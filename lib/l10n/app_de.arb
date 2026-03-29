@@ -1,4 +1,13 @@
 {
   "@@locale": "de",
-  "appTitle": "Habit Loop"
+  "appTitle": "Habit Loop",
+  "dashboardTitle": "Übersicht",
+  "todayShowups": "Heutige Showups",
+  "noPactsYet": "Noch keine Pakte",
+  "noPactsDescription": "Erstelle deinen ersten Pakt, um eine Gewohnheit aufzubauen.",
+  "createPact": "Pakt erstellen",
+  "noShowupsForDay": "Keine Showups an diesem Tag",
+  "showupDone": "Erledigt",
+  "showupFailed": "Verpasst",
+  "showupPending": "Ausstehend"
 }

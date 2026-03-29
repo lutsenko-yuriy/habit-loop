@@ -10,4 +10,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appTitle => 'Habit Loop';
+
+  @override
+  String get dashboardTitle => 'Dashboard';
+
+  @override
+  String get todayShowups => 'Today\'s Showups';
+
+  @override
+  String get noPactsYet => 'No pacts yet';
+
+  @override
+  String get noPactsDescription =>
+      'Create your first pact to start building a habit.';
+
+  @override
+  String get createPact => 'Create a Pact';
+
+  @override
+  String get noShowupsForDay => 'No showups for this day';
+
+  @override
+  String get showupDone => 'Done';
+
+  @override
+  String get showupFailed => 'Failed';
+
+  @override
+  String get showupPending => 'Pending';
 }

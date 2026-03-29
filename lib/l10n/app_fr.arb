@@ -1,4 +1,13 @@
 {
   "@@locale": "fr",
-  "appTitle": "Habit Loop"
+  "appTitle": "Habit Loop",
+  "dashboardTitle": "Tableau de bord",
+  "todayShowups": "Rendez-vous du jour",
+  "noPactsYet": "Aucun pacte",
+  "noPactsDescription": "Créez votre premier pacte pour commencer à construire une habitude.",
+  "createPact": "Créer un pacte",
+  "noShowupsForDay": "Aucun rendez-vous ce jour",
+  "showupDone": "Fait",
+  "showupFailed": "Échoué",
+  "showupPending": "En attente"
 }

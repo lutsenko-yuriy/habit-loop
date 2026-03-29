@@ -5,7 +5,7 @@ The app is available in English, French, and German.
 The Habit Loop app allows the user to:
 - See an overview on a dashboard what the user should do today, what he has already done today how it goes with his pacts in general
   - The user must see a todo list of showups that are already done/should be done today
-  - The user must see a calendar view centered on today, showing 3 days before and 3 days after. Past and today's slots show completed/failed showups; future slots show upcoming scheduled showups.
+  - The user must see a calendar view centered on today, showing 3 days before and 3 days after. Past and today's slots show completed/failed showups; future slots show upcoming scheduled showups. Each day shows colored dots per showup (green=done, red=failed, grey=upcoming). Today is highlighted with a circle; the selected day has accent color. Tapping a day shows that day's showups in the list below.
   - The user can create a new pact on a separate screen
   - Multiple pacts can be active simultaneously
 - Create such pacts to show up
@@ -19,7 +19,6 @@ The Habit Loop app allows the user to:
     - He can say that he wants to show up on some specific weekdays (e.g., Saturday at 4pm, Tuesday at 7pm, etc.)
     - He can say that he wants to show up on some specific days of a months (e.g., every 2nd tuesday of a month or every 25th day of the month, etc.)
   - The user can define when he wants to be reminded to show up (by default no reminder, but can be reminded up to 60 minutes before the showup or when the showup starts immediately)
-  - The user can mark the pact with some color or emoji (not defined by default)
 - Track if the user shows up to a pact he defined on a separate screen
   - The user can see detail of his pact
     - How many showups he made it to

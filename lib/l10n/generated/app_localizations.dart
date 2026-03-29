@@ -105,6 +105,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Habit Loop'**
   String get appTitle;
+
+  /// No description provided for @dashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get dashboardTitle;
+
+  /// No description provided for @todayShowups.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Showups'**
+  String get todayShowups;
+
+  /// No description provided for @noPactsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No pacts yet'**
+  String get noPactsYet;
+
+  /// No description provided for @noPactsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first pact to start building a habit.'**
+  String get noPactsDescription;
+
+  /// No description provided for @createPact.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a Pact'**
+  String get createPact;
+
+  /// No description provided for @noShowupsForDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No showups for this day'**
+  String get noShowupsForDay;
+
+  /// No description provided for @showupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get showupDone;
+
+  /// No description provided for @showupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get showupFailed;
+
+  /// No description provided for @showupPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get showupPending;
 }
 
 class _AppLocalizationsDelegate

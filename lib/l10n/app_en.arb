@@ -1,4 +1,13 @@
 {
   "@@locale": "en",
-  "appTitle": "Habit Loop"
+  "appTitle": "Habit Loop",
+  "dashboardTitle": "Dashboard",
+  "todayShowups": "Today's Showups",
+  "noPactsYet": "No pacts yet",
+  "noPactsDescription": "Create your first pact to start building a habit.",
+  "createPact": "Create a Pact",
+  "noShowupsForDay": "No showups for this day",
+  "showupDone": "Done",
+  "showupFailed": "Failed",
+  "showupPending": "Pending"
 }
