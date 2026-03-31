@@ -8,12 +8,14 @@ class DashboardPageAndroid extends StatelessWidget {
   final DashboardState state;
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
+  final VoidCallback onCreatePact;
 
   const DashboardPageAndroid({
     super.key,
     required this.state,
     required this.hasPacts,
     required this.onDaySelected,
+    required this.onCreatePact,
   });
 
   @override
@@ -22,10 +24,17 @@ class DashboardPageAndroid extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.dashboardTitle)),
+      floatingActionButton: hasPacts
+          ? FloatingActionButton(
+              key: const Key('create-pact-button'),
+              onPressed: onCreatePact,
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : !hasPacts
-              ? _EmptyState(l10n: l10n)
+              ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
               : _DashboardContent(
                   state: state,
                   l10n: l10n,
@@ -37,8 +46,9 @@ class DashboardPageAndroid extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final AppLocalizations l10n;
+  final VoidCallback onCreatePact;
 
-  const _EmptyState({required this.l10n});
+  const _EmptyState({required this.l10n, required this.onCreatePact});
 
   @override
   Widget build(BuildContext context) {
@@ -60,9 +70,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             FilledButton(
-              onPressed: () {
-                // TODO: Navigate to pact creation
-              },
+              onPressed: onCreatePact,
               child: Text(l10n.createPact),
             ),
           ],

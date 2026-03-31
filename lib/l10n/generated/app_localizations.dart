@@ -159,6 +159,282 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pending'**
   String get showupPending;
+
+  /// No description provided for @pactCreationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Pact'**
+  String get pactCreationTitle;
+
+  /// No description provided for @habitNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit name'**
+  String get habitNameLabel;
+
+  /// No description provided for @habitNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Meditate, Jog, Read…'**
+  String get habitNameHint;
+
+  /// No description provided for @pactDurationStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Pact Duration'**
+  String get pactDurationStep;
+
+  /// No description provided for @startDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get startDateLabel;
+
+  /// No description provided for @endDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get endDateLabel;
+
+  /// No description provided for @showupDurationStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Showup Duration'**
+  String get showupDurationStep;
+
+  /// No description provided for @showupDurationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How long is each showup?'**
+  String get showupDurationLabel;
+
+  /// No description provided for @showupDurationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String showupDurationMinutes(int minutes);
+
+  /// No description provided for @scheduleStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get scheduleStep;
+
+  /// No description provided for @scheduleTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'When do you want to show up?'**
+  String get scheduleTypeLabel;
+
+  /// No description provided for @scheduleDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day'**
+  String get scheduleDaily;
+
+  /// No description provided for @scheduleWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'Specific weekdays'**
+  String get scheduleWeekday;
+
+  /// No description provided for @scheduleMonthlyByWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly by weekday'**
+  String get scheduleMonthlyByWeekday;
+
+  /// No description provided for @scheduleMonthlyByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly by date'**
+  String get scheduleMonthlyByDate;
+
+  /// No description provided for @timeOfDayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get timeOfDayLabel;
+
+  /// No description provided for @addEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another'**
+  String get addEntry;
+
+  /// No description provided for @removeEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeEntry;
+
+  /// No description provided for @weekdayMon.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In en, this message translates to:
+  /// **'Tue'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In en, this message translates to:
+  /// **'Wed'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In en, this message translates to:
+  /// **'Thu'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In en, this message translates to:
+  /// **'Fri'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In en, this message translates to:
+  /// **'Sat'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get weekdaySun;
+
+  /// No description provided for @occurrenceFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'1st'**
+  String get occurrenceFirst;
+
+  /// No description provided for @occurrenceSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'2nd'**
+  String get occurrenceSecond;
+
+  /// No description provided for @occurrenceThird.
+  ///
+  /// In en, this message translates to:
+  /// **'3rd'**
+  String get occurrenceThird;
+
+  /// No description provided for @occurrenceFourth.
+  ///
+  /// In en, this message translates to:
+  /// **'4th'**
+  String get occurrenceFourth;
+
+  /// No description provided for @dayOfMonthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of month'**
+  String get dayOfMonthLabel;
+
+  /// No description provided for @reminderStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get reminderStep;
+
+  /// No description provided for @reminderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me before showup'**
+  String get reminderLabel;
+
+  /// No description provided for @reminderNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminder'**
+  String get reminderNone;
+
+  /// No description provided for @reminderAtStart.
+  ///
+  /// In en, this message translates to:
+  /// **'When it starts'**
+  String get reminderAtStart;
+
+  /// No description provided for @reminderMinutesBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min before'**
+  String reminderMinutesBefore(int minutes);
+
+  /// No description provided for @summaryHabit.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit'**
+  String get summaryHabit;
+
+  /// No description provided for @summaryDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Pact duration'**
+  String get summaryDuration;
+
+  /// No description provided for @summaryShowupDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Showup duration'**
+  String get summaryShowupDuration;
+
+  /// No description provided for @summarySchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get summarySchedule;
+
+  /// No description provided for @summaryReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get summaryReminder;
+
+  /// No description provided for @commitmentStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment'**
+  String get commitmentStep;
+
+  /// No description provided for @commitmentWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing a showup counts as a failure. There are no exceptions and no pausing a pact. By creating this pact, you commit to showing up every time.'**
+  String get commitmentWarning;
+
+  /// No description provided for @commitmentAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand and commit'**
+  String get commitmentAccept;
+
+  /// No description provided for @createPactConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Pact'**
+  String get createPactConfirm;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
 }
 
 class _AppLocalizationsDelegate

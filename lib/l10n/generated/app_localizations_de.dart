@@ -38,4 +38,147 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get showupPending => 'Ausstehend';
+
+  @override
+  String get pactCreationTitle => 'Neuer Pakt';
+
+  @override
+  String get habitNameLabel => 'Name der Gewohnheit';
+
+  @override
+  String get habitNameHint => 'z.B. Meditieren, Joggen, Lesen…';
+
+  @override
+  String get pactDurationStep => 'Paktdauer';
+
+  @override
+  String get startDateLabel => 'Startdatum';
+
+  @override
+  String get endDateLabel => 'Enddatum';
+
+  @override
+  String get showupDurationStep => 'Showup-Dauer';
+
+  @override
+  String get showupDurationLabel => 'Wie lang ist jedes Showup?';
+
+  @override
+  String showupDurationMinutes(int minutes) {
+    return '$minutes Min.';
+  }
+
+  @override
+  String get scheduleStep => 'Zeitplan';
+
+  @override
+  String get scheduleTypeLabel => 'Wann möchtest du erscheinen?';
+
+  @override
+  String get scheduleDaily => 'Jeden Tag';
+
+  @override
+  String get scheduleWeekday => 'Bestimmte Wochentage';
+
+  @override
+  String get scheduleMonthlyByWeekday => 'Monatlich nach Wochentag';
+
+  @override
+  String get scheduleMonthlyByDate => 'Monatlich nach Datum';
+
+  @override
+  String get timeOfDayLabel => 'Uhrzeit';
+
+  @override
+  String get addEntry => 'Weiteren hinzufügen';
+
+  @override
+  String get removeEntry => 'Entfernen';
+
+  @override
+  String get weekdayMon => 'Mo';
+
+  @override
+  String get weekdayTue => 'Di';
+
+  @override
+  String get weekdayWed => 'Mi';
+
+  @override
+  String get weekdayThu => 'Do';
+
+  @override
+  String get weekdayFri => 'Fr';
+
+  @override
+  String get weekdaySat => 'Sa';
+
+  @override
+  String get weekdaySun => 'So';
+
+  @override
+  String get occurrenceFirst => '1.';
+
+  @override
+  String get occurrenceSecond => '2.';
+
+  @override
+  String get occurrenceThird => '3.';
+
+  @override
+  String get occurrenceFourth => '4.';
+
+  @override
+  String get dayOfMonthLabel => 'Tag des Monats';
+
+  @override
+  String get reminderStep => 'Erinnerung';
+
+  @override
+  String get reminderLabel => 'Vor dem Showup erinnern';
+
+  @override
+  String get reminderNone => 'Keine Erinnerung';
+
+  @override
+  String get reminderAtStart => 'Beim Start';
+
+  @override
+  String reminderMinutesBefore(int minutes) {
+    return '$minutes Min. vorher';
+  }
+
+  @override
+  String get summaryHabit => 'Gewohnheit';
+
+  @override
+  String get summaryDuration => 'Paktdauer';
+
+  @override
+  String get summaryShowupDuration => 'Showup-Dauer';
+
+  @override
+  String get summarySchedule => 'Zeitplan';
+
+  @override
+  String get summaryReminder => 'Erinnerung';
+
+  @override
+  String get commitmentStep => 'Verpflichtung';
+
+  @override
+  String get commitmentWarning =>
+      'Ein verpasstes Showup zählt als Misserfolg. Es gibt keine Ausnahmen und keine Pausen. Mit der Erstellung dieses Pakts verpflichtest du dich, jedes Mal zu erscheinen.';
+
+  @override
+  String get commitmentAccept => 'Ich verstehe und verpflichte mich';
+
+  @override
+  String get createPactConfirm => 'Pakt erstellen';
+
+  @override
+  String get next => 'Weiter';
+
+  @override
+  String get back => 'Zurück';
 }
