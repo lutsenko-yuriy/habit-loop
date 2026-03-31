@@ -494,20 +494,43 @@ class _ScheduleDetails extends StatefulWidget {
 }
 
 class _ScheduleDetailsState extends State<_ScheduleDetails> {
-  Duration _dailyTime = const Duration(hours: 8);
-  // ignore: prefer_final_fields
-  List<WeekdayEntry> _weekdayEntries = [
-    const WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 8)),
-  ];
-  // ignore: prefer_final_fields
-  List<MonthlyWeekdayEntry> _monthlyWeekdayEntries = [
-    const MonthlyWeekdayEntry(
-        occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
-  ];
-  // ignore: prefer_final_fields
-  List<MonthlyDateEntry> _monthlyDateEntries = [
-    const MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
-  ];
+  late Duration _dailyTime;
+  late List<WeekdayEntry> _weekdayEntries;
+  late List<MonthlyWeekdayEntry> _monthlyWeekdayEntries;
+  late List<MonthlyDateEntry> _monthlyDateEntries;
+
+  @override
+  void initState() {
+    super.initState();
+    final schedule = widget.state.schedule;
+    if (schedule is DailySchedule) {
+      _dailyTime = schedule.timeOfDay;
+    } else {
+      _dailyTime = const Duration(hours: 8);
+    }
+    if (schedule is WeekdaySchedule) {
+      _weekdayEntries = List.of(schedule.entries);
+    } else {
+      _weekdayEntries = [
+        const WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 8)),
+      ];
+    }
+    if (schedule is MonthlyByWeekdaySchedule) {
+      _monthlyWeekdayEntries = List.of(schedule.entries);
+    } else {
+      _monthlyWeekdayEntries = [
+        const MonthlyWeekdayEntry(
+            occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
+      ];
+    }
+    if (schedule is MonthlyByDateSchedule) {
+      _monthlyDateEntries = List.of(schedule.entries);
+    } else {
+      _monthlyDateEntries = [
+        const MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
+      ];
+    }
+  }
 
   String _weekdayName(int weekday) {
     final l10n = widget.l10n;
