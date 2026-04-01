@@ -139,6 +139,23 @@ void main() {
       expect(find.text('Meditate'), findsOneWidget);
     });
 
+    testWidgets('shows create pact button when pacts exist', (tester) async {
+      await tester.pumpWidget(_buildApp(pacts: [
+        Pact(
+          id: '1',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+        ),
+      ]));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('create-pact-button')), findsOneWidget);
+    });
+
     testWidgets('shows status dots for showups on calendar days',
         (tester) async {
       final doneShowup = Showup(

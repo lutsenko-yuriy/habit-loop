@@ -38,4 +38,147 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showupPending => 'Pending';
+
+  @override
+  String get pactCreationTitle => 'New Pact';
+
+  @override
+  String get habitNameLabel => 'Habit name';
+
+  @override
+  String get habitNameHint => 'e.g., Meditate, Jog, Read…';
+
+  @override
+  String get pactDurationStep => 'Pact Duration';
+
+  @override
+  String get startDateLabel => 'Start date';
+
+  @override
+  String get endDateLabel => 'End date';
+
+  @override
+  String get showupDurationStep => 'Showup Duration';
+
+  @override
+  String get showupDurationLabel => 'How long is each showup?';
+
+  @override
+  String showupDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get scheduleStep => 'Schedule';
+
+  @override
+  String get scheduleTypeLabel => 'When do you want to show up?';
+
+  @override
+  String get scheduleDaily => 'Every day';
+
+  @override
+  String get scheduleWeekday => 'Specific weekdays';
+
+  @override
+  String get scheduleMonthlyByWeekday => 'Monthly by weekday';
+
+  @override
+  String get scheduleMonthlyByDate => 'Monthly by date';
+
+  @override
+  String get timeOfDayLabel => 'Time';
+
+  @override
+  String get addEntry => 'Add another';
+
+  @override
+  String get removeEntry => 'Remove';
+
+  @override
+  String get weekdayMon => 'Mon';
+
+  @override
+  String get weekdayTue => 'Tue';
+
+  @override
+  String get weekdayWed => 'Wed';
+
+  @override
+  String get weekdayThu => 'Thu';
+
+  @override
+  String get weekdayFri => 'Fri';
+
+  @override
+  String get weekdaySat => 'Sat';
+
+  @override
+  String get weekdaySun => 'Sun';
+
+  @override
+  String get occurrenceFirst => '1st';
+
+  @override
+  String get occurrenceSecond => '2nd';
+
+  @override
+  String get occurrenceThird => '3rd';
+
+  @override
+  String get occurrenceFourth => '4th';
+
+  @override
+  String get dayOfMonthLabel => 'Day of month';
+
+  @override
+  String get reminderStep => 'Reminder';
+
+  @override
+  String get reminderLabel => 'Remind me before showup';
+
+  @override
+  String get reminderNone => 'No reminder';
+
+  @override
+  String get reminderAtStart => 'When it starts';
+
+  @override
+  String reminderMinutesBefore(int minutes) {
+    return '$minutes min before';
+  }
+
+  @override
+  String get summaryHabit => 'Habit';
+
+  @override
+  String get summaryDuration => 'Pact duration';
+
+  @override
+  String get summaryShowupDuration => 'Showup duration';
+
+  @override
+  String get summarySchedule => 'Schedule';
+
+  @override
+  String get summaryReminder => 'Reminder';
+
+  @override
+  String get commitmentStep => 'Commitment';
+
+  @override
+  String get commitmentWarning =>
+      'Missing a showup counts as a failure. There are no exceptions and no pausing a pact. By creating this pact, you commit to showing up every time.';
+
+  @override
+  String get commitmentAccept => 'I understand and commit';
+
+  @override
+  String get createPactConfirm => 'Create Pact';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get back => 'Back';
 }

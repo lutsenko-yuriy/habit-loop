@@ -20,4 +20,9 @@ class InMemoryPactRepository implements PactRepository {
       return null;
     }
   }
+
+  @override
+  Future<void> savePact(Pact pact) async {
+    _pacts.add(pact);
+  }
 }

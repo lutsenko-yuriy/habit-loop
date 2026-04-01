@@ -9,5 +9,62 @@
   "noShowupsForDay": "Keine Showups an diesem Tag",
   "showupDone": "Erledigt",
   "showupFailed": "Verpasst",
-  "showupPending": "Ausstehend"
+  "showupPending": "Ausstehend",
+
+  "pactCreationTitle": "Neuer Pakt",
+  "habitNameLabel": "Name der Gewohnheit",
+  "habitNameHint": "z.B. Meditieren, Joggen, Lesen…",
+  "pactDurationStep": "Paktdauer",
+  "startDateLabel": "Startdatum",
+  "endDateLabel": "Enddatum",
+  "showupDurationStep": "Showup-Dauer",
+  "showupDurationLabel": "Wie lang ist jedes Showup?",
+  "showupDurationMinutes": "{minutes} Min.",
+  "@showupDurationMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "scheduleStep": "Zeitplan",
+  "scheduleTypeLabel": "Wann möchtest du erscheinen?",
+  "scheduleDaily": "Jeden Tag",
+  "scheduleWeekday": "Bestimmte Wochentage",
+  "scheduleMonthlyByWeekday": "Monatlich nach Wochentag",
+  "scheduleMonthlyByDate": "Monatlich nach Datum",
+  "timeOfDayLabel": "Uhrzeit",
+  "addEntry": "Weiteren hinzufügen",
+  "removeEntry": "Entfernen",
+  "weekdayMon": "Mo",
+  "weekdayTue": "Di",
+  "weekdayWed": "Mi",
+  "weekdayThu": "Do",
+  "weekdayFri": "Fr",
+  "weekdaySat": "Sa",
+  "weekdaySun": "So",
+  "occurrenceFirst": "1.",
+  "occurrenceSecond": "2.",
+  "occurrenceThird": "3.",
+  "occurrenceFourth": "4.",
+  "dayOfMonthLabel": "Tag des Monats",
+  "reminderStep": "Erinnerung",
+  "reminderLabel": "Vor dem Showup erinnern",
+  "reminderNone": "Keine Erinnerung",
+  "reminderAtStart": "Beim Start",
+  "reminderMinutesBefore": "{minutes} Min. vorher",
+  "@reminderMinutesBefore": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "summaryHabit": "Gewohnheit",
+  "summaryDuration": "Paktdauer",
+  "summaryShowupDuration": "Showup-Dauer",
+  "summarySchedule": "Zeitplan",
+  "summaryReminder": "Erinnerung",
+  "commitmentStep": "Verpflichtung",
+  "commitmentWarning": "Ein verpasstes Showup zählt als Misserfolg. Es gibt keine Ausnahmen und keine Pausen. Mit der Erstellung dieses Pakts verpflichtest du dich, jedes Mal zu erscheinen.",
+  "commitmentAccept": "Ich verstehe und verpflichte mich",
+  "createPactConfirm": "Pakt erstellen",
+  "next": "Weiter",
+  "back": "Zurück"
 }
