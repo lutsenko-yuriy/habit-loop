@@ -103,9 +103,23 @@ void main() {
 
     test('updatePact throws if id not found', () async {
       repo = InMemoryPactRepository([activePact]);
-      final unknown = activePact.copyWith(id: 'unknown');
+      final unknown = Pact(
+        id: 'unknown',
+        habitName: 'Meditate',
+        startDate: DateTime(2026, 3, 1),
+        endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.stopped,
+      );
 
       expect(() => repo.updatePact(unknown), throwsArgumentError);
+    });
+
+    test('savePact throws if a pact with the same id already exists', () async {
+      repo = InMemoryPactRepository([activePact]);
+
+      expect(() => repo.savePact(activePact), throwsArgumentError);
     });
   });
 }

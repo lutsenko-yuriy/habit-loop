@@ -24,8 +24,11 @@ class Pact {
     this.stopReason,
   });
 
+  /// Returns a copy of this pact with the given fields replaced.
+  ///
+  /// [id] is immutable and cannot be changed after creation — it is the
+  /// identity of a pact and is used as a foreign key by its showups.
   Pact copyWith({
-    String? id,
     String? habitName,
     DateTime? startDate,
     DateTime? endDate,
@@ -38,7 +41,7 @@ class Pact {
     bool clearStopReason = false,
   }) {
     return Pact(
-      id: id ?? this.id,
+      id: id,
       habitName: habitName ?? this.habitName,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
