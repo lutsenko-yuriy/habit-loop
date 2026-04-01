@@ -102,24 +102,26 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
     state = state.copyWith(isSubmitting: true);
 
-    final pact = Pact(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      habitName: state.habitName.trim(),
-      startDate: state.startDate,
-      endDate: state.endDate,
-      showupDuration: state.showupDuration!,
-      schedule: state.schedule!,
-      status: PactStatus.active,
-      reminderOffset: state.reminderOffset,
-    );
+    try {
+      final pact = Pact(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        habitName: state.habitName.trim(),
+        startDate: state.startDate,
+        endDate: state.endDate,
+        showupDuration: state.showupDuration!,
+        schedule: state.schedule!,
+        status: PactStatus.active,
+        reminderOffset: state.reminderOffset,
+      );
 
-    final repo = ref.read(pactCreationRepositoryProvider);
-    await repo.savePact(pact);
-    // TODO: generate showups for the pact and save them via ShowupRepository.
-    // ShowupGenerator.generate(pact) produces the full list of pending showups;
-    // they should be persisted here so the dashboard and tracking screens
-    // can query them immediately after pact creation.
-
-    state = state.copyWith(isSubmitting: false);
+      final repo = ref.read(pactCreationRepositoryProvider);
+      await repo.savePact(pact);
+      // TODO: generate showups for the pact and save them via ShowupRepository.
+      // ShowupGenerator.generate(pact) produces the full list of pending showups;
+      // they should be persisted here so the dashboard and tracking screens
+      // can query them immediately after pact creation.
+    } finally {
+      state = state.copyWith(isSubmitting: false);
+    }
   }
 }

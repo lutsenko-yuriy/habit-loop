@@ -134,5 +134,27 @@ void main() {
       expect(stats.totalShowups, 0);
       expect(stats.currentStreak, 0);
     });
+
+    test('two PactStats with same fields are equal', () {
+      final showups = [
+        _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
+      ];
+      final a = PactStats.compute(pact: _pact(), showups: showups);
+      final b = PactStats.compute(pact: _pact(), showups: showups);
+
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+    });
+
+    test('two PactStats with different fields are not equal', () {
+      final a = PactStats.compute(pact: _pact(), showups: [
+        _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
+      ]);
+      final b = PactStats.compute(pact: _pact(), showups: [
+        _showup('1', ShowupStatus.failed, DateTime(2026, 4, 1, 7)),
+      ]);
+
+      expect(a, isNot(equals(b)));
+    });
   });
 }
