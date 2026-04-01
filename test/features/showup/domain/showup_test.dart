@@ -97,6 +97,7 @@ void main() {
 
     test('unchanged fields are preserved', () {
       final updated = base.copyWith(status: ShowupStatus.failed);
+      expect(updated.id, base.id);
       expect(updated.pactId, base.pactId);
       expect(updated.scheduledAt, base.scheduledAt);
       expect(updated.duration, base.duration);

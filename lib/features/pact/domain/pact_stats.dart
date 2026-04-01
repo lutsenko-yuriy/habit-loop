@@ -34,7 +34,9 @@ class PactStats {
         showups.where((s) => s.status == ShowupStatus.pending).length;
 
     // Current streak: count consecutive done showups from the most recent
-    // resolved (non-pending) showup backwards.
+    // resolved (non-pending) showup backwards. Pending showups are excluded
+    // from streak calculation — they have not been resolved yet and do not
+    // break or extend the streak.
     final resolved = showups
         .where((s) => s.status != ShowupStatus.pending)
         .toList()

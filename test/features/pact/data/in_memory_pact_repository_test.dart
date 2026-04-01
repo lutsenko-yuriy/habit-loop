@@ -101,14 +101,11 @@ void main() {
       expect(result?.stopReason, 'Lost interest');
     });
 
-    test('updatePact does nothing if id not found', () async {
+    test('updatePact throws if id not found', () async {
       repo = InMemoryPactRepository([activePact]);
       final unknown = activePact.copyWith(id: 'unknown');
 
-      await repo.updatePact(unknown);
-
-      final result = await repo.getActivePacts();
-      expect(result, [activePact]);
+      expect(() => repo.updatePact(unknown), throwsArgumentError);
     });
   });
 }

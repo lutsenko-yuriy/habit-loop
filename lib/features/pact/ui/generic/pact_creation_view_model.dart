@@ -103,7 +103,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     state = state.copyWith(isSubmitting: true);
 
     final pact = Pact(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
       habitName: state.habitName.trim(),
       startDate: state.startDate,
       endDate: state.endDate,

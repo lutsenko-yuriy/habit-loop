@@ -56,8 +56,9 @@ class InMemoryShowupRepository implements ShowupRepository {
   @override
   Future<void> updateShowup(Showup showup) async {
     final index = _showups.indexWhere((s) => s.id == showup.id);
-    if (index != -1) {
-      _showups[index] = showup;
+    if (index == -1) {
+      throw ArgumentError('Showup with id "${showup.id}" not found.');
     }
+    _showups[index] = showup;
   }
 }
