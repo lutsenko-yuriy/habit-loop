@@ -23,6 +23,9 @@ class InMemoryPactRepository implements PactRepository {
 
   @override
   Future<void> savePact(Pact pact) async {
+    if (_pacts.any((p) => p.id == pact.id)) {
+      throw ArgumentError('Pact with id "${pact.id}" already exists.');
+    }
     _pacts.add(pact);
   }
 

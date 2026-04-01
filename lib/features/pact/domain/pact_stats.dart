@@ -37,6 +37,9 @@ class PactStats {
     // resolved (non-pending) showup backwards. Pending showups are excluded
     // from streak calculation — they have not been resolved yet and do not
     // break or extend the streak.
+    // `..sort(...)` is Dart's cascade operator: it calls sort() on the list
+    // and returns the list itself (not the void return of sort), so we can
+    // assign the sorted list in one expression.
     final resolved = showups
         .where((s) => s.status != ShowupStatus.pending)
         .toList()
