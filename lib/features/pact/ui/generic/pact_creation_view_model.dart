@@ -100,7 +100,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
   Future<void> submit() async {
     if (state.schedule == null || state.showupDuration == null) return;
 
-    state = state.copyWith(isSubmitting: true);
+    state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
     try {
       final pact = Pact(
@@ -120,6 +120,8 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       // ShowupGenerator.generate(pact) produces the full list of pending showups;
       // they should be persisted here so the dashboard and tracking screens
       // can query them immediately after pact creation.
+    } catch (e) {
+      state = state.copyWith(submitError: e);
     } finally {
       state = state.copyWith(isSubmitting: false);
     }

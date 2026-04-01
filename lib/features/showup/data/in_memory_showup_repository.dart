@@ -27,7 +27,7 @@ class InMemoryShowupRepository implements ShowupRepository {
     final endDay = ShowupDateUtils.endOfDay(end);
     return _showups.where((s) {
       return !s.scheduledAt.isBefore(startDay) &&
-          !s.scheduledAt.isAfter(endDay);
+          s.scheduledAt.isBefore(endDay);
     }).toList();
   }
 

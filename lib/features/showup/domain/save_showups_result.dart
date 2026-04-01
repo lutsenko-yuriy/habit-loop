@@ -6,10 +6,10 @@ class SaveShowupsResult {
   /// IDs of showups that were skipped because they already existed.
   final List<String> skippedIds;
 
-  const SaveShowupsResult({
+  SaveShowupsResult({
     required this.savedCount,
-    required this.skippedIds,
-  });
+    required List<String> skippedIds,
+  }) : skippedIds = List.unmodifiable(skippedIds);
 
   /// True if all showups were saved and none were skipped.
   bool get allSaved => skippedIds.isEmpty;
