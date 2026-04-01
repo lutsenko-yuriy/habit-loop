@@ -78,5 +78,37 @@ void main() {
       final result = await repo.getActivePacts();
       expect(result, [activePact]);
     });
+
+    test('getAllPacts returns all pacts regardless of status', () async {
+      repo = InMemoryPactRepository([activePact, stoppedPact]);
+
+      final result = await repo.getAllPacts();
+
+      expect(result, [activePact, stoppedPact]);
+    });
+
+    test('updatePact replaces existing pact by id', () async {
+      repo = InMemoryPactRepository([activePact]);
+      final stopped = activePact.copyWith(
+        status: PactStatus.stopped,
+        stopReason: 'Lost interest',
+      );
+
+      await repo.updatePact(stopped);
+
+      final result = await repo.getPactById('1');
+      expect(result?.status, PactStatus.stopped);
+      expect(result?.stopReason, 'Lost interest');
+    });
+
+    test('updatePact does nothing if id not found', () async {
+      repo = InMemoryPactRepository([activePact]);
+      final unknown = activePact.copyWith(id: 'unknown');
+
+      await repo.updatePact(unknown);
+
+      final result = await repo.getActivePacts();
+      expect(result, [activePact]);
+    });
   });
 }
