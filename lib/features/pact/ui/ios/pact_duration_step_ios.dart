@@ -1,0 +1,136 @@
+import 'package:flutter/cupertino.dart';
+import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
+
+class PactDurationStepIos extends StatelessWidget {
+  final PactCreationState state;
+  final AppLocalizations l10n;
+  final ValueChanged<DateTime> onStartDateChanged;
+  final ValueChanged<DateTime> onEndDateChanged;
+  final ValueChanged<Duration> onShowupDurationChanged;
+
+  const PactDurationStepIos({
+    super.key,
+    required this.state,
+    required this.l10n,
+    required this.onStartDateChanged,
+    required this.onEndDateChanged,
+    required this.onShowupDurationChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          l10n.pactDurationStep,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _DateRow(
+          label: l10n.startDateLabel,
+          date: state.startDate,
+          onTap: () => _showDatePicker(
+            context,
+            state.startDate,
+            minimumDate: DateTime.now(),
+            onDateChanged: onStartDateChanged,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _DateRow(
+          label: l10n.endDateLabel,
+          date: state.endDate,
+          onTap: () => _showDatePicker(
+            context,
+            state.endDate,
+            minimumDate: state.startDate.add(const Duration(days: 1)),
+            onDateChanged: onEndDateChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDatePicker(
+    BuildContext context,
+    DateTime initialDate, {
+    DateTime? minimumDate,
+    required ValueChanged<DateTime> onDateChanged,
+  }) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => Container(
+        height: 320 + MediaQuery.of(context).padding.bottom,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 44,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CupertinoButton(
+                    child: const Text('Done'),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: initialDate,
+                minimumDate: minimumDate,
+                onDateTimeChanged: onDateChanged,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DateRow extends StatelessWidget {
+  final String label;
+  final DateTime date;
+  final VoidCallback onTap;
+
+  const _DateRow({
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label),
+            Text(
+              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+              style: TextStyle(
+                color: CupertinoTheme.of(context).primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

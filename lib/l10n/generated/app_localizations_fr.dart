@@ -38,4 +38,148 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get showupPending => 'En attente';
+
+  @override
+  String get pactCreationTitle => 'Nouveau pacte';
+
+  @override
+  String get habitNameLabel => 'Nom de l\'habitude';
+
+  @override
+  String get habitNameHint => 'ex. Méditer, Courir, Lire…';
+
+  @override
+  String get pactDurationStep => 'Durée du pacte';
+
+  @override
+  String get startDateLabel => 'Date de début';
+
+  @override
+  String get endDateLabel => 'Date de fin';
+
+  @override
+  String get showupDurationStep => 'Durée du rendez-vous';
+
+  @override
+  String get showupDurationLabel =>
+      'Combien de temps dure chaque rendez-vous ?';
+
+  @override
+  String showupDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get scheduleStep => 'Horaire';
+
+  @override
+  String get scheduleTypeLabel => 'Quand voulez-vous vous présenter ?';
+
+  @override
+  String get scheduleDaily => 'Tous les jours';
+
+  @override
+  String get scheduleWeekday => 'Jours spécifiques';
+
+  @override
+  String get scheduleMonthlyByWeekday => 'Mensuel par jour de semaine';
+
+  @override
+  String get scheduleMonthlyByDate => 'Mensuel par date';
+
+  @override
+  String get timeOfDayLabel => 'Heure';
+
+  @override
+  String get addEntry => 'Ajouter un autre';
+
+  @override
+  String get removeEntry => 'Supprimer';
+
+  @override
+  String get weekdayMon => 'Lun';
+
+  @override
+  String get weekdayTue => 'Mar';
+
+  @override
+  String get weekdayWed => 'Mer';
+
+  @override
+  String get weekdayThu => 'Jeu';
+
+  @override
+  String get weekdayFri => 'Ven';
+
+  @override
+  String get weekdaySat => 'Sam';
+
+  @override
+  String get weekdaySun => 'Dim';
+
+  @override
+  String get occurrenceFirst => '1er';
+
+  @override
+  String get occurrenceSecond => '2e';
+
+  @override
+  String get occurrenceThird => '3e';
+
+  @override
+  String get occurrenceFourth => '4e';
+
+  @override
+  String get dayOfMonthLabel => 'Jour du mois';
+
+  @override
+  String get reminderStep => 'Rappel';
+
+  @override
+  String get reminderLabel => 'Me rappeler avant le rendez-vous';
+
+  @override
+  String get reminderNone => 'Pas de rappel';
+
+  @override
+  String get reminderAtStart => 'Au début';
+
+  @override
+  String reminderMinutesBefore(int minutes) {
+    return '$minutes min avant';
+  }
+
+  @override
+  String get summaryHabit => 'Habitude';
+
+  @override
+  String get summaryDuration => 'Durée du pacte';
+
+  @override
+  String get summaryShowupDuration => 'Durée du rendez-vous';
+
+  @override
+  String get summarySchedule => 'Horaire';
+
+  @override
+  String get summaryReminder => 'Rappel';
+
+  @override
+  String get commitmentStep => 'Engagement';
+
+  @override
+  String get commitmentWarning =>
+      'Manquer un rendez-vous compte comme un échec. Il n\'y a aucune exception et aucune pause possible. En créant ce pacte, vous vous engagez à vous présenter à chaque fois.';
+
+  @override
+  String get commitmentAccept => 'Je comprends et m\'engage';
+
+  @override
+  String get createPactConfirm => 'Créer le pacte';
+
+  @override
+  String get next => 'Suivant';
+
+  @override
+  String get back => 'Retour';
 }

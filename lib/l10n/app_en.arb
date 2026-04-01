@@ -9,5 +9,62 @@
   "noShowupsForDay": "No showups for this day",
   "showupDone": "Done",
   "showupFailed": "Failed",
-  "showupPending": "Pending"
+  "showupPending": "Pending",
+
+  "pactCreationTitle": "New Pact",
+  "habitNameLabel": "Habit name",
+  "habitNameHint": "e.g., Meditate, Jog, Read…",
+  "pactDurationStep": "Pact Duration",
+  "startDateLabel": "Start date",
+  "endDateLabel": "End date",
+  "showupDurationStep": "Showup Duration",
+  "showupDurationLabel": "How long is each showup?",
+  "showupDurationMinutes": "{minutes} min",
+  "@showupDurationMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "scheduleStep": "Schedule",
+  "scheduleTypeLabel": "When do you want to show up?",
+  "scheduleDaily": "Every day",
+  "scheduleWeekday": "Specific weekdays",
+  "scheduleMonthlyByWeekday": "Monthly by weekday",
+  "scheduleMonthlyByDate": "Monthly by date",
+  "timeOfDayLabel": "Time",
+  "addEntry": "Add another",
+  "removeEntry": "Remove",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+  "occurrenceFirst": "1st",
+  "occurrenceSecond": "2nd",
+  "occurrenceThird": "3rd",
+  "occurrenceFourth": "4th",
+  "dayOfMonthLabel": "Day of month",
+  "reminderStep": "Reminder",
+  "reminderLabel": "Remind me before showup",
+  "reminderNone": "No reminder",
+  "reminderAtStart": "When it starts",
+  "reminderMinutesBefore": "{minutes} min before",
+  "@reminderMinutesBefore": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "summaryHabit": "Habit",
+  "summaryDuration": "Pact duration",
+  "summaryShowupDuration": "Showup duration",
+  "summarySchedule": "Schedule",
+  "summaryReminder": "Reminder",
+  "commitmentStep": "Commitment",
+  "commitmentWarning": "Missing a showup counts as a failure. There are no exceptions and no pausing a pact. By creating this pact, you commit to showing up every time.",
+  "commitmentAccept": "I understand and commit",
+  "createPactConfirm": "Create Pact",
+  "next": "Next",
+  "back": "Back"
 }

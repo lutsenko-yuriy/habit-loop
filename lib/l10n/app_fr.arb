@@ -9,5 +9,62 @@
   "noShowupsForDay": "Aucun rendez-vous ce jour",
   "showupDone": "Fait",
   "showupFailed": "Échoué",
-  "showupPending": "En attente"
+  "showupPending": "En attente",
+
+  "pactCreationTitle": "Nouveau pacte",
+  "habitNameLabel": "Nom de l'habitude",
+  "habitNameHint": "ex. Méditer, Courir, Lire…",
+  "pactDurationStep": "Durée du pacte",
+  "startDateLabel": "Date de début",
+  "endDateLabel": "Date de fin",
+  "showupDurationStep": "Durée du rendez-vous",
+  "showupDurationLabel": "Combien de temps dure chaque rendez-vous ?",
+  "showupDurationMinutes": "{minutes} min",
+  "@showupDurationMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "scheduleStep": "Horaire",
+  "scheduleTypeLabel": "Quand voulez-vous vous présenter ?",
+  "scheduleDaily": "Tous les jours",
+  "scheduleWeekday": "Jours spécifiques",
+  "scheduleMonthlyByWeekday": "Mensuel par jour de semaine",
+  "scheduleMonthlyByDate": "Mensuel par date",
+  "timeOfDayLabel": "Heure",
+  "addEntry": "Ajouter un autre",
+  "removeEntry": "Supprimer",
+  "weekdayMon": "Lun",
+  "weekdayTue": "Mar",
+  "weekdayWed": "Mer",
+  "weekdayThu": "Jeu",
+  "weekdayFri": "Ven",
+  "weekdaySat": "Sam",
+  "weekdaySun": "Dim",
+  "occurrenceFirst": "1er",
+  "occurrenceSecond": "2e",
+  "occurrenceThird": "3e",
+  "occurrenceFourth": "4e",
+  "dayOfMonthLabel": "Jour du mois",
+  "reminderStep": "Rappel",
+  "reminderLabel": "Me rappeler avant le rendez-vous",
+  "reminderNone": "Pas de rappel",
+  "reminderAtStart": "Au début",
+  "reminderMinutesBefore": "{minutes} min avant",
+  "@reminderMinutesBefore": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "summaryHabit": "Habitude",
+  "summaryDuration": "Durée du pacte",
+  "summaryShowupDuration": "Durée du rendez-vous",
+  "summarySchedule": "Horaire",
+  "summaryReminder": "Rappel",
+  "commitmentStep": "Engagement",
+  "commitmentWarning": "Manquer un rendez-vous compte comme un échec. Il n'y a aucune exception et aucune pause possible. En créant ce pacte, vous vous engagez à vous présenter à chaque fois.",
+  "commitmentAccept": "Je comprends et m'engage",
+  "createPactConfirm": "Créer le pacte",
+  "next": "Suivant",
+  "back": "Retour"
 }

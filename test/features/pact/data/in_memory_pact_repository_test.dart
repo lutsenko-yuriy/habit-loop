@@ -60,5 +60,23 @@ void main() {
 
       expect(result, isNull);
     });
+
+    test('savePact adds a new pact to the repository', () async {
+      repo = InMemoryPactRepository();
+
+      await repo.savePact(activePact);
+
+      final result = await repo.getPactById('1');
+      expect(result, activePact);
+    });
+
+    test('savePact makes pact available in getActivePacts', () async {
+      repo = InMemoryPactRepository();
+
+      await repo.savePact(activePact);
+
+      final result = await repo.getActivePacts();
+      expect(result, [activePact]);
+    });
   });
 }

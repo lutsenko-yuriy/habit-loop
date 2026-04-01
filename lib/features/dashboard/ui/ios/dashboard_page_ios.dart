@@ -9,12 +9,14 @@ class DashboardPageIos extends StatelessWidget {
   final DashboardState state;
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
+  final VoidCallback onCreatePact;
 
   const DashboardPageIos({
     super.key,
     required this.state,
     required this.hasPacts,
     required this.onDaySelected,
+    required this.onCreatePact,
   });
 
   @override
@@ -24,6 +26,12 @@ class DashboardPageIos extends StatelessWidget {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: Text(l10n.dashboardTitle),
+        trailing: CupertinoButton(
+          key: const Key('create-pact-button'),
+          padding: EdgeInsets.zero,
+          onPressed: onCreatePact,
+          child: const Icon(CupertinoIcons.add),
+        ),
       ),
       child: SafeArea(
         child: Material(
@@ -31,7 +39,7 @@ class DashboardPageIos extends StatelessWidget {
           child: state.isLoading
               ? const Center(child: CupertinoActivityIndicator())
               : !hasPacts
-                  ? _EmptyState(l10n: l10n)
+                  ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
                   : _DashboardContent(
                       state: state,
                       l10n: l10n,
@@ -45,8 +53,9 @@ class DashboardPageIos extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final AppLocalizations l10n;
+  final VoidCallback onCreatePact;
 
-  const _EmptyState({required this.l10n});
+  const _EmptyState({required this.l10n, required this.onCreatePact});
 
   @override
   Widget build(BuildContext context) {
@@ -70,9 +79,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             CupertinoButton.filled(
-              onPressed: () {
-                // TODO: Navigate to pact creation
-              },
+              onPressed: onCreatePact,
               child: Text(l10n.createPact),
             ),
           ],
