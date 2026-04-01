@@ -1,12 +1,40 @@
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 
+enum PactCreationStep {
+  pactDuration(0),
+  showupDuration(1),
+  schedule(2),
+  reminder(3),
+  commitment(4);
+
+  const PactCreationStep(this.value);
+  final int value;
+
+  static int get count => PactCreationStep.values.length;
+
+  bool get isFirst => this == PactCreationStep.values.first;
+  bool get isLast => this == PactCreationStep.values.last;
+
+  PactCreationStep? get next {
+    final i = index + 1;
+    return i < PactCreationStep.values.length
+        ? PactCreationStep.values[i]
+        : null;
+  }
+
+  PactCreationStep? get previous {
+    final i = index - 1;
+    return i >= 0 ? PactCreationStep.values[i] : null;
+  }
+}
+
 enum ScheduleType { daily, weekday, monthlyByWeekday, monthlyByDate }
 
 class PactCreationState {
-  static const int totalSteps = 5;
+  static int get totalSteps => PactCreationStep.count;
 
   final String habitName;
-  final int currentStep;
+  final PactCreationStep currentStep;
   final DateTime startDate;
   final DateTime endDate;
   final Duration? showupDuration;
@@ -19,7 +47,7 @@ class PactCreationState {
   PactCreationState({
     required DateTime today,
     this.habitName = '',
-    this.currentStep = 0,
+    this.currentStep = PactCreationStep.pactDuration,
     DateTime? startDate,
     DateTime? endDate,
     this.showupDuration,
@@ -34,26 +62,24 @@ class PactCreationState {
 
   bool get canAdvanceFromStep {
     switch (currentStep) {
-      case 0:
+      case PactCreationStep.pactDuration:
         return startDate.isBefore(endDate);
-      case 1:
+      case PactCreationStep.showupDuration:
         return showupDuration != null &&
             showupDuration!.inMinutes >= 1 &&
             showupDuration!.inMinutes <= 120;
-      case 2:
+      case PactCreationStep.schedule:
         return schedule != null;
-      case 3:
+      case PactCreationStep.reminder:
         return true;
-      case 4:
+      case PactCreationStep.commitment:
         return commitmentAccepted && habitName.trim().isNotEmpty;
-      default:
-        return false;
     }
   }
 
   PactCreationState copyWith({
     String? habitName,
-    int? currentStep,
+    PactCreationStep? currentStep,
     DateTime? startDate,
     DateTime? endDate,
     Duration? showupDuration,
@@ -81,7 +107,7 @@ class PactCreationState {
     );
   }
 
-  PactCreationState._internal({
+  const PactCreationState._internal({
     required this.habitName,
     required this.currentStep,
     required this.startDate,

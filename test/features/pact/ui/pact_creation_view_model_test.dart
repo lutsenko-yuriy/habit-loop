@@ -31,7 +31,7 @@ void main() {
   group('PactCreationViewModel', () {
     test('initial state has correct defaults', () {
       final state = readState();
-      expect(state.currentStep, 0);
+      expect(state.currentStep, PactCreationStep.pactDuration);
       expect(state.habitName, '');
       expect(state.startDate, today);
       expect(state.endDate, DateTime(2026, 9, 30));
@@ -95,7 +95,7 @@ void main() {
     test('nextStep advances when step is valid', () {
       // Step 0 requires valid dates (defaults are valid)
       readVM().nextStep();
-      expect(readState().currentStep, 1);
+      expect(readState().currentStep, PactCreationStep.showupDuration);
     });
 
     test('nextStep to step 1 defaults showupDuration to 10 min', () {
@@ -108,20 +108,20 @@ void main() {
       readVM().setStartDate(DateTime(2026, 10, 1));
       readVM().setEndDate(DateTime(2026, 3, 1));
       readVM().nextStep();
-      expect(readState().currentStep, 0);
+      expect(readState().currentStep, PactCreationStep.pactDuration);
     });
 
     test('previousStep goes back', () {
       readVM().nextStep();
-      expect(readState().currentStep, 1);
+      expect(readState().currentStep, PactCreationStep.showupDuration);
 
       readVM().previousStep();
-      expect(readState().currentStep, 0);
+      expect(readState().currentStep, PactCreationStep.pactDuration);
     });
 
     test('previousStep does not go below 0', () {
       readVM().previousStep();
-      expect(readState().currentStep, 0);
+      expect(readState().currentStep, PactCreationStep.pactDuration);
     });
 
     test('submit creates pact and saves to repository', () async {

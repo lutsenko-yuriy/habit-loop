@@ -76,23 +76,24 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
   void nextStep() {
     if (!state.canAdvanceFromStep) return;
-    if (state.currentStep < PactCreationState.totalSteps - 1) {
-      final nextStep = state.currentStep + 1;
-      // Default showup duration to 10 min when entering step 1
-      if (nextStep == 1 && state.showupDuration == null) {
-        state = state.copyWith(
-          currentStep: nextStep,
-          showupDuration: const Duration(minutes: 10),
-        );
-      } else {
-        state = state.copyWith(currentStep: nextStep);
-      }
+    final nextStep = state.currentStep.next;
+    if (nextStep == null) return;
+    // Default showup duration to 10 min when entering the showup duration step
+    if (nextStep == PactCreationStep.showupDuration &&
+        state.showupDuration == null) {
+      state = state.copyWith(
+        currentStep: nextStep,
+        showupDuration: const Duration(minutes: 10),
+      );
+    } else {
+      state = state.copyWith(currentStep: nextStep);
     }
   }
 
   void previousStep() {
-    if (state.currentStep > 0) {
-      state = state.copyWith(currentStep: state.currentStep - 1);
+    final prevStep = state.currentStep.previous;
+    if (prevStep != null) {
+      state = state.copyWith(currentStep: prevStep);
     }
   }
 
