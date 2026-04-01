@@ -71,5 +71,9 @@ After that, wait for the user to review and approve (or adjust) the plan before 
 9. If an architecture is changed the `@docs/ARCHITECTURE.md` gets modified.
 10. Commit all changes with a descriptive message.
 11. Push to the remote.
-12. Remind the user to compact the context after each commit to keep the conversation lean.
-13. Clear the context after the PR with the changes is merged.
+12. Open a PR and request a review:
+    - Check whether a `code-reviewer` agent exists in `.claude/agents/code-reviewer.md`.
+    - If it does, invoke it immediately by passing it the PR number: `Use the code-reviewer agent to review PR #<number>`.
+    - If no such agent exists, request a review from the user directly.
+13. Remind the user to compact the context after each commit to keep the conversation lean.
+14. Clear the context after the PR with the changes is merged.
