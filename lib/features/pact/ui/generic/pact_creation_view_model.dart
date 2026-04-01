@@ -115,6 +115,10 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
     final repo = ref.read(pactCreationRepositoryProvider);
     await repo.savePact(pact);
+    // TODO: generate showups for the pact and save them via ShowupRepository.
+    // ShowupGenerator.generate(pact) produces the full list of pending showups;
+    // they should be persisted here so the dashboard and tracking screens
+    // can query them immediately after pact creation.
 
     state = state.copyWith(isSubmitting: false);
   }
