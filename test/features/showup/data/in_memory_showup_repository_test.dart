@@ -80,5 +80,100 @@ void main() {
 
       expect(result, isEmpty);
     });
+
+    test('saveShowup adds a new showup', () async {
+      repo = InMemoryShowupRepository();
+      await repo.saveShowup(showupMar28);
+
+      final result = await repo.getShowupsForDate(DateTime(2026, 3, 28));
+      expect(result, [showupMar28]);
+    });
+
+    test('saveShowup throws if id already exists', () async {
+      expect(() => repo.saveShowup(showupMar28), throwsArgumentError);
+    });
+
+    test('saveShowups adds multiple showups', () async {
+      repo = InMemoryShowupRepository();
+      final result = await repo.saveShowups([showupMar28, showupMar29Morning]);
+
+      expect(result.savedCount, 2);
+      expect(result.skippedIds, isEmpty);
+      expect(result.allSaved, isTrue);
+
+      final stored = await repo.getShowupsForDateRange(
+        DateTime(2026, 3, 28),
+        DateTime(2026, 3, 29),
+      );
+      expect(stored, [showupMar28, showupMar29Morning]);
+    });
+
+    test('saveShowups skips duplicates and reports them', () async {
+      // showupMar28 (id='1') already exists in setUp
+      final newShowup = Showup(
+        id: '99',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 4, 1, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final result = await repo.saveShowups([showupMar28, newShowup]);
+
+      expect(result.savedCount, 1);
+      expect(result.skippedIds, ['1']);
+      expect(result.allSaved, isFalse);
+    });
+
+    test('saveShowups deduplicates within the input list', () async {
+      repo = InMemoryShowupRepository();
+      final result = await repo.saveShowups([showupMar28, showupMar28]);
+
+      expect(result.savedCount, 1);
+      expect(result.skippedIds, ['1']);
+
+      final stored = await repo.getShowupsForPact('pact-1');
+      expect(stored.length, 1);
+    });
+
+    test('updateShowup replaces existing showup by id', () async {
+      final updated = showupMar28.copyWith(status: ShowupStatus.done, note: 'Did it!');
+      await repo.updateShowup(updated);
+
+      final result = await repo.getShowupsForDate(DateTime(2026, 3, 28));
+      expect(result.first.status, ShowupStatus.done);
+      expect(result.first.note, 'Did it!');
+    });
+
+    test('updateShowup throws if id not found', () async {
+      final unknown = Showup(
+        id: 'unknown',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 28, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.done,
+      );
+
+      expect(() => repo.updateShowup(unknown), throwsArgumentError);
+    });
+
+    test('getShowupById returns the correct showup', () async {
+      final result = await repo.getShowupById('2');
+      expect(result, showupMar29Morning);
+    });
+
+    test('getShowupById returns null for unknown id', () async {
+      final result = await repo.getShowupById('unknown');
+      expect(result, isNull);
+    });
+
+    test('getShowupsForPact returns showups for given pactId', () async {
+      final result = await repo.getShowupsForPact('pact-1');
+      expect(result, [showupMar28, showupMar29Morning, showupMar30]);
+    });
+
+    test('getShowupsForPact returns empty for unknown pactId', () async {
+      final result = await repo.getShowupsForPact('unknown');
+      expect(result, isEmpty);
+    });
   });
 }

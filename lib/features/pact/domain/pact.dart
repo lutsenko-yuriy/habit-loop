@@ -24,6 +24,36 @@ class Pact {
     this.stopReason,
   });
 
+  /// Returns a copy of this pact with the given fields replaced.
+  ///
+  /// [id] is immutable and cannot be changed after creation — it is the
+  /// identity of a pact and is used as a foreign key by its showups.
+  Pact copyWith({
+    String? habitName,
+    DateTime? startDate,
+    DateTime? endDate,
+    Duration? showupDuration,
+    ShowupSchedule? schedule,
+    PactStatus? status,
+    Duration? reminderOffset,
+    String? stopReason,
+    bool clearReminderOffset = false,
+    bool clearStopReason = false,
+  }) {
+    return Pact(
+      id: id,
+      habitName: habitName ?? this.habitName,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      showupDuration: showupDuration ?? this.showupDuration,
+      schedule: schedule ?? this.schedule,
+      status: status ?? this.status,
+      reminderOffset:
+          clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
+      stopReason: clearStopReason ? null : (stopReason ?? this.stopReason),
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

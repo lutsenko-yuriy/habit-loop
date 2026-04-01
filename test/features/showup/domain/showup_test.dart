@@ -68,6 +68,42 @@ void main() {
     });
   });
 
+  group('copyWith', () {
+    final base = Showup(
+      id: '1',
+      pactId: 'pact-1',
+      scheduledAt: DateTime(2026, 3, 29, 7, 0),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.pending,
+    );
+
+    test('updates status', () {
+      final updated = base.copyWith(status: ShowupStatus.done);
+      expect(updated.status, ShowupStatus.done);
+      expect(updated.id, base.id);
+    });
+
+    test('updates note', () {
+      final updated = base.copyWith(note: 'Great session');
+      expect(updated.note, 'Great session');
+      expect(updated.status, base.status);
+    });
+
+    test('clears note when clearNote is true', () {
+      final withNote = base.copyWith(note: 'Some note');
+      final cleared = withNote.copyWith(clearNote: true);
+      expect(cleared.note, isNull);
+    });
+
+    test('unchanged fields are preserved', () {
+      final updated = base.copyWith(status: ShowupStatus.failed);
+      expect(updated.id, base.id);
+      expect(updated.pactId, base.pactId);
+      expect(updated.scheduledAt, base.scheduledAt);
+      expect(updated.duration, base.duration);
+    });
+  });
+
   group('ShowupStatus', () {
     test('has three values', () {
       expect(ShowupStatus.values, hasLength(3));
