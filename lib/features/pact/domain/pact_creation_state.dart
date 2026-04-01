@@ -43,6 +43,7 @@ class PactCreationState {
   final Duration? reminderOffset;
   final bool commitmentAccepted;
   final bool isSubmitting;
+  final Object? submitError;
 
   PactCreationState({
     required DateTime today,
@@ -56,6 +57,7 @@ class PactCreationState {
     this.reminderOffset,
     this.commitmentAccepted = false,
     this.isSubmitting = false,
+    this.submitError,
   })  : startDate = startDate ?? today,
         endDate = endDate ??
             DateTime(today.year, today.month + 6, today.day);
@@ -88,8 +90,10 @@ class PactCreationState {
     Duration? reminderOffset,
     bool? commitmentAccepted,
     bool? isSubmitting,
+    Object? submitError,
     bool clearSchedule = false,
     bool clearReminderOffset = false,
+    bool clearSubmitError = false,
   }) {
     return PactCreationState._internal(
       habitName: habitName ?? this.habitName,
@@ -104,6 +108,8 @@ class PactCreationState {
           : (reminderOffset ?? this.reminderOffset),
       commitmentAccepted: commitmentAccepted ?? this.commitmentAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      submitError:
+          clearSubmitError ? null : (submitError ?? this.submitError),
     );
   }
 
@@ -118,5 +124,6 @@ class PactCreationState {
     required this.reminderOffset,
     required this.commitmentAccepted,
     required this.isSubmitting,
+    required this.submitError,
   });
 }

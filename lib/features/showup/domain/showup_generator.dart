@@ -45,8 +45,12 @@ class ShowupGenerator {
     final end = pact.endDate;
 
     while (!date.isAfter(end)) {
-      showups.add(makeShowup(_combine(date, schedule.timeOfDay)));
-      date = date.add(const Duration(days: 1));
+      final scheduledAt = _combine(date, schedule.timeOfDay);
+      if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
+        showups.add(makeShowup(scheduledAt));
+      }
+      // Use calendar arithmetic instead of Duration addition to avoid DST issues.
+      date = DateTime(date.year, date.month, date.day + 1);
     }
     return showups;
   }
@@ -67,10 +71,14 @@ class ShowupGenerator {
     while (!date.isAfter(end)) {
       for (final entry in schedule.entries) {
         if (date.weekday == entry.weekday) {
-          showups.add(makeShowup(_combine(date, entry.timeOfDay)));
+          final scheduledAt = _combine(date, entry.timeOfDay);
+          if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
+            showups.add(makeShowup(scheduledAt));
+          }
         }
       }
-      date = date.add(const Duration(days: 1));
+      // Use calendar arithmetic instead of Duration addition to avoid DST issues.
+      date = DateTime(date.year, date.month, date.day + 1);
     }
     return showups;
   }
@@ -116,7 +124,7 @@ class ShowupGenerator {
     // Find the first occurrence of the weekday in the month.
     var day = DateTime(year, month, 1);
     while (day.weekday != weekday) {
-      day = day.add(const Duration(days: 1));
+      day = DateTime(day.year, day.month, day.day + 1);
     }
     // Advance to the requested occurrence.
     day = day.add(Duration(days: (occurrence - 1) * 7));
@@ -193,7 +201,7 @@ class ShowupGenerator {
   /// Returns true if [dt] is within [start]…[end] day boundaries (inclusive).
   static bool _isWithinRange(DateTime dt, DateTime start, DateTime end) {
     return !dt.isBefore(ShowupDateUtils.startOfDay(start)) &&
-        !dt.isAfter(ShowupDateUtils.endOfDay(end));
+        dt.isBefore(ShowupDateUtils.endOfDay(end));
   }
 
   static Showup _showup({
@@ -201,12 +209,18 @@ class ShowupGenerator {
     required DateTime scheduledAt,
     required int seq,
   }) {
+    final datePart =
+        '${scheduledAt.year}${_pad(scheduledAt.month)}${_pad(scheduledAt.day)}';
+    final timePart =
+        '${_pad(scheduledAt.hour)}${_pad(scheduledAt.minute)}${_pad(scheduledAt.second)}';
     return Showup(
-      id: '${pact.id}_${scheduledAt.millisecondsSinceEpoch}_$seq',
+      id: '${pact.id}_${datePart}T${timePart}_$seq',
       pactId: pact.id,
       scheduledAt: scheduledAt,
       duration: pact.showupDuration,
       status: ShowupStatus.pending,
     );
   }
+
+  static String _pad(int n) => n.toString().padLeft(2, '0');
 }

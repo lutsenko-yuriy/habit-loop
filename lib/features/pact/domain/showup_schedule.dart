@@ -22,6 +22,11 @@ class DailySchedule extends ShowupSchedule {
   int get hashCode => timeOfDay.hashCode;
 }
 
+/// A schedule that triggers on specific weekdays.
+///
+/// If [entries] contains two entries for the same weekday and time-of-day,
+/// [ShowupGenerator] will produce two separate showups for that occurrence,
+/// each with a unique ID.
 class WeekdaySchedule extends ShowupSchedule {
   final List<WeekdayEntry> entries;
 
