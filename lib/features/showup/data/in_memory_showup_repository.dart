@@ -1,6 +1,7 @@
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/save_showups_result.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
+import 'package:habit_loop/features/showup/domain/showup_date_utils.dart';
 
 class InMemoryShowupRepository implements ShowupRepository {
   final List<Showup> _showups;
@@ -22,11 +23,11 @@ class InMemoryShowupRepository implements ShowupRepository {
     DateTime start,
     DateTime end,
   ) async {
-    final startDate = DateTime(start.year, start.month, start.day);
-    final endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
+    final startDay = ShowupDateUtils.startOfDay(start);
+    final endDay = ShowupDateUtils.endOfDay(end);
     return _showups.where((s) {
-      return !s.scheduledAt.isBefore(startDate) &&
-          !s.scheduledAt.isAfter(endDate);
+      return !s.scheduledAt.isBefore(startDay) &&
+          !s.scheduledAt.isAfter(endDay);
     }).toList();
   }
 

@@ -22,6 +22,29 @@ class PactStats {
     required this.endDate,
   });
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PactStats &&
+          showupsDone == other.showupsDone &&
+          showupsFailed == other.showupsFailed &&
+          showupsRemaining == other.showupsRemaining &&
+          totalShowups == other.totalShowups &&
+          currentStreak == other.currentStreak &&
+          startDate == other.startDate &&
+          endDate == other.endDate;
+
+  @override
+  int get hashCode => Object.hash(
+        showupsDone,
+        showupsFailed,
+        showupsRemaining,
+        totalShowups,
+        currentStreak,
+        startDate,
+        endDate,
+      );
+
   /// Computes statistics for [pact] from its associated [showups].
   factory PactStats.compute({
     required Pact pact,

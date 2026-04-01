@@ -19,8 +19,8 @@ class Showup {
 
   /// Returns a copy of this showup with the given fields replaced.
   ///
-  /// [id], [pactId], and [scheduledAt] are immutable and cannot be changed
-  /// after creation — they form the identity of a showup.
+  /// [id], [pactId], [scheduledAt], and [duration] are immutable and cannot
+  /// be changed after creation — they form the identity of a showup.
   Showup copyWith({
     ShowupStatus? status,
     String? note,

@@ -163,5 +163,26 @@ void main() {
       final pacts = await pactRepo.getActivePacts();
       expect(pacts.first.reminderOffset, const Duration(minutes: 15));
     });
+
+    test('submit resets isSubmitting to false even when savePact throws', () async {
+      final vm = readVM();
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      // Save once to force a duplicate on the second submit
+      await vm.submit();
+
+      // Second submit should throw (duplicate pact id) but isSubmitting
+      // must be reset to false regardless.
+      try {
+        await vm.submit();
+      } catch (_) {}
+
+      expect(readState().isSubmitting, false);
+    });
   });
 }

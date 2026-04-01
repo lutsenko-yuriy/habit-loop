@@ -1,6 +1,7 @@
 import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
+import 'package:habit_loop/features/showup/domain/showup_date_utils.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 /// Generates [Showup] instances from a [Pact]'s schedule.
@@ -191,9 +192,8 @@ class ShowupGenerator {
 
   /// Returns true if [dt] is within [start]…[end] day boundaries (inclusive).
   static bool _isWithinRange(DateTime dt, DateTime start, DateTime end) {
-    final startDay = DateTime(start.year, start.month, start.day);
-    final endDay = DateTime(end.year, end.month, end.day, 23, 59, 59);
-    return !dt.isBefore(startDay) && !dt.isAfter(endDay);
+    return !dt.isBefore(ShowupDateUtils.startOfDay(start)) &&
+        !dt.isAfter(ShowupDateUtils.endOfDay(end));
   }
 
   static Showup _showup({

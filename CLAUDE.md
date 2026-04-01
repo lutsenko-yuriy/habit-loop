@@ -50,30 +50,30 @@ Follow TDD: write or update tests **before** implementing the feature or fix. Re
 
 **For large changes** (spanning multiple files, introducing new domain entities, new dependencies, or architectural shifts): present an implementation plan to the user **before writing any code**. The plan should cover:
 
-1. New packages / dependencies
-2. New models and classes
-3. Changes to existing classes
-4. UI changes (for each platform)
-5. Test strategy
-6. Implementation order broken into phases
+- New packages / dependencies
+- New models and classes
+- Changes to existing classes
+- UI changes (for each platform)
+- Test strategy
+- Implementation order broken into phases
 
 After that, wait for the user to review and approve (or adjust) the plan before proceeding.
 
 1. For large changes, present the implementation plan and wait for approval.
 2. Create a new feature branch (`git checkout -b feature/<name>`) and switch to it before writing any code.
 3. Write failing tests that describe the expected behaviour.
-3. Implement the minimum code to make the tests pass.
-4. Refactor if needed.
-5. Run `flutter test` and `flutter analyze` — fix any failures before proceeding.
-6. Update this `CLAUDE.md` file if the architecture, UI, conventions or use cases changed.
-7. If a functionality was added/removed/changed the required changes are made into `@docs/PRODUCT_SPEC.md`.
-8. If a versioning and CI/CD process was somehow impacted `@docs/VERSIONING.md` gets modified.
-9. If an architecture is changed the `@docs/ARCHITECTURE.md` gets modified.
-10. Commit all changes with a descriptive message.
-11. Push to the remote.
-12. Open a PR and request a review:
+4. Implement the minimum code to make the tests pass.
+5. Refactor if needed.
+6. Run `flutter test` and `flutter analyze` — fix any failures before proceeding.
+7. Update this `CLAUDE.md` file if the architecture, UI, conventions or use cases changed.
+8. If a functionality was added/removed/changed the required changes are made into `@docs/PRODUCT_SPEC.md`.
+9. If a versioning and CI/CD process was somehow impacted `@docs/VERSIONING.md` gets modified.
+10. If an architecture is changed the `@docs/ARCHITECTURE.md` gets modified.
+11. Commit all changes with a descriptive message.
+12. Push to the remote.
+13. Open a PR and request a review:
     - Check whether a `code-reviewer` agent exists in `.claude/agents/code-reviewer.md`.
     - If it does, invoke it immediately by passing it the PR number: `Use the code-reviewer agent to review PR #<number>`.
     - If no such agent exists, request a review from the user directly.
-13. Remind the user to compact the context after each commit to keep the conversation lean.
-14. Clear the context after the PR with the changes is merged.
+14. Remind the user to compact the context after each commit to keep the conversation lean.
+15. Clear the context after the PR with the changes is merged.
