@@ -78,5 +78,48 @@ void main() {
       final result = await repo.getActivePacts();
       expect(result, [activePact]);
     });
+
+    test('getAllPacts returns all pacts regardless of status', () async {
+      repo = InMemoryPactRepository([activePact, stoppedPact]);
+
+      final result = await repo.getAllPacts();
+
+      expect(result, [activePact, stoppedPact]);
+    });
+
+    test('updatePact replaces existing pact by id', () async {
+      repo = InMemoryPactRepository([activePact]);
+      final stopped = activePact.copyWith(
+        status: PactStatus.stopped,
+        stopReason: 'Lost interest',
+      );
+
+      await repo.updatePact(stopped);
+
+      final result = await repo.getPactById('1');
+      expect(result?.status, PactStatus.stopped);
+      expect(result?.stopReason, 'Lost interest');
+    });
+
+    test('updatePact throws if id not found', () async {
+      repo = InMemoryPactRepository([activePact]);
+      final unknown = Pact(
+        id: 'unknown',
+        habitName: 'Meditate',
+        startDate: DateTime(2026, 3, 1),
+        endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.stopped,
+      );
+
+      expect(() => repo.updatePact(unknown), throwsArgumentError);
+    });
+
+    test('savePact throws if a pact with the same id already exists', () async {
+      repo = InMemoryPactRepository([activePact]);
+
+      expect(() => repo.savePact(activePact), throwsArgumentError);
+    });
   });
 }
