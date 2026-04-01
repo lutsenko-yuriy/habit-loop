@@ -243,6 +243,23 @@ void main() {
         expect(showups[0].scheduledAt, DateTime(2026, 4, 1, 8, 0));
         expect(showups[1].scheduledAt, DateTime(2026, 4, 15, 20, 0));
       });
+
+      test('two entries at the same datetime produce unique ids', () {
+        // Edge case: two entries resolving to the same day+time
+        final pact = _pact(
+          schedule: const MonthlyByDateSchedule(entries: [
+            MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
+            MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
+          ]),
+          startDate: DateTime(2026, 4, 1),
+          endDate: DateTime(2026, 4, 30),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        expect(showups.length, 2);
+        expect(showups[0].id, isNot(equals(showups[1].id)));
+      });
     });
   });
 }
