@@ -25,4 +25,17 @@ class InMemoryPactRepository implements PactRepository {
   Future<void> savePact(Pact pact) async {
     _pacts.add(pact);
   }
+
+  @override
+  Future<List<Pact>> getAllPacts() async {
+    return List.of(_pacts);
+  }
+
+  @override
+  Future<void> updatePact(Pact pact) async {
+    final index = _pacts.indexWhere((p) => p.id == pact.id);
+    if (index != -1) {
+      _pacts[index] = pact;
+    }
+  }
 }

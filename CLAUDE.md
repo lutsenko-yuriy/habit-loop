@@ -60,7 +60,8 @@ Follow TDD: write or update tests **before** implementing the feature or fix. Re
 After that, wait for the user to review and approve (or adjust) the plan before proceeding.
 
 1. For large changes, present the implementation plan and wait for approval.
-2. Write failing tests that describe the expected behaviour.
+2. Create a new feature branch (`git checkout -b feature/<name>`) and switch to it before writing any code.
+3. Write failing tests that describe the expected behaviour.
 3. Implement the minimum code to make the tests pass.
 4. Refactor if needed.
 5. Run `flutter test` and `flutter analyze` — fix any failures before proceeding.

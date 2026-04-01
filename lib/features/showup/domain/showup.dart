@@ -17,6 +17,25 @@ class Showup {
     this.note,
   });
 
+  Showup copyWith({
+    String? id,
+    String? pactId,
+    DateTime? scheduledAt,
+    Duration? duration,
+    ShowupStatus? status,
+    String? note,
+    bool clearNote = false,
+  }) {
+    return Showup(
+      id: id ?? this.id,
+      pactId: pactId ?? this.pactId,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      duration: duration ?? this.duration,
+      status: status ?? this.status,
+      note: clearNote ? null : (note ?? this.note),
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

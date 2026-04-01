@@ -28,4 +28,36 @@ class InMemoryShowupRepository implements ShowupRepository {
           !s.scheduledAt.isAfter(endDate);
     }).toList();
   }
+
+  @override
+  Future<Showup?> getShowupById(String id) async {
+    try {
+      return _showups.firstWhere((s) => s.id == id);
+    } on StateError {
+      return null;
+    }
+  }
+
+  @override
+  Future<List<Showup>> getShowupsForPact(String pactId) async {
+    return _showups.where((s) => s.pactId == pactId).toList();
+  }
+
+  @override
+  Future<void> saveShowup(Showup showup) async {
+    _showups.add(showup);
+  }
+
+  @override
+  Future<void> saveShowups(List<Showup> showups) async {
+    _showups.addAll(showups);
+  }
+
+  @override
+  Future<void> updateShowup(Showup showup) async {
+    final index = _showups.indexWhere((s) => s.id == showup.id);
+    if (index != -1) {
+      _showups[index] = showup;
+    }
+  }
 }

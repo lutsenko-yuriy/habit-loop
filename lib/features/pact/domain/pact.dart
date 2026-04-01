@@ -24,6 +24,33 @@ class Pact {
     this.stopReason,
   });
 
+  Pact copyWith({
+    String? id,
+    String? habitName,
+    DateTime? startDate,
+    DateTime? endDate,
+    Duration? showupDuration,
+    ShowupSchedule? schedule,
+    PactStatus? status,
+    Duration? reminderOffset,
+    String? stopReason,
+    bool clearReminderOffset = false,
+    bool clearStopReason = false,
+  }) {
+    return Pact(
+      id: id ?? this.id,
+      habitName: habitName ?? this.habitName,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      showupDuration: showupDuration ?? this.showupDuration,
+      schedule: schedule ?? this.schedule,
+      status: status ?? this.status,
+      reminderOffset:
+          clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
+      stopReason: clearStopReason ? null : (stopReason ?? this.stopReason),
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
