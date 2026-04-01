@@ -109,7 +109,7 @@ void main() {
       expect(result.first.note, 'Did it!');
     });
 
-    test('updateShowup does nothing if id not found', () async {
+    test('updateShowup throws if id not found', () async {
       final unknown = Showup(
         id: 'unknown',
         pactId: 'pact-1',
@@ -117,11 +117,8 @@ void main() {
         duration: const Duration(minutes: 10),
         status: ShowupStatus.done,
       );
-      await repo.updateShowup(unknown);
 
-      // Original showup is unchanged
-      final result = await repo.getShowupsForDate(DateTime(2026, 3, 28));
-      expect(result.first, showupMar28);
+      expect(() => repo.updateShowup(unknown), throwsArgumentError);
     });
 
     test('getShowupById returns the correct showup', () async {

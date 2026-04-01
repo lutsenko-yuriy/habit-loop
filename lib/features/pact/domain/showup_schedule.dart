@@ -1,3 +1,9 @@
+/// Base class for all showup recurrence schedules.
+///
+/// All `timeOfDay` fields in subclasses represent the time within a day as a
+/// [Duration]. Only hours, minutes, and seconds are meaningful — sub-second
+/// precision is ignored during schedule generation. Values must satisfy:
+/// `0 <= hours <= 23`, `0 <= minutes <= 59`, `0 <= seconds <= 59`.
 sealed class ShowupSchedule {
   const ShowupSchedule();
 }

@@ -161,6 +161,9 @@ class ShowupGenerator {
   }
 
   /// Combines a date and a time-of-day [Duration] into a single [DateTime].
+  ///
+  /// Preserves hours, minutes, and seconds. Sub-second precision is not
+  /// supported — [timeOfDay] should only contain hours, minutes, and seconds.
   static DateTime _combine(DateTime date, Duration timeOfDay) {
     return DateTime(
       date.year,
@@ -168,6 +171,7 @@ class ShowupGenerator {
       date.day,
       timeOfDay.inHours,
       timeOfDay.inMinutes.remainder(60),
+      timeOfDay.inSeconds.remainder(60),
     );
   }
 
@@ -178,11 +182,9 @@ class ShowupGenerator {
     return !dt.isBefore(startDay) && !dt.isAfter(endDay);
   }
 
-  static int _counter = 0;
-
   static Showup _showup({required Pact pact, required DateTime scheduledAt}) {
     return Showup(
-      id: '${pact.id}_${scheduledAt.millisecondsSinceEpoch}_${_counter++}',
+      id: '${pact.id}_${scheduledAt.millisecondsSinceEpoch}',
       pactId: pact.id,
       scheduledAt: scheduledAt,
       duration: pact.showupDuration,

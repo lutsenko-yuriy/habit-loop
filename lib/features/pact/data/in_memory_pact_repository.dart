@@ -34,8 +34,9 @@ class InMemoryPactRepository implements PactRepository {
   @override
   Future<void> updatePact(Pact pact) async {
     final index = _pacts.indexWhere((p) => p.id == pact.id);
-    if (index != -1) {
-      _pacts[index] = pact;
+    if (index == -1) {
+      throw ArgumentError('Pact with id "${pact.id}" not found.');
     }
+    _pacts[index] = pact;
   }
 }

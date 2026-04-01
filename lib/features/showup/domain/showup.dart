@@ -17,20 +17,20 @@ class Showup {
     this.note,
   });
 
+  /// Returns a copy of this showup with the given fields replaced.
+  ///
+  /// [id], [pactId], and [scheduledAt] are immutable and cannot be changed
+  /// after creation — they form the identity of a showup.
   Showup copyWith({
-    String? id,
-    String? pactId,
-    DateTime? scheduledAt,
-    Duration? duration,
     ShowupStatus? status,
     String? note,
     bool clearNote = false,
   }) {
     return Showup(
-      id: id ?? this.id,
-      pactId: pactId ?? this.pactId,
-      scheduledAt: scheduledAt ?? this.scheduledAt,
-      duration: duration ?? this.duration,
+      id: id,
+      pactId: pactId,
+      scheduledAt: scheduledAt,
+      duration: duration,
       status: status ?? this.status,
       note: clearNote ? null : (note ?? this.note),
     );

@@ -5,5 +5,8 @@ abstract class PactRepository {
   Future<List<Pact>> getAllPacts();
   Future<Pact?> getPactById(String id);
   Future<void> savePact(Pact pact);
+  /// Updates an existing pact by id.
+  ///
+  /// Throws [ArgumentError] if no pact with the given id exists.
   Future<void> updatePact(Pact pact);
 }
