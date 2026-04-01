@@ -89,15 +89,50 @@ void main() {
       expect(result, [showupMar28]);
     });
 
+    test('saveShowup throws if id already exists', () async {
+      expect(() => repo.saveShowup(showupMar28), throwsArgumentError);
+    });
+
     test('saveShowups adds multiple showups', () async {
       repo = InMemoryShowupRepository();
-      await repo.saveShowups([showupMar28, showupMar29Morning]);
+      final result = await repo.saveShowups([showupMar28, showupMar29Morning]);
 
-      final result = await repo.getShowupsForDateRange(
+      expect(result.savedCount, 2);
+      expect(result.skippedIds, isEmpty);
+      expect(result.allSaved, isTrue);
+
+      final stored = await repo.getShowupsForDateRange(
         DateTime(2026, 3, 28),
         DateTime(2026, 3, 29),
       );
-      expect(result, [showupMar28, showupMar29Morning]);
+      expect(stored, [showupMar28, showupMar29Morning]);
+    });
+
+    test('saveShowups skips duplicates and reports them', () async {
+      // showupMar28 (id='1') already exists in setUp
+      final newShowup = Showup(
+        id: '99',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 4, 1, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final result = await repo.saveShowups([showupMar28, newShowup]);
+
+      expect(result.savedCount, 1);
+      expect(result.skippedIds, ['1']);
+      expect(result.allSaved, isFalse);
+    });
+
+    test('saveShowups deduplicates within the input list', () async {
+      repo = InMemoryShowupRepository();
+      final result = await repo.saveShowups([showupMar28, showupMar28]);
+
+      expect(result.savedCount, 1);
+      expect(result.skippedIds, ['1']);
+
+      final stored = await repo.getShowupsForPact('pact-1');
+      expect(stored.length, 1);
     });
 
     test('updateShowup replaces existing showup by id', () async {

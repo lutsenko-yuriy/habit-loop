@@ -9,14 +9,24 @@ class ShowupGenerator {
 
   /// Returns a list of pending [Showup] instances for every scheduled
   /// occurrence within [pact.startDate]…[pact.endDate] (inclusive).
+  ///
+  /// IDs are deterministic: regenerating for the same pact always produces
+  /// the same IDs in the same order.
   static List<Showup> generate(Pact pact) {
     final schedule = pact.schedule;
+    // Sequence index scoped to this generate() call — ensures unique IDs
+    // even when two schedule entries resolve to the same datetime.
+    var seq = 0;
+    Showup makeShowup(DateTime scheduledAt) =>
+        _showup(pact: pact, scheduledAt: scheduledAt, seq: seq++);
+
     return switch (schedule) {
-      DailySchedule() => _generateDaily(pact, schedule),
-      WeekdaySchedule() => _generateWeekday(pact, schedule),
+      DailySchedule() => _generateDaily(pact, schedule, makeShowup),
+      WeekdaySchedule() => _generateWeekday(pact, schedule, makeShowup),
       MonthlyByWeekdaySchedule() =>
-        _generateMonthlyByWeekday(pact, schedule),
-      MonthlyByDateSchedule() => _generateMonthlyByDate(pact, schedule),
+        _generateMonthlyByWeekday(pact, schedule, makeShowup),
+      MonthlyByDateSchedule() =>
+        _generateMonthlyByDate(pact, schedule, makeShowup),
     };
   }
 
@@ -24,16 +34,17 @@ class ShowupGenerator {
   // Daily
   // ---------------------------------------------------------------------------
 
-  static List<Showup> _generateDaily(Pact pact, DailySchedule schedule) {
+  static List<Showup> _generateDaily(
+    Pact pact,
+    DailySchedule schedule,
+    Showup Function(DateTime) makeShowup,
+  ) {
     final showups = <Showup>[];
     var date = pact.startDate;
     final end = pact.endDate;
 
     while (!date.isAfter(end)) {
-      showups.add(_showup(
-        pact: pact,
-        scheduledAt: _combine(date, schedule.timeOfDay),
-      ));
+      showups.add(makeShowup(_combine(date, schedule.timeOfDay)));
       date = date.add(const Duration(days: 1));
     }
     return showups;
@@ -43,7 +54,11 @@ class ShowupGenerator {
   // Weekday
   // ---------------------------------------------------------------------------
 
-  static List<Showup> _generateWeekday(Pact pact, WeekdaySchedule schedule) {
+  static List<Showup> _generateWeekday(
+    Pact pact,
+    WeekdaySchedule schedule,
+    Showup Function(DateTime) makeShowup,
+  ) {
     final showups = <Showup>[];
     var date = pact.startDate;
     final end = pact.endDate;
@@ -51,10 +66,7 @@ class ShowupGenerator {
     while (!date.isAfter(end)) {
       for (final entry in schedule.entries) {
         if (date.weekday == entry.weekday) {
-          showups.add(_showup(
-            pact: pact,
-            scheduledAt: _combine(date, entry.timeOfDay),
-          ));
+          showups.add(makeShowup(_combine(date, entry.timeOfDay)));
         }
       }
       date = date.add(const Duration(days: 1));
@@ -69,6 +81,7 @@ class ShowupGenerator {
   static List<Showup> _generateMonthlyByWeekday(
     Pact pact,
     MonthlyByWeekdaySchedule schedule,
+    Showup Function(DateTime) makeShowup,
   ) {
     final showups = <Showup>[];
     final months = _monthsInRange(pact.startDate, pact.endDate);
@@ -84,7 +97,7 @@ class ShowupGenerator {
         if (date == null) continue;
         final scheduledAt = _combine(date, entry.timeOfDay);
         if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
-          showups.add(_showup(pact: pact, scheduledAt: scheduledAt));
+          showups.add(makeShowup(scheduledAt));
         }
       }
     }
@@ -118,6 +131,7 @@ class ShowupGenerator {
   static List<Showup> _generateMonthlyByDate(
     Pact pact,
     MonthlyByDateSchedule schedule,
+    Showup Function(DateTime) makeShowup,
   ) {
     final showups = <Showup>[];
     final months = _monthsInRange(pact.startDate, pact.endDate);
@@ -131,7 +145,7 @@ class ShowupGenerator {
 
         final scheduledAt = _combine(candidate, entry.timeOfDay);
         if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
-          showups.add(_showup(pact: pact, scheduledAt: scheduledAt));
+          showups.add(makeShowup(scheduledAt));
         }
       }
     }
@@ -149,7 +163,7 @@ class ShowupGenerator {
     var year = start.year;
     var month = start.month;
 
-    while (DateTime(year, month).isBefore(DateTime(end.year, end.month + 1))) {
+    while (year < end.year || (year == end.year && month <= end.month)) {
       months.add(DateTime(year, month));
       month++;
       if (month > 12) {
@@ -182,9 +196,13 @@ class ShowupGenerator {
     return !dt.isBefore(startDay) && !dt.isAfter(endDay);
   }
 
-  static Showup _showup({required Pact pact, required DateTime scheduledAt}) {
+  static Showup _showup({
+    required Pact pact,
+    required DateTime scheduledAt,
+    required int seq,
+  }) {
     return Showup(
-      id: '${pact.id}_${scheduledAt.millisecondsSinceEpoch}',
+      id: '${pact.id}_${scheduledAt.millisecondsSinceEpoch}_$seq',
       pactId: pact.id,
       scheduledAt: scheduledAt,
       duration: pact.showupDuration,

@@ -68,14 +68,13 @@ void main() {
       );
 
       final showups = ShowupGenerator.generate(pact);
-      await repo.saveShowups(showups);
+      final result = await repo.saveShowups(showups);
+
+      expect(result.allSaved, isTrue,
+          reason: 'No showup ids should collide during save');
 
       final saved = await repo.getShowupsForPact('pact-1');
       expect(saved.length, showups.length);
-
-      final savedIds = saved.map((s) => s.id).toSet();
-      expect(savedIds.length, showups.length,
-          reason: 'No showup ids should collide after persistence');
     });
   });
 }

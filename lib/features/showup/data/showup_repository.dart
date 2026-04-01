@@ -1,3 +1,4 @@
+import 'package:habit_loop/features/showup/domain/save_showups_result.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 
 /// Repository for persisting and querying [Showup] instances.
@@ -10,8 +11,19 @@ abstract class ShowupRepository {
   Future<List<Showup>> getShowupsForDateRange(DateTime start, DateTime end);
   Future<Showup?> getShowupById(String id);
   Future<List<Showup>> getShowupsForPact(String pactId);
+
+  /// Persists a single showup.
+  ///
+  /// Throws [ArgumentError] if a showup with the same id already exists.
   Future<void> saveShowup(Showup showup);
-  Future<void> saveShowups(List<Showup> showups);
+
+  /// Persists multiple showups in one operation.
+  ///
+  /// Showups whose ids already exist are skipped (not saved). Returns a
+  /// [SaveShowupsResult] with the count of saved showups and the ids of
+  /// any that were skipped.
+  Future<SaveShowupsResult> saveShowups(List<Showup> showups);
+
   /// Updates an existing showup by id.
   ///
   /// Throws [ArgumentError] if no showup with the given id exists.

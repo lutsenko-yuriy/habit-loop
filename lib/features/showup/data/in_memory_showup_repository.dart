@@ -1,4 +1,5 @@
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
+import 'package:habit_loop/features/showup/domain/save_showups_result.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 
 class InMemoryShowupRepository implements ShowupRepository {
@@ -45,12 +46,29 @@ class InMemoryShowupRepository implements ShowupRepository {
 
   @override
   Future<void> saveShowup(Showup showup) async {
+    if (_showups.any((s) => s.id == showup.id)) {
+      throw ArgumentError('Showup with id "${showup.id}" already exists.');
+    }
     _showups.add(showup);
   }
 
   @override
-  Future<void> saveShowups(List<Showup> showups) async {
-    _showups.addAll(showups);
+  Future<SaveShowupsResult> saveShowups(List<Showup> showups) async {
+    final existingIds = _showups.map((s) => s.id).toSet();
+    final skippedIds = <String>[];
+    var savedCount = 0;
+
+    for (final showup in showups) {
+      if (existingIds.contains(showup.id)) {
+        skippedIds.add(showup.id);
+      } else {
+        _showups.add(showup);
+        existingIds.add(showup.id);
+        savedCount++;
+      }
+    }
+
+    return SaveShowupsResult(savedCount: savedCount, skippedIds: skippedIds);
   }
 
   @override
