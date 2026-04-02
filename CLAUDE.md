@@ -44,6 +44,14 @@ Version bumps in pubspec.yaml require user approval before any change.
 CI handles build numbers automatically — do not touch.
 Details: @docs/VERSIONING.md
 
+## Session start
+
+At the beginning of every new session, before doing anything else:
+
+1. Read `@docs/CHANGELOG.md`.
+2. Summarise to the user what has already been done and what is still remaining (the **Unreleased** section).
+3. Ask the user: *"What goes into the next release?"* and wait for their answer before proceeding.
+
 ## Workflow
 
 Follow TDD: write or update tests **before** implementing the feature or fix. Red → Green → Refactor.
