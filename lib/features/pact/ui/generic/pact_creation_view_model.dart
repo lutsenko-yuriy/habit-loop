@@ -13,6 +13,11 @@ final pactCreationRepositoryProvider = Provider<PactRepository>((ref) {
   throw UnimplementedError('Override pactCreationRepositoryProvider');
 });
 
+/// Provides the [ShowupRepository] used during pact creation.
+///
+/// Must be overridden in every [ProviderScope] (and in every test that
+/// exercises [PactCreationViewModel.submit]), otherwise accessing it will
+/// throw [UnimplementedError].
 final pactCreationShowupRepositoryProvider =
     Provider<ShowupRepository>((ref) {
   throw UnimplementedError('Override pactCreationShowupRepositoryProvider');
@@ -109,24 +114,39 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
+    // Build the pact and generate showups before any I/O so that a retry
+    // does not mint a second pact ID if the first attempt partially failed.
+    final pact = Pact(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      habitName: state.habitName.trim(),
+      startDate: state.startDate,
+      endDate: state.endDate,
+      showupDuration: state.showupDuration!,
+      schedule: state.schedule!,
+      status: PactStatus.active,
+      reminderOffset: state.reminderOffset,
+    );
+    final showups = ShowupGenerator.generate(pact);
+
     try {
-      final pact = Pact(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        habitName: state.habitName.trim(),
-        startDate: state.startDate,
-        endDate: state.endDate,
-        showupDuration: state.showupDuration!,
-        schedule: state.schedule!,
-        status: PactStatus.active,
-        reminderOffset: state.reminderOffset,
-      );
+      final pactRepo = ref.read(pactCreationRepositoryProvider);
+      await pactRepo.savePact(pact);
 
-      final repo = ref.read(pactCreationRepositoryProvider);
-      await repo.savePact(pact);
-
-      final showups = ShowupGenerator.generate(pact);
-      final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
-      await showupRepo.saveShowups(showups);
+      try {
+        final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
+        final result = await showupRepo.saveShowups(showups);
+        if (!result.allSaved) {
+          throw StateError(
+            'Failed to save ${result.skippedIds.length} showup(s): '
+            '${result.skippedIds}',
+          );
+        }
+      } catch (e) {
+        // Roll back the pact so the app is not left with an orphaned pact
+        // that has no showups.
+        await pactRepo.deletePact(pact.id);
+        rethrow;
+      }
     } catch (e) {
       state = state.copyWith(submitError: e);
     } finally {

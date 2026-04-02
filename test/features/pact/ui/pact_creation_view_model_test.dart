@@ -189,10 +189,12 @@ void main() {
       final pacts = await pactRepo.getActivePacts();
       final pact = pacts.first;
 
-      // Daily schedule from 2026-03-30 to 2026-09-30 = 185 days
       final showups = await showupRepo.getShowupsForPact(pact.id);
       expect(showups, isNotEmpty);
-      expect(showups.length, 185);
+      // Daily schedule: one showup per day inclusive of start and end date
+      final expectedCount =
+          pact.endDate.difference(pact.startDate).inDays + 1;
+      expect(showups.length, expectedCount);
       expect(
         showups.every((s) => s.pactId == pact.id),
         isTrue,
@@ -262,6 +264,34 @@ void main() {
       final state = failingContainer.read(pactCreationViewModelProvider);
       expect(state.submitError, isNotNull);
       expect(state.isSubmitting, false);
+    });
+
+    test('submit rolls back pact when saveShowups fails', () async {
+      final rollbackPactRepo = InMemoryPactRepository();
+      final failingContainer = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(today),
+          pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(_AlwaysThrowingShowupRepository()),
+        ],
+      );
+      addTearDown(failingContainer.dispose);
+
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      // Pact should have been rolled back after showup save failure
+      final pacts = await rollbackPactRepo.getAllPacts();
+      expect(pacts, isEmpty);
     });
   });
 
@@ -338,6 +368,10 @@ class _AlwaysThrowingPactRepository implements PactRepository {
   @override
   Future<void> updatePact(Pact pact) async =>
       throw Exception('update failed intentionally');
+
+  @override
+  Future<void> deletePact(String id) async =>
+      throw Exception('delete failed intentionally');
 }
 
 class _AlwaysThrowingShowupRepository implements ShowupRepository {

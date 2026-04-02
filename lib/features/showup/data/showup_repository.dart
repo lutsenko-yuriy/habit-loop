@@ -22,6 +22,11 @@ abstract class ShowupRepository {
   /// Showups whose ids already exist are skipped (not saved). Returns a
   /// [SaveShowupsResult] with the count of saved showups and the ids of
   /// any that were skipped.
+  ///
+  /// **Implementations must treat this as an atomic operation**: either all
+  /// new showups are written or none are. Partial writes are not permitted.
+  /// Callers (e.g. pact creation) rely on this guarantee to avoid leaving a
+  /// pact with an incomplete set of showups.
   Future<SaveShowupsResult> saveShowups(List<Showup> showups);
 
   /// Updates an existing showup by id.
