@@ -115,7 +115,11 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
     // Build the pact and generate showups before any I/O so that a retry
-    // does not mint a second pact ID if the first attempt partially failed.
+    // does not mint a second pact ID when the first attempt fails before
+    // savePact is called. Note: if savePact succeeded but the rollback via
+    // deletePact later fails, a subsequent retry will produce a new ID and
+    // a second orphaned record — full idempotency requires storage-level
+    // transactions, which will be addressed in the SQLite implementation.
     final pact = Pact(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       habitName: state.habitName.trim(),
