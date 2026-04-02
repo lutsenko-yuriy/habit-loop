@@ -10,14 +10,15 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 void main() {
   final pactRepo = InMemoryPactRepository();
+  final showupRepo = InMemoryShowupRepository();
 
   runApp(
     ProviderScope(
       overrides: [
         pactRepositoryProvider.overrideWithValue(pactRepo),
         pactCreationRepositoryProvider.overrideWithValue(pactRepo),
-        showupRepositoryProvider
-            .overrideWithValue(InMemoryShowupRepository()),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
       ],
       child: const HabitLoopApp(),
     ),

@@ -4,11 +4,18 @@ import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/features/showup/data/showup_repository.dart';
+import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 
 final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
 
 final pactCreationRepositoryProvider = Provider<PactRepository>((ref) {
   throw UnimplementedError('Override pactCreationRepositoryProvider');
+});
+
+final pactCreationShowupRepositoryProvider =
+    Provider<ShowupRepository>((ref) {
+  throw UnimplementedError('Override pactCreationShowupRepositoryProvider');
 });
 
 final pactCreationViewModelProvider =
@@ -116,10 +123,10 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
       final repo = ref.read(pactCreationRepositoryProvider);
       await repo.savePact(pact);
-      // TODO: generate showups for the pact and save them via ShowupRepository.
-      // ShowupGenerator.generate(pact) produces the full list of pending showups;
-      // they should be persisted here so the dashboard and tracking screens
-      // can query them immediately after pact creation.
+
+      final showups = ShowupGenerator.generate(pact);
+      final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
+      await showupRepo.saveShowups(showups);
     } catch (e) {
       state = state.copyWith(submitError: e);
     } finally {
