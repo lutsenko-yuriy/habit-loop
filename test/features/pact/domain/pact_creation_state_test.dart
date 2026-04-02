@@ -20,6 +20,29 @@ void main() {
       expect(state.isSubmitting, false);
     });
 
+    test('default endDate clamps to last day of month for end-of-month starts', () {
+      // August 31 + 6 months → February 28 (not March 3)
+      expect(
+        PactCreationState(today: DateTime(2026, 8, 31)).endDate,
+        DateTime(2027, 2, 28),
+      );
+      // March 31 + 6 months → September 30 (not October 1)
+      expect(
+        PactCreationState(today: DateTime(2026, 3, 31)).endDate,
+        DateTime(2026, 9, 30),
+      );
+      // October 31 + 6 months → April 30
+      expect(
+        PactCreationState(today: DateTime(2026, 10, 31)).endDate,
+        DateTime(2027, 4, 30),
+      );
+      // January 31 + 6 months → July 31 (no clamping needed)
+      expect(
+        PactCreationState(today: DateTime(2026, 1, 31)).endDate,
+        DateTime(2026, 7, 31),
+      );
+    });
+
     test('totalSteps is 5', () {
       final state = PactCreationState(today: DateTime(2026, 3, 30));
       expect(PactCreationState.totalSteps, 5);

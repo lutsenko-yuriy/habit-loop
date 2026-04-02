@@ -42,4 +42,9 @@ class InMemoryPactRepository implements PactRepository {
     }
     _pacts[index] = pact;
   }
+
+  @override
+  Future<void> deletePact(String id) async {
+    _pacts.removeWhere((p) => p.id == id);
+  }
 }

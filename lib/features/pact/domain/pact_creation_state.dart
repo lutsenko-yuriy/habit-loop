@@ -1,5 +1,16 @@
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 
+/// Returns [date] advanced by [months], clamping the day to the last day of
+/// the target month if the original day does not exist there (e.g. Aug 31 + 6
+/// months → Feb 28, not Mar 3).
+DateTime _addMonths(DateTime date, int months) {
+  final rawMonth = date.month + months;
+  final year = date.year + (rawMonth - 1) ~/ 12;
+  final month = (rawMonth - 1) % 12 + 1;
+  final daysInMonth = DateTime(year, month + 1, 0).day;
+  return DateTime(year, month, date.day.clamp(1, daysInMonth));
+}
+
 enum PactCreationStep {
   pactDuration(0),
   showupDuration(1),
@@ -59,8 +70,7 @@ class PactCreationState {
     this.isSubmitting = false,
     this.submitError,
   })  : startDate = startDate ?? today,
-        endDate = endDate ??
-            DateTime(today.year, today.month + 6, today.day);
+        endDate = endDate ?? _addMonths(today, 6);
 
   bool get canAdvanceFromStep {
     switch (currentStep) {
