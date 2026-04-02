@@ -148,6 +148,12 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       } catch (e) {
         // Roll back the pact so the app is not left with an orphaned pact
         // that has no showups.
+        // TECH DEBT: if deletePact itself throws (e.g. DB locked), the
+        // rollback silently fails, the original error is masked by the new
+        // exception, and the pact remains orphaned. The proper fix is to
+        // wrap both writes in a single DB transaction (sqflite db.transaction)
+        // once the SQLite implementation is in place, making this manual
+        // rollback unnecessary. Tracked in CHANGELOG.md § Issues.
         await pactRepo.deletePact(pact.id);
         rethrow;
       }
