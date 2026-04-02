@@ -21,6 +21,12 @@ Uses **Riverpod** for both state management and dependency injection. Uses **sqf
 
 The more detailed architecture you can find in @docs/ARCHITECTURE.md.
 
+## Flutter SDK
+
+Flutter binary: `/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter`
+
+Always use this full path when running Flutter commands (e.g. `flutter` is not on the default shell PATH).
+
 ## Common Commands
 
 - **Run app:** `flutter run` (add `-d ios`, `-d Android`, etc. for specific platforms)
