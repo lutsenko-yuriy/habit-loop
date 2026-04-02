@@ -84,4 +84,7 @@ After that, wait for the user to review and approve (or adjust) the plan before 
     - If it does, invoke it immediately by passing it the PR number: `Use the code-reviewer agent to review PR #<number>`.
     - If no such agent exists, request a review from the user directly.
 14. Remind the user to compact the context after each commit to keep the conversation lean.
-15. Clear the context after the PR with the changes is merged.
+15. After the PR is merged:
+    - Update `@docs/CHANGELOG.md`: move completed work from the **Unreleased** section to a new version section (e.g., `[0.2.0]`), with the date and PR reference.
+    - Keep the **Unreleased** section with **Issues** and **Remaining work** subsections (remove completed items).
+16. Clear the context after the PR with the changes is merged.
