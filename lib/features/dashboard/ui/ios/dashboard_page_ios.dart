@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
@@ -9,7 +10,7 @@ class DashboardPageIos extends StatelessWidget {
   final DashboardState state;
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
-  final VoidCallback onCreatePact;
+  final AsyncCallback onCreatePact;
 
   const DashboardPageIos({
     super.key,
@@ -26,12 +27,14 @@ class DashboardPageIos extends StatelessWidget {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: Text(l10n.dashboardTitle),
-        trailing: CupertinoButton(
-          key: const Key('create-pact-button'),
-          padding: EdgeInsets.zero,
-          onPressed: onCreatePact,
-          child: const Icon(CupertinoIcons.add),
-        ),
+        trailing: hasPacts
+            ? CupertinoButton(
+                key: const Key('create-pact-button'),
+                padding: EdgeInsets.zero,
+                onPressed: onCreatePact,
+                child: const Icon(CupertinoIcons.add),
+              )
+            : null,
       ),
       child: SafeArea(
         child: Material(
@@ -53,7 +56,7 @@ class DashboardPageIos extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final AppLocalizations l10n;
-  final VoidCallback onCreatePact;
+  final AsyncCallback onCreatePact;
 
   const _EmptyState({required this.l10n, required this.onCreatePact});
 

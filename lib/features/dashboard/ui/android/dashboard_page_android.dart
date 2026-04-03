@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
@@ -8,7 +9,7 @@ class DashboardPageAndroid extends StatelessWidget {
   final DashboardState state;
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
-  final VoidCallback onCreatePact;
+  final AsyncCallback onCreatePact;
 
   const DashboardPageAndroid({
     super.key,
@@ -46,7 +47,7 @@ class DashboardPageAndroid extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final AppLocalizations l10n;
-  final VoidCallback onCreatePact;
+  final AsyncCallback onCreatePact;
 
   const _EmptyState({required this.l10n, required this.onCreatePact});
 
