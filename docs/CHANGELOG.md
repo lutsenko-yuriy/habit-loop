@@ -4,7 +4,7 @@
 
 ### Issues
 
-- **Tech debt — rollback exception masks original error** (`pact_creation_view_model.dart`): if `saveShowups` fails and the compensating `deletePact` call also throws (e.g. DB locked), the rollback exception replaces the original showup error and the pact remains orphaned. Proper fix: wrap both writes in a single `db.transaction()` once the SQLite implementation is in place, eliminating the need for manual rollback entirely.
+- **Tech debt — rollback exception masks original error** (`pact_creation_view_model.dart`): if `saveShowups` fails and the compensating `deletePact` call also throws (e.g. DB locked), the rollback exception replaces the original showup error and the pact remains orphaned. **Proposed solution:** have the SQLite implementation class implement both `PactRepository` and `ShowupRepository`, giving it a single `Database` reference. It can then expose a transactional method (e.g. `savePactWithShowups(pact, showups)`) that wraps both inserts in one `db.transaction()`, eliminating the need for manual rollback in the view model. Note: simply sharing the class isn't enough — the existing `savePact()` and `saveShowups()` are separate async calls with separate implicit transactions, so a dedicated combined method is required for atomicity.
 - [#2](https://github.com/lutsenko-yuriy/habit-loop/issues/2) **Refactor: replace `PactCreationState` with a `PactBuilder`** — `PactCreationState` mixes wizard navigation state with pact-building data. Extract a `PactBuilder` class that holds only the pact fields and exposes a `build()` method returning a `Pact`.
 
 ### Remaining work
