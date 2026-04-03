@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
@@ -8,7 +9,7 @@ class DashboardPageAndroid extends StatelessWidget {
   final DashboardState state;
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
-  final VoidCallback onCreatePact;
+  final AsyncCallback onCreatePact;
 
   const DashboardPageAndroid({
     super.key,
@@ -46,7 +47,7 @@ class DashboardPageAndroid extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final AppLocalizations l10n;
-  final VoidCallback onCreatePact;
+  final AsyncCallback onCreatePact;
 
   const _EmptyState({required this.l10n, required this.onCreatePact});
 
@@ -101,9 +102,19 @@ class _DashboardContent extends StatelessWidget {
         ),
         const Divider(height: 1),
         Expanded(
-          child: state.selectedDayShowups.isEmpty
-              ? Center(child: Text(l10n.noShowupsForDay))
-              : _ShowupList(showups: state.selectedDayShowups, state: state),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: state.selectedDayShowups.isEmpty
+                ? Center(
+                    key: ValueKey('empty-${state.selectedDayIndex}'),
+                    child: Text(l10n.noShowupsForDay),
+                  )
+                : _ShowupList(
+                    key: ValueKey('list-${state.selectedDayIndex}'),
+                    showups: state.selectedDayShowups,
+                    state: state,
+                  ),
+          ),
         ),
       ],
     );
@@ -190,23 +201,67 @@ class _CalendarDay extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: entry.showups.map((showup) {
-              return Container(
-                key: Key('status-dot-${showup.id}'),
-                width: 6,
-                height: 6,
-                margin: const EdgeInsets.symmetric(horizontal: 1),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _dotColor(showup.status, theme),
-                ),
-              );
-            }).toList(),
-          ),
+          _buildDots(entry.showups, entry.date, theme),
         ],
       ),
+    );
+  }
+
+  Widget _buildDots(List<Showup> showups, DateTime date, ThemeData theme) {
+    final dateKey =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    if (showups.isEmpty) return const SizedBox.shrink();
+    if (showups.length >= 4) {
+      var done = 0, failed = 0, pending = 0;
+      for (final s in showups) {
+        if (s.status == ShowupStatus.done) done++;
+        else if (s.status == ShowupStatus.failed) failed++;
+        else pending++;
+      }
+      final overflowColor = pending > 0
+          ? Colors.grey
+          : done >= failed
+              ? Colors.green
+              : Colors.red;
+      return Container(
+        key: Key('status-dot-overflow-$dateKey'),
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: overflowColor,
+        ),
+      );
+    }
+    Widget dot(Showup s) => Container(
+          key: Key('status-dot-${s.id}'),
+          width: 6,
+          height: 6,
+          margin: const EdgeInsets.symmetric(horizontal: 1),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _dotColor(s.status, theme),
+          ),
+        );
+    if (showups.length <= 2) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: showups.map(dot).toList(),
+      );
+    }
+    // 3 showups: 2 on top row, 1 on bottom row
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [dot(showups[0]), dot(showups[1])],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [dot(showups[2])],
+        ),
+      ],
     );
   }
 
@@ -226,7 +281,7 @@ class _ShowupList extends StatelessWidget {
   final List<Showup> showups;
   final DashboardState state;
 
-  const _ShowupList({required this.showups, required this.state});
+  const _ShowupList({super.key, required this.showups, required this.state});
 
   @override
   Widget build(BuildContext context) {

@@ -66,5 +66,14 @@
   "commitmentAccept": "Ich verstehe und verpflichte mich",
   "createPactConfirm": "Pakt erstellen",
   "next": "Weiter",
-  "back": "Zurück"
+  "back": "Zurück",
+  "cancel": "Abbrechen",
+  "tooManyPactsTitle": "Zu viele aktive Pakte",
+  "tooManyPactsBody": "{count, plural, one{Du hast bereits 1 aktiven Pakt. Möchtest du wirklich einen weiteren erstellen?} other{Du hast bereits {count} aktive Pakte. Möchtest du wirklich mehr erstellen?}}",
+  "@tooManyPactsBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "tooManyPactsConfirm": "Ja, weiteren erstellen"
 }

@@ -181,4 +181,26 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get back => 'Zurück';
+
+  @override
+  String get cancel => 'Abbrechen';
+
+  @override
+  String get tooManyPactsTitle => 'Zu viele aktive Pakte';
+
+  @override
+  String tooManyPactsBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Du hast bereits $count aktive Pakte. Möchtest du wirklich mehr erstellen?',
+      one:
+          'Du hast bereits 1 aktiven Pakt. Möchtest du wirklich einen weiteren erstellen?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tooManyPactsConfirm => 'Ja, weiteren erstellen';
 }
