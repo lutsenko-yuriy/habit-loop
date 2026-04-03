@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-### Proposed changes
+### Proposed product changes
 
 - We should probably warn a user if there are already too many pacts he created.
     - Research: how many pacts can a user follow physically?
