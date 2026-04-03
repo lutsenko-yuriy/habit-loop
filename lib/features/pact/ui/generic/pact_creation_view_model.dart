@@ -4,11 +4,23 @@ import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/features/showup/data/showup_repository.dart';
+import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 
 final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
 
 final pactCreationRepositoryProvider = Provider<PactRepository>((ref) {
   throw UnimplementedError('Override pactCreationRepositoryProvider');
+});
+
+/// Provides the [ShowupRepository] used during pact creation.
+///
+/// Must be overridden in every [ProviderScope] (and in every test that
+/// exercises [PactCreationViewModel.submit]), otherwise accessing it will
+/// throw [UnimplementedError].
+final pactCreationShowupRepositoryProvider =
+    Provider<ShowupRepository>((ref) {
+  throw UnimplementedError('Override pactCreationShowupRepositoryProvider');
 });
 
 final pactCreationViewModelProvider =
@@ -102,24 +114,49 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
-    try {
-      final pact = Pact(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        habitName: state.habitName.trim(),
-        startDate: state.startDate,
-        endDate: state.endDate,
-        showupDuration: state.showupDuration!,
-        schedule: state.schedule!,
-        status: PactStatus.active,
-        reminderOffset: state.reminderOffset,
-      );
+    // Build the pact and generate showups before any I/O so that a retry
+    // does not mint a second pact ID when the first attempt fails before
+    // savePact is called. Note: if savePact succeeded but the rollback via
+    // deletePact later fails, a subsequent retry will produce a new ID and
+    // a second orphaned record — full idempotency requires storage-level
+    // transactions, which will be addressed in the SQLite implementation.
+    final pact = Pact(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      habitName: state.habitName.trim(),
+      startDate: state.startDate,
+      endDate: state.endDate,
+      showupDuration: state.showupDuration!,
+      schedule: state.schedule!,
+      status: PactStatus.active,
+      reminderOffset: state.reminderOffset,
+    );
+    final showups = ShowupGenerator.generate(pact);
 
-      final repo = ref.read(pactCreationRepositoryProvider);
-      await repo.savePact(pact);
-      // TODO: generate showups for the pact and save them via ShowupRepository.
-      // ShowupGenerator.generate(pact) produces the full list of pending showups;
-      // they should be persisted here so the dashboard and tracking screens
-      // can query them immediately after pact creation.
+    try {
+      final pactRepo = ref.read(pactCreationRepositoryProvider);
+      await pactRepo.savePact(pact);
+
+      try {
+        final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
+        final result = await showupRepo.saveShowups(showups);
+        if (!result.allSaved) {
+          throw StateError(
+            'Failed to save ${result.skippedIds.length} showup(s): '
+            '${result.skippedIds}',
+          );
+        }
+      } catch (e) {
+        // Roll back the pact so the app is not left with an orphaned pact
+        // that has no showups.
+        // TECH DEBT: if deletePact itself throws (e.g. DB locked), the
+        // rollback silently fails, the original error is masked by the new
+        // exception, and the pact remains orphaned. The proper fix is to
+        // wrap both writes in a single DB transaction (sqflite db.transaction)
+        // once the SQLite implementation is in place, making this manual
+        // rollback unnecessary. Tracked in CHANGELOG.md § Issues.
+        await pactRepo.deletePact(pact.id);
+        rethrow;
+      }
     } catch (e) {
       state = state.copyWith(submitError: e);
     } finally {

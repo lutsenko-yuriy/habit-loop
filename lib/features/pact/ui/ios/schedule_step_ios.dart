@@ -181,33 +181,32 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
   void _showTimePicker(Duration initial, ValueChanged<Duration> onChanged) {
     showCupertinoModalPopup<void>(
       context: context,
-      builder: (context) => Container(
-        height: 320 + MediaQuery.of(context).padding.bottom,
-        color: CupertinoColors.systemBackground.resolveFrom(context),
+      builder: (ctx) => Container(
+        color: CupertinoColors.systemBackground.resolveFrom(ctx),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              height: 44,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CupertinoButton(
-                    child: const Text('Done'),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CupertinoButton(
+                  child: const Text('Done'),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
             ),
-            Expanded(
+            SizedBox(
+              height: 216,
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.time,
-                initialDateTime: DateTime(2026, 1, 1,
-                    initial.inHours, initial.inMinutes % 60),
+                initialDateTime: DateTime(
+                    2026, 1, 1, initial.inHours, initial.inMinutes % 60),
                 onDateTimeChanged: (dt) {
                   onChanged(Duration(hours: dt.hour, minutes: dt.minute));
                 },
               ),
             ),
+            SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
           ],
         ),
       ),
@@ -602,23 +601,21 @@ class _DropdownWeekday extends StatelessWidget {
         showCupertinoModalPopup<void>(
           context: context,
           builder: (ctx) => Container(
-            height: 280 + MediaQuery.of(ctx).padding.bottom,
             color: CupertinoColors.systemBackground.resolveFrom(ctx),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  height: 44,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      CupertinoButton(
-                        child: const Text('Done'),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CupertinoButton(
+                      child: const Text('Done'),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
                 ),
-                Expanded(
+                SizedBox(
+                  height: 216,
                   child: CupertinoPicker(
                     scrollController:
                         FixedExtentScrollController(initialItem: value - 1),
@@ -630,6 +627,7 @@ class _DropdownWeekday extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
               ],
             ),
           ),
@@ -659,23 +657,21 @@ class _DropdownOccurrence extends StatelessWidget {
         showCupertinoModalPopup<void>(
           context: context,
           builder: (ctx) => Container(
-            height: 280 + MediaQuery.of(ctx).padding.bottom,
             color: CupertinoColors.systemBackground.resolveFrom(ctx),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  height: 44,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      CupertinoButton(
-                        child: const Text('Done'),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CupertinoButton(
+                      child: const Text('Done'),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
                 ),
-                Expanded(
+                SizedBox(
+                  height: 216,
                   child: CupertinoPicker(
                     scrollController:
                         FixedExtentScrollController(initialItem: value - 1),
@@ -687,6 +683,7 @@ class _DropdownOccurrence extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
               ],
             ),
           ),
@@ -714,27 +711,25 @@ class _DayOfMonthPicker extends StatelessWidget {
       onTap: () {
         showCupertinoModalPopup<void>(
           context: context,
-          builder: (context) => Container(
-            height: 320,
-            color: CupertinoColors.systemBackground.resolveFrom(context),
+          builder: (ctx) => Container(
+            color: CupertinoColors.systemBackground.resolveFrom(ctx),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  height: 44,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      CupertinoButton(
-                        child: const Text('Done'),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CupertinoButton(
+                      child: const Text('Done'),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
                 ),
-                Expanded(
+                SizedBox(
+                  height: 216,
                   child: CupertinoPicker(
-                    scrollController: FixedExtentScrollController(
-                        initialItem: value - 1),
+                    scrollController:
+                        FixedExtentScrollController(initialItem: value - 1),
                     itemExtent: 40,
                     onSelectedItemChanged: (index) => onChanged(index + 1),
                     children: List.generate(
@@ -743,6 +738,7 @@ class _DayOfMonthPicker extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
               ],
             ),
           ),
