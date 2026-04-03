@@ -2,19 +2,6 @@
 
 ## Unreleased
 
-### Proposed product changes
-
-- We should probably warn a user if there are already too many pacts he created.
-    - Research: how many pacts can a user follow physically?
-    - Even before creating a pact (as a step 0, if you want to) that there are already too many pacts (show the exact number).
-    - Let the user proceed with the creation only if he is sure he wants to create more pacts.
-    - On dashboard in the calendar strip reorganize the dots under the dates so that on a single line there are no more than 2 dots:
-       - One dot if there is a single showup on the date.
-       - Two dots if there are two showups on the date.
-       - Two dots on first line and one dot on second line if there are three showups on the date.
-       - Two dots on first line and two dots on second line if there are four showups on the date.
-       - One giant dot if there are more than four showups on the date.
-
 ### Issues
 
 - [#6](https://github.com/lutsenko-yuriy/habit-loop/issues/6) **Refactor: reduce duplicated logic between iOS and Android dashboard widgets** — `_buildDots()` (status counting, layout, overflow colour) and the showup list/tile are duplicated verbatim across both platform pages. Extract shared logic into platform-agnostic helpers once there are enough instances to justify the abstraction.
@@ -28,6 +15,30 @@
 - **Pact list** — navigate from dashboard to a list of all active and past pacts
 - **Showup detail screen** — view showup time and habit name, mark as done or failed, auto-fail if the screen is opened after the scheduled showup time, leave a free-text note
 - **Notifications / reminders** — schedule local notifications when a reminder offset is configured during pact creation; stretch goal: actionable notifications on iOS and Android so the user can mark a showup as done without opening the app
+
+---
+
+## [0.3.0] — 2026-04-03 (PR #5 merged)
+
+### Added — Pact count warning and calendar dot layout
+
+- Warning dialog before pact creation when the user already has 3 or more active pacts; plural-aware copy in EN/FR/DE
+- iOS warning uses `CupertinoAlertDialog`; Android uses `AlertDialog`
+- Crossfade animation when switching days in the calendar strip
+- iOS nav-bar `+` button hidden on empty state (matching Android FAB behaviour)
+- New l10n keys: `cancel`, `tooManyPactsTitle`, `tooManyPactsBody` (plural), `tooManyPactsConfirm`
+
+### Changed — Calendar strip dot layout
+
+- 1 showup → 1 dot; 2 → 2 dots on one row; 3 → 2+1 rows; 4+ → single large overflow dot
+- Overflow dot colour: grey while any showup is still pending; green if all resolved and done ≥ failed; red if failed > done
+- Overflow dot key includes date (`status-dot-overflow-YYYY-MM-DD`) to prevent key collisions across the 7-day strip
+
+### Fixed
+
+- TOCTOU race: `_creatingPact` flag prevents double-tap from bypassing the pact count guard
+- `onCreatePact` typed as `AsyncCallback` so exceptions after `await` are not silently dropped
+- `hasActivePactsProvider` now invalidated on return from pact creation via the warning-dialog path
 
 ---
 
