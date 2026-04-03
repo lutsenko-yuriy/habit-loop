@@ -66,5 +66,14 @@
   "commitmentAccept": "I understand and commit",
   "createPactConfirm": "Create Pact",
   "next": "Next",
-  "back": "Back"
+  "back": "Back",
+  "cancel": "Cancel",
+  "tooManyPactsTitle": "Too many active pacts",
+  "tooManyPactsBody": "{count, plural, one{You already have 1 active pact. Are you sure you want to create another?} other{You already have {count} active pacts. Are you sure you want to create more?}}",
+  "@tooManyPactsBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "tooManyPactsConfirm": "Yes, create another"
 }

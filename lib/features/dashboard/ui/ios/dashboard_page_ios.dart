@@ -190,26 +190,57 @@ class _CalendarStrip extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: entry.showups.map((showup) {
-                    return Container(
-                      key: Key('status-dot-${showup.id}'),
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 1),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _dotColor(showup.status),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                _buildDots(entry.showups),
               ],
             ),
           );
         }),
       ),
+    );
+  }
+
+  Widget _buildDots(List<Showup> showups) {
+    if (showups.isEmpty) return const SizedBox.shrink();
+    if (showups.length >= 4) {
+      return Container(
+        key: const Key('status-dot-overflow'),
+        width: 10,
+        height: 10,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: CupertinoColors.systemGrey,
+        ),
+      );
+    }
+    Widget dot(Showup s) => Container(
+          key: Key('status-dot-${s.id}'),
+          width: 6,
+          height: 6,
+          margin: const EdgeInsets.symmetric(horizontal: 1),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _dotColor(s.status),
+          ),
+        );
+    if (showups.length <= 2) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: showups.map(dot).toList(),
+      );
+    }
+    // 3 showups: 2 on top row, 1 on bottom row
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [dot(showups[0]), dot(showups[1])],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [dot(showups[2])],
+        ),
+      ],
     );
   }
 

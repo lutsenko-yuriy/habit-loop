@@ -435,6 +435,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back'**
   String get back;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @tooManyPactsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many active pacts'**
+  String get tooManyPactsTitle;
+
+  /// No description provided for @tooManyPactsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{You already have 1 active pact. Are you sure you want to create another?} other{You already have {count} active pacts. Are you sure you want to create more?}}'**
+  String tooManyPactsBody(int count);
+
+  /// No description provided for @tooManyPactsConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, create another'**
+  String get tooManyPactsConfirm;
 }
 
 class _AppLocalizationsDelegate
