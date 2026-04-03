@@ -6,18 +6,26 @@ import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_creation_view_model.dart';
+import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/features/showup/data/showup_repository.dart';
+import 'package:habit_loop/features/showup/domain/save_showups_result.dart';
+import 'package:habit_loop/features/showup/domain/showup.dart';
+import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 void main() {
   late ProviderContainer container;
   late InMemoryPactRepository pactRepo;
+  late InMemoryShowupRepository showupRepo;
   final today = DateTime(2026, 3, 30);
 
   setUp(() {
     pactRepo = InMemoryPactRepository();
+    showupRepo = InMemoryShowupRepository();
     container = ProviderContainer(
       overrides: [
         pactCreationTodayProvider.overrideWithValue(today),
         pactCreationRepositoryProvider.overrideWithValue(pactRepo),
+        pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
       ],
     );
   });
@@ -166,6 +174,125 @@ void main() {
       expect(pacts.first.reminderOffset, const Duration(minutes: 15));
     });
 
+    test('submit generates and saves showups to repository', () async {
+      final vm = readVM();
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(
+          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      final pacts = await pactRepo.getActivePacts();
+      final pact = pacts.first;
+
+      final showups = await showupRepo.getShowupsForPact(pact.id);
+      expect(showups, isNotEmpty);
+      // Daily schedule: one showup per day inclusive of start and end date
+      final expectedCount =
+          pact.endDate.difference(pact.startDate).inDays + 1;
+      expect(showups.length, expectedCount);
+      expect(
+        showups.every((s) => s.pactId == pact.id),
+        isTrue,
+      );
+      expect(
+        showups.every((s) => s.status == ShowupStatus.pending),
+        isTrue,
+      );
+      expect(
+        showups.every((s) => s.duration == const Duration(minutes: 10)),
+        isTrue,
+      );
+    });
+
+    test('submit does not save showups when savePact fails', () async {
+      final failingContainer = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(today),
+          pactCreationRepositoryProvider
+              .overrideWithValue(_AlwaysThrowingPactRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
+        ],
+      );
+      addTearDown(failingContainer.dispose);
+
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      // Pact save failed, so showups should not have been generated/saved
+      final allShowups = await showupRepo.getShowupsForDateRange(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      expect(allShowups, isEmpty);
+    });
+
+    test('submit sets error when showup saving fails', () async {
+      final failingContainer = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(today),
+          pactCreationRepositoryProvider.overrideWithValue(pactRepo),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(_AlwaysThrowingShowupRepository()),
+        ],
+      );
+      addTearDown(failingContainer.dispose);
+
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      final state = failingContainer.read(pactCreationViewModelProvider);
+      expect(state.submitError, isNotNull);
+      expect(state.isSubmitting, false);
+    });
+
+    test('submit rolls back pact when saveShowups fails', () async {
+      final rollbackPactRepo = InMemoryPactRepository();
+      final failingContainer = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(today),
+          pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(_AlwaysThrowingShowupRepository()),
+        ],
+      );
+      addTearDown(failingContainer.dispose);
+
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      // Pact should have been rolled back after showup save failure
+      final pacts = await rollbackPactRepo.getAllPacts();
+      expect(pacts, isEmpty);
+    });
   });
 
   group('PactCreationViewModel with failing repository', () {
@@ -177,6 +304,7 @@ void main() {
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider
               .overrideWithValue(_AlwaysThrowingPactRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
         ],
       );
     });
@@ -239,5 +367,36 @@ class _AlwaysThrowingPactRepository implements PactRepository {
 
   @override
   Future<void> updatePact(Pact pact) async =>
+      throw Exception('update failed intentionally');
+
+  @override
+  Future<void> deletePact(String id) async =>
+      throw Exception('delete failed intentionally');
+}
+
+class _AlwaysThrowingShowupRepository implements ShowupRepository {
+  @override
+  Future<List<Showup>> getShowupsForDate(DateTime date) async => [];
+
+  @override
+  Future<List<Showup>> getShowupsForDateRange(
+      DateTime start, DateTime end) async => [];
+
+  @override
+  Future<Showup?> getShowupById(String id) async => null;
+
+  @override
+  Future<List<Showup>> getShowupsForPact(String pactId) async => [];
+
+  @override
+  Future<void> saveShowup(Showup showup) async =>
+      throw Exception('save failed intentionally');
+
+  @override
+  Future<SaveShowupsResult> saveShowups(List<Showup> showups) async =>
+      throw Exception('save failed intentionally');
+
+  @override
+  Future<void> updateShowup(Showup showup) async =>
       throw Exception('update failed intentionally');
 }

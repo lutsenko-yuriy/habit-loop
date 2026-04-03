@@ -78,13 +78,19 @@ After that, wait for the user to review and approve (or adjust) the plan before 
 9. If a versioning and CI/CD process was somehow impacted `@docs/VERSIONING.md` gets modified.
 10. If an architecture is changed the `@docs/ARCHITECTURE.md` gets modified.
 11. Commit all changes with a descriptive message.
-12. Push to the remote.
-13. Open a PR and request a review:
+12. Launch the app on both platforms for a smoke test using the Flutter binary from `CLAUDE.local.md`:
+    ```
+    flutter run -d ios
+    flutter run -d android
+    ```
+    Run each in the background (`run_in_background: true`) so both start simultaneously. Wait for the user to confirm the app looks correct on both platforms before proceeding.
+13. Push to the remote.
+14. Open a PR and request a review:
     - Check whether a `code-reviewer` agent exists in `.claude/agents/code-reviewer.md`.
     - If it does, invoke it immediately by passing it the PR number: `Use the code-reviewer agent to review PR #<number>`.
     - If no such agent exists, request a review from the user directly.
-14. Remind the user to compact the context after each commit to keep the conversation lean.
-15. After the PR is merged:
+15. Remind the user to compact the context after each commit to keep the conversation lean.
+16. After the PR is merged:
     - Update `@docs/CHANGELOG.md`: move completed work from the **Unreleased** section to a new version section (e.g., `[0.2.0]`), with the date and PR reference.
     - Keep the **Unreleased** section with **Issues** and **Remaining work** subsections (remove completed items).
-16. Clear the context after the PR with the changes is merged.
+17. Clear the context after the PR with the changes is merged.
