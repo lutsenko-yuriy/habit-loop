@@ -200,17 +200,19 @@ class _CalendarDay extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          _buildDots(entry.showups, theme),
+          _buildDots(entry.showups, entry.date, theme),
         ],
       ),
     );
   }
 
-  Widget _buildDots(List<Showup> showups, ThemeData theme) {
+  Widget _buildDots(List<Showup> showups, DateTime date, ThemeData theme) {
+    final dateKey =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     if (showups.isEmpty) return const SizedBox.shrink();
     if (showups.length >= 4) {
       return Container(
-        key: const Key('status-dot-overflow'),
+        key: Key('status-dot-overflow-$dateKey'),
         width: 10,
         height: 10,
         decoration: const BoxDecoration(

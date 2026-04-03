@@ -1,4 +1,9 @@
-import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
+import 'package:flutter/cupertino.dart'
+    show
+        CupertinoAlertDialog,
+        CupertinoDialogAction,
+        CupertinoPageRoute,
+        showCupertinoDialog;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,47 +43,78 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ref.invalidate(pactCreationViewModelProvider);
       if (!context.mounted) return;
       if (defaultTargetPlatform == TargetPlatform.iOS) {
-        Navigator.of(context).push(
+        await Navigator.of(context).push(
           CupertinoPageRoute<void>(
             builder: (_) => const PactCreationScreen(),
           ),
         );
       } else {
-        Navigator.of(context).push(
+        await Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => const PactCreationScreen(),
           ),
         );
       }
+      if (context.mounted) {
+        ref.invalidate(hasActivePactsProvider);
+        ref.read(dashboardViewModelProvider.notifier).load();
+      }
     }
 
-    void onCreatePact() {
-      final pactRepo = ref.read(pactRepositoryProvider);
-      final l10n = AppLocalizations.of(context)!;
-      pactRepo.getActivePacts().then((activePacts) async {
+    Future<void> onCreatePact() async {
+      try {
+        final pactRepo = ref.read(pactRepositoryProvider);
+        final l10n = AppLocalizations.of(context)!;
+        final activePacts = await pactRepo.getActivePacts();
         if (!context.mounted) return;
         if (activePacts.length >= 3) {
-          final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(l10n.tooManyPactsTitle),
-              content: Text(l10n.tooManyPactsBody(activePacts.length)),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: Text(l10n.cancel),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: Text(l10n.tooManyPactsConfirm),
-                ),
-              ],
-            ),
-          );
-          if (confirmed != true) return;
+          final bool confirmed;
+          if (defaultTargetPlatform == TargetPlatform.iOS) {
+            confirmed = await showCupertinoDialog<bool>(
+              context: context,
+              builder: (ctx) => CupertinoAlertDialog(
+                title: Text(l10n.tooManyPactsTitle),
+                content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                actions: [
+                  CupertinoDialogAction(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(l10n.cancel),
+                  ),
+                  CupertinoDialogAction(
+                    isDefaultAction: true,
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(l10n.tooManyPactsConfirm),
+                  ),
+                ],
+              ),
+            ) ?? false;
+          } else {
+            confirmed = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(l10n.tooManyPactsTitle),
+                content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(l10n.cancel),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(l10n.tooManyPactsConfirm),
+                  ),
+                ],
+              ),
+            ) ?? false;
+          }
+          if (!confirmed) return;
         }
         await navigateToPactCreation();
-      });
+      } catch (_) {
+        // getActivePacts failed — proceed without the guard so the user
+        // can still create a pact.
+        if (context.mounted) await navigateToPactCreation();
+      }
     }
 
     return hasActivePacts.when(
