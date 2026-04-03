@@ -75,5 +75,33 @@
       "count": { "type": "int" }
     }
   },
-  "tooManyPactsConfirm": "Oui, créer un autre"
+  "tooManyPactsConfirm": "Oui, créer un autre",
+
+  "pactDetailTitle": "Détails du pacte",
+  "statsDone": "Réalisés",
+  "statsFailed": "Échoués",
+  "statsRemaining": "Restants",
+  "statsStreak": "Série",
+  "statsShowups": "{count} rendez-vous",
+  "@statsShowups": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStartDate": "Début",
+  "pactEndDate": "Fin",
+  "daysRemaining": "{count, plural, one{1 jour restant} other{{count} jours restants}}",
+  "@daysRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStatusActive": "Actif",
+  "pactStatusStopped": "Arrêté",
+  "pactStatusCompleted": "Terminé",
+  "stopPact": "Arrêter le pacte",
+  "stopPactTitle": "Arrêter ce pacte ?",
+  "stopPactBody": "Cette action est irréversible. Vous pourrez toujours consulter l'historique du pacte.",
+  "stopPactReasonHint": "Raison (facultatif)",
+  "stopPactConfirm": "Arrêter"
 }

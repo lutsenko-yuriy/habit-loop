@@ -5,6 +5,7 @@ import 'package:habit_loop/features/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_creation_view_model.dart';
+import 'package:habit_loop/features/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
@@ -19,6 +20,8 @@ void main() {
         pactCreationRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
       ],
       child: const HabitLoopApp(),
     ),
