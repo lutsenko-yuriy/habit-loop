@@ -75,5 +75,33 @@
       "count": { "type": "int" }
     }
   },
-  "tooManyPactsConfirm": "Yes, create another"
+  "tooManyPactsConfirm": "Yes, create another",
+
+  "pactDetailTitle": "Pact Details",
+  "statsDone": "Done",
+  "statsFailed": "Failed",
+  "statsRemaining": "Remaining",
+  "statsStreak": "Streak",
+  "statsShowups": "{count} showups",
+  "@statsShowups": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStartDate": "Started",
+  "pactEndDate": "Ends",
+  "daysRemaining": "{count, plural, one{1 day remaining} other{{count} days remaining}}",
+  "@daysRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStatusActive": "Active",
+  "pactStatusStopped": "Stopped",
+  "pactStatusCompleted": "Completed",
+  "stopPact": "Stop Pact",
+  "stopPactTitle": "Stop this pact?",
+  "stopPactBody": "This cannot be undone. You can still view the pact history afterwards.",
+  "stopPactReasonHint": "Reason (optional)",
+  "stopPactConfirm": "Stop"
 }

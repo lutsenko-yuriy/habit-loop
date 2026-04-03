@@ -204,4 +204,66 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tooManyPactsConfirm => 'Oui, créer un autre';
+
+  @override
+  String get pactDetailTitle => 'Détails du pacte';
+
+  @override
+  String get statsDone => 'Réalisés';
+
+  @override
+  String get statsFailed => 'Échoués';
+
+  @override
+  String get statsRemaining => 'Restants';
+
+  @override
+  String get statsStreak => 'Série';
+
+  @override
+  String statsShowups(int count) {
+    return '$count rendez-vous';
+  }
+
+  @override
+  String get pactStartDate => 'Début';
+
+  @override
+  String get pactEndDate => 'Fin';
+
+  @override
+  String daysRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours restants',
+      one: '1 jour restant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pactStatusActive => 'Actif';
+
+  @override
+  String get pactStatusStopped => 'Arrêté';
+
+  @override
+  String get pactStatusCompleted => 'Terminé';
+
+  @override
+  String get stopPact => 'Arrêter le pacte';
+
+  @override
+  String get stopPactTitle => 'Arrêter ce pacte ?';
+
+  @override
+  String get stopPactBody =>
+      'Cette action est irréversible. Vous pourrez toujours consulter l\'historique du pacte.';
+
+  @override
+  String get stopPactReasonHint => 'Raison (facultatif)';
+
+  @override
+  String get stopPactConfirm => 'Arrêter';
 }

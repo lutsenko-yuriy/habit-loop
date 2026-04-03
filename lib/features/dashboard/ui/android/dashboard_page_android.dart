@@ -10,6 +10,7 @@ class DashboardPageAndroid extends StatelessWidget {
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
+  final ValueChanged<String> onShowupTapped;
 
   const DashboardPageAndroid({
     super.key,
@@ -17,6 +18,7 @@ class DashboardPageAndroid extends StatelessWidget {
     required this.hasPacts,
     required this.onDaySelected,
     required this.onCreatePact,
+    required this.onShowupTapped,
   });
 
   @override
@@ -40,6 +42,7 @@ class DashboardPageAndroid extends StatelessWidget {
                   state: state,
                   l10n: l10n,
                   onDaySelected: onDaySelected,
+                  onShowupTapped: onShowupTapped,
                 ),
     );
   }
@@ -85,11 +88,13 @@ class _DashboardContent extends StatelessWidget {
   final DashboardState state;
   final AppLocalizations l10n;
   final ValueChanged<int> onDaySelected;
+  final ValueChanged<String> onShowupTapped;
 
   const _DashboardContent({
     required this.state,
     required this.l10n,
     required this.onDaySelected,
+    required this.onShowupTapped,
   });
 
   @override
@@ -113,6 +118,7 @@ class _DashboardContent extends StatelessWidget {
                     key: ValueKey('list-${state.selectedDayIndex}'),
                     showups: state.selectedDayShowups,
                     state: state,
+                    onShowupTapped: onShowupTapped,
                   ),
           ),
         ),
@@ -214,9 +220,13 @@ class _CalendarDay extends StatelessWidget {
     if (showups.length >= 4) {
       var done = 0, failed = 0, pending = 0;
       for (final s in showups) {
-        if (s.status == ShowupStatus.done) done++;
-        else if (s.status == ShowupStatus.failed) failed++;
-        else pending++;
+        if (s.status == ShowupStatus.done) {
+          done++;
+        } else if (s.status == ShowupStatus.failed) {
+          failed++;
+        } else {
+          pending++;
+        }
       }
       final overflowColor = pending > 0
           ? Colors.grey
@@ -280,8 +290,14 @@ class _CalendarDay extends StatelessWidget {
 class _ShowupList extends StatelessWidget {
   final List<Showup> showups;
   final DashboardState state;
+  final ValueChanged<String> onShowupTapped;
 
-  const _ShowupList({super.key, required this.showups, required this.state});
+  const _ShowupList({
+    super.key,
+    required this.showups,
+    required this.state,
+    required this.onShowupTapped,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -293,6 +309,7 @@ class _ShowupList extends StatelessWidget {
         return _ShowupTile(
           showup: showup,
           habitName: state.habitName(showup.pactId),
+          onTap: () => onShowupTapped(showup.pactId),
         );
       },
     );
@@ -302,8 +319,13 @@ class _ShowupList extends StatelessWidget {
 class _ShowupTile extends StatelessWidget {
   final Showup showup;
   final String habitName;
+  final VoidCallback onTap;
 
-  const _ShowupTile({required this.showup, required this.habitName});
+  const _ShowupTile({
+    required this.showup,
+    required this.habitName,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -325,11 +347,11 @@ class _ShowupTile extends StatelessWidget {
     };
 
     return ListTile(
+      onTap: onTap,
       leading: Icon(icon, color: color),
       title: Text(habitName),
-      subtitle: Text(
-        '${showup.duration.inMinutes} min — $statusText',
-      ),
+      subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
+      trailing: const Icon(Icons.chevron_right),
     );
   }
 }

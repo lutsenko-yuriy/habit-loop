@@ -203,4 +203,66 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tooManyPactsConfirm => 'Ja, weiteren erstellen';
+
+  @override
+  String get pactDetailTitle => 'Pakt-Details';
+
+  @override
+  String get statsDone => 'Erledigt';
+
+  @override
+  String get statsFailed => 'Verpasst';
+
+  @override
+  String get statsRemaining => 'Ausstehend';
+
+  @override
+  String get statsStreak => 'Serie';
+
+  @override
+  String statsShowups(int count) {
+    return '$count Showups';
+  }
+
+  @override
+  String get pactStartDate => 'Beginn';
+
+  @override
+  String get pactEndDate => 'Ende';
+
+  @override
+  String daysRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Tage verbleibend',
+      one: '1 Tag verbleibend',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pactStatusActive => 'Aktiv';
+
+  @override
+  String get pactStatusStopped => 'Gestoppt';
+
+  @override
+  String get pactStatusCompleted => 'Abgeschlossen';
+
+  @override
+  String get stopPact => 'Pakt beenden';
+
+  @override
+  String get stopPactTitle => 'Diesen Pakt beenden?';
+
+  @override
+  String get stopPactBody =>
+      'Diese Aktion kann nicht rückgängig gemacht werden. Du kannst den Pakt-Verlauf danach noch einsehen.';
+
+  @override
+  String get stopPactReasonHint => 'Grund (optional)';
+
+  @override
+  String get stopPactConfirm => 'Beenden';
 }

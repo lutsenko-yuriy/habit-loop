@@ -203,4 +203,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tooManyPactsConfirm => 'Yes, create another';
+
+  @override
+  String get pactDetailTitle => 'Pact Details';
+
+  @override
+  String get statsDone => 'Done';
+
+  @override
+  String get statsFailed => 'Failed';
+
+  @override
+  String get statsRemaining => 'Remaining';
+
+  @override
+  String get statsStreak => 'Streak';
+
+  @override
+  String statsShowups(int count) {
+    return '$count showups';
+  }
+
+  @override
+  String get pactStartDate => 'Started';
+
+  @override
+  String get pactEndDate => 'Ends';
+
+  @override
+  String daysRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days remaining',
+      one: '1 day remaining',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pactStatusActive => 'Active';
+
+  @override
+  String get pactStatusStopped => 'Stopped';
+
+  @override
+  String get pactStatusCompleted => 'Completed';
+
+  @override
+  String get stopPact => 'Stop Pact';
+
+  @override
+  String get stopPactTitle => 'Stop this pact?';
+
+  @override
+  String get stopPactBody =>
+      'This cannot be undone. You can still view the pact history afterwards.';
+
+  @override
+  String get stopPactReasonHint => 'Reason (optional)';
+
+  @override
+  String get stopPactConfirm => 'Stop';
 }

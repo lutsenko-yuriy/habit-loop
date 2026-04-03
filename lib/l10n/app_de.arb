@@ -75,5 +75,33 @@
       "count": { "type": "int" }
     }
   },
-  "tooManyPactsConfirm": "Ja, weiteren erstellen"
+  "tooManyPactsConfirm": "Ja, weiteren erstellen",
+
+  "pactDetailTitle": "Pakt-Details",
+  "statsDone": "Erledigt",
+  "statsFailed": "Verpasst",
+  "statsRemaining": "Ausstehend",
+  "statsStreak": "Serie",
+  "statsShowups": "{count} Showups",
+  "@statsShowups": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStartDate": "Beginn",
+  "pactEndDate": "Ende",
+  "daysRemaining": "{count, plural, one{1 Tag verbleibend} other{{count} Tage verbleibend}}",
+  "@daysRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStatusActive": "Aktiv",
+  "pactStatusStopped": "Gestoppt",
+  "pactStatusCompleted": "Abgeschlossen",
+  "stopPact": "Pakt beenden",
+  "stopPactTitle": "Diesen Pakt beenden?",
+  "stopPactBody": "Diese Aktion kann nicht rückgängig gemacht werden. Du kannst den Pakt-Verlauf danach noch einsehen.",
+  "stopPactReasonHint": "Grund (optional)",
+  "stopPactConfirm": "Beenden"
 }
