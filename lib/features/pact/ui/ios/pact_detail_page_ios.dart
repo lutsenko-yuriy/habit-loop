@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
+import 'package:intl/intl.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
@@ -267,7 +268,7 @@ class _DateRow extends StatelessWidget {
         children: [
           Text(label),
           Text(
-            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+            DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
             style: const TextStyle(color: CupertinoColors.systemGrey),
           ),
         ],

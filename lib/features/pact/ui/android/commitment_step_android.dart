@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
+import 'package:intl/intl.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
@@ -15,16 +16,15 @@ class CommitmentStepAndroid extends StatelessWidget {
     required this.onCommitmentChanged,
   });
 
-  String _formatDate(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  String _formatDate(BuildContext context, DateTime d) =>
+      DateFormat.yMd(Localizations.localeOf(context).toString()).format(d);
 
-  String _scheduleDescription() {
+  String _scheduleDescription(BuildContext context) {
     final s = state.schedule;
     if (s == null) return '';
     if (s is DailySchedule) {
-      final h = s.timeOfDay.inHours.toString().padLeft(2, '0');
-      final m = (s.timeOfDay.inMinutes % 60).toString().padLeft(2, '0');
-      return '${l10n.scheduleDaily} @ $h:$m';
+      final t = TimeOfDay(hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60).format(context);
+      return '${l10n.scheduleDaily} @ $t';
     }
     if (s is WeekdaySchedule) return '${l10n.scheduleWeekday} (${s.entries.length})';
     if (s is MonthlyByWeekdaySchedule) return '${l10n.scheduleMonthlyByWeekday} (${s.entries.length})';
@@ -58,13 +58,13 @@ class CommitmentStepAndroid extends StatelessWidget {
               _SummaryRow(label: l10n.summaryHabit, value: state.habitName),
               _SummaryRow(
                 label: l10n.summaryDuration,
-                value: '${_formatDate(state.startDate)} → ${_formatDate(state.endDate)}',
+                value: '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
               ),
               _SummaryRow(
                 label: l10n.summaryShowupDuration,
                 value: l10n.showupDurationMinutes(state.showupDuration?.inMinutes ?? 0),
               ),
-              _SummaryRow(label: l10n.summarySchedule, value: _scheduleDescription()),
+              _SummaryRow(label: l10n.summarySchedule, value: _scheduleDescription(context)),
               _SummaryRow(label: l10n.summaryReminder, value: reminderText),
             ],
           ),

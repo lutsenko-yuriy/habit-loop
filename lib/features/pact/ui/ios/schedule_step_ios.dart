@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -213,12 +214,6 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
     );
   }
 
-  String _formatTime(Duration d) {
-    final h = d.inHours.toString().padLeft(2, '0');
-    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
-    return '$h:$m';
-  }
-
   @override
   Widget build(BuildContext context) {
     switch (widget.state.scheduleType!) {
@@ -240,7 +235,6 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
         _TimeRow(
           label: widget.l10n.timeOfDayLabel,
           time: _dailyTime,
-          formatTime: _formatTime,
           onTap: () => _showTimePicker(_dailyTime, (t) {
             setState(() => _dailyTime = t);
             widget.onScheduleChanged(DailySchedule(timeOfDay: t));
@@ -283,8 +277,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                 const SizedBox(width: 12),
                 _TimeChip(
                   time: entry.timeOfDay,
-                  formatTime: _formatTime,
-                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                          onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                     setState(() {
                       _weekdayEntries[index] =
                           WeekdayEntry(weekday: entry.weekday, timeOfDay: t);
@@ -383,8 +376,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                     ),
                     _TimeChip(
                       time: entry.timeOfDay,
-                      formatTime: _formatTime,
-                      onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                         setState(() {
                           _monthlyWeekdayEntries[index] =
                               MonthlyWeekdayEntry(
@@ -463,8 +455,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                 const SizedBox(width: 8),
                 _TimeChip(
                   time: entry.timeOfDay,
-                  formatTime: _formatTime,
-                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                          onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                     setState(() {
                       _monthlyDateEntries[index] = MonthlyDateEntry(
                           dayOfMonth: entry.dayOfMonth, timeOfDay: t);
@@ -513,13 +504,11 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
 class _TimeRow extends StatelessWidget {
   final String label;
   final Duration time;
-  final String Function(Duration) formatTime;
   final VoidCallback onTap;
 
   const _TimeRow({
     required this.label,
     required this.time,
-    required this.formatTime,
     required this.onTap,
   });
 
@@ -538,7 +527,7 @@ class _TimeRow extends StatelessWidget {
           children: [
             Text(label),
             Text(
-              formatTime(time),
+              TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60).format(context),
               style: TextStyle(
                 color: CupertinoTheme.of(context).primaryColor,
               ),
@@ -552,12 +541,10 @@ class _TimeRow extends StatelessWidget {
 
 class _TimeChip extends StatelessWidget {
   final Duration time;
-  final String Function(Duration) formatTime;
   final VoidCallback onTap;
 
   const _TimeChip({
     required this.time,
-    required this.formatTime,
     required this.onTap,
   });
 
@@ -572,7 +559,7 @@ class _TimeChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          formatTime(time),
+          TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60).format(context),
           style: TextStyle(
             color: CupertinoTheme.of(context).primaryColor,
           ),
