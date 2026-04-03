@@ -17,6 +17,7 @@
 
 ### Issues
 
+- [#6](https://github.com/lutsenko-yuriy/habit-loop/issues/6) **Refactor: reduce duplicated logic between iOS and Android dashboard widgets** — `_buildDots()` (status counting, layout, overflow colour) and the showup list/tile are duplicated verbatim across both platform pages. Extract shared logic into platform-agnostic helpers once there are enough instances to justify the abstraction.
 - **Tech debt — rollback exception masks original error** (`pact_creation_view_model.dart`): if `saveShowups` fails and the compensating `deletePact` call also throws (e.g. DB locked), the rollback exception replaces the original showup error and the pact remains orphaned. **Proposed solution:** have the SQLite implementation class implement both `PactRepository` and `ShowupRepository`, giving it a single `Database` reference. It can then expose a transactional method (e.g. `savePactWithShowups(pact, showups)`) that wraps both inserts in one `db.transaction()`, eliminating the need for manual rollback in the view model. Note: simply sharing the class isn't enough — the existing `savePact()` and `saveShowups()` are separate async calls with separate implicit transactions, so a dedicated combined method is required for atomicity.
 - [#2](https://github.com/lutsenko-yuriy/habit-loop/issues/2) **Refactor: replace `PactCreationState` with a `PactBuilder`** — `PactCreationState` mixes wizard navigation state with pact-building data. Extract a `PactBuilder` class that holds only the pact fields and exposes a `build()` method returning a `Pact`.
 
@@ -26,8 +27,31 @@
 - **Pact detail screen** — stats (showups made / failed / remaining), time details (start date, end date, days remaining), current streak, stop pact with confirmation dialog and optional explanation; accessible for stopped and expired pacts
 - **Pact list** — navigate from dashboard to a list of all active and past pacts
 - **Showup detail screen** — view showup time and habit name, mark as done or failed, auto-fail if the screen is opened after the scheduled showup time, leave a free-text note
-- **Dashboard wiring** — connect the calendar strip and today's showup list to real persisted data instead of the current empty state
 - **Notifications / reminders** — schedule local notifications when a reminder offset is configured during pact creation; stretch goal: actionable notifications on iOS and Android so the user can mark a showup as done without opening the app
+
+---
+
+## [0.2.0] — 2026-04-03 (PR #4 merged)
+
+### Added — Dashboard wiring
+
+- Showups are now generated and persisted when a pact is created via `PactCreationViewModel.submit()`
+- `pactCreationShowupRepositoryProvider` — new Riverpod provider for the showup repository used during pact creation
+- `deletePact(String id)` added to `PactRepository` interface and `InMemoryPactRepository`
+- Shared `InMemoryShowupRepository` instance wired between dashboard and pact creation in `main.dart`
+- Integration test: submit pact → load dashboard → assert showups appear in `calendarDays`
+
+### Fixed
+
+- `endDate` overflow: replaced `DateTime(today.year, today.month + 6, today.day)` with month-overflow-safe `_addMonths()` that clamps the day to the last day of the target month
+- iOS `CupertinoDatePicker` assertion: `initial date not >= minimumDate` — strip time component from today when used as `minimumDate`
+- iOS modal pickers: Done button no longer cut off by home indicator — switched to `mainAxisSize: MainAxisSize.min` + `SizedBox(height: viewPadding.bottom)` instead of a fixed calculated container height; applied to all pickers in pact duration and schedule steps
+- Orphaned pact rollback: `saveShowups` failure now triggers `deletePact` to clean up; failure is surfaced via `submitError`; masking risk documented as tech debt
+
+### Tests
+
+- `pact_creation_view_model_test.dart`: added showup repo override to all containers, 3 new tests (generates showups, skips showups on pact failure, sets error on showup failure)
+- `pact_creation_state_test.dart`: end-of-month edge cases for `_addMonths`
 
 ---
 
