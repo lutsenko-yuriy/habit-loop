@@ -219,7 +219,8 @@ class _CalendarStrip extends StatelessWidget {
     if (showups.length >= 4) {
       final done = showups.where((s) => s.status == ShowupStatus.done).length;
       final failed = showups.where((s) => s.status == ShowupStatus.failed).length;
-      final overflowColor = (done == 0 && failed == 0)
+      final pending = showups.where((s) => s.status == ShowupStatus.pending).length;
+      final overflowColor = pending > 0
           ? CupertinoColors.systemGrey
           : done >= failed
               ? CupertinoColors.activeGreen
