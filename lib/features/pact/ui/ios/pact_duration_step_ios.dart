@@ -38,7 +38,7 @@ class PactDurationStepIos extends StatelessWidget {
           onTap: () => _showDatePicker(
             context,
             state.startDate,
-            minimumDate: DateTime.now(),
+            minimumDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
             onDateChanged: onStartDateChanged,
           ),
         ),
@@ -65,24 +65,22 @@ class PactDurationStepIos extends StatelessWidget {
   }) {
     showCupertinoModalPopup<void>(
       context: context,
-      builder: (context) => Container(
-        height: 320 + MediaQuery.of(context).padding.bottom,
-        color: CupertinoColors.systemBackground.resolveFrom(context),
+      builder: (ctx) => Container(
+        color: CupertinoColors.systemBackground.resolveFrom(ctx),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              height: 44,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CupertinoButton(
-                    child: const Text('Done'),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CupertinoButton(
+                  child: const Text('Done'),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
             ),
-            Expanded(
+            SizedBox(
+              height: 216,
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.date,
                 initialDateTime: initialDate,
@@ -90,6 +88,7 @@ class PactDurationStepIos extends StatelessWidget {
                 onDateTimeChanged: onDateChanged,
               ),
             ),
+            SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
           ],
         ),
       ),
