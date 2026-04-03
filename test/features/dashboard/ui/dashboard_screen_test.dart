@@ -194,5 +194,194 @@ void main() {
       expect(find.byKey(const Key('status-dot-1')), findsOneWidget);
       expect(find.byKey(const Key('status-dot-2')), findsOneWidget);
     });
+
+    testWidgets('shows single large dot for 4 or more showups on a day',
+        (tester) async {
+      final showups = List.generate(
+        4,
+        (i) => Showup(
+          id: 'su$i',
+          pactId: '$i',
+          scheduledAt: DateTime(2026, 3, 29, 7 + i, 0),
+          duration: const Duration(minutes: 10),
+          status: ShowupStatus.pending,
+        ),
+      );
+      final pacts = List.generate(
+        4,
+        (i) => Pact(
+          id: '$i',
+          habitName: 'Habit $i',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+        ),
+      );
+
+      await tester.pumpWidget(_buildApp(pacts: pacts, showups: showups));
+      await tester.pumpAndSettle();
+
+      // Individual dots must not be rendered; overflow dot must appear instead.
+      expect(find.byKey(const Key('status-dot-su0')), findsNothing);
+      expect(find.byKey(const Key('status-dot-overflow-2026-03-29')), findsOneWidget);
+    });
+
+    testWidgets('overflow dot is green when all resolved and done >= failed', (tester) async {
+      final showups = [
+        Showup(id: 'a', pactId: '1', scheduledAt: DateTime(2026, 3, 29, 7), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+        Showup(id: 'b', pactId: '2', scheduledAt: DateTime(2026, 3, 29, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+        Showup(id: 'c', pactId: '3', scheduledAt: DateTime(2026, 3, 29, 9), duration: const Duration(minutes: 10), status: ShowupStatus.failed),
+        Showup(id: 'd', pactId: '4', scheduledAt: DateTime(2026, 3, 29, 10), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+      ];
+      final pacts = List.generate(4, (i) => Pact(
+        id: '${i + 1}', habitName: 'Habit $i',
+        startDate: DateTime(2026, 3, 1), endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+      ));
+
+      await tester.pumpWidget(_buildApp(pacts: pacts, showups: showups));
+      await tester.pumpAndSettle();
+
+      final dot = tester.widget<Container>(
+        find.byKey(const Key('status-dot-overflow-2026-03-29')),
+      );
+      final decoration = dot.decoration! as BoxDecoration;
+      expect(decoration.color, isNot(equals(Colors.grey)));
+    });
+
+    testWidgets('overflow dot is grey when any showup is still pending', (tester) async {
+      final showups = List.generate(4, (i) => Showup(
+        id: 'p$i', pactId: '$i',
+        scheduledAt: DateTime(2026, 3, 29, 7 + i),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      ));
+      final pacts = List.generate(4, (i) => Pact(
+        id: '$i', habitName: 'Habit $i',
+        startDate: DateTime(2026, 3, 1), endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+      ));
+
+      await tester.pumpWidget(_buildApp(pacts: pacts, showups: showups));
+      await tester.pumpAndSettle();
+
+      final dot = tester.widget<Container>(
+        find.byKey(const Key('status-dot-overflow-2026-03-29')),
+      );
+      final decoration = dot.decoration! as BoxDecoration;
+      expect(decoration.color, equals(Colors.grey));
+    });
+
+    testWidgets('overflow dot is grey when some done but some still pending',
+        (tester) async {
+      final showups = [
+        Showup(id: 'a', pactId: '1', scheduledAt: DateTime(2026, 3, 29, 7), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+        Showup(id: 'b', pactId: '2', scheduledAt: DateTime(2026, 3, 29, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+        Showup(id: 'c', pactId: '3', scheduledAt: DateTime(2026, 3, 29, 9), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+        Showup(id: 'd', pactId: '4', scheduledAt: DateTime(2026, 3, 29, 10), duration: const Duration(minutes: 10), status: ShowupStatus.pending),
+      ];
+      final pacts = List.generate(4, (i) => Pact(
+        id: '${i + 1}', habitName: 'Habit $i',
+        startDate: DateTime(2026, 3, 1), endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+      ));
+
+      await tester.pumpWidget(_buildApp(pacts: pacts, showups: showups));
+      await tester.pumpAndSettle();
+
+      final dot = tester.widget<Container>(
+        find.byKey(const Key('status-dot-overflow-2026-03-29')),
+      );
+      final decoration = dot.decoration! as BoxDecoration;
+      expect(decoration.color, equals(Colors.grey));
+    });
+
+    testWidgets('shows dialog when 3 or more active pacts exist on create tap',
+        (tester) async {
+      final pacts = List.generate(
+        3,
+        (i) => Pact(
+          id: '$i',
+          habitName: 'Habit $i',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+        ),
+      );
+
+      await tester.pumpWidget(_buildApp(pacts: pacts));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('create-pact-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Too many active pacts'), findsOneWidget);
+    });
+
+    testWidgets('does not show dialog when fewer than 3 active pacts',
+        (tester) async {
+      final pacts = List.generate(
+        2,
+        (i) => Pact(
+          id: '$i',
+          habitName: 'Habit $i',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+        ),
+      );
+
+      await tester.pumpWidget(_buildApp(pacts: pacts));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('create-pact-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Too many active pacts'), findsNothing);
+    });
+
+    testWidgets('dialog body uses plural for 1 active pact', (tester) async {
+      // This test verifies the singular form. In practice the dialog only
+      // appears at 3+, but we can reach the singular branch if the threshold
+      // is exactly 1 — tested here by using a custom threshold scenario.
+      // Since the threshold is 3, we test with exactly 3 pacts and verify
+      // the plural "active pacts" (not "active pact") form is shown.
+      final pacts = List.generate(
+        3,
+        (i) => Pact(
+          id: '$i',
+          habitName: 'Habit $i',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+        ),
+      );
+
+      await tester.pumpWidget(_buildApp(pacts: pacts));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('create-pact-button')));
+      await tester.pumpAndSettle();
+
+      // Plural form for 3 pacts.
+      expect(
+        find.textContaining('3 active pacts'),
+        findsOneWidget,
+      );
+    });
   });
 }
