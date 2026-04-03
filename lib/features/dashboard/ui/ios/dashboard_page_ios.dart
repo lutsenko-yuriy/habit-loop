@@ -110,9 +110,19 @@ class _DashboardContent extends StatelessWidget {
         ),
         const _Separator(),
         Expanded(
-          child: state.selectedDayShowups.isEmpty
-              ? Center(child: Text(l10n.noShowupsForDay))
-              : _ShowupList(showups: state.selectedDayShowups, state: state),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: state.selectedDayShowups.isEmpty
+                ? Center(
+                    key: ValueKey('empty-${state.selectedDayIndex}'),
+                    child: Text(l10n.noShowupsForDay),
+                  )
+                : _ShowupList(
+                    key: ValueKey('list-${state.selectedDayIndex}'),
+                    showups: state.selectedDayShowups,
+                    state: state,
+                  ),
+          ),
         ),
       ],
     );
@@ -260,7 +270,7 @@ class _ShowupList extends StatelessWidget {
   final List<Showup> showups;
   final DashboardState state;
 
-  const _ShowupList({required this.showups, required this.state});
+  const _ShowupList({super.key, required this.showups, required this.state});
 
   @override
   Widget build(BuildContext context) {
