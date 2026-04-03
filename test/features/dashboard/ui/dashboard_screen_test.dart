@@ -225,7 +225,7 @@ void main() {
 
       // Individual dots must not be rendered; overflow dot must appear instead.
       expect(find.byKey(const Key('status-dot-su0')), findsNothing);
-      expect(find.byKey(const Key('status-dot-overflow')), findsOneWidget);
+      expect(find.byKey(const Key('status-dot-overflow-2026-03-29')), findsOneWidget);
     });
 
     testWidgets('shows dialog when 3 or more active pacts exist on create tap',
