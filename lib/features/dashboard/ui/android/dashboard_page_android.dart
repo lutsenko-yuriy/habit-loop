@@ -211,13 +211,20 @@ class _CalendarDay extends StatelessWidget {
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     if (showups.isEmpty) return const SizedBox.shrink();
     if (showups.length >= 4) {
+      final done = showups.where((s) => s.status == ShowupStatus.done).length;
+      final failed = showups.where((s) => s.status == ShowupStatus.failed).length;
+      final overflowColor = (done == 0 && failed == 0)
+          ? Colors.grey
+          : done >= failed
+              ? Colors.green
+              : Colors.red;
       return Container(
         key: Key('status-dot-overflow-$dateKey'),
         width: 10,
         height: 10,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.grey,
+          color: overflowColor,
         ),
       );
     }
