@@ -22,6 +22,8 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _creatingPact = false;
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +64,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
 
     Future<void> onCreatePact() async {
+      if (_creatingPact) return;
+      _creatingPact = true;
       try {
         final pactRepo = ref.read(pactRepositoryProvider);
         final l10n = AppLocalizations.of(context)!;
@@ -114,6 +118,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // getActivePacts failed — proceed without the guard so the user
         // can still create a pact.
         if (context.mounted) await navigateToPactCreation();
+      } finally {
+        _creatingPact = false;
       }
     }
 
