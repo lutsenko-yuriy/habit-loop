@@ -12,10 +12,36 @@
 ### Remaining work
 
 - **SQLite persistence** — replace in-memory `PactRepository` and `ShowupRepository` with real `sqflite` implementations
-- **Pact detail screen** — stats (showups made / failed / remaining), time details (start date, end date, days remaining), current streak, stop pact with confirmation dialog and optional explanation; accessible for stopped and expired pacts
-- **Pact list** — navigate from dashboard to a list of all active and past pacts
 - **Showup detail screen** — view showup time and habit name, mark as done or failed, auto-fail if the screen is opened after the scheduled showup time, leave a free-text note
 - **Notifications / reminders** — schedule local notifications when a reminder offset is configured during pact creation; stretch goal: actionable notifications on iOS and Android so the user can mark a showup as done without opening the app
+
+---
+
+## [0.4.0] — 2026-04-04 (PR #7 merged)
+
+### Added — Pact detail screen and persistent pacts panel
+
+- Pact detail screen: stats (done / failed / remaining or cancelled / streak), timeline (start date, end date, days remaining), stop pact with confirmation dialog and optional explanation
+- Pact detail screen is accessible for active, stopped, and completed pacts
+- Persistent `DraggableScrollableSheet` panel on the dashboard listing all pacts with filter chips (Active / Done / Stopped) and a summary bar
+- Tapping a pact tile navigates to its detail screen; returning refreshes both the pact list and the dashboard calendar
+- Auto-completion: `PactDetailViewModel.load()` transitions an active pact to `completed` when its end date has passed (`daysLeft ≤ 0`) or all showups are resolved
+- Locale-aware date and time formatting throughout (EN / FR / DE)
+- Localised section headers (Stats, Timeline, Stop reason) in all three locales
+- New l10n keys: `sectionStats`, `sectionTimeline`, `sectionStopReason`, `stopPactError`, `pactsActive`, `pactsDone`, `pactsCancelled`, `addPact`, `pactListTitle`, `filterActive`, `filterDone`, `filterCancelled`, `pactNextShowup`, `pactEndedOn`, `pactCancelledOn`
+
+### Fixed
+
+- `stopError` now displayed to the user when stopping a pact fails
+- `TextEditingController` in stop dialogs wrapped in `try/finally` to guarantee disposal
+- `assert(pact != null && stats != null)` added to `_PactDetailContent.build` on both platforms; defensive null guard retained for release mode
+- Removed duplicate `pactListViewModelProvider.load()` — `DashboardScreen` owns all cold-start loads; `PactsPanel` is a pure observer
+- Chevron removed from dashboard showup tiles (showup detail screen not yet implemented)
+- Dashboard `getAllPacts()` used instead of `getActivePacts()` so pact names remain available across status transitions
+
+### Tests
+
+- 3 new tests for auto-completion: expired end date, all showups resolved, no-op (active with pending showups)
 
 ---
 
