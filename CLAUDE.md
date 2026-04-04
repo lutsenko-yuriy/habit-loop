@@ -22,6 +22,7 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, etc.) — not committed |
 | .claude/agents/code-reviewer.md | PR review agent — invoked automatically in workflow step 11 |
 | .claude/agents/product-owner.md | Product Owner agent — invoked at session start and after PR merge |
+| .claude/agents/tech-lead.md | Tech Lead agent — invoked for large changes to produce an implementation plan before coding starts |
 
 ## Architecture
 
@@ -65,18 +66,15 @@ At the beginning of every new session, before doing anything else:
 
 Follow TDD: write or update tests **before** implementing the feature or fix. Red → Green → Refactor.
 
-**For large changes** (spanning multiple files, introducing new domain entities, new dependencies, or architectural shifts): present an implementation plan to the user **before writing any code**. The plan should cover:
+**For large changes** (spanning multiple files, introducing new domain entities, new dependencies, or architectural shifts): invoke the `tech-lead` agent to produce the implementation plan **before writing any code**:
 
-- New packages / dependencies
-- New models and classes
-- Changes to existing classes
-- UI changes (for each platform)
-- Test strategy
-- Implementation order broken into phases
+```
+Use the tech-lead agent to plan HAB-XX: <issue title>
+```
 
-After that, wait for the user to review and approve (or adjust) the plan before proceeding.
+The Tech Lead will produce a structured plan (dependencies, models, UI changes, test strategy, ordered phases, Developer work units) and wait for the user to approve or adjust it.
 
-1. For large changes, present the implementation plan and wait for approval.
+1. For large changes, invoke the tech-lead agent and wait for plan approval.
 2. Create a new feature branch (`git checkout -b feature/<name>`) and switch to it before writing any code.
 3. Write failing tests that describe the expected behaviour.
 4. Implement the minimum code to make the tests pass.
