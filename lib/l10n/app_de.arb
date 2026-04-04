@@ -90,6 +90,7 @@
   },
   "pactStartDate": "Beginn",
   "pactEndDate": "Ende",
+  "pactEndedDate": "Beendet",
   "daysRemaining": "{count, plural, one{1 Tag verbleibend} other{{count} Tage verbleibend}}",
   "@daysRemaining": {
     "placeholders": {

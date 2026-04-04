@@ -90,14 +90,23 @@ class _PactDetailContent extends StatelessWidget {
             Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
           ],
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining))),
-            const SizedBox(width: 8),
-            Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
-          ],
-        ),
+        if (pact.status == PactStatus.active || stats.showupsRemaining > 0) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining))),
+              const SizedBox(width: 8),
+              Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+            ],
+          ),
+        ] else ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+            ],
+          ),
+        ],
         const SizedBox(height: 24),
 
         // Time details
@@ -105,7 +114,10 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 8),
         _DateRow(label: l10n.pactStartDate, date: pact.startDate),
         const SizedBox(height: 8),
-        _DateRow(label: l10n.pactEndDate, date: pact.endDate),
+        _DateRow(
+          label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
+          date: pact.endDate,
+        ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
           const SizedBox(height: 8),
           Card(
@@ -232,9 +244,9 @@ class _DateRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label),
+            Expanded(child: Text(label)),
+            const SizedBox(width: 8),
             Text(
               DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
               style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
