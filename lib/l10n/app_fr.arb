@@ -75,5 +75,68 @@
       "count": { "type": "int" }
     }
   },
-  "tooManyPactsConfirm": "Oui, créer un autre"
+  "tooManyPactsConfirm": "Oui, créer un autre",
+
+  "pactDetailTitle": "Détails du pacte",
+  "sectionStats": "Statistiques",
+  "sectionTimeline": "Chronologie",
+  "sectionStopReason": "Raison de l'arrêt",
+  "stopPactError": "Impossible d'arrêter le pacte. Veuillez réessayer.",
+  "statsDone": "Réalisés",
+  "statsFailed": "Échoués",
+  "statsRemaining": "Restants",
+  "statsCancelled": "Arrêtés",
+  "statsStreak": "Série",
+  "statsShowups": "{count} rendez-vous",
+  "@statsShowups": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStartDate": "Début",
+  "pactEndDate": "Fin",
+  "pactEndedDate": "Terminé",
+  "daysRemaining": "{count, plural, one{1 jour restant} other{{count} jours restants}}",
+  "@daysRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStatusActive": "Actif",
+  "pactStatusStopped": "Arrêté",
+  "pactStatusCompleted": "Terminé",
+  "stopPact": "Arrêter le pacte",
+  "stopPactTitle": "Arrêter ce pacte ?",
+  "stopPactBody": "Cette action est irréversible. Vous pourrez toujours consulter l'historique du pacte.",
+  "stopPactReasonHint": "Raison (facultatif)",
+  "stopPactConfirm": "Arrêter",
+  "pactsActive": "{count, plural, =0{Aucun pacte actif} one{1 pacte actif} other{{count} pactes actifs}}",
+  "@pactsActive": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsDone": "{count, plural, =0{Aucun pacte terminé} one{1 pacte terminé} other{{count} pactes terminés}}",
+  "@pactsDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsCancelled": "{count, plural, =0{Aucun pacte arrêté} one{1 pacte arrêté} other{{count} pactes arrêtés}}",
+  "@pactsCancelled": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "addPact": "Ajouter un pacte",
+  "pactListTitle": "Pactes",
+  "filterActive": "Actifs",
+  "filterDone": "Terminés",
+  "filterCancelled": "Arrêtés",
+  "pactNextShowup": "Prochain : {date}",
+  "@pactNextShowup": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactEndedOn": "Terminé le {date}",
+  "@pactEndedOn": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactCancelledOn": "Arrêté le {date}",
+  "@pactCancelledOn": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }

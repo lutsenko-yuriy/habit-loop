@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
+import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -11,6 +12,7 @@ class DashboardPageIos extends StatelessWidget {
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
+  final Future<void> Function(String) onShowupTapped;
 
   const DashboardPageIos({
     super.key,
@@ -18,6 +20,7 @@ class DashboardPageIos extends StatelessWidget {
     required this.hasPacts,
     required this.onDaySelected,
     required this.onCreatePact,
+    required this.onShowupTapped,
   });
 
   @override
@@ -39,15 +42,21 @@ class DashboardPageIos extends StatelessWidget {
       child: SafeArea(
         child: Material(
           type: MaterialType.transparency,
-          child: state.isLoading
-              ? const Center(child: CupertinoActivityIndicator())
-              : !hasPacts
-                  ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
-                  : _DashboardContent(
-                      state: state,
-                      l10n: l10n,
-                      onDaySelected: onDaySelected,
-                    ),
+          child: Stack(
+            children: [
+              state.isLoading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : !hasPacts
+                      ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
+                      : _DashboardContent(
+                          state: state,
+                          l10n: l10n,
+                          onDaySelected: onDaySelected,
+                          onShowupTapped: onShowupTapped,
+                        ),
+              PactsPanel(onCreatePact: onCreatePact),
+            ],
+          ),
         ),
       ),
     );
@@ -96,11 +105,13 @@ class _DashboardContent extends StatelessWidget {
   final DashboardState state;
   final AppLocalizations l10n;
   final ValueChanged<int> onDaySelected;
+  final Future<void> Function(String) onShowupTapped;
 
   const _DashboardContent({
     required this.state,
     required this.l10n,
     required this.onDaySelected,
+    required this.onShowupTapped,
   });
 
   @override
@@ -124,6 +135,7 @@ class _DashboardContent extends StatelessWidget {
                     key: ValueKey('list-${state.selectedDayIndex}'),
                     showups: state.selectedDayShowups,
                     state: state,
+                    onShowupTapped: onShowupTapped,
                   ),
           ),
         ),
@@ -219,9 +231,13 @@ class _CalendarStrip extends StatelessWidget {
     if (showups.length >= 4) {
       var done = 0, failed = 0, pending = 0;
       for (final s in showups) {
-        if (s.status == ShowupStatus.done) done++;
-        else if (s.status == ShowupStatus.failed) failed++;
-        else pending++;
+        if (s.status == ShowupStatus.done) {
+          done++;
+        } else if (s.status == ShowupStatus.failed) {
+          failed++;
+        } else {
+          pending++;
+        }
       }
       final overflowColor = pending > 0
           ? CupertinoColors.systemGrey
@@ -285,8 +301,14 @@ class _CalendarStrip extends StatelessWidget {
 class _ShowupList extends StatelessWidget {
   final List<Showup> showups;
   final DashboardState state;
+  final Future<void> Function(String) onShowupTapped;
 
-  const _ShowupList({super.key, required this.showups, required this.state});
+  const _ShowupList({
+    super.key,
+    required this.showups,
+    required this.state,
+    required this.onShowupTapped,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -298,6 +320,7 @@ class _ShowupList extends StatelessWidget {
         return _ShowupTile(
           showup: showup,
           habitName: state.habitName(showup.pactId),
+          onTap: () => onShowupTapped(showup.pactId),
         );
       },
     );
@@ -307,8 +330,13 @@ class _ShowupList extends StatelessWidget {
 class _ShowupTile extends StatelessWidget {
   final Showup showup;
   final String habitName;
+  final VoidCallback onTap;
 
-  const _ShowupTile({required this.showup, required this.habitName});
+  const _ShowupTile({
+    required this.showup,
+    required this.habitName,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -320,6 +348,7 @@ class _ShowupTile extends StatelessWidget {
     };
 
     return CupertinoListTile(
+      onTap: onTap,
       leading: Icon(
         switch (showup.status) {
           ShowupStatus.done => CupertinoIcons.check_mark_circled_solid,
