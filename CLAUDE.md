@@ -93,10 +93,10 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
     ```
     Run each in the background (`run_in_background: true`) so both start simultaneously. Wait for the user to confirm the app looks correct on both platforms before proceeding.
 10. Push to the remote.
-11. Open a PR and request a review:
-    - Check whether a `code-reviewer` agent exists in `.claude/agents/code-reviewer.md`.
-    - If it does, invoke it immediately by passing it the PR number: `Use the code-reviewer agent to review PR #<number>`.
-    - If no such agent exists, request a review from the user directly.
+11. Open a PR and request reviews in order:
+    - If `.claude/agents/tech-lead.md` exists, invoke it first for an architectural review: `Use the tech-lead agent to review PR #<number>`.
+    - Then, if `.claude/agents/code-reviewer.md` exists, invoke it for a runtime/launch/migration review: `Use the code-reviewer agent to review PR #<number>`.
+    - If neither agent exists, request a review from the user directly.
 12. Remind the user to compact the context after each commit to keep the conversation lean.
 13. When the user approves the PR:
     - Invoke the `product-owner` agent: `Use the product-owner agent to close the approved PR's Linear issues, regenerate BACKLOG.md and CHANGELOG.md, and merge the PR`.
