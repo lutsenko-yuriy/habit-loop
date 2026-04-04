@@ -103,7 +103,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [vX.Y.Z] — YYYY-MM-DD (PR #N merged)
+## [X.Y.Z] — YYYY-MM-DD (PR #N merged)
 
 ### Added — <milestone short description>
 

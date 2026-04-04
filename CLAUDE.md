@@ -19,7 +19,7 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | @docs/BACKLOG.md | Known issues and remaining work not yet released |
 | @docs/CHANGELOG.md | Released version history |
 | @docs/VERSIONING.md | Version numbering rules and CI/CD pipeline |
-| CLAUDE.local.md | Local machine settings (Flutter binary path, etc.) — not committed |
+| CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, etc.) — not committed |
 | .claude/agents/code-reviewer.md | PR review agent — invoked automatically in workflow step 11 |
 | .claude/agents/product-owner.md | Product Owner agent — invoked at session start and after PR merge |
 
@@ -56,9 +56,10 @@ Details: @docs/VERSIONING.md
 
 At the beginning of every new session, before doing anything else:
 
-1. Invoke the `product-owner` agent: `Use the product-owner agent to present the current backlog from Linear`.
-2. The Product Owner agent will summarise what has been done and what is remaining, then ask *"What goes into the next release?"*.
-3. Wait for the user's answer before proceeding.
+1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
+2. Invoke the `product-owner` agent: `Use the product-owner agent to present the current backlog from Linear`.
+3. The Product Owner agent will summarise what has been done and what is remaining, then ask *"What goes into the next release?"*.
+4. Wait for the user's answer before proceeding.
 
 ## Workflow
 

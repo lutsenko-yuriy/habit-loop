@@ -20,7 +20,7 @@ User
 ## Agents
 
 ### Product Owner
-**File:** `.claude/agents/product-owner.md` *(to be created)*
+**File:** `.claude/agents/product-owner.md`
 **Model:** `claude-sonnet-4-6`
 
 Responsibilities:
@@ -67,11 +67,11 @@ Responsibilities:
 **MCP config:** `.mcp.json` (project-scoped, committed to repo)
 **MCP server:** `https://mcp.linear.app/mcp`
 
-Linear workspace structure to set up (done in Linear UI by user):
-- Team: `Habit Loop` (abbreviation `HAB`)
-- Workflow states: `Triage → Backlog → Todo → In Progress → In Review → Done → Cancelled`
-- Labels: `feature`, `bug`, `tech-debt`, `docs`
-- One milestone/release per app version (0.5.0, 0.6.0, …)
+Linear workspace (configured):
+- Team: `Iurii Lutsenko's workspace` (abbreviation `IUR`)
+- Workflow states: `Backlog → Todo → In Progress → In Review → Done` (cancelled: `Canceled`, `Duplicate`)
+- Labels: `Feature`, `Improvement`, `Bug`, `Tech Debt`
+- Milestones v0.0.1–v0.5.0 created; one milestone per app version going forward
 
 ---
 
