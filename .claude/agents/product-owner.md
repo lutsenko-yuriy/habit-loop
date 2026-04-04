@@ -1,6 +1,7 @@
 ---
 name: product-owner
 description: Use this agent at session start to present the current backlog from Linear, and after a PR is merged to close issues, update milestones, and regenerate BACKLOG.md and CHANGELOG.md from Linear data.
+model: claude-sonnet-4-6
 tools: Bash, Read, Write, Edit, Glob, Grep, mcp__linear__list_issues, mcp__linear__get_issue, mcp__linear__save_issue, mcp__linear__list_milestones, mcp__linear__get_milestone, mcp__linear__save_milestone, mcp__linear__list_projects, mcp__linear__list_issue_statuses, mcp__linear__list_issue_labels, mcp__linear__list_comments, mcp__linear__save_comment
 ---
 

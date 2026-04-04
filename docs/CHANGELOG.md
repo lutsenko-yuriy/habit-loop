@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.6.0] — 2026-04-05 (PR #10 merged)
+
+### Added — Tech Lead agent and review wiring
+
+- Tech Lead agent (`.claude/agents/tech-lead.md`, model `claude-opus-4-6`) that produces structured implementation plans from Linear issues: dependencies, models, UI changes, test strategy, ordered phases, and Developer work units
+- `CLAUDE.md` workflow updated: step 1 now invokes the Tech Lead agent for large changes instead of producing plans inline; step 11 invokes tech-lead and code-reviewer in parallel (they check independent concerns — architectural vs runtime/launch)
+- `model: claude-opus-4-6` field added to `tech-lead.md`; `model: claude-sonnet-4-6` added to `product-owner.md` and `code-reviewer.md` frontmatter
+- `code-reviewer.md` updated with an explicit pre-reporting reasoning checklist (trigger sequence, existing handling, test coverage, worst-case outcome) — a finding is only reported when all four questions can be answered concretely
+- `docs/AGENTS.md` updated to mark Phase 3 Done and record next actions
+
+---
+
 ## [0.5.0] — 2026-04-04 (PR #9 merged)
 
 ### Added — Multi-agent workflow and Linear integration
