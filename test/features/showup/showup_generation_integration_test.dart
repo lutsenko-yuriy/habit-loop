@@ -16,8 +16,8 @@ void main() {
       final pact = Pact(
         id: 'pact-1',
         habitName: 'Meditate',
-        startDate: DateTime(2026, 1, 1),
-        endDate: DateTime(2026, 6, 30),
+        startDate: DateTime(2054, 1, 1),
+        endDate: DateTime(2054, 6, 30),
         showupDuration: const Duration(minutes: 10),
         schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
         status: PactStatus.active,
@@ -34,8 +34,8 @@ void main() {
       final pact1 = Pact(
         id: 'pact-1',
         habitName: 'Meditate',
-        startDate: DateTime(2026, 4, 1),
-        endDate: DateTime(2026, 4, 30),
+        startDate: DateTime(2054, 4, 1),
+        endDate: DateTime(2054, 4, 30),
         showupDuration: const Duration(minutes: 10),
         schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
         status: PactStatus.active,
@@ -43,8 +43,8 @@ void main() {
       final pact2 = Pact(
         id: 'pact-2',
         habitName: 'Jog',
-        startDate: DateTime(2026, 4, 1),
-        endDate: DateTime(2026, 4, 30),
+        startDate: DateTime(2054, 4, 1),
+        endDate: DateTime(2054, 4, 30),
         showupDuration: const Duration(minutes: 30),
         schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
         status: PactStatus.active,
@@ -65,8 +65,8 @@ void main() {
       final pact = Pact(
         id: 'pact-1',
         habitName: 'Meditate',
-        startDate: DateTime(2026, 4, 1),
-        endDate: DateTime(2026, 4, 30),
+        startDate: DateTime(2054, 4, 1),
+        endDate: DateTime(2054, 4, 30),
         showupDuration: const Duration(minutes: 10),
         schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
         status: PactStatus.active,
@@ -87,7 +87,7 @@ void main() {
     test(
         'submitting a pact generates showups visible on the dashboard',
         () async {
-      final today = DateTime(2026, 4, 1);
+      final today = DateTime(2054, 4, 1);
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
 

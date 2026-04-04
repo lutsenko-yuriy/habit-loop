@@ -203,4 +203,151 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tooManyPactsConfirm => 'Ja, weiteren erstellen';
+
+  @override
+  String get pactDetailTitle => 'Pakt-Details';
+
+  @override
+  String get sectionStats => 'Statistiken';
+
+  @override
+  String get sectionTimeline => 'Zeitleiste';
+
+  @override
+  String get sectionStopReason => 'Stoppgrund';
+
+  @override
+  String get stopPactError =>
+      'Pakt konnte nicht gestoppt werden. Bitte erneut versuchen.';
+
+  @override
+  String get statsDone => 'Erledigt';
+
+  @override
+  String get statsFailed => 'Verpasst';
+
+  @override
+  String get statsRemaining => 'Ausstehend';
+
+  @override
+  String get statsCancelled => 'Gestoppt';
+
+  @override
+  String get statsStreak => 'Serie';
+
+  @override
+  String statsShowups(int count) {
+    return '$count Showups';
+  }
+
+  @override
+  String get pactStartDate => 'Beginn';
+
+  @override
+  String get pactEndDate => 'Ende';
+
+  @override
+  String get pactEndedDate => 'Beendet';
+
+  @override
+  String daysRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Tage verbleibend',
+      one: '1 Tag verbleibend',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pactStatusActive => 'Aktiv';
+
+  @override
+  String get pactStatusStopped => 'Gestoppt';
+
+  @override
+  String get pactStatusCompleted => 'Abgeschlossen';
+
+  @override
+  String get stopPact => 'Pakt beenden';
+
+  @override
+  String get stopPactTitle => 'Diesen Pakt beenden?';
+
+  @override
+  String get stopPactBody =>
+      'Diese Aktion kann nicht rückgängig gemacht werden. Du kannst den Pakt-Verlauf danach noch einsehen.';
+
+  @override
+  String get stopPactReasonHint => 'Grund (optional)';
+
+  @override
+  String get stopPactConfirm => 'Beenden';
+
+  @override
+  String pactsActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Pakte aktiv',
+      one: '1 Pakt aktiv',
+      zero: 'Keine aktiven Pakte',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pactsDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Pakte abgeschlossen',
+      one: '1 Pakt abgeschlossen',
+      zero: 'Keine abgeschlossenen Pakte',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pactsCancelled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Pakte gestoppt',
+      one: '1 Pakt gestoppt',
+      zero: 'Keine gestoppten Pakte',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addPact => 'Pakt hinzufügen';
+
+  @override
+  String get pactListTitle => 'Pakte';
+
+  @override
+  String get filterActive => 'Aktiv';
+
+  @override
+  String get filterDone => 'Abgeschlossen';
+
+  @override
+  String get filterCancelled => 'Gestoppt';
+
+  @override
+  String pactNextShowup(String date) {
+    return 'Nächster: $date';
+  }
+
+  @override
+  String pactEndedOn(String date) {
+    return 'Beendet am $date';
+  }
+
+  @override
+  String pactCancelledOn(String date) {
+    return 'Gestoppt am $date';
+  }
 }

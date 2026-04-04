@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
+import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 final todayProvider = Provider<DateTime>((ref) => DateTime.now());
 
@@ -38,12 +39,19 @@ class DashboardViewModel extends Notifier<DashboardState> {
     final endDate = DateTime(today.year, today.month, today.day + 3);
 
     final showups = await showupRepo.getShowupsForDateRange(startDate, endDate);
-    final pacts = await pactRepo.getActivePacts();
+    final pacts = await pactRepo.getAllPacts();
     final pactNames = {for (final p in pacts) p.id: p.habitName};
+    final activePactIds = {
+      for (final p in pacts)
+        if (p.status == PactStatus.active) p.id
+    };
 
     final days = List.generate(7, (i) {
       final date = DateTime(today.year, today.month, today.day - 3 + i);
-      final dayShowups = showups.where((s) => _sameDay(s.scheduledAt, date)).toList();
+      final dayShowups = showups
+          .where((s) =>
+              _sameDay(s.scheduledAt, date) && activePactIds.contains(s.pactId))
+          .toList();
       return CalendarDayEntry(date: date, showups: dayShowups);
     });
 

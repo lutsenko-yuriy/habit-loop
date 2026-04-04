@@ -459,6 +459,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yes, create another'**
   String get tooManyPactsConfirm;
+
+  /// No description provided for @pactDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pact Details'**
+  String get pactDetailTitle;
+
+  /// No description provided for @sectionStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get sectionStats;
+
+  /// No description provided for @sectionTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get sectionTimeline;
+
+  /// No description provided for @sectionStopReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop reason'**
+  String get sectionStopReason;
+
+  /// No description provided for @stopPactError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to stop pact. Please try again.'**
+  String get stopPactError;
+
+  /// No description provided for @statsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get statsDone;
+
+  /// No description provided for @statsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get statsFailed;
+
+  /// No description provided for @statsRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get statsRemaining;
+
+  /// No description provided for @statsCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get statsCancelled;
+
+  /// No description provided for @statsStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get statsStreak;
+
+  /// No description provided for @statsShowups.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} showups'**
+  String statsShowups(int count);
+
+  /// No description provided for @pactStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Started'**
+  String get pactStartDate;
+
+  /// No description provided for @pactEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get pactEndDate;
+
+  /// No description provided for @pactEndedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get pactEndedDate;
+
+  /// No description provided for @daysRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 day remaining} other{{count} days remaining}}'**
+  String daysRemaining(int count);
+
+  /// No description provided for @pactStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get pactStatusActive;
+
+  /// No description provided for @pactStatusStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get pactStatusStopped;
+
+  /// No description provided for @pactStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get pactStatusCompleted;
+
+  /// No description provided for @stopPact.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Pact'**
+  String get stopPact;
+
+  /// No description provided for @stopPactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop this pact?'**
+  String get stopPactTitle;
+
+  /// No description provided for @stopPactBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone. You can still view the pact history afterwards.'**
+  String get stopPactBody;
+
+  /// No description provided for @stopPactReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get stopPactReasonHint;
+
+  /// No description provided for @stopPactConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stopPactConfirm;
+
+  /// No description provided for @pactsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No pacts active} one{1 pact active} other{{count} pacts active}}'**
+  String pactsActive(int count);
+
+  /// No description provided for @pactsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No pacts done} one{1 pact done} other{{count} pacts done}}'**
+  String pactsDone(int count);
+
+  /// No description provided for @pactsCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No pacts stopped} one{1 pact stopped} other{{count} pacts stopped}}'**
+  String pactsCancelled(int count);
+
+  /// No description provided for @addPact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a pact'**
+  String get addPact;
+
+  /// No description provided for @pactListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pacts'**
+  String get pactListTitle;
+
+  /// No description provided for @filterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get filterActive;
+
+  /// No description provided for @filterDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get filterDone;
+
+  /// No description provided for @filterCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get filterCancelled;
+
+  /// No description provided for @pactNextShowup.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {date}'**
+  String pactNextShowup(String date);
+
+  /// No description provided for @pactEndedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended {date}'**
+  String pactEndedOn(String date);
+
+  /// No description provided for @pactCancelledOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped {date}'**
+  String pactCancelledOn(String date);
 }
 
 class _AppLocalizationsDelegate
