@@ -30,7 +30,7 @@ Responsibilities:
 - After a PR is merged: close the relevant Linear issue(s), close the milestone if complete, regenerate BACKLOG.md (open issues) and CHANGELOG.md (completed milestones) from Linear data
 
 ### Tech Lead
-**File:** `.claude/agents/tech-lead.md` *(to be created)*
+**File:** `.claude/agents/tech-lead.md`
 **Model:** `claude-opus-4-6`
 
 Responsibilities:
@@ -81,11 +81,10 @@ Linear workspace (configured):
 |---|---|---|
 | 1 | Linear MCP setup + workspace creation | Done — MCP connected, workspace configured |
 | 2 | Product Owner agent + migrate BACKLOG/CHANGELOG to Linear | **Done** — agent at `.claude/agents/product-owner.md`; all issues (IUR-10–IUR-17) and milestones (v0.0.1–v0.5.0) in Linear; CLAUDE.md updated |
-| 3 | Tech Lead agent | Pending |
+| 3 | Tech Lead agent | **Done** — agent at `.claude/agents/tech-lead.md`; CLAUDE.md updated |
 | 4 | Developer agent | Pending |
 | 5 | Update CLAUDE.md to orchestrate all agents | Pending |
 
 ### Next actions (start of next session)
-1. Build the Tech Lead agent (`.claude/agents/tech-lead.md`)
-2. Build the Developer agent (`.claude/agents/developer.md`)
-3. Update CLAUDE.md workflow to invoke Tech Lead for large changes and Developer for implementation
+1. Build the Developer agent (`.claude/agents/developer.md`)
+2. Update CLAUDE.md workflow to invoke Developer for implementation
