@@ -9,40 +9,74 @@ import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:intl/intl.dart';
 
-class PactsSummaryBar extends ConsumerStatefulWidget {
+/// A persistent draggable panel that lives at the bottom of the dashboard.
+///
+/// Collapsed: shows pact counts (hidden entirely when all counts are 0).
+/// Drag up or tap the header to expand to the full pact list.
+class PactsPanel extends ConsumerStatefulWidget {
   final AsyncCallback onCreatePact;
 
-  const PactsSummaryBar({super.key, required this.onCreatePact});
+  const PactsPanel({super.key, required this.onCreatePact});
 
   @override
-  ConsumerState<PactsSummaryBar> createState() => _PactsSummaryBarState();
+  ConsumerState<PactsPanel> createState() => _PactsPanelState();
 }
 
-class _PactsSummaryBarState extends ConsumerState<PactsSummaryBar> {
+class _PactsPanelState extends ConsumerState<PactsPanel> {
+  late final DraggableScrollableController _controller;
+
+  static const double _minSize = 0.14;
+  static const double _expandedSize = 0.55;
+  static const double _maxSize = 0.92;
+
   @override
   void initState() {
     super.initState();
+    _controller = DraggableScrollableController();
     Future.microtask(() {
       if (mounted) ref.read(pactListViewModelProvider.notifier).load();
     });
   }
 
-  Future<void> _showSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (ctx, scrollController) => _PactListSheet(
-          scrollController: scrollController,
-          onCreatePact: widget.onCreatePact,
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _expand() => _controller.animateTo(
+        _expandedSize,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+
+  void _collapse() => _controller.animateTo(
+        _minSize,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeIn,
+      );
+
+  Future<void> _navigateToPact(PactListEntry entry) async {
+    _collapse();
+    await Future<void>.delayed(const Duration(milliseconds: 260));
+    if (!mounted) return;
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      await Navigator.of(context).push(CupertinoPageRoute<void>(
+        builder: (_) => PactDetailScreen(pactId: entry.pact.id),
+      ));
+    } else {
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => PactDetailScreen(pactId: entry.pact.id),
+      ));
+    }
+    if (mounted) ref.read(pactListViewModelProvider.notifier).load();
+  }
+
+  Future<void> _addPact() async {
+    _collapse();
+    await Future<void>.delayed(const Duration(milliseconds: 260));
+    if (!mounted) return;
+    await widget.onCreatePact();
     if (mounted) ref.read(pactListViewModelProvider.notifier).load();
   }
 
@@ -51,191 +85,150 @@ class _PactsSummaryBarState extends ConsumerState<PactsSummaryBar> {
     final state = ref.watch(pactListViewModelProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0) {
+    if (state.activeCount == 0 &&
+        state.doneCount == 0 &&
+        state.cancelledCount == 0) {
       return const SizedBox.shrink();
     }
 
-    final lines = <String>[
+    final summaryLines = [
       if (state.activeCount > 0) l10n.pactsActive(state.activeCount),
       if (state.doneCount > 0) l10n.pactsDone(state.doneCount),
       if (state.cancelledCount > 0) l10n.pactsCancelled(state.cancelledCount),
-    ];
+    ].join('\n');
 
-    return GestureDetector(
-      onTap: () => _showSheet(context),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
+    return DraggableScrollableSheet(
+      controller: _controller,
+      initialChildSize: _minSize,
+      minChildSize: _minSize,
+      maxChildSize: _maxSize,
+      snap: true,
+      snapSizes: const [_minSize, _expandedSize],
+      builder: (ctx, scrollController) {
+        return Material(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                lines.join('\n'),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            const Icon(Icons.keyboard_arrow_up, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Sheet content ────────────────────────────────────────────────────────────
-
-class _PactListSheet extends ConsumerWidget {
-  final ScrollController scrollController;
-  final AsyncCallback onCreatePact;
-
-  const _PactListSheet({
-    required this.scrollController,
-    required this.onCreatePact,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(pactListViewModelProvider);
-    final l10n = AppLocalizations.of(context)!;
-
-    void navigateToPact(PactListEntry entry) {
-      final nav = Navigator.of(context);
-      nav.pop();
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        nav.push(CupertinoPageRoute<void>(
-          builder: (_) => PactDetailScreen(pactId: entry.pact.id),
-        ));
-      } else {
-        nav.push(MaterialPageRoute<void>(
-          builder: (_) => PactDetailScreen(pactId: entry.pact.id),
-        ));
-      }
-    }
-
-    Future<void> addPact() async {
-      Navigator.of(context).pop();
-      await onCreatePact();
-    }
-
-    return Column(
-      children: [
-        // Drag handle
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.outlineVariant,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-        // Header row
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 12, 8),
-          child: Row(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          elevation: 4,
+          child: Column(
             children: [
-              Expanded(
-                child: Text(
-                  l10n.pactListTitle,
-                  style: Theme.of(context).textTheme.titleLarge,
+              // ── Drag handle + summary (tappable to expand) ──
+              GestureDetector(
+                onTap: _expand,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              summaryLines,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          const Icon(Icons.keyboard_arrow_up, size: 20),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              TextButton.icon(
-                onPressed: addPact,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(l10n.addPact),
-              ),
-            ],
-          ),
-        ),
-        // Filter chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              _FilterChip(
-                label: l10n.filterActive,
-                selected: state.activeFilters.contains(PactStatus.active),
-                onTap: () => ref
-                    .read(pactListViewModelProvider.notifier)
-                    .toggleFilter(PactStatus.active),
-              ),
-              const SizedBox(width: 8),
-              _FilterChip(
-                label: l10n.filterDone,
-                selected: state.activeFilters.contains(PactStatus.completed),
-                onTap: () => ref
-                    .read(pactListViewModelProvider.notifier)
-                    .toggleFilter(PactStatus.completed),
-              ),
-              const SizedBox(width: 8),
-              _FilterChip(
-                label: l10n.filterCancelled,
-                selected: state.activeFilters.contains(PactStatus.stopped),
-                onTap: () => ref
-                    .read(pactListViewModelProvider.notifier)
-                    .toggleFilter(PactStatus.stopped),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Divider(height: 1),
-        // Pact list
-        Expanded(
-          child: state.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : state.filteredEntries.isEmpty
-                  ? Center(child: Text(l10n.noPactsYet))
-                  : ListView.separated(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: state.filteredEntries.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
-                      itemBuilder: (context, index) {
-                        final entry = state.filteredEntries[index];
-                        return _PactTile(
-                          entry: entry,
-                          onTap: () => navigateToPact(entry),
-                        );
-                      },
+
+              // ── Title + add button ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.pactListTitle,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
-        ),
-      ],
-    );
-  }
-}
+                    TextButton.icon(
+                      onPressed: _addPact,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(l10n.addPact),
+                    ),
+                  ],
+                ),
+              ),
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+              // ── Filter chips ──
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    FilterChip(
+                      label: Text(l10n.filterActive),
+                      selected:
+                          state.activeFilters.contains(PactStatus.active),
+                      onSelected: (_) => ref
+                          .read(pactListViewModelProvider.notifier)
+                          .toggleFilter(PactStatus.active),
+                    ),
+                    const SizedBox(width: 8),
+                    FilterChip(
+                      label: Text(l10n.filterDone),
+                      selected: state.activeFilters
+                          .contains(PactStatus.completed),
+                      onSelected: (_) => ref
+                          .read(pactListViewModelProvider.notifier)
+                          .toggleFilter(PactStatus.completed),
+                    ),
+                    const SizedBox(width: 8),
+                    FilterChip(
+                      label: Text(l10n.filterCancelled),
+                      selected:
+                          state.activeFilters.contains(PactStatus.stopped),
+                      onSelected: (_) => ref
+                          .read(pactListViewModelProvider.notifier)
+                          .toggleFilter(PactStatus.stopped),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1),
 
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FilterChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onTap(),
+              // ── Pact list ──
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : state.filteredEntries.isEmpty
+                        ? Center(child: Text(l10n.noPactsYet))
+                        : ListView.separated(
+                            controller: scrollController,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: state.filteredEntries.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1, indent: 16),
+                            itemBuilder: (context, index) {
+                              final entry = state.filteredEntries[index];
+                              return _PactTile(
+                                entry: entry,
+                                onTap: () => _navigateToPact(entry),
+                              );
+                            },
+                          ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -256,9 +249,7 @@ class _PactTile extends StatelessWidget {
     final String subtitle;
     if (pact.status == PactStatus.active) {
       final next = entry.nextShowupAt;
-      subtitle = next != null
-          ? l10n.pactNextShowup(dateFormat.format(next))
-          : '';
+      subtitle = next != null ? l10n.pactNextShowup(dateFormat.format(next)) : '';
     } else if (pact.status == PactStatus.completed) {
       subtitle = l10n.pactEndedOn(dateFormat.format(pact.endDate));
     } else {
