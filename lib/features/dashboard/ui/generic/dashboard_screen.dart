@@ -30,6 +30,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.initState();
     Future.microtask(() {
       ref.read(dashboardViewModelProvider.notifier).load();
+      ref.read(pactListViewModelProvider.notifier).load();
     });
   }
 

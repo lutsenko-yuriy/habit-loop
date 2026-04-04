@@ -100,5 +100,72 @@ void main() {
       final persisted = await pactRepo.getPactById('p1');
       expect(persisted?.stopReason, isNull);
     });
+
+    test('load auto-completes an active pact whose end date is in the past', () async {
+      final expiredPact = Pact(
+        id: 'expired',
+        habitName: 'Run',
+        startDate: DateTime(2020, 1, 1),
+        endDate: DateTime(2020, 3, 1), // clearly in the past
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+      );
+      final showups = [
+        Showup(id: 'e1', pactId: 'expired', scheduledAt: DateTime(2020, 1, 5, 7), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+      ];
+      final pactRepo = InMemoryPactRepository([expiredPact]);
+      final container = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('expired').notifier).load();
+
+      final state = container.read(pactDetailViewModelProvider('expired'));
+      expect(state.pact?.status, PactStatus.completed);
+      final persisted = await pactRepo.getPactById('expired');
+      expect(persisted?.status, PactStatus.completed);
+    });
+
+    test('load auto-completes an active pact when all showups are resolved', () async {
+      // Dates in 2054 so they are in the future, but all showups already resolved.
+      final allResolvedPact = Pact(
+        id: 'all-resolved',
+        habitName: 'Stretch',
+        startDate: DateTime(2054, 1, 1),
+        endDate: DateTime(2054, 6, 30),
+        showupDuration: const Duration(minutes: 5),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 6)),
+        status: PactStatus.active,
+      );
+      final showups = [
+        Showup(id: 'r1', pactId: 'all-resolved', scheduledAt: DateTime(2054, 1, 5, 6), duration: const Duration(minutes: 5), status: ShowupStatus.done),
+        Showup(id: 'r2', pactId: 'all-resolved', scheduledAt: DateTime(2054, 1, 6, 6), duration: const Duration(minutes: 5), status: ShowupStatus.failed),
+      ];
+      final pactRepo = InMemoryPactRepository([allResolvedPact]);
+      final container = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('all-resolved').notifier).load();
+
+      final state = container.read(pactDetailViewModelProvider('all-resolved'));
+      expect(state.pact?.status, PactStatus.completed);
+      final persisted = await pactRepo.getPactById('all-resolved');
+      expect(persisted?.status, PactStatus.completed);
+    });
+
+    test('load does not auto-complete an active pact with a future end date and pending showups', () async {
+      // _pact: endDate=2026-09-01 (future from 2026-04-04), has pending showup s4.
+      final container = _makeContainer(pacts: [_pact], showups: _showups);
+      addTearDown(container.dispose);
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.pact?.status, PactStatus.active);
+    });
   });
 }

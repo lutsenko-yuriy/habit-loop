@@ -56,6 +56,8 @@ class _PactDetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final pact = state.pact;
     final stats = state.stats;
+    assert(pact != null && stats != null,
+        '_PactDetailContent must only be shown after a successful load');
     if (pact == null || stats == null) return const SizedBox.shrink();
     final today = DateTime.now();
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
