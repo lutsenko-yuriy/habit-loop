@@ -508,6 +508,12 @@ abstract class AppLocalizations {
   /// **'Ends'**
   String get pactEndDate;
 
+  /// No description provided for @pactEndedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get pactEndedDate;
+
   /// No description provided for @daysRemaining.
   ///
   /// In en, this message translates to:

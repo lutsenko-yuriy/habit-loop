@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
 import 'package:intl/intl.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
@@ -23,15 +24,18 @@ class PactDetailPageIos extends StatelessWidget {
         middle: Text(l10n.pactDetailTitle),
       ),
       child: SafeArea(
-        child: state.isLoading
-            ? const Center(child: CupertinoActivityIndicator())
-            : state.loadError != null
-                ? Center(child: Text(state.loadError.toString()))
-                : _PactDetailContent(
-                    state: state,
-                    l10n: l10n,
-                    onStopPact: onStopPact,
-                  ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: state.isLoading
+              ? const Center(child: CupertinoActivityIndicator())
+              : state.loadError != null
+                  ? Center(child: Text(state.loadError.toString()))
+                  : _PactDetailContent(
+                      state: state,
+                      l10n: l10n,
+                      onStopPact: onStopPact,
+                    ),
+        ),
       ),
     );
   }
@@ -102,14 +106,23 @@ class _PactDetailContent extends StatelessWidget {
             Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
           ],
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining))),
-            const SizedBox(width: 8),
-            Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
-          ],
-        ),
+        if (pact.status == PactStatus.active || stats.showupsRemaining > 0) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining))),
+              const SizedBox(width: 8),
+              Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+            ],
+          ),
+        ] else ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+            ],
+          ),
+        ],
         const SizedBox(height: 24),
 
         // Time details
@@ -117,7 +130,10 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 8),
         _DateRow(label: l10n.pactStartDate, date: pact.startDate),
         const SizedBox(height: 8),
-        _DateRow(label: l10n.pactEndDate, date: pact.endDate),
+        _DateRow(
+          label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
+          date: pact.endDate,
+        ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
           const SizedBox(height: 8),
           _InfoRow(label: l10n.daysRemaining(daysLeft)),
@@ -264,9 +280,9 @@ class _DateRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
+          Expanded(child: Text(label)),
+          const SizedBox(width: 8),
           Text(
             DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
             style: const TextStyle(color: CupertinoColors.systemGrey),

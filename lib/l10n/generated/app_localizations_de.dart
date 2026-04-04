@@ -231,6 +231,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pactEndDate => 'Ende';
 
   @override
+  String get pactEndedDate => 'Beendet';
+
+  @override
   String daysRemaining(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
