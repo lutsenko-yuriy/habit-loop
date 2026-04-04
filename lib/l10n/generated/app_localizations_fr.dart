@@ -269,4 +269,67 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get stopPactConfirm => 'Arrêter';
+
+  @override
+  String pactsActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pactes actifs',
+      one: '1 pacte actif',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pactsDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pactes terminés',
+      one: '1 pacte terminé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pactsCancelled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pactes annulés',
+      one: '1 pacte annulé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addPact => 'Ajouter un pacte';
+
+  @override
+  String get pactListTitle => 'Pactes';
+
+  @override
+  String get filterActive => 'Actifs';
+
+  @override
+  String get filterDone => 'Terminés';
+
+  @override
+  String get filterCancelled => 'Annulés';
+
+  @override
+  String pactNextShowup(String date) {
+    return 'Prochain : $date';
+  }
+
+  @override
+  String pactEndedOn(String date) {
+    return 'Terminé le $date';
+  }
+
+  @override
+  String pactCancelledOn(String date) {
+    return 'Annulé le $date';
+  }
 }
