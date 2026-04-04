@@ -1,26 +1,57 @@
 # Architecture
 
-The structure in general will be a mix of vertical slice architecture as defined [here](https://ddd-practitioners.com/home/glossary/vertical-slice-architecture/), where each slice is a feature as defined in @docs/PRODUCT_SPEC.md.
+Vertical-slice architecture where each slice is a feature from @docs/PRODUCT_SPEC.md, with three layers per slice: domain, data, and UI.
 
-Each vertical slice would have three layers: domain, data and UI.
+## Directory structure
 
-## Domain
-Domain is where all the domain related classes are stored. NO classes from data, UI or infrastructure layers must be here:
-  - The core domain is a habit tracking, which includes habits, pacts, showups and timelines.
-  - The colors or emoji assignment to the habits is a support domain
-  - Preparing notifications are also a support domain.
+```
+lib/
+├── main.dart                          # App entry point (runApp)
+├── l10n/                              # ARB source files + generated/ output
+└── features/
+    ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel
+    │   ├── domain/
+    │   ├── data/
+    │   └── ui/ (generic/, ios/, android/)
+    ├── pact/                          # Pact creation wizard + pact detail screen
+    │   ├── domain/
+    │   ├── data/
+    │   └── ui/ (generic/, ios/, android/)
+    ├── showup/                        # Showup model, generation, repository, stats
+    │   ├── domain/
+    │   ├── data/
+    │   └── ui/ (generic/, ios/, android/)
+    └── reminder/                      # Notification scheduling (not yet implemented)
+        ├── domain/
+        ├── data/
+        └── ui/ (generic/, ios/, android/)
 
-## Data
-All the data management related classes are located in data layer.
-- Storage and mapping data to the domain layer and back are located in data layer.
-- Changes in the data layer (schemes, contracts etc.) should also be covered with tests in order to prevent issues during migrations. If change in schemes or APIs occur, the migration files should be generated and tested.
+test/
+└── features/                          # Mirrors lib/features/
+    ├── dashboard/ (domain/, ui/)
+    ├── pact/ (data/, domain/, ui/)
+    └── showup/ (data/, domain/)
+```
 
-## UI
-All the UI related classes are located in the UI layer. 
-- Custom widgets and mapping from Domain to the UI and back belong here.
-- There should be three sublayers: for iOS (Cupertino), for Android (Material), and a generic one that prepares the view state and delegates rendering to the platform-specific sublayer.
-- The class where `runApp` is getting called should be out of this hierarchy (`lib/main.dart`).
+## Layers
 
-## Flutter-related details
-- [sqflite](https://pub.dev/packages/sqflite) for local storage.
-- [Riverpod](https://riverpod.dev/) for state management and dependency injection.
+### Domain
+Core business logic. No dependencies on data, UI, or infrastructure.
+- Models: `Pact`, `PactStatus`, `Showup`, `ShowupStatus`, `ShowupSchedule`, `PactStats`
+- Repository interfaces: `PactRepository`, `ShowupRepository`
+- Generators: `ShowupGenerator`, `ShowupDateUtils`
+
+### Data
+Storage and persistence. Implements repository interfaces from domain.
+- Currently: `InMemoryPactRepository`, `InMemoryShowupRepository` (sqflite implementations planned — see @docs/BACKLOG.md)
+
+### UI
+Platform-split presentation:
+- `generic/` — view models (Riverpod notifiers) and shared state classes
+- `ios/` — Cupertino widgets
+- `android/` — Material widgets
+
+## Dependencies
+
+- [Riverpod](https://riverpod.dev/) — state management and dependency injection
+- [sqflite](https://pub.dev/packages/sqflite) — local storage (dependency declared, real implementations pending)
