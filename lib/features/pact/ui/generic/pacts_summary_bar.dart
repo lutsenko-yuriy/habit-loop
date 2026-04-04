@@ -9,10 +9,11 @@ import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:intl/intl.dart';
 
-/// A persistent draggable panel that lives at the bottom of the dashboard.
+/// A persistent draggable panel at the bottom of the dashboard.
 ///
-/// Collapsed: shows pact counts (hidden entirely when all counts are 0).
-/// Drag up or tap the header to expand to the full pact list.
+/// Uses [DraggableScrollableSheet] with a [CustomScrollView] so that the
+/// sheet expands as the user drags, then scrolls the pact list once fully
+/// open — avoiding any fixed-height Column overflow.
 class PactsPanel extends ConsumerStatefulWidget {
   final AsyncCallback onCreatePact;
 
@@ -25,7 +26,7 @@ class PactsPanel extends ConsumerStatefulWidget {
 class _PactsPanelState extends ConsumerState<PactsPanel> {
   late final DraggableScrollableController _controller;
 
-  static const double _minSize = 0.14;
+  static const double _minSize = 0.1;
   static const double _expandedSize = 0.55;
   static const double _maxSize = 0.92;
 
@@ -97,6 +98,8 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       if (state.cancelledCount > 0) l10n.pactsCancelled(state.cancelledCount),
     ].join('\n');
 
+    final entries = state.filteredEntries;
+
     return DraggableScrollableSheet(
       controller: _controller,
       initialChildSize: _minSize,
@@ -109,122 +112,134 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           elevation: 4,
-          child: Column(
-            children: [
-              // ── Drag handle + summary (tappable to expand) ──
-              GestureDetector(
-                onTap: _expand,
-                behavior: HitTestBehavior.opaque,
+          child: CustomScrollView(
+            controller: scrollController,
+            slivers: [
+              // ── Drag handle + summary (tap to expand) ──
+              SliverToBoxAdapter(
+                child: GestureDetector(
+                  onTap: _expand,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                summaryLines,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                            const Icon(Icons.keyboard_arrow_up, size: 20),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Title + add button ──
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+                  child: Row(
                     children: [
-                      Container(
-                        width: 36,
-                        height: 4,
-                        margin: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          color:
-                              Theme.of(context).colorScheme.outlineVariant,
-                          borderRadius: BorderRadius.circular(2),
+                      Expanded(
+                        child: Text(
+                          l10n.pactListTitle,
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              summaryLines,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                          const Icon(Icons.keyboard_arrow_up, size: 20),
-                        ],
+                      TextButton.icon(
+                        onPressed: _addPact,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: Text(l10n.addPact),
                       ),
                     ],
                   ),
                 ),
               ),
 
-              // ── Title + add button ──
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.pactListTitle,
-                        style: Theme.of(context).textTheme.titleLarge,
+              // ── Filter chips ──
+              SliverToBoxAdapter(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      FilterChip(
+                        label: Text(l10n.filterActive),
+                        selected:
+                            state.activeFilters.contains(PactStatus.active),
+                        onSelected: (_) => ref
+                            .read(pactListViewModelProvider.notifier)
+                            .toggleFilter(PactStatus.active),
                       ),
-                    ),
-                    TextButton.icon(
-                      onPressed: _addPact,
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(l10n.addPact),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: Text(l10n.filterDone),
+                        selected: state.activeFilters
+                            .contains(PactStatus.completed),
+                        onSelected: (_) => ref
+                            .read(pactListViewModelProvider.notifier)
+                            .toggleFilter(PactStatus.completed),
+                      ),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: Text(l10n.filterCancelled),
+                        selected:
+                            state.activeFilters.contains(PactStatus.stopped),
+                        onSelected: (_) => ref
+                            .read(pactListViewModelProvider.notifier)
+                            .toggleFilter(PactStatus.stopped),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
-              // ── Filter chips ──
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    FilterChip(
-                      label: Text(l10n.filterActive),
-                      selected:
-                          state.activeFilters.contains(PactStatus.active),
-                      onSelected: (_) => ref
-                          .read(pactListViewModelProvider.notifier)
-                          .toggleFilter(PactStatus.active),
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: Text(l10n.filterDone),
-                      selected: state.activeFilters
-                          .contains(PactStatus.completed),
-                      onSelected: (_) => ref
-                          .read(pactListViewModelProvider.notifier)
-                          .toggleFilter(PactStatus.completed),
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: Text(l10n.filterCancelled),
-                      selected:
-                          state.activeFilters.contains(PactStatus.stopped),
-                      onSelected: (_) => ref
-                          .read(pactListViewModelProvider.notifier)
-                          .toggleFilter(PactStatus.stopped),
-                    ),
-                  ],
-                ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 8),
               ),
-              const SizedBox(height: 8),
-              const Divider(height: 1),
+              const SliverToBoxAdapter(
+                child: Divider(height: 1),
+              ),
 
               // ── Pact list ──
-              Expanded(
-                child: state.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : state.filteredEntries.isEmpty
-                        ? Center(child: Text(l10n.noPactsYet))
-                        : ListView.separated(
-                            controller: scrollController,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            itemCount: state.filteredEntries.length,
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 1, indent: 16),
-                            itemBuilder: (context, index) {
-                              final entry = state.filteredEntries[index];
-                              return _PactTile(
-                                entry: entry,
-                                onTap: () => _navigateToPact(entry),
-                              );
-                            },
-                          ),
-              ),
+              if (state.isLoading)
+                const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (entries.isEmpty)
+                SliverFillRemaining(
+                  child: Center(child: Text(l10n.noPactsYet)),
+                )
+              else
+                SliverList.separated(
+                  itemCount: entries.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, indent: 16),
+                  itemBuilder: (context, index) {
+                    final entry = entries[index];
+                    return _PactTile(
+                      entry: entry,
+                      onTap: () => _navigateToPact(entry),
+                    );
+                  },
+                ),
             ],
           ),
         );
@@ -249,7 +264,8 @@ class _PactTile extends StatelessWidget {
     final String subtitle;
     if (pact.status == PactStatus.active) {
       final next = entry.nextShowupAt;
-      subtitle = next != null ? l10n.pactNextShowup(dateFormat.format(next)) : '';
+      subtitle =
+          next != null ? l10n.pactNextShowup(dateFormat.format(next)) : '';
     } else if (pact.status == PactStatus.completed) {
       subtitle = l10n.pactEndedOn(dateFormat.format(pact.endDate));
     } else {
