@@ -109,9 +109,10 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       snapSizes: const [_minSize, _expandedSize],
       builder: (ctx, scrollController) {
         return Material(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          elevation: 4,
+          elevation: 12,
+          shadowColor: Colors.black.withValues(alpha: 0.3),
           child: CustomScrollView(
             controller: scrollController,
             slivers: [

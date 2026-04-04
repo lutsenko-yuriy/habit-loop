@@ -90,23 +90,17 @@ class _PactDetailContent extends StatelessWidget {
             Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
           ],
         ),
-        if (pact.status == PactStatus.active || stats.showupsRemaining > 0) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining))),
-              const SizedBox(width: 8),
-              Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
-            ],
-          ),
-        ] else ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
-            ],
-          ),
-        ],
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            if (pact.status == PactStatus.active)
+              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
+            else if (pact.status == PactStatus.stopped)
+              Expanded(child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
+            if (pact.status != PactStatus.completed) const SizedBox(width: 8),
+            Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+          ],
+        ),
         const SizedBox(height: 24),
 
         // Time details

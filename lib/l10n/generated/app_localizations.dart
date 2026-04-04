@@ -484,6 +484,12 @@ abstract class AppLocalizations {
   /// **'Remaining'**
   String get statsRemaining;
 
+  /// No description provided for @statsCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get statsCancelled;
+
   /// No description provided for @statsStreak.
   ///
   /// In en, this message translates to:

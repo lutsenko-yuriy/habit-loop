@@ -81,6 +81,7 @@
   "statsDone": "Done",
   "statsFailed": "Failed",
   "statsRemaining": "Remaining",
+  "statsCancelled": "Cancelled",
   "statsStreak": "Streak",
   "statsShowups": "{count} showups",
   "@statsShowups": {

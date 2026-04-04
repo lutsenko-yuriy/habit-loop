@@ -155,15 +155,13 @@ void main() {
       expect(filters, {PactStatus.completed, PactStatus.stopped});
     });
 
-    test('toggleFilter is no-op when it is the only selected filter', () {
+    test('toggleFilter can deselect all filters', () {
       final c = _makeContainer();
-      // deselect two first
+      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped);
-      // now only active remains — try to deselect it
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
       final filters = c.read(pactListViewModelProvider).activeFilters;
-      expect(filters, {PactStatus.active});
+      expect(filters, isEmpty);
     });
 
     test('toggleFilter selects a deselected filter', () {
