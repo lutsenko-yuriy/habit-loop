@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
-import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart';
+import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -35,21 +35,19 @@ class DashboardPageAndroid extends StatelessWidget {
               child: const Icon(Icons.add),
             )
           : null,
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : !hasPacts
-                    ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
-                    : _DashboardContent(
-                        state: state,
-                        l10n: l10n,
-                        onDaySelected: onDaySelected,
-                        onShowupTapped: onShowupTapped,
-                      ),
-          ),
-          PactsSummaryBar(onCreatePact: onCreatePact),
+          state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : !hasPacts
+                  ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
+                  : _DashboardContent(
+                      state: state,
+                      l10n: l10n,
+                      onDaySelected: onDaySelected,
+                      onShowupTapped: onShowupTapped,
+                    ),
+          PactsPanel(onCreatePact: onCreatePact),
         ],
       ),
     );
