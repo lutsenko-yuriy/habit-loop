@@ -37,20 +37,22 @@ When invoked at the start of a session, do the following:
 3. Present a concise summary to the user:
    - **Latest released milestone** — name and what it delivered (from its issues in Done state).
    - **Current milestone** (In Progress issues) — what is being worked on.
-   - **Backlog** — open issues grouped by label (Feature, Tech Debt, Bug), with IUR-XX identifiers.
+   - **Backlog** — open issues grouped by label (Feature, Tech Debt, Bug), with HAB-XX identifiers.
 4. Ask: *"What goes into the next release?"* and wait for the user's answer.
 5. If the user names issues or describes work, create or update Linear issues accordingly (see Issue triage below).
 
-## Mode 2 — After a PR is merged
+## Mode 2 — After a PR is approved
 
-When invoked after a PR is merged, do the following:
+When invoked after the user signals PR approval (e.g. "I approve the PR", "PR approved", "LGTM"), do the following:
 
 1. Ask the user which Linear issue(s) the PR closes (or infer from the PR title/branch name if obvious).
 2. Move those issues to **Done** state via `mcp__linear__save_issue`.
 3. Check if all issues in the current milestone are Done. If yes, mark the milestone complete (set a `targetDate` matching today's date if not already set).
 4. Regenerate `docs/BACKLOG.md` — see format below.
 5. Regenerate `docs/CHANGELOG.md` — see format below.
-6. Confirm to the user: "Linear updated. BACKLOG.md and CHANGELOG.md regenerated."
+6. Commit and push the regenerated docs to the PR branch.
+7. Merge the PR using `gh pr merge <number> --squash --delete-branch`.
+8. Confirm to the user: "Linear updated, docs regenerated, PR merged."
 
 ## Issue triage
 
@@ -64,7 +66,7 @@ When the user describes a bug, feature, or tech debt:
    - `state` — Backlog (default) or Todo (if the user says it's next)
    - `milestone` — assign to the relevant version milestone if known
    - `description` — full context, acceptance criteria, and any links
-2. Report the created issue ID (e.g. IUR-23) back to the user.
+2. Report the created issue ID (e.g. HAB-23) back to the user.
 
 ---
 

@@ -100,6 +100,6 @@ After that, wait for the user to review and approve (or adjust) the plan before 
     - If it does, invoke it immediately by passing it the PR number: `Use the code-reviewer agent to review PR #<number>`.
     - If no such agent exists, request a review from the user directly.
 12. Remind the user to compact the context after each commit to keep the conversation lean.
-13. After the PR is merged:
-    - Invoke the `product-owner` agent: `Use the product-owner agent to close the merged PR's Linear issues and regenerate BACKLOG.md and CHANGELOG.md`.
+13. When the user approves the PR:
+    - Invoke the `product-owner` agent: `Use the product-owner agent to close the approved PR's Linear issues, regenerate BACKLOG.md and CHANGELOG.md, and merge the PR`.
 14. Clear the context after the PR with the changes is merged.
