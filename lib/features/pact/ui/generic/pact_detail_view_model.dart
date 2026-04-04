@@ -29,7 +29,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     try {
       final pactRepo = ref.read(pactDetailRepositoryProvider);
       final showupRepo = ref.read(pactDetailShowupRepositoryProvider);
-      final pact = await pactRepo.getPactById(arg);
+      var pact = await pactRepo.getPactById(arg);
       if (pact == null) {
         state = state.copyWith(
           isLoading: false,
@@ -38,7 +38,22 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         return;
       }
       final showups = await showupRepo.getShowupsForPact(arg);
-      final stats = PactStats.compute(pact: pact, showups: showups);
+      var stats = PactStats.compute(pact: pact, showups: showups);
+
+      // Auto-complete the pact when its end date has passed or all showups
+      // are resolved (done or failed) — whichever comes first.
+      if (pact.status == PactStatus.active) {
+        final today = DateTime.now();
+        final todayDate = DateTime(today.year, today.month, today.day);
+        final endDateOnly = DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
+        final daysLeft = endDateOnly.difference(todayDate).inDays;
+        if (daysLeft <= 0 || stats.showupsRemaining == 0) {
+          pact = pact.copyWith(status: PactStatus.completed);
+          await pactRepo.updatePact(pact);
+          stats = PactStats.compute(pact: pact, showups: showups);
+        }
+      }
+
       state = state.copyWith(pact: pact, stats: stats, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, loadError: e);

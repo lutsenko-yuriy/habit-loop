@@ -35,9 +35,6 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
   void initState() {
     super.initState();
     _controller = DraggableScrollableController();
-    Future.microtask(() {
-      if (mounted) ref.read(pactListViewModelProvider.notifier).load();
-    });
   }
 
   @override
