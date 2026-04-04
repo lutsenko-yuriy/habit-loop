@@ -16,6 +16,10 @@ void main() {
   late ProviderContainer container;
   late InMemoryPactRepository pactRepo;
   late InMemoryShowupRepository showupRepo;
+  // 2054 is used throughout to keep all generated showups in the future.
+  // ShowupGenerator.generate() filters by DateTime.now(), so past dates would
+  // silently drop showups and break count assertions. 2054 has the same weekday
+  // structure as 2026 (28-year Gregorian cycle) so all expected values are identical.
   final today = DateTime(2054, 3, 30);
 
   setUp(() {

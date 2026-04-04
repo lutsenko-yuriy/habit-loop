@@ -58,7 +58,9 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         clearStopReason: reason == null || reason.trim().isEmpty,
       );
       await ref.read(pactDetailRepositoryProvider).updatePact(updated);
-      state = state.copyWith(pact: updated, isStopping: false);
+      final showups = await ref.read(pactDetailShowupRepositoryProvider).getShowupsForPact(arg);
+      final stats = PactStats.compute(pact: updated, showups: showups);
+      state = state.copyWith(pact: updated, stats: stats, isStopping: false);
     } catch (e) {
       state = state.copyWith(isStopping: false, stopError: e);
     }
