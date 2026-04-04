@@ -5,19 +5,23 @@ import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
+// 2054 has the same weekday structure as 2026 (28-year Gregorian cycle),
+// and is far enough in the future that DateTime.now() filtering won't affect these tests.
 Pact _pact({
   required ShowupSchedule schedule,
   DateTime? startDate,
   DateTime? endDate,
+  Duration? reminderOffset,
 }) {
   return Pact(
     id: 'pact-1',
     habitName: 'Meditate',
-    startDate: startDate ?? DateTime(2026, 4, 1),
-    endDate: endDate ?? DateTime(2026, 4, 30),
+    startDate: startDate ?? DateTime(2054, 4, 1),
+    endDate: endDate ?? DateTime(2054, 4, 30),
     showupDuration: const Duration(minutes: 10),
     schedule: schedule,
     status: PactStatus.active,
+    reminderOffset: reminderOffset,
   );
 }
 
@@ -27,16 +31,16 @@ void main() {
       test('generates one showup per day within the pact range', () {
         final pact = _pact(
           schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 4, 3),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 3),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         expect(showups.length, 3);
-        expect(showups[0].scheduledAt, DateTime(2026, 4, 1, 7, 0));
-        expect(showups[1].scheduledAt, DateTime(2026, 4, 2, 7, 0));
-        expect(showups[2].scheduledAt, DateTime(2026, 4, 3, 7, 0));
+        expect(showups[0].scheduledAt, DateTime(2054, 4, 1, 7, 0));
+        expect(showups[1].scheduledAt, DateTime(2054, 4, 2, 7, 0));
+        expect(showups[2].scheduledAt, DateTime(2054, 4, 3, 7, 0));
       });
 
       test('all generated showups are pending', () {
@@ -52,8 +56,8 @@ void main() {
       test('generated showups have correct pactId and duration', () {
         final pact = _pact(
           schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 4, 1),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 1),
         );
 
         final showups = ShowupGenerator.generate(pact);
@@ -65,8 +69,8 @@ void main() {
       test('each showup has a unique id', () {
         final pact = _pact(
           schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 4, 5),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 5),
         );
 
         final showups = ShowupGenerator.generate(pact);
@@ -79,47 +83,47 @@ void main() {
         final pact = _pact(
           schedule:
               const DailySchedule(timeOfDay: Duration(hours: 7, minutes: 30)),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 4, 1),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 1),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
-        expect(showups.first.scheduledAt, DateTime(2026, 4, 1, 7, 30));
+        expect(showups.first.scheduledAt, DateTime(2054, 4, 1, 7, 30));
       });
     });
 
     group('WeekdaySchedule', () {
       test('generates showups only on specified weekdays', () {
-        // April 2026: Mon=6,13,20,27 / Wed=1,8,15,22,29
+        // April 2054 (same weekday structure as April 2026): Mon=6,13,20,27 / Wed=1,8,15,22,29
         final pact = _pact(
           schedule: const WeekdaySchedule(entries: [
             WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
             WeekdayEntry(
                 weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
           ]),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 4, 14),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 14),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         // April 1=Wed, 6=Mon, 8=Wed, 13=Mon
         expect(showups.length, 4);
-        expect(showups[0].scheduledAt, DateTime(2026, 4, 1, 18, 0)); // Wed
-        expect(showups[1].scheduledAt, DateTime(2026, 4, 6, 6, 0));  // Mon
-        expect(showups[2].scheduledAt, DateTime(2026, 4, 8, 18, 0)); // Wed
-        expect(showups[3].scheduledAt, DateTime(2026, 4, 13, 6, 0)); // Mon
+        expect(showups[0].scheduledAt, DateTime(2054, 4, 1, 18, 0)); // Wed
+        expect(showups[1].scheduledAt, DateTime(2054, 4, 6, 6, 0));  // Mon
+        expect(showups[2].scheduledAt, DateTime(2054, 4, 8, 18, 0)); // Wed
+        expect(showups[3].scheduledAt, DateTime(2054, 4, 13, 6, 0)); // Mon
       });
 
       test('generates nothing if no weekday matches the range', () {
-        // Only Sunday, but range is Mon-Fri (April 6-10, 2026)
+        // Only Sunday, but range is Mon-Fri (April 6-10, 2054)
         final pact = _pact(
           schedule: const WeekdaySchedule(entries: [
             WeekdayEntry(weekday: DateTime.sunday, timeOfDay: Duration(hours: 9)),
           ]),
-          startDate: DateTime(2026, 4, 6),
-          endDate: DateTime(2026, 4, 10),
+          startDate: DateTime(2054, 4, 6),
+          endDate: DateTime(2054, 4, 10),
         );
 
         final showups = ShowupGenerator.generate(pact);
@@ -130,8 +134,8 @@ void main() {
 
     group('MonthlyByWeekdaySchedule', () {
       test('generates showup on correct occurrence of weekday each month', () {
-        // 2nd Monday of April 2026 = April 13
-        // 2nd Monday of May 2026 = May 11
+        // 2nd Monday of April 2054 = April 13
+        // 2nd Monday of May 2054 = May 11
         final pact = _pact(
           schedule: const MonthlyByWeekdaySchedule(entries: [
             MonthlyWeekdayEntry(
@@ -140,20 +144,20 @@ void main() {
               timeOfDay: Duration(hours: 9),
             ),
           ]),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 5, 31),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 5, 31),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         expect(showups.length, 2);
-        expect(showups[0].scheduledAt, DateTime(2026, 4, 13, 9, 0));
-        expect(showups[1].scheduledAt, DateTime(2026, 5, 11, 9, 0));
+        expect(showups[0].scheduledAt, DateTime(2054, 4, 13, 9, 0));
+        expect(showups[1].scheduledAt, DateTime(2054, 5, 11, 9, 0));
       });
 
       test('skips month if occurrence does not exist', () {
-        // 5th Monday of April 2026 does not exist (only 4 Mondays: 6,13,20,27)
-        // 5th Monday of June 2026 = June 29
+        // 5th Monday of April 2054 does not exist (only 4 Mondays: 6,13,20,27)
+        // 5th Monday of June 2054 = June 29
         final pact = _pact(
           schedule: const MonthlyByWeekdaySchedule(entries: [
             MonthlyWeekdayEntry(
@@ -162,34 +166,34 @@ void main() {
               timeOfDay: Duration(hours: 9),
             ),
           ]),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 6, 30),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 6, 30),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         // April: no 5th Monday. May: May 4,11,18,25 — no 5th. June: Jun 1,8,15,22,29 — 5th Monday = Jun 29
         expect(showups.length, 1);
-        expect(showups[0].scheduledAt, DateTime(2026, 6, 29, 9, 0));
+        expect(showups[0].scheduledAt, DateTime(2054, 6, 29, 9, 0));
       });
     });
 
     group('MonthlyByDateSchedule', () {
       test('generates showup on specified day of each month', () {
-        // 15th of April and May 2026
+        // 15th of April and May 2054
         final pact = _pact(
           schedule: const MonthlyByDateSchedule(entries: [
             MonthlyDateEntry(dayOfMonth: 15, timeOfDay: Duration(hours: 8)),
           ]),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 5, 31),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 5, 31),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         expect(showups.length, 2);
-        expect(showups[0].scheduledAt, DateTime(2026, 4, 15, 8, 0));
-        expect(showups[1].scheduledAt, DateTime(2026, 5, 15, 8, 0));
+        expect(showups[0].scheduledAt, DateTime(2054, 4, 15, 8, 0));
+        expect(showups[1].scheduledAt, DateTime(2054, 5, 15, 8, 0));
       });
 
       test('skips months where the day does not exist', () {
@@ -198,16 +202,16 @@ void main() {
           schedule: const MonthlyByDateSchedule(entries: [
             MonthlyDateEntry(dayOfMonth: 31, timeOfDay: Duration(hours: 8)),
           ]),
-          startDate: DateTime(2026, 3, 1),
-          endDate: DateTime(2026, 6, 30),
+          startDate: DateTime(2054, 3, 1),
+          endDate: DateTime(2054, 6, 30),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         // March 31 and May 31 exist; April 31 and June 31 do not
         expect(showups.length, 2);
-        expect(showups[0].scheduledAt, DateTime(2026, 3, 31, 8, 0));
-        expect(showups[1].scheduledAt, DateTime(2026, 5, 31, 8, 0));
+        expect(showups[0].scheduledAt, DateTime(2054, 3, 31, 8, 0));
+        expect(showups[1].scheduledAt, DateTime(2054, 5, 31, 8, 0));
       });
 
       test('skips day if it falls outside the pact date range', () {
@@ -216,15 +220,15 @@ void main() {
           schedule: const MonthlyByDateSchedule(entries: [
             MonthlyDateEntry(dayOfMonth: 25, timeOfDay: Duration(hours: 8)),
           ]),
-          startDate: DateTime(2026, 4, 26),
-          endDate: DateTime(2026, 5, 31),
+          startDate: DateTime(2054, 4, 26),
+          endDate: DateTime(2054, 5, 31),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         // April 25 is before the start; May 25 is within range
         expect(showups.length, 1);
-        expect(showups[0].scheduledAt, DateTime(2026, 5, 25, 8, 0));
+        expect(showups[0].scheduledAt, DateTime(2054, 5, 25, 8, 0));
       });
 
       test('multiple entries per month generates multiple showups', () {
@@ -233,15 +237,15 @@ void main() {
             MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
             MonthlyDateEntry(dayOfMonth: 15, timeOfDay: Duration(hours: 20)),
           ]),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 4, 30),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 30),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         expect(showups.length, 2);
-        expect(showups[0].scheduledAt, DateTime(2026, 4, 1, 8, 0));
-        expect(showups[1].scheduledAt, DateTime(2026, 4, 15, 20, 0));
+        expect(showups[0].scheduledAt, DateTime(2054, 4, 1, 8, 0));
+        expect(showups[1].scheduledAt, DateTime(2054, 4, 15, 20, 0));
       });
 
       test('two entries at the same datetime produce unique ids', () {
@@ -251,14 +255,63 @@ void main() {
             MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
             MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
           ]),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 4, 30),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 30),
         );
 
         final showups = ShowupGenerator.generate(pact);
 
         expect(showups.length, 2);
         expect(showups[0].id, isNot(equals(showups[1].id)));
+      });
+    });
+
+    group('cutoff filtering', () {
+      test('skips showup when scheduledAt - reminderOffset is already past', () {
+        // scheduledAt = 10 days from now, reminderOffset = 20 days
+        // → cutoff = 10 days ago (past) → filtered
+        final now = DateTime.now();
+        final pact = _pact(
+          schedule: DailySchedule(timeOfDay: Duration(hours: now.hour)),
+          startDate: DateTime(now.year, now.month, now.day + 10),
+          endDate: DateTime(now.year, now.month, now.day + 10),
+          reminderOffset: const Duration(days: 20),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        expect(showups, isEmpty);
+      });
+
+      test('includes showup when scheduledAt - reminderOffset is in the future', () {
+        // scheduledAt = 30 days from now, reminderOffset = 5 days
+        // → cutoff = 25 days from now (future) → included
+        final now = DateTime.now();
+        final pact = _pact(
+          schedule: DailySchedule(timeOfDay: Duration(hours: now.hour)),
+          startDate: DateTime(now.year, now.month, now.day + 30),
+          endDate: DateTime(now.year, now.month, now.day + 30),
+          reminderOffset: const Duration(days: 5),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        expect(showups.length, 1);
+      });
+
+      test('skips showup with no reminder when scheduledAt is in the past', () {
+        // No reminderOffset → cutoff = scheduledAt itself → past showups filtered
+        final now = DateTime.now();
+        final yesterday = DateTime(now.year, now.month, now.day - 1);
+        final pact = _pact(
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          startDate: yesterday,
+          endDate: yesterday,
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        expect(showups, isEmpty);
       });
     });
   });

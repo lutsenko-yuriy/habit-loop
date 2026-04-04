@@ -15,19 +15,25 @@ class ShowupGenerator {
   /// the same IDs in the same order.
   static List<Showup> generate(Pact pact) {
     final schedule = pact.schedule;
+    final now = DateTime.now();
     // Sequence index scoped to this generate() call — ensures unique IDs
     // even when two schedule entries resolve to the same datetime.
     var seq = 0;
     Showup makeShowup(DateTime scheduledAt) =>
         _showup(pact: pact, scheduledAt: scheduledAt, seq: seq++);
 
+    bool isActionable(DateTime scheduledAt) {
+      final cutoff = scheduledAt.subtract(pact.reminderOffset ?? Duration.zero);
+      return cutoff.isAfter(now);
+    }
+
     return switch (schedule) {
-      DailySchedule() => _generateDaily(pact, schedule, makeShowup),
-      WeekdaySchedule() => _generateWeekday(pact, schedule, makeShowup),
+      DailySchedule() => _generateDaily(pact, schedule, makeShowup, isActionable),
+      WeekdaySchedule() => _generateWeekday(pact, schedule, makeShowup, isActionable),
       MonthlyByWeekdaySchedule() =>
-        _generateMonthlyByWeekday(pact, schedule, makeShowup),
+        _generateMonthlyByWeekday(pact, schedule, makeShowup, isActionable),
       MonthlyByDateSchedule() =>
-        _generateMonthlyByDate(pact, schedule, makeShowup),
+        _generateMonthlyByDate(pact, schedule, makeShowup, isActionable),
     };
   }
 
@@ -39,6 +45,7 @@ class ShowupGenerator {
     Pact pact,
     DailySchedule schedule,
     Showup Function(DateTime) makeShowup,
+    bool Function(DateTime) isActionable,
   ) {
     final showups = <Showup>[];
     var date = pact.startDate;
@@ -46,7 +53,8 @@ class ShowupGenerator {
 
     while (!date.isAfter(end)) {
       final scheduledAt = _combine(date, schedule.timeOfDay);
-      if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
+      if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate) &&
+          isActionable(scheduledAt)) {
         showups.add(makeShowup(scheduledAt));
       }
       // Use calendar arithmetic instead of Duration addition to avoid DST issues.
@@ -63,6 +71,7 @@ class ShowupGenerator {
     Pact pact,
     WeekdaySchedule schedule,
     Showup Function(DateTime) makeShowup,
+    bool Function(DateTime) isActionable,
   ) {
     final showups = <Showup>[];
     var date = pact.startDate;
@@ -72,7 +81,8 @@ class ShowupGenerator {
       for (final entry in schedule.entries) {
         if (date.weekday == entry.weekday) {
           final scheduledAt = _combine(date, entry.timeOfDay);
-          if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
+          if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate) &&
+              isActionable(scheduledAt)) {
             showups.add(makeShowup(scheduledAt));
           }
         }
@@ -91,6 +101,7 @@ class ShowupGenerator {
     Pact pact,
     MonthlyByWeekdaySchedule schedule,
     Showup Function(DateTime) makeShowup,
+    bool Function(DateTime) isActionable,
   ) {
     final showups = <Showup>[];
     final months = _monthsInRange(pact.startDate, pact.endDate);
@@ -105,7 +116,8 @@ class ShowupGenerator {
         );
         if (date == null) continue;
         final scheduledAt = _combine(date, entry.timeOfDay);
-        if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
+        if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate) &&
+            isActionable(scheduledAt)) {
           showups.add(makeShowup(scheduledAt));
         }
       }
@@ -141,6 +153,7 @@ class ShowupGenerator {
     Pact pact,
     MonthlyByDateSchedule schedule,
     Showup Function(DateTime) makeShowup,
+    bool Function(DateTime) isActionable,
   ) {
     final showups = <Showup>[];
     final months = _monthsInRange(pact.startDate, pact.endDate);
@@ -153,7 +166,8 @@ class ShowupGenerator {
         if (candidate.month != month.month) continue; // day doesn't exist
 
         final scheduledAt = _combine(candidate, entry.timeOfDay);
-        if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
+        if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate) &&
+            isActionable(scheduledAt)) {
           showups.add(makeShowup(scheduledAt));
         }
       }

@@ -217,7 +217,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsRemaining => 'Remaining';
 
   @override
-  String get statsCancelled => 'Cancelled';
+  String get statsCancelled => 'Stopped';
 
   @override
   String get statsStreak => 'Streak';
@@ -279,6 +279,7 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '$count pacts active',
       one: '1 pact active',
+      zero: 'No pacts active',
     );
     return '$_temp0';
   }
@@ -290,6 +291,7 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '$count pacts done',
       one: '1 pact done',
+      zero: 'No pacts done',
     );
     return '$_temp0';
   }
@@ -299,8 +301,9 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count pacts cancelled',
-      one: '1 pact cancelled',
+      other: '$count pacts stopped',
+      one: '1 pact stopped',
+      zero: 'No pacts stopped',
     );
     return '$_temp0';
   }
@@ -318,7 +321,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterDone => 'Done';
 
   @override
-  String get filterCancelled => 'Cancelled';
+  String get filterCancelled => 'Stopped';
 
   @override
   String pactNextShowup(String date) {
@@ -332,6 +335,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pactCancelledOn(String date) {
-    return 'Cancelled $date';
+    return 'Stopped $date';
   }
 }

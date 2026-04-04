@@ -50,8 +50,10 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     if (pact == null) return;
     state = state.copyWith(isStopping: true, clearStopError: true);
     try {
+      final now = DateTime.now();
       final updated = pact.copyWith(
         status: PactStatus.stopped,
+        endDate: DateTime(now.year, now.month, now.day),
         stopReason: reason,
         clearStopReason: reason == null || reason.trim().isEmpty,
       );

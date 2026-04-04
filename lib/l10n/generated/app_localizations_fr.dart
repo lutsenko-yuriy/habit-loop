@@ -218,7 +218,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get statsRemaining => 'Restants';
 
   @override
-  String get statsCancelled => 'Annulés';
+  String get statsCancelled => 'Arrêtés';
 
   @override
   String get statsStreak => 'Série';
@@ -280,6 +280,7 @@ class AppLocalizationsFr extends AppLocalizations {
       locale: localeName,
       other: '$count pactes actifs',
       one: '1 pacte actif',
+      zero: 'Aucun pacte actif',
     );
     return '$_temp0';
   }
@@ -291,6 +292,7 @@ class AppLocalizationsFr extends AppLocalizations {
       locale: localeName,
       other: '$count pactes terminés',
       one: '1 pacte terminé',
+      zero: 'Aucun pacte terminé',
     );
     return '$_temp0';
   }
@@ -300,8 +302,9 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count pactes annulés',
-      one: '1 pacte annulé',
+      other: '$count pactes arrêtés',
+      one: '1 pacte arrêté',
+      zero: 'Aucun pacte arrêté',
     );
     return '$_temp0';
   }
@@ -319,7 +322,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get filterDone => 'Terminés';
 
   @override
-  String get filterCancelled => 'Annulés';
+  String get filterCancelled => 'Arrêtés';
 
   @override
   String pactNextShowup(String date) {
@@ -333,6 +336,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String pactCancelledOn(String date) {
-    return 'Annulé le $date';
+    return 'Arrêté le $date';
   }
 }
