@@ -64,7 +64,6 @@ class PactListViewModel extends Notifier<PactListState> {
 
   void toggleFilter(PactStatus status) {
     final current = state.activeFilters;
-    if (current.contains(status) && current.length == 1) return;
     final next = Set<PactStatus>.of(current);
     if (current.contains(status)) {
       next.remove(status);

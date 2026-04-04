@@ -81,6 +81,7 @@
   "statsDone": "Réalisés",
   "statsFailed": "Échoués",
   "statsRemaining": "Restants",
+  "statsCancelled": "Annulés",
   "statsStreak": "Série",
   "statsShowups": "{count} rendez-vous",
   "@statsShowups": {

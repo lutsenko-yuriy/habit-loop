@@ -81,6 +81,7 @@
   "statsDone": "Erledigt",
   "statsFailed": "Verpasst",
   "statsRemaining": "Ausstehend",
+  "statsCancelled": "Abgebrochen",
   "statsStreak": "Serie",
   "statsShowups": "{count} Showups",
   "@statsShowups": {

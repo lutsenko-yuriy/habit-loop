@@ -217,6 +217,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsRemaining => 'Remaining';
 
   @override
+  String get statsCancelled => 'Cancelled';
+
+  @override
   String get statsStreak => 'Streak';
 
   @override
