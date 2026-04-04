@@ -159,13 +159,15 @@ class _PactDetailContent extends StatelessWidget {
         if (pact.status == PactStatus.active) ...[
           const SizedBox(height: 32),
           CupertinoButton(
-            color: CupertinoColors.destructiveRed,
             onPressed: state.isStopping
                 ? null
                 : () => _showStopDialog(context),
             child: state.isStopping
                 ? const CupertinoActivityIndicator()
-                : Text(l10n.stopPact),
+                : Text(
+                    l10n.stopPact,
+                    style: const TextStyle(color: CupertinoColors.destructiveRed),
+                  ),
           ),
         ],
       ],
