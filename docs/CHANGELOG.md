@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.7.0] — 2026-04-05 (PR #11 merged)
+
+### Added — Developer agent for TDD feature implementation
+
+- Developer agent (`.claude/agents/developer.md`, model `claude-sonnet-4-6`) that implements work units produced by the Tech Lead agent following a strict TDD cycle (Red → Green → Refactor)
+- Agent requires an approved Tech Lead implementation plan (read from Linear issue comments) before writing any code
+- Branch naming convention enforced: `feature/HAB-XX-description`
+- Full TDD cycle: write failing tests, implement minimum code to pass, refactor, run `flutter test` and `flutter analyze`
+- Smoke test on both iOS and Android platforms required before opening a PR
+- After pushing a PR the agent transitions the Linear issue to "In Review" and cues the orchestrator to invoke the Tech Lead and Code Reviewer agents in parallel for review
+- Delegates `docs/ARCHITECTURE.md` updates to the Tech Lead agent and `docs/PRODUCT_SPEC.md` updates to the Product Owner agent; does not merge PRs (that remains the Product Owner's responsibility)
+
+---
+
 ## [0.6.0] — 2026-04-05 (PR #10 merged)
 
 ### Added — Tech Lead agent and review wiring

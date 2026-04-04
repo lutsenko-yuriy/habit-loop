@@ -41,15 +41,15 @@ Responsibilities:
 - Review Developer agent PRs at an architectural level before requesting human/code-reviewer review
 
 ### Developer
-**File:** `.claude/agents/developer.md` *(to be created)*
+**File:** `.claude/agents/developer.md`
 **Model:** `claude-sonnet-4-6`
 
 Responsibilities:
-- Pick up one work unit from the Tech Lead's plan
+- Requires an approved Tech Lead plan comment on the Linear issue before starting — escalates if absent
 - Follow TDD: write failing tests → implement → refactor → `flutter test` + `flutter analyze`
-- Create feature branch, commit, push, open PR
-- Update the Linear issue with the PR link and move it to `In Review`
-- Invoke the Code Reviewer agent on the PR
+- Create feature branch (`feature/HAB-XX-description`), commit, push, open PR
+- Delegates doc updates: requests Tech Lead to update ARCHITECTURE.md, Product Owner to update PRODUCT_SPEC.md
+- Posts the PR link as a Linear comment; does not merge
 
 ### Code Reviewer
 **File:** `.claude/agents/code-reviewer.md` *(already exists)*
@@ -82,9 +82,8 @@ Linear workspace (configured):
 | 1 | Linear MCP setup + workspace creation | Done — MCP connected, workspace configured |
 | 2 | Product Owner agent + migrate BACKLOG/CHANGELOG to Linear | **Done** — agent at `.claude/agents/product-owner.md`; all issues (IUR-10–IUR-17) and milestones (v0.0.1–v0.5.0) in Linear; CLAUDE.md updated |
 | 3 | Tech Lead agent | **Done** — agent at `.claude/agents/tech-lead.md`; CLAUDE.md updated |
-| 4 | Developer agent | Pending |
-| 5 | Update CLAUDE.md to orchestrate all agents | Pending |
+| 4 | Developer agent | **Done** — agent at `.claude/agents/developer.md`; CLAUDE.md updated |
+| 5 | Update CLAUDE.md to orchestrate all agents | **Done** — all agents wired into session-start and workflow steps |
 
 ### Next actions (start of next session)
-1. Build the Developer agent (`.claude/agents/developer.md`)
-2. Update CLAUDE.md workflow to invoke Developer for implementation
+- All four agents are in place. Begin feature work from the backlog (HAB-11, HAB-12, or HAB-13).
