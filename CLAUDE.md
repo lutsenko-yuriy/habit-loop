@@ -19,8 +19,9 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | @docs/BACKLOG.md | Known issues and remaining work not yet released |
 | @docs/CHANGELOG.md | Released version history |
 | @docs/VERSIONING.md | Version numbering rules and CI/CD pipeline |
-| CLAUDE.local.md | Local machine settings (Flutter binary path, etc.) — not committed |
-| .claude/agents/code-reviewer.md | PR review agent — invoked automatically in workflow step 14 |
+| CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, etc.) — not committed |
+| .claude/agents/code-reviewer.md | PR review agent — invoked automatically in workflow step 11 |
+| .claude/agents/product-owner.md | Product Owner agent — invoked at session start and after PR merge |
 
 ## Architecture
 
@@ -55,9 +56,10 @@ Details: @docs/VERSIONING.md
 
 At the beginning of every new session, before doing anything else:
 
-1. Read `@docs/CHANGELOG.md` (released versions) and `@docs/BACKLOG.md` (known issues and remaining work).
-2. Summarise to the user what has already been done (latest release) and what is still remaining (backlog).
-3. Ask the user: *"What goes into the next release?"* and wait for their answer before proceeding.
+1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
+2. Invoke the `product-owner` agent: `Use the product-owner agent to present the current backlog from Linear`.
+3. The Product Owner agent will summarise what has been done and what is remaining, then ask *"What goes into the next release?"*.
+4. Wait for the user's answer before proceeding.
 
 ## Workflow
 
@@ -98,7 +100,6 @@ After that, wait for the user to review and approve (or adjust) the plan before 
     - If it does, invoke it immediately by passing it the PR number: `Use the code-reviewer agent to review PR #<number>`.
     - If no such agent exists, request a review from the user directly.
 12. Remind the user to compact the context after each commit to keep the conversation lean.
-13. After the PR is merged:
-    - Update `@docs/CHANGELOG.md`: add a new version section (e.g., `[0.2.0]`) with the date and PR reference describing what was delivered.
-    - Update `@docs/BACKLOG.md`: remove completed items from **Remaining work**; add any new issues discovered during the work to **Issues**.
+13. When the user approves the PR:
+    - Invoke the `product-owner` agent: `Use the product-owner agent to close the approved PR's Linear issues, regenerate BACKLOG.md and CHANGELOG.md, and merge the PR`.
 14. Clear the context after the PR with the changes is merged.

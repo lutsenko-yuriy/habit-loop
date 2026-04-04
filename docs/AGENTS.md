@@ -20,7 +20,7 @@ User
 ## Agents
 
 ### Product Owner
-**File:** `.claude/agents/product-owner.md` *(to be created)*
+**File:** `.claude/agents/product-owner.md`
 **Model:** `claude-sonnet-4-6`
 
 Responsibilities:
@@ -67,11 +67,11 @@ Responsibilities:
 **MCP config:** `.mcp.json` (project-scoped, committed to repo)
 **MCP server:** `https://mcp.linear.app/mcp`
 
-Linear workspace structure to set up (done in Linear UI by user):
+Linear workspace (configured):
 - Team: `Habit Loop` (abbreviation `HAB`)
-- Workflow states: `Triage → Backlog → Todo → In Progress → In Review → Done → Cancelled`
-- Labels: `feature`, `bug`, `tech-debt`, `docs`
-- One milestone/release per app version (0.5.0, 0.6.0, …)
+- Workflow states: `Backlog → Todo → In Progress → In Review → Done` (cancelled: `Canceled`, `Duplicate`)
+- Labels: `Feature`, `Improvement`, `Bug`, `Tech Debt`
+- Milestones v0.0.1–v0.5.0 created; one milestone per app version going forward
 
 ---
 
@@ -79,16 +79,13 @@ Linear workspace structure to set up (done in Linear UI by user):
 
 | Phase | What | Status |
 |---|---|---|
-| 1 | Linear MCP setup + workspace creation | MCP connected; workspace needs configuring in Linear UI |
-| 2 | Product Owner agent + migrate BACKLOG/CHANGELOG to Linear | **Next** |
+| 1 | Linear MCP setup + workspace creation | Done — MCP connected, workspace configured |
+| 2 | Product Owner agent + migrate BACKLOG/CHANGELOG to Linear | **Done** — agent at `.claude/agents/product-owner.md`; all issues (IUR-10–IUR-17) and milestones (v0.0.1–v0.5.0) in Linear; CLAUDE.md updated |
 | 3 | Tech Lead agent | Pending |
 | 4 | Developer agent | Pending |
 | 5 | Update CLAUDE.md to orchestrate all agents | Pending |
 
 ### Next actions (start of next session)
-1. Verify Linear MCP tools are available (`/mcp` if not)
-2. User configures the Linear workspace (team, states, labels, milestones) in the UI
-3. Build the Product Owner agent (`.claude/agents/product-owner.md`)
-4. Product Owner migrates existing BACKLOG.md items into Linear issues
-5. Product Owner migrates CHANGELOG.md versions into Linear milestones
-6. Update CLAUDE.md session-start and post-merge steps to invoke Product Owner
+1. Build the Tech Lead agent (`.claude/agents/tech-lead.md`)
+2. Build the Developer agent (`.claude/agents/developer.md`)
+3. Update CLAUDE.md workflow to invoke Tech Lead for large changes and Developer for implementation

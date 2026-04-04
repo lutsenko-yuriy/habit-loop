@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.5.0] — 2026-04-04 (PR #9 merged)
+
+### Added — Multi-agent workflow and Linear integration
+
+- Product Owner agent (`.claude/agents/product-owner.md`) wired into session-start and post-merge workflow: reads Linear backlog, summarises released and remaining work, manages BACKLOG.md and CHANGELOG.md regeneration from Linear
+- `.mcp.json` committed — Linear MCP server configured for the workspace, enabling all agents to query and update Linear issues
+- `.claude/agents/` directory committed to the repository; `code-reviewer.md` (previously untracked) and `product-owner.md` now versioned
+- `docs/AGENTS.md` describing the full multi-agent plan (Product Owner, Tech Lead, Developer, Code Reviewer)
+- Backlog and changelog migrated to Linear as the single source of truth: `BACKLOG.md` is now generated from open Linear issues; `CHANGELOG.md` is maintained by the Product Owner agent after each merge
+- HAB-10 (v0.5.0 milestone) closed as Done; milestone reached 100% completion
+
+---
+
 ## [0.4.0] — 2026-04-04 (PR #7 merged)
 
 ### Added — Pact detail screen and persistent pacts panel
