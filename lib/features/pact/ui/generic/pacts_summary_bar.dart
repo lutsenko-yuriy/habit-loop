@@ -82,7 +82,6 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     await Future<void>.delayed(const Duration(milliseconds: 260));
     if (!mounted) return;
     await widget.onCreatePact();
-    if (mounted) ref.read(pactListViewModelProvider.notifier).load();
   }
 
   @override

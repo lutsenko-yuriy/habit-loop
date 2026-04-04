@@ -54,8 +54,9 @@ class _PactDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pact = state.pact!;
-    final stats = state.stats!;
+    final pact = state.pact;
+    final stats = state.stats;
+    if (pact == null || stats == null) return const SizedBox.shrink();
     final today = DateTime.now();
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
 
@@ -97,7 +98,7 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Stats cards
-        _SectionHeader(title: 'Stats'),
+        _SectionHeader(title: l10n.sectionStats),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -120,7 +121,7 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Time details
-        _SectionHeader(title: 'Timeline'),
+        _SectionHeader(title: l10n.sectionTimeline),
         const SizedBox(height: 8),
         _DateRow(label: l10n.pactStartDate, date: pact.startDate),
         const SizedBox(height: 8),
@@ -136,7 +137,7 @@ class _PactDetailContent extends StatelessWidget {
         // Stop reason (if stopped)
         if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
           const SizedBox(height: 24),
-          _SectionHeader(title: 'Stop reason'),
+          _SectionHeader(title: l10n.sectionStopReason),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -152,6 +153,14 @@ class _PactDetailContent extends StatelessWidget {
         // Stop pact button
         if (pact.status == PactStatus.active) ...[
           const SizedBox(height: 32),
+          if (state.stopError != null) ...[
+            Text(
+              l10n.stopPactError,
+              style: const TextStyle(color: CupertinoColors.destructiveRed),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
           CupertinoButton(
             onPressed: state.isStopping
                 ? null
@@ -179,43 +188,45 @@ class _PactDetailContent extends StatelessWidget {
   Future<void> _showStopDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final reasonController = TextEditingController();
-
-    final confirmed = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text(l10n.stopPactTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Text(l10n.stopPactBody),
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: reasonController,
-              placeholder: l10n.stopPactReasonHint,
-              maxLines: 3,
+    try {
+      final confirmed = await showCupertinoDialog<bool>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: Text(l10n.stopPactTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Text(l10n.stopPactBody),
+              const SizedBox(height: 12),
+              CupertinoTextField(
+                controller: reasonController,
+                placeholder: l10n.stopPactReasonHint,
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.stopPactConfirm),
             ),
           ],
         ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.stopPactConfirm),
-          ),
-        ],
-      ),
-    );
+      );
 
-    if (confirmed == true) {
-      final reason = reasonController.text.trim();
-      await onStopPact(reason.isEmpty ? null : reason);
+      if (confirmed == true) {
+        final reason = reasonController.text.trim();
+        await onStopPact(reason.isEmpty ? null : reason);
+      }
+    } finally {
+      reasonController.dispose();
     }
-    reasonController.dispose();
   }
 }
 

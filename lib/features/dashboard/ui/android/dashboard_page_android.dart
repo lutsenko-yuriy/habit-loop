@@ -357,7 +357,6 @@ class _ShowupTile extends StatelessWidget {
       leading: Icon(icon, color: color),
       title: Text(habitName),
       subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
-      trailing: const Icon(Icons.chevron_right),
     );
   }
 }

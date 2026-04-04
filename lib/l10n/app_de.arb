@@ -78,6 +78,10 @@
   "tooManyPactsConfirm": "Ja, weiteren erstellen",
 
   "pactDetailTitle": "Pakt-Details",
+  "sectionStats": "Statistiken",
+  "sectionTimeline": "Zeitleiste",
+  "sectionStopReason": "Stoppgrund",
+  "stopPactError": "Pakt konnte nicht gestoppt werden. Bitte erneut versuchen.",
   "statsDone": "Erledigt",
   "statsFailed": "Verpasst",
   "statsRemaining": "Ausstehend",

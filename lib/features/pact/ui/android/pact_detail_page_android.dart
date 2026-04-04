@@ -46,8 +46,9 @@ class _PactDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pact = state.pact!;
-    final stats = state.stats!;
+    final pact = state.pact;
+    final stats = state.stats;
+    if (pact == null || stats == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final today = DateTime.now();
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
@@ -81,7 +82,7 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Stats cards
-        Text('STATS', style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+        Text(l10n.sectionStats.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -104,7 +105,7 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Time details
-        Text('TIMELINE', style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+        Text(l10n.sectionTimeline.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
         const SizedBox(height: 8),
         _DateRow(label: l10n.pactStartDate, date: pact.startDate),
         const SizedBox(height: 8),
@@ -126,7 +127,7 @@ class _PactDetailContent extends StatelessWidget {
         // Stop reason (if stopped)
         if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
           const SizedBox(height: 24),
-          Text('STOP REASON', style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+          Text(l10n.sectionStopReason.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
           const SizedBox(height: 8),
           Card(
             margin: EdgeInsets.zero,
@@ -140,6 +141,10 @@ class _PactDetailContent extends StatelessWidget {
         // Stop pact button
         if (pact.status == PactStatus.active) ...[
           const SizedBox(height: 32),
+          if (state.stopError != null) ...[
+            Text(l10n.stopPactError, style: TextStyle(color: theme.colorScheme.error)),
+            const SizedBox(height: 8),
+          ],
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: state.isStopping ? null : () => _showStopDialog(context),
@@ -163,42 +168,44 @@ class _PactDetailContent extends StatelessWidget {
   Future<void> _showStopDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final reasonController = TextEditingController();
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.stopPactTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.stopPactBody),
-            const SizedBox(height: 12),
-            TextField(
-              controller: reasonController,
-              decoration: InputDecoration(hintText: l10n.stopPactReasonHint),
-              maxLines: 3,
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.stopPactTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.stopPactBody),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonController,
+                decoration: InputDecoration(hintText: l10n.stopPactReasonHint),
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.stopPactConfirm),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.stopPactConfirm),
-          ),
-        ],
-      ),
-    );
+      );
 
-    if (confirmed == true) {
-      final reason = reasonController.text.trim();
-      await onStopPact(reason.isEmpty ? null : reason);
+      if (confirmed == true) {
+        final reason = reasonController.text.trim();
+        await onStopPact(reason.isEmpty ? null : reason);
+      }
+    } finally {
+      reasonController.dispose();
     }
-    reasonController.dispose();
   }
 }
 
