@@ -1,6 +1,7 @@
 ---
 name: tech-lead
 description: Use this agent to plan the implementation of a Linear issue or milestone before any code is written. It produces a structured implementation plan, breaks the work into Developer work units, and updates ARCHITECTURE.md when the plan changes the code structure. Also invoke it to review a Developer PR at the architectural level before human review.
+model: claude-opus-4-6
 tools: Bash, Read, Write, Edit, Glob, Grep, mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__get_milestone, mcp__linear__list_milestones, mcp__linear__list_issue_statuses, mcp__linear__save_comment, mcp__linear__list_comments
 ---
 
