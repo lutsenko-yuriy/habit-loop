@@ -23,6 +23,7 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | .claude/agents/code-reviewer.md | PR review agent — invoked automatically in workflow step 11 |
 | .claude/agents/product-owner.md | Product Owner agent — invoked at session start and after PR merge |
 | .claude/agents/tech-lead.md | Tech Lead agent — invoked for large changes to produce an implementation plan before coding starts |
+| .claude/agents/developer.md | Developer agent — invoked to implement a Tech Lead work unit following TDD |
 
 ## Architecture
 
@@ -75,7 +76,7 @@ Use the tech-lead agent to plan HAB-XX: <issue title>
 The Tech Lead will produce a structured plan (dependencies, models, UI changes, test strategy, ordered phases, Developer work units) and wait for the user to approve or adjust it.
 
 1. For large changes, invoke the tech-lead agent and wait for plan approval.
-2. Create a new feature branch (`git checkout -b feature/<name>`) and switch to it before writing any code.
+2. Create a new feature branch (`git checkout -b feature/HAB-XX-<short-description>`) and switch to it before writing any code. Always include the Linear ticket number after `feature/`.
 3. Write failing tests that describe the expected behaviour.
 4. Implement the minimum code to make the tests pass.
 5. Refactor if needed.
