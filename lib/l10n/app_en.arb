@@ -78,6 +78,10 @@
   "tooManyPactsConfirm": "Yes, create another",
 
   "pactDetailTitle": "Pact Details",
+  "sectionStats": "Stats",
+  "sectionTimeline": "Timeline",
+  "sectionStopReason": "Stop reason",
+  "stopPactError": "Failed to stop pact. Please try again.",
   "statsDone": "Done",
   "statsFailed": "Failed",
   "statsRemaining": "Remaining",

@@ -22,6 +22,10 @@ class ShowupGenerator {
     Showup makeShowup(DateTime scheduledAt) =>
         _showup(pact: pact, scheduledAt: scheduledAt, seq: seq++);
 
+    // Only generate showups whose reminder window hasn't started yet.
+    // This assumes generate() is called when a pact is first created, so
+    // all scheduled times are in the future. If generate() is ever called
+    // for an already-started pact, past showups will be silently omitted.
     bool isActionable(DateTime scheduledAt) {
       final cutoff = scheduledAt.subtract(pact.reminderOffset ?? Duration.zero);
       return cutoff.isAfter(now);

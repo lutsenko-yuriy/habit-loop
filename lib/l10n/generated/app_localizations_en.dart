@@ -208,6 +208,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pactDetailTitle => 'Pact Details';
 
   @override
+  String get sectionStats => 'Stats';
+
+  @override
+  String get sectionTimeline => 'Timeline';
+
+  @override
+  String get sectionStopReason => 'Stop reason';
+
+  @override
+  String get stopPactError => 'Failed to stop pact. Please try again.';
+
+  @override
   String get statsDone => 'Done';
 
   @override

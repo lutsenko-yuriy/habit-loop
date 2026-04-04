@@ -363,7 +363,6 @@ class _ShowupTile extends StatelessWidget {
       ),
       title: Text(habitName),
       subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
-      trailing: const CupertinoListTileChevron(),
     );
   }
 }

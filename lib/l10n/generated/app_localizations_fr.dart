@@ -209,6 +209,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pactDetailTitle => 'Détails du pacte';
 
   @override
+  String get sectionStats => 'Statistiques';
+
+  @override
+  String get sectionTimeline => 'Chronologie';
+
+  @override
+  String get sectionStopReason => 'Raison de l\'arrêt';
+
+  @override
+  String get stopPactError =>
+      'Impossible d\'arrêter le pacte. Veuillez réessayer.';
+
+  @override
   String get statsDone => 'Réalisés';
 
   @override

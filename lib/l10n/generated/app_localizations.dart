@@ -466,6 +466,30 @@ abstract class AppLocalizations {
   /// **'Pact Details'**
   String get pactDetailTitle;
 
+  /// No description provided for @sectionStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get sectionStats;
+
+  /// No description provided for @sectionTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get sectionTimeline;
+
+  /// No description provided for @sectionStopReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop reason'**
+  String get sectionStopReason;
+
+  /// No description provided for @stopPactError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to stop pact. Please try again.'**
+  String get stopPactError;
+
   /// No description provided for @statsDone.
   ///
   /// In en, this message translates to:
