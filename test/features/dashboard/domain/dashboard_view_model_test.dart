@@ -98,7 +98,20 @@ void main() {
         status: ShowupStatus.done,
       );
 
-      container = createContainer(showups: [showupToday, showupYesterday]);
+      container = createContainer(
+        pacts: [
+          Pact(
+            id: 'pact-1',
+            habitName: 'Meditate',
+            startDate: DateTime(2026, 3, 1),
+            endDate: DateTime(2026, 9, 1),
+            showupDuration: const Duration(minutes: 10),
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+            status: PactStatus.active,
+          ),
+        ],
+        showups: [showupToday, showupYesterday],
+      );
 
       await container.read(dashboardViewModelProvider.notifier).load();
       final state = container.read(dashboardViewModelProvider);
@@ -118,7 +131,20 @@ void main() {
         status: ShowupStatus.done,
       );
 
-      container = createContainer(showups: [showupMar27]);
+      container = createContainer(
+        pacts: [
+          Pact(
+            id: 'pact-1',
+            habitName: 'Meditate',
+            startDate: DateTime(2026, 3, 1),
+            endDate: DateTime(2026, 9, 1),
+            showupDuration: const Duration(minutes: 10),
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+            status: PactStatus.active,
+          ),
+        ],
+        showups: [showupMar27],
+      );
 
       await container.read(dashboardViewModelProvider.notifier).load();
       container.read(dashboardViewModelProvider.notifier).selectDay(1);

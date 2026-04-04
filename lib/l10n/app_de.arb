@@ -81,7 +81,7 @@
   "statsDone": "Erledigt",
   "statsFailed": "Verpasst",
   "statsRemaining": "Ausstehend",
-  "statsCancelled": "Abgebrochen",
+  "statsCancelled": "Gestoppt",
   "statsStreak": "Serie",
   "statsShowups": "{count} Showups",
   "@statsShowups": {
@@ -106,15 +106,15 @@
   "stopPactBody": "Diese Aktion kann nicht rückgängig gemacht werden. Du kannst den Pakt-Verlauf danach noch einsehen.",
   "stopPactReasonHint": "Grund (optional)",
   "stopPactConfirm": "Beenden",
-  "pactsActive": "{count, plural, one{1 Pakt aktiv} other{{count} Pakte aktiv}}",
+  "pactsActive": "{count, plural, =0{Keine aktiven Pakte} one{1 Pakt aktiv} other{{count} Pakte aktiv}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "pactsDone": "{count, plural, one{1 Pakt abgeschlossen} other{{count} Pakte abgeschlossen}}",
+  "pactsDone": "{count, plural, =0{Keine abgeschlossenen Pakte} one{1 Pakt abgeschlossen} other{{count} Pakte abgeschlossen}}",
   "@pactsDone": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "pactsCancelled": "{count, plural, one{1 Pakt abgebrochen} other{{count} Pakte abgebrochen}}",
+  "pactsCancelled": "{count, plural, =0{Keine gestoppten Pakte} one{1 Pakt gestoppt} other{{count} Pakte gestoppt}}",
   "@pactsCancelled": {
     "placeholders": { "count": { "type": "int" } }
   },
@@ -122,7 +122,7 @@
   "pactListTitle": "Pakte",
   "filterActive": "Aktiv",
   "filterDone": "Abgeschlossen",
-  "filterCancelled": "Abgebrochen",
+  "filterCancelled": "Gestoppt",
   "pactNextShowup": "Nächster: {date}",
   "@pactNextShowup": {
     "placeholders": { "date": { "type": "String" } }
@@ -131,7 +131,7 @@
   "@pactEndedOn": {
     "placeholders": { "date": { "type": "String" } }
   },
-  "pactCancelledOn": "Abgebrochen am {date}",
+  "pactCancelledOn": "Gestoppt am {date}",
   "@pactCancelledOn": {
     "placeholders": { "date": { "type": "String" } }
   }

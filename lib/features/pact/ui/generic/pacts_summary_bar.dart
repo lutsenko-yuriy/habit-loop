@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/features/pact/domain/pact_list_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
+import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -26,7 +27,7 @@ class PactsPanel extends ConsumerStatefulWidget {
 class _PactsPanelState extends ConsumerState<PactsPanel> {
   late final DraggableScrollableController _controller;
 
-  static const double _minSize = 0.1;
+  static const double _minSize = 0.12;
   static const double _expandedSize = 0.55;
   static const double _maxSize = 0.92;
 
@@ -70,7 +71,10 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
         builder: (_) => PactDetailScreen(pactId: entry.pact.id),
       ));
     }
-    if (mounted) ref.read(pactListViewModelProvider.notifier).load();
+    if (mounted) {
+      ref.read(pactListViewModelProvider.notifier).load();
+      ref.read(dashboardViewModelProvider.notifier).load();
+    }
   }
 
   Future<void> _addPact() async {
@@ -86,16 +90,14 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     final state = ref.watch(pactListViewModelProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    if (state.activeCount == 0 &&
-        state.doneCount == 0 &&
-        state.cancelledCount == 0) {
+    if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0) {
       return const SizedBox.shrink();
     }
 
     final summaryLines = [
-      if (state.activeCount > 0) l10n.pactsActive(state.activeCount),
-      if (state.doneCount > 0) l10n.pactsDone(state.doneCount),
-      if (state.cancelledCount > 0) l10n.pactsCancelled(state.cancelledCount),
+      l10n.pactsActive(state.activeCount),
+      l10n.pactsDone(state.doneCount),
+      l10n.pactsCancelled(state.cancelledCount),
     ].join('\n');
 
     final entries = state.filteredEntries;
@@ -106,23 +108,30 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       minChildSize: _minSize,
       maxChildSize: _maxSize,
       snap: true,
-      snapSizes: const [_minSize, _expandedSize],
+      snapSizes: const [_minSize, _expandedSize, _maxSize],
       builder: (ctx, scrollController) {
-        return Material(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          elevation: 12,
-          shadowColor: Colors.black.withValues(alpha: 0.3),
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                offset: const Offset(0, -4),
+                blurRadius: 12,
+              ),
+            ],
+          ),
           child: CustomScrollView(
             controller: scrollController,
             slivers: [
-              // ── Drag handle + summary (tap to expand) ──
+              // ── Drag handle + summary (collapsed peek) ──
               SliverToBoxAdapter(
                 child: GestureDetector(
                   onTap: _expand,
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -135,16 +144,12 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                summaryLines,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ),
-                            const Icon(Icons.keyboard_arrow_up, size: 20),
-                          ],
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            summaryLines,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ),
                       ],
                     ),
@@ -152,7 +157,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                 ),
               ),
 
-              // ── Title + add button ──
+              // ── Title + add button (visible only when expanded) ──
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
@@ -273,11 +278,42 @@ class _PactTile extends StatelessWidget {
       subtitle = l10n.pactCancelledOn(dateFormat.format(pact.endDate));
     }
 
+    final statusText = switch (pact.status) {
+      PactStatus.active => l10n.pactStatusActive,
+      PactStatus.completed => l10n.pactStatusCompleted,
+      PactStatus.stopped => l10n.pactStatusStopped,
+    };
+    final statusColor = switch (pact.status) {
+      PactStatus.active => Colors.blue,
+      PactStatus.completed => Colors.green,
+      PactStatus.stopped => Colors.red,
+    };
+
     return ListTile(
       onTap: onTap,
       title: Text(pact.habitName),
       subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
-      trailing: const Icon(Icons.chevron_right),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              statusText,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: statusColor,
+              ),
+            ),
+          ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
     );
   }
 }

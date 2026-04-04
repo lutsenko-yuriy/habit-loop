@@ -16,7 +16,7 @@ void main() {
   late ProviderContainer container;
   late InMemoryPactRepository pactRepo;
   late InMemoryShowupRepository showupRepo;
-  final today = DateTime(2026, 3, 30);
+  final today = DateTime(2054, 3, 30);
 
   setUp(() {
     pactRepo = InMemoryPactRepository();
@@ -44,7 +44,7 @@ void main() {
       expect(state.currentStep, PactCreationStep.pactDuration);
       expect(state.habitName, '');
       expect(state.startDate, today);
-      expect(state.endDate, DateTime(2026, 9, 30));
+      expect(state.endDate, DateTime(2054, 9, 30));
       expect(state.commitmentAccepted, false);
     });
 
@@ -54,13 +54,13 @@ void main() {
     });
 
     test('setStartDate updates start date', () {
-      final newDate = DateTime(2026, 4, 1);
+      final newDate = DateTime(2054, 4, 1);
       readVM().setStartDate(newDate);
       expect(readState().startDate, newDate);
     });
 
     test('setEndDate updates end date', () {
-      final newDate = DateTime(2026, 12, 1);
+      final newDate = DateTime(2054, 12, 1);
       readVM().setEndDate(newDate);
       expect(readState().endDate, newDate);
     });
@@ -115,8 +115,8 @@ void main() {
 
     test('nextStep does not advance when step is invalid', () {
       // Step 0 with invalid dates (end before start)
-      readVM().setStartDate(DateTime(2026, 10, 1));
-      readVM().setEndDate(DateTime(2026, 3, 1));
+      readVM().setStartDate(DateTime(2054, 10, 1));
+      readVM().setEndDate(DateTime(2054, 3, 1));
       readVM().nextStep();
       expect(readState().currentStep, PactCreationStep.pactDuration);
     });
@@ -153,7 +153,7 @@ void main() {
       expect(pacts.first.schedule,
           const DailySchedule(timeOfDay: Duration(hours: 7)));
       expect(pacts.first.startDate, today);
-      expect(pacts.first.endDate, DateTime(2026, 9, 30));
+      expect(pacts.first.endDate, DateTime(2054, 9, 30));
       expect(pacts.first.reminderOffset, isNull);
     });
 
