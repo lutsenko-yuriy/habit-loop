@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
+import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -11,7 +12,7 @@ class DashboardPageIos extends StatelessWidget {
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
-  final ValueChanged<String> onShowupTapped;
+  final Future<void> Function(String) onShowupTapped;
 
   const DashboardPageIos({
     super.key,
@@ -41,16 +42,23 @@ class DashboardPageIos extends StatelessWidget {
       child: SafeArea(
         child: Material(
           type: MaterialType.transparency,
-          child: state.isLoading
-              ? const Center(child: CupertinoActivityIndicator())
-              : !hasPacts
-                  ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
-                  : _DashboardContent(
-                      state: state,
-                      l10n: l10n,
-                      onDaySelected: onDaySelected,
-                      onShowupTapped: onShowupTapped,
-                    ),
+          child: Column(
+            children: [
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : !hasPacts
+                        ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
+                        : _DashboardContent(
+                            state: state,
+                            l10n: l10n,
+                            onDaySelected: onDaySelected,
+                            onShowupTapped: onShowupTapped,
+                          ),
+              ),
+              PactsSummaryBar(onCreatePact: onCreatePact),
+            ],
+          ),
         ),
       ),
     );
@@ -99,7 +107,7 @@ class _DashboardContent extends StatelessWidget {
   final DashboardState state;
   final AppLocalizations l10n;
   final ValueChanged<int> onDaySelected;
-  final ValueChanged<String> onShowupTapped;
+  final Future<void> Function(String) onShowupTapped;
 
   const _DashboardContent({
     required this.state,
@@ -295,7 +303,7 @@ class _CalendarStrip extends StatelessWidget {
 class _ShowupList extends StatelessWidget {
   final List<Showup> showups;
   final DashboardState state;
-  final ValueChanged<String> onShowupTapped;
+  final Future<void> Function(String) onShowupTapped;
 
   const _ShowupList({
     super.key,

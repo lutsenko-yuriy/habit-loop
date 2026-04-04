@@ -104,5 +104,34 @@
   "stopPactTitle": "Stop this pact?",
   "stopPactBody": "This cannot be undone. You can still view the pact history afterwards.",
   "stopPactReasonHint": "Reason (optional)",
-  "stopPactConfirm": "Stop"
+  "stopPactConfirm": "Stop",
+  "pactsActive": "{count, plural, one{1 pact active} other{{count} pacts active}}",
+  "@pactsActive": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsDone": "{count, plural, one{1 pact done} other{{count} pacts done}}",
+  "@pactsDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsCancelled": "{count, plural, one{1 pact cancelled} other{{count} pacts cancelled}}",
+  "@pactsCancelled": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "addPact": "Add a pact",
+  "pactListTitle": "Pacts",
+  "filterActive": "Active",
+  "filterDone": "Done",
+  "filterCancelled": "Cancelled",
+  "pactNextShowup": "Next: {date}",
+  "@pactNextShowup": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactEndedOn": "Ended {date}",
+  "@pactEndedOn": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactCancelledOn": "Cancelled {date}",
+  "@pactCancelledOn": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }

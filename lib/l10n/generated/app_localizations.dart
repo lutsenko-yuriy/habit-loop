@@ -567,6 +567,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stop'**
   String get stopPactConfirm;
+
+  /// No description provided for @pactsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 pact active} other{{count} pacts active}}'**
+  String pactsActive(int count);
+
+  /// No description provided for @pactsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 pact done} other{{count} pacts done}}'**
+  String pactsDone(int count);
+
+  /// No description provided for @pactsCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 pact cancelled} other{{count} pacts cancelled}}'**
+  String pactsCancelled(int count);
+
+  /// No description provided for @addPact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a pact'**
+  String get addPact;
+
+  /// No description provided for @pactListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pacts'**
+  String get pactListTitle;
+
+  /// No description provided for @filterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get filterActive;
+
+  /// No description provided for @filterDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get filterDone;
+
+  /// No description provided for @filterCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get filterCancelled;
+
+  /// No description provided for @pactNextShowup.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {date}'**
+  String pactNextShowup(String date);
+
+  /// No description provided for @pactEndedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended {date}'**
+  String pactEndedOn(String date);
+
+  /// No description provided for @pactCancelledOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled {date}'**
+  String pactCancelledOn(String date);
 }
 
 class _AppLocalizationsDelegate

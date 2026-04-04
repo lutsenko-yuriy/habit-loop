@@ -104,5 +104,34 @@
   "stopPactTitle": "Diesen Pakt beenden?",
   "stopPactBody": "Diese Aktion kann nicht rückgängig gemacht werden. Du kannst den Pakt-Verlauf danach noch einsehen.",
   "stopPactReasonHint": "Grund (optional)",
-  "stopPactConfirm": "Beenden"
+  "stopPactConfirm": "Beenden",
+  "pactsActive": "{count, plural, one{1 Pakt aktiv} other{{count} Pakte aktiv}}",
+  "@pactsActive": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsDone": "{count, plural, one{1 Pakt abgeschlossen} other{{count} Pakte abgeschlossen}}",
+  "@pactsDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsCancelled": "{count, plural, one{1 Pakt abgebrochen} other{{count} Pakte abgebrochen}}",
+  "@pactsCancelled": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "addPact": "Pakt hinzufügen",
+  "pactListTitle": "Pakte",
+  "filterActive": "Aktiv",
+  "filterDone": "Abgeschlossen",
+  "filterCancelled": "Abgebrochen",
+  "pactNextShowup": "Nächster: {date}",
+  "@pactNextShowup": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactEndedOn": "Beendet am {date}",
+  "@pactEndedOn": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactCancelledOn": "Abgebrochen am {date}",
+  "@pactCancelledOn": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }

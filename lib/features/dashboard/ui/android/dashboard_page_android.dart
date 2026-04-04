@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
+import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -10,7 +11,7 @@ class DashboardPageAndroid extends StatelessWidget {
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
-  final ValueChanged<String> onShowupTapped;
+  final Future<void> Function(String) onShowupTapped;
 
   const DashboardPageAndroid({
     super.key,
@@ -34,16 +35,23 @@ class DashboardPageAndroid extends StatelessWidget {
               child: const Icon(Icons.add),
             )
           : null,
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : !hasPacts
-              ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
-              : _DashboardContent(
-                  state: state,
-                  l10n: l10n,
-                  onDaySelected: onDaySelected,
-                  onShowupTapped: onShowupTapped,
-                ),
+      body: Column(
+        children: [
+          Expanded(
+            child: state.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : !hasPacts
+                    ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
+                    : _DashboardContent(
+                        state: state,
+                        l10n: l10n,
+                        onDaySelected: onDaySelected,
+                        onShowupTapped: onShowupTapped,
+                      ),
+          ),
+          PactsSummaryBar(onCreatePact: onCreatePact),
+        ],
+      ),
     );
   }
 }
@@ -88,7 +96,7 @@ class _DashboardContent extends StatelessWidget {
   final DashboardState state;
   final AppLocalizations l10n;
   final ValueChanged<int> onDaySelected;
-  final ValueChanged<String> onShowupTapped;
+  final Future<void> Function(String) onShowupTapped;
 
   const _DashboardContent({
     required this.state,
@@ -290,7 +298,7 @@ class _CalendarDay extends StatelessWidget {
 class _ShowupList extends StatelessWidget {
   final List<Showup> showups;
   final DashboardState state;
-  final ValueChanged<String> onShowupTapped;
+  final Future<void> Function(String) onShowupTapped;
 
   const _ShowupList({
     super.key,

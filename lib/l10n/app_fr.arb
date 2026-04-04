@@ -104,5 +104,34 @@
   "stopPactTitle": "Arrêter ce pacte ?",
   "stopPactBody": "Cette action est irréversible. Vous pourrez toujours consulter l'historique du pacte.",
   "stopPactReasonHint": "Raison (facultatif)",
-  "stopPactConfirm": "Arrêter"
+  "stopPactConfirm": "Arrêter",
+  "pactsActive": "{count, plural, one{1 pacte actif} other{{count} pactes actifs}}",
+  "@pactsActive": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsDone": "{count, plural, one{1 pacte terminé} other{{count} pactes terminés}}",
+  "@pactsDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsCancelled": "{count, plural, one{1 pacte annulé} other{{count} pactes annulés}}",
+  "@pactsCancelled": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "addPact": "Ajouter un pacte",
+  "pactListTitle": "Pactes",
+  "filterActive": "Actifs",
+  "filterDone": "Terminés",
+  "filterCancelled": "Annulés",
+  "pactNextShowup": "Prochain : {date}",
+  "@pactNextShowup": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactEndedOn": "Terminé le {date}",
+  "@pactEndedOn": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactCancelledOn": "Annulé le {date}",
+  "@pactCancelledOn": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }
