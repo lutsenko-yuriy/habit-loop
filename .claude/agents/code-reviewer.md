@@ -53,12 +53,12 @@ Only report a finding if you can answer all four questions. A finding with a vag
 
 ## Leaving comments
 
-For every finding where you can pinpoint the exact file and line, leave an **inline comment** on the PR using the GitHub CLI:
+For every finding where you can pinpoint the exact file and line, leave an **inline comment** on the PR using the GitHub CLI. Prefix every comment body with `**[Code Reviewer]**` so it is distinguishable from tech-lead comments:
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{pr}/comments \
   --method POST \
-  --field body="<your comment>" \
+  --field body="**[Code Reviewer]** <your comment>" \
   --field commit_id="<head sha from gh pr view>" \
   --field path="<file path>" \
   --field line=<line number> \
@@ -68,7 +68,7 @@ gh api repos/{owner}/{repo}/pulls/{pr}/comments \
 For findings that span multiple files or cannot be tied to a specific line, leave a **general PR comment** instead:
 
 ```bash
-gh pr comment <number> --body "<your comment>"
+gh pr comment <number> --body "**[Code Reviewer]** <your comment>"
 ```
 
 Post one comment per distinct finding. Do not batch unrelated issues into a single comment — each comment should be self-contained and actionable.
