@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.7.1] — 2026-04-05 (PR #12 merged)
+
+### Changed — Agent comment prefixes for distinguishability
+
+- Tech Lead PR comments now prefixed with **[Tech Lead]** and Code Reviewer PR comments with **[Code Reviewer]** on all inline and general comments, so both agents' findings are distinguishable when reviewing in parallel
+
+---
+
 ## [0.7.0] — 2026-04-05 (PR #11 merged)
 
 ### Added — Developer agent for TDD feature implementation
