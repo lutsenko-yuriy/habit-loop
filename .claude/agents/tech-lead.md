@@ -86,12 +86,12 @@ Invoked with a PR number after the Developer agent has opened a PR and before th
    - **Naming and placement** — models, repositories, and view models in the right directories per `docs/ARCHITECTURE.md`
    - **Interface coverage** — repository interfaces updated when implementations change their contract
    - **Architectural drift** — patterns inconsistent with the rest of the codebase without a good reason
-6. For each finding, leave an inline PR comment using `{owner}`, `{repo}`, and `headRefOid` resolved in steps 1–2:
+6. For each finding, leave an inline PR comment using `{owner}`, `{repo}`, and `headRefOid` resolved in steps 1–2. Prefix every comment body with `**[Tech Lead]**` so it is distinguishable from code-reviewer comments:
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{pr}/comments \
   --method POST \
-  --field body="<comment>" \
+  --field body="**[Tech Lead]** <comment>" \
   --field commit_id="<head sha>" \
   --field path="<file>" \
   --field line=<line> \
