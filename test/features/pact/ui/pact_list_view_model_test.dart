@@ -59,8 +59,10 @@ void main() {
 
     test('load with active pact sets nextShowupAt to earliest pending showup', () async {
       final pact = _pact('p1', PactStatus.active);
-      final future = DateTime(2026, 4, 10, 9);
-      final earlier = DateTime(2026, 4, 5, 9);
+      // Both dates are far in the future so they are never filtered out by the
+      // "past showups are ignored" logic regardless of when the test runs.
+      final future = DateTime(2099, 12, 10, 9);
+      final earlier = DateTime(2099, 12, 5, 9);
       final c = _makeContainer(
         pacts: [pact],
         showups: [
