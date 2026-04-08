@@ -138,5 +138,18 @@
   "pactCancelledOn": "Gestoppt am {date}",
   "@pactCancelledOn": {
     "placeholders": { "date": { "type": "String" } }
-  }
+  },
+
+  "showupDetailTitle": "Showup-Details",
+  "showupDetailHabit": "Gewohnheit",
+  "showupDetailScheduledAt": "Geplant um",
+  "showupDetailDuration": "Dauer",
+  "showupDetailStatus": "Status",
+  "markDone": "Als erledigt markieren",
+  "markFailed": "Als verpasst markieren",
+  "showupAutoFailed": "Dieses Showup wurde automatisch als verpasst markiert, da es nach der geplanten Zeit geöffnet wurde.",
+  "showupNoteLabel": "Notiz",
+  "showupNoteSave": "Notiz speichern",
+  "showupNoteError": "Notiz konnte nicht gespeichert werden. Bitte erneut versuchen.",
+  "showupMarkError": "Status konnte nicht aktualisiert werden. Bitte erneut versuchen."
 }

@@ -349,4 +349,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String pactCancelledOn(String date) {
     return 'Stopped $date';
   }
+
+  @override
+  String get showupDetailTitle => 'Showup Details';
+
+  @override
+  String get showupDetailHabit => 'Habit';
+
+  @override
+  String get showupDetailScheduledAt => 'Scheduled at';
+
+  @override
+  String get showupDetailDuration => 'Duration';
+
+  @override
+  String get showupDetailStatus => 'Status';
+
+  @override
+  String get markDone => 'Mark as Done';
+
+  @override
+  String get markFailed => 'Mark as Failed';
+
+  @override
+  String get showupAutoFailed =>
+      'This showup was automatically marked as failed because it was opened after its scheduled time had passed.';
+
+  @override
+  String get showupNoteLabel => 'Note';
+
+  @override
+  String get showupNoteSave => 'Save Note';
+
+  @override
+  String get showupNoteError => 'Failed to save note. Please try again.';
+
+  @override
+  String get showupMarkError =>
+      'Failed to update showup status. Please try again.';
 }

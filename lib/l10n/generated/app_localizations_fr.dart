@@ -351,4 +351,43 @@ class AppLocalizationsFr extends AppLocalizations {
   String pactCancelledOn(String date) {
     return 'Arrêté le $date';
   }
+
+  @override
+  String get showupDetailTitle => 'Détails du rendez-vous';
+
+  @override
+  String get showupDetailHabit => 'Habitude';
+
+  @override
+  String get showupDetailScheduledAt => 'Prévu à';
+
+  @override
+  String get showupDetailDuration => 'Durée';
+
+  @override
+  String get showupDetailStatus => 'Statut';
+
+  @override
+  String get markDone => 'Marquer comme réalisé';
+
+  @override
+  String get markFailed => 'Marquer comme échoué';
+
+  @override
+  String get showupAutoFailed =>
+      'Ce rendez-vous a été automatiquement marqué comme échoué car il a été ouvert après l\'heure prévue.';
+
+  @override
+  String get showupNoteLabel => 'Note';
+
+  @override
+  String get showupNoteSave => 'Enregistrer la note';
+
+  @override
+  String get showupNoteError =>
+      'Impossible d\'enregistrer la note. Veuillez réessayer.';
+
+  @override
+  String get showupMarkError =>
+      'Impossible de mettre à jour le statut. Veuillez réessayer.';
 }

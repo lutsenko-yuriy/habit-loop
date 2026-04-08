@@ -138,5 +138,18 @@
   "pactCancelledOn": "Stopped {date}",
   "@pactCancelledOn": {
     "placeholders": { "date": { "type": "String" } }
-  }
+  },
+
+  "showupDetailTitle": "Showup Details",
+  "showupDetailHabit": "Habit",
+  "showupDetailScheduledAt": "Scheduled at",
+  "showupDetailDuration": "Duration",
+  "showupDetailStatus": "Status",
+  "markDone": "Mark as Done",
+  "markFailed": "Mark as Failed",
+  "showupAutoFailed": "This showup was automatically marked as failed because it was opened after its scheduled time had passed.",
+  "showupNoteLabel": "Note",
+  "showupNoteSave": "Save Note",
+  "showupNoteError": "Failed to save note. Please try again.",
+  "showupMarkError": "Failed to update showup status. Please try again."
 }
