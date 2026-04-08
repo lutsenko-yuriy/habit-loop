@@ -267,8 +267,62 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Save Note button must always be present.
+      // Save Note button must always be present (though disabled until changed).
       expect(find.text('Save Note'), findsOneWidget);
+    });
+
+    testWidgets('Save Note button is disabled when note has not changed',
+        (tester) async {
+      final showup = _pendingFutureShowup();
+
+      await tester.pumpWidget(
+        _testApp(
+          overrides: _overrides(showup: showup, pact: _pact),
+          child: ShowupDetailScreen(showupId: showup.id),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // No text entered — button must be disabled (onPressed == null).
+      final buttons = tester.widgetList<FilledButton>(find.byType(FilledButton));
+      final saveButton = buttons.firstWhere(
+        (b) => find
+            .descendant(of: find.byWidget(b), matching: find.text('Save Note'))
+            .evaluate()
+            .isNotEmpty,
+        orElse: () => throw TestFailure('Save Note FilledButton not found'),
+      );
+      expect(saveButton.onPressed, isNull);
+    });
+
+    testWidgets('Save Note button becomes enabled after typing', (tester) async {
+      final showup = _pendingFutureShowup();
+
+      await tester.pumpWidget(
+        _testApp(
+          overrides: _overrides(showup: showup, pact: _pact),
+          child: ShowupDetailScreen(showupId: showup.id),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Type something in the note field.
+      final noteField = find.byType(TextField).last;
+      await tester.enterText(noteField, 'New note');
+      await tester.pump(); // let ValueListenableBuilder rebuild
+
+      // Button must now be enabled.
+      final buttons = tester.widgetList<FilledButton>(find.byType(FilledButton));
+      final saveButton = buttons.firstWhere(
+        (b) => find
+            .descendant(of: find.byWidget(b), matching: find.text('Save Note'))
+            .evaluate()
+            .isNotEmpty,
+        orElse: () => throw TestFailure('Save Note FilledButton not found'),
+      );
+      expect(saveButton.onPressed, isNotNull);
     });
 
     testWidgets('saving a note updates state', (tester) async {
@@ -283,9 +337,10 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Enter note text.
+      // Enter note text, pump so ValueListenableBuilder enables the button.
       final noteField = find.byType(TextField).last;
       await tester.enterText(noteField, 'Great meditation session');
+      await tester.pump();
       await tester.tap(find.text('Save Note'));
       await tester.pumpAndSettle();
 

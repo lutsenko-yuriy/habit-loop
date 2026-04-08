@@ -217,14 +217,21 @@ class _ShowupDetailContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: FilledButton.tonal(
-            onPressed: state.isSaving
-                ? null
-                : () => onSaveNote(noteController.text),
-            child: Text(l10n.showupNoteSave),
-          ),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: noteController,
+          builder: (context, value, _) {
+            final savedNote = state.showup?.note ?? '';
+            final hasChanged = value.text != savedNote;
+            return Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.tonal(
+                onPressed: (state.isSaving || !hasChanged)
+                    ? null
+                    : () => onSaveNote(noteController.text),
+                child: Text(l10n.showupNoteSave),
+              ),
+            );
+          },
         ),
         if (state.saveError != null) ...[
           const SizedBox(height: 4),
