@@ -208,8 +208,8 @@ class _ShowupDetailContent extends StatelessWidget {
           const SizedBox(height: 16),
         ],
 
-        // Save error
-        if (state.saveError != null) ...[
+        // Mark error (shown above the note section)
+        if (state.markError != null) ...[
           Text(
             l10n.showupMarkError,
             style: const TextStyle(color: CupertinoColors.destructiveRed),
@@ -245,7 +245,7 @@ class _ShowupDetailContent extends StatelessWidget {
             );
           },
         ),
-        if (state.saveError != null) ...[
+        if (state.noteError != null) ...[
           Text(
             l10n.showupNoteError,
             style: const TextStyle(color: CupertinoColors.destructiveRed),

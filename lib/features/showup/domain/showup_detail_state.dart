@@ -20,8 +20,11 @@ class ShowupDetailState {
   /// True while a mark-done, mark-failed, or save-note operation is in progress.
   final bool isSaving;
 
-  /// Set when a save operation (mark or note) fails.
-  final Object? saveError;
+  /// Set when a mark-done or mark-failed operation fails.
+  final Object? markError;
+
+  /// Set when a save-note operation fails.
+  final Object? noteError;
 
   /// True when the showup was automatically transitioned to [ShowupStatus.failed]
   /// on load because the current time was past `scheduledAt + duration`.
@@ -33,7 +36,8 @@ class ShowupDetailState {
     this.isLoading = true,
     this.loadError,
     this.isSaving = false,
-    this.saveError,
+    this.markError,
+    this.noteError,
     this.wasAutoFailed = false,
   });
 
@@ -44,8 +48,10 @@ class ShowupDetailState {
     Object? loadError,
     bool clearLoadError = false,
     bool? isSaving,
-    Object? saveError,
-    bool clearSaveError = false,
+    Object? markError,
+    bool clearMarkError = false,
+    Object? noteError,
+    bool clearNoteError = false,
     bool? wasAutoFailed,
   }) {
     return ShowupDetailState(
@@ -54,7 +60,8 @@ class ShowupDetailState {
       isLoading: isLoading ?? this.isLoading,
       loadError: clearLoadError ? null : (loadError ?? this.loadError),
       isSaving: isSaving ?? this.isSaving,
-      saveError: clearSaveError ? null : (saveError ?? this.saveError),
+      markError: clearMarkError ? null : (markError ?? this.markError),
+      noteError: clearNoteError ? null : (noteError ?? this.noteError),
       wasAutoFailed: wasAutoFailed ?? this.wasAutoFailed,
     );
   }

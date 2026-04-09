@@ -24,6 +24,9 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      // Invalidate the now provider so load() always samples the real current
+      // time, not a cached value from a previous navigation or app start.
+      ref.invalidate(showupDetailNowProvider);
       ref
           .read(showupDetailViewModelProvider(widget.showupId).notifier)
           .load();

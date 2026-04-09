@@ -20,7 +20,8 @@ void main() {
       expect(state.habitName, isNull);
       expect(state.loadError, isNull);
       expect(state.isSaving, false);
-      expect(state.saveError, isNull);
+      expect(state.markError, isNull);
+      expect(state.noteError, isNull);
       expect(state.wasAutoFailed, false);
     });
 
@@ -43,10 +44,16 @@ void main() {
       expect(updated.isLoading, false);
     });
 
-    test('copyWith clearSaveError sets saveError to null', () {
-      final state = ShowupDetailState(saveError: StateError('oops'));
-      final cleared = state.copyWith(clearSaveError: true);
-      expect(cleared.saveError, isNull);
+    test('copyWith clearMarkError sets markError to null', () {
+      final state = ShowupDetailState(markError: StateError('mark failed'));
+      final cleared = state.copyWith(clearMarkError: true);
+      expect(cleared.markError, isNull);
+    });
+
+    test('copyWith clearNoteError sets noteError to null', () {
+      final state = ShowupDetailState(noteError: StateError('note failed'));
+      final cleared = state.copyWith(clearNoteError: true);
+      expect(cleared.noteError, isNull);
     });
 
     test('copyWith clearLoadError sets loadError to null', () {
@@ -55,11 +62,14 @@ void main() {
       expect(cleared.loadError, isNull);
     });
 
-    test('copyWith with explicit null saveError leaves existing error intact', () {
-      final error = StateError('original');
-      final state = ShowupDetailState(saveError: error);
-      final updated = state.copyWith(isLoading: false);
-      expect(updated.saveError, error);
+    test('markError and noteError are independent', () {
+      final markErr = StateError('mark');
+      final noteErr = StateError('note');
+      final state = ShowupDetailState(markError: markErr, noteError: noteErr);
+      // Clearing markError leaves noteError intact.
+      final cleared = state.copyWith(clearMarkError: true);
+      expect(cleared.markError, isNull);
+      expect(cleared.noteError, noteErr);
     });
 
     test('copyWith wasAutoFailed updates flag', () {

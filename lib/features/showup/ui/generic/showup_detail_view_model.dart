@@ -6,6 +6,11 @@ import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 /// Provides the current time. Overridable in tests to make auto-fail logic
 /// deterministic.
+///
+/// NOTE: This provider is intentionally NOT cached between navigations — it is
+/// invalidated by [ShowupDetailScreen] before every [ShowupDetailViewModel.load]
+/// call so that `DateTime.now()` is always sampled at the moment the screen
+/// opens, not at app-start time.
 final showupDetailNowProvider = Provider<DateTime>((ref) => DateTime.now());
 
 /// Repository provider for showups used by [ShowupDetailViewModel].
@@ -21,8 +26,14 @@ final showupDetailPactRepositoryProvider = Provider<PactRepository>((ref) {
 });
 
 /// Family provider keyed by showup ID.
-final showupDetailViewModelProvider = NotifierProviderFamily<
-    ShowupDetailViewModel, ShowupDetailState, String>(
+///
+/// Uses `autoDispose` so state is released when the screen is popped, avoiding
+/// unbounded accumulation of one ViewModel instance per visited showup ID.
+/// [ShowupDetailScreen.initState] always calls [ShowupDetailViewModel.load] on
+/// entry, so re-creating the state on each visit is correct and safe.
+final showupDetailViewModelProvider =
+    AutoDisposeNotifierProviderFamily<ShowupDetailViewModel, ShowupDetailState,
+        String>(
   ShowupDetailViewModel.new,
 );
 
@@ -39,14 +50,22 @@ final showupDetailViewModelProvider = NotifierProviderFamily<
 /// - [saveNote] persists a note regardless of showup status. An empty string
 ///   clears the note.
 class ShowupDetailViewModel
-    extends FamilyNotifier<ShowupDetailState, String> {
+    extends AutoDisposeFamilyNotifier<ShowupDetailState, String> {
   @override
   ShowupDetailState build(String showupId) {
     return const ShowupDetailState();
   }
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, clearLoadError: true);
+    // Clear any stale saving state from a previous visit so buttons are never
+    // permanently disabled when the screen is re-entered after an interrupted save.
+    state = state.copyWith(
+      isLoading: true,
+      clearLoadError: true,
+      isSaving: false,
+      clearMarkError: true,
+      clearNoteError: true,
+    );
     try {
       final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
       final pactRepo = ref.read(showupDetailPactRepositoryProvider);
@@ -61,10 +80,14 @@ class ShowupDetailViewModel
       }
 
       // Resolve habit name from the associated pact.
+      // If the pact is missing (e.g. deleted while showups were not cleaned up),
+      // surface a visible fallback rather than silently showing a blank name.
       final pact = await pactRepo.getPactById(showup.pactId);
-      final habitName = pact?.habitName;
+      final habitName = pact?.habitName ?? '(habit deleted)';
 
       // Auto-fail if the showup is still pending but the window has passed.
+      // showupDetailNowProvider is invalidated by ShowupDetailScreen before
+      // load() is called, so this always reflects the real current time.
       bool wasAutoFailed = false;
       if (showup.status == ShowupStatus.pending) {
         final now = ref.read(showupDetailNowProvider);
@@ -102,14 +125,14 @@ class ShowupDetailViewModel
   }
 
   Future<void> _updateStatus(ShowupStatus newStatus) async {
-    state = state.copyWith(isSaving: true, clearSaveError: true);
+    state = state.copyWith(isSaving: true, clearMarkError: true);
     try {
       final updatedShowup = state.showup!.copyWith(status: newStatus);
       final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
       await showupRepo.updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
     } catch (e) {
-      state = state.copyWith(isSaving: false, saveError: e);
+      state = state.copyWith(isSaving: false, markError: e);
     }
   }
 
@@ -118,7 +141,7 @@ class ShowupDetailViewModel
   Future<void> saveNote(String note) async {
     final showup = state.showup;
     if (showup == null) return;
-    state = state.copyWith(isSaving: true, clearSaveError: true);
+    state = state.copyWith(isSaving: true, clearNoteError: true);
     try {
       final updatedShowup = note.isEmpty
           ? showup.copyWith(clearNote: true)
@@ -127,7 +150,7 @@ class ShowupDetailViewModel
       await showupRepo.updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
     } catch (e) {
-      state = state.copyWith(isSaving: false, saveError: e);
+      state = state.copyWith(isSaving: false, noteError: e);
     }
   }
 }
