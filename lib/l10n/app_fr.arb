@@ -138,5 +138,19 @@
   "pactCancelledOn": "Arrêté le {date}",
   "@pactCancelledOn": {
     "placeholders": { "date": { "type": "String" } }
-  }
+  },
+
+  "showupDetailTitle": "Détails du rendez-vous",
+  "showupDetailHabit": "Habitude",
+  "showupDetailScheduledAt": "Prévu à",
+  "showupDetailDuration": "Durée",
+  "showupDetailStatus": "Statut",
+  "markDone": "Marquer comme réalisé",
+  "markFailed": "Marquer comme échoué",
+  "showupAutoFailed": "Ce rendez-vous a été automatiquement marqué comme échoué car il a été ouvert après l'heure prévue.",
+  "showupNoteLabel": "Note",
+  "showupNoteSave": "Enregistrer la note",
+  "showupNoteError": "Impossible d'enregistrer la note. Veuillez réessayer.",
+  "showupMarkError": "Impossible de mettre à jour le statut. Veuillez réessayer.",
+  "showupHabitDeleted": "(habitude supprimée)"
 }
