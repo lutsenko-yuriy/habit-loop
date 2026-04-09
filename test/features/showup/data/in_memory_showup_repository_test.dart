@@ -175,5 +175,30 @@ void main() {
       final result = await repo.getShowupsForPact('unknown');
       expect(result, isEmpty);
     });
+
+    test('countShowupsForPact returns count of showups for given pactId',
+        () async {
+      // pact-1 has showupMar28, showupMar29Morning, showupMar30 = 3 showups.
+      final result = await repo.countShowupsForPact('pact-1');
+      expect(result, 3);
+    });
+
+    test('countShowupsForPact returns 0 for unknown pactId', () async {
+      final result = await repo.countShowupsForPact('unknown');
+      expect(result, 0);
+    });
+
+    test('countShowupsForPact returns only count for specified pactId',
+        () async {
+      // pact-2 has only showupMar29Evening = 1 showup.
+      final result = await repo.countShowupsForPact('pact-2');
+      expect(result, 1);
+    });
+
+    test('countShowupsForPact returns 0 for empty repository', () async {
+      repo = InMemoryShowupRepository();
+      final result = await repo.countShowupsForPact('pact-1');
+      expect(result, 0);
+    });
   });
 }

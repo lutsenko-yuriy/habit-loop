@@ -46,15 +46,30 @@ class PactStats {
       );
 
   /// Computes statistics for [pact] from its associated [showups].
+  ///
+  /// When [totalShowups] is provided it overrides the list-length derivation:
+  /// - [PactStats.totalShowups] is set to [totalShowups].
+  /// - [PactStats.showupsRemaining] is computed as
+  ///   `totalShowups - done - failed`, which accounts for showups outside
+  ///   the persisted window (e.g. when only an initial rolling window has
+  ///   been persisted rather than the full pact duration).
+  ///
+  /// When [totalShowups] is omitted, both fields are derived from [showups]:
+  /// - [PactStats.totalShowups] equals `showups.length`.
+  /// - [PactStats.showupsRemaining] equals the number of pending showups.
   factory PactStats.compute({
     required Pact pact,
     required List<Showup> showups,
+    int? totalShowups,
   }) {
     final done = showups.where((s) => s.status == ShowupStatus.done).length;
     final failed =
         showups.where((s) => s.status == ShowupStatus.failed).length;
-    final remaining =
-        showups.where((s) => s.status == ShowupStatus.pending).length;
+
+    final effectiveTotal = totalShowups ?? showups.length;
+    final remaining = totalShowups != null
+        ? (totalShowups - done - failed).clamp(0, totalShowups)
+        : showups.where((s) => s.status == ShowupStatus.pending).length;
 
     // Current streak: count consecutive done showups from the most recent
     // resolved (non-pending) showup backwards. Pending showups are excluded
@@ -81,7 +96,7 @@ class PactStats {
       showupsDone: done,
       showupsFailed: failed,
       showupsRemaining: remaining,
-      totalShowups: showups.length,
+      totalShowups: effectiveTotal,
       currentStreak: streak,
       startDate: pact.startDate,
       endDate: pact.endDate,

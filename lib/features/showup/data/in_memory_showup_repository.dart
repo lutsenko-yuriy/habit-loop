@@ -7,7 +7,7 @@ class InMemoryShowupRepository implements ShowupRepository {
   final List<Showup> _showups;
 
   InMemoryShowupRepository([List<Showup>? showups])
-      : _showups = showups ?? [];
+      : _showups = showups != null ? List.of(showups) : [];
 
   @override
   Future<List<Showup>> getShowupsForDate(DateTime date) async {
@@ -79,5 +79,10 @@ class InMemoryShowupRepository implements ShowupRepository {
       throw ArgumentError('Showup with id "${showup.id}" not found.');
     }
     _showups[index] = showup;
+  }
+
+  @override
+  Future<int> countShowupsForPact(String pactId) async {
+    return _showups.where((s) => s.pactId == pactId).length;
   }
 }

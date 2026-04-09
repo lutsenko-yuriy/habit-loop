@@ -178,6 +178,44 @@ void main() {
       expect(pacts.first.reminderOffset, const Duration(minutes: 15));
     });
 
+    test('submit generates only the initial 8-day window of showups', () async {
+      final vm = readVM();
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      final pacts = await pactRepo.getActivePacts();
+      final pact = pacts.first;
+
+      final showups = await showupRepo.getShowupsForPact(pact.id);
+      // Daily schedule: window is today through today+7 → at most 8 showups,
+      // clamped to the pact's end date (pact ends 2054-09-30 so no clamping).
+      expect(showups, hasLength(8));
+      expect(
+        showups.every((s) => s.pactId == pact.id),
+        isTrue,
+      );
+      expect(
+        showups.every((s) => s.status == ShowupStatus.pending),
+        isTrue,
+      );
+      expect(
+        showups.every((s) => s.duration == const Duration(minutes: 10)),
+        isTrue,
+      );
+      // All showups must fall within the 8-day window
+      final windowEnd = DateTime(today.year, today.month, today.day + 7, 23, 59, 59);
+      expect(
+        showups.every((s) => !s.scheduledAt.isAfter(windowEnd)),
+        isTrue,
+      );
+    });
+
     test('submit generates and saves showups to repository', () async {
       final vm = readVM();
 
@@ -195,10 +233,8 @@ void main() {
 
       final showups = await showupRepo.getShowupsForPact(pact.id);
       expect(showups, isNotEmpty);
-      // Daily schedule: one showup per day inclusive of start and end date
-      final expectedCount =
-          pact.endDate.difference(pact.startDate).inDays + 1;
-      expect(showups.length, expectedCount);
+      // Windowed generation: only the 8-day initial window is persisted
+      expect(showups.length, lessThanOrEqualTo(8));
       expect(
         showups.every((s) => s.pactId == pact.id),
         isTrue,
@@ -403,4 +439,7 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
   @override
   Future<void> updateShowup(Showup showup) async =>
       throw Exception('update failed intentionally');
+
+  @override
+  Future<int> countShowupsForPact(String pactId) async => 0;
 }
