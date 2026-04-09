@@ -58,10 +58,19 @@ class DashboardViewModel extends Notifier<DashboardState> {
     }
 
     // -----------------------------------------------------------------------
-    // todayIndex: 0 only on the very first day the user ever created a pact
-    // (today == oldest pact start date across ALL pacts regardless of status);
-    // 3 (centred) in every other case.  This means deleting or stopping a pact
-    // never shifts the strip position.
+    // todayIndex: gradual ramp over the first 3 days after the user created
+    // their very first pact, then stays centred (3) thereafter.
+    //
+    // Formula: min(daysSinceOldestPact, 3) where
+    //   daysSinceOldestPact = today.difference(oldestStartDate).inDays
+    //
+    // ALL pacts (active, stopped, completed) contribute to finding the oldest
+    // start date so that deleting or stopping a pact never shifts the strip.
+    //
+    //   Day 1 (today == oldestStartDate)        → todayIndex = 0
+    //   Day 2 (today == oldestStartDate + 1)    → todayIndex = 1
+    //   Day 3 (today == oldestStartDate + 2)    → todayIndex = 2
+    //   Day 4+ (today >= oldestStartDate + 3)   → todayIndex = 3
     // -----------------------------------------------------------------------
     int computedTodayIndex = 3;
     if (allPacts.isNotEmpty) {
@@ -72,8 +81,9 @@ class DashboardViewModel extends Notifier<DashboardState> {
           earliestStart = start;
         }
       }
-      if (earliestStart != null && earliestStart == todayNorm) {
-        computedTodayIndex = 0;
+      if (earliestStart != null) {
+        final daysSince = todayNorm.difference(earliestStart).inDays;
+        computedTodayIndex = daysSince.clamp(0, 3);
       }
     }
 
