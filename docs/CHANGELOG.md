@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.9.1] — 2026-04-10 (PR #15 merged)
+
+### Changed — Lazy DateTime candidate generation in ShowupGenerator
+
+- `_candidatesDaily`, `_candidatesWeekly`, `_candidatesMonthly`, and `_monthsInRange` converted from `List<DateTime>` builders to `sync*` / `yield` lazy `Iterable<DateTime>` generators
+- New private dispatcher `_candidates(Pact)` routes to the correct generator based on schedule type
+- `_generateInRange` and `_countInRange` now iterate lazily — no full-pact `DateTime` list is ever materialised, eliminating ~183 allocations per `DashboardViewModel.load()` call on a 6-month daily pact
+
+---
+
 ## [0.9.0] — 2026-04-09 (PR #14 merged)
 
 ### Added — Lazy windowed showup generation + dynamic calendar strip
