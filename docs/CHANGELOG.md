@@ -4,6 +4,21 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.8.0] — 2026-04-08 (PR #13 merged)
+
+### Added — Showup detail screen
+
+- `ShowupDetailState` and `ShowupDetailViewModel` (Riverpod `autoDispose` notifier) backed by `ShowupRepository`; loads showup and resolves the parent pact name for the header
+- iOS (`CupertinoPageScaffold`) and Android (`Scaffold`) detail screens: shows scheduled time, habit name, and showup status with Done / Failed action buttons
+- Auto-fail on open: if the screen is opened after the showup's scheduled window has passed (`now > scheduledAt + duration`), the showup is immediately persisted as `failed`; `nowProvider` is used so the clock is injectable and testable
+- Save Note button disabled until the note content differs from the persisted value, preventing spurious writes
+- Split error fields: `markError` for Done/Failed status mutations and `noteError` for note saves, so each action reports failures independently
+- Localised `"(habit deleted)"` fallback displayed when the parent pact can no longer be found in the repository
+- Dashboard showup tiles now carry a chevron and navigate to the detail screen; `nowProvider` invalidated on return so stale timestamps do not persist across navigations
+- 12 new l10n keys across EN / FR / DE: `showupDetailTitle`, `showupDone`, `showupFailed`, `showupPending`, `markDone`, `markFailed`, `noteLabel`, `notePlaceholder`, `saveNote`, `markError`, `saveNoteError`, `habitDeleted`
+
+---
+
 ## [0.7.1] — 2026-04-05 (PR #12 merged)
 
 ### Changed — Agent comment prefixes for distinguishability
