@@ -130,7 +130,19 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       status: PactStatus.active,
       reminderOffset: state.reminderOffset,
     );
-    final showups = ShowupGenerator.generate(pact);
+    // Generate only the initial 8-day window (startDate through startDate+7)
+    // to keep the repository lean. Further windows are generated lazily by the
+    // ShowupGenerationService when the dashboard loads each day.
+    final windowEnd = DateTime(
+      state.startDate.year,
+      state.startDate.month,
+      state.startDate.day + 7,
+    );
+    final showups = ShowupGenerator.generateWindow(
+      pact,
+      from: state.startDate,
+      to: windowEnd,
+    );
 
     try {
       final pactRepo = ref.read(pactCreationRepositoryProvider);
