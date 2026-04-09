@@ -7,6 +7,7 @@ import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
+import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 final _pact = Pact(
@@ -58,8 +59,20 @@ void main() {
       expect(state.pact?.habitName, 'Meditate');
       expect(state.stats?.showupsDone, 2);
       expect(state.stats?.showupsFailed, 1);
-      expect(state.stats?.showupsRemaining, 1);
       expect(state.stats?.currentStreak, 0); // streak broken by failed
+    });
+
+    test('load uses ShowupGenerator.countTotal for totalShowups when window is partial', () async {
+      // _showups has only 4 entries but _pact spans 2026-03-01..2026-09-01
+      // (daily). countTotal returns the full schedule count, which is much
+      // larger than 4. showupsRemaining must be countTotal - done(2) - failed(1).
+      final container = _makeContainer(pacts: [_pact], showups: _showups);
+      addTearDown(container.dispose);
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      final expectedTotal = ShowupGenerator.countTotal(_pact);
+      expect(state.stats?.totalShowups, expectedTotal);
+      expect(state.stats?.showupsRemaining, expectedTotal - 2 - 1); // total - done - failed
     });
 
     test('load sets error when pact not found', () async {

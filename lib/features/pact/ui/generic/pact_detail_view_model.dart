@@ -4,6 +4,8 @@ import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_stats.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
+import 'package:habit_loop/features/showup/domain/showup_generator.dart';
+import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 final pactDetailRepositoryProvider = Provider<PactRepository>((ref) {
   throw UnimplementedError('Override pactDetailRepositoryProvider');
@@ -38,19 +40,34 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         return;
       }
       final showups = await showupRepo.getShowupsForPact(arg);
-      var stats = PactStats.compute(pact: pact, showups: showups);
+      final totalShowups = ShowupGenerator.countTotal(pact);
+      var stats = PactStats.compute(
+        pact: pact,
+        showups: showups,
+        totalShowups: totalShowups,
+      );
 
       // Auto-complete the pact when its end date has passed or all showups
-      // are resolved (done or failed) — whichever comes first.
+      // in the persisted window are resolved (none pending) — whichever comes
+      // first. We check the pending count in the persisted window rather than
+      // stats.showupsRemaining because, with lazy generation, the full schedule
+      // is not yet materialised and showupsRemaining reflects the total schedule
+      // deficit, not the resolved-window condition.
       if (pact.status == PactStatus.active) {
         final today = DateTime.now();
         final todayDate = DateTime(today.year, today.month, today.day);
         final endDateOnly = DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
         final daysLeft = endDateOnly.difference(todayDate).inDays;
-        if (daysLeft <= 0 || stats.showupsRemaining == 0) {
+        final pendingInWindow =
+            showups.where((s) => s.status == ShowupStatus.pending).length;
+        if (daysLeft <= 0 || pendingInWindow == 0) {
           pact = pact.copyWith(status: PactStatus.completed);
           await pactRepo.updatePact(pact);
-          stats = PactStats.compute(pact: pact, showups: showups);
+          stats = PactStats.compute(
+            pact: pact,
+            showups: showups,
+            totalShowups: totalShowups,
+          );
         }
       }
 
@@ -74,7 +91,11 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       );
       await ref.read(pactDetailRepositoryProvider).updatePact(updated);
       final showups = await ref.read(pactDetailShowupRepositoryProvider).getShowupsForPact(arg);
-      final stats = PactStats.compute(pact: updated, showups: showups);
+      final stats = PactStats.compute(
+        pact: updated,
+        showups: showups,
+        totalShowups: ShowupGenerator.countTotal(updated),
+      );
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
     } catch (e) {
       state = state.copyWith(isStopping: false, stopError: e);
