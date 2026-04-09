@@ -389,4 +389,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get showupMarkError =>
       'Status konnte nicht aktualisiert werden. Bitte erneut versuchen.';
+
+  @override
+  String get showupHabitDeleted => '(Gewohnheit gelöscht)';
 }

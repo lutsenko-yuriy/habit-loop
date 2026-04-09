@@ -390,4 +390,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get showupMarkError =>
       'Impossible de mettre à jour le statut. Veuillez réessayer.';
+
+  @override
+  String get showupHabitDeleted => '(habitude supprimée)';
 }

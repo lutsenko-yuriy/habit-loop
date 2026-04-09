@@ -151,5 +151,6 @@
   "showupNoteLabel": "Note",
   "showupNoteSave": "Save Note",
   "showupNoteError": "Failed to save note. Please try again.",
-  "showupMarkError": "Failed to update showup status. Please try again."
+  "showupMarkError": "Failed to update showup status. Please try again.",
+  "showupHabitDeleted": "(habit deleted)"
 }

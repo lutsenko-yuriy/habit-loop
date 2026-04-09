@@ -123,7 +123,7 @@ class _ShowupDetailContent extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                state.habitName ?? '',
+                state.habitName ?? l10n.showupHabitDeleted,
                 style: theme.textTheme.headlineSmall
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),

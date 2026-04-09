@@ -127,7 +127,7 @@ class _ShowupDetailContent extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                state.habitName ?? '',
+                state.habitName ?? l10n.showupHabitDeleted,
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,

@@ -387,4 +387,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get showupMarkError =>
       'Failed to update showup status. Please try again.';
+
+  @override
+  String get showupHabitDeleted => '(habit deleted)';
 }

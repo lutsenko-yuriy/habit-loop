@@ -337,7 +337,7 @@ void main() {
       expect(state.showup?.note, 'Missed it');
     });
 
-    test('load() shows "(habit deleted)" fallback when pact is not found', () async {
+    test('load() sets habitName to null when pact is not found (UI shows localised fallback)', () async {
       final showup = _pendingFutureShowup();
       // Empty pact repo — pact not found.
       final container = _makeContainer(showup: showup, pact: null);
@@ -348,7 +348,8 @@ void main() {
 
       expect(state.isLoading, false);
       expect(state.loadError, isNull);
-      expect(state.habitName, '(habit deleted)');
+      // habitName is null; the UI layer resolves the localised fallback string.
+      expect(state.habitName, isNull);
     });
 
     test('load() resets isSaving so buttons are never stuck after re-entry', () async {

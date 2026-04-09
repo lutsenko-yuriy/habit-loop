@@ -151,5 +151,6 @@
   "showupNoteLabel": "Note",
   "showupNoteSave": "Enregistrer la note",
   "showupNoteError": "Impossible d'enregistrer la note. Veuillez réessayer.",
-  "showupMarkError": "Impossible de mettre à jour le statut. Veuillez réessayer."
+  "showupMarkError": "Impossible de mettre à jour le statut. Veuillez réessayer.",
+  "showupHabitDeleted": "(habitude supprimée)"
 }

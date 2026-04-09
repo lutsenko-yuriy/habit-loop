@@ -151,5 +151,6 @@
   "showupNoteLabel": "Notiz",
   "showupNoteSave": "Notiz speichern",
   "showupNoteError": "Notiz konnte nicht gespeichert werden. Bitte erneut versuchen.",
-  "showupMarkError": "Status konnte nicht aktualisiert werden. Bitte erneut versuchen."
+  "showupMarkError": "Status konnte nicht aktualisiert werden. Bitte erneut versuchen.",
+  "showupHabitDeleted": "(Gewohnheit gelöscht)"
 }

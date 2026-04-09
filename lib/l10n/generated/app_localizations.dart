@@ -735,6 +735,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to update showup status. Please try again.'**
   String get showupMarkError;
+
+  /// No description provided for @showupHabitDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'(habit deleted)'**
+  String get showupHabitDeleted;
 }
 
 class _AppLocalizationsDelegate

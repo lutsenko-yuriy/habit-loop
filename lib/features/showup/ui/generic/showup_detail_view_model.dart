@@ -81,9 +81,9 @@ class ShowupDetailViewModel
 
       // Resolve habit name from the associated pact.
       // If the pact is missing (e.g. deleted while showups were not cleaned up),
-      // surface a visible fallback rather than silently showing a blank name.
+      // habitName is left null so the UI layer can show a localised fallback.
       final pact = await pactRepo.getPactById(showup.pactId);
-      final habitName = pact?.habitName ?? '(habit deleted)';
+      final habitName = pact?.habitName;
 
       // Auto-fail if the showup is still pending but the window has passed.
       // showupDetailNowProvider is invalidated by ShowupDetailScreen before
