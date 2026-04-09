@@ -403,4 +403,7 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
   @override
   Future<void> updateShowup(Showup showup) async =>
       throw Exception('update failed intentionally');
+
+  @override
+  Future<int> countShowupsForPact(String pactId) async => 0;
 }

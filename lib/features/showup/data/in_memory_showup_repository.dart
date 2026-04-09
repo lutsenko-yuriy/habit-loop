@@ -80,4 +80,9 @@ class InMemoryShowupRepository implements ShowupRepository {
     }
     _showups[index] = showup;
   }
+
+  @override
+  Future<int> countShowupsForPact(String pactId) async {
+    return _showups.where((s) => s.pactId == pactId).length;
+  }
 }
