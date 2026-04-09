@@ -11,6 +11,7 @@ import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
+import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 final _today = DateTime(2026, 3, 29);
@@ -19,13 +20,15 @@ Widget _buildApp({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
 }) {
+  final pactRepo = InMemoryPactRepository(pacts);
+  final showupRepo = InMemoryShowupRepository(showups);
   return ProviderScope(
     overrides: [
-      pactRepositoryProvider
-          .overrideWithValue(InMemoryPactRepository(pacts)),
-      showupRepositoryProvider
-          .overrideWithValue(InMemoryShowupRepository(showups)),
+      pactRepositoryProvider.overrideWithValue(pactRepo),
+      showupRepositoryProvider.overrideWithValue(showupRepo),
       todayProvider.overrideWithValue(_today),
+      showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+      showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
     ],
     child: const MaterialApp(
       localizationsDelegates: [
@@ -350,6 +353,36 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Too many active pacts'), findsNothing);
+    });
+
+    testWidgets('tapping a showup tile navigates to showup detail screen',
+        (tester) async {
+      final showup = Showup(
+        id: 'showup-1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final pact = Pact(
+        id: 'pact-1',
+        habitName: 'Meditate',
+        startDate: DateTime(2026, 3, 1),
+        endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+      );
+
+      await tester.pumpWidget(_buildApp(pacts: [pact], showups: [showup]));
+      await tester.pumpAndSettle();
+
+      // Tap the showup tile to navigate to detail screen.
+      await tester.tap(find.text('Meditate'));
+      await tester.pumpAndSettle();
+
+      // The showup detail screen title should appear.
+      expect(find.text('Showup Details'), findsOneWidget);
     });
 
     testWidgets('dialog body uses plural for 1 active pact', (tester) async {

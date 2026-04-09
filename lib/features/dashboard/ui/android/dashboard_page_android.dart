@@ -315,7 +315,7 @@ class _ShowupList extends StatelessWidget {
         return _ShowupTile(
           showup: showup,
           habitName: state.habitName(showup.pactId),
-          onTap: () => onShowupTapped(showup.pactId),
+          onTap: () => onShowupTapped(showup.id),
         );
       },
     );

@@ -350,4 +350,46 @@ class AppLocalizationsDe extends AppLocalizations {
   String pactCancelledOn(String date) {
     return 'Gestoppt am $date';
   }
+
+  @override
+  String get showupDetailTitle => 'Showup-Details';
+
+  @override
+  String get showupDetailHabit => 'Gewohnheit';
+
+  @override
+  String get showupDetailScheduledAt => 'Geplant um';
+
+  @override
+  String get showupDetailDuration => 'Dauer';
+
+  @override
+  String get showupDetailStatus => 'Status';
+
+  @override
+  String get markDone => 'Als erledigt markieren';
+
+  @override
+  String get markFailed => 'Als verpasst markieren';
+
+  @override
+  String get showupAutoFailed =>
+      'Dieses Showup wurde automatisch als verpasst markiert, da es nach der geplanten Zeit geöffnet wurde.';
+
+  @override
+  String get showupNoteLabel => 'Notiz';
+
+  @override
+  String get showupNoteSave => 'Notiz speichern';
+
+  @override
+  String get showupNoteError =>
+      'Notiz konnte nicht gespeichert werden. Bitte erneut versuchen.';
+
+  @override
+  String get showupMarkError =>
+      'Status konnte nicht aktualisiert werden. Bitte erneut versuchen.';
+
+  @override
+  String get showupHabitDeleted => '(Gewohnheit gelöscht)';
 }

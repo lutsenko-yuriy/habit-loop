@@ -13,6 +13,7 @@ import 'package:habit_loop/features/dashboard/ui/ios/dashboard_page_ios.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/features/showup/ui/generic/showup_detail_screen.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -126,8 +127,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
     }
 
-    Future<void> onShowupTapped(String pactId) async {
-      // Showup detail screen not yet implemented.
+    Future<void> onShowupTapped(String showupId) async {
+      if (!context.mounted) return;
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await Navigator.of(context).push(
+          CupertinoPageRoute<void>(
+            builder: (_) => ShowupDetailScreen(showupId: showupId),
+          ),
+        );
+      } else {
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ShowupDetailScreen(showupId: showupId),
+          ),
+        );
+      }
+      if (context.mounted) {
+        ref.read(dashboardViewModelProvider.notifier).load();
+        ref.read(pactListViewModelProvider.notifier).load();
+      }
     }
 
     return hasActivePacts.when(

@@ -663,6 +663,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stopped {date}'**
   String pactCancelledOn(String date);
+
+  /// No description provided for @showupDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Showup Details'**
+  String get showupDetailTitle;
+
+  /// No description provided for @showupDetailHabit.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit'**
+  String get showupDetailHabit;
+
+  /// No description provided for @showupDetailScheduledAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled at'**
+  String get showupDetailScheduledAt;
+
+  /// No description provided for @showupDetailDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get showupDetailDuration;
+
+  /// No description provided for @showupDetailStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get showupDetailStatus;
+
+  /// No description provided for @markDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Done'**
+  String get markDone;
+
+  /// No description provided for @markFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Failed'**
+  String get markFailed;
+
+  /// No description provided for @showupAutoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This showup was automatically marked as failed because it was opened after its scheduled time had passed.'**
+  String get showupAutoFailed;
+
+  /// No description provided for @showupNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get showupNoteLabel;
+
+  /// No description provided for @showupNoteSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Note'**
+  String get showupNoteSave;
+
+  /// No description provided for @showupNoteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save note. Please try again.'**
+  String get showupNoteError;
+
+  /// No description provided for @showupMarkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update showup status. Please try again.'**
+  String get showupMarkError;
+
+  /// No description provided for @showupHabitDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'(habit deleted)'**
+  String get showupHabitDeleted;
 }
 
 class _AppLocalizationsDelegate
