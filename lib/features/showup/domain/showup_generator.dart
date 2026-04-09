@@ -64,11 +64,8 @@ class ShowupGenerator {
 
   /// Returns the total number of showups scheduled across the full pact
   /// duration ([pact.startDate]…[pact.endDate]) without materialising any
-  /// [Showup] objects.
-  ///
-  /// Note: the underlying [_countInRange] helper still allocates an O(n)
-  /// [List<DateTime>] of candidates internally — a future optimisation
-  /// opportunity if pact durations grow very large.
+  /// [Showup] objects or building a [List<DateTime>].  Candidate dates are
+  /// produced lazily by [_candidates] and counted in a single pass.
   ///
   /// The count reflects the schedule structure only — it is **not** affected
   /// by [pact.reminderOffset] and never filters past dates. This makes it
@@ -88,49 +85,37 @@ class ShowupGenerator {
   /// The sequence counter is always advanced for every occurrence in the full
   /// pact range — even skipped ones — so that IDs are deterministic and
   /// independent of the requested window.
+  ///
+  /// Candidate [DateTime] values are produced lazily via [_candidates] — no
+  /// full-pact [List] is ever materialised.
   static List<Showup> _generateInRange(
     Pact pact, {
     required DateTime effectiveFrom,
     required DateTime effectiveTo,
     required bool Function(DateTime) filter,
   }) {
-    final schedule = pact.schedule;
     var seq = 0;
+    final result = <Showup>[];
 
-    // emit() decides whether a candidate scheduledAt should be included in
-    // the output given the current window and filter, always advancing seq.
-    List<Showup> emitAll(List<DateTime> candidates) {
-      final result = <Showup>[];
-      for (final scheduledAt in candidates) {
-        final currentSeq = seq++;
-        if (_isWithinRange(scheduledAt, effectiveFrom, effectiveTo) &&
-            filter(scheduledAt)) {
-          result.add(_showup(pact: pact, scheduledAt: scheduledAt, seq: currentSeq));
-        }
+    for (final scheduledAt in _candidates(pact)) {
+      final currentSeq = seq++;
+      if (_isWithinRange(scheduledAt, effectiveFrom, effectiveTo) &&
+          filter(scheduledAt)) {
+        result.add(_showup(pact: pact, scheduledAt: scheduledAt, seq: currentSeq));
       }
-      return result;
     }
 
-    // Build the full list of candidate datetimes across the whole pact range.
-    final candidates = switch (schedule) {
-      DailySchedule() => _candidatesDaily(pact, schedule),
-      WeekdaySchedule() => _candidatesWeekday(pact, schedule),
-      MonthlyByWeekdaySchedule() =>
-        _candidatesMonthlyByWeekday(pact, schedule),
-      MonthlyByDateSchedule() => _candidatesMonthlyByDate(pact, schedule),
-    };
-
-    return emitAll(candidates);
+    return result;
   }
 
   /// Counts schedule occurrences in the full pact range without materialising
-  /// [Showup] objects.  No filter is applied — all schedule slots are counted.
+  /// [Showup] objects or a [List<DateTime>].  No filter is applied — all
+  /// schedule slots are counted.
   static int _countInRange(
     Pact pact, {
     required DateTime from,
     required DateTime to,
   }) {
-    final schedule = pact.schedule;
     // Clamp range to pact boundaries.
     final effectiveFrom = from.isBefore(pact.startDate) ? pact.startDate : from;
     final effectiveTo = to.isAfter(pact.endDate) ? pact.endDate : to;
@@ -138,41 +123,50 @@ class ShowupGenerator {
     // If the range is inverted after clamping, there is nothing to count.
     if (effectiveTo.isBefore(effectiveFrom)) return 0;
 
-    final candidates = switch (schedule) {
-      DailySchedule() => _candidatesDaily(pact, schedule),
-      WeekdaySchedule() => _candidatesWeekday(pact, schedule),
-      MonthlyByWeekdaySchedule() =>
-        _candidatesMonthlyByWeekday(pact, schedule),
-      MonthlyByDateSchedule() => _candidatesMonthlyByDate(pact, schedule),
-    };
-
-    return candidates
-        .where((dt) => _isWithinRange(dt, effectiveFrom, effectiveTo))
-        .length;
+    var count = 0;
+    for (final dt in _candidates(pact)) {
+      if (_isWithinRange(dt, effectiveFrom, effectiveTo)) count++;
+    }
+    return count;
   }
 
   // ---------------------------------------------------------------------------
-  // Candidate-datetime builders (no filtering, full pact range)
+  // Candidate-datetime generators (lazy, full pact range, no Showup allocation)
   // ---------------------------------------------------------------------------
 
-  static List<DateTime> _candidatesDaily(Pact pact, DailySchedule schedule) {
-    final candidates = <DateTime>[];
+  /// Lazily yields every candidate [DateTime] across the full pact range for
+  /// any schedule type.  No [List] is ever built — each value is produced
+  /// on demand as the caller iterates.
+  static Iterable<DateTime> _candidates(Pact pact) {
+    final schedule = pact.schedule;
+    return switch (schedule) {
+      DailySchedule() => _candidatesDaily(pact, schedule),
+      WeekdaySchedule() => _candidatesWeekday(pact, schedule),
+      MonthlyByWeekdaySchedule() => _candidatesMonthlyByWeekday(pact, schedule),
+      MonthlyByDateSchedule() => _candidatesMonthlyByDate(pact, schedule),
+    };
+  }
+
+  static Iterable<DateTime> _candidatesDaily(
+    Pact pact,
+    DailySchedule schedule,
+  ) sync* {
     var date = pact.startDate;
     final end = pact.endDate;
 
     while (!date.isAfter(end)) {
       final scheduledAt = _combine(date, schedule.timeOfDay);
       if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
-        candidates.add(scheduledAt);
+        yield scheduledAt;
       }
       date = DateTime(date.year, date.month, date.day + 1);
     }
-    return candidates;
   }
 
-  static List<DateTime> _candidatesWeekday(
-      Pact pact, WeekdaySchedule schedule) {
-    final candidates = <DateTime>[];
+  static Iterable<DateTime> _candidatesWeekday(
+    Pact pact,
+    WeekdaySchedule schedule,
+  ) sync* {
     var date = pact.startDate;
     final end = pact.endDate;
 
@@ -181,23 +175,19 @@ class ShowupGenerator {
         if (date.weekday == entry.weekday) {
           final scheduledAt = _combine(date, entry.timeOfDay);
           if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
-            candidates.add(scheduledAt);
+            yield scheduledAt;
           }
         }
       }
       date = DateTime(date.year, date.month, date.day + 1);
     }
-    return candidates;
   }
 
-  static List<DateTime> _candidatesMonthlyByWeekday(
+  static Iterable<DateTime> _candidatesMonthlyByWeekday(
     Pact pact,
     MonthlyByWeekdaySchedule schedule,
-  ) {
-    final candidates = <DateTime>[];
-    final months = _monthsInRange(pact.startDate, pact.endDate);
-
-    for (final month in months) {
+  ) sync* {
+    for (final month in _monthsInRange(pact.startDate, pact.endDate)) {
       for (final entry in schedule.entries) {
         final date = _nthWeekdayOfMonth(
           year: month.year,
@@ -208,31 +198,26 @@ class ShowupGenerator {
         if (date == null) continue;
         final scheduledAt = _combine(date, entry.timeOfDay);
         if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
-          candidates.add(scheduledAt);
+          yield scheduledAt;
         }
       }
     }
-    return candidates;
   }
 
-  static List<DateTime> _candidatesMonthlyByDate(
+  static Iterable<DateTime> _candidatesMonthlyByDate(
     Pact pact,
     MonthlyByDateSchedule schedule,
-  ) {
-    final candidates = <DateTime>[];
-    final months = _monthsInRange(pact.startDate, pact.endDate);
-
-    for (final month in months) {
+  ) sync* {
+    for (final month in _monthsInRange(pact.startDate, pact.endDate)) {
       for (final entry in schedule.entries) {
         final candidate = DateTime(month.year, month.month, entry.dayOfMonth);
         if (candidate.month != month.month) continue; // day doesn't exist
         final scheduledAt = _combine(candidate, entry.timeOfDay);
         if (_isWithinRange(scheduledAt, pact.startDate, pact.endDate)) {
-          candidates.add(scheduledAt);
+          yield scheduledAt;
         }
       }
     }
-    return candidates;
   }
 
   // ---------------------------------------------------------------------------
@@ -259,22 +244,23 @@ class ShowupGenerator {
     return day;
   }
 
-  /// Returns one [DateTime] per distinct year-month combination between
+  /// Lazily yields one [DateTime] per distinct year-month combination between
   /// [start] and [end] (inclusive).
-  static List<DateTime> _monthsInRange(DateTime start, DateTime end) {
-    final months = <DateTime>[];
+  static Iterable<DateTime> _monthsInRange(
+    DateTime start,
+    DateTime end,
+  ) sync* {
     var year = start.year;
     var month = start.month;
 
     while (year < end.year || (year == end.year && month <= end.month)) {
-      months.add(DateTime(year, month));
+      yield DateTime(year, month);
       month++;
       if (month > 12) {
         month = 1;
         year++;
       }
     }
-    return months;
   }
 
   /// Combines a date and a time-of-day [Duration] into a single [DateTime].
