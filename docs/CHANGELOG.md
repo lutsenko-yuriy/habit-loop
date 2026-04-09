@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.9.0] — 2026-04-09 (PR #14 merged)
+
+### Added — Lazy windowed showup generation + dynamic calendar strip
+
+- `ShowupGenerator.generateWindow()` generates only showups within a configurable rolling window ahead of today instead of the full pact duration; `countTotal()` computes the total showup count without materialising all showups
+- `ShowupGenerationService` encapsulates windowed generation logic and exposes `countShowupsForPact()` helper
+- `PactStats` updated to accept a `totalShowups` override, enabling accurate stats using `countTotal()` rather than the persisted subset
+- `PactDetailViewModel` uses `ShowupGenerator.countTotal()` for remaining/total counts so stats are accurate even when only a window of showups is persisted
+- `DashboardViewModel` generates the next window on load and refreshes it lazily as the calendar scrolls into future dates
+- Calendar strip `todayIndex` offset ramps gradually over the first 3 days (day 1: today at index 0, day 2: index 1, day 3: index 2, day 4+: centered at index 3) to avoid a visual jump when a pact is first created
+
+---
+
 ## [0.8.0] — 2026-04-08 (PR #13 merged)
 
 ### Added — Showup detail screen

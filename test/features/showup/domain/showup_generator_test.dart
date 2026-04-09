@@ -314,5 +314,366 @@ void main() {
         expect(showups, isEmpty);
       });
     });
+
+    // -------------------------------------------------------------------------
+    // generateWindow tests
+    // -------------------------------------------------------------------------
+
+    group('generateWindow', () {
+      group('DailySchedule', () {
+        test('returns only showups within the given window', () {
+          final pact = _pact(
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          // Request just April 5–7
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 5),
+            to: DateTime(2054, 4, 7),
+          );
+
+          expect(showups.length, 3);
+          expect(showups[0].scheduledAt, DateTime(2054, 4, 5, 7, 0));
+          expect(showups[1].scheduledAt, DateTime(2054, 4, 6, 7, 0));
+          expect(showups[2].scheduledAt, DateTime(2054, 4, 7, 7, 0));
+        });
+
+        test('window clamped to pact boundaries — window starts before pact', () {
+          final pact = _pact(
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+            startDate: DateTime(2054, 4, 5),
+            endDate: DateTime(2054, 4, 10),
+          );
+
+          // Window starts before pact start
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 1),
+            to: DateTime(2054, 4, 7),
+          );
+
+          // Should only produce April 5, 6, 7
+          expect(showups.length, 3);
+          expect(showups.first.scheduledAt, DateTime(2054, 4, 5, 8, 0));
+        });
+
+        test('window clamped to pact boundaries — window ends after pact', () {
+          final pact = _pact(
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+            startDate: DateTime(2054, 4, 5),
+            endDate: DateTime(2054, 4, 10),
+          );
+
+          // Window extends past pact end
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 8),
+            to: DateTime(2054, 4, 15),
+          );
+
+          // Should only produce April 8, 9, 10
+          expect(showups.length, 3);
+          expect(showups.last.scheduledAt, DateTime(2054, 4, 10, 8, 0));
+        });
+
+        test('returns empty list when window is entirely outside pact range', () {
+          final pact = _pact(
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 5, 1),
+            to: DateTime(2054, 5, 10),
+          );
+
+          expect(showups, isEmpty);
+        });
+
+        test('all generated showups are pending', () {
+          final pact = _pact(
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 1),
+            to: DateTime(2054, 4, 3),
+          );
+
+          expect(showups.every((s) => s.status == ShowupStatus.pending), isTrue);
+        });
+
+        test('IDs are deterministic — regenerating the same window yields same IDs', () {
+          final pact = _pact(
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          final first = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 5),
+            to: DateTime(2054, 4, 8),
+          );
+          final second = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 5),
+            to: DateTime(2054, 4, 8),
+          );
+
+          expect(first.map((s) => s.id).toList(),
+              equals(second.map((s) => s.id).toList()));
+        });
+
+        test('IDs from overlapping windows are consistent with full generate()', () {
+          // generateWindow IDs for a given date must match what generate() produces
+          // for the same date (so we can safely deduplicate by ID in the service).
+          final pact = _pact(
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 5),
+          );
+
+          final full = ShowupGenerator.generate(pact);
+          final window = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 2),
+            to: DateTime(2054, 4, 4),
+          );
+
+          // The IDs in the window must be a subset of IDs from the full generation.
+          final fullIds = full.map((s) => s.id).toSet();
+          for (final s in window) {
+            expect(fullIds, contains(s.id));
+          }
+        });
+      });
+
+      group('WeekdaySchedule', () {
+        test('returns only showups on matching weekdays within window', () {
+          // April 2054: Mon=6,13,20,27 / Wed=1,8,15,22,29
+          final pact = _pact(
+            schedule: const WeekdaySchedule(entries: [
+              WeekdayEntry(
+                  weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
+              WeekdayEntry(
+                  weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
+            ]),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          // Window: April 5–10 → Mon Apr 6, Wed Apr 8
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 5),
+            to: DateTime(2054, 4, 10),
+          );
+
+          expect(showups.length, 2);
+          expect(showups[0].scheduledAt, DateTime(2054, 4, 6, 6, 0));
+          expect(showups[1].scheduledAt, DateTime(2054, 4, 8, 18, 0));
+        });
+
+        test('returns empty list when window contains no matching weekday', () {
+          // Only Sunday, window covers Mon–Fri
+          final pact = _pact(
+            schedule: const WeekdaySchedule(entries: [
+              WeekdayEntry(
+                  weekday: DateTime.sunday, timeOfDay: Duration(hours: 9)),
+            ]),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 7),
+            to: DateTime(2054, 4, 11),
+          );
+
+          expect(showups, isEmpty);
+        });
+      });
+
+      group('MonthlyByWeekdaySchedule', () {
+        test('returns matching monthly occurrences within window', () {
+          // 2nd Monday of April 2054 = April 13; 2nd Monday of May 2054 = May 11
+          final pact = _pact(
+            schedule: const MonthlyByWeekdaySchedule(entries: [
+              MonthlyWeekdayEntry(
+                occurrence: 2,
+                weekday: DateTime.monday,
+                timeOfDay: Duration(hours: 9),
+              ),
+            ]),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 5, 31),
+          );
+
+          // Window covers only April 10–15 → only April 13
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 10),
+            to: DateTime(2054, 4, 15),
+          );
+
+          expect(showups.length, 1);
+          expect(showups[0].scheduledAt, DateTime(2054, 4, 13, 9, 0));
+        });
+      });
+
+      group('MonthlyByDateSchedule', () {
+        test('returns matching monthly-date showups within window', () {
+          // 15th of April and May 2054
+          final pact = _pact(
+            schedule: const MonthlyByDateSchedule(entries: [
+              MonthlyDateEntry(dayOfMonth: 15, timeOfDay: Duration(hours: 8)),
+            ]),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 5, 31),
+          );
+
+          // Window: April 14–16 → only April 15
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 14),
+            to: DateTime(2054, 4, 16),
+          );
+
+          expect(showups.length, 1);
+          expect(showups[0].scheduledAt, DateTime(2054, 4, 15, 8, 0));
+        });
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // countTotal tests
+    // -------------------------------------------------------------------------
+
+    group('countTotal', () {
+      test('equals the number of showups generate() produces for daily schedule', () {
+        final pact = _pact(
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 30),
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+        final generated = ShowupGenerator.generate(pact);
+
+        expect(count, generated.length);
+      });
+
+      test('equals the number of showups generate() produces for weekday schedule', () {
+        // Mon + Wed, April 2054 (30 days): 4 Mondays + 5 Wednesdays = 9 total
+        final pact = _pact(
+          schedule: const WeekdaySchedule(entries: [
+            WeekdayEntry(
+                weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
+            WeekdayEntry(
+                weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
+          ]),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 30),
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+        final generated = ShowupGenerator.generate(pact);
+
+        expect(count, generated.length);
+      });
+
+      test('equals the number of showups generate() produces for monthly-by-weekday', () {
+        final pact = _pact(
+          schedule: const MonthlyByWeekdaySchedule(entries: [
+            MonthlyWeekdayEntry(
+              occurrence: 2,
+              weekday: DateTime.monday,
+              timeOfDay: Duration(hours: 9),
+            ),
+          ]),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 5, 31),
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+        final generated = ShowupGenerator.generate(pact);
+
+        expect(count, generated.length);
+      });
+
+      test('equals the number of showups generate() produces for monthly-by-date', () {
+        final pact = _pact(
+          schedule: const MonthlyByDateSchedule(entries: [
+            MonthlyDateEntry(dayOfMonth: 31, timeOfDay: Duration(hours: 8)),
+          ]),
+          startDate: DateTime(2054, 3, 1),
+          endDate: DateTime(2054, 6, 30),
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+        final generated = ShowupGenerator.generate(pact);
+
+        // March 31 + May 31 = 2 (April and June have no 31st)
+        expect(count, 2);
+        expect(count, generated.length);
+      });
+
+      test('returns zero for a pact with an empty date range', () {
+        // endDate before startDate — degenerate case
+        final pact = _pact(
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          startDate: DateTime(2054, 4, 10),
+          endDate: DateTime(2054, 4, 5),
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+
+        expect(count, 0);
+      });
+
+      test('countTotal equals generateWindow across the full pact range', () {
+        final pact = _pact(
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 30),
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+        final windowShowups = ShowupGenerator.generateWindow(
+          pact,
+          from: pact.startDate,
+          to: pact.endDate,
+        );
+
+        expect(count, windowShowups.length);
+      });
+
+      test('countTotal is not affected by reminderOffset (counts all scheduled slots)', () {
+        // countTotal should count all schedule slots regardless of reminder cutoff.
+        // This is important so PactStats can display total even when generate()
+        // skips past showups.
+        final pact = _pact(
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 3),
+          reminderOffset: const Duration(days: 999), // would filter all in generate()
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+
+        // All 3 days must be counted even though generate() would skip them
+        expect(count, 3);
+      });
+    });
   });
 }

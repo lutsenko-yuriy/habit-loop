@@ -87,6 +87,8 @@ void main() {
         status: ShowupStatus.pending,
       );
 
+      // Use a Monday-only schedule so lazy generation produces no showups on
+      // today (Sunday March 29) — this prevents duplicate 'Meditate' tiles.
       await tester.pumpWidget(_buildApp(
         pacts: [
           Pact(
@@ -95,7 +97,9 @@ void main() {
             startDate: DateTime(2026, 3, 1),
             endDate: DateTime(2026, 9, 1),
             showupDuration: const Duration(minutes: 10),
-            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+            schedule: const WeekdaySchedule(entries: [
+              WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+            ]),
             status: PactStatus.active,
           ),
         ],
@@ -115,6 +119,8 @@ void main() {
         status: ShowupStatus.done,
       );
 
+      // Use a Monday-only schedule so lazy generation produces no showup on
+      // today (Sunday March 29) — keeping the "no showups" empty state visible.
       await tester.pumpWidget(_buildApp(
         pacts: [
           Pact(
@@ -123,7 +129,9 @@ void main() {
             startDate: DateTime(2026, 3, 1),
             endDate: DateTime(2026, 9, 1),
             showupDuration: const Duration(minutes: 10),
-            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+            schedule: const WeekdaySchedule(entries: [
+              WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+            ]),
             status: PactStatus.active,
           ),
         ],
@@ -131,7 +139,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      // Today (29) is selected — no showups for today
+      // Today (29, Sunday) is selected — no showups generated for Sunday
       expect(find.text('No showups for this day'), findsOneWidget);
 
       // Tap on day 28
@@ -238,11 +246,15 @@ void main() {
         Showup(id: 'c', pactId: '3', scheduledAt: DateTime(2026, 3, 29, 9), duration: const Duration(minutes: 10), status: ShowupStatus.failed),
         Showup(id: 'd', pactId: '4', scheduledAt: DateTime(2026, 3, 29, 10), duration: const Duration(minutes: 10), status: ShowupStatus.done),
       ];
+      // Use Monday-only schedules so lazy generation skips Sunday (today = Mar 29)
+      // and the pre-seeded showups remain the only ones on today's calendar slot.
       final pacts = List.generate(4, (i) => Pact(
         id: '${i + 1}', habitName: 'Habit $i',
         startDate: DateTime(2026, 3, 1), endDate: DateTime(2026, 9, 1),
         showupDuration: const Duration(minutes: 10),
-        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        schedule: const WeekdaySchedule(entries: [
+          WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+        ]),
         status: PactStatus.active,
       ));
 
@@ -364,13 +376,18 @@ void main() {
         duration: const Duration(minutes: 10),
         status: ShowupStatus.pending,
       );
+      // Use a Monday-only schedule so lazy generation does not produce an
+      // additional showup on today (Sunday March 29). Only the pre-seeded
+      // showup appears, making find.text('Meditate') unambiguous.
       final pact = Pact(
         id: 'pact-1',
         habitName: 'Meditate',
         startDate: DateTime(2026, 3, 1),
         endDate: DateTime(2026, 9, 1),
         showupDuration: const Duration(minutes: 10),
-        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        schedule: const WeekdaySchedule(entries: [
+          WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+        ]),
         status: PactStatus.active,
       );
 

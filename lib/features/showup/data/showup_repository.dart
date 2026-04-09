@@ -33,4 +33,9 @@ abstract class ShowupRepository {
   ///
   /// Throws [ArgumentError] if no showup with the given id exists.
   Future<void> updateShowup(Showup showup);
+
+  /// Returns the number of showups persisted for the given [pactId].
+  ///
+  /// Returns 0 if no showups exist for that pact.
+  Future<int> countShowupsForPact(String pactId);
 }

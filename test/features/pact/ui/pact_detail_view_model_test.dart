@@ -7,6 +7,7 @@ import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
+import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 final _pact = Pact(
@@ -58,8 +59,20 @@ void main() {
       expect(state.pact?.habitName, 'Meditate');
       expect(state.stats?.showupsDone, 2);
       expect(state.stats?.showupsFailed, 1);
-      expect(state.stats?.showupsRemaining, 1);
       expect(state.stats?.currentStreak, 0); // streak broken by failed
+    });
+
+    test('load uses ShowupGenerator.countTotal for totalShowups when window is partial', () async {
+      // _showups has only 4 entries but _pact spans 2026-03-01..2026-09-01
+      // (daily). countTotal returns the full schedule count, which is much
+      // larger than 4. showupsRemaining must be countTotal - done(2) - failed(1).
+      final container = _makeContainer(pacts: [_pact], showups: _showups);
+      addTearDown(container.dispose);
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      final expectedTotal = ShowupGenerator.countTotal(_pact);
+      expect(state.stats?.totalShowups, expectedTotal);
+      expect(state.stats?.showupsRemaining, expectedTotal - 2 - 1); // total - done - failed
     });
 
     test('load sets error when pact not found', () async {
@@ -130,20 +143,26 @@ void main() {
     });
 
     test('load auto-completes an active pact when all showups are resolved', () async {
-      // Dates in 2054 so they are in the future, but all showups already resolved.
+      // Dates in 2054 so the end date is in the future (daysLeft > 0), ensuring
+      // auto-completion is triggered solely by showupsRemaining == 0 rather than
+      // by the end-date guard. We generate every scheduled showup and mark them
+      // all done/failed so countTotal - done - failed == 0.
       final allResolvedPact = Pact(
         id: 'all-resolved',
         habitName: 'Stretch',
         startDate: DateTime(2054, 1, 1),
-        endDate: DateTime(2054, 6, 30),
+        endDate: DateTime(2054, 1, 3), // 3-day pact → exactly 3 daily showups
         showupDuration: const Duration(minutes: 5),
         schedule: const DailySchedule(timeOfDay: Duration(hours: 6)),
         status: PactStatus.active,
       );
-      final showups = [
-        Showup(id: 'r1', pactId: 'all-resolved', scheduledAt: DateTime(2054, 1, 5, 6), duration: const Duration(minutes: 5), status: ShowupStatus.done),
-        Showup(id: 'r2', pactId: 'all-resolved', scheduledAt: DateTime(2054, 1, 6, 6), duration: const Duration(minutes: 5), status: ShowupStatus.failed),
-      ];
+      // Generate all showups for the pact and mark them resolved.
+      final generated = ShowupGenerator.generateWindow(
+        allResolvedPact,
+        from: allResolvedPact.startDate,
+        to: allResolvedPact.endDate,
+      );
+      final showups = generated.map((s) => s.copyWith(status: ShowupStatus.done)).toList();
       final pactRepo = InMemoryPactRepository([allResolvedPact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
