@@ -58,21 +58,22 @@ class DashboardViewModel extends Notifier<DashboardState> {
     }
 
     // -----------------------------------------------------------------------
-    // todayIndex: how many days after the earliest active pact start date is
-    // today? Clamped to [0, 3]. Defaults to 3 when there are no active pacts.
+    // todayIndex: 0 only on the very first day the user ever created a pact
+    // (today == oldest pact start date across ALL pacts regardless of status);
+    // 3 (centred) in every other case.  This means deleting or stopping a pact
+    // never shifts the strip position.
     // -----------------------------------------------------------------------
     int computedTodayIndex = 3;
-    if (activePacts.isNotEmpty) {
+    if (allPacts.isNotEmpty) {
       DateTime? earliestStart;
-      for (final p in activePacts) {
+      for (final p in allPacts) {
         final start = DateTime(p.startDate.year, p.startDate.month, p.startDate.day);
         if (earliestStart == null || start.isBefore(earliestStart)) {
           earliestStart = start;
         }
       }
-      if (earliestStart != null) {
-        final daysSinceStart = todayNorm.difference(earliestStart).inDays;
-        computedTodayIndex = daysSinceStart.clamp(0, 3);
+      if (earliestStart != null && earliestStart == todayNorm) {
+        computedTodayIndex = 0;
       }
     }
 

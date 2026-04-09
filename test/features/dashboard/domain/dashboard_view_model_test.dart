@@ -194,8 +194,15 @@ void main() {
   });
 
   // today = DateTime(2026, 3, 29)
+  //
+  // New offset rules (simplified):
+  //   - Query ALL pacts (regardless of status) to find the oldest start date.
+  //   - If today == that oldest start date → todayIndex = 0.
+  //   - Otherwise → todayIndex = 3.
+  //   - No intermediate values (1, 2) — the strip only shifts on the very first
+  //     day the user created their first pact ever.
   group('todayIndex — calendar strip offset', () {
-    test('todayIndex is 3 when no active pacts', () async {
+    test('todayIndex is 3 when no pacts exist', () async {
       container = createContainer();
 
       await container.read(dashboardViewModelProvider.notifier).load();
@@ -204,8 +211,8 @@ void main() {
       expect(state.todayIndex, 3);
     });
 
-    test('todayIndex is 3 when earliest active pact started 3+ days ago', () async {
-      // pact started 10 days before today → offset capped at 3
+    test('todayIndex is 3 when oldest pact started before today', () async {
+      // pact started 10 days before today → not the same day → todayIndex = 3
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 19))],
       );
@@ -216,7 +223,7 @@ void main() {
       expect(state.todayIndex, 3);
     });
 
-    test('todayIndex is 0 when earliest active pact started today', () async {
+    test('todayIndex is 0 when oldest pact started today', () async {
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: today)],
       );
@@ -227,7 +234,8 @@ void main() {
       expect(state.todayIndex, 0);
     });
 
-    test('todayIndex is 1 when earliest active pact started yesterday', () async {
+    test('todayIndex is 3 when oldest pact started yesterday', () async {
+      // Started yesterday — not today → todayIndex = 3 (centered)
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 28))],
       );
@@ -235,10 +243,10 @@ void main() {
       await container.read(dashboardViewModelProvider.notifier).load();
       final state = container.read(dashboardViewModelProvider);
 
-      expect(state.todayIndex, 1);
+      expect(state.todayIndex, 3);
     });
 
-    test('todayIndex is 2 when earliest active pact started 2 days ago', () async {
+    test('todayIndex is 3 when oldest pact started 2 days ago', () async {
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 27))],
       );
@@ -246,15 +254,15 @@ void main() {
       await container.read(dashboardViewModelProvider.notifier).load();
       final state = container.read(dashboardViewModelProvider);
 
-      expect(state.todayIndex, 2);
+      expect(state.todayIndex, 3);
     });
 
-    test('todayIndex uses earliest of multiple active pacts', () async {
-      // p1 started today → would give 0; p2 started 2 days ago → gives 2
-      // earliest = 2 days ago → todayIndex = 2
+    test('todayIndex considers ALL pacts regardless of status', () async {
+      // Stopped pact started today and active pact started 2 days ago.
+      // With all-pacts logic: oldest = 2 days ago (not today) → todayIndex = 3.
       container = createContainer(
         pacts: [
-          _dailyPact(id: 'p1', startDate: today),
+          _dailyPact(id: 'p1', startDate: today, status: PactStatus.stopped),
           _dailyPact(id: 'p2', startDate: DateTime(2026, 3, 27)),
         ],
       );
@@ -262,27 +270,42 @@ void main() {
       await container.read(dashboardViewModelProvider.notifier).load();
       final state = container.read(dashboardViewModelProvider);
 
-      expect(state.todayIndex, 2);
+      expect(state.todayIndex, 3);
     });
 
-    test('todayIndex ignores non-active pacts', () async {
-      // stopped pact started today — should NOT affect todayIndex
+    test('todayIndex is 0 when stopped pact is the only one and started today', () async {
+      // A stopped pact that was created today → oldest start = today → todayIndex = 0.
+      // Deleting/stopping a pact must not shift the strip back to centered layout.
       container = createContainer(
         pacts: [
           _dailyPact(id: 'p1', startDate: today, status: PactStatus.stopped),
-          _dailyPact(id: 'p2', startDate: DateTime(2026, 3, 20)),
         ],
       );
 
       await container.read(dashboardViewModelProvider.notifier).load();
       final state = container.read(dashboardViewModelProvider);
 
-      // p2 is stopped too (not active), so fallback to 3
+      expect(state.todayIndex, 0);
+    });
+
+    test('todayIndex uses oldest across mixed-status pacts', () async {
+      // Active pact started today (would give 0); stopped pact started 2 days
+      // ago (oldest, not today) → todayIndex = 3.
+      container = createContainer(
+        pacts: [
+          _dailyPact(id: 'p1', startDate: today),
+          _dailyPact(id: 'p2', startDate: DateTime(2026, 3, 27), status: PactStatus.stopped),
+        ],
+      );
+
+      await container.read(dashboardViewModelProvider.notifier).load();
+      final state = container.read(dashboardViewModelProvider);
+
       expect(state.todayIndex, 3);
     });
 
-    test('calendar strip starts from today - todayIndex', () async {
-      // pact started yesterday → todayIndex = 1 → strip[0] = today - 1
+    test('calendar strip is centered on today (todayIndex = 3) by default', () async {
+      // pact started yesterday → todayIndex = 3 → strip[0] = today - 3
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 28))],
       );
@@ -291,8 +314,21 @@ void main() {
       final state = container.read(dashboardViewModelProvider);
 
       expect(state.calendarDays, hasLength(7));
-      expect(state.calendarDays[0].date, DateTime(2026, 3, 28)); // today - 1
-      expect(state.calendarDays[1].date, today);                  // today at index 1
+      expect(state.calendarDays[0].date, DateTime(2026, 3, 26)); // today - 3
+      expect(state.calendarDays[3].date, today);                  // today at index 3
+    });
+
+    test('calendar strip starts at today when todayIndex = 0', () async {
+      // pact started today → todayIndex = 0 → strip[0] = today
+      container = createContainer(
+        pacts: [_dailyPact(id: 'p1', startDate: today)],
+      );
+
+      await container.read(dashboardViewModelProvider.notifier).load();
+      final state = container.read(dashboardViewModelProvider);
+
+      expect(state.calendarDays, hasLength(7));
+      expect(state.calendarDays[0].date, today);
     });
 
     test('selectedDayIndex defaults to todayIndex after load', () async {
