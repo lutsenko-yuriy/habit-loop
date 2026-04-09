@@ -7,7 +7,7 @@ class InMemoryShowupRepository implements ShowupRepository {
   final List<Showup> _showups;
 
   InMemoryShowupRepository([List<Showup>? showups])
-      : _showups = showups ?? [];
+      : _showups = showups != null ? List.of(showups) : [];
 
   @override
   Future<List<Showup>> getShowupsForDate(DateTime date) async {

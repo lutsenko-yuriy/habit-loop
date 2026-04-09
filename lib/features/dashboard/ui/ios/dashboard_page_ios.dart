@@ -168,7 +168,7 @@ class _CalendarStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final today = state.calendarDays.isNotEmpty
-        ? state.calendarDays[3].date
+        ? state.calendarDays[state.todayIndex].date
         : DateTime.now();
 
     return Padding(
