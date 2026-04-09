@@ -66,6 +66,10 @@ class ShowupGenerator {
   /// duration ([pact.startDate]…[pact.endDate]) without materialising any
   /// [Showup] objects.
   ///
+  /// Note: the underlying [_countInRange] helper still allocates an O(n)
+  /// [List<DateTime>] of candidates internally — a future optimisation
+  /// opportunity if pact durations grow very large.
+  ///
   /// The count reflects the schedule structure only — it is **not** affected
   /// by [pact.reminderOffset] and never filters past dates. This makes it
   /// suitable for displaying overall totals in stats screens even when only

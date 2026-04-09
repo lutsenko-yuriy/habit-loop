@@ -143,20 +143,26 @@ void main() {
     });
 
     test('load auto-completes an active pact when all showups are resolved', () async {
-      // Dates in 2054 so they are in the future, but all showups already resolved.
+      // Dates in 2054 so the end date is in the future (daysLeft > 0), ensuring
+      // auto-completion is triggered solely by showupsRemaining == 0 rather than
+      // by the end-date guard. We generate every scheduled showup and mark them
+      // all done/failed so countTotal - done - failed == 0.
       final allResolvedPact = Pact(
         id: 'all-resolved',
         habitName: 'Stretch',
         startDate: DateTime(2054, 1, 1),
-        endDate: DateTime(2054, 6, 30),
+        endDate: DateTime(2054, 1, 3), // 3-day pact → exactly 3 daily showups
         showupDuration: const Duration(minutes: 5),
         schedule: const DailySchedule(timeOfDay: Duration(hours: 6)),
         status: PactStatus.active,
       );
-      final showups = [
-        Showup(id: 'r1', pactId: 'all-resolved', scheduledAt: DateTime(2054, 1, 5, 6), duration: const Duration(minutes: 5), status: ShowupStatus.done),
-        Showup(id: 'r2', pactId: 'all-resolved', scheduledAt: DateTime(2054, 1, 6, 6), duration: const Duration(minutes: 5), status: ShowupStatus.failed),
-      ];
+      // Generate all showups for the pact and mark them resolved.
+      final generated = ShowupGenerator.generateWindow(
+        allResolvedPact,
+        from: allResolvedPact.startDate,
+        to: allResolvedPact.endDate,
+      );
+      final showups = generated.map((s) => s.copyWith(status: ShowupStatus.done)).toList();
       final pactRepo = InMemoryPactRepository([allResolvedPact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
