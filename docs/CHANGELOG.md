@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.9.3] — 2026-04-10 (PR #17 merged)
+
+### Added — Firebase project setup (HAB-27)
+
+- `firebase_core` added to `pubspec.yaml`; `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` called in `main.dart` before `runApp`, so all subsequent Firebase SDKs (Analytics, Remote Config, App Distribution) can be added without further wiring
+- `com.google.gms:google-services` Gradle plugin applied to `android/settings.gradle.kts` and `android/app/build.gradle.kts`
+- `ios/Runner.xcodeproj/project.pbxproj` updated with Firebase configuration entries
+- `lib/firebase_options.dart` added to `.gitignore` alongside `google-services.json` and `GoogleService-Info.plist` — credentials are never committed; branch history cleaned with `git filter-repo` to remove accidentally committed secrets
+
+---
+
 ## [0.9.2] — 2026-04-10 (PR #16 merged)
 
 ### Changed — Showup generation window and date arithmetic
