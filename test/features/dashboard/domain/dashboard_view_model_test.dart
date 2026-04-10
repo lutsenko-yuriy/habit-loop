@@ -404,10 +404,10 @@ void main() {
 
       await container.read(dashboardViewModelProvider.notifier).load();
 
-      // Repository should now contain showups for the window [today, today+7]
+      // Repository should now contain showups for the window [today, today+10]
       final generated = await showupRepo.getShowupsForDateRange(
         today,
-        DateTime(today.year, today.month, today.day + 7),
+        today.add(const Duration(days: 10)),
       );
       expect(generated, isNotEmpty);
     });

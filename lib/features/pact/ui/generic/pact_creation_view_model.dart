@@ -130,9 +130,12 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       status: PactStatus.active,
       reminderOffset: state.reminderOffset,
     );
-    // Generate only the initial 8-day window (startDate through startDate+7)
-    // to keep the repository lean. Further windows are generated lazily by the
-    // ShowupGenerationService when the dashboard loads each day.
+    // Generate only the initial 11-day window (startDate through startDate+10)
+    // to keep the repository lean. The window is intentionally wider than the
+    // 7-day calendar strip so that a DST fall-back transition (which can make
+    // Duration arithmetic land 1 hour early) still covers all visible strip
+    // days. Further windows are generated lazily by ShowupGenerationService
+    // when the dashboard loads each day.
     final windowEnd = state.startDate.add(const Duration(days: 10));
     final showups = ShowupGenerator.generateWindow(
       pact,
