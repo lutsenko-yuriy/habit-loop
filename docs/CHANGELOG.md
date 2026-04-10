@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.9.2] — 2026-04-10 (PR #16 merged)
+
+### Changed — Showup generation window and date arithmetic
+
+- Replaced `DateTime(year, month, day + 7)` arithmetic in `pact_creation_view_model.dart` and `dashboard_view_model.dart` with `date.add(const Duration(days: 7))`, which handles month-end boundaries correctly and is consistent with the `_addMonths()` pattern introduced in v0.2.0
+- Expanded the showup generation window from 7 to 10 days to ensure the full 7-day calendar strip is always covered with a DST-safe buffer; updated tests to assert the wider window
+
+---
+
 ## [0.9.1] — 2026-04-10 (PR #15 merged)
 
 ### Changed — Lazy DateTime candidate generation in ShowupGenerator
