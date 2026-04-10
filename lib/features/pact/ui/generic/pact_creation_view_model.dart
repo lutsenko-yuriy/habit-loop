@@ -133,7 +133,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     // Generate only the initial 8-day window (startDate through startDate+7)
     // to keep the repository lean. Further windows are generated lazily by the
     // ShowupGenerationService when the dashboard loads each day.
-    final windowEnd = state.startDate.add(const Duration(days: 7));
+    final windowEnd = state.startDate.add(const Duration(days: 10));
     final showups = ShowupGenerator.generateWindow(
       pact,
       from: state.startDate,
