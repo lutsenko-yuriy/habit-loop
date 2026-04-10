@@ -193,9 +193,9 @@ void main() {
       final pact = pacts.first;
 
       final showups = await showupRepo.getShowupsForPact(pact.id);
-      // Daily schedule: window is today through today+7 → at most 8 showups,
+      // Daily schedule: window is today through today+10 → at most 11 showups,
       // clamped to the pact's end date (pact ends 2054-09-30 so no clamping).
-      expect(showups, hasLength(8));
+      expect(showups, hasLength(11));
       expect(
         showups.every((s) => s.pactId == pact.id),
         isTrue,
@@ -208,8 +208,8 @@ void main() {
         showups.every((s) => s.duration == const Duration(minutes: 10)),
         isTrue,
       );
-      // All showups must fall within the 8-day window
-      final windowEnd = DateTime(today.year, today.month, today.day + 7, 23, 59, 59);
+      // All showups must fall within the 11-day window
+      final windowEnd = today.add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
       expect(
         showups.every((s) => !s.scheduledAt.isAfter(windowEnd)),
         isTrue,
@@ -233,8 +233,8 @@ void main() {
 
       final showups = await showupRepo.getShowupsForPact(pact.id);
       expect(showups, isNotEmpty);
-      // Windowed generation: only the 8-day initial window is persisted
-      expect(showups.length, lessThanOrEqualTo(8));
+      // Windowed generation: only the 11-day initial window is persisted
+      expect(showups.length, lessThanOrEqualTo(11));
       expect(
         showups.every((s) => s.pactId == pact.id),
         isTrue,

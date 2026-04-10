@@ -45,9 +45,11 @@ class DashboardViewModel extends Notifier<DashboardState> {
 
     // -----------------------------------------------------------------------
     // Lazy generation: ensure showups exist for each active pact in the
-    // window [today, today + 7] before reading from the repository.
+    // window [today, today + 10] before reading from the repository.
+    // The window is intentionally wider than the 7-day calendar strip so that
+    // a DST-caused 1-day shortfall still covers all visible strip days.
     // -----------------------------------------------------------------------
-    final generationWindowEnd = DateTime(todayNorm.year, todayNorm.month, todayNorm.day + 7);
+    final generationWindowEnd = todayNorm.add(const Duration(days: 10));
     final generationService = ShowupGenerationService(repository: showupRepo);
     for (final pact in activePacts) {
       await generationService.ensureShowupsExist(
