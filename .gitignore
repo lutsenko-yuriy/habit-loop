@@ -48,3 +48,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase credentials — must NOT be committed; generate via flutterfire configure
+google-services.json
+GoogleService-Info.plist

@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,8 +11,14 @@ import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   final pactRepo = InMemoryPactRepository();
   final showupRepo = InMemoryShowupRepository();
 
