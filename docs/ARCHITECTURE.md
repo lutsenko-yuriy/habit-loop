@@ -16,15 +16,17 @@ lib/
     ├── pact/                          # Pact creation wizard + pact detail screen
     │   ├── domain/
     │   ├── data/
+    │   ├── analytics/                 # PactCreatedEvent, PactStoppedEvent
     │   └── ui/ (generic/, ios/, android/)
     ├── showup/                        # Showup model, generation, repository, stats
     │   ├── domain/
     │   ├── data/
+    │   ├── analytics/                 # ShowupMarkedDoneEvent, ShowupMarkedFailedEvent, ShowupAutoFailedEvent
     │   └── ui/ (generic/, ios/, android/)
-    ├── analytics/                     # Firebase Analytics event tracking
-    │   ├── domain/                    # AnalyticsEvent (sealed), AnalyticsScreen, AnalyticsService interface
+    ├── analytics/                     # Firebase Analytics infrastructure (no widgets)
+    │   ├── domain/                    # AnalyticsEvent (abstract base), AnalyticsScreen, AnalyticsService interface
     │   ├── data/                      # FirebaseAnalyticsService, FirebaseAnalyticsClientAdapter, NoopAnalyticsService
-    │   └── ui/generic/                # analyticsServiceProvider
+    │   └── providers/                 # analyticsServiceProvider (Riverpod)
     └── reminder/                      # Notification scheduling (not yet implemented)
         ├── domain/
         ├── data/
@@ -33,8 +35,8 @@ lib/
 test/
 └── features/                          # Mirrors lib/features/
     ├── dashboard/ (domain/, ui/)
-    ├── pact/ (data/, domain/, ui/)
-    ├── showup/ (data/, domain/)
+    ├── pact/ (analytics/, data/, domain/, ui/)
+    ├── showup/ (analytics/, data/, domain/, ui/)
     └── analytics/ (domain/, data/, fake_analytics_service.dart)
 ```
 
@@ -55,6 +57,11 @@ Platform-split presentation:
 - `generic/` — view models (Riverpod notifiers) and shared state classes
 - `ios/` — Cupertino widgets
 - `android/` — Material widgets
+
+### Analytics subdirectories
+Each vertical may contain an `analytics/` subdirectory with event classes extending `AnalyticsEvent`. This keeps event definitions co-located with the domain they describe rather than centralised in the `analytics/` slice.
+
+The central `analytics/` vertical is infrastructure-only: the abstract base class, service interface, Firebase adapter, noop adapter, and Riverpod provider. It intentionally has no `ui/` directory because it contains no widgets — the provider lives under `providers/` instead.
 
 ## Dependencies
 

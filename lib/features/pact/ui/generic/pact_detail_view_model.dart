@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
-import 'package:habit_loop/features/analytics/ui/generic/analytics_providers.dart';
+import 'package:habit_loop/features/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_stats.dart';

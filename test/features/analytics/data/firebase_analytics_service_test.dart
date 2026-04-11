@@ -1,7 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/features/analytics/data/firebase_analytics_service.dart';
-import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
 import 'package:habit_loop/features/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
+import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 
 // Hand-rolled fake — does not depend on firebase_analytics at all in tests.
 class FakeFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
