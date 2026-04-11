@@ -4,6 +4,21 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.9.5] — 2026-04-11 (PR #19 merged)
+
+### Added — Firebase Analytics integration (HAB-26)
+
+- `firebase_analytics` SDK added to `pubspec.yaml`; a new `analytics` vertical slice introduces `AnalyticsService` (abstract interface), `FirebaseAnalyticsService` (backed by `FirebaseAnalyticsClientAdapter`), and `NoopAnalyticsService` — infrastructure only, no widgets
+- Per-vertical `analytics/` packages: `pact/analytics/` contains `PactCreatedEvent` and `PactStoppedEvent`; `showup/analytics/` contains `ShowupMarkedDoneEvent`, `ShowupMarkedFailedEvent`, and `ShowupAutoFailedEvent` — events live next to the domain they describe
+- Events tracked: `pact_created` (schedule type, duration days, showup duration minutes, reminder offset, showups expected), `pact_stopped` (days active, done/failed/remaining counts), `showup_marked_done`, `showup_marked_failed`, `showup_auto_failed`
+- Screen views tracked via `AnalyticsScreen` enum on dashboard, pact creation, pact detail, and showup detail screens
+- `kReleaseMode` guard in `main.dart`: debug/profile builds inject `NoopAnalyticsService`; only release builds wire `FirebaseAnalyticsService`
+- `analyticsServiceProvider` provided via Riverpod so the service can be overridden in tests
+- All analytics failures are swallowed in view models so analytics can never surface errors to the user
+- `FakeAnalyticsService` in `test/features/analytics/` for dependency injection; `PactCreationViewModel`, `PactDetailViewModel`, and `ShowupDetailViewModel` tests assert correct events are fired with the right parameters (290 tests passing)
+
+---
+
 ## [0.9.4] — 2026-04-11 (PR #18 merged)
 
 ### Added — Android CI/CD pipeline with Firebase App Distribution (HAB-20)
