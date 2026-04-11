@@ -55,6 +55,26 @@ When invoked after the user signals PR approval (e.g. "I approve the PR", "PR ap
 7. Merge the PR using `gh pr merge <number> --squash --delete-branch`.
 8. Confirm to the user: "Linear updated, docs regenerated, PR merged."
 
+## Mode 3 — Analytics planning (before Tech Lead)
+
+When a feature involves user-visible screens or user interactions, the Product Owner is responsible for defining **what analytics events and screen views should be tracked** before the Tech Lead produces an implementation plan.
+
+> Infrastructure, CI/CD, or backend-only changes with no user-facing screens or actions do not need analytics planning — skip directly to the Tech Lead.
+
+When invoked for analytics planning on a feature:
+
+1. Read the feature's Linear issue (description + acceptance criteria).
+2. Read `docs/ANALYTICS_EVENTS.md` to understand existing events and conventions.
+3. Propose analytics additions:
+   - New **events** — name (snake_case), trigger (user action), and properties. Event classes live in `features/<vertical>/analytics/`, extend `AnalyticsEvent`, and are passed to `AnalyticsService.logEvent()`.
+   - New **screen views** — if the feature introduces a new screen, a concrete `AnalyticsScreen` implementation goes in `features/<vertical>/analytics/`.
+   - For each property that could be user-entered text or personally identifiable, flag it explicitly — the privacy policy may need updating.
+4. Present the proposal and wait for user approval or adjustments.
+5. Once approved, update `docs/ANALYTICS_EVENTS.md` and post the finalised spec as a comment on the Linear issue.
+6. Only after analytics approval should the Tech Lead be invoked.
+
+---
+
 ## Issue triage
 
 When the user describes a bug, feature, or tech debt:

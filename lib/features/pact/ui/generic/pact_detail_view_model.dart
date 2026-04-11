@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_stats.dart';
@@ -94,6 +96,15 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         totalShowups: ShowupGenerator.countTotal(updated),
       );
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
+
+      // Fire analytics for pact stop.
+      // AnalyticsService is no-throw; no wrapping try/catch needed.
+      await ref.read(analyticsServiceProvider).logEvent(PactStoppedEvent(
+        daysActive: now.difference(pact.startDate).inDays,
+        totalShowupsDone: stats.showupsDone,
+        totalShowupsFailed: stats.showupsFailed,
+        totalShowupsRemaining: stats.showupsRemaining,
+      ));
     } catch (e) {
       state = state.copyWith(isStopping: false, stopError: e);
     }

@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
@@ -168,10 +170,30 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
         await pactRepo.deletePact(pact.id);
         rethrow;
       }
+
+      // Both pact and showups were persisted successfully — fire analytics.
+      // AnalyticsService is no-throw; no wrapping try/catch needed.
+      await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
+        scheduleType: _scheduleTypeName(pact.schedule),
+        durationDays: pact.endDate.difference(pact.startDate).inDays,
+        showupDurationMinutes: pact.showupDuration.inMinutes,
+        reminderOffsetMinutes: pact.reminderOffset?.inMinutes,
+        showupsExpected: ShowupGenerator.countTotal(pact),
+      ));
     } catch (e) {
       state = state.copyWith(submitError: e);
     } finally {
       state = state.copyWith(isSubmitting: false);
     }
+  }
+
+  /// Maps a [ShowupSchedule] to the analytics schedule type string.
+  String _scheduleTypeName(ShowupSchedule schedule) {
+    return switch (schedule) {
+      DailySchedule() => 'daily',
+      WeekdaySchedule() => 'weekly',
+      MonthlyByWeekdaySchedule() => 'monthly',
+      MonthlyByDateSchedule() => 'monthly',
+    };
   }
 }

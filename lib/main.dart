@@ -1,7 +1,12 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/analytics/data/firebase_analytics_client_adapter.dart';
+import 'package:habit_loop/analytics/data/firebase_analytics_service.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
@@ -25,6 +30,13 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [
+        // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
+        if (kReleaseMode)
+          analyticsServiceProvider.overrideWithValue(
+            FirebaseAnalyticsService(
+              FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
+            ),
+          ),
         pactRepositoryProvider.overrideWithValue(pactRepo),
         pactCreationRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),

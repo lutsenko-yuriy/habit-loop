@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
@@ -96,6 +99,12 @@ class ShowupDetailViewModel
           showup = showup.copyWith(status: ShowupStatus.failed);
           await showupRepo.updateShowup(showup);
           wasAutoFailed = true;
+
+          // Fire auto-fail analytics event.
+          // AnalyticsService is no-throw; no wrapping try/catch needed.
+          await ref.read(analyticsServiceProvider).logEvent(
+            ShowupAutoFailedEvent(pactId: showup.pactId),
+          );
         }
       }
 
@@ -131,6 +140,20 @@ class ShowupDetailViewModel
       final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
       await showupRepo.updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
+
+      // Determine the analytics event inside the try block so that a StateError
+      // on an unexpected pending status is caught by the outer catch and
+      // surfaced as markError rather than being swallowed.
+      final AnalyticsEvent event = switch (newStatus) {
+        ShowupStatus.done =>
+          ShowupMarkedDoneEvent(pactId: updatedShowup.pactId),
+        ShowupStatus.failed =>
+          ShowupMarkedFailedEvent(pactId: updatedShowup.pactId),
+        ShowupStatus.pending => throw StateError('Unexpected pending status'),
+      };
+
+      // Fire analytics for manual status changes. Swallow failures.
+      await ref.read(analyticsServiceProvider).logEvent(event);
     } catch (e) {
       state = state.copyWith(isSaving: false, markError: e);
     }

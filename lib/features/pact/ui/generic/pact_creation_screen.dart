@@ -1,16 +1,31 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/ui/android/pact_creation_page_android.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/features/pact/ui/ios/pact_creation_page_ios.dart';
 
-class PactCreationScreen extends ConsumerWidget {
+class PactCreationScreen extends ConsumerStatefulWidget {
   const PactCreationScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PactCreationScreen> createState() => _PactCreationScreenState();
+}
+
+class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(analyticsServiceProvider).logScreenView(const PactCreationAnalyticsScreen());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(pactCreationViewModelProvider);
     final vm = ref.read(pactCreationViewModelProvider.notifier);
 
