@@ -7,6 +7,8 @@ import 'package:flutter/cupertino.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/features/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/features/analytics/ui/generic/analytics_providers.dart';
 import 'package:habit_loop/features/dashboard/ui/android/dashboard_page_android.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/dashboard/ui/ios/dashboard_page_ios.dart';
@@ -30,6 +32,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      ref.read(analyticsServiceProvider).logScreenView(AnalyticsScreen.dashboard);
       ref.read(dashboardViewModelProvider.notifier).load();
       ref.read(pactListViewModelProvider.notifier).load();
     });

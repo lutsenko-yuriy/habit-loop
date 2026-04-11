@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/features/analytics/ui/generic/analytics_providers.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
@@ -9,6 +11,8 @@ import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
+
+import '../../analytics/fake_analytics_service.dart';
 
 final _pact = Pact(
   id: 'p1',
@@ -187,4 +191,152 @@ void main() {
       expect(state.pact?.status, PactStatus.active);
     });
   });
+
+  group('PactDetailViewModel analytics', () {
+    late FakeAnalyticsService fakeAnalytics;
+
+    ProviderContainer makeContainerWithAnalytics({
+      List<Pact> pacts = const [],
+      List<Showup> showups = const [],
+    }) {
+      fakeAnalytics = FakeAnalyticsService();
+      return ProviderContainer(
+        overrides: [
+          pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
+          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+        ],
+      );
+    }
+
+    test('stopPact fires PactStoppedEvent with correct stats on success', () async {
+      final container = makeContainerWithAnalytics(
+        pacts: [_pact],
+        showups: _showups,
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Giving up');
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first;
+      expect(event, isA<PactStoppedEvent>());
+
+      final pactStoppedEvent = event as PactStoppedEvent;
+      // _showups has 2 done, 1 failed, 1 pending
+      expect(pactStoppedEvent.totalShowupsDone, 2);
+      expect(pactStoppedEvent.totalShowupsFailed, 1);
+      // After stopping, all pending showups are counted as remaining
+      // daysActive is computed at stopPact() time; just verify it's non-negative.
+      expect(pactStoppedEvent.daysActive, greaterThanOrEqualTo(0));
+    });
+
+    test('stopPact fires PactStoppedEvent with totalShowupsRemaining from stats', () async {
+      final container = makeContainerWithAnalytics(
+        pacts: [_pact],
+        showups: _showups,
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
+
+      final event = fakeAnalytics.loggedEvents.first as PactStoppedEvent;
+      // The stats are computed on the stopped pact, so remaining reflects
+      // ShowupGenerator.countTotal(stoppedPact) - done - failed.
+      expect(event.totalShowupsRemaining, greaterThanOrEqualTo(0));
+    });
+
+    test('stopPact does NOT fire event on failure', () async {
+      final throwingPactRepo = _ThrowingPactRepository();
+      fakeAnalytics = FakeAnalyticsService();
+      final container = ProviderContainer(
+        overrides: [
+          pactDetailRepositoryProvider.overrideWithValue(throwingPactRepo),
+          pactDetailShowupRepositoryProvider
+              .overrideWithValue(InMemoryShowupRepository(_showups)),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Load succeeds (getPactById returns the pact), but stopPact will fail
+      // because updatePact throws.
+      final loadRepo = InMemoryPactRepository([_pact]);
+      final workingContainer = ProviderContainer(
+        overrides: [
+          pactDetailRepositoryProvider.overrideWithValue(loadRepo),
+          pactDetailShowupRepositoryProvider
+              .overrideWithValue(InMemoryShowupRepository(_showups)),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+        ],
+      );
+      addTearDown(workingContainer.dispose);
+
+      await workingContainer.read(pactDetailViewModelProvider('p1').notifier).load();
+
+      // Now swap to a failing repo by replacing the container. Since we can't
+      // do that, we test with a repo whose updatePact throws.
+      final throwingRepo = _ThrowingOnUpdatePactRepository([_pact]);
+      fakeAnalytics.reset();
+      final failContainer = ProviderContainer(
+        overrides: [
+          pactDetailRepositoryProvider.overrideWithValue(throwingRepo),
+          pactDetailShowupRepositoryProvider
+              .overrideWithValue(InMemoryShowupRepository(_showups)),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+        ],
+      );
+      addTearDown(failContainer.dispose);
+
+      await failContainer.read(pactDetailViewModelProvider('p1').notifier).load();
+      await failContainer.read(pactDetailViewModelProvider('p1').notifier).stopPact('reason');
+
+      final state = failContainer.read(pactDetailViewModelProvider('p1'));
+      expect(state.stopError, isNotNull);
+      expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+
+    test('analytics failure in stopPact does not affect pact stop', () async {
+      final throwingAnalytics = _ThrowingAnalyticsService();
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final container = ProviderContainer(
+        overrides: [
+          pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+          pactDetailShowupRepositoryProvider
+              .overrideWithValue(InMemoryShowupRepository(_showups)),
+          analyticsServiceProvider.overrideWithValue(throwingAnalytics),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('reason');
+
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.stopError, isNull);
+      expect(state.pact?.status, PactStatus.stopped);
+    });
+  });
+}
+
+class _ThrowingPactRepository extends InMemoryPactRepository {
+  @override
+  Future<Pact?> getPactById(String id) async =>
+      throw Exception('load failed intentionally');
+}
+
+class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
+  _ThrowingOnUpdatePactRepository(super.initialPacts);
+
+  @override
+  Future<void> updatePact(Pact pact) async =>
+      throw Exception('update failed intentionally');
+}
+
+class _ThrowingAnalyticsService extends FakeAnalyticsService {
+  @override
+  Future<void> logEvent(event) async =>
+      throw Exception('analytics failed intentionally');
 }

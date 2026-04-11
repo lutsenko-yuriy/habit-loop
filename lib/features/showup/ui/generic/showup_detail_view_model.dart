@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/features/analytics/ui/generic/analytics_providers.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
@@ -96,6 +98,14 @@ class ShowupDetailViewModel
           showup = showup.copyWith(status: ShowupStatus.failed);
           await showupRepo.updateShowup(showup);
           wasAutoFailed = true;
+
+          // Fire auto-fail analytics event. Swallow failures so load() is unaffected.
+          try {
+            final analytics = ref.read(analyticsServiceProvider);
+            await analytics.logEvent(ShowupAutoFailedEvent(pactId: showup.pactId));
+          } catch (_) {
+            // Analytics failures must not surface to the user.
+          }
         }
       }
 
@@ -131,6 +141,21 @@ class ShowupDetailViewModel
       final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
       await showupRepo.updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
+
+      // Fire analytics for manual status changes. Swallow failures.
+      try {
+        final analytics = ref.read(analyticsServiceProvider);
+        final AnalyticsEvent event = switch (newStatus) {
+          ShowupStatus.done =>
+            ShowupMarkedDoneEvent(pactId: updatedShowup.pactId),
+          ShowupStatus.failed =>
+            ShowupMarkedFailedEvent(pactId: updatedShowup.pactId),
+          ShowupStatus.pending => throw StateError('Unexpected pending status'),
+        };
+        await analytics.logEvent(event);
+      } catch (_) {
+        // Analytics failures must not surface to the user.
+      }
     } catch (e) {
       state = state.copyWith(isSaving: false, markError: e);
     }

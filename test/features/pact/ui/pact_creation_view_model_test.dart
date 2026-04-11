@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/features/analytics/ui/generic/analytics_providers.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
@@ -10,7 +12,10 @@ import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/save_showups_result.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
+import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
+
+import '../../analytics/fake_analytics_service.dart';
 
 void main() {
   late ProviderContainer container;
@@ -335,6 +340,161 @@ void main() {
     });
   });
 
+  group('PactCreationViewModel analytics', () {
+    late FakeAnalyticsService fakeAnalytics;
+
+    setUp(() {
+      fakeAnalytics = FakeAnalyticsService();
+    });
+
+    ProviderContainer makeAnalyticsContainer({
+      PactRepository? pactRepository,
+      ShowupRepository? showupRepository,
+    }) {
+      return ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(today),
+          pactCreationRepositoryProvider
+              .overrideWithValue(pactRepository ?? InMemoryPactRepository()),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+        ],
+      );
+    }
+
+    void setUpValidState(PactCreationViewModel vm, {ScheduleType scheduleType = ScheduleType.daily}) {
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(scheduleType);
+      if (scheduleType == ScheduleType.daily) {
+        vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      } else if (scheduleType == ScheduleType.weekday) {
+        vm.setSchedule(const WeekdaySchedule(entries: [WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))]));
+      } else {
+        vm.setSchedule(const MonthlyByDateSchedule(entries: [MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))]));
+      }
+      vm.setCommitmentAccepted(true);
+    }
+
+    test('submit fires PactCreatedEvent with correct properties on success', () async {
+      final pactRepo = InMemoryPactRepository();
+      final showupRepo = InMemoryShowupRepository();
+      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm);
+      await vm.submit();
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first;
+      expect(event, isA<PactCreatedEvent>());
+
+      final pactCreatedEvent = event as PactCreatedEvent;
+      expect(pactCreatedEvent.scheduleType, 'daily');
+
+      final pacts = await pactRepo.getActivePacts();
+      final pact = pacts.first;
+      expect(pactCreatedEvent.durationDays,
+          pact.endDate.difference(pact.startDate).inDays);
+      expect(pactCreatedEvent.showupDurationMinutes, 10);
+      expect(pactCreatedEvent.reminderOffsetMinutes, isNull);
+      expect(pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
+    });
+
+    test('submit fires PactCreatedEvent with reminder offset when reminder set', () async {
+      final c = makeAnalyticsContainer();
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm);
+      vm.setReminderOffset(const Duration(minutes: 15));
+      await vm.submit();
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first as PactCreatedEvent;
+      expect(event.reminderOffsetMinutes, 15);
+    });
+
+    test('submit fires PactCreatedEvent with schedule_type weekly for weekday schedule', () async {
+      final c = makeAnalyticsContainer();
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm, scheduleType: ScheduleType.weekday);
+      await vm.submit();
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first as PactCreatedEvent;
+      expect(event.scheduleType, 'weekly');
+    });
+
+    test('submit fires PactCreatedEvent with schedule_type monthly for monthly schedule', () async {
+      final c = makeAnalyticsContainer();
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm, scheduleType: ScheduleType.monthlyByDate);
+      await vm.submit();
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first as PactCreatedEvent;
+      expect(event.scheduleType, 'monthly');
+    });
+
+    test('submit does NOT fire analytics event when savePact fails', () async {
+      final c = makeAnalyticsContainer(
+        pactRepository: _AlwaysThrowingPactRepository(),
+      );
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm);
+      await vm.submit();
+
+      expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+
+    test('submit does NOT fire analytics event when saveShowups fails', () async {
+      final c = makeAnalyticsContainer(
+        showupRepository: _AlwaysThrowingShowupRepository(),
+      );
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm);
+      await vm.submit();
+
+      expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+
+    test('analytics failure does not affect pact creation success', () async {
+      final throwingAnalytics = _ThrowingAnalyticsService();
+      final pactRepo = InMemoryPactRepository();
+      final showupRepo = InMemoryShowupRepository();
+      final c = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(today),
+          pactCreationRepositoryProvider.overrideWithValue(pactRepo),
+          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
+          analyticsServiceProvider.overrideWithValue(throwingAnalytics),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm);
+      await vm.submit();
+
+      // Pact creation must still succeed even if analytics throws.
+      final state = c.read(pactCreationViewModelProvider);
+      expect(state.submitError, isNull);
+      final pacts = await pactRepo.getActivePacts();
+      expect(pacts, hasLength(1));
+    });
+  });
+
   group('PactCreationViewModel with failing repository', () {
     late ProviderContainer failingContainer;
 
@@ -412,6 +572,12 @@ class _AlwaysThrowingPactRepository implements PactRepository {
   @override
   Future<void> deletePact(String id) async =>
       throw Exception('delete failed intentionally');
+}
+
+class _ThrowingAnalyticsService extends FakeAnalyticsService {
+  @override
+  Future<void> logEvent(event) async =>
+      throw Exception('analytics failed intentionally');
 }
 
 class _AlwaysThrowingShowupRepository implements ShowupRepository {

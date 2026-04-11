@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/features/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/features/analytics/ui/generic/analytics_providers.dart';
 import 'package:habit_loop/features/showup/ui/android/showup_detail_page_android.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/features/showup/ui/ios/showup_detail_page_ios.dart';
@@ -24,6 +26,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      ref.read(analyticsServiceProvider).logScreenView(AnalyticsScreen.showupDetail);
       // Invalidate the now provider so load() always samples the real current
       // time, not a cached value from a previous navigation or app start.
       ref.invalidate(showupDetailNowProvider);

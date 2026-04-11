@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/features/analytics/ui/generic/analytics_providers.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
@@ -8,6 +10,8 @@ import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
+
+import '../../analytics/fake_analytics_service.dart';
 
 // A fixed reference "now" to make auto-fail tests deterministic.
 // We use a time clearly in the past so pending showups with past scheduledAt
@@ -396,4 +400,139 @@ void main() {
       expect(persisted?.note, isNull);
     });
   });
+
+  group('ShowupDetailViewModel analytics', () {
+    late FakeAnalyticsService fakeAnalytics;
+
+    ProviderContainer makeContainerWithAnalytics({
+      required Showup showup,
+      Pact? pact,
+      DateTime? nowOverride,
+    }) {
+      fakeAnalytics = FakeAnalyticsService();
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = InMemoryPactRepository(pact != null ? [pact] : []);
+      return ProviderContainer(
+        overrides: [
+          showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+          showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+          if (nowOverride != null)
+            showupDetailNowProvider.overrideWithValue(nowOverride),
+        ],
+      );
+    }
+
+    test('load() fires ShowupAutoFailedEvent when showup is auto-failed', () async {
+      final showup = _pendingPastShowup();
+      final container = makeContainerWithAnalytics(
+        showup: showup,
+        pact: _pact,
+        nowOverride: _past,
+      );
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first;
+      expect(event, isA<ShowupAutoFailedEvent>());
+      expect((event as ShowupAutoFailedEvent).pactId, showup.pactId);
+    });
+
+    test('load() does NOT fire ShowupAutoFailedEvent when showup is not auto-failed', () async {
+      final showup = _pendingFutureShowup();
+      final container = makeContainerWithAnalytics(
+        showup: showup,
+        pact: _pact,
+      );
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+
+    test('markDone() fires ShowupMarkedDoneEvent on success', () async {
+      final showup = _pendingFutureShowup();
+      final container = makeContainerWithAnalytics(showup: showup, pact: _pact);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      fakeAnalytics.reset();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first;
+      expect(event, isA<ShowupMarkedDoneEvent>());
+      expect((event as ShowupMarkedDoneEvent).pactId, showup.pactId);
+    });
+
+    test('markFailed() fires ShowupMarkedFailedEvent on success', () async {
+      final showup = _pendingFutureShowup();
+      final container = makeContainerWithAnalytics(showup: showup, pact: _pact);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      fakeAnalytics.reset();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markFailed();
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first;
+      expect(event, isA<ShowupMarkedFailedEvent>());
+      expect((event as ShowupMarkedFailedEvent).pactId, showup.pactId);
+    });
+
+    test('markDone() does NOT fire event when showup is already done (no-op)', () async {
+      final showup = _doneShowup();
+      final container = makeContainerWithAnalytics(showup: showup, pact: _pact);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      fakeAnalytics.reset();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
+
+      expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+
+    test('markFailed() does NOT fire event when showup is already failed (no-op)', () async {
+      final showup = _failedShowup();
+      final container = makeContainerWithAnalytics(showup: showup, pact: _pact);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      fakeAnalytics.reset();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markFailed();
+
+      expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+
+    test('analytics failure in markDone() does not affect status update', () async {
+      final showup = _pendingFutureShowup();
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final throwingAnalytics = _ThrowingAnalyticsService();
+      final container = ProviderContainer(
+        overrides: [
+          showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+          showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+          analyticsServiceProvider.overrideWithValue(throwingAnalytics),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
+
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+      expect(state.showup?.status, ShowupStatus.done);
+      expect(state.markError, isNull);
+    });
+  });
+}
+
+class _ThrowingAnalyticsService extends FakeAnalyticsService {
+  @override
+  Future<void> logEvent(event) async =>
+      throw Exception('analytics failed intentionally');
 }
