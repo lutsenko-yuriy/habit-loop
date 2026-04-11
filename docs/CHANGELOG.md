@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.9.4] — 2026-04-11 (PR #18 merged)
+
+### Added — Android CI/CD pipeline with Firebase App Distribution (HAB-20)
+
+- GitHub Actions `distribute-android` job updated to upload the Android AAB to Firebase App Distribution on every merge to `main` using the Firebase App Distribution GitHub Action
+- `FIREBASE_APP_ID_ANDROID` and `FIREBASE_TOKEN` GitHub Actions secrets wired into the workflow; build artifacts flow from the `build-android` job via uploaded artifacts
+- Distribution only runs on the `main` branch; feature branch builds continue to build without distributing or tagging
+
+---
+
 ## [0.9.3] — 2026-04-10 (PR #17 merged)
 
 ### Added — Firebase project setup (HAB-27)
