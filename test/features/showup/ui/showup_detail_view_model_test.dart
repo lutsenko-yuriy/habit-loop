@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/features/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
@@ -11,7 +11,7 @@ import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
 
-import '../../analytics/fake_analytics_service.dart';
+import '../../../analytics/fake_analytics_service.dart';
 
 // A fixed reference "now" to make auto-fail tests deterministic.
 // We use a time clearly in the past so pending showups with past scheduledAt

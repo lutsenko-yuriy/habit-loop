@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/features/analytics/data/noop_analytics_service.dart';
-import 'package:habit_loop/features/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/analytics/data/noop_analytics_service.dart';
+import 'package:habit_loop/analytics/domain/analytics_screen.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 

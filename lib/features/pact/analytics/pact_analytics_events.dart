@@ -1,4 +1,4 @@
-import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/analytics/domain/analytics_event.dart';
 
 /// Fired when the user successfully completes the pact creation wizard and
 /// the pact is persisted.

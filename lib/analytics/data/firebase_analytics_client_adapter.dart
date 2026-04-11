@@ -1,5 +1,5 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:habit_loop/features/analytics/data/firebase_analytics_service.dart';
+import 'package:habit_loop/analytics/data/firebase_analytics_service.dart';
 
 /// Adapts the real [FirebaseAnalytics] SDK to the [FirebaseAnalyticsClient]
 /// interface so [FirebaseAnalyticsService] never directly imports the SDK.

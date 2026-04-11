@@ -1,4 +1,4 @@
-import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/analytics/domain/analytics_event.dart';
 
 /// Fired when the user manually marks a showup as done.
 final class ShowupMarkedDoneEvent extends AnalyticsEvent {

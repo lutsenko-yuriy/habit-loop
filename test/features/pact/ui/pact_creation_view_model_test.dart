@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/features/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
@@ -15,7 +15,7 @@ import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
-import '../../analytics/fake_analytics_service.dart';
+import '../../../analytics/fake_analytics_service.dart';
 
 void main() {
   late ProviderContainer container;

@@ -1,6 +1,6 @@
-import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
-import 'package:habit_loop/features/analytics/domain/analytics_screen.dart';
-import 'package:habit_loop/features/analytics/domain/analytics_service.dart';
+import 'package:habit_loop/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/analytics/domain/analytics_service.dart';
 
 /// A fake [AnalyticsService] that records all logged events and screens.
 /// Use in tests that need to assert on analytics calls without touching Firebase.

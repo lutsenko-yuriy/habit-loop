@@ -1,6 +1,6 @@
-import 'package:habit_loop/features/analytics/domain/analytics_event.dart';
-import 'package:habit_loop/features/analytics/domain/analytics_screen.dart';
-import 'package:habit_loop/features/analytics/domain/analytics_service.dart';
+import 'package:habit_loop/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/analytics/domain/analytics_service.dart';
 
 /// No-op [AnalyticsService] used as the default when Firebase is not wired in.
 ///
