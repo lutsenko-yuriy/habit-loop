@@ -162,7 +162,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
 
       - name: Bump pubspec build number and push tag
         run: |
