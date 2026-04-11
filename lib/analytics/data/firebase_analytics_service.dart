@@ -45,7 +45,7 @@ final class FirebaseAnalyticsService implements AnalyticsService {
   @override
   Future<void> logScreenView(AnalyticsScreen screen) async {
     try {
-      await _client.logScreenView(screenName: screen.value);
+      await _client.logScreenView(screenName: screen.name);
     } catch (_) {
       // Analytics failures must never surface to the user.
     }

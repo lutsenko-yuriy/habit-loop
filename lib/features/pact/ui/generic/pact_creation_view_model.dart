@@ -172,19 +172,14 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       }
 
       // Both pact and showups were persisted successfully — fire analytics.
-      // Swallow any analytics failure so pact creation is never affected.
-      try {
-        final analytics = ref.read(analyticsServiceProvider);
-        await analytics.logEvent(PactCreatedEvent(
-          scheduleType: _scheduleTypeName(pact.schedule),
-          durationDays: pact.endDate.difference(pact.startDate).inDays,
-          showupDurationMinutes: pact.showupDuration.inMinutes,
-          reminderOffsetMinutes: pact.reminderOffset?.inMinutes,
-          showupsExpected: ShowupGenerator.countTotal(pact),
-        ));
-      } catch (_) {
-        // Analytics failures must not surface to the user.
-      }
+      // AnalyticsService is no-throw; no wrapping try/catch needed.
+      await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
+        scheduleType: _scheduleTypeName(pact.schedule),
+        durationDays: pact.endDate.difference(pact.startDate).inDays,
+        showupDurationMinutes: pact.showupDuration.inMinutes,
+        reminderOffsetMinutes: pact.reminderOffset?.inMinutes,
+        showupsExpected: ShowupGenerator.countTotal(pact),
+      ));
     } catch (e) {
       state = state.copyWith(submitError: e);
     } finally {

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/analytics/data/firebase_analytics_service.dart';
-import 'package:habit_loop/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/features/dashboard/analytics/dashboard_screens.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 
@@ -85,23 +85,23 @@ void main() {
   });
 
   group('FirebaseAnalyticsService.logScreenView', () {
-    test('forwards screen value to Firebase', () async {
-      await service.logScreenView(AnalyticsScreen.dashboard);
+    test('forwards dashboard screen name to Firebase', () async {
+      await service.logScreenView(const DashboardAnalyticsScreen());
       expect(fakeClient.loggedScreenNames.single, 'dashboard');
     });
 
     test('forwards pact_creation screen name', () async {
-      await service.logScreenView(AnalyticsScreen.pactCreation);
+      await service.logScreenView(const PactCreationAnalyticsScreen());
       expect(fakeClient.loggedScreenNames.single, 'pact_creation');
     });
 
     test('forwards pact_detail screen name', () async {
-      await service.logScreenView(AnalyticsScreen.pactDetail);
+      await service.logScreenView(const PactDetailAnalyticsScreen());
       expect(fakeClient.loggedScreenNames.single, 'pact_detail');
     });
 
     test('forwards showup_detail screen name', () async {
-      await service.logScreenView(AnalyticsScreen.showupDetail);
+      await service.logScreenView(const ShowupDetailAnalyticsScreen());
       expect(fakeClient.loggedScreenNames.single, 'showup_detail');
     });
 
@@ -109,7 +109,7 @@ void main() {
       final throwingClient = _ThrowingFirebaseAnalyticsClient();
       final throwingService = FirebaseAnalyticsService(throwingClient);
       await expectLater(
-        throwingService.logScreenView(AnalyticsScreen.dashboard),
+        throwingService.logScreenView(const DashboardAnalyticsScreen()),
         completes,
       );
     });

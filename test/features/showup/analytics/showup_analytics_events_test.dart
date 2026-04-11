@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/analytics/domain/analytics_screen.dart';
 import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 
 void main() {
@@ -38,6 +39,16 @@ void main() {
       final event = ShowupAutoFailedEvent(pactId: 'pact-789');
       final params = event.toParameters();
       expect(params['pact_id'], 'pact-789');
+    });
+  });
+
+  group('ShowupDetailAnalyticsScreen', () {
+    test('implements AnalyticsScreen', () {
+      expect(const ShowupDetailAnalyticsScreen(), isA<AnalyticsScreen>());
+    });
+
+    test('name is showup_detail', () {
+      expect(const ShowupDetailAnalyticsScreen().name, 'showup_detail');
     });
   });
 }

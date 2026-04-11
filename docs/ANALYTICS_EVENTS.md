@@ -2,8 +2,6 @@
 
 All events are sent via `AnalyticsService` (a thin Riverpod-provided wrapper around `FirebaseAnalytics`).
 
-> **GDPR note:** `pact_name` in `pact_created` is user-entered text. Ensure your privacy policy discloses that habit names are transmitted to Firebase Analytics.
-
 ---
 
 ## Events
@@ -67,11 +65,13 @@ Fired when the user confirms stopping an active pact.
 
 ## Screen Views
 
-Tracked via `AnalyticsService.logScreenView(screenName)`, which calls `FirebaseAnalytics.logScreenView`.
+Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.
 
-| `screen_name` | When |
-|---|---|
-| `dashboard` | Dashboard screen opens |
-| `pact_creation` | Pact creation wizard opens |
-| `pact_detail` | Pact detail screen opens |
-| `showup_detail` | Showup detail screen opens |
+`AnalyticsScreen` is an abstract class (not an enum). Each vertical's `analytics/` subdirectory provides its own concrete implementations:
+
+| Concrete class | `screen_name` | Source file | When |
+|---|---|---|---|
+| `DashboardAnalyticsScreen` | `dashboard` | `features/dashboard/analytics/dashboard_screens.dart` | Dashboard screen opens |
+| `PactCreationAnalyticsScreen` | `pact_creation` | `features/pact/analytics/pact_analytics_events.dart` | Pact creation wizard opens |
+| `PactDetailAnalyticsScreen` | `pact_detail` | `features/pact/analytics/pact_analytics_events.dart` | Pact detail screen opens |
+| `ShowupDetailAnalyticsScreen` | `showup_detail` | `features/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |

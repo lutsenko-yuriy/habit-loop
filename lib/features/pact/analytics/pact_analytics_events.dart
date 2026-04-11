@@ -1,4 +1,5 @@
 import 'package:habit_loop/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/analytics/domain/analytics_screen.dart';
 
 /// Fired when the user successfully completes the pact creation wizard and
 /// the pact is persisted.
@@ -73,4 +74,20 @@ final class PactStoppedEvent extends AnalyticsEvent {
     'total_showups_failed': totalShowupsFailed,
     'total_showups_remaining': totalShowupsRemaining,
   };
+}
+
+/// Screen identifier for the pact creation wizard.
+class PactCreationAnalyticsScreen implements AnalyticsScreen {
+  const PactCreationAnalyticsScreen();
+
+  @override
+  String get name => 'pact_creation';
+}
+
+/// Screen identifier for the pact detail screen.
+class PactDetailAnalyticsScreen implements AnalyticsScreen {
+  const PactDetailAnalyticsScreen();
+
+  @override
+  String get name => 'pact_detail';
 }

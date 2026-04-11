@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/analytics/data/noop_analytics_service.dart';
-import 'package:habit_loop/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/features/dashboard/analytics/dashboard_screens.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 
@@ -36,7 +36,13 @@ void main() {
     });
 
     test('logScreenView does not throw for any screen', () async {
-      for (final screen in AnalyticsScreen.values) {
+      final screens = [
+        const DashboardAnalyticsScreen(),
+        const PactCreationAnalyticsScreen(),
+        const PactDetailAnalyticsScreen(),
+        const ShowupDetailAnalyticsScreen(),
+      ];
+      for (final screen in screens) {
         await expectLater(service.logScreenView(screen), completes);
       }
     });

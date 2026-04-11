@@ -298,26 +298,6 @@ void main() {
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
 
-    test('analytics failure in stopPact does not affect pact stop', () async {
-      final throwingAnalytics = _ThrowingAnalyticsService();
-      final pactRepo = InMemoryPactRepository([_pact]);
-      final container = ProviderContainer(
-        overrides: [
-          pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-          pactDetailShowupRepositoryProvider
-              .overrideWithValue(InMemoryShowupRepository(_showups)),
-          analyticsServiceProvider.overrideWithValue(throwingAnalytics),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('reason');
-
-      final state = container.read(pactDetailViewModelProvider('p1'));
-      expect(state.stopError, isNull);
-      expect(state.pact?.status, PactStatus.stopped);
-    });
   });
 }
 
@@ -333,10 +313,4 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   @override
   Future<void> updatePact(Pact pact) async =>
       throw Exception('update failed intentionally');
-}
-
-class _ThrowingAnalyticsService extends FakeAnalyticsService {
-  @override
-  Future<void> logEvent(event) async =>
-      throw Exception('analytics failed intentionally');
 }

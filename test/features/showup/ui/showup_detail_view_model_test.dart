@@ -507,32 +507,5 @@ void main() {
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
 
-    test('analytics failure in markDone() does not affect status update', () async {
-      final showup = _pendingFutureShowup();
-      final showupRepo = InMemoryShowupRepository([showup]);
-      final pactRepo = InMemoryPactRepository([_pact]);
-      final throwingAnalytics = _ThrowingAnalyticsService();
-      final container = ProviderContainer(
-        overrides: [
-          showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
-          showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
-          analyticsServiceProvider.overrideWithValue(throwingAnalytics),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
-      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
-
-      final state = container.read(showupDetailViewModelProvider(showup.id));
-      expect(state.showup?.status, ShowupStatus.done);
-      expect(state.markError, isNull);
-    });
   });
-}
-
-class _ThrowingAnalyticsService extends FakeAnalyticsService {
-  @override
-  Future<void> logEvent(event) async =>
-      throw Exception('analytics failed intentionally');
 }

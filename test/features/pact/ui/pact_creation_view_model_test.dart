@@ -469,30 +469,6 @@ void main() {
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
 
-    test('analytics failure does not affect pact creation success', () async {
-      final throwingAnalytics = _ThrowingAnalyticsService();
-      final pactRepo = InMemoryPactRepository();
-      final showupRepo = InMemoryShowupRepository();
-      final c = ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider.overrideWithValue(pactRepo),
-          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
-          analyticsServiceProvider.overrideWithValue(throwingAnalytics),
-        ],
-      );
-      addTearDown(c.dispose);
-
-      final vm = c.read(pactCreationViewModelProvider.notifier);
-      setUpValidState(vm);
-      await vm.submit();
-
-      // Pact creation must still succeed even if analytics throws.
-      final state = c.read(pactCreationViewModelProvider);
-      expect(state.submitError, isNull);
-      final pacts = await pactRepo.getActivePacts();
-      expect(pacts, hasLength(1));
-    });
   });
 
   group('PactCreationViewModel with failing repository', () {
@@ -572,12 +548,6 @@ class _AlwaysThrowingPactRepository implements PactRepository {
   @override
   Future<void> deletePact(String id) async =>
       throw Exception('delete failed intentionally');
-}
-
-class _ThrowingAnalyticsService extends FakeAnalyticsService {
-  @override
-  Future<void> logEvent(event) async =>
-      throw Exception('analytics failed intentionally');
 }
 
 class _AlwaysThrowingShowupRepository implements ShowupRepository {

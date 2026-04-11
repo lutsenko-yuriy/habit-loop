@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/analytics/domain/analytics_screen.dart';
 import 'package:habit_loop/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/ui/android/pact_detail_page_android.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/features/pact/ui/ios/pact_detail_page_ios.dart';
@@ -21,7 +21,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      ref.read(analyticsServiceProvider).logScreenView(AnalyticsScreen.pactDetail);
+      ref.read(analyticsServiceProvider).logScreenView(const PactDetailAnalyticsScreen());
       ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load();
     });
   }

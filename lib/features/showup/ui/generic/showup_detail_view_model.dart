@@ -100,13 +100,11 @@ class ShowupDetailViewModel
           await showupRepo.updateShowup(showup);
           wasAutoFailed = true;
 
-          // Fire auto-fail analytics event. Swallow failures so load() is unaffected.
-          try {
-            final analytics = ref.read(analyticsServiceProvider);
-            await analytics.logEvent(ShowupAutoFailedEvent(pactId: showup.pactId));
-          } catch (_) {
-            // Analytics failures must not surface to the user.
-          }
+          // Fire auto-fail analytics event.
+          // AnalyticsService is no-throw; no wrapping try/catch needed.
+          await ref.read(analyticsServiceProvider).logEvent(
+            ShowupAutoFailedEvent(pactId: showup.pactId),
+          );
         }
       }
 
@@ -143,20 +141,19 @@ class ShowupDetailViewModel
       await showupRepo.updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
 
+      // Determine the analytics event before entering the try block so that a
+      // StateError on an unexpected pending status propagates to the outer
+      // catch and is surfaced as markError rather than being swallowed.
+      final AnalyticsEvent event = switch (newStatus) {
+        ShowupStatus.done =>
+          ShowupMarkedDoneEvent(pactId: updatedShowup.pactId),
+        ShowupStatus.failed =>
+          ShowupMarkedFailedEvent(pactId: updatedShowup.pactId),
+        ShowupStatus.pending => throw StateError('Unexpected pending status'),
+      };
+
       // Fire analytics for manual status changes. Swallow failures.
-      try {
-        final analytics = ref.read(analyticsServiceProvider);
-        final AnalyticsEvent event = switch (newStatus) {
-          ShowupStatus.done =>
-            ShowupMarkedDoneEvent(pactId: updatedShowup.pactId),
-          ShowupStatus.failed =>
-            ShowupMarkedFailedEvent(pactId: updatedShowup.pactId),
-          ShowupStatus.pending => throw StateError('Unexpected pending status'),
-        };
-        await analytics.logEvent(event);
-      } catch (_) {
-        // Analytics failures must not surface to the user.
-      }
+      await ref.read(analyticsServiceProvider).logEvent(event);
     } catch (e) {
       state = state.copyWith(isSaving: false, markError: e);
     }

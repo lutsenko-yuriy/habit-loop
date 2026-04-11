@@ -97,18 +97,14 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       );
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
 
-      // Fire analytics for pact stop. Swallow failures so the user is unaffected.
-      try {
-        final analytics = ref.read(analyticsServiceProvider);
-        await analytics.logEvent(PactStoppedEvent(
-          daysActive: DateTime.now().difference(pact.startDate).inDays,
-          totalShowupsDone: stats.showupsDone,
-          totalShowupsFailed: stats.showupsFailed,
-          totalShowupsRemaining: stats.showupsRemaining,
-        ));
-      } catch (_) {
-        // Analytics failures must not surface to the user.
-      }
+      // Fire analytics for pact stop.
+      // AnalyticsService is no-throw; no wrapping try/catch needed.
+      await ref.read(analyticsServiceProvider).logEvent(PactStoppedEvent(
+        daysActive: now.difference(pact.startDate).inDays,
+        totalShowupsDone: stats.showupsDone,
+        totalShowupsFailed: stats.showupsFailed,
+        totalShowupsRemaining: stats.showupsRemaining,
+      ));
     } catch (e) {
       state = state.copyWith(isStopping: false, stopError: e);
     }

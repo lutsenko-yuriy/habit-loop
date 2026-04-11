@@ -1,4 +1,5 @@
 import 'package:habit_loop/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/analytics/domain/analytics_screen.dart';
 
 /// Fired when the user manually marks a showup as done.
 final class ShowupMarkedDoneEvent extends AnalyticsEvent {
@@ -41,4 +42,12 @@ final class ShowupAutoFailedEvent extends AnalyticsEvent {
 
   @override
   Map<String, Object?> toParameters() => {'pact_id': pactId};
+}
+
+/// Screen identifier for the showup detail screen.
+class ShowupDetailAnalyticsScreen implements AnalyticsScreen {
+  const ShowupDetailAnalyticsScreen();
+
+  @override
+  String get name => 'showup_detail';
 }

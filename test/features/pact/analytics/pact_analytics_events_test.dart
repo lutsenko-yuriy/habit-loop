@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/analytics/domain/analytics_screen.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 
 void main() {
@@ -75,6 +76,26 @@ void main() {
       expect(params['total_showups_done'], 25);
       expect(params['total_showups_failed'], 3);
       expect(params['total_showups_remaining'], 2);
+    });
+  });
+
+  group('PactCreationAnalyticsScreen', () {
+    test('implements AnalyticsScreen', () {
+      expect(const PactCreationAnalyticsScreen(), isA<AnalyticsScreen>());
+    });
+
+    test('name is pact_creation', () {
+      expect(const PactCreationAnalyticsScreen().name, 'pact_creation');
+    });
+  });
+
+  group('PactDetailAnalyticsScreen', () {
+    test('implements AnalyticsScreen', () {
+      expect(const PactDetailAnalyticsScreen(), isA<AnalyticsScreen>());
+    });
+
+    test('name is pact_detail', () {
+      expect(const PactDetailAnalyticsScreen().name, 'pact_detail');
     });
   });
 }
