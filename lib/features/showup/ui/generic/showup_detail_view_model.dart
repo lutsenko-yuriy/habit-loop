@@ -141,9 +141,9 @@ class ShowupDetailViewModel
       await showupRepo.updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
 
-      // Determine the analytics event before entering the try block so that a
-      // StateError on an unexpected pending status propagates to the outer
-      // catch and is surfaced as markError rather than being swallowed.
+      // Determine the analytics event inside the try block so that a StateError
+      // on an unexpected pending status is caught by the outer catch and
+      // surfaced as markError rather than being swallowed.
       final AnalyticsEvent event = switch (newStatus) {
         ShowupStatus.done =>
           ShowupMarkedDoneEvent(pactId: updatedShowup.pactId),
