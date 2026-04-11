@@ -59,6 +59,8 @@ android {
             signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
             } else {
+                // Fallback: debug-signed AAB is not uploadable to the Play Store.
+                // To build a distributable release locally, provide android/key.properties.
                 signingConfigs.getByName("debug")
             }
         }
