@@ -82,6 +82,7 @@ jobs:
   # ── Build signed Android AAB ──────────────────────────────────────────────
   build-android:
     needs: resolve-version
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
       success: ${{ steps.build.outputs.success }}
