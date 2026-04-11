@@ -139,7 +139,7 @@ jobs:
           name: android-release
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: npm install -g firebase-tools@13
 
       - name: Upload to Firebase App Distribution
         run: |
@@ -153,8 +153,8 @@ jobs:
 
   # ── Tag the release and bump pubspec build number ─────────────────────────
   version-tag:
-    needs: [resolve-version, build-android]
-    if: needs.build-android.outputs.success == 'true'
+    needs: [resolve-version, distribute-android]
+    if: needs.distribute-android.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

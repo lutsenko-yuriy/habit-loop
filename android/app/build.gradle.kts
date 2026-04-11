@@ -53,7 +53,14 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Use upload keystore when available (CI and developer machines that have it);
+            // fall back to debug signing so `flutter run --release` still works locally
+            // without the keystore file.
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
