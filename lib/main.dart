@@ -33,6 +33,9 @@ Future<void> main() async {
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
     // Forward Dart async / platform errors to Crashlytics.
     PlatformDispatcher.instance.onError = (error, stack) {
+      // recordError is not awaited: this callback must return bool synchronously.
+      // Crashlytics writes fatal crash records synchronously on the native layer
+      // before the returned Future resolves, so no data is lost.
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       return true;
     };

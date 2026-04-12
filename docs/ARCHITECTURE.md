@@ -14,8 +14,7 @@ lib/
 │   └── providers/                     # analyticsServiceProvider (Riverpod)
 ├── crashlytics/                       # Cross-cutting crash reporting infrastructure (shared across all features)
 │   ├── domain/
-│   │   ├── crashlytics_service.dart            # abstract CrashlyticsService interface (no-throw contract)
-│   │   └── firebase_crashlytics_client.dart    # abstract client interface (adapter pattern)
+│   │   └── crashlytics_service.dart            # abstract CrashlyticsService interface (no-throw contract)
 │   ├── data/
 │   │   ├── firebase_crashlytics_service.dart       # real implementation (swallows exceptions)
 │   │   ├── firebase_crashlytics_client_adapter.dart # wraps FirebaseCrashlytics SDK; only used in main.dart
