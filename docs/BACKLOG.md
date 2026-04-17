@@ -9,7 +9,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ### Remaining work
 
-- [HAB-29](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-29/firebase-crashlytics-integration) **Firebase Crashlytics integration** — Integrate Firebase Crashlytics to automatically capture and report fatal and non-fatal crashes; wire `FlutterError.onError` and `PlatformDispatcher.instance.onError` to Crashlytics in `main.dart`; active in release builds only. (Feature)
 - [HAB-28](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-28/cicd-distribute-ios-builds-to-firebase-app-distribution) **CI/CD: distribute iOS builds to Firebase App Distribution** — Wire GitHub Actions to automatically distribute iOS builds to Firebase App Distribution on every merge to `main`. Blocked until Apple Developer Program enrollment is approved. (Feature)
 - [HAB-25](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-25/firebase-remote-config-integration) **Firebase Remote Config integration** — Integrate Firebase Remote Config so that feature flags and configuration values can be updated remotely without a new app release. (Feature)
 

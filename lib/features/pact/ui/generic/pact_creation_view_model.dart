@@ -122,6 +122,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     // deletePact later fails, a subsequent retry will produce a new ID and
     // a second orphaned record — full idempotency requires storage-level
     // transactions, which will be addressed in the SQLite implementation.
+    final now = ref.read(pactCreationTodayProvider);
     final pact = Pact(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       habitName: state.habitName.trim(),
@@ -131,6 +132,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       schedule: state.schedule!,
       status: PactStatus.active,
       reminderOffset: state.reminderOffset,
+      createdAt: now,
     );
     // Generate only the initial 11-day window (startDate through startDate+10)
     // to keep the repository lean. The window is intentionally wider than the
@@ -138,12 +140,16 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     // Duration arithmetic land 1 hour early) still covers all visible strip
     // days. Further windows are generated lazily by ShowupGenerationService
     // when the dashboard loads each day.
+    //
+    // Showups scheduled before pact.createdAt are excluded here (and in
+    // ShowupGenerationService.ensureShowupsExist) so that a user who creates
+    // a pact at 10pm never sees an already-failed 8am slot on day 1.
     final windowEnd = state.startDate.add(const Duration(days: 10));
     final showups = ShowupGenerator.generateWindow(
       pact,
       from: state.startDate,
       to: windowEnd,
-    );
+    ).where((s) => !s.scheduledAt.isBefore(now)).toList();
 
     try {
       final pactRepo = ref.read(pactCreationRepositoryProvider);

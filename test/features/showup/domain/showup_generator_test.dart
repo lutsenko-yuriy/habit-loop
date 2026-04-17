@@ -674,6 +674,27 @@ void main() {
         // All 3 days must be counted even though generate() would skip them
         expect(count, 3);
       });
+
+      test('countTotal respects createdAt — excludes slots before pact was created', () {
+        // A pact starting Apr 1 but created at 22:00 on Apr 1 must not count
+        // the 08:00 slot that was never reachable.
+        final pact = Pact(
+          id: 'pact-1',
+          habitName: 'Meditate',
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 3), // 3-day pact: Apr 1, 2, 3
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          createdAt: DateTime(2054, 4, 1, 22, 0), // created at 22:00 on Apr 1
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+
+        // Apr 1 08:00 is before createdAt (22:00) → excluded.
+        // Apr 2 08:00 and Apr 3 08:00 → included. Total = 2.
+        expect(count, 2);
+      });
     });
   });
 }

@@ -68,11 +68,28 @@ class ShowupGenerator {
   /// produced lazily by [_candidates] and counted in a single pass.
   ///
   /// The count reflects the schedule structure only — it is **not** affected
-  /// by [pact.reminderOffset] and never filters past dates. This makes it
-  /// suitable for displaying overall totals in stats screens even when only
-  /// a window of showups has been persisted.
+  /// by [pact.reminderOffset] — but it **does** respect [pact.createdAt]:
+  /// slots scheduled before the pact was created are excluded, matching the
+  /// filtering applied by [generateWindow] and
+  /// [ShowupGenerationService.ensureShowupsExist]. This keeps the total
+  /// consistent with the number of showups that can actually exist in the
+  /// repository so that stats (remaining, streak) are never permanently off
+  /// by the number of intra-day slots that were dropped at creation time.
+  ///
+  /// If [pact.createdAt] is null, no intra-day filtering is applied.
   static int countTotal(Pact pact) {
-    return _countInRange(pact, from: pact.startDate, to: pact.endDate);
+    final effectiveCreatedAt = pact.createdAt;
+    if (effectiveCreatedAt == null) {
+      return _countInRange(pact, from: pact.startDate, to: pact.endDate);
+    }
+    var count = 0;
+    for (final dt in _candidates(pact)) {
+      if (_isWithinRange(dt, pact.startDate, pact.endDate) &&
+          !dt.isBefore(effectiveCreatedAt)) {
+        count++;
+      }
+    }
+    return count;
   }
 
   // ---------------------------------------------------------------------------

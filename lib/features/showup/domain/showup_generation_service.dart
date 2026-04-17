@@ -21,6 +21,11 @@ class ShowupGenerationService {
   ///
   /// - Uses [ShowupGenerator.generateWindow] to produce the candidate showups
   ///   for the requested window (automatically clamped to the pact boundaries).
+  /// - Skips any candidate whose [Showup.scheduledAt] is before
+  ///   [Pact.createdAt] (or [Pact.startDate] if [createdAt] is null). This
+  ///   prevents a dashboard reload from re-inserting intra-day slots that were
+  ///   intentionally omitted at pact-creation time — e.g. an 8am slot on a
+  ///   pact created at 10pm the same day.
   /// - Delegates to [ShowupRepository.saveShowups], which skips IDs that are
   ///   already stored — so calling this method multiple times with the same or
   ///   overlapping windows is safe and produces no duplicates.
@@ -32,7 +37,10 @@ class ShowupGenerationService {
     required DateTime from,
     required DateTime to,
   }) async {
-    final candidates = ShowupGenerator.generateWindow(pact, from: from, to: to);
+    final effectiveCreatedAt = pact.createdAt ?? pact.startDate;
+    final candidates = ShowupGenerator.generateWindow(pact, from: from, to: to)
+        .where((s) => !s.scheduledAt.isBefore(effectiveCreatedAt))
+        .toList();
     if (candidates.isEmpty) return;
     await _repository.saveShowups(candidates);
   }
