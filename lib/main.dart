@@ -30,17 +30,20 @@ Future<void> main() async {
 
   if (kReleaseMode) {
     // Forward Flutter framework errors to Crashlytics.
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    FlutterError.onError = (details) {
+      try {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      } catch (_) {}
+    };
     // Forward Dart async / platform errors to Crashlytics.
     PlatformDispatcher.instance.onError = (error, stack) {
-      // recordError is not awaited: this callback must return bool synchronously.
-      // Crashlytics writes fatal crash records synchronously on the native layer
-      // before the returned Future resolves, so no data is lost.
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      try {
+        // recordError returns a Future but the callback must return bool synchronously.
+        // Errors from the native layer are caught here to prevent a re-entrant error loop.
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      } catch (_) {}
       return true;
     };
-    // Explicitly enable collection (defensive; defaults to enabled in release).
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
   }
 
   final pactRepo = InMemoryPactRepository();
