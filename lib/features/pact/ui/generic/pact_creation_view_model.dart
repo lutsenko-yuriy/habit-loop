@@ -138,12 +138,18 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     // Duration arithmetic land 1 hour early) still covers all visible strip
     // days. Further windows are generated lazily by ShowupGenerationService
     // when the dashboard loads each day.
+    //
+    // Filter out any showup whose scheduled time is already in the past
+    // relative to when the wizard was opened. This prevents an immediately
+    // auto-failing showup when a user creates a pact at 10 pm with, say,
+    // an 8 am daily schedule — the first real showup will be tomorrow's 8 am.
+    final now = ref.read(pactCreationTodayProvider);
     final windowEnd = state.startDate.add(const Duration(days: 10));
     final showups = ShowupGenerator.generateWindow(
       pact,
       from: state.startDate,
       to: windowEnd,
-    );
+    ).where((s) => !s.scheduledAt.isBefore(now)).toList();
 
     try {
       final pactRepo = ref.read(pactCreationRepositoryProvider);

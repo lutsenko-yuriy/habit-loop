@@ -338,6 +338,51 @@ void main() {
       final pacts = await rollbackPactRepo.getAllPacts();
       expect(pacts, isEmpty);
     });
+
+    test('submit skips today\'s showup when its scheduled time is already past',
+        () async {
+      // Simulate opening the wizard at 22:00 on March 30 with a daily 8am
+      // schedule starting today. The 8am slot is 14 hours in the past — it
+      // should NOT be persisted; the first saved showup must be tomorrow's 8am.
+      final eveningPactRepo = InMemoryPactRepository();
+      final eveningShowupRepo = InMemoryShowupRepository();
+      final eveningContainer = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider
+              .overrideWithValue(DateTime(2054, 3, 30, 22, 0)),
+          pactCreationRepositoryProvider.overrideWithValue(eveningPactRepo),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(eveningShowupRepo),
+        ],
+      );
+      addTearDown(eveningContainer.dispose);
+
+      final vm =
+          eveningContainer.read(pactCreationViewModelProvider.notifier);
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 8)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      final pacts = await eveningPactRepo.getActivePacts();
+      final showups = await eveningShowupRepo.getShowupsForPact(pacts.first.id);
+
+      // Today's 8am slot is already past (it's 22:00) — must not be saved.
+      expect(
+        showups.any((s) => s.scheduledAt == DateTime(2054, 3, 30, 8, 0)),
+        isFalse,
+        reason: 'Past-due showup for today should not be saved at pact creation',
+      );
+      // Tomorrow's 8am must be the first saved showup.
+      expect(
+        showups.any((s) => s.scheduledAt == DateTime(2054, 3, 31, 8, 0)),
+        isTrue,
+        reason: 'First showup should be tomorrow since today\'s slot already passed',
+      );
+    });
   });
 
   group('PactCreationViewModel analytics', () {
