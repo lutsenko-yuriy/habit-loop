@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.10.0] — 2026-04-17 (PR #20 merged)
+
+### Added — Firebase Crashlytics integration (HAB-29)
+
+- `firebase_crashlytics` SDK added to `pubspec.yaml`; a new `crashlytics` vertical slice introduces `CrashlyticsService` (abstract interface with a strict no-throw contract), `FirebaseCrashlyticsService` (backed by `FirebaseCrashlyticsClientAdapter`), and `NoopCrashlyticsService`
+- `FlutterError.onError` and `PlatformDispatcher.instance.onError` wired to Crashlytics in `main.dart` so both Flutter-layer and native crashes are captured in release builds; debug and profile builds fall back to `NoopCrashlyticsService`
+- `crashlyticsServiceProvider` provided via Riverpod so the service can be overridden in tests; `FakeCrashlyticsService` in `test/crashlytics/` for dependency injection
+- `NoopAnalyticsService` and `NoopCrashlyticsService` now log via `debugPrint` in debug/profile builds for easier local debugging
+- `Pact.createdAt` field added; `ShowupGenerationService.ensureShowupsExist` and `ShowupGenerator.countTotal` now respect it to prevent past-due intra-day showups from being resurrected on dashboard load or causing a ghost "1 remaining" in pact stats
+- `ARCHITECTURE.md` corrected: raw `FirebaseCrashlytics` SDK is referenced both via the adapter and directly in pre-`runApp` error handlers
+
+---
+
 ## [0.9.5] — 2026-04-11 (PR #19 merged)
 
 ### Added — Firebase Analytics integration (HAB-26)
