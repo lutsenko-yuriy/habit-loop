@@ -18,9 +18,10 @@ jobs:
       should_skip: ${{ steps.check.outputs.should_skip }}
     steps:
       - id: check
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          MSG="${{ github.event.head_commit.message }}"
-          if [[ "$MSG" == *"[skip ci]"* ]]; then
+          if [[ "$COMMIT_MSG" == *"[skip ci]"* ]]; then
             echo "should_skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "should_skip=false" >> "$GITHUB_OUTPUT"
