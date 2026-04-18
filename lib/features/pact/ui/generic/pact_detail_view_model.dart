@@ -59,7 +59,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       // lazy generation, we do not fire prematurely after only the first window
       // is resolved.
       if (pact.status == PactStatus.active) {
-        final today = DateTime.now();
+        final today = ref.read(pactDetailNowProvider);
         final todayDate = DateTime(today.year, today.month, today.day);
         final endDateOnly = DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
         final daysLeft = endDateOnly.difference(todayDate).inDays;

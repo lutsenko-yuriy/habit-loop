@@ -242,6 +242,38 @@ void main() {
       expect(persisted?.status, PactStatus.completed);
     });
 
+    test('load auto-completes a pact when pactDetailNowProvider is past the end date', () async {
+      // Pact endDate is in the future from the real clock, but we inject a
+      // "now" that is past it — verifying the auto-completion path uses the
+      // provider rather than DateTime.now() directly.
+      final futurePact = Pact(
+        id: 'future-end',
+        habitName: 'Stretch',
+        startDate: DateTime(2054, 1, 1),
+        endDate: DateTime(2054, 6, 1),
+        showupDuration: const Duration(minutes: 5),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+      );
+      final pactRepo = InMemoryPactRepository([futurePact]);
+      // Inject a "now" that is one day past the end date.
+      final pastEndDate = DateTime(2054, 6, 2, 12, 0);
+      final container = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
+        pactDetailNowProvider.overrideWithValue(pastEndDate),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('future-end').notifier).load();
+
+      final state = container.read(pactDetailViewModelProvider('future-end'));
+      expect(state.pact?.status, PactStatus.completed,
+          reason: 'Pact must auto-complete when injected now is past endDate');
+      final persisted = await pactRepo.getPactById('future-end');
+      expect(persisted?.status, PactStatus.completed);
+    });
+
     test('load auto-completes an active pact when all showups are resolved', () async {
       // Dates in 2054 so the end date is in the future (daysLeft > 0), ensuring
       // auto-completion is triggered solely by showupsRemaining == 0 rather than
