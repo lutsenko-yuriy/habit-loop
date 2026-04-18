@@ -169,10 +169,10 @@ jobs:
     needs: [resolve-version, distribute-android]
     if: needs.distribute-android.result == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_PAT }}
 
       - name: Bump pubspec build number and push tag
         run: |
