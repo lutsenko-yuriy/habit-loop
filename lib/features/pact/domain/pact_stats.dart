@@ -83,7 +83,8 @@ class PactStats {
     int? totalShowups,
   }) {
     final done = showups.where((s) => s.status == ShowupStatus.done).length;
-    final failed = showups.where((s) => s.status == ShowupStatus.failed).length;
+    final failed =
+        showups.where((s) => s.status == ShowupStatus.failed).length;
 
     final effectiveTotal = totalShowups ?? showups.length;
     final remaining = totalShowups != null

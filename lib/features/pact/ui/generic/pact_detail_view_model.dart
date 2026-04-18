@@ -15,9 +15,10 @@ final pactDetailShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
   throw UnimplementedError('Override pactDetailShowupRepositoryProvider');
 });
 
-final pactDetailViewModelProvider =
-    NotifierProviderFamily<PactDetailViewModel, PactDetailState, String>(
-        PactDetailViewModel.new);
+final pactDetailViewModelProvider = NotifierProviderFamily<
+    PactDetailViewModel, PactDetailState, String>(
+  PactDetailViewModel.new,
+);
 
 class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
   @override
@@ -54,8 +55,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       if (pact.status == PactStatus.active) {
         final today = DateTime.now();
         final todayDate = DateTime(today.year, today.month, today.day);
-        final endDateOnly =
-            DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
+        final endDateOnly = DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
         final daysLeft = endDateOnly.difference(todayDate).inDays;
         if (daysLeft <= 0 || stats.showupsRemaining == 0) {
           pact = pact.copyWith(
@@ -97,14 +97,12 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
 
       // Fire analytics for pact stop.
       // AnalyticsService is no-throw; no wrapping try/catch needed.
-      await ref.read(analyticsServiceProvider).logEvent(
-        PactStoppedEvent(
-          daysActive: now.difference(pact.startDate).inDays,
-          totalShowupsDone: stats.showupsDone,
-          totalShowupsFailed: stats.showupsFailed,
-          totalShowupsRemaining: stats.showupsRemaining,
-        ),
-      );
+      await ref.read(analyticsServiceProvider).logEvent(PactStoppedEvent(
+        daysActive: now.difference(pact.startDate).inDays,
+        totalShowupsDone: stats.showupsDone,
+        totalShowupsFailed: stats.showupsFailed,
+        totalShowupsRemaining: stats.showupsRemaining,
+      ));
     } catch (e) {
       state = state.copyWith(isStopping: false, stopError: e);
     }

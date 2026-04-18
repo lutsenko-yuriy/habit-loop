@@ -149,7 +149,8 @@ void main() {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setSchedule(
+          const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
       await vm.submit();
@@ -178,7 +179,8 @@ void main() {
       vm.setHabitName('Jog');
       vm.setShowupDuration(const Duration(minutes: 30));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 6)));
+      vm.setSchedule(
+          const DailySchedule(timeOfDay: Duration(hours: 6)));
       vm.setReminderOffset(const Duration(minutes: 15));
       vm.setCommitmentAccepted(true);
 
@@ -269,7 +271,8 @@ void main() {
       );
       addTearDown(failingContainer.dispose);
 
-      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -298,7 +301,8 @@ void main() {
       );
       addTearDown(failingContainer.dispose);
 
-      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -354,7 +358,8 @@ void main() {
       );
       addTearDown(failingContainer.dispose);
 
-      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -394,7 +399,8 @@ void main() {
       );
       addTearDown(eveningContainer.dispose);
 
-      final vm = eveningContainer.read(pactCreationViewModelProvider.notifier);
+      final vm =
+          eveningContainer.read(pactCreationViewModelProvider.notifier);
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
@@ -451,25 +457,17 @@ void main() {
       if (scheduleType == ScheduleType.daily) {
         vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       } else if (scheduleType == ScheduleType.weekday) {
-        vm.setSchedule(const WeekdaySchedule(entries: [
-          WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7)),
-        ]));
+        vm.setSchedule(const WeekdaySchedule(entries: [WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))]));
       } else {
-        vm.setSchedule(const MonthlyByDateSchedule(entries: [
-          MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7)),
-        ]));
+        vm.setSchedule(const MonthlyByDateSchedule(entries: [MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))]));
       }
       vm.setCommitmentAccepted(true);
     }
 
-    test('submit fires PactCreatedEvent with correct properties on success',
-        () async {
+    test('submit fires PactCreatedEvent with correct properties on success', () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-      );
+      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -495,14 +493,10 @@ void main() {
       expect(pact.stats?.showupsRemaining, pactCreatedEvent.showupsExpected);
     });
 
-    test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
-        () async {
+    test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact', () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-      );
+      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -514,8 +508,7 @@ void main() {
       expect(event.showupsExpected, event.durationDays);
     });
 
-    test('submit fires PactCreatedEvent with reminder offset when reminder set',
-        () async {
+    test('submit fires PactCreatedEvent with reminder offset when reminder set', () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -568,8 +561,7 @@ void main() {
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
 
-    test('submit does NOT fire analytics event when saveShowups fails',
-        () async {
+    test('submit does NOT fire analytics event when saveShowups fails', () async {
       final c = makeAnalyticsContainer(
         showupRepository: _AlwaysThrowingShowupRepository(),
       );
@@ -625,8 +617,7 @@ void main() {
       expect(readFailingState().submitError, isNotNull);
     });
 
-    test('submitError is cleared at the start of a new submit attempt',
-        () async {
+    test('submitError is cleared at the start of a new submit attempt', () async {
       setUpValidState(readFailingVM());
       await readFailingVM().submit();
       expect(readFailingState().submitError, isNotNull);
@@ -674,7 +665,8 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
   Future<List<Showup>> getShowupsForDate(DateTime date) async => [];
 
   @override
-  Future<List<Showup>> getShowupsForDateRange(DateTime start, DateTime end) async => [];
+  Future<List<Showup>> getShowupsForDateRange(
+      DateTime start, DateTime end) async => [];
 
   @override
   Future<Showup?> getShowupById(String id) async => null;

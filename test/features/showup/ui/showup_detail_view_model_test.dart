@@ -76,8 +76,7 @@ ProviderContainer _makeContainer({
     overrides: [
       showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
       showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
-      if (nowOverride != null)
-        showupDetailNowProvider.overrideWithValue(nowOverride),
+      if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
     ],
   );
 }
@@ -121,8 +120,7 @@ void main() {
       expect(state.showup, isNull);
     });
 
-    test('load() auto-fails a pending showup when current time is past scheduledAt + duration',
-        () async {
+    test('load() auto-fails a pending showup when current time is past scheduledAt + duration', () async {
       final showup = _pendingPastShowup(); // scheduledAt=08:00, duration=10min → ends 08:10
       final container = _makeContainer(
         showup: showup,
@@ -463,8 +461,7 @@ void main() {
       );
     }
 
-    test('load() fires ShowupAutoFailedEvent when showup is auto-failed',
-        () async {
+    test('load() fires ShowupAutoFailedEvent when showup is auto-failed', () async {
       final showup = _pendingPastShowup();
       final container = makeContainerWithAnalytics(
         showup: showup,
@@ -473,9 +470,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first;
@@ -483,9 +478,7 @@ void main() {
       expect((event as ShowupAutoFailedEvent).pactId, showup.pactId);
     });
 
-    test(
-        'load() does NOT fire ShowupAutoFailedEvent when showup is not auto-failed',
-        () async {
+    test('load() does NOT fire ShowupAutoFailedEvent when showup is not auto-failed', () async {
       final showup = _pendingFutureShowup();
       final container = makeContainerWithAnalytics(
         showup: showup,
@@ -493,9 +486,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
 
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
@@ -505,13 +496,9 @@ void main() {
       final container = makeContainerWithAnalytics(showup: showup, pact: _pact);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       fakeAnalytics.reset();
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .markDone();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first;
@@ -524,13 +511,9 @@ void main() {
       final container = makeContainerWithAnalytics(showup: showup, pact: _pact);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       fakeAnalytics.reset();
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .markFailed();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markFailed();
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first;
@@ -538,37 +521,26 @@ void main() {
       expect((event as ShowupMarkedFailedEvent).pactId, showup.pactId);
     });
 
-    test('markDone() does NOT fire event when showup is already done (no-op)',
-        () async {
+    test('markDone() does NOT fire event when showup is already done (no-op)', () async {
       final showup = _doneShowup();
       final container = makeContainerWithAnalytics(showup: showup, pact: _pact);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       fakeAnalytics.reset();
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .markDone();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
 
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
 
-    test(
-        'markFailed() does NOT fire event when showup is already failed (no-op)',
-        () async {
+    test('markFailed() does NOT fire event when showup is already failed (no-op)', () async {
       final showup = _failedShowup();
       final container = makeContainerWithAnalytics(showup: showup, pact: _pact);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       fakeAnalytics.reset();
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .markFailed();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markFailed();
 
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });

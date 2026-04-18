@@ -230,8 +230,7 @@ void main() {
       final pactRepo = InMemoryPactRepository([expiredPact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider
-            .overrideWithValue(InMemoryShowupRepository(showups)),
+        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
       ]);
       addTearDown(container.dispose);
 
@@ -264,19 +263,15 @@ void main() {
         from: allResolvedPact.startDate,
         to: allResolvedPact.endDate,
       );
-      final showups =
-          generated.map((s) => s.copyWith(status: ShowupStatus.done)).toList();
+      final showups = generated.map((s) => s.copyWith(status: ShowupStatus.done)).toList();
       final pactRepo = InMemoryPactRepository([allResolvedPact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider
-            .overrideWithValue(InMemoryShowupRepository(showups)),
+        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
       ]);
       addTearDown(container.dispose);
 
-      await container
-          .read(pactDetailViewModelProvider('all-resolved').notifier)
-          .load();
+      await container.read(pactDetailViewModelProvider('all-resolved').notifier).load();
 
       final state = container.read(pactDetailViewModelProvider('all-resolved'));
       expect(state.pact?.status, PactStatus.completed);
@@ -284,8 +279,7 @@ void main() {
       expect(persisted?.status, PactStatus.completed);
     });
 
-    test('load does not auto-complete an active pact with a future end date and pending showups',
-        () async {
+    test('load does not auto-complete an active pact with a future end date and pending showups', () async {
       // _pact: endDate=2026-09-01 (future from 2026-04-04), has pending showup s4.
       final container = _makeContainer(pacts: [_pact], showups: _showups);
       addTearDown(container.dispose);
@@ -305,10 +299,8 @@ void main() {
       fakeAnalytics = FakeAnalyticsService();
       return ProviderContainer(
         overrides: [
-          pactDetailRepositoryProvider
-              .overrideWithValue(InMemoryPactRepository(pacts)),
-          pactDetailShowupRepositoryProvider
-              .overrideWithValue(InMemoryShowupRepository(showups)),
+          pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
+          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );

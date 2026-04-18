@@ -198,7 +198,8 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                       const SizedBox(width: 8),
                       FilterChip(
                         label: Text(l10n.filterDone),
-                        selected: state.activeFilters.contains(PactStatus.completed),
+                        selected: state.activeFilters
+                            .contains(PactStatus.completed),
                         onSelected: (_) => ref
                             .read(pactListViewModelProvider.notifier)
                             .toggleFilter(PactStatus.completed),

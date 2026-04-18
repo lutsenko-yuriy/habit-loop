@@ -21,7 +21,8 @@ final pactCreationRepositoryProvider = Provider<PactRepository>((ref) {
 /// Must be overridden in every [ProviderScope] (and in every test that
 /// exercises [PactCreationViewModel.submit]), otherwise accessing it will
 /// throw [UnimplementedError].
-final pactCreationShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
+final pactCreationShowupRepositoryProvider =
+    Provider<ShowupRepository>((ref) {
   throw UnimplementedError('Override pactCreationShowupRepositoryProvider');
 });
 
@@ -55,7 +56,8 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
   void setScheduleType(ScheduleType type) {
     final defaultSchedule = switch (type) {
-      ScheduleType.daily => const DailySchedule(timeOfDay: Duration(hours: 8)),
+      ScheduleType.daily =>
+        const DailySchedule(timeOfDay: Duration(hours: 8)),
       ScheduleType.weekday => const WeekdaySchedule(entries: [
           WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 8)),
         ]),
@@ -187,17 +189,16 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
       // Both pact and showups were persisted successfully — fire analytics.
       // AnalyticsService is no-throw; no wrapping try/catch needed.
-      await ref.read(analyticsServiceProvider).logEvent(
-        PactCreatedEvent(
-          scheduleType: _scheduleTypeName(pactWithStats.schedule),
-          durationDays:
-              pactWithStats.endDate.difference(pactWithStats.startDate).inDays +
-                  1,
-          showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
-          reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
-          showupsExpected: totalShowups,
-        ),
-      );
+      await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
+        scheduleType: _scheduleTypeName(pactWithStats.schedule),
+        durationDays: pactWithStats.endDate
+                .difference(pactWithStats.startDate)
+                .inDays +
+            1,
+        showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
+        reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
+        showupsExpected: totalShowups,
+      ));
     } catch (e) {
       state = state.copyWith(submitError: e);
     } finally {

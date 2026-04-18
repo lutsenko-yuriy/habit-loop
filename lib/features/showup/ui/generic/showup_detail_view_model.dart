@@ -102,9 +102,9 @@ class ShowupDetailViewModel
 
           // Fire auto-fail analytics event.
           // AnalyticsService is no-throw; no wrapping try/catch needed.
-          await ref
-              .read(analyticsServiceProvider)
-              .logEvent(ShowupAutoFailedEvent(pactId: showup.pactId));
+          await ref.read(analyticsServiceProvider).logEvent(
+            ShowupAutoFailedEvent(pactId: showup.pactId),
+          );
         }
       }
 
