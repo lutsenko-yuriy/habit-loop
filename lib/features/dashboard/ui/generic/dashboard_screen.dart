@@ -83,42 +83,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           final bool confirmed;
           if (defaultTargetPlatform == TargetPlatform.iOS) {
             confirmed = await showCupertinoDialog<bool>(
-                  context: context,
-                  builder: (ctx) => CupertinoAlertDialog(
-                    title: Text(l10n.tooManyPactsTitle),
-                    content: Text(l10n.tooManyPactsBody(activePacts.length)),
-                    actions: [
-                      CupertinoDialogAction(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: Text(l10n.cancel),
-                      ),
-                      CupertinoDialogAction(
-                        isDefaultAction: true,
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: Text(l10n.tooManyPactsConfirm),
-                      ),
-                    ],
+              context: context,
+              builder: (ctx) => CupertinoAlertDialog(
+                title: Text(l10n.tooManyPactsTitle),
+                content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                actions: [
+                  CupertinoDialogAction(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(l10n.cancel),
                   ),
-                ) ??
+                  CupertinoDialogAction(
+                    isDefaultAction: true,
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(l10n.tooManyPactsConfirm),
+                  ),
+                ],
+              ),
+            ) ??
                 false;
           } else {
             confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: Text(l10n.tooManyPactsTitle),
-                    content: Text(l10n.tooManyPactsBody(activePacts.length)),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: Text(l10n.cancel),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: Text(l10n.tooManyPactsConfirm),
-                      ),
-                    ],
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(l10n.tooManyPactsTitle),
+                content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(l10n.cancel),
                   ),
-                ) ??
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(l10n.tooManyPactsConfirm),
+                  ),
+                ],
+              ),
+            ) ??
                 false;
           }
           if (!confirmed) return;

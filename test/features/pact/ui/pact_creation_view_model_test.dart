@@ -219,8 +219,8 @@ void main() {
         isTrue,
       );
       // All showups must fall within the 11-day window
-      final windowEnd = today
-          .add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
+      final windowEnd =
+          today.add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
       expect(
         showups.every((s) => !s.scheduledAt.isAfter(windowEnd)),
         isTrue,
@@ -440,8 +440,8 @@ void main() {
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider
               .overrideWithValue(pactRepository ?? InMemoryPactRepository()),
-          pactCreationShowupRepositoryProvider.overrideWithValue(
-              showupRepository ?? InMemoryShowupRepository()),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
@@ -455,13 +455,11 @@ void main() {
       if (scheduleType == ScheduleType.daily) {
         vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       } else if (scheduleType == ScheduleType.weekday) {
-        vm.setSchedule(const WeekdaySchedule(entries: [
-          WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))
-        ]));
+        vm.setSchedule(const WeekdaySchedule(
+            entries: [WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))]));
       } else {
-        vm.setSchedule(const MonthlyByDateSchedule(entries: [
-          MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))
-        ]));
+        vm.setSchedule(const MonthlyByDateSchedule(
+            entries: [MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))]));
       }
       vm.setCommitmentAccepted(true);
     }
@@ -470,8 +468,7 @@ void main() {
         () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(
-          pactRepository: pactRepo, showupRepository: showupRepo);
+      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -493,8 +490,7 @@ void main() {
       );
       expect(pactCreatedEvent.showupDurationMinutes, 10);
       expect(pactCreatedEvent.reminderOffsetMinutes, isNull);
-      expect(
-          pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
+      expect(pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
       expect(pact.stats?.showupsRemaining, pactCreatedEvent.showupsExpected);
     });
 
@@ -533,8 +529,7 @@ void main() {
       expect(event.reminderOffsetMinutes, 15);
     });
 
-    test(
-        'submit fires PactCreatedEvent with schedule_type weekly for weekday schedule',
+    test('submit fires PactCreatedEvent with schedule_type weekly for weekday schedule',
         () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
@@ -548,8 +543,7 @@ void main() {
       expect(event.scheduleType, 'weekly');
     });
 
-    test(
-        'submit fires PactCreatedEvent with schedule_type monthly for monthly schedule',
+    test('submit fires PactCreatedEvent with schedule_type monthly for monthly schedule',
         () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);

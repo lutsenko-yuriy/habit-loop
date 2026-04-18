@@ -26,30 +26,10 @@ final _pact = Pact(
 );
 
 final _showups = [
-  Showup(
-      id: 's1',
-      pactId: 'p1',
-      scheduledAt: DateTime(2026, 3, 1, 8),
-      duration: const Duration(minutes: 10),
-      status: ShowupStatus.done),
-  Showup(
-      id: 's2',
-      pactId: 'p1',
-      scheduledAt: DateTime(2026, 3, 2, 8),
-      duration: const Duration(minutes: 10),
-      status: ShowupStatus.done),
-  Showup(
-      id: 's3',
-      pactId: 'p1',
-      scheduledAt: DateTime(2026, 3, 3, 8),
-      duration: const Duration(minutes: 10),
-      status: ShowupStatus.failed),
-  Showup(
-      id: 's4',
-      pactId: 'p1',
-      scheduledAt: DateTime(2026, 3, 4, 8),
-      duration: const Duration(minutes: 10),
-      status: ShowupStatus.pending),
+  Showup(id: 's1', pactId: 'p1', scheduledAt: DateTime(2026, 3, 1, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+  Showup(id: 's2', pactId: 'p1', scheduledAt: DateTime(2026, 3, 2, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+  Showup(id: 's3', pactId: 'p1', scheduledAt: DateTime(2026, 3, 3, 8), duration: const Duration(minutes: 10), status: ShowupStatus.failed),
+  Showup(id: 's4', pactId: 'p1', scheduledAt: DateTime(2026, 3, 4, 8), duration: const Duration(minutes: 10), status: ShowupStatus.pending),
 ];
 
 ProviderContainer _makeContainer({
@@ -58,10 +38,8 @@ ProviderContainer _makeContainer({
 }) {
   return ProviderContainer(
     overrides: [
-      pactDetailRepositoryProvider
-          .overrideWithValue(InMemoryPactRepository(pacts)),
-      pactDetailShowupRepositoryProvider
-          .overrideWithValue(InMemoryShowupRepository(showups)),
+      pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
+      pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
     ],
   );
 }
@@ -108,9 +86,7 @@ void main() {
     test('load sets error when pact not found', () async {
       final container = _makeContainer();
       addTearDown(container.dispose);
-      await container
-          .read(pactDetailViewModelProvider('missing').notifier)
-          .load();
+      await container.read(pactDetailViewModelProvider('missing').notifier).load();
       final state = container.read(pactDetailViewModelProvider('missing'));
       expect(state.isLoading, false);
       expect(state.loadError, isNotNull);
@@ -120,14 +96,11 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider
-            .overrideWithValue(InMemoryShowupRepository(_showups)),
+        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
       ]);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .stopPact('Not for me');
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Not for me');
       final state = container.read(pactDetailViewModelProvider('p1'));
       expect(state.pact?.status, PactStatus.stopped);
       expect(state.pact?.stopReason, 'Not for me');
@@ -140,14 +113,11 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider
-            .overrideWithValue(InMemoryShowupRepository(_showups)),
+        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
       ]);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .stopPact(null);
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
       final persisted = await pactRepo.getPactById('p1');
       expect(persisted?.stopReason, isNull);
     });
@@ -210,8 +180,7 @@ void main() {
       addTearDown(container.dispose);
 
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      final statsBeforeStop =
-          container.read(pactDetailViewModelProvider('p1')).stats;
+      final statsBeforeStop = container.read(pactDetailViewModelProvider('p1')).stats;
 
       await container
           .read(pactDetailViewModelProvider('p1').notifier)
@@ -230,8 +199,7 @@ void main() {
           .read(pactDetailViewModelProvider('p1').notifier)
           .load();
 
-      final reloadedState =
-          reloadedContainer.read(pactDetailViewModelProvider('p1'));
+      final reloadedState = reloadedContainer.read(pactDetailViewModelProvider('p1'));
       expect(reloadedState.pact?.status, PactStatus.stopped);
       expect(reloadedState.pact?.stats, isNotNull);
       expect(reloadedState.stats?.showupsDone, statsBeforeStop?.showupsDone);
@@ -435,9 +403,7 @@ void main() {
       );
       addTearDown(workingContainer.dispose);
 
-      await workingContainer
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .load();
+      await workingContainer.read(pactDetailViewModelProvider('p1').notifier).load();
 
       // Now swap to a failing repo by replacing the container. Since we can't
       // do that, we test with a repo whose updatePact throws.
@@ -453,12 +419,8 @@ void main() {
       );
       addTearDown(failContainer.dispose);
 
-      await failContainer
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .load();
-      await failContainer
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .stopPact('reason');
+      await failContainer.read(pactDetailViewModelProvider('p1').notifier).load();
+      await failContainer.read(pactDetailViewModelProvider('p1').notifier).stopPact('reason');
 
       final state = failContainer.read(pactDetailViewModelProvider('p1'));
       expect(state.stopError, isNotNull);

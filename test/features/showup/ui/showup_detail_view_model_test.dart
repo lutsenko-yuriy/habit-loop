@@ -99,9 +99,7 @@ void main() {
       final showup = _pendingFutureShowup();
       final container = _makeContainer(showup: showup, pact: _pact);
       addTearDown(container.dispose);
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       final state = container.read(showupDetailViewModelProvider(showup.id));
       expect(state.isLoading, false);
       expect(state.showup, showup);
@@ -117,9 +115,7 @@ void main() {
       );
       addTearDown(container.dispose);
       // Request a non-existent showup ID.
-      await container
-          .read(showupDetailViewModelProvider('nonexistent').notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider('nonexistent').notifier).load();
       final state =
           container.read(showupDetailViewModelProvider('nonexistent'));
       expect(state.isLoading, false);
@@ -139,9 +135,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       final state = container.read(showupDetailViewModelProvider(showup.id));
 
       expect(state.isLoading, false);
@@ -174,9 +168,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       final state = container.read(showupDetailViewModelProvider(showup.id));
 
       expect(state.showup?.status, ShowupStatus.pending);
@@ -193,9 +185,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       final state = container.read(showupDetailViewModelProvider(showup.id));
 
       expect(state.showup?.status, ShowupStatus.done);
@@ -211,9 +201,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       final state = container.read(showupDetailViewModelProvider(showup.id));
 
       expect(state.showup?.status, ShowupStatus.failed);
@@ -230,12 +218,8 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .markDone();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
 
       final state = container.read(showupDetailViewModelProvider(showup.id));
       expect(state.showup?.status, ShowupStatus.done);
@@ -260,12 +244,8 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .markFailed();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markFailed();
 
       final state = container.read(showupDetailViewModelProvider(showup.id));
       expect(state.showup?.status, ShowupStatus.failed);
@@ -290,12 +270,8 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .markDone();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
 
       final state = container.read(showupDetailViewModelProvider(showup.id));
       expect(state.showup?.status, ShowupStatus.done);
@@ -315,9 +291,7 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       final stateBefore =
           container.read(showupDetailViewModelProvider(showup.id));
       await container
@@ -336,9 +310,7 @@ void main() {
       final container = _makeContainer(showup: showup, pact: _pact);
       addTearDown(container.dispose);
 
-      await container
-          .read(showupDetailViewModelProvider(showup.id).notifier)
-          .load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
       await container
           .read(showupDetailViewModelProvider(showup.id).notifier)
           .markDone();
