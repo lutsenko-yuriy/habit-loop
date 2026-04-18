@@ -22,6 +22,10 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     super.initState();
     Future.microtask(() {
       ref.read(analyticsServiceProvider).logScreenView(const PactDetailAnalyticsScreen());
+      // Invalidate so load() always samples the real current time, not a
+      // cached value from a previous navigation or app start. Mirrors the
+      // ref.invalidate(showupDetailNowProvider) pattern in ShowupDetailScreen.
+      ref.invalidate(pactDetailNowProvider);
       ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load();
     });
   }
@@ -31,6 +35,9 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     final state = ref.watch(pactDetailViewModelProvider(widget.pactId));
 
     Future<void> onStopPact(String? reason) async {
+      // Invalidate so stopPact() samples the real current time even if the
+      // screen has been open for an extended period.
+      ref.invalidate(pactDetailNowProvider);
       await ref
           .read(pactDetailViewModelProvider(widget.pactId).notifier)
           .stopPact(reason);

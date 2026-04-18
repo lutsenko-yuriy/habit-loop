@@ -43,7 +43,13 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
   }
 
   void setStartDate(DateTime date) {
-    state = state.copyWith(startDate: date);
+    // Normalize to midnight so that startDate is always a pure date value.
+    // Date pickers on some platforms return a DateTime with a time component,
+    // which would cause durationDays analytics to under-count and daysActive
+    // to report 0 when the pact is stopped the following morning.
+    state = state.copyWith(
+      startDate: DateTime(date.year, date.month, date.day),
+    );
   }
 
   void setEndDate(DateTime date) {

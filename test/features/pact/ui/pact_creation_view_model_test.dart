@@ -68,6 +68,17 @@ void main() {
       expect(readState().startDate, newDate);
     });
 
+    test('setStartDate normalizes to midnight when date has a time component', () {
+      // Date pickers on some platforms return a DateTime with a time component.
+      // Without normalization startDate would carry the time into analytics
+      // (durationDays under-counts) and into the showup generation (daysActive
+      // would show 0 when the pact is stopped the next morning).
+      readVM().setStartDate(DateTime(2054, 4, 1, 22, 30));
+      expect(readState().startDate, DateTime(2054, 4, 1));
+      expect(readState().startDate.hour, 0);
+      expect(readState().startDate.minute, 0);
+    });
+
     test('setEndDate updates end date', () {
       final newDate = DateTime(2054, 12, 1);
       readVM().setEndDate(newDate);
