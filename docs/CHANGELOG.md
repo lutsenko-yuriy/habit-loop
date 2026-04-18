@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.10.1] — 2026-04-18 (PR #21 merged)
+
+### Fixed — Pact stats and dashboard analytics fixes (HAB-30, HAB-31, HAB-32)
+
+- `pact_created` analytics now reports inclusive `duration_days`, aligning daily 6-month pact duration semantics with `showups_expected` and removing the apparent off-by-one mismatch
+- Stopped pacts now preserve historical showup stats after active showups are deleted, and showup status changes refresh persisted pact stats through a single service boundary
+- Dashboard `screen_view` analytics now fire every time the dashboard becomes visible again after returning from pact creation, pact detail, or showup detail flows
+
 ## [0.10.0] — 2026-04-17 (PR #20 merged)
 
 ### Added — Firebase Crashlytics integration (HAB-29)
