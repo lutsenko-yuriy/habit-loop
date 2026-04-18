@@ -148,13 +148,19 @@ jobs:
 
       - name: Upload to Firebase App Distribution
         run: |
+          if [[ -z "$FIREBASE_ANDROID_APP_ID" || -z "$FIREBASE_SERVICE_ACCOUNT_ANDROID" ]]; then
+            echo "Missing FIREBASE_ANDROID_APP_ID or FIREBASE_SERVICE_ACCOUNT_ANDROID secret." >&2
+            exit 1
+          fi
+
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_ANDROID" > "$RUNNER_TEMP/firebase-service-account.json"
           firebase appdistribution:distribute app-release.aab \
-            --app "$FIREBASE_APP_ID_ANDROID" \
-            --token "$FIREBASE_TOKEN" \
+            --app "$FIREBASE_ANDROID_APP_ID" \
             --release-notes "Build ${{ needs.resolve-version.outputs.build_number }} — ${{ github.sha }}"
         env:
-          FIREBASE_APP_ID_ANDROID: ${{ secrets.FIREBASE_APP_ID_ANDROID }}
-          FIREBASE_TOKEN:          ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_ANDROID_APP_ID:          ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_SERVICE_ACCOUNT_ANDROID: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
+          GOOGLE_APPLICATION_CREDENTIALS:   ${{ runner.temp }}/firebase-service-account.json
 
   # ── Tag the release and bump pubspec build number ─────────────────────────
   version-tag:
