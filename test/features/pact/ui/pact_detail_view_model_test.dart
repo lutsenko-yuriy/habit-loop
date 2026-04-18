@@ -242,8 +242,7 @@ void main() {
       expect(persisted?.status, PactStatus.completed);
     });
 
-    test('load auto-completes an active pact when all showups are resolved',
-        () async {
+    test('load auto-completes an active pact when all showups are resolved', () async {
       // Dates in 2054 so the end date is in the future (daysLeft > 0), ensuring
       // auto-completion is triggered solely by showupsRemaining == 0 rather than
       // by the end-date guard. We generate every scheduled showup and mark them
@@ -306,8 +305,7 @@ void main() {
       );
     }
 
-    test('stopPact fires PactStoppedEvent with correct stats on success',
-        () async {
+    test('stopPact fires PactStoppedEvent with correct stats on success', () async {
       final container = makeContainerWithAnalytics(
         pacts: [_pact],
         showups: _showups,

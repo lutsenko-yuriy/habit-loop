@@ -196,7 +196,8 @@ void main() {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setSchedule(
+          const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
       await vm.submit();
@@ -329,7 +330,8 @@ void main() {
       );
       addTearDown(failingContainer.dispose);
 
-      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
