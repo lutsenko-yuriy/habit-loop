@@ -5,6 +5,7 @@ import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_generator.dart';
+import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 /// Owns pact stats calculation and persistence across pact/showup mutations.
 ///
@@ -78,6 +79,23 @@ class PactStatsService {
     return persistStats(pact: pact, showups: showups);
   }
 
+  /// Persists a resolved showup status and refreshes the denormalized pact
+  /// stats snapshot from the same service boundary.
+  ///
+  /// The showup status is the source of truth for the user action. If syncing
+  /// the derived pact stats fails afterwards, the primary showup update still
+  /// succeeds and callers can rely on [currentStats] to recompute fresh values
+  /// from showups on the next load.
+  Future<Showup> persistShowupStatus({
+    required Showup showup,
+    required ShowupStatus status,
+  }) async {
+    final updatedShowup = showup.copyWith(status: status);
+    await _showupRepository.updateShowup(updatedShowup);
+    await _syncStatsBestEffort(updatedShowup.pactId);
+    return updatedShowup;
+  }
+
   Future<Pact> stopPact({
     required Pact pact,
     required String pactId,
@@ -131,6 +149,16 @@ class PactStatsService {
 
     if (rollbackError != null && rollbackStackTrace != null) {
       Error.throwWithStackTrace(rollbackError, rollbackStackTrace);
+    }
+  }
+
+  Future<void> _syncStatsBestEffort(String pactId) async {
+    try {
+      await syncStats(pactId);
+    } catch (_) {
+      // The showup status is the source of truth for the user action. If the
+      // derived pact stats snapshot fails to persist, keep the primary update
+      // successful and let pact detail recompute fresh stats from showups.
     }
   }
 }
