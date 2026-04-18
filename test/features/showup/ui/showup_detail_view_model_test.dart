@@ -8,6 +8,7 @@ import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
+import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
 
@@ -140,6 +141,12 @@ void main() {
       final showupRepo = container.read(showupDetailShowupRepositoryProvider);
       final persisted = await showupRepo.getShowupById(showup.id);
       expect(persisted?.status, ShowupStatus.failed);
+
+      final pactRepo = container.read(showupDetailPactRepositoryProvider);
+      final updatedPact = await pactRepo.getPactById('p1');
+      final totalShowups = ShowupGenerator.countTotal(updatedPact!);
+      expect(updatedPact.stats?.showupsFailed, 1);
+      expect(updatedPact.stats?.showupsRemaining, totalShowups - 1);
     });
 
     test('load() does not auto-fail a pending showup before its end time', () async {
@@ -211,6 +218,11 @@ void main() {
 
       final persisted = await showupRepo.getShowupById(showup.id);
       expect(persisted?.status, ShowupStatus.done);
+
+      final updatedPact = await pactRepo.getPactById('p1');
+      final totalShowups = ShowupGenerator.countTotal(updatedPact!);
+      expect(updatedPact.stats?.showupsDone, 1);
+      expect(updatedPact.stats?.showupsRemaining, totalShowups - 1);
     });
 
     test('markFailed() updates showup status to failed and persists', () async {
@@ -232,6 +244,32 @@ void main() {
 
       final persisted = await showupRepo.getShowupById(showup.id);
       expect(persisted?.status, ShowupStatus.failed);
+
+      final updatedPact = await pactRepo.getPactById('p1');
+      final totalShowups = ShowupGenerator.countTotal(updatedPact!);
+      expect(updatedPact.stats?.showupsFailed, 1);
+      expect(updatedPact.stats?.showupsRemaining, totalShowups - 1);
+    });
+
+    test('markDone() succeeds even when pact stats sync fails', () async {
+      final showup = _pendingFutureShowup();
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = _ThrowingOnUpdatePactRepository([_pact]);
+      final container = ProviderContainer(overrides: [
+        showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
+
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+      expect(state.showup?.status, ShowupStatus.done);
+      expect(state.markError, isNull);
+
+      final persisted = await showupRepo.getShowupById(showup.id);
+      expect(persisted?.status, ShowupStatus.done);
     });
 
     test('markDone() is a no-op when showup is already done', () async {
@@ -506,6 +544,13 @@ void main() {
 
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
-
   });
+}
+
+class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
+  _ThrowingOnUpdatePactRepository(super.initialPacts);
+
+  @override
+  Future<void> updatePact(Pact pact) async =>
+      throw Exception('update failed intentionally');
 }

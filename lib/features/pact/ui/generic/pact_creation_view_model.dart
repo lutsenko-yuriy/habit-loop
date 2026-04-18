@@ -4,6 +4,7 @@ import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
+import 'package:habit_loop/features/pact/domain/pact_stats_service.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
@@ -153,10 +154,10 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
     try {
       final pactRepo = ref.read(pactCreationRepositoryProvider);
+      final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
       await pactRepo.savePact(pact);
 
       try {
-        final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
         final result = await showupRepo.saveShowups(showups);
         if (!result.allSaved) {
           throw StateError(
@@ -177,14 +178,26 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
         rethrow;
       }
 
+      final totalShowups = ShowupGenerator.countTotal(pact);
+      final pactWithStats = await PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      ).persistInitialStatsOrRollback(
+        pact: pact,
+        showups: showups,
+      );
+
       // Both pact and showups were persisted successfully — fire analytics.
       // AnalyticsService is no-throw; no wrapping try/catch needed.
       await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
-        scheduleType: _scheduleTypeName(pact.schedule),
-        durationDays: pact.endDate.difference(pact.startDate).inDays,
-        showupDurationMinutes: pact.showupDuration.inMinutes,
-        reminderOffsetMinutes: pact.reminderOffset?.inMinutes,
-        showupsExpected: ShowupGenerator.countTotal(pact),
+        scheduleType: _scheduleTypeName(pactWithStats.schedule),
+        durationDays: pactWithStats.endDate
+                .difference(pactWithStats.startDate)
+                .inDays +
+            1,
+        showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
+        reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
+        showupsExpected: totalShowups,
       ));
     } catch (e) {
       state = state.copyWith(submitError: e);

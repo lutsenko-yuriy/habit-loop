@@ -32,6 +32,19 @@ Showup _showup(String id, ShowupStatus status, DateTime scheduledAt) {
   );
 }
 
+PactStats _computeStats(
+  Pact pact,
+  List<Showup> showups, {
+  int? totalShowups,
+}) {
+  return PactStats.compute(
+    startDate: pact.startDate,
+    endDate: pact.endDate,
+    showups: showups,
+    totalShowups: totalShowups,
+  );
+}
+
 void main() {
   group('PactStats', () {
     test('counts done, failed and pending showups correctly', () {
@@ -43,7 +56,7 @@ void main() {
         _showup('5', ShowupStatus.pending, DateTime(2026, 4, 5, 7)),
       ];
 
-      final stats = PactStats.compute(pact: _pact(), showups: showups);
+      final stats = _computeStats(_pact(), showups);
 
       expect(stats.showupsDone, 2);
       expect(stats.showupsFailed, 1);
@@ -62,7 +75,7 @@ void main() {
         _showup('5', ShowupStatus.done, DateTime(2026, 4, 5, 7)),
       ];
 
-      final stats = PactStats.compute(pact: _pact(), showups: showups);
+      final stats = _computeStats(_pact(), showups);
 
       expect(stats.currentStreak, 2);
     });
@@ -73,7 +86,7 @@ void main() {
         _showup('2', ShowupStatus.failed, DateTime(2026, 4, 2, 7)),
       ];
 
-      final stats = PactStats.compute(pact: _pact(), showups: showups);
+      final stats = _computeStats(_pact(), showups);
 
       expect(stats.currentStreak, 0);
     });
@@ -86,7 +99,7 @@ void main() {
         _showup('3', ShowupStatus.pending, DateTime(2026, 4, 3, 7)),
       ];
 
-      final stats = PactStats.compute(pact: _pact(), showups: showups);
+      final stats = _computeStats(_pact(), showups);
 
       expect(stats.currentStreak, 2);
     });
@@ -96,7 +109,7 @@ void main() {
         _showup('1', ShowupStatus.pending, DateTime(2026, 4, 1, 7)),
       ];
 
-      final stats = PactStats.compute(pact: _pact(), showups: showups);
+      final stats = _computeStats(_pact(), showups);
 
       expect(stats.currentStreak, 0);
     });
@@ -108,7 +121,7 @@ void main() {
         _showup('3', ShowupStatus.done, DateTime(2026, 4, 3, 7)),
       ];
 
-      final stats = PactStats.compute(pact: _pact(), showups: showups);
+      final stats = _computeStats(_pact(), showups);
 
       expect(stats.currentStreak, 3);
     });
@@ -119,14 +132,14 @@ void main() {
         endDate: DateTime(2026, 9, 30),
       );
 
-      final stats = PactStats.compute(pact: pact, showups: []);
+      final stats = _computeStats(pact, []);
 
       expect(stats.startDate, DateTime(2026, 4, 1));
       expect(stats.endDate, DateTime(2026, 9, 30));
     });
 
     test('computes zero counts for empty showup list', () {
-      final stats = PactStats.compute(pact: _pact(), showups: []);
+      final stats = _computeStats(_pact(), []);
 
       expect(stats.showupsDone, 0);
       expect(stats.showupsFailed, 0);
@@ -139,18 +152,18 @@ void main() {
       final showups = [
         _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
       ];
-      final a = PactStats.compute(pact: _pact(), showups: showups);
-      final b = PactStats.compute(pact: _pact(), showups: showups);
+      final a = _computeStats(_pact(), showups);
+      final b = _computeStats(_pact(), showups);
 
       expect(a, equals(b));
       expect(a.hashCode, equals(b.hashCode));
     });
 
     test('two PactStats with different fields are not equal', () {
-      final a = PactStats.compute(pact: _pact(), showups: [
+      final a = _computeStats(_pact(), [
         _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
       ]);
-      final b = PactStats.compute(pact: _pact(), showups: [
+      final b = _computeStats(_pact(), [
         _showup('1', ShowupStatus.failed, DateTime(2026, 4, 1, 7)),
       ]);
 
@@ -168,11 +181,7 @@ void main() {
           _showup('3', ShowupStatus.pending, DateTime(2026, 4, 3, 7)),
         ];
 
-        final stats = PactStats.compute(
-          pact: _pact(),
-          showups: showups,
-          totalShowups: 30,
-        );
+        final stats = _computeStats(_pact(), showups, totalShowups: 30);
 
         expect(stats.totalShowups, 30);
       });
@@ -187,11 +196,7 @@ void main() {
           _showup('3', ShowupStatus.pending, DateTime(2026, 4, 3, 7)),
         ];
 
-        final stats = PactStats.compute(
-          pact: _pact(),
-          showups: showups,
-          totalShowups: 30,
-        );
+        final stats = _computeStats(_pact(), showups, totalShowups: 30);
 
         expect(stats.showupsRemaining, 28);
       });
@@ -206,11 +211,7 @@ void main() {
           _showup('3', ShowupStatus.pending, DateTime(2026, 4, 3, 7)),
         ];
 
-        final stats = PactStats.compute(
-          pact: _pact(),
-          showups: showups,
-          totalShowups: 3,
-        );
+        final stats = _computeStats(_pact(), showups, totalShowups: 3);
 
         expect(stats.totalShowups, 3);
         expect(stats.showupsRemaining, 1);
@@ -225,10 +226,7 @@ void main() {
           _showup('3', ShowupStatus.pending, DateTime(2026, 4, 3, 7)),
         ];
 
-        final stats = PactStats.compute(
-          pact: _pact(),
-          showups: showups,
-        );
+        final stats = _computeStats(_pact(), showups);
 
         // No override: totalShowups = list length = 3, remaining = pending = 1
         expect(stats.totalShowups, 3);

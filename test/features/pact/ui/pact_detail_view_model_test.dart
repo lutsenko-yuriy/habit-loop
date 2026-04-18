@@ -4,6 +4,7 @@ import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
+import 'package:habit_loop/features/pact/domain/pact_stats.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_view_model.dart';
@@ -118,7 +119,102 @@ void main() {
       expect(persisted?.stopReason, isNull);
     });
 
-    test('load auto-completes an active pact whose end date is in the past', () async {
+    test('load recomputes fresh stats when persisted snapshot is stale',
+        () async {
+      final stalePact = _pact.copyWith(
+        stats: PactStats(
+          showupsDone: 0,
+          showupsFailed: 0,
+          showupsRemaining: 999,
+          totalShowups: 999,
+          currentStreak: 0,
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+        ),
+      );
+      final container = _makeContainer(pacts: [stalePact], showups: _showups);
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.stats?.showupsDone, 2);
+      expect(state.stats?.showupsFailed, 1);
+      expect(state.stats?.totalShowups, ShowupGenerator.countTotal(_pact));
+    });
+
+    test('stopPact rolls pact back when deleting showups fails', () async {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = _ThrowingOnDeleteShowupRepository(_showups);
+      final container = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Not for me');
+
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.stopError, isNotNull);
+
+      final persisted = await pactRepo.getPactById('p1');
+      expect(persisted?.status, PactStatus.active);
+      expect(persisted?.stopReason, isNull);
+      expect(await showupRepo.getShowupsForPact('p1'), isNotEmpty);
+    });
+
+    test('stopPact preserves historical stats even after showups are removed',
+        () async {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository(_showups);
+      final container = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final statsBeforeStop = container.read(pactDetailViewModelProvider('p1')).stats;
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Not for me');
+
+      final remainingShowups = await showupRepo.getShowupsForPact('p1');
+      expect(remainingShowups, isEmpty);
+
+      final reloadedContainer = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+      ]);
+      addTearDown(reloadedContainer.dispose);
+
+      await reloadedContainer.read(pactDetailViewModelProvider('p1').notifier).load();
+
+      final reloadedState = reloadedContainer.read(pactDetailViewModelProvider('p1'));
+      expect(reloadedState.pact?.status, PactStatus.stopped);
+      expect(reloadedState.pact?.stats, isNotNull);
+      expect(reloadedState.stats?.showupsDone, statsBeforeStop?.showupsDone);
+      expect(
+        reloadedState.stats?.showupsFailed,
+        statsBeforeStop?.showupsFailed,
+      );
+      expect(
+        reloadedState.stats?.showupsRemaining,
+        statsBeforeStop?.showupsRemaining,
+      );
+      expect(
+        reloadedState.stats?.totalShowups,
+        statsBeforeStop?.totalShowups,
+      );
+      expect(
+        reloadedState.stats?.currentStreak,
+        statsBeforeStop?.currentStreak,
+      );
+      expect(reloadedState.pact?.stats, reloadedState.stats);
+    });
+
+    test('load auto-completes an active pact whose end date is in the past',
+        () async {
       final expiredPact = Pact(
         id: 'expired',
         habitName: 'Run',
@@ -297,7 +393,6 @@ void main() {
       expect(state.stopError, isNotNull);
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
-
   });
 }
 
@@ -313,4 +408,12 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   @override
   Future<void> updatePact(Pact pact) async =>
       throw Exception('update failed intentionally');
+}
+
+class _ThrowingOnDeleteShowupRepository extends InMemoryShowupRepository {
+  _ThrowingOnDeleteShowupRepository(super.initialShowups);
+
+  @override
+  Future<void> deleteShowupsForPact(String pactId) async =>
+      throw Exception('delete failed intentionally');
 }

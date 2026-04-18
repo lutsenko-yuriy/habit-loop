@@ -3,6 +3,7 @@ import 'package:habit_loop/analytics/domain/analytics_event.dart';
 import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
+import 'package:habit_loop/features/pact/domain/pact_stats_service.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
@@ -34,11 +35,10 @@ final showupDetailPactRepositoryProvider = Provider<PactRepository>((ref) {
 /// unbounded accumulation of one ViewModel instance per visited showup ID.
 /// [ShowupDetailScreen.initState] always calls [ShowupDetailViewModel.load] on
 /// entry, so re-creating the state on each visit is correct and safe.
-final showupDetailViewModelProvider =
-    AutoDisposeNotifierProviderFamily<ShowupDetailViewModel, ShowupDetailState,
-        String>(
-  ShowupDetailViewModel.new,
-);
+final showupDetailViewModelProvider = AutoDisposeNotifierProviderFamily<
+    ShowupDetailViewModel,
+    ShowupDetailState,
+    String>(ShowupDetailViewModel.new);
 
 /// View model for the showup detail screen.
 ///
@@ -92,19 +92,25 @@ class ShowupDetailViewModel
       // showupDetailNowProvider is invalidated by ShowupDetailScreen before
       // load() is called, so this always reflects the real current time.
       bool wasAutoFailed = false;
+      final pactStatsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       if (showup.status == ShowupStatus.pending) {
         final now = ref.read(showupDetailNowProvider);
         final endTime = showup.scheduledAt.add(showup.duration);
         if (now.isAfter(endTime)) {
-          showup = showup.copyWith(status: ShowupStatus.failed);
-          await showupRepo.updateShowup(showup);
+          showup = await pactStatsService.persistShowupStatus(
+            showup: showup,
+            status: ShowupStatus.failed,
+          );
           wasAutoFailed = true;
 
           // Fire auto-fail analytics event.
           // AnalyticsService is no-throw; no wrapping try/catch needed.
           await ref.read(analyticsServiceProvider).logEvent(
-            ShowupAutoFailedEvent(pactId: showup.pactId),
-          );
+                ShowupAutoFailedEvent(pactId: showup.pactId),
+              );
         }
       }
 
@@ -136,9 +142,13 @@ class ShowupDetailViewModel
   Future<void> _updateStatus(ShowupStatus newStatus) async {
     state = state.copyWith(isSaving: true, clearMarkError: true);
     try {
-      final updatedShowup = state.showup!.copyWith(status: newStatus);
-      final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
-      await showupRepo.updateShowup(updatedShowup);
+      final updatedShowup = await PactStatsService(
+        pactRepository: ref.read(showupDetailPactRepositoryProvider),
+        showupRepository: ref.read(showupDetailShowupRepositoryProvider),
+      ).persistShowupStatus(
+        showup: state.showup!,
+        status: newStatus,
+      );
       state = state.copyWith(showup: updatedShowup, isSaving: false);
 
       // Determine the analytics event inside the try block so that a StateError

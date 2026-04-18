@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
@@ -14,11 +15,14 @@ import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
+import '../../../analytics/fake_analytics_service.dart';
+
 final _today = DateTime(2026, 3, 29);
 
 Widget _buildApp({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
+  FakeAnalyticsService? analyticsService,
 }) {
   final pactRepo = InMemoryPactRepository(pacts);
   final showupRepo = InMemoryShowupRepository(showups);
@@ -29,6 +33,8 @@ Widget _buildApp({
       todayProvider.overrideWithValue(_today),
       showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
       showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+      if (analyticsService != null)
+        analyticsServiceProvider.overrideWithValue(analyticsService),
     ],
     child: const MaterialApp(
       localizationsDelegates: [
@@ -431,6 +437,57 @@ void main() {
       expect(
         find.textContaining('3 active pacts'),
         findsOneWidget,
+      );
+    });
+
+    testWidgets('logs dashboard screen_view again when returning from showup detail',
+        (tester) async {
+      final analytics = FakeAnalyticsService();
+      final showup = Showup(
+        id: 'showup-1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final pact = Pact(
+        id: 'pact-1',
+        habitName: 'Meditate',
+        startDate: DateTime(2026, 3, 1),
+        endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const WeekdaySchedule(entries: [
+          WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+        ]),
+        status: PactStatus.active,
+      );
+
+      await tester.pumpWidget(
+        _buildApp(
+          pacts: [pact],
+          showups: [showup],
+          analyticsService: analytics,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        analytics.loggedScreens.where((screen) => screen.name == 'dashboard'),
+        hasLength(1),
+      );
+
+      await tester.tap(find.text('Meditate'));
+      await tester.pumpAndSettle();
+      expect(find.text('Showup Details'), findsOneWidget);
+
+      final detailNavigator =
+          Navigator.of(tester.element(find.byType(Scaffold).last));
+      detailNavigator.pop();
+      await tester.pumpAndSettle();
+
+      expect(
+        analytics.loggedScreens.where((screen) => screen.name == 'dashboard'),
+        hasLength(2),
       );
     });
   });

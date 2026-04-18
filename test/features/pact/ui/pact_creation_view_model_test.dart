@@ -164,6 +164,13 @@ void main() {
       expect(pacts.first.startDate, today);
       expect(pacts.first.endDate, DateTime(2054, 9, 30));
       expect(pacts.first.reminderOffset, isNull);
+      expect(pacts.first.stats, isNotNull);
+      expect(pacts.first.stats?.showupsDone, 0);
+      expect(pacts.first.stats?.showupsFailed, 0);
+      expect(
+        pacts.first.stats?.showupsRemaining,
+        ShowupGenerator.countTotal(pacts.first),
+      );
     });
 
     test('submit with reminder saves reminder offset', () async {
@@ -189,7 +196,8 @@ void main() {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setSchedule(
+          const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
       await vm.submit();
@@ -227,8 +235,7 @@ void main() {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(
-          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
       await vm.submit();
@@ -339,6 +346,43 @@ void main() {
       expect(pacts, isEmpty);
     });
 
+    test('submit rolls back pact and showups when stats persistence fails',
+        () async {
+      final rollbackPactRepo = _ThrowingOnUpdatePactRepository();
+      final rollbackShowupRepo = InMemoryShowupRepository();
+      final failingContainer = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(today),
+          pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(rollbackShowupRepo),
+        ],
+      );
+      addTearDown(failingContainer.dispose);
+
+      final vm =
+          failingContainer.read(pactCreationViewModelProvider.notifier);
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      final state = failingContainer.read(pactCreationViewModelProvider);
+      expect(state.submitError, isNotNull);
+      expect(await rollbackPactRepo.getAllPacts(), isEmpty);
+      expect(
+        await rollbackShowupRepo.getShowupsForDateRange(
+          DateTime(2054, 1, 1),
+          DateTime(2054, 12, 31),
+        ),
+        isEmpty,
+      );
+    });
+
     test('submit skips today\'s showup when its scheduled time is already past',
         () async {
       // Simulate opening the wizard at 22:00 on March 30 with a daily 8am
@@ -441,11 +485,29 @@ void main() {
 
       final pacts = await pactRepo.getActivePacts();
       final pact = pacts.first;
-      expect(pactCreatedEvent.durationDays,
-          pact.endDate.difference(pact.startDate).inDays);
+      expect(
+        pactCreatedEvent.durationDays,
+        pact.endDate.difference(pact.startDate).inDays + 1,
+      );
       expect(pactCreatedEvent.showupDurationMinutes, 10);
       expect(pactCreatedEvent.reminderOffsetMinutes, isNull);
       expect(pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
+      expect(pact.stats?.showupsRemaining, pactCreatedEvent.showupsExpected);
+    });
+
+    test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact', () async {
+      final pactRepo = InMemoryPactRepository();
+      final showupRepo = InMemoryShowupRepository();
+      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm);
+      await vm.submit();
+
+      final event = fakeAnalytics.loggedEvents.single as PactCreatedEvent;
+      expect(event.scheduleType, 'daily');
+      expect(event.showupsExpected, event.durationDays);
     });
 
     test('submit fires PactCreatedEvent with reminder offset when reminder set', () async {
@@ -513,7 +575,6 @@ void main() {
 
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
-
   });
 
   group('PactCreationViewModel with failing repository', () {
@@ -595,6 +656,12 @@ class _AlwaysThrowingPactRepository implements PactRepository {
       throw Exception('delete failed intentionally');
 }
 
+class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
+  @override
+  Future<void> updatePact(Pact pact) async =>
+      throw Exception('update failed intentionally');
+}
+
 class _AlwaysThrowingShowupRepository implements ShowupRepository {
   @override
   Future<List<Showup>> getShowupsForDate(DateTime date) async => [];
@@ -623,4 +690,8 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
 
   @override
   Future<int> countShowupsForPact(String pactId) async => 0;
+
+  @override
+  Future<void> deleteShowupsForPact(String pactId) async =>
+      throw Exception('delete failed intentionally');
 }

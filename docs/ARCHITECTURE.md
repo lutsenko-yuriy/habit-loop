@@ -64,6 +64,7 @@ Core business logic. No dependencies on data, UI, or infrastructure.
 - Models: `Pact`, `PactStatus`, `Showup`, `ShowupStatus`, `ShowupSchedule`, `PactStats`
 - Repository interfaces: `PactRepository`, `ShowupRepository`
 - Generators: `ShowupGenerator`, `ShowupDateUtils`
+- Services: `ShowupGenerationService`, `PactStatsService`
 
 ### Data
 Storage and persistence. Implements repository interfaces from domain.
