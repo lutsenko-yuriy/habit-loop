@@ -1,7 +1,7 @@
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
-/// Computed or persisted statistics for a pact based on its [Showup] instances.
+/// Statistics for a pact based on its [Showup] instances.
 class PactStats {
   final int showupsDone;
   final int showupsFailed;

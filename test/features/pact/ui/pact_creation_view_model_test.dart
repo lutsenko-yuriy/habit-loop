@@ -341,6 +341,42 @@ void main() {
       expect(pacts, isEmpty);
     });
 
+    test('submit rolls back pact and showups when stats persistence fails',
+        () async {
+      final rollbackPactRepo = _ThrowingOnUpdatePactRepository();
+      final rollbackShowupRepo = InMemoryShowupRepository();
+      final failingContainer = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(today),
+          pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(rollbackShowupRepo),
+        ],
+      );
+      addTearDown(failingContainer.dispose);
+
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
+
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit();
+
+      final state = failingContainer.read(pactCreationViewModelProvider);
+      expect(state.submitError, isNotNull);
+      expect(await rollbackPactRepo.getAllPacts(), isEmpty);
+      expect(
+        await rollbackShowupRepo.getShowupsForDateRange(
+          DateTime(2054, 1, 1),
+          DateTime(2054, 12, 31),
+        ),
+        isEmpty,
+      );
+    });
+
     test('submit skips today\'s showup when its scheduled time is already past',
         () async {
       // Simulate opening the wizard at 22:00 on March 30 with a daily 8am
@@ -633,6 +669,12 @@ class _AlwaysThrowingPactRepository implements PactRepository {
   @override
   Future<void> deletePact(String id) async =>
       throw Exception('delete failed intentionally');
+}
+
+class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
+  @override
+  Future<void> updatePact(Pact pact) async =>
+      throw Exception('update failed intentionally');
 }
 
 class _AlwaysThrowingShowupRepository implements ShowupRepository {

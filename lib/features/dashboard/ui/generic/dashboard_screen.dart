@@ -32,9 +32,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      ref
-          .read(analyticsServiceProvider)
-          .logScreenView(const DashboardAnalyticsScreen());
+      ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
       ref.read(dashboardViewModelProvider.notifier).load();
       ref.read(pactListViewModelProvider.notifier).load();
     });
@@ -66,9 +64,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
       if (context.mounted) {
-        ref.read(analyticsServiceProvider).logScreenView(
-              const DashboardAnalyticsScreen(),
-            );
+        ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
         ref.invalidate(hasActivePactsProvider);
         ref.read(dashboardViewModelProvider.notifier).load();
         ref.read(pactListViewModelProvider.notifier).load();
@@ -153,9 +149,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
       if (context.mounted) {
-        ref.read(analyticsServiceProvider).logScreenView(
-              const DashboardAnalyticsScreen(),
-            );
+        ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
         ref.read(dashboardViewModelProvider.notifier).load();
         ref.read(pactListViewModelProvider.notifier).load();
       }

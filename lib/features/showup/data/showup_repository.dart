@@ -40,5 +40,8 @@ abstract class ShowupRepository {
   Future<int> countShowupsForPact(String pactId);
 
   /// Deletes all showups associated with [pactId].
+  ///
+  /// Implementations must treat this as an atomic operation: either all
+  /// showups for the pact are deleted or none are.
   Future<void> deleteShowupsForPact(String pactId);
 }

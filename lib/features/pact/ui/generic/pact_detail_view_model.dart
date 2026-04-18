@@ -3,10 +3,9 @@ import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
-import 'package:habit_loop/features/pact/domain/pact_stats.dart';
+import 'package:habit_loop/features/pact/domain/pact_stats_service.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
-import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 
 final pactDetailRepositoryProvider = Provider<PactRepository>((ref) {
   throw UnimplementedError('Override pactDetailRepositoryProvider');
@@ -32,6 +31,10 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     try {
       final pactRepo = ref.read(pactDetailRepositoryProvider);
       final showupRepo = ref.read(pactDetailShowupRepositoryProvider);
+      final pactStatsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       var pact = await pactRepo.getPactById(arg);
       if (pact == null) {
         state = state.copyWith(
@@ -41,14 +44,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         return;
       }
       final showups = await showupRepo.getShowupsForPact(arg);
-      final totalShowups = ShowupGenerator.countTotal(pact);
-      var stats = pact.stats ??
-          PactStats.compute(
-            startDate: pact.startDate,
-            endDate: pact.endDate,
-            showups: showups,
-            totalShowups: totalShowups,
-          );
+      var stats = pactStatsService.currentStats(pact: pact, showups: showups);
 
       // Auto-complete the pact when its end date has passed or all showups
       // across the entire schedule have been resolved (showupsRemaining == 0).
@@ -87,29 +83,16 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     state = state.copyWith(isStopping: true, clearStopError: true);
     try {
       final now = DateTime.now();
-      final showupRepo = ref.read(pactDetailShowupRepositoryProvider);
-      final showups = await showupRepo.getShowupsForPact(arg);
-      final statsBeforeStop = state.stats ??
-          pact.stats ??
-          PactStats.compute(
-            startDate: pact.startDate,
-            endDate: pact.endDate,
-            showups: showups,
-            totalShowups: ShowupGenerator.countTotal(pact),
-          );
-      final stoppedDate = DateTime(now.year, now.month, now.day);
-      final updated = pact.copyWith(
-        status: PactStatus.stopped,
-        endDate: stoppedDate,
-        stopReason: reason,
-        stats: statsBeforeStop.copyWith(
-          startDate: pact.startDate,
-          endDate: stoppedDate,
-        ),
-        clearStopReason: reason == null || reason.trim().isEmpty,
+      final updated = await PactStatsService(
+        pactRepository: ref.read(pactDetailRepositoryProvider),
+        showupRepository: ref.read(pactDetailShowupRepositoryProvider),
+      ).stopPact(
+        pact: pact,
+        pactId: arg,
+        now: now,
+        reason: reason,
+        existingStats: state.stats,
       );
-      await ref.read(pactDetailRepositoryProvider).updatePact(updated);
-      await showupRepo.deleteShowupsForPact(arg);
       final stats = updated.stats!;
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
 

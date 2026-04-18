@@ -280,6 +280,31 @@ void main() {
       expect(updatedPact.stats?.showupsRemaining, totalShowups - 1);
     });
 
+    test('markDone() succeeds even when pact stats sync fails', () async {
+      final showup = _pendingFutureShowup();
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = _ThrowingOnUpdatePactRepository([_pact]);
+      final container = ProviderContainer(overrides: [
+        showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+      ]);
+      addTearDown(container.dispose);
+
+      await container
+          .read(showupDetailViewModelProvider(showup.id).notifier)
+          .load();
+      await container
+          .read(showupDetailViewModelProvider(showup.id).notifier)
+          .markDone();
+
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+      expect(state.showup?.status, ShowupStatus.done);
+      expect(state.markError, isNull);
+
+      final persisted = await showupRepo.getShowupById(showup.id);
+      expect(persisted?.status, ShowupStatus.done);
+    });
+
     test('markDone() is a no-op when showup is already done', () async {
       final showup = _doneShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
@@ -619,4 +644,12 @@ void main() {
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
   });
+}
+
+class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
+  _ThrowingOnUpdatePactRepository(super.initialPacts);
+
+  @override
+  Future<void> updatePact(Pact pact) async =>
+      throw Exception('update failed intentionally');
 }
