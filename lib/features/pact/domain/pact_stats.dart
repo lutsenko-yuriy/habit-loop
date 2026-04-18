@@ -1,8 +1,7 @@
-import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
-/// Computed statistics for a [Pact] based on its [Showup] instances.
+/// Computed or persisted statistics for a pact based on its [Showup] instances.
 class PactStats {
   final int showupsDone;
   final int showupsFailed;
@@ -45,7 +44,27 @@ class PactStats {
         endDate,
       );
 
-  /// Computes statistics for [pact] from its associated [showups].
+  PactStats copyWith({
+    int? showupsDone,
+    int? showupsFailed,
+    int? showupsRemaining,
+    int? totalShowups,
+    int? currentStreak,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    return PactStats(
+      showupsDone: showupsDone ?? this.showupsDone,
+      showupsFailed: showupsFailed ?? this.showupsFailed,
+      showupsRemaining: showupsRemaining ?? this.showupsRemaining,
+      totalShowups: totalShowups ?? this.totalShowups,
+      currentStreak: currentStreak ?? this.currentStreak,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+    );
+  }
+
+  /// Computes statistics for a pact from its associated [showups].
   ///
   /// When [totalShowups] is provided it overrides the list-length derivation:
   /// - [PactStats.totalShowups] is set to [totalShowups].
@@ -58,13 +77,13 @@ class PactStats {
   /// - [PactStats.totalShowups] equals `showups.length`.
   /// - [PactStats.showupsRemaining] equals the number of pending showups.
   factory PactStats.compute({
-    required Pact pact,
+    required DateTime startDate,
+    required DateTime endDate,
     required List<Showup> showups,
     int? totalShowups,
   }) {
     final done = showups.where((s) => s.status == ShowupStatus.done).length;
-    final failed =
-        showups.where((s) => s.status == ShowupStatus.failed).length;
+    final failed = showups.where((s) => s.status == ShowupStatus.failed).length;
 
     final effectiveTotal = totalShowups ?? showups.length;
     final remaining = totalShowups != null
@@ -98,8 +117,8 @@ class PactStats {
       showupsRemaining: remaining,
       totalShowups: effectiveTotal,
       currentStreak: streak,
-      startDate: pact.startDate,
-      endDate: pact.endDate,
+      startDate: startDate,
+      endDate: endDate,
     );
   }
 }

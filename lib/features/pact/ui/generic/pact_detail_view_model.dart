@@ -16,8 +16,8 @@ final pactDetailShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
   throw UnimplementedError('Override pactDetailShowupRepositoryProvider');
 });
 
-final pactDetailViewModelProvider = NotifierProviderFamily<
-    PactDetailViewModel, PactDetailState, String>(
+final pactDetailViewModelProvider =
+    NotifierProviderFamily<PactDetailViewModel, PactDetailState, String>(
   PactDetailViewModel.new,
 );
 
@@ -42,11 +42,13 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       }
       final showups = await showupRepo.getShowupsForPact(arg);
       final totalShowups = ShowupGenerator.countTotal(pact);
-      var stats = PactStats.compute(
-        pact: pact,
-        showups: showups,
-        totalShowups: totalShowups,
-      );
+      var stats = pact.stats ??
+          PactStats.compute(
+            startDate: pact.startDate,
+            endDate: pact.endDate,
+            showups: showups,
+            totalShowups: totalShowups,
+          );
 
       // Auto-complete the pact when its end date has passed or all showups
       // across the entire schedule have been resolved (showupsRemaining == 0).
@@ -57,16 +59,19 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       if (pact.status == PactStatus.active) {
         final today = DateTime.now();
         final todayDate = DateTime(today.year, today.month, today.day);
-        final endDateOnly = DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
+        final endDateOnly =
+            DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
         final daysLeft = endDateOnly.difference(todayDate).inDays;
         if (daysLeft <= 0 || stats.showupsRemaining == 0) {
-          pact = pact.copyWith(status: PactStatus.completed);
-          await pactRepo.updatePact(pact);
-          stats = PactStats.compute(
-            pact: pact,
-            showups: showups,
-            totalShowups: totalShowups,
+          pact = pact.copyWith(
+            status: PactStatus.completed,
+            stats: stats.copyWith(
+              startDate: pact.startDate,
+              endDate: pact.endDate,
+            ),
           );
+          await pactRepo.updatePact(pact);
+          stats = pact.stats!;
         }
       }
 
@@ -82,29 +87,40 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     state = state.copyWith(isStopping: true, clearStopError: true);
     try {
       final now = DateTime.now();
+      final showupRepo = ref.read(pactDetailShowupRepositoryProvider);
+      final showups = await showupRepo.getShowupsForPact(arg);
+      final statsBeforeStop = state.stats ??
+          pact.stats ??
+          PactStats.compute(
+            startDate: pact.startDate,
+            endDate: pact.endDate,
+            showups: showups,
+            totalShowups: ShowupGenerator.countTotal(pact),
+          );
+      final stoppedDate = DateTime(now.year, now.month, now.day);
       final updated = pact.copyWith(
         status: PactStatus.stopped,
-        endDate: DateTime(now.year, now.month, now.day),
+        endDate: stoppedDate,
         stopReason: reason,
+        stats: statsBeforeStop.copyWith(
+          startDate: pact.startDate,
+          endDate: stoppedDate,
+        ),
         clearStopReason: reason == null || reason.trim().isEmpty,
       );
       await ref.read(pactDetailRepositoryProvider).updatePact(updated);
-      final showups = await ref.read(pactDetailShowupRepositoryProvider).getShowupsForPact(arg);
-      final stats = PactStats.compute(
-        pact: updated,
-        showups: showups,
-        totalShowups: ShowupGenerator.countTotal(updated),
-      );
+      await showupRepo.deleteShowupsForPact(arg);
+      final stats = updated.stats!;
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
 
       // Fire analytics for pact stop.
       // AnalyticsService is no-throw; no wrapping try/catch needed.
       await ref.read(analyticsServiceProvider).logEvent(PactStoppedEvent(
-        daysActive: now.difference(pact.startDate).inDays,
-        totalShowupsDone: stats.showupsDone,
-        totalShowupsFailed: stats.showupsFailed,
-        totalShowupsRemaining: stats.showupsRemaining,
-      ));
+            daysActive: now.difference(pact.startDate).inDays,
+            totalShowupsDone: stats.showupsDone,
+            totalShowupsFailed: stats.showupsFailed,
+            totalShowupsRemaining: stats.showupsRemaining,
+          ));
     } catch (e) {
       state = state.copyWith(isStopping: false, stopError: e);
     }

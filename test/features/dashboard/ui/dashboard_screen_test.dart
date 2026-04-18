@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
@@ -14,11 +15,14 @@ import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
+import '../../../analytics/fake_analytics_service.dart';
+
 final _today = DateTime(2026, 3, 29);
 
 Widget _buildApp({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
+  FakeAnalyticsService? analyticsService,
 }) {
   final pactRepo = InMemoryPactRepository(pacts);
   final showupRepo = InMemoryShowupRepository(showups);
@@ -29,6 +33,8 @@ Widget _buildApp({
       todayProvider.overrideWithValue(_today),
       showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
       showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+      if (analyticsService != null)
+        analyticsServiceProvider.overrideWithValue(analyticsService),
     ],
     child: const MaterialApp(
       localizationsDelegates: [
@@ -98,7 +104,8 @@ void main() {
             endDate: DateTime(2026, 9, 1),
             showupDuration: const Duration(minutes: 10),
             schedule: const WeekdaySchedule(entries: [
-              WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+              WeekdayEntry(
+                  weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
             ]),
             status: PactStatus.active,
           ),
@@ -130,7 +137,8 @@ void main() {
             endDate: DateTime(2026, 9, 1),
             showupDuration: const Duration(minutes: 10),
             schedule: const WeekdaySchedule(entries: [
-              WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+              WeekdayEntry(
+                  weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
             ]),
             status: PactStatus.active,
           ),
@@ -236,27 +244,54 @@ void main() {
 
       // Individual dots must not be rendered; overflow dot must appear instead.
       expect(find.byKey(const Key('status-dot-su0')), findsNothing);
-      expect(find.byKey(const Key('status-dot-overflow-2026-03-29')), findsOneWidget);
+      expect(find.byKey(const Key('status-dot-overflow-2026-03-29')),
+          findsOneWidget);
     });
 
-    testWidgets('overflow dot is green when all resolved and done >= failed', (tester) async {
+    testWidgets('overflow dot is green when all resolved and done >= failed',
+        (tester) async {
       final showups = [
-        Showup(id: 'a', pactId: '1', scheduledAt: DateTime(2026, 3, 29, 7), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-        Showup(id: 'b', pactId: '2', scheduledAt: DateTime(2026, 3, 29, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-        Showup(id: 'c', pactId: '3', scheduledAt: DateTime(2026, 3, 29, 9), duration: const Duration(minutes: 10), status: ShowupStatus.failed),
-        Showup(id: 'd', pactId: '4', scheduledAt: DateTime(2026, 3, 29, 10), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+        Showup(
+            id: 'a',
+            pactId: '1',
+            scheduledAt: DateTime(2026, 3, 29, 7),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.done),
+        Showup(
+            id: 'b',
+            pactId: '2',
+            scheduledAt: DateTime(2026, 3, 29, 8),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.done),
+        Showup(
+            id: 'c',
+            pactId: '3',
+            scheduledAt: DateTime(2026, 3, 29, 9),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.failed),
+        Showup(
+            id: 'd',
+            pactId: '4',
+            scheduledAt: DateTime(2026, 3, 29, 10),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.done),
       ];
       // Use Monday-only schedules so lazy generation skips Sunday (today = Mar 29)
       // and the pre-seeded showups remain the only ones on today's calendar slot.
-      final pacts = List.generate(4, (i) => Pact(
-        id: '${i + 1}', habitName: 'Habit $i',
-        startDate: DateTime(2026, 3, 1), endDate: DateTime(2026, 9, 1),
-        showupDuration: const Duration(minutes: 10),
-        schedule: const WeekdaySchedule(entries: [
-          WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
-        ]),
-        status: PactStatus.active,
-      ));
+      final pacts = List.generate(
+          4,
+          (i) => Pact(
+                id: '${i + 1}',
+                habitName: 'Habit $i',
+                startDate: DateTime(2026, 3, 1),
+                endDate: DateTime(2026, 9, 1),
+                showupDuration: const Duration(minutes: 10),
+                schedule: const WeekdaySchedule(entries: [
+                  WeekdayEntry(
+                      weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+                ]),
+                status: PactStatus.active,
+              ));
 
       await tester.pumpWidget(_buildApp(pacts: pacts, showups: showups));
       await tester.pumpAndSettle();
@@ -268,20 +303,28 @@ void main() {
       expect(decoration.color, isNot(equals(Colors.grey)));
     });
 
-    testWidgets('overflow dot is grey when any showup is still pending', (tester) async {
-      final showups = List.generate(4, (i) => Showup(
-        id: 'p$i', pactId: '$i',
-        scheduledAt: DateTime(2026, 3, 29, 7 + i),
-        duration: const Duration(minutes: 10),
-        status: ShowupStatus.pending,
-      ));
-      final pacts = List.generate(4, (i) => Pact(
-        id: '$i', habitName: 'Habit $i',
-        startDate: DateTime(2026, 3, 1), endDate: DateTime(2026, 9, 1),
-        showupDuration: const Duration(minutes: 10),
-        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
-        status: PactStatus.active,
-      ));
+    testWidgets('overflow dot is grey when any showup is still pending',
+        (tester) async {
+      final showups = List.generate(
+          4,
+          (i) => Showup(
+                id: 'p$i',
+                pactId: '$i',
+                scheduledAt: DateTime(2026, 3, 29, 7 + i),
+                duration: const Duration(minutes: 10),
+                status: ShowupStatus.pending,
+              ));
+      final pacts = List.generate(
+          4,
+          (i) => Pact(
+                id: '$i',
+                habitName: 'Habit $i',
+                startDate: DateTime(2026, 3, 1),
+                endDate: DateTime(2026, 9, 1),
+                showupDuration: const Duration(minutes: 10),
+                schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+                status: PactStatus.active,
+              ));
 
       await tester.pumpWidget(_buildApp(pacts: pacts, showups: showups));
       await tester.pumpAndSettle();
@@ -296,18 +339,42 @@ void main() {
     testWidgets('overflow dot is grey when some done but some still pending',
         (tester) async {
       final showups = [
-        Showup(id: 'a', pactId: '1', scheduledAt: DateTime(2026, 3, 29, 7), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-        Showup(id: 'b', pactId: '2', scheduledAt: DateTime(2026, 3, 29, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-        Showup(id: 'c', pactId: '3', scheduledAt: DateTime(2026, 3, 29, 9), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-        Showup(id: 'd', pactId: '4', scheduledAt: DateTime(2026, 3, 29, 10), duration: const Duration(minutes: 10), status: ShowupStatus.pending),
+        Showup(
+            id: 'a',
+            pactId: '1',
+            scheduledAt: DateTime(2026, 3, 29, 7),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.done),
+        Showup(
+            id: 'b',
+            pactId: '2',
+            scheduledAt: DateTime(2026, 3, 29, 8),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.done),
+        Showup(
+            id: 'c',
+            pactId: '3',
+            scheduledAt: DateTime(2026, 3, 29, 9),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.done),
+        Showup(
+            id: 'd',
+            pactId: '4',
+            scheduledAt: DateTime(2026, 3, 29, 10),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.pending),
       ];
-      final pacts = List.generate(4, (i) => Pact(
-        id: '${i + 1}', habitName: 'Habit $i',
-        startDate: DateTime(2026, 3, 1), endDate: DateTime(2026, 9, 1),
-        showupDuration: const Duration(minutes: 10),
-        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
-        status: PactStatus.active,
-      ));
+      final pacts = List.generate(
+          4,
+          (i) => Pact(
+                id: '${i + 1}',
+                habitName: 'Habit $i',
+                startDate: DateTime(2026, 3, 1),
+                endDate: DateTime(2026, 9, 1),
+                showupDuration: const Duration(minutes: 10),
+                schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+                status: PactStatus.active,
+              ));
 
       await tester.pumpWidget(_buildApp(pacts: pacts, showups: showups));
       await tester.pumpAndSettle();
@@ -431,6 +498,58 @@ void main() {
       expect(
         find.textContaining('3 active pacts'),
         findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'logs dashboard screen_view again when returning from showup detail',
+        (tester) async {
+      final analytics = FakeAnalyticsService();
+      final showup = Showup(
+        id: 'showup-1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final pact = Pact(
+        id: 'pact-1',
+        habitName: 'Meditate',
+        startDate: DateTime(2026, 3, 1),
+        endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const WeekdaySchedule(entries: [
+          WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+        ]),
+        status: PactStatus.active,
+      );
+
+      await tester.pumpWidget(
+        _buildApp(
+          pacts: [pact],
+          showups: [showup],
+          analyticsService: analytics,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        analytics.loggedScreens.where((screen) => screen.name == 'dashboard'),
+        hasLength(1),
+      );
+
+      await tester.tap(find.text('Meditate'));
+      await tester.pumpAndSettle();
+      expect(find.text('Showup Details'), findsOneWidget);
+
+      final detailNavigator =
+          Navigator.of(tester.element(find.byType(Scaffold).last));
+      detailNavigator.pop();
+      await tester.pumpAndSettle();
+
+      expect(
+        analytics.loggedScreens.where((screen) => screen.name == 'dashboard'),
+        hasLength(2),
       );
     });
   });

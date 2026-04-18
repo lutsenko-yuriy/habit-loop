@@ -25,10 +25,30 @@ final _pact = Pact(
 );
 
 final _showups = [
-  Showup(id: 's1', pactId: 'p1', scheduledAt: DateTime(2026, 3, 1, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-  Showup(id: 's2', pactId: 'p1', scheduledAt: DateTime(2026, 3, 2, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-  Showup(id: 's3', pactId: 'p1', scheduledAt: DateTime(2026, 3, 3, 8), duration: const Duration(minutes: 10), status: ShowupStatus.failed),
-  Showup(id: 's4', pactId: 'p1', scheduledAt: DateTime(2026, 3, 4, 8), duration: const Duration(minutes: 10), status: ShowupStatus.pending),
+  Showup(
+      id: 's1',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 3, 1, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.done),
+  Showup(
+      id: 's2',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 3, 2, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.done),
+  Showup(
+      id: 's3',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 3, 3, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.failed),
+  Showup(
+      id: 's4',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 3, 4, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.pending),
 ];
 
 ProviderContainer _makeContainer({
@@ -37,8 +57,10 @@ ProviderContainer _makeContainer({
 }) {
   return ProviderContainer(
     overrides: [
-      pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-      pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+      pactDetailRepositoryProvider
+          .overrideWithValue(InMemoryPactRepository(pacts)),
+      pactDetailShowupRepositoryProvider
+          .overrideWithValue(InMemoryShowupRepository(showups)),
     ],
   );
 }
@@ -66,7 +88,9 @@ void main() {
       expect(state.stats?.currentStreak, 0); // streak broken by failed
     });
 
-    test('load uses ShowupGenerator.countTotal for totalShowups when window is partial', () async {
+    test(
+        'load uses ShowupGenerator.countTotal for totalShowups when window is partial',
+        () async {
       // _showups has only 4 entries but _pact spans 2026-03-01..2026-09-01
       // (daily). countTotal returns the full schedule count, which is much
       // larger than 4. showupsRemaining must be countTotal - done(2) - failed(1).
@@ -76,13 +100,16 @@ void main() {
       final state = container.read(pactDetailViewModelProvider('p1'));
       final expectedTotal = ShowupGenerator.countTotal(_pact);
       expect(state.stats?.totalShowups, expectedTotal);
-      expect(state.stats?.showupsRemaining, expectedTotal - 2 - 1); // total - done - failed
+      expect(state.stats?.showupsRemaining,
+          expectedTotal - 2 - 1); // total - done - failed
     });
 
     test('load sets error when pact not found', () async {
       final container = _makeContainer();
       addTearDown(container.dispose);
-      await container.read(pactDetailViewModelProvider('missing').notifier).load();
+      await container
+          .read(pactDetailViewModelProvider('missing').notifier)
+          .load();
       final state = container.read(pactDetailViewModelProvider('missing'));
       expect(state.isLoading, false);
       expect(state.loadError, isNotNull);
@@ -92,11 +119,14 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
+        pactDetailShowupRepositoryProvider
+            .overrideWithValue(InMemoryShowupRepository(_showups)),
       ]);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Not for me');
+      await container
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .stopPact('Not for me');
       final state = container.read(pactDetailViewModelProvider('p1'));
       expect(state.pact?.status, PactStatus.stopped);
       expect(state.pact?.stopReason, 'Not for me');
@@ -109,16 +139,75 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
+        pactDetailShowupRepositoryProvider
+            .overrideWithValue(InMemoryShowupRepository(_showups)),
       ]);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
+      await container
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .stopPact(null);
       final persisted = await pactRepo.getPactById('p1');
       expect(persisted?.stopReason, isNull);
     });
 
-    test('load auto-completes an active pact whose end date is in the past', () async {
+    test('stopPact preserves historical stats even after showups are removed',
+        () async {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository(_showups);
+      final container = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final statsBeforeStop =
+          container.read(pactDetailViewModelProvider('p1')).stats;
+
+      await container
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .stopPact('Not for me');
+
+      final remainingShowups = await showupRepo.getShowupsForPact('p1');
+      expect(remainingShowups, isEmpty);
+
+      final reloadedContainer = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+      ]);
+      addTearDown(reloadedContainer.dispose);
+
+      await reloadedContainer
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .load();
+
+      final reloadedState =
+          reloadedContainer.read(pactDetailViewModelProvider('p1'));
+      expect(reloadedState.pact?.status, PactStatus.stopped);
+      expect(reloadedState.pact?.stats, isNotNull);
+      expect(reloadedState.stats?.showupsDone, statsBeforeStop?.showupsDone);
+      expect(
+        reloadedState.stats?.showupsFailed,
+        statsBeforeStop?.showupsFailed,
+      );
+      expect(
+        reloadedState.stats?.showupsRemaining,
+        statsBeforeStop?.showupsRemaining,
+      );
+      expect(
+        reloadedState.stats?.totalShowups,
+        statsBeforeStop?.totalShowups,
+      );
+      expect(
+        reloadedState.stats?.currentStreak,
+        statsBeforeStop?.currentStreak,
+      );
+      expect(reloadedState.pact?.stats, reloadedState.stats);
+    });
+
+    test('load auto-completes an active pact whose end date is in the past',
+        () async {
       final expiredPact = Pact(
         id: 'expired',
         habitName: 'Run',
@@ -129,16 +218,24 @@ void main() {
         status: PactStatus.active,
       );
       final showups = [
-        Showup(id: 'e1', pactId: 'expired', scheduledAt: DateTime(2020, 1, 5, 7), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+        Showup(
+            id: 'e1',
+            pactId: 'expired',
+            scheduledAt: DateTime(2020, 1, 5, 7),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.done),
       ];
       final pactRepo = InMemoryPactRepository([expiredPact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+        pactDetailShowupRepositoryProvider
+            .overrideWithValue(InMemoryShowupRepository(showups)),
       ]);
       addTearDown(container.dispose);
 
-      await container.read(pactDetailViewModelProvider('expired').notifier).load();
+      await container
+          .read(pactDetailViewModelProvider('expired').notifier)
+          .load();
 
       final state = container.read(pactDetailViewModelProvider('expired'));
       expect(state.pact?.status, PactStatus.completed);
@@ -146,7 +243,8 @@ void main() {
       expect(persisted?.status, PactStatus.completed);
     });
 
-    test('load auto-completes an active pact when all showups are resolved', () async {
+    test('load auto-completes an active pact when all showups are resolved',
+        () async {
       // Dates in 2054 so the end date is in the future (daysLeft > 0), ensuring
       // auto-completion is triggered solely by showupsRemaining == 0 rather than
       // by the end-date guard. We generate every scheduled showup and mark them
@@ -166,15 +264,19 @@ void main() {
         from: allResolvedPact.startDate,
         to: allResolvedPact.endDate,
       );
-      final showups = generated.map((s) => s.copyWith(status: ShowupStatus.done)).toList();
+      final showups =
+          generated.map((s) => s.copyWith(status: ShowupStatus.done)).toList();
       final pactRepo = InMemoryPactRepository([allResolvedPact]);
       final container = ProviderContainer(overrides: [
         pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+        pactDetailShowupRepositoryProvider
+            .overrideWithValue(InMemoryShowupRepository(showups)),
       ]);
       addTearDown(container.dispose);
 
-      await container.read(pactDetailViewModelProvider('all-resolved').notifier).load();
+      await container
+          .read(pactDetailViewModelProvider('all-resolved').notifier)
+          .load();
 
       final state = container.read(pactDetailViewModelProvider('all-resolved'));
       expect(state.pact?.status, PactStatus.completed);
@@ -182,7 +284,9 @@ void main() {
       expect(persisted?.status, PactStatus.completed);
     });
 
-    test('load does not auto-complete an active pact with a future end date and pending showups', () async {
+    test(
+        'load does not auto-complete an active pact with a future end date and pending showups',
+        () async {
       // _pact: endDate=2026-09-01 (future from 2026-04-04), has pending showup s4.
       final container = _makeContainer(pacts: [_pact], showups: _showups);
       addTearDown(container.dispose);
@@ -202,14 +306,17 @@ void main() {
       fakeAnalytics = FakeAnalyticsService();
       return ProviderContainer(
         overrides: [
-          pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+          pactDetailRepositoryProvider
+              .overrideWithValue(InMemoryPactRepository(pacts)),
+          pactDetailShowupRepositoryProvider
+              .overrideWithValue(InMemoryShowupRepository(showups)),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
     }
 
-    test('stopPact fires PactStoppedEvent with correct stats on success', () async {
+    test('stopPact fires PactStoppedEvent with correct stats on success',
+        () async {
       final container = makeContainerWithAnalytics(
         pacts: [_pact],
         showups: _showups,
@@ -217,7 +324,9 @@ void main() {
       addTearDown(container.dispose);
 
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Giving up');
+      await container
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .stopPact('Giving up');
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first;
@@ -232,7 +341,9 @@ void main() {
       expect(pactStoppedEvent.daysActive, greaterThanOrEqualTo(0));
     });
 
-    test('stopPact fires PactStoppedEvent with totalShowupsRemaining from stats', () async {
+    test(
+        'stopPact fires PactStoppedEvent with totalShowupsRemaining from stats',
+        () async {
       final container = makeContainerWithAnalytics(
         pacts: [_pact],
         showups: _showups,
@@ -240,7 +351,9 @@ void main() {
       addTearDown(container.dispose);
 
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
+      await container
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .stopPact(null);
 
       final event = fakeAnalytics.loggedEvents.first as PactStoppedEvent;
       // The stats are computed on the stopped pact, so remaining reflects
@@ -274,7 +387,9 @@ void main() {
       );
       addTearDown(workingContainer.dispose);
 
-      await workingContainer.read(pactDetailViewModelProvider('p1').notifier).load();
+      await workingContainer
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .load();
 
       // Now swap to a failing repo by replacing the container. Since we can't
       // do that, we test with a repo whose updatePact throws.
@@ -290,14 +405,17 @@ void main() {
       );
       addTearDown(failContainer.dispose);
 
-      await failContainer.read(pactDetailViewModelProvider('p1').notifier).load();
-      await failContainer.read(pactDetailViewModelProvider('p1').notifier).stopPact('reason');
+      await failContainer
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .load();
+      await failContainer
+          .read(pactDetailViewModelProvider('p1').notifier)
+          .stopPact('reason');
 
       final state = failContainer.read(pactDetailViewModelProvider('p1'));
       expect(state.stopError, isNotNull);
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
-
   });
 }
 

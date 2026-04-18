@@ -32,7 +32,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
+      ref
+          .read(analyticsServiceProvider)
+          .logScreenView(const DashboardAnalyticsScreen());
       ref.read(dashboardViewModelProvider.notifier).load();
       ref.read(pactListViewModelProvider.notifier).load();
     });
@@ -64,6 +66,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
       if (context.mounted) {
+        ref.read(analyticsServiceProvider).logScreenView(
+              const DashboardAnalyticsScreen(),
+            );
         ref.invalidate(hasActivePactsProvider);
         ref.read(dashboardViewModelProvider.notifier).load();
         ref.read(pactListViewModelProvider.notifier).load();
@@ -82,41 +87,43 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           final bool confirmed;
           if (defaultTargetPlatform == TargetPlatform.iOS) {
             confirmed = await showCupertinoDialog<bool>(
-              context: context,
-              builder: (ctx) => CupertinoAlertDialog(
-                title: Text(l10n.tooManyPactsTitle),
-                content: Text(l10n.tooManyPactsBody(activePacts.length)),
-                actions: [
-                  CupertinoDialogAction(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: Text(l10n.cancel),
+                  context: context,
+                  builder: (ctx) => CupertinoAlertDialog(
+                    title: Text(l10n.tooManyPactsTitle),
+                    content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(l10n.cancel),
+                      ),
+                      CupertinoDialogAction(
+                        isDefaultAction: true,
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(l10n.tooManyPactsConfirm),
+                      ),
+                    ],
                   ),
-                  CupertinoDialogAction(
-                    isDefaultAction: true,
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: Text(l10n.tooManyPactsConfirm),
-                  ),
-                ],
-              ),
-            ) ?? false;
+                ) ??
+                false;
           } else {
             confirmed = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: Text(l10n.tooManyPactsTitle),
-                content: Text(l10n.tooManyPactsBody(activePacts.length)),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: Text(l10n.cancel),
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text(l10n.tooManyPactsTitle),
+                    content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(l10n.cancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(l10n.tooManyPactsConfirm),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: Text(l10n.tooManyPactsConfirm),
-                  ),
-                ],
-              ),
-            ) ?? false;
+                ) ??
+                false;
           }
           if (!confirmed) return;
         }
@@ -146,6 +153,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
       if (context.mounted) {
+        ref.read(analyticsServiceProvider).logScreenView(
+              const DashboardAnalyticsScreen(),
+            );
         ref.read(dashboardViewModelProvider.notifier).load();
         ref.read(pactListViewModelProvider.notifier).load();
       }

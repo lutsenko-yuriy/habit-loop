@@ -4,6 +4,7 @@ import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
+import 'package:habit_loop/features/pact/domain/pact_stats.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
@@ -20,8 +21,7 @@ final pactCreationRepositoryProvider = Provider<PactRepository>((ref) {
 /// Must be overridden in every [ProviderScope] (and in every test that
 /// exercises [PactCreationViewModel.submit]), otherwise accessing it will
 /// throw [UnimplementedError].
-final pactCreationShowupRepositoryProvider =
-    Provider<ShowupRepository>((ref) {
+final pactCreationShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
   throw UnimplementedError('Override pactCreationShowupRepositoryProvider');
 });
 
@@ -55,13 +55,11 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
   void setScheduleType(ScheduleType type) {
     final defaultSchedule = switch (type) {
-      ScheduleType.daily =>
-        const DailySchedule(timeOfDay: Duration(hours: 8)),
+      ScheduleType.daily => const DailySchedule(timeOfDay: Duration(hours: 8)),
       ScheduleType.weekday => const WeekdaySchedule(entries: [
           WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 8)),
         ]),
-      ScheduleType.monthlyByWeekday =>
-        const MonthlyByWeekdaySchedule(entries: [
+      ScheduleType.monthlyByWeekday => const MonthlyByWeekdaySchedule(entries: [
           MonthlyWeekdayEntry(
               occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
         ]),
@@ -177,15 +175,29 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
         rethrow;
       }
 
+      final totalShowups = ShowupGenerator.countTotal(pact);
+      final pactWithStats = pact.copyWith(
+        stats: PactStats.compute(
+          startDate: pact.startDate,
+          endDate: pact.endDate,
+          showups: showups,
+          totalShowups: totalShowups,
+        ),
+      );
+      await pactRepo.updatePact(pactWithStats);
+
       // Both pact and showups were persisted successfully — fire analytics.
       // AnalyticsService is no-throw; no wrapping try/catch needed.
       await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
-        scheduleType: _scheduleTypeName(pact.schedule),
-        durationDays: pact.endDate.difference(pact.startDate).inDays,
-        showupDurationMinutes: pact.showupDuration.inMinutes,
-        reminderOffsetMinutes: pact.reminderOffset?.inMinutes,
-        showupsExpected: ShowupGenerator.countTotal(pact),
-      ));
+            scheduleType: _scheduleTypeName(pactWithStats.schedule),
+            durationDays: pactWithStats.endDate
+                    .difference(pactWithStats.startDate)
+                    .inDays +
+                1,
+            showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
+            reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
+            showupsExpected: totalShowups,
+          ));
     } catch (e) {
       state = state.copyWith(submitError: e);
     } finally {

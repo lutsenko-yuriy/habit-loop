@@ -38,4 +38,7 @@ abstract class ShowupRepository {
   ///
   /// Returns 0 if no showups exist for that pact.
   Future<int> countShowupsForPact(String pactId);
+
+  /// Deletes all showups associated with [pactId].
+  Future<void> deleteShowupsForPact(String pactId);
 }

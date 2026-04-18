@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/analytics/domain/analytics_event.dart';
 import 'package:habit_loop/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/features/pact/domain/pact_stats.dart';
 import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
+import 'package:habit_loop/features/showup/domain/showup_generator.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 /// Provides the current time. Overridable in tests to make auto-fail logic
@@ -34,9 +36,8 @@ final showupDetailPactRepositoryProvider = Provider<PactRepository>((ref) {
 /// unbounded accumulation of one ViewModel instance per visited showup ID.
 /// [ShowupDetailScreen.initState] always calls [ShowupDetailViewModel.load] on
 /// entry, so re-creating the state on each visit is correct and safe.
-final showupDetailViewModelProvider =
-    AutoDisposeNotifierProviderFamily<ShowupDetailViewModel, ShowupDetailState,
-        String>(
+final showupDetailViewModelProvider = AutoDisposeNotifierProviderFamily<
+    ShowupDetailViewModel, ShowupDetailState, String>(
   ShowupDetailViewModel.new,
 );
 
@@ -98,13 +99,14 @@ class ShowupDetailViewModel
         if (now.isAfter(endTime)) {
           showup = showup.copyWith(status: ShowupStatus.failed);
           await showupRepo.updateShowup(showup);
+          await _syncPactStats(showup.pactId);
           wasAutoFailed = true;
 
           // Fire auto-fail analytics event.
           // AnalyticsService is no-throw; no wrapping try/catch needed.
           await ref.read(analyticsServiceProvider).logEvent(
-            ShowupAutoFailedEvent(pactId: showup.pactId),
-          );
+                ShowupAutoFailedEvent(pactId: showup.pactId),
+              );
         }
       }
 
@@ -139,6 +141,7 @@ class ShowupDetailViewModel
       final updatedShowup = state.showup!.copyWith(status: newStatus);
       final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
       await showupRepo.updateShowup(updatedShowup);
+      await _syncPactStats(updatedShowup.pactId);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
 
       // Determine the analytics event inside the try block so that a StateError
@@ -175,5 +178,23 @@ class ShowupDetailViewModel
     } catch (e) {
       state = state.copyWith(isSaving: false, noteError: e);
     }
+  }
+
+  Future<void> _syncPactStats(String pactId) async {
+    final pactRepo = ref.read(showupDetailPactRepositoryProvider);
+    final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
+    final pact = await pactRepo.getPactById(pactId);
+    if (pact == null) return;
+
+    final showups = await showupRepo.getShowupsForPact(pactId);
+    final updatedPact = pact.copyWith(
+      stats: PactStats.compute(
+        startDate: pact.startDate,
+        endDate: pact.endDate,
+        showups: showups,
+        totalShowups: ShowupGenerator.countTotal(pact),
+      ),
+    );
+    await pactRepo.updatePact(updatedPact);
   }
 }

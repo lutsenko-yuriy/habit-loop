@@ -1,4 +1,5 @@
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
+import 'package:habit_loop/features/pact/domain/pact_stats.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 
 class Pact {
@@ -11,6 +12,7 @@ class Pact {
   final PactStatus status;
   final Duration? reminderOffset;
   final String? stopReason;
+  final PactStats? stats;
 
   /// The wall-clock instant at which this pact was created.
   ///
@@ -32,6 +34,7 @@ class Pact {
     required this.status,
     this.reminderOffset,
     this.stopReason,
+    this.stats,
     this.createdAt,
   });
 
@@ -48,8 +51,10 @@ class Pact {
     PactStatus? status,
     Duration? reminderOffset,
     String? stopReason,
+    PactStats? stats,
     bool clearReminderOffset = false,
     bool clearStopReason = false,
+    bool clearStats = false,
   }) {
     return Pact(
       id: id,
@@ -62,6 +67,7 @@ class Pact {
       reminderOffset:
           clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
       stopReason: clearStopReason ? null : (stopReason ?? this.stopReason),
+      stats: clearStats ? null : (stats ?? this.stats),
       createdAt: createdAt, // immutable — never overridden by copyWith
     );
   }
@@ -79,6 +85,7 @@ class Pact {
           status == other.status &&
           reminderOffset == other.reminderOffset &&
           stopReason == other.stopReason &&
+          stats == other.stats &&
           createdAt == other.createdAt;
 
   @override
@@ -92,6 +99,7 @@ class Pact {
         status,
         reminderOffset,
         stopReason,
+        stats,
         createdAt,
       );
 }
