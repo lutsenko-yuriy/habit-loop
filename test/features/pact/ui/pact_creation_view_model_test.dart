@@ -510,6 +510,42 @@ void main() {
       expect(event.showupsExpected, event.durationDays);
     });
 
+    test('duration_days is correct when pact is created in the evening', () async {
+      // Without normalization: startDate = 2054-03-30T22:00, endDate = 2054-09-30T00:00
+      // difference.inDays = 183, +1 = 184 (wrong; should be 185)
+      // After fix: startDate = 2054-03-30T00:00 → difference.inDays = 184, +1 = 185 (correct)
+      final eveningNow = DateTime(2054, 3, 30, 22, 0);
+      final localPactRepo = InMemoryPactRepository();
+      final localShowupRepo = InMemoryShowupRepository();
+      final c = ProviderContainer(
+        overrides: [
+          pactCreationTodayProvider.overrideWithValue(eveningNow),
+          pactCreationRepositoryProvider.overrideWithValue(localPactRepo),
+          pactCreationShowupRepositoryProvider.overrideWithValue(localShowupRepo),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm); // daily at 7am — all slots filtered since 7:00 < 22:00 createdAt
+      await vm.submit();
+
+      final pacts = await localPactRepo.getActivePacts();
+      final pact = pacts.first;
+      final event = fakeAnalytics.loggedEvents.single as PactCreatedEvent;
+
+      // duration_days must reflect inclusive calendar days (midnight-to-midnight),
+      // independent of the time-of-day at which the pact was created.
+      expect(
+        event.durationDays,
+        pact.endDate.difference(pact.startDate).inDays + 1,
+        reason: 'durationDays must equal (endDate - startDate).inDays + 1',
+      );
+      expect(event.durationDays, 185,
+          reason: 'Mar 30 → Sep 30 inclusive = 185 calendar days');
+    });
+
     test('submit fires PactCreatedEvent with reminder offset when reminder set', () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);

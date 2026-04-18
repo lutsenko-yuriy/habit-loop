@@ -344,6 +344,34 @@ void main() {
       expect(event.totalShowupsRemaining, greaterThanOrEqualTo(0));
     });
 
+    test('daysActive is 1 when pact was created at midnight and stopped next morning', () async {
+      // pact.startDate = 2026-03-01T00:00 (midnight — as normalised by PactCreationState fix)
+      // now = 2026-03-02T08:00 (next morning)
+      // daysActive = (Mar 2 08:00 − Mar 1 00:00).inDays = 1 ✅
+      //
+      // Without the startDate normalisation fix, startDate would carry the
+      // creation time (e.g. 22:00), making the difference only ~10 hours → 0.
+      fakeAnalytics = FakeAnalyticsService();
+      final nextMorning = DateTime(2026, 3, 2, 8, 0);
+      final container = ProviderContainer(
+        overrides: [
+          pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository([_pact])),
+          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
+          pactDetailNowProvider.overrideWithValue(nextMorning),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
+
+      final event = fakeAnalytics.loggedEvents.single as PactStoppedEvent;
+      // Mar 1 00:00 → Mar 2 08:00 = 1 day 8 hours → daysActive = 1
+      expect(event.daysActive, 1,
+          reason: 'Stopping on the morning after start day must report 1 day active');
+    });
+
     test('stopPact does NOT fire event on failure', () async {
       final throwingPactRepo = _ThrowingPactRepository();
       fakeAnalytics = FakeAnalyticsService();

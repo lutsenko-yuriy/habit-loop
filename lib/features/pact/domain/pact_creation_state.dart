@@ -69,7 +69,8 @@ class PactCreationState {
     this.commitmentAccepted = false,
     this.isSubmitting = false,
     this.submitError,
-  })  : startDate = startDate ?? today,
+  })  : startDate =
+            startDate ?? DateTime(today.year, today.month, today.day),
         endDate = endDate ?? _addMonths(today, 6);
 
   bool get canAdvanceFromStep {
