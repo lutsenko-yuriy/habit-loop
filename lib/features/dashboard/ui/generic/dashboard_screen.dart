@@ -99,8 +99,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ],
               ),
-            ) ??
-                false;
+            ) ?? false;
           } else {
             confirmed = await showDialog<bool>(
               context: context,
@@ -118,8 +117,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ],
               ),
-            ) ??
-                false;
+            ) ?? false;
           }
           if (!confirmed) return;
         }

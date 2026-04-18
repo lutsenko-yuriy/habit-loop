@@ -71,9 +71,9 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       ));
     }
     if (mounted) {
-      ref.read(analyticsServiceProvider).logScreenView(
-            const DashboardAnalyticsScreen(),
-          );
+      ref
+          .read(analyticsServiceProvider)
+          .logScreenView(const DashboardAnalyticsScreen());
       ref.read(pactListViewModelProvider.notifier).load();
       ref.read(dashboardViewModelProvider.notifier).load();
     }
@@ -91,9 +91,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     final state = ref.watch(pactListViewModelProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    if (state.activeCount == 0 &&
-        state.doneCount == 0 &&
-        state.cancelledCount == 0) {
+    if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0) {
       return const SizedBox.shrink();
     }
 
@@ -200,8 +198,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                       const SizedBox(width: 8),
                       FilterChip(
                         label: Text(l10n.filterDone),
-                        selected:
-                            state.activeFilters.contains(PactStatus.completed),
+                        selected: state.activeFilters.contains(PactStatus.completed),
                         onSelected: (_) => ref
                             .read(pactListViewModelProvider.notifier)
                             .toggleFilter(PactStatus.completed),

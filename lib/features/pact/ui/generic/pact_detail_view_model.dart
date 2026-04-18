@@ -17,8 +17,7 @@ final pactDetailShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
 
 final pactDetailViewModelProvider =
     NotifierProviderFamily<PactDetailViewModel, PactDetailState, String>(
-  PactDetailViewModel.new,
-);
+        PactDetailViewModel.new);
 
 class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
   @override
@@ -98,12 +97,14 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
 
       // Fire analytics for pact stop.
       // AnalyticsService is no-throw; no wrapping try/catch needed.
-      await ref.read(analyticsServiceProvider).logEvent(PactStoppedEvent(
-            daysActive: now.difference(pact.startDate).inDays,
-            totalShowupsDone: stats.showupsDone,
-            totalShowupsFailed: stats.showupsFailed,
-            totalShowupsRemaining: stats.showupsRemaining,
-          ));
+      await ref.read(analyticsServiceProvider).logEvent(
+        PactStoppedEvent(
+          daysActive: now.difference(pact.startDate).inDays,
+          totalShowupsDone: stats.showupsDone,
+          totalShowupsFailed: stats.showupsFailed,
+          totalShowupsRemaining: stats.showupsRemaining,
+        ),
+      );
     } catch (e) {
       state = state.copyWith(isStopping: false, stopError: e);
     }

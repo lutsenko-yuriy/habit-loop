@@ -35,10 +35,9 @@ final showupDetailPactRepositoryProvider = Provider<PactRepository>((ref) {
 /// unbounded accumulation of one ViewModel instance per visited showup ID.
 /// [ShowupDetailScreen.initState] always calls [ShowupDetailViewModel.load] on
 /// entry, so re-creating the state on each visit is correct and safe.
-final showupDetailViewModelProvider = AutoDisposeNotifierProviderFamily<
-    ShowupDetailViewModel, ShowupDetailState, String>(
-  ShowupDetailViewModel.new,
-);
+final showupDetailViewModelProvider =
+    AutoDisposeNotifierProviderFamily<ShowupDetailViewModel, ShowupDetailState,
+        String>(ShowupDetailViewModel.new);
 
 /// View model for the showup detail screen.
 ///
@@ -103,9 +102,9 @@ class ShowupDetailViewModel
 
           // Fire auto-fail analytics event.
           // AnalyticsService is no-throw; no wrapping try/catch needed.
-          await ref.read(analyticsServiceProvider).logEvent(
-                ShowupAutoFailedEvent(pactId: showup.pactId),
-              );
+          await ref
+              .read(analyticsServiceProvider)
+              .logEvent(ShowupAutoFailedEvent(pactId: showup.pactId));
         }
       }
 

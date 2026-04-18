@@ -59,7 +59,8 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       ScheduleType.weekday => const WeekdaySchedule(entries: [
           WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 8)),
         ]),
-      ScheduleType.monthlyByWeekday => const MonthlyByWeekdaySchedule(entries: [
+      ScheduleType.monthlyByWeekday =>
+        const MonthlyByWeekdaySchedule(entries: [
           MonthlyWeekdayEntry(
               occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
         ]),
@@ -186,16 +187,17 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
       // Both pact and showups were persisted successfully — fire analytics.
       // AnalyticsService is no-throw; no wrapping try/catch needed.
-      await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
-            scheduleType: _scheduleTypeName(pactWithStats.schedule),
-            durationDays: pactWithStats.endDate
-                    .difference(pactWithStats.startDate)
-                    .inDays +
-                1,
-            showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
-            reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
-            showupsExpected: totalShowups,
-          ));
+      await ref.read(analyticsServiceProvider).logEvent(
+        PactCreatedEvent(
+          scheduleType: _scheduleTypeName(pactWithStats.schedule),
+          durationDays:
+              pactWithStats.endDate.difference(pactWithStats.startDate).inDays +
+                  1,
+          showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
+          reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
+          showupsExpected: totalShowups,
+        ),
+      );
     } catch (e) {
       state = state.copyWith(submitError: e);
     } finally {

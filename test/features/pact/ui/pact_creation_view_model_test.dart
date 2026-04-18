@@ -219,8 +219,7 @@ void main() {
         isTrue,
       );
       // All showups must fall within the 11-day window
-      final windowEnd =
-          today.add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
+      final windowEnd = today.add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
       expect(
         showups.every((s) => !s.scheduledAt.isAfter(windowEnd)),
         isTrue,
@@ -411,15 +410,13 @@ void main() {
       expect(
         showups.any((s) => s.scheduledAt == DateTime(2054, 3, 30, 8, 0)),
         isFalse,
-        reason:
-            'Past-due showup for today should not be saved at pact creation',
+        reason: 'Past-due showup for today should not be saved at pact creation',
       );
       // Tomorrow's 8am must be the first saved showup.
       expect(
         showups.any((s) => s.scheduledAt == DateTime(2054, 3, 31, 8, 0)),
         isTrue,
-        reason:
-            'First showup should be tomorrow since today\'s slot already passed',
+        reason: 'First showup should be tomorrow since today\'s slot already passed',
       );
     });
   });
@@ -447,19 +444,20 @@ void main() {
       );
     }
 
-    void setUpValidState(PactCreationViewModel vm,
-        {ScheduleType scheduleType = ScheduleType.daily}) {
+    void setUpValidState(PactCreationViewModel vm, {ScheduleType scheduleType = ScheduleType.daily}) {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(scheduleType);
       if (scheduleType == ScheduleType.daily) {
         vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       } else if (scheduleType == ScheduleType.weekday) {
-        vm.setSchedule(const WeekdaySchedule(
-            entries: [WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))]));
+        vm.setSchedule(const WeekdaySchedule(entries: [
+          WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7)),
+        ]));
       } else {
-        vm.setSchedule(const MonthlyByDateSchedule(
-            entries: [MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))]));
+        vm.setSchedule(const MonthlyByDateSchedule(entries: [
+          MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7)),
+        ]));
       }
       vm.setCommitmentAccepted(true);
     }
@@ -468,7 +466,10 @@ void main() {
         () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
+      final c = makeAnalyticsContainer(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -494,8 +495,7 @@ void main() {
       expect(pact.stats?.showupsRemaining, pactCreatedEvent.showupsExpected);
     });
 
-    test(
-        'submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
+    test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
         () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
@@ -529,8 +529,7 @@ void main() {
       expect(event.reminderOffsetMinutes, 15);
     });
 
-    test('submit fires PactCreatedEvent with schedule_type weekly for weekday schedule',
-        () async {
+    test('submit fires PactCreatedEvent with schedule_type weekly for weekday schedule', () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -543,8 +542,7 @@ void main() {
       expect(event.scheduleType, 'weekly');
     });
 
-    test('submit fires PactCreatedEvent with schedule_type monthly for monthly schedule',
-        () async {
+    test('submit fires PactCreatedEvent with schedule_type monthly for monthly schedule', () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -676,9 +674,7 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
   Future<List<Showup>> getShowupsForDate(DateTime date) async => [];
 
   @override
-  Future<List<Showup>> getShowupsForDateRange(
-          DateTime start, DateTime end) async =>
-      [];
+  Future<List<Showup>> getShowupsForDateRange(DateTime start, DateTime end) async => [];
 
   @override
   Future<Showup?> getShowupById(String id) async => null;

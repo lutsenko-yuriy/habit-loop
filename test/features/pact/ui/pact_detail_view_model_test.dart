@@ -67,9 +67,7 @@ void main() {
       expect(state.stats?.currentStreak, 0); // streak broken by failed
     });
 
-    test(
-        'load uses ShowupGenerator.countTotal for totalShowups when window is partial',
-        () async {
+    test('load uses ShowupGenerator.countTotal for totalShowups when window is partial', () async {
       // _showups has only 4 entries but _pact spans 2026-03-01..2026-09-01
       // (daily). countTotal returns the full schedule count, which is much
       // larger than 4. showupsRemaining must be countTotal - done(2) - failed(1).
@@ -79,8 +77,7 @@ void main() {
       final state = container.read(pactDetailViewModelProvider('p1'));
       final expectedTotal = ShowupGenerator.countTotal(_pact);
       expect(state.stats?.totalShowups, expectedTotal);
-      expect(state.stats?.showupsRemaining,
-          expectedTotal - 2 - 1); // total - done - failed
+      expect(state.stats?.showupsRemaining, expectedTotal - 2 - 1); // total - done - failed
     });
 
     test('load sets error when pact not found', () async {
@@ -156,9 +153,7 @@ void main() {
       addTearDown(container.dispose);
 
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .stopPact('Not for me');
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Not for me');
 
       final state = container.read(pactDetailViewModelProvider('p1'));
       expect(state.stopError, isNotNull);
@@ -182,9 +177,7 @@ void main() {
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
       final statsBeforeStop = container.read(pactDetailViewModelProvider('p1')).stats;
 
-      await container
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .stopPact('Not for me');
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Not for me');
 
       final remainingShowups = await showupRepo.getShowupsForPact('p1');
       expect(remainingShowups, isEmpty);
@@ -195,9 +188,7 @@ void main() {
       ]);
       addTearDown(reloadedContainer.dispose);
 
-      await reloadedContainer
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .load();
+      await reloadedContainer.read(pactDetailViewModelProvider('p1').notifier).load();
 
       final reloadedState = reloadedContainer.read(pactDetailViewModelProvider('p1'));
       expect(reloadedState.pact?.status, PactStatus.stopped);
@@ -234,12 +225,7 @@ void main() {
         status: PactStatus.active,
       );
       final showups = [
-        Showup(
-            id: 'e1',
-            pactId: 'expired',
-            scheduledAt: DateTime(2020, 1, 5, 7),
-            duration: const Duration(minutes: 10),
-            status: ShowupStatus.done),
+        Showup(id: 'e1', pactId: 'expired', scheduledAt: DateTime(2020, 1, 5, 7), duration: const Duration(minutes: 10), status: ShowupStatus.done),
       ];
       final pactRepo = InMemoryPactRepository([expiredPact]);
       final container = ProviderContainer(overrides: [
@@ -249,9 +235,7 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      await container
-          .read(pactDetailViewModelProvider('expired').notifier)
-          .load();
+      await container.read(pactDetailViewModelProvider('expired').notifier).load();
 
       final state = container.read(pactDetailViewModelProvider('expired'));
       expect(state.pact?.status, PactStatus.completed);
@@ -300,8 +284,7 @@ void main() {
       expect(persisted?.status, PactStatus.completed);
     });
 
-    test(
-        'load does not auto-complete an active pact with a future end date and pending showups',
+    test('load does not auto-complete an active pact with a future end date and pending showups',
         () async {
       // _pact: endDate=2026-09-01 (future from 2026-04-04), has pending showup s4.
       final container = _makeContainer(pacts: [_pact], showups: _showups);
@@ -340,9 +323,7 @@ void main() {
       addTearDown(container.dispose);
 
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .stopPact('Giving up');
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Giving up');
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first;
@@ -357,9 +338,7 @@ void main() {
       expect(pactStoppedEvent.daysActive, greaterThanOrEqualTo(0));
     });
 
-    test(
-        'stopPact fires PactStoppedEvent with totalShowupsRemaining from stats',
-        () async {
+    test('stopPact fires PactStoppedEvent with totalShowupsRemaining from stats', () async {
       final container = makeContainerWithAnalytics(
         pacts: [_pact],
         showups: _showups,
@@ -367,9 +346,7 @@ void main() {
       addTearDown(container.dispose);
 
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
-      await container
-          .read(pactDetailViewModelProvider('p1').notifier)
-          .stopPact(null);
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
 
       final event = fakeAnalytics.loggedEvents.first as PactStoppedEvent;
       // The stats are computed on the stopped pact, so remaining reflects
