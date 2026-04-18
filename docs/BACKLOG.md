@@ -38,3 +38,11 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 - [HAB-13](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-13/notifications-and-reminders) **Notifications and reminders** — Schedule local notifications when a reminder offset is configured during pact creation. Stretch goal: actionable notifications on iOS and Android so the user can mark a showup as done without opening the app. Coordinate with lazy showup generation. (Feature)
 - [HAB-21](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-21/auto-fail-past-due-showups-on-dashboard-load) **Auto-fail past-due showups on dashboard load** — When the dashboard loads or refreshes, any showup whose scheduled window has passed (`now > scheduledAt + duration`) and is still `pending` should be automatically transitioned to `failed` and persisted. (Feature — blocked by HAB-13)
+
+---
+
+## No milestone
+
+### Issues
+
+- [HAB-33](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-33/code-cleanup-define-code-quality-baseline-and-separate-formatting) **Code cleanup: define code quality baseline and separate formatting commit** — Establish a shared definition of good code for Habit Loop, choose the supporting tooling, apply the agreed formatting/cleanup rules to the codebase, and update the agent workflow so formatting happens in a dedicated commit after functional work. (Tech Debt)

@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.10.2] — 2026-04-18 (PR #25 merged)
+
+### Fixed — startDate normalization and injectable now in pact detail (HAB-34)
+
+- `PactCreationState` constructor and `PactCreationViewModel.setStartDate()` now normalize `startDate` to midnight, preventing a wall-clock time component from causing `duration_days` in `pact_created` analytics to under-count by 1 and `daysActive` in `pact_stopped` to report 0 when a pact is stopped the morning after an evening creation
+- `pactDetailNowProvider` (`Provider<DateTime>`) extracted and wired into both `load()` (auto-completion check) and `stopPact()` (analytics), matching the `showupDetailNowProvider` and `pactCreationTodayProvider` pattern; `PactDetailScreen.initState()` and `onStopPact()` both invalidate the provider before use so the clock is always fresh
+
+---
+
 ## [0.10.1] — 2026-04-18 (PR #21 merged)
 
 ### Fixed — Pact stats and dashboard analytics fixes (HAB-30, HAB-31, HAB-32)
