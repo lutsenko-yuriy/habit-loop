@@ -7,6 +7,12 @@ import 'package:habit_loop/features/pact/domain/pact_stats_service.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 
+/// Provides the current time for pact detail operations.
+///
+/// Overridable in tests to make [PactDetailViewModel.stopPact] (specifically
+/// the `daysActive` computation in the analytics event) deterministic.
+final pactDetailNowProvider = Provider<DateTime>((ref) => DateTime.now());
+
 final pactDetailRepositoryProvider = Provider<PactRepository>((ref) {
   throw UnimplementedError('Override pactDetailRepositoryProvider');
 });
@@ -53,7 +59,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       // lazy generation, we do not fire prematurely after only the first window
       // is resolved.
       if (pact.status == PactStatus.active) {
-        final today = DateTime.now();
+        final today = ref.read(pactDetailNowProvider);
         final todayDate = DateTime(today.year, today.month, today.day);
         final endDateOnly = DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
         final daysLeft = endDateOnly.difference(todayDate).inDays;
@@ -81,7 +87,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     if (pact == null) return;
     state = state.copyWith(isStopping: true, clearStopError: true);
     try {
-      final now = DateTime.now();
+      final now = ref.read(pactDetailNowProvider);
       final updated = await PactStatsService(
         pactRepository: ref.read(pactDetailRepositoryProvider),
         showupRepository: ref.read(pactDetailShowupRepositoryProvider),

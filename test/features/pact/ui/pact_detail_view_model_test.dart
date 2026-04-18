@@ -242,6 +242,38 @@ void main() {
       expect(persisted?.status, PactStatus.completed);
     });
 
+    test('load auto-completes a pact when pactDetailNowProvider is past the end date', () async {
+      // Pact endDate is in the future from the real clock, but we inject a
+      // "now" that is past it — verifying the auto-completion path uses the
+      // provider rather than DateTime.now() directly.
+      final futurePact = Pact(
+        id: 'future-end',
+        habitName: 'Stretch',
+        startDate: DateTime(2054, 1, 1),
+        endDate: DateTime(2054, 6, 1),
+        showupDuration: const Duration(minutes: 5),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+      );
+      final pactRepo = InMemoryPactRepository([futurePact]);
+      // Inject a "now" that is one day past the end date.
+      final pastEndDate = DateTime(2054, 6, 2, 12, 0);
+      final container = ProviderContainer(overrides: [
+        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
+        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
+        pactDetailNowProvider.overrideWithValue(pastEndDate),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('future-end').notifier).load();
+
+      final state = container.read(pactDetailViewModelProvider('future-end'));
+      expect(state.pact?.status, PactStatus.completed,
+          reason: 'Pact must auto-complete when injected now is past endDate');
+      final persisted = await pactRepo.getPactById('future-end');
+      expect(persisted?.status, PactStatus.completed);
+    });
+
     test('load auto-completes an active pact when all showups are resolved', () async {
       // Dates in 2054 so the end date is in the future (daysLeft > 0), ensuring
       // auto-completion is triggered solely by showupsRemaining == 0 rather than
@@ -342,6 +374,34 @@ void main() {
       // The stats are computed on the stopped pact, so remaining reflects
       // ShowupGenerator.countTotal(stoppedPact) - done - failed.
       expect(event.totalShowupsRemaining, greaterThanOrEqualTo(0));
+    });
+
+    test('daysActive is 1 when pact was created at midnight and stopped next morning', () async {
+      // pact.startDate = 2026-03-01T00:00 (midnight — as normalised by PactCreationState fix)
+      // now = 2026-03-02T08:00 (next morning)
+      // daysActive = (Mar 2 08:00 − Mar 1 00:00).inDays = 1 ✅
+      //
+      // Without the startDate normalisation fix, startDate would carry the
+      // creation time (e.g. 22:00), making the difference only ~10 hours → 0.
+      fakeAnalytics = FakeAnalyticsService();
+      final nextMorning = DateTime(2026, 3, 2, 8, 0);
+      final container = ProviderContainer(
+        overrides: [
+          pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository([_pact])),
+          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
+          pactDetailNowProvider.overrideWithValue(nextMorning),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
+
+      final event = fakeAnalytics.loggedEvents.single as PactStoppedEvent;
+      // Mar 1 00:00 → Mar 2 08:00 = 1 day 8 hours → daysActive = 1
+      expect(event.daysActive, 1,
+          reason: 'Stopping on the morning after start day must report 1 day active');
     });
 
     test('stopPact does NOT fire event on failure', () async {

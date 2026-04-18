@@ -20,6 +20,16 @@ void main() {
       expect(state.isSubmitting, false);
     });
 
+    test('startDate is normalized to midnight when today has a time component', () {
+      // Simulate wizard opened at 22:00. Without normalization, startDate would
+      // carry the time component and durationDays in analytics would under-count.
+      final eveningNow = DateTime(2026, 4, 18, 22, 0, 0);
+      final state = PactCreationState(today: eveningNow);
+      expect(state.startDate, DateTime(2026, 4, 18));
+      expect(state.startDate.hour, 0);
+      expect(state.startDate.minute, 0);
+    });
+
     test('default endDate clamps to last day of month for end-of-month starts', () {
       // August 31 + 6 months → February 28 (not March 3)
       expect(
