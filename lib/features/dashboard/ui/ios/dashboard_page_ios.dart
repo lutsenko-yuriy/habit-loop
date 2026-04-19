@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
-import 'package:flutter/material.dart' show Material, MaterialType;
+import 'package:flutter/material.dart' show ColoredBox, Material, MaterialType, Theme;
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
 import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/features/showup/domain/showup.dart';
@@ -28,6 +28,9 @@ class DashboardPageIos extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return CupertinoPageScaffold(
+      backgroundColor: hasPacts
+          ? Theme.of(context).colorScheme.surface
+          : CupertinoColors.systemBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
         middle: Text(l10n.dashboardTitle),
         trailing: hasPacts
@@ -40,22 +43,26 @@ class DashboardPageIos extends StatelessWidget {
             : null,
       ),
       child: SafeArea(
-        child: Material(
-          type: MaterialType.transparency,
-          child: Stack(
-            children: [
-              state.isLoading
-                  ? const Center(child: CupertinoActivityIndicator())
-                  : !hasPacts
-                      ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
-                      : _DashboardContent(
-                          state: state,
-                          l10n: l10n,
-                          onDaySelected: onDaySelected,
-                          onShowupTapped: onShowupTapped,
-                        ),
-              PactsPanel(onCreatePact: onCreatePact),
-            ],
+        key: const Key('dashboard-ios-safe-area'),
+        child: ColoredBox(
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: Material(
+            type: MaterialType.transparency,
+            child: Stack(
+              children: [
+                state.isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : !hasPacts
+                        ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
+                        : _DashboardContent(
+                            state: state,
+                            l10n: l10n,
+                            onDaySelected: onDaySelected,
+                            onShowupTapped: onShowupTapped,
+                          ),
+                PactsPanel(onCreatePact: onCreatePact),
+              ],
+            ),
           ),
         ),
       ),

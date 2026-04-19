@@ -10,6 +10,7 @@ import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.da
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:intl/intl.dart';
 
 /// A persistent draggable panel at the bottom of the dashboard.
@@ -285,9 +286,9 @@ class _PactTile extends StatelessWidget {
       PactStatus.stopped => l10n.pactStatusStopped,
     };
     final statusColor = switch (pact.status) {
-      PactStatus.active => Colors.blue,
-      PactStatus.completed => Colors.green,
-      PactStatus.stopped => Colors.red,
+      PactStatus.active => HabitLoopColors.primary,
+      PactStatus.completed => HabitLoopColors.success,
+      PactStatus.stopped => HabitLoopColors.danger,
     };
 
     return ListTile(

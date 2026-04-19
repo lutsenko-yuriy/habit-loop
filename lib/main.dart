@@ -1,6 +1,7 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -24,6 +25,7 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:habit_loop/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/remote_config/data/firebase_remote_config_service.dart';
 import 'package:habit_loop/remote_config/providers/remote_config_providers.dart';
+import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -114,6 +116,13 @@ class HabitLoopApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Habit Loop',
+      theme: HabitLoopTheme.materialTheme,
+      builder: (context, child) {
+        return CupertinoTheme(
+          data: HabitLoopTheme.cupertinoTheme,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

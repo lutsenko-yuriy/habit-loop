@@ -3,6 +3,7 @@ import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
 import 'package:intl/intl.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 class PactDetailPageAndroid extends StatelessWidget {
   final PactDetailState state;
@@ -161,9 +162,9 @@ class _PactDetailContent extends StatelessWidget {
 
   Color _statusColor(PactStatus status) {
     return switch (status) {
-      PactStatus.active => Colors.blue,
-      PactStatus.stopped => Colors.red,
-      PactStatus.completed => Colors.green,
+      PactStatus.active => HabitLoopColors.primary,
+      PactStatus.stopped => HabitLoopColors.danger,
+      PactStatus.completed => HabitLoopColors.success,
     };
   }
 
