@@ -12,8 +12,16 @@ final class FirebaseRemoteConfigClientAdapter
   final FirebaseRemoteConfig _firebase;
 
   @override
-  Future<void> setConfigSettings(RemoteConfigSettings settings) {
-    return _firebase.setConfigSettings(settings);
+  Future<void> setConfigSettings({
+    required Duration fetchTimeout,
+    required Duration minimumFetchInterval,
+  }) {
+    return _firebase.setConfigSettings(
+      RemoteConfigSettings(
+        fetchTimeout: fetchTimeout,
+        minimumFetchInterval: minimumFetchInterval,
+      ),
+    );
   }
 
   @override
@@ -27,7 +35,22 @@ final class FirebaseRemoteConfigClientAdapter
   }
 
   @override
-  RemoteConfigValue getValue(String key) {
-    return _firebase.getValue(key);
+  int getInt(String key) {
+    return _firebase.getValue(key).asInt();
+  }
+
+  @override
+  bool getBool(String key) {
+    return _firebase.getValue(key).asBool();
+  }
+
+  @override
+  String getString(String key) {
+    return _firebase.getValue(key).asString();
+  }
+
+  @override
+  double getDouble(String key) {
+    return _firebase.getValue(key).asDouble();
   }
 }

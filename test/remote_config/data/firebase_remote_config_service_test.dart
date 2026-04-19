@@ -1,23 +1,27 @@
-import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/remote_config/data/firebase_remote_config_service.dart';
 import 'package:habit_loop/remote_config/domain/remote_config_defaults.dart';
 
-// Hand-rolled fake — does not depend on the real Firebase SDK at runtime.
-// Returns values encoded as UTF-8 bytes (how RemoteConfigValue.asInt/asBool/etc. parse them).
+// Hand-rolled fake — no firebase_remote_config import needed because the
+// interface only exposes plain Dart types.
 class FakeFirebaseRemoteConfigClient implements FirebaseRemoteConfigClient {
-  final List<RemoteConfigSettings> appliedSettings = [];
+  final List<Map<String, Duration>> appliedSettings = [];
   final List<Map<String, dynamic>> appliedDefaults = [];
   int fetchAndActivateCallCount = 0;
 
-  // Store raw string values; the service calls .asInt() / .asBool() etc. on the RemoteConfigValue.
-  final Map<String, String> _stringValues = {};
+  final Map<String, dynamic> _values = {};
 
-  void setStringValue(String key, String value) => _stringValues[key] = value;
+  void setValue(String key, dynamic value) => _values[key] = value;
 
   @override
-  Future<void> setConfigSettings(RemoteConfigSettings settings) async {
-    appliedSettings.add(settings);
+  Future<void> setConfigSettings({
+    required Duration fetchTimeout,
+    required Duration minimumFetchInterval,
+  }) async {
+    appliedSettings.add({
+      'fetchTimeout': fetchTimeout,
+      'minimumFetchInterval': minimumFetchInterval,
+    });
   }
 
   @override
@@ -32,22 +36,42 @@ class FakeFirebaseRemoteConfigClient implements FirebaseRemoteConfigClient {
   }
 
   @override
-  RemoteConfigValue getValue(String key) {
-    final rawValue = _stringValues[key];
-    if (rawValue == null) {
-      // Returns a value that decodes to 0 / false / '' — matches the SDK default behaviour.
-      return RemoteConfigValue(null, ValueSource.valueDefault);
-    }
-    // Encode the string as UTF-8 bytes so asInt/asBool/asString/asDouble parse it correctly.
-    final bytes = rawValue.codeUnits;
-    return RemoteConfigValue(bytes, ValueSource.valueRemote);
+  int getInt(String key) {
+    final value = _values[key];
+    if (value is int) return value;
+    return 0;
+  }
+
+  @override
+  bool getBool(String key) {
+    final value = _values[key];
+    if (value is bool) return value;
+    return false;
+  }
+
+  @override
+  String getString(String key) {
+    final value = _values[key];
+    if (value is String) return value;
+    return '';
+  }
+
+  @override
+  double getDouble(String key) {
+    final value = _values[key];
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return 0.0;
   }
 }
 
 class _ThrowingFirebaseRemoteConfigClient
     implements FirebaseRemoteConfigClient {
   @override
-  Future<void> setConfigSettings(RemoteConfigSettings settings) async {
+  Future<void> setConfigSettings({
+    required Duration fetchTimeout,
+    required Duration minimumFetchInterval,
+  }) async {
     throw Exception('Remote Config error');
   }
 
@@ -62,18 +86,31 @@ class _ThrowingFirebaseRemoteConfigClient
   }
 
   @override
-  RemoteConfigValue getValue(String key) {
-    throw Exception('Remote Config error');
-  }
+  int getInt(String key) => throw Exception('Remote Config error');
+
+  @override
+  bool getBool(String key) => throw Exception('Remote Config error');
+
+  @override
+  String getString(String key) => throw Exception('Remote Config error');
+
+  @override
+  double getDouble(String key) => throw Exception('Remote Config error');
 }
 
 class _FetchThrowingClient implements FirebaseRemoteConfigClient {
-  final List<RemoteConfigSettings> appliedSettings = [];
+  final List<Map<String, Duration>> appliedSettings = [];
   final List<Map<String, dynamic>> appliedDefaults = [];
 
   @override
-  Future<void> setConfigSettings(RemoteConfigSettings settings) async {
-    appliedSettings.add(settings);
+  Future<void> setConfigSettings({
+    required Duration fetchTimeout,
+    required Duration minimumFetchInterval,
+  }) async {
+    appliedSettings.add({
+      'fetchTimeout': fetchTimeout,
+      'minimumFetchInterval': minimumFetchInterval,
+    });
   }
 
   @override
@@ -87,9 +124,16 @@ class _FetchThrowingClient implements FirebaseRemoteConfigClient {
   }
 
   @override
-  RemoteConfigValue getValue(String key) {
-    return RemoteConfigValue(null, ValueSource.valueDefault);
-  }
+  int getInt(String key) => 0;
+
+  @override
+  bool getBool(String key) => false;
+
+  @override
+  String getString(String key) => '';
+
+  @override
+  double getDouble(String key) => 0.0;
 }
 
 class _TrackingFirebaseRemoteConfigClient
@@ -98,7 +142,10 @@ class _TrackingFirebaseRemoteConfigClient
   final List<String> _log;
 
   @override
-  Future<void> setConfigSettings(RemoteConfigSettings settings) async {
+  Future<void> setConfigSettings({
+    required Duration fetchTimeout,
+    required Duration minimumFetchInterval,
+  }) async {
     _log.add('setConfigSettings');
   }
 
@@ -114,9 +161,16 @@ class _TrackingFirebaseRemoteConfigClient
   }
 
   @override
-  RemoteConfigValue getValue(String key) {
-    return RemoteConfigValue(null, ValueSource.valueDefault);
-  }
+  int getInt(String key) => 0;
+
+  @override
+  bool getBool(String key) => false;
+
+  @override
+  String getString(String key) => '';
+
+  @override
+  double getDouble(String key) => 0.0;
 }
 
 void main() {
@@ -174,20 +228,19 @@ void main() {
 
   group('FirebaseRemoteConfigService.getInt', () {
     test('returns int value from client', () async {
-      fakeClient.setStringValue('max_active_pacts', '5');
+      fakeClient.setValue('max_active_pacts', 5);
 
       final result = service.getInt('max_active_pacts');
       expect(result, 5);
     });
 
-    test('returns default when client returns null value', () {
-      // No value set — client returns RemoteConfigValue(null, ...) which decodes to 0.
-      // The service falls back to RemoteConfigDefaults for a known key.
-      final result = service.getInt('max_active_pacts');
-      // The client returns 0 (null value), service checks RemoteConfigDefaults: 3.
-      // Based on implementation: if client value is 0 and default exists, use default.
-      // Simpler: just verify no throw and returns a default-like int.
-      expect(result, isA<int>());
+    test('returns in-code default when client throws', () {
+      // The fallback fires when the client raises an exception during getInt.
+      final throwingService = FirebaseRemoteConfigService(
+        _ThrowingFirebaseRemoteConfigClient(),
+      );
+      final result = throwingService.getInt('max_active_pacts');
+      expect(result, RemoteConfigDefaults.maxActivePacts);
     });
 
     test('returns default value when client throws', () {
@@ -207,13 +260,13 @@ void main() {
   });
 
   group('FirebaseRemoteConfigService.getBool', () {
-    test('returns true when client returns "true"', () {
-      fakeClient.setStringValue('feature_flag', 'true');
+    test('returns true when client returns true', () {
+      fakeClient.setValue('feature_flag', true);
       expect(service.getBool('feature_flag'), isTrue);
     });
 
-    test('returns false when client returns "false"', () {
-      fakeClient.setStringValue('feature_flag', 'false');
+    test('returns false when client returns false', () {
+      fakeClient.setValue('feature_flag', false);
       expect(service.getBool('feature_flag'), isFalse);
     });
 
@@ -234,7 +287,7 @@ void main() {
 
   group('FirebaseRemoteConfigService.getString', () {
     test('returns string value from client', () {
-      fakeClient.setStringValue('greeting', 'hello');
+      fakeClient.setValue('greeting', 'hello');
       expect(service.getString('greeting'), 'hello');
     });
 
@@ -255,7 +308,7 @@ void main() {
 
   group('FirebaseRemoteConfigService.getDouble', () {
     test('returns double value from client', () {
-      fakeClient.setStringValue('ratio', '3.14');
+      fakeClient.setValue('ratio', 3.14);
       expect(service.getDouble('ratio'), closeTo(3.14, 0.001));
     });
 
