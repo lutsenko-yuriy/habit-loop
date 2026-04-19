@@ -214,7 +214,9 @@ class _BottomBar extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         child: CupertinoButton.filled(
-          onPressed: canAdvance ? (isLastStep ? onSubmit : onNext) : null,
+          onPressed: canAdvance
+              ? (isLastStep ? onSubmit : onNext)
+              : null,
           child: Text(
             isLastStep ? l10n.createPactConfirm : l10n.next,
           ),

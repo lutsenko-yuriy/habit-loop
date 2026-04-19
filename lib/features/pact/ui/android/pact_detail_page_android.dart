@@ -54,9 +54,7 @@ class _PactDetailContent extends StatelessWidget {
     if (pact == null || stats == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final today = DateTime.now();
-    final daysLeft = pact.endDate
-        .difference(DateTime(today.year, today.month, today.day))
-        .inDays;
+    final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
 
     final statusText = switch (pact.status) {
       PactStatus.active => l10n.pactStatusActive,
@@ -73,17 +71,13 @@ class _PactDetailContent extends StatelessWidget {
             Expanded(
               child: Text(
                 pact.habitName,
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             Chip(
               label: Text(statusText),
-              backgroundColor:
-                  _statusColor(pact.status).withValues(alpha: 0.15),
-              labelStyle: TextStyle(
-                  color: _statusColor(pact.status),
-                  fontWeight: FontWeight.w600),
+              backgroundColor: _statusColor(pact.status).withValues(alpha: 0.15),
+              labelStyle: TextStyle(color: _statusColor(pact.status), fontWeight: FontWeight.w600),
               side: BorderSide.none,
             ),
           ],
@@ -91,54 +85,35 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Stats cards
-        Text(l10n.sectionStats.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+        Text(l10n.sectionStats.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(
-                child: _StatCard(
-                    label: l10n.statsDone,
-                    value: l10n.statsShowups(stats.showupsDone))),
+            Expanded(child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone))),
             const SizedBox(width: 8),
-            Expanded(
-                child: _StatCard(
-                    label: l10n.statsFailed,
-                    value: l10n.statsShowups(stats.showupsFailed))),
+            Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
             if (pact.status == PactStatus.active)
-              Expanded(
-                  child: _StatCard(
-                      label: l10n.statsRemaining,
-                      value: l10n.statsShowups(stats.showupsRemaining)))
+              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
             else if (pact.status == PactStatus.stopped)
-              Expanded(
-                  child: _StatCard(
-                      label: l10n.statsCancelled,
-                      value: l10n.statsShowups(stats.showupsRemaining))),
+              Expanded(child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
             if (pact.status != PactStatus.completed) const SizedBox(width: 8),
-            Expanded(
-                child: _StatCard(
-                    label: l10n.statsStreak,
-                    value: l10n.statsShowups(stats.currentStreak))),
+            Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
           ],
         ),
         const SizedBox(height: 24),
 
         // Time details
-        Text(l10n.sectionTimeline.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+        Text(l10n.sectionTimeline.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
         const SizedBox(height: 8),
         _DateRow(label: l10n.pactStartDate, date: pact.startDate),
         const SizedBox(height: 8),
         _DateRow(
-          label: pact.status == PactStatus.active
-              ? l10n.pactEndDate
-              : l10n.pactEndedDate,
+          label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
           date: pact.endDate,
         ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
@@ -155,8 +130,7 @@ class _PactDetailContent extends StatelessWidget {
         // Stop reason (if stopped)
         if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
           const SizedBox(height: 24),
-          Text(l10n.sectionStopReason.toUpperCase(),
-              style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+          Text(l10n.sectionStopReason.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
           const SizedBox(height: 8),
           Card(
             margin: EdgeInsets.zero,
@@ -171,19 +145,14 @@ class _PactDetailContent extends StatelessWidget {
         if (pact.status == PactStatus.active) ...[
           const SizedBox(height: 32),
           if (state.stopError != null) ...[
-            Text(l10n.stopPactError,
-                style: TextStyle(color: theme.colorScheme.error)),
+            Text(l10n.stopPactError, style: TextStyle(color: theme.colorScheme.error)),
             const SizedBox(height: 8),
           ],
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: state.isStopping ? null : () => _showStopDialog(context),
             child: state.isStopping
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : Text(l10n.stopPact),
           ),
         ],
@@ -259,9 +228,7 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(label, style: Theme.of(context).textTheme.labelSmall),
             const SizedBox(height: 4),
-            Text(value,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -285,10 +252,8 @@ class _DateRow extends StatelessWidget {
             Expanded(child: Text(label)),
             const SizedBox(width: 8),
             Text(
-              DateFormat.yMd(Localizations.localeOf(context).toString())
-                  .format(date),
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+              DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
