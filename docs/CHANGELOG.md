@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.10.4] — 2026-04-19 (PR #28 merged)
+
+### Added — App design foundation and launcher icon (HAB-35)
+
+- Shared Habit Loop visual foundation added in `lib/theme/`: Material and Cupertino themes now use the same teal/growth/sunrise palette, and pact status colors consume semantic app colors instead of ad-hoc Material defaults
+- New Habit Loop app icon source added under `assets/app_icon/` and integrated into iOS and Android launcher assets, using the approved original icon composition with opaque iOS PNGs
+- Android adaptive launcher icon and splash screen now share the same teal background color and tuned foreground sizing so the icon fills the launcher surface without the previous visible clipping
+- iOS pact creation now includes a small step indicator using the shared palette, improving consistency with the newly defined app visual language
+- iOS dashboard keeps the bottom safe-area visually aligned with the mint bottom sheet via the scaffold background, with focused test coverage documenting that no custom home-indicator overlay or reserve is used
+- `docs/ARCHITECTURE.md` updated to document the shared theme layer and app icon asset source; tests added for the theme, iOS pact creation step indicator, and iOS dashboard safe-area treatment
+
+---
+
 ## [0.10.3] — 2026-04-19 (PR #27 merged)
 
 ### Added — Firebase Remote Config integration (HAB-25)

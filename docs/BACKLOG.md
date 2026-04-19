@@ -44,8 +44,5 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ### Issues
 
+- [HAB-36](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-36/fix-ios-home-indicator-gesture-on-dashboard-bottom-sheet) **Fix iOS home indicator gesture on dashboard bottom sheet** — On iOS, the home indicator / bottom handle cannot be dragged up to go to the Home screen while the dashboard bottom sheet is present. Keep the accepted mint safe-area visual treatment while restoring the native swipe-up gesture. (Bug — related to HAB-35)
 - [HAB-33](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-33/code-cleanup-define-code-quality-baseline-and-separate-formatting) **Code cleanup: define code quality baseline and separate formatting commit** — Establish a shared definition of good code for Habit Loop, choose the supporting tooling, apply the agreed formatting/cleanup rules to the codebase, and update the agent workflow so formatting happens in a dedicated commit after functional work. (Tech Debt)
-
-### Remaining work
-
-- [HAB-35](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-35/prepare-app-design-consistency-and-icon) **Prepare app design consistency and icon** — Review current iOS and Android app surfaces for design consistency, propose and apply any corrections, and generate a new app icon that depicts the Habit Loop concept. (Improvement)
