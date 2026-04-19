@@ -10,7 +10,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ### Remaining work
 
 - [HAB-28](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-28/cicd-distribute-ios-builds-to-firebase-app-distribution) **CI/CD: distribute iOS builds to Firebase App Distribution** — Wire GitHub Actions to automatically distribute iOS builds to Firebase App Distribution on every merge to `main`. Blocked until Apple Developer Program enrollment is approved. (Feature)
-- [HAB-25](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-25/firebase-remote-config-integration) **Firebase Remote Config integration** — Integrate Firebase Remote Config so that feature flags and configuration values can be updated remotely without a new app release. (Feature)
 
 ---
 
@@ -46,3 +45,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ### Issues
 
 - [HAB-33](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-33/code-cleanup-define-code-quality-baseline-and-separate-formatting) **Code cleanup: define code quality baseline and separate formatting commit** — Establish a shared definition of good code for Habit Loop, choose the supporting tooling, apply the agreed formatting/cleanup rules to the codebase, and update the agent workflow so formatting happens in a dedicated commit after functional work. (Tech Debt)
+
+### Remaining work
+
+- [HAB-35](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-35/prepare-app-design-consistency-and-icon) **Prepare app design consistency and icon** — Review current iOS and Android app surfaces for design consistency, propose and apply any corrections, and generate a new app icon that depicts the Habit Loop concept. (Improvement)

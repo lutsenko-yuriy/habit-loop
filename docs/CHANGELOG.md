@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.10.3] — 2026-04-19 (PR #27 merged)
+
+### Added — Firebase Remote Config integration (HAB-25)
+
+- `firebase_remote_config` SDK added to `pubspec.yaml`; a new `remote_config/` vertical slice introduces `RemoteConfigService` (abstract interface with a no-throw contract), `FirebaseRemoteConfigService` (backed by `FirebaseRemoteConfigClientAdapter`), and `NoopRemoteConfigService` for debug/profile builds
+- `RemoteConfigDefaults` class acts as the single source of truth for all default values; `max_active_pacts` defaults to `3`
+- `remoteConfigServiceProvider` wired via Riverpod so the service can be overridden in tests; `main.dart` constructs the adapter, calls `initialize()`, and overrides the provider under `kReleaseMode`
+- Dashboard pact-count warning threshold replaced: hardcoded `>= 3` replaced with `remoteConfigServiceProvider.getInt('max_active_pacts')`, making the limit remotely configurable without a new release
+- `tooManyPactsBody` l10n updated across EN/FR/DE to be plural-aware on the limit value (not the existing count), so copy is grammatically correct when `max_active_pacts = 1`
+- `docs/ARCHITECTURE.md` updated with `remote_config/` directory tree, Layers section, and `firebase_remote_config` dependency
+- 361 tests passing, analyzer clean
+
+---
+
 ## [0.10.2] — 2026-04-18 (PR #25 merged)
 
 ### Fixed — startDate normalization and injectable now in pact detail (HAB-34)
