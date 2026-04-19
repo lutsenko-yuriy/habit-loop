@@ -5,9 +5,14 @@ Vertical-slice architecture where each slice is a feature from @docs/PRODUCT_SPE
 ## Directory structure
 
 ```
+assets/
+└── app_icon/
+    └── habit_loop_icon.png            # Source launcher icon generated from the Habit Loop palette
+
 lib/
 ├── main.dart                          # App entry point (runApp)
 ├── l10n/                              # ARB source files + generated/ output
+├── theme/                             # Shared Habit Loop palette and Material/Cupertino theme data
 ├── analytics/                         # Cross-cutting analytics infrastructure (shared across all features)
 │   ├── domain/                        # AnalyticsEvent (abstract base), AnalyticsScreen, AnalyticsService interface
 │   ├── data/                          # FirebaseAnalyticsService, FirebaseAnalyticsClientAdapter, NoopAnalyticsService
@@ -52,6 +57,7 @@ lib/
         └── ui/ (generic/, ios/, android/)
 
 test/
+├── theme/                             # Shared app theme/widget tests
 ├── analytics/                         # Mirrors lib/analytics/
 │   ├── domain/
 │   ├── data/
@@ -90,6 +96,10 @@ Platform-split presentation:
 - `generic/` — view models (Riverpod notifiers) and shared state classes
 - `ios/` — Cupertino widgets
 - `android/` — Material widgets
+
+### Theme
+
+`lib/theme/` contains the cross-platform Habit Loop visual foundation: the shared brand palette and the Material/Cupertino theme data applied from `HabitLoopApp`. Feature UI should consume the theme via `Theme.of(context)`, `CupertinoTheme.of(context)`, or the shared semantic colors when a reusable status color is needed. Launcher icon assets under `assets/app_icon/`, `ios/Runner/Assets.xcassets/AppIcon.appiconset/`, and `android/app/src/main/res/mipmap-*/` use the same palette so the installed app icon matches the in-app design language.
 
 ### Analytics
 

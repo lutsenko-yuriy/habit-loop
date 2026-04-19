@@ -8,6 +8,7 @@ import 'package:habit_loop/features/pact/ui/ios/reminder_step_ios.dart';
 import 'package:habit_loop/features/pact/ui/ios/schedule_step_ios.dart';
 import 'package:habit_loop/features/pact/ui/ios/showup_duration_step_ios.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 class PactCreationPageIos extends StatelessWidget {
   final PactCreationState state;
@@ -66,6 +67,7 @@ class PactCreationPageIos extends StatelessWidget {
                 onChanged: onHabitNameChanged,
                 l10n: l10n,
               ),
+              _StepIndicator(currentStep: state.currentStep),
               Expanded(
                 child: _buildStep(context, l10n),
               ),
@@ -119,6 +121,37 @@ class PactCreationPageIos extends StatelessWidget {
           onCommitmentChanged: onCommitmentChanged,
         );
     }
+  }
+}
+
+class _StepIndicator extends StatelessWidget {
+  final PactCreationStep currentStep;
+
+  const _StepIndicator({required this.currentStep});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      key: const Key('pact-creation-step-indicator-ios'),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: List.generate(PactCreationStep.count, (index) {
+          return Expanded(
+            child: Container(
+              key: Key('pact-creation-step-indicator-ios-segment-$index'),
+              height: 4,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(2),
+                color: index <= currentStep.index
+                    ? HabitLoopColors.primary
+                    : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 }
 
@@ -181,9 +214,7 @@ class _BottomBar extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         child: CupertinoButton.filled(
-          onPressed: canAdvance
-              ? (isLastStep ? onSubmit : onNext)
-              : null,
+          onPressed: canAdvance ? (isLastStep ? onSubmit : onNext) : null,
           child: Text(
             isLastStep ? l10n.createPactConfirm : l10n.next,
           ),
