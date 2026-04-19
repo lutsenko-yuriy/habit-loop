@@ -190,14 +190,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tooManyPactsTitle => 'Trop de pactes actifs';
 
   @override
-  String tooManyPactsBody(int count) {
+  String tooManyPactsBody(int max) {
     String _temp0 = intl.Intl.pluralLogic(
-      count,
+      max,
       locale: localeName,
       other:
-          'Vous avez déjà $count pactes actifs. Voulez-vous vraiment en créer davantage ?',
+          'Vous ne pouvez avoir que $max pactes actifs à la fois. Voulez-vous vraiment en créer davantage ?',
       one:
-          'Vous avez déjà 1 pacte actif. Voulez-vous vraiment en créer un autre ?',
+          'Vous ne pouvez avoir qu\'1 pacte actif à la fois. Voulez-vous vraiment en créer un autre ?',
     );
     return '$_temp0';
   }

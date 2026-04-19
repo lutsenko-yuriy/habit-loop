@@ -17,6 +17,7 @@ import 'package:habit_loop/features/pact/ui/generic/pact_creation_view_model.dar
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_screen.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/remote_config/providers/remote_config_providers.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -79,14 +80,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final l10n = AppLocalizations.of(context)!;
         final activePacts = await pactRepo.getActivePacts();
         if (!context.mounted) return;
-        if (activePacts.length >= 3) {
+        final maxActivePacts = ref
+            .read(remoteConfigServiceProvider)
+            .getInt('max_active_pacts');
+        if (activePacts.length >= maxActivePacts) {
           final bool confirmed;
           if (defaultTargetPlatform == TargetPlatform.iOS) {
             confirmed = await showCupertinoDialog<bool>(
               context: context,
               builder: (ctx) => CupertinoAlertDialog(
                 title: Text(l10n.tooManyPactsTitle),
-                content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                content: Text(l10n.tooManyPactsBody(maxActivePacts)),
                 actions: [
                   CupertinoDialogAction(
                     onPressed: () => Navigator.pop(ctx, false),
@@ -105,7 +109,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               context: context,
               builder: (ctx) => AlertDialog(
                 title: Text(l10n.tooManyPactsTitle),
-                content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                content: Text(l10n.tooManyPactsBody(maxActivePacts)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
