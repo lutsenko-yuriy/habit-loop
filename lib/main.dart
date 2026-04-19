@@ -20,6 +20,10 @@ import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:habit_loop/remote_config/data/firebase_remote_config_client_adapter.dart';
+import 'package:habit_loop/remote_config/data/firebase_remote_config_service.dart';
+import 'package:habit_loop/remote_config/providers/remote_config_providers.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -46,6 +50,23 @@ Future<void> main() async {
     };
   }
 
+  // Initialise Remote Config before runApp so flags are ready on first frame.
+  // Failures are swallowed by the service — they must not prevent app launch.
+  FirebaseRemoteConfigService? remoteConfigService;
+  if (kReleaseMode) {
+    try {
+      final remoteConfigClient = FirebaseRemoteConfigClientAdapter(
+        FirebaseRemoteConfig.instance,
+      );
+      remoteConfigService = FirebaseRemoteConfigService(remoteConfigClient);
+      await remoteConfigService.initialize();
+    } catch (_) {
+      // initialize() already swallows, but guard here as well so a constructor
+      // failure cannot prevent runApp.
+      remoteConfigService = null;
+    }
+  }
+
   final pactRepo = InMemoryPactRepository();
   final showupRepo = InMemoryShowupRepository();
 
@@ -66,6 +87,10 @@ Future<void> main() async {
               FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
             ),
           ),
+        // Only wire Firebase Remote Config in release builds; debug/profile fall
+        // back to NoopRemoteConfigService which returns in-code defaults.
+        if (kReleaseMode && remoteConfigService != null)
+          remoteConfigServiceProvider.overrideWithValue(remoteConfigService),
         pactRepositoryProvider.overrideWithValue(pactRepo),
         pactCreationRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
