@@ -451,8 +451,8 @@ abstract class AppLocalizations {
   /// No description provided for @tooManyPactsBody.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, one{You already have 1 active pact. Are you sure you want to create another?} other{You already have {count} active pacts. Are you sure you want to create more?}}'**
-  String tooManyPactsBody(int count);
+  /// **'{max, plural, one{You can only have 1 active pact at a time. Are you sure you want to create another?} other{You can only have {max} active pacts at a time. Are you sure you want to create more?}}'**
+  String tooManyPactsBody(int max);
 
   /// No description provided for @tooManyPactsConfirm.
   ///

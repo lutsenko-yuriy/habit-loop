@@ -90,7 +90,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               context: context,
               builder: (ctx) => CupertinoAlertDialog(
                 title: Text(l10n.tooManyPactsTitle),
-                content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                content: Text(l10n.tooManyPactsBody(maxActivePacts)),
                 actions: [
                   CupertinoDialogAction(
                     onPressed: () => Navigator.pop(ctx, false),
@@ -109,7 +109,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               context: context,
               builder: (ctx) => AlertDialog(
                 title: Text(l10n.tooManyPactsTitle),
-                content: Text(l10n.tooManyPactsBody(activePacts.length)),
+                content: Text(l10n.tooManyPactsBody(maxActivePacts)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
