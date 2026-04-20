@@ -24,7 +24,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ### Remaining work
 
 - [HAB-37](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-37/dark-mode-support) **Dark mode support** — Audit all screens and widgets for hardcoded colours or theme values that break in dark mode, and ensure every surface respects the system colour scheme correctly. (Improvement)
-- [HAB-38](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-38/lock-app-to-portrait-orientation) **Lock app to portrait orientation** — Set portrait-only supported orientations on iOS (`Info.plist`) and Android (`AndroidManifest.xml`) so the app does not break in landscape. (Improvement)
 
 ---
 

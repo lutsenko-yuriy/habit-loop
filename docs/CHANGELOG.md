@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.1] — 2026-04-21 (PR #30 merged)
+
+### Changed — Lock app to portrait orientation (HAB-38)
+
+- `Info.plist` updated to list only `UIInterfaceOrientationPortrait` in `UISupportedInterfaceOrientations` (iPhone), so iOS phones stay portrait-only regardless of device rotation
+- iPad landscape support preserved in `UISupportedInterfaceOrientations~ipad` to comply with App Store guideline 10.1, which requires iPad apps to support both landscape orientations
+- `AndroidManifest.xml` `MainActivity` entry updated with `android:screenOrientation="portrait"` so Android devices remain locked to portrait
+
+---
+
 ## [0.11.0] — 2026-04-20 (PR #29 merged)
 
 ### Fixed — iOS home indicator gesture on dashboard bottom sheet (HAB-36)
