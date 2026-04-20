@@ -175,7 +175,6 @@ class _ShowupDetailContent extends StatelessWidget {
             onPressed: state.isSaving ? null : onMarkDone,
             style: FilledButton.styleFrom(
               backgroundColor: HabitLoopColors.success,
-              foregroundColor: Colors.white,
             ),
             child: state.isSaving
                 ? const SizedBox(
