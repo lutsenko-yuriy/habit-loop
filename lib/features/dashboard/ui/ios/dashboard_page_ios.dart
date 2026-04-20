@@ -44,6 +44,7 @@ class DashboardPageIos extends StatelessWidget {
       ),
       child: SafeArea(
         key: const Key('dashboard-ios-safe-area'),
+        bottom: false,
         child: ColoredBox(
           color: CupertinoColors.systemBackground.resolveFrom(context),
           child: Material(

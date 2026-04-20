@@ -248,6 +248,9 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                     );
                   },
                 ),
+              SliverToBoxAdapter(
+                child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
+              ),
             ],
           ),
         );

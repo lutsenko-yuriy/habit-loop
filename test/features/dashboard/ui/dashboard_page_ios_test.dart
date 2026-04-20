@@ -55,7 +55,7 @@ void main() {
     final theme = Theme.of(tester.element(find.byType(DashboardPageIos)));
 
     expect(scaffold.backgroundColor, theme.colorScheme.surface);
-    expect(safeArea.bottom, isTrue);
+    expect(safeArea.bottom, isFalse);
     expect(find.byKey(const Key('dashboard-ios-bottom-panel-safe-area-fill')), findsNothing);
     expect(find.byKey(const Key('dashboard-ios-bottom-panel-safe-area-ignore-pointer')), findsNothing);
     expect(find.byKey(const Key('dashboard-ios-home-gesture-reserve')), findsNothing);
