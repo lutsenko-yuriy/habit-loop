@@ -228,12 +228,18 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
 
               // ── Pact list ──
               if (state.isLoading)
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
+                SliverFillRemaining(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
                 )
               else if (entries.isEmpty)
                 SliverFillRemaining(
-                  child: Center(child: Text(l10n.noPactsYet)),
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
+                    child: Center(child: Text(l10n.noPactsYet)),
+                  ),
                 )
               else
                 SliverList.separated(
@@ -248,6 +254,9 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                     );
                   },
                 ),
+              SliverToBoxAdapter(
+                child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
+              ),
             ],
           ),
         );
