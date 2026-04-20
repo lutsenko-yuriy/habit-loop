@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.0] — 2026-04-20 (PR #29 merged)
+
+### Fixed — iOS home indicator gesture on dashboard bottom sheet (HAB-36)
+
+- Removed the invisible gesture-blocking overlay that was preventing the native iOS swipe-up home gesture while the dashboard bottom sheet was visible; the `DraggableScrollableSheet` now receives gestures correctly without any custom bottom reserve
+- The mint safe-area visual treatment (achieved via `CupertinoPageScaffold.backgroundColor`) is preserved, so no white stripe reappears below the bottom sheet
+- Focused widget test added to `dashboard_page_ios_test.dart` asserting that no custom home-indicator reserve or blocking overlay is present in the widget tree
+
+---
+
 ## [0.10.4] — 2026-04-19 (PR #28 merged)
 
 ### Added — App design foundation and launcher icon (HAB-35)

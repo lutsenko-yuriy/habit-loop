@@ -13,13 +13,26 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ---
 
+## v0.11.0 — UI polish & pre-1.0 cleanup
+
+### Issues
+
+- [HAB-33](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-33/code-cleanup-define-code-quality-baseline-and-separate-formatting) **Code cleanup: define code quality baseline and separate formatting commit** — Establish a shared definition of good code for Habit Loop, choose the supporting tooling, apply the agreed formatting/cleanup rules to the codebase, and update the agent workflow so formatting happens in a dedicated commit after functional work. (Tech Debt)
+- [HAB-15](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-15/refactor-reduce-duplicated-iosandroid-dashboard-widget-logic) **Refactor: reduce duplicated iOS/Android dashboard widget logic** — `_buildDots()` (status counting, layout, overflow colour) and the showup list/tile are duplicated verbatim across both platform pages. Extract shared logic into platform-agnostic helpers once there are enough instances to justify the abstraction. (Tech Debt)
+- [HAB-17](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-17/refactor-replace-pactcreationstate-with-a-pactbuilder) **Refactor: replace PactCreationState with a PactBuilder** — `PactCreationState` mixes wizard navigation state with pact-building data. Extract a `PactBuilder` class that holds only the pact fields and exposes a `build()` method returning a `Pact`. (Tech Debt)
+
+### Remaining work
+
+- [HAB-37](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-37/dark-mode-support) **Dark mode support** — Audit all screens and widgets for hardcoded colours or theme values that break in dark mode, and ensure every surface respects the system colour scheme correctly. (Improvement)
+- [HAB-38](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-38/lock-app-to-portrait-orientation) **Lock app to portrait orientation** — Set portrait-only supported orientations on iOS (`Info.plist`) and Android (`AndroidManifest.xml`) so the app does not break in landscape. (Improvement)
+
+---
+
 ## v1.0.0 — SQLite persistence + pre-persistence cleanup
 
 ### Issues
 
 - [HAB-16](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-16/tech-debt-rollback-exception-masks-original-error-in-pact-creation) **Tech debt: rollback exception masks original error in pact creation** — Resolved as part of HAB-11: wrap pact and showup inserts in a single `db.transaction()` via `savePactWithShowups()`. (Tech Debt — blocked by HAB-11)
-- [HAB-17](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-17/refactor-replace-pactcreationstate-with-a-pactbuilder) **Refactor: replace PactCreationState with a PactBuilder** — `PactCreationState` mixes wizard navigation state with pact-building data. Extract a `PactBuilder` class that holds only the pact fields and exposes a `build()` method returning a `Pact`. (Tech Debt)
-- [HAB-15](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-15/refactor-reduce-duplicated-iosandroid-dashboard-widget-logic) **Refactor: reduce duplicated iOS/Android dashboard widget logic** — `_buildDots()` (status counting, layout, overflow colour) and the showup list/tile are duplicated verbatim across both platform pages. Extract shared logic into platform-agnostic helpers once there are enough instances to justify the abstraction. (Tech Debt)
 
 ### Remaining work
 
@@ -37,12 +50,3 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 - [HAB-13](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-13/notifications-and-reminders) **Notifications and reminders** — Schedule local notifications when a reminder offset is configured during pact creation. Stretch goal: actionable notifications on iOS and Android so the user can mark a showup as done without opening the app. Coordinate with lazy showup generation. (Feature)
 - [HAB-21](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-21/auto-fail-past-due-showups-on-dashboard-load) **Auto-fail past-due showups on dashboard load** — When the dashboard loads or refreshes, any showup whose scheduled window has passed (`now > scheduledAt + duration`) and is still `pending` should be automatically transitioned to `failed` and persisted. (Feature — blocked by HAB-13)
-
----
-
-## No milestone
-
-### Issues
-
-- [HAB-36](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-36/fix-ios-home-indicator-gesture-on-dashboard-bottom-sheet) **Fix iOS home indicator gesture on dashboard bottom sheet** — On iOS, the home indicator / bottom handle cannot be dragged up to go to the Home screen while the dashboard bottom sheet is present. Keep the accepted mint safe-area visual treatment while restoring the native swipe-up gesture. (Bug — related to HAB-35)
-- [HAB-33](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-33/code-cleanup-define-code-quality-baseline-and-separate-formatting) **Code cleanup: define code quality baseline and separate formatting commit** — Establish a shared definition of good code for Habit Loop, choose the supporting tooling, apply the agreed formatting/cleanup rules to the codebase, and update the agent workflow so formatting happens in a dedicated commit after functional work. (Tech Debt)
