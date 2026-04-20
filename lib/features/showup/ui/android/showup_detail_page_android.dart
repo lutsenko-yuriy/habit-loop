@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:intl/intl.dart';
 
 /// Material (Android) implementation of the showup detail screen.
@@ -172,7 +173,10 @@ class _ShowupDetailContent extends StatelessWidget {
         if (isPending) ...[
           FilledButton(
             onPressed: state.isSaving ? null : onMarkDone,
-            style: FilledButton.styleFrom(backgroundColor: Colors.green),
+            style: FilledButton.styleFrom(
+              backgroundColor: HabitLoopColors.success,
+              foregroundColor: Colors.white,
+            ),
             child: state.isSaving
                 ? const SizedBox(
                     height: 20,
@@ -187,7 +191,7 @@ class _ShowupDetailContent extends StatelessWidget {
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: state.isSaving ? null : onMarkFailed,
-            style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+            style: OutlinedButton.styleFrom(foregroundColor: theme.colorScheme.error),
             child: Text(l10n.markFailed),
           ),
           const SizedBox(height: 16),
@@ -246,9 +250,9 @@ class _ShowupDetailContent extends StatelessWidget {
 
   Color _statusColor(ShowupStatus status) {
     return switch (status) {
-      ShowupStatus.pending => Colors.orange,
-      ShowupStatus.done => Colors.green,
-      ShowupStatus.failed => Colors.red,
+      ShowupStatus.pending => HabitLoopColors.pending,
+      ShowupStatus.done => HabitLoopColors.success,
+      ShowupStatus.failed => HabitLoopColors.danger,
     };
   }
 }

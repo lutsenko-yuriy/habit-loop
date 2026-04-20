@@ -118,7 +118,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
                 offset: const Offset(0, -4),
                 blurRadius: 12,
               ),

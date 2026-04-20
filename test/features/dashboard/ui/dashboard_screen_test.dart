@@ -296,7 +296,8 @@ void main() {
         find.byKey(const Key('status-dot-overflow-2026-03-29')),
       );
       final decoration = dot.decoration! as BoxDecoration;
-      expect(decoration.color, equals(Colors.grey));
+      final expectedColor = Theme.of(tester.element(find.byType(DashboardScreen))).colorScheme.onSurfaceVariant;
+      expect(decoration.color, equals(expectedColor));
     });
 
     testWidgets('overflow dot is grey when some done but some still pending',
@@ -322,7 +323,8 @@ void main() {
         find.byKey(const Key('status-dot-overflow-2026-03-29')),
       );
       final decoration = dot.decoration! as BoxDecoration;
-      expect(decoration.color, equals(Colors.grey));
+      final expectedColor = Theme.of(tester.element(find.byType(DashboardScreen))).colorScheme.onSurfaceVariant;
+      expect(decoration.color, equals(expectedColor));
     });
 
     testWidgets('shows dialog when 3 or more active pacts exist on create tap',
