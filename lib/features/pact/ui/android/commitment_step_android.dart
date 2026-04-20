@@ -78,7 +78,11 @@ class CommitmentStepAndroid extends StatelessWidget {
           ),
           child: Text(
             l10n.commitmentWarning,
-            style: const TextStyle(fontSize: 15, height: 1.5),
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              color: Theme.of(context).colorScheme.onTertiaryContainer,
+            ),
           ),
         ),
         const SizedBox(height: 16),

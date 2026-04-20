@@ -17,6 +17,12 @@ abstract final class HabitLoopTheme {
   static ThemeData get darkMaterialTheme => _buildMaterialTheme(Brightness.dark);
 
   static ThemeData _buildMaterialTheme(Brightness brightness) {
+    // Derive tertiaryContainer/onTertiaryContainer from the sunrise seed so
+    // the commitment warning box stays amber-toned in both light and dark mode.
+    final sunriseScheme = ColorScheme.fromSeed(
+      seedColor: HabitLoopColors.sunrise,
+      brightness: brightness,
+    );
     final colorScheme = ColorScheme.fromSeed(
       seedColor: HabitLoopColors.primary,
       brightness: brightness,
@@ -24,6 +30,8 @@ abstract final class HabitLoopTheme {
       primary: HabitLoopColors.primary,
       secondary: HabitLoopColors.growth,
       tertiary: HabitLoopColors.sunrise,
+      tertiaryContainer: sunriseScheme.primaryContainer,
+      onTertiaryContainer: sunriseScheme.onPrimaryContainer,
       error: HabitLoopColors.danger,
     );
 

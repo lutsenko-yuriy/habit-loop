@@ -5,7 +5,6 @@ import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 class DashboardPageAndroid extends StatelessWidget {
   final DashboardState state;
@@ -238,8 +237,8 @@ class _CalendarDay extends StatelessWidget {
       final overflowColor = pending > 0
           ? theme.colorScheme.onSurfaceVariant
           : done >= failed
-              ? HabitLoopColors.success
-              : HabitLoopColors.danger;
+              ? theme.colorScheme.secondary
+              : theme.colorScheme.error;
       return Container(
         key: Key('status-dot-overflow-$dateKey'),
         width: 10,
@@ -285,9 +284,9 @@ class _CalendarDay extends StatelessWidget {
   Color _dotColor(ShowupStatus status, ThemeData theme) {
     switch (status) {
       case ShowupStatus.done:
-        return HabitLoopColors.success;
+        return theme.colorScheme.secondary;
       case ShowupStatus.failed:
-        return HabitLoopColors.danger;
+        return theme.colorScheme.error;
       case ShowupStatus.pending:
         return theme.colorScheme.onSurfaceVariant;
     }
@@ -344,8 +343,8 @@ class _ShowupTile extends StatelessWidget {
     };
     final theme = Theme.of(context);
     final color = switch (showup.status) {
-      ShowupStatus.done => HabitLoopColors.success,
-      ShowupStatus.failed => HabitLoopColors.danger,
+      ShowupStatus.done => theme.colorScheme.secondary,
+      ShowupStatus.failed => theme.colorScheme.error,
       ShowupStatus.pending => theme.colorScheme.onSurfaceVariant,
     };
     final statusText = switch (showup.status) {

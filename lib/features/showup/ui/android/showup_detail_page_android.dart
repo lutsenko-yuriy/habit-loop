@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:intl/intl.dart';
 
 /// Material (Android) implementation of the showup detail screen.
@@ -131,10 +130,9 @@ class _ShowupDetailContent extends StatelessWidget {
             ),
             Chip(
               label: Text(statusText),
-              backgroundColor:
-                  _statusColor(showup.status).withValues(alpha: 0.15),
+              backgroundColor: _statusChipBg(showup.status, theme.colorScheme),
               labelStyle: TextStyle(
-                color: _statusColor(showup.status),
+                color: _statusChipFg(showup.status, theme.colorScheme),
                 fontWeight: FontWeight.w600,
               ),
               side: BorderSide.none,
@@ -174,7 +172,7 @@ class _ShowupDetailContent extends StatelessWidget {
           FilledButton(
             onPressed: state.isSaving ? null : onMarkDone,
             style: FilledButton.styleFrom(
-              backgroundColor: HabitLoopColors.success,
+              backgroundColor: theme.colorScheme.secondary,
             ),
             child: state.isSaving
                 ? const SizedBox(
@@ -247,13 +245,17 @@ class _ShowupDetailContent extends StatelessWidget {
     );
   }
 
-  Color _statusColor(ShowupStatus status) {
-    return switch (status) {
-      ShowupStatus.pending => HabitLoopColors.pending,
-      ShowupStatus.done => HabitLoopColors.success,
-      ShowupStatus.failed => HabitLoopColors.danger,
-    };
-  }
+  Color _statusChipBg(ShowupStatus status, ColorScheme cs) => switch (status) {
+    ShowupStatus.pending => cs.surfaceContainerHighest,
+    ShowupStatus.done => cs.secondaryContainer,
+    ShowupStatus.failed => cs.errorContainer,
+  };
+
+  Color _statusChipFg(ShowupStatus status, ColorScheme cs) => switch (status) {
+    ShowupStatus.pending => cs.onSurfaceVariant,
+    ShowupStatus.done => cs.onSecondaryContainer,
+    ShowupStatus.failed => cs.onErrorContainer,
+  };
 }
 
 class _InfoRow extends StatelessWidget {
