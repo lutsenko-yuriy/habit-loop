@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.3] — 2026-04-21 (PR #32 merged)
+
+### Changed — Per-app language selection (HAB-39)
+
+- `CFBundleLocalizations` array added to `ios/Runner/Info.plist` listing `en`, `fr`, `de`, so iOS Settings shows a per-app language picker under the app's entry (iOS 13+)
+- `android/app/src/main/res/xml/locales_config.xml` created with the three supported locales and referenced via `android:localeConfig` on the `<application>` element in `AndroidManifest.xml` (Android 13+ / API 33; older versions are unaffected)
+- No Dart changes required — Flutter's existing `AppLocalizations` setup already handles locale switching once the platform declarations are in place
+
+---
+
 ## [0.11.2] — 2026-04-21 (PR #31 merged)
 
 ### Changed — Dark mode support (HAB-37)
