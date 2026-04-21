@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
-import 'package:intl/intl.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class PactDurationStepAndroid extends StatelessWidget {
   final PactCreationState state;

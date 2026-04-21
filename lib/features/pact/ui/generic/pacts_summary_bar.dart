@@ -1,12 +1,14 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/dashboard/analytics/dashboard_screens.dart';
+import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/domain/pact_list_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
-import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -71,11 +73,13 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       ));
     }
     if (mounted) {
-      ref
-          .read(analyticsServiceProvider)
-          .logScreenView(const DashboardAnalyticsScreen());
-      ref.read(pactListViewModelProvider.notifier).load();
-      ref.read(dashboardViewModelProvider.notifier).load();
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logScreenView(const DashboardAnalyticsScreen()),
+      );
+      unawaited(ref.read(pactListViewModelProvider.notifier).load());
+      unawaited(ref.read(dashboardViewModelProvider.notifier).load());
     }
   }
 

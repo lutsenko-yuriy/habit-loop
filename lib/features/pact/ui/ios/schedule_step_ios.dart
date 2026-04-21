@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
@@ -180,35 +182,42 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
   }
 
   void _showTimePicker(Duration initial, ValueChanged<Duration> onChanged) {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => Container(
-        color: CupertinoColors.systemBackground.resolveFrom(ctx),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CupertinoButton(
-                  child: const Text('Done'),
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 216,
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                initialDateTime: DateTime(
-                    2026, 1, 1, initial.inHours, initial.inMinutes % 60),
-                onDateTimeChanged: (dt) {
-                  onChanged(Duration(hours: dt.hour, minutes: dt.minute));
-                },
+    unawaited(
+      showCupertinoModalPopup<void>(
+        context: context,
+        builder: (ctx) => ColoredBox(
+          color: CupertinoColors.systemBackground.resolveFrom(ctx),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Done'),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-          ],
+              SizedBox(
+                height: 216,
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  initialDateTime: DateTime(
+                    2026,
+                    1,
+                    1,
+                    initial.inHours,
+                    initial.inMinutes % 60,
+                  ),
+                  onDateTimeChanged: (dt) {
+                    onChanged(Duration(hours: dt.hour, minutes: dt.minute));
+                  },
+                ),
+              ),
+              SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+            ],
+          ),
         ),
       ),
     );
@@ -585,37 +594,39 @@ class _DropdownWeekday extends StatelessWidget {
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       onPressed: () {
-        showCupertinoModalPopup<void>(
-          context: context,
-          builder: (ctx) => Container(
-            color: CupertinoColors.systemBackground.resolveFrom(ctx),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('Done'),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 216,
-                  child: CupertinoPicker(
-                    scrollController:
-                        FixedExtentScrollController(initialItem: value - 1),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (i) => onChanged(i + 1),
-                    children: List.generate(
-                      7,
-                      (i) => Center(child: Text(weekdayName(i + 1))),
+        unawaited(
+          showCupertinoModalPopup<void>(
+            context: context,
+            builder: (ctx) => ColoredBox(
+              color: CupertinoColors.systemBackground.resolveFrom(ctx),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 216,
+                    child: CupertinoPicker(
+                      scrollController:
+                          FixedExtentScrollController(initialItem: value - 1),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (i) => onChanged(i + 1),
+                      children: List.generate(
+                        7,
+                        (i) => Center(child: Text(weekdayName(i + 1))),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-              ],
+                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+                ],
+              ),
             ),
           ),
         );
@@ -641,37 +652,39 @@ class _DropdownOccurrence extends StatelessWidget {
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       onPressed: () {
-        showCupertinoModalPopup<void>(
-          context: context,
-          builder: (ctx) => Container(
-            color: CupertinoColors.systemBackground.resolveFrom(ctx),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('Done'),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 216,
-                  child: CupertinoPicker(
-                    scrollController:
-                        FixedExtentScrollController(initialItem: value - 1),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (i) => onChanged(i + 1),
-                    children: List.generate(
-                      4,
-                      (i) => Center(child: Text(occurrenceName(i + 1))),
+        unawaited(
+          showCupertinoModalPopup<void>(
+            context: context,
+            builder: (ctx) => ColoredBox(
+              color: CupertinoColors.systemBackground.resolveFrom(ctx),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 216,
+                    child: CupertinoPicker(
+                      scrollController:
+                          FixedExtentScrollController(initialItem: value - 1),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (i) => onChanged(i + 1),
+                      children: List.generate(
+                        4,
+                        (i) => Center(child: Text(occurrenceName(i + 1))),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-              ],
+                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+                ],
+              ),
             ),
           ),
         );
@@ -696,37 +709,39 @@ class _DayOfMonthPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        showCupertinoModalPopup<void>(
-          context: context,
-          builder: (ctx) => Container(
-            color: CupertinoColors.systemBackground.resolveFrom(ctx),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('Done'),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 216,
-                  child: CupertinoPicker(
-                    scrollController:
-                        FixedExtentScrollController(initialItem: value - 1),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (index) => onChanged(index + 1),
-                    children: List.generate(
-                      31,
-                      (i) => Center(child: Text('${i + 1}')),
+        unawaited(
+          showCupertinoModalPopup<void>(
+            context: context,
+            builder: (ctx) => ColoredBox(
+              color: CupertinoColors.systemBackground.resolveFrom(ctx),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 216,
+                    child: CupertinoPicker(
+                      scrollController:
+                          FixedExtentScrollController(initialItem: value - 1),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (index) => onChanged(index + 1),
+                      children: List.generate(
+                        31,
+                        (i) => Center(child: Text('${i + 1}')),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-              ],
+                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+                ],
+              ),
             ),
           ),
         );

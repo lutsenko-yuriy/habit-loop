@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart'
     show
         CupertinoAlertDialog,
@@ -32,11 +34,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
-      ref.read(dashboardViewModelProvider.notifier).load();
-      ref.read(pactListViewModelProvider.notifier).load();
-    });
+    unawaited(
+      Future.microtask(() {
+        unawaited(
+          ref
+              .read(analyticsServiceProvider)
+              .logScreenView(const DashboardAnalyticsScreen()),
+        );
+        unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+        unawaited(ref.read(pactListViewModelProvider.notifier).load());
+      }),
+    );
   }
 
   @override
@@ -65,10 +73,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
       if (context.mounted) {
-        ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
+        unawaited(
+          ref
+              .read(analyticsServiceProvider)
+              .logScreenView(const DashboardAnalyticsScreen()),
+        );
         ref.invalidate(hasActivePactsProvider);
-        ref.read(dashboardViewModelProvider.notifier).load();
-        ref.read(pactListViewModelProvider.notifier).load();
+        unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+        unawaited(ref.read(pactListViewModelProvider.notifier).load());
       }
     }
 
@@ -151,9 +163,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
       if (context.mounted) {
-        ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
-        ref.read(dashboardViewModelProvider.notifier).load();
-        ref.read(pactListViewModelProvider.notifier).load();
+        unawaited(
+          ref
+              .read(analyticsServiceProvider)
+              .logScreenView(const DashboardAnalyticsScreen()),
+        );
+        unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+        unawaited(ref.read(pactListViewModelProvider.notifier).load());
       }
     }
 

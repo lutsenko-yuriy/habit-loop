@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/analytics/domain/analytics_event.dart';
 import 'package:habit_loop/analytics/providers/analytics_providers.dart';
-import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact_stats_service.dart';
+import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';

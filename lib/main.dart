@@ -1,6 +1,9 @@
+import 'dart:async' show unawaited;
+
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -20,13 +23,12 @@ import 'package:habit_loop/features/pact/ui/generic/pact_detail_view_model.dart'
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
+import 'package:habit_loop/firebase_options.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:habit_loop/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/remote_config/data/firebase_remote_config_service.dart';
 import 'package:habit_loop/remote_config/providers/remote_config_providers.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
-import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +40,9 @@ Future<void> main() async {
     // Forward Flutter framework errors to Crashlytics.
     FlutterError.onError = (details) {
       try {
-        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+        unawaited(
+          FirebaseCrashlytics.instance.recordFlutterFatalError(details),
+        );
       } catch (_) {}
     };
     // Forward Dart async / platform errors to Crashlytics.
@@ -46,7 +50,9 @@ Future<void> main() async {
       try {
         // recordError returns a Future but the callback must return bool synchronously.
         // Errors from the native layer are caught here to prevent a re-entrant error loop.
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        unawaited(
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
+        );
       } catch (_) {}
       return true;
     };
