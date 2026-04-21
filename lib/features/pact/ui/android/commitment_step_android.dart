@@ -28,12 +28,15 @@ class CommitmentStepAndroid extends StatelessWidget {
           .format(context);
       return '${l10n.scheduleDaily} @ $t';
     }
-    if (s is WeekdaySchedule)
+    if (s is WeekdaySchedule) {
       return '${l10n.scheduleWeekday} (${s.entries.length})';
-    if (s is MonthlyByWeekdaySchedule)
+    }
+    if (s is MonthlyByWeekdaySchedule) {
       return '${l10n.scheduleMonthlyByWeekday} (${s.entries.length})';
-    if (s is MonthlyByDateSchedule)
+    }
+    if (s is MonthlyByDateSchedule) {
       return '${l10n.scheduleMonthlyByDate} (${s.entries.length})';
+    }
     return '';
   }
 
