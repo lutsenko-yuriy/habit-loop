@@ -21,10 +21,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 - [HAB-15](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-15/refactor-reduce-duplicated-iosandroid-dashboard-widget-logic) **Refactor: reduce duplicated iOS/Android dashboard widget logic** — `_buildDots()` (status counting, layout, overflow colour) and the showup list/tile are duplicated verbatim across both platform pages. Extract shared logic into platform-agnostic helpers once there are enough instances to justify the abstraction. (Tech Debt)
 - [HAB-17](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-17/refactor-replace-pactcreationstate-with-a-pactbuilder) **Refactor: replace PactCreationState with a PactBuilder** — `PactCreationState` mixes wizard navigation state with pact-building data. Extract a `PactBuilder` class that holds only the pact fields and exposes a `build()` method returning a `Pact`. (Tech Debt)
 
-### Remaining work
-
-- [HAB-37](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-37/dark-mode-support) **Dark mode support** — Audit all screens and widgets for hardcoded colours or theme values that break in dark mode, and ensure every surface respects the system colour scheme correctly. (Improvement)
-
 ---
 
 ## v1.0.0 — SQLite persistence + pre-persistence cleanup
