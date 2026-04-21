@@ -47,7 +47,9 @@ jobs:
       - run: flutter pub get
       - name: Check formatting
         run: |
-          find lib/ test/ -name "*.dart" -not -name "firebase_options.dart" \
+          find lib/ test/ -name "*.dart" \
+            -not -name "firebase_options.dart" \
+            -not -path "*/l10n/generated/*" \
             | sort | xargs dart format -l 120 --set-exit-if-changed
       - run: flutter analyze
       - run: flutter test
