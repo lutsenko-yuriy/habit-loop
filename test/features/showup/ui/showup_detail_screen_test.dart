@@ -120,7 +120,8 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('shows habit name and scheduled time after load', (tester) async {
+    testWidgets('shows habit name and scheduled time after load',
+        (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -136,7 +137,8 @@ void main() {
       expect(find.text('Meditate'), findsOneWidget);
     });
 
-    testWidgets('shows Mark as Done and Mark as Failed buttons for pending showup',
+    testWidgets(
+        'shows Mark as Done and Mark as Failed buttons for pending showup',
         (tester) async {
       final showup = _pendingFutureShowup();
 
@@ -153,7 +155,8 @@ void main() {
       expect(find.text('Mark as Failed'), findsOneWidget);
     });
 
-    testWidgets('does not show action buttons for a done showup', (tester) async {
+    testWidgets('does not show action buttons for a done showup',
+        (tester) async {
       final showup = _doneShowup();
 
       await tester.pumpWidget(
@@ -285,7 +288,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // No text entered — button must be disabled (onPressed == null).
-      final buttons = tester.widgetList<FilledButton>(find.byType(FilledButton));
+      final buttons =
+          tester.widgetList<FilledButton>(find.byType(FilledButton));
       final saveButton = buttons.firstWhere(
         (b) => find
             .descendant(of: find.byWidget(b), matching: find.text('Save Note'))
@@ -296,7 +300,8 @@ void main() {
       expect(saveButton.onPressed, isNull);
     });
 
-    testWidgets('Save Note button becomes enabled after typing', (tester) async {
+    testWidgets('Save Note button becomes enabled after typing',
+        (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -314,7 +319,8 @@ void main() {
       await tester.pump(); // let ValueListenableBuilder rebuild
 
       // Button must now be enabled.
-      final buttons = tester.widgetList<FilledButton>(find.byType(FilledButton));
+      final buttons =
+          tester.widgetList<FilledButton>(find.byType(FilledButton));
       final saveButton = buttons.firstWhere(
         (b) => find
             .descendant(of: find.byWidget(b), matching: find.text('Save Note'))

@@ -20,7 +20,8 @@ void main() {
       expect(state.isSubmitting, false);
     });
 
-    test('startDate is normalized to midnight when today has a time component', () {
+    test('startDate is normalized to midnight when today has a time component',
+        () {
       // Simulate wizard opened at 22:00. Without normalization, startDate would
       // carry the time component and durationDays in analytics would under-count.
       final eveningNow = DateTime(2026, 4, 18, 22, 0, 0);
@@ -30,7 +31,8 @@ void main() {
       expect(state.startDate.minute, 0);
     });
 
-    test('default endDate clamps to last day of month for end-of-month starts', () {
+    test('default endDate clamps to last day of month for end-of-month starts',
+        () {
       // August 31 + 6 months → February 28 (not March 3)
       expect(
         PactCreationState(today: DateTime(2026, 8, 31)).endDate,
@@ -100,12 +102,14 @@ void main() {
         );
         expect(tooLong.canAdvanceFromStep, false);
 
-        final noDuration = base.copyWith(currentStep: PactCreationStep.showupDuration);
+        final noDuration =
+            base.copyWith(currentStep: PactCreationStep.showupDuration);
         expect(noDuration.canAdvanceFromStep, false);
       });
 
       test('step 2 (schedule) requires schedule to be set', () {
-        final noSchedule = base.copyWith(currentStep: PactCreationStep.schedule);
+        final noSchedule =
+            base.copyWith(currentStep: PactCreationStep.schedule);
         expect(noSchedule.canAdvanceFromStep, false);
 
         final withSchedule = base.copyWith(
@@ -122,7 +126,8 @@ void main() {
       });
 
       test('step 4 (commitment) requires acceptance and habit name', () {
-        final notAccepted = base.copyWith(currentStep: PactCreationStep.commitment);
+        final notAccepted =
+            base.copyWith(currentStep: PactCreationStep.commitment);
         expect(notAccepted.canAdvanceFromStep, false);
 
         final acceptedNoName = base.copyWith(

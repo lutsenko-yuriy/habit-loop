@@ -4,6 +4,7 @@ abstract class PactRepository {
   Future<List<Pact>> getActivePacts();
   Future<List<Pact>> getAllPacts();
   Future<Pact?> getPactById(String id);
+
   /// Persists a new pact.
   ///
   /// Throws [ArgumentError] if a pact with the same id already exists.

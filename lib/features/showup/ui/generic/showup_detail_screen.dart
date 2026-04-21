@@ -48,8 +48,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state =
-        ref.watch(showupDetailViewModelProvider(widget.showupId));
+    final state = ref.watch(showupDetailViewModelProvider(widget.showupId));
 
     Future<void> onMarkDone() async {
       await ref

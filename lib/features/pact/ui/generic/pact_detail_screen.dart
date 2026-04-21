@@ -34,9 +34,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         // ref.invalidate(showupDetailNowProvider) pattern in ShowupDetailScreen.
         ref.invalidate(pactDetailNowProvider);
         unawaited(
-          ref
-              .read(pactDetailViewModelProvider(widget.pactId).notifier)
-              .load(),
+          ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
         );
       }),
     );

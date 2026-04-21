@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
-import 'package:flutter/material.dart' show ColoredBox, Material, MaterialType, Theme;
+import 'package:flutter/material.dart'
+    show ColoredBox, Material, MaterialType, Theme;
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
-import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
+import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart'
+    show PactsPanel;
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -214,11 +216,8 @@ class _CalendarStrip extends StatelessWidget {
                   child: Text(
                     '${entry.date.day}',
                     style: TextStyle(
-                      fontWeight:
-                          isToday ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected
-                          ? CupertinoColors.white
-                          : null,
+                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? CupertinoColors.white : null,
                     ),
                   ),
                 ),

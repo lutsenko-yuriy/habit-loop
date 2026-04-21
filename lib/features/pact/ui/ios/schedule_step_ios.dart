@@ -159,25 +159,38 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
   String _weekdayName(int weekday) {
     final l10n = widget.l10n;
     switch (weekday) {
-      case 1: return l10n.weekdayMon;
-      case 2: return l10n.weekdayTue;
-      case 3: return l10n.weekdayWed;
-      case 4: return l10n.weekdayThu;
-      case 5: return l10n.weekdayFri;
-      case 6: return l10n.weekdaySat;
-      case 7: return l10n.weekdaySun;
-      default: return '';
+      case 1:
+        return l10n.weekdayMon;
+      case 2:
+        return l10n.weekdayTue;
+      case 3:
+        return l10n.weekdayWed;
+      case 4:
+        return l10n.weekdayThu;
+      case 5:
+        return l10n.weekdayFri;
+      case 6:
+        return l10n.weekdaySat;
+      case 7:
+        return l10n.weekdaySun;
+      default:
+        return '';
     }
   }
 
   String _occurrenceName(int occurrence) {
     final l10n = widget.l10n;
     switch (occurrence) {
-      case 1: return l10n.occurrenceFirst;
-      case 2: return l10n.occurrenceSecond;
-      case 3: return l10n.occurrenceThird;
-      case 4: return l10n.occurrenceFourth;
-      default: return '';
+      case 1:
+        return l10n.occurrenceFirst;
+      case 2:
+        return l10n.occurrenceSecond;
+      case 3:
+        return l10n.occurrenceThird;
+      case 4:
+        return l10n.occurrenceFourth;
+      default:
+        return '';
     }
   }
 
@@ -286,7 +299,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                 const SizedBox(width: 12),
                 _TimeChip(
                   time: entry.timeOfDay,
-                          onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                     setState(() {
                       _weekdayEntries[index] =
                           WeekdayEntry(weekday: entry.weekday, timeOfDay: t);
@@ -347,70 +360,66 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
             ),
             child: Row(
               children: [
-                    Expanded(
-                      child: _DropdownOccurrence(
-                        value: entry.occurrence,
-                        occurrenceName: _occurrenceName,
-                        onChanged: (occ) {
-                          setState(() {
-                            _monthlyWeekdayEntries[index] =
-                                MonthlyWeekdayEntry(
-                              occurrence: occ,
-                              weekday: entry.weekday,
-                              timeOfDay: entry.timeOfDay,
-                            );
-                          });
-                          widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                              entries: List.of(_monthlyWeekdayEntries)));
-                        },
-                      ),
-                    ),
-                    Expanded(
-                      child: _DropdownWeekday(
-                        value: entry.weekday,
-                        weekdayName: _weekdayName,
-                        onChanged: (wd) {
-                          setState(() {
-                            _monthlyWeekdayEntries[index] =
-                                MonthlyWeekdayEntry(
-                              occurrence: entry.occurrence,
-                              weekday: wd,
-                              timeOfDay: entry.timeOfDay,
-                            );
-                          });
-                          widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                              entries: List.of(_monthlyWeekdayEntries)));
-                        },
-                      ),
-                    ),
-                    _TimeChip(
-                      time: entry.timeOfDay,
-                                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
-                        setState(() {
-                          _monthlyWeekdayEntries[index] =
-                              MonthlyWeekdayEntry(
-                            occurrence: entry.occurrence,
-                            weekday: entry.weekday,
-                            timeOfDay: t,
-                          );
-                        });
-                        widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                            entries: List.of(_monthlyWeekdayEntries)));
-                      }),
-                    ),
-                    const Spacer(),
-                    if (_monthlyWeekdayEntries.length > 1)
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        child: const Icon(CupertinoIcons.minus_circle,
-                            color: CupertinoColors.destructiveRed, size: 22),
-                        onPressed: () {
-                          setState(
-                              () => _monthlyWeekdayEntries.removeAt(index));
-                          widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                              entries: List.of(_monthlyWeekdayEntries)));
-                        },
-                      ),
+                Expanded(
+                  child: _DropdownOccurrence(
+                    value: entry.occurrence,
+                    occurrenceName: _occurrenceName,
+                    onChanged: (occ) {
+                      setState(() {
+                        _monthlyWeekdayEntries[index] = MonthlyWeekdayEntry(
+                          occurrence: occ,
+                          weekday: entry.weekday,
+                          timeOfDay: entry.timeOfDay,
+                        );
+                      });
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(
+                          entries: List.of(_monthlyWeekdayEntries)));
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: _DropdownWeekday(
+                    value: entry.weekday,
+                    weekdayName: _weekdayName,
+                    onChanged: (wd) {
+                      setState(() {
+                        _monthlyWeekdayEntries[index] = MonthlyWeekdayEntry(
+                          occurrence: entry.occurrence,
+                          weekday: wd,
+                          timeOfDay: entry.timeOfDay,
+                        );
+                      });
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(
+                          entries: List.of(_monthlyWeekdayEntries)));
+                    },
+                  ),
+                ),
+                _TimeChip(
+                  time: entry.timeOfDay,
+                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                    setState(() {
+                      _monthlyWeekdayEntries[index] = MonthlyWeekdayEntry(
+                        occurrence: entry.occurrence,
+                        weekday: entry.weekday,
+                        timeOfDay: t,
+                      );
+                    });
+                    widget.onScheduleChanged(MonthlyByWeekdaySchedule(
+                        entries: List.of(_monthlyWeekdayEntries)));
+                  }),
+                ),
+                const Spacer(),
+                if (_monthlyWeekdayEntries.length > 1)
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Icon(CupertinoIcons.minus_circle,
+                        color: CupertinoColors.destructiveRed, size: 22),
+                    onPressed: () {
+                      setState(() => _monthlyWeekdayEntries.removeAt(index));
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(
+                          entries: List.of(_monthlyWeekdayEntries)));
+                    },
+                  ),
               ],
             ),
           );
@@ -464,7 +473,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                 const SizedBox(width: 8),
                 _TimeChip(
                   time: entry.timeOfDay,
-                          onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                     setState(() {
                       _monthlyDateEntries[index] = MonthlyDateEntry(
                           dayOfMonth: entry.dayOfMonth, timeOfDay: t);
@@ -536,7 +545,8 @@ class _TimeRow extends StatelessWidget {
           children: [
             Text(label),
             Text(
-              TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60).format(context),
+              TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60)
+                  .format(context),
               style: TextStyle(
                 color: CupertinoTheme.of(context).primaryColor,
               ),
@@ -568,7 +578,8 @@ class _TimeChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60).format(context),
+          TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60)
+              .format(context),
           style: TextStyle(
             color: CupertinoTheme.of(context).primaryColor,
           ),

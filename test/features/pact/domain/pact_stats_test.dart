@@ -171,8 +171,7 @@ void main() {
     });
 
     group('with explicit totalShowups override', () {
-      test(
-          'totalShowups uses provided value instead of showup list length',
+      test('totalShowups uses provided value instead of showup list length',
           () {
         // Only 3 showups in the window but the full pact has 30
         final showups = [

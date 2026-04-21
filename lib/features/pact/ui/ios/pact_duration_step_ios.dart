@@ -41,7 +41,8 @@ class PactDurationStepIos extends StatelessWidget {
           onTap: () => _showDatePicker(
             context,
             state.startDate,
-            minimumDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+            minimumDate: DateTime(
+                DateTime.now().year, DateTime.now().month, DateTime.now().day),
             onDateChanged: onStartDateChanged,
           ),
         ),
@@ -127,7 +128,8 @@ class _DateRow extends StatelessWidget {
           children: [
             Text(label),
             Text(
-              DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
+              DateFormat.yMd(Localizations.localeOf(context).toString())
+                  .format(date),
               style: TextStyle(
                 color: CupertinoTheme.of(context).primaryColor,
               ),

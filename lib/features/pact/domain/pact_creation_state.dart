@@ -69,8 +69,7 @@ class PactCreationState {
     this.commitmentAccepted = false,
     this.isSubmitting = false,
     this.submitError,
-  })  : startDate =
-            startDate ?? DateTime(today.year, today.month, today.day),
+  })  : startDate = startDate ?? DateTime(today.year, today.month, today.day),
         endDate = endDate ?? _addMonths(today, 6);
 
   bool get canAdvanceFromStep {
@@ -114,13 +113,11 @@ class PactCreationState {
       showupDuration: showupDuration ?? this.showupDuration,
       scheduleType: scheduleType ?? this.scheduleType,
       schedule: clearSchedule ? null : (schedule ?? this.schedule),
-      reminderOffset: clearReminderOffset
-          ? null
-          : (reminderOffset ?? this.reminderOffset),
+      reminderOffset:
+          clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
       commitmentAccepted: commitmentAccepted ?? this.commitmentAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      submitError:
-          clearSubmitError ? null : (submitError ?? this.submitError),
+      submitError: clearSubmitError ? null : (submitError ?? this.submitError),
     );
   }
 

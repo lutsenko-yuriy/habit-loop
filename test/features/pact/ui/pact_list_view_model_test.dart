@@ -57,7 +57,8 @@ void main() {
       expect(c.read(pactListViewModelProvider).entries, isEmpty);
     });
 
-    test('load with active pact sets nextShowupAt to earliest pending showup', () async {
+    test('load with active pact sets nextShowupAt to earliest pending showup',
+        () async {
       final pact = _pact('p1', PactStatus.active);
       // Both dates are far in the future so they are never filtered out by the
       // "past showups are ignored" logic regardless of when the test runs.
@@ -117,11 +118,16 @@ void main() {
         _pact('active', PactStatus.active),
       ]);
       await c.read(pactListViewModelProvider.notifier).load();
-      final ids = c.read(pactListViewModelProvider).entries.map((e) => e.pact.id).toList();
+      final ids = c
+          .read(pactListViewModelProvider)
+          .entries
+          .map((e) => e.pact.id)
+          .toList();
       expect(ids, ['active', 'completed', 'stopped']);
     });
 
-    test('active pacts sorted by nextShowupAt ascending within group', () async {
+    test('active pacts sorted by nextShowupAt ascending within group',
+        () async {
       final p1 = _pact('p1', PactStatus.active);
       final p2 = _pact('p2', PactStatus.active);
       final c = _makeContainer(
@@ -132,7 +138,11 @@ void main() {
         ],
       );
       await c.read(pactListViewModelProvider.notifier).load();
-      final ids = c.read(pactListViewModelProvider).entries.map((e) => e.pact.id).toList();
+      final ids = c
+          .read(pactListViewModelProvider)
+          .entries
+          .map((e) => e.pact.id)
+          .toList();
       expect(ids, ['p2', 'p1']);
     });
 
@@ -152,26 +162,39 @@ void main() {
 
     test('toggleFilter deselects when multiple filters selected', () {
       final c = _makeContainer();
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+      c
+          .read(pactListViewModelProvider.notifier)
+          .toggleFilter(PactStatus.active);
       final filters = c.read(pactListViewModelProvider).activeFilters;
       expect(filters, {PactStatus.completed, PactStatus.stopped});
     });
 
     test('toggleFilter can deselect all filters', () {
       final c = _makeContainer();
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped);
+      c
+          .read(pactListViewModelProvider.notifier)
+          .toggleFilter(PactStatus.active);
+      c
+          .read(pactListViewModelProvider.notifier)
+          .toggleFilter(PactStatus.completed);
+      c
+          .read(pactListViewModelProvider.notifier)
+          .toggleFilter(PactStatus.stopped);
       final filters = c.read(pactListViewModelProvider).activeFilters;
       expect(filters, isEmpty);
     });
 
     test('toggleFilter selects a deselected filter', () {
       final c = _makeContainer();
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
+      c
+          .read(pactListViewModelProvider.notifier)
+          .toggleFilter(PactStatus.completed);
+      c
+          .read(pactListViewModelProvider.notifier)
+          .toggleFilter(PactStatus.completed);
       final filters = c.read(pactListViewModelProvider).activeFilters;
-      expect(filters, {PactStatus.active, PactStatus.completed, PactStatus.stopped});
+      expect(filters,
+          {PactStatus.active, PactStatus.completed, PactStatus.stopped});
     });
 
     test('filteredEntries respects activeFilters', () async {
@@ -181,8 +204,12 @@ void main() {
         _pact('c1', PactStatus.stopped),
       ]);
       await c.read(pactListViewModelProvider.notifier).load();
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
-      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped);
+      c
+          .read(pactListViewModelProvider.notifier)
+          .toggleFilter(PactStatus.completed);
+      c
+          .read(pactListViewModelProvider.notifier)
+          .toggleFilter(PactStatus.stopped);
       final filtered = c.read(pactListViewModelProvider).filteredEntries;
       expect(filtered.length, 1);
       expect(filtered.first.pact.id, 'a1');

@@ -11,8 +11,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          pactRepositoryProvider
-              .overrideWithValue(InMemoryPactRepository()),
+          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository()),
           showupRepositoryProvider
               .overrideWithValue(InMemoryShowupRepository()),
         ],

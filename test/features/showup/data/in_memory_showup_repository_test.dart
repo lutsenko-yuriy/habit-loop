@@ -136,7 +136,8 @@ void main() {
     });
 
     test('updateShowup replaces existing showup by id', () async {
-      final updated = showupMar28.copyWith(status: ShowupStatus.done, note: 'Did it!');
+      final updated =
+          showupMar28.copyWith(status: ShowupStatus.done, note: 'Did it!');
       await repo.updateShowup(updated);
 
       final result = await repo.getShowupsForDate(DateTime(2026, 3, 28));

@@ -142,7 +142,8 @@ class _ShowupDetailContent extends StatelessWidget {
         const SizedBox(height: 16),
 
         // Info cards
-        _InfoRow(label: l10n.showupDetailScheduledAt,
+        _InfoRow(
+            label: l10n.showupDetailScheduledAt,
             value: '$scheduledDate  $scheduledTime'),
         const SizedBox(height: 8),
         _InfoRow(
@@ -188,7 +189,8 @@ class _ShowupDetailContent extends StatelessWidget {
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: state.isSaving ? null : onMarkFailed,
-            style: OutlinedButton.styleFrom(foregroundColor: theme.colorScheme.error),
+            style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.error),
             child: Text(l10n.markFailed),
           ),
           const SizedBox(height: 16),
@@ -246,16 +248,16 @@ class _ShowupDetailContent extends StatelessWidget {
   }
 
   Color _statusChipBg(ShowupStatus status, ColorScheme cs) => switch (status) {
-    ShowupStatus.pending => cs.surfaceContainerHighest,
-    ShowupStatus.done => cs.secondaryContainer,
-    ShowupStatus.failed => cs.errorContainer,
-  };
+        ShowupStatus.pending => cs.surfaceContainerHighest,
+        ShowupStatus.done => cs.secondaryContainer,
+        ShowupStatus.failed => cs.errorContainer,
+      };
 
   Color _statusChipFg(ShowupStatus status, ColorScheme cs) => switch (status) {
-    ShowupStatus.pending => cs.onSurfaceVariant,
-    ShowupStatus.done => cs.onSecondaryContainer,
-    ShowupStatus.failed => cs.onErrorContainer,
-  };
+        ShowupStatus.pending => cs.onSurfaceVariant,
+        ShowupStatus.done => cs.onSecondaryContainer,
+        ShowupStatus.failed => cs.onErrorContainer,
+      };
 }
 
 class _InfoRow extends StatelessWidget {

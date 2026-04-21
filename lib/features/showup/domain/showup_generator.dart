@@ -50,8 +50,7 @@ class ShowupGenerator {
     required DateTime to,
   }) {
     // Clamp the effective range to the pact boundaries.
-    final effectiveFrom =
-        from.isBefore(pact.startDate) ? pact.startDate : from;
+    final effectiveFrom = from.isBefore(pact.startDate) ? pact.startDate : from;
     final effectiveTo = to.isAfter(pact.endDate) ? pact.endDate : to;
 
     return _generateInRange(
@@ -118,7 +117,8 @@ class ShowupGenerator {
       final currentSeq = seq++;
       if (_isWithinRange(scheduledAt, effectiveFrom, effectiveTo) &&
           filter(scheduledAt)) {
-        result.add(_showup(pact: pact, scheduledAt: scheduledAt, seq: currentSeq));
+        result.add(
+            _showup(pact: pact, scheduledAt: scheduledAt, seq: currentSeq));
       }
     }
 

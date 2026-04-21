@@ -69,11 +69,11 @@ final class PactStoppedEvent extends AnalyticsEvent {
 
   @override
   Map<String, Object?> toParameters() => {
-    'days_active': daysActive,
-    'total_showups_done': totalShowupsDone,
-    'total_showups_failed': totalShowupsFailed,
-    'total_showups_remaining': totalShowupsRemaining,
-  };
+        'days_active': daysActive,
+        'total_showups_done': totalShowupsDone,
+        'total_showups_failed': totalShowupsFailed,
+        'total_showups_remaining': totalShowupsRemaining,
+      };
 }
 
 /// Screen identifier for the pact creation wizard.

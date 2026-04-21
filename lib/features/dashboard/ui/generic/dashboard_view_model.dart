@@ -39,7 +39,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
     final showupRepo = ref.read(showupRepositoryProvider);
 
     final allPacts = await pactRepo.getAllPacts();
-    final activePacts = allPacts.where((p) => p.status == PactStatus.active).toList();
+    final activePacts =
+        allPacts.where((p) => p.status == PactStatus.active).toList();
     final pactNames = {for (final p in allPacts) p.id: p.habitName};
     final activePactIds = {for (final p in activePacts) p.id};
 
@@ -78,7 +79,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
     if (allPacts.isNotEmpty) {
       DateTime? earliestStart;
       for (final p in allPacts) {
-        final start = DateTime(p.startDate.year, p.startDate.month, p.startDate.day);
+        final start =
+            DateTime(p.startDate.year, p.startDate.month, p.startDate.day);
         if (earliestStart == null || start.isBefore(earliestStart)) {
           earliestStart = start;
         }
@@ -92,13 +94,17 @@ class DashboardViewModel extends Notifier<DashboardState> {
     // -----------------------------------------------------------------------
     // Build the 7-day strip starting from today - computedTodayIndex.
     // -----------------------------------------------------------------------
-    final stripStart = DateTime(todayNorm.year, todayNorm.month, todayNorm.day - computedTodayIndex);
-    final stripEnd = DateTime(todayNorm.year, todayNorm.month, todayNorm.day + (6 - computedTodayIndex));
+    final stripStart = DateTime(
+        todayNorm.year, todayNorm.month, todayNorm.day - computedTodayIndex);
+    final stripEnd = DateTime(todayNorm.year, todayNorm.month,
+        todayNorm.day + (6 - computedTodayIndex));
 
-    final showups = await showupRepo.getShowupsForDateRange(stripStart, stripEnd);
+    final showups =
+        await showupRepo.getShowupsForDateRange(stripStart, stripEnd);
 
     final days = List.generate(7, (i) {
-      final date = DateTime(stripStart.year, stripStart.month, stripStart.day + i);
+      final date =
+          DateTime(stripStart.year, stripStart.month, stripStart.day + i);
       final dayShowups = showups
           .where((s) =>
               _sameDay(s.scheduledAt, date) && activePactIds.contains(s.pactId))

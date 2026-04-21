@@ -24,7 +24,9 @@ class CommitmentStepIos extends StatelessWidget {
     final s = state.schedule;
     if (s == null) return '';
     if (s is DailySchedule) {
-      final t = TimeOfDay(hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60).format(context);
+      final t = TimeOfDay(
+              hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60)
+          .format(context);
       return '${l10n.scheduleDaily} @ $t';
     }
     if (s is WeekdaySchedule) {

@@ -98,7 +98,8 @@ void main() {
         // April 2054 (same weekday structure as April 2026): Mon=6,13,20,27 / Wed=1,8,15,22,29
         final pact = _pact(
           schedule: const WeekdaySchedule(entries: [
-            WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
+            WeekdayEntry(
+                weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
             WeekdayEntry(
                 weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
           ]),
@@ -111,7 +112,7 @@ void main() {
         // April 1=Wed, 6=Mon, 8=Wed, 13=Mon
         expect(showups.length, 4);
         expect(showups[0].scheduledAt, DateTime(2054, 4, 1, 18, 0)); // Wed
-        expect(showups[1].scheduledAt, DateTime(2054, 4, 6, 6, 0));  // Mon
+        expect(showups[1].scheduledAt, DateTime(2054, 4, 6, 6, 0)); // Mon
         expect(showups[2].scheduledAt, DateTime(2054, 4, 8, 18, 0)); // Wed
         expect(showups[3].scheduledAt, DateTime(2054, 4, 13, 6, 0)); // Mon
       });
@@ -120,7 +121,8 @@ void main() {
         // Only Sunday, but range is Mon-Fri (April 6-10, 2054)
         final pact = _pact(
           schedule: const WeekdaySchedule(entries: [
-            WeekdayEntry(weekday: DateTime.sunday, timeOfDay: Duration(hours: 9)),
+            WeekdayEntry(
+                weekday: DateTime.sunday, timeOfDay: Duration(hours: 9)),
           ]),
           startDate: DateTime(2054, 4, 6),
           endDate: DateTime(2054, 4, 10),
@@ -267,7 +269,8 @@ void main() {
     });
 
     group('cutoff filtering', () {
-      test('skips showup when scheduledAt - reminderOffset is already past', () {
+      test('skips showup when scheduledAt - reminderOffset is already past',
+          () {
         // scheduledAt = 10 days from now, reminderOffset = 20 days
         // → cutoff = 10 days ago (past) → filtered
         final now = DateTime.now();
@@ -283,7 +286,8 @@ void main() {
         expect(showups, isEmpty);
       });
 
-      test('includes showup when scheduledAt - reminderOffset is in the future', () {
+      test('includes showup when scheduledAt - reminderOffset is in the future',
+          () {
         // scheduledAt = 30 days from now, reminderOffset = 5 days
         // → cutoff = 25 days from now (future) → included
         final now = DateTime.now();
@@ -341,7 +345,8 @@ void main() {
           expect(showups[2].scheduledAt, DateTime(2054, 4, 7, 7, 0));
         });
 
-        test('window clamped to pact boundaries — window starts before pact', () {
+        test('window clamped to pact boundaries — window starts before pact',
+            () {
           final pact = _pact(
             schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
             startDate: DateTime(2054, 4, 5),
@@ -379,7 +384,8 @@ void main() {
           expect(showups.last.scheduledAt, DateTime(2054, 4, 10, 8, 0));
         });
 
-        test('returns empty list when window is entirely outside pact range', () {
+        test('returns empty list when window is entirely outside pact range',
+            () {
           final pact = _pact(
             schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
             startDate: DateTime(2054, 4, 1),
@@ -408,10 +414,13 @@ void main() {
             to: DateTime(2054, 4, 3),
           );
 
-          expect(showups.every((s) => s.status == ShowupStatus.pending), isTrue);
+          expect(
+              showups.every((s) => s.status == ShowupStatus.pending), isTrue);
         });
 
-        test('IDs are deterministic — regenerating the same window yields same IDs', () {
+        test(
+            'IDs are deterministic — regenerating the same window yields same IDs',
+            () {
           final pact = _pact(
             schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
             startDate: DateTime(2054, 4, 1),
@@ -433,7 +442,8 @@ void main() {
               equals(second.map((s) => s.id).toList()));
         });
 
-        test('IDs from overlapping windows are consistent with full generate()', () {
+        test('IDs from overlapping windows are consistent with full generate()',
+            () {
           // generateWindow IDs for a given date must match what generate() produces
           // for the same date (so we can safely deduplicate by ID in the service).
           final pact = _pact(
@@ -560,7 +570,9 @@ void main() {
     // -------------------------------------------------------------------------
 
     group('countTotal', () {
-      test('equals the number of showups generate() produces for daily schedule', () {
+      test(
+          'equals the number of showups generate() produces for daily schedule',
+          () {
         final pact = _pact(
           schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
           startDate: DateTime(2054, 4, 1),
@@ -573,7 +585,9 @@ void main() {
         expect(count, generated.length);
       });
 
-      test('equals the number of showups generate() produces for weekday schedule', () {
+      test(
+          'equals the number of showups generate() produces for weekday schedule',
+          () {
         // Mon + Wed, April 2054 (30 days): 4 Mondays + 5 Wednesdays = 9 total
         final pact = _pact(
           schedule: const WeekdaySchedule(entries: [
@@ -592,7 +606,9 @@ void main() {
         expect(count, generated.length);
       });
 
-      test('equals the number of showups generate() produces for monthly-by-weekday', () {
+      test(
+          'equals the number of showups generate() produces for monthly-by-weekday',
+          () {
         final pact = _pact(
           schedule: const MonthlyByWeekdaySchedule(entries: [
             MonthlyWeekdayEntry(
@@ -611,7 +627,9 @@ void main() {
         expect(count, generated.length);
       });
 
-      test('equals the number of showups generate() produces for monthly-by-date', () {
+      test(
+          'equals the number of showups generate() produces for monthly-by-date',
+          () {
         final pact = _pact(
           schedule: const MonthlyByDateSchedule(entries: [
             MonthlyDateEntry(dayOfMonth: 31, timeOfDay: Duration(hours: 8)),
@@ -658,7 +676,9 @@ void main() {
         expect(count, windowShowups.length);
       });
 
-      test('countTotal is not affected by reminderOffset (counts all scheduled slots)', () {
+      test(
+          'countTotal is not affected by reminderOffset (counts all scheduled slots)',
+          () {
         // countTotal should count all schedule slots regardless of reminder cutoff.
         // This is important so PactStats can display total even when generate()
         // skips past showups.
@@ -666,7 +686,8 @@ void main() {
           schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
           startDate: DateTime(2054, 4, 1),
           endDate: DateTime(2054, 4, 3),
-          reminderOffset: const Duration(days: 999), // would filter all in generate()
+          reminderOffset:
+              const Duration(days: 999), // would filter all in generate()
         );
 
         final count = ShowupGenerator.countTotal(pact);
@@ -675,7 +696,9 @@ void main() {
         expect(count, 3);
       });
 
-      test('countTotal respects createdAt — excludes slots before pact was created', () {
+      test(
+          'countTotal respects createdAt — excludes slots before pact was created',
+          () {
         // A pact starting Apr 1 but created at 22:00 on Apr 1 must not count
         // the 08:00 slot that was never reachable.
         final pact = Pact(

@@ -68,7 +68,8 @@ void main() {
       expect(readState().startDate, newDate);
     });
 
-    test('setStartDate normalizes to midnight when date has a time component', () {
+    test('setStartDate normalizes to midnight when date has a time component',
+        () {
       // Date pickers on some platforms return a DateTime with a time component.
       // Without normalization startDate would carry the time into analytics
       // (durationDays under-counts) and into the showup generation (daysActive
@@ -160,8 +161,7 @@ void main() {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(
-          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
       await vm.submit();
@@ -190,8 +190,7 @@ void main() {
       vm.setHabitName('Jog');
       vm.setShowupDuration(const Duration(minutes: 30));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(
-          const DailySchedule(timeOfDay: Duration(hours: 6)));
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 6)));
       vm.setReminderOffset(const Duration(minutes: 15));
       vm.setCommitmentAccepted(true);
 
@@ -207,8 +206,7 @@ void main() {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(
-          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
       await vm.submit();
@@ -233,7 +231,8 @@ void main() {
         isTrue,
       );
       // All showups must fall within the 11-day window
-      final windowEnd = today.add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
+      final windowEnd = today
+          .add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
       expect(
         showups.every((s) => !s.scheduledAt.isAfter(windowEnd)),
         isTrue,
@@ -283,8 +282,7 @@ void main() {
       );
       addTearDown(failingContainer.dispose);
 
-      final vm =
-          failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -313,8 +311,7 @@ void main() {
       );
       addTearDown(failingContainer.dispose);
 
-      final vm =
-          failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -341,8 +338,7 @@ void main() {
       );
       addTearDown(failingContainer.dispose);
 
-      final vm =
-          failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -371,8 +367,7 @@ void main() {
       );
       addTearDown(failingContainer.dispose);
 
-      final vm =
-          failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -412,8 +407,7 @@ void main() {
       );
       addTearDown(eveningContainer.dispose);
 
-      final vm =
-          eveningContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = eveningContainer.read(pactCreationViewModelProvider.notifier);
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
@@ -429,13 +423,15 @@ void main() {
       expect(
         showups.any((s) => s.scheduledAt == DateTime(2054, 3, 30, 8, 0)),
         isFalse,
-        reason: 'Past-due showup for today should not be saved at pact creation',
+        reason:
+            'Past-due showup for today should not be saved at pact creation',
       );
       // Tomorrow's 8am must be the first saved showup.
       expect(
         showups.any((s) => s.scheduledAt == DateTime(2054, 3, 31, 8, 0)),
         isTrue,
-        reason: 'First showup should be tomorrow since today\'s slot already passed',
+        reason:
+            'First showup should be tomorrow since today\'s slot already passed',
       );
     });
   });
@@ -456,31 +452,38 @@ void main() {
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider
               .overrideWithValue(pactRepository ?? InMemoryPactRepository()),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(
+              showupRepository ?? InMemoryShowupRepository()),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
     }
 
-    void setUpValidState(PactCreationViewModel vm, {ScheduleType scheduleType = ScheduleType.daily}) {
+    void setUpValidState(PactCreationViewModel vm,
+        {ScheduleType scheduleType = ScheduleType.daily}) {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(scheduleType);
       if (scheduleType == ScheduleType.daily) {
         vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       } else if (scheduleType == ScheduleType.weekday) {
-        vm.setSchedule(const WeekdaySchedule(entries: [WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))]));
+        vm.setSchedule(const WeekdaySchedule(entries: [
+          WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))
+        ]));
       } else {
-        vm.setSchedule(const MonthlyByDateSchedule(entries: [MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))]));
+        vm.setSchedule(const MonthlyByDateSchedule(entries: [
+          MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))
+        ]));
       }
       vm.setCommitmentAccepted(true);
     }
 
-    test('submit fires PactCreatedEvent with correct properties on success', () async {
+    test('submit fires PactCreatedEvent with correct properties on success',
+        () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
+      final c = makeAnalyticsContainer(
+          pactRepository: pactRepo, showupRepository: showupRepo);
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -502,14 +505,18 @@ void main() {
       );
       expect(pactCreatedEvent.showupDurationMinutes, 10);
       expect(pactCreatedEvent.reminderOffsetMinutes, isNull);
-      expect(pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
+      expect(
+          pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
       expect(pact.stats?.showupsRemaining, pactCreatedEvent.showupsExpected);
     });
 
-    test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact', () async {
+    test(
+        'submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
+        () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
+      final c = makeAnalyticsContainer(
+          pactRepository: pactRepo, showupRepository: showupRepo);
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -521,7 +528,8 @@ void main() {
       expect(event.showupsExpected, event.durationDays);
     });
 
-    test('duration_days is correct when pact is created in the evening', () async {
+    test('duration_days is correct when pact is created in the evening',
+        () async {
       // Without normalization: startDate = 2054-03-30T22:00, endDate = 2054-09-30T00:00
       // difference.inDays = 183, +1 = 184 (wrong; should be 185)
       // After fix: startDate = 2054-03-30T00:00 → difference.inDays = 184, +1 = 185 (correct)
@@ -532,14 +540,16 @@ void main() {
         overrides: [
           pactCreationTodayProvider.overrideWithValue(eveningNow),
           pactCreationRepositoryProvider.overrideWithValue(localPactRepo),
-          pactCreationShowupRepositoryProvider.overrideWithValue(localShowupRepo),
+          pactCreationShowupRepositoryProvider
+              .overrideWithValue(localShowupRepo),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
-      setUpValidState(vm); // daily at 7am — all slots filtered since 7:00 < 22:00 createdAt
+      setUpValidState(
+          vm); // daily at 7am — all slots filtered since 7:00 < 22:00 createdAt
       await vm.submit();
 
       final pacts = await localPactRepo.getActivePacts();
@@ -557,7 +567,8 @@ void main() {
           reason: 'Mar 30 → Sep 30 inclusive = 185 calendar days');
     });
 
-    test('submit fires PactCreatedEvent with reminder offset when reminder set', () async {
+    test('submit fires PactCreatedEvent with reminder offset when reminder set',
+        () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -571,7 +582,9 @@ void main() {
       expect(event.reminderOffsetMinutes, 15);
     });
 
-    test('submit fires PactCreatedEvent with schedule_type weekly for weekday schedule', () async {
+    test(
+        'submit fires PactCreatedEvent with schedule_type weekly for weekday schedule',
+        () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -584,7 +597,9 @@ void main() {
       expect(event.scheduleType, 'weekly');
     });
 
-    test('submit fires PactCreatedEvent with schedule_type monthly for monthly schedule', () async {
+    test(
+        'submit fires PactCreatedEvent with schedule_type monthly for monthly schedule',
+        () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -610,7 +625,8 @@ void main() {
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
 
-    test('submit does NOT fire analytics event when saveShowups fails', () async {
+    test('submit does NOT fire analytics event when saveShowups fails',
+        () async {
       final c = makeAnalyticsContainer(
         showupRepository: _AlwaysThrowingShowupRepository(),
       );
@@ -666,7 +682,8 @@ void main() {
       expect(readFailingState().submitError, isNotNull);
     });
 
-    test('submitError is cleared at the start of a new submit attempt', () async {
+    test('submitError is cleared at the start of a new submit attempt',
+        () async {
       setUpValidState(readFailingVM());
       await readFailingVM().submit();
       expect(readFailingState().submitError, isNotNull);
@@ -715,7 +732,8 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
 
   @override
   Future<List<Showup>> getShowupsForDateRange(
-      DateTime start, DateTime end) async => [];
+          DateTime start, DateTime end) async =>
+      [];
 
   @override
   Future<Showup?> getShowupById(String id) async => null;

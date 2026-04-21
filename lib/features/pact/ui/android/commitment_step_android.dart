@@ -23,12 +23,17 @@ class CommitmentStepAndroid extends StatelessWidget {
     final s = state.schedule;
     if (s == null) return '';
     if (s is DailySchedule) {
-      final t = TimeOfDay(hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60).format(context);
+      final t = TimeOfDay(
+              hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60)
+          .format(context);
       return '${l10n.scheduleDaily} @ $t';
     }
-    if (s is WeekdaySchedule) return '${l10n.scheduleWeekday} (${s.entries.length})';
-    if (s is MonthlyByWeekdaySchedule) return '${l10n.scheduleMonthlyByWeekday} (${s.entries.length})';
-    if (s is MonthlyByDateSchedule) return '${l10n.scheduleMonthlyByDate} (${s.entries.length})';
+    if (s is WeekdaySchedule)
+      return '${l10n.scheduleWeekday} (${s.entries.length})';
+    if (s is MonthlyByWeekdaySchedule)
+      return '${l10n.scheduleMonthlyByWeekday} (${s.entries.length})';
+    if (s is MonthlyByDateSchedule)
+      return '${l10n.scheduleMonthlyByDate} (${s.entries.length})';
     return '';
   }
 
@@ -58,13 +63,17 @@ class CommitmentStepAndroid extends StatelessWidget {
               _SummaryRow(label: l10n.summaryHabit, value: state.habitName),
               _SummaryRow(
                 label: l10n.summaryDuration,
-                value: '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
+                value:
+                    '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
               ),
               _SummaryRow(
                 label: l10n.summaryShowupDuration,
-                value: l10n.showupDurationMinutes(state.showupDuration?.inMinutes ?? 0),
+                value: l10n.showupDurationMinutes(
+                    state.showupDuration?.inMinutes ?? 0),
               ),
-              _SummaryRow(label: l10n.summarySchedule, value: _scheduleDescription(context)),
+              _SummaryRow(
+                  label: l10n.summarySchedule,
+                  value: _scheduleDescription(context)),
               _SummaryRow(label: l10n.summaryReminder, value: reminderText),
             ],
           ),

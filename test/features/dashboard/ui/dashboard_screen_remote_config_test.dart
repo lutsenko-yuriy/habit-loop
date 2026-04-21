@@ -68,7 +68,8 @@ void main() {
       );
       final pacts = List.generate(4, (i) => _buildPact('$i'));
 
-      await tester.pumpWidget(_buildApp(pacts: pacts, remoteConfig: remoteConfig));
+      await tester
+          .pumpWidget(_buildApp(pacts: pacts, remoteConfig: remoteConfig));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('create-pact-button')));
@@ -86,7 +87,8 @@ void main() {
       );
       final pacts = List.generate(3, (i) => _buildPact('$i'));
 
-      await tester.pumpWidget(_buildApp(pacts: pacts, remoteConfig: remoteConfig));
+      await tester
+          .pumpWidget(_buildApp(pacts: pacts, remoteConfig: remoteConfig));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('create-pact-button')));
@@ -105,7 +107,8 @@ void main() {
       );
       final pacts = List.generate(3, (i) => _buildPact('$i'));
 
-      await tester.pumpWidget(_buildApp(pacts: pacts, remoteConfig: remoteConfig));
+      await tester
+          .pumpWidget(_buildApp(pacts: pacts, remoteConfig: remoteConfig));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('create-pact-button')));

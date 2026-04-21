@@ -61,7 +61,9 @@ class _PactDetailContent extends StatelessWidget {
         '_PactDetailContent must only be shown after a successful load');
     if (pact == null || stats == null) return const SizedBox.shrink();
     final today = DateTime.now();
-    final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
+    final daysLeft = pact.endDate
+        .difference(DateTime(today.year, today.month, today.day))
+        .inDays;
 
     final statusText = switch (pact.status) {
       PactStatus.active => l10n.pactStatusActive,
@@ -78,7 +80,8 @@ class _PactDetailContent extends StatelessWidget {
             Expanded(
               child: Text(
                 pact.habitName,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ),
             Container(
@@ -105,20 +108,35 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone))),
+            Expanded(
+                child: _StatCard(
+                    label: l10n.statsDone,
+                    value: l10n.statsShowups(stats.showupsDone))),
             const SizedBox(width: 8),
-            Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
+            Expanded(
+                child: _StatCard(
+                    label: l10n.statsFailed,
+                    value: l10n.statsShowups(stats.showupsFailed))),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
             if (pact.status == PactStatus.active)
-              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
+              Expanded(
+                  child: _StatCard(
+                      label: l10n.statsRemaining,
+                      value: l10n.statsShowups(stats.showupsRemaining)))
             else if (pact.status == PactStatus.stopped)
-              Expanded(child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
+              Expanded(
+                  child: _StatCard(
+                      label: l10n.statsCancelled,
+                      value: l10n.statsShowups(stats.showupsRemaining))),
             if (pact.status != PactStatus.completed) const SizedBox(width: 8),
-            Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+            Expanded(
+                child: _StatCard(
+                    label: l10n.statsStreak,
+                    value: l10n.statsShowups(stats.currentStreak))),
           ],
         ),
         const SizedBox(height: 24),
@@ -129,7 +147,9 @@ class _PactDetailContent extends StatelessWidget {
         _DateRow(label: l10n.pactStartDate, date: pact.startDate),
         const SizedBox(height: 8),
         _DateRow(
-          label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
+          label: pact.status == PactStatus.active
+              ? l10n.pactEndDate
+              : l10n.pactEndedDate,
           date: pact.endDate,
         ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
@@ -165,14 +185,13 @@ class _PactDetailContent extends StatelessWidget {
             const SizedBox(height: 8),
           ],
           CupertinoButton(
-            onPressed: state.isStopping
-                ? null
-                : () => _showStopDialog(context),
+            onPressed: state.isStopping ? null : () => _showStopDialog(context),
             child: state.isStopping
                 ? const CupertinoActivityIndicator()
                 : Text(
                     l10n.stopPact,
-                    style: const TextStyle(color: CupertinoColors.destructiveRed),
+                    style:
+                        const TextStyle(color: CupertinoColors.destructiveRed),
                   ),
           ),
         ],
@@ -267,9 +286,13 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey)),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 12, color: CupertinoColors.systemGrey)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -294,7 +317,8 @@ class _DateRow extends StatelessWidget {
           Expanded(child: Text(label)),
           const SizedBox(width: 8),
           Text(
-            DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
+            DateFormat.yMd(Localizations.localeOf(context).toString())
+                .format(date),
             style: const TextStyle(color: CupertinoColors.systemGrey),
           ),
         ],

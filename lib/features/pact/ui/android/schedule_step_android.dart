@@ -43,7 +43,9 @@ class ScheduleStepAndroid extends StatelessWidget {
               : theme.colorScheme.surfaceContainerHighest,
           leading: Icon(
             isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant,
           ),
           title: Text(label),
           onTap: () => onScheduleTypeChanged(type),
@@ -136,25 +138,38 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
   String _weekdayName(int weekday) {
     final l10n = widget.l10n;
     switch (weekday) {
-      case 1: return l10n.weekdayMon;
-      case 2: return l10n.weekdayTue;
-      case 3: return l10n.weekdayWed;
-      case 4: return l10n.weekdayThu;
-      case 5: return l10n.weekdayFri;
-      case 6: return l10n.weekdaySat;
-      case 7: return l10n.weekdaySun;
-      default: return '';
+      case 1:
+        return l10n.weekdayMon;
+      case 2:
+        return l10n.weekdayTue;
+      case 3:
+        return l10n.weekdayWed;
+      case 4:
+        return l10n.weekdayThu;
+      case 5:
+        return l10n.weekdayFri;
+      case 6:
+        return l10n.weekdaySat;
+      case 7:
+        return l10n.weekdaySun;
+      default:
+        return '';
     }
   }
 
   String _occurrenceName(int occurrence) {
     final l10n = widget.l10n;
     switch (occurrence) {
-      case 1: return l10n.occurrenceFirst;
-      case 2: return l10n.occurrenceSecond;
-      case 3: return l10n.occurrenceThird;
-      case 4: return l10n.occurrenceFourth;
-      default: return '';
+      case 1:
+        return l10n.occurrenceFirst;
+      case 2:
+        return l10n.occurrenceSecond;
+      case 3:
+        return l10n.occurrenceThird;
+      case 4:
+        return l10n.occurrenceFourth;
+      default:
+        return '';
     }
   }
 
@@ -190,7 +205,8 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
           final t = await _pickTime(_dailyTime);
           if (t != null) {
             setState(() => _dailyTime = t);
-            widget.onScheduleChanged(DailySchedule(timeOfDay: _todToDuration(t)));
+            widget
+                .onScheduleChanged(DailySchedule(timeOfDay: _todToDuration(t)));
           }
         },
         child: Text(_dailyTime.format(context)),
@@ -378,8 +394,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
               value: entry.dayOfMonth,
               items: List.generate(
                 31,
-                (i) => DropdownMenuItem(
-                    value: i + 1, child: Text('${i + 1}')),
+                (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1}')),
               ),
               onChanged: (day) {
                 if (day == null) return;

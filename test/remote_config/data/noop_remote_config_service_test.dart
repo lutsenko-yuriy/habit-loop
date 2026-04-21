@@ -14,8 +14,7 @@ void main() {
       await expectLater(service.initialize(), completes);
     });
 
-    test('getInt returns the expected default from RemoteConfigDefaults',
-        () {
+    test('getInt returns the expected default from RemoteConfigDefaults', () {
       expect(
         service.getInt('max_active_pacts'),
         RemoteConfigDefaults.maxActivePacts,

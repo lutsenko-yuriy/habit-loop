@@ -59,9 +59,8 @@ final class FirebaseRemoteConfigService implements RemoteConfigService {
         fetchTimeout: !kReleaseMode
             ? const Duration(seconds: 10)
             : const Duration(minutes: 1),
-        minimumFetchInterval: !kReleaseMode
-            ? Duration.zero
-            : const Duration(hours: 12),
+        minimumFetchInterval:
+            !kReleaseMode ? Duration.zero : const Duration(hours: 12),
       );
       await _client.setDefaults(RemoteConfigDefaults.all);
       await _client.fetchAndActivate();

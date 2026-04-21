@@ -32,7 +32,8 @@ void main() {
   });
 
   group('ShowupGenerationService.ensureShowupsExist', () {
-    test('generates showups for the requested window when none exist', () async {
+    test('generates showups for the requested window when none exist',
+        () async {
       final pact = makePact(
         id: 'pact-1',
         startDate: DateTime(2026, 4, 1),
@@ -90,7 +91,8 @@ void main() {
       final stored = await repo.getShowupsForPact('pact-1');
       // Apr 1–9 = 9 unique showups.
       expect(stored.length, 9,
-          reason: 'Overlapping calls must not duplicate showups in the overlap');
+          reason:
+              'Overlapping calls must not duplicate showups in the overlap');
     });
 
     test('handles two separate pacts independently', () async {
@@ -190,7 +192,8 @@ void main() {
       expect(
         stored.any((s) => s.scheduledAt == DateTime(2026, 4, 1, 8, 0)),
         isFalse,
-        reason: 'Showup at 08:00 is before createdAt (22:00) and must be skipped',
+        reason:
+            'Showup at 08:00 is before createdAt (22:00) and must be skipped',
       );
       // April 2 onwards must be included (their 8am is after createdAt).
       expect(

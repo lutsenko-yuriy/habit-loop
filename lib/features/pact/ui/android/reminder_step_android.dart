@@ -60,9 +60,7 @@ class ReminderStepAndroid extends StatelessWidget {
                       .withValues(alpha: 0.08)
                   : Theme.of(context).colorScheme.surfaceContainerHighest,
               leading: Icon(
-                isSelected
-                    ? Icons.check_circle
-                    : Icons.radio_button_unchecked,
+                isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.onSurfaceVariant,

@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
-import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
+import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart'
+    show PactsPanel;
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';

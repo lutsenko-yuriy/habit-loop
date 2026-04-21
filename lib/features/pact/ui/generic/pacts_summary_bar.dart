@@ -95,7 +95,9 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     final state = ref.watch(pactListViewModelProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0) {
+    if (state.activeCount == 0 &&
+        state.doneCount == 0 &&
+        state.cancelledCount == 0) {
       return const SizedBox.shrink();
     }
 
@@ -121,7 +123,10 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+                color: Theme.of(context)
+                    .colorScheme
+                    .shadow
+                    .withValues(alpha: 0.15),
                 offset: const Offset(0, -4),
                 blurRadius: 12,
               ),
@@ -202,8 +207,8 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                       const SizedBox(width: 8),
                       FilterChip(
                         label: Text(l10n.filterDone),
-                        selected: state.activeFilters
-                            .contains(PactStatus.completed),
+                        selected:
+                            state.activeFilters.contains(PactStatus.completed),
                         onSelected: (_) => ref
                             .read(pactListViewModelProvider.notifier)
                             .toggleFilter(PactStatus.completed),
@@ -233,14 +238,16 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
               if (state.isLoading)
                 SliverFillRemaining(
                   child: Padding(
-                    padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
+                    padding: EdgeInsets.only(
+                        bottom: MediaQuery.viewPaddingOf(ctx).bottom),
                     child: const Center(child: CircularProgressIndicator()),
                   ),
                 )
               else if (entries.isEmpty)
                 SliverFillRemaining(
                   child: Padding(
-                    padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
+                    padding: EdgeInsets.only(
+                        bottom: MediaQuery.viewPaddingOf(ctx).bottom),
                     child: Center(child: Text(l10n.noPactsYet)),
                   ),
                 )

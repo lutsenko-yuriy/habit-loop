@@ -5,16 +5,15 @@ import 'package:habit_loop/crashlytics/domain/crashlytics_service.dart';
 /// Use in tests that need to assert on Crashlytics calls without touching Firebase.
 class FakeCrashlyticsService implements CrashlyticsService {
   final List<
-    ({
-      Object error,
-      StackTrace? stack,
-      bool fatal,
-      Iterable<Object> information,
-    })
-  > recordedErrors = [];
+      ({
+        Object error,
+        StackTrace? stack,
+        bool fatal,
+        Iterable<Object> information,
+      })> recordedErrors = [];
 
   final List<({FlutterErrorDetails details, bool fatal})>
-  recordedFlutterErrors = [];
+      recordedFlutterErrors = [];
 
   final List<String> logs = [];
 
