@@ -162,9 +162,8 @@ class _StepIndicator extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
-                color: index <= currentStep.index
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.surfaceContainerHighest,
+                color:
+                    index <= currentStep.index ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
               ),
             ),
           );

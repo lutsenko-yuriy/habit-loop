@@ -6,15 +6,12 @@ import 'package:habit_loop/features/showup/domain/showup_date_utils.dart';
 class InMemoryShowupRepository implements ShowupRepository {
   final List<Showup> _showups;
 
-  InMemoryShowupRepository([List<Showup>? showups])
-      : _showups = showups != null ? List.of(showups) : [];
+  InMemoryShowupRepository([List<Showup>? showups]) : _showups = showups != null ? List.of(showups) : [];
 
   @override
   Future<List<Showup>> getShowupsForDate(DateTime date) async {
     return _showups.where((s) {
-      return s.scheduledAt.year == date.year &&
-          s.scheduledAt.month == date.month &&
-          s.scheduledAt.day == date.day;
+      return s.scheduledAt.year == date.year && s.scheduledAt.month == date.month && s.scheduledAt.day == date.day;
     }).toList();
   }
 
@@ -26,8 +23,7 @@ class InMemoryShowupRepository implements ShowupRepository {
     final startDay = ShowupDateUtils.startOfDay(start);
     final endDay = ShowupDateUtils.endOfDay(end);
     return _showups.where((s) {
-      return !s.scheduledAt.isBefore(startDay) &&
-          s.scheduledAt.isBefore(endDay);
+      return !s.scheduledAt.isBefore(startDay) && s.scheduledAt.isBefore(endDay);
     }).toList();
   }
 

@@ -97,9 +97,7 @@ class PactStats {
     // `..sort(...)` is Dart's cascade operator: it calls sort() on the list
     // and returns the list itself (not the void return of sort), so we can
     // assign the sorted list in one expression.
-    final resolved = showups
-        .where((s) => s.status != ShowupStatus.pending)
-        .toList()
+    final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList()
       ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
     var streak = 0;

@@ -13,9 +13,7 @@ import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 void main() {
-  testWidgets(
-      'iOS dashboard uses scaffold color without custom home indicator affordances',
-      (tester) async {
+  testWidgets('iOS dashboard uses scaffold color without custom home indicator affordances', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -58,14 +56,9 @@ void main() {
 
     expect(scaffold.backgroundColor, theme.colorScheme.surface);
     expect(safeArea.bottom, isFalse);
-    expect(find.byKey(const Key('dashboard-ios-bottom-panel-safe-area-fill')),
-        findsNothing);
-    expect(
-        find.byKey(
-            const Key('dashboard-ios-bottom-panel-safe-area-ignore-pointer')),
-        findsNothing);
-    expect(find.byKey(const Key('dashboard-ios-home-gesture-reserve')),
-        findsNothing);
+    expect(find.byKey(const Key('dashboard-ios-bottom-panel-safe-area-fill')), findsNothing);
+    expect(find.byKey(const Key('dashboard-ios-bottom-panel-safe-area-ignore-pointer')), findsNothing);
+    expect(find.byKey(const Key('dashboard-ios-home-gesture-reserve')), findsNothing);
   });
 }
 

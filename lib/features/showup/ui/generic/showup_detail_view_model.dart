@@ -35,10 +35,8 @@ final showupDetailPactRepositoryProvider = Provider<PactRepository>((ref) {
 /// unbounded accumulation of one ViewModel instance per visited showup ID.
 /// [ShowupDetailScreen.initState] always calls [ShowupDetailViewModel.load] on
 /// entry, so re-creating the state on each visit is correct and safe.
-final showupDetailViewModelProvider = AutoDisposeNotifierProviderFamily<
-    ShowupDetailViewModel,
-    ShowupDetailState,
-    String>(ShowupDetailViewModel.new);
+final showupDetailViewModelProvider =
+    AutoDisposeNotifierProviderFamily<ShowupDetailViewModel, ShowupDetailState, String>(ShowupDetailViewModel.new);
 
 /// View model for the showup detail screen.
 ///
@@ -52,8 +50,7 @@ final showupDetailViewModelProvider = AutoDisposeNotifierProviderFamily<
 ///   the showup is already resolved.
 /// - [saveNote] persists a note regardless of showup status. An empty string
 ///   clears the note.
-class ShowupDetailViewModel
-    extends AutoDisposeFamilyNotifier<ShowupDetailState, String> {
+class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState, String> {
   @override
   ShowupDetailState build(String showupId) {
     return const ShowupDetailState();
@@ -155,10 +152,8 @@ class ShowupDetailViewModel
       // on an unexpected pending status is caught by the outer catch and
       // surfaced as markError rather than being swallowed.
       final AnalyticsEvent event = switch (newStatus) {
-        ShowupStatus.done =>
-          ShowupMarkedDoneEvent(pactId: updatedShowup.pactId),
-        ShowupStatus.failed =>
-          ShowupMarkedFailedEvent(pactId: updatedShowup.pactId),
+        ShowupStatus.done => ShowupMarkedDoneEvent(pactId: updatedShowup.pactId),
+        ShowupStatus.failed => ShowupMarkedFailedEvent(pactId: updatedShowup.pactId),
         ShowupStatus.pending => throw StateError('Unexpected pending status'),
       };
 
@@ -176,9 +171,7 @@ class ShowupDetailViewModel
     if (showup == null) return;
     state = state.copyWith(isSaving: true, clearNoteError: true);
     try {
-      final updatedShowup = note.isEmpty
-          ? showup.copyWith(clearNote: true)
-          : showup.copyWith(note: note);
+      final updatedShowup = note.isEmpty ? showup.copyWith(clearNote: true) : showup.copyWith(note: note);
       final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
       await showupRepo.updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);

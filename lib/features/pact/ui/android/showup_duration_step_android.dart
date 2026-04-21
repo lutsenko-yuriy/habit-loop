@@ -22,8 +22,7 @@ class ShowupDurationStepAndroid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         const SizedBox(height: 16),
-        Text(l10n.showupDurationStep,
-            style: Theme.of(context).textTheme.headlineSmall),
+        Text(l10n.showupDurationStep, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(l10n.showupDurationLabel),
         const SizedBox(height: 24),

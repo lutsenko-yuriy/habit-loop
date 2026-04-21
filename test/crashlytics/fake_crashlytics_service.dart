@@ -12,8 +12,7 @@ class FakeCrashlyticsService implements CrashlyticsService {
         Iterable<Object> information,
       })> recordedErrors = [];
 
-  final List<({FlutterErrorDetails details, bool fatal})>
-      recordedFlutterErrors = [];
+  final List<({FlutterErrorDetails details, bool fatal})> recordedFlutterErrors = [];
 
   final List<String> logs = [];
 

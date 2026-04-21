@@ -98,7 +98,7 @@ Never update `docs/BACKLOG.md` or `docs/CHANGELOG.md` — those are owned by the
 After all tests pass and the analyzer is clean, apply `dart format` in a **separate, formatting-only commit that precedes the functional commit in the branch history**:
 
 ```bash
-dart format lib/ test/
+dart format -l 120 lib/ test/
 ```
 
 If any files changed, stage only those files and commit with a `style:` prefix:
@@ -107,7 +107,7 @@ If any files changed, stage only those files and commit with a `style:` prefix:
 git commit -m "style: apply dart format (HAB-XX)"
 ```
 
-If no files changed, skip this step. Never mix formatting changes with functional changes in the same commit — keeping them separate makes the PR diff reviewable and ensures CI's `dart format --set-exit-if-changed` check always passes.
+If no files changed, skip this step. Never mix formatting changes with functional changes in the same commit — keeping them separate makes the PR diff reviewable and ensures CI's `dart format -l 120 --set-exit-if-changed` check always passes.
 
 ### 8. Commit
 

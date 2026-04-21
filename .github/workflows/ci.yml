@@ -48,7 +48,7 @@ jobs:
       - name: Check formatting
         run: |
           find lib/ test/ -name "*.dart" -not -name "firebase_options.dart" \
-            | sort | xargs dart format --set-exit-if-changed
+            | sort | xargs dart format -l 120 --set-exit-if-changed
       - run: flutter analyze
       - run: flutter test
 

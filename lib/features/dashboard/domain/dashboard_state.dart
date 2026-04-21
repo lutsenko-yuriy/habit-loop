@@ -21,8 +21,7 @@ class DashboardState {
     this.todayIndex = 3,
   });
 
-  List<Showup> get selectedDayShowups =>
-      calendarDays.isEmpty ? [] : calendarDays[selectedDayIndex].showups;
+  List<Showup> get selectedDayShowups => calendarDays.isEmpty ? [] : calendarDays[selectedDayIndex].showups;
 
   String habitName(String pactId) => pactNames[pactId] ?? pactId;
 

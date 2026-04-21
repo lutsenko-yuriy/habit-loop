@@ -1,10 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
-import 'package:flutter/material.dart'
-    show ColoredBox, Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show ColoredBox, Material, MaterialType, Theme;
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
-import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart'
-    show PactsPanel;
+import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -30,9 +28,8 @@ class DashboardPageIos extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return CupertinoPageScaffold(
-      backgroundColor: hasPacts
-          ? Theme.of(context).colorScheme.surface
-          : CupertinoColors.systemBackground.resolveFrom(context),
+      backgroundColor:
+          hasPacts ? Theme.of(context).colorScheme.surface : CupertinoColors.systemBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
         middle: Text(l10n.dashboardTitle),
         trailing: hasPacts
@@ -177,9 +174,7 @@ class _CalendarStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final today = state.calendarDays.isNotEmpty
-        ? state.calendarDays[state.todayIndex].date
-        : DateTime.now();
+    final today = state.calendarDays.isNotEmpty ? state.calendarDays[state.todayIndex].date : DateTime.now();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -187,9 +182,8 @@ class _CalendarStrip extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(state.calendarDays.length, (index) {
           final entry = state.calendarDays[index];
-          final isToday = entry.date.day == today.day &&
-              entry.date.month == today.month &&
-              entry.date.year == today.year;
+          final isToday =
+              entry.date.day == today.day && entry.date.month == today.month && entry.date.year == today.year;
           final isSelected = index == state.selectedDayIndex;
 
           return GestureDetector(
@@ -202,9 +196,7 @@ class _CalendarStrip extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isSelected
-                        ? CupertinoTheme.of(context).primaryColor
-                        : null,
+                    color: isSelected ? CupertinoTheme.of(context).primaryColor : null,
                     border: isToday && !isSelected
                         ? Border.all(
                             color: CupertinoTheme.of(context).primaryColor,
@@ -232,8 +224,7 @@ class _CalendarStrip extends StatelessWidget {
   }
 
   Widget _buildDots(List<Showup> showups, DateTime date) {
-    final dateKey =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     if (showups.isEmpty) return const SizedBox.shrink();
     if (showups.length >= 4) {
       var done = 0, failed = 0, pending = 0;

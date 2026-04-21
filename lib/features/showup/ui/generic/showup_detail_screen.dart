@@ -30,17 +30,13 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
     unawaited(
       Future.microtask(() {
         unawaited(
-          ref
-              .read(analyticsServiceProvider)
-              .logScreenView(const ShowupDetailAnalyticsScreen()),
+          ref.read(analyticsServiceProvider).logScreenView(const ShowupDetailAnalyticsScreen()),
         );
         // Invalidate the now provider so load() always samples the real current
         // time, not a cached value from a previous navigation or app start.
         ref.invalidate(showupDetailNowProvider);
         unawaited(
-          ref
-              .read(showupDetailViewModelProvider(widget.showupId).notifier)
-              .load(),
+          ref.read(showupDetailViewModelProvider(widget.showupId).notifier).load(),
         );
       }),
     );
@@ -51,21 +47,15 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
     final state = ref.watch(showupDetailViewModelProvider(widget.showupId));
 
     Future<void> onMarkDone() async {
-      await ref
-          .read(showupDetailViewModelProvider(widget.showupId).notifier)
-          .markDone();
+      await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).markDone();
     }
 
     Future<void> onMarkFailed() async {
-      await ref
-          .read(showupDetailViewModelProvider(widget.showupId).notifier)
-          .markFailed();
+      await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).markFailed();
     }
 
     Future<void> onSaveNote(String note) async {
-      await ref
-          .read(showupDetailViewModelProvider(widget.showupId).notifier)
-          .saveNote(note);
+      await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).saveNote(note);
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {

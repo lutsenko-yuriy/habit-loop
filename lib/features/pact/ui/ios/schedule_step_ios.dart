@@ -39,9 +39,7 @@ class ScheduleStepIos extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? CupertinoTheme.of(context)
-                      .primaryColor
-                      .withValues(alpha: 0.1)
+                  ? CupertinoTheme.of(context).primaryColor.withValues(alpha: 0.1)
                   : CupertinoColors.tertiarySystemFill.resolveFrom(context),
               borderRadius: BorderRadius.circular(10),
               border: isSelected
@@ -54,12 +52,8 @@ class ScheduleStepIos extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  isSelected
-                      ? CupertinoIcons.check_mark_circled_solid
-                      : CupertinoIcons.circle,
-                  color: isSelected
-                      ? CupertinoTheme.of(context).primaryColor
-                      : CupertinoColors.systemGrey,
+                  isSelected ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
+                  color: isSelected ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
                   size: 22,
                 ),
                 const SizedBox(width: 12),
@@ -143,8 +137,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
       _monthlyWeekdayEntries = List.of(schedule.entries);
     } else {
       _monthlyWeekdayEntries = [
-        const MonthlyWeekdayEntry(
-            occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
+        const MonthlyWeekdayEntry(occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
       ];
     }
     if (schedule is MonthlyByDateSchedule) {
@@ -288,11 +281,9 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                     weekdayName: _weekdayName,
                     onChanged: (wd) {
                       setState(() {
-                        _weekdayEntries[index] = WeekdayEntry(
-                            weekday: wd, timeOfDay: entry.timeOfDay);
+                        _weekdayEntries[index] = WeekdayEntry(weekday: wd, timeOfDay: entry.timeOfDay);
                       });
-                      widget.onScheduleChanged(
-                          WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                      widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
                     },
                   ),
                 ),
@@ -301,22 +292,18 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                   time: entry.timeOfDay,
                   onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                     setState(() {
-                      _weekdayEntries[index] =
-                          WeekdayEntry(weekday: entry.weekday, timeOfDay: t);
+                      _weekdayEntries[index] = WeekdayEntry(weekday: entry.weekday, timeOfDay: t);
                     });
-                    widget.onScheduleChanged(
-                        WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                    widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
                   }),
                 ),
                 if (_weekdayEntries.length > 1)
                   CupertinoButton(
                     padding: const EdgeInsets.only(left: 4),
-                    child: const Icon(CupertinoIcons.minus_circle,
-                        color: CupertinoColors.destructiveRed, size: 22),
+                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
                     onPressed: () {
                       setState(() => _weekdayEntries.removeAt(index));
-                      widget.onScheduleChanged(
-                          WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                      widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
                     },
                   ),
               ],
@@ -327,8 +314,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
           padding: EdgeInsets.zero,
           onPressed: () {
             setState(() {
-              _weekdayEntries.add(const WeekdayEntry(
-                  weekday: 1, timeOfDay: Duration(hours: 8)));
+              _weekdayEntries.add(const WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           child: Row(
@@ -372,8 +358,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                           timeOfDay: entry.timeOfDay,
                         );
                       });
-                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                          entries: List.of(_monthlyWeekdayEntries)));
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
                     },
                   ),
                 ),
@@ -389,8 +374,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                           timeOfDay: entry.timeOfDay,
                         );
                       });
-                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                          entries: List.of(_monthlyWeekdayEntries)));
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
                     },
                   ),
                 ),
@@ -404,20 +388,17 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                         timeOfDay: t,
                       );
                     });
-                    widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                        entries: List.of(_monthlyWeekdayEntries)));
+                    widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
                   }),
                 ),
                 const Spacer(),
                 if (_monthlyWeekdayEntries.length > 1)
                   CupertinoButton(
                     padding: EdgeInsets.zero,
-                    child: const Icon(CupertinoIcons.minus_circle,
-                        color: CupertinoColors.destructiveRed, size: 22),
+                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
                     onPressed: () {
                       setState(() => _monthlyWeekdayEntries.removeAt(index));
-                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                          entries: List.of(_monthlyWeekdayEntries)));
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
                     },
                   ),
               ],
@@ -428,8 +409,8 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
           padding: EdgeInsets.zero,
           onPressed: () {
             setState(() {
-              _monthlyWeekdayEntries.add(const MonthlyWeekdayEntry(
-                  occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)));
+              _monthlyWeekdayEntries
+                  .add(const MonthlyWeekdayEntry(occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           child: Row(
@@ -462,11 +443,9 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                     label: widget.l10n.dayOfMonthLabel,
                     onChanged: (day) {
                       setState(() {
-                        _monthlyDateEntries[index] = MonthlyDateEntry(
-                            dayOfMonth: day, timeOfDay: entry.timeOfDay);
+                        _monthlyDateEntries[index] = MonthlyDateEntry(dayOfMonth: day, timeOfDay: entry.timeOfDay);
                       });
-                      widget.onScheduleChanged(MonthlyByDateSchedule(
-                          entries: List.of(_monthlyDateEntries)));
+                      widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
                     },
                   ),
                 ),
@@ -475,22 +454,18 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                   time: entry.timeOfDay,
                   onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                     setState(() {
-                      _monthlyDateEntries[index] = MonthlyDateEntry(
-                          dayOfMonth: entry.dayOfMonth, timeOfDay: t);
+                      _monthlyDateEntries[index] = MonthlyDateEntry(dayOfMonth: entry.dayOfMonth, timeOfDay: t);
                     });
-                    widget.onScheduleChanged(MonthlyByDateSchedule(
-                        entries: List.of(_monthlyDateEntries)));
+                    widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
                   }),
                 ),
                 if (_monthlyDateEntries.length > 1)
                   CupertinoButton(
                     padding: EdgeInsets.zero,
-                    child: const Icon(CupertinoIcons.minus_circle,
-                        color: CupertinoColors.destructiveRed, size: 22),
+                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
                     onPressed: () {
                       setState(() => _monthlyDateEntries.removeAt(index));
-                      widget.onScheduleChanged(MonthlyByDateSchedule(
-                          entries: List.of(_monthlyDateEntries)));
+                      widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
                     },
                   ),
               ],
@@ -501,8 +476,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
           padding: EdgeInsets.zero,
           onPressed: () {
             setState(() {
-              _monthlyDateEntries.add(const MonthlyDateEntry(
-                  dayOfMonth: 1, timeOfDay: Duration(hours: 8)));
+              _monthlyDateEntries.add(const MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           child: Row(
@@ -545,8 +519,7 @@ class _TimeRow extends StatelessWidget {
           children: [
             Text(label),
             Text(
-              TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60)
-                  .format(context),
+              TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60).format(context),
               style: TextStyle(
                 color: CupertinoTheme.of(context).primaryColor,
               ),
@@ -578,8 +551,7 @@ class _TimeChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60)
-              .format(context),
+          TimeOfDay(hour: time.inHours, minute: time.inMinutes % 60).format(context),
           style: TextStyle(
             color: CupertinoTheme.of(context).primaryColor,
           ),
@@ -625,8 +597,7 @@ class _DropdownWeekday extends StatelessWidget {
                   SizedBox(
                     height: 216,
                     child: CupertinoPicker(
-                      scrollController:
-                          FixedExtentScrollController(initialItem: value - 1),
+                      scrollController: FixedExtentScrollController(initialItem: value - 1),
                       itemExtent: 40,
                       onSelectedItemChanged: (i) => onChanged(i + 1),
                       children: List.generate(
@@ -683,8 +654,7 @@ class _DropdownOccurrence extends StatelessWidget {
                   SizedBox(
                     height: 216,
                     child: CupertinoPicker(
-                      scrollController:
-                          FixedExtentScrollController(initialItem: value - 1),
+                      scrollController: FixedExtentScrollController(initialItem: value - 1),
                       itemExtent: 40,
                       onSelectedItemChanged: (i) => onChanged(i + 1),
                       children: List.generate(
@@ -740,8 +710,7 @@ class _DayOfMonthPicker extends StatelessWidget {
                   SizedBox(
                     height: 216,
                     child: CupertinoPicker(
-                      scrollController:
-                          FixedExtentScrollController(initialItem: value - 1),
+                      scrollController: FixedExtentScrollController(initialItem: value - 1),
                       itemExtent: 40,
                       onSelectedItemChanged: (index) => onChanged(index + 1),
                       children: List.generate(

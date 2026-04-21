@@ -33,8 +33,7 @@ Widget _buildApp({
       todayProvider.overrideWithValue(_today),
       showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
       showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
-      if (analyticsService != null)
-        analyticsServiceProvider.overrideWithValue(analyticsService),
+      if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
     ],
     child: const MaterialApp(
       localizationsDelegates: [
@@ -104,8 +103,7 @@ void main() {
             endDate: DateTime(2026, 9, 1),
             showupDuration: const Duration(minutes: 10),
             schedule: const WeekdaySchedule(entries: [
-              WeekdayEntry(
-                  weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+              WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
             ]),
             status: PactStatus.active,
           ),
@@ -137,8 +135,7 @@ void main() {
             endDate: DateTime(2026, 9, 1),
             showupDuration: const Duration(minutes: 10),
             schedule: const WeekdaySchedule(entries: [
-              WeekdayEntry(
-                  weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+              WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
             ]),
             status: PactStatus.active,
           ),
@@ -175,8 +172,7 @@ void main() {
       expect(find.byKey(const Key('create-pact-button')), findsOneWidget);
     });
 
-    testWidgets('shows status dots for showups on calendar days',
-        (tester) async {
+    testWidgets('shows status dots for showups on calendar days', (tester) async {
       final doneShowup = Showup(
         id: '1',
         pactId: '1',
@@ -214,8 +210,7 @@ void main() {
       expect(find.byKey(const Key('status-dot-2')), findsOneWidget);
     });
 
-    testWidgets('shows single large dot for 4 or more showups on a day',
-        (tester) async {
+    testWidgets('shows single large dot for 4 or more showups on a day', (tester) async {
       final showups = List.generate(
         4,
         (i) => Showup(
@@ -244,12 +239,10 @@ void main() {
 
       // Individual dots must not be rendered; overflow dot must appear instead.
       expect(find.byKey(const Key('status-dot-su0')), findsNothing);
-      expect(find.byKey(const Key('status-dot-overflow-2026-03-29')),
-          findsOneWidget);
+      expect(find.byKey(const Key('status-dot-overflow-2026-03-29')), findsOneWidget);
     });
 
-    testWidgets('overflow dot is green when all resolved and done >= failed',
-        (tester) async {
+    testWidgets('overflow dot is green when all resolved and done >= failed', (tester) async {
       final showups = [
         Showup(
             id: 'a',
@@ -287,8 +280,7 @@ void main() {
                 endDate: DateTime(2026, 9, 1),
                 showupDuration: const Duration(minutes: 10),
                 schedule: const WeekdaySchedule(entries: [
-                  WeekdayEntry(
-                      weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
+                  WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
                 ]),
                 status: PactStatus.active,
               ));
@@ -303,8 +295,7 @@ void main() {
       expect(decoration.color, isNot(equals(Colors.grey)));
     });
 
-    testWidgets('overflow dot is grey when any showup is still pending',
-        (tester) async {
+    testWidgets('overflow dot is grey when any showup is still pending', (tester) async {
       final showups = List.generate(
           4,
           (i) => Showup(
@@ -333,15 +324,11 @@ void main() {
         find.byKey(const Key('status-dot-overflow-2026-03-29')),
       );
       final decoration = dot.decoration! as BoxDecoration;
-      final expectedColor =
-          Theme.of(tester.element(find.byType(DashboardScreen)))
-              .colorScheme
-              .onSurfaceVariant;
+      final expectedColor = Theme.of(tester.element(find.byType(DashboardScreen))).colorScheme.onSurfaceVariant;
       expect(decoration.color, equals(expectedColor));
     });
 
-    testWidgets('overflow dot is grey when some done but some still pending',
-        (tester) async {
+    testWidgets('overflow dot is grey when some done but some still pending', (tester) async {
       final showups = [
         Showup(
             id: 'a',
@@ -387,15 +374,11 @@ void main() {
         find.byKey(const Key('status-dot-overflow-2026-03-29')),
       );
       final decoration = dot.decoration! as BoxDecoration;
-      final expectedColor =
-          Theme.of(tester.element(find.byType(DashboardScreen)))
-              .colorScheme
-              .onSurfaceVariant;
+      final expectedColor = Theme.of(tester.element(find.byType(DashboardScreen))).colorScheme.onSurfaceVariant;
       expect(decoration.color, equals(expectedColor));
     });
 
-    testWidgets('shows dialog when 3 or more active pacts exist on create tap',
-        (tester) async {
+    testWidgets('shows dialog when 3 or more active pacts exist on create tap', (tester) async {
       final pacts = List.generate(
         3,
         (i) => Pact(
@@ -418,8 +401,7 @@ void main() {
       expect(find.text('Too many active pacts'), findsOneWidget);
     });
 
-    testWidgets('does not show dialog when fewer than 3 active pacts',
-        (tester) async {
+    testWidgets('does not show dialog when fewer than 3 active pacts', (tester) async {
       final pacts = List.generate(
         2,
         (i) => Pact(
@@ -442,8 +424,7 @@ void main() {
       expect(find.text('Too many active pacts'), findsNothing);
     });
 
-    testWidgets('tapping a showup tile navigates to showup detail screen',
-        (tester) async {
+    testWidgets('tapping a showup tile navigates to showup detail screen', (tester) async {
       final showup = Showup(
         id: 'showup-1',
         pactId: 'pact-1',
@@ -509,9 +490,7 @@ void main() {
       );
     });
 
-    testWidgets(
-        'logs dashboard screen_view again when returning from showup detail',
-        (tester) async {
+    testWidgets('logs dashboard screen_view again when returning from showup detail', (tester) async {
       final analytics = FakeAnalyticsService();
       final showup = Showup(
         id: 'showup-1',
@@ -550,8 +529,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Showup Details'), findsOneWidget);
 
-      final detailNavigator =
-          Navigator.of(tester.element(find.byType(Scaffold).last));
+      final detailNavigator = Navigator.of(tester.element(find.byType(Scaffold).last));
       detailNavigator.pop();
       await tester.pumpAndSettle();
 

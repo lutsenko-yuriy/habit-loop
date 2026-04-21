@@ -14,8 +14,7 @@ abstract final class HabitLoopColors {
 abstract final class HabitLoopTheme {
   static ThemeData get materialTheme => _buildMaterialTheme(Brightness.light);
 
-  static ThemeData get darkMaterialTheme =>
-      _buildMaterialTheme(Brightness.dark);
+  static ThemeData get darkMaterialTheme => _buildMaterialTheme(Brightness.dark);
 
   static ThemeData _buildMaterialTheme(Brightness brightness) {
     // Derive tertiaryContainer/onTertiaryContainer from the sunrise seed so

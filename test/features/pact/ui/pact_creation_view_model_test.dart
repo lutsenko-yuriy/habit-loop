@@ -41,11 +41,9 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  PactCreationState readState() =>
-      container.read(pactCreationViewModelProvider);
+  PactCreationState readState() => container.read(pactCreationViewModelProvider);
 
-  PactCreationViewModel readVM() =>
-      container.read(pactCreationViewModelProvider.notifier);
+  PactCreationViewModel readVM() => container.read(pactCreationViewModelProvider.notifier);
 
   group('PactCreationViewModel', () {
     test('initial state has correct defaults', () {
@@ -68,8 +66,7 @@ void main() {
       expect(readState().startDate, newDate);
     });
 
-    test('setStartDate normalizes to midnight when date has a time component',
-        () {
+    test('setStartDate normalizes to midnight when date has a time component', () {
       // Date pickers on some platforms return a DateTime with a time component.
       // Without normalization startDate would carry the time into analytics
       // (durationDays under-counts) and into the showup generation (daysActive
@@ -170,8 +167,7 @@ void main() {
       expect(pacts, hasLength(1));
       expect(pacts.first.habitName, 'Meditate');
       expect(pacts.first.showupDuration, const Duration(minutes: 10));
-      expect(pacts.first.schedule,
-          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      expect(pacts.first.schedule, const DailySchedule(timeOfDay: Duration(hours: 7)));
       expect(pacts.first.startDate, today);
       expect(pacts.first.endDate, DateTime(2054, 9, 30));
       expect(pacts.first.reminderOffset, isNull);
@@ -231,8 +227,7 @@ void main() {
         isTrue,
       );
       // All showups must fall within the 11-day window
-      final windowEnd = today
-          .add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
+      final windowEnd = today.add(const Duration(days: 10, hours: 23, minutes: 59, seconds: 59));
       expect(
         showups.every((s) => !s.scheduledAt.isAfter(windowEnd)),
         isTrue,
@@ -275,8 +270,7 @@ void main() {
       final failingContainer = ProviderContainer(
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider
-              .overrideWithValue(_AlwaysThrowingPactRepository()),
+          pactCreationRepositoryProvider.overrideWithValue(_AlwaysThrowingPactRepository()),
           pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
         ],
       );
@@ -305,8 +299,7 @@ void main() {
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider.overrideWithValue(pactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(_AlwaysThrowingShowupRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(_AlwaysThrowingShowupRepository()),
         ],
       );
       addTearDown(failingContainer.dispose);
@@ -332,8 +325,7 @@ void main() {
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(_AlwaysThrowingShowupRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(_AlwaysThrowingShowupRepository()),
         ],
       );
       addTearDown(failingContainer.dispose);
@@ -353,16 +345,14 @@ void main() {
       expect(pacts, isEmpty);
     });
 
-    test('submit rolls back pact and showups when stats persistence fails',
-        () async {
+    test('submit rolls back pact and showups when stats persistence fails', () async {
       final rollbackPactRepo = _ThrowingOnUpdatePactRepository();
       final rollbackShowupRepo = InMemoryShowupRepository();
       final failingContainer = ProviderContainer(
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(rollbackShowupRepo),
+          pactCreationShowupRepositoryProvider.overrideWithValue(rollbackShowupRepo),
         ],
       );
       addTearDown(failingContainer.dispose);
@@ -389,8 +379,7 @@ void main() {
       );
     });
 
-    test('submit skips today\'s showup when its scheduled time is already past',
-        () async {
+    test('submit skips today\'s showup when its scheduled time is already past', () async {
       // Simulate opening the wizard at 22:00 on March 30 with a daily 8am
       // schedule starting today. The 8am slot is 14 hours in the past — it
       // should NOT be persisted; the first saved showup must be tomorrow's 8am.
@@ -398,11 +387,9 @@ void main() {
       final eveningShowupRepo = InMemoryShowupRepository();
       final eveningContainer = ProviderContainer(
         overrides: [
-          pactCreationTodayProvider
-              .overrideWithValue(DateTime(2054, 3, 30, 22, 0)),
+          pactCreationTodayProvider.overrideWithValue(DateTime(2054, 3, 30, 22, 0)),
           pactCreationRepositoryProvider.overrideWithValue(eveningPactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(eveningShowupRepo),
+          pactCreationShowupRepositoryProvider.overrideWithValue(eveningShowupRepo),
         ],
       );
       addTearDown(eveningContainer.dispose);
@@ -423,15 +410,13 @@ void main() {
       expect(
         showups.any((s) => s.scheduledAt == DateTime(2054, 3, 30, 8, 0)),
         isFalse,
-        reason:
-            'Past-due showup for today should not be saved at pact creation',
+        reason: 'Past-due showup for today should not be saved at pact creation',
       );
       // Tomorrow's 8am must be the first saved showup.
       expect(
         showups.any((s) => s.scheduledAt == DateTime(2054, 3, 31, 8, 0)),
         isTrue,
-        reason:
-            'First showup should be tomorrow since today\'s slot already passed',
+        reason: 'First showup should be tomorrow since today\'s slot already passed',
       );
     });
   });
@@ -450,40 +435,32 @@ void main() {
       return ProviderContainer(
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider
-              .overrideWithValue(pactRepository ?? InMemoryPactRepository()),
-          pactCreationShowupRepositoryProvider.overrideWithValue(
-              showupRepository ?? InMemoryShowupRepository()),
+          pactCreationRepositoryProvider.overrideWithValue(pactRepository ?? InMemoryPactRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
     }
 
-    void setUpValidState(PactCreationViewModel vm,
-        {ScheduleType scheduleType = ScheduleType.daily}) {
+    void setUpValidState(PactCreationViewModel vm, {ScheduleType scheduleType = ScheduleType.daily}) {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(scheduleType);
       if (scheduleType == ScheduleType.daily) {
         vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       } else if (scheduleType == ScheduleType.weekday) {
-        vm.setSchedule(const WeekdaySchedule(entries: [
-          WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))
-        ]));
+        vm.setSchedule(const WeekdaySchedule(entries: [WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))]));
       } else {
-        vm.setSchedule(const MonthlyByDateSchedule(entries: [
-          MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))
-        ]));
+        vm.setSchedule(
+            const MonthlyByDateSchedule(entries: [MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))]));
       }
       vm.setCommitmentAccepted(true);
     }
 
-    test('submit fires PactCreatedEvent with correct properties on success',
-        () async {
+    test('submit fires PactCreatedEvent with correct properties on success', () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(
-          pactRepository: pactRepo, showupRepository: showupRepo);
+      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -505,18 +482,15 @@ void main() {
       );
       expect(pactCreatedEvent.showupDurationMinutes, 10);
       expect(pactCreatedEvent.reminderOffsetMinutes, isNull);
-      expect(
-          pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
+      expect(pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
       expect(pact.stats?.showupsRemaining, pactCreatedEvent.showupsExpected);
     });
 
-    test(
-        'submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
+    test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
         () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(
-          pactRepository: pactRepo, showupRepository: showupRepo);
+      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -528,8 +502,7 @@ void main() {
       expect(event.showupsExpected, event.durationDays);
     });
 
-    test('duration_days is correct when pact is created in the evening',
-        () async {
+    test('duration_days is correct when pact is created in the evening', () async {
       // Without normalization: startDate = 2054-03-30T22:00, endDate = 2054-09-30T00:00
       // difference.inDays = 183, +1 = 184 (wrong; should be 185)
       // After fix: startDate = 2054-03-30T00:00 → difference.inDays = 184, +1 = 185 (correct)
@@ -540,16 +513,14 @@ void main() {
         overrides: [
           pactCreationTodayProvider.overrideWithValue(eveningNow),
           pactCreationRepositoryProvider.overrideWithValue(localPactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(localShowupRepo),
+          pactCreationShowupRepositoryProvider.overrideWithValue(localShowupRepo),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
-      setUpValidState(
-          vm); // daily at 7am — all slots filtered since 7:00 < 22:00 createdAt
+      setUpValidState(vm); // daily at 7am — all slots filtered since 7:00 < 22:00 createdAt
       await vm.submit();
 
       final pacts = await localPactRepo.getActivePacts();
@@ -563,12 +534,10 @@ void main() {
         pact.endDate.difference(pact.startDate).inDays + 1,
         reason: 'durationDays must equal (endDate - startDate).inDays + 1',
       );
-      expect(event.durationDays, 185,
-          reason: 'Mar 30 → Sep 30 inclusive = 185 calendar days');
+      expect(event.durationDays, 185, reason: 'Mar 30 → Sep 30 inclusive = 185 calendar days');
     });
 
-    test('submit fires PactCreatedEvent with reminder offset when reminder set',
-        () async {
+    test('submit fires PactCreatedEvent with reminder offset when reminder set', () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -582,9 +551,7 @@ void main() {
       expect(event.reminderOffsetMinutes, 15);
     });
 
-    test(
-        'submit fires PactCreatedEvent with schedule_type weekly for weekday schedule',
-        () async {
+    test('submit fires PactCreatedEvent with schedule_type weekly for weekday schedule', () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -597,9 +564,7 @@ void main() {
       expect(event.scheduleType, 'weekly');
     });
 
-    test(
-        'submit fires PactCreatedEvent with schedule_type monthly for monthly schedule',
-        () async {
+    test('submit fires PactCreatedEvent with schedule_type monthly for monthly schedule', () async {
       final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
@@ -625,8 +590,7 @@ void main() {
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
 
-    test('submit does NOT fire analytics event when saveShowups fails',
-        () async {
+    test('submit does NOT fire analytics event when saveShowups fails', () async {
       final c = makeAnalyticsContainer(
         showupRepository: _AlwaysThrowingShowupRepository(),
       );
@@ -647,8 +611,7 @@ void main() {
       failingContainer = ProviderContainer(
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider
-              .overrideWithValue(_AlwaysThrowingPactRepository()),
+          pactCreationRepositoryProvider.overrideWithValue(_AlwaysThrowingPactRepository()),
           pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
         ],
       );
@@ -656,11 +619,9 @@ void main() {
 
     tearDown(() => failingContainer.dispose());
 
-    PactCreationState readFailingState() =>
-        failingContainer.read(pactCreationViewModelProvider);
+    PactCreationState readFailingState() => failingContainer.read(pactCreationViewModelProvider);
 
-    PactCreationViewModel readFailingVM() =>
-        failingContainer.read(pactCreationViewModelProvider.notifier);
+    PactCreationViewModel readFailingVM() => failingContainer.read(pactCreationViewModelProvider.notifier);
 
     void setUpValidState(PactCreationViewModel vm) {
       vm.setHabitName('Meditate');
@@ -682,8 +643,7 @@ void main() {
       expect(readFailingState().submitError, isNotNull);
     });
 
-    test('submitError is cleared at the start of a new submit attempt',
-        () async {
+    test('submitError is cleared at the start of a new submit attempt', () async {
       setUpValidState(readFailingVM());
       await readFailingVM().submit();
       expect(readFailingState().submitError, isNotNull);
@@ -708,22 +668,18 @@ class _AlwaysThrowingPactRepository implements PactRepository {
   Future<Pact?> getPactById(String id) async => null;
 
   @override
-  Future<void> savePact(Pact pact) async =>
-      throw Exception('save failed intentionally');
+  Future<void> savePact(Pact pact) async => throw Exception('save failed intentionally');
 
   @override
-  Future<void> updatePact(Pact pact) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 
   @override
-  Future<void> deletePact(String id) async =>
-      throw Exception('delete failed intentionally');
+  Future<void> deletePact(String id) async => throw Exception('delete failed intentionally');
 }
 
 class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   @override
-  Future<void> updatePact(Pact pact) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 }
 
 class _AlwaysThrowingShowupRepository implements ShowupRepository {
@@ -731,9 +687,7 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
   Future<List<Showup>> getShowupsForDate(DateTime date) async => [];
 
   @override
-  Future<List<Showup>> getShowupsForDateRange(
-          DateTime start, DateTime end) async =>
-      [];
+  Future<List<Showup>> getShowupsForDateRange(DateTime start, DateTime end) async => [];
 
   @override
   Future<Showup?> getShowupById(String id) async => null;
@@ -742,21 +696,17 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
   Future<List<Showup>> getShowupsForPact(String pactId) async => [];
 
   @override
-  Future<void> saveShowup(Showup showup) async =>
-      throw Exception('save failed intentionally');
+  Future<void> saveShowup(Showup showup) async => throw Exception('save failed intentionally');
 
   @override
-  Future<SaveShowupsResult> saveShowups(List<Showup> showups) async =>
-      throw Exception('save failed intentionally');
+  Future<SaveShowupsResult> saveShowups(List<Showup> showups) async => throw Exception('save failed intentionally');
 
   @override
-  Future<void> updateShowup(Showup showup) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updateShowup(Showup showup) async => throw Exception('update failed intentionally');
 
   @override
   Future<int> countShowupsForPact(String pactId) async => 0;
 
   @override
-  Future<void> deleteShowupsForPact(String pactId) async =>
-      throw Exception('delete failed intentionally');
+  Future<void> deleteShowupsForPact(String pactId) async => throw Exception('delete failed intentionally');
 }

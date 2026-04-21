@@ -171,8 +171,7 @@ void main() {
     });
 
     group('with explicit totalShowups override', () {
-      test('totalShowups uses provided value instead of showup list length',
-          () {
+      test('totalShowups uses provided value instead of showup list length', () {
         // Only 3 showups in the window but the full pact has 30
         final showups = [
           _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
@@ -185,9 +184,7 @@ void main() {
         expect(stats.totalShowups, 30);
       });
 
-      test(
-          'showupsRemaining is derived from totalShowups minus done and failed',
-          () {
+      test('showupsRemaining is derived from totalShowups minus done and failed', () {
         // 1 done, 1 failed, total=30 → remaining = 30 - 1 - 1 = 28
         final showups = [
           _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
@@ -200,9 +197,7 @@ void main() {
         expect(stats.showupsRemaining, 28);
       });
 
-      test(
-          'when totalShowups equals done+failed+pending, remaining equals pending count',
-          () {
+      test('when totalShowups equals done+failed+pending, remaining equals pending count', () {
         // totalShowups == list length: remaining should equal pending count
         final showups = [
           _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
@@ -216,9 +211,7 @@ void main() {
         expect(stats.showupsRemaining, 1);
       });
 
-      test(
-          'without totalShowups override, remaining equals pending count from list',
-          () {
+      test('without totalShowups override, remaining equals pending count from list', () {
         final showups = [
           _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
           _showup('2', ShowupStatus.failed, DateTime(2026, 4, 2, 7)),

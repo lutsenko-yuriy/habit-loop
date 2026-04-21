@@ -10,8 +10,7 @@ import 'package:habit_loop/main.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 void main() {
-  testWidgets('HabitLoopApp applies the shared Habit Loop brand color',
-      (tester) async {
+  testWidgets('HabitLoopApp applies the shared Habit Loop brand color', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

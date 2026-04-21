@@ -94,8 +94,7 @@ List<Override> _overrides({
   return [
     showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
     showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
-    if (nowOverride != null)
-      showupDetailNowProvider.overrideWithValue(nowOverride),
+    if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
   ];
 }
 
@@ -105,8 +104,7 @@ List<Override> _overrides({
 
 void main() {
   group('ShowupDetailScreen', () {
-    testWidgets('shows loading indicator before load completes',
-        (tester) async {
+    testWidgets('shows loading indicator before load completes', (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -120,8 +118,7 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('shows habit name and scheduled time after load',
-        (tester) async {
+    testWidgets('shows habit name and scheduled time after load', (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -137,9 +134,7 @@ void main() {
       expect(find.text('Meditate'), findsOneWidget);
     });
 
-    testWidgets(
-        'shows Mark as Done and Mark as Failed buttons for pending showup',
-        (tester) async {
+    testWidgets('shows Mark as Done and Mark as Failed buttons for pending showup', (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -155,8 +150,7 @@ void main() {
       expect(find.text('Mark as Failed'), findsOneWidget);
     });
 
-    testWidgets('does not show action buttons for a done showup',
-        (tester) async {
+    testWidgets('does not show action buttons for a done showup', (tester) async {
       final showup = _doneShowup();
 
       await tester.pumpWidget(
@@ -172,8 +166,7 @@ void main() {
       expect(find.text('Mark as Failed'), findsNothing);
     });
 
-    testWidgets('does not show action buttons for a failed showup',
-        (tester) async {
+    testWidgets('does not show action buttons for a failed showup', (tester) async {
       final showup = _failedShowup();
 
       await tester.pumpWidget(
@@ -189,8 +182,7 @@ void main() {
       expect(find.text('Mark as Failed'), findsNothing);
     });
 
-    testWidgets('tapping Mark as Done updates the status display',
-        (tester) async {
+    testWidgets('tapping Mark as Done updates the status display', (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -211,8 +203,7 @@ void main() {
       expect(find.text('Done'), findsWidgets);
     });
 
-    testWidgets('tapping Mark as Failed updates the status display',
-        (tester) async {
+    testWidgets('tapping Mark as Failed updates the status display', (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -231,8 +222,7 @@ void main() {
       expect(find.text('Failed'), findsWidgets);
     });
 
-    testWidgets('shows auto-fail notice when showup was auto-failed on load',
-        (tester) async {
+    testWidgets('shows auto-fail notice when showup was auto-failed on load', (tester) async {
       final showup = _pendingPastShowup();
       // now is well past the showup end time.
       final pastNow = DateTime(2020, 1, 1, 9, 0);
@@ -257,8 +247,7 @@ void main() {
       );
     });
 
-    testWidgets('shows note section always (regardless of status)',
-        (tester) async {
+    testWidgets('shows note section always (regardless of status)', (tester) async {
       final showup = _doneShowup();
 
       await tester.pumpWidget(
@@ -274,8 +263,7 @@ void main() {
       expect(find.text('Save Note'), findsOneWidget);
     });
 
-    testWidgets('Save Note button is disabled when note has not changed',
-        (tester) async {
+    testWidgets('Save Note button is disabled when note has not changed', (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -288,20 +276,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // No text entered — button must be disabled (onPressed == null).
-      final buttons =
-          tester.widgetList<FilledButton>(find.byType(FilledButton));
+      final buttons = tester.widgetList<FilledButton>(find.byType(FilledButton));
       final saveButton = buttons.firstWhere(
-        (b) => find
-            .descendant(of: find.byWidget(b), matching: find.text('Save Note'))
-            .evaluate()
-            .isNotEmpty,
+        (b) => find.descendant(of: find.byWidget(b), matching: find.text('Save Note')).evaluate().isNotEmpty,
         orElse: () => throw TestFailure('Save Note FilledButton not found'),
       );
       expect(saveButton.onPressed, isNull);
     });
 
-    testWidgets('Save Note button becomes enabled after typing',
-        (tester) async {
+    testWidgets('Save Note button becomes enabled after typing', (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -319,13 +302,9 @@ void main() {
       await tester.pump(); // let ValueListenableBuilder rebuild
 
       // Button must now be enabled.
-      final buttons =
-          tester.widgetList<FilledButton>(find.byType(FilledButton));
+      final buttons = tester.widgetList<FilledButton>(find.byType(FilledButton));
       final saveButton = buttons.firstWhere(
-        (b) => find
-            .descendant(of: find.byWidget(b), matching: find.text('Save Note'))
-            .evaluate()
-            .isNotEmpty,
+        (b) => find.descendant(of: find.byWidget(b), matching: find.text('Save Note')).evaluate().isNotEmpty,
         orElse: () => throw TestFailure('Save Note FilledButton not found'),
       );
       expect(saveButton.onPressed, isNotNull);

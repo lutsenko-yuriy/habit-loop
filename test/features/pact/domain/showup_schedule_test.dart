@@ -4,8 +4,7 @@ import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 void main() {
   group('DailySchedule', () {
     test('stores time of day', () {
-      const schedule =
-          DailySchedule(timeOfDay: Duration(hours: 7, minutes: 30));
+      const schedule = DailySchedule(timeOfDay: Duration(hours: 7, minutes: 30));
 
       expect(schedule.timeOfDay, const Duration(hours: 7, minutes: 30));
     });
@@ -24,8 +23,7 @@ void main() {
     test('stores weekday-time pairs', () {
       const schedule = WeekdaySchedule(entries: [
         WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 7)),
-        WeekdayEntry(
-            weekday: DateTime.saturday, timeOfDay: Duration(hours: 16)),
+        WeekdayEntry(weekday: DateTime.saturday, timeOfDay: Duration(hours: 16)),
       ]);
 
       expect(schedule.entries, hasLength(2));

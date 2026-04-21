@@ -24,9 +24,7 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
     unawaited(
       Future.microtask(() {
         unawaited(
-          ref
-              .read(analyticsServiceProvider)
-              .logScreenView(const PactCreationAnalyticsScreen()),
+          ref.read(analyticsServiceProvider).logScreenView(const PactCreationAnalyticsScreen()),
         );
       }),
     );

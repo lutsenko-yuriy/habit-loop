@@ -20,8 +20,7 @@ Pact _dailyPact({
     id: id,
     habitName: 'Habit $id',
     startDate: startDate,
-    endDate:
-        endDate ?? DateTime(startDate.year, startDate.month + 6, startDate.day),
+    endDate: endDate ?? DateTime(startDate.year, startDate.month + 6, startDate.day),
     showupDuration: const Duration(minutes: 10),
     schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
     status: status,
@@ -40,8 +39,7 @@ void main() {
     return ProviderContainer(
       overrides: [
         pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-        showupRepositoryProvider
-            .overrideWithValue(InMemoryShowupRepository(showups)),
+        showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
         todayProvider.overrideWithValue(today),
       ],
     );
@@ -213,8 +211,7 @@ void main() {
       expect(state.todayIndex, 3);
     });
 
-    test('todayIndex is 3 when oldest pact started 10+ days before today',
-        () async {
+    test('todayIndex is 3 when oldest pact started 10+ days before today', () async {
       // pact started 10 days before today → daysSince = 10, clamped to 3
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 19))],
@@ -238,8 +235,7 @@ void main() {
       expect(state.todayIndex, 0);
     });
 
-    test('todayIndex is 1 when oldest pact started yesterday (day 2)',
-        () async {
+    test('todayIndex is 1 when oldest pact started yesterday (day 2)', () async {
       // daysSince = 1 → todayIndex = min(1, 3) = 1
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 28))],
@@ -251,8 +247,7 @@ void main() {
       expect(state.todayIndex, 1);
     });
 
-    test('todayIndex is 2 when oldest pact started 2 days ago (day 3)',
-        () async {
+    test('todayIndex is 2 when oldest pact started 2 days ago (day 3)', () async {
       // daysSince = 2 → todayIndex = min(2, 3) = 2
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 27))],
@@ -264,8 +259,7 @@ void main() {
       expect(state.todayIndex, 2);
     });
 
-    test('todayIndex is 3 when oldest pact started 3 days ago (day 4)',
-        () async {
+    test('todayIndex is 3 when oldest pact started 3 days ago (day 4)', () async {
       // daysSince = 3 → todayIndex = min(3, 3) = 3
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 26))],
@@ -293,8 +287,7 @@ void main() {
       expect(state.todayIndex, 2);
     });
 
-    test('todayIndex is 0 when stopped pact is the only one and started today',
-        () async {
+    test('todayIndex is 0 when stopped pact is the only one and started today', () async {
       // daysSince = 0 → todayIndex = 0.  Stopping the pact must not shift
       // the strip back to the centred layout.
       container = createContainer(
@@ -309,17 +302,13 @@ void main() {
       expect(state.todayIndex, 0);
     });
 
-    test('todayIndex uses oldest start date across mixed-status pacts',
-        () async {
+    test('todayIndex uses oldest start date across mixed-status pacts', () async {
       // Active pact started today (daysSince=0); stopped pact started 2 days
       // ago (daysSince=2).  Oldest = 2 days ago → todayIndex = 2.
       container = createContainer(
         pacts: [
           _dailyPact(id: 'p1', startDate: today),
-          _dailyPact(
-              id: 'p2',
-              startDate: DateTime(2026, 3, 27),
-              status: PactStatus.stopped),
+          _dailyPact(id: 'p2', startDate: DateTime(2026, 3, 27), status: PactStatus.stopped),
         ],
       );
 
@@ -329,8 +318,7 @@ void main() {
       expect(state.todayIndex, 2);
     });
 
-    test('calendar strip is centred on today (todayIndex = 3) for day 4+',
-        () async {
+    test('calendar strip is centred on today (todayIndex = 3) for day 4+', () async {
       // pact started 3 days ago → todayIndex = 3 → strip[0] = today - 3
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 26))],
@@ -344,8 +332,7 @@ void main() {
       expect(state.calendarDays[3].date, today); // today at index 3
     });
 
-    test('calendar strip starts at today when todayIndex = 0 (day 1)',
-        () async {
+    test('calendar strip starts at today when todayIndex = 0 (day 1)', () async {
       // pact started today → todayIndex = 0 → strip[0] = today
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: today)],
@@ -358,8 +345,7 @@ void main() {
       expect(state.calendarDays[0].date, today);
     });
 
-    test('calendar strip on day 2: strip[0] = today-1, today at index 1',
-        () async {
+    test('calendar strip on day 2: strip[0] = today-1, today at index 1', () async {
       // pact started yesterday → todayIndex = 1 → strip[0] = today - 1
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 28))],
@@ -373,8 +359,7 @@ void main() {
       expect(state.calendarDays[1].date, today); // today at index 1
     });
 
-    test('calendar strip on day 3: strip[0] = today-2, today at index 2',
-        () async {
+    test('calendar strip on day 3: strip[0] = today-2, today at index 2', () async {
       // pact started 2 days ago → todayIndex = 2 → strip[0] = today - 2
       container = createContainer(
         pacts: [_dailyPact(id: 'p1', startDate: DateTime(2026, 3, 27))],
@@ -401,15 +386,13 @@ void main() {
   });
 
   group('lazy showup generation on load', () {
-    test('generates showups for active pacts into repository on load',
-        () async {
+    test('generates showups for active pacts into repository on load', () async {
       final showupRepo = InMemoryShowupRepository();
       final pact = _dailyPact(id: 'p1', startDate: today);
 
       final container = ProviderContainer(
         overrides: [
-          pactRepositoryProvider
-              .overrideWithValue(InMemoryPactRepository([pact])),
+          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([pact])),
           showupRepositoryProvider.overrideWithValue(showupRepo),
           todayProvider.overrideWithValue(today),
         ],
@@ -432,8 +415,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          pactRepositoryProvider
-              .overrideWithValue(InMemoryPactRepository([pact])),
+          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([pact])),
           showupRepositoryProvider.overrideWithValue(showupRepo),
           todayProvider.overrideWithValue(today),
         ],
@@ -453,8 +435,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          pactRepositoryProvider
-              .overrideWithValue(InMemoryPactRepository([pact])),
+          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([pact])),
           showupRepositoryProvider.overrideWithValue(showupRepo),
           todayProvider.overrideWithValue(today),
         ],
@@ -479,8 +460,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          pactRepositoryProvider
-              .overrideWithValue(InMemoryPactRepository([stoppedPact])),
+          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([stoppedPact])),
           showupRepositoryProvider.overrideWithValue(showupRepo),
           todayProvider.overrideWithValue(today),
         ],

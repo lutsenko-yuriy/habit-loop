@@ -24,9 +24,7 @@ class CommitmentStepIos extends StatelessWidget {
     final s = state.schedule;
     if (s == null) return '';
     if (s is DailySchedule) {
-      final t = TimeOfDay(
-              hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60)
-          .format(context);
+      final t = TimeOfDay(hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60).format(context);
       return '${l10n.scheduleDaily} @ $t';
     }
     if (s is WeekdaySchedule) {
@@ -70,17 +68,13 @@ class CommitmentStepIos extends StatelessWidget {
               _SummaryRow(label: l10n.summaryHabit, value: state.habitName),
               _SummaryRow(
                 label: l10n.summaryDuration,
-                value:
-                    '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
+                value: '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
               ),
               _SummaryRow(
                 label: l10n.summaryShowupDuration,
-                value: l10n.showupDurationMinutes(
-                    state.showupDuration?.inMinutes ?? 0),
+                value: l10n.showupDurationMinutes(state.showupDuration?.inMinutes ?? 0),
               ),
-              _SummaryRow(
-                  label: l10n.summarySchedule,
-                  value: _scheduleDescription(context)),
+              _SummaryRow(label: l10n.summarySchedule, value: _scheduleDescription(context)),
               _SummaryRow(label: l10n.summaryReminder, value: reminderText),
             ],
           ),
@@ -103,20 +97,15 @@ class CommitmentStepIos extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                state.commitmentAccepted
-                    ? CupertinoIcons.check_mark_circled_solid
-                    : CupertinoIcons.circle,
-                color: state.commitmentAccepted
-                    ? CupertinoTheme.of(context).primaryColor
-                    : CupertinoColors.systemGrey,
+                state.commitmentAccepted ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
+                color: state.commitmentAccepted ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
                 size: 28,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   l10n.commitmentAccept,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ],

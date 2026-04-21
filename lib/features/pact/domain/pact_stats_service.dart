@@ -26,8 +26,7 @@ class PactStatsService {
     required List<Showup> showups,
     DateTime? endDate,
   }) {
-    final effectivePact =
-        endDate == null ? pact : pact.copyWith(endDate: endDate);
+    final effectivePact = endDate == null ? pact : pact.copyWith(endDate: endDate);
     return PactStats.compute(
       startDate: effectivePact.startDate,
       endDate: effectivePact.endDate,
@@ -105,8 +104,7 @@ class PactStatsService {
   }) async {
     final showups = await _showupRepository.getShowupsForPact(pactId);
     final stoppedDate = DateTime(now.year, now.month, now.day);
-    final statsBeforeStop =
-        existingStats ?? currentStats(pact: pact, showups: showups);
+    final statsBeforeStop = existingStats ?? currentStats(pact: pact, showups: showups);
     final updated = pact.copyWith(
       status: PactStatus.stopped,
       endDate: stoppedDate,

@@ -36,8 +36,7 @@ final class PactCreatedEvent extends AnalyticsEvent {
       'schedule_type': scheduleType,
       'duration_days': durationDays,
       'showup_duration_minutes': showupDurationMinutes,
-      if (reminderOffsetMinutes != null)
-        'reminder_offset_minutes': reminderOffsetMinutes!,
+      if (reminderOffsetMinutes != null) 'reminder_offset_minutes': reminderOffsetMinutes!,
       'showups_expected': showupsExpected,
     };
   }

@@ -13,8 +13,7 @@ class ShowupGenerationService {
   final ShowupRepository _repository;
 
   /// Creates a [ShowupGenerationService] backed by [repository].
-  const ShowupGenerationService({required ShowupRepository repository})
-      : _repository = repository;
+  const ShowupGenerationService({required ShowupRepository repository}) : _repository = repository;
 
   /// Ensures that all showups for [pact] within the window [[from], [to]]
   /// are persisted in the repository.

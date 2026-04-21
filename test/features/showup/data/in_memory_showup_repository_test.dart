@@ -54,8 +54,7 @@ void main() {
       expect(result, [showupMar29Morning, showupMar29Evening]);
     });
 
-    test('getShowupsForDate returns empty list for date with no showups',
-        () async {
+    test('getShowupsForDate returns empty list for date with no showups', () async {
       final result = await repo.getShowupsForDate(DateTime(2026, 4, 1));
 
       expect(result, isEmpty);
@@ -136,8 +135,7 @@ void main() {
     });
 
     test('updateShowup replaces existing showup by id', () async {
-      final updated =
-          showupMar28.copyWith(status: ShowupStatus.done, note: 'Did it!');
+      final updated = showupMar28.copyWith(status: ShowupStatus.done, note: 'Did it!');
       await repo.updateShowup(updated);
 
       final result = await repo.getShowupsForDate(DateTime(2026, 3, 28));
@@ -177,8 +175,7 @@ void main() {
       expect(result, isEmpty);
     });
 
-    test('countShowupsForPact returns count of showups for given pactId',
-        () async {
+    test('countShowupsForPact returns count of showups for given pactId', () async {
       // pact-1 has showupMar28, showupMar29Morning, showupMar30 = 3 showups.
       final result = await repo.countShowupsForPact('pact-1');
       expect(result, 3);
@@ -189,8 +186,7 @@ void main() {
       expect(result, 0);
     });
 
-    test('countShowupsForPact returns only count for specified pactId',
-        () async {
+    test('countShowupsForPact returns only count for specified pactId', () async {
       // pact-2 has only showupMar29Evening = 1 showup.
       final result = await repo.countShowupsForPact('pact-2');
       expect(result, 1);

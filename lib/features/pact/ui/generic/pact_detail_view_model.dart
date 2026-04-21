@@ -21,8 +21,7 @@ final pactDetailShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
   throw UnimplementedError('Override pactDetailShowupRepositoryProvider');
 });
 
-final pactDetailViewModelProvider =
-    NotifierProviderFamily<PactDetailViewModel, PactDetailState, String>(
+final pactDetailViewModelProvider = NotifierProviderFamily<PactDetailViewModel, PactDetailState, String>(
   PactDetailViewModel.new,
 );
 
@@ -61,8 +60,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       if (pact.status == PactStatus.active) {
         final today = ref.read(pactDetailNowProvider);
         final todayDate = DateTime(today.year, today.month, today.day);
-        final endDateOnly =
-            DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
+        final endDateOnly = DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
         final daysLeft = endDateOnly.difference(todayDate).inDays;
         if (daysLeft <= 0 || stats.showupsRemaining == 0) {
           pact = pact.copyWith(

@@ -83,8 +83,7 @@ class ShowupGenerator {
     }
     var count = 0;
     for (final dt in _candidates(pact)) {
-      if (_isWithinRange(dt, pact.startDate, pact.endDate) &&
-          !dt.isBefore(effectiveCreatedAt)) {
+      if (_isWithinRange(dt, pact.startDate, pact.endDate) && !dt.isBefore(effectiveCreatedAt)) {
         count++;
       }
     }
@@ -115,10 +114,8 @@ class ShowupGenerator {
 
     for (final scheduledAt in _candidates(pact)) {
       final currentSeq = seq++;
-      if (_isWithinRange(scheduledAt, effectiveFrom, effectiveTo) &&
-          filter(scheduledAt)) {
-        result.add(
-            _showup(pact: pact, scheduledAt: scheduledAt, seq: currentSeq));
+      if (_isWithinRange(scheduledAt, effectiveFrom, effectiveTo) && filter(scheduledAt)) {
+        result.add(_showup(pact: pact, scheduledAt: scheduledAt, seq: currentSeq));
       }
     }
 
@@ -297,8 +294,7 @@ class ShowupGenerator {
 
   /// Returns true if [dt] is within [start]…[end] day boundaries (inclusive).
   static bool _isWithinRange(DateTime dt, DateTime start, DateTime end) {
-    return !dt.isBefore(ShowupDateUtils.startOfDay(start)) &&
-        dt.isBefore(ShowupDateUtils.endOfDay(end));
+    return !dt.isBefore(ShowupDateUtils.startOfDay(start)) && dt.isBefore(ShowupDateUtils.endOfDay(end));
   }
 
   static Showup _showup({
@@ -306,10 +302,8 @@ class ShowupGenerator {
     required DateTime scheduledAt,
     required int seq,
   }) {
-    final datePart =
-        '${scheduledAt.year}${_pad(scheduledAt.month)}${_pad(scheduledAt.day)}';
-    final timePart =
-        '${_pad(scheduledAt.hour)}${_pad(scheduledAt.minute)}${_pad(scheduledAt.second)}';
+    final datePart = '${scheduledAt.year}${_pad(scheduledAt.month)}${_pad(scheduledAt.day)}';
+    final timePart = '${_pad(scheduledAt.hour)}${_pad(scheduledAt.minute)}${_pad(scheduledAt.second)}';
     return Showup(
       id: '${pact.id}_${datePart}T${timePart}_$seq',
       pactId: pact.id,

@@ -64,8 +64,7 @@ class Pact {
       showupDuration: showupDuration ?? this.showupDuration,
       schedule: schedule ?? this.schedule,
       status: status ?? this.status,
-      reminderOffset:
-          clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
+      reminderOffset: clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
       stopReason: clearStopReason ? null : (stopReason ?? this.stopReason),
       stats: clearStats ? null : (stats ?? this.stats),
       createdAt: createdAt, // immutable — never overridden by copyWith

@@ -11,8 +11,7 @@ class FakeFirebaseCrashlyticsClient implements FirebaseCrashlyticsClient {
         bool fatal,
         Iterable<Object> information,
       })> recordedErrors = [];
-  final List<({FlutterErrorDetails details, bool fatal})>
-      recordedFlutterErrors = [];
+  final List<({FlutterErrorDetails details, bool fatal})> recordedFlutterErrors = [];
   final List<String> logs = [];
   final List<String> userIdentifiers = [];
 
@@ -99,8 +98,7 @@ void main() {
     });
 
     test('forwards fatal flag to the client', () async {
-      await service.recordError(Exception('e'), StackTrace.current,
-          fatal: true);
+      await service.recordError(Exception('e'), StackTrace.current, fatal: true);
       expect(fakeClient.recordedErrors.single.fatal, isTrue);
     });
 

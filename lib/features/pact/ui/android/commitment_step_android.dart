@@ -23,9 +23,7 @@ class CommitmentStepAndroid extends StatelessWidget {
     final s = state.schedule;
     if (s == null) return '';
     if (s is DailySchedule) {
-      final t = TimeOfDay(
-              hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60)
-          .format(context);
+      final t = TimeOfDay(hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60).format(context);
       return '${l10n.scheduleDaily} @ $t';
     }
     if (s is WeekdaySchedule) {
@@ -52,8 +50,7 @@ class CommitmentStepAndroid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         const SizedBox(height: 16),
-        Text(l10n.commitmentStep,
-            style: Theme.of(context).textTheme.headlineSmall),
+        Text(l10n.commitmentStep, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
@@ -66,17 +63,13 @@ class CommitmentStepAndroid extends StatelessWidget {
               _SummaryRow(label: l10n.summaryHabit, value: state.habitName),
               _SummaryRow(
                 label: l10n.summaryDuration,
-                value:
-                    '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
+                value: '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
               ),
               _SummaryRow(
                 label: l10n.summaryShowupDuration,
-                value: l10n.showupDurationMinutes(
-                    state.showupDuration?.inMinutes ?? 0),
+                value: l10n.showupDurationMinutes(state.showupDuration?.inMinutes ?? 0),
               ),
-              _SummaryRow(
-                  label: l10n.summarySchedule,
-                  value: _scheduleDescription(context)),
+              _SummaryRow(label: l10n.summarySchedule, value: _scheduleDescription(context)),
               _SummaryRow(label: l10n.summaryReminder, value: reminderText),
             ],
           ),

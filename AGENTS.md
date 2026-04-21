@@ -91,7 +91,7 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
 5. Implement the minimum code to make the tests pass.
 6. Refactor if needed.
 7. Run `flutter test` and `flutter analyze` — fix any failures before proceeding.
-8. Apply formatting in a dedicated commit **before** the functional commit: run `dart format lib/ test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
+8. Apply formatting in a dedicated commit **before** the functional commit: run `dart format -l 120 lib/ test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
 9. Update documentation if affected by the changes:
     - `CLAUDE.md` — architecture, conventions, or workflow changed
     - `@docs/PRODUCT_SPEC.md` — functionality added, removed, or changed
