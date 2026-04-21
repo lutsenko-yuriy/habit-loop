@@ -17,7 +17,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ### Issues
 
-- [HAB-33](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-33/code-cleanup-define-code-quality-baseline-and-separate-formatting) **Code cleanup: define code quality baseline and separate formatting commit** — Establish a shared definition of good code for Habit Loop, choose the supporting tooling, apply the agreed formatting/cleanup rules to the codebase, and update the agent workflow so formatting happens in a dedicated commit after functional work. (Tech Debt)
 - [HAB-15](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-15/refactor-reduce-duplicated-iosandroid-dashboard-widget-logic) **Refactor: reduce duplicated iOS/Android dashboard widget logic** — `_buildDots()` (status counting, layout, overflow colour) and the showup list/tile are duplicated verbatim across both platform pages. Extract shared logic into platform-agnostic helpers once there are enough instances to justify the abstraction. (Tech Debt)
 - [HAB-17](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-17/refactor-replace-pactcreationstate-with-a-pactbuilder) **Refactor: replace PactCreationState with a PactBuilder** — `PactCreationState` mixes wizard navigation state with pact-building data. Extract a `PactBuilder` class that holds only the pact fields and exposes a `build()` method returning a `Pact`. (Tech Debt)
 

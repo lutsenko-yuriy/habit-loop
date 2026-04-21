@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.4] — 2026-04-21 (PR #33 merged)
+
+### Changed — Code quality baseline and dart format enforcement (HAB-33)
+
+- 13 lint rules added to `analysis_options.yaml` covering readability (`always_declare_return_types`, `avoid_print`, `prefer_single_quotes`, etc.), safety (`avoid_dynamic_calls`, `cast_nullable_to_non_nullable`), and Flutter-specific concerns (`use_build_context_synchronously`, `sized_box_for_whitespace`)
+- `dart format --line-length 120` applied across the entire codebase in a dedicated formatting commit, keeping style-only changes separate from functional work
+- CI (`github/workflows/ci.yml`) gains a `dart format --output=none --set-exit-if-changed` check on every push and PR, excluding generated files (`firebase_options.dart`, `lib/l10n/generated/*`)
+- `AGENTS.md` and `.claude/agents/developer.md` updated to require a formatting commit (separate from functional commits) as part of the standard ticket delivery workflow; worktree-per-issue convention documented throughout
+
+---
+
 ## [0.11.3] — 2026-04-21 (PR #32 merged)
 
 ### Changed — Per-app language selection (HAB-39)
