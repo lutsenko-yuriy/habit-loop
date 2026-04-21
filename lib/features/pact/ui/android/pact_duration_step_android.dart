@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
-import 'package:intl/intl.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class PactDurationStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -23,8 +23,7 @@ class PactDurationStepAndroid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         const SizedBox(height: 16),
-        Text(l10n.pactDurationStep,
-            style: Theme.of(context).textTheme.headlineSmall),
+        Text(l10n.pactDurationStep, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 24),
         _DateTile(
           label: l10n.startDateLabel,

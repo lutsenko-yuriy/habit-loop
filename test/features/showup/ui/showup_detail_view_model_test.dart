@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/analytics/providers/analytics_providers.dart';
-import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/features/pact/domain/pact.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_generator.dart';
@@ -455,8 +455,7 @@ void main() {
           showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
           showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
-          if (nowOverride != null)
-            showupDetailNowProvider.overrideWithValue(nowOverride),
+          if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
         ],
       );
     }
@@ -551,6 +550,5 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   _ThrowingOnUpdatePactRepository(super.initialPacts);
 
   @override
-  Future<void> updatePact(Pact pact) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 }

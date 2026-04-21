@@ -29,9 +29,7 @@ final _pendingShowup = Showup(
 
 void main() {
   group('PactStatsService.persistShowupStatus', () {
-    test(
-        'updates the showup and refreshes pact stats from one service boundary',
-        () async {
+    test('updates the showup and refreshes pact stats from one service boundary', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository([_pendingShowup]);
       final service = PactStatsService(
@@ -81,6 +79,5 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   _ThrowingOnUpdatePactRepository(super.initialPacts);
 
   @override
-  Future<void> updatePact(Pact pact) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 }

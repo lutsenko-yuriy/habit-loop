@@ -91,24 +91,25 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
 5. Implement the minimum code to make the tests pass.
 6. Refactor if needed.
 7. Run `flutter test` and `flutter analyze` — fix any failures before proceeding.
-8. Update documentation if affected by the changes:
+8. Apply formatting in a dedicated commit **before** the functional commit: run `dart format -l 120 lib/ test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
+9. Update documentation if affected by the changes:
     - `CLAUDE.md` — architecture, conventions, or workflow changed
     - `@docs/PRODUCT_SPEC.md` — functionality added, removed, or changed
     - `@docs/ARCHITECTURE.md` — code structure or dependencies changed
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
-9. Commit all changes with a descriptive message.
-10. Launch the app on both platforms for a smoke test using the Flutter binary from `CLAUDE.local.md`:
+10. Commit all changes with a descriptive message.
+11. Launch the app on both platforms for a smoke test using the Flutter binary from `CLAUDE.local.md`:
     ```
     flutter run -d ios
     flutter run -d android
     ```
     Run each in the background (`run_in_background: true`) so both start simultaneously. Wait for the user to confirm the app looks correct on both platforms before proceeding.
-11. Push to the remote.
-12. Open a PR and request reviews in parallel (both agents are independent — launch them simultaneously):
+12. Push to the remote.
+13. Open a PR and request reviews in parallel (both agents are independent — launch them simultaneously):
     - If `.claude/agents/tech-lead.md` exists, invoke it for an architectural review: `Use the tech-lead agent to review PR #<number>`.
     - If `.claude/agents/code-reviewer.md` exists, invoke it for a runtime/launch/migration review: `Use the code-reviewer agent to review PR #<number>`.
     - If neither agent exists, request a review from the user directly.
-13. Remind the user to compact the context after each commit to keep the conversation lean.
-14. When the user approves the PR:
+14. Remind the user to compact the context after each commit to keep the conversation lean.
+15. When the user approves the PR:
     - Invoke the `product-owner` agent: `Use the product-owner agent to close the approved PR's Linear issues, regenerate BACKLOG.md and CHANGELOG.md, and merge the PR`.
-15. Clear the context after the PR with the changes is merged.
+16. Clear the context after the PR with the changes is merged.

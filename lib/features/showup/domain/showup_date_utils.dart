@@ -6,10 +6,8 @@ class ShowupDateUtils {
   /// following day (00:00:00). Use with [DateTime.isBefore] for
   /// end-of-day range checks. Calendar arithmetic is used instead of
   /// [Duration] addition to avoid DST edge cases.
-  static DateTime endOfDay(DateTime date) =>
-      DateTime(date.year, date.month, date.day + 1);
+  static DateTime endOfDay(DateTime date) => DateTime(date.year, date.month, date.day + 1);
 
   /// Returns a [DateTime] representing the start of [date]'s day (00:00:00).
-  static DateTime startOfDay(DateTime date) =>
-      DateTime(date.year, date.month, date.day);
+  static DateTime startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
 }

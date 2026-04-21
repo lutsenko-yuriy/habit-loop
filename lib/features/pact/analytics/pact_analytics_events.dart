@@ -36,8 +36,7 @@ final class PactCreatedEvent extends AnalyticsEvent {
       'schedule_type': scheduleType,
       'duration_days': durationDays,
       'showup_duration_minutes': showupDurationMinutes,
-      if (reminderOffsetMinutes != null)
-        'reminder_offset_minutes': reminderOffsetMinutes!,
+      if (reminderOffsetMinutes != null) 'reminder_offset_minutes': reminderOffsetMinutes!,
       'showups_expected': showupsExpected,
     };
   }
@@ -69,11 +68,11 @@ final class PactStoppedEvent extends AnalyticsEvent {
 
   @override
   Map<String, Object?> toParameters() => {
-    'days_active': daysActive,
-    'total_showups_done': totalShowupsDone,
-    'total_showups_failed': totalShowupsFailed,
-    'total_showups_remaining': totalShowupsRemaining,
-  };
+        'days_active': daysActive,
+        'total_showups_done': totalShowupsDone,
+        'total_showups_failed': totalShowupsFailed,
+        'total_showups_remaining': totalShowupsRemaining,
+      };
 }
 
 /// Screen identifier for the pact creation wizard.

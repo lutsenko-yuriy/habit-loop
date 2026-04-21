@@ -14,9 +14,7 @@ class DailySchedule extends ShowupSchedule {
   const DailySchedule({required this.timeOfDay});
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is DailySchedule && timeOfDay == other.timeOfDay;
+  bool operator ==(Object other) => identical(this, other) || other is DailySchedule && timeOfDay == other.timeOfDay;
 
   @override
   int get hashCode => timeOfDay.hashCode;
@@ -35,9 +33,7 @@ class WeekdaySchedule extends ShowupSchedule {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is WeekdaySchedule &&
-          entries.length == other.entries.length &&
-          _entriesEqual(other.entries);
+      other is WeekdaySchedule && entries.length == other.entries.length && _entriesEqual(other.entries);
 
   bool _entriesEqual(List<WeekdayEntry> other) {
     for (var i = 0; i < entries.length; i++) {
@@ -58,10 +54,7 @@ class WeekdayEntry {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is WeekdayEntry &&
-          weekday == other.weekday &&
-          timeOfDay == other.timeOfDay;
+      identical(this, other) || other is WeekdayEntry && weekday == other.weekday && timeOfDay == other.timeOfDay;
 
   @override
   int get hashCode => Object.hash(weekday, timeOfDay);
@@ -75,9 +68,7 @@ class MonthlyByWeekdaySchedule extends ShowupSchedule {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is MonthlyByWeekdaySchedule &&
-          entries.length == other.entries.length &&
-          _entriesEqual(other.entries);
+      other is MonthlyByWeekdaySchedule && entries.length == other.entries.length && _entriesEqual(other.entries);
 
   bool _entriesEqual(List<MonthlyWeekdayEntry> other) {
     for (var i = 0; i < entries.length; i++) {
@@ -121,9 +112,7 @@ class MonthlyByDateSchedule extends ShowupSchedule {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is MonthlyByDateSchedule &&
-          entries.length == other.entries.length &&
-          _entriesEqual(other.entries);
+      other is MonthlyByDateSchedule && entries.length == other.entries.length && _entriesEqual(other.entries);
 
   bool _entriesEqual(List<MonthlyDateEntry> other) {
     for (var i = 0; i < entries.length; i++) {
@@ -148,9 +137,7 @@ class MonthlyDateEntry {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is MonthlyDateEntry &&
-          dayOfMonth == other.dayOfMonth &&
-          timeOfDay == other.timeOfDay;
+      other is MonthlyDateEntry && dayOfMonth == other.dayOfMonth && timeOfDay == other.timeOfDay;
 
   @override
   int get hashCode => Object.hash(dayOfMonth, timeOfDay);

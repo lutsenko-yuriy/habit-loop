@@ -162,9 +162,8 @@ class _StepIndicator extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
-                color: index <= currentStep.index
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.surfaceContainerHighest,
+                color:
+                    index <= currentStep.index ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
               ),
             ),
           );
@@ -198,9 +197,7 @@ class _BottomBar extends StatelessWidget {
         child: SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: canAdvance
-                ? (isLastStep ? onSubmit : onNext)
-                : null,
+            onPressed: canAdvance ? (isLastStep ? onSubmit : onNext) : null,
             child: Text(
               isLastStep ? l10n.createPactConfirm : l10n.next,
             ),

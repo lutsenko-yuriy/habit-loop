@@ -46,8 +46,7 @@ void main() {
       final stored = await repo.getShowupsForPact('pact-1');
       // Daily from Apr 1 to Apr 7 inclusive = 7 showups.
       expect(stored.length, 7);
-      expect(stored.map((s) => s.scheduledAt.day).toList(),
-          equals([1, 2, 3, 4, 5, 6, 7]));
+      expect(stored.map((s) => s.scheduledAt.day).toList(), equals([1, 2, 3, 4, 5, 6, 7]));
     });
 
     test('is idempotent — calling twice does not duplicate showups', () async {
@@ -63,8 +62,7 @@ void main() {
       await service.ensureShowupsExist(pact, from: from, to: to);
 
       final stored = await repo.getShowupsForPact('pact-1');
-      expect(stored.length, 7,
-          reason: 'Second call must not create duplicates');
+      expect(stored.length, 7, reason: 'Second call must not create duplicates');
     });
 
     test('calling with overlapping windows deduplicates correctly', () async {
@@ -89,8 +87,7 @@ void main() {
 
       final stored = await repo.getShowupsForPact('pact-1');
       // Apr 1–9 = 9 unique showups.
-      expect(stored.length, 9,
-          reason: 'Overlapping calls must not duplicate showups in the overlap');
+      expect(stored.length, 9, reason: 'Overlapping calls must not duplicate showups in the overlap');
     });
 
     test('handles two separate pacts independently', () async {
@@ -142,8 +139,7 @@ void main() {
       expect(stored.last.scheduledAt.day, 10);
     });
 
-    test('generates nothing when window is entirely outside pact range',
-        () async {
+    test('generates nothing when window is entirely outside pact range', () async {
       final pact = makePact(
         id: 'pact-1',
         startDate: DateTime(2026, 4, 15),

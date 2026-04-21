@@ -34,9 +34,7 @@ class ScheduleStepAndroid extends StatelessWidget {
         child: ListTile(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: isSelected
-                ? BorderSide(color: theme.colorScheme.primary, width: 2)
-                : BorderSide.none,
+            side: isSelected ? BorderSide(color: theme.colorScheme.primary, width: 2) : BorderSide.none,
           ),
           tileColor: isSelected
               ? theme.colorScheme.primary.withValues(alpha: 0.08)
@@ -58,8 +56,7 @@ class ScheduleStepAndroid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         const SizedBox(height: 16),
-        Text(l10n.scheduleStep,
-            style: Theme.of(context).textTheme.headlineSmall),
+        Text(l10n.scheduleStep, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(l10n.scheduleTypeLabel),
         const SizedBox(height: 16),
@@ -103,9 +100,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
     super.initState();
     final schedule = widget.state.schedule;
     if (schedule is DailySchedule) {
-      _dailyTime = TimeOfDay(
-          hour: schedule.timeOfDay.inHours,
-          minute: schedule.timeOfDay.inMinutes % 60);
+      _dailyTime = TimeOfDay(hour: schedule.timeOfDay.inHours, minute: schedule.timeOfDay.inMinutes % 60);
     } else {
       _dailyTime = const TimeOfDay(hour: 8, minute: 0);
     }
@@ -120,8 +115,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
       _monthlyWeekdayEntries = List.of(schedule.entries);
     } else {
       _monthlyWeekdayEntries = [
-        const MonthlyWeekdayEntry(
-            occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
+        const MonthlyWeekdayEntry(occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
       ];
     }
     if (schedule is MonthlyByDateSchedule) {
@@ -136,25 +130,38 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
   String _weekdayName(int weekday) {
     final l10n = widget.l10n;
     switch (weekday) {
-      case 1: return l10n.weekdayMon;
-      case 2: return l10n.weekdayTue;
-      case 3: return l10n.weekdayWed;
-      case 4: return l10n.weekdayThu;
-      case 5: return l10n.weekdayFri;
-      case 6: return l10n.weekdaySat;
-      case 7: return l10n.weekdaySun;
-      default: return '';
+      case 1:
+        return l10n.weekdayMon;
+      case 2:
+        return l10n.weekdayTue;
+      case 3:
+        return l10n.weekdayWed;
+      case 4:
+        return l10n.weekdayThu;
+      case 5:
+        return l10n.weekdayFri;
+      case 6:
+        return l10n.weekdaySat;
+      case 7:
+        return l10n.weekdaySun;
+      default:
+        return '';
     }
   }
 
   String _occurrenceName(int occurrence) {
     final l10n = widget.l10n;
     switch (occurrence) {
-      case 1: return l10n.occurrenceFirst;
-      case 2: return l10n.occurrenceSecond;
-      case 3: return l10n.occurrenceThird;
-      case 4: return l10n.occurrenceFourth;
-      default: return '';
+      case 1:
+        return l10n.occurrenceFirst;
+      case 2:
+        return l10n.occurrenceSecond;
+      case 3:
+        return l10n.occurrenceThird;
+      case 4:
+        return l10n.occurrenceFourth;
+      default:
+        return '';
     }
   }
 
@@ -162,11 +169,9 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
     return showTimePicker(context: context, initialTime: initial);
   }
 
-  Duration _todToDuration(TimeOfDay t) =>
-      Duration(hours: t.hour, minutes: t.minute);
+  Duration _todToDuration(TimeOfDay t) => Duration(hours: t.hour, minutes: t.minute);
 
-  TimeOfDay _durationToTod(Duration d) =>
-      TimeOfDay(hour: d.inHours, minute: d.inMinutes % 60);
+  TimeOfDay _durationToTod(Duration d) => TimeOfDay(hour: d.inHours, minute: d.inMinutes % 60);
 
   @override
   Widget build(BuildContext context) {
@@ -209,17 +214,14 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
               value: entry.weekday,
               items: List.generate(
                 7,
-                (i) => DropdownMenuItem(
-                    value: i + 1, child: Text(_weekdayName(i + 1))),
+                (i) => DropdownMenuItem(value: i + 1, child: Text(_weekdayName(i + 1))),
               ),
               onChanged: (wd) {
                 if (wd == null) return;
                 setState(() {
-                  _weekdayEntries[index] =
-                      WeekdayEntry(weekday: wd, timeOfDay: entry.timeOfDay);
+                  _weekdayEntries[index] = WeekdayEntry(weekday: wd, timeOfDay: entry.timeOfDay);
                 });
-                widget.onScheduleChanged(
-                    WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
               },
             ),
             trailing: Row(
@@ -230,24 +232,19 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                     final t = await _pickTime(_durationToTod(entry.timeOfDay));
                     if (t != null) {
                       setState(() {
-                        _weekdayEntries[index] = WeekdayEntry(
-                            weekday: entry.weekday,
-                            timeOfDay: _todToDuration(t));
+                        _weekdayEntries[index] = WeekdayEntry(weekday: entry.weekday, timeOfDay: _todToDuration(t));
                       });
-                      widget.onScheduleChanged(
-                          WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                      widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
                     }
                   },
                   child: Text(_durationToTod(entry.timeOfDay).format(context)),
                 ),
                 if (_weekdayEntries.length > 1)
                   IconButton(
-                    icon: Icon(Icons.remove_circle_outline,
-                        color: Theme.of(context).colorScheme.error),
+                    icon: Icon(Icons.remove_circle_outline, color: Theme.of(context).colorScheme.error),
                     onPressed: () {
                       setState(() => _weekdayEntries.removeAt(index));
-                      widget.onScheduleChanged(
-                          WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                      widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
                     },
                   ),
               ],
@@ -257,8 +254,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
         TextButton.icon(
           onPressed: () {
             setState(() {
-              _weekdayEntries.add(const WeekdayEntry(
-                  weekday: 1, timeOfDay: Duration(hours: 8)));
+              _weekdayEntries.add(const WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           icon: const Icon(Icons.add_circle_outline),
@@ -283,8 +279,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                   value: entry.occurrence,
                   items: List.generate(
                     4,
-                    (i) => DropdownMenuItem(
-                        value: i + 1, child: Text(_occurrenceName(i + 1))),
+                    (i) => DropdownMenuItem(value: i + 1, child: Text(_occurrenceName(i + 1))),
                   ),
                   onChanged: (occ) {
                     if (occ == null) return;
@@ -295,8 +290,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                         timeOfDay: entry.timeOfDay,
                       );
                     });
-                    widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                        entries: List.of(_monthlyWeekdayEntries)));
+                    widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
                   },
                 ),
                 const SizedBox(width: 8),
@@ -304,8 +298,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                   value: entry.weekday,
                   items: List.generate(
                     7,
-                    (i) => DropdownMenuItem(
-                        value: i + 1, child: Text(_weekdayName(i + 1))),
+                    (i) => DropdownMenuItem(value: i + 1, child: Text(_weekdayName(i + 1))),
                   ),
                   onChanged: (wd) {
                     if (wd == null) return;
@@ -316,8 +309,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                         timeOfDay: entry.timeOfDay,
                       );
                     });
-                    widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                        entries: List.of(_monthlyWeekdayEntries)));
+                    widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
                   },
                 ),
                 const Spacer(),
@@ -332,20 +324,17 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                           timeOfDay: _todToDuration(t),
                         );
                       });
-                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                          entries: List.of(_monthlyWeekdayEntries)));
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
                     }
                   },
                   child: Text(_durationToTod(entry.timeOfDay).format(context)),
                 ),
                 if (_monthlyWeekdayEntries.length > 1)
                   IconButton(
-                    icon: Icon(Icons.remove_circle_outline,
-                        color: Theme.of(context).colorScheme.error),
+                    icon: Icon(Icons.remove_circle_outline, color: Theme.of(context).colorScheme.error),
                     onPressed: () {
                       setState(() => _monthlyWeekdayEntries.removeAt(index));
-                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                          entries: List.of(_monthlyWeekdayEntries)));
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
                     },
                   ),
                 const SizedBox(width: 8),
@@ -356,8 +345,8 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
         TextButton.icon(
           onPressed: () {
             setState(() {
-              _monthlyWeekdayEntries.add(const MonthlyWeekdayEntry(
-                  occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)));
+              _monthlyWeekdayEntries
+                  .add(const MonthlyWeekdayEntry(occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           icon: const Icon(Icons.add_circle_outline),
@@ -378,17 +367,14 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
               value: entry.dayOfMonth,
               items: List.generate(
                 31,
-                (i) => DropdownMenuItem(
-                    value: i + 1, child: Text('${i + 1}')),
+                (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1}')),
               ),
               onChanged: (day) {
                 if (day == null) return;
                 setState(() {
-                  _monthlyDateEntries[index] = MonthlyDateEntry(
-                      dayOfMonth: day, timeOfDay: entry.timeOfDay);
+                  _monthlyDateEntries[index] = MonthlyDateEntry(dayOfMonth: day, timeOfDay: entry.timeOfDay);
                 });
-                widget.onScheduleChanged(MonthlyByDateSchedule(
-                    entries: List.of(_monthlyDateEntries)));
+                widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
               },
             ),
             trailing: Row(
@@ -399,24 +385,20 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                     final t = await _pickTime(_durationToTod(entry.timeOfDay));
                     if (t != null) {
                       setState(() {
-                        _monthlyDateEntries[index] = MonthlyDateEntry(
-                            dayOfMonth: entry.dayOfMonth,
-                            timeOfDay: _todToDuration(t));
+                        _monthlyDateEntries[index] =
+                            MonthlyDateEntry(dayOfMonth: entry.dayOfMonth, timeOfDay: _todToDuration(t));
                       });
-                      widget.onScheduleChanged(MonthlyByDateSchedule(
-                          entries: List.of(_monthlyDateEntries)));
+                      widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
                     }
                   },
                   child: Text(_durationToTod(entry.timeOfDay).format(context)),
                 ),
                 if (_monthlyDateEntries.length > 1)
                   IconButton(
-                    icon: Icon(Icons.remove_circle_outline,
-                        color: Theme.of(context).colorScheme.error),
+                    icon: Icon(Icons.remove_circle_outline, color: Theme.of(context).colorScheme.error),
                     onPressed: () {
                       setState(() => _monthlyDateEntries.removeAt(index));
-                      widget.onScheduleChanged(MonthlyByDateSchedule(
-                          entries: List.of(_monthlyDateEntries)));
+                      widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
                     },
                   ),
               ],
@@ -426,8 +408,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
         TextButton.icon(
           onPressed: () {
             setState(() {
-              _monthlyDateEntries.add(const MonthlyDateEntry(
-                  dayOfMonth: 1, timeOfDay: Duration(hours: 8)));
+              _monthlyDateEntries.add(const MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           icon: const Icon(Icons.add_circle_outline),

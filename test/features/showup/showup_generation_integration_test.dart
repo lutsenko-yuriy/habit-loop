@@ -26,8 +26,7 @@ void main() {
       final showups = ShowupGenerator.generate(pact);
       final ids = showups.map((s) => s.id).toSet();
 
-      expect(ids.length, showups.length,
-          reason: 'Every generated showup must have a unique id');
+      expect(ids.length, showups.length, reason: 'Every generated showup must have a unique id');
     });
 
     test('generated showup ids are unique across two pacts with the same schedule', () {
@@ -56,8 +55,7 @@ void main() {
       ];
       final ids = all.map((s) => s.id).toSet();
 
-      expect(ids.length, all.length,
-          reason: 'Showup ids must be unique across different pacts');
+      expect(ids.length, all.length, reason: 'Showup ids must be unique across different pacts');
     });
 
     test('all generated showups can be saved and retrieved without collision', () async {
@@ -75,8 +73,7 @@ void main() {
       final showups = ShowupGenerator.generate(pact);
       final result = await repo.saveShowups(showups);
 
-      expect(result.allSaved, isTrue,
-          reason: 'No showup ids should collide during save');
+      expect(result.allSaved, isTrue, reason: 'No showup ids should collide during save');
 
       final saved = await repo.getShowupsForPact('pact-1');
       expect(saved.length, showups.length);
@@ -84,9 +81,7 @@ void main() {
   });
 
   group('Pact creation → Dashboard wiring integration', () {
-    test(
-        'submitting a pact generates showups visible on the dashboard',
-        () async {
+    test('submitting a pact generates showups visible on the dashboard', () async {
       final today = DateTime(2054, 4, 1);
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
@@ -96,8 +91,7 @@ void main() {
           // Pact creation providers
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider.overrideWithValue(pactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(showupRepo),
+          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
           // Dashboard providers
           todayProvider.overrideWithValue(today),
           pactRepositoryProvider.overrideWithValue(pactRepo),
@@ -107,13 +101,11 @@ void main() {
       addTearDown(container.dispose);
 
       // Create a pact via the creation view model
-      final creationVM =
-          container.read(pactCreationViewModelProvider.notifier);
+      final creationVM = container.read(pactCreationViewModelProvider.notifier);
       creationVM.setHabitName('Meditate');
       creationVM.setShowupDuration(const Duration(minutes: 10));
       creationVM.setScheduleType(ScheduleType.daily);
-      creationVM.setSchedule(
-          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      creationVM.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       creationVM.setCommitmentAccepted(true);
 
       await creationVM.submit();
@@ -123,9 +115,7 @@ void main() {
       expect(creationState.submitError, isNull);
 
       // Load the dashboard
-      await container
-          .read(dashboardViewModelProvider.notifier)
-          .load();
+      await container.read(dashboardViewModelProvider.notifier).load();
 
       final dashState = container.read(dashboardViewModelProvider);
       expect(dashState.isLoading, false);

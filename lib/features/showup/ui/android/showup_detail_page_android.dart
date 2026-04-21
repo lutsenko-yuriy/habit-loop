@@ -20,8 +20,7 @@ class ShowupDetailPageAndroid extends StatefulWidget {
   });
 
   @override
-  State<ShowupDetailPageAndroid> createState() =>
-      _ShowupDetailPageAndroidState();
+  State<ShowupDetailPageAndroid> createState() => _ShowupDetailPageAndroidState();
 }
 
 class _ShowupDetailPageAndroidState extends State<ShowupDetailPageAndroid> {
@@ -41,8 +40,7 @@ class _ShowupDetailPageAndroidState extends State<ShowupDetailPageAndroid> {
     // Sync controller text when the showup note changes from outside (e.g., on
     // initial load). Only update if not currently editing to avoid cursor jumps.
     final newNote = widget.state.showup?.note ?? '';
-    if (oldWidget.state.showup?.note != widget.state.showup?.note &&
-        _noteController.text != newNote) {
+    if (oldWidget.state.showup?.note != widget.state.showup?.note && _noteController.text != newNote) {
       _noteController.text = newNote;
     }
   }
@@ -124,8 +122,7 @@ class _ShowupDetailContent extends StatelessWidget {
             Expanded(
               child: Text(
                 state.habitName ?? l10n.showupHabitDeleted,
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             Chip(
@@ -142,8 +139,7 @@ class _ShowupDetailContent extends StatelessWidget {
         const SizedBox(height: 16),
 
         // Info cards
-        _InfoRow(label: l10n.showupDetailScheduledAt,
-            value: '$scheduledDate  $scheduledTime'),
+        _InfoRow(label: l10n.showupDetailScheduledAt, value: '$scheduledDate  $scheduledTime'),
         const SizedBox(height: 8),
         _InfoRow(
           label: l10n.showupDetailDuration,
@@ -226,9 +222,7 @@ class _ShowupDetailContent extends StatelessWidget {
             return Align(
               alignment: Alignment.centerRight,
               child: FilledButton.tonal(
-                onPressed: (state.isSaving || !hasChanged)
-                    ? null
-                    : () => onSaveNote(noteController.text),
+                onPressed: (state.isSaving || !hasChanged) ? null : () => onSaveNote(noteController.text),
                 child: Text(l10n.showupNoteSave),
               ),
             );
@@ -246,16 +240,16 @@ class _ShowupDetailContent extends StatelessWidget {
   }
 
   Color _statusChipBg(ShowupStatus status, ColorScheme cs) => switch (status) {
-    ShowupStatus.pending => cs.surfaceContainerHighest,
-    ShowupStatus.done => cs.secondaryContainer,
-    ShowupStatus.failed => cs.errorContainer,
-  };
+        ShowupStatus.pending => cs.surfaceContainerHighest,
+        ShowupStatus.done => cs.secondaryContainer,
+        ShowupStatus.failed => cs.errorContainer,
+      };
 
   Color _statusChipFg(ShowupStatus status, ColorScheme cs) => switch (status) {
-    ShowupStatus.pending => cs.onSurfaceVariant,
-    ShowupStatus.done => cs.onSecondaryContainer,
-    ShowupStatus.failed => cs.onErrorContainer,
-  };
+        ShowupStatus.pending => cs.onSurfaceVariant,
+        ShowupStatus.done => cs.onSecondaryContainer,
+        ShowupStatus.failed => cs.onErrorContainer,
+      };
 }
 
 class _InfoRow extends StatelessWidget {

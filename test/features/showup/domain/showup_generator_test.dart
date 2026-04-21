@@ -81,8 +81,7 @@ void main() {
 
       test('handles time with minutes', () {
         final pact = _pact(
-          schedule:
-              const DailySchedule(timeOfDay: Duration(hours: 7, minutes: 30)),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7, minutes: 30)),
           startDate: DateTime(2054, 4, 1),
           endDate: DateTime(2054, 4, 1),
         );
@@ -99,8 +98,7 @@ void main() {
         final pact = _pact(
           schedule: const WeekdaySchedule(entries: [
             WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
-            WeekdayEntry(
-                weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
+            WeekdayEntry(weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
           ]),
           startDate: DateTime(2054, 4, 1),
           endDate: DateTime(2054, 4, 14),
@@ -111,7 +109,7 @@ void main() {
         // April 1=Wed, 6=Mon, 8=Wed, 13=Mon
         expect(showups.length, 4);
         expect(showups[0].scheduledAt, DateTime(2054, 4, 1, 18, 0)); // Wed
-        expect(showups[1].scheduledAt, DateTime(2054, 4, 6, 6, 0));  // Mon
+        expect(showups[1].scheduledAt, DateTime(2054, 4, 6, 6, 0)); // Mon
         expect(showups[2].scheduledAt, DateTime(2054, 4, 8, 18, 0)); // Wed
         expect(showups[3].scheduledAt, DateTime(2054, 4, 13, 6, 0)); // Mon
       });
@@ -429,8 +427,7 @@ void main() {
             to: DateTime(2054, 4, 8),
           );
 
-          expect(first.map((s) => s.id).toList(),
-              equals(second.map((s) => s.id).toList()));
+          expect(first.map((s) => s.id).toList(), equals(second.map((s) => s.id).toList()));
         });
 
         test('IDs from overlapping windows are consistent with full generate()', () {
@@ -462,10 +459,8 @@ void main() {
           // April 2054: Mon=6,13,20,27 / Wed=1,8,15,22,29
           final pact = _pact(
             schedule: const WeekdaySchedule(entries: [
-              WeekdayEntry(
-                  weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
-              WeekdayEntry(
-                  weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
+              WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
+              WeekdayEntry(weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
             ]),
             startDate: DateTime(2054, 4, 1),
             endDate: DateTime(2054, 4, 30),
@@ -487,8 +482,7 @@ void main() {
           // Only Sunday, window covers Mon–Fri
           final pact = _pact(
             schedule: const WeekdaySchedule(entries: [
-              WeekdayEntry(
-                  weekday: DateTime.sunday, timeOfDay: Duration(hours: 9)),
+              WeekdayEntry(weekday: DateTime.sunday, timeOfDay: Duration(hours: 9)),
             ]),
             startDate: DateTime(2054, 4, 1),
             endDate: DateTime(2054, 4, 30),
@@ -577,10 +571,8 @@ void main() {
         // Mon + Wed, April 2054 (30 days): 4 Mondays + 5 Wednesdays = 9 total
         final pact = _pact(
           schedule: const WeekdaySchedule(entries: [
-            WeekdayEntry(
-                weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
-            WeekdayEntry(
-                weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
+            WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 6)),
+            WeekdayEntry(weekday: DateTime.wednesday, timeOfDay: Duration(hours: 18)),
           ]),
           startDate: DateTime(2054, 4, 1),
           endDate: DateTime(2054, 4, 30),

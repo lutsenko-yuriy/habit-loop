@@ -26,10 +26,30 @@ final _pact = Pact(
 );
 
 final _showups = [
-  Showup(id: 's1', pactId: 'p1', scheduledAt: DateTime(2026, 3, 1, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-  Showup(id: 's2', pactId: 'p1', scheduledAt: DateTime(2026, 3, 2, 8), duration: const Duration(minutes: 10), status: ShowupStatus.done),
-  Showup(id: 's3', pactId: 'p1', scheduledAt: DateTime(2026, 3, 3, 8), duration: const Duration(minutes: 10), status: ShowupStatus.failed),
-  Showup(id: 's4', pactId: 'p1', scheduledAt: DateTime(2026, 3, 4, 8), duration: const Duration(minutes: 10), status: ShowupStatus.pending),
+  Showup(
+      id: 's1',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 3, 1, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.done),
+  Showup(
+      id: 's2',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 3, 2, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.done),
+  Showup(
+      id: 's3',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 3, 3, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.failed),
+  Showup(
+      id: 's4',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 3, 4, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.pending),
 ];
 
 ProviderContainer _makeContainer({
@@ -119,8 +139,7 @@ void main() {
       expect(persisted?.stopReason, isNull);
     });
 
-    test('load recomputes fresh stats when persisted snapshot is stale',
-        () async {
+    test('load recomputes fresh stats when persisted snapshot is stale', () async {
       final stalePact = _pact.copyWith(
         stats: PactStats(
           showupsDone: 0,
@@ -164,8 +183,7 @@ void main() {
       expect(await showupRepo.getShowupsForPact('p1'), isNotEmpty);
     });
 
-    test('stopPact preserves historical stats even after showups are removed',
-        () async {
+    test('stopPact preserves historical stats even after showups are removed', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final container = ProviderContainer(overrides: [
@@ -213,8 +231,7 @@ void main() {
       expect(reloadedState.pact?.stats, reloadedState.stats);
     });
 
-    test('load auto-completes an active pact whose end date is in the past',
-        () async {
+    test('load auto-completes an active pact whose end date is in the past', () async {
       final expiredPact = Pact(
         id: 'expired',
         habitName: 'Run',
@@ -225,7 +242,12 @@ void main() {
         status: PactStatus.active,
       );
       final showups = [
-        Showup(id: 'e1', pactId: 'expired', scheduledAt: DateTime(2020, 1, 5, 7), duration: const Duration(minutes: 10), status: ShowupStatus.done),
+        Showup(
+            id: 'e1',
+            pactId: 'expired',
+            scheduledAt: DateTime(2020, 1, 5, 7),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.done),
       ];
       final pactRepo = InMemoryPactRepository([expiredPact]);
       final container = ProviderContainer(overrides: [
@@ -400,8 +422,7 @@ void main() {
 
       final event = fakeAnalytics.loggedEvents.single as PactStoppedEvent;
       // Mar 1 00:00 → Mar 2 08:00 = 1 day 8 hours → daysActive = 1
-      expect(event.daysActive, 1,
-          reason: 'Stopping on the morning after start day must report 1 day active');
+      expect(event.daysActive, 1, reason: 'Stopping on the morning after start day must report 1 day active');
     });
 
     test('stopPact does NOT fire event on failure', () async {
@@ -410,8 +431,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           pactDetailRepositoryProvider.overrideWithValue(throwingPactRepo),
-          pactDetailShowupRepositoryProvider
-              .overrideWithValue(InMemoryShowupRepository(_showups)),
+          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
@@ -423,8 +443,7 @@ void main() {
       final workingContainer = ProviderContainer(
         overrides: [
           pactDetailRepositoryProvider.overrideWithValue(loadRepo),
-          pactDetailShowupRepositoryProvider
-              .overrideWithValue(InMemoryShowupRepository(_showups)),
+          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
@@ -439,8 +458,7 @@ void main() {
       final failContainer = ProviderContainer(
         overrides: [
           pactDetailRepositoryProvider.overrideWithValue(throwingRepo),
-          pactDetailShowupRepositoryProvider
-              .overrideWithValue(InMemoryShowupRepository(_showups)),
+          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
@@ -458,22 +476,19 @@ void main() {
 
 class _ThrowingPactRepository extends InMemoryPactRepository {
   @override
-  Future<Pact?> getPactById(String id) async =>
-      throw Exception('load failed intentionally');
+  Future<Pact?> getPactById(String id) async => throw Exception('load failed intentionally');
 }
 
 class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   _ThrowingOnUpdatePactRepository(super.initialPacts);
 
   @override
-  Future<void> updatePact(Pact pact) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 }
 
 class _ThrowingOnDeleteShowupRepository extends InMemoryShowupRepository {
   _ThrowingOnDeleteShowupRepository(super.initialShowups);
 
   @override
-  Future<void> deleteShowupsForPact(String pactId) async =>
-      throw Exception('delete failed intentionally');
+  Future<void> deleteShowupsForPact(String pactId) async => throw Exception('delete failed intentionally');
 }

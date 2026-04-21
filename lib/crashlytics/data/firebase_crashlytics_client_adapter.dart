@@ -6,8 +6,7 @@ import 'package:habit_loop/crashlytics/data/firebase_crashlytics_service.dart';
 /// interface so [FirebaseCrashlyticsService] never directly imports the SDK.
 ///
 /// Only constructed in `main.dart`; tests use a hand-rolled fake client.
-final class FirebaseCrashlyticsClientAdapter
-    implements FirebaseCrashlyticsClient {
+final class FirebaseCrashlyticsClientAdapter implements FirebaseCrashlyticsClient {
   FirebaseCrashlyticsClientAdapter(this._firebase);
 
   final FirebaseCrashlytics _firebase;

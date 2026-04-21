@@ -21,8 +21,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noPactsYet => 'Noch keine Pakte';
 
   @override
-  String get noPactsDescription =>
-      'Erstelle deinen ersten Pakt, um eine Gewohnheit aufzubauen.';
+  String get noPactsDescription => 'Erstelle deinen ersten Pakt, um eine Gewohnheit aufzubauen.';
 
   @override
   String get createPact => 'Pakt erstellen';
@@ -193,10 +192,8 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       max,
       locale: localeName,
-      other:
-          'Du kannst nur $max aktive Pakte gleichzeitig haben. Möchtest du wirklich mehr erstellen?',
-      one:
-          'Du kannst nur 1 aktiven Pakt gleichzeitig haben. Möchtest du wirklich einen weiteren erstellen?',
+      other: 'Du kannst nur $max aktive Pakte gleichzeitig haben. Möchtest du wirklich mehr erstellen?',
+      one: 'Du kannst nur 1 aktiven Pakt gleichzeitig haben. Möchtest du wirklich einen weiteren erstellen?',
     );
     return '$_temp0';
   }
@@ -217,8 +214,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sectionStopReason => 'Stoppgrund';
 
   @override
-  String get stopPactError =>
-      'Pakt konnte nicht gestoppt werden. Bitte erneut versuchen.';
+  String get stopPactError => 'Pakt konnte nicht gestoppt werden. Bitte erneut versuchen.';
 
   @override
   String get statsDone => 'Erledigt';
@@ -383,12 +379,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get showupNoteSave => 'Notiz speichern';
 
   @override
-  String get showupNoteError =>
-      'Notiz konnte nicht gespeichert werden. Bitte erneut versuchen.';
+  String get showupNoteError => 'Notiz konnte nicht gespeichert werden. Bitte erneut versuchen.';
 
   @override
-  String get showupMarkError =>
-      'Status konnte nicht aktualisiert werden. Bitte erneut versuchen.';
+  String get showupMarkError => 'Status konnte nicht aktualisiert werden. Bitte erneut versuchen.';
 
   @override
   String get showupHabitDeleted => '(Gewohnheit gelöscht)';

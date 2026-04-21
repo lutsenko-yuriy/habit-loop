@@ -1,12 +1,14 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/dashboard/analytics/dashboard_screens.dart';
+import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/domain/pact_list_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
-import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -71,11 +73,11 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       ));
     }
     if (mounted) {
-      ref
-          .read(analyticsServiceProvider)
-          .logScreenView(const DashboardAnalyticsScreen());
-      ref.read(pactListViewModelProvider.notifier).load();
-      ref.read(dashboardViewModelProvider.notifier).load();
+      unawaited(
+        ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
+      );
+      unawaited(ref.read(pactListViewModelProvider.notifier).load());
+      unawaited(ref.read(dashboardViewModelProvider.notifier).load());
     }
   }
 
@@ -189,29 +191,22 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                     children: [
                       FilterChip(
                         label: Text(l10n.filterActive),
-                        selected:
-                            state.activeFilters.contains(PactStatus.active),
-                        onSelected: (_) => ref
-                            .read(pactListViewModelProvider.notifier)
-                            .toggleFilter(PactStatus.active),
+                        selected: state.activeFilters.contains(PactStatus.active),
+                        onSelected: (_) => ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active),
                       ),
                       const SizedBox(width: 8),
                       FilterChip(
                         label: Text(l10n.filterDone),
-                        selected: state.activeFilters
-                            .contains(PactStatus.completed),
-                        onSelected: (_) => ref
-                            .read(pactListViewModelProvider.notifier)
-                            .toggleFilter(PactStatus.completed),
+                        selected: state.activeFilters.contains(PactStatus.completed),
+                        onSelected: (_) =>
+                            ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed),
                       ),
                       const SizedBox(width: 8),
                       FilterChip(
                         label: Text(l10n.filterCancelled),
-                        selected:
-                            state.activeFilters.contains(PactStatus.stopped),
-                        onSelected: (_) => ref
-                            .read(pactListViewModelProvider.notifier)
-                            .toggleFilter(PactStatus.stopped),
+                        selected: state.activeFilters.contains(PactStatus.stopped),
+                        onSelected: (_) =>
+                            ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped),
                       ),
                     ],
                   ),
@@ -243,8 +238,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
               else
                 SliverList.separated(
                   itemCount: entries.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1, indent: 16),
+                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
                   itemBuilder: (context, index) {
                     final entry = entries[index];
                     return _PactTile(
@@ -280,8 +274,7 @@ class _PactTile extends StatelessWidget {
     final String subtitle;
     if (pact.status == PactStatus.active) {
       final next = entry.nextShowupAt;
-      subtitle =
-          next != null ? l10n.pactNextShowup(dateFormat.format(next)) : '';
+      subtitle = next != null ? l10n.pactNextShowup(dateFormat.format(next)) : '';
     } else if (pact.status == PactStatus.completed) {
       subtitle = l10n.pactEndedOn(dateFormat.format(pact.endDate));
     } else {

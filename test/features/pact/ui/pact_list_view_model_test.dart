@@ -19,9 +19,7 @@ Pact _pact(String id, PactStatus status, {DateTime? endDate}) => Pact(
       status: status,
     );
 
-Showup _showup(String id, String pactId, DateTime scheduledAt,
-        {ShowupStatus status = ShowupStatus.pending}) =>
-    Showup(
+Showup _showup(String id, String pactId, DateTime scheduledAt, {ShowupStatus status = ShowupStatus.pending}) => Showup(
       id: id,
       pactId: pactId,
       scheduledAt: scheduledAt,
@@ -35,8 +33,7 @@ ProviderContainer _makeContainer({
 }) {
   return ProviderContainer(overrides: [
     pactListRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-    pactListShowupRepositoryProvider
-        .overrideWithValue(InMemoryShowupRepository(showups)),
+    pactListShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
   ]);
 }
 
@@ -47,8 +44,7 @@ void main() {
       final state = c.read(pactListViewModelProvider);
       expect(state.entries, isEmpty);
       expect(state.isLoading, false);
-      expect(state.activeFilters,
-          {PactStatus.active, PactStatus.completed, PactStatus.stopped});
+      expect(state.activeFilters, {PactStatus.active, PactStatus.completed, PactStatus.stopped});
     });
 
     test('load with no pacts → empty entries', () async {

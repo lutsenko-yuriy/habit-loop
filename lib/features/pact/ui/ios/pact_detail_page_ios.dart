@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
-import 'package:intl/intl.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:intl/intl.dart';
 
 class PactDetailPageIos extends StatelessWidget {
   final PactDetailState state;
@@ -57,8 +57,7 @@ class _PactDetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final pact = state.pact;
     final stats = state.stats;
-    assert(pact != null && stats != null,
-        '_PactDetailContent must only be shown after a successful load');
+    assert(pact != null && stats != null, '_PactDetailContent must only be shown after a successful load');
     if (pact == null || stats == null) return const SizedBox.shrink();
     final today = DateTime.now();
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
@@ -165,9 +164,7 @@ class _PactDetailContent extends StatelessWidget {
             const SizedBox(height: 8),
           ],
           CupertinoButton(
-            onPressed: state.isStopping
-                ? null
-                : () => _showStopDialog(context),
+            onPressed: state.isStopping ? null : () => _showStopDialog(context),
             child: state.isStopping
                 ? const CupertinoActivityIndicator()
                 : Text(

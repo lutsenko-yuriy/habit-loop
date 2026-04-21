@@ -7,8 +7,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 void main() {
-  testWidgets('iOS pact creation shows a themed step indicator',
-      (tester) async {
+  testWidgets('iOS pact creation shows a themed step indicator', (tester) async {
     final state = PactCreationState(
       today: DateTime(2026, 3, 30),
       currentStep: PactCreationStep.schedule,

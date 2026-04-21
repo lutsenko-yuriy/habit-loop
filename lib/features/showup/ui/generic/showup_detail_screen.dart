@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,38 +27,35 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(analyticsServiceProvider).logScreenView(const ShowupDetailAnalyticsScreen());
-      // Invalidate the now provider so load() always samples the real current
-      // time, not a cached value from a previous navigation or app start.
-      ref.invalidate(showupDetailNowProvider);
-      ref
-          .read(showupDetailViewModelProvider(widget.showupId).notifier)
-          .load();
-    });
+    unawaited(
+      Future.microtask(() {
+        unawaited(
+          ref.read(analyticsServiceProvider).logScreenView(const ShowupDetailAnalyticsScreen()),
+        );
+        // Invalidate the now provider so load() always samples the real current
+        // time, not a cached value from a previous navigation or app start.
+        ref.invalidate(showupDetailNowProvider);
+        unawaited(
+          ref.read(showupDetailViewModelProvider(widget.showupId).notifier).load(),
+        );
+      }),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final state =
-        ref.watch(showupDetailViewModelProvider(widget.showupId));
+    final state = ref.watch(showupDetailViewModelProvider(widget.showupId));
 
     Future<void> onMarkDone() async {
-      await ref
-          .read(showupDetailViewModelProvider(widget.showupId).notifier)
-          .markDone();
+      await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).markDone();
     }
 
     Future<void> onMarkFailed() async {
-      await ref
-          .read(showupDetailViewModelProvider(widget.showupId).notifier)
-          .markFailed();
+      await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).markFailed();
     }
 
     Future<void> onSaveNote(String note) async {
-      await ref
-          .read(showupDetailViewModelProvider(widget.showupId).notifier)
-          .saveNote(note);
+      await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).saveNote(note);
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {

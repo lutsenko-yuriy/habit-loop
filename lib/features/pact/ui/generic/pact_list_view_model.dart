@@ -13,8 +13,7 @@ final pactListShowupRepositoryProvider = Provider<ShowupRepository>(
   (_) => throw UnimplementedError('Override pactListShowupRepositoryProvider'),
 );
 
-final pactListViewModelProvider =
-    NotifierProvider<PactListViewModel, PactListState>(PactListViewModel.new);
+final pactListViewModelProvider = NotifierProvider<PactListViewModel, PactListState>(PactListViewModel.new);
 
 class PactListViewModel extends Notifier<PactListState> {
   @override
@@ -33,11 +32,7 @@ class PactListViewModel extends Notifier<PactListState> {
         DateTime? nextShowupAt;
         if (pact.status == PactStatus.active) {
           final showups = await showupRepo.getShowupsForPact(pact.id);
-          final pending = showups
-              .where((s) =>
-                  s.status == ShowupStatus.pending &&
-                  s.scheduledAt.isAfter(now))
-              .toList()
+          final pending = showups.where((s) => s.status == ShowupStatus.pending && s.scheduledAt.isAfter(now)).toList()
             ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
           if (pending.isNotEmpty) nextShowupAt = pending.first.scheduledAt;
         }
@@ -45,8 +40,7 @@ class PactListViewModel extends Notifier<PactListState> {
       }
 
       entries.sort((a, b) {
-        final statusCmp =
-            _statusOrder(a.pact.status).compareTo(_statusOrder(b.pact.status));
+        final statusCmp = _statusOrder(a.pact.status).compareTo(_statusOrder(b.pact.status));
         if (statusCmp != 0) return statusCmp;
         if (a.pact.status == PactStatus.active) {
           final aT = a.nextShowupAt ?? DateTime(9999);

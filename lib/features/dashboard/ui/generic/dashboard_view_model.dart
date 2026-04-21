@@ -15,8 +15,7 @@ final showupRepositoryProvider = Provider<ShowupRepository>((ref) {
   throw UnimplementedError('Override showupRepositoryProvider');
 });
 
-final dashboardViewModelProvider =
-    NotifierProvider<DashboardViewModel, DashboardState>(
+final dashboardViewModelProvider = NotifierProvider<DashboardViewModel, DashboardState>(
   DashboardViewModel.new,
 );
 
@@ -99,10 +98,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
 
     final days = List.generate(7, (i) {
       final date = DateTime(stripStart.year, stripStart.month, stripStart.day + i);
-      final dayShowups = showups
-          .where((s) =>
-              _sameDay(s.scheduledAt, date) && activePactIds.contains(s.pactId))
-          .toList();
+      final dayShowups =
+          showups.where((s) => _sameDay(s.scheduledAt, date) && activePactIds.contains(s.pactId)).toList();
       return CalendarDayEntry(date: date, showups: dayShowups);
     });
 
@@ -119,6 +116,5 @@ class DashboardViewModel extends Notifier<DashboardState> {
     state = state.copyWith(selectedDayIndex: index);
   }
 
-  bool _sameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
+  bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 }

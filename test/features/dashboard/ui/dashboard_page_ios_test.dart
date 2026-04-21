@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show MaterialApp, Theme;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
@@ -10,7 +11,6 @@ import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   testWidgets('iOS dashboard uses scaffold color without custom home indicator affordances', (tester) async {

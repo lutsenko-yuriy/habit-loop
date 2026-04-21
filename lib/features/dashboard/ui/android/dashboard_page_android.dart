@@ -144,9 +144,7 @@ class _CalendarStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final today = state.calendarDays.isNotEmpty
-        ? state.calendarDays[state.todayIndex].date
-        : DateTime.now();
+    final today = state.calendarDays.isNotEmpty ? state.calendarDays[state.todayIndex].date : DateTime.now();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -154,9 +152,8 @@ class _CalendarStrip extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(state.calendarDays.length, (index) {
           final entry = state.calendarDays[index];
-          final isToday = entry.date.day == today.day &&
-              entry.date.month == today.month &&
-              entry.date.year == today.year;
+          final isToday =
+              entry.date.day == today.day && entry.date.month == today.month && entry.date.year == today.year;
           final isSelected = index == state.selectedDayIndex;
 
           return _CalendarDay(
@@ -199,9 +196,7 @@ class _CalendarDay extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isSelected ? theme.colorScheme.primary : null,
-              border: isToday && !isSelected
-                  ? Border.all(color: theme.colorScheme.primary, width: 2)
-                  : null,
+              border: isToday && !isSelected ? Border.all(color: theme.colorScheme.primary, width: 2) : null,
             ),
             alignment: Alignment.center,
             child: Text(
@@ -220,8 +215,7 @@ class _CalendarDay extends StatelessWidget {
   }
 
   Widget _buildDots(List<Showup> showups, DateTime date, ThemeData theme) {
-    final dateKey =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     if (showups.isEmpty) return const SizedBox.shrink();
     if (showups.length >= 4) {
       var done = 0, failed = 0, pending = 0;

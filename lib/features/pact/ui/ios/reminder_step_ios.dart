@@ -20,17 +20,10 @@ class ReminderStepIos extends StatelessWidget {
   Widget build(BuildContext context) {
     final options = <_ReminderOption>[
       _ReminderOption(label: l10n.reminderNone, offset: null),
-      _ReminderOption(
-          label: l10n.reminderAtStart, offset: Duration.zero),
-      _ReminderOption(
-          label: l10n.reminderMinutesBefore(15),
-          offset: const Duration(minutes: 15)),
-      _ReminderOption(
-          label: l10n.reminderMinutesBefore(30),
-          offset: const Duration(minutes: 30)),
-      _ReminderOption(
-          label: l10n.reminderMinutesBefore(60),
-          offset: const Duration(minutes: 60)),
+      _ReminderOption(label: l10n.reminderAtStart, offset: Duration.zero),
+      _ReminderOption(label: l10n.reminderMinutesBefore(15), offset: const Duration(minutes: 15)),
+      _ReminderOption(label: l10n.reminderMinutesBefore(30), offset: const Duration(minutes: 30)),
+      _ReminderOption(label: l10n.reminderMinutesBefore(60), offset: const Duration(minutes: 60)),
     ];
 
     return ListView(
@@ -60,15 +53,11 @@ class ReminderStepIos extends StatelessWidget {
                 }
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? CupertinoTheme.of(context)
-                          .primaryColor
-                          .withValues(alpha: 0.1)
-                      : CupertinoColors.tertiarySystemFill
-                          .resolveFrom(context),
+                      ? CupertinoTheme.of(context).primaryColor.withValues(alpha: 0.1)
+                      : CupertinoColors.tertiarySystemFill.resolveFrom(context),
                   borderRadius: BorderRadius.circular(10),
                   border: isSelected
                       ? Border.all(
@@ -80,12 +69,8 @@ class ReminderStepIos extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(
-                      isSelected
-                          ? CupertinoIcons.check_mark_circled_solid
-                          : CupertinoIcons.circle,
-                      color: isSelected
-                          ? CupertinoTheme.of(context).primaryColor
-                          : CupertinoColors.systemGrey,
+                      isSelected ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
+                      color: isSelected ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
                     ),
                     const SizedBox(width: 12),
                     Text(option.label),

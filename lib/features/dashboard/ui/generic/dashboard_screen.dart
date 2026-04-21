@@ -1,9 +1,7 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart'
-    show
-        CupertinoAlertDialog,
-        CupertinoDialogAction,
-        CupertinoPageRoute,
-        showCupertinoDialog;
+    show CupertinoAlertDialog, CupertinoDialogAction, CupertinoPageRoute, showCupertinoDialog;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,11 +30,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
-      ref.read(dashboardViewModelProvider.notifier).load();
-      ref.read(pactListViewModelProvider.notifier).load();
-    });
+    unawaited(
+      Future.microtask(() {
+        unawaited(
+          ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
+        );
+        unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+        unawaited(ref.read(pactListViewModelProvider.notifier).load());
+      }),
+    );
   }
 
   @override
@@ -65,10 +67,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
       if (context.mounted) {
-        ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
+        unawaited(
+          ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
+        );
         ref.invalidate(hasActivePactsProvider);
-        ref.read(dashboardViewModelProvider.notifier).load();
-        ref.read(pactListViewModelProvider.notifier).load();
+        unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+        unawaited(ref.read(pactListViewModelProvider.notifier).load());
       }
     }
 
@@ -80,48 +84,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final l10n = AppLocalizations.of(context)!;
         final activePacts = await pactRepo.getActivePacts();
         if (!context.mounted) return;
-        final maxActivePacts = ref
-            .read(remoteConfigServiceProvider)
-            .getInt('max_active_pacts');
+        final maxActivePacts = ref.read(remoteConfigServiceProvider).getInt('max_active_pacts');
         if (activePacts.length >= maxActivePacts) {
           final bool confirmed;
           if (defaultTargetPlatform == TargetPlatform.iOS) {
             confirmed = await showCupertinoDialog<bool>(
-              context: context,
-              builder: (ctx) => CupertinoAlertDialog(
-                title: Text(l10n.tooManyPactsTitle),
-                content: Text(l10n.tooManyPactsBody(maxActivePacts)),
-                actions: [
-                  CupertinoDialogAction(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: Text(l10n.cancel),
+                  context: context,
+                  builder: (ctx) => CupertinoAlertDialog(
+                    title: Text(l10n.tooManyPactsTitle),
+                    content: Text(l10n.tooManyPactsBody(maxActivePacts)),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(l10n.cancel),
+                      ),
+                      CupertinoDialogAction(
+                        isDefaultAction: true,
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(l10n.tooManyPactsConfirm),
+                      ),
+                    ],
                   ),
-                  CupertinoDialogAction(
-                    isDefaultAction: true,
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: Text(l10n.tooManyPactsConfirm),
-                  ),
-                ],
-              ),
-            ) ?? false;
+                ) ??
+                false;
           } else {
             confirmed = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: Text(l10n.tooManyPactsTitle),
-                content: Text(l10n.tooManyPactsBody(maxActivePacts)),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: Text(l10n.cancel),
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text(l10n.tooManyPactsTitle),
+                    content: Text(l10n.tooManyPactsBody(maxActivePacts)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(l10n.cancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(l10n.tooManyPactsConfirm),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: Text(l10n.tooManyPactsConfirm),
-                  ),
-                ],
-              ),
-            ) ?? false;
+                ) ??
+                false;
           }
           if (!confirmed) return;
         }
@@ -151,9 +155,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
       if (context.mounted) {
-        ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen());
-        ref.read(dashboardViewModelProvider.notifier).load();
-        ref.read(pactListViewModelProvider.notifier).load();
+        unawaited(
+          ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
+        );
+        unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+        unawaited(ref.read(pactListViewModelProvider.notifier).load());
       }
     }
 

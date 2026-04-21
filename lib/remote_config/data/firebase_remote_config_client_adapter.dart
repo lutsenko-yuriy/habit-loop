@@ -5,8 +5,7 @@ import 'package:habit_loop/remote_config/data/firebase_remote_config_service.dar
 /// interface so [FirebaseRemoteConfigService] never directly imports the SDK.
 ///
 /// Only constructed in `main.dart`; tests use a hand-rolled fake client.
-final class FirebaseRemoteConfigClientAdapter
-    implements FirebaseRemoteConfigClient {
+final class FirebaseRemoteConfigClientAdapter implements FirebaseRemoteConfigClient {
   FirebaseRemoteConfigClientAdapter(this._firebase);
 
   final FirebaseRemoteConfig _firebase;

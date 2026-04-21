@@ -25,17 +25,13 @@ class PactListState {
     },
   });
 
-  int get activeCount =>
-      entries.where((e) => e.pact.status == PactStatus.active).length;
+  int get activeCount => entries.where((e) => e.pact.status == PactStatus.active).length;
 
-  int get doneCount =>
-      entries.where((e) => e.pact.status == PactStatus.completed).length;
+  int get doneCount => entries.where((e) => e.pact.status == PactStatus.completed).length;
 
-  int get cancelledCount =>
-      entries.where((e) => e.pact.status == PactStatus.stopped).length;
+  int get cancelledCount => entries.where((e) => e.pact.status == PactStatus.stopped).length;
 
-  List<PactListEntry> get filteredEntries =>
-      entries.where((e) => activeFilters.contains(e.pact.status)).toList();
+  List<PactListEntry> get filteredEntries => entries.where((e) => activeFilters.contains(e.pact.status)).toList();
 
   PactListState copyWith({
     List<PactListEntry>? entries,

@@ -5,15 +5,13 @@ import 'package:habit_loop/crashlytics/data/firebase_crashlytics_service.dart';
 // Hand-rolled fake — does not depend on firebase_crashlytics at all in tests.
 class FakeFirebaseCrashlyticsClient implements FirebaseCrashlyticsClient {
   final List<
-    ({
-      Object error,
-      StackTrace? stack,
-      bool fatal,
-      Iterable<Object> information,
-    })
-  > recordedErrors = [];
-  final List<({FlutterErrorDetails details, bool fatal})>
-  recordedFlutterErrors = [];
+      ({
+        Object error,
+        StackTrace? stack,
+        bool fatal,
+        Iterable<Object> information,
+      })> recordedErrors = [];
+  final List<({FlutterErrorDetails details, bool fatal})> recordedFlutterErrors = [];
   final List<String> logs = [];
   final List<String> userIdentifiers = [];
 

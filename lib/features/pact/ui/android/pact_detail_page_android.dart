@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
-import 'package:intl/intl.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:intl/intl.dart';
 
 class PactDetailPageAndroid extends StatelessWidget {
   final PactDetailState state;
@@ -49,8 +49,7 @@ class _PactDetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final pact = state.pact;
     final stats = state.stats;
-    assert(pact != null && stats != null,
-        '_PactDetailContent must only be shown after a successful load');
+    assert(pact != null && stats != null, '_PactDetailContent must only be shown after a successful load');
     if (pact == null || stats == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final today = DateTime.now();
@@ -155,7 +154,10 @@ class _PactDetailContent extends StatelessWidget {
             ),
             onPressed: state.isStopping ? null : () => _showStopDialog(context),
             child: state.isStopping
-                ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onError))
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onError))
                 : Text(l10n.stopPact),
           ),
         ],

@@ -65,8 +65,7 @@ class FakeFirebaseRemoteConfigClient implements FirebaseRemoteConfigClient {
   }
 }
 
-class _ThrowingFirebaseRemoteConfigClient
-    implements FirebaseRemoteConfigClient {
+class _ThrowingFirebaseRemoteConfigClient implements FirebaseRemoteConfigClient {
   @override
   Future<void> setConfigSettings({
     required Duration fetchTimeout,
@@ -136,8 +135,7 @@ class _FetchThrowingClient implements FirebaseRemoteConfigClient {
   double getDouble(String key) => 0.0;
 }
 
-class _TrackingFirebaseRemoteConfigClient
-    implements FirebaseRemoteConfigClient {
+class _TrackingFirebaseRemoteConfigClient implements FirebaseRemoteConfigClient {
   _TrackingFirebaseRemoteConfigClient(this._log);
   final List<String> _log;
 
@@ -183,8 +181,7 @@ void main() {
   });
 
   group('FirebaseRemoteConfigService.initialize', () {
-    test('calls setConfigSettings, setDefaults, and fetchAndActivate in order',
-        () async {
+    test('calls setConfigSettings, setDefaults, and fetchAndActivate in order', () async {
       final callOrder = <String>[];
       final trackingClient = _TrackingFirebaseRemoteConfigClient(callOrder);
       final trackingService = FirebaseRemoteConfigService(trackingClient);
@@ -216,8 +213,7 @@ void main() {
     });
 
     test('swallows exception from fetchAndActivate', () async {
-      final fetchThrowingService =
-          FirebaseRemoteConfigService(_FetchThrowingClient());
+      final fetchThrowingService = FirebaseRemoteConfigService(_FetchThrowingClient());
       await expectLater(fetchThrowingService.initialize(), completes);
     });
 

@@ -6,8 +6,7 @@ import 'package:habit_loop/remote_config/domain/remote_config_service.dart';
 /// Tests can inject specific flag values via the [overrides] map.
 /// Getters look up [overrides] first, then fall back to [RemoteConfigDefaults.all].
 class FakeRemoteConfigService implements RemoteConfigService {
-  FakeRemoteConfigService({Map<String, dynamic>? overrides})
-      : overrides = overrides ?? {};
+  FakeRemoteConfigService({Map<String, dynamic>? overrides}) : overrides = overrides ?? {};
 
   final Map<String, dynamic> overrides;
 

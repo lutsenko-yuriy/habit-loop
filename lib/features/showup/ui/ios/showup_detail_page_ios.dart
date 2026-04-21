@@ -39,8 +39,7 @@ class _ShowupDetailPageIosState extends State<ShowupDetailPageIos> {
   void didUpdateWidget(ShowupDetailPageIos oldWidget) {
     super.didUpdateWidget(oldWidget);
     final newNote = widget.state.showup?.note ?? '';
-    if (oldWidget.state.showup?.note != widget.state.showup?.note &&
-        _noteController.text != newNote) {
+    if (oldWidget.state.showup?.note != widget.state.showup?.note && _noteController.text != newNote) {
       _noteController.text = newNote;
     }
   }
@@ -135,8 +134,7 @@ class _ShowupDetailContent extends StatelessWidget {
               ),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: _statusColor(showup.status).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
@@ -193,9 +191,7 @@ class _ShowupDetailContent extends StatelessWidget {
         if (isPending) ...[
           CupertinoButton.filled(
             onPressed: state.isSaving ? null : onMarkDone,
-            child: state.isSaving
-                ? const CupertinoActivityIndicator(color: Colors.white)
-                : Text(l10n.markDone),
+            child: state.isSaving ? const CupertinoActivityIndicator(color: Colors.white) : Text(l10n.markDone),
           ),
           const SizedBox(height: 8),
           CupertinoButton(
@@ -237,9 +233,7 @@ class _ShowupDetailContent extends StatelessWidget {
             return Align(
               alignment: Alignment.centerRight,
               child: CupertinoButton(
-                onPressed: (state.isSaving || !hasChanged)
-                    ? null
-                    : () => onSaveNote(noteController.text),
+                onPressed: (state.isSaving || !hasChanged) ? null : () => onSaveNote(noteController.text),
                 child: Text(l10n.showupNoteSave),
               ),
             );

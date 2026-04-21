@@ -6,8 +6,7 @@ import 'package:habit_loop/features/showup/analytics/showup_analytics_events.dar
 
 // Hand-rolled fake — does not depend on firebase_analytics at all in tests.
 class FakeFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
-  final List<({String name, Map<String, Object>? parameters})> loggedEvents =
-      [];
+  final List<({String name, Map<String, Object>? parameters})> loggedEvents = [];
   final List<String> loggedScreenNames = [];
 
   @override

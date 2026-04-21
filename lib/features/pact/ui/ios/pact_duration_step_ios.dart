@@ -1,7 +1,9 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
-import 'package:intl/intl.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class PactDurationStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -64,33 +66,35 @@ class PactDurationStepIos extends StatelessWidget {
     DateTime? minimumDate,
     required ValueChanged<DateTime> onDateChanged,
   }) {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => Container(
-        color: CupertinoColors.systemBackground.resolveFrom(ctx),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CupertinoButton(
-                  child: const Text('Done'),
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 216,
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.date,
-                initialDateTime: initialDate,
-                minimumDate: minimumDate,
-                onDateTimeChanged: onDateChanged,
+    unawaited(
+      showCupertinoModalPopup<void>(
+        context: context,
+        builder: (ctx) => ColoredBox(
+          color: CupertinoColors.systemBackground.resolveFrom(ctx),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Done'),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-          ],
+              SizedBox(
+                height: 216,
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: initialDate,
+                  minimumDate: minimumDate,
+                  onDateTimeChanged: onDateChanged,
+                ),
+              ),
+              SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+            ],
+          ),
         ),
       ),
     );

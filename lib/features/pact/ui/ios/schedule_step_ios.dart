@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
@@ -37,9 +39,7 @@ class ScheduleStepIos extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? CupertinoTheme.of(context)
-                      .primaryColor
-                      .withValues(alpha: 0.1)
+                  ? CupertinoTheme.of(context).primaryColor.withValues(alpha: 0.1)
                   : CupertinoColors.tertiarySystemFill.resolveFrom(context),
               borderRadius: BorderRadius.circular(10),
               border: isSelected
@@ -52,12 +52,8 @@ class ScheduleStepIos extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  isSelected
-                      ? CupertinoIcons.check_mark_circled_solid
-                      : CupertinoIcons.circle,
-                  color: isSelected
-                      ? CupertinoTheme.of(context).primaryColor
-                      : CupertinoColors.systemGrey,
+                  isSelected ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
+                  color: isSelected ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
                   size: 22,
                 ),
                 const SizedBox(width: 12),
@@ -141,8 +137,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
       _monthlyWeekdayEntries = List.of(schedule.entries);
     } else {
       _monthlyWeekdayEntries = [
-        const MonthlyWeekdayEntry(
-            occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
+        const MonthlyWeekdayEntry(occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)),
       ];
     }
     if (schedule is MonthlyByDateSchedule) {
@@ -157,58 +152,78 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
   String _weekdayName(int weekday) {
     final l10n = widget.l10n;
     switch (weekday) {
-      case 1: return l10n.weekdayMon;
-      case 2: return l10n.weekdayTue;
-      case 3: return l10n.weekdayWed;
-      case 4: return l10n.weekdayThu;
-      case 5: return l10n.weekdayFri;
-      case 6: return l10n.weekdaySat;
-      case 7: return l10n.weekdaySun;
-      default: return '';
+      case 1:
+        return l10n.weekdayMon;
+      case 2:
+        return l10n.weekdayTue;
+      case 3:
+        return l10n.weekdayWed;
+      case 4:
+        return l10n.weekdayThu;
+      case 5:
+        return l10n.weekdayFri;
+      case 6:
+        return l10n.weekdaySat;
+      case 7:
+        return l10n.weekdaySun;
+      default:
+        return '';
     }
   }
 
   String _occurrenceName(int occurrence) {
     final l10n = widget.l10n;
     switch (occurrence) {
-      case 1: return l10n.occurrenceFirst;
-      case 2: return l10n.occurrenceSecond;
-      case 3: return l10n.occurrenceThird;
-      case 4: return l10n.occurrenceFourth;
-      default: return '';
+      case 1:
+        return l10n.occurrenceFirst;
+      case 2:
+        return l10n.occurrenceSecond;
+      case 3:
+        return l10n.occurrenceThird;
+      case 4:
+        return l10n.occurrenceFourth;
+      default:
+        return '';
     }
   }
 
   void _showTimePicker(Duration initial, ValueChanged<Duration> onChanged) {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => Container(
-        color: CupertinoColors.systemBackground.resolveFrom(ctx),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CupertinoButton(
-                  child: const Text('Done'),
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 216,
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                initialDateTime: DateTime(
-                    2026, 1, 1, initial.inHours, initial.inMinutes % 60),
-                onDateTimeChanged: (dt) {
-                  onChanged(Duration(hours: dt.hour, minutes: dt.minute));
-                },
+    unawaited(
+      showCupertinoModalPopup<void>(
+        context: context,
+        builder: (ctx) => ColoredBox(
+          color: CupertinoColors.systemBackground.resolveFrom(ctx),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Done'),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-          ],
+              SizedBox(
+                height: 216,
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  initialDateTime: DateTime(
+                    2026,
+                    1,
+                    1,
+                    initial.inHours,
+                    initial.inMinutes % 60,
+                  ),
+                  onDateTimeChanged: (dt) {
+                    onChanged(Duration(hours: dt.hour, minutes: dt.minute));
+                  },
+                ),
+              ),
+              SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+            ],
+          ),
         ),
       ),
     );
@@ -266,35 +281,29 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                     weekdayName: _weekdayName,
                     onChanged: (wd) {
                       setState(() {
-                        _weekdayEntries[index] = WeekdayEntry(
-                            weekday: wd, timeOfDay: entry.timeOfDay);
+                        _weekdayEntries[index] = WeekdayEntry(weekday: wd, timeOfDay: entry.timeOfDay);
                       });
-                      widget.onScheduleChanged(
-                          WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                      widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
                     },
                   ),
                 ),
                 const SizedBox(width: 12),
                 _TimeChip(
                   time: entry.timeOfDay,
-                          onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                     setState(() {
-                      _weekdayEntries[index] =
-                          WeekdayEntry(weekday: entry.weekday, timeOfDay: t);
+                      _weekdayEntries[index] = WeekdayEntry(weekday: entry.weekday, timeOfDay: t);
                     });
-                    widget.onScheduleChanged(
-                        WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                    widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
                   }),
                 ),
                 if (_weekdayEntries.length > 1)
                   CupertinoButton(
                     padding: const EdgeInsets.only(left: 4),
-                    child: const Icon(CupertinoIcons.minus_circle,
-                        color: CupertinoColors.destructiveRed, size: 22),
+                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
                     onPressed: () {
                       setState(() => _weekdayEntries.removeAt(index));
-                      widget.onScheduleChanged(
-                          WeekdaySchedule(entries: List.of(_weekdayEntries)));
+                      widget.onScheduleChanged(WeekdaySchedule(entries: List.of(_weekdayEntries)));
                     },
                   ),
               ],
@@ -305,8 +314,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
           padding: EdgeInsets.zero,
           onPressed: () {
             setState(() {
-              _weekdayEntries.add(const WeekdayEntry(
-                  weekday: 1, timeOfDay: Duration(hours: 8)));
+              _weekdayEntries.add(const WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           child: Row(
@@ -338,70 +346,61 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
             ),
             child: Row(
               children: [
-                    Expanded(
-                      child: _DropdownOccurrence(
-                        value: entry.occurrence,
-                        occurrenceName: _occurrenceName,
-                        onChanged: (occ) {
-                          setState(() {
-                            _monthlyWeekdayEntries[index] =
-                                MonthlyWeekdayEntry(
-                              occurrence: occ,
-                              weekday: entry.weekday,
-                              timeOfDay: entry.timeOfDay,
-                            );
-                          });
-                          widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                              entries: List.of(_monthlyWeekdayEntries)));
-                        },
-                      ),
-                    ),
-                    Expanded(
-                      child: _DropdownWeekday(
-                        value: entry.weekday,
-                        weekdayName: _weekdayName,
-                        onChanged: (wd) {
-                          setState(() {
-                            _monthlyWeekdayEntries[index] =
-                                MonthlyWeekdayEntry(
-                              occurrence: entry.occurrence,
-                              weekday: wd,
-                              timeOfDay: entry.timeOfDay,
-                            );
-                          });
-                          widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                              entries: List.of(_monthlyWeekdayEntries)));
-                        },
-                      ),
-                    ),
-                    _TimeChip(
-                      time: entry.timeOfDay,
-                                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
-                        setState(() {
-                          _monthlyWeekdayEntries[index] =
-                              MonthlyWeekdayEntry(
-                            occurrence: entry.occurrence,
-                            weekday: entry.weekday,
-                            timeOfDay: t,
-                          );
-                        });
-                        widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                            entries: List.of(_monthlyWeekdayEntries)));
-                      }),
-                    ),
-                    const Spacer(),
-                    if (_monthlyWeekdayEntries.length > 1)
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        child: const Icon(CupertinoIcons.minus_circle,
-                            color: CupertinoColors.destructiveRed, size: 22),
-                        onPressed: () {
-                          setState(
-                              () => _monthlyWeekdayEntries.removeAt(index));
-                          widget.onScheduleChanged(MonthlyByWeekdaySchedule(
-                              entries: List.of(_monthlyWeekdayEntries)));
-                        },
-                      ),
+                Expanded(
+                  child: _DropdownOccurrence(
+                    value: entry.occurrence,
+                    occurrenceName: _occurrenceName,
+                    onChanged: (occ) {
+                      setState(() {
+                        _monthlyWeekdayEntries[index] = MonthlyWeekdayEntry(
+                          occurrence: occ,
+                          weekday: entry.weekday,
+                          timeOfDay: entry.timeOfDay,
+                        );
+                      });
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: _DropdownWeekday(
+                    value: entry.weekday,
+                    weekdayName: _weekdayName,
+                    onChanged: (wd) {
+                      setState(() {
+                        _monthlyWeekdayEntries[index] = MonthlyWeekdayEntry(
+                          occurrence: entry.occurrence,
+                          weekday: wd,
+                          timeOfDay: entry.timeOfDay,
+                        );
+                      });
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
+                    },
+                  ),
+                ),
+                _TimeChip(
+                  time: entry.timeOfDay,
+                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                    setState(() {
+                      _monthlyWeekdayEntries[index] = MonthlyWeekdayEntry(
+                        occurrence: entry.occurrence,
+                        weekday: entry.weekday,
+                        timeOfDay: t,
+                      );
+                    });
+                    widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
+                  }),
+                ),
+                const Spacer(),
+                if (_monthlyWeekdayEntries.length > 1)
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
+                    onPressed: () {
+                      setState(() => _monthlyWeekdayEntries.removeAt(index));
+                      widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(_monthlyWeekdayEntries)));
+                    },
+                  ),
               ],
             ),
           );
@@ -410,8 +409,8 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
           padding: EdgeInsets.zero,
           onPressed: () {
             setState(() {
-              _monthlyWeekdayEntries.add(const MonthlyWeekdayEntry(
-                  occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)));
+              _monthlyWeekdayEntries
+                  .add(const MonthlyWeekdayEntry(occurrence: 1, weekday: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           child: Row(
@@ -444,35 +443,29 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                     label: widget.l10n.dayOfMonthLabel,
                     onChanged: (day) {
                       setState(() {
-                        _monthlyDateEntries[index] = MonthlyDateEntry(
-                            dayOfMonth: day, timeOfDay: entry.timeOfDay);
+                        _monthlyDateEntries[index] = MonthlyDateEntry(dayOfMonth: day, timeOfDay: entry.timeOfDay);
                       });
-                      widget.onScheduleChanged(MonthlyByDateSchedule(
-                          entries: List.of(_monthlyDateEntries)));
+                      widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
                 _TimeChip(
                   time: entry.timeOfDay,
-                          onTap: () => _showTimePicker(entry.timeOfDay, (t) {
+                  onTap: () => _showTimePicker(entry.timeOfDay, (t) {
                     setState(() {
-                      _monthlyDateEntries[index] = MonthlyDateEntry(
-                          dayOfMonth: entry.dayOfMonth, timeOfDay: t);
+                      _monthlyDateEntries[index] = MonthlyDateEntry(dayOfMonth: entry.dayOfMonth, timeOfDay: t);
                     });
-                    widget.onScheduleChanged(MonthlyByDateSchedule(
-                        entries: List.of(_monthlyDateEntries)));
+                    widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
                   }),
                 ),
                 if (_monthlyDateEntries.length > 1)
                   CupertinoButton(
                     padding: EdgeInsets.zero,
-                    child: const Icon(CupertinoIcons.minus_circle,
-                        color: CupertinoColors.destructiveRed, size: 22),
+                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
                     onPressed: () {
                       setState(() => _monthlyDateEntries.removeAt(index));
-                      widget.onScheduleChanged(MonthlyByDateSchedule(
-                          entries: List.of(_monthlyDateEntries)));
+                      widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(_monthlyDateEntries)));
                     },
                   ),
               ],
@@ -483,8 +476,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
           padding: EdgeInsets.zero,
           onPressed: () {
             setState(() {
-              _monthlyDateEntries.add(const MonthlyDateEntry(
-                  dayOfMonth: 1, timeOfDay: Duration(hours: 8)));
+              _monthlyDateEntries.add(const MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)));
             });
           },
           child: Row(
@@ -585,37 +577,38 @@ class _DropdownWeekday extends StatelessWidget {
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       onPressed: () {
-        showCupertinoModalPopup<void>(
-          context: context,
-          builder: (ctx) => Container(
-            color: CupertinoColors.systemBackground.resolveFrom(ctx),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('Done'),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 216,
-                  child: CupertinoPicker(
-                    scrollController:
-                        FixedExtentScrollController(initialItem: value - 1),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (i) => onChanged(i + 1),
-                    children: List.generate(
-                      7,
-                      (i) => Center(child: Text(weekdayName(i + 1))),
+        unawaited(
+          showCupertinoModalPopup<void>(
+            context: context,
+            builder: (ctx) => ColoredBox(
+              color: CupertinoColors.systemBackground.resolveFrom(ctx),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 216,
+                    child: CupertinoPicker(
+                      scrollController: FixedExtentScrollController(initialItem: value - 1),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (i) => onChanged(i + 1),
+                      children: List.generate(
+                        7,
+                        (i) => Center(child: Text(weekdayName(i + 1))),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-              ],
+                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+                ],
+              ),
             ),
           ),
         );
@@ -641,37 +634,38 @@ class _DropdownOccurrence extends StatelessWidget {
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       onPressed: () {
-        showCupertinoModalPopup<void>(
-          context: context,
-          builder: (ctx) => Container(
-            color: CupertinoColors.systemBackground.resolveFrom(ctx),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('Done'),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 216,
-                  child: CupertinoPicker(
-                    scrollController:
-                        FixedExtentScrollController(initialItem: value - 1),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (i) => onChanged(i + 1),
-                    children: List.generate(
-                      4,
-                      (i) => Center(child: Text(occurrenceName(i + 1))),
+        unawaited(
+          showCupertinoModalPopup<void>(
+            context: context,
+            builder: (ctx) => ColoredBox(
+              color: CupertinoColors.systemBackground.resolveFrom(ctx),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 216,
+                    child: CupertinoPicker(
+                      scrollController: FixedExtentScrollController(initialItem: value - 1),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (i) => onChanged(i + 1),
+                      children: List.generate(
+                        4,
+                        (i) => Center(child: Text(occurrenceName(i + 1))),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-              ],
+                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+                ],
+              ),
             ),
           ),
         );
@@ -696,37 +690,38 @@ class _DayOfMonthPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        showCupertinoModalPopup<void>(
-          context: context,
-          builder: (ctx) => Container(
-            color: CupertinoColors.systemBackground.resolveFrom(ctx),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('Done'),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 216,
-                  child: CupertinoPicker(
-                    scrollController:
-                        FixedExtentScrollController(initialItem: value - 1),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (index) => onChanged(index + 1),
-                    children: List.generate(
-                      31,
-                      (i) => Center(child: Text('${i + 1}')),
+        unawaited(
+          showCupertinoModalPopup<void>(
+            context: context,
+            builder: (ctx) => ColoredBox(
+              color: CupertinoColors.systemBackground.resolveFrom(ctx),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 216,
+                    child: CupertinoPicker(
+                      scrollController: FixedExtentScrollController(initialItem: value - 1),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (index) => onChanged(index + 1),
+                      children: List.generate(
+                        31,
+                        (i) => Center(child: Text('${i + 1}')),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-              ],
+                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
+                ],
+              ),
             ),
           ),
         );

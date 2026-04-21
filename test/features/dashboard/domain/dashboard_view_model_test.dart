@@ -38,10 +38,8 @@ void main() {
   }) {
     return ProviderContainer(
       overrides: [
-        pactRepositoryProvider
-            .overrideWithValue(InMemoryPactRepository(pacts)),
-        showupRepositoryProvider
-            .overrideWithValue(InMemoryShowupRepository(showups)),
+        pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
+        showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
         todayProvider.overrideWithValue(today),
       ],
     );
@@ -167,8 +165,7 @@ void main() {
       container = createContainer();
 
       await container.read(dashboardViewModelProvider.notifier).load();
-      final hasActive =
-          await container.read(hasActivePactsProvider.future);
+      final hasActive = await container.read(hasActivePactsProvider.future);
 
       expect(hasActive, isFalse);
     });
@@ -186,8 +183,7 @@ void main() {
         ),
       ]);
 
-      final hasActive =
-          await container.read(hasActivePactsProvider.future);
+      final hasActive = await container.read(hasActivePactsProvider.future);
 
       expect(hasActive, isTrue);
     });
@@ -333,7 +329,7 @@ void main() {
 
       expect(state.calendarDays, hasLength(7));
       expect(state.calendarDays[0].date, DateTime(2026, 3, 26)); // today - 3
-      expect(state.calendarDays[3].date, today);                  // today at index 3
+      expect(state.calendarDays[3].date, today); // today at index 3
     });
 
     test('calendar strip starts at today when todayIndex = 0 (day 1)', () async {
@@ -360,7 +356,7 @@ void main() {
 
       expect(state.calendarDays, hasLength(7));
       expect(state.calendarDays[0].date, DateTime(2026, 3, 28)); // today - 1
-      expect(state.calendarDays[1].date, today);                  // today at index 1
+      expect(state.calendarDays[1].date, today); // today at index 1
     });
 
     test('calendar strip on day 3: strip[0] = today-2, today at index 2', () async {
@@ -374,7 +370,7 @@ void main() {
 
       expect(state.calendarDays, hasLength(7));
       expect(state.calendarDays[0].date, DateTime(2026, 3, 27)); // today - 2
-      expect(state.calendarDays[2].date, today);                  // today at index 2
+      expect(state.calendarDays[2].date, today); // today at index 2
     });
 
     test('selectedDayIndex defaults to todayIndex after load', () async {

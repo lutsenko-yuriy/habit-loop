@@ -28,9 +28,7 @@ enum PactCreationStep {
 
   PactCreationStep? get next {
     final i = index + 1;
-    return i < PactCreationStep.values.length
-        ? PactCreationStep.values[i]
-        : null;
+    return i < PactCreationStep.values.length ? PactCreationStep.values[i] : null;
   }
 
   PactCreationStep? get previous {
@@ -69,8 +67,7 @@ class PactCreationState {
     this.commitmentAccepted = false,
     this.isSubmitting = false,
     this.submitError,
-  })  : startDate =
-            startDate ?? DateTime(today.year, today.month, today.day),
+  })  : startDate = startDate ?? DateTime(today.year, today.month, today.day),
         endDate = endDate ?? _addMonths(today, 6);
 
   bool get canAdvanceFromStep {
@@ -78,9 +75,7 @@ class PactCreationState {
       case PactCreationStep.pactDuration:
         return startDate.isBefore(endDate);
       case PactCreationStep.showupDuration:
-        return showupDuration != null &&
-            showupDuration!.inMinutes >= 1 &&
-            showupDuration!.inMinutes <= 120;
+        return showupDuration != null && showupDuration!.inMinutes >= 1 && showupDuration!.inMinutes <= 120;
       case PactCreationStep.schedule:
         return schedule != null;
       case PactCreationStep.reminder:
@@ -114,13 +109,10 @@ class PactCreationState {
       showupDuration: showupDuration ?? this.showupDuration,
       scheduleType: scheduleType ?? this.scheduleType,
       schedule: clearSchedule ? null : (schedule ?? this.schedule),
-      reminderOffset: clearReminderOffset
-          ? null
-          : (reminderOffset ?? this.reminderOffset),
+      reminderOffset: clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
       commitmentAccepted: commitmentAccepted ?? this.commitmentAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      submitError:
-          clearSubmitError ? null : (submitError ?? this.submitError),
+      submitError: clearSubmitError ? null : (submitError ?? this.submitError),
     );
   }
 

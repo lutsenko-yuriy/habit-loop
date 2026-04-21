@@ -93,7 +93,23 @@ You may update `CLAUDE.md` yourself only if a project-wide convention changed an
 
 Never update `docs/BACKLOG.md` or `docs/CHANGELOG.md` — those are owned by the Product Owner agent.
 
-### 7. Commit
+### 7. Format
+
+After all tests pass and the analyzer is clean, apply `dart format` in a **separate, formatting-only commit that precedes the functional commit in the branch history**:
+
+```bash
+dart format -l 120 lib/ test/
+```
+
+If any files changed, stage only those files and commit with a `style:` prefix:
+
+```bash
+git commit -m "style: apply dart format (HAB-XX)"
+```
+
+If no files changed, skip this step. Never mix formatting changes with functional changes in the same commit — keeping them separate makes the PR diff reviewable and ensures CI's `dart format -l 120 --set-exit-if-changed` check always passes.
+
+### 8. Commit
 
 Stage only the files you changed (never `git add -A` or `git add .`). Write a commit message that explains *why*, not just what:
 
@@ -110,7 +126,7 @@ EOF
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
 
-### 8. Smoke test
+### 9. Smoke test
 
 Read the Flutter binary path from `CLAUDE.local.md` and launch the app on both platforms simultaneously using that full path (e.g. `/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter`):
 
@@ -123,15 +139,17 @@ Run each with `run_in_background: true`. Then report to the user:
 
 > "Both simulators are launching. Please confirm the app looks correct on iOS and Android before I push."
 
-Wait for the user's confirmation before proceeding to step 9.
+Wait for the user's confirmation before proceeding to step 10.
 
-### 9. Push
+### 10. Push
 
 ```bash
 git push -u origin <branch-name>
 ```
 
-### 10. Open a PR
+Run this from the issue-specific worktree. The pushed branch is only the PR backing ref; do not switch the shared checkout.
+
+### 11. Open a PR
 
 ```bash
 gh pr create \
@@ -156,11 +174,11 @@ EOF
 
 Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 
-### 11. Transition issue to "In Review"
+### 12. Transition issue to "In Review"
 
 Call `mcp__linear__save_issue` with `state: "In Review"` and `id: <issue-id>` so the Linear board reflects that the work is awaiting review, not still in active development.
 
-### 12. Post the PR link to Linear
+### 13. Post the PR link to Linear
 
 Call `mcp__linear__save_comment` on the primary issue with the PR URL so the Tech Lead and Product Owner can find it:
 
@@ -168,13 +186,13 @@ Call `mcp__linear__save_comment` on the primary issue with the PR URL so the Tec
 PR opened: <PR URL>
 ```
 
-### 13. Request reviews
+### 14. Request reviews
 
 Report back to the orchestrator and ask it to invoke both review agents in parallel:
 
 > "PR #<N> is open. Please invoke the tech-lead agent for architectural review and the code-reviewer agent for runtime/migration review simultaneously."
 
-### 14. Report back
+### 15. Report back
 
 Return a summary to the orchestrator:
 - What was built

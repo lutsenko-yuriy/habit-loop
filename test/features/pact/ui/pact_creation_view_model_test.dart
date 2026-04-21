@@ -41,11 +41,9 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  PactCreationState readState() =>
-      container.read(pactCreationViewModelProvider);
+  PactCreationState readState() => container.read(pactCreationViewModelProvider);
 
-  PactCreationViewModel readVM() =>
-      container.read(pactCreationViewModelProvider.notifier);
+  PactCreationViewModel readVM() => container.read(pactCreationViewModelProvider.notifier);
 
   group('PactCreationViewModel', () {
     test('initial state has correct defaults', () {
@@ -160,8 +158,7 @@ void main() {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(
-          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
       await vm.submit();
@@ -170,8 +167,7 @@ void main() {
       expect(pacts, hasLength(1));
       expect(pacts.first.habitName, 'Meditate');
       expect(pacts.first.showupDuration, const Duration(minutes: 10));
-      expect(pacts.first.schedule,
-          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      expect(pacts.first.schedule, const DailySchedule(timeOfDay: Duration(hours: 7)));
       expect(pacts.first.startDate, today);
       expect(pacts.first.endDate, DateTime(2054, 9, 30));
       expect(pacts.first.reminderOffset, isNull);
@@ -190,8 +186,7 @@ void main() {
       vm.setHabitName('Jog');
       vm.setShowupDuration(const Duration(minutes: 30));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(
-          const DailySchedule(timeOfDay: Duration(hours: 6)));
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 6)));
       vm.setReminderOffset(const Duration(minutes: 15));
       vm.setCommitmentAccepted(true);
 
@@ -207,8 +202,7 @@ void main() {
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
-      vm.setSchedule(
-          const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
       await vm.submit();
@@ -276,15 +270,13 @@ void main() {
       final failingContainer = ProviderContainer(
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider
-              .overrideWithValue(_AlwaysThrowingPactRepository()),
+          pactCreationRepositoryProvider.overrideWithValue(_AlwaysThrowingPactRepository()),
           pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
         ],
       );
       addTearDown(failingContainer.dispose);
 
-      final vm =
-          failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -307,14 +299,12 @@ void main() {
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider.overrideWithValue(pactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(_AlwaysThrowingShowupRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(_AlwaysThrowingShowupRepository()),
         ],
       );
       addTearDown(failingContainer.dispose);
 
-      final vm =
-          failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -335,14 +325,12 @@ void main() {
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(_AlwaysThrowingShowupRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(_AlwaysThrowingShowupRepository()),
         ],
       );
       addTearDown(failingContainer.dispose);
 
-      final vm =
-          failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -357,22 +345,19 @@ void main() {
       expect(pacts, isEmpty);
     });
 
-    test('submit rolls back pact and showups when stats persistence fails',
-        () async {
+    test('submit rolls back pact and showups when stats persistence fails', () async {
       final rollbackPactRepo = _ThrowingOnUpdatePactRepository();
       final rollbackShowupRepo = InMemoryShowupRepository();
       final failingContainer = ProviderContainer(
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
           pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(rollbackShowupRepo),
+          pactCreationShowupRepositoryProvider.overrideWithValue(rollbackShowupRepo),
         ],
       );
       addTearDown(failingContainer.dispose);
 
-      final vm =
-          failingContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = failingContainer.read(pactCreationViewModelProvider.notifier);
 
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
@@ -394,8 +379,7 @@ void main() {
       );
     });
 
-    test('submit skips today\'s showup when its scheduled time is already past',
-        () async {
+    test('submit skips today\'s showup when its scheduled time is already past', () async {
       // Simulate opening the wizard at 22:00 on March 30 with a daily 8am
       // schedule starting today. The 8am slot is 14 hours in the past — it
       // should NOT be persisted; the first saved showup must be tomorrow's 8am.
@@ -403,17 +387,14 @@ void main() {
       final eveningShowupRepo = InMemoryShowupRepository();
       final eveningContainer = ProviderContainer(
         overrides: [
-          pactCreationTodayProvider
-              .overrideWithValue(DateTime(2054, 3, 30, 22, 0)),
+          pactCreationTodayProvider.overrideWithValue(DateTime(2054, 3, 30, 22, 0)),
           pactCreationRepositoryProvider.overrideWithValue(eveningPactRepo),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(eveningShowupRepo),
+          pactCreationShowupRepositoryProvider.overrideWithValue(eveningShowupRepo),
         ],
       );
       addTearDown(eveningContainer.dispose);
 
-      final vm =
-          eveningContainer.read(pactCreationViewModelProvider.notifier);
+      final vm = eveningContainer.read(pactCreationViewModelProvider.notifier);
       vm.setHabitName('Meditate');
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
@@ -454,10 +435,8 @@ void main() {
       return ProviderContainer(
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider
-              .overrideWithValue(pactRepository ?? InMemoryPactRepository()),
-          pactCreationShowupRepositoryProvider
-              .overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
+          pactCreationRepositoryProvider.overrideWithValue(pactRepository ?? InMemoryPactRepository()),
+          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
@@ -472,7 +451,8 @@ void main() {
       } else if (scheduleType == ScheduleType.weekday) {
         vm.setSchedule(const WeekdaySchedule(entries: [WeekdayEntry(weekday: 1, timeOfDay: Duration(hours: 7))]));
       } else {
-        vm.setSchedule(const MonthlyByDateSchedule(entries: [MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))]));
+        vm.setSchedule(
+            const MonthlyByDateSchedule(entries: [MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 7))]));
       }
       vm.setCommitmentAccepted(true);
     }
@@ -506,7 +486,8 @@ void main() {
       expect(pact.stats?.showupsRemaining, pactCreatedEvent.showupsExpected);
     });
 
-    test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact', () async {
+    test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
+        () async {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
       final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
@@ -553,8 +534,7 @@ void main() {
         pact.endDate.difference(pact.startDate).inDays + 1,
         reason: 'durationDays must equal (endDate - startDate).inDays + 1',
       );
-      expect(event.durationDays, 185,
-          reason: 'Mar 30 → Sep 30 inclusive = 185 calendar days');
+      expect(event.durationDays, 185, reason: 'Mar 30 → Sep 30 inclusive = 185 calendar days');
     });
 
     test('submit fires PactCreatedEvent with reminder offset when reminder set', () async {
@@ -631,8 +611,7 @@ void main() {
       failingContainer = ProviderContainer(
         overrides: [
           pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider
-              .overrideWithValue(_AlwaysThrowingPactRepository()),
+          pactCreationRepositoryProvider.overrideWithValue(_AlwaysThrowingPactRepository()),
           pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
         ],
       );
@@ -640,11 +619,9 @@ void main() {
 
     tearDown(() => failingContainer.dispose());
 
-    PactCreationState readFailingState() =>
-        failingContainer.read(pactCreationViewModelProvider);
+    PactCreationState readFailingState() => failingContainer.read(pactCreationViewModelProvider);
 
-    PactCreationViewModel readFailingVM() =>
-        failingContainer.read(pactCreationViewModelProvider.notifier);
+    PactCreationViewModel readFailingVM() => failingContainer.read(pactCreationViewModelProvider.notifier);
 
     void setUpValidState(PactCreationViewModel vm) {
       vm.setHabitName('Meditate');
@@ -691,22 +668,18 @@ class _AlwaysThrowingPactRepository implements PactRepository {
   Future<Pact?> getPactById(String id) async => null;
 
   @override
-  Future<void> savePact(Pact pact) async =>
-      throw Exception('save failed intentionally');
+  Future<void> savePact(Pact pact) async => throw Exception('save failed intentionally');
 
   @override
-  Future<void> updatePact(Pact pact) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 
   @override
-  Future<void> deletePact(String id) async =>
-      throw Exception('delete failed intentionally');
+  Future<void> deletePact(String id) async => throw Exception('delete failed intentionally');
 }
 
 class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   @override
-  Future<void> updatePact(Pact pact) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 }
 
 class _AlwaysThrowingShowupRepository implements ShowupRepository {
@@ -714,8 +687,7 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
   Future<List<Showup>> getShowupsForDate(DateTime date) async => [];
 
   @override
-  Future<List<Showup>> getShowupsForDateRange(
-      DateTime start, DateTime end) async => [];
+  Future<List<Showup>> getShowupsForDateRange(DateTime start, DateTime end) async => [];
 
   @override
   Future<Showup?> getShowupById(String id) async => null;
@@ -724,21 +696,17 @@ class _AlwaysThrowingShowupRepository implements ShowupRepository {
   Future<List<Showup>> getShowupsForPact(String pactId) async => [];
 
   @override
-  Future<void> saveShowup(Showup showup) async =>
-      throw Exception('save failed intentionally');
+  Future<void> saveShowup(Showup showup) async => throw Exception('save failed intentionally');
 
   @override
-  Future<SaveShowupsResult> saveShowups(List<Showup> showups) async =>
-      throw Exception('save failed intentionally');
+  Future<SaveShowupsResult> saveShowups(List<Showup> showups) async => throw Exception('save failed intentionally');
 
   @override
-  Future<void> updateShowup(Showup showup) async =>
-      throw Exception('update failed intentionally');
+  Future<void> updateShowup(Showup showup) async => throw Exception('update failed intentionally');
 
   @override
   Future<int> countShowupsForPact(String pactId) async => 0;
 
   @override
-  Future<void> deleteShowupsForPact(String pactId) async =>
-      throw Exception('delete failed intentionally');
+  Future<void> deleteShowupsForPact(String pactId) async => throw Exception('delete failed intentionally');
 }

@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,14 +22,20 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(analyticsServiceProvider).logScreenView(const PactDetailAnalyticsScreen());
-      // Invalidate so load() always samples the real current time, not a
-      // cached value from a previous navigation or app start. Mirrors the
-      // ref.invalidate(showupDetailNowProvider) pattern in ShowupDetailScreen.
-      ref.invalidate(pactDetailNowProvider);
-      ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load();
-    });
+    unawaited(
+      Future.microtask(() {
+        unawaited(
+          ref.read(analyticsServiceProvider).logScreenView(const PactDetailAnalyticsScreen()),
+        );
+        // Invalidate so load() always samples the real current time, not a
+        // cached value from a previous navigation or app start. Mirrors the
+        // ref.invalidate(showupDetailNowProvider) pattern in ShowupDetailScreen.
+        ref.invalidate(pactDetailNowProvider);
+        unawaited(
+          ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
+        );
+      }),
+    );
   }
 
   @override
@@ -38,9 +46,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       // Invalidate so stopPact() samples the real current time even if the
       // screen has been open for an extended period.
       ref.invalidate(pactDetailNowProvider);
-      await ref
-          .read(pactDetailViewModelProvider(widget.pactId).notifier)
-          .stopPact(reason);
+      await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).stopPact(reason);
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {

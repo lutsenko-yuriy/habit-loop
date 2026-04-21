@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
-import 'package:intl/intl.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class CommitmentStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -26,9 +26,15 @@ class CommitmentStepAndroid extends StatelessWidget {
       final t = TimeOfDay(hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60).format(context);
       return '${l10n.scheduleDaily} @ $t';
     }
-    if (s is WeekdaySchedule) return '${l10n.scheduleWeekday} (${s.entries.length})';
-    if (s is MonthlyByWeekdaySchedule) return '${l10n.scheduleMonthlyByWeekday} (${s.entries.length})';
-    if (s is MonthlyByDateSchedule) return '${l10n.scheduleMonthlyByDate} (${s.entries.length})';
+    if (s is WeekdaySchedule) {
+      return '${l10n.scheduleWeekday} (${s.entries.length})';
+    }
+    if (s is MonthlyByWeekdaySchedule) {
+      return '${l10n.scheduleMonthlyByWeekday} (${s.entries.length})';
+    }
+    if (s is MonthlyByDateSchedule) {
+      return '${l10n.scheduleMonthlyByDate} (${s.entries.length})';
+    }
     return '';
   }
 
@@ -44,8 +50,7 @@ class CommitmentStepAndroid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         const SizedBox(height: 16),
-        Text(l10n.commitmentStep,
-            style: Theme.of(context).textTheme.headlineSmall),
+        Text(l10n.commitmentStep, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),

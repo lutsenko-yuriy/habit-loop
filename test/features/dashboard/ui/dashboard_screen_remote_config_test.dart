@@ -59,9 +59,7 @@ Widget _buildApp({
 
 void main() {
   group('DashboardScreen — Remote Config max_active_pacts threshold', () {
-    testWidgets(
-        'does not show warning dialog when active pact count is below Remote Config threshold',
-        (tester) async {
+    testWidgets('does not show warning dialog when active pact count is below Remote Config threshold', (tester) async {
       // Remote Config says 5 is the max; only 4 pacts exist — no warning.
       final remoteConfig = FakeRemoteConfigService(
         overrides: {'max_active_pacts': 5},
@@ -77,9 +75,7 @@ void main() {
       expect(find.text('Too many active pacts'), findsNothing);
     });
 
-    testWidgets(
-        'shows warning dialog when active pact count meets Remote Config threshold',
-        (tester) async {
+    testWidgets('shows warning dialog when active pact count meets Remote Config threshold', (tester) async {
       // Remote Config says 3 is the max; exactly 3 pacts exist — warning shown.
       final remoteConfig = FakeRemoteConfigService(
         overrides: {'max_active_pacts': 3},
@@ -95,9 +91,7 @@ void main() {
       expect(find.text('Too many active pacts'), findsOneWidget);
     });
 
-    testWidgets(
-        'does not show warning dialog when pact count is below the raised threshold',
-        (tester) async {
+    testWidgets('does not show warning dialog when pact count is below the raised threshold', (tester) async {
       // Remote Config raises the limit to 5; 3 pacts exist — no warning
       // (whereas the hardcoded value of 3 would have triggered one).
       final remoteConfig = FakeRemoteConfigService(
