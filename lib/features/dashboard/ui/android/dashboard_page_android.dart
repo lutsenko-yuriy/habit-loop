@@ -235,10 +235,10 @@ class _CalendarDay extends StatelessWidget {
         }
       }
       final overflowColor = pending > 0
-          ? Colors.grey
+          ? theme.colorScheme.onSurfaceVariant
           : done >= failed
-              ? Colors.green
-              : Colors.red;
+              ? theme.colorScheme.secondary
+              : theme.colorScheme.error;
       return Container(
         key: Key('status-dot-overflow-$dateKey'),
         width: 10,
@@ -284,11 +284,11 @@ class _CalendarDay extends StatelessWidget {
   Color _dotColor(ShowupStatus status, ThemeData theme) {
     switch (status) {
       case ShowupStatus.done:
-        return Colors.green;
+        return theme.colorScheme.secondary;
       case ShowupStatus.failed:
-        return Colors.red;
+        return theme.colorScheme.error;
       case ShowupStatus.pending:
-        return Colors.grey;
+        return theme.colorScheme.onSurfaceVariant;
     }
   }
 }
@@ -341,10 +341,11 @@ class _ShowupTile extends StatelessWidget {
       ShowupStatus.failed => Icons.cancel,
       ShowupStatus.pending => Icons.radio_button_unchecked,
     };
+    final theme = Theme.of(context);
     final color = switch (showup.status) {
-      ShowupStatus.done => Colors.green,
-      ShowupStatus.failed => Colors.red,
-      ShowupStatus.pending => Colors.grey,
+      ShowupStatus.done => theme.colorScheme.secondary,
+      ShowupStatus.failed => theme.colorScheme.error,
+      ShowupStatus.pending => theme.colorScheme.onSurfaceVariant,
     };
     final statusText = switch (showup.status) {
       ShowupStatus.done => l10n.showupDone,

@@ -117,9 +117,13 @@ class HabitLoopApp extends StatelessWidget {
     return MaterialApp(
       title: 'Habit Loop',
       theme: HabitLoopTheme.materialTheme,
+      darkTheme: HabitLoopTheme.darkMaterialTheme,
+      themeMode: ThemeMode.system,
       builder: (context, child) {
         return CupertinoTheme(
-          data: HabitLoopTheme.cupertinoTheme,
+          data: HabitLoopTheme.cupertinoTheme.copyWith(
+            brightness: Theme.of(context).brightness,
+          ),
           child: child ?? const SizedBox.shrink(),
         );
       },

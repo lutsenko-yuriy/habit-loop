@@ -43,7 +43,7 @@ class ScheduleStepAndroid extends StatelessWidget {
               : theme.colorScheme.surfaceContainerHighest,
           leading: Icon(
             isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isSelected ? theme.colorScheme.primary : Colors.grey,
+            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
           ),
           title: Text(label),
           onTap: () => onScheduleTypeChanged(type),
@@ -242,8 +242,8 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                 ),
                 if (_weekdayEntries.length > 1)
                   IconButton(
-                    icon: const Icon(Icons.remove_circle_outline,
-                        color: Colors.red),
+                    icon: Icon(Icons.remove_circle_outline,
+                        color: Theme.of(context).colorScheme.error),
                     onPressed: () {
                       setState(() => _weekdayEntries.removeAt(index));
                       widget.onScheduleChanged(
@@ -340,8 +340,8 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                 ),
                 if (_monthlyWeekdayEntries.length > 1)
                   IconButton(
-                    icon: const Icon(Icons.remove_circle_outline,
-                        color: Colors.red),
+                    icon: Icon(Icons.remove_circle_outline,
+                        color: Theme.of(context).colorScheme.error),
                     onPressed: () {
                       setState(() => _monthlyWeekdayEntries.removeAt(index));
                       widget.onScheduleChanged(MonthlyByWeekdaySchedule(
@@ -411,8 +411,8 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
                 ),
                 if (_monthlyDateEntries.length > 1)
                   IconButton(
-                    icon: const Icon(Icons.remove_circle_outline,
-                        color: Colors.red),
+                    icon: Icon(Icons.remove_circle_outline,
+                        color: Theme.of(context).colorScheme.error),
                     onPressed: () {
                       setState(() => _monthlyDateEntries.removeAt(index));
                       widget.onScheduleChanged(MonthlyByDateSchedule(

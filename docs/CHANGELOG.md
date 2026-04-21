@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.2] — 2026-04-21 (PR #31 merged)
+
+### Changed — Dark mode support (HAB-37)
+
+- `darkMaterialTheme` added to `HabitLoopTheme` using Material3 container tokens so all surfaces, text, and icons adapt automatically to the system colour scheme
+- `ThemeMode.system` wired into `MaterialApp` so the app follows the device's light/dark preference without any manual toggle
+- `CupertinoTheme` brightness propagated from the active `BuildContext` so iOS widgets also respond correctly to dark mode
+- All hardcoded non-adaptive colours replaced with Material3 container tokens across Android widgets (Dashboard, Pact creation wizard, Pact detail, Showup detail, pacts panel, calendar strip, status dots, tiles)
+
+---
+
 ## [0.11.1] — 2026-04-21 (PR #30 merged)
 
 ### Changed — Lock app to portrait orientation (HAB-38)

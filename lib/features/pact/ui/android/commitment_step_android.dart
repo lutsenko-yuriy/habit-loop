@@ -73,12 +73,16 @@ class CommitmentStepAndroid extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.amber.withValues(alpha: 0.15),
+            color: Theme.of(context).colorScheme.tertiaryContainer,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             l10n.commitmentWarning,
-            style: const TextStyle(fontSize: 15, height: 1.5),
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              color: Theme.of(context).colorScheme.onTertiaryContainer,
+            ),
           ),
         ),
         const SizedBox(height: 16),

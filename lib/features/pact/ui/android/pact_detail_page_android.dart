@@ -149,10 +149,13 @@ class _PactDetailContent extends StatelessWidget {
             const SizedBox(height: 8),
           ],
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
             onPressed: state.isStopping ? null : () => _showStopDialog(context),
             child: state.isStopping
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onError))
                 : Text(l10n.stopPact),
           ),
         ],
@@ -194,7 +197,7 @@ class _PactDetailContent extends StatelessWidget {
               child: Text(l10n.cancel),
             ),
             TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.error),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(l10n.stopPactConfirm),
             ),

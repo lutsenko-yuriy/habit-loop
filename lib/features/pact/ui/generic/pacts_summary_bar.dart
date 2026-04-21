@@ -10,7 +10,6 @@ import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.da
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:intl/intl.dart';
 
 /// A persistent draggable panel at the bottom of the dashboard.
@@ -118,7 +117,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
                 offset: const Offset(0, -4),
                 blurRadius: 12,
               ),
@@ -294,10 +293,11 @@ class _PactTile extends StatelessWidget {
       PactStatus.completed => l10n.pactStatusCompleted,
       PactStatus.stopped => l10n.pactStatusStopped,
     };
-    final statusColor = switch (pact.status) {
-      PactStatus.active => HabitLoopColors.primary,
-      PactStatus.completed => HabitLoopColors.success,
-      PactStatus.stopped => HabitLoopColors.danger,
+    final cs = Theme.of(context).colorScheme;
+    final (badgeBg, badgeFg) = switch (pact.status) {
+      PactStatus.active => (cs.primaryContainer, cs.onPrimaryContainer),
+      PactStatus.completed => (cs.secondaryContainer, cs.onSecondaryContainer),
+      PactStatus.stopped => (cs.errorContainer, cs.onErrorContainer),
     };
 
     return ListTile(
@@ -310,7 +310,7 @@ class _PactTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.12),
+              color: badgeBg,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -318,7 +318,7 @@ class _PactTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: statusColor,
+                color: badgeFg,
               ),
             ),
           ),

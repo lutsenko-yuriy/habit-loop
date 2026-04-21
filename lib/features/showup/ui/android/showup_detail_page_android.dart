@@ -130,10 +130,9 @@ class _ShowupDetailContent extends StatelessWidget {
             ),
             Chip(
               label: Text(statusText),
-              backgroundColor:
-                  _statusColor(showup.status).withValues(alpha: 0.15),
+              backgroundColor: _statusChipBg(showup.status, theme.colorScheme),
               labelStyle: TextStyle(
-                color: _statusColor(showup.status),
+                color: _statusChipFg(showup.status, theme.colorScheme),
                 fontWeight: FontWeight.w600,
               ),
               side: BorderSide.none,
@@ -172,7 +171,9 @@ class _ShowupDetailContent extends StatelessWidget {
         if (isPending) ...[
           FilledButton(
             onPressed: state.isSaving ? null : onMarkDone,
-            style: FilledButton.styleFrom(backgroundColor: Colors.green),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.secondary,
+            ),
             child: state.isSaving
                 ? const SizedBox(
                     height: 20,
@@ -187,7 +188,7 @@ class _ShowupDetailContent extends StatelessWidget {
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: state.isSaving ? null : onMarkFailed,
-            style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+            style: OutlinedButton.styleFrom(foregroundColor: theme.colorScheme.error),
             child: Text(l10n.markFailed),
           ),
           const SizedBox(height: 16),
@@ -244,13 +245,17 @@ class _ShowupDetailContent extends StatelessWidget {
     );
   }
 
-  Color _statusColor(ShowupStatus status) {
-    return switch (status) {
-      ShowupStatus.pending => Colors.orange,
-      ShowupStatus.done => Colors.green,
-      ShowupStatus.failed => Colors.red,
-    };
-  }
+  Color _statusChipBg(ShowupStatus status, ColorScheme cs) => switch (status) {
+    ShowupStatus.pending => cs.surfaceContainerHighest,
+    ShowupStatus.done => cs.secondaryContainer,
+    ShowupStatus.failed => cs.errorContainer,
+  };
+
+  Color _statusChipFg(ShowupStatus status, ColorScheme cs) => switch (status) {
+    ShowupStatus.pending => cs.onSurfaceVariant,
+    ShowupStatus.done => cs.onSecondaryContainer,
+    ShowupStatus.failed => cs.onErrorContainer,
+  };
 }
 
 class _InfoRow extends StatelessWidget {

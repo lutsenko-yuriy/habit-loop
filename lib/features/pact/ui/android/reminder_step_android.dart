@@ -65,7 +65,7 @@ class ReminderStepAndroid extends StatelessWidget {
                     : Icons.radio_button_unchecked,
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
-                    : Colors.grey,
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               title: Text(option.label),
               onTap: () {
