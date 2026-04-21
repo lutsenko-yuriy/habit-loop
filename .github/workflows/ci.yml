@@ -46,7 +46,9 @@ jobs:
 
       - run: flutter pub get
       - name: Check formatting
-        run: dart format --set-exit-if-changed lib/ test/
+        run: |
+          find lib/ test/ -name "*.dart" -not -name "firebase_options.dart" \
+            | sort | xargs dart format --set-exit-if-changed
       - run: flutter analyze
       - run: flutter test
 
