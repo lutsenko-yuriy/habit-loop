@@ -95,7 +95,7 @@ Never update `docs/BACKLOG.md` or `docs/CHANGELOG.md` — those are owned by the
 
 ### 7. Format
 
-After all tests pass and the analyzer is clean, apply `dart format` in a **separate, formatting-only commit** before the functional commit:
+After all tests pass and the analyzer is clean, apply `dart format` in a **separate, formatting-only commit that precedes the functional commit in the branch history**:
 
 ```bash
 dart format lib/ test/
