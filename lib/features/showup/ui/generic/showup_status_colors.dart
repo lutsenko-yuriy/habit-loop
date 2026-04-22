@@ -57,11 +57,11 @@ class ShowupStatusColors {
   /// with 4+ showups. The caller passes pre-counted done/failed/pending
   /// totals; this keeps the resolver free of any iteration logic.
   Color overflow({
-    required int done,
-    required int failed,
-    required int pending,
+    required int doneCount,
+    required int failedCount,
+    required int pendingCount,
   }) {
-    if (pending > 0) return this.pending;
-    return done >= failed ? this.done : this.failed;
+    if (pendingCount > 0) return pending;
+    return doneCount >= failedCount ? done : failed;
   }
 }

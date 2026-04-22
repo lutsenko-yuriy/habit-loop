@@ -16,13 +16,13 @@ class SummaryRow extends StatelessWidget {
   /// site (e.g. `CupertinoColors.systemGrey` on iOS or
   /// `Theme.of(context).colorScheme.onSurfaceVariant` on Android) rather than
   /// hard-coding one here.
-  final Color? labelColor;
+  final Color labelColor;
 
   const SummaryRow({
     super.key,
     required this.label,
     required this.value,
-    this.labelColor,
+    required this.labelColor,
   });
 
   @override
@@ -36,10 +36,7 @@ class SummaryRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: labelColor, fontSize: 14),
             ),
           ),
           Expanded(

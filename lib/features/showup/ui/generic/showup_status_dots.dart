@@ -54,7 +54,7 @@ class ShowupStatusDots extends StatelessWidget {
         height: 10,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: colors.overflow(done: done, failed: failed, pending: pending),
+          color: colors.overflow(doneCount: done, failedCount: failed, pendingCount: pending),
         ),
       );
     }

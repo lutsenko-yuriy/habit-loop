@@ -15,17 +15,17 @@ void main() {
     });
 
     test('overflow is grey while any showup is pending', () {
-      expect(colors.overflow(done: 2, failed: 1, pending: 1), CupertinoColors.systemGrey);
-      expect(colors.overflow(done: 0, failed: 0, pending: 4), CupertinoColors.systemGrey);
+      expect(colors.overflow(doneCount: 2, failedCount: 1, pendingCount: 1), CupertinoColors.systemGrey);
+      expect(colors.overflow(doneCount: 0, failedCount: 0, pendingCount: 4), CupertinoColors.systemGrey);
     });
 
     test('overflow is green when resolved and done ≥ failed', () {
-      expect(colors.overflow(done: 2, failed: 2, pending: 0), CupertinoColors.activeGreen);
-      expect(colors.overflow(done: 4, failed: 0, pending: 0), CupertinoColors.activeGreen);
+      expect(colors.overflow(doneCount: 2, failedCount: 2, pendingCount: 0), CupertinoColors.activeGreen);
+      expect(colors.overflow(doneCount: 4, failedCount: 0, pendingCount: 0), CupertinoColors.activeGreen);
     });
 
     test('overflow is red when resolved and failed > done', () {
-      expect(colors.overflow(done: 1, failed: 3, pending: 0), CupertinoColors.destructiveRed);
+      expect(colors.overflow(doneCount: 1, failedCount: 3, pendingCount: 0), CupertinoColors.destructiveRed);
     });
   });
 
@@ -41,15 +41,15 @@ void main() {
     });
 
     test('overflow is onSurfaceVariant while any showup is pending', () {
-      expect(colors.overflow(done: 2, failed: 1, pending: 1), colorScheme.onSurfaceVariant);
+      expect(colors.overflow(doneCount: 2, failedCount: 1, pendingCount: 1), colorScheme.onSurfaceVariant);
     });
 
     test('overflow is secondary when resolved and done ≥ failed', () {
-      expect(colors.overflow(done: 2, failed: 2, pending: 0), colorScheme.secondary);
+      expect(colors.overflow(doneCount: 2, failedCount: 2, pendingCount: 0), colorScheme.secondary);
     });
 
     test('overflow is error when resolved and failed > done', () {
-      expect(colors.overflow(done: 1, failed: 3, pending: 0), colorScheme.error);
+      expect(colors.overflow(doneCount: 1, failedCount: 3, pendingCount: 0), colorScheme.error);
     });
   });
 }

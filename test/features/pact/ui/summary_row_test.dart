@@ -9,7 +9,7 @@ void main() {
   testWidgets('renders both label and value', (tester) async {
     await _pump(
       tester,
-      const SummaryRow(label: 'Habit', value: 'Meditate'),
+      const SummaryRow(label: 'Habit', value: 'Meditate', labelColor: CupertinoColors.systemGrey),
     );
     expect(find.text('Habit'), findsOneWidget);
     expect(find.text('Meditate'), findsOneWidget);
@@ -31,7 +31,7 @@ void main() {
   testWidgets('reserves a 110-wide column for the label', (tester) async {
     await _pump(
       tester,
-      const SummaryRow(label: 'Habit', value: 'Meditate'),
+      const SummaryRow(label: 'Habit', value: 'Meditate', labelColor: CupertinoColors.systemGrey),
     );
     // The SizedBox wrapping the label should have width 110.
     final sizedBox = tester.widget<SizedBox>(
