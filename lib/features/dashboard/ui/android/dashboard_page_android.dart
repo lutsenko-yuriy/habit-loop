@@ -4,6 +4,9 @@ import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
 import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
+import 'package:habit_loop/features/showup/ui/generic/showup_formatters.dart';
+import 'package:habit_loop/features/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/features/showup/ui/generic/showup_status_dots.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class DashboardPageAndroid extends StatelessWidget {
@@ -208,82 +211,14 @@ class _CalendarDay extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          _buildDots(entry.showups, entry.date, theme),
+          ShowupStatusDots(
+            showups: entry.showups,
+            date: entry.date,
+            colors: ShowupStatusColors.material(theme.colorScheme),
+          ),
         ],
       ),
     );
-  }
-
-  Widget _buildDots(List<Showup> showups, DateTime date, ThemeData theme) {
-    final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    if (showups.isEmpty) return const SizedBox.shrink();
-    if (showups.length >= 4) {
-      var done = 0, failed = 0, pending = 0;
-      for (final s in showups) {
-        if (s.status == ShowupStatus.done) {
-          done++;
-        } else if (s.status == ShowupStatus.failed) {
-          failed++;
-        } else {
-          pending++;
-        }
-      }
-      final overflowColor = pending > 0
-          ? theme.colorScheme.onSurfaceVariant
-          : done >= failed
-              ? theme.colorScheme.secondary
-              : theme.colorScheme.error;
-      return Container(
-        key: Key('status-dot-overflow-$dateKey'),
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: overflowColor,
-        ),
-      );
-    }
-    Widget dot(Showup s) => Container(
-          key: Key('status-dot-${s.id}'),
-          width: 6,
-          height: 6,
-          margin: const EdgeInsets.symmetric(horizontal: 1),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _dotColor(s.status, theme),
-          ),
-        );
-    if (showups.length <= 2) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: showups.map(dot).toList(),
-      );
-    }
-    // 3 showups: 2 on top row, 1 on bottom row
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [dot(showups[0]), dot(showups[1])],
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [dot(showups[2])],
-        ),
-      ],
-    );
-  }
-
-  Color _dotColor(ShowupStatus status, ThemeData theme) {
-    switch (status) {
-      case ShowupStatus.done:
-        return theme.colorScheme.secondary;
-      case ShowupStatus.failed:
-        return theme.colorScheme.error;
-      case ShowupStatus.pending:
-        return theme.colorScheme.onSurfaceVariant;
-    }
   }
 }
 
@@ -335,21 +270,12 @@ class _ShowupTile extends StatelessWidget {
       ShowupStatus.failed => Icons.cancel,
       ShowupStatus.pending => Icons.radio_button_unchecked,
     };
-    final theme = Theme.of(context);
-    final color = switch (showup.status) {
-      ShowupStatus.done => theme.colorScheme.secondary,
-      ShowupStatus.failed => theme.colorScheme.error,
-      ShowupStatus.pending => theme.colorScheme.onSurfaceVariant,
-    };
-    final statusText = switch (showup.status) {
-      ShowupStatus.done => l10n.showupDone,
-      ShowupStatus.failed => l10n.showupFailed,
-      ShowupStatus.pending => l10n.showupPending,
-    };
+    final colors = ShowupStatusColors.material(Theme.of(context).colorScheme);
+    final statusText = showupStatusText(l10n, showup.status);
 
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: color),
+      leading: Icon(icon, color: colors.forStatus(showup.status)),
       title: Text(habitName),
       subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
     );
