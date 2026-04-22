@@ -93,7 +93,7 @@ Storage and persistence. Implements repository interfaces from domain.
 
 ### UI
 Platform-split presentation:
-- `generic/` — view models (Riverpod notifiers) and shared state classes
+- `generic/` — view models (Riverpod notifiers), shared state classes, and platform-agnostic helpers shared by both Cupertino and Material implementations (formatters, colour-role resolvers, and reusable widgets). Examples: `pact/ui/generic/pact_creation_formatters.dart` (date/schedule/reminder labels), `pact/ui/generic/summary_row.dart`, `showup/ui/generic/showup_formatters.dart`, `showup/ui/generic/showup_status_colors.dart` (Cupertino + Material palette factories mapping `ShowupStatus` to colours), `showup/ui/generic/showup_status_dots.dart` (calendar-strip dot widget). Helpers that need a platform-idiom colour accept it as a parameter rather than branching on platform.
 - `ios/` — Cupertino widgets
 - `android/` — Material widgets
 
