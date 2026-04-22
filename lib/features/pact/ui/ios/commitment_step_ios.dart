@@ -1,9 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
-import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/features/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:intl/intl.dart';
 
 class CommitmentStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -17,35 +15,9 @@ class CommitmentStepIos extends StatelessWidget {
     required this.onCommitmentChanged,
   });
 
-  String _formatDate(BuildContext context, DateTime d) =>
-      DateFormat.yMd(Localizations.localeOf(context).toString()).format(d);
-
-  String _scheduleDescription(BuildContext context) {
-    final s = state.schedule;
-    if (s == null) return '';
-    if (s is DailySchedule) {
-      final t = TimeOfDay(hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60).format(context);
-      return '${l10n.scheduleDaily} @ $t';
-    }
-    if (s is WeekdaySchedule) {
-      return '${l10n.scheduleWeekday} (${s.entries.length})';
-    }
-    if (s is MonthlyByWeekdaySchedule) {
-      return '${l10n.scheduleMonthlyByWeekday} (${s.entries.length})';
-    }
-    if (s is MonthlyByDateSchedule) {
-      return '${l10n.scheduleMonthlyByDate} (${s.entries.length})';
-    }
-    return '';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final reminderText = state.reminderOffset == null
-        ? l10n.reminderNone
-        : state.reminderOffset == Duration.zero
-            ? l10n.reminderAtStart
-            : l10n.reminderMinutesBefore(state.reminderOffset!.inMinutes);
+    final reminderText = reminderDescription(l10n, state.reminderOffset);
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -68,13 +40,16 @@ class CommitmentStepIos extends StatelessWidget {
               _SummaryRow(label: l10n.summaryHabit, value: state.habitName),
               _SummaryRow(
                 label: l10n.summaryDuration,
-                value: '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
+                value: '${formatPactDate(context, state.startDate)} → ${formatPactDate(context, state.endDate)}',
               ),
               _SummaryRow(
                 label: l10n.summaryShowupDuration,
                 value: l10n.showupDurationMinutes(state.showupDuration?.inMinutes ?? 0),
               ),
-              _SummaryRow(label: l10n.summarySchedule, value: _scheduleDescription(context)),
+              _SummaryRow(
+                label: l10n.summarySchedule,
+                value: scheduleDescription(context, l10n, state.schedule),
+              ),
               _SummaryRow(label: l10n.summaryReminder, value: reminderText),
             ],
           ),
