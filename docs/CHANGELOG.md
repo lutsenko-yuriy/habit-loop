@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.6] — 2026-04-26 (PR #35 merged)
+
+### Fixed — Align pubspec.yaml version name with changelog (HAB-43)
+
+- `pubspec.yaml` version name bumped from `0.1.0` to `0.11.5` so Firebase App Distribution labels builds with the correct version instead of the initial scaffold value
+- `AGENTS.md` workflow updated: step 10 now requires verifying that `pubspec.yaml` version name matches the latest `CHANGELOG.md` entry before committing, and updating it (with user approval) when a new changelog entry is added
+- 399 tests pass, analyzer clean
+
+---
+
 ## [0.11.5] — 2026-04-25 (PR #34 merged)
 
 ### Changed — Reduce duplicated iOS/Android dashboard widget logic (HAB-15)
