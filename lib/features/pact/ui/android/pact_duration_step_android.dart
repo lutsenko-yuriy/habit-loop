@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:intl/intl.dart';
 
 class PactDurationStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -77,7 +77,7 @@ class _DateTile extends StatelessWidget {
       tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       title: Text(label),
       trailing: Text(
-        DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
+        formatLocaleDate(context, date),
         style: TextStyle(color: Theme.of(context).colorScheme.primary),
       ),
       onTap: onTap,

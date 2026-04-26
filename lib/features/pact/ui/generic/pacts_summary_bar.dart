@@ -12,8 +12,8 @@ import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:intl/intl.dart';
 
 /// A persistent draggable panel at the bottom of the dashboard.
 ///
@@ -268,18 +268,16 @@ class _PactTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context).toString();
-    final dateFormat = DateFormat.yMd(locale);
     final pact = entry.pact;
 
     final String subtitle;
     if (pact.status == PactStatus.active) {
       final next = entry.nextShowupAt;
-      subtitle = next != null ? l10n.pactNextShowup(dateFormat.format(next)) : '';
+      subtitle = next != null ? l10n.pactNextShowup(formatLocaleDate(context, next)) : '';
     } else if (pact.status == PactStatus.completed) {
-      subtitle = l10n.pactEndedOn(dateFormat.format(pact.endDate));
+      subtitle = l10n.pactEndedOn(formatLocaleDate(context, pact.endDate));
     } else {
-      subtitle = l10n.pactCancelledOn(dateFormat.format(pact.endDate));
+      subtitle = l10n.pactCancelledOn(formatLocaleDate(context, pact.endDate));
     }
 
     final statusText = pactStatusText(l10n, pact.status);

@@ -2,8 +2,8 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:intl/intl.dart';
 
 class PactDurationStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -127,7 +127,7 @@ class _DateRow extends StatelessWidget {
           children: [
             Text(label),
             Text(
-              DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
+              formatLocaleDate(context, date),
               style: TextStyle(
                 color: CupertinoTheme.of(context).primaryColor,
               ),
