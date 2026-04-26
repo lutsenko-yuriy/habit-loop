@@ -97,19 +97,20 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
     - `@docs/PRODUCT_SPEC.md` — functionality added, removed, or changed
     - `@docs/ARCHITECTURE.md` — code structure or dependencies changed
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
-10. Commit all changes with a descriptive message.
-11. Launch the app on both platforms for a smoke test using the Flutter binary from `CLAUDE.local.md`:
+10. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly (requires user approval per the Versioning section above). Do not touch the build number — CI manages it.
+11. Commit all changes with a descriptive message.
+12. Launch the app on both platforms for a smoke test using the Flutter binary from `CLAUDE.local.md`:
     ```
     flutter run -d ios
     flutter run -d android
     ```
     Run each in the background (`run_in_background: true`) so both start simultaneously. Wait for the user to confirm the app looks correct on both platforms before proceeding.
-12. Push to the remote.
-13. Open a PR and request reviews in parallel (both agents are independent — launch them simultaneously):
+13. Push to the remote.
+14. Open a PR and request reviews in parallel (both agents are independent — launch them simultaneously):
     - If `.claude/agents/tech-lead.md` exists, invoke it for an architectural review: `Use the tech-lead agent to review PR #<number>`.
     - If `.claude/agents/code-reviewer.md` exists, invoke it for a runtime/launch/migration review: `Use the code-reviewer agent to review PR #<number>`.
     - If neither agent exists, request a review from the user directly.
-14. Remind the user to compact the context after each commit to keep the conversation lean.
-15. When the user approves the PR:
+15. Remind the user to compact the context after each commit to keep the conversation lean.
+16. When the user approves the PR:
     - Invoke the `product-owner` agent: `Use the product-owner agent to close the approved PR's Linear issues, regenerate BACKLOG.md and CHANGELOG.md, and merge the PR`.
-16. Clear the context after the PR with the changes is merged.
+17. Clear the context after the PR with the changes is merged.
