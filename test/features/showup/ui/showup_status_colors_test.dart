@@ -5,27 +5,111 @@ import 'package:habit_loop/features/showup/domain/showup_status.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_status_colors.dart';
 
 void main() {
-  group('ShowupStatusColors.cupertino', () {
-    const colors = ShowupStatusColors.cupertino;
+  // Helper to pump a widget under a CupertinoTheme and capture the BuildContext.
+  Future<BuildContext> buildContext(
+    WidgetTester tester, {
+    Brightness brightness = Brightness.light,
+  }) async {
+    late BuildContext captured;
+    await tester.pumpWidget(
+      CupertinoApp(
+        theme: CupertinoThemeData(brightness: brightness),
+        home: Builder(builder: (ctx) {
+          captured = ctx;
+          return const SizedBox.shrink();
+        }),
+      ),
+    );
+    return captured;
+  }
 
-    test('maps done → activeGreen, failed → destructiveRed, pending → systemGrey', () {
-      expect(colors.forStatus(ShowupStatus.done), CupertinoColors.activeGreen);
-      expect(colors.forStatus(ShowupStatus.failed), CupertinoColors.destructiveRed);
-      expect(colors.forStatus(ShowupStatus.pending), CupertinoColors.systemGrey);
+  // Builds a ShowupStatusColors palette with Cupertino system colours
+  // resolved against the given context so dynamic light/dark adaptation works.
+  ShowupStatusColors cupertinoColors(BuildContext context) => ShowupStatusColors(
+        done: CupertinoColors.activeGreen.resolveFrom(context),
+        failed: CupertinoColors.destructiveRed.resolveFrom(context),
+        pending: CupertinoColors.systemGrey.resolveFrom(context),
+      );
+
+  group('ShowupStatusColors — Cupertino resolved palette', () {
+    testWidgets('forStatus maps done → resolved activeGreen', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = cupertinoColors(ctx);
+      expect(colors.forStatus(ShowupStatus.done), CupertinoColors.activeGreen.resolveFrom(ctx));
     });
 
-    test('overflow is grey while any showup is pending', () {
-      expect(colors.overflow(doneCount: 2, failedCount: 1, pendingCount: 1), CupertinoColors.systemGrey);
-      expect(colors.overflow(doneCount: 0, failedCount: 0, pendingCount: 4), CupertinoColors.systemGrey);
+    testWidgets('forStatus maps failed → resolved destructiveRed', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = cupertinoColors(ctx);
+      expect(colors.forStatus(ShowupStatus.failed), CupertinoColors.destructiveRed.resolveFrom(ctx));
     });
 
-    test('overflow is green when resolved and done ≥ failed', () {
-      expect(colors.overflow(doneCount: 2, failedCount: 2, pendingCount: 0), CupertinoColors.activeGreen);
-      expect(colors.overflow(doneCount: 4, failedCount: 0, pendingCount: 0), CupertinoColors.activeGreen);
+    testWidgets('forStatus maps pending → resolved systemGrey', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = cupertinoColors(ctx);
+      expect(colors.forStatus(ShowupStatus.pending), CupertinoColors.systemGrey.resolveFrom(ctx));
     });
 
-    test('overflow is red when resolved and failed > done', () {
-      expect(colors.overflow(doneCount: 1, failedCount: 3, pendingCount: 0), CupertinoColors.destructiveRed);
+    testWidgets('done colour differs between light and dark mode', (tester) async {
+      final lightCtx = await buildContext(tester, brightness: Brightness.light);
+      final lightDone = cupertinoColors(lightCtx).done;
+
+      final darkCtx = await buildContext(tester, brightness: Brightness.dark);
+      final darkDone = cupertinoColors(darkCtx).done;
+
+      expect(lightDone, isNot(equals(darkDone)));
+    });
+
+    testWidgets('failed colour differs between light and dark mode', (tester) async {
+      final lightCtx = await buildContext(tester, brightness: Brightness.light);
+      final lightFailed = cupertinoColors(lightCtx).failed;
+
+      final darkCtx = await buildContext(tester, brightness: Brightness.dark);
+      final darkFailed = cupertinoColors(darkCtx).failed;
+
+      expect(lightFailed, isNot(equals(darkFailed)));
+    });
+
+    testWidgets('pending colour is the resolved systemGrey for the current brightness', (tester) async {
+      final lightCtx = await buildContext(tester, brightness: Brightness.light);
+      final pendingLight = cupertinoColors(lightCtx).pending;
+      // Verify the pending colour is the correctly resolved systemGrey, not the raw unresolved Color.
+      expect(pendingLight, CupertinoColors.systemGrey.resolveFrom(lightCtx));
+    });
+
+    testWidgets('overflow is grey while any showup is pending', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = cupertinoColors(ctx);
+      expect(
+        colors.overflow(doneCount: 2, failedCount: 1, pendingCount: 1),
+        CupertinoColors.systemGrey.resolveFrom(ctx),
+      );
+      expect(
+        colors.overflow(doneCount: 0, failedCount: 0, pendingCount: 4),
+        CupertinoColors.systemGrey.resolveFrom(ctx),
+      );
+    });
+
+    testWidgets('overflow is green when resolved and done >= failed', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = cupertinoColors(ctx);
+      expect(
+        colors.overflow(doneCount: 2, failedCount: 2, pendingCount: 0),
+        CupertinoColors.activeGreen.resolveFrom(ctx),
+      );
+      expect(
+        colors.overflow(doneCount: 4, failedCount: 0, pendingCount: 0),
+        CupertinoColors.activeGreen.resolveFrom(ctx),
+      );
+    });
+
+    testWidgets('overflow is red when resolved and failed > done', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = cupertinoColors(ctx);
+      expect(
+        colors.overflow(doneCount: 1, failedCount: 3, pendingCount: 0),
+        CupertinoColors.destructiveRed.resolveFrom(ctx),
+      );
     });
   });
 
@@ -44,7 +128,7 @@ void main() {
       expect(colors.overflow(doneCount: 2, failedCount: 1, pendingCount: 1), colorScheme.onSurfaceVariant);
     });
 
-    test('overflow is secondary when resolved and done ≥ failed', () {
+    test('overflow is secondary when resolved and done >= failed', () {
       expect(colors.overflow(doneCount: 2, failedCount: 2, pendingCount: 0), colorScheme.secondary);
     });
 

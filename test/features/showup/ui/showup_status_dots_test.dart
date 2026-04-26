@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/features/showup/domain/showup.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
@@ -14,14 +13,27 @@ Showup _s(String id, ShowupStatus status) => Showup(
       status: status,
     );
 
-Future<void> _pump(WidgetTester tester, Widget child) => tester.pumpWidget(MaterialApp(home: Scaffold(body: child)));
+// Pumps ShowupStatusDots inside a CupertinoApp so that
+// ShowupStatusColors.cupertino(context) can resolve against a real brightness.
+Future<void> _pump(WidgetTester tester, List<Showup> showups, DateTime date) {
+  return tester.pumpWidget(
+    CupertinoApp(
+      home: Builder(
+        builder: (context) => ShowupStatusDots(
+          showups: showups,
+          date: date,
+          colors: ShowupStatusColors.cupertino(context),
+        ),
+      ),
+    ),
+  );
+}
 
 void main() {
-  const colors = ShowupStatusColors.cupertino;
   final date = DateTime(2026, 3, 30);
 
   testWidgets('renders nothing when there are no showups', (tester) async {
-    await _pump(tester, ShowupStatusDots(showups: const [], date: date, colors: colors));
+    await _pump(tester, const [], date);
     expect(find.byType(SizedBox), findsOneWidget);
     // No dot keys should be present.
     expect(find.byKey(const Key('status-dot-overflow-2026-03-30')), findsNothing);
@@ -33,7 +45,7 @@ void main() {
       _s('b', ShowupStatus.failed),
       _s('c', ShowupStatus.pending),
     ];
-    await _pump(tester, ShowupStatusDots(showups: showups, date: date, colors: colors));
+    await _pump(tester, showups, date);
     expect(find.byKey(const Key('status-dot-a')), findsOneWidget);
     expect(find.byKey(const Key('status-dot-b')), findsOneWidget);
     expect(find.byKey(const Key('status-dot-c')), findsOneWidget);
@@ -48,7 +60,7 @@ void main() {
       _s('c', ShowupStatus.failed),
       _s('d', ShowupStatus.pending),
     ];
-    await _pump(tester, ShowupStatusDots(showups: showups, date: date, colors: colors));
+    await _pump(tester, showups, date);
     expect(find.byKey(const Key('status-dot-overflow-2026-03-30')), findsOneWidget);
     // Individual dots are not rendered in overflow mode.
     expect(find.byKey(const Key('status-dot-a')), findsNothing);
@@ -61,17 +73,19 @@ void main() {
       _s('c', ShowupStatus.done),
       _s('d', ShowupStatus.done),
     ];
-    await _pump(tester, ShowupStatusDots(showups: showups, date: date, colors: colors));
+    await _pump(tester, showups, date);
     final container = tester.widget<Container>(find.byKey(const Key('status-dot-overflow-2026-03-30')));
     final decoration = container.decoration as BoxDecoration;
-    expect(decoration.color, CupertinoColors.systemGrey);
+    // The overflow dot should use the resolved systemGrey colour.
+    final BuildContext ctx = tester.element(find.byKey(const Key('status-dot-overflow-2026-03-30')));
+    expect(decoration.color, CupertinoColors.systemGrey.resolveFrom(ctx));
   });
 
   testWidgets('pads the overflow key with zeros (single-digit month/day)', (tester) async {
     // Date with single-digit month and day: 2026-01-05 → "2026-01-05".
     final early = DateTime(2026, 1, 5);
     final showups = List.generate(4, (i) => _s('s$i', ShowupStatus.done));
-    await _pump(tester, ShowupStatusDots(showups: showups, date: early, colors: colors));
+    await _pump(tester, showups, early);
     expect(find.byKey(const Key('status-dot-overflow-2026-01-05')), findsOneWidget);
   });
 }

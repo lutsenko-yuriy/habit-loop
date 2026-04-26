@@ -220,7 +220,7 @@ class _CalendarStrip extends StatelessWidget {
                 ShowupStatusDots(
                   showups: entry.showups,
                   date: entry.date,
-                  colors: ShowupStatusColors.cupertino,
+                  colors: ShowupStatusColors.cupertino(context),
                 ),
               ],
             ),
@@ -284,7 +284,7 @@ class _ShowupTile extends StatelessWidget {
           ShowupStatus.failed => CupertinoIcons.xmark_circle_fill,
           ShowupStatus.pending => CupertinoIcons.circle,
         },
-        color: ShowupStatusColors.cupertino.forStatus(showup.status),
+        color: ShowupStatusColors.cupertino(context).forStatus(showup.status),
       ),
       title: Text(habitName),
       subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
