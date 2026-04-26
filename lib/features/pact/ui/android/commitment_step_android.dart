@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
-import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/features/pact/ui/generic/pact_creation_formatters.dart';
+import 'package:habit_loop/features/pact/ui/generic/summary_row.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:intl/intl.dart';
 
 class CommitmentStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -16,35 +16,9 @@ class CommitmentStepAndroid extends StatelessWidget {
     required this.onCommitmentChanged,
   });
 
-  String _formatDate(BuildContext context, DateTime d) =>
-      DateFormat.yMd(Localizations.localeOf(context).toString()).format(d);
-
-  String _scheduleDescription(BuildContext context) {
-    final s = state.schedule;
-    if (s == null) return '';
-    if (s is DailySchedule) {
-      final t = TimeOfDay(hour: s.timeOfDay.inHours, minute: s.timeOfDay.inMinutes % 60).format(context);
-      return '${l10n.scheduleDaily} @ $t';
-    }
-    if (s is WeekdaySchedule) {
-      return '${l10n.scheduleWeekday} (${s.entries.length})';
-    }
-    if (s is MonthlyByWeekdaySchedule) {
-      return '${l10n.scheduleMonthlyByWeekday} (${s.entries.length})';
-    }
-    if (s is MonthlyByDateSchedule) {
-      return '${l10n.scheduleMonthlyByDate} (${s.entries.length})';
-    }
-    return '';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final reminderText = state.reminderOffset == null
-        ? l10n.reminderNone
-        : state.reminderOffset == Duration.zero
-            ? l10n.reminderAtStart
-            : l10n.reminderMinutesBefore(state.reminderOffset!.inMinutes);
+    final reminderText = reminderDescription(l10n, state.reminderOffset);
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -60,17 +34,31 @@ class CommitmentStepAndroid extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _SummaryRow(label: l10n.summaryHabit, value: state.habitName),
-              _SummaryRow(
-                label: l10n.summaryDuration,
-                value: '${_formatDate(context, state.startDate)} → ${_formatDate(context, state.endDate)}',
+              SummaryRow(
+                label: l10n.summaryHabit,
+                value: state.habitName,
+                labelColor: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              _SummaryRow(
+              SummaryRow(
+                label: l10n.summaryDuration,
+                value: '${formatPactDate(context, state.startDate)} → ${formatPactDate(context, state.endDate)}',
+                labelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              SummaryRow(
                 label: l10n.summaryShowupDuration,
                 value: l10n.showupDurationMinutes(state.showupDuration?.inMinutes ?? 0),
+                labelColor: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              _SummaryRow(label: l10n.summarySchedule, value: _scheduleDescription(context)),
-              _SummaryRow(label: l10n.summaryReminder, value: reminderText),
+              SummaryRow(
+                label: l10n.summarySchedule,
+                value: scheduleDescription(context, l10n, state.schedule),
+                labelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              SummaryRow(
+                label: l10n.summaryReminder,
+                value: reminderText,
+                labelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ],
           ),
         ),
@@ -104,41 +92,6 @@ class CommitmentStepAndroid extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

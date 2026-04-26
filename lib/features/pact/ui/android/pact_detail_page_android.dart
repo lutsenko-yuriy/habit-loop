@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
+import 'package:habit_loop/features/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:intl/intl.dart';
@@ -55,11 +56,7 @@ class _PactDetailContent extends StatelessWidget {
     final today = DateTime.now();
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
 
-    final statusText = switch (pact.status) {
-      PactStatus.active => l10n.pactStatusActive,
-      PactStatus.stopped => l10n.pactStatusStopped,
-      PactStatus.completed => l10n.pactStatusCompleted,
-    };
+    final statusText = pactStatusText(l10n, pact.status);
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

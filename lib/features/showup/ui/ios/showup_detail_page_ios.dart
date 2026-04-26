@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Material, MaterialType, Colors;
 import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
 import 'package:habit_loop/features/showup/domain/showup_status.dart';
+import 'package:habit_loop/features/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:intl/intl.dart';
 
 /// Cupertino (iOS) implementation of the showup detail screen.
 class ShowupDetailPageIos extends StatefulWidget {
@@ -106,17 +106,12 @@ class _ShowupDetailContent extends StatelessWidget {
     );
     if (showup == null) return const SizedBox.shrink();
 
-    final locale = Localizations.localeOf(context).toString();
-    final scheduledDate = DateFormat.yMd(locale).format(showup.scheduledAt);
-    final scheduledTime = DateFormat.jm(locale).format(showup.scheduledAt);
+    final scheduledDate = formatShowupDate(context, showup.scheduledAt);
+    final scheduledTime = formatShowupTime(context, showup.scheduledAt);
     final durationMins = showup.duration.inMinutes;
     final isPending = showup.status == ShowupStatus.pending;
 
-    final statusText = switch (showup.status) {
-      ShowupStatus.pending => l10n.showupPending,
-      ShowupStatus.done => l10n.showupDone,
-      ShowupStatus.failed => l10n.showupFailed,
-    };
+    final statusText = showupStatusText(l10n, showup.status);
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/features/pact/ui/generic/pact_creation_formatters.dart' as pf;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class ScheduleStepAndroid extends StatelessWidget {
@@ -127,43 +128,9 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
     }
   }
 
-  String _weekdayName(int weekday) {
-    final l10n = widget.l10n;
-    switch (weekday) {
-      case 1:
-        return l10n.weekdayMon;
-      case 2:
-        return l10n.weekdayTue;
-      case 3:
-        return l10n.weekdayWed;
-      case 4:
-        return l10n.weekdayThu;
-      case 5:
-        return l10n.weekdayFri;
-      case 6:
-        return l10n.weekdaySat;
-      case 7:
-        return l10n.weekdaySun;
-      default:
-        return '';
-    }
-  }
+  String _weekdayName(int weekday) => pf.weekdayName(widget.l10n, weekday);
 
-  String _occurrenceName(int occurrence) {
-    final l10n = widget.l10n;
-    switch (occurrence) {
-      case 1:
-        return l10n.occurrenceFirst;
-      case 2:
-        return l10n.occurrenceSecond;
-      case 3:
-        return l10n.occurrenceThird;
-      case 4:
-        return l10n.occurrenceFourth;
-      default:
-        return '';
-    }
-  }
+  String _occurrenceName(int occurrence) => pf.occurrenceName(widget.l10n, occurrence);
 
   Future<TimeOfDay?> _pickTime(TimeOfDay initial) {
     return showTimePicker(context: context, initialTime: initial);

@@ -10,6 +10,7 @@ import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.da
 import 'package:habit_loop/features/pact/domain/pact_list_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_detail_screen.dart';
+import 'package:habit_loop/features/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -281,11 +282,7 @@ class _PactTile extends StatelessWidget {
       subtitle = l10n.pactCancelledOn(dateFormat.format(pact.endDate));
     }
 
-    final statusText = switch (pact.status) {
-      PactStatus.active => l10n.pactStatusActive,
-      PactStatus.completed => l10n.pactStatusCompleted,
-      PactStatus.stopped => l10n.pactStatusStopped,
-    };
+    final statusText = pactStatusText(l10n, pact.status);
     final cs = Theme.of(context).colorScheme;
     final (badgeBg, badgeFg) = switch (pact.status) {
       PactStatus.active => (cs.primaryContainer, cs.onPrimaryContainer),
