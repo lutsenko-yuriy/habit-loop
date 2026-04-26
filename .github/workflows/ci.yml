@@ -259,7 +259,14 @@ jobs:
           fi
 
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT_IOS" > "$RUNNER_TEMP/firebase-service-account.json"
-          firebase appdistribution:distribute *.ipa \
+
+          IPA_PATH=$(find . -maxdepth 1 -name "*.ipa" | head -1)
+          if [[ -z "$IPA_PATH" ]]; then
+            echo "No IPA file found in downloaded artifact." >&2
+            exit 1
+          fi
+
+          firebase appdistribution:distribute "$IPA_PATH" \
             --app "$FIREBASE_IOS_APP_ID" \
             --release-notes "Build ${{ needs.resolve-version.outputs.build_number }} — ${{ github.sha }}"
         env:
@@ -292,8 +299,11 @@ jobs:
             SUFFIX="both"
           elif [[ "$ANDROID_OK" == "success" ]]; then
             SUFFIX="android"
-          else
+          elif [[ "$IOS_OK" == "success" ]]; then
             SUFFIX="ios"
+          else
+            echo "version-tag reached an unexpected state: android=$ANDROID_OK ios=$IOS_OK" >&2
+            exit 1
           fi
 
           sed -i "s/^version: .*/version: ${VERSION}+${BUILD}/" pubspec.yaml
