@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.5] — 2026-04-25 (PR #34 merged)
+
+### Changed — Reduce duplicated iOS/Android dashboard widget logic (HAB-15)
+
+- Extracted shared formatter helpers — `pact_creation_formatters.dart`, `pact_formatters.dart`, `showup_formatters.dart` — replacing duplicated date, schedule, reminder, and status formatting logic across commitment steps, schedule steps, pact detail pages, showup detail pages, and the pacts summary bar
+- Extracted `ShowupStatusColors` — a platform-agnostic colour-role resolver with Cupertino and Material factory constructors, replacing inline status-colour switches in both dashboard pages and showup tile implementations
+- Extracted `ShowupStatusDots` — a platform-agnostic calendar-strip dot widget encapsulating the 1/2/3/4+ overflow layout and key naming, replacing `_buildDots()` in both dashboard pages
+- Extracted `SummaryRow` — a platform-agnostic two-column label/value row for the commitment step summary card, replacing `_SummaryRow` in both commitment step files
+- `docs/ARCHITECTURE.md` updated to document the expanded `generic/` responsibilities
+- 399 tests pass, analyzer clean, dart format clean
+
+---
+
 ## [0.11.4] — 2026-04-21 (PR #33 merged)
 
 ### Changed — Code quality baseline and dart format enforcement (HAB-33)
