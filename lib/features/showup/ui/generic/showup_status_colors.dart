@@ -18,7 +18,8 @@ import 'package:habit_loop/features/showup/domain/showup_status.dart';
 /// Two factories are provided so the call sites can keep their platform idiom
 /// without duplicating the switch statement or the overflow logic:
 ///
-/// - [ShowupStatusColors.cupertino] — raw Cupertino system colours
+/// - [ShowupStatusColors.cupertino] — Cupertino system colours resolved against
+///   a [BuildContext] so dark-mode adaptation is preserved
 /// - [ShowupStatusColors.material] — Material 3 [ColorScheme] slots
 class ShowupStatusColors {
   final Color done;
@@ -31,12 +32,16 @@ class ShowupStatusColors {
     required this.pending,
   });
 
-  /// Cupertino palette: green / red / grey.
-  static const ShowupStatusColors cupertino = ShowupStatusColors(
-    done: CupertinoColors.activeGreen,
-    failed: CupertinoColors.destructiveRed,
-    pending: CupertinoColors.systemGrey,
-  );
+  /// Returns a Cupertino palette with Cupertino system colours resolved against
+  /// [context] so that dynamic light/dark adaptation is preserved.
+  ///
+  /// Call this inside a [StatelessWidget.build] (or any method that has a
+  /// [BuildContext]) so the resolution happens against the active brightness.
+  static ShowupStatusColors cupertino(BuildContext context) => ShowupStatusColors(
+        done: CupertinoColors.activeGreen.resolveFrom(context),
+        failed: CupertinoColors.destructiveRed.resolveFrom(context),
+        pending: CupertinoColors.systemGrey.resolveFrom(context),
+      );
 
   /// Material palette derived from a [ColorScheme]: secondary / error /
   /// onSurfaceVariant.
