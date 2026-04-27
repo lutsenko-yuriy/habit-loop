@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 /// Formats [date] as a locale-aware short date (e.g. `3/30/2026` in en-US,
-/// `30/03/2026` in fr, `30.03.2026` in de) using the ambient [BuildContext]
+/// `30/03/2026` in fr, `30.3.2026` in de) using the ambient [BuildContext]
 /// locale.
 ///
 /// This is a thin wrapper around `DateFormat.yMd` that resolves the locale
