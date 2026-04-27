@@ -11,7 +11,9 @@ assets/
 
 lib/
 ├── main.dart                          # App entry point (runApp)
-├── l10n/                              # ARB source files + generated/ output
+├── l10n/                              # ARB source files, generated/ output, and shared localisation utilities
+│   ├── generated/                     # Output of `flutter gen-l10n` — do not edit by hand
+│   └── date_formatters.dart           # formatLocaleDate(context, date) — single locale-aware yMd helper shared across all features
 ├── theme/                             # Shared Habit Loop palette and Material/Cupertino theme data
 ├── analytics/                         # Cross-cutting analytics infrastructure (shared across all features)
 │   ├── domain/                        # AnalyticsEvent (abstract base), AnalyticsScreen, AnalyticsService interface
@@ -57,6 +59,8 @@ lib/
         └── ui/ (generic/, ios/, android/)
 
 test/
+├── l10n/                              # Mirrors lib/l10n/
+│   └── date_formatters_test.dart      # Widget tests for formatLocaleDate (en, fr, de)
 ├── theme/                             # Shared app theme/widget tests
 ├── analytics/                         # Mirrors lib/analytics/
 │   ├── domain/

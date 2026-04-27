@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart' show BuildContext, TimeOfDay;
-import 'package:flutter/widgets.dart' show Localizations;
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:intl/intl.dart';
 
 /// Formats a pact-related date using the ambient locale (e.g. `3/30/2026` in
 /// en-US, `30/03/2026` in fr).
 ///
 /// Extracted from `commitment_step_ios.dart` / `commitment_step_android.dart`
 /// where the same formatter was declared privately in both platform widgets.
-String formatPactDate(BuildContext context, DateTime date) =>
-    DateFormat.yMd(Localizations.localeOf(context).toString()).format(date);
+String formatPactDate(BuildContext context, DateTime date) => formatLocaleDate(context, date);
 
 /// Builds the human-readable summary for a [ShowupSchedule] shown on the
 /// commitment (review) step of the pact creation wizard.

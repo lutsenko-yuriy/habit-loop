@@ -3,9 +3,9 @@ import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_formatters.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
-import 'package:intl/intl.dart';
 
 class PactDetailPageIos extends StatelessWidget {
   final PactDetailState state;
@@ -288,7 +288,7 @@ class _DateRow extends StatelessWidget {
           Expanded(child: Text(label)),
           const SizedBox(width: 8),
           Text(
-            DateFormat.yMd(Localizations.localeOf(context).toString()).format(date),
+            formatLocaleDate(context, date),
             style: const TextStyle(color: CupertinoColors.systemGrey),
           ),
         ],
