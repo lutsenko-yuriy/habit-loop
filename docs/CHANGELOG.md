@@ -4,6 +4,26 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.8] — 2026-04-27 (PR #38 merged)
+
+### Fixed — CupertinoDynamicColor dark-mode resolution in ShowupStatusColors (HAB-41)
+
+- `ShowupStatusColors.cupertino` const factory removed; both iOS dashboard call sites now resolve `CupertinoColors.activeGreen`, `CupertinoColors.destructiveRed`, and `CupertinoColors.systemGrey` via `resolveFrom(context)` before passing them to the `ShowupStatusColors` constructor, restoring correct light/dark adaptation for calendar-strip dots and showup tile icons in iOS dark mode
+- 404 tests pass, analyzer clean
+
+---
+
+## [0.11.7] — 2026-04-27 (PR #37 merged)
+
+### Changed — Extract shared formatLocaleDate helper to eliminate six-site duplication (HAB-42)
+
+- `formatLocaleDate(BuildContext context, DateTime date)` helper added to `lib/l10n/date_formatters.dart` as the single canonical definition of the `DateFormat.yMd(locale).format(date)` pattern
+- All six previous call sites unified: inline usages in `pact_duration_step_ios.dart`, `pact_duration_step_android.dart`, `pact_detail_page_ios.dart`, and `pact_detail_page_android.dart` replaced; `formatPactDate` in `pact_creation_formatters.dart` and `formatShowupDate` in `showup_formatters.dart` delegated to the shared helper
+- `docs/ARCHITECTURE.md` updated to document `lib/l10n/date_formatters.dart`
+- 402 tests pass, analyzer clean
+
+---
+
 ## [0.11.6] — 2026-04-26 (PR #35 merged)
 
 ### Fixed — Align pubspec.yaml version name with changelog (HAB-43)

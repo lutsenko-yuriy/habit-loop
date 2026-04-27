@@ -48,11 +48,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## Unscheduled
 
-### Issues
-
-- [HAB-41](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-41/tech-debt-cupertinodynamiccolor-loses-dark-mode-resolution-in) **Tech debt: CupertinoDynamicColor loses dark-mode resolution in ShowupStatusColors** — `ShowupStatusColors.cupertino` stores `CupertinoColors` as plain `Color` fields, dropping dynamic light/dark resolution; dots and icons render with incorrect colours in iOS dark mode. (Tech Debt)
-- [HAB-42](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-42/tech-debt-extract-shared-formatlocaledate-helper-to-eliminate-six-site) **Tech debt: extract shared formatLocaleDate helper to eliminate six-site duplication** — `DateFormat.yMd(Localizations.localeOf(context).toString()).format(date)` appears six times across the codebase with no shared abstraction. (Tech Debt)
-
 ### Remaining work
 
 - [HAB-40](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-40/in-app-language-selection-without-leaving-the-app) **In-app language selection without leaving the app** — Add an in-app language selector so any user can switch between English, French, and German without going to system Settings. (Feature)
