@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.9] — 2026-04-27 (PR #36 merged)
+
+### Added — iOS builds wired to Firebase App Distribution (HAB-28)
+
+- `build-ios` job added to `.github/workflows/ci.yml` running on `macos-latest`; builds a release IPA using the Apple distribution certificate and ad-hoc provisioning profile stored as GitHub Actions secrets (`IOS_CERTIFICATE_P12`, `IOS_CERTIFICATE_PASSWORD`, `IOS_PROVISIONING_PROFILE`, `IOS_TEAM_ID`)
+- `distribute-ios` job added; uploads the signed IPA to Firebase App Distribution using the `FIREBASE_IOS_APP_ID` and `FIREBASE_SERVICE_ACCOUNT_IOS` secrets, running on every merge to `main` only
+- `version-tag` job updated to emit `both`, `android`, or `ios` suffix depending on which platform builds succeeded, and pinned to the triggering commit SHA to close a race window where a concurrent build-number bump could cause the tag to target the wrong commit
+- `docs/VERSIONING.md` updated with the `FIREBASE_IOS_APP_ID` and `FIREBASE_SERVICE_ACCOUNT_IOS` secrets, the revised CI pipeline diagram, and the race-window fix explanation
+
+---
+
 ## [0.11.8] — 2026-04-27 (PR #38 merged)
 
 ### Fixed — CupertinoDynamicColor dark-mode resolution in ShowupStatusColors (HAB-41)

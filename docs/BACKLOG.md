@@ -5,14 +5,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ---
 
-## v0.10.0 — Firebase integration
-
-### Remaining work
-
-- [HAB-28](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-28/cicd-distribute-ios-builds-to-firebase-app-distribution) **CI/CD: distribute iOS builds to Firebase App Distribution** — Wire GitHub Actions to automatically distribute iOS builds to Firebase App Distribution on every merge to `main`. Blocked until Apple Developer Program enrollment is approved. (Feature)
-
----
-
 ## v0.11.0 — UI polish & pre-1.0 cleanup
 
 ### Issues
