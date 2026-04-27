@@ -62,6 +62,7 @@ jobs:
     outputs:
       version_name: ${{ steps.resolve.outputs.version_name }}
       build_number: ${{ steps.resolve.outputs.build_number }}
+      triggered_sha: ${{ steps.resolve.outputs.triggered_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -85,6 +86,7 @@ jobs:
 
           echo "version_name=$VERSION_NAME"  >> "$GITHUB_OUTPUT"
           echo "build_number=$BUILD_NUMBER"  >> "$GITHUB_OUTPUT"
+          echo "triggered_sha=$GITHUB_SHA"   >> "$GITHUB_OUTPUT"
 
   # ── Build signed Android AAB ──────────────────────────────────────────────
   build-android:
@@ -286,6 +288,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-version.outputs.triggered_sha }}
 
       - name: Bump pubspec build number and push tag
         run: |
