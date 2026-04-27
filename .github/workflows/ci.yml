@@ -62,7 +62,6 @@ jobs:
     outputs:
       version_name: ${{ steps.resolve.outputs.version_name }}
       build_number: ${{ steps.resolve.outputs.build_number }}
-      triggered_sha: ${{ steps.resolve.outputs.triggered_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,7 +85,6 @@ jobs:
 
           echo "version_name=$VERSION_NAME"  >> "$GITHUB_OUTPUT"
           echo "build_number=$BUILD_NUMBER"  >> "$GITHUB_OUTPUT"
-          echo "triggered_sha=$GITHUB_SHA"   >> "$GITHUB_OUTPUT"
 
   # ── Build signed Android AAB ──────────────────────────────────────────────
   build-android:
@@ -211,14 +209,6 @@ jobs:
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
 
-      - name: Configure manual code signing
-        run: |
-          # Automatic signing requires a signed-in Apple account on the machine.
-          # Switch to manual so xcodebuild uses the certificate we imported above.
-          sed -i '' \
-            's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' \
-            ios/Runner.xcodeproj/project.pbxproj
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -249,10 +239,35 @@ jobs:
 
       - id: build
         run: |
-          flutter build ipa --release \
-            --build-number=${{ needs.resolve-version.outputs.build_number }} \
-            --export-options-plist=/tmp/ExportOptions.plist
+          # flutter build ipa re-enables automatic signing when DEVELOPMENT_TEAM
+          # is present in the project, ignoring project.pbxproj overrides.
+          # Use the three-step approach to pass signing settings directly.
+
+          # 1. Compile Dart + Flutter without code signing
+          flutter build ios --release --no-codesign \
+            --build-number=${{ needs.resolve-version.outputs.build_number }}
+
+          # 2. Archive with explicit manual signing (overrides project settings)
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath /tmp/Runner.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM="$IOS_TEAM_ID"
+
+          # 3. Export IPA using ExportOptions.plist
+          xcodebuild -exportArchive \
+            -archivePath /tmp/Runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist /tmp/ExportOptions.plist
+
           echo "success=true" >> "$GITHUB_OUTPUT"
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
 
       - uses: actions/upload-artifact@v4
         if: steps.build.outputs.success == 'true'
@@ -309,8 +324,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.resolve-version.outputs.triggered_sha }}
 
       - name: Bump pubspec build number and push tag
         run: |
@@ -337,7 +350,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pubspec.yaml
           git commit -m "chore: bump build number to ${BUILD} [skip ci]"
-          git pull --rebase   # rebase onto HEAD in case a commit landed during the build
+          git pull --rebase origin main   # absorb any commits that landed during the build
           git push
 
           git tag "version-${VERSION}-${BUILD}-${SUFFIX}"
