@@ -209,44 +209,6 @@ jobs:
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
 
-      - name: Configure Xcode signing for Runner Release
-        run: |
-          python3 << 'EOF'
-          import os, sys
-
-          pbxproj = 'ios/Runner.xcodeproj/project.pbxproj'
-          profile_uuid = os.environ['PROFILE_UUID']
-
-          with open(pbxproj) as f:
-              content = f.read()
-
-          # Target the Runner Release config by its unique baseConfigurationReference.
-          # 7AFA3C8E1D35360C0083082E is the Release.xcconfig reference used only by
-          # the Runner target's Release config (97C147071CF9000F007C117D). Injecting
-          # signing settings here (not as xcodebuild command-line flags) ensures
-          # CocoaPods static-library targets are not affected.
-          marker = 'baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;'
-          if marker not in content:
-              sys.exit('ERROR: Runner Release config marker not found in project.pbxproj')
-
-          block_start = content.index(marker)
-          build_settings_pos = content.index('buildSettings = {', block_start)
-          insert_pos = build_settings_pos + len('buildSettings = {')
-
-          injection = (
-              '\n\t\t\t\t\tCODE_SIGN_STYLE = Manual;'
-              '\n\t\t\t\t\tCODE_SIGN_IDENTITY = "Apple Distribution";'
-              f'\n\t\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_uuid}";'
-          )
-
-          content = content[:insert_pos] + injection + content[insert_pos:]
-
-          with open(pbxproj, 'w') as f:
-              f.write(content)
-
-          print(f'Injected signing settings for PROFILE_UUID={profile_uuid}')
-          EOF
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -277,21 +239,52 @@ jobs:
 
       - id: build
         run: |
-          # flutter build ipa re-enables automatic signing when DEVELOPMENT_TEAM
-          # is present in the project, ignoring project.pbxproj overrides.
-          # Use the three-step approach: compile without signing, archive using
-          # signing settings injected into project.pbxproj (Runner Release config
-          # only, via the step above), then export.
-
-          # 1. Compile Dart + Flutter without code signing
+          # 1. Compile Dart + Flutter without code signing.
+          # This also runs `pod install`, which can regenerate parts of
+          # project.pbxproj. We inject signing settings AFTER this step so
+          # pod install cannot overwrite them.
           flutter build ios --release --no-codesign \
             --build-number=${{ needs.resolve-version.outputs.build_number }}
 
-          # 2. Archive — signing settings read from the patched project.pbxproj.
-          # Passing CODE_SIGN_STYLE/PROVISIONING_PROFILE_SPECIFIER at the command
-          # line applies globally to ALL workspace targets (including CocoaPods
-          # static libraries), causing "does not support provisioning profiles"
-          # errors. Omitting them here lets the target-level pbxproj settings win.
+          # 2. Inject manual signing into the Runner Release config in
+          # project.pbxproj. Must happen AFTER pod install (above) to survive.
+          # Targeting by the unique Release.xcconfig reference UUID keeps the
+          # injection scoped to Runner's Release config only — CocoaPods static-
+          # library targets (firebase_core etc.) are never touched.
+          python3 << 'EOF'
+          import os, sys
+
+          pbxproj = 'ios/Runner.xcodeproj/project.pbxproj'
+          profile_uuid = os.environ['PROFILE_UUID']
+
+          with open(pbxproj) as f:
+              content = f.read()
+
+          marker = 'baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;'
+          if marker not in content:
+              sys.exit('ERROR: Runner Release config marker not found in project.pbxproj')
+
+          block_start = content.index(marker)
+          build_settings_pos = content.index('buildSettings = {', block_start)
+          insert_pos = build_settings_pos + len('buildSettings = {')
+
+          injection = (
+              '\n\t\t\t\t\tCODE_SIGN_STYLE = Manual;'
+              '\n\t\t\t\t\tCODE_SIGN_IDENTITY = "Apple Distribution";'
+              f'\n\t\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_uuid}";'
+          )
+
+          content = content[:insert_pos] + injection + content[insert_pos:]
+
+          with open(pbxproj, 'w') as f:
+              f.write(content)
+
+          print(f'Injected signing settings for PROFILE_UUID={profile_uuid}')
+          EOF
+
+          # 3. Archive — no signing flags at the command line. Signing settings
+          # come entirely from the patched project.pbxproj (Runner Release config),
+          # so CocoaPods static libraries are unaffected.
           xcodebuild archive \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \
@@ -299,7 +292,7 @@ jobs:
             -sdk iphoneos \
             -archivePath /tmp/Runner.xcarchive
 
-          # 3. Export IPA using ExportOptions.plist
+          # 4. Export IPA using ExportOptions.plist
           xcodebuild -exportArchive \
             -archivePath /tmp/Runner.xcarchive \
             -exportPath build/ios/ipa \
