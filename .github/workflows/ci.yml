@@ -282,9 +282,26 @@ jobs:
           print(f'Injected signing settings for PROFILE_UUID={profile_uuid}')
           EOF
 
+          # 2b. Verify the injection actually landed by printing the Runner
+          # Release config block. If the injection silently failed, this is
+          # what we need to diagnose it.
+          echo '=== Runner Release config in project.pbxproj after injection ==='
+          awk '
+            /97C147071CF9000F007C117D \/\* Release \*\/ = \{/ { found=1 }
+            found { print }
+            found && /name = Release;/ { exit }
+          ' ios/Runner.xcodeproj/project.pbxproj
+          echo '=== End of Runner Release config block ==='
+
+          echo '=== Provisioning profiles available to xcodebuild ==='
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo 'no profiles dir'
+          echo '=== Codesign identities in keychain ==='
+          security find-identity -v -p codesigning || true
+
           # 3. Archive — no signing flags at the command line. Signing settings
           # come entirely from the patched project.pbxproj (Runner Release config),
-          # so CocoaPods static libraries are unaffected.
+          # so CocoaPods static libraries are unaffected. Use -allowProvisioningUpdates
+          # so xcodebuild can install/select profiles automatically if needed.
           xcodebuild archive \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \
