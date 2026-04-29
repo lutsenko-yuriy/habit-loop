@@ -1,147 +1,272 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/features/pact/domain/pact_builder.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 
 void main() {
   group('PactCreationState', () {
-    test('has correct defaults', () {
-      final today = DateTime(2026, 3, 30);
-      final state = PactCreationState(today: today);
+    test('totalSteps is 5', () {
+      expect(PactCreationState.totalSteps, 5);
+    });
 
-      expect(state.habitName, '');
+    test('default currentStep is pactDuration', () {
+      final state = PactCreationState(today: DateTime(2026, 3, 30));
       expect(state.currentStep, PactCreationStep.pactDuration);
-      expect(state.startDate, today);
-      expect(state.endDate, DateTime(2026, 9, 30));
-      expect(state.showupDuration, isNull);
-      expect(state.scheduleType, isNull);
-      expect(state.schedule, isNull);
-      expect(state.reminderOffset, isNull);
+    });
+
+    test('commitmentAccepted defaults to false', () {
+      final state = PactCreationState(today: DateTime(2026, 3, 30));
       expect(state.commitmentAccepted, false);
+    });
+
+    test('isSubmitting defaults to false', () {
+      final state = PactCreationState(today: DateTime(2026, 3, 30));
       expect(state.isSubmitting, false);
     });
 
-    test('startDate is normalized to midnight when today has a time component', () {
-      // Simulate wizard opened at 22:00. Without normalization, startDate would
-      // carry the time component and durationDays in analytics would under-count.
-      final eveningNow = DateTime(2026, 4, 18, 22, 0, 0);
-      final state = PactCreationState(today: eveningNow);
-      expect(state.startDate, DateTime(2026, 4, 18));
-      expect(state.startDate.hour, 0);
-      expect(state.startDate.minute, 0);
-    });
-
-    test('default endDate clamps to last day of month for end-of-month starts', () {
-      // August 31 + 6 months → February 28 (not March 3)
-      expect(
-        PactCreationState(today: DateTime(2026, 8, 31)).endDate,
-        DateTime(2027, 2, 28),
-      );
-      // March 31 + 6 months → September 30 (not October 1)
-      expect(
-        PactCreationState(today: DateTime(2026, 3, 31)).endDate,
-        DateTime(2026, 9, 30),
-      );
-      // October 31 + 6 months → April 30
-      expect(
-        PactCreationState(today: DateTime(2026, 10, 31)).endDate,
-        DateTime(2027, 4, 30),
-      );
-      // January 31 + 6 months → July 31 (no clamping needed)
-      expect(
-        PactCreationState(today: DateTime(2026, 1, 31)).endDate,
-        DateTime(2026, 7, 31),
-      );
-    });
-
-    test('totalSteps is 5', () {
+    test('submitError defaults to null', () {
       final state = PactCreationState(today: DateTime(2026, 3, 30));
-      expect(PactCreationState.totalSteps, 5);
-      expect(state.currentStep, PactCreationStep.pactDuration);
+      expect(state.submitError, isNull);
     });
 
-    test('copyWith updates only specified fields', () {
-      final state = PactCreationState(today: DateTime(2026, 3, 30));
-
-      final updated = state.copyWith(
-        habitName: 'Meditate',
-        currentStep: PactCreationStep.showupDuration,
-      );
-
-      expect(updated.habitName, 'Meditate');
-      expect(updated.currentStep, PactCreationStep.showupDuration);
-      expect(updated.startDate, state.startDate);
-      expect(updated.endDate, state.endDate);
-    });
-
-    group('canAdvanceFromStep', () {
-      final base = PactCreationState(today: DateTime(2026, 3, 30));
-
-      test('step 0 (pact duration) requires valid date range', () {
-        // Default dates are valid (today < today + 6 months)
-        expect(base.canAdvanceFromStep, true);
-
-        final invalidDates = base.copyWith(
-          startDate: DateTime(2026, 10, 1),
-          endDate: DateTime(2026, 3, 1),
+    group('proxy getters delegate to builder', () {
+      test('habitName proxies builder.habitName', () {
+        final today = DateTime(2026, 3, 30);
+        final state = PactCreationState(
+          today: today,
+          builder: PactBuilder(today: today).copyWith(habitName: 'Meditate'),
         );
-        expect(invalidDates.canAdvanceFromStep, false);
+        expect(state.habitName, 'Meditate');
       });
 
-      test('step 1 (showup duration) requires duration set and <= 2h', () {
-        final atStep1 = base.copyWith(
-          currentStep: PactCreationStep.showupDuration,
-          showupDuration: const Duration(minutes: 10),
+      test('startDate proxies builder.startDate', () {
+        final today = DateTime(2026, 3, 30);
+        final newStart = DateTime(2026, 4, 1);
+        final state = PactCreationState(
+          today: today,
+          builder: PactBuilder(today: today).copyWith(startDate: newStart),
         );
-        expect(atStep1.canAdvanceFromStep, true);
-
-        final tooLong = base.copyWith(
-          currentStep: PactCreationStep.showupDuration,
-          showupDuration: const Duration(hours: 3),
-        );
-        expect(tooLong.canAdvanceFromStep, false);
-
-        final noDuration = base.copyWith(currentStep: PactCreationStep.showupDuration);
-        expect(noDuration.canAdvanceFromStep, false);
+        expect(state.startDate, newStart);
       });
 
-      test('step 2 (schedule) requires schedule to be set', () {
-        final noSchedule = base.copyWith(currentStep: PactCreationStep.schedule);
-        expect(noSchedule.canAdvanceFromStep, false);
+      test('endDate proxies builder.endDate', () {
+        final today = DateTime(2026, 3, 30);
+        final newEnd = DateTime(2026, 12, 31);
+        final state = PactCreationState(
+          today: today,
+          builder: PactBuilder(today: today).copyWith(endDate: newEnd),
+        );
+        expect(state.endDate, newEnd);
+      });
 
-        final withSchedule = base.copyWith(
+      test('showupDuration proxies builder.showupDuration', () {
+        final today = DateTime(2026, 3, 30);
+        const dur = Duration(minutes: 20);
+        final state = PactCreationState(
+          today: today,
+          builder: PactBuilder(today: today).copyWith(showupDuration: dur),
+        );
+        expect(state.showupDuration, dur);
+      });
+
+      test('scheduleType proxies builder.scheduleType', () {
+        final today = DateTime(2026, 3, 30);
+        final state = PactCreationState(
+          today: today,
+          builder: PactBuilder(today: today).copyWith(scheduleType: ScheduleType.weekday),
+        );
+        expect(state.scheduleType, ScheduleType.weekday);
+      });
+
+      test('schedule proxies builder.schedule', () {
+        final today = DateTime(2026, 3, 30);
+        const schedule = DailySchedule(timeOfDay: Duration(hours: 7));
+        final state = PactCreationState(
+          today: today,
+          builder: PactBuilder(today: today).copyWith(schedule: schedule),
+        );
+        expect(state.schedule, schedule);
+      });
+
+      test('reminderOffset proxies builder.reminderOffset', () {
+        final today = DateTime(2026, 3, 30);
+        const offset = Duration(minutes: 15);
+        final state = PactCreationState(
+          today: today,
+          builder: PactBuilder(today: today).copyWith(reminderOffset: offset),
+        );
+        expect(state.reminderOffset, offset);
+      });
+    });
+
+    group('canAdvanceFromStep dispatches to builder predicates', () {
+      final today = DateTime(2026, 3, 30);
+
+      test('pactDuration step delegates to builder.isDateRangeValid (valid)', () {
+        final state = PactCreationState(today: today);
+        // Default builder has valid date range
+        expect(state.currentStep, PactCreationStep.pactDuration);
+        expect(state.canAdvanceFromStep, isTrue);
+      });
+
+      test('pactDuration step delegates to builder.isDateRangeValid (invalid)', () {
+        final state = PactCreationState(
+          today: today,
+          builder: PactBuilder(today: today).copyWith(
+            startDate: DateTime(2026, 10, 1),
+            endDate: DateTime(2026, 3, 1),
+          ),
+        );
+        expect(state.currentStep, PactCreationStep.pactDuration);
+        expect(state.canAdvanceFromStep, isFalse);
+      });
+
+      test('showupDuration step delegates to builder.isShowupDurationValid (valid)', () {
+        final state = PactCreationState(
+          today: today,
+          currentStep: PactCreationStep.showupDuration,
+          builder: PactBuilder(today: today).copyWith(showupDuration: const Duration(minutes: 10)),
+        );
+        expect(state.canAdvanceFromStep, isTrue);
+      });
+
+      test('showupDuration step delegates to builder.isShowupDurationValid (null)', () {
+        final state = PactCreationState(
+          today: today,
+          currentStep: PactCreationStep.showupDuration,
+        );
+        expect(state.canAdvanceFromStep, isFalse);
+      });
+
+      test('showupDuration step delegates to builder.isShowupDurationValid (too long)', () {
+        final state = PactCreationState(
+          today: today,
+          currentStep: PactCreationStep.showupDuration,
+          builder: PactBuilder(today: today).copyWith(showupDuration: const Duration(hours: 3)),
+        );
+        expect(state.canAdvanceFromStep, isFalse);
+      });
+
+      test('schedule step delegates to builder.isScheduleSet (not set)', () {
+        final state = PactCreationState(
+          today: today,
           currentStep: PactCreationStep.schedule,
-          scheduleType: ScheduleType.daily,
-          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
         );
-        expect(withSchedule.canAdvanceFromStep, true);
+        expect(state.canAdvanceFromStep, isFalse);
       });
 
-      test('step 3 (reminder) always allows advancing', () {
-        final atStep3 = base.copyWith(currentStep: PactCreationStep.reminder);
-        expect(atStep3.canAdvanceFromStep, true);
+      test('schedule step delegates to builder.isScheduleSet (set)', () {
+        final state = PactCreationState(
+          today: today,
+          currentStep: PactCreationStep.schedule,
+          builder: PactBuilder(today: today).copyWith(
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          ),
+        );
+        expect(state.canAdvanceFromStep, isTrue);
       });
 
-      test('step 4 (commitment) requires acceptance and habit name', () {
-        final notAccepted = base.copyWith(currentStep: PactCreationStep.commitment);
-        expect(notAccepted.canAdvanceFromStep, false);
+      test('reminder step always returns true', () {
+        final state = PactCreationState(
+          today: today,
+          currentStep: PactCreationStep.reminder,
+        );
+        expect(state.canAdvanceFromStep, isTrue);
+      });
 
-        final acceptedNoName = base.copyWith(
+      test('commitment step requires commitmentAccepted AND builder.isHabitNameValid', () {
+        // Neither accepted nor name
+        final neitherState = PactCreationState(
+          today: today,
+          currentStep: PactCreationStep.commitment,
+        );
+        expect(neitherState.canAdvanceFromStep, isFalse);
+
+        // Accepted but no name
+        final acceptedNoName = PactCreationState(
+          today: today,
           currentStep: PactCreationStep.commitment,
           commitmentAccepted: true,
         );
-        expect(acceptedNoName.canAdvanceFromStep, false);
+        expect(acceptedNoName.canAdvanceFromStep, isFalse);
 
-        final ready = base.copyWith(
+        // Name but not accepted
+        final nameNotAccepted = PactCreationState(
+          today: today,
+          currentStep: PactCreationStep.commitment,
+          builder: PactBuilder(today: today).copyWith(habitName: 'Meditate'),
+        );
+        expect(nameNotAccepted.canAdvanceFromStep, isFalse);
+
+        // Both name and accepted
+        final ready = PactCreationState(
+          today: today,
           currentStep: PactCreationStep.commitment,
           commitmentAccepted: true,
-          habitName: 'Meditate',
+          builder: PactBuilder(today: today).copyWith(habitName: 'Meditate'),
         );
-        expect(ready.canAdvanceFromStep, true);
+        expect(ready.canAdvanceFromStep, isTrue);
+      });
+    });
+
+    group('copyWith (wizard concerns only)', () {
+      final today = DateTime(2026, 3, 30);
+
+      test('updates currentStep', () {
+        final state = PactCreationState(today: today);
+        final updated = state.copyWith(currentStep: PactCreationStep.schedule);
+        expect(updated.currentStep, PactCreationStep.schedule);
+        expect(updated.builder.habitName, state.builder.habitName);
+      });
+
+      test('updates builder', () {
+        final state = PactCreationState(today: today);
+        final newBuilder = state.builder.copyWith(habitName: 'Meditate');
+        final updated = state.copyWith(builder: newBuilder);
+        expect(updated.habitName, 'Meditate');
+        expect(updated.currentStep, state.currentStep);
+      });
+
+      test('updates commitmentAccepted', () {
+        final state = PactCreationState(today: today);
+        final updated = state.copyWith(commitmentAccepted: true);
+        expect(updated.commitmentAccepted, isTrue);
+      });
+
+      test('updates isSubmitting', () {
+        final state = PactCreationState(today: today);
+        final updated = state.copyWith(isSubmitting: true);
+        expect(updated.isSubmitting, isTrue);
+      });
+
+      test('updates submitError', () {
+        final state = PactCreationState(today: today);
+        final error = Exception('test error');
+        final updated = state.copyWith(submitError: error);
+        expect(updated.submitError, error);
+      });
+
+      test('clearSubmitError sets submitError to null', () {
+        final state = PactCreationState(today: today).copyWith(submitError: Exception('err'));
+        expect(state.submitError, isNotNull);
+        final cleared = state.copyWith(clearSubmitError: true);
+        expect(cleared.submitError, isNull);
+      });
+
+      test('unspecified fields are preserved', () {
+        final state = PactCreationState(
+          today: today,
+          currentStep: PactCreationStep.schedule,
+          commitmentAccepted: true,
+        );
+        final updated = state.copyWith(isSubmitting: true);
+        expect(updated.currentStep, PactCreationStep.schedule);
+        expect(updated.commitmentAccepted, isTrue);
       });
     });
   });
 
-  group('ScheduleType', () {
+  group('ScheduleType re-exported from pact_creation_state', () {
     test('has four values', () {
       expect(ScheduleType.values.length, 4);
       expect(ScheduleType.values, contains(ScheduleType.daily));
