@@ -57,7 +57,7 @@ class PactCreationState {
     this.submitError,
   }) : builder = builder ?? PactBuilder(today: today);
 
-  const PactCreationState._internal({
+  PactCreationState._internal({
     required this.builder,
     required this.currentStep,
     required this.commitmentAccepted,

@@ -152,6 +152,25 @@ void main() {
       expect(readState().currentStep, PactCreationStep.pactDuration);
     });
 
+    test('submit is a no-op when builder is incomplete', () async {
+      final vm = readVM();
+
+      // Set enough to pass the commitment step's canAdvanceFromStep
+      // (commitmentAccepted + isHabitNameValid) but leave showupDuration null
+      // so builder.isComplete returns false. submit() should return immediately
+      // without touching the repositories or surfacing any error.
+      vm.setHabitName('Meditate');
+      vm.setCommitmentAccepted(true);
+      // scheduleType and showupDuration are intentionally not set.
+
+      await vm.submit();
+
+      final state = readState();
+      expect(state.isSubmitting, false);
+      expect(state.submitError, isNull);
+      expect(await pactRepo.getActivePacts(), isEmpty);
+    });
+
     test('submit creates pact and saves to repository', () async {
       final vm = readVM();
 

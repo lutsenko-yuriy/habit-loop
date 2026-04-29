@@ -132,36 +132,38 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
-    // Build the pact and generate showups before any I/O so that a retry
-    // does not mint a second pact ID when the first attempt fails before
-    // savePact is called. Note: if savePact succeeded but the rollback via
-    // deletePact later fails, a subsequent retry will produce a new ID and
-    // a second orphaned record — full idempotency requires storage-level
-    // transactions, which will be addressed in the SQLite implementation.
-    final now = ref.read(pactCreationTodayProvider);
-    final pact = state.builder.build(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      createdAt: now,
-    );
-
-    // Generate only the initial 11-day window (startDate through startDate+10)
-    // to keep the repository lean. The window is intentionally wider than the
-    // 7-day calendar strip so that a DST fall-back transition (which can make
-    // Duration arithmetic land 1 hour early) still covers all visible strip
-    // days. Further windows are generated lazily by ShowupGenerationService
-    // when the dashboard loads each day.
-    //
-    // Showups scheduled before pact.createdAt are excluded here (and in
-    // ShowupGenerationService.ensureShowupsExist) so that a user who creates
-    // a pact at 10pm never sees an already-failed 8am slot on day 1.
-    final windowEnd = state.startDate.add(const Duration(days: 10));
-    final showups = ShowupGenerator.generateWindow(
-      pact,
-      from: state.startDate,
-      to: windowEnd,
-    ).where((s) => !s.scheduledAt.isBefore(now)).toList();
-
     try {
+      // Build the pact and generate showups before any I/O so that a retry
+      // does not mint a second pact ID when the first attempt fails before
+      // savePact is called. Note: if savePact succeeded but the rollback via
+      // deletePact later fails, a subsequent retry will produce a new ID and
+      // a second orphaned record — full idempotency requires storage-level
+      // transactions, which will be addressed in the SQLite implementation.
+      //
+      // Both calls are inside the try/finally so that any unexpected exception
+      // (e.g. if either method's contract changes) still resets isSubmitting.
+      final now = ref.read(pactCreationTodayProvider);
+      final pact = state.builder.build(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        createdAt: now,
+      );
+
+      // Generate only the initial 11-day window (startDate through startDate+10)
+      // to keep the repository lean. The window is intentionally wider than the
+      // 7-day calendar strip so that a DST fall-back transition (which can make
+      // Duration arithmetic land 1 hour early) still covers all visible strip
+      // days. Further windows are generated lazily by ShowupGenerationService
+      // when the dashboard loads each day.
+      //
+      // Showups scheduled before pact.createdAt are excluded here (and in
+      // ShowupGenerationService.ensureShowupsExist) so that a user who creates
+      // a pact at 10pm never sees an already-failed 8am slot on day 1.
+      final windowEnd = state.startDate.add(const Duration(days: 10));
+      final showups = ShowupGenerator.generateWindow(
+        pact,
+        from: state.startDate,
+        to: windowEnd,
+      ).where((s) => !s.scheduledAt.isBefore(now)).toList();
       final pactRepo = ref.read(pactCreationRepositoryProvider);
       final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
       await pactRepo.savePact(pact);
