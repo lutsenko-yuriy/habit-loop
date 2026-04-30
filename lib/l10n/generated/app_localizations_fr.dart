@@ -21,7 +21,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noPactsYet => 'Aucun pacte';
 
   @override
-  String get noPactsDescription => 'Créez votre premier pacte pour commencer à construire une habitude.';
+  String get noPactsDescription =>
+      'Créez votre premier pacte pour commencer à construire une habitude.';
 
   @override
   String get createPact => 'Créer un pacte';
@@ -60,7 +61,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showupDurationStep => 'Durée du rendez-vous';
 
   @override
-  String get showupDurationLabel => 'Combien de temps dure chaque rendez-vous ?';
+  String get showupDurationLabel =>
+      'Combien de temps dure chaque rendez-vous ?';
 
   @override
   String showupDurationMinutes(int minutes) {
@@ -192,8 +194,10 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       max,
       locale: localeName,
-      other: 'Vous ne pouvez avoir que $max pactes actifs à la fois. Voulez-vous vraiment en créer davantage ?',
-      one: 'Vous ne pouvez avoir qu\'1 pacte actif à la fois. Voulez-vous vraiment en créer un autre ?',
+      other:
+          'Vous ne pouvez avoir que $max pactes actifs à la fois. Voulez-vous vraiment en créer davantage ?',
+      one:
+          'Vous ne pouvez avoir qu\'1 pacte actif à la fois. Voulez-vous vraiment en créer un autre ?',
     );
     return '$_temp0';
   }
@@ -214,7 +218,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sectionStopReason => 'Raison de l\'arrêt';
 
   @override
-  String get stopPactError => 'Impossible d\'arrêter le pacte. Veuillez réessayer.';
+  String get stopPactError =>
+      'Impossible d\'arrêter le pacte. Veuillez réessayer.';
 
   @override
   String get statsDone => 'Réalisés';
@@ -272,7 +277,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get stopPactTitle => 'Arrêter ce pacte ?';
 
   @override
-  String get stopPactBody => 'Cette action est irréversible. Vous pourrez toujours consulter l\'historique du pacte.';
+  String get stopPactBody =>
+      'Cette action est irréversible. Vous pourrez toujours consulter l\'historique du pacte.';
 
   @override
   String get stopPactReasonHint => 'Raison (facultatif)';
@@ -378,10 +384,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showupNoteSave => 'Enregistrer la note';
 
   @override
-  String get showupNoteError => 'Impossible d\'enregistrer la note. Veuillez réessayer.';
+  String get showupNoteError =>
+      'Impossible d\'enregistrer la note. Veuillez réessayer.';
 
   @override
-  String get showupMarkError => 'Impossible de mettre à jour le statut. Veuillez réessayer.';
+  String get showupMarkError =>
+      'Impossible de mettre à jour le statut. Veuillez réessayer.';
 
   @override
   String get showupHabitDeleted => '(habitude supprimée)';

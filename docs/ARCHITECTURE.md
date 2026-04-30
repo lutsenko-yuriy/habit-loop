@@ -87,6 +87,7 @@ test/
 ### Domain
 Core business logic. No dependencies on data, UI, or infrastructure.
 - Models: `Pact`, `PactStatus`, `Showup`, `ShowupStatus`, `ShowupSchedule`, `PactStats`
+- Builder: `PactBuilder` — holds the 7 pact-data fields assembled during the creation wizard, exposes validity predicates (`isDateRangeValid`, `isShowupDurationValid`, `isScheduleSet`, `isHabitNameValid`, `isComplete`), and materialises a `Pact` via `build(id, createdAt)`. Also owns `ScheduleType` (re-exported from `pact_creation_state.dart` for backwards compatibility).
 - Repository interfaces: `PactRepository`, `ShowupRepository`
 - Generators: `ShowupGenerator`, `ShowupDateUtils`
 - Services: `ShowupGenerationService`, `PactStatsService`

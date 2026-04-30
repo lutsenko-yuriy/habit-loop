@@ -21,7 +21,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPactsYet => 'No pacts yet';
 
   @override
-  String get noPactsDescription => 'Create your first pact to start building a habit.';
+  String get noPactsDescription =>
+      'Create your first pact to start building a habit.';
 
   @override
   String get createPact => 'Create a Pact';
@@ -192,8 +193,10 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       max,
       locale: localeName,
-      other: 'You can only have $max active pacts at a time. Are you sure you want to create more?',
-      one: 'You can only have 1 active pact at a time. Are you sure you want to create another?',
+      other:
+          'You can only have $max active pacts at a time. Are you sure you want to create more?',
+      one:
+          'You can only have 1 active pact at a time. Are you sure you want to create another?',
     );
     return '$_temp0';
   }
@@ -272,7 +275,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stopPactTitle => 'Stop this pact?';
 
   @override
-  String get stopPactBody => 'This cannot be undone. You can still view the pact history afterwards.';
+  String get stopPactBody =>
+      'This cannot be undone. You can still view the pact history afterwards.';
 
   @override
   String get stopPactReasonHint => 'Reason (optional)';
@@ -381,7 +385,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showupNoteError => 'Failed to save note. Please try again.';
 
   @override
-  String get showupMarkError => 'Failed to update showup status. Please try again.';
+  String get showupMarkError =>
+      'Failed to update showup status. Please try again.';
 
   @override
   String get showupHabitDeleted => '(habit deleted)';

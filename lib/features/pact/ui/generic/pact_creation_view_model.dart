@@ -2,10 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/features/pact/data/pact_repository.dart';
-import 'package:habit_loop/features/pact/domain/pact.dart';
+import 'package:habit_loop/features/pact/domain/pact_builder.dart';
 import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/domain/pact_stats_service.dart';
-import 'package:habit_loop/features/pact/domain/pact_status.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/showup/data/showup_repository.dart';
 import 'package:habit_loop/features/showup/domain/showup_generator.dart';
@@ -36,8 +35,20 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     return PactCreationState(today: today);
   }
 
+  // ---------------------------------------------------------------------------
+  // Private helper — routes all data-field mutations through the builder.
+  // ---------------------------------------------------------------------------
+
+  void _updateBuilder(PactBuilder Function(PactBuilder) update) {
+    state = state.copyWith(builder: update(state.builder));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Data-field setters — all delegate through _updateBuilder.
+  // ---------------------------------------------------------------------------
+
   void setHabitName(String name) {
-    state = state.copyWith(habitName: name);
+    _updateBuilder((b) => b.copyWith(habitName: name));
   }
 
   void setStartDate(DateTime date) {
@@ -45,17 +56,15 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     // Date pickers on some platforms return a DateTime with a time component,
     // which would cause durationDays analytics to under-count and daysActive
     // to report 0 when the pact is stopped the following morning.
-    state = state.copyWith(
-      startDate: DateTime(date.year, date.month, date.day),
-    );
+    _updateBuilder((b) => b.copyWith(startDate: DateTime(date.year, date.month, date.day)));
   }
 
   void setEndDate(DateTime date) {
-    state = state.copyWith(endDate: date);
+    _updateBuilder((b) => b.copyWith(endDate: date));
   }
 
   void setShowupDuration(Duration duration) {
-    state = state.copyWith(showupDuration: duration);
+    _updateBuilder((b) => b.copyWith(showupDuration: duration));
   }
 
   void setScheduleType(ScheduleType type) {
@@ -71,20 +80,24 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
           MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
         ]),
     };
-    state = state.copyWith(scheduleType: type, schedule: defaultSchedule);
+    _updateBuilder((b) => b.copyWith(scheduleType: type, schedule: defaultSchedule));
   }
 
   void setSchedule(ShowupSchedule schedule) {
-    state = state.copyWith(schedule: schedule);
+    _updateBuilder((b) => b.copyWith(schedule: schedule));
   }
 
   void setReminderOffset(Duration offset) {
-    state = state.copyWith(reminderOffset: offset);
+    _updateBuilder((b) => b.copyWith(reminderOffset: offset));
   }
 
   void clearReminderOffset() {
-    state = state.copyWith(clearReminderOffset: true);
+    _updateBuilder((b) => b.copyWith(clearReminderOffset: true));
   }
+
+  // ---------------------------------------------------------------------------
+  // Wizard-concern setters — operate directly on PactCreationState.
+  // ---------------------------------------------------------------------------
 
   void setCommitmentAccepted(bool accepted) {
     state = state.copyWith(commitmentAccepted: accepted);
@@ -94,11 +107,13 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     if (!state.canAdvanceFromStep) return;
     final nextStep = state.currentStep.next;
     if (nextStep == null) return;
-    // Default showup duration to 10 min when entering the showup duration step
+    // Default showup duration to 10 min when entering the showup duration step.
+    // CRITICAL: both builder and currentStep updates are done in a single
+    // state = assignment to preserve atomicity — no intermediate state is emitted.
     if (nextStep == PactCreationStep.showupDuration && state.showupDuration == null) {
       state = state.copyWith(
+        builder: state.builder.copyWith(showupDuration: const Duration(minutes: 10)),
         currentStep: nextStep,
-        showupDuration: const Duration(minutes: 10),
       );
     } else {
       state = state.copyWith(currentStep: nextStep);
@@ -113,46 +128,42 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
   }
 
   Future<void> submit() async {
-    if (state.schedule == null || state.showupDuration == null) return;
+    if (!state.builder.isComplete) return;
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
-    // Build the pact and generate showups before any I/O so that a retry
-    // does not mint a second pact ID when the first attempt fails before
-    // savePact is called. Note: if savePact succeeded but the rollback via
-    // deletePact later fails, a subsequent retry will produce a new ID and
-    // a second orphaned record — full idempotency requires storage-level
-    // transactions, which will be addressed in the SQLite implementation.
-    final now = ref.read(pactCreationTodayProvider);
-    final pact = Pact(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      habitName: state.habitName.trim(),
-      startDate: state.startDate,
-      endDate: state.endDate,
-      showupDuration: state.showupDuration!,
-      schedule: state.schedule!,
-      status: PactStatus.active,
-      reminderOffset: state.reminderOffset,
-      createdAt: now,
-    );
-    // Generate only the initial 11-day window (startDate through startDate+10)
-    // to keep the repository lean. The window is intentionally wider than the
-    // 7-day calendar strip so that a DST fall-back transition (which can make
-    // Duration arithmetic land 1 hour early) still covers all visible strip
-    // days. Further windows are generated lazily by ShowupGenerationService
-    // when the dashboard loads each day.
-    //
-    // Showups scheduled before pact.createdAt are excluded here (and in
-    // ShowupGenerationService.ensureShowupsExist) so that a user who creates
-    // a pact at 10pm never sees an already-failed 8am slot on day 1.
-    final windowEnd = state.startDate.add(const Duration(days: 10));
-    final showups = ShowupGenerator.generateWindow(
-      pact,
-      from: state.startDate,
-      to: windowEnd,
-    ).where((s) => !s.scheduledAt.isBefore(now)).toList();
-
     try {
+      // Build the pact and generate showups before any I/O so that a retry
+      // does not mint a second pact ID when the first attempt fails before
+      // savePact is called. Note: if savePact succeeded but the rollback via
+      // deletePact later fails, a subsequent retry will produce a new ID and
+      // a second orphaned record — full idempotency requires storage-level
+      // transactions, which will be addressed in the SQLite implementation.
+      //
+      // Both calls are inside the try/finally so that any unexpected exception
+      // (e.g. if either method's contract changes) still resets isSubmitting.
+      final now = ref.read(pactCreationTodayProvider);
+      final pact = state.builder.build(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        createdAt: now,
+      );
+
+      // Generate only the initial 11-day window (startDate through startDate+10)
+      // to keep the repository lean. The window is intentionally wider than the
+      // 7-day calendar strip so that a DST fall-back transition (which can make
+      // Duration arithmetic land 1 hour early) still covers all visible strip
+      // days. Further windows are generated lazily by ShowupGenerationService
+      // when the dashboard loads each day.
+      //
+      // Showups scheduled before pact.createdAt are excluded here (and in
+      // ShowupGenerationService.ensureShowupsExist) so that a user who creates
+      // a pact at 10pm never sees an already-failed 8am slot on day 1.
+      final windowEnd = state.startDate.add(const Duration(days: 10));
+      final showups = ShowupGenerator.generateWindow(
+        pact,
+        from: state.startDate,
+        to: windowEnd,
+      ).where((s) => !s.scheduledAt.isBefore(now)).toList();
       final pactRepo = ref.read(pactCreationRepositoryProvider);
       final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
       await pactRepo.savePact(pact);

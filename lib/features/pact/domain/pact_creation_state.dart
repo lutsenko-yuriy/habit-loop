@@ -1,15 +1,9 @@
+import 'package:habit_loop/features/pact/domain/pact_builder.dart';
 import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 
-/// Returns [date] advanced by [months], clamping the day to the last day of
-/// the target month if the original day does not exist there (e.g. Aug 31 + 6
-/// months → Feb 28, not Mar 3).
-DateTime _addMonths(DateTime date, int months) {
-  final rawMonth = date.month + months;
-  final year = date.year + (rawMonth - 1) ~/ 12;
-  final month = (rawMonth - 1) % 12 + 1;
-  final daysInMonth = DateTime(year, month + 1, 0).day;
-  return DateTime(year, month, date.day.clamp(1, daysInMonth));
-}
+// Re-export ScheduleType so all existing import sites that import
+// pact_creation_state.dart continue to resolve ScheduleType without change.
+export 'package:habit_loop/features/pact/domain/pact_builder.dart' show ScheduleType;
 
 enum PactCreationStep {
   pactDuration(0),
@@ -37,96 +31,89 @@ enum PactCreationStep {
   }
 }
 
-enum ScheduleType { daily, weekday, monthlyByWeekday, monthlyByDate }
-
+/// Wizard-navigation state for the pact creation flow.
+///
+/// Pact-data fields (habit name, dates, schedule, etc.) are owned by
+/// [PactBuilder], which is held here as [builder]. Proxy getters expose the
+/// builder's fields directly so widget code that reads `state.habitName`,
+/// `state.startDate`, etc. requires no changes.
 class PactCreationState {
   static int get totalSteps => PactCreationStep.count;
 
-  final String habitName;
+  /// The pact-data currently being assembled by the wizard.
+  final PactBuilder builder;
+
   final PactCreationStep currentStep;
-  final DateTime startDate;
-  final DateTime endDate;
-  final Duration? showupDuration;
-  final ScheduleType? scheduleType;
-  final ShowupSchedule? schedule;
-  final Duration? reminderOffset;
   final bool commitmentAccepted;
   final bool isSubmitting;
   final Object? submitError;
 
   PactCreationState({
     required DateTime today,
-    this.habitName = '',
+    PactBuilder? builder,
     this.currentStep = PactCreationStep.pactDuration,
-    DateTime? startDate,
-    DateTime? endDate,
-    this.showupDuration,
-    this.scheduleType,
-    this.schedule,
-    this.reminderOffset,
     this.commitmentAccepted = false,
     this.isSubmitting = false,
     this.submitError,
-  })  : startDate = startDate ?? DateTime(today.year, today.month, today.day),
-        endDate = endDate ?? _addMonths(today, 6);
+  }) : builder = builder ?? PactBuilder(today: today);
+
+  PactCreationState._internal({
+    required this.builder,
+    required this.currentStep,
+    required this.commitmentAccepted,
+    required this.isSubmitting,
+    required this.submitError,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Proxy getters — delegate to builder so widget code is unchanged.
+  // ---------------------------------------------------------------------------
+
+  String get habitName => builder.habitName;
+  DateTime get startDate => builder.startDate;
+  DateTime get endDate => builder.endDate;
+  Duration? get showupDuration => builder.showupDuration;
+  ScheduleType? get scheduleType => builder.scheduleType;
+  ShowupSchedule? get schedule => builder.schedule;
+  Duration? get reminderOffset => builder.reminderOffset;
+
+  // ---------------------------------------------------------------------------
+  // Step-validation dispatch table — each step delegates to a builder predicate.
+  // ---------------------------------------------------------------------------
 
   bool get canAdvanceFromStep {
     switch (currentStep) {
       case PactCreationStep.pactDuration:
-        return startDate.isBefore(endDate);
+        return builder.isDateRangeValid;
       case PactCreationStep.showupDuration:
-        return showupDuration != null && showupDuration!.inMinutes >= 1 && showupDuration!.inMinutes <= 120;
+        return builder.isShowupDurationValid;
       case PactCreationStep.schedule:
-        return schedule != null;
+        return builder.isScheduleSet;
       case PactCreationStep.reminder:
         return true;
       case PactCreationStep.commitment:
-        return commitmentAccepted && habitName.trim().isNotEmpty;
+        return commitmentAccepted && builder.isHabitNameValid;
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // copyWith — wizard concerns only; data-field params removed.
+  // ---------------------------------------------------------------------------
+
   PactCreationState copyWith({
-    String? habitName,
+    PactBuilder? builder,
     PactCreationStep? currentStep,
-    DateTime? startDate,
-    DateTime? endDate,
-    Duration? showupDuration,
-    ScheduleType? scheduleType,
-    ShowupSchedule? schedule,
-    Duration? reminderOffset,
     bool? commitmentAccepted,
     bool? isSubmitting,
     Object? submitError,
-    bool clearSchedule = false,
-    bool clearReminderOffset = false,
     bool clearSubmitError = false,
   }) {
     return PactCreationState._internal(
-      habitName: habitName ?? this.habitName,
+      builder: builder ?? this.builder,
       currentStep: currentStep ?? this.currentStep,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
-      showupDuration: showupDuration ?? this.showupDuration,
-      scheduleType: scheduleType ?? this.scheduleType,
-      schedule: clearSchedule ? null : (schedule ?? this.schedule),
-      reminderOffset: clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
       commitmentAccepted: commitmentAccepted ?? this.commitmentAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
     );
   }
-
-  const PactCreationState._internal({
-    required this.habitName,
-    required this.currentStep,
-    required this.startDate,
-    required this.endDate,
-    required this.showupDuration,
-    required this.scheduleType,
-    required this.schedule,
-    required this.reminderOffset,
-    required this.commitmentAccepted,
-    required this.isSubmitting,
-    required this.submitError,
-  });
 }

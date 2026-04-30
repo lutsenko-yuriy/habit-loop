@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.10] — 2026-04-29 (HAB-17)
+
+### Refactored — Extract PactBuilder from PactCreationState (HAB-17)
+
+- `PactBuilder` introduced in `lib/features/pact/domain/pact_builder.dart`: owns the 7 pact-data fields (`habitName`, `startDate`, `endDate`, `showupDuration`, `scheduleType`, `schedule`, `reminderOffset`), the `_addMonths` month-clamping helper, and the `ScheduleType` enum; exposes validity predicates (`isDateRangeValid`, `isShowupDurationValid`, `isScheduleSet`, `isHabitNameValid`, `isComplete`) and a `build({id, createdAt})` factory that throws `StateError` if incomplete
+- `PactCreationState` slimmed to wizard-navigation concerns only: holds `builder: PactBuilder`, `currentStep`, `commitmentAccepted`, `isSubmitting`, `submitError`; data-field params removed from `copyWith`; proxy getters (`habitName`, `startDate`, etc.) delegate to `builder` so zero widget changes were needed; `canAdvanceFromStep` is now a pure dispatch table routing each step to the corresponding builder predicate
+- `PactCreationViewModel` gains private `_updateBuilder()` helper; all data-field setters route through it; `submit()` guard replaced with `if (!state.builder.isComplete) return;` and manual `Pact(...)` constructor replaced with `state.builder.build(id: ..., createdAt: now)`
+- `ScheduleType` re-exported from `pact_creation_state.dart` so all existing import sites remain unchanged
+- 43 new `PactBuilder` tests; `PactCreationState` tests rewritten to cover dispatch-table delegation and proxy-getter correctness; 468 tests pass, analyzer clean
+
+---
+
 ## [0.11.9] — 2026-04-27 (PR #36 merged)
 
 ### Added — iOS builds wired to Firebase App Distribution (HAB-28)
