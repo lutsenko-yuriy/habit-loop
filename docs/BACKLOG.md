@@ -9,7 +9,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ### Issues
 
-- [HAB-17](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-17/refactor-replace-pactcreationstate-with-a-pactbuilder) **Refactor: replace PactCreationState with a PactBuilder** — `PactCreationState` mixes wizard navigation state with pact-building data. Extract a `PactBuilder` class that holds only the pact fields and exposes a `build()` method returning a `Pact`. (Tech Debt)
+- [HAB-44](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-44) **Fix iOS cold-start white screen** — On cold start the iOS app briefly shows a white screen before the first frame is painted. Investigate and resolve the root cause (likely a missing launch screen configuration or delayed Firebase init). (Bug)
 
 ---
 
@@ -39,6 +39,10 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ---
 
 ## Unscheduled
+
+### Issues
+
+- [HAB-45](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-45) **Introduce application layer** — Add a dedicated application-layer directory between domain and UI to house orchestration logic (e.g. use cases / interactors) and keep view models thin. (Tech Debt)
 
 ### Remaining work
 
