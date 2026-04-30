@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/analytics/domain/analytics_screen.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
+import 'package:habit_loop/infrastructure/analytics/domain/analytics_screen.dart';
 
 void main() {
   group('PactCreatedEvent', () {

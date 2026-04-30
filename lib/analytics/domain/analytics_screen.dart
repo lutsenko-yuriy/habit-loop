@@ -1,6 +1,2 @@
-/// Identifies a screen for Firebase Analytics screen-view tracking.
-/// Implementations live in per-vertical `analytics/` subdirectories.
-abstract class AnalyticsScreen {
-  /// The snake_case screen name sent to Firebase Analytics.
-  String get name;
-}
+// Canonical location moved to lib/infrastructure/domain/analytics_screen.dart — HAB-45 refactor.
+export 'package:habit_loop/infrastructure/analytics/domain/analytics_screen.dart';

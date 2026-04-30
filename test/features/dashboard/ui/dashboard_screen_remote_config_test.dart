@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
-import 'package:habit_loop/features/pact/domain/pact.dart';
-import 'package:habit_loop/features/pact/domain/pact_status.dart';
-import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_detail_view_model.dart';
+import 'package:habit_loop/infrastructure/remote_config/providers/remote_config_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/remote_config/providers/remote_config_providers.dart';
 
 import '../../../remote_config/fake_remote_config_service.dart';
 

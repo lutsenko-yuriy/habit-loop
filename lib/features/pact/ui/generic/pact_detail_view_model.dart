@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/domain/pact/pact_repository.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/features/pact/analytics/pact_analytics_events.dart';
-import 'package:habit_loop/features/pact/data/pact_repository.dart';
-import 'package:habit_loop/features/pact/domain/pact_detail_state.dart';
-import 'package:habit_loop/features/pact/domain/pact_stats_service.dart';
-import 'package:habit_loop/features/pact/domain/pact_status.dart';
-import 'package:habit_loop/features/showup/data/showup_repository.dart';
+import 'package:habit_loop/features/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/features/pact/ui/generic/pact_detail_state.dart';
+import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 
 /// Provides the current time for pact detail operations.
 ///

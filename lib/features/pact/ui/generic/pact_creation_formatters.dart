@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart' show BuildContext, TimeOfDay;
-import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 

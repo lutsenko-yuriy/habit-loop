@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
+import 'package:habit_loop/features/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/features/pact/ui/generic/summary_row.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';

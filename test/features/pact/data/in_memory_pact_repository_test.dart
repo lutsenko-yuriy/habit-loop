@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
-import 'package:habit_loop/features/pact/domain/pact.dart';
-import 'package:habit_loop/features/pact/domain/pact_status.dart';
-import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 
 void main() {
   late InMemoryPactRepository repo;

@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
+import 'package:habit_loop/features/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class ShowupDurationStepIos extends StatelessWidget {

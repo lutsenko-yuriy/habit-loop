@@ -1,4 +1,4 @@
-import 'package:habit_loop/features/pact/domain/pact_status.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 /// Maps a [PactStatus] to its localized label shown on pact detail, pact list

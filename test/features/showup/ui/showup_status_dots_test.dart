@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/features/showup/domain/showup.dart';
-import 'package:habit_loop/features/showup/domain/showup_status.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_status_dots.dart';
 

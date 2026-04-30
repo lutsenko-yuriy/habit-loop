@@ -2,8 +2,8 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show TimeOfDay;
-import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
-import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/features/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_creation_formatters.dart' as pf;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 

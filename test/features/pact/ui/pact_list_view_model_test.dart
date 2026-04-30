@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
-import 'package:habit_loop/features/pact/domain/pact.dart';
-import 'package:habit_loop/features/pact/domain/pact_status.dart';
-import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
-import 'package:habit_loop/features/showup/domain/showup.dart';
-import 'package:habit_loop/features/showup/domain/showup_status.dart';
 
 Pact _pact(String id, PactStatus status, {DateTime? endDate}) => Pact(
       id: id,

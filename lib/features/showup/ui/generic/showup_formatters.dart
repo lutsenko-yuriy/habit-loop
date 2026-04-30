@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:habit_loop/features/showup/domain/showup_status.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:intl/intl.dart';

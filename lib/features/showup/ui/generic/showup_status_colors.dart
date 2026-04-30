@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show ColorScheme;
-import 'package:habit_loop/features/showup/domain/showup_status.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 
 /// Platform-agnostic showup-status color palette used by dashboard status
 /// dots and showup list-tile leading icons.

@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Material, MaterialType;
-import 'package:habit_loop/features/pact/domain/pact_creation_state.dart';
-import 'package:habit_loop/features/pact/domain/showup_schedule.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/features/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/features/pact/ui/ios/commitment_step_ios.dart';
 import 'package:habit_loop/features/pact/ui/ios/pact_duration_step_ios.dart';
 import 'package:habit_loop/features/pact/ui/ios/reminder_step_ios.dart';

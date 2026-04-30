@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Material, MaterialType, Colors;
-import 'package:habit_loop/features/showup/domain/showup_detail_state.dart';
-import 'package:habit_loop/features/showup/domain/showup_status.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/features/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/features/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 

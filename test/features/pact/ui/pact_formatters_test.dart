@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/features/pact/domain/pact_status.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/features/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
