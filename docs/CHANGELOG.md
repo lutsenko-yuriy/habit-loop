@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.11.11] — 2026-04-30 (PR #40 merged)
+
+### Fixed — iOS cold-start white screen (HAB-44)
+
+- `LaunchScreen.storyboard` background changed from white to brand teal (`#00637B`); transparent foreground icon (from Android adaptive icon layer) replaces the flat opaque icon — logo now floats seamlessly on the teal background, matching Android's splash screen
+- `Main.storyboard` root view background changed from white to teal (`#00637B`) — eliminates the white flash during Firebase init between launch screen dismissal and first Flutter frame
+- `SceneDelegate.swift` sets `UIWindow.backgroundColor` to teal (`#00637B`) — closes the last remaining white gap caused by the UIKit window default white showing through the transparent `FlutterViewController` view during engine init
+- `dashboard_page_ios.dart`: removed `ColoredBox(systemBackground)` that forced white on the calendar strip and showup list while the nav bar and `PactsPanel` used `colorScheme.surface` (mint); set `CupertinoListTile.backgroundColor` to transparent for full visual consistency
+- `ios/Podfile.lock`: `firebase_remote_config` and `FirebaseABTesting` pods added (were missing despite being declared in `pubspec.yaml` since v0.10.3)
+- 469 tests pass, analyzer clean
+
+---
+
 ## [0.11.10] — 2026-04-29 (HAB-17)
 
 ### Refactored — Extract PactBuilder from PactCreationState (HAB-17)
