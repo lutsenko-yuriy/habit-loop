@@ -5,14 +5,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ---
 
-## v0.11.0 — UI polish & pre-1.0 cleanup
-
-### Issues
-
-- [HAB-44](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-44) **Fix iOS cold-start white screen** — On cold start the iOS app briefly shows a white screen before the first frame is painted. Investigate and resolve the root cause (likely a missing launch screen configuration or delayed Firebase init). (Bug)
-
----
-
 ## v1.0.0 — SQLite persistence + pre-persistence cleanup
 
 ### Issues
