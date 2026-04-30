@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
-import 'package:flutter/material.dart' show ColoredBox, Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:habit_loop/features/dashboard/domain/dashboard_state.dart';
 import 'package:habit_loop/features/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/features/showup/domain/showup.dart';
@@ -47,25 +47,22 @@ class DashboardPageIos extends StatelessWidget {
       child: SafeArea(
         key: const Key('dashboard-ios-safe-area'),
         bottom: false,
-        child: ColoredBox(
-          color: CupertinoColors.systemBackground.resolveFrom(context),
-          child: Material(
-            type: MaterialType.transparency,
-            child: Stack(
-              children: [
-                state.isLoading
-                    ? const Center(child: CupertinoActivityIndicator())
-                    : !hasPacts
-                        ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
-                        : _DashboardContent(
-                            state: state,
-                            l10n: l10n,
-                            onDaySelected: onDaySelected,
-                            onShowupTapped: onShowupTapped,
-                          ),
-                PactsPanel(onCreatePact: onCreatePact),
-              ],
-            ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: Stack(
+            children: [
+              state.isLoading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : !hasPacts
+                      ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
+                      : _DashboardContent(
+                          state: state,
+                          l10n: l10n,
+                          onDaySelected: onDaySelected,
+                          onShowupTapped: onShowupTapped,
+                        ),
+              PactsPanel(onCreatePact: onCreatePact),
+            ],
           ),
         ),
       ),
@@ -277,6 +274,7 @@ class _ShowupTile extends StatelessWidget {
     final statusText = showupStatusText(l10n, showup.status);
 
     return CupertinoListTile(
+      backgroundColor: CupertinoColors.transparent,
       onTap: onTap,
       leading: Icon(
         switch (showup.status) {
