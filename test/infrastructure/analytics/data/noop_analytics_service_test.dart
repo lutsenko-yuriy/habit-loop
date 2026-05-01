@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.dart';
 import 'package:habit_loop/slices/dashboard/analytics/dashboard_screens.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
-import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.dart';
 
 void main() {
   group('NoopAnalyticsService', () {

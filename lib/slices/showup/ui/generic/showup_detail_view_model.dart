@@ -2,15 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-// TODO(HAB-45): Cross-feature boundary violation — showup feature imports from pact/application/.
-// Resolve by either elevating PactStatsService to lib/domain/ (shared domain layer)
-// or introducing a callback/interface that the showup feature depends on
-// and the pact feature fulfils from outside.
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
+import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
-import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 
 /// Provides the current time. Overridable in tests to make auto-fail logic
 /// deterministic.

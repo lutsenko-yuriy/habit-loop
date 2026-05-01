@@ -3,12 +3,12 @@ import 'dart:async' show unawaited;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_creation_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_creation_page_ios.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 
 class PactCreationScreen extends ConsumerStatefulWidget {
   const PactCreationScreen({super.key});

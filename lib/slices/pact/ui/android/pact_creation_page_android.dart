@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/android/commitment_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_duration_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/android/reminder_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/android/schedule_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/android/showup_duration_step_android.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class PactCreationPageAndroid extends StatelessWidget {
   final PactCreationState state;

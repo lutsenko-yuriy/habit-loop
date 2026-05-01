@@ -6,11 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/ios/dashboard_page_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 void main() {
   testWidgets('iOS dashboard uses scaffold color without custom home indicator affordances', (tester) async {

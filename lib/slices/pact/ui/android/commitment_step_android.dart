@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/summary_row.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class CommitmentStepAndroid extends StatelessWidget {
   final PactCreationState state;

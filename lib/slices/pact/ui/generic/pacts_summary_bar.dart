@@ -5,15 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/dashboard_screens.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
-import 'package:habit_loop/l10n/date_formatters.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 /// A persistent draggable panel at the bottom of the dashboard.
 ///

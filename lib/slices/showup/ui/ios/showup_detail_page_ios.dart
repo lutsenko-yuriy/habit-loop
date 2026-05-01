@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Material, MaterialType, Colors;
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 /// Cupertino (iOS) implementation of the showup detail screen.
 class ShowupDetailPageIos extends StatefulWidget {

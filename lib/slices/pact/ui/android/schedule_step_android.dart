@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart' as pf;
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class ScheduleStepAndroid extends StatelessWidget {
   final PactCreationState state;

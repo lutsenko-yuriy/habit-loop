@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_creation_page_ios.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 void main() {

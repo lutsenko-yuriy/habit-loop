@@ -5,6 +5,9 @@ import 'package:flutter/cupertino.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/infrastructure/remote_config/providers/remote_config_providers.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/dashboard_screens.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/dashboard_page_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
@@ -13,9 +16,6 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
-import 'package:habit_loop/infrastructure/remote_config/providers/remote_config_providers.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});

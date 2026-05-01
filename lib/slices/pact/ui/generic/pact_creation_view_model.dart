@@ -3,11 +3,11 @@ import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 
 final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
 

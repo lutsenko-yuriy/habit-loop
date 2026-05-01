@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 class PactDetailPageIos extends StatelessWidget {

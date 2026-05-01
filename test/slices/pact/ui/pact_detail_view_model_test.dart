@@ -7,11 +7,11 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 

@@ -1,9 +1,9 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/cupertino.dart';
-import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 
 class PactDurationStepIos extends StatelessWidget {
   final PactCreationState state;

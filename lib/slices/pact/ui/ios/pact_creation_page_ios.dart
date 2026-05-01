@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/ios/commitment_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_duration_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/reminder_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/schedule_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/showup_duration_step_ios.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 class PactCreationPageIos extends StatelessWidget {
