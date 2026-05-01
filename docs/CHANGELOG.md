@@ -4,6 +4,22 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.12.0] — 2026-05-01 (PR #41 merged)
+
+### Changed — DDD-style layered architecture refactor (HAB-45)
+
+- `lib/features/` renamed to `lib/slices/`; all import sites updated to canonical paths
+- `lib/domain/` introduced as a top-level directory for pure domain models and repository interfaces shared across slices (`pact/`, `showup/`)
+- `lib/infrastructure/` groups all cross-cutting services (`analytics/`, `crashlytics/`, `remote_config/`); each service's `domain/` subdirectory renamed to `contracts/` to avoid shadowing the top-level `lib/domain/`
+- `PactBuilder`, `PactCreationState`, and `PactStatsService` moved from `slices/pact/domain/` to `slices/pact/application/`
+- `ShowupGenerationService` moved from `slices/showup/domain/` to `slices/showup/application/`
+- `ScheduleType` enum extracted from `PactBuilder` to `lib/domain/pact/schedule_type.dart`
+- UI state classes (`DashboardState`, `PactDetailState`, `PactListState`, `ShowupDetailState`) moved from slice `domain/` to their respective `ui/generic/` directories
+- All re-export stubs removed; every import site updated to the canonical file path
+- Zero logic changes; 469 tests pass, analyzer clean
+
+---
+
 ## [0.11.11] — 2026-04-30 (PR #40 merged)
 
 ### Fixed — iOS cold-start white screen (HAB-44)

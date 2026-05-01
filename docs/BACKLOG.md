@@ -10,7 +10,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ### Issues
 
 - [HAB-16](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-16/tech-debt-rollback-exception-masks-original-error-in-pact-creation) **Tech debt: rollback exception masks original error in pact creation** — Resolved as part of HAB-11: wrap pact and showup inserts in a single `db.transaction()` via `savePactWithShowups()`. (Tech Debt — blocked by HAB-11)
-- [HAB-45](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-45/refactor-introduce-an-explicit-application-layer-to-separate-domain) **Introduce application layer** — Audit every `domain/` directory for application-layer concerns (wizard states, builders, orchestration services), add an explicit `application/` directory per vertical, migrate misplaced classes, and update `docs/ARCHITECTURE.md`. (Tech Debt)
 - [HAB-22](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-22/auto-refresh-dashboard-when-date-changes-at-midnight) **Auto-refresh dashboard when date changes at midnight** — `nowProvider` is evaluated once and not invalidated while the app stays open; after midnight the calendar strip still shows the previous day as "today" and new showups are not generated until relaunch. On foreground resume, invalidate `nowProvider` if the date has changed; stretch goal: midnight background trigger coordinated with HAB-13. (Tech Debt / Feature — blocked by HAB-13)
 
 ### Remaining work
