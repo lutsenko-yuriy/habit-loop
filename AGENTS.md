@@ -99,17 +99,20 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
 10. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly (requires user approval per the Versioning section above). Do not touch the build number — CI manages it.
 11. Commit all changes with a descriptive message.
-12. Launch the app on both platforms for a smoke test using the Flutter binary from `CLAUDE.local.md`:
-    ```
-    flutter run -d ios
-    flutter run -d android
-    ```
-    Run each in the background (`run_in_background: true`) so both start simultaneously. Wait for the user to confirm the app looks correct on both platforms before proceeding.
-13. Push to the remote.
-14. Open a PR and request reviews in parallel (both agents are independent — launch them simultaneously):
-    - If `.claude/agents/tech-lead.md` exists, invoke it for an architectural review: `Use the tech-lead agent to review PR #<number>`.
-    - If `.claude/agents/code-reviewer.md` exists, invoke it for a runtime/launch/migration review: `Use the code-reviewer agent to review PR #<number>`.
-    - If neither agent exists, request a review from the user directly.
+12. Push to the remote, launch the app on both platforms, and open a PR — all in parallel:
+    - Push the branch to the remote.
+    - Launch the app on both platforms for a smoke test using the Flutter binary from `CLAUDE.local.md`:
+      ```
+      flutter run -d ios
+      flutter run -d android
+      ```
+      Run each in the background (`run_in_background: true`) so both start simultaneously.
+    - Open a PR (do not wait for smoke test confirmation first).
+    - Request reviews in parallel once the PR is open (both agents are independent — launch them simultaneously):
+      - If `.claude/agents/tech-lead.md` exists, invoke it for an architectural review: `Use the tech-lead agent to review PR #<number>`.
+      - If `.claude/agents/code-reviewer.md` exists, invoke it for a runtime/launch/migration review: `Use the code-reviewer agent to review PR #<number>`.
+      - If neither agent exists, request a review from the user directly.
+    - Inform the user of the PR URL and ask them to confirm the app looks correct on both platforms.
 15. Remind the user to compact the context after each commit to keep the conversation lean.
 16. When the user approves the PR:
     - Invoke the `product-owner` agent: `Use the product-owner agent to close the approved PR's Linear issues, regenerate BACKLOG.md and CHANGELOG.md, and merge the PR`.
