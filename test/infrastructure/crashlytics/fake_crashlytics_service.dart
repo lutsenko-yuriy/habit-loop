@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:habit_loop/infrastructure/crashlytics/domain/crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 
 /// A fake [CrashlyticsService] that records all calls made to it.
 /// Use in tests that need to assert on Crashlytics calls without touching Firebase.

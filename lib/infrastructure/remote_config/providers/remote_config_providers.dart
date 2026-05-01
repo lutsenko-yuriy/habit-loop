@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_service.dart';
-import 'package:habit_loop/infrastructure/remote_config/domain/remote_config_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 
 /// Provides the active [RemoteConfigService] to the app.
 ///

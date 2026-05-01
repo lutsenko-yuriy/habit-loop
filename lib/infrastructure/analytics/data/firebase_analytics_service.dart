@@ -1,6 +1,6 @@
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_event.dart';
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_screen.dart';
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_service.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_screen.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 
 /// Thin abstraction over the Firebase Analytics SDK methods used by this app.
 ///

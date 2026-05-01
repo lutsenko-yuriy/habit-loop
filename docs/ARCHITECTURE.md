@@ -34,11 +34,11 @@ lib/
 │       └── save_showups_result.dart   # SaveShowupsResult — batch-save result type
 ├── infrastructure/                    # Cross-cutting infrastructure shared by all features
 │   ├── analytics/
-│   │   ├── domain/                    # AnalyticsEvent (abstract base), AnalyticsScreen, AnalyticsService interface
+│   │   ├── contracts/                 # AnalyticsEvent (abstract base), AnalyticsScreen, AnalyticsService interface
 │   │   ├── data/                      # FirebaseAnalyticsService, FirebaseAnalyticsClientAdapter, NoopAnalyticsService
 │   │   └── providers/                 # analyticsServiceProvider (Riverpod)
 │   ├── crashlytics/
-│   │   ├── domain/
+│   │   ├── contracts/
 │   │   │   └── crashlytics_service.dart            # abstract CrashlyticsService interface (no-throw contract)
 │   │   ├── data/
 │   │   │   ├── firebase_crashlytics_service.dart       # real implementation (swallows exceptions)
@@ -47,7 +47,7 @@ lib/
 │   │   └── providers/
 │   │       └── crashlytics_providers.dart  # crashlyticsServiceProvider (Provider<CrashlyticsService>)
 │   └── remote_config/
-│       ├── domain/
+│       ├── contracts/
 │       │   ├── remote_config_service.dart          # abstract RemoteConfigService interface (no-throw contract)
 │       │   └── remote_config_defaults.dart         # RemoteConfigDefaults — in-code fallback values
 │       ├── data/
@@ -135,7 +135,7 @@ Platform-split presentation:
 
 ### Infrastructure (`lib/infrastructure/`)
 
-Cross-cutting services (analytics, crashlytics, remote config) that are shared by the entire app. Each service follows the same internal structure: `domain/` (abstract interface with a no-throw contract), `data/` (Firebase-backed implementation + noop fallback), `providers/` (Riverpod provider defaulting to the noop).
+Cross-cutting services (analytics, crashlytics, remote config) that are shared by the entire app. Each service follows the same internal structure: `contracts/` (abstract interface with a no-throw contract), `data/` (Firebase-backed implementation + noop fallback), `providers/` (Riverpod provider defaulting to the noop).
 
 Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/analytics/`, `slices/showup/analytics/`) with event classes extending `AnalyticsEvent`. This keeps event definitions co-located with the domain they describe.
 

@@ -1,5 +1,5 @@
-import 'package:habit_loop/infrastructure/remote_config/domain/remote_config_defaults.dart';
-import 'package:habit_loop/infrastructure/remote_config/domain/remote_config_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 
 /// A fake [RemoteConfigService] backed by an in-memory map.
 ///

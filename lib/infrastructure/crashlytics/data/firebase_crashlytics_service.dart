@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:habit_loop/infrastructure/crashlytics/domain/crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 
 /// Thin abstraction over the Firebase Crashlytics SDK methods used by this app.
 ///

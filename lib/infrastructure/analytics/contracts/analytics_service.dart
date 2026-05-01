@@ -1,5 +1,5 @@
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_event.dart';
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_screen.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_screen.dart';
 
 /// Abstract interface for the analytics service.
 ///

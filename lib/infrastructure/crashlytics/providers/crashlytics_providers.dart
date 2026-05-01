@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
-import 'package:habit_loop/infrastructure/crashlytics/domain/crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 
 /// Provides the active [CrashlyticsService] to the app.
 ///

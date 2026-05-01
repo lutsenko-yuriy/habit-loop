@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/features/dashboard/ui/generic/dashboard_view_model.dart';
-import 'package:habit_loop/features/pact/data/in_memory_pact_repository.dart';
-import 'package:habit_loop/features/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/main.dart';
 
 void main() {

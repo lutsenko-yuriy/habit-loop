@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_event.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 
 /// Minimal concrete implementation used only to verify the base class contract.
 final class _TestEvent extends AnalyticsEvent {

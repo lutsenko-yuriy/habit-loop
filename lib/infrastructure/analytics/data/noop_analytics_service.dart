@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_event.dart';
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_screen.dart';
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_service.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_screen.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 
 /// No-op [AnalyticsService] used as the default when Firebase is not wired in.
 ///

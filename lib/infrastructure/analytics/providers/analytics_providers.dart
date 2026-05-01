@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.dart';
-import 'package:habit_loop/infrastructure/analytics/domain/analytics_service.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 
 /// Provides the active [AnalyticsService] to the app.
 ///
