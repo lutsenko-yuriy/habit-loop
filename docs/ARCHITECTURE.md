@@ -15,7 +15,7 @@ lib/
 ├── main.dart                          # App entry point (runApp)
 ├── l10n/                              # ARB source files, generated/ output, and shared localisation utilities
 │   ├── generated/                     # Output of `flutter gen-l10n` — do not edit by hand
-│   └── date_formatters.dart           # formatLocaleDate(context, date) — single locale-aware yMd helper shared across all features
+│   └── date_formatters.dart           # formatLocaleDate(context, date) — single locale-aware yMd helper shared across all slices
 ├── theme/                             # Shared Habit Loop palette and Material/Cupertino theme data
 ├── domain/                            # Top-level shared domain — pure models and repository interfaces used by multiple features
 │   ├── pact/
@@ -56,7 +56,7 @@ lib/
 │       │   └── noop_remote_config_service.dart         # default no-op returning in-code defaults
 │       └── providers/
 │           └── remote_config_providers.dart  # remoteConfigServiceProvider (Provider<RemoteConfigService>)
-└── features/
+└── slices/
     ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel
     │   ├── analytics/                 # DashboardAnalyticsScreen
     │   └── ui/ (generic/, ios/, android/)
@@ -97,15 +97,11 @@ test/
 │       │   ├── firebase_remote_config_service_test.dart
 │       │   └── noop_remote_config_service_test.dart
 │       └── fake_remote_config_service.dart  # Shared fake for test overrides
-└── features/                          # Mirrors lib/features/
+└── slices/                            # Mirrors lib/slices/
     ├── dashboard/ (analytics/, ui/)
     ├── pact/ (analytics/, application/, data/, ui/)
     └── showup/ (analytics/, application/, data/, ui/)
 ```
-
-### Re-export stubs
-
-Old import paths (`lib/analytics/`, `lib/crashlytics/`, `lib/remote_config/`, `lib/features/*/domain/`) are preserved as single-line re-export stubs so that existing import sites continue to compile. New code should import from the canonical locations (`lib/domain/`, `lib/infrastructure/`, `lib/features/*/application/`, `lib/features/*/ui/generic/`).
 
 ## Layers
 
@@ -116,20 +112,20 @@ Pure business models and repository interfaces shared across features. No depend
 - Generators: `ShowupGenerator`, `ShowupDateUtils`
 - Result types: `SaveShowupsResult`
 
-### Application (`lib/features/*/application/`)
-Orchestration logic that coordinates domain objects and repository calls. Lives inside each feature vertical. May depend on `lib/domain/` and on other features' application services when necessary (though cross-feature imports should be minimised).
-- `PactBuilder` (`features/pact/application/`) — holds the 7 pact-data fields assembled during the creation wizard, exposes validity predicates (`isDateRangeValid`, `isShowupDurationValid`, `isScheduleSet`, `isHabitNameValid`, `isComplete`), and materialises a `Pact` via `build(id, createdAt)`.
-- `PactCreationState` (`features/pact/application/`) — wizard-navigation state: holds `builder: PactBuilder`, `currentStep`, `commitmentAccepted`, `isSubmitting`, `submitError`. Re-exports `ScheduleType` for backwards compatibility.
-- `PactStatsService` (`features/pact/application/`) — owns pact stats calculation, persistence, and the stop-pact transaction.
-- `ShowupGenerationService` (`features/showup/application/`) — orchestrates lazy windowed showup generation and deduplication.
+### Application (`lib/slices/*/application/`)
+Orchestration logic that coordinates domain objects and repository calls. Lives inside each slice vertical. May depend on `lib/domain/` and on other slices' application services when necessary (though cross-slice imports should be minimised).
+- `PactBuilder` (`slices/pact/application/`) — holds the 7 pact-data fields assembled during the creation wizard, exposes validity predicates (`isDateRangeValid`, `isShowupDurationValid`, `isScheduleSet`, `isHabitNameValid`, `isComplete`), and materialises a `Pact` via `build(id, createdAt)`.
+- `PactCreationState` (`slices/pact/application/`) — wizard-navigation state: holds `builder: PactBuilder`, `currentStep`, `commitmentAccepted`, `isSubmitting`, `submitError`. Re-exports `ScheduleType` for backwards compatibility.
+- `PactStatsService` (`slices/pact/application/`) — owns pact stats calculation, persistence, and the stop-pact transaction.
+- `ShowupGenerationService` (`slices/showup/application/`) — orchestrates lazy windowed showup generation and deduplication.
 
-### Data (`lib/features/*/data/`)
+### Data (`lib/slices/*/data/`)
 Storage and persistence. Implements repository interfaces from `lib/domain/`.
 - Currently: `InMemoryPactRepository`, `InMemoryShowupRepository` (sqflite implementations planned -- see @docs/BACKLOG.md)
 
-### UI (`lib/features/*/ui/`)
+### UI (`lib/slices/*/ui/`)
 Platform-split presentation:
-- `generic/` — view models (Riverpod notifiers), shared state classes (e.g. `DashboardState`, `PactDetailState`, `PactListState`, `ShowupDetailState`), and platform-agnostic helpers shared by both Cupertino and Material implementations (formatters, colour-role resolvers, and reusable widgets). Examples: `pact/ui/generic/pact_creation_formatters.dart` (date/schedule/reminder labels), `pact/ui/generic/summary_row.dart`, `showup/ui/generic/showup_formatters.dart`, `showup/ui/generic/showup_status_colors.dart` (Cupertino + Material palette factories mapping `ShowupStatus` to colours), `showup/ui/generic/showup_status_dots.dart` (calendar-strip dot widget). Helpers that need a platform-idiom colour accept it as a parameter rather than branching on platform.
+- `generic/` — view models (Riverpod notifiers), shared state classes (e.g. `DashboardState`, `PactDetailState`, `PactListState`, `ShowupDetailState`), and platform-agnostic helpers shared by both Cupertino and Material implementations (formatters, colour-role resolvers, and reusable widgets). Examples: `slices/pact/ui/generic/pact_creation_formatters.dart` (date/schedule/reminder labels), `slices/pact/ui/generic/summary_row.dart`, `slices/showup/ui/generic/showup_formatters.dart`, `slices/showup/ui/generic/showup_status_colors.dart` (Cupertino + Material palette factories mapping `ShowupStatus` to colours), `slices/showup/ui/generic/showup_status_dots.dart` (calendar-strip dot widget). Helpers that need a platform-idiom colour accept it as a parameter rather than branching on platform.
 - `ios/` — Cupertino widgets
 - `android/` — Material widgets
 
@@ -141,7 +137,7 @@ Platform-split presentation:
 
 Cross-cutting services (analytics, crashlytics, remote config) that are shared by the entire app. Each service follows the same internal structure: `domain/` (abstract interface with a no-throw contract), `data/` (Firebase-backed implementation + noop fallback), `providers/` (Riverpod provider defaulting to the noop).
 
-Each feature vertical may contain an `analytics/` subdirectory (e.g. `features/pact/analytics/`, `features/showup/analytics/`) with event classes extending `AnalyticsEvent`. This keeps event definitions co-located with the domain they describe.
+Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/analytics/`, `slices/showup/analytics/`) with event classes extending `AnalyticsEvent`. This keeps event definitions co-located with the domain they describe.
 
 **Analytics:** `lib/infrastructure/analytics/` contains the abstract base class (`AnalyticsEvent`, `AnalyticsScreen`), service interface (`AnalyticsService`), Firebase adapter, noop adapter, and Riverpod provider. It has no `ui/` directory because it contains no widgets.
 

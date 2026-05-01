@@ -71,7 +71,7 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 
 | Concrete class | `screen_name` | Source file | When |
 |---|---|---|---|
-| `DashboardAnalyticsScreen` | `dashboard` | `features/dashboard/analytics/dashboard_screens.dart` | Dashboard screen opens or becomes visible again after returning from a detail/creation flow |
-| `PactCreationAnalyticsScreen` | `pact_creation` | `features/pact/analytics/pact_analytics_events.dart` | Pact creation wizard opens |
-| `PactDetailAnalyticsScreen` | `pact_detail` | `features/pact/analytics/pact_analytics_events.dart` | Pact detail screen opens |
-| `ShowupDetailAnalyticsScreen` | `showup_detail` | `features/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |
+| `DashboardAnalyticsScreen` | `dashboard` | `slices/dashboard/analytics/dashboard_screens.dart` | Dashboard screen opens or becomes visible again after returning from a detail/creation flow |
+| `PactCreationAnalyticsScreen` | `pact_creation` | `slices/pact/analytics/pact_analytics_events.dart` | Pact creation wizard opens |
+| `PactDetailAnalyticsScreen` | `pact_detail` | `slices/pact/analytics/pact_analytics_events.dart` | Pact detail screen opens |
+| `ShowupDetailAnalyticsScreen` | `showup_detail` | `slices/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |
