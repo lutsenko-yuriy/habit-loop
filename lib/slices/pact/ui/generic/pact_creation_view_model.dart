@@ -7,6 +7,7 @@ import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
+import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
@@ -111,13 +112,15 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     final nextStep = state.currentStep.next;
     if (nextStep == null) return;
 
-    // Log step transition breadcrumb for production diagnostics.
-    // Fire-and-forget: CrashlyticsService is no-throw, no await needed here.
+    // Log step transition breadcrumb for production diagnostics (fire-and-forget).
     // PII rule: only step names — no user-entered text.
     unawaited(
       ref.read(crashlyticsServiceProvider).log(
             'pact_creation: step ${state.currentStep.name} -> ${nextStep.name}',
           ),
+    );
+    unawaited(
+      ref.read(logServiceProvider).info('pact_creation: step ${state.currentStep.name} -> ${nextStep.name}'),
     );
 
     // Default showup duration to 10 min when entering the showup duration step.
@@ -212,20 +215,30 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       );
 
       // Both pact and showups were persisted successfully — log breadcrumb and
-      // fire analytics. CrashlyticsService and AnalyticsService are no-throw.
+      // fire analytics. CrashlyticsService, AnalyticsService, and LogService are
+      // no-throw. Use unawaited so diagnostics never block the UI path.
       // PII rule: log only schedule type and counts — no habit name.
-      await ref.read(crashlyticsServiceProvider).log(
-            'pact_created: scheduleType=${_scheduleTypeName(pactWithStats.schedule)}'
-            ' showupsExpected=$totalShowups',
-          );
-      await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
-            scheduleType: _scheduleTypeName(pactWithStats.schedule),
-            durationDays: pactWithStats.endDate.difference(pactWithStats.startDate).inDays + 1,
-            showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
-            reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
-            showupsExpected: totalShowups,
-          ));
-    } catch (e) {
+      final scheduleTypeName = _scheduleTypeName(pactWithStats.schedule);
+      unawaited(
+        ref.read(crashlyticsServiceProvider).log(
+              'pact_created: scheduleType=$scheduleTypeName showupsExpected=$totalShowups',
+            ),
+      );
+      unawaited(
+        ref.read(logServiceProvider).info('pact_created: id=${pact.id} scheduleType=$scheduleTypeName'
+            ' showupsExpected=$totalShowups'),
+      );
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
+              scheduleType: scheduleTypeName,
+              durationDays: pactWithStats.endDate.difference(pactWithStats.startDate).inDays + 1,
+              showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
+              reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
+              showupsExpected: totalShowups,
+            )),
+      );
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('pact_creation_failed', exception: e, stackTrace: st));
       state = state.copyWith(submitError: e);
     } finally {
       state = state.copyWith(isSubmitting: false);

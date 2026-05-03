@@ -7,42 +7,45 @@ import 'package:talker_flutter/talker_flutter.dart';
 /// All calls are synchronous under the hood (Talker does not return Futures),
 /// so each method completes immediately.
 ///
-/// The in-app Talker overlay is only available in debug mode — the guard is
-/// applied at the [ProviderScope] override level in `main.dart`, not here,
-/// so this service can be unit-tested without platform concerns.
+/// This service is only used in debug/profile builds — the [ProviderScope]
+/// override in `main.dart` only wires it when `!kReleaseMode`. Release builds
+/// use the silent [NoopLogService] default from [logServiceProvider].
+///
+/// **No-throw contract:** every method body is wrapped in try/catch so that a
+/// Talker failure can never crash the app. Logging is best-effort diagnostics.
 ///
 /// **PII rules:** see [LogService] documentation.
 final class TalkerLogService implements LogService {
-  TalkerLogService(this._talker);
+  TalkerLogService(this._talker) : assert(!kReleaseMode, 'TalkerLogService must not be used in release builds');
 
   final Talker _talker;
 
   @override
   Future<void> debug(String message) async {
-    if (!kReleaseMode) {
+    try {
       _talker.debug(message);
-    }
+    } catch (_) {}
   }
 
   @override
   Future<void> info(String message) async {
-    if (!kReleaseMode) {
+    try {
       _talker.info(message);
-    }
+    } catch (_) {}
   }
 
   @override
   Future<void> warning(String message) async {
-    if (!kReleaseMode) {
+    try {
       _talker.warning(message);
-    }
+    } catch (_) {}
   }
 
   @override
   Future<void> error(String message, {Object? exception, StackTrace? stackTrace}) async {
-    if (!kReleaseMode) {
+    try {
       _talker.error(message, exception, stackTrace);
-    }
+    } catch (_) {}
   }
 
   @override
@@ -50,9 +53,9 @@ final class TalkerLogService implements LogService {
     // LOCAL ONLY — this call site is intentionally not forwarded to Crashlytics
     // or any remote service. It may contain PII-adjacent content (habit names,
     // notes) for developer convenience during local debugging.
-    if (!kReleaseMode) {
+    try {
       final prefixed = tag != null ? '[$tag] $message' : message;
       _talker.info(prefixed);
-    }
+    } catch (_) {}
   }
 }

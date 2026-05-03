@@ -1,4 +1,5 @@
 import 'dart:async' show unawaited;
+import 'dart:io' show Platform;
 
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -59,6 +60,16 @@ Future<void> main() async {
       } catch (_) {}
       return true;
     };
+
+    // Set session-scoped custom keys so every crash report carries locale and
+    // session start time. These are fire-and-forget diagnostics; failures are
+    // swallowed by the no-throw CrashlyticsService contract.
+    try {
+      unawaited(FirebaseCrashlytics.instance.setCustomKey('locale', Platform.localeName));
+      unawaited(
+        FirebaseCrashlytics.instance.setCustomKey('app_session_start_time', DateTime.now().toIso8601String()),
+      );
+    } catch (_) {}
   }
 
   // Initialise Remote Config before runApp so flags are ready on first frame.
