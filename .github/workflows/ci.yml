@@ -372,13 +372,17 @@ jobs:
             exit 1
           fi
 
-          sed -i "s/^version: .*/version: ${VERSION}+${BUILD}/" pubspec.yaml
-
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Pull first so our sed change applies on top of the current main,
+          # avoiding a rebase conflict when another build-number bump landed
+          # while this job was waiting for distribute-android/-ios to finish.
+          git pull --rebase origin main
+
+          sed -i "s/^version: .*/version: ${VERSION}+${BUILD}/" pubspec.yaml
           git add pubspec.yaml
           git commit -m "chore: bump build number to ${BUILD} [skip ci]"
-          git pull --rebase origin main   # absorb any commits that landed during the build
           git push
 
           git tag "version-${VERSION}-${BUILD}-${SUFFIX}"
