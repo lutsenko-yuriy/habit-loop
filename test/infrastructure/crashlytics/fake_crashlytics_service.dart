@@ -18,6 +18,8 @@ class FakeCrashlyticsService implements CrashlyticsService {
 
   final List<String> userIdentifiers = [];
 
+  final List<({String key, Object value})> customKeys = [];
+
   @override
   Future<void> recordError(
     Object error,
@@ -51,10 +53,16 @@ class FakeCrashlyticsService implements CrashlyticsService {
     userIdentifiers.add(identifier);
   }
 
+  @override
+  Future<void> setCustomKey(String key, Object value) async {
+    customKeys.add((key: key, value: value));
+  }
+
   void reset() {
     recordedErrors.clear();
     recordedFlutterErrors.clear();
     logs.clear();
     userIdentifiers.clear();
+    customKeys.clear();
   }
 }

@@ -40,4 +40,9 @@ final class NoopCrashlyticsService implements CrashlyticsService {
   Future<void> setUserIdentifier(String identifier) async {
     debugPrint('[Crashlytics] setUserIdentifier: $identifier');
   }
+
+  @override
+  Future<void> setCustomKey(String key, Object value) async {
+    debugPrint('[Crashlytics] setCustomKey: $key = $value');
+  }
 }

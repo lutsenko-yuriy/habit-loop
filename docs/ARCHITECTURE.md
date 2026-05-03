@@ -48,6 +48,14 @@ lib/
 │   │   │   └── noop_crashlytics_service.dart           # default no-op
 │   │   └── providers/
 │   │       └── crashlytics_providers.dart  # crashlyticsServiceProvider (Provider<CrashlyticsService>)
+│   ├── logging/
+│   │   ├── contracts/
+│   │   │   └── log_service.dart                    # abstract LogService interface (debug/info/warning/error/logLocal); PII rules documented
+│   │   ├── data/
+│   │   │   ├── talker_log_service.dart                 # talker_flutter implementation; in-app overlay gated on kDebugMode
+│   │   │   └── noop_log_service.dart                   # default no-op
+│   │   └── providers/
+│   │       └── log_service_providers.dart  # logServiceProvider (Provider<LogService>); overridden with TalkerLogService in non-release builds
 │   └── remote_config/
 │       ├── contracts/
 │       │   ├── remote_config_service.dart          # abstract RemoteConfigService interface (no-throw contract)
@@ -94,6 +102,11 @@ test/
 │   │   │   ├── firebase_crashlytics_service_test.dart
 │   │   │   └── noop_crashlytics_service_test.dart
 │   │   └── fake_crashlytics_service.dart  # Shared fake for test overrides
+│   ├── logging/
+│   │   ├── data/
+│   │   │   ├── talker_log_service_test.dart
+│   │   │   └── noop_log_service_test.dart
+│   │   └── fake_log_service.dart              # Shared fake for test overrides
 │   └── remote_config/
 │       ├── data/
 │       │   ├── firebase_remote_config_service_test.dart
@@ -137,13 +150,15 @@ Platform-split presentation:
 
 ### Infrastructure (`lib/infrastructure/`)
 
-Cross-cutting services (analytics, crashlytics, remote config) that are shared by the entire app. Each service follows the same internal structure: `contracts/` (abstract interface with a no-throw contract), `data/` (Firebase-backed implementation + noop fallback), `providers/` (Riverpod provider defaulting to the noop).
+Cross-cutting services (analytics, crashlytics, logging, remote config) that are shared by the entire app. Each service follows the same internal structure: `contracts/` (abstract interface with a no-throw contract), `data/` (Firebase-backed implementation + noop fallback), `providers/` (Riverpod provider defaulting to the noop).
 
 Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/analytics/`, `slices/showup/analytics/`) with event classes extending `AnalyticsEvent`. This keeps event definitions co-located with the domain they describe.
 
 **Analytics:** `lib/infrastructure/analytics/` contains the abstract base class (`AnalyticsEvent`, `AnalyticsScreen`), service interface (`AnalyticsService`), Firebase adapter, noop adapter, and Riverpod provider. It has no `ui/` directory because it contains no widgets.
 
-**Crashlytics:** `lib/infrastructure/crashlytics/` wraps crash reporting. Activation is gated on `kReleaseMode` in `main.dart`, so debug and test runs fall back to `NoopCrashlyticsService`. The `CrashlyticsService` interface has a strict no-throw contract: implementations must swallow any exceptions raised by the underlying SDK so that crash reporting failures can never crash the app themselves. The raw `FirebaseCrashlytics` SDK is referenced in `main.dart` in two ways: via `FirebaseCrashlyticsClientAdapter` for the Riverpod provider override, and directly in the `FlutterError.onError` / `PlatformDispatcher.instance.onError` global error handlers (which must be installed before `runApp`, before the Riverpod container exists). The rest of the app depends only on the abstract interface.
+**Crashlytics:** `lib/infrastructure/crashlytics/` wraps crash reporting. Activation is gated on `kReleaseMode` in `main.dart`, so debug and test runs fall back to `NoopCrashlyticsService`. The `CrashlyticsService` interface has a strict no-throw contract: implementations must swallow any exceptions raised by the underlying SDK so that crash reporting failures can never crash the app themselves. The interface exposes `log()` for breadcrumbs and `setCustomKey()` for runtime context (active pact count, current screen, locale). The raw `FirebaseCrashlytics` SDK is referenced in `main.dart` in two ways: via `FirebaseCrashlyticsClientAdapter` for the Riverpod provider override, and directly in the `FlutterError.onError` / `PlatformDispatcher.instance.onError` global error handlers (which must be installed before `runApp`, before the Riverpod container exists). The rest of the app depends only on the abstract interface.
+
+**Logging:** `lib/infrastructure/logging/` provides structured local logging via `talker_flutter`. The `LogService` interface exposes `debug()`, `info()`, `warning()`, `error()`, and `logLocal()` (for PII-safe local-only detail). `TalkerLogService` is active in debug and profile builds only; `NoopLogService` is the default in release and tests. The in-app log overlay is gated on `kDebugMode`. **PII rule:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
 
 **Remote Config:** `lib/infrastructure/remote_config/` wraps feature flag resolution. The `RemoteConfigService` interface has a strict no-throw contract: all implementations must swallow exceptions internally so a Remote Config outage can never crash the app. `FirebaseRemoteConfigClient` (defined in `data/`) is an intermediate adapter interface whose methods return only plain Dart primitives -- no Firebase SDK types leak through it, so test fakes can implement it without importing `firebase_remote_config`. The raw `FirebaseRemoteConfig` SDK is confined to `FirebaseRemoteConfigClientAdapter`, which is only instantiated in `main.dart`. Activation is gated on `kReleaseMode`: debug and profile builds use `NoopRemoteConfigService`, which returns in-code defaults from `RemoteConfigDefaults`. In debug and profile builds `!kReleaseMode` controls the fetch interval to `Duration.zero` so QA can verify flag changes without the 12-hour production throttle.
 
@@ -155,4 +170,5 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 - [firebase_analytics](https://pub.dev/packages/firebase_analytics) — analytics / event tracking; wrapped by `AnalyticsService` in `lib/infrastructure/analytics/` and wired via `analyticsServiceProvider`. The raw `FirebaseAnalytics` SDK is only touched in `main.dart` through `FirebaseAnalyticsClientAdapter`; the rest of the app depends on the `AnalyticsService` interface
 - [firebase_crashlytics](https://pub.dev/packages/firebase_crashlytics) — crash reporting; wrapped by `CrashlyticsService` in `lib/infrastructure/crashlytics/` and provided via `crashlyticsServiceProvider`. `FlutterError.onError` and `PlatformDispatcher.instance.onError` are wired in `main.dart` under `kReleaseMode` only. The raw `FirebaseCrashlytics` SDK is referenced in `main.dart` via `FirebaseCrashlyticsClientAdapter` (for the provider override) and directly in the global error handlers (which run before `runApp`)
 - [firebase_remote_config](https://pub.dev/packages/firebase_remote_config) — feature flags and remote configuration; wrapped by `RemoteConfigService` in `lib/infrastructure/remote_config/` and provided via `remoteConfigServiceProvider`. The raw `FirebaseRemoteConfig` SDK is confined to `FirebaseRemoteConfigClientAdapter`, which is only instantiated in `main.dart` under `kReleaseMode`. Debug and profile builds fall back to `NoopRemoteConfigService` returning in-code defaults
+- [talker_flutter](https://pub.dev/packages/talker_flutter) — structured local logging and in-app log overlay; wrapped by `LogService` in `lib/infrastructure/logging/` and provided via `logServiceProvider`. Active in debug/profile builds only; release builds use `NoopLogService`
 - `lib/firebase_options.dart` — platform-specific Firebase configuration generated by `flutterfire configure`

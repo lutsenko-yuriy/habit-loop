@@ -1,4 +1,5 @@
 import 'dart:async' show unawaited;
+import 'dart:io' show Platform;
 
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,6 +17,8 @@ import 'package:habit_loop/infrastructure/analytics/providers/analytics_provider
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
+import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
+import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/providers/remote_config_providers.dart';
@@ -29,6 +32,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +60,16 @@ Future<void> main() async {
       } catch (_) {}
       return true;
     };
+
+    // Set session-scoped custom keys so every crash report carries locale and
+    // session start time. These are fire-and-forget diagnostics; failures are
+    // swallowed by the no-throw CrashlyticsService contract.
+    try {
+      unawaited(FirebaseCrashlytics.instance.setCustomKey('locale', Platform.localeName));
+      unawaited(
+        FirebaseCrashlytics.instance.setCustomKey('app_session_start_time', DateTime.now().toIso8601String()),
+      );
+    } catch (_) {}
   }
 
   // Initialise Remote Config before runApp so flags are ready on first frame.
@@ -75,12 +89,23 @@ Future<void> main() async {
     }
   }
 
+  // Instantiate Talker for local logging. The in-app overlay is shown only in
+  // debug mode (kDebugMode guard inside TalkerLogService). This is intentionally
+  // wired in debug and profile builds only; release builds fall back to the
+  // NoopLogService default from logServiceProvider.
+  final talker = kReleaseMode ? null : Talker();
+  final logService = talker != null ? TalkerLogService(talker) : null;
+
   final pactRepo = InMemoryPactRepository();
   final showupRepo = InMemoryShowupRepository();
 
   runApp(
     ProviderScope(
       overrides: [
+        // Wire TalkerLogService in debug/profile builds for local visibility.
+        // Release builds use the NoopLogService default from logServiceProvider.
+        if (logService != null) logServiceProvider.overrideWithValue(logService),
+
         // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
         if (kReleaseMode)
           analyticsServiceProvider.overrideWithValue(

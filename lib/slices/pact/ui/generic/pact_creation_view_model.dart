@@ -1,9 +1,13 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
+import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
@@ -107,6 +111,18 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     if (!state.canAdvanceFromStep) return;
     final nextStep = state.currentStep.next;
     if (nextStep == null) return;
+
+    // Log step transition breadcrumb for production diagnostics (fire-and-forget).
+    // PII rule: only step names — no user-entered text.
+    unawaited(
+      ref.read(crashlyticsServiceProvider).log(
+            'pact_creation: step ${state.currentStep.name} -> ${nextStep.name}',
+          ),
+    );
+    unawaited(
+      ref.read(logServiceProvider).info('pact_creation: step ${state.currentStep.name} -> ${nextStep.name}'),
+    );
+
     // Default showup duration to 10 min when entering the showup duration step.
     // CRITICAL: both builder and currentStep updates are done in a single
     // state = assignment to preserve atomicity — no intermediate state is emitted.
@@ -198,16 +214,31 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
         showups: showups,
       );
 
-      // Both pact and showups were persisted successfully — fire analytics.
-      // AnalyticsService is no-throw; no wrapping try/catch needed.
-      await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
-            scheduleType: _scheduleTypeName(pactWithStats.schedule),
-            durationDays: pactWithStats.endDate.difference(pactWithStats.startDate).inDays + 1,
-            showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
-            reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
-            showupsExpected: totalShowups,
-          ));
-    } catch (e) {
+      // Both pact and showups were persisted successfully — log breadcrumb and
+      // fire analytics. CrashlyticsService, AnalyticsService, and LogService are
+      // no-throw. Use unawaited so diagnostics never block the UI path.
+      // PII rule: log only schedule type and counts — no habit name.
+      final scheduleTypeName = _scheduleTypeName(pactWithStats.schedule);
+      unawaited(
+        ref.read(crashlyticsServiceProvider).log(
+              'pact_created: scheduleType=$scheduleTypeName showupsExpected=$totalShowups',
+            ),
+      );
+      unawaited(
+        ref.read(logServiceProvider).info('pact_created: id=${pact.id} scheduleType=$scheduleTypeName'
+            ' showupsExpected=$totalShowups'),
+      );
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
+              scheduleType: scheduleTypeName,
+              durationDays: pactWithStats.endDate.difference(pactWithStats.startDate).inDays + 1,
+              showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
+              reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
+              showupsExpected: totalShowups,
+            )),
+      );
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('pact_creation_failed', exception: e, stackTrace: st));
       state = state.copyWith(submitError: e);
     } finally {
       state = state.copyWith(isSubmitting: false);

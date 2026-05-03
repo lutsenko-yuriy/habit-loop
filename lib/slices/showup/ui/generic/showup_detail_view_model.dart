@@ -1,9 +1,13 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
+import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
@@ -66,7 +70,13 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       clearMarkError: true,
       clearNoteError: true,
     );
+
     try {
+      // Log screen breadcrumb for production diagnostics (fire-and-forget).
+      // PII rule: only showup ID — no habit name or note content.
+      unawaited(ref.read(crashlyticsServiceProvider).log('screen: showup_detail(id=$arg)'));
+      unawaited(ref.read(logServiceProvider).info('showup_detail: load(id=$arg)'));
+
       final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
       final pactRepo = ref.read(showupDetailPactRepositoryProvider);
 
@@ -103,11 +113,11 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
           );
           wasAutoFailed = true;
 
-          // Fire auto-fail analytics event.
-          // AnalyticsService is no-throw; no wrapping try/catch needed.
-          await ref.read(analyticsServiceProvider).logEvent(
-                ShowupAutoFailedEvent(pactId: showup.pactId),
-              );
+          // Fire auto-fail analytics and log (fire-and-forget).
+          unawaited(
+            ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+          );
+          unawaited(ref.read(logServiceProvider).info('showup_auto_failed: id=$arg pactId=${showup.pactId}'));
         }
       }
 
@@ -117,7 +127,10 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         isLoading: false,
         wasAutoFailed: wasAutoFailed,
       );
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+        ref.read(logServiceProvider).error('showup_detail_load_failed: id=$arg', exception: e, stackTrace: st),
+      );
       state = state.copyWith(isLoading: false, loadError: e);
     }
   }
@@ -138,7 +151,15 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
 
   Future<void> _updateStatus(ShowupStatus newStatus) async {
     state = state.copyWith(isSaving: true, clearMarkError: true);
+
+    final actionName = newStatus == ShowupStatus.done ? 'mark_done' : 'mark_failed';
+
     try {
+      // Log action breadcrumb for production diagnostics (fire-and-forget).
+      // PII rule: only showup ID and status enum — no habit name or note.
+      unawaited(ref.read(crashlyticsServiceProvider).log('action: $actionName(showupId=$arg)'));
+      unawaited(ref.read(logServiceProvider).info('showup_$actionName: id=$arg'));
+
       final updatedShowup = await PactStatsService(
         pactRepository: ref.read(showupDetailPactRepositoryProvider),
         showupRepository: ref.read(showupDetailShowupRepositoryProvider),
@@ -157,9 +178,12 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         ShowupStatus.pending => throw StateError('Unexpected pending status'),
       };
 
-      // Fire analytics for manual status changes. Swallow failures.
-      await ref.read(analyticsServiceProvider).logEvent(event);
-    } catch (e) {
+      // Fire analytics for manual status changes (fire-and-forget).
+      unawaited(ref.read(analyticsServiceProvider).logEvent(event));
+    } catch (e, st) {
+      unawaited(
+        ref.read(logServiceProvider).error('showup_${actionName}_failed: id=$arg', exception: e, stackTrace: st),
+      );
       state = state.copyWith(isSaving: false, markError: e);
     }
   }

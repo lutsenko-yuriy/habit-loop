@@ -1,8 +1,12 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
+import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
@@ -33,7 +37,13 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
 
   Future<void> load() async {
     state = state.copyWith(isLoading: true, clearLoadError: true);
+
     try {
+      // Log screen breadcrumb for production diagnostics (fire-and-forget).
+      // PII rule: only pact ID — no habit name.
+      unawaited(ref.read(crashlyticsServiceProvider).log('screen: pact_detail(id=$arg)'));
+      unawaited(ref.read(logServiceProvider).info('pact_detail: load(id=$arg)'));
+
       final pactRepo = ref.read(pactDetailRepositoryProvider);
       final showupRepo = ref.read(pactDetailShowupRepositoryProvider);
       final pactStatsService = PactStatsService(
@@ -76,7 +86,8 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       }
 
       state = state.copyWith(pact: pact, stats: stats, isLoading: false);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('pact_detail_load_failed: id=$arg', exception: e, stackTrace: st));
       state = state.copyWith(isLoading: false, loadError: e);
     }
   }
@@ -100,15 +111,33 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       final stats = updated.stats!;
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
 
-      // Fire analytics for pact stop.
-      // AnalyticsService is no-throw; no wrapping try/catch needed.
-      await ref.read(analyticsServiceProvider).logEvent(PactStoppedEvent(
-            daysActive: now.difference(pact.startDate).inDays,
-            totalShowupsDone: stats.showupsDone,
-            totalShowupsFailed: stats.showupsFailed,
-            totalShowupsRemaining: stats.showupsRemaining,
-          ));
-    } catch (e) {
+      // Log breadcrumb and fire analytics for pact stop (fire-and-forget).
+      // CrashlyticsService, AnalyticsService, and LogService are no-throw.
+      // PII rule: log only counts and IDs — no habit name, no stop reason.
+      unawaited(
+        ref.read(crashlyticsServiceProvider).log(
+              'pact_stopped: id=$arg'
+              ' done=${stats.showupsDone}'
+              ' failed=${stats.showupsFailed}'
+              ' remaining=${stats.showupsRemaining}',
+            ),
+      );
+      unawaited(
+        ref.read(logServiceProvider).info(
+              'pact_stopped: id=$arg done=${stats.showupsDone}'
+              ' failed=${stats.showupsFailed} remaining=${stats.showupsRemaining}',
+            ),
+      );
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(PactStoppedEvent(
+              daysActive: now.difference(pact.startDate).inDays,
+              totalShowupsDone: stats.showupsDone,
+              totalShowupsFailed: stats.showupsFailed,
+              totalShowupsRemaining: stats.showupsRemaining,
+            )),
+      );
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('pact_stop_failed: id=$arg', exception: e, stackTrace: st));
       state = state.copyWith(isStopping: false, stopError: e);
     }
   }
