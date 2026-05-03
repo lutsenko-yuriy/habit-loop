@@ -52,7 +52,7 @@ Uses `package:flutter_lints` (configured in `analysis_options.yaml`).
 
 ## Versioning
 
-Version bumps in pubspec.yaml require user approval before any change.
+Update `pubspec.yaml` version name (`X.Y.Z`) whenever a new `CHANGELOG.md` entry is added — no separate approval needed.
 CI handles build numbers automatically — do not touch.
 Details: @docs/VERSIONING.md
 
@@ -68,6 +68,8 @@ At the beginning of every new session, before doing anything else:
 ## Workflow
 
 Follow TDD: write or update tests **before** implementing the feature or fix. Red → Green → Refactor.
+
+**Only one ticket may be in progress at a time.** Before picking up any new ticket, check the `## In Progress` section at the top of `docs/BACKLOG.md`. If a ticket is listed there, do not start new work until the current ticket is merged and the section is cleared.
 
 **For features with user-visible screens or interactions**: invoke the `product-owner` agent first for analytics planning before the Tech Lead:
 
@@ -87,7 +89,7 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
 
 1. For features with user-facing screens/interactions, invoke the product-owner agent for analytics planning first and wait for approval.
 2. For large changes, invoke the tech-lead agent and wait for plan approval.
-3. Create a new feature branch (`git checkout -b feature/HAB-XX-<short-description>`) and switch to it before writing any code. Always include the Linear ticket number after `feature/`.
+3. Create a new feature branch (`git checkout -b feature/HAB-XX-<short-description>`) and switch to it before writing any code. Always include the Linear ticket number after `feature/`. Mark the ticket as In Progress in `docs/BACKLOG.md`: replace the `_(nothing in progress)_` placeholder with a single bullet linking to the issue (same format as in the milestone sections).
 4. Write failing tests that describe the expected behaviour.
 5. Implement the minimum code to make the tests pass.
 6. Refactor if needed.
@@ -98,7 +100,7 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
     - `@docs/PRODUCT_SPEC.md` — functionality added, removed, or changed
     - `@docs/ARCHITECTURE.md` — code structure or dependencies changed
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
-10. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly (requires user approval per the Versioning section above). Do not touch the build number — CI manages it.
+10. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
 11. Commit all changes with a descriptive message.
 12. Push to the remote, launch the app on both platforms, and open a PR — all in parallel:
     - Push the branch to the remote.
@@ -115,8 +117,11 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
       - If neither agent exists, request a review from the user directly.
     - Inform the user of the PR URL and ask them to confirm the app looks correct on both platforms.
 15. Remind the user to compact the context after each commit to keep the conversation lean.
-16. When the user approves the PR:
-    - Invoke the `product-owner` agent: `Use the product-owner agent to close the approved PR's Linear issues, regenerate BACKLOG.md and CHANGELOG.md, and merge the PR`.
+16. When the user approves the PR, invoke the `product-owner` agent **before merging**:
+    ```
+    Use the product-owner agent to prepare PR #<number> for merge: close the Linear issues, add a CHANGELOG entry, regenerate BACKLOG.md (clear the In Progress marker), bump pubspec.yaml version, commit everything onto the feature branch, push, then merge the PR.
+    ```
+    The housekeeping commits land on the feature branch so the squash merge captures them. No separate approval is needed for the version bump.
 17. Clear the context after the PR with the changes is merged.
 
 ## Experiments
