@@ -20,6 +20,7 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | @docs/CHANGELOG.md | Released version history |
 | @docs/VERSIONING.md | Version numbering rules and CI/CD pipeline |
 | @docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
+| @docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, etc.) — not committed |
 | .claude/agents/code-reviewer.md | PR review agent — invoked automatically in workflow step 11 |
 | .claude/agents/product-owner.md | Product Owner agent — invoked at session start, for analytics planning, and after PR merge |
@@ -117,3 +118,13 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
 16. When the user approves the PR:
     - Invoke the `product-owner` agent: `Use the product-owner agent to close the approved PR's Linear issues, regenerate BACKLOG.md and CHANGELOG.md, and merge the PR`.
 17. Clear the context after the PR with the changes is merged.
+
+## Experiments
+
+Product experiments are tracked in `docs/experiments/`. The registry README (`docs/experiments/README.md`) contains the index table; each individual experiment has its own file named `EXP-NNN-<short-name>.md` following `docs/experiments/TEMPLATE.md`.
+
+When an experiment concludes (status changes to `won`, `lost`, or `abandoned`):
+1. Update the experiment file with the final decision and learnings.
+2. Update the index row in `docs/experiments/README.md` with the primary metric result and decision date.
+
+The registry must be kept up to date so experiment outcomes are never lost.

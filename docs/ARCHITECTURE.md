@@ -4,6 +4,8 @@ Vertical-slice architecture where each slice is a feature from @docs/PRODUCT_SPE
 
 Cross-cutting infrastructure (analytics, crashlytics, remote config) lives under `lib/infrastructure/`. Pure domain models and repository interfaces shared across features live under `lib/domain/`.
 
+Product experiments (hypothesis, metrics, decisions) are tracked in `docs/experiments/` — see `docs/experiments/README.md` for the index and `docs/experiments/TEMPLATE.md` for the per-experiment format.
+
 ## Directory structure
 
 ```
