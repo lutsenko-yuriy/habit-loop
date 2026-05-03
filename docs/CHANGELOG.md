@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.13.0] — 2026-05-03 (PR #43 merged)
+
+### Changed — Logging infrastructure and deepened Crashlytics instrumentation (HAB-47)
+
+- `talker_flutter`-based `LogService` abstraction introduced in `lib/infrastructure/logging/`: `TalkerLogService` (in-app overlay in debug mode), `NoopLogService` (for tests), and a Riverpod `logServiceProvider`
+- `CrashlyticsService` extended with `setCustomKey(String key, Object value)` — implemented in `FirebaseCrashlyticsService`, `NoopCrashlyticsService`, and `FirebaseCrashlyticsClientAdapter`
+- `main.dart` wired to instantiate Talker, override `logServiceProvider` in debug builds, and set `locale` and `app_session_start_time` custom Crashlytics keys on startup
+- Breadcrumb `crashlyticsService.log()` calls added in `DashboardViewModel`, `PactCreationViewModel`, `PactDetailViewModel`, and `ShowupDetailViewModel` on load and user actions; `recordError` added in catch blocks for non-fatal exception capture
+- PII rules enforced: user-entered text (habit names, notes, stop reasons) logged only as `field.length=N`; IDs, timestamps, counts, and enum values logged freely
+- 497 tests pass, analyzer clean
+
+---
+
 ## [0.12.0] — 2026-05-01 (PR #41 merged)
 
 ### Changed — DDD-style layered architecture refactor (HAB-45)
