@@ -4,7 +4,25 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.13.0] — 2026-05-03 (PR #43 merged)
+## [0.14.0] — 2026-05-03 (PR #44)
+
+### Changed — Single-ticket workflow, pre-merge housekeeping, CI version-tag fix
+
+- `AGENTS.md`: only one ticket may be in progress at a time; `docs/BACKLOG.md` `## In Progress` section signals the active ticket; step 3 marks the ticket there when the branch is created; step 16 revised — product-owner commits CHANGELOG + BACKLOG + pubspec bump onto the feature branch *before* merge so all housekeeping lands in one squash commit; version bump no longer requires user approval
+- `docs/BACKLOG.md`: `## In Progress` section added at the top; HAB-47 and HAB-49 removed from Unscheduled (merged)
+- `.github/workflows/ci.yml` `version-tag` job: `git pull --rebase` moved to *before* the `sed`/commit instead of after — eliminates the rebase conflict when a prior build-number bump landed on main while the job was waiting for distribute steps to finish
+
+---
+
+## [0.13.0] — 2026-05-03 (PR #42 + PR #43)
+
+### Added — Experiment registry and experimentation stack documentation (HAB-49)
+
+- `docs/experiments/README.md` added: index table of all experiments (empty to start), status definitions (`running`, `won`, `lost`, `abandoned`), and a step-by-step "Starting an experiment" protocol with ID numbering convention
+- `docs/experiments/TEMPLATE.md` added: per-experiment file template covering hypothesis, setup, primary and guardrail metrics, audience, ramp plan, stop rule, decision, and learnings; status field defaults to `running`
+- `docs/ARCHITECTURE.md` updated with a brief mention of `docs/experiments/` as the experiment registry location
+- `AGENTS.md` updated: documentation table entry for the registry; new Experiments section describing how agents should update the registry when an experiment concludes; clarification that Firebase A/B Testing is console-only (no extra SDK needed)
+- Default experimentation stack defined: Firebase Remote Config + Firebase A/B Testing for the near term, with explicit criteria for when to evaluate dedicated tools (Statsig, LaunchDarkly, or PostHog)
 
 ### Changed — Logging infrastructure and deepened Crashlytics instrumentation (HAB-47)
 
