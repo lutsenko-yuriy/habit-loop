@@ -119,7 +119,7 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
 15. Remind the user to compact the context after each commit to keep the conversation lean.
 16. When the user approves the PR, invoke the `product-owner` agent **before merging**:
     ```
-    Use the product-owner agent to prepare PR #<number> for merge: close the Linear issues, add a CHANGELOG entry, regenerate BACKLOG.md (clear the In Progress marker), bump pubspec.yaml version, commit everything onto the feature branch, push, then merge the PR.
+    Use the product-owner agent to prepare PR #<number> for merge: close the Linear issues, add a CHANGELOG entry, regenerate BACKLOG.md (restore the In Progress section to "_(nothing in progress)_" and remove the ticket from its milestone's remaining-work list), bump pubspec.yaml version, commit everything onto the feature branch, push, then merge the PR.
     ```
     The housekeeping commits land on the feature branch so the squash merge captures them. No separate approval is needed for the version bump.
 17. Clear the context after the PR with the changes is merged.

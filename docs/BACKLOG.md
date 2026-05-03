@@ -1,7 +1,8 @@
 # Backlog
 
 Known issues and planned work that has not yet been released.
-This file is generated from Linear — do not edit by hand. Source of truth: [Habit Loop project on Linear](https://linear.app/iurii-lutsenkos-workspace/project/habit-loop-flutter-app-created-with-assistance-of-claude-bf8b51a86175).
+Most of this file is generated from Linear — do not edit the milestone and unscheduled sections by hand. Source of truth: [Habit Loop project on Linear](https://linear.app/iurii-lutsenkos-workspace/project/habit-loop-flutter-app-created-with-assistance-of-claude-bf8b51a86175).
+The `## In Progress` section at the top is the one exception — it is maintained manually by agents as part of the single-ticket-in-progress workflow.
 
 ---
 
