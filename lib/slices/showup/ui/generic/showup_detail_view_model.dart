@@ -4,6 +4,7 @@ import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
@@ -66,6 +67,11 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       clearMarkError: true,
       clearNoteError: true,
     );
+
+    // Log screen breadcrumb for production diagnostics.
+    // PII rule: only showup ID — no habit name or note content.
+    await ref.read(crashlyticsServiceProvider).log('screen: showup_detail(id=$arg)');
+
     try {
       final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
       final pactRepo = ref.read(showupDetailPactRepositoryProvider);
@@ -138,6 +144,12 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
 
   Future<void> _updateStatus(ShowupStatus newStatus) async {
     state = state.copyWith(isSaving: true, clearMarkError: true);
+
+    // Log action breadcrumb for production diagnostics.
+    // PII rule: only showup ID and status enum — no habit name or note.
+    final actionName = newStatus == ShowupStatus.done ? 'mark_done' : 'mark_failed';
+    await ref.read(crashlyticsServiceProvider).log('action: $actionName(showupId=$arg)');
+
     try {
       final updatedShowup = await PactStatsService(
         pactRepository: ref.read(showupDetailPactRepositoryProvider),

@@ -1,9 +1,12 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
@@ -107,6 +110,16 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     if (!state.canAdvanceFromStep) return;
     final nextStep = state.currentStep.next;
     if (nextStep == null) return;
+
+    // Log step transition breadcrumb for production diagnostics.
+    // Fire-and-forget: CrashlyticsService is no-throw, no await needed here.
+    // PII rule: only step names — no user-entered text.
+    unawaited(
+      ref.read(crashlyticsServiceProvider).log(
+            'pact_creation: step ${state.currentStep.name} -> ${nextStep.name}',
+          ),
+    );
+
     // Default showup duration to 10 min when entering the showup duration step.
     // CRITICAL: both builder and currentStep updates are done in a single
     // state = assignment to preserve atomicity — no intermediate state is emitted.
@@ -198,8 +211,13 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
         showups: showups,
       );
 
-      // Both pact and showups were persisted successfully — fire analytics.
-      // AnalyticsService is no-throw; no wrapping try/catch needed.
+      // Both pact and showups were persisted successfully — log breadcrumb and
+      // fire analytics. CrashlyticsService and AnalyticsService are no-throw.
+      // PII rule: log only schedule type and counts — no habit name.
+      await ref.read(crashlyticsServiceProvider).log(
+            'pact_created: scheduleType=${_scheduleTypeName(pactWithStats.schedule)}'
+            ' showupsExpected=$totalShowups',
+          );
       await ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
             scheduleType: _scheduleTypeName(pactWithStats.schedule),
             durationDays: pactWithStats.endDate.difference(pactWithStats.startDate).inDays + 1,

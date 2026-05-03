@@ -43,4 +43,9 @@ final class FirebaseCrashlyticsClientAdapter implements FirebaseCrashlyticsClien
   Future<void> setUserIdentifier(String identifier) {
     return _firebase.setUserIdentifier(identifier);
   }
+
+  @override
+  Future<void> setCustomKey(String key, Object value) {
+    return _firebase.setCustomKey(key, value);
+  }
 }

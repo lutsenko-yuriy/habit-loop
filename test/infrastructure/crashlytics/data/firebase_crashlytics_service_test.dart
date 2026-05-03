@@ -47,6 +47,9 @@ class FakeFirebaseCrashlyticsClient implements FirebaseCrashlyticsClient {
   Future<void> setUserIdentifier(String identifier) async {
     userIdentifiers.add(identifier);
   }
+
+  @override
+  Future<void> setCustomKey(String key, Object value) async {}
 }
 
 class _ThrowingFirebaseCrashlyticsClient implements FirebaseCrashlyticsClient {
@@ -75,6 +78,11 @@ class _ThrowingFirebaseCrashlyticsClient implements FirebaseCrashlyticsClient {
 
   @override
   Future<void> setUserIdentifier(String identifier) async {
+    throw Exception('Firebase Crashlytics error');
+  }
+
+  @override
+  Future<void> setCustomKey(String key, Object value) async {
     throw Exception('Firebase Crashlytics error');
   }
 }

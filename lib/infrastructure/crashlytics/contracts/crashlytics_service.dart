@@ -43,4 +43,18 @@ abstract interface class CrashlyticsService {
   ///
   /// Never throws — implementations swallow failures silently.
   Future<void> setUserIdentifier(String identifier);
+
+  /// Sets a custom key-value pair on the current Crashlytics session.
+  ///
+  /// Use this to attach runtime context that helps filter and group crashes:
+  ///   - `active_pacts_count` (int) — set on dashboard load
+  ///   - `current_screen` (String) — set on every navigation
+  ///   - `last_pact_schedule_type` (String) — set after pact creation
+  ///   - `locale` (String) — set at app start
+  ///
+  /// **PII rule:** NEVER pass user-entered text (habit names, notes, stop
+  /// reasons) as a value. Only IDs, counts, enum strings, and timestamps are safe.
+  ///
+  /// Never throws — implementations swallow failures silently.
+  Future<void> setCustomKey(String key, Object value);
 }

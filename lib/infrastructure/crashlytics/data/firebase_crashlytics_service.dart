@@ -20,6 +20,8 @@ abstract interface class FirebaseCrashlyticsClient {
   Future<void> log(String message);
 
   Future<void> setUserIdentifier(String identifier);
+
+  Future<void> setCustomKey(String key, Object value);
 }
 
 /// [CrashlyticsService] implementation backed by Firebase Crashlytics.
@@ -74,6 +76,15 @@ final class FirebaseCrashlyticsService implements CrashlyticsService {
   Future<void> setUserIdentifier(String identifier) async {
     try {
       await _client.setUserIdentifier(identifier);
+    } catch (_) {
+      // Crashlytics failures must never surface to the user.
+    }
+  }
+
+  @override
+  Future<void> setCustomKey(String key, Object value) async {
+    try {
+      await _client.setCustomKey(key, value);
     } catch (_) {
       // Crashlytics failures must never surface to the user.
     }

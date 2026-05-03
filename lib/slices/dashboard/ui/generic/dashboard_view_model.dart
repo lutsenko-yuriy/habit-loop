@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
 
@@ -36,11 +37,20 @@ class DashboardViewModel extends Notifier<DashboardState> {
     final todayNorm = DateTime(today.year, today.month, today.day);
     final pactRepo = ref.read(pactRepositoryProvider);
     final showupRepo = ref.read(showupRepositoryProvider);
+    final crashlytics = ref.read(crashlyticsServiceProvider);
+
+    // Log screen breadcrumb for production diagnostics.
+    // PII rule: no user-entered text — only screen name.
+    await crashlytics.log('screen: dashboard');
 
     final allPacts = await pactRepo.getAllPacts();
     final activePacts = allPacts.where((p) => p.status == PactStatus.active).toList();
     final pactNames = {for (final p in allPacts) p.id: p.habitName};
     final activePactIds = {for (final p in activePacts) p.id};
+
+    // Set Crashlytics custom key for active pact count so crashes can be
+    // filtered by user context. PII rule: count is safe — no habit names.
+    await crashlytics.setCustomKey('active_pacts_count', activePacts.length);
 
     // -----------------------------------------------------------------------
     // Lazy generation: ensure showups exist for each active pact in the
