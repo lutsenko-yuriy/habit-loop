@@ -123,6 +123,12 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
 
 Product experiments are tracked in `docs/experiments/`. The registry README (`docs/experiments/README.md`) contains the index table; each individual experiment has its own file named `EXP-NNN-<short-name>.md` following `docs/experiments/TEMPLATE.md`.
 
+When starting an experiment:
+1. Pick the next sequential `EXP-NNN` ID from the index table in `docs/experiments/README.md`.
+2. Copy `docs/experiments/TEMPLATE.md` to `docs/experiments/EXP-NNN-<short-name>.md`.
+3. Fill in the hypothesis, setup, and metrics sections. Leave Decision and Learnings blank.
+4. Add a row to the index table with status `running`.
+
 When an experiment concludes (status changes to `won`, `lost`, or `abandoned`):
 1. Update the experiment file with the final decision and learnings.
 2. Update the index row in `docs/experiments/README.md` with the primary metric result and decision date.
