@@ -28,7 +28,10 @@ abstract final class ShowupMapper {
 
   /// Reconstructs a [Showup] from a SQLite row map.
   ///
-  /// `scheduled_at` is restored as a UTC [DateTime].
+  /// `scheduled_at` is restored as a **local-time** [DateTime], matching the
+  /// local-time values produced by [ShowupGenerator._combine]. Using `isUtc: true`
+  /// here would silently shift times in non-UTC timezones (e.g. UTC+2 would
+  /// reconstruct 8:00 AM as 6:00 AM).
   ///
   /// Throws [ArgumentError] if the `status` column contains an unknown value.
   static Showup fromRow(Map<String, dynamic> row) {
@@ -37,7 +40,6 @@ abstract final class ShowupMapper {
       pactId: row['pact_id'] as String,
       scheduledAt: DateTime.fromMillisecondsSinceEpoch(
         (row['scheduled_at'] as num).toInt(),
-        isUtc: true,
       ),
       duration: Duration(microseconds: (row['duration'] as num).toInt()),
       status: _decodeStatus(row['status'] as String),

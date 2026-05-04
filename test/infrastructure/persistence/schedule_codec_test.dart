@@ -138,6 +138,30 @@ void main() {
           throwsFormatException,
         );
       });
+
+      test('throws FormatException when JSON root is a string, not an object', () {
+        // Regression: jsonDecode('"daily"') succeeds but returns a String, not a
+        // Map. Without a type guard the subsequent `as Map<String, dynamic>` cast
+        // would throw TypeError instead of FormatException, masking the real error.
+        expect(
+          () => ScheduleCodec.decode('"daily"'),
+          throwsFormatException,
+        );
+      });
+
+      test('throws FormatException when JSON root is a number', () {
+        expect(
+          () => ScheduleCodec.decode('42'),
+          throwsFormatException,
+        );
+      });
+
+      test('throws FormatException when JSON root is an array', () {
+        expect(
+          () => ScheduleCodec.decode('[]'),
+          throwsFormatException,
+        );
+      });
     });
   });
 }

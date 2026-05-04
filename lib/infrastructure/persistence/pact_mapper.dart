@@ -31,6 +31,16 @@ abstract final class PactMapper {
   ///
   /// `actual_end_date` is initialised to `scheduled_end_date` here; the
   /// stop-pact transaction overwrites it to the actual stop date.
+  ///
+  /// **`scheduled_end_date` is immutable after initial insert.**
+  /// It must never be updated via this method in a subsequent `UPDATE` statement.
+  /// The stop-pact transaction (WU3) must update `actual_end_date` directly:
+  /// ```sql
+  /// UPDATE pacts SET actual_end_date = ? WHERE id = ?
+  /// ```
+  /// Going through `PactMapper.toRow` in the stop-pact path would overwrite
+  /// `scheduled_end_date` with the stop date, breaking the invariant that
+  /// `scheduled_end_date` always holds the original planned end date.
   static Map<String, dynamic> toRow(Pact pact) {
     return {
       'id': pact.id,
@@ -53,6 +63,12 @@ abstract final class PactMapper {
   /// Always returns a [Pact] with `stats: null` — stats are computed from SQL
   /// aggregates, not stored in a column.
   ///
+  /// All [DateTime] fields are reconstructed as **local-time** values, matching
+  /// the local-time [DateTime] objects produced by [PactBuilder] (which
+  /// normalises `startDate` to local midnight). Using `isUtc: true` would silently
+  /// shift timestamps in non-UTC timezones, causing [ShowupGenerator]'s date
+  /// iteration to produce off-by-timezone-offset boundary errors.
+  ///
   /// `total_showups` may be `null` for legacy rows or rows written before the
   /// first `savePactWithShowups()` call; this is handled gracefully.
   ///
@@ -63,11 +79,9 @@ abstract final class PactMapper {
       habitName: row['habit_name'] as String,
       startDate: DateTime.fromMillisecondsSinceEpoch(
         (row['start_date'] as num).toInt(),
-        isUtc: true,
       ),
       endDate: DateTime.fromMillisecondsSinceEpoch(
         (row['scheduled_end_date'] as num).toInt(),
-        isUtc: true,
       ),
       showupDuration: Duration(microseconds: (row['showup_duration'] as num).toInt()),
       schedule: ScheduleCodec.decode(row['schedule'] as String),
@@ -78,7 +92,6 @@ abstract final class PactMapper {
       createdAt: row['created_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(
               (row['created_at'] as num).toInt(),
-              isUtc: true,
             )
           : null,
       // total_showups is read-acknowledged but not propagated into the domain

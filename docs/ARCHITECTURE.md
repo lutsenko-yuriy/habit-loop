@@ -56,6 +56,10 @@ lib/
 │   │   │   └── noop_log_service.dart                   # default no-op
 │   │   └── providers/
 │   │       └── log_service_providers.dart  # logServiceProvider (Provider<LogService>); overridden with TalkerLogService in non-release builds
+│   ├── persistence/
+│   │   ├── schedule_codec.dart        # ScheduleCodec — encodes/decodes ShowupSchedule to/from JSON string (schedule TEXT column)
+│   │   ├── pact_mapper.dart           # PactMapper — maps Pact domain objects to/from SQLite row maps
+│   │   └── showup_mapper.dart         # ShowupMapper — maps Showup domain objects to/from SQLite row maps
 │   └── remote_config/
 │       ├── contracts/
 │       │   ├── remote_config_service.dart          # abstract RemoteConfigService interface (no-throw contract)
@@ -107,6 +111,10 @@ test/
 │   │   │   ├── talker_log_service_test.dart
 │   │   │   └── noop_log_service_test.dart
 │   │   └── fake_log_service.dart              # Shared fake for test overrides
+│   ├── persistence/
+│   │   ├── schedule_codec_test.dart   # ScheduleCodec encode/decode round-trips, type-guard FormatException cases
+│   │   ├── pact_mapper_test.dart      # PactMapper toRow/fromRow/round-trip, including local-time regression tests
+│   │   └── showup_mapper_test.dart    # ShowupMapper toRow/fromRow/round-trip, including local-time regression tests
 │   └── remote_config/
 │       ├── data/
 │       │   ├── firebase_remote_config_service_test.dart
@@ -159,6 +167,8 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 **Crashlytics:** `lib/infrastructure/crashlytics/` wraps crash reporting. Activation is gated on `kReleaseMode` in `main.dart`, so debug and test runs fall back to `NoopCrashlyticsService`. The `CrashlyticsService` interface has a strict no-throw contract: implementations must swallow any exceptions raised by the underlying SDK so that crash reporting failures can never crash the app themselves. The interface exposes `log()` for breadcrumbs and `setCustomKey()` for runtime context (active pact count, current screen, locale). The raw `FirebaseCrashlytics` SDK is referenced in `main.dart` in two ways: via `FirebaseCrashlyticsClientAdapter` for the Riverpod provider override, and directly in the `FlutterError.onError` / `PlatformDispatcher.instance.onError` global error handlers (which must be installed before `runApp`, before the Riverpod container exists). The rest of the app depends only on the abstract interface.
 
 **Logging:** `lib/infrastructure/logging/` provides structured local logging via `talker_flutter`. The `LogService` interface exposes `debug()`, `info()`, `warning()`, `error()`, and `logLocal()` (for PII-safe local-only detail). `TalkerLogService` is active in debug and profile builds only; `NoopLogService` is the default in release and tests. The in-app log overlay is gated on `kDebugMode`. **PII rule:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
+
+**Persistence:** `lib/infrastructure/persistence/` contains the codec and mapper utilities used by the sqflite repository implementations (WU2). All classes are `abstract final` with only `static` methods — they have no mutable state and carry no sqflite dependency themselves (sqflite is introduced by the concrete repository in `slices/*/data/`). `ScheduleCodec` encodes and decodes `ShowupSchedule` discriminated unions to and from a JSON string stored in the `schedule TEXT` column; its `decode` method applies a type guard before the `Map<String, dynamic>` cast so that syntactically valid but non-object JSON values produce a `FormatException` rather than an uncaught `TypeError`. `PactMapper` and `ShowupMapper` convert domain objects to column maps (for `INSERT`/`UPDATE`) and reconstruct them from row maps (for `SELECT`). All `DateTime` fields are stored as epoch milliseconds and reconstructed as **local-time** values — matching the local-time `DateTime` objects produced by `PactBuilder` and `ShowupGenerator` — so that timezones are handled correctly throughout the app.
 
 **Remote Config:** `lib/infrastructure/remote_config/` wraps feature flag resolution. The `RemoteConfigService` interface has a strict no-throw contract: all implementations must swallow exceptions internally so a Remote Config outage can never crash the app. `FirebaseRemoteConfigClient` (defined in `data/`) is an intermediate adapter interface whose methods return only plain Dart primitives -- no Firebase SDK types leak through it, so test fakes can implement it without importing `firebase_remote_config`. The raw `FirebaseRemoteConfig` SDK is confined to `FirebaseRemoteConfigClientAdapter`, which is only instantiated in `main.dart`. Activation is gated on `kReleaseMode`: debug and profile builds use `NoopRemoteConfigService`, which returns in-code defaults from `RemoteConfigDefaults`. In debug and profile builds `!kReleaseMode` controls the fetch interval to `Duration.zero` so QA can verify flag changes without the 12-hour production throttle.
 

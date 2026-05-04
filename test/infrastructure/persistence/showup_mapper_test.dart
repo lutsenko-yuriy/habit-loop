@@ -4,7 +4,10 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/persistence/showup_mapper.dart';
 
 void main() {
-  final scheduledAt = DateTime.utc(2026, 3, 15, 8, 0, 0);
+  // Use local-time DateTime to match ShowupGenerator output. The mapper stores
+  // epoch milliseconds and must reconstruct local-time values on read, so test
+  // fixtures must also use local time to produce correct round-trip assertions.
+  final scheduledAt = DateTime(2026, 3, 15, 8, 0, 0);
   const duration = Duration(minutes: 30);
 
   Showup baseShowup({ShowupStatus status = ShowupStatus.pending, String? note}) => Showup(
@@ -110,9 +113,9 @@ void main() {
         expect(() => ShowupMapper.fromRow(row), throwsArgumentError);
       });
 
-      test('reconstructs scheduledAt as UTC DateTime', () {
+      test('reconstructs scheduledAt as local-time DateTime (not UTC)', () {
         final showup = ShowupMapper.fromRow(baseRow());
-        expect(showup.scheduledAt.isUtc, isTrue);
+        expect(showup.scheduledAt.isUtc, isFalse);
       });
 
       test('reconstructs duration from microseconds correctly', () {
@@ -123,6 +126,22 @@ void main() {
     });
 
     group('round-trip', () {
+      test('local-time scheduledAt preserves hour after round-trip', () {
+        // Regression: fromRow must not use isUtc: true; a UTC+N user would see
+        // the wrong hour if the reconstructed DateTime were UTC instead of local.
+        final localScheduledAt = DateTime(2026, 6, 15, 8, 0); // local time, 8:00 AM
+        final showup = Showup(
+          id: 'showup-local',
+          pactId: 'pact-local',
+          scheduledAt: localScheduledAt,
+          duration: const Duration(minutes: 30),
+          status: ShowupStatus.pending,
+        );
+        final restored = ShowupMapper.fromRow(ShowupMapper.toRow(showup));
+        expect(restored.scheduledAt.hour, equals(localScheduledAt.hour));
+        expect(restored.scheduledAt.isUtc, isFalse);
+      });
+
       test('pending showup without note round-trips correctly', () {
         final original = baseShowup();
         final restored = ShowupMapper.fromRow(ShowupMapper.toRow(original));

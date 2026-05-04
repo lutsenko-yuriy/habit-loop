@@ -6,9 +6,12 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/infrastructure/persistence/pact_mapper.dart';
 
 void main() {
-  final startDate = DateTime.utc(2026, 1, 1);
-  final endDate = DateTime.utc(2026, 7, 1);
-  final createdAt = DateTime.utc(2026, 1, 1, 10, 0, 0);
+  // Use local-time DateTime to match PactBuilder output. The mapper stores epoch
+  // milliseconds and must reconstruct local-time values on read, so test fixtures
+  // must also use local time to produce correct round-trip assertions.
+  final startDate = DateTime(2026, 1, 1);
+  final endDate = DateTime(2026, 7, 1);
+  final createdAt = DateTime(2026, 1, 1, 10, 0, 0);
   const schedule = DailySchedule(timeOfDay: Duration(hours: 8));
   const showupDuration = Duration(minutes: 30);
   const reminderOffset = Duration(minutes: 15);
@@ -214,9 +217,46 @@ void main() {
         final row = baseRow()..['status'] = 'unknown';
         expect(() => PactMapper.fromRow(row), throwsArgumentError);
       });
+
+      test('reconstructs startDate as local-time DateTime (not UTC)', () {
+        // Regression: fromRow must not use isUtc: true; a UTC+N user would get
+        // midnight UTC instead of midnight local, causing date boundary errors
+        // in ShowupGenerator's date iteration.
+        final localStart = DateTime(2026, 3, 1); // local midnight
+        final row = baseRow()..['start_date'] = localStart.millisecondsSinceEpoch;
+        final pact = PactMapper.fromRow(row);
+        expect(pact.startDate.isUtc, isFalse);
+        expect(pact.startDate.hour, equals(localStart.hour));
+      });
     });
 
     group('round-trip', () {
+      test('local-time dates preserve hour after round-trip', () {
+        // Regression: all DateTime fields in fromRow must use local time.
+        // PactBuilder normalises startDate to local midnight; after a round-trip
+        // the value must still be local midnight, not UTC midnight.
+        final localStart = DateTime(2026, 6, 1); // local midnight
+        final localEnd = DateTime(2026, 12, 1); // local midnight
+        final localCreatedAt = DateTime(2026, 6, 1, 9, 30); // local 9:30 AM
+        final pact = Pact(
+          id: 'pact-local-rt',
+          habitName: 'Jog',
+          startDate: localStart,
+          endDate: localEnd,
+          showupDuration: const Duration(minutes: 30),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+          createdAt: localCreatedAt,
+        );
+        final restored = PactMapper.fromRow(PactMapper.toRow(pact));
+        expect(restored.startDate.isUtc, isFalse);
+        expect(restored.startDate.hour, equals(localStart.hour));
+        expect(restored.endDate.isUtc, isFalse);
+        expect(restored.endDate.hour, equals(localEnd.hour));
+        expect(restored.createdAt!.isUtc, isFalse);
+        expect(restored.createdAt!.hour, equals(localCreatedAt.hour));
+      });
+
       test('full pact round-trips correctly (ignoring stats)', () {
         final original = Pact(
           id: 'pact-rt',

@@ -24,11 +24,17 @@ abstract final class ScheduleCodec {
 
   /// Decodes [json] back into a [ShowupSchedule].
   ///
-  /// Throws [FormatException] if [json] is not valid JSON.
+  /// Throws [FormatException] if [json] is not valid JSON, or if the JSON root
+  /// is not an object (e.g. a string, number, or array). The type guard prevents
+  /// a silent [TypeError] from the `as Map<String, dynamic>` cast when the DB
+  /// column contains syntactically valid but non-object JSON.
   /// Throws [ArgumentError] if the `type` discriminator is unknown.
   static ShowupSchedule decode(String json) {
-    final map = jsonDecode(json) as Map<String, dynamic>;
-    return _fromJson(map);
+    final raw = jsonDecode(json);
+    if (raw is! Map<String, dynamic>) {
+      throw FormatException('Expected a JSON object, got ${raw.runtimeType}: $json');
+    }
+    return _fromJson(raw);
   }
 
   // ---------------------------------------------------------------------------
