@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.15.0] — 2026-05-03 (PR #45 merged)
+
+### Added — SQLite mappers and codec (HAB-11 Work Unit 1)
+
+- `lib/infrastructure/persistence/schedule_codec.dart` — JSON codec for `ShowupSchedule` supporting all three schedule types (`daily`, `weekly`, `monthly`); encodes to a plain `Map<String, dynamic>` suitable for SQLite text columns
+- `lib/infrastructure/persistence/pact_mapper.dart` — bidirectional mapper between `Pact` domain model and SQLite row (`Map<String, dynamic>`); handles all nullable fields and delegates schedule serialisation to `ScheduleCodec`
+- `lib/infrastructure/persistence/showup_mapper.dart` — bidirectional mapper between `Showup` domain model and SQLite row; handles `ShowupStatus` and `Duration` round-trips
+- `docs/ARCHITECTURE.md` updated with `persistence/` directory tree entry and Persistence paragraph describing the mapper/codec layer
+- `AGENTS.md` step 3 updated: branch must be created from `origin/main`
+- 561 tests passing, analyzer clean
+
+---
+
 ## [0.14.0] — 2026-05-03 (PR #44)
 
 ### Changed — Single-ticket workflow, pre-merge housekeeping, CI version-tag fix
