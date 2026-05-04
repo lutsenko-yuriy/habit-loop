@@ -86,17 +86,16 @@ class SqliteShowupRepository implements ShowupRepository {
   /// Persists multiple showups, skipping any whose ids already exist.
   ///
   /// The entire batch is wrapped in a transaction so either all new showups are
-  /// written or none are (atomic).
+  /// written or none are (atomic). Accumulators are declared *inside* the
+  /// transaction closure so that sqflite transaction retries (on SQLITE_BUSY)
+  /// do not produce duplicate entries in the result.
   @override
   Future<SaveShowupsResult> saveShowups(List<Showup> showups) async {
     if (showups.isEmpty) {
       return SaveShowupsResult(savedCount: 0, skippedIds: []);
     }
 
-    final skippedIds = <String>[];
-    var savedCount = 0;
-
-    await _db.transaction((txn) async {
+    final (savedCount, skippedIds) = await _db.transaction<(int, List<String>)>((txn) async {
       // Collect existing ids in one query to minimise round-trips.
       final ids = showups.map((s) => s.id).toList();
       final placeholders = List.filled(ids.length, '?').join(', ');
@@ -106,14 +105,17 @@ class SqliteShowupRepository implements ShowupRepository {
       );
       final existingIds = existingRows.map((r) => r['id'] as String).toSet();
 
+      final localSkipped = <String>[];
+      var localSaved = 0;
       for (final showup in showups) {
         if (existingIds.contains(showup.id)) {
-          skippedIds.add(showup.id);
+          localSkipped.add(showup.id);
         } else {
           await txn.insert(_table, ShowupMapper.toRow(showup));
-          savedCount++;
+          localSaved++;
         }
       }
+      return (localSaved, localSkipped);
     });
 
     return SaveShowupsResult(savedCount: savedCount, skippedIds: skippedIds);

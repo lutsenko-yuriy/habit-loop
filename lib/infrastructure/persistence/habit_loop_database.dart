@@ -16,25 +16,36 @@ class HabitLoopDatabase {
   /// The production singleton. Do not use in tests.
   static final HabitLoopDatabase instance = HabitLoopDatabase._();
 
-  Database? _db;
+  // Stores the in-flight or resolved Future<Database> rather than the resolved
+  // Database itself.  The ??= assignment is synchronous (no await before it),
+  // so concurrent callers all receive the *same* Future and only one _open()
+  // call is ever initiated — eliminating the double-open race.
+  Future<Database>? _dbFuture;
 
   /// Returns the open [Database], opening it on first access.
-  Future<Database> get database async {
-    _db ??= await _open();
-    return _db!;
-  }
+  ///
+  /// Multiple concurrent callers are safe: the `??=` assignment is synchronous
+  /// so only one [_open] call is ever scheduled, regardless of how many
+  /// `await database` calls race at cold-start.
+  Future<Database> get database => _dbFuture ??= _open();
 
   Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'habit_loop.db');
-    return openDatabase(path, version: 1, onCreate: runMigrations);
+    return openDatabase(
+      path,
+      version: 1,
+      onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+      onCreate: runMigrations,
+    );
   }
 
   /// Closes the underlying database connection.
   ///
   /// After calling this, the next access to [database] will reopen the file.
   Future<void> close() async {
-    await _db?.close();
-    _db = null;
+    final db = await _dbFuture;
+    await db?.close();
+    _dbFuture = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -90,7 +101,11 @@ class HabitLoopDatabase {
   static Future<Database> openForTesting() async {
     return databaseFactory.openDatabase(
       inMemoryDatabasePath,
-      options: OpenDatabaseOptions(version: 1, onCreate: runMigrations),
+      options: OpenDatabaseOptions(
+        version: 1,
+        onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+        onCreate: runMigrations,
+      ),
     );
   }
 }

@@ -86,6 +86,32 @@ abstract final class PactMapper {
     );
   }
 
+  /// Returns only the columns that may legitimately change after a pact is
+  /// created — for use by [SqlitePactRepository.updatePact].
+  ///
+  /// The following columns are intentionally **excluded** because they are
+  /// immutable after initial insert and must never be overwritten:
+  /// - `id`, `start_date`, `scheduled_end_date`, `showup_duration`, `schedule`,
+  ///   `created_at` — structural / historical facts
+  /// - `total_showups` — set by `savePactWithShowups()` (WU3); overwriting it
+  ///   here would null it out and break pact stats
+  ///
+  /// The following mutable columns ARE included:
+  /// - `habit_name` — user may rename (future feature)
+  /// - `status` — transitions active → stopped / completed
+  /// - `actual_end_date` — updated to the stop date when a pact is stopped
+  /// - `reminder_offset` — may be changed in settings (future feature)
+  /// - `stop_reason` — written when the user stops a pact
+  static Map<String, dynamic> toUpdateRow(Pact pact) {
+    return {
+      'habit_name': pact.habitName,
+      'status': _encodeStatus(pact.status),
+      'actual_end_date': pact.endDate.millisecondsSinceEpoch,
+      'reminder_offset': pact.reminderOffset?.inMicroseconds,
+      'stop_reason': pact.stopReason,
+    };
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------

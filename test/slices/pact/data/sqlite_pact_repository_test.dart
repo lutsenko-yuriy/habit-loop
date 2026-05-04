@@ -199,6 +199,35 @@ void main() {
         final all = await repository.getAllPacts();
         expect(all.first.status, equals(PactStatus.completed));
       });
+
+      test('updatePact does NOT overwrite scheduled_end_date', () async {
+        await repository.savePact(makePact());
+        // The pact object still has the same endDate — this simulates a stop-pact
+        // path that sets actualEndDate to today but should not clobber the planned end.
+        final updated = makePact(status: PactStatus.stopped, stopReason: 'Quitting');
+        await repository.updatePact(updated);
+
+        // Read the raw row to verify the immutable column is intact.
+        final rows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-1']);
+        expect(rows, hasLength(1));
+        expect(
+          rows.first['scheduled_end_date'],
+          equals(endDate.millisecondsSinceEpoch),
+          reason: 'scheduled_end_date must survive an updatePact call',
+        );
+      });
+
+      test('updatePact does NOT zero out a pre-existing total_showups value', () async {
+        await repository.savePact(makePact());
+        // Simulate WU3 writing total_showups after initial insert.
+        await db.rawUpdate('UPDATE pacts SET total_showups = 182 WHERE id = ?', ['pact-1']);
+
+        final updated = makePact(status: PactStatus.stopped, stopReason: 'Tired');
+        await repository.updatePact(updated);
+
+        final rows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-1']);
+        expect(rows.first['total_showups'], equals(182), reason: 'total_showups must not be nulled by updatePact');
+      });
     });
 
     // -------------------------------------------------------------------------

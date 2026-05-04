@@ -66,8 +66,15 @@ class SqlitePactRepository implements PactRepository {
     if (existing == null) {
       throw ArgumentError('Pact with id "${pact.id}" not found.');
     }
-    // Use INSERT OR REPLACE to atomically update the row.
-    await _db.insert(_table, PactMapper.toRow(pact), conflictAlgorithm: ConflictAlgorithm.replace);
+    // Use a targeted UPDATE so immutable columns (scheduled_end_date, total_showups,
+    // schedule, etc.) are never overwritten — see PactMapper.toUpdateRow for the
+    // exact set of mutable columns that are touched.
+    await _db.update(
+      _table,
+      PactMapper.toUpdateRow(pact),
+      where: 'id = ?',
+      whereArgs: [pact.id],
+    );
   }
 
   @override
