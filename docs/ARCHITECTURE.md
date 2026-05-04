@@ -57,6 +57,7 @@ lib/
 │   │   └── providers/
 │   │       └── log_service_providers.dart  # logServiceProvider (Provider<LogService>); overridden with TalkerLogService in non-release builds
 │   ├── persistence/
+│   │   ├── habit_loop_database.dart   # HabitLoopDatabase — owns the sqflite Database lifecycle and schema DDL (runMigrations); production singleton + @visibleForTesting openForTesting()
 │   │   ├── schedule_codec.dart        # ScheduleCodec — encodes/decodes ShowupSchedule to/from JSON string (schedule TEXT column)
 │   │   ├── pact_mapper.dart           # PactMapper — maps Pact domain objects to/from SQLite row maps
 │   │   └── showup_mapper.dart         # ShowupMapper — maps Showup domain objects to/from SQLite row maps
@@ -76,12 +77,12 @@ lib/
     │   └── ui/ (generic/, ios/, android/)
     ├── pact/                          # Pact creation wizard + pact detail screen
     │   ├── application/               # PactBuilder, PactCreationState, PactStatsService
-    │   ├── data/                      # InMemoryPactRepository
+    │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production)
     │   ├── analytics/                 # PactCreatedEvent, PactStoppedEvent
     │   └── ui/ (generic/, ios/, android/)
     ├── showup/                        # Showup detail, generation service
     │   ├── application/               # ShowupGenerationService
-    │   ├── data/                      # InMemoryShowupRepository
+    │   ├── data/                      # InMemoryShowupRepository (tests), SqliteShowupRepository (production)
     │   ├── analytics/                 # ShowupMarkedDoneEvent, ShowupMarkedFailedEvent, ShowupAutoFailedEvent
     │   └── ui/ (generic/, ios/, android/)
     └── reminder/                      # Notification scheduling (not yet implemented)
@@ -112,9 +113,10 @@ test/
 │   │   │   └── noop_log_service_test.dart
 │   │   └── fake_log_service.dart              # Shared fake for test overrides
 │   ├── persistence/
-│   │   ├── schedule_codec_test.dart   # ScheduleCodec encode/decode round-trips, type-guard FormatException cases
-│   │   ├── pact_mapper_test.dart      # PactMapper toRow/fromRow/round-trip, including local-time regression tests
-│   │   └── showup_mapper_test.dart    # ShowupMapper toRow/fromRow/round-trip, including local-time regression tests
+│   │   ├── habit_loop_database_test.dart  # schema creation, table/column/index existence checks
+│   │   ├── schedule_codec_test.dart       # ScheduleCodec encode/decode round-trips, type-guard FormatException cases
+│   │   ├── pact_mapper_test.dart          # PactMapper toRow/fromRow/round-trip, including local-time regression tests
+│   │   └── showup_mapper_test.dart        # ShowupMapper toRow/fromRow/round-trip, including local-time regression tests
 │   └── remote_config/
 │       ├── data/
 │       │   ├── firebase_remote_config_service_test.dart
@@ -122,8 +124,14 @@ test/
 │       └── fake_remote_config_service.dart  # Shared fake for test overrides
 └── slices/                            # Mirrors lib/slices/
     ├── dashboard/ (analytics/, ui/)
-    ├── pact/ (analytics/, application/, data/, ui/)
-    └── showup/ (analytics/, application/, data/, ui/)
+    ├── pact/
+    │   ├── analytics/, application/, ui/
+    │   └── data/
+    │       └── sqlite_pact_repository_test.dart   # SqlitePactRepository CRUD tests using sqflite_common_ffi in-memory db
+    └── showup/
+        ├── analytics/, application/, ui/
+        └── data/
+            └── sqlite_showup_repository_test.dart # SqliteShowupRepository CRUD + date-boundary tests using sqflite_common_ffi
 ```
 
 ## Layers
@@ -144,7 +152,9 @@ Orchestration logic that coordinates domain objects and repository calls. Lives 
 
 ### Data (`lib/slices/*/data/`)
 Storage and persistence. Implements repository interfaces from `lib/domain/`.
-- Currently: `InMemoryPactRepository`, `InMemoryShowupRepository` (sqflite implementations planned -- see @docs/BACKLOG.md)
+- `SqlitePactRepository` (`slices/pact/data/`) — production SQLite implementation of `PactRepository`; takes an injected `Database` from `HabitLoopDatabase`; uses `PactMapper` for row conversion.
+- `SqliteShowupRepository` (`slices/showup/data/`) — production SQLite implementation of `ShowupRepository`; takes an injected `Database`; uses `ShowupMapper` and `ShowupDateUtils` for date-range queries (all date filtering uses epoch milliseconds with local-time boundaries computed by `ShowupDateUtils.startOfDay`/`endOfDay`).
+- `InMemoryPactRepository`, `InMemoryShowupRepository` — retained for use in tests that do not need a real database (all existing slice tests inject these).
 
 ### UI (`lib/slices/*/ui/`)
 Platform-split presentation:
@@ -168,14 +178,15 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 
 **Logging:** `lib/infrastructure/logging/` provides structured local logging via `talker_flutter`. The `LogService` interface exposes `debug()`, `info()`, `warning()`, `error()`, and `logLocal()` (for PII-safe local-only detail). `TalkerLogService` is active in debug and profile builds only; `NoopLogService` is the default in release and tests. The in-app log overlay is gated on `kDebugMode`. **PII rule:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
 
-**Persistence:** `lib/infrastructure/persistence/` contains the codec and mapper utilities used by the sqflite repository implementations (WU2). All classes are `abstract final` with only `static` methods — they have no mutable state and carry no sqflite dependency themselves (sqflite is introduced by the concrete repository in `slices/*/data/`). `ScheduleCodec` encodes and decodes `ShowupSchedule` discriminated unions to and from a JSON string stored in the `schedule TEXT` column; its `decode` method applies a type guard before the `Map<String, dynamic>` cast so that syntactically valid but non-object JSON values produce a `FormatException` rather than an uncaught `TypeError`. `PactMapper` and `ShowupMapper` convert domain objects to column maps (for `INSERT`/`UPDATE`) and reconstruct them from row maps (for `SELECT`). All `DateTime` fields are stored as epoch milliseconds and reconstructed as **local-time** values — matching the local-time `DateTime` objects produced by `PactBuilder` and `ShowupGenerator` — so that timezones are handled correctly throughout the app.
+**Persistence:** `lib/infrastructure/persistence/` contains the database lifecycle manager and the codec/mapper utilities used by the SQLite repository implementations. `HabitLoopDatabase` owns the sqflite `Database` singleton for production use, exposes `HabitLoopDatabase.runMigrations` as a public static so tests can apply the v1 schema to an in-memory `databaseFactoryFfi` database without going through the file-backed singleton, and provides `@visibleForTesting openForTesting()` as a convenience wrapper. `ScheduleCodec`, `PactMapper`, and `ShowupMapper` are `abstract final` classes with only `static` methods — they carry no sqflite dependency themselves (sqflite is introduced by the concrete repositories in `slices/*/data/`). `ScheduleCodec` encodes and decodes `ShowupSchedule` discriminated unions to and from a JSON string stored in the `schedule TEXT` column; its `decode` method applies a type guard before the `Map<String, dynamic>` cast so that syntactically valid but non-object JSON values produce a `FormatException` rather than an uncaught `TypeError`. `PactMapper` and `ShowupMapper` convert domain objects to column maps (for `INSERT`/`UPDATE`) and reconstruct them from row maps (for `SELECT`). All `DateTime` fields are stored as epoch milliseconds and reconstructed as **local-time** values — matching the local-time `DateTime` objects produced by `PactBuilder` and `ShowupGenerator` — so that timezones are handled correctly throughout the app.
 
 **Remote Config:** `lib/infrastructure/remote_config/` wraps feature flag resolution. The `RemoteConfigService` interface has a strict no-throw contract: all implementations must swallow exceptions internally so a Remote Config outage can never crash the app. `FirebaseRemoteConfigClient` (defined in `data/`) is an intermediate adapter interface whose methods return only plain Dart primitives -- no Firebase SDK types leak through it, so test fakes can implement it without importing `firebase_remote_config`. The raw `FirebaseRemoteConfig` SDK is confined to `FirebaseRemoteConfigClientAdapter`, which is only instantiated in `main.dart`. Activation is gated on `kReleaseMode`: debug and profile builds use `NoopRemoteConfigService`, which returns in-code defaults from `RemoteConfigDefaults`. In debug and profile builds `!kReleaseMode` controls the fetch interval to `Duration.zero` so QA can verify flag changes without the 12-hour production throttle.
 
 ## Dependencies
 
 - [Riverpod](https://riverpod.dev/) — state management and dependency injection
-- [sqflite](https://pub.dev/packages/sqflite) — local storage (dependency declared, real implementations pending)
+- [sqflite](https://pub.dev/packages/sqflite) — local storage; `HabitLoopDatabase` manages the file-backed `Database` lifecycle; `SqlitePactRepository` and `SqliteShowupRepository` provide the production repository implementations
+- [sqflite_common_ffi](https://pub.dev/packages/sqflite_common_ffi) (dev) — enables in-memory SQLite for unit tests running on macOS/Linux without a device; used in `habit_loop_database_test.dart`, `sqlite_pact_repository_test.dart`, and `sqlite_showup_repository_test.dart`
 - [firebase_core](https://pub.dev/packages/firebase_core) — Firebase SDK bootstrap; `Firebase.initializeApp()` called in `main()` before `runApp`
 - [firebase_analytics](https://pub.dev/packages/firebase_analytics) — analytics / event tracking; wrapped by `AnalyticsService` in `lib/infrastructure/analytics/` and wired via `analyticsServiceProvider`. The raw `FirebaseAnalytics` SDK is only touched in `main.dart` through `FirebaseAnalyticsClientAdapter`; the rest of the app depends on the `AnalyticsService` interface
 - [firebase_crashlytics](https://pub.dev/packages/firebase_crashlytics) — crash reporting; wrapped by `CrashlyticsService` in `lib/infrastructure/crashlytics/` and provided via `crashlyticsServiceProvider`. `FlutterError.onError` and `PlatformDispatcher.instance.onError` are wired in `main.dart` under `kReleaseMode` only. The raw `FirebaseCrashlytics` SDK is referenced in `main.dart` via `FirebaseCrashlyticsClientAdapter` (for the provider override) and directly in the global error handlers (which run before `runApp`)
