@@ -4,22 +4,8 @@ import 'package:habit_loop/infrastructure/persistence/schedule_codec.dart';
 
 /// Maps [Pact] domain objects to and from SQLite row maps.
 ///
-/// Column layout (schema v1):
-///
-/// ```sql
-/// id                 TEXT    NOT NULL PRIMARY KEY
-/// habit_name         TEXT    NOT NULL
-/// start_date         INTEGER NOT NULL   -- ms since epoch
-/// scheduled_end_date INTEGER NOT NULL   -- ms since epoch (immutable)
-/// actual_end_date    INTEGER NOT NULL   -- ms since epoch; = scheduled_end_date, or stop date if stopped
-/// showup_duration    INTEGER NOT NULL   -- microseconds
-/// schedule           TEXT    NOT NULL   -- JSON discriminated union
-/// status             TEXT    NOT NULL   -- 'active' | 'stopped' | 'completed'
-/// reminder_offset    INTEGER            -- microseconds, NULL = no reminder
-/// stop_reason        TEXT
-/// created_at         INTEGER            -- ms since epoch, NULL for legacy rows
-/// total_showups      INTEGER            -- written once at creation by savePactWithShowups, never changed
-/// ```
+/// The canonical column-to-field mapping is defined by [toRow] and [fromRow].
+/// Schema DDL lives in `HabitLoopDatabase.runMigrations`.
 ///
 /// `PactStats` is **not** persisted — it is always computed from SQL aggregates
 /// at read time. [fromRow] therefore always returns a [Pact] with `stats: null`.

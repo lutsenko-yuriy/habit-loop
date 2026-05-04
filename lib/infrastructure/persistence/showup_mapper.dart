@@ -3,16 +3,8 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 
 /// Maps [Showup] domain objects to and from SQLite row maps.
 ///
-/// Column layout (schema v1):
-///
-/// ```sql
-/// id           TEXT    NOT NULL PRIMARY KEY
-/// pact_id      TEXT    NOT NULL REFERENCES pacts(id)
-/// scheduled_at INTEGER NOT NULL   -- ms since epoch
-/// duration     INTEGER NOT NULL   -- microseconds
-/// status       TEXT    NOT NULL   -- 'pending' | 'done' | 'failed'
-/// note         TEXT
-/// ```
+/// The canonical column-to-field mapping is defined by [toRow] and [fromRow].
+/// Schema DDL lives in `HabitLoopDatabase.runMigrations`.
 abstract final class ShowupMapper {
   /// Converts [showup] to a column map ready for SQLite insertion or update.
   static Map<String, dynamic> toRow(Showup showup) {
