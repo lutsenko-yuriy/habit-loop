@@ -6,20 +6,29 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 /// Owns pact stats calculation and persistence across pact/showup mutations.
 ///
 /// Keeping this logic in one service prevents UI view models from each
 /// maintaining their own version of the `Pact.stats` invariant.
+///
+/// When [transactionService] is provided, [stopPact] wraps the update-pact and
+/// delete-showups writes in a single SQLite transaction (atomic). When omitted
+/// (e.g. in tests that inject in-memory repositories), it falls back to the
+/// two-step path.
 class PactStatsService {
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
+  final PactTransactionService? _transactionService;
 
   const PactStatsService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
+    PactTransactionService? transactionService,
   })  : _pactRepository = pactRepository,
-        _showupRepository = showupRepository;
+        _showupRepository = showupRepository,
+        _transactionService = transactionService;
 
   PactStats buildStats({
     required Pact pact,
@@ -95,6 +104,13 @@ class PactStatsService {
     return updatedShowup;
   }
 
+  /// Stops the pact atomically.
+  ///
+  /// When a [PactTransactionService] was supplied at construction, the pact
+  /// update and the showup deletion are wrapped in a single SQLite transaction
+  /// so either both succeed or both are rolled back. When no transaction service
+  /// is present (e.g. in tests that use in-memory repositories) the legacy
+  /// two-step path is used with a manual rollback attempt on failure.
   Future<Pact> stopPact({
     required Pact pact,
     required String pactId,
@@ -116,12 +132,24 @@ class PactStatsService {
       clearStopReason: reason == null || reason.trim().isEmpty,
     );
 
-    await _pactRepository.updatePact(updated);
-    try {
-      await _showupRepository.deleteShowupsForPact(pactId);
-    } catch (error, stackTrace) {
-      await _pactRepository.updatePact(pact);
-      Error.throwWithStackTrace(error, stackTrace);
+    if (_transactionService != null) {
+      // Atomic path: update pact + delete showups in one SQLite transaction.
+      await _transactionService.stopPactTransaction(
+        updatedPact: updated,
+        pactId: pactId,
+      );
+    } else {
+      // Legacy fallback path for in-memory repositories (used in tests).
+      // The two-step path retains a manual rollback so that a failure on the
+      // showup-delete step does not leave the pact permanently stopped without
+      // its showups being cleaned up.
+      await _pactRepository.updatePact(updated);
+      try {
+        await _showupRepository.deleteShowupsForPact(pactId);
+      } catch (error, stackTrace) {
+        await _pactRepository.updatePact(pact);
+        Error.throwWithStackTrace(error, stackTrace);
+      }
     }
 
     return updated;

@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-- [HAB-11](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-11/sqlite-persistence-replace-in-memory-repositories) **SQLite persistence — replace in-memory repositories** — Work Units 1 (mappers and codec) and 2 (HabitLoopDatabase + SqlitePactRepository + SqliteShowupRepository) merged in PRs #45 and #46. Remaining work units: transaction service (WU3), provider wiring + rollback cleanup (WU4). (Feature)
+- [HAB-11](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-11/sqlite-persistence-replace-in-memory-repositories) **SQLite persistence — replace in-memory repositories** — Work Units 1 (mappers and codec) and 2 (HabitLoopDatabase + SqlitePactRepository + SqliteShowupRepository) merged in PRs #45 and #46. WU3 (PactTransactionService — savePactWithShowups + stopPactTransaction) in progress. Remaining work unit: WU4 (provider wiring + rollback cleanup). (Feature)
 
 ---
 
