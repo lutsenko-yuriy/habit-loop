@@ -4,6 +4,21 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.16.0] — 2026-05-05 (PR #46 merged)
+
+### Added — SQLite database and repository implementations (HAB-11 Work Unit 2)
+
+- `lib/infrastructure/persistence/habit_loop_database.dart` — `HabitLoopDatabase` owns the sqflite `Database` singleton lifecycle and schema v1 DDL via `runMigrations` (public static for test injection); canonical DDL for `pacts` and `showups` tables consolidated here
+- `lib/slices/pact/data/sqlite_pact_repository.dart` — `SqlitePactRepository` — production `PactRepository` implementation backed by sqflite; uses `PactMapper` for row conversion; `updatePact` issues a targeted `UPDATE` on the primary key
+- `lib/slices/showup/data/sqlite_showup_repository.dart` — `SqliteShowupRepository` — production `ShowupRepository` implementation; `getShowupsForDate` and `getShowupsInRange` use epoch-ms boundaries derived from local-time midnight via `ShowupDateUtils`; `saveShowups` uses `INSERT OR REPLACE` for idempotent batch upserts
+- `sqflite_common_ffi` added as dev dependency to enable in-memory SQLite for unit tests on macOS
+- Schema DDL comment blocks removed from `PactMapper`/`ShowupMapper` (canonical DDL now lives in `HabitLoopDatabase.runMigrations`)
+- `docs/ARCHITECTURE.md` updated with new file entries, updated Data layer description, and updated Persistence infrastructure paragraph
+- `AGENTS.md` workflow updated: simulator smoke test step removed from the standard delivery workflow
+- 614 tests passing (561 pre-existing + 53 new), analyzer clean
+
+---
+
 ## [0.15.0] — 2026-05-03 (PR #45 merged)
 
 ### Added — SQLite mappers and codec (HAB-11 Work Unit 1)
