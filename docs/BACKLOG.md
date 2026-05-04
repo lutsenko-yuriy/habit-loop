@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-_(nothing in progress)_
+- [HAB-11](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-11/sqlite-persistence-replace-in-memory-repositories) **SQLite persistence — replace in-memory repositories** — Work Unit 1 (mappers and codec) merged in PR #45. Remaining work units: DB schema + migrations, real repository implementations, provider wiring. (Feature)
 
 ---
 
