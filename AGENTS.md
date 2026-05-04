@@ -89,7 +89,12 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
 
 1. For features with user-facing screens/interactions, invoke the product-owner agent for analytics planning first and wait for approval.
 2. For large changes, invoke the tech-lead agent and wait for plan approval.
-3. Create a new feature branch (`git checkout -b feature/HAB-XX-<short-description>`) and switch to it before writing any code. Always include the Linear ticket number after `feature/`. Mark the ticket as In Progress in `docs/BACKLOG.md`: replace the `_(nothing in progress)_` placeholder with a single bullet linking to the issue (same format as in the milestone sections).
+3. Create a new feature branch from the latest `main` and switch to it before writing any code. Always include the Linear ticket number after `feature/`:
+   ```
+   git fetch origin
+   git checkout -b feature/HAB-XX-<short-description> origin/main
+   ```
+   If the branch already exists, rebase it onto `origin/main` before writing any code (`git rebase origin/main`). This ensures the PR diff contains only the new work. Mark the ticket as In Progress in `docs/BACKLOG.md`: replace the `_(nothing in progress)_` placeholder with a single bullet linking to the issue (same format as in the milestone sections).
 4. Write failing tests that describe the expected behaviour.
 5. Implement the minimum code to make the tests pass.
 6. Refactor if needed.
