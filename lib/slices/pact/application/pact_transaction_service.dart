@@ -62,12 +62,15 @@ class PactTransactionService {
     required String pactId,
   }) async {
     await _db.transaction((txn) async {
-      await txn.update(
+      final affected = await txn.update(
         'pacts',
         PactMapper.toUpdateRow(updatedPact),
         where: 'id = ?',
         whereArgs: [pactId],
       );
+      if (affected == 0) {
+        throw StateError('stopPactTransaction: pact $pactId not found');
+      }
       await txn.delete('showups', where: 'pact_id = ?', whereArgs: [pactId]);
     });
   }
@@ -75,12 +78,10 @@ class PactTransactionService {
 
 /// Provides the [PactTransactionService] to the app.
 ///
-/// Throws by default — must be overridden in [ProviderScope] with a real
-/// [Database] instance before any code reads this provider. The override is
-/// installed in WU4 (provider wiring in `main.dart`).
+/// Returns `null` by default. When `null`, callers that accept an optional
+/// [PactTransactionService] fall back to their legacy two-step in-memory path,
+/// which is correct for tests that inject in-memory repositories.
 ///
-/// This follows the same pattern as [pactRepositoryProvider] and
-/// [showupRepositoryProvider].
-final pactTransactionServiceProvider = Provider<PactTransactionService>((ref) {
-  throw UnimplementedError('Override pactTransactionServiceProvider with a real Database instance');
-});
+/// In production the override is installed in WU4 (provider wiring in
+/// `main.dart`) where a real [Database] instance is available.
+final pactTransactionServiceProvider = Provider<PactTransactionService?>((ref) => null);

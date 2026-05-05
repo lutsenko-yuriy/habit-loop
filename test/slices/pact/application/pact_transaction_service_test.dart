@@ -231,6 +231,19 @@ void main() {
           reason: 'total_showups must not be zeroed out by stopPactTransaction',
         );
       });
+
+      test('throws StateError when pact id does not exist', () async {
+        final nonExistentPact = makePact(id: 'does-not-exist');
+        final stoppedPact = nonExistentPact.copyWith(
+          status: PactStatus.stopped,
+          endDate: DateTime(2026, 3, 1),
+        );
+
+        await expectLater(
+          () => service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'does-not-exist'),
+          throwsA(isA<StateError>()),
+        );
+      });
     });
   });
 }
