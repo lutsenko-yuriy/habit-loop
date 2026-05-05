@@ -1,15 +1,13 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
 import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
+import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
-import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 
 /// Provides the current time for pact detail operations.
@@ -17,14 +15,6 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 /// Overridable in tests to make [PactDetailViewModel.stopPact] (specifically
 /// the `daysActive` computation in the analytics event) deterministic.
 final pactDetailNowProvider = Provider<DateTime>((ref) => DateTime.now());
-
-final pactDetailRepositoryProvider = Provider<PactRepository>((ref) {
-  throw UnimplementedError('Override pactDetailRepositoryProvider');
-});
-
-final pactDetailShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
-  throw UnimplementedError('Override pactDetailShowupRepositoryProvider');
-});
 
 final pactDetailViewModelProvider = NotifierProviderFamily<PactDetailViewModel, PactDetailState, String>(
   PactDetailViewModel.new,
@@ -45,13 +35,10 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       unawaited(ref.read(crashlyticsServiceProvider).log('screen: pact_detail(id=$arg)'));
       unawaited(ref.read(logServiceProvider).info('pact_detail: load(id=$arg)'));
 
-      final pactRepo = ref.read(pactDetailRepositoryProvider);
-      final showupRepo = ref.read(pactDetailShowupRepositoryProvider);
-      final pactStatsService = PactStatsService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-      );
-      var pact = await pactRepo.getPactById(arg);
+      final pactService = ref.read(pactServiceProvider);
+      final pactStatsService = ref.read(pactStatsServiceProvider);
+
+      var pact = await pactService.getPact(arg);
       if (pact == null) {
         state = state.copyWith(
           isLoading: false,
@@ -59,7 +46,10 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         );
         return;
       }
-      final showups = await showupRepo.getShowupsForPact(arg);
+
+      // Load showups directly from the stats service (which owns the showup repository).
+      // Note: showup reads for stats computation go through PactStatsService.
+      final showups = await pactStatsService.loadShowupsForPact(arg);
       var stats = pactStatsService.currentStats(pact: pact, showups: showups);
 
       // Auto-complete the pact when its end date has passed or all showups
@@ -81,7 +71,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
               endDate: pact.endDate,
             ),
           );
-          await pactRepo.updatePact(pact);
+          await pactService.updatePact(pact);
           stats = pact.stats!;
         }
       }
@@ -99,18 +89,13 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     state = state.copyWith(isStopping: true, clearStopError: true);
     try {
       final now = ref.read(pactDetailNowProvider);
-      final transactionService = ref.read(pactTransactionServiceProvider);
-      final updated = await PactStatsService(
-        pactRepository: ref.read(pactDetailRepositoryProvider),
-        showupRepository: ref.read(pactDetailShowupRepositoryProvider),
-        transactionService: transactionService,
-      ).stopPact(
-        pact: pact,
-        pactId: arg,
-        now: now,
-        reason: reason,
-        existingStats: state.stats,
-      );
+      final updated = await ref.read(pactStatsServiceProvider).stopPact(
+            pact: pact,
+            pactId: arg,
+            now: now,
+            reason: reason,
+            existingStats: state.stats,
+          );
       final stats = updated.stats!;
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
 

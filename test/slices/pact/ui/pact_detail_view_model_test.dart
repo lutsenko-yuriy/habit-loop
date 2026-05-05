@@ -9,6 +9,8 @@ import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
+import 'package:habit_loop/slices/pact/application/pact_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -55,11 +57,24 @@ final _showups = [
 ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
+  List<Override> extras = const [],
 }) {
+  final pactRepo = InMemoryPactRepository(pacts);
+  final showupRepo = InMemoryShowupRepository(showups);
+  final service = PactService(
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+    transactionService: null,
+  );
+  final statsService = PactStatsService(
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+  );
   return ProviderContainer(
     overrides: [
-      pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-      pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+      pactServiceProvider.overrideWithValue(service),
+      pactStatsServiceProvider.overrideWithValue(statsService),
+      ...extras,
     ],
   );
 }
@@ -111,9 +126,19 @@ void main() {
 
     test('stopPact updates pact status to stopped with reason', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository(_showups);
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: null,
+      );
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       final container = ProviderContainer(overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
       ]);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
@@ -128,9 +153,19 @@ void main() {
 
     test('stopPact with no reason persists null stopReason', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository(_showups);
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: null,
+      );
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       final container = ProviderContainer(overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
       ]);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
@@ -165,9 +200,18 @@ void main() {
     test('stopPact rolls pact back when deleting showups fails', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = _ThrowingOnDeleteShowupRepository(_showups);
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: null,
+      );
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       final container = ProviderContainer(overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
       ]);
       addTearDown(container.dispose);
 
@@ -186,9 +230,18 @@ void main() {
     test('stopPact preserves historical stats even after showups are removed', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: null,
+      );
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       final container = ProviderContainer(overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
       ]);
       addTearDown(container.dispose);
 
@@ -200,9 +253,20 @@ void main() {
       final remainingShowups = await showupRepo.getShowupsForPact('p1');
       expect(remainingShowups, isEmpty);
 
+      final reloadedPactRepo = InMemoryPactRepository([await pactRepo.getPactById('p1') ?? _pact]);
+      final reloadedShowupRepo = InMemoryShowupRepository();
+      final reloadedService = PactService(
+        pactRepository: reloadedPactRepo,
+        showupRepository: reloadedShowupRepo,
+        transactionService: null,
+      );
+      final reloadedStatsService = PactStatsService(
+        pactRepository: reloadedPactRepo,
+        showupRepository: reloadedShowupRepo,
+      );
       final reloadedContainer = ProviderContainer(overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        pactServiceProvider.overrideWithValue(reloadedService),
+        pactStatsServiceProvider.overrideWithValue(reloadedStatsService),
       ]);
       addTearDown(reloadedContainer.dispose);
 
@@ -250,9 +314,19 @@ void main() {
             status: ShowupStatus.done),
       ];
       final pactRepo = InMemoryPactRepository([expiredPact]);
+      final showupRepo = InMemoryShowupRepository(showups);
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: null,
+      );
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       final container = ProviderContainer(overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
       ]);
       addTearDown(container.dispose);
 
@@ -278,11 +352,21 @@ void main() {
         status: PactStatus.active,
       );
       final pactRepo = InMemoryPactRepository([futurePact]);
+      final showupRepo = InMemoryShowupRepository();
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: null,
+      );
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       // Inject a "now" that is one day past the end date.
       final pastEndDate = DateTime(2054, 6, 2, 12, 0);
       final container = ProviderContainer(overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
         pactDetailNowProvider.overrideWithValue(pastEndDate),
       ]);
       addTearDown(container.dispose);
@@ -318,9 +402,19 @@ void main() {
       );
       final showups = generated.map((s) => s.copyWith(status: ShowupStatus.done)).toList();
       final pactRepo = InMemoryPactRepository([allResolvedPact]);
+      final showupRepo = InMemoryShowupRepository(showups);
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: null,
+      );
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       final container = ProviderContainer(overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
       ]);
       addTearDown(container.dispose);
 
@@ -350,12 +444,10 @@ void main() {
       List<Showup> showups = const [],
     }) {
       fakeAnalytics = FakeAnalyticsService();
-      return ProviderContainer(
-        overrides: [
-          pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
-          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
-        ],
+      return _makeContainer(
+        pacts: pacts,
+        showups: showups,
+        extras: [analyticsServiceProvider.overrideWithValue(fakeAnalytics)],
       );
     }
 
@@ -402,15 +494,12 @@ void main() {
       // pact.startDate = 2026-03-01T00:00 (midnight — as normalised by PactCreationState fix)
       // now = 2026-03-02T08:00 (next morning)
       // daysActive = (Mar 2 08:00 − Mar 1 00:00).inDays = 1 ✅
-      //
-      // Without the startDate normalisation fix, startDate would carry the
-      // creation time (e.g. 22:00), making the difference only ~10 hours → 0.
       fakeAnalytics = FakeAnalyticsService();
       final nextMorning = DateTime(2026, 3, 2, 8, 0);
-      final container = ProviderContainer(
-        overrides: [
-          pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository([_pact])),
-          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
+      final container = _makeContainer(
+        pacts: [_pact],
+        showups: _showups,
+        extras: [
           pactDetailNowProvider.overrideWithValue(nextMorning),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
@@ -426,39 +515,23 @@ void main() {
     });
 
     test('stopPact does NOT fire event on failure', () async {
-      final throwingPactRepo = _ThrowingPactRepository();
       fakeAnalytics = FakeAnalyticsService();
-      final container = ProviderContainer(
-        overrides: [
-          pactDetailRepositoryProvider.overrideWithValue(throwingPactRepo),
-          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
-          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
-        ],
+
+      final throwingPactRepo = _ThrowingOnUpdatePactRepository([_pact]);
+      final throwingShowupRepo = InMemoryShowupRepository(_showups);
+      final throwingService = PactService(
+        pactRepository: throwingPactRepo,
+        showupRepository: throwingShowupRepo,
+        transactionService: null,
       );
-      addTearDown(container.dispose);
-
-      // Load succeeds (getPactById returns the pact), but stopPact will fail
-      // because updatePact throws.
-      final loadRepo = InMemoryPactRepository([_pact]);
-      final workingContainer = ProviderContainer(
-        overrides: [
-          pactDetailRepositoryProvider.overrideWithValue(loadRepo),
-          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
-          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
-        ],
+      final throwingStatsService = PactStatsService(
+        pactRepository: throwingPactRepo,
+        showupRepository: throwingShowupRepo,
       );
-      addTearDown(workingContainer.dispose);
-
-      await workingContainer.read(pactDetailViewModelProvider('p1').notifier).load();
-
-      // Now swap to a failing repo by replacing the container. Since we can't
-      // do that, we test with a repo whose updatePact throws.
-      final throwingRepo = _ThrowingOnUpdatePactRepository([_pact]);
-      fakeAnalytics.reset();
       final failContainer = ProviderContainer(
         overrides: [
-          pactDetailRepositoryProvider.overrideWithValue(throwingRepo),
-          pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(_showups)),
+          pactServiceProvider.overrideWithValue(throwingService),
+          pactStatsServiceProvider.overrideWithValue(throwingStatsService),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
@@ -472,11 +545,6 @@ void main() {
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
   });
-}
-
-class _ThrowingPactRepository extends InMemoryPactRepository {
-  @override
-  Future<Pact?> getPactById(String id) async => throw Exception('load failed intentionally');
 }
 
 class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {

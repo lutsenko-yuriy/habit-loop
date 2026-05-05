@@ -19,19 +19,20 @@ import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_
 import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
 import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
 import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
+import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/providers/remote_config_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
-import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
-import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 Future<void> main() async {
@@ -96,8 +97,13 @@ Future<void> main() async {
   final talker = kReleaseMode ? null : Talker();
   final logService = talker != null ? TalkerLogService(talker) : null;
 
-  final pactRepo = InMemoryPactRepository();
-  final showupRepo = InMemoryShowupRepository();
+  // Open the SQLite database and construct the shared repository instances.
+  // HabitLoopDatabase.instance.database is a Future-based singleton: concurrent
+  // callers all share the same Future so only one openDatabase call is ever made.
+  final Database db = await HabitLoopDatabase.instance.database;
+  final pactRepo = SqlitePactRepository(db);
+  final showupRepo = SqliteShowupRepository(db);
+  final txService = PactTransactionService(db);
 
   runApp(
     ProviderScope(
@@ -124,12 +130,17 @@ Future<void> main() async {
         // back to NoopRemoteConfigService which returns in-code defaults.
         if (kReleaseMode && remoteConfigService != null)
           remoteConfigServiceProvider.overrideWithValue(remoteConfigService),
+
+        // Wire the shared SQLite-backed repository instances. All slices that
+        // need a PactRepository or ShowupRepository read these providers.
         pactRepositoryProvider.overrideWithValue(pactRepo),
-        pactCreationRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
-        pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
-        pactDetailRepositoryProvider.overrideWithValue(pactRepo),
-        pactDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
+
+        // Per-slice repository providers wired to the same SQLite instances.
+        // These remain because PactListViewModel and ShowupDetailViewModel still
+        // read them directly — they will be consolidated to pactServiceProvider
+        // in a future cleanup pass.
         pactListRepositoryProvider.overrideWithValue(pactRepo),
         pactListShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),

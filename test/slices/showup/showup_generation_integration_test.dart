@@ -6,6 +6,8 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/slices/pact/application/pact_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -86,12 +88,21 @@ void main() {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
 
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: null,
+      );
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+      );
       final container = ProviderContainer(
         overrides: [
           // Pact creation providers
           pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider.overrideWithValue(pactRepo),
-          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
+          pactServiceProvider.overrideWithValue(service),
+          pactStatsServiceProvider.overrideWithValue(statsService),
           // Dashboard providers
           todayProvider.overrideWithValue(today),
           pactRepositoryProvider.overrideWithValue(pactRepo),
