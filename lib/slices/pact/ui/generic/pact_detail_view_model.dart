@@ -9,6 +9,7 @@ import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_prov
 import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 
 /// Provides the current time for pact detail operations.
@@ -98,9 +99,11 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     state = state.copyWith(isStopping: true, clearStopError: true);
     try {
       final now = ref.read(pactDetailNowProvider);
+      final transactionService = ref.read(pactTransactionServiceProvider);
       final updated = await PactStatsService(
         pactRepository: ref.read(pactDetailRepositoryProvider),
         showupRepository: ref.read(pactDetailShowupRepositoryProvider),
+        transactionService: transactionService,
       ).stopPact(
         pact: pact,
         pactId: arg,

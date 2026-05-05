@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
 
@@ -182,27 +183,30 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       ).where((s) => !s.scheduledAt.isBefore(now)).toList();
       final pactRepo = ref.read(pactCreationRepositoryProvider);
       final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
-      await pactRepo.savePact(pact);
+      final transactionService = ref.read(pactTransactionServiceProvider);
 
-      try {
-        final result = await showupRepo.saveShowups(showups);
-        if (!result.allSaved) {
-          throw StateError(
-            'Failed to save ${result.skippedIds.length} showup(s): '
-            '${result.skippedIds}',
-          );
+      if (transactionService != null) {
+        // Atomic path: write pact + showups in a single SQLite transaction.
+        // sqflite rolls back automatically on any failure — no manual rollback needed.
+        await transactionService.savePactWithShowups(pact, showups);
+      } else {
+        // Legacy fallback path for in-memory repositories (used in tests).
+        await pactRepo.savePact(pact);
+
+        try {
+          final result = await showupRepo.saveShowups(showups);
+          if (!result.allSaved) {
+            throw StateError(
+              'Failed to save ${result.skippedIds.length} showup(s): '
+              '${result.skippedIds}',
+            );
+          }
+        } catch (e) {
+          // Roll back the pact so the app is not left with an orphaned pact
+          // that has no showups.
+          await pactRepo.deletePact(pact.id);
+          rethrow;
         }
-      } catch (e) {
-        // Roll back the pact so the app is not left with an orphaned pact
-        // that has no showups.
-        // TECH DEBT: if deletePact itself throws (e.g. DB locked), the
-        // rollback silently fails, the original error is masked by the new
-        // exception, and the pact remains orphaned. The proper fix is to
-        // wrap both writes in a single DB transaction (sqflite db.transaction)
-        // once the SQLite implementation is in place, making this manual
-        // rollback unnecessary. Tracked in CHANGELOG.md § Issues.
-        await pactRepo.deletePact(pact.id);
-        rethrow;
       }
 
       final totalShowups = ShowupGenerator.countTotal(pact);

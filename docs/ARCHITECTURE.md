@@ -76,7 +76,7 @@ lib/
     │   ├── analytics/                 # DashboardAnalyticsScreen
     │   └── ui/ (generic/, ios/, android/)
     ├── pact/                          # Pact creation wizard + pact detail screen
-    │   ├── application/               # PactBuilder, PactCreationState, PactStatsService
+    │   ├── application/               # PactBuilder, PactCreationState, PactStatsService, PactTransactionService
     │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production)
     │   ├── analytics/                 # PactCreatedEvent, PactStoppedEvent
     │   └── ui/ (generic/, ios/, android/)
@@ -125,7 +125,9 @@ test/
 └── slices/                            # Mirrors lib/slices/
     ├── dashboard/ (analytics/, ui/)
     ├── pact/
-    │   ├── analytics/, application/, ui/
+    │   ├── analytics/, ui/
+    │   ├── application/
+    │   │   └── pact_transaction_service_test.dart # PactTransactionService: savePactWithShowups atomicity + stopPactTransaction atomicity; sqflite_common_ffi in-memory db
     │   └── data/
     │       └── sqlite_pact_repository_test.dart   # SqlitePactRepository CRUD tests using sqflite_common_ffi in-memory db
     └── showup/
@@ -147,7 +149,8 @@ Pure business models and repository interfaces shared across features. No depend
 Orchestration logic that coordinates domain objects and repository calls. Lives inside each slice vertical. May depend on `lib/domain/` and on other slices' application services when necessary (though cross-slice imports should be minimised).
 - `PactBuilder` (`slices/pact/application/`) — holds the 7 pact-data fields assembled during the creation wizard, exposes validity predicates (`isDateRangeValid`, `isShowupDurationValid`, `isScheduleSet`, `isHabitNameValid`, `isComplete`), and materialises a `Pact` via `build(id, createdAt)`.
 - `PactCreationState` (`slices/pact/application/`) — wizard-navigation state: holds `builder: PactBuilder`, `currentStep`, `commitmentAccepted`, `isSubmitting`, `submitError`. Re-exports `ScheduleType` for backwards compatibility.
-- `PactStatsService` (`slices/pact/application/`) — owns pact stats calculation, persistence, and the stop-pact transaction.
+- `PactStatsService` (`slices/pact/application/`) — owns pact stats calculation, persistence, and the stop-pact transaction. Accepts an optional `PactTransactionService` at construction; when provided, `stopPact()` delegates to the atomic `stopPactTransaction()` path instead of the two-step fallback.
+- `PactTransactionService` (`slices/pact/application/`) — owns the atomic write paths that span both `pacts` and `showups` tables. `savePactWithShowups(pact, showups)` inserts both in one SQLite transaction and sets `total_showups` to `showups.length`. `stopPactTransaction(updatedPact, pactId)` updates the pact row and deletes the pact's showups in one SQLite transaction. Both methods use `ConflictAlgorithm.fail` so any duplicate-ID error surfaces immediately rather than silently overwriting data. Provides `pactTransactionServiceProvider` (throws by default; overridden in WU4).
 - `ShowupGenerationService` (`slices/showup/application/`) — orchestrates lazy windowed showup generation and deduplication.
 
 ### Data (`lib/slices/*/data/`)
