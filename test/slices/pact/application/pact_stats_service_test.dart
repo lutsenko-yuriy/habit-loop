@@ -7,6 +7,7 @@ import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 final _pact = Pact(
@@ -35,6 +36,7 @@ void main() {
       final service = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
       );
 
       final updatedShowup = await service.persistShowupStatus(
@@ -60,6 +62,7 @@ void main() {
       final service = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
       );
 
       final updatedShowup = await service.persistShowupStatus(

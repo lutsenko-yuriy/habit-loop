@@ -5,9 +5,14 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
+import 'package:habit_loop/slices/pact/application/pact_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/crashlytics/fake_crashlytics_service.dart';
 
@@ -28,10 +33,24 @@ void main() {
     required Pact pact,
     FakeCrashlyticsService? crashlytics,
   }) {
+    final pactRepo = InMemoryPactRepository([pact]);
+    final showupRepo = InMemoryShowupRepository();
+    final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+    final service = PactService(
+      pactRepository: pactRepo,
+      showupRepository: showupRepo,
+      transactionService: txService,
+    );
+    final statsService = PactStatsService(
+      pactRepository: pactRepo,
+      showupRepository: showupRepo,
+      transactionService: txService,
+    );
     return ProviderContainer(
       overrides: [
-        pactDetailRepositoryProvider.overrideWithValue(InMemoryPactRepository([pact])),
-        pactDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
+        pactTransactionServiceProvider.overrideWithValue(txService),
         pactDetailNowProvider.overrideWithValue(today),
         analyticsServiceProvider.overrideWithValue(FakeAnalyticsService()),
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),

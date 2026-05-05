@@ -3,6 +3,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_date_utils.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 
+// TODO(HAB-11): remove once all tests migrate to sqflite_common_ffi.
 class InMemoryShowupRepository implements ShowupRepository {
   final List<Showup> _showups;
 

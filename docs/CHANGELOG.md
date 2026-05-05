@@ -4,6 +4,22 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.18.0] — 2026-05-05 (PR #48 merged)
+
+### Added — PactService façade and full SQLite wiring (HAB-11 Work Unit 4)
+
+- `lib/slices/pact/application/pact_service.dart` — `PactService` application-layer façade that composes `PactRepository`, `ShowupRepository`, and `PactTransactionService`; `createPactFromBuilder()` delegates to the atomic `PactTransactionService.savePactWithShowups()` path (SQLite) or falls back to sequential saves with manual rollback (in-memory test path); view models no longer import repository or transaction providers directly
+- `PactTransactionService` interface made non-nullable in `PactService`; `SqlitePactTransactionService` is the production implementation wired via `main.dart`; `InMemoryPactTransactionService` is provided for tests
+- `lib/infrastructure/persistence/repository_providers.dart` — centralised Riverpod provider declarations for `SqlitePactRepository`, `SqliteShowupRepository`, and `PactTransactionService` so all infrastructure providers are declared in one place
+- `main.dart` opens `HabitLoopDatabase`, constructs `SqlitePactRepository`, `SqliteShowupRepository`, and `PactTransactionService`, and wires them as the single app-wide repository sources via `ProviderScope` overrides; `InMemoryPactRepository` and `InMemoryShowupRepository` are no longer used at runtime
+- `_DatabaseErrorApp` widget displayed when the database fails to open, giving the user a visible error rather than a silent crash
+- `PactCreationViewModel` and `PactDetailViewModel` refactored to delegate all persistence to `PactService` and `PactStatsService` respectively
+- `PactStatsService` extended with `loadShowupsForPact()` helper so `PactDetailViewModel` can load showups without reaching into `showupRepositoryProvider`
+- `pactServiceProvider` composed from the three lower-level providers; existing `ProviderContainer` overrides in tests continue to work
+- 637 tests passing, analyzer clean
+
+---
+
 ## [0.17.0] — 2026-05-05 (PR #47 merged)
 
 ### Added — Atomic pact creation and stop-pact transaction (HAB-11 Work Unit 3)

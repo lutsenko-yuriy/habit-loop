@@ -8,7 +8,9 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
@@ -91,9 +93,11 @@ List<Override> _overrides({
 }) {
   final showupRepo = InMemoryShowupRepository([showup]);
   final pactRepo = InMemoryPactRepository(pact != null ? [pact] : []);
+  final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
   return [
     showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
     showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+    pactTransactionServiceProvider.overrideWithValue(txService),
     if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
   ];
 }

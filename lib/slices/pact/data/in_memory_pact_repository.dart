@@ -2,6 +2,7 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 
+// TODO(HAB-11): remove once all tests migrate to sqflite_common_ffi.
 class InMemoryPactRepository implements PactRepository {
   final List<Pact> _pacts;
 

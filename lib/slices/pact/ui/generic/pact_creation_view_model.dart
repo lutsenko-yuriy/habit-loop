@@ -1,33 +1,18 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
-import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
 import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
-import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
-
-final pactCreationRepositoryProvider = Provider<PactRepository>((ref) {
-  throw UnimplementedError('Override pactCreationRepositoryProvider');
-});
-
-/// Provides the [ShowupRepository] used during pact creation.
-///
-/// Must be overridden in every [ProviderScope] (and in every test that
-/// exercises [PactCreationViewModel.submit]), otherwise accessing it will
-/// throw [UnimplementedError].
-final pactCreationShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
-  throw UnimplementedError('Override pactCreationShowupRepositoryProvider');
-});
 
 final pactCreationViewModelProvider = NotifierProvider<PactCreationViewModel, PactCreationState>(
   PactCreationViewModel.new,
@@ -150,20 +135,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
     try {
-      // Build the pact and generate showups before any I/O so that a retry
-      // does not mint a second pact ID when the first attempt fails before
-      // savePact is called. Note: if savePact succeeded but the rollback via
-      // deletePact later fails, a subsequent retry will produce a new ID and
-      // a second orphaned record — full idempotency requires storage-level
-      // transactions, which will be addressed in the SQLite implementation.
-      //
-      // Both calls are inside the try/finally so that any unexpected exception
-      // (e.g. if either method's contract changes) still resets isSubmitting.
       final now = ref.read(pactCreationTodayProvider);
-      final pact = state.builder.build(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        createdAt: now,
-      );
 
       // Generate only the initial 11-day window (startDate through startDate+10)
       // to keep the repository lean. The window is intentionally wider than the
@@ -172,51 +144,25 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       // days. Further windows are generated lazily by ShowupGenerationService
       // when the dashboard loads each day.
       //
-      // Showups scheduled before pact.createdAt are excluded here (and in
-      // ShowupGenerationService.ensureShowupsExist) so that a user who creates
-      // a pact at 10pm never sees an already-failed 8am slot on day 1.
+      // Showups scheduled before pact.createdAt are excluded by
+      // createPactFromBuilder (and in ShowupGenerationService.ensureShowupsExist)
+      // so that a user who creates a pact at 10 pm never sees an already-failed
+      // 8 am slot on day 1.
       final windowEnd = state.startDate.add(const Duration(days: 10));
-      final showups = ShowupGenerator.generateWindow(
-        pact,
-        from: state.startDate,
-        to: windowEnd,
-      ).where((s) => !s.scheduledAt.isBefore(now)).toList();
-      final pactRepo = ref.read(pactCreationRepositoryProvider);
-      final showupRepo = ref.read(pactCreationShowupRepositoryProvider);
-      final transactionService = ref.read(pactTransactionServiceProvider);
-
-      if (transactionService != null) {
-        // Atomic path: write pact + showups in a single SQLite transaction.
-        // sqflite rolls back automatically on any failure — no manual rollback needed.
-        await transactionService.savePactWithShowups(pact, showups);
-      } else {
-        // Legacy fallback path for in-memory repositories (used in tests).
-        await pactRepo.savePact(pact);
-
-        try {
-          final result = await showupRepo.saveShowups(showups);
-          if (!result.allSaved) {
-            throw StateError(
-              'Failed to save ${result.skippedIds.length} showup(s): '
-              '${result.skippedIds}',
-            );
-          }
-        } catch (e) {
-          // Roll back the pact so the app is not left with an orphaned pact
-          // that has no showups.
-          await pactRepo.deletePact(pact.id);
-          rethrow;
-        }
-      }
-
-      final totalShowups = ShowupGenerator.countTotal(pact);
-      final pactWithStats = await PactStatsService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-      ).persistInitialStatsOrRollback(
-        pact: pact,
-        showups: showups,
+      final service = ref.read(pactServiceProvider);
+      final pact = await service.createPactFromBuilder(
+        builder: state.builder,
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        now: now,
+        windowEnd: windowEnd,
       );
+
+      final showups = await service.getShowupsForPact(pact.id);
+      final totalShowups = ShowupGenerator.countTotal(pact);
+      final pactWithStats = await ref.read(pactStatsServiceProvider).persistInitialStatsOrRollback(
+            pact: pact,
+            showups: showups,
+          );
 
       // Both pact and showups were persisted successfully — log breadcrumb and
       // fire analytics. CrashlyticsService, AnalyticsService, and LogService are
