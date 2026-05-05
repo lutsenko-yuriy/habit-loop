@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.17.0] — 2026-05-05 (PR #47 merged)
+
+### Added — Atomic pact creation and stop-pact transaction (HAB-11 Work Unit 3)
+
+- `lib/slices/pact/application/pact_transaction_service.dart` — `PactTransactionService` encapsulates two atomic operations: `savePactWithShowups(pact, showups)` wraps pact insert and showup batch-save in a single sqflite transaction so a showup-write failure can never leave an orphan pact row; `stopPactTransaction(pactId, stoppedAt, reason)` atomically deletes pending showups and updates the pact status to stopped in one transaction
+- `PactCreationViewModel` wired to call `PactTransactionService.savePactWithShowups()` instead of the previous two-step insert + saveShowups path, resolving the HAB-16 rollback tech debt atomically
+- `PactDetailViewModel` wired to call `PactTransactionService.stopPactTransaction()` for the stop-pact flow, replacing the previous separate delete + update calls
+- HAB-16 (rollback exception masks original error in pact creation) resolved: the orphan-pact risk is eliminated because the transaction rolls back atomically on any failure
+- 626 tests passing, analyzer clean
+
+---
+
 ## [0.16.0] — 2026-05-05 (PR #46 merged)
 
 ### Added — SQLite database and repository implementations (HAB-11 Work Unit 2)
