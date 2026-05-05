@@ -76,7 +76,7 @@ lib/
     │   ├── analytics/                 # DashboardAnalyticsScreen
     │   └── ui/ (generic/, ios/, android/)
     ├── pact/                          # Pact creation wizard + pact detail screen
-    │   ├── application/               # PactBuilder, PactCreationState, PactStatsService
+    │   ├── application/               # PactBuilder, PactCreationState, PactService, PactStatsService, PactTransactionService
     │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production)
     │   ├── analytics/                 # PactCreatedEvent, PactStoppedEvent
     │   └── ui/ (generic/, ios/, android/)
@@ -125,7 +125,10 @@ test/
 └── slices/                            # Mirrors lib/slices/
     ├── dashboard/ (analytics/, ui/)
     ├── pact/
-    │   ├── analytics/, application/, ui/
+    │   ├── analytics/, ui/
+    │   ├── application/
+    │   │   ├── pact_service_test.dart              # PactService: delegation, fallback rollback, atomic SQLite transaction, provider composition
+    │   │   └── pact_transaction_service_test.dart # PactTransactionService: savePactWithShowups atomicity + stopPactTransaction atomicity; sqflite_common_ffi in-memory db
     │   └── data/
     │       └── sqlite_pact_repository_test.dart   # SqlitePactRepository CRUD tests using sqflite_common_ffi in-memory db
     └── showup/
@@ -147,7 +150,9 @@ Pure business models and repository interfaces shared across features. No depend
 Orchestration logic that coordinates domain objects and repository calls. Lives inside each slice vertical. May depend on `lib/domain/` and on other slices' application services when necessary (though cross-slice imports should be minimised).
 - `PactBuilder` (`slices/pact/application/`) — holds the 7 pact-data fields assembled during the creation wizard, exposes validity predicates (`isDateRangeValid`, `isShowupDurationValid`, `isScheduleSet`, `isHabitNameValid`, `isComplete`), and materialises a `Pact` via `build(id, createdAt)`.
 - `PactCreationState` (`slices/pact/application/`) — wizard-navigation state: holds `builder: PactBuilder`, `currentStep`, `commitmentAccepted`, `isSubmitting`, `submitError`. Re-exports `ScheduleType` for backwards compatibility.
-- `PactStatsService` (`slices/pact/application/`) — owns pact stats calculation, persistence, and the stop-pact transaction.
+- `PactService` (`slices/pact/application/`) — application-layer facade that composes `PactRepository`, `ShowupRepository`, and `PactTransactionService`. View models depend on `PactService` (via `pactServiceProvider`) instead of importing persistence-layer repository providers directly. `createPact()` uses an atomic SQLite transaction when `PactTransactionService` is available, falling back to sequential saves with manual rollback for the in-memory test path. Also exposes delegating reads (`getPact`, `getAllPacts`, `getActivePacts`) and writes (`updatePact`, `deletePact`).
+- `PactStatsService` (`slices/pact/application/`) — owns pact stats calculation, persistence, and the stop-pact transaction. Accepts an optional `PactTransactionService` at construction; when provided, `stopPact()` delegates to the atomic `stopPactTransaction()` path instead of the two-step fallback. Also exposes `loadShowupsForPact()` so view models can fetch showups without depending on `ShowupRepository` directly. Provided via `pactStatsServiceProvider`.
+- `PactTransactionService` (`slices/pact/application/`) — owns the atomic write paths that span both `pacts` and `showups` tables. `savePactWithShowups(pact, showups)` inserts both in one SQLite transaction and sets `total_showups` to `showups.length`. `stopPactTransaction(updatedPact, pactId)` updates the pact row and deletes the pact's showups in one SQLite transaction. Both methods use `ConflictAlgorithm.fail` so any duplicate-ID error surfaces immediately rather than silently overwriting data. Provides `pactTransactionServiceProvider` (throws by default; overridden in main.dart).
 - `ShowupGenerationService` (`slices/showup/application/`) — orchestrates lazy windowed showup generation and deduplication.
 
 ### Data (`lib/slices/*/data/`)
