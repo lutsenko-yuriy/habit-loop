@@ -1,21 +1,51 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
-import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/save_showups_result.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
-import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/slices/pact/application/pact_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+
+// ---------------------------------------------------------------------------
+// Helper: build a ProviderContainer with PactService + PactStatsService wired
+// from the given in-memory repositories.
+// ---------------------------------------------------------------------------
+
+ProviderContainer _makeContainer({
+  required InMemoryPactRepository pactRepo,
+  required InMemoryShowupRepository showupRepo,
+  required DateTime today,
+  List<Override> extras = const [],
+}) {
+  final service = PactService(
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+    transactionService: null,
+  );
+  final statsService = PactStatsService(
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+  );
+  return ProviderContainer(
+    overrides: [
+      pactCreationTodayProvider.overrideWithValue(today),
+      pactServiceProvider.overrideWithValue(service),
+      pactStatsServiceProvider.overrideWithValue(statsService),
+      ...extras,
+    ],
+  );
+}
 
 void main() {
   late ProviderContainer container;
@@ -30,13 +60,7 @@ void main() {
   setUp(() {
     pactRepo = InMemoryPactRepository();
     showupRepo = InMemoryShowupRepository();
-    container = ProviderContainer(
-      overrides: [
-        pactCreationTodayProvider.overrideWithValue(today),
-        pactCreationRepositoryProvider.overrideWithValue(pactRepo),
-        pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
-      ],
-    );
+    container = _makeContainer(pactRepo: pactRepo, showupRepo: showupRepo, today: today);
   });
 
   tearDown(() => container.dispose());
@@ -286,12 +310,11 @@ void main() {
     });
 
     test('submit does not save showups when savePact fails', () async {
-      final failingContainer = ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider.overrideWithValue(_AlwaysThrowingPactRepository()),
-          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
-        ],
+      final failingPactRepo = _AlwaysThrowingPactRepository();
+      final failingContainer = _makeContainer(
+        pactRepo: failingPactRepo,
+        showupRepo: showupRepo,
+        today: today,
       );
       addTearDown(failingContainer.dispose);
 
@@ -314,12 +337,11 @@ void main() {
     });
 
     test('submit sets error when showup saving fails', () async {
-      final failingContainer = ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider.overrideWithValue(pactRepo),
-          pactCreationShowupRepositoryProvider.overrideWithValue(_AlwaysThrowingShowupRepository()),
-        ],
+      final failingShowupRepo = _AlwaysThrowingShowupRepository();
+      final failingContainer = _makeContainer(
+        pactRepo: pactRepo,
+        showupRepo: failingShowupRepo,
+        today: today,
       );
       addTearDown(failingContainer.dispose);
 
@@ -340,12 +362,10 @@ void main() {
 
     test('submit rolls back pact when saveShowups fails', () async {
       final rollbackPactRepo = InMemoryPactRepository();
-      final failingContainer = ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
-          pactCreationShowupRepositoryProvider.overrideWithValue(_AlwaysThrowingShowupRepository()),
-        ],
+      final failingContainer = _makeContainer(
+        pactRepo: rollbackPactRepo,
+        showupRepo: _AlwaysThrowingShowupRepository(),
+        today: today,
       );
       addTearDown(failingContainer.dispose);
 
@@ -367,12 +387,10 @@ void main() {
     test('submit rolls back pact and showups when stats persistence fails', () async {
       final rollbackPactRepo = _ThrowingOnUpdatePactRepository();
       final rollbackShowupRepo = InMemoryShowupRepository();
-      final failingContainer = ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider.overrideWithValue(rollbackPactRepo),
-          pactCreationShowupRepositoryProvider.overrideWithValue(rollbackShowupRepo),
-        ],
+      final failingContainer = _makeContainer(
+        pactRepo: rollbackPactRepo,
+        showupRepo: rollbackShowupRepo,
+        today: today,
       );
       addTearDown(failingContainer.dispose);
 
@@ -404,12 +422,10 @@ void main() {
       // should NOT be persisted; the first saved showup must be tomorrow's 8am.
       final eveningPactRepo = InMemoryPactRepository();
       final eveningShowupRepo = InMemoryShowupRepository();
-      final eveningContainer = ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(DateTime(2054, 3, 30, 22, 0)),
-          pactCreationRepositoryProvider.overrideWithValue(eveningPactRepo),
-          pactCreationShowupRepositoryProvider.overrideWithValue(eveningShowupRepo),
-        ],
+      final eveningContainer = _makeContainer(
+        pactRepo: eveningPactRepo,
+        showupRepo: eveningShowupRepo,
+        today: DateTime(2054, 3, 30, 22, 0),
       );
       addTearDown(eveningContainer.dispose);
 
@@ -448,16 +464,16 @@ void main() {
     });
 
     ProviderContainer makeAnalyticsContainer({
-      PactRepository? pactRepository,
-      ShowupRepository? showupRepository,
+      InMemoryPactRepository? pactRepository,
+      InMemoryShowupRepository? showupRepository,
     }) {
-      return ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider.overrideWithValue(pactRepository ?? InMemoryPactRepository()),
-          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
-          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
-        ],
+      final pr = pactRepository ?? InMemoryPactRepository();
+      final sr = showupRepository ?? InMemoryShowupRepository();
+      return _makeContainer(
+        pactRepo: pr,
+        showupRepo: sr,
+        today: today,
+        extras: [analyticsServiceProvider.overrideWithValue(fakeAnalytics)],
       );
     }
 
@@ -477,9 +493,9 @@ void main() {
     }
 
     test('submit fires PactCreatedEvent with correct properties on success', () async {
-      final pactRepo = InMemoryPactRepository();
-      final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
+      final pr = InMemoryPactRepository();
+      final sr = InMemoryShowupRepository();
+      final c = makeAnalyticsContainer(pactRepository: pr, showupRepository: sr);
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -493,7 +509,7 @@ void main() {
       final pactCreatedEvent = event as PactCreatedEvent;
       expect(pactCreatedEvent.scheduleType, 'daily');
 
-      final pacts = await pactRepo.getActivePacts();
+      final pacts = await pr.getActivePacts();
       final pact = pacts.first;
       expect(
         pactCreatedEvent.durationDays,
@@ -507,9 +523,7 @@ void main() {
 
     test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
         () async {
-      final pactRepo = InMemoryPactRepository();
-      final showupRepo = InMemoryShowupRepository();
-      final c = makeAnalyticsContainer(pactRepository: pactRepo, showupRepository: showupRepo);
+      final c = makeAnalyticsContainer();
       addTearDown(c.dispose);
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
@@ -528,13 +542,11 @@ void main() {
       final eveningNow = DateTime(2054, 3, 30, 22, 0);
       final localPactRepo = InMemoryPactRepository();
       final localShowupRepo = InMemoryShowupRepository();
-      final c = ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(eveningNow),
-          pactCreationRepositoryProvider.overrideWithValue(localPactRepo),
-          pactCreationShowupRepositoryProvider.overrideWithValue(localShowupRepo),
-          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
-        ],
+      final c = _makeContainer(
+        pactRepo: localPactRepo,
+        showupRepo: localShowupRepo,
+        today: eveningNow,
+        extras: [analyticsServiceProvider.overrideWithValue(fakeAnalytics)],
       );
       addTearDown(c.dispose);
 
@@ -627,12 +639,10 @@ void main() {
     late ProviderContainer failingContainer;
 
     setUp(() {
-      failingContainer = ProviderContainer(
-        overrides: [
-          pactCreationTodayProvider.overrideWithValue(today),
-          pactCreationRepositoryProvider.overrideWithValue(_AlwaysThrowingPactRepository()),
-          pactCreationShowupRepositoryProvider.overrideWithValue(showupRepo),
-        ],
+      failingContainer = _makeContainer(
+        pactRepo: _AlwaysThrowingPactRepository(),
+        showupRepo: showupRepo,
+        today: today,
       );
     });
 
@@ -676,7 +686,7 @@ void main() {
   });
 }
 
-class _AlwaysThrowingPactRepository implements PactRepository {
+class _AlwaysThrowingPactRepository extends InMemoryPactRepository {
   @override
   Future<List<Pact>> getActivePacts() async => [];
 
@@ -701,7 +711,7 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 }
 
-class _AlwaysThrowingShowupRepository implements ShowupRepository {
+class _AlwaysThrowingShowupRepository extends InMemoryShowupRepository {
   @override
   Future<List<Showup>> getShowupsForDate(DateTime date) async => [];
 
