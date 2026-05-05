@@ -6,6 +6,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -50,7 +51,7 @@ void main() {
           onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
         ),
       );
-      service = PactTransactionService(db);
+      service = SqlitePactTransactionService(db);
     });
 
     tearDown(() async => db.close());

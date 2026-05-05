@@ -7,7 +7,9 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
@@ -43,10 +45,14 @@ void main() {
     required Showup showup,
     FakeCrashlyticsService? crashlytics,
   }) {
+    final pactRepo = InMemoryPactRepository([pact]);
+    final showupRepo = InMemoryShowupRepository([showup]);
+    final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
     return ProviderContainer(
       overrides: [
-        showupDetailPactRepositoryProvider.overrideWithValue(InMemoryPactRepository([pact])),
-        showupDetailShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository([showup])),
+        showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
         showupDetailNowProvider.overrideWithValue(today),
         analyticsServiceProvider.overrideWithValue(FakeAnalyticsService()),
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),

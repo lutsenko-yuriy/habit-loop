@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
@@ -28,14 +29,16 @@ ProviderContainer _makeContainer({
   required DateTime today,
   List<Override> extras = const [],
 }) {
+  final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
   final service = PactService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
-    transactionService: null,
+    transactionService: txService,
   );
   final statsService = PactStatsService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
+    transactionService: txService,
   );
   return ProviderContainer(
     overrides: [

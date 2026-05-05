@@ -7,7 +7,9 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
@@ -71,11 +73,13 @@ ProviderContainer _makeContainer({
 }) {
   final showupRepo = InMemoryShowupRepository([showup]);
   final pactRepo = InMemoryPactRepository(pact != null ? [pact] : []);
+  final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
 
   return ProviderContainer(
     overrides: [
       showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
       showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+      pactTransactionServiceProvider.overrideWithValue(txService),
       if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
     ],
   );
@@ -203,9 +207,11 @@ void main() {
       final showup = _pendingFutureShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -229,9 +235,11 @@ void main() {
       final showup = _pendingFutureShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -255,9 +263,11 @@ void main() {
       final showup = _pendingFutureShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = _ThrowingOnUpdatePactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -276,9 +286,11 @@ void main() {
       final showup = _doneShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -308,9 +320,11 @@ void main() {
       final showup = _failedShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -327,9 +341,11 @@ void main() {
       final showup = _pendingFutureShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -348,9 +364,11 @@ void main() {
       final showup = _doneShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -366,9 +384,11 @@ void main() {
       final showup = _failedShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -422,9 +442,11 @@ void main() {
       );
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final container = ProviderContainer(overrides: [
         showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
         showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
       ]);
       addTearDown(container.dispose);
 
@@ -450,10 +472,12 @@ void main() {
       fakeAnalytics = FakeAnalyticsService();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository(pact != null ? [pact] : []);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       return ProviderContainer(
         overrides: [
           showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
           showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
           if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
         ],

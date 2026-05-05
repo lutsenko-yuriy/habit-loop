@@ -135,14 +135,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
     try {
-      // Build the pact and generate showups before any I/O so that a retry
-      // does not mint a second pact ID when the first attempt fails before
-      // savePact is called.
       final now = ref.read(pactCreationTodayProvider);
-      final pact = state.builder.build(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        createdAt: now,
-      );
 
       // Generate only the initial 11-day window (startDate through startDate+10)
       // to keep the repository lean. The window is intentionally wider than the
@@ -151,21 +144,20 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       // days. Further windows are generated lazily by ShowupGenerationService
       // when the dashboard loads each day.
       //
-      // Showups scheduled before pact.createdAt are excluded here (and in
-      // ShowupGenerationService.ensureShowupsExist) so that a user who creates
-      // a pact at 10pm never sees an already-failed 8am slot on day 1.
+      // Showups scheduled before pact.createdAt are excluded by
+      // createPactFromBuilder (and in ShowupGenerationService.ensureShowupsExist)
+      // so that a user who creates a pact at 10 pm never sees an already-failed
+      // 8 am slot on day 1.
       final windowEnd = state.startDate.add(const Duration(days: 10));
-      final showups = ShowupGenerator.generateWindow(
-        pact,
-        from: state.startDate,
-        to: windowEnd,
-      ).where((s) => !s.scheduledAt.isBefore(now)).toList();
-
-      // Delegate to PactService: atomically persist pact + showups (SQLite),
-      // or fall back to the sequential save + rollback path (in-memory repos).
       final service = ref.read(pactServiceProvider);
-      await service.createPact(pact, showups);
+      final pact = await service.createPactFromBuilder(
+        builder: state.builder,
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        now: now,
+        windowEnd: windowEnd,
+      );
 
+      final showups = await service.getShowupsForPact(pact.id);
       final totalShowups = ShowupGenerator.countTotal(pact);
       final pactWithStats = await ref.read(pactStatsServiceProvider).persistInitialStatsOrRollback(
             pact: pact,

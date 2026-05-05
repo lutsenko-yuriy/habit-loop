@@ -7,12 +7,13 @@ import 'package:habit_loop/domain/showup/save_showups_result.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart'
-    show pactRepositoryProvider, showupRepositoryProvider;
+import 'package:habit_loop/infrastructure/persistence/repository_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -59,7 +60,7 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   });
 
-  group('PactService — in-memory (no transaction service)', () {
+  group('PactService — in-memory (with InMemoryPactTransactionService)', () {
     late InMemoryPactRepository pactRepo;
     late InMemoryShowupRepository showupRepo;
     late PactService service;
@@ -70,7 +71,7 @@ void main() {
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        transactionService: null,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
       );
     });
 
@@ -87,12 +88,12 @@ void main() {
       expect(showups, hasLength(2));
     });
 
-    test('createPact rolls back pact when saveShowups fails (fallback path)', () async {
+    test('createPact rolls back pact when saveShowups fails', () async {
       final failingShowupRepo = _ThrowingShowupRepository();
       final failService = PactService(
         pactRepository: pactRepo,
         showupRepository: failingShowupRepo,
-        transactionService: null,
+        transactionService: InMemoryPactTransactionService(pactRepo, failingShowupRepo),
       );
 
       await expectLater(
@@ -183,7 +184,7 @@ void main() {
       );
       pactRepo = SqlitePactRepository(db);
       showupRepo = SqliteShowupRepository(db);
-      txService = PactTransactionService(db);
+      txService = SqlitePactTransactionService(db);
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
@@ -232,12 +233,13 @@ void main() {
     test('provider is accessible and composes lower-level providers', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
 
       final container = ProviderContainer(
         overrides: [
           pactRepositoryProvider.overrideWithValue(pactRepo),
           showupRepositoryProvider.overrideWithValue(showupRepo),
-          pactTransactionServiceProvider.overrideWith((_) => null),
+          pactTransactionServiceProvider.overrideWithValue(txService),
         ],
       );
       addTearDown(container.dispose);
