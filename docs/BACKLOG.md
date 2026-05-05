@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-_(nothing in progress)_
+- [HAB-52](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-52/centralise-dependency-injection-libinfrastructureinjections) **Centralise dependency injection — lib/infrastructure/injections/ + INJECTIONS.md**
 
 ---
 

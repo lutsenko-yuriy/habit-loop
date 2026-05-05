@@ -5,11 +5,8 @@ import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
-import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
-import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
-import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 

@@ -13,26 +13,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/firebase_options.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_service.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
-import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
+import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
-import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
-import 'package:habit_loop/infrastructure/persistence/repository_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
-import 'package:habit_loop/infrastructure/remote_config/providers/remote_config_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
-import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -113,45 +105,27 @@ Future<void> main() async {
 
     runApp(
       ProviderScope(
-        overrides: [
-          // Wire TalkerLogService in debug/profile builds for local visibility.
-          // Release builds use the NoopLogService default from logServiceProvider.
-          if (logService != null) logServiceProvider.overrideWithValue(logService),
-
+        overrides: AppContainer.overrides(
+          pactRepository: pactRepo,
+          showupRepository: showupRepo,
+          transactionService: txService,
+          logService: logService,
           // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
-          if (kReleaseMode)
-            analyticsServiceProvider.overrideWithValue(
-              FirebaseAnalyticsService(
-                FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
-              ),
-            ),
+          analyticsService: kReleaseMode
+              ? FirebaseAnalyticsService(
+                  FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
+                )
+              : null,
           // Only send crash reports in release builds — debug/profile use NoopCrashlyticsService.
-          if (kReleaseMode)
-            crashlyticsServiceProvider.overrideWithValue(
-              FirebaseCrashlyticsService(
-                FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
-              ),
-            ),
+          crashlyticsService: kReleaseMode
+              ? FirebaseCrashlyticsService(
+                  FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
+                )
+              : null,
           // Only wire Firebase Remote Config in release builds; debug/profile fall
           // back to NoopRemoteConfigService which returns in-code defaults.
-          if (kReleaseMode && remoteConfigService != null)
-            remoteConfigServiceProvider.overrideWithValue(remoteConfigService),
-
-          // Wire the shared SQLite-backed repository instances. All slices that
-          // need a PactRepository or ShowupRepository read these providers.
-          pactRepositoryProvider.overrideWithValue(pactRepo),
-          showupRepositoryProvider.overrideWithValue(showupRepo),
-          pactTransactionServiceProvider.overrideWithValue(txService),
-
-          // Per-slice repository providers wired to the same SQLite instances.
-          // These remain because PactListViewModel and ShowupDetailViewModel still
-          // read them directly — they will be consolidated to pactServiceProvider
-          // in a future cleanup pass.
-          pactListRepositoryProvider.overrideWithValue(pactRepo),
-          pactListShowupRepositoryProvider.overrideWithValue(showupRepo),
-          showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
-          showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
-        ],
+          remoteConfigService: kReleaseMode ? remoteConfigService : null,
+        ),
         child: const HabitLoopApp(),
       ),
     );

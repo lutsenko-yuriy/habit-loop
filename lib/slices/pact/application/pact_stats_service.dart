@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
@@ -7,7 +6,6 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/infrastructure/persistence/repository_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 /// Owns pact stats calculation and persistence across pact/showup mutations.
@@ -178,20 +176,3 @@ class PactStatsService {
     }
   }
 }
-
-// ---------------------------------------------------------------------------
-// Riverpod provider
-// ---------------------------------------------------------------------------
-
-/// Provides [PactStatsService] by composing the lower-level repository and
-/// transaction service providers.
-///
-/// View models use this provider instead of constructing [PactStatsService]
-/// inline — this removes their direct dependency on the repository providers.
-final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
-  return PactStatsService(
-    pactRepository: ref.watch(pactRepositoryProvider),
-    showupRepository: ref.watch(showupRepositoryProvider),
-    transactionService: ref.watch(pactTransactionServiceProvider),
-  );
-});
