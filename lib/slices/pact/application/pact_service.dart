@@ -2,9 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart'
-    show pactRepositoryProvider, showupRepositoryProvider;
+import 'package:habit_loop/infrastructure/persistence/repository_providers.dart';
+import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 /// Application service that composes [PactRepository], [ShowupRepository], and
@@ -13,60 +14,58 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 /// View models depend only on [PactService] (and [PactStatsService] for stat
 /// computations) — they no longer import persistence-layer providers directly.
 ///
-/// When [transactionService] is non-null (SQLite production path), [createPact]
-/// is atomic: the pact insert and all showup inserts are wrapped in a single
-/// `db.transaction()` call so either everything commits or nothing does.
-///
-/// When [transactionService] is null (in-memory fallback used in tests),
-/// [createPact] uses the two-step save + manual rollback path that was
-/// previously inlined in `PactCreationViewModel.submit()`.
+/// [createPact] delegates to [PactTransactionService.savePactWithShowups] which
+/// is always atomic: on SQLite it uses a single `db.transaction()` call so
+/// either everything commits or nothing does; the in-memory test double applies
+/// a best-effort manual rollback.
 class PactService {
   const PactService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
-    required PactTransactionService? transactionService,
+    required PactTransactionService transactionService,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _transactionService = transactionService;
 
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
-  final PactTransactionService? _transactionService;
+  final PactTransactionService _transactionService;
 
   // ---------------------------------------------------------------------------
   // Atomic creation
   // ---------------------------------------------------------------------------
 
-  /// Atomically creates [pact] and all [showups].
+  /// Atomically creates [pact] and all [showups] via [PactTransactionService].
   ///
-  /// When [transactionService] is non-null, the two inserts are wrapped in a
-  /// single SQLite transaction — sqflite rolls back automatically on any
-  /// exception, so neither orphaned pacts nor orphaned showups can be left in
-  /// the database.
-  ///
-  /// When [transactionService] is null (in-memory repositories, used in tests),
-  /// falls back to the sequential save + manual rollback path.
+  /// Delegates to [PactTransactionService.savePactWithShowups] so either both
+  /// the pact insert and all showup inserts commit together, or nothing does.
   Future<void> createPact(Pact pact, List<Showup> showups) async {
-    if (_transactionService != null) {
-      // Atomic SQLite path.
-      await _transactionService.savePactWithShowups(pact, showups);
-    } else {
-      // Fallback path for in-memory repositories (used in tests).
-      await _pactRepository.savePact(pact);
-      try {
-        for (final showup in showups) {
-          await _showupRepository.saveShowup(showup);
-        }
-      } catch (error, stackTrace) {
-        // Roll back the pact so the app is not left with an orphaned pact.
-        try {
-          await _pactRepository.deletePact(pact.id);
-        } catch (_) {
-          // Ignore rollback errors — the original error is more informative.
-        }
-        Error.throwWithStackTrace(error, stackTrace);
-      }
-    }
+    await _transactionService.savePactWithShowups(pact, showups);
+  }
+
+  /// Builds a pact from [builder], generates the initial showup window, and
+  /// atomically persists both via [createPact].
+  ///
+  /// Only showups whose [Showup.scheduledAt] is on or after [now] are included
+  /// (showups already in the past are excluded at creation time so a user who
+  /// creates a pact at 10 pm never sees an already-failed 8 am slot on day 1).
+  ///
+  /// Returns the built [Pact] so the caller can proceed with stat
+  /// initialization without a second repository round-trip.
+  Future<Pact> createPactFromBuilder({
+    required PactBuilder builder,
+    required String id,
+    required DateTime now,
+    required DateTime windowEnd,
+  }) async {
+    final pact = builder.build(id: id, createdAt: now);
+    final showups = ShowupGenerator.generateWindow(
+      pact,
+      from: pact.startDate,
+      to: windowEnd,
+    ).where((s) => !s.scheduledAt.isBefore(now)).toList();
+    await createPact(pact, showups);
+    return pact;
   }
 
   // ---------------------------------------------------------------------------
@@ -81,6 +80,12 @@ class PactService {
 
   /// Returns only active pacts.
   Future<List<Pact>> getActivePacts() => _pactRepository.getActivePacts();
+
+  /// Returns showups for the given pact from the showup repository.
+  ///
+  /// Exposed so that view models can fetch showups without depending on the
+  /// [ShowupRepository] directly.
+  Future<List<Showup>> getShowupsForPact(String pactId) => _showupRepository.getShowupsForPact(pactId);
 
   // ---------------------------------------------------------------------------
   // Delegating writes
