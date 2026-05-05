@@ -4,7 +4,9 @@ import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_prov
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
@@ -16,20 +18,23 @@ void main() {
   ProviderContainer createContainer({FakeCrashlyticsService? crashlytics}) {
     final pactRepo = InMemoryPactRepository();
     final showupRepo = InMemoryShowupRepository();
+    final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
     final service = PactService(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
-      transactionService: null,
+      transactionService: txService,
     );
     final statsService = PactStatsService(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
+      transactionService: txService,
     );
     return ProviderContainer(
       overrides: [
         pactCreationTodayProvider.overrideWithValue(today),
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactTransactionServiceProvider.overrideWithValue(txService),
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),
       ],
     );

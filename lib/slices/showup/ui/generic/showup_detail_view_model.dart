@@ -9,6 +9,7 @@ import 'package:habit_loop/infrastructure/analytics/providers/analytics_provider
 import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
 import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 
@@ -102,6 +103,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final pactStatsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        transactionService: ref.read(pactTransactionServiceProvider),
       );
       if (showup.status == ShowupStatus.pending) {
         final now = ref.read(showupDetailNowProvider);
@@ -163,6 +165,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final updatedShowup = await PactStatsService(
         pactRepository: ref.read(showupDetailPactRepositoryProvider),
         showupRepository: ref.read(showupDetailShowupRepositoryProvider),
+        transactionService: ref.read(pactTransactionServiceProvider),
       ).persistShowupStatus(
         showup: state.showup!,
         status: newStatus,

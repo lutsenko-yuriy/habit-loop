@@ -20,6 +20,7 @@ import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_prov
 import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
 import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
+import 'package:habit_loop/infrastructure/persistence/repository_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/providers/remote_config_providers.dart';
@@ -28,6 +29,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
@@ -100,55 +102,63 @@ Future<void> main() async {
   // Open the SQLite database and construct the shared repository instances.
   // HabitLoopDatabase.instance.database is a Future-based singleton: concurrent
   // callers all share the same Future so only one openDatabase call is ever made.
-  final Database db = await HabitLoopDatabase.instance.database;
-  final pactRepo = SqlitePactRepository(db);
-  final showupRepo = SqliteShowupRepository(db);
-  final txService = PactTransactionService(db);
+  //
+  // If the database cannot be opened (e.g. disk full, corrupt file), fall back
+  // to a minimal error screen rather than crashing to a black screen.
+  try {
+    final Database db = await HabitLoopDatabase.instance.database;
+    final pactRepo = SqlitePactRepository(db);
+    final showupRepo = SqliteShowupRepository(db);
+    final txService = SqlitePactTransactionService(db);
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        // Wire TalkerLogService in debug/profile builds for local visibility.
-        // Release builds use the NoopLogService default from logServiceProvider.
-        if (logService != null) logServiceProvider.overrideWithValue(logService),
+    runApp(
+      ProviderScope(
+        overrides: [
+          // Wire TalkerLogService in debug/profile builds for local visibility.
+          // Release builds use the NoopLogService default from logServiceProvider.
+          if (logService != null) logServiceProvider.overrideWithValue(logService),
 
-        // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
-        if (kReleaseMode)
-          analyticsServiceProvider.overrideWithValue(
-            FirebaseAnalyticsService(
-              FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
+          // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
+          if (kReleaseMode)
+            analyticsServiceProvider.overrideWithValue(
+              FirebaseAnalyticsService(
+                FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
+              ),
             ),
-          ),
-        // Only send crash reports in release builds — debug/profile use NoopCrashlyticsService.
-        if (kReleaseMode)
-          crashlyticsServiceProvider.overrideWithValue(
-            FirebaseCrashlyticsService(
-              FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
+          // Only send crash reports in release builds — debug/profile use NoopCrashlyticsService.
+          if (kReleaseMode)
+            crashlyticsServiceProvider.overrideWithValue(
+              FirebaseCrashlyticsService(
+                FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
+              ),
             ),
-          ),
-        // Only wire Firebase Remote Config in release builds; debug/profile fall
-        // back to NoopRemoteConfigService which returns in-code defaults.
-        if (kReleaseMode && remoteConfigService != null)
-          remoteConfigServiceProvider.overrideWithValue(remoteConfigService),
+          // Only wire Firebase Remote Config in release builds; debug/profile fall
+          // back to NoopRemoteConfigService which returns in-code defaults.
+          if (kReleaseMode && remoteConfigService != null)
+            remoteConfigServiceProvider.overrideWithValue(remoteConfigService),
 
-        // Wire the shared SQLite-backed repository instances. All slices that
-        // need a PactRepository or ShowupRepository read these providers.
-        pactRepositoryProvider.overrideWithValue(pactRepo),
-        showupRepositoryProvider.overrideWithValue(showupRepo),
-        pactTransactionServiceProvider.overrideWithValue(txService),
+          // Wire the shared SQLite-backed repository instances. All slices that
+          // need a PactRepository or ShowupRepository read these providers.
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
 
-        // Per-slice repository providers wired to the same SQLite instances.
-        // These remain because PactListViewModel and ShowupDetailViewModel still
-        // read them directly — they will be consolidated to pactServiceProvider
-        // in a future cleanup pass.
-        pactListRepositoryProvider.overrideWithValue(pactRepo),
-        pactListShowupRepositoryProvider.overrideWithValue(showupRepo),
-        showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
-        showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
-      ],
-      child: const HabitLoopApp(),
-    ),
-  );
+          // Per-slice repository providers wired to the same SQLite instances.
+          // These remain because PactListViewModel and ShowupDetailViewModel still
+          // read them directly — they will be consolidated to pactServiceProvider
+          // in a future cleanup pass.
+          pactListRepositoryProvider.overrideWithValue(pactRepo),
+          pactListShowupRepositoryProvider.overrideWithValue(showupRepo),
+          showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+          showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+        ],
+        child: const HabitLoopApp(),
+      ),
+    );
+  } catch (e, st) {
+    debugPrint('Failed to open database: $e\n$st');
+    runApp(const _DatabaseErrorApp());
+  }
 }
 
 class HabitLoopApp extends StatelessWidget {
@@ -177,6 +187,31 @@ class HabitLoopApp extends StatelessWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       home: const DashboardScreen(),
+    );
+  }
+}
+
+/// Minimal fallback app shown when the SQLite database cannot be opened.
+///
+/// Displayed instead of a black screen when [HabitLoopDatabase.instance.database]
+/// throws during startup (e.g. disk full, corrupt database file). The message is
+/// English-only because the localisation delegates are not available at this
+/// point — the error is a fatal infrastructure failure, not a user-facing flow.
+class _DatabaseErrorApp extends StatelessWidget {
+  const _DatabaseErrorApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text(
+            'Unable to open the app database.\n'
+            'Please free up storage space and restart the app.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
     );
   }
 }

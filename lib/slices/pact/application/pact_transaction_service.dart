@@ -1,87 +1,42 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/infrastructure/persistence/pact_mapper.dart';
-import 'package:habit_loop/infrastructure/persistence/showup_mapper.dart';
-import 'package:sqflite/sqflite.dart';
 
-/// Owns the atomic write paths for pact creation and pact termination.
+/// Abstract interface for atomic write paths that span both the `pacts` and
+/// `showups` tables.
 ///
-/// Both operations span the `pacts` and `showups` tables. Using a single
-/// `db.transaction()` block guarantees atomicity: if any individual INSERT or
-/// UPDATE fails the whole operation rolls back, leaving the database in a
-/// consistent state.
+/// Two concrete implementations exist:
+/// - [SqlitePactTransactionService] — production implementation backed by
+///   sqflite; wraps both mutations in a single `db.transaction()` call.
+/// - [InMemoryPactTransactionService] — test double backed by in-memory
+///   repositories; falls back to the sequential save + manual rollback path.
 ///
-/// This class is the fix for HAB-16: previously `PactCreationViewModel` called
-/// `PactRepository.savePact` and `ShowupRepository.saveShowups` as two separate
-/// operations with a manual `deletePact` rollback on failure. The manual rollback
-/// could mask the original error and left a window where a network interruption
-/// produced an orphaned pact with no showups.
-class PactTransactionService {
-  const PactTransactionService(this._db);
+/// Keeping the interface abstract allows view models and application services to
+/// depend on [PactTransactionService] without importing sqflite.
+abstract class PactTransactionService {
+  /// Atomically creates [pact] and all [showups].
+  ///
+  /// Throws if either insert fails (e.g. duplicate ID). Implementations must
+  /// guarantee that on failure the database is left in a consistent state (no
+  /// orphaned pact row, no partial showup inserts).
+  Future<void> savePactWithShowups(Pact pact, List<Showup> showups);
 
-  final Database _db;
-
-  /// Atomically inserts [pact] and all [showups] in a single transaction.
+  /// Atomically updates the pact row and deletes all showups for the pact.
   ///
-  /// Sets the pact's `total_showups` column to `showups.length`. This value is
-  /// written here — not by [PactMapper.toRow] — because only the caller knows
-  /// the exact count of showups being persisted.
-  ///
-  /// Throws if either insert fails (e.g. duplicate ID). sqflite rolls back the
-  /// transaction automatically on any exception, so the database is always left
-  /// in a consistent state.
-  Future<void> savePactWithShowups(Pact pact, List<Showup> showups) async {
-    await _db.transaction((txn) async {
-      final row = PactMapper.toRow(pact);
-      row['total_showups'] = showups.length;
-      await txn.insert('pacts', row, conflictAlgorithm: ConflictAlgorithm.fail);
-      for (final showup in showups) {
-        await txn.insert(
-          'showups',
-          ShowupMapper.toRow(showup),
-          conflictAlgorithm: ConflictAlgorithm.fail,
-        );
-      }
-    });
-  }
-
-  /// Atomically updates the pact row (status, actual_end_date, stop_reason) and
-  /// deletes all showups for the pact in a single transaction.
-  ///
-  /// This is the atomic stop-pact path that replaces the two-step
-  /// `updatePact` + `deleteShowupsForPact` sequence that existed in
-  /// `PactStatsService.stopPact`. Both mutations are now wrapped in one
-  /// `db.transaction()` so either both succeed or both are rolled back.
-  ///
-  /// Only the mutable columns are written (via [PactMapper.toUpdateRow]) —
-  /// `scheduled_end_date` and `total_showups` are intentionally excluded and
-  /// preserved intact.
+  /// Used by the stop-pact flow: the pact status update and the showup deletion
+  /// are wrapped in a single operation so either both succeed or both are rolled
+  /// back.
   Future<void> stopPactTransaction({
     required Pact updatedPact,
     required String pactId,
-  }) async {
-    await _db.transaction((txn) async {
-      final affected = await txn.update(
-        'pacts',
-        PactMapper.toUpdateRow(updatedPact),
-        where: 'id = ?',
-        whereArgs: [pactId],
-      );
-      if (affected == 0) {
-        throw StateError('stopPactTransaction: pact $pactId not found');
-      }
-      await txn.delete('showups', where: 'pact_id = ?', whereArgs: [pactId]);
-    });
-  }
+  });
 }
 
 /// Provides the [PactTransactionService] to the app.
 ///
-/// Returns `null` by default. When `null`, callers that accept an optional
-/// [PactTransactionService] fall back to their legacy two-step in-memory path,
-/// which is correct for tests that inject in-memory repositories.
-///
-/// In production the override is installed in WU4 (provider wiring in
-/// `main.dart`) where a real [Database] instance is available.
-final pactTransactionServiceProvider = Provider<PactTransactionService?>((ref) => null);
+/// Throws [UnimplementedError] by default — must be overridden in `main.dart`
+/// with a [SqlitePactTransactionService] instance, and in tests with an
+/// [InMemoryPactTransactionService].
+final pactTransactionServiceProvider = Provider<PactTransactionService>((ref) {
+  throw UnimplementedError('pactTransactionServiceProvider must be overridden in main.dart');
+});
