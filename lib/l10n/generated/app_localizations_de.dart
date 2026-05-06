@@ -233,7 +233,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String statsShowups(int count) {
-    return '$count Showups';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Auftritte',
+      one: '$count Auftritt',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -386,4 +392,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get showupHabitDeleted => '(Gewohnheit gelöscht)';
+
+  @override
+  String get languagePickerTitle => 'Sprache';
+
+  @override
+  String get languageEnglish => 'Englisch';
+
+  @override
+  String get languageFrench => 'Französisch';
+
+  @override
+  String get languageGerman => 'Deutsch';
+
+  @override
+  String get languageRussian => 'Russisch';
+
+  @override
+  String get languageSystem => 'Systemsprache verwenden';
 }

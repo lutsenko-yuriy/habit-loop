@@ -87,7 +87,7 @@
   "statsRemaining": "Restants",
   "statsCancelled": "Arrêtés",
   "statsStreak": "Série",
-  "statsShowups": "{count} rendez-vous",
+  "statsShowups": "{count, plural, one{{count} visite} other{{count} visites}}",
   "@statsShowups": {
     "placeholders": {
       "count": { "type": "int" }
@@ -152,5 +152,12 @@
   "showupNoteSave": "Enregistrer la note",
   "showupNoteError": "Impossible d'enregistrer la note. Veuillez réessayer.",
   "showupMarkError": "Impossible de mettre à jour le statut. Veuillez réessayer.",
-  "showupHabitDeleted": "(habitude supprimée)"
+  "showupHabitDeleted": "(habitude supprimée)",
+
+  "languagePickerTitle": "Langue",
+  "languageEnglish": "Anglais",
+  "languageFrench": "Français",
+  "languageGerman": "Allemand",
+  "languageRussian": "Russe",
+  "languageSystem": "Utiliser la langue du système"
 }

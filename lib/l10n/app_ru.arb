@@ -1,0 +1,163 @@
+{
+  "@@locale": "ru",
+  "appTitle": "Habit Loop",
+  "dashboardTitle": "Главная",
+  "todayShowups": "Сегодняшние визиты",
+  "noPactsYet": "Нет пактов",
+  "noPactsDescription": "Создайте первый пакт, чтобы начать формировать привычку.",
+  "createPact": "Создать пакт",
+  "noShowupsForDay": "Нет визитов в этот день",
+  "showupDone": "Выполнено",
+  "showupFailed": "Пропущено",
+  "showupPending": "Ожидается",
+
+  "pactCreationTitle": "Новый пакт",
+  "habitNameLabel": "Название привычки",
+  "habitNameHint": "например, Медитация, Пробежка, Чтение…",
+  "pactDurationStep": "Длительность пакта",
+  "startDateLabel": "Дата начала",
+  "endDateLabel": "Дата окончания",
+  "showupDurationStep": "Длительность визита",
+  "showupDurationLabel": "Как долго длится каждый визит?",
+  "showupDurationMinutes": "{minutes} мин",
+  "@showupDurationMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "scheduleStep": "Расписание",
+  "scheduleTypeLabel": "Когда вы хотите появляться?",
+  "scheduleDaily": "Каждый день",
+  "scheduleWeekday": "Определённые дни недели",
+  "scheduleMonthlyByWeekday": "Ежемесячно по дню недели",
+  "scheduleMonthlyByDate": "Ежемесячно по числу",
+  "timeOfDayLabel": "Время",
+  "addEntry": "Добавить ещё",
+  "removeEntry": "Удалить",
+  "weekdayMon": "Пн",
+  "weekdayTue": "Вт",
+  "weekdayWed": "Ср",
+  "weekdayThu": "Чт",
+  "weekdayFri": "Пт",
+  "weekdaySat": "Сб",
+  "weekdaySun": "Вс",
+  "occurrenceFirst": "1-й",
+  "occurrenceSecond": "2-й",
+  "occurrenceThird": "3-й",
+  "occurrenceFourth": "4-й",
+  "dayOfMonthLabel": "День месяца",
+  "reminderStep": "Напоминание",
+  "reminderLabel": "Напомнить перед визитом",
+  "reminderNone": "Без напоминания",
+  "reminderAtStart": "В момент начала",
+  "reminderMinutesBefore": "За {minutes} мин",
+  "@reminderMinutesBefore": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "summaryHabit": "Привычка",
+  "summaryDuration": "Длительность пакта",
+  "summaryShowupDuration": "Длительность визита",
+  "summarySchedule": "Расписание",
+  "summaryReminder": "Напоминание",
+  "commitmentStep": "Обязательство",
+  "commitmentWarning": "Пропущенный визит считается провалом. Исключений и пауз нет. Создавая этот пакт, вы обязуетесь появляться каждый раз.",
+  "commitmentAccept": "Понимаю и обязуюсь",
+  "createPactConfirm": "Создать пакт",
+  "next": "Далее",
+  "back": "Назад",
+  "cancel": "Отмена",
+  "tooManyPactsTitle": "Слишком много активных пактов",
+  "tooManyPactsBody": "{max, plural, one{Можно иметь только 1 активный пакт одновременно. Создать ещё один?} few{Можно иметь только {max} активных пакта одновременно. Создать ещё?} many{Можно иметь только {max} активных пактов одновременно. Создать ещё?} other{Можно иметь только {max} активных пакта одновременно. Создать ещё?}}",
+  "@tooManyPactsBody": {
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+  "tooManyPactsConfirm": "Да, создать ещё",
+
+  "pactDetailTitle": "Детали пакта",
+  "sectionStats": "Статистика",
+  "sectionTimeline": "Хронология",
+  "sectionStopReason": "Причина остановки",
+  "stopPactError": "Не удалось остановить пакт. Попробуйте ещё раз.",
+  "statsDone": "Выполнено",
+  "statsFailed": "Пропущено",
+  "statsRemaining": "Осталось",
+  "statsCancelled": "Остановлено",
+  "statsStreak": "Серия",
+  "statsShowups": "{count, plural, one{{count} визит} few{{count} визита} many{{count} визитов} other{{count} визита}}",
+  "@statsShowups": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStartDate": "Начало",
+  "pactEndDate": "Конец",
+  "pactEndedDate": "Завершено",
+  "daysRemaining": "{count, plural, one{Остался 1 день} few{Осталось {count} дня} many{Осталось {count} дней} other{Осталось {count} дня}}",
+  "@daysRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactStatusActive": "Активен",
+  "pactStatusStopped": "Остановлен",
+  "pactStatusCompleted": "Завершён",
+  "stopPact": "Остановить пакт",
+  "stopPactTitle": "Остановить пакт?",
+  "stopPactBody": "Это действие необратимо. Вы сможете просмотреть историю пакта позже.",
+  "stopPactReasonHint": "Причина (необязательно)",
+  "stopPactConfirm": "Остановить",
+  "pactsActive": "{count, plural, =0{Нет активных пактов} one{1 активный пакт} few{{count} активных пакта} many{{count} активных пактов} other{{count} активных пакта}}",
+  "@pactsActive": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsDone": "{count, plural, =0{Нет завершённых пактов} one{1 завершённый пакт} few{{count} завершённых пакта} many{{count} завершённых пактов} other{{count} завершённых пакта}}",
+  "@pactsDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pactsCancelled": "{count, plural, =0{Нет остановленных пактов} one{1 остановленный пакт} few{{count} остановленных пакта} many{{count} остановленных пактов} other{{count} остановленных пакта}}",
+  "@pactsCancelled": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "addPact": "Добавить пакт",
+  "pactListTitle": "Пакты",
+  "filterActive": "Активные",
+  "filterDone": "Завершённые",
+  "filterCancelled": "Остановленные",
+  "pactNextShowup": "Следующий: {date}",
+  "@pactNextShowup": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactEndedOn": "Завершён {date}",
+  "@pactEndedOn": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "pactCancelledOn": "Остановлен {date}",
+  "@pactCancelledOn": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "showupDetailTitle": "Детали визита",
+  "showupDetailHabit": "Привычка",
+  "showupDetailScheduledAt": "Запланировано на",
+  "showupDetailDuration": "Длительность",
+  "showupDetailStatus": "Статус",
+  "markDone": "Отметить выполненным",
+  "markFailed": "Отметить пропущенным",
+  "showupAutoFailed": "Этот визит автоматически отмечен как пропущенный, так как был открыт после запланированного времени.",
+  "showupNoteLabel": "Заметка",
+  "showupNoteSave": "Сохранить заметку",
+  "showupNoteError": "Не удалось сохранить заметку. Попробуйте ещё раз.",
+  "showupMarkError": "Не удалось обновить статус визита. Попробуйте ещё раз.",
+  "showupHabitDeleted": "(привычка удалена)",
+
+  "languagePickerTitle": "Язык",
+  "languageEnglish": "Английский",
+  "languageFrench": "Французский",
+  "languageGerman": "Немецкий",
+  "languageRussian": "Русский",
+  "languageSystem": "Использовать язык системы"
+}

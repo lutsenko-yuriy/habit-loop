@@ -87,7 +87,7 @@
   "statsRemaining": "Ausstehend",
   "statsCancelled": "Gestoppt",
   "statsStreak": "Serie",
-  "statsShowups": "{count} Showups",
+  "statsShowups": "{count, plural, one{{count} Auftritt} other{{count} Auftritte}}",
   "@statsShowups": {
     "placeholders": {
       "count": { "type": "int" }
@@ -152,5 +152,12 @@
   "showupNoteSave": "Notiz speichern",
   "showupNoteError": "Notiz konnte nicht gespeichert werden. Bitte erneut versuchen.",
   "showupMarkError": "Status konnte nicht aktualisiert werden. Bitte erneut versuchen.",
-  "showupHabitDeleted": "(Gewohnheit gelöscht)"
+  "showupHabitDeleted": "(Gewohnheit gelöscht)",
+
+  "languagePickerTitle": "Sprache",
+  "languageEnglish": "Englisch",
+  "languageFrench": "Französisch",
+  "languageGerman": "Deutsch",
+  "languageRussian": "Russisch",
+  "languageSystem": "Systemsprache verwenden"
 }

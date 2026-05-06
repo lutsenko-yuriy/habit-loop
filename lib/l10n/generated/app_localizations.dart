@@ -8,6 +8,7 @@ import 'package:intl/intl.dart' as intl;
 import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_fr.dart';
+import 'app_localizations_ru.dart';
 
 // ignore_for_file: type=lint
 
@@ -91,7 +92,7 @@ abstract class AppLocalizations {
   ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('de'), Locale('en'), Locale('fr')];
+  static const List<Locale> supportedLocales = <Locale>[Locale('de'), Locale('en'), Locale('fr'), Locale('ru')];
 
   /// No description provided for @appTitle.
   ///
@@ -516,7 +517,7 @@ abstract class AppLocalizations {
   /// No description provided for @statsShowups.
   ///
   /// In en, this message translates to:
-  /// **'{count} showups'**
+  /// **'{count, plural, one{{count} showup} other{{count} showups}}'**
   String statsShowups(int count);
 
   /// No description provided for @pactStartDate.
@@ -734,6 +735,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'(habit deleted)'**
   String get showupHabitDeleted;
+
+  /// No description provided for @languagePickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languagePickerTitle;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageFrench.
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get languageFrench;
+
+  /// No description provided for @languageGerman.
+  ///
+  /// In en, this message translates to:
+  /// **'German'**
+  String get languageGerman;
+
+  /// No description provided for @languageRussian.
+  ///
+  /// In en, this message translates to:
+  /// **'Russian'**
+  String get languageRussian;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Use system language'**
+  String get languageSystem;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -745,7 +782,7 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['de', 'en', 'fr'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['de', 'en', 'fr', 'ru'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -760,6 +797,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'fr':
       return AppLocalizationsFr();
+    case 'ru':
+      return AppLocalizationsRu();
   }
 
   throw FlutterError('AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '

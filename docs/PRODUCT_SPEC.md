@@ -1,6 +1,6 @@
 # Product Specification
 
-The app is available in English, French, and German.
+The app is available in English, French, German, and Russian.
 
 The Habit Loop app allows the user to:
 - See an overview on a dashboard what the user should do today, what he has already done today how it goes with his pacts in general
