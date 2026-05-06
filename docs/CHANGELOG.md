@@ -4,6 +4,21 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.18.2] — 2026-05-06 (PR #50 merged)
+
+### Changed — In-memory stats cache in PactStatsService (HAB-51)
+
+- `PactStatsService` gained a private `Map<String, PactStats> _statsCache` keyed by pact ID; constructor is no longer `const`
+- `currentStats()` made async with lazy cache-on-miss: when called with empty showups, checks cache first; on miss loads from `ShowupRepository`, writes to cache, and returns; on hit returns immediately without a DB round-trip; when called with non-empty showups, computes fresh stats without touching cache
+- `persistShowupStatus()` evicts the stale cache entry before `_syncStatsBestEffort`, which then repopulates it via `syncStats → persistStats`
+- `stopPact()` evicts-only after the stop transaction (showups are deleted so there is no valid state to cache)
+- `onPactCompleted(String pactId)` added — evicts the cache entry; called internally by `PactService.updatePact()` when pact status transitions to `completed`, keeping `PactDetailViewModel` fully unaware of cache management
+- `PactService` now holds a required (non-nullable) `PactStatsService`; `pactServiceProvider` in `app_providers.dart` wires it in
+- `docs/ARCHITECTURE.md` updated with accurate cache lifecycle description and circular-dependency warning
+- 668 tests passing, analyzer clean
+
+---
+
 ## [0.18.1] — 2026-05-06 (PR #49 merged)
 
 ### Changed — Centralise dependency injection into lib/infrastructure/injections/ (HAB-52)

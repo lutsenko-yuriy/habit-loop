@@ -1,9 +1,11 @@
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
+import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 /// Application service that composes [PactRepository], [ShowupRepository], and
@@ -16,18 +18,33 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 /// is always atomic: on SQLite it uses a single `db.transaction()` call so
 /// either everything commits or nothing does; the in-memory test double applies
 /// a best-effort manual rollback.
+///
+/// [updatePact] checks whether the pact being persisted has
+/// [PactStatus.completed] and, if so, notifies [_pactStatsService] via
+/// [PactStatsService.onPactCompleted] so the stale cache entry is evicted.
+/// This keeps the view model completely unaware of cache management.
+///
+/// Note on provider ordering: [pactServiceProvider] watches [pactStatsServiceProvider]
+/// (one-way dependency). [pactStatsServiceProvider] must never watch [pactServiceProvider]
+/// — doing so would create a circular dependency in the Riverpod graph.
 class PactService {
-  const PactService({
+  PactService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
+    required PactStatsService pactStatsService,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
-        _transactionService = transactionService;
+        _transactionService = transactionService,
+        _pactStatsService = pactStatsService;
 
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
   final PactTransactionService _transactionService;
+
+  /// Reference to [PactStatsService] used exclusively to notify the cache when
+  /// [updatePact] persists a completed pact.
+  final PactStatsService _pactStatsService;
 
   // ---------------------------------------------------------------------------
   // Atomic creation
@@ -89,8 +106,17 @@ class PactService {
   // Delegating writes
   // ---------------------------------------------------------------------------
 
-  /// Updates [pact] in the repository. Throws if the pact does not exist.
-  Future<void> updatePact(Pact pact) => _pactRepository.updatePact(pact);
+  /// Updates [pact] in the repository.
+  ///
+  /// If [pact.status] is [PactStatus.completed], notifies [_pactStatsService]
+  /// via [PactStatsService.onPactCompleted] so the stale cache entry is evicted
+  /// atomically with the repository write.  Throws if the pact does not exist.
+  Future<void> updatePact(Pact pact) async {
+    await _pactRepository.updatePact(pact);
+    if (pact.status == PactStatus.completed) {
+      _pactStatsService.onPactCompleted(pact.id);
+    }
+  }
 
   /// Deletes the pact with [id]. No-op if the pact does not exist.
   Future<void> deletePact(String id) => _pactRepository.deletePact(id);

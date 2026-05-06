@@ -63,15 +63,16 @@ ProviderContainer _makeContainer({
   final pactRepo = InMemoryPactRepository(pacts);
   final showupRepo = InMemoryShowupRepository(showups);
   final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-  final service = PactService(
-    pactRepository: pactRepo,
-    showupRepository: showupRepo,
-    transactionService: txService,
-  );
   final statsService = PactStatsService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
     transactionService: txService,
+  );
+  final service = PactService(
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+    transactionService: txService,
+    pactStatsService: statsService,
   );
   return ProviderContainer(
     overrides: [
@@ -131,15 +132,16 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final service = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
@@ -160,15 +162,16 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final service = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
@@ -208,15 +211,16 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final throwingShowupRepo = _ThrowingOnDeleteShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, throwingShowupRepo);
-      final service = PactService(
-        pactRepository: pactRepo,
-        showupRepository: throwingShowupRepo,
-        transactionService: txService,
-      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: throwingShowupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
@@ -241,15 +245,16 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final service = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
@@ -268,15 +273,16 @@ void main() {
       final reloadedPactRepo = InMemoryPactRepository([await pactRepo.getPactById('p1') ?? _pact]);
       final reloadedShowupRepo = InMemoryShowupRepository();
       final reloadedTxService = InMemoryPactTransactionService(reloadedPactRepo, reloadedShowupRepo);
-      final reloadedService = PactService(
-        pactRepository: reloadedPactRepo,
-        showupRepository: reloadedShowupRepo,
-        transactionService: reloadedTxService,
-      );
       final reloadedStatsService = PactStatsService(
         pactRepository: reloadedPactRepo,
         showupRepository: reloadedShowupRepo,
         transactionService: reloadedTxService,
+      );
+      final reloadedService = PactService(
+        pactRepository: reloadedPactRepo,
+        showupRepository: reloadedShowupRepo,
+        transactionService: reloadedTxService,
+        pactStatsService: reloadedStatsService,
       );
       final reloadedContainer = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(reloadedService),
@@ -330,15 +336,16 @@ void main() {
       final pactRepo = InMemoryPactRepository([expiredPact]);
       final showupRepo = InMemoryShowupRepository(showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final service = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
@@ -346,12 +353,25 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
+      // Warm the cache first so we can verify it is evicted on auto-complete.
+      await statsService.currentStats(pact: expiredPact, showups: showups);
+
       await container.read(pactDetailViewModelProvider('expired').notifier).load();
 
       final state = container.read(pactDetailViewModelProvider('expired'));
       expect(state.pact?.status, PactStatus.completed);
       final persisted = await pactRepo.getPactById('expired');
       expect(persisted?.status, PactStatus.completed);
+
+      // After auto-completion, onPactCompleted was called which evicted the cache.
+      // Calling currentStats with empty showups now goes to DB (cache miss), so
+      // the returned stats must reflect the completed pact (not stale active-pact data).
+      final completedPact = persisted!;
+      final statsAfterComplete = await statsService.currentStats(pact: completedPact, showups: []);
+      // The pact's showups are still in the repo (completion does not delete them),
+      // so stats must be re-computed from DB and be non-null.
+      expect(statsAfterComplete, isNotNull,
+          reason: 'currentStats must re-load from DB after cache eviction by onPactCompleted');
     });
 
     test('load auto-completes a pact when pactDetailNowProvider is past the end date', () async {
@@ -370,15 +390,16 @@ void main() {
       final pactRepo = InMemoryPactRepository([futurePact]);
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final service = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
       );
       // Inject a "now" that is one day past the end date.
       final pastEndDate = DateTime(2054, 6, 2, 12, 0);
@@ -422,15 +443,16 @@ void main() {
       final pactRepo = InMemoryPactRepository([allResolvedPact]);
       final showupRepo = InMemoryShowupRepository(showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final service = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
@@ -540,15 +562,16 @@ void main() {
       final throwingPactRepo = _ThrowingOnUpdatePactRepository([_pact]);
       final throwingShowupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(throwingPactRepo, throwingShowupRepo);
-      final throwingService = PactService(
-        pactRepository: throwingPactRepo,
-        showupRepository: throwingShowupRepo,
-        transactionService: txService,
-      );
       final throwingStatsService = PactStatsService(
         pactRepository: throwingPactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
+      );
+      final throwingService = PactService(
+        pactRepository: throwingPactRepo,
+        showupRepository: throwingShowupRepo,
+        transactionService: txService,
+        pactStatsService: throwingStatsService,
       );
       final failContainer = ProviderContainer(
         overrides: [

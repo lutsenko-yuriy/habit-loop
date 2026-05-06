@@ -27,11 +27,6 @@ _(nothing in progress)_
 
 ## Unscheduled
 
-### Issues
-
-- [HAB-46](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-46/define-habit-loop-technical-stack-before-hab-11) **Define Habit Loop technical stack before HAB-11** — Explicit decisions on the supporting stack in three areas: developer and production diagnostics / logging, local persistence with a strong performance focus, and experimentation tooling and experiment tracking workflow. (Tech Debt)
-- [HAB-48](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-48/choose-persistence-layer-for-hab-11-with-performance-as-the-primary) **Choose persistence layer for HAB-11 with performance as the primary constraint** — Evaluate persistence options (sqflite, Drift, Isar, Hive) against transactional correctness, query clarity, isolate/concurrency story, migration safety, and runtime performance before implementing HAB-11. (Tech Debt)
-
 ### Remaining work
 
 - [HAB-40](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-40/in-app-language-selection-without-leaving-the-app) **In-app language selection without leaving the app** — Add an in-app language selector so any user can switch between English, French, and German without going to system Settings. (Feature)

@@ -9,6 +9,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
@@ -68,10 +69,17 @@ void main() {
     setUp(() {
       pactRepo = InMemoryPactRepository();
       showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        transactionService: txService,
+        pactStatsService: statsService,
       );
     });
 
@@ -90,10 +98,17 @@ void main() {
 
     test('createPact rolls back pact when saveShowups fails', () async {
       final failingShowupRepo = _ThrowingShowupRepository();
+      final failTxService = InMemoryPactTransactionService(pactRepo, failingShowupRepo);
+      final failStatsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: failingShowupRepo,
+        transactionService: failTxService,
+      );
       final failService = PactService(
         pactRepository: pactRepo,
         showupRepository: failingShowupRepo,
-        transactionService: InMemoryPactTransactionService(pactRepo, failingShowupRepo),
+        transactionService: failTxService,
+        pactStatsService: failStatsService,
       );
 
       await expectLater(
@@ -160,6 +175,84 @@ void main() {
       final result = await pactRepo.getAllPacts();
       expect(result, isEmpty);
     });
+
+    // updatePact + PactStatsService integration --------------------------------
+
+    test('updatePact calls onPactCompleted when pact status is completed', () async {
+      await pactRepo.savePact(_pact);
+      final completedPact = _pact.copyWith(status: PactStatus.completed);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+      );
+      final serviceWithStats = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        pactStatsService: statsService,
+      );
+
+      // Warm the cache first so we can verify eviction.
+      final showupForCache = Showup(
+        id: 's1',
+        pactId: 'p1',
+        scheduledAt: DateTime(2026, 3, 1, 8),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      await showupRepo.saveShowup(showupForCache);
+      await statsService.currentStats(pact: _pact, showups: []);
+
+      // After updatePact with a completed pact, cache entry must be evicted.
+      await serviceWithStats.updatePact(completedPact);
+
+      // Verify the pact was persisted.
+      final persisted = await pactRepo.getPactById('p1');
+      expect(persisted?.status, PactStatus.completed);
+    });
+
+    test('updatePact does NOT call onPactCompleted when pact status is active', () async {
+      await pactRepo.savePact(_pact);
+      final updatedPact = _pact.copyWith(habitName: 'Jog');
+      final statsService = _TrackingPactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+      );
+      final serviceWithStats = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        pactStatsService: statsService,
+      );
+
+      await serviceWithStats.updatePact(updatedPact);
+
+      expect(statsService.onPactCompletedCallCount, 0,
+          reason: 'onPactCompleted must not be called for an active pact update');
+    });
+
+    test('updatePact does NOT call onPactCompleted when pact status is stopped', () async {
+      final stoppedPact = _pact.copyWith(status: PactStatus.stopped);
+      await pactRepo.savePact(stoppedPact);
+      final statsService = _TrackingPactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+      );
+      final serviceWithStats = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        pactStatsService: statsService,
+      );
+
+      await serviceWithStats.updatePact(stoppedPact);
+
+      expect(statsService.onPactCompletedCallCount, 0,
+          reason: 'onPactCompleted must not be called for a stopped pact update');
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -185,10 +278,16 @@ void main() {
       pactRepo = SqlitePactRepository(db);
       showupRepo = SqliteShowupRepository(db);
       txService = SqlitePactTransactionService(db);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        pactStatsService: statsService,
       );
     });
 
@@ -264,5 +363,22 @@ class _ThrowingShowupRepository extends InMemoryShowupRepository {
   @override
   Future<SaveShowupsResult> saveShowups(List<Showup> showups) async {
     throw Exception('saveShowups failed intentionally');
+  }
+}
+
+/// A [PactStatsService] subclass that records calls to [onPactCompleted].
+class _TrackingPactStatsService extends PactStatsService {
+  _TrackingPactStatsService({
+    required super.pactRepository,
+    required super.showupRepository,
+    required super.transactionService,
+  });
+
+  int onPactCompletedCallCount = 0;
+
+  @override
+  void onPactCompleted(String pactId) {
+    onPactCompletedCallCount++;
+    super.onPactCompleted(pactId);
   }
 }
