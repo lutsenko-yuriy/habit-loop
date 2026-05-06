@@ -3,14 +3,10 @@ import 'dart:async' show unawaited;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
-import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
-import 'package:habit_loop/infrastructure/logging/providers/log_service_providers.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
-import 'package:habit_loop/slices/pact/application/pact_service.dart';
-import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 
 final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
 

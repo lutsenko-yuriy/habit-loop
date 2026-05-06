@@ -5,9 +5,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/infrastructure/analytics/providers/analytics_providers.dart';
-import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
-import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -50,8 +48,8 @@ void main() {
     final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
     return ProviderContainer(
       overrides: [
-        showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
-        showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        pactRepositoryProvider.overrideWithValue(pactRepo),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
         showupDetailNowProvider.overrideWithValue(today),
         analyticsServiceProvider.overrideWithValue(FakeAnalyticsService()),

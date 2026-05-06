@@ -17,7 +17,6 @@ _(nothing in progress)_
 ### Issues
 
 - [HAB-22](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-22/auto-refresh-dashboard-when-date-changes-at-midnight) **Auto-refresh dashboard when date changes at midnight** — `nowProvider` is evaluated once and not invalidated while the app stays open; after midnight the calendar strip still shows the previous day as "today" and new showups are not generated until relaunch. On foreground resume, invalidate `nowProvider` if the date has changed; stretch goal: midnight background trigger coordinated with HAB-13. (Tech Debt / Feature — blocked by HAB-13)
-- [HAB-52](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-52/centralise-dependency-injection-libinfrastructureinjections) **Centralise dependency injection — lib/infrastructure/injections/ + INJECTIONS.md** — Provider declarations and ProviderScope overrides are currently scattered across repository providers, application service files, and inline in `main.dart`. Create `lib/infrastructure/injections/` as the single composition root with an `AppContainer` exporting the overrides list, make `PactStatsService` a singleton provider, and add `INJECTIONS.md` documenting the full dependency graph. (Tech Debt)
 
 ### Remaining work
 

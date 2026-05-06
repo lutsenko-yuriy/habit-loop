@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -32,8 +33,8 @@ ProviderContainer _makeContainer({
   List<Showup> showups = const [],
 }) {
   return ProviderContainer(overrides: [
-    pactListRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-    pactListShowupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+    pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
+    showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
   ]);
 }
 

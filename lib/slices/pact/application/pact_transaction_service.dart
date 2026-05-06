@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 
@@ -31,12 +30,3 @@ abstract class PactTransactionService {
     required String pactId,
   });
 }
-
-/// Provides the [PactTransactionService] to the app.
-///
-/// Throws [UnimplementedError] by default — must be overridden in `main.dart`
-/// with a [SqlitePactTransactionService] instance, and in tests with an
-/// [InMemoryPactTransactionService].
-final pactTransactionServiceProvider = Provider<PactTransactionService>((ref) {
-  throw UnimplementedError('pactTransactionServiceProvider must be overridden in main.dart');
-});

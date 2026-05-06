@@ -1,10 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
-import 'package:habit_loop/infrastructure/persistence/repository_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
@@ -97,19 +95,3 @@ class PactService {
   /// Deletes the pact with [id]. No-op if the pact does not exist.
   Future<void> deletePact(String id) => _pactRepository.deletePact(id);
 }
-
-// ---------------------------------------------------------------------------
-// Riverpod provider
-// ---------------------------------------------------------------------------
-
-/// Provides [PactService] by composing the three lower-level providers.
-///
-/// Works regardless of whether the lower-level providers are backed by
-/// in-memory (test) or SQLite (production) implementations.
-final pactServiceProvider = Provider<PactService>((ref) {
-  return PactService(
-    pactRepository: ref.watch(pactRepositoryProvider),
-    showupRepository: ref.watch(showupRepositoryProvider),
-    transactionService: ref.watch(pactTransactionServiceProvider),
-  );
-});

@@ -4,6 +4,23 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.18.1] — 2026-05-06 (PR #49 merged)
+
+### Changed — Centralise dependency injection into lib/infrastructure/injections/ (HAB-52)
+
+- `lib/infrastructure/injections/app_providers.dart` — single canonical file declaring all 9 app-wide Riverpod providers (analytics, crashlytics, logging, remote config, pact/showup repositories, pact transaction service, pact service, pact stats service); replaces 5 deleted `providers/` files and removes provider declarations from 3 application-service files
+- `lib/infrastructure/injections/app_container.dart` — `AppContainer` static class exposing `AppContainer.overrides(...)` that accepts constructed service instances and returns the full `List<Override>` for `ProviderScope`; `main.dart` calls only this method
+- `main.dart` slimmed to call `AppContainer.overrides(...)`; no provider declarations or override lists remain inline
+- 5 old `providers/` files deleted (analytics, crashlytics, logging, remote config, persistence/repository_providers.dart); 4 empty directories removed
+- 4 duplicate slice-local repository provider aliases removed; `PactListViewModel` and `ShowupDetailViewModel` now read canonical providers from `injections/`
+- `ShowupDetailViewModel` refactored to use `ref.read(pactStatsServiceProvider)` instead of inline `PactStatsService(...)` construction — `PactStatsService` is now a singleton provider
+- `docs/INJECTIONS.md` added — full dependency graph, provider table, and instructions for adding new providers
+- `docs/ARCHITECTURE.md` updated with `injections/` directory entries
+- `test/infrastructure/injections/app_container_test.dart` — smoke tests for `AppContainer`
+- 644 tests passing, analyzer clean
+
+---
+
 ## [0.18.0] — 2026-05-05 (PR #48 merged)
 
 ### Added — PactService façade and full SQLite wiring (HAB-11 Work Unit 4)

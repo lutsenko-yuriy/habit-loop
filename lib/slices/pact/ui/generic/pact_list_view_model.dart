@@ -1,17 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
-
-final pactListRepositoryProvider = Provider<PactRepository>(
-  (_) => throw UnimplementedError('Override pactListRepositoryProvider'),
-);
-
-final pactListShowupRepositoryProvider = Provider<ShowupRepository>(
-  (_) => throw UnimplementedError('Override pactListShowupRepositoryProvider'),
-);
 
 final pactListViewModelProvider = NotifierProvider<PactListViewModel, PactListState>(PactListViewModel.new);
 
@@ -22,8 +13,8 @@ class PactListViewModel extends Notifier<PactListState> {
   Future<void> load() async {
     state = state.copyWith(isLoading: true);
     try {
-      final pactRepo = ref.read(pactListRepositoryProvider);
-      final showupRepo = ref.read(pactListShowupRepositoryProvider);
+      final pactRepo = ref.read(pactRepositoryProvider);
+      final showupRepo = ref.read(showupRepositoryProvider);
       final pacts = await pactRepo.getAllPacts();
       final now = DateTime.now();
 

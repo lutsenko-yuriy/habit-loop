@@ -35,27 +35,25 @@ lib/
 │       ├── showup_date_utils.dart     # ShowupDateUtils — date arithmetic helpers
 │       └── save_showups_result.dart   # SaveShowupsResult — batch-save result type
 ├── infrastructure/                    # Cross-cutting infrastructure shared by all features
+│   ├── injections/
+│   │   ├── app_providers.dart         # Single canonical file declaring every app-wide Riverpod provider; all lib/ and test/ code imports providers from here
+│   │   └── app_container.dart         # AppContainer — static class exposing List<Override> overrides(...); called by main.dart to wire all production instances into ProviderScope
 │   ├── analytics/
 │   │   ├── contracts/                 # AnalyticsEvent (abstract base), AnalyticsScreen, AnalyticsService interface
-│   │   ├── data/                      # FirebaseAnalyticsService, FirebaseAnalyticsClientAdapter, NoopAnalyticsService
-│   │   └── providers/                 # analyticsServiceProvider (Riverpod)
+│   │   └── data/                      # FirebaseAnalyticsService, FirebaseAnalyticsClientAdapter, NoopAnalyticsService
 │   ├── crashlytics/
 │   │   ├── contracts/
 │   │   │   └── crashlytics_service.dart            # abstract CrashlyticsService interface (no-throw contract)
-│   │   ├── data/
-│   │   │   ├── firebase_crashlytics_service.dart       # real implementation (swallows exceptions)
-│   │   │   ├── firebase_crashlytics_client_adapter.dart # wraps FirebaseCrashlytics SDK; only used in main.dart
-│   │   │   └── noop_crashlytics_service.dart           # default no-op
-│   │   └── providers/
-│   │       └── crashlytics_providers.dart  # crashlyticsServiceProvider (Provider<CrashlyticsService>)
+│   │   └── data/
+│   │       ├── firebase_crashlytics_service.dart       # real implementation (swallows exceptions)
+│   │       ├── firebase_crashlytics_client_adapter.dart # wraps FirebaseCrashlytics SDK; only used in main.dart
+│   │       └── noop_crashlytics_service.dart           # default no-op
 │   ├── logging/
 │   │   ├── contracts/
 │   │   │   └── log_service.dart                    # abstract LogService interface (debug/info/warning/error/logLocal); PII rules documented
-│   │   ├── data/
-│   │   │   ├── talker_log_service.dart                 # talker_flutter implementation; in-app overlay gated on kDebugMode
-│   │   │   └── noop_log_service.dart                   # default no-op
-│   │   └── providers/
-│   │       └── log_service_providers.dart  # logServiceProvider (Provider<LogService>); overridden with TalkerLogService in non-release builds
+│   │   └── data/
+│   │       ├── talker_log_service.dart                 # talker_flutter implementation; in-app overlay gated on kDebugMode
+│   │       └── noop_log_service.dart                   # default no-op
 │   ├── persistence/
 │   │   ├── habit_loop_database.dart   # HabitLoopDatabase — owns the sqflite Database lifecycle and schema DDL (runMigrations); production singleton + @visibleForTesting openForTesting()
 │   │   ├── schedule_codec.dart        # ScheduleCodec — encodes/decodes ShowupSchedule to/from JSON string (schedule TEXT column)
@@ -65,12 +63,10 @@ lib/
 │       ├── contracts/
 │       │   ├── remote_config_service.dart          # abstract RemoteConfigService interface (no-throw contract)
 │       │   └── remote_config_defaults.dart         # RemoteConfigDefaults — in-code fallback values
-│       ├── data/
-│       │   ├── firebase_remote_config_service.dart     # real implementation (swallows exceptions); also contains FirebaseRemoteConfigClient interface
-│       │   ├── firebase_remote_config_client_adapter.dart # wraps FirebaseRemoteConfig SDK; only used in main.dart
-│       │   └── noop_remote_config_service.dart         # default no-op returning in-code defaults
-│       └── providers/
-│           └── remote_config_providers.dart  # remoteConfigServiceProvider (Provider<RemoteConfigService>)
+│       └── data/
+│           ├── firebase_remote_config_service.dart     # real implementation (swallows exceptions); also contains FirebaseRemoteConfigClient interface
+│           ├── firebase_remote_config_client_adapter.dart # wraps FirebaseRemoteConfig SDK; only used in main.dart
+│           └── noop_remote_config_service.dart         # default no-op returning in-code defaults
 └── slices/
     ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel
     │   ├── analytics/                 # DashboardAnalyticsScreen
@@ -98,6 +94,8 @@ test/
 │   ├── pact/                          # Pact, PactStats, ShowupSchedule tests
 │   └── showup/                        # Showup, ShowupGenerator tests
 ├── infrastructure/                    # Mirrors lib/infrastructure/
+│   ├── injections/
+│   │   └── app_container_test.dart    # Smoke test: AppContainer.overrides(...) returns expected override count; all canonical providers resolve without throwing
 │   ├── analytics/
 │   │   ├── domain/
 │   │   ├── data/
@@ -150,7 +148,7 @@ Orchestration logic that coordinates domain objects and repository calls. Lives 
 - `PactBuilder` (`slices/pact/application/`) — holds the 7 pact-data fields assembled during the creation wizard, exposes validity predicates (`isDateRangeValid`, `isShowupDurationValid`, `isScheduleSet`, `isHabitNameValid`, `isComplete`), and materialises a `Pact` via `build(id, createdAt)`.
 - `PactCreationState` (`slices/pact/application/`) — wizard-navigation state: holds `builder: PactBuilder`, `currentStep`, `commitmentAccepted`, `isSubmitting`, `submitError`. Re-exports `ScheduleType` for backwards compatibility.
 - `PactStatsService` (`slices/pact/application/`) — owns pact stats calculation, persistence, and the stop-pact transaction. Accepts an optional `PactTransactionService` at construction; when provided, `stopPact()` delegates to the atomic `stopPactTransaction()` path instead of the two-step fallback.
-- `PactTransactionService` (`slices/pact/application/`) — owns the atomic write paths that span both `pacts` and `showups` tables. `savePactWithShowups(pact, showups)` inserts both in one SQLite transaction and sets `total_showups` to `showups.length`. `stopPactTransaction(updatedPact, pactId)` updates the pact row and deletes the pact's showups in one SQLite transaction. Both methods use `ConflictAlgorithm.fail` so any duplicate-ID error surfaces immediately rather than silently overwriting data. Provides `pactTransactionServiceProvider` (throws by default; overridden in WU4).
+- `PactTransactionService` (`slices/pact/application/`) — owns the atomic write paths that span both `pacts` and `showups` tables. `savePactWithShowups(pact, showups)` inserts both in one SQLite transaction and sets `total_showups` to `showups.length`. `stopPactTransaction(updatedPact, pactId)` updates the pact row and deletes the pact's showups in one SQLite transaction. Both methods use `ConflictAlgorithm.fail` so any duplicate-ID error surfaces immediately rather than silently overwriting data. Provider declared in `lib/infrastructure/injections/app_providers.dart`.
 - `ShowupGenerationService` (`slices/showup/application/`) — orchestrates lazy windowed showup generation and deduplication.
 
 ### Data (`lib/slices/*/data/`)
@@ -171,9 +169,11 @@ Platform-split presentation:
 
 ### Infrastructure (`lib/infrastructure/`)
 
-Cross-cutting services (analytics, crashlytics, logging, remote config) that are shared by the entire app. Each service follows the same internal structure: `contracts/` (abstract interface with a no-throw contract), `data/` (Firebase-backed implementation + noop fallback), `providers/` (Riverpod provider defaulting to the noop).
+Cross-cutting services (analytics, crashlytics, logging, remote config) that are shared by the entire app. Each service follows the same internal structure: `contracts/` (abstract interface with a no-throw contract) and `data/` (Firebase-backed implementation + noop fallback). Provider declarations have been consolidated — see Injections below.
 
 Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/analytics/`, `slices/showup/analytics/`) with event classes extending `AnalyticsEvent`. This keeps event definitions co-located with the domain they describe.
+
+**Injections:** `lib/infrastructure/injections/` is the single composition root. `app_providers.dart` declares every app-wide Riverpod provider (repositories, transaction service, application services, and all infrastructure service providers). `app_container.dart` exposes `AppContainer.overrides(...)`, a static factory that accepts already-constructed production instances and returns the `List<Override>` passed to `ProviderScope` in `main.dart`. `main.dart` retains all `kReleaseMode` branching and Firebase construction; `AppContainer` is mode-agnostic and purely maps instances to overrides. See `docs/INJECTIONS.md` for the full dependency graph.
 
 **Analytics:** `lib/infrastructure/analytics/` contains the abstract base class (`AnalyticsEvent`, `AnalyticsScreen`), service interface (`AnalyticsService`), Firebase adapter, noop adapter, and Riverpod provider. It has no `ui/` directory because it contains no widgets.
 

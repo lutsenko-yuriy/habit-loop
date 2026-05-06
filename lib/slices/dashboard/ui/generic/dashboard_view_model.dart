@@ -1,14 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/infrastructure/crashlytics/providers/crashlytics_providers.dart';
-import 'package:habit_loop/infrastructure/persistence/repository_providers.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
-
-// Re-exported so that existing callers that import pactRepositoryProvider /
-// showupRepositoryProvider from this file continue to compile without changes.
-export 'package:habit_loop/infrastructure/persistence/repository_providers.dart'
-    show pactRepositoryProvider, showupRepositoryProvider;
 
 final todayProvider = Provider<DateTime>((ref) => DateTime.now());
 
