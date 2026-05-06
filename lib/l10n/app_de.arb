@@ -87,7 +87,7 @@
   "statsRemaining": "Ausstehend",
   "statsCancelled": "Gestoppt",
   "statsStreak": "Serie",
-  "statsShowups": "{count} Showups",
+  "statsShowups": "{count, plural, one{{count} Auftritt} other{{count} Auftritte}}",
   "@statsShowups": {
     "placeholders": {
       "count": { "type": "int" }

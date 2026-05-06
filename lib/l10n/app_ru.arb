@@ -69,7 +69,7 @@
   "back": "Назад",
   "cancel": "Отмена",
   "tooManyPactsTitle": "Слишком много активных пактов",
-  "tooManyPactsBody": "{max, plural, one{Можно иметь только 1 активный пакт одновременно. Создать ещё один?} other{Можно иметь только {max} активных пакта одновременно. Создать ещё?}}",
+  "tooManyPactsBody": "{max, plural, one{Можно иметь только 1 активный пакт одновременно. Создать ещё один?} few{Можно иметь только {max} активных пакта одновременно. Создать ещё?} many{Можно иметь только {max} активных пактов одновременно. Создать ещё?} other{Можно иметь только {max} активных пакта одновременно. Создать ещё?}}",
   "@tooManyPactsBody": {
     "placeholders": {
       "max": { "type": "int" }
@@ -87,7 +87,7 @@
   "statsRemaining": "Осталось",
   "statsCancelled": "Остановлено",
   "statsStreak": "Серия",
-  "statsShowups": "{count} визитов",
+  "statsShowups": "{count, plural, one{{count} визит} few{{count} визита} many{{count} визитов} other{{count} визита}}",
   "@statsShowups": {
     "placeholders": {
       "count": { "type": "int" }
@@ -96,7 +96,7 @@
   "pactStartDate": "Начало",
   "pactEndDate": "Конец",
   "pactEndedDate": "Завершено",
-  "daysRemaining": "{count, plural, one{Остался 1 день} other{Осталось {count} дней}}",
+  "daysRemaining": "{count, plural, one{Остался 1 день} few{Осталось {count} дня} many{Осталось {count} дней} other{Осталось {count} дня}}",
   "@daysRemaining": {
     "placeholders": {
       "count": { "type": "int" }
@@ -110,15 +110,15 @@
   "stopPactBody": "Это действие необратимо. Вы сможете просмотреть историю пакта позже.",
   "stopPactReasonHint": "Причина (необязательно)",
   "stopPactConfirm": "Остановить",
-  "pactsActive": "{count, plural, =0{Нет активных пактов} one{1 активный пакт} other{{count} активных пакта}}",
+  "pactsActive": "{count, plural, =0{Нет активных пактов} one{1 активный пакт} few{{count} активных пакта} many{{count} активных пактов} other{{count} активных пакта}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "pactsDone": "{count, plural, =0{Нет завершённых пактов} one{1 завершённый пакт} other{{count} завершённых пакта}}",
+  "pactsDone": "{count, plural, =0{Нет завершённых пактов} one{1 завершённый пакт} few{{count} завершённых пакта} many{{count} завершённых пактов} other{{count} завершённых пакта}}",
   "@pactsDone": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "pactsCancelled": "{count, plural, =0{Нет остановленных пактов} one{1 остановленный пакт} other{{count} остановленных пакта}}",
+  "pactsCancelled": "{count, plural, =0{Нет остановленных пактов} one{1 остановленный пакт} few{{count} остановленных пакта} many{{count} остановленных пактов} other{{count} остановленных пакта}}",
   "@pactsCancelled": {
     "placeholders": { "count": { "type": "int" } }
   },
