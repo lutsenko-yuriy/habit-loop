@@ -20,19 +20,20 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 /// session — Riverpod keeps the singleton alive until the container is disposed).
 ///
 /// Cache lifecycle:
-/// - **Pre-warm**: [preWarmCache] loads all active pacts in one pass and fills
-///   the cache before any individual screen opens.
 /// - **Lazy hit**: [currentStats] checks the cache first; a hit returns
-///   immediately without a DB round-trip.
+///   immediately without a DB round-trip.  On a cache miss, showups are loaded
+///   from the repository, stats are computed, the result is written to the
+///   cache, and then returned.  Subsequent calls for the same pact are always
+///   cache hits.
 /// - **Write-through**: [persistShowupStatus] evicts the stale entry, then
 ///   [_syncStatsBestEffort] → [syncStats] → [persistStats] repopulates it.
-/// - **Evict-only**: [stopPact] and [completePact] evict the entry after the
+/// - **Evict-only**: [stopPact] and [onPactCompleted] evict the entry after the
 ///   write because showups are deleted/irrelevant and there is nothing valid to
 ///   cache.
 ///
 /// [stopPact] wraps the update-pact and delete-showups writes in a single
 /// operation via [transactionService] so either both succeed or both are rolled
-/// back. Tests inject an [InMemoryPactTransactionService]; production uses
+/// back.  Tests inject an [InMemoryPactTransactionService]; production uses
 /// [SqlitePactTransactionService].
 class PactStatsService {
   final PactRepository _pactRepository;
@@ -56,25 +57,6 @@ class PactStatsService {
   /// [ShowupRepository] directly.
   Future<List<Showup>> loadShowupsForPact(String pactId) => _showupRepository.getShowupsForPact(pactId);
 
-  /// Pre-warms the stats cache for a list of pacts in a single pass.
-  ///
-  /// Intended to be called by [DashboardViewModel.load] after showup generation
-  /// so that all subsequent navigations (pact detail, showup detail) are
-  /// guaranteed cache hits and incur no additional DB round-trips.
-  ///
-  /// Stale entries — pacts that are no longer in [pacts] (e.g. auto-completed
-  /// or stopped between two dashboard loads) — are evicted first to prevent
-  /// monotonic cache growth across refreshes.
-  Future<void> preWarmCache(List<Pact> pacts) async {
-    // Prune entries for pacts that are no longer active so the cache does not
-    // grow unboundedly across multiple dashboard refreshes.
-    _statsCache.removeWhere((id, _) => !pacts.any((p) => p.id == id));
-    for (final pact in pacts) {
-      final showups = await _showupRepository.getShowupsForPact(pact.id);
-      _statsCache[pact.id] = buildStats(pact: pact, showups: showups);
-    }
-  }
-
   PactStats buildStats({
     required Pact pact,
     required List<Showup> showups,
@@ -94,26 +76,35 @@ class PactStatsService {
   /// Priority order:
   /// 1. If [showups] is non-empty, compute fresh stats from the provided list
   ///    (caller already loaded showups — no cache check needed).
-  /// 2. If [showups] is empty and a cache entry exists for this pact (any pact
-  ///    that has been pre-warmed or written-through), return the cached value
-  ///    immediately — no DB round-trip.
-  /// 3. If [showups] is empty and no cache entry exists — either because the
-  ///    entry was evicted by [stopPact] / [completePact], or because the pact
-  ///    was never pre-warmed — fall back to the frozen [Pact.stats] snapshot.
-  ///    This is the normal path for stopped and completed pacts whose showups
-  ///    have been deleted or are no longer relevant.
-  PactStats currentStats({
+  /// 2. If [showups] is empty and a cache entry exists for this pact, return
+  ///    the cached value immediately — no DB round-trip.
+  /// 3. If [showups] is empty and no cache entry exists (cache miss), load
+  ///    showups from the repository, compute stats, write the result to the
+  ///    cache, and return.  Subsequent calls are guaranteed cache hits.
+  Future<PactStats> currentStats({
     required Pact pact,
     required List<Showup> showups,
-  }) {
+  }) async {
     if (showups.isNotEmpty) {
       return buildStats(pact: pact, showups: showups);
     }
     // Cache hit — return without a DB round-trip.
     final cached = _statsCache[pact.id];
     if (cached != null) return cached;
-    // Lazy fallback: no cache and no showups (e.g. stopped pact).
-    return pact.stats ?? buildStats(pact: pact, showups: showups);
+
+    // Cache miss: load from DB, populate cache, return.
+    // This covers both active pacts on first access and stopped/completed pacts
+    // whose showups have been deleted (in which case the query returns an empty
+    // list and we fall back to the frozen Pact.stats snapshot if available).
+    final loadedShowups = await _showupRepository.getShowupsForPact(pact.id);
+    if (loadedShowups.isEmpty && pact.stats != null) {
+      // No showups in DB and a frozen snapshot exists — return the snapshot
+      // directly without caching it (it is already on the pact model).
+      return pact.stats!;
+    }
+    final computed = buildStats(pact: pact, showups: loadedShowups);
+    _statsCache[pact.id] = computed;
+    return computed;
   }
 
   Future<Pact> persistStats({
@@ -167,9 +158,7 @@ class PactStatsService {
     //
     // If [_syncStatsBestEffort] silently swallows an error, the cache stays
     // *empty* (not stale) for the rest of the session.  Subsequent calls to
-    // [currentStats] with no showups will then reach the lazy fallback and
-    // return the [Pact.stats] snapshot that was valid before this mutation —
-    // consistent with the best-effort contract documented on this method.
+    // [currentStats] with no showups will then trigger a lazy reload from DB.
     _statsCache.remove(updatedShowup.pactId);
     await _syncStatsBestEffort(updatedShowup.pactId);
     return updatedShowup;
@@ -188,7 +177,7 @@ class PactStatsService {
   }) async {
     final showups = await _showupRepository.getShowupsForPact(pactId);
     final stoppedDate = DateTime(now.year, now.month, now.day);
-    final statsBeforeStop = existingStats ?? currentStats(pact: pact, showups: showups);
+    final statsBeforeStop = existingStats ?? await currentStats(pact: pact, showups: showups);
     final updated = pact.copyWith(
       status: PactStatus.stopped,
       endDate: stoppedDate,
@@ -212,24 +201,17 @@ class PactStatsService {
     return updated;
   }
 
-  /// Persists a pact auto-completion and evicts its cache entry.
+  /// Evicts the cache entry for [pactId] after a pact has been auto-completed.
   ///
-  /// Called by [PactDetailViewModel.load] when it determines that the pact
-  /// end date has passed or all showups have been resolved.  Using this method
-  /// instead of [PactService.updatePact] directly ensures the cache is kept
-  /// consistent: a stale active-pact entry is evicted so subsequent reads fall
-  /// through to the frozen [Pact.stats] snapshot rather than returning pre-
-  /// completion data.
+  /// Called by [PactService.updatePact] when it detects that the pact being
+  /// persisted has [PactStatus.completed].  This keeps the cache consistent:
+  /// a stale active-pact entry is evicted so subsequent reads fall through to
+  /// the lazy-load path rather than returning pre-completion data.
   ///
-  /// Does NOT repopulate the cache: the completed pact's showups may already be
-  /// resolved or irrelevant, and the [Pact.stats] snapshot on [updatedPact]
-  /// carries all the information the UI needs.
-  Future<void> completePact(Pact updatedPact) async {
-    await _pactRepository.updatePact(updatedPact);
-    // Evict-only: the completed pact's showups are no longer changing, so
-    // there is nothing meaningful to cache.  The frozen pact.stats snapshot
-    // is the source of truth for subsequent reads.
-    _statsCache.remove(updatedPact.id);
+  /// Does NOT persist anything — the repository write is done by the caller
+  /// ([PactService.updatePact]).
+  void onPactCompleted(String pactId) {
+    _statsCache.remove(pactId);
   }
 
   Future<void> _rollbackCreatedPact(String pactId) async {

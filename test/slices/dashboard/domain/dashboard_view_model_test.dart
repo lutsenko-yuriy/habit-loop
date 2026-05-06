@@ -505,8 +505,8 @@ void main() {
     });
   });
 
-  group('preWarmCache on load', () {
-    test('load() warms the stats cache for active pacts (cache hit avoids DB)', () async {
+  group('lazy stats cache on load', () {
+    test('currentStats is a cache hit after load() — second call avoids DB', () async {
       final pact = _dailyPact(id: 'p1', startDate: today);
       // Pre-seed a done showup so the cached stats have showupsDone=1.
       final doneShowup = Showup(
@@ -538,22 +538,26 @@ void main() {
 
       await container.read(dashboardViewModelProvider.notifier).load();
 
-      // After load, the stats cache should be warm: currentStats with empty
-      // showups returns the cached value (which knows about the done showup)
-      // without any additional DB calls.
-      final callsAfterLoad = showupRepo.getShowupsForPactCallCount;
-      final stats = statsService.currentStats(pact: pact, showups: []);
+      // First call to currentStats after dashboard load — lazy miss → DB hit,
+      // result cached.
+      final statsFirst = await statsService.currentStats(pact: pact, showups: []);
+      final callsAfterFirst = showupRepo.getShowupsForPactCallCount;
 
-      // No additional DB call was made.
-      expect(showupRepo.getShowupsForPactCallCount, callsAfterLoad);
-      // The cached stats reflect the done showup loaded during pre-warm.
-      expect(stats.showupsDone, 1);
+      // Second call — must be a cache hit (no additional DB round-trip).
+      final statsSecond = await statsService.currentStats(pact: pact, showups: []);
+
+      expect(showupRepo.getShowupsForPactCallCount, callsAfterFirst,
+          reason: 'Second call to currentStats must be a cache hit');
+      expect(statsFirst.showupsDone, statsSecond.showupsDone);
+      // The cached stats reflect the done showup.
+      expect(statsSecond.showupsDone, 1);
     });
 
-    test('load() only warms cache for active pacts, not stopped ones', () async {
+    test('DashboardViewModel does not call preWarmCache — cache is populated lazily', () async {
+      // This test verifies that the dashboard itself does not try to pre-warm
+      // anything; the cache is populated on first currentStats call per pact.
       final stoppedPact = _dailyPact(id: 'p1', startDate: today, status: PactStatus.stopped);
       final activePact = _dailyPact(id: 'p2', startDate: today);
-      // A done showup for the active pact so we can verify the cache is warm.
       final doneShowup = Showup(
         id: 's2',
         pactId: 'p2',
@@ -583,11 +587,18 @@ void main() {
 
       await container.read(dashboardViewModelProvider.notifier).load();
 
-      // activePact (p2) cache is warm — currentStats returns cached stats with done=1.
-      final callsAfterLoad = showupRepo.getShowupsForPactCallCount;
-      final activeStats = statsService.currentStats(pact: activePact, showups: []);
-      expect(showupRepo.getShowupsForPactCallCount, callsAfterLoad);
+      // After load, the stats cache is cold — first call lazily loads from DB.
+      final callsBeforeCacheAccess = showupRepo.getShowupsForPactCallCount;
+      final activeStats = await statsService.currentStats(pact: activePact, showups: []);
+
+      // First lazy access hits DB.
+      expect(showupRepo.getShowupsForPactCallCount, greaterThan(callsBeforeCacheAccess));
       expect(activeStats.showupsDone, 1);
+
+      // Second access is a cache hit.
+      final callsAfterFirstAccess = showupRepo.getShowupsForPactCallCount;
+      await statsService.currentStats(pact: activePact, showups: []);
+      expect(showupRepo.getShowupsForPactCallCount, callsAfterFirstAccess);
     });
   });
 }

@@ -46,7 +46,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       // Load showups directly from the stats service (which owns the showup repository).
       // Note: showup reads for stats computation go through PactStatsService.
       final showups = await pactStatsService.loadShowupsForPact(arg);
-      var stats = pactStatsService.currentStats(pact: pact, showups: showups);
+      var stats = await pactStatsService.currentStats(pact: pact, showups: showups);
 
       // Auto-complete the pact when its end date has passed or all showups
       // across the entire schedule have been resolved (showupsRemaining == 0).
@@ -67,11 +67,11 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
               endDate: pact.endDate,
             ),
           );
-          // Delegate to PactStatsService.completePact so the cache entry is
-          // evicted atomically with the repository write.  Calling
-          // pactService.updatePact directly would leave a stale active-pact
-          // entry in the stats cache for the rest of the session.
-          await pactStatsService.completePact(pact);
+          // Delegate to PactService.updatePact which internally notifies
+          // PactStatsService.onPactCompleted to evict the cache entry
+          // atomically with the repository write.  The view model is
+          // completely unaware of cache management.
+          await pactService.updatePact(pact);
           stats = pact.stats!;
         }
       }

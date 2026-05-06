@@ -102,7 +102,9 @@ final pactTransactionServiceProvider = Provider<PactTransactionService>((ref) {
   throw UnimplementedError('pactTransactionServiceProvider must be overridden in main.dart');
 });
 
-/// Provides [PactService] by composing the three lower-level providers.
+/// Provides [PactService] by composing the three lower-level providers and the
+/// [PactStatsService] so that [PactService.updatePact] can notify the cache
+/// when a pact transitions to [PactStatus.completed].
 ///
 /// Works regardless of whether the lower-level providers are backed by
 /// in-memory (test) or SQLite (production) implementations.
@@ -111,6 +113,7 @@ final pactServiceProvider = Provider<PactService>((ref) {
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
+    pactStatsService: ref.watch(pactStatsServiceProvider),
   );
 });
 
