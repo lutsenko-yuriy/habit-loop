@@ -385,4 +385,22 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get showupHabitDeleted => '(habitude supprimée)';
+
+  @override
+  String get languagePickerTitle => 'Langue';
+
+  @override
+  String get languageEnglish => 'Anglais';
+
+  @override
+  String get languageFrench => 'Français';
+
+  @override
+  String get languageGerman => 'Allemand';
+
+  @override
+  String get languageRussian => 'Russe';
+
+  @override
+  String get languageSystem => 'Utiliser la langue du système';
 }

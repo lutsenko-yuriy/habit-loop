@@ -152,5 +152,12 @@
   "showupNoteSave": "Save Note",
   "showupNoteError": "Failed to save note. Please try again.",
   "showupMarkError": "Failed to update showup status. Please try again.",
-  "showupHabitDeleted": "(habit deleted)"
+  "showupHabitDeleted": "(habit deleted)",
+
+  "languagePickerTitle": "Language",
+  "languageEnglish": "English",
+  "languageFrench": "French",
+  "languageGerman": "German",
+  "languageRussian": "Russian",
+  "languageSystem": "Use system language"
 }
