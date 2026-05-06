@@ -69,8 +69,8 @@ lib/
 │           └── noop_remote_config_service.dart         # default no-op returning in-code defaults
 └── slices/
     ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel
-    │   ├── analytics/                 # DashboardAnalyticsScreen
-    │   └── ui/ (generic/, ios/, android/)
+    │   ├── analytics/                 # DashboardAnalyticsScreen, LanguagePickerAnalyticsScreen, LanguageChangeRequestedEvent, LanguageChangedEvent
+    │   └── ui/ (generic/ — includes language_picker_handler.dart with shared applyLanguageSelection orchestration, ios/, android/)
     ├── pact/                          # Pact creation wizard + pact detail screen
     │   ├── application/               # PactBuilder, PactCreationState, PactStatsService, PactTransactionService
     │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production)

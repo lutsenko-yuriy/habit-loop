@@ -9,6 +9,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/language_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
@@ -37,14 +38,16 @@ class DashboardPageAndroid extends ConsumerWidget {
     Future<void> onLanguagePickerTapped() async {
       final analytics = ref.read(analyticsServiceProvider);
       final localeService = ref.read(localePreferenceServiceProvider);
+
+      // Read currentOverride and compute systemLocaleCode BEFORE the await so
+      // they are not captured after the async gap.
       final currentOverride = ref.read(localeOverrideProvider);
+      final systemLocaleCode = Localizations.localeOf(context).languageCode;
 
       unawaited(analytics.logEvent(LanguageChangeRequestedEvent()));
       unawaited(analytics.logScreenView(const LanguagePickerAnalyticsScreen()));
 
       if (!context.mounted) return;
-
-      final fromCode = currentOverride?.languageCode ?? Localizations.localeOf(context).languageCode;
 
       // Build options list: (label, locale or null for system)
       final options = <(String, Locale?)>[
@@ -86,20 +89,15 @@ class DashboardPageAndroid extends ConsumerWidget {
       if (result == null || !context.mounted) return;
 
       final (isSystem, selectedLocale) = result;
-      if (isSystem) {
-        await localeService.clearLocale();
-        ref.read(localeOverrideProvider.notifier).state = null;
-      } else if (selectedLocale != null) {
-        await localeService.saveLocale(selectedLocale);
-        ref.read(localeOverrideProvider.notifier).state = selectedLocale;
-        if (context.mounted) {
-          unawaited(
-            analytics.logEvent(
-              LanguageChangedEvent(fromLanguage: fromCode, toLanguage: selectedLocale.languageCode),
-            ),
-          );
-        }
-      }
+
+      await applyLanguageSelection(
+        selectedLocale: isSystem ? null : selectedLocale,
+        currentOverride: currentOverride,
+        systemLocaleCode: systemLocaleCode,
+        analyticsService: analytics,
+        localeService: localeService,
+        updateLocaleOverride: (locale) => ref.read(localeOverrideProvider.notifier).state = locale,
+      );
     }
 
     return Scaffold(

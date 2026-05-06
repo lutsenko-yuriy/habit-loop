@@ -147,7 +147,48 @@ void main() {
     await tester.pumpAndSettle();
 
     // Locale service should have been cleared
-    expect(localeService.clearedLocale, isTrue);
+    expect(localeService.clearLocaleCallCount, greaterThan(0));
+  });
+
+  testWidgets('re-selecting the already-selected language does not fire analytics or save', (tester) async {
+    final analyticsService = FakeAnalyticsService();
+    final localeService = FakeLocalePreferenceService();
+
+    // German is already selected
+    await tester.pumpWidget(
+      _buildTestApp(
+        analyticsService: analyticsService,
+        localeService: localeService,
+        localeOverride: const Locale('de'),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('language-picker-button')));
+    await tester.pumpAndSettle();
+
+    // Tap the already-selected German option (has a check icon)
+    await tester.tap(find.text('German'));
+    await tester.pumpAndSettle();
+
+    // language_changed must NOT have been fired
+    expect(analyticsService.loggedEvents.any((e) => e.name == 'language_changed'), isFalse);
+    // locale service must not have been written
+    expect(localeService.savedLocale, isNull);
+  });
+
+  testWidgets('selecting system language when already on system is a no-op', (tester) async {
+    final localeService = FakeLocalePreferenceService();
+
+    // localeOverride is null — already on system
+    await tester.pumpWidget(_buildTestApp(localeService: localeService));
+
+    await tester.tap(find.byKey(const Key('language-picker-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Use system language'));
+    await tester.pumpAndSettle();
+
+    expect(localeService.clearLocaleCallCount, 0);
   });
 }
 
