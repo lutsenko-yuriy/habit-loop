@@ -10,6 +10,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/language_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
@@ -38,28 +39,32 @@ class DashboardPageIos extends ConsumerWidget {
     Future<void> onLanguagePickerTapped() async {
       final analytics = ref.read(analyticsServiceProvider);
       final localeService = ref.read(localePreferenceServiceProvider);
+
+      // Read currentOverride and compute fromCode BEFORE the await so they
+      // are not captured after the async gap (fix for the stale-capture warning).
       final currentOverride = ref.read(localeOverrideProvider);
+      final systemLocaleCode = Localizations.localeOf(context).languageCode;
 
       unawaited(analytics.logEvent(LanguageChangeRequestedEvent()));
       unawaited(analytics.logScreenView(const LanguagePickerAnalyticsScreen()));
 
       if (!context.mounted) return;
 
-      // Determine display name for the checkmark
-      String? localeLabel(Locale? locale) {
-        if (locale == null) return null;
-        return switch (locale.languageCode) {
-          'en' => l10n.languageEnglish,
-          'fr' => l10n.languageFrench,
-          'de' => l10n.languageGerman,
-          'ru' => l10n.languageRussian,
-          _ => null,
-        };
+      // Build options list: (label, locale or null for system)
+      final options = <(String, Locale?)>[
+        (l10n.languageEnglish, const Locale('en')),
+        (l10n.languageFrench, const Locale('fr')),
+        (l10n.languageGerman, const Locale('de')),
+        (l10n.languageRussian, const Locale('ru')),
+        (l10n.languageSystem, null),
+      ];
+
+      String prefixed(String label, Locale? locale) {
+        // Use Locale equality for specific languages; check null-override for system.
+        final isSelected =
+            locale == null ? currentOverride == null : currentOverride?.languageCode == locale.languageCode;
+        return isSelected ? '✓ $label' : label;
       }
-
-      final currentLabel = currentOverride == null ? l10n.languageSystem : localeLabel(currentOverride);
-
-      String prefixed(String label) => label == currentLabel ? '✓ $label' : label;
 
       // Returns (isSystem: true, locale: null) for "Use system language",
       // (isSystem: false, locale: Locale) for a specific language,
@@ -68,28 +73,13 @@ class DashboardPageIos extends ConsumerWidget {
         context: context,
         builder: (ctx) => CupertinoActionSheet(
           title: Text(l10n.languagePickerTitle),
-          actions: [
-            CupertinoActionSheetAction(
-              onPressed: () => Navigator.pop(ctx, (false, const Locale('en'))),
-              child: Text(prefixed(l10n.languageEnglish)),
-            ),
-            CupertinoActionSheetAction(
-              onPressed: () => Navigator.pop(ctx, (false, const Locale('fr'))),
-              child: Text(prefixed(l10n.languageFrench)),
-            ),
-            CupertinoActionSheetAction(
-              onPressed: () => Navigator.pop(ctx, (false, const Locale('de'))),
-              child: Text(prefixed(l10n.languageGerman)),
-            ),
-            CupertinoActionSheetAction(
-              onPressed: () => Navigator.pop(ctx, (false, const Locale('ru'))),
-              child: Text(prefixed(l10n.languageRussian)),
-            ),
-            CupertinoActionSheetAction(
-              onPressed: () => Navigator.pop(ctx, (true, null)), // system language
-              child: Text(prefixed(l10n.languageSystem)),
-            ),
-          ],
+          actions: options.map(((String, Locale?) opt) {
+            final (label, locale) = opt;
+            return CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, (locale == null, locale)),
+              child: Text(prefixed(label, locale)),
+            );
+          }).toList(),
           cancelButton: CupertinoActionSheetAction(
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.cancel),
@@ -99,23 +89,16 @@ class DashboardPageIos extends ConsumerWidget {
 
       if (result == null || !context.mounted) return;
 
-      final fromCode = currentOverride?.languageCode ?? Localizations.localeOf(context).languageCode;
       final (isSystem, selectedLocale) = result;
 
-      if (isSystem) {
-        await localeService.clearLocale();
-        ref.read(localeOverrideProvider.notifier).state = null;
-      } else if (selectedLocale != null) {
-        await localeService.saveLocale(selectedLocale);
-        ref.read(localeOverrideProvider.notifier).state = selectedLocale;
-        if (context.mounted) {
-          unawaited(
-            analytics.logEvent(
-              LanguageChangedEvent(fromLanguage: fromCode, toLanguage: selectedLocale.languageCode),
-            ),
-          );
-        }
-      }
+      await applyLanguageSelection(
+        selectedLocale: isSystem ? null : selectedLocale,
+        currentOverride: currentOverride,
+        systemLocaleCode: systemLocaleCode,
+        analyticsService: analytics,
+        localeService: localeService,
+        updateLocaleOverride: (locale) => ref.read(localeOverrideProvider.notifier).state = locale,
+      );
     }
 
     return CupertinoPageScaffold(
