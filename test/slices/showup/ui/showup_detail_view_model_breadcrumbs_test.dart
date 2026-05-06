@@ -48,8 +48,8 @@ void main() {
     final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
     return ProviderContainer(
       overrides: [
-        showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
-        showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
+        pactRepositoryProvider.overrideWithValue(pactRepo),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
         showupDetailNowProvider.overrideWithValue(today),
         analyticsServiceProvider.overrideWithValue(FakeAnalyticsService()),

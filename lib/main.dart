@@ -84,13 +84,6 @@ Future<void> main() async {
     }
   }
 
-  // Instantiate Talker for local logging. The in-app overlay is shown only in
-  // debug mode (kDebugMode guard inside TalkerLogService). This is intentionally
-  // wired in debug and profile builds only; release builds fall back to the
-  // NoopLogService default from logServiceProvider.
-  final talker = kReleaseMode ? null : Talker();
-  final logService = talker != null ? TalkerLogService(talker) : null;
-
   // Open the SQLite database and construct the shared repository instances.
   // HabitLoopDatabase.instance.database is a Future-based singleton: concurrent
   // callers all share the same Future so only one openDatabase call is ever made.
@@ -109,7 +102,10 @@ Future<void> main() async {
           pactRepository: pactRepo,
           showupRepository: showupRepo,
           transactionService: txService,
-          logService: logService,
+          // Talker log service is active in debug and profile builds only; the
+          // in-app overlay is gated on kDebugMode inside TalkerLogService.
+          // Release builds fall back to the NoopLogService default.
+          logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
           // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
           analyticsService: kReleaseMode
               ? FirebaseAnalyticsService(

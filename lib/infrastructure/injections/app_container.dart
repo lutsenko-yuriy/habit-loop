@@ -7,8 +7,6 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 
 /// Composition root for the Habit Loop app.
 ///
@@ -54,14 +52,6 @@ abstract final class AppContainer {
 
       // Canonical transaction service provider.
       pactTransactionServiceProvider.overrideWithValue(transactionService),
-
-      // Per-slice view-model repository providers wired to the same instances.
-      // These remain because PactListViewModel and ShowupDetailViewModel read
-      // them directly via their own slice-local providers.
-      pactListRepositoryProvider.overrideWithValue(pactRepository),
-      pactListShowupRepositoryProvider.overrideWithValue(showupRepository),
-      showupDetailShowupRepositoryProvider.overrideWithValue(showupRepository),
-      showupDetailPactRepositoryProvider.overrideWithValue(pactRepository),
 
       // Optional infrastructure services — only added when non-null.
       if (logService != null) logServiceProvider.overrideWithValue(logService),

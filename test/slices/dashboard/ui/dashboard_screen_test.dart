@@ -13,7 +13,6 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 
@@ -31,8 +30,6 @@ Widget _buildApp({
       pactRepositoryProvider.overrideWithValue(pactRepo),
       showupRepositoryProvider.overrideWithValue(showupRepo),
       todayProvider.overrideWithValue(_today),
-      showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
-      showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
     ],
     child: const MaterialApp(

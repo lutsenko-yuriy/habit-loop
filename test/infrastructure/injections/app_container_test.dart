@@ -25,9 +25,9 @@ void main() {
         transactionService: txService,
       );
 
-      // Minimum overrides: pactRepo, showupRepo, txService,
-      // plus per-view-model providers (4 slice-local ones).
-      expect(overrides, hasLength(greaterThanOrEqualTo(7)));
+      // Minimum overrides: pactRepo, showupRepo, txService (3 required).
+      // Slice-local aliases have been removed — only canonical providers are wired.
+      expect(overrides, hasLength(greaterThanOrEqualTo(3)));
     });
 
     test('container with overrides resolves pactRepositoryProvider without throwing', () {

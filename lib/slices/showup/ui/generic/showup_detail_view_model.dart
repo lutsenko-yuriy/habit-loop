@@ -1,12 +1,9 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/domain/pact/pact_repository.dart';
-import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 
@@ -18,18 +15,6 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 /// call so that `DateTime.now()` is always sampled at the moment the screen
 /// opens, not at app-start time.
 final showupDetailNowProvider = Provider<DateTime>((ref) => DateTime.now());
-
-/// Repository provider for showups used by [ShowupDetailViewModel].
-/// Must be overridden at the ProviderScope / ProviderContainer level.
-final showupDetailShowupRepositoryProvider = Provider<ShowupRepository>((ref) {
-  throw UnimplementedError('Override showupDetailShowupRepositoryProvider');
-});
-
-/// Repository provider for pacts used by [ShowupDetailViewModel].
-/// Must be overridden at the ProviderScope / ProviderContainer level.
-final showupDetailPactRepositoryProvider = Provider<PactRepository>((ref) {
-  throw UnimplementedError('Override showupDetailPactRepositoryProvider');
-});
 
 /// Family provider keyed by showup ID.
 ///
@@ -75,8 +60,8 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       unawaited(ref.read(crashlyticsServiceProvider).log('screen: showup_detail(id=$arg)'));
       unawaited(ref.read(logServiceProvider).info('showup_detail: load(id=$arg)'));
 
-      final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
-      final pactRepo = ref.read(showupDetailPactRepositoryProvider);
+      final showupRepo = ref.read(showupRepositoryProvider);
+      final pactRepo = ref.read(pactRepositoryProvider);
 
       var showup = await showupRepo.getShowupById(arg);
       if (showup == null) {
@@ -97,11 +82,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       // showupDetailNowProvider is invalidated by ShowupDetailScreen before
       // load() is called, so this always reflects the real current time.
       bool wasAutoFailed = false;
-      final pactStatsService = PactStatsService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: ref.read(pactTransactionServiceProvider),
-      );
+      final pactStatsService = ref.read(pactStatsServiceProvider);
       if (showup.status == ShowupStatus.pending) {
         final now = ref.read(showupDetailNowProvider);
         final endTime = showup.scheduledAt.add(showup.duration);
@@ -159,14 +140,10 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       unawaited(ref.read(crashlyticsServiceProvider).log('action: $actionName(showupId=$arg)'));
       unawaited(ref.read(logServiceProvider).info('showup_$actionName: id=$arg'));
 
-      final updatedShowup = await PactStatsService(
-        pactRepository: ref.read(showupDetailPactRepositoryProvider),
-        showupRepository: ref.read(showupDetailShowupRepositoryProvider),
-        transactionService: ref.read(pactTransactionServiceProvider),
-      ).persistShowupStatus(
-        showup: state.showup!,
-        status: newStatus,
-      );
+      final updatedShowup = await ref.read(pactStatsServiceProvider).persistShowupStatus(
+            showup: state.showup!,
+            status: newStatus,
+          );
       state = state.copyWith(showup: updatedShowup, isSaving: false);
 
       // Determine the analytics event inside the try block so that a StateError
@@ -196,8 +173,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
     state = state.copyWith(isSaving: true, clearNoteError: true);
     try {
       final updatedShowup = note.isEmpty ? showup.copyWith(clearNote: true) : showup.copyWith(note: note);
-      final showupRepo = ref.read(showupDetailShowupRepositoryProvider);
-      await showupRepo.updateShowup(updatedShowup);
+      await ref.read(showupRepositoryProvider).updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
     } catch (e) {
       state = state.copyWith(isSaving: false, noteError: e);

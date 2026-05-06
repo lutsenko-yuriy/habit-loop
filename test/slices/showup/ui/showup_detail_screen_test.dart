@@ -95,8 +95,8 @@ List<Override> _overrides({
   final pactRepo = InMemoryPactRepository(pact != null ? [pact] : []);
   final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
   return [
-    showupDetailShowupRepositoryProvider.overrideWithValue(showupRepo),
-    showupDetailPactRepositoryProvider.overrideWithValue(pactRepo),
+    pactRepositoryProvider.overrideWithValue(pactRepo),
+    showupRepositoryProvider.overrideWithValue(showupRepo),
     pactTransactionServiceProvider.overrideWithValue(txService),
     if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
   ];

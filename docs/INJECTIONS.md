@@ -78,10 +78,6 @@ references for tests).
 | `showupDetailNowProvider` | `showup_detail_view_model.dart` | Current time for showup auto-fail logic |
 | `todayProvider` | `dashboard_view_model.dart` | Today's date for the dashboard strip |
 | `hasActivePactsProvider` | `dashboard_view_model.dart` | Whether any active pacts exist |
-| `pactListRepositoryProvider` | `pact_list_view_model.dart` | PactRepository for the pact list panel |
-| `pactListShowupRepositoryProvider` | `pact_list_view_model.dart` | ShowupRepository for the pact list panel |
-| `showupDetailShowupRepositoryProvider` | `showup_detail_view_model.dart` | ShowupRepository for showup detail |
-| `showupDetailPactRepositoryProvider` | `showup_detail_view_model.dart` | PactRepository for showup detail |
 
 ---
 
