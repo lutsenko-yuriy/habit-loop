@@ -1,5 +1,4 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show MaterialApp, Theme;
+import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,8 +7,8 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/dashboard/ui/android/dashboard_page_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
-import 'package:habit_loop/slices/dashboard/ui/ios/dashboard_page_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
@@ -38,138 +37,107 @@ Widget _buildTestApp({
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
-      home: MediaQuery(
-        data: const MediaQueryData(
-          size: Size(390, 844),
-          padding: EdgeInsets.only(bottom: 34),
-          viewPadding: EdgeInsets.only(bottom: 34),
-        ),
-        child: DashboardPageIos(
-          state: const DashboardState(isLoading: false),
-          hasPacts: hasPacts,
-          onDaySelected: (_) {},
-          onCreatePact: () async {},
-          onShowupTapped: (_) async {},
-        ),
+      home: DashboardPageAndroid(
+        state: const DashboardState(isLoading: false),
+        hasPacts: hasPacts,
+        onDaySelected: (_) {},
+        onCreatePact: () async {},
+        onShowupTapped: (_) async {},
       ),
     ),
   );
 }
 
 void main() {
-  testWidgets('iOS dashboard uses scaffold color without custom home indicator affordances', (tester) async {
-    await tester.pumpWidget(_buildTestApp());
-
-    final safeArea = tester.widget<SafeArea>(
-      find.byKey(const Key('dashboard-ios-safe-area')),
-    );
-    final scaffold = tester.widget<CupertinoPageScaffold>(
-      find.byType(CupertinoPageScaffold),
-    );
-    final theme = Theme.of(tester.element(find.byType(DashboardPageIos)));
-
-    expect(scaffold.backgroundColor, theme.colorScheme.surface);
-    expect(safeArea.bottom, isFalse);
-    expect(find.byKey(const Key('dashboard-ios-bottom-panel-safe-area-fill')), findsNothing);
-    expect(find.byKey(const Key('dashboard-ios-bottom-panel-safe-area-ignore-pointer')), findsNothing);
-    expect(find.byKey(const Key('dashboard-ios-home-gesture-reserve')), findsNothing);
-  });
-
-  testWidgets('iOS dashboard shows globe icon button in navigation bar', (tester) async {
+  testWidgets('Android dashboard shows language globe icon in app bar', (tester) async {
     await tester.pumpWidget(_buildTestApp());
 
     expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
-    expect(find.byIcon(CupertinoIcons.globe), findsOneWidget);
+    expect(find.byIcon(Icons.language), findsOneWidget);
   });
 
-  testWidgets('iOS dashboard globe icon visible even when hasPacts is false', (tester) async {
+  testWidgets('Android dashboard globe icon visible even when hasPacts is false', (tester) async {
     await tester.pumpWidget(_buildTestApp(hasPacts: false));
 
     expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
-    expect(find.byIcon(CupertinoIcons.globe), findsOneWidget);
+    expect(find.byIcon(Icons.language), findsOneWidget);
   });
 
-  testWidgets('tapping globe icon shows CupertinoActionSheet with language options', (tester) async {
-    // Use a specific locale override so system option does not have checkmark,
-    // allowing plain text matching for all options.
-    await tester.pumpWidget(_buildTestApp(localeOverride: const Locale('en')));
+  testWidgets('tapping globe icon shows SimpleDialog with language options', (tester) async {
+    await tester.pumpWidget(_buildTestApp());
 
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
-    // Action sheet title
+    // Dialog title
     expect(find.text('Language'), findsOneWidget);
 
-    // Four language options (English has checkmark since it's selected)
-    expect(find.text('✓ English'), findsOneWidget);
+    // Four language options + system option
+    expect(find.text('English'), findsOneWidget);
     expect(find.text('French'), findsOneWidget);
     expect(find.text('German'), findsOneWidget);
     expect(find.text('Russian'), findsOneWidget);
     expect(find.text('Use system language'), findsOneWidget);
-
-    // Cancel button
-    expect(find.text('Cancel'), findsOneWidget);
   });
 
-  testWidgets('action sheet shows checkmark on currently selected language', (tester) async {
-    await tester.pumpWidget(_buildTestApp(localeOverride: const Locale('fr')));
+  testWidgets('dialog shows check icon on currently selected language', (tester) async {
+    await tester.pumpWidget(_buildTestApp(localeOverride: const Locale('de')));
 
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
-    // The French option should have a leading checkmark
-    expect(find.text('✓ French'), findsOneWidget);
-    // English should not have a checkmark
-    expect(find.text('✓ English'), findsNothing);
+    // German option row should contain a check icon
+    final germanRow = find.ancestor(of: find.text('German'), matching: find.byType(Row));
+    expect(germanRow, findsOneWidget);
+    final checkIcon = find.descendant(of: germanRow, matching: find.byIcon(Icons.check));
+    expect(checkIcon, findsOneWidget);
   });
 
-  testWidgets('action sheet shows checkmark on system option when localeOverride is null', (tester) async {
+  testWidgets('dialog shows check icon on system option when localeOverride is null', (tester) async {
     await tester.pumpWidget(_buildTestApp());
 
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
-    // When localeOverrideProvider is null, system option should have checkmark
-    expect(find.text('✓ Use system language'), findsOneWidget);
+    // System option row should contain a check icon
+    final systemRow = find.ancestor(of: find.text('Use system language'), matching: find.byType(Row));
+    expect(systemRow, findsOneWidget);
+    final checkIcon = find.descendant(of: systemRow, matching: find.byIcon(Icons.check));
+    expect(checkIcon, findsOneWidget);
   });
 
-  testWidgets('selecting a language from action sheet fires analytics and updates locale provider', (tester) async {
+  testWidgets('selecting a language fires analytics and saves locale', (tester) async {
     final analyticsService = FakeAnalyticsService();
     final localeService = FakeLocalePreferenceService();
 
-    // Start with English override so French has no checkmark and can be tapped by plain text
     await tester.pumpWidget(
-      _buildTestApp(
-        analyticsService: analyticsService,
-        localeService: localeService,
-        localeOverride: const Locale('en'),
-      ),
+      _buildTestApp(analyticsService: analyticsService, localeService: localeService),
     );
 
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('French'));
+    await tester.tap(find.text('German'));
     await tester.pumpAndSettle();
 
-    // Analytics: language_change_requested should have been fired when the picker opened
+    // Analytics: language_change_requested should have been fired when picker opened
     expect(analyticsService.loggedEvents.any((e) => e.name == 'language_change_requested'), isTrue);
     // Analytics: language_changed should have been fired after selection
     expect(analyticsService.loggedEvents.any((e) => e.name == 'language_changed'), isTrue);
 
     final changedEvent = analyticsService.loggedEvents.firstWhere((e) => e.name == 'language_changed');
-    expect(changedEvent.toParameters()['to_language'], 'fr');
+    expect(changedEvent.toParameters()['to_language'], 'de');
 
     // Locale service should have saved the new locale
-    expect(localeService.savedLocale, const Locale('fr'));
+    expect(localeService.savedLocale, const Locale('de'));
   });
 
   testWidgets('selecting system language clears locale override', (tester) async {
     final localeService = FakeLocalePreferenceService();
 
-    // Start with French override
+    // Start with German override
     await tester.pumpWidget(
-      _buildTestApp(localeService: localeService, localeOverride: const Locale('fr')),
+      _buildTestApp(localeService: localeService, localeOverride: const Locale('de')),
     );
 
     await tester.tap(find.byKey(const Key('language-picker-button')));

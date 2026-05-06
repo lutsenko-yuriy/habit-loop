@@ -1,16 +1,21 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Material, MaterialType, Theme;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/dashboard/analytics/language_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
 
-class DashboardPageIos extends StatelessWidget {
+class DashboardPageIos extends ConsumerWidget {
   final DashboardState state;
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
@@ -27,13 +32,102 @@ class DashboardPageIos extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+
+    Future<void> onLanguagePickerTapped() async {
+      final analytics = ref.read(analyticsServiceProvider);
+      final localeService = ref.read(localePreferenceServiceProvider);
+      final currentOverride = ref.read(localeOverrideProvider);
+
+      unawaited(analytics.logEvent(LanguageChangeRequestedEvent()));
+      unawaited(analytics.logScreenView(const LanguagePickerAnalyticsScreen()));
+
+      if (!context.mounted) return;
+
+      // Determine display name for the checkmark
+      String? localeLabel(Locale? locale) {
+        if (locale == null) return null;
+        return switch (locale.languageCode) {
+          'en' => l10n.languageEnglish,
+          'fr' => l10n.languageFrench,
+          'de' => l10n.languageGerman,
+          'ru' => l10n.languageRussian,
+          _ => null,
+        };
+      }
+
+      final currentLabel = currentOverride == null ? l10n.languageSystem : localeLabel(currentOverride);
+
+      String prefixed(String label) => label == currentLabel ? '✓ $label' : label;
+
+      // Returns (isSystem: true, locale: null) for "Use system language",
+      // (isSystem: false, locale: Locale) for a specific language,
+      // null if dismissed.
+      final result = await showCupertinoModalPopup<(bool isSystem, Locale? locale)>(
+        context: context,
+        builder: (ctx) => CupertinoActionSheet(
+          title: Text(l10n.languagePickerTitle),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, (false, const Locale('en'))),
+              child: Text(prefixed(l10n.languageEnglish)),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, (false, const Locale('fr'))),
+              child: Text(prefixed(l10n.languageFrench)),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, (false, const Locale('de'))),
+              child: Text(prefixed(l10n.languageGerman)),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, (false, const Locale('ru'))),
+              child: Text(prefixed(l10n.languageRussian)),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, (true, null)), // system language
+              child: Text(prefixed(l10n.languageSystem)),
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+        ),
+      );
+
+      if (result == null || !context.mounted) return;
+
+      final fromCode = currentOverride?.languageCode ?? Localizations.localeOf(context).languageCode;
+      final (isSystem, selectedLocale) = result;
+
+      if (isSystem) {
+        await localeService.clearLocale();
+        ref.read(localeOverrideProvider.notifier).state = null;
+      } else if (selectedLocale != null) {
+        await localeService.saveLocale(selectedLocale);
+        ref.read(localeOverrideProvider.notifier).state = selectedLocale;
+        if (context.mounted) {
+          unawaited(
+            analytics.logEvent(
+              LanguageChangedEvent(fromLanguage: fromCode, toLanguage: selectedLocale.languageCode),
+            ),
+          );
+        }
+      }
+    }
 
     return CupertinoPageScaffold(
       backgroundColor:
           hasPacts ? Theme.of(context).colorScheme.surface : CupertinoColors.systemBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
+        leading: CupertinoButton(
+          key: const Key('language-picker-button'),
+          padding: EdgeInsets.zero,
+          onPressed: onLanguagePickerTapped,
+          child: const Icon(CupertinoIcons.globe),
+        ),
         middle: Text(l10n.dashboardTitle),
         trailing: hasPacts
             ? CupertinoButton(
