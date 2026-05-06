@@ -6,6 +6,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import '../../../infrastructure/crashlytics/fake_crashlytics_service.dart';
 
@@ -16,10 +17,14 @@ void main() {
     List<Pact> pacts = const [],
     FakeCrashlyticsService? crashlytics,
   }) {
+    final pactRepo = InMemoryPactRepository(pacts);
+    final showupRepo = InMemoryShowupRepository();
+    final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
     return ProviderContainer(
       overrides: [
-        pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-        showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
+        pactRepositoryProvider.overrideWithValue(pactRepo),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
         todayProvider.overrideWithValue(today),
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),
       ],

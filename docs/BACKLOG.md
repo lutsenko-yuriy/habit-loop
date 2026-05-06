@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-_(nothing in progress)_
+- [HAB-51](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-51/in-memory-cache-for-showup-stats-donefailed-counts) **In-memory cache for showup stats (done/failed counts)**
 
 ---
 

@@ -7,8 +7,23 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+
+/// Wraps [InMemoryShowupRepository] and counts calls to [getShowupsForPact].
+class _CountingShowupRepository extends InMemoryShowupRepository {
+  _CountingShowupRepository([super.initialShowups]);
+
+  int getShowupsForPactCallCount = 0;
+
+  @override
+  Future<List<Showup>> getShowupsForPact(String pactId) async {
+    getShowupsForPactCallCount++;
+    return super.getShowupsForPact(pactId);
+  }
+}
 
 // Helper to build a daily-schedule pact starting on [startDate].
 Pact _dailyPact({
@@ -37,10 +52,14 @@ void main() {
     List<Pact> pacts = const [],
     List<Showup> showups = const [],
   }) {
+    final pactRepo = InMemoryPactRepository(pacts);
+    final showupRepo = InMemoryShowupRepository(showups);
+    final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
     return ProviderContainer(
       overrides: [
-        pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
-        showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+        pactRepositoryProvider.overrideWithValue(pactRepo),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
         todayProvider.overrideWithValue(today),
       ],
     );
@@ -390,11 +409,14 @@ void main() {
     test('generates showups for active pacts into repository on load', () async {
       final showupRepo = InMemoryShowupRepository();
       final pact = _dailyPact(id: 'p1', startDate: today);
+      final pactRepo = InMemoryPactRepository([pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
 
       final container = ProviderContainer(
         overrides: [
-          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([pact])),
+          pactRepositoryProvider.overrideWithValue(pactRepo),
           showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
           todayProvider.overrideWithValue(today),
         ],
       );
@@ -413,11 +435,14 @@ void main() {
       // Repo starts empty; pact starts today → load must generate + display
       final showupRepo = InMemoryShowupRepository();
       final pact = _dailyPact(id: 'p1', startDate: today);
+      final pactRepo = InMemoryPactRepository([pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
 
       final container = ProviderContainer(
         overrides: [
-          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([pact])),
+          pactRepositoryProvider.overrideWithValue(pactRepo),
           showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
           todayProvider.overrideWithValue(today),
         ],
       );
@@ -433,11 +458,14 @@ void main() {
     test('does not duplicate showups on repeated load calls', () async {
       final showupRepo = InMemoryShowupRepository();
       final pact = _dailyPact(id: 'p1', startDate: today);
+      final pactRepo = InMemoryPactRepository([pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
 
       final container = ProviderContainer(
         overrides: [
-          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([pact])),
+          pactRepositoryProvider.overrideWithValue(pactRepo),
           showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
           todayProvider.overrideWithValue(today),
         ],
       );
@@ -458,11 +486,14 @@ void main() {
         startDate: today,
         status: PactStatus.stopped,
       );
+      final pactRepo = InMemoryPactRepository([stoppedPact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
 
       final container = ProviderContainer(
         overrides: [
-          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([stoppedPact])),
+          pactRepositoryProvider.overrideWithValue(pactRepo),
           showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
           todayProvider.overrideWithValue(today),
         ],
       );
@@ -471,6 +502,92 @@ void main() {
 
       final all = await showupRepo.getShowupsForPact('p1');
       expect(all, isEmpty);
+    });
+  });
+
+  group('preWarmCache on load', () {
+    test('load() warms the stats cache for active pacts (cache hit avoids DB)', () async {
+      final pact = _dailyPact(id: 'p1', startDate: today);
+      // Pre-seed a done showup so the cached stats have showupsDone=1.
+      final doneShowup = Showup(
+        id: 's1',
+        pactId: 'p1',
+        scheduledAt: DateTime(today.year, today.month, today.day - 1, 7),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.done,
+      );
+      final pactRepo = InMemoryPactRepository([pact]);
+      final showupRepo = _CountingShowupRepository([doneShowup]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          pactStatsServiceProvider.overrideWithValue(statsService),
+          todayProvider.overrideWithValue(today),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(dashboardViewModelProvider.notifier).load();
+
+      // After load, the stats cache should be warm: currentStats with empty
+      // showups returns the cached value (which knows about the done showup)
+      // without any additional DB calls.
+      final callsAfterLoad = showupRepo.getShowupsForPactCallCount;
+      final stats = statsService.currentStats(pact: pact, showups: []);
+
+      // No additional DB call was made.
+      expect(showupRepo.getShowupsForPactCallCount, callsAfterLoad);
+      // The cached stats reflect the done showup loaded during pre-warm.
+      expect(stats.showupsDone, 1);
+    });
+
+    test('load() only warms cache for active pacts, not stopped ones', () async {
+      final stoppedPact = _dailyPact(id: 'p1', startDate: today, status: PactStatus.stopped);
+      final activePact = _dailyPact(id: 'p2', startDate: today);
+      // A done showup for the active pact so we can verify the cache is warm.
+      final doneShowup = Showup(
+        id: 's2',
+        pactId: 'p2',
+        scheduledAt: DateTime(today.year, today.month, today.day - 1, 7),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.done,
+      );
+      final pactRepo = InMemoryPactRepository([stoppedPact, activePact]);
+      final showupRepo = _CountingShowupRepository([doneShowup]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          pactStatsServiceProvider.overrideWithValue(statsService),
+          todayProvider.overrideWithValue(today),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(dashboardViewModelProvider.notifier).load();
+
+      // activePact (p2) cache is warm — currentStats returns cached stats with done=1.
+      final callsAfterLoad = showupRepo.getShowupsForPactCallCount;
+      final activeStats = statsService.currentStats(pact: activePact, showups: []);
+      expect(showupRepo.getShowupsForPactCallCount, callsAfterLoad);
+      expect(activeStats.showupsDone, 1);
     });
   });
 }

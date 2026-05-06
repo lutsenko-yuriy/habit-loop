@@ -13,6 +13,22 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 /// Keeping this logic in one service prevents UI view models from each
 /// maintaining their own version of the `Pact.stats` invariant.
 ///
+/// ### In-memory cache
+///
+/// [_statsCache] holds the most recent [PactStats] per pact ID.  The cache is
+/// keyed by `pactId` and lives for the lifetime of the service (i.e. the app
+/// session — Riverpod keeps the singleton alive until the container is disposed).
+///
+/// Cache lifecycle:
+/// - **Pre-warm**: [preWarmCache] loads all active pacts in one pass and fills
+///   the cache before any individual screen opens.
+/// - **Lazy hit**: [currentStats] checks the cache first; a hit returns
+///   immediately without a DB round-trip.
+/// - **Write-through**: [persistShowupStatus] evicts the stale entry, then
+///   [_syncStatsBestEffort] → [syncStats] → [persistStats] repopulates it.
+/// - **Evict-only**: [stopPact] evicts the entry after the transaction because
+///   showups are deleted and there is nothing valid to cache.
+///
 /// [stopPact] wraps the update-pact and delete-showups writes in a single
 /// operation via [transactionService] so either both succeed or both are rolled
 /// back. Tests inject an [InMemoryPactTransactionService]; production uses
@@ -22,7 +38,10 @@ class PactStatsService {
   final ShowupRepository _showupRepository;
   final PactTransactionService _transactionService;
 
-  const PactStatsService({
+  /// Runtime-only stats cache; never persisted.
+  final Map<String, PactStats> _statsCache = {};
+
+  PactStatsService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
@@ -35,6 +54,18 @@ class PactStatsService {
   /// Exposed so that view models can fetch showups without depending on the
   /// [ShowupRepository] directly.
   Future<List<Showup>> loadShowupsForPact(String pactId) => _showupRepository.getShowupsForPact(pactId);
+
+  /// Pre-warms the stats cache for a list of pacts in a single pass.
+  ///
+  /// Intended to be called by [DashboardViewModel.load] after showup generation
+  /// so that all subsequent navigations (pact detail, showup detail) are
+  /// guaranteed cache hits and incur no additional DB round-trips.
+  Future<void> preWarmCache(List<Pact> pacts) async {
+    for (final pact in pacts) {
+      final showups = await _showupRepository.getShowupsForPact(pact.id);
+      _statsCache[pact.id] = buildStats(pact: pact, showups: showups);
+    }
+  }
 
   PactStats buildStats({
     required Pact pact,
@@ -50,8 +81,16 @@ class PactStatsService {
     );
   }
 
-  /// Returns fresh stats whenever showups still exist, falling back to the
-  /// persisted snapshot only after the showups were deleted (stopped pact).
+  /// Returns stats for [pact], consulting the cache before hitting the DB.
+  ///
+  /// Priority order:
+  /// 1. If [showups] is non-empty, compute fresh stats from the provided list
+  ///    (caller already loaded showups — no cache check needed).
+  /// 2. If [showups] is empty and a cache entry exists, return the cached value
+  ///    (cache hit — no DB round-trip).
+  /// 3. If [showups] is empty and no cache entry exists, fall back to the
+  ///    persisted [Pact.stats] snapshot (lazy path for stopped/completed pacts
+  ///    whose showups have been deleted).
   PactStats currentStats({
     required Pact pact,
     required List<Showup> showups,
@@ -59,6 +98,10 @@ class PactStatsService {
     if (showups.isNotEmpty) {
       return buildStats(pact: pact, showups: showups);
     }
+    // Cache hit — return without a DB round-trip.
+    final cached = _statsCache[pact.id];
+    if (cached != null) return cached;
+    // Lazy fallback: no cache and no showups (e.g. stopped pact).
     return pact.stats ?? buildStats(pact: pact, showups: showups);
   }
 
@@ -66,10 +109,11 @@ class PactStatsService {
     required Pact pact,
     required List<Showup> showups,
   }) async {
-    final updatedPact = pact.copyWith(
-      stats: buildStats(pact: pact, showups: showups),
-    );
+    final stats = buildStats(pact: pact, showups: showups);
+    final updatedPact = pact.copyWith(stats: stats);
     await _pactRepository.updatePact(updatedPact);
+    // Populate cache with the freshly persisted stats.
+    _statsCache[pact.id] = stats;
     return updatedPact;
   }
 
@@ -106,6 +150,10 @@ class PactStatsService {
   }) async {
     final updatedShowup = showup.copyWith(status: status);
     await _showupRepository.updateShowup(updatedShowup);
+    // Evict stale cache entry before the write-through so any concurrent read
+    // between the eviction and the repopulation falls back to DB rather than
+    // returning stale data.
+    _statsCache.remove(updatedShowup.pactId);
     await _syncStatsBestEffort(updatedShowup.pactId);
     return updatedShowup;
   }
@@ -139,6 +187,10 @@ class PactStatsService {
       updatedPact: updated,
       pactId: pactId,
     );
+
+    // Evict-only: showups are deleted by the transaction, so there is nothing
+    // valid to cache.  The next read will use the frozen pact.stats snapshot.
+    _statsCache.remove(pactId);
 
     return updated;
   }

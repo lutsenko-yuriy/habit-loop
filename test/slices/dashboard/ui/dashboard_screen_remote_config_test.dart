@@ -10,6 +10,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
@@ -33,10 +34,12 @@ Widget _buildApp({
 }) {
   final pactRepo = InMemoryPactRepository(pacts);
   final showupRepo = InMemoryShowupRepository([]);
+  final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
   return ProviderScope(
     overrides: [
       pactRepositoryProvider.overrideWithValue(pactRepo),
       showupRepositoryProvider.overrideWithValue(showupRepo),
+      pactTransactionServiceProvider.overrideWithValue(txService),
       todayProvider.overrideWithValue(_today),
       remoteConfigServiceProvider.overrideWithValue(remoteConfig),
     ],

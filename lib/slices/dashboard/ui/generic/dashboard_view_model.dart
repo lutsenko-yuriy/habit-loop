@@ -58,6 +58,11 @@ class DashboardViewModel extends Notifier<DashboardState> {
       );
     }
 
+    // Pre-warm the stats cache for all active pacts so that subsequent
+    // navigations to pact detail or showup detail screens are guaranteed
+    // cache hits and incur no additional SQLite round-trips.
+    await ref.read(pactStatsServiceProvider).preWarmCache(activePacts);
+
     // -----------------------------------------------------------------------
     // todayIndex: gradual ramp over the first 3 days after the user created
     // their very first pact, then stays centred (3) thereafter.
