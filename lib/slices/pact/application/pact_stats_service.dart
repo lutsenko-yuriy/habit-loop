@@ -73,14 +73,23 @@ class PactStatsService {
 
   /// Returns stats for [pact], consulting the cache before hitting the DB.
   ///
-  /// Priority order:
-  /// 1. If [showups] is non-empty, compute fresh stats from the provided list
-  ///    (caller already loaded showups — no cache check needed).
-  /// 2. If [showups] is empty and a cache entry exists for this pact, return
-  ///    the cached value immediately — no DB round-trip.
-  /// 3. If [showups] is empty and no cache entry exists (cache miss), load
-  ///    showups from the repository, compute stats, write the result to the
-  ///    cache, and return.  Subsequent calls are guaranteed cache hits.
+  /// **When [showups] is non-empty:** computes fresh stats from the provided
+  /// list and returns immediately.  Does NOT consult or write to the cache —
+  /// the caller already has the showups loaded, so a DB round-trip is
+  /// unnecessary.  Use this form when you have recently loaded showups and
+  /// want to guarantee a fresh computation (e.g. inside [persistStats]).
+  ///
+  /// **When [showups] is empty:** triggers the lazy cache path:
+  /// - *Cache hit* — returns the cached [PactStats] immediately; no DB
+  ///   round-trip.
+  /// - *Cache miss* — loads showups from [ShowupRepository], computes stats,
+  ///   writes the result to [_statsCache], and returns.  Subsequent calls for
+  ///   the same pact are guaranteed cache hits until an eviction occurs.
+  ///
+  /// Prefer `currentStats(pact, showups: [])` when you want the cache to be
+  /// consulted or populated (e.g. in view-model `load()` calls).  Pass
+  /// explicit showups only when you have already fetched them and want a fresh
+  /// computation.
   Future<PactStats> currentStats({
     required Pact pact,
     required List<Showup> showups,

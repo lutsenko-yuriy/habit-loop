@@ -18,15 +18,16 @@ void main() {
     final pactRepo = InMemoryPactRepository();
     final showupRepo = InMemoryShowupRepository();
     final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-    final service = PactService(
-      pactRepository: pactRepo,
-      showupRepository: showupRepo,
-      transactionService: txService,
-    );
     final statsService = PactStatsService(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
       transactionService: txService,
+    );
+    final service = PactService(
+      pactRepository: pactRepo,
+      showupRepository: showupRepo,
+      transactionService: txService,
+      pactStatsService: statsService,
     );
     return ProviderContainer(
       overrides: [

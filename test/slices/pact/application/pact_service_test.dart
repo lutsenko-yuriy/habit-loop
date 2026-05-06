@@ -69,10 +69,17 @@ void main() {
     setUp(() {
       pactRepo = InMemoryPactRepository();
       showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        transactionService: txService,
+        pactStatsService: statsService,
       );
     });
 
@@ -91,10 +98,17 @@ void main() {
 
     test('createPact rolls back pact when saveShowups fails', () async {
       final failingShowupRepo = _ThrowingShowupRepository();
+      final failTxService = InMemoryPactTransactionService(pactRepo, failingShowupRepo);
+      final failStatsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: failingShowupRepo,
+        transactionService: failTxService,
+      );
       final failService = PactService(
         pactRepository: pactRepo,
         showupRepository: failingShowupRepo,
-        transactionService: InMemoryPactTransactionService(pactRepo, failingShowupRepo),
+        transactionService: failTxService,
+        pactStatsService: failStatsService,
       );
 
       await expectLater(
@@ -264,10 +278,16 @@ void main() {
       pactRepo = SqlitePactRepository(db);
       showupRepo = SqliteShowupRepository(db);
       txService = SqlitePactTransactionService(db);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        pactStatsService: statsService,
       );
     });
 

@@ -23,12 +23,16 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 /// [PactStatus.completed] and, if so, notifies [_pactStatsService] via
 /// [PactStatsService.onPactCompleted] so the stale cache entry is evicted.
 /// This keeps the view model completely unaware of cache management.
+///
+/// Note on provider ordering: [pactServiceProvider] watches [pactStatsServiceProvider]
+/// (one-way dependency). [pactStatsServiceProvider] must never watch [pactServiceProvider]
+/// — doing so would create a circular dependency in the Riverpod graph.
 class PactService {
   PactService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
-    PactStatsService? pactStatsService,
+    required PactStatsService pactStatsService,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _transactionService = transactionService,
@@ -38,10 +42,9 @@ class PactService {
   final ShowupRepository _showupRepository;
   final PactTransactionService _transactionService;
 
-  /// Optional reference to [PactStatsService] used exclusively to notify the
-  /// cache when [updatePact] persists a completed pact.  May be null when the
-  /// caller does not need cache integration (e.g. simple delegation tests).
-  final PactStatsService? _pactStatsService;
+  /// Reference to [PactStatsService] used exclusively to notify the cache when
+  /// [updatePact] persists a completed pact.
+  final PactStatsService _pactStatsService;
 
   // ---------------------------------------------------------------------------
   // Atomic creation
@@ -111,7 +114,7 @@ class PactService {
   Future<void> updatePact(Pact pact) async {
     await _pactRepository.updatePact(pact);
     if (pact.status == PactStatus.completed) {
-      _pactStatsService?.onPactCompleted(pact.id);
+      _pactStatsService.onPactCompleted(pact.id);
     }
   }
 
