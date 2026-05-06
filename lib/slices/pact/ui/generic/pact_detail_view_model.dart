@@ -67,7 +67,11 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
               endDate: pact.endDate,
             ),
           );
-          await pactService.updatePact(pact);
+          // Delegate to PactStatsService.completePact so the cache entry is
+          // evicted atomically with the repository write.  Calling
+          // pactService.updatePact directly would leave a stale active-pact
+          // entry in the stats cache for the rest of the session.
+          await pactStatsService.completePact(pact);
           stats = pact.stats!;
         }
       }

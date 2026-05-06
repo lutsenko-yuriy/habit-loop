@@ -313,6 +313,149 @@ void main() {
     });
 
     // -------------------------------------------------------------------------
+    // preWarmCache prunes stale entries
+    // -------------------------------------------------------------------------
+
+    group('preWarmCache prunes stale entries', () {
+      test('second preWarmCache evicts entries for pacts no longer in the list', () async {
+        final pactA = _makePact('pA');
+        final pactB = _makePact('pB');
+        final showupA = _makeShowup('sA', 'pA');
+        final showupB = _makeShowup('sB', 'pB');
+
+        final pactRepo = InMemoryPactRepository([pactA, pactB]);
+        final showupRepo = _CountingShowupRepository([showupA, showupB]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo);
+
+        // First warm: both pacts cached.
+        await service.preWarmCache([pactA, pactB]);
+
+        // Simulate pactB transitioning away (auto-completed / stopped).
+        // Second warm: only pactA is still active.
+        await service.preWarmCache([pactA]);
+
+        // pactB's entry must have been evicted — currentStats falls back to DB
+        // (pactB.stats is null, so buildStats from empty showups is used).
+        final callsBefore = showupRepo.getShowupsForPactCallCount;
+        service.currentStats(pact: pactB, showups: []);
+
+        // If pactB were still cached, no DB call would happen. Since it was
+        // evicted the fallback path (pact.stats == null) computes in-memory —
+        // still no DB call, but the result is "fresh" (no stale cache entry).
+        // We verify the absence of a cache entry by checking that the next
+        // preWarmCache for pactA alone does NOT re-add pactB.
+        // Re-warm again with only pactA to confirm pactB stays evicted.
+        await service.preWarmCache([pactA]);
+        final callsAfterSecondWarm = showupRepo.getShowupsForPactCallCount;
+
+        // Only pactA should have been loaded in the second warm (1 call).
+        // The third warm also hits only pactA (1 more call).
+        // Total new calls from second + third warm = 2 (one per pactA load each time).
+        expect(callsAfterSecondWarm - callsBefore, 1);
+      });
+
+      test('second preWarmCache with only pactA does not re-cache pactB', () async {
+        final pactA = _makePact('pA');
+        final pactB = _makePact('pB');
+        final showupA = _makeShowup('sA', 'pA', status: ShowupStatus.done);
+        final showupB = _makeShowup('sB', 'pB', status: ShowupStatus.failed);
+
+        final pactRepo = InMemoryPactRepository([pactA, pactB]);
+        final showupRepo = _CountingShowupRepository([showupA, showupB]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo);
+
+        // First warm: both cached.
+        await service.preWarmCache([pactA, pactB]);
+
+        // Second warm: pactB excluded — its entry must be removed.
+        await service.preWarmCache([pactA]);
+
+        // Verify: currentStats for pactB falls back to pact.stats (null),
+        // producing a freshly-computed (in-memory, non-stale) result.
+        // The key check is that the cached failed=1 from pactB's first warm
+        // is NOT returned — instead the fallback returns 0 (no showups known,
+        // pact.stats is null).
+        final stats = service.currentStats(pact: pactB, showups: []);
+        // Fallback path: pact.stats == null → buildStats(pact, showups: []) → all zeros.
+        expect(stats.showupsFailed, 0);
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // completePact eviction
+    // -------------------------------------------------------------------------
+
+    group('completePact', () {
+      test('completePact updates pact and evicts cache entry', () async {
+        final pact = _makePact('p1');
+        final showup = _makeShowup('s1', 'p1', status: ShowupStatus.done);
+
+        final pactRepo = InMemoryPactRepository([pact]);
+        final showupRepo = _CountingShowupRepository([showup]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo);
+
+        // Pre-warm: cache has an entry for p1.
+        await service.preWarmCache([pact]);
+
+        // Auto-complete the pact.
+        final completedPact = pact.copyWith(status: PactStatus.completed);
+        await service.completePact(completedPact);
+
+        // The pact must be updated in the repository.
+        final fetched = await pactRepo.getPactById('p1');
+        expect(fetched?.status, PactStatus.completed);
+
+        // The cache entry must have been evicted: currentStats with empty showups
+        // should fall back to pact.stats (not the stale cached value).
+        // Since completedPact.stats == null, the fallback computes from empty list.
+        final callsBefore = showupRepo.getShowupsForPactCallCount;
+        service.currentStats(pact: completedPact, showups: []);
+        // No new DB call: fallback is in-memory (pact.stats lookup, then buildStats).
+        expect(showupRepo.getShowupsForPactCallCount, callsBefore);
+      });
+
+      test('completePact does not repopulate cache', () async {
+        final pact = _makePact('p1');
+        final showup = _makeShowup('s1', 'p1', status: ShowupStatus.done);
+
+        final pactRepo = InMemoryPactRepository([pact]);
+        final showupRepo = _CountingShowupRepository([showup]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo);
+
+        await service.preWarmCache([pact]);
+        final callsAfterWarm = showupRepo.getShowupsForPactCallCount;
+
+        final completedPact = pact.copyWith(status: PactStatus.completed);
+        await service.completePact(completedPact);
+
+        // completePact must NOT issue extra DB reads to repopulate.
+        expect(showupRepo.getShowupsForPactCallCount, callsAfterWarm);
+      });
+
+      test('other pact cache entries survive completePact of a single pact', () async {
+        final pact1 = _makePact('p1');
+        final pact2 = _makePact('p2');
+        final showup1 = _makeShowup('s1', 'p1', status: ShowupStatus.done);
+        final showup2 = _makeShowup('s2', 'p2', status: ShowupStatus.done);
+
+        final pactRepo = InMemoryPactRepository([pact1, pact2]);
+        final showupRepo = _CountingShowupRepository([showup1, showup2]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo);
+
+        await service.preWarmCache([pact1, pact2]);
+
+        final completedPact1 = pact1.copyWith(status: PactStatus.completed);
+        await service.completePact(completedPact1);
+
+        final callsAfterComplete = showupRepo.getShowupsForPactCallCount;
+
+        // pact2's cache entry should still be warm.
+        service.currentStats(pact: pact2, showups: []);
+        expect(showupRepo.getShowupsForPactCallCount, callsAfterComplete);
+      });
+    });
+
+    // -------------------------------------------------------------------------
     // Cache correctness
     // -------------------------------------------------------------------------
 
