@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.18.3] — 2026-05-06 (PR #51 merged)
+
+### Added — Russian locale and language picker l10n keys (HAB-40 WU1)
+
+- `lib/l10n/app_ru.arb` added with Russian translations for all 55 existing l10n keys
+- 6 new language picker keys (`languagePickerTitle`, `languageEnglish`, `languageFrench`, `languageGerman`, `languageRussian`, `languageSystem`) added to all four ARB files (en, fr, de, ru) and regenerated via `flutter gen-l10n`
+- `ru` declared in `ios/Runner/Info.plist` `CFBundleLocalizations` array (iOS per-app language picker support)
+- `<locale android:name="ru"/>` added to `android/app/src/main/res/xml/locales_config.xml` (Android 13+ locale config)
+- Russian plural categories (`few`/`many`) added; `statsShowups` pluralised correctly across all four locales
+- `test/l10n/russian_locale_test.dart` — 8 new tests: `AppLocalizations` resolves for `Locale('ru')` and all 6 new language picker keys are non-empty in en/fr/de/ru
+- 674 tests passing, analyzer clean
+
+---
+
 ## [0.18.2] — 2026-05-06 (PR #50 merged)
 
 ### Changed — In-memory stats cache in PactStatsService (HAB-51)
