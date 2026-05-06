@@ -1,9 +1,11 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
@@ -36,6 +38,9 @@ abstract final class AppContainer {
   /// - [crashlyticsService] — only provided in release builds.
   /// - [logService] — provided in debug/profile builds.
   /// - [remoteConfigService] — only provided in release builds.
+  /// - [localePreferenceService] — provided when SharedPreferences is available.
+  /// - [initialLocale] — the saved locale loaded before `runApp`; `null` means
+  ///   follow the system locale (i.e. [localeOverrideProvider] stays `null`).
   static List<Override> overrides({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
@@ -44,6 +49,8 @@ abstract final class AppContainer {
     CrashlyticsService? crashlyticsService,
     LogService? logService,
     RemoteConfigService? remoteConfigService,
+    LocalePreferenceService? localePreferenceService,
+    Locale? initialLocale,
   }) {
     return [
       // Canonical repository providers.
@@ -58,6 +65,10 @@ abstract final class AppContainer {
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),
       if (remoteConfigService != null) remoteConfigServiceProvider.overrideWithValue(remoteConfigService),
+
+      // Locale persistence and initial locale override.
+      if (localePreferenceService != null) localePreferenceServiceProvider.overrideWithValue(localePreferenceService),
+      if (initialLocale != null) localeOverrideProvider.overrideWith((ref) => initialLocale),
     ];
   }
 }
