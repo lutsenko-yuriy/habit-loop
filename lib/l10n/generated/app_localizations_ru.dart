@@ -193,6 +193,8 @@ class AppLocalizationsRu extends AppLocalizations {
       max,
       locale: localeName,
       other: 'Можно иметь только $max активных пакта одновременно. Создать ещё?',
+      many: 'Можно иметь только $max активных пактов одновременно. Создать ещё?',
+      few: 'Можно иметь только $max активных пакта одновременно. Создать ещё?',
       one: 'Можно иметь только 1 активный пакт одновременно. Создать ещё один?',
     );
     return '$_temp0';
@@ -233,7 +235,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String statsShowups(int count) {
-    return '$count визитов';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count визита',
+      many: '$count визитов',
+      few: '$count визита',
+      one: '$count визит',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -250,7 +260,9 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Осталось $count дней',
+      other: 'Осталось $count дня',
+      many: 'Осталось $count дней',
+      few: 'Осталось $count дня',
       one: 'Остался 1 день',
     );
     return '$_temp0';
@@ -286,6 +298,8 @@ class AppLocalizationsRu extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count активных пакта',
+      many: '$count активных пактов',
+      few: '$count активных пакта',
       one: '1 активный пакт',
       zero: 'Нет активных пактов',
     );
@@ -298,6 +312,8 @@ class AppLocalizationsRu extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count завершённых пакта',
+      many: '$count завершённых пактов',
+      few: '$count завершённых пакта',
       one: '1 завершённый пакт',
       zero: 'Нет завершённых пактов',
     );
@@ -310,6 +326,8 @@ class AppLocalizationsRu extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count остановленных пакта',
+      many: '$count остановленных пактов',
+      few: '$count остановленных пакта',
       one: '1 остановленный пакт',
       zero: 'Нет остановленных пактов',
     );

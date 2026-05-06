@@ -517,7 +517,7 @@ abstract class AppLocalizations {
   /// No description provided for @statsShowups.
   ///
   /// In en, this message translates to:
-  /// **'{count} showups'**
+  /// **'{count, plural, one{{count} showup} other{{count} showups}}'**
   String statsShowups(int count);
 
   /// No description provided for @pactStartDate.

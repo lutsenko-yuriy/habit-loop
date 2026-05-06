@@ -233,7 +233,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String statsShowups(int count) {
-    return '$count Showups';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Auftritte',
+      one: '$count Auftritt',
+    );
+    return '$_temp0';
   }
 
   @override
