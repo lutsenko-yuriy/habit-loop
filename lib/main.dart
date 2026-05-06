@@ -168,6 +168,14 @@ class HabitLoopApp extends ConsumerWidget {
       theme: HabitLoopTheme.materialTheme,
       darkTheme: HabitLoopTheme.darkMaterialTheme,
       themeMode: ThemeMode.system,
+      // Passing a non-null locale to MaterialApp suppresses Flutter's built-in
+      // localeResolutionCallback and localeListResolutionCallback entirely —
+      // Flutter simply uses the supplied locale without consulting those
+      // callbacks. This is intentional for a user-forced override: the user
+      // has explicitly chosen a language, so system negotiation is bypassed.
+      // If localeResolutionCallback or localeListResolutionCallback are ever
+      // added here, they will be silently ignored whenever localeOverride is
+      // non-null and must be removed or adapted accordingly.
       locale: localeOverride,
       builder: (context, child) {
         return CupertinoTheme(

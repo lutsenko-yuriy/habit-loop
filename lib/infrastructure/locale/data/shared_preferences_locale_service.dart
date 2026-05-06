@@ -41,6 +41,13 @@ final class SharedPreferencesLocaleService implements LocalePreferenceService {
     }
   }
 
+  /// Persists [locale] so it can be restored on the next app launch.
+  ///
+  /// **Only [Locale.languageCode] is stored** — the country/script subtag is
+  /// intentionally discarded. This is correct for the current supported locale
+  /// set (`de`, `en`, `fr`, `ru`), where each language has exactly one variant.
+  /// If regional variants such as `zh-TW` / `zh-CN` are ever added, this method
+  /// would need to be updated to persist the full BCP 47 tag instead.
   @override
   Future<void> saveLocale(Locale locale) async {
     try {

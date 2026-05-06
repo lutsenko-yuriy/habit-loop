@@ -38,9 +38,14 @@ abstract final class AppContainer {
   /// - [crashlyticsService] — only provided in release builds.
   /// - [logService] — provided in debug/profile builds.
   /// - [remoteConfigService] — only provided in release builds.
-  /// - [localePreferenceService] — provided when SharedPreferences is available.
+  /// - [localePreferenceService] — provided when SharedPreferences is available;
+  ///   `null` falls back to [NoopLocalePreferenceService]. Independently
+  ///   optional: may be passed without [initialLocale] (e.g. first launch,
+  ///   no prior preference stored).
   /// - [initialLocale] — the saved locale loaded before `runApp`; `null` means
   ///   follow the system locale (i.e. [localeOverrideProvider] stays `null`).
+  ///   Independently optional: may be passed without [localePreferenceService]
+  ///   when the service is unavailable but a default locale is still desired.
   static List<Override> overrides({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
