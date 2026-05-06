@@ -1,7 +1,9 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -105,6 +107,65 @@ void main() {
       expect(() => container.read(crashlyticsServiceProvider), returnsNormally);
       expect(() => container.read(logServiceProvider), returnsNormally);
       expect(() => container.read(remoteConfigServiceProvider), returnsNormally);
+    });
+
+    test('localePreferenceServiceProvider resolves to noop default when not provided', () {
+      final overrides = AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(localePreferenceServiceProvider), returnsNormally);
+    });
+
+    test('localeOverrideProvider resolves to null when initialLocale not provided', () {
+      final overrides = AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(localeOverrideProvider), isNull);
+    });
+
+    test('localePreferenceService and initialLocale overrides are included when provided', () {
+      const locale = Locale('fr');
+      final localeService = NoopLocalePreferenceService();
+
+      final overrides = AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        localePreferenceService: localeService,
+        initialLocale: locale,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(localePreferenceServiceProvider), same(localeService));
+      expect(container.read(localeOverrideProvider), equals(locale));
+    });
+
+    test('overrides list grows by 2 when both locale params are provided', () {
+      final baseOverrides = AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final localeOverrides = AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        localePreferenceService: NoopLocalePreferenceService(),
+        initialLocale: const Locale('de'),
+      );
+
+      expect(localeOverrides, hasLength(baseOverrides.length + 2));
     });
   });
 }

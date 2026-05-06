@@ -22,6 +22,7 @@ dependencies:
   firebase_crashlytics: ^4.0.0
   firebase_remote_config: ^5.0.0
   talker_flutter: ^5.1.17
+  shared_preferences: ^2.3.0
 
 dev_dependencies:
   flutter_test:

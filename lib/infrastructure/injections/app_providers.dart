@@ -10,6 +10,7 @@
 /// because they are scoped to a single screen.
 library;
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
@@ -17,6 +18,8 @@ import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.
 import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
+import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
 import 'package:habit_loop/infrastructure/logging/data/noop_log_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
@@ -24,6 +27,31 @@ import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+
+// ---------------------------------------------------------------------------
+// Locale providers
+// ---------------------------------------------------------------------------
+
+/// Provides the active [LocalePreferenceService] to the app.
+///
+/// Defaults to [NoopLocalePreferenceService] so tests and environments
+/// without SharedPreferences work without additional setup. Overridden in
+/// `main.dart` via [AppContainer.overrides] with [SharedPreferencesLocaleService].
+final localePreferenceServiceProvider = Provider<LocalePreferenceService>(
+  (ref) => NoopLocalePreferenceService(),
+);
+
+/// Nullable locale override provider.
+///
+/// `null` means "follow the system locale" — `MaterialApp.locale = null` lets
+/// Flutter resolve the locale via [AppLocalizations.supportedLocales]
+/// automatically.
+///
+/// On startup, `main.dart` loads the saved locale and initialises this provider
+/// to that value (or leaves it `null` when no saved locale exists). The
+/// language picker in the dashboard reads and writes this provider so that
+/// locale changes take effect immediately without an app restart.
+final localeOverrideProvider = StateProvider<Locale?>((ref) => null);
 
 // ---------------------------------------------------------------------------
 // Infrastructure service providers
