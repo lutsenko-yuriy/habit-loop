@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-- [HAB-51](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-51/in-memory-cache-for-showup-stats-donefailed-counts) **In-memory cache for showup stats (done/failed counts)**
+_(nothing in progress)_
 
 ---
 
@@ -26,11 +26,6 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 ---
 
 ## Unscheduled
-
-### Issues
-
-- [HAB-46](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-46/define-habit-loop-technical-stack-before-hab-11) **Define Habit Loop technical stack before HAB-11** — Explicit decisions on the supporting stack in three areas: developer and production diagnostics / logging, local persistence with a strong performance focus, and experimentation tooling and experiment tracking workflow. (Tech Debt)
-- [HAB-48](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-48/choose-persistence-layer-for-hab-11-with-performance-as-the-primary) **Choose persistence layer for HAB-11 with performance as the primary constraint** — Evaluate persistence options (sqflite, Drift, Isar, Hive) against transactional correctness, query clarity, isolate/concurrency story, migration safety, and runtime performance before implementing HAB-11. (Tech Debt)
 
 ### Remaining work
 
