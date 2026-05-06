@@ -16,6 +16,8 @@ import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_serv
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/locale/data/shared_preferences_locale_service.dart';
 import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
@@ -26,6 +28,7 @@ import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -84,6 +87,19 @@ Future<void> main() async {
     }
   }
 
+  // Load the user's saved locale preference before runApp so the initial
+  // MaterialApp.locale is set correctly on the very first frame.
+  // SharedPreferences.getInstance() is fast (reads from an in-memory cache
+  // after the first call) and independent of the SQLite database lifecycle.
+  SharedPreferencesLocaleService? localeService;
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    localeService = SharedPreferencesLocaleService(prefs);
+  } catch (_) {
+    // If SharedPreferences fails to initialise, fall back to system locale.
+    localeService = null;
+  }
+
   // Open the SQLite database and construct the shared repository instances.
   // HabitLoopDatabase.instance.database is a Future-based singleton: concurrent
   // callers all share the same Future so only one openDatabase call is ever made.
@@ -98,7 +114,7 @@ Future<void> main() async {
 
     runApp(
       ProviderScope(
-        overrides: AppContainer.overrides(
+        overrides: await AppContainer.overrides(
           pactRepository: pactRepo,
           showupRepository: showupRepo,
           transactionService: txService,
@@ -121,6 +137,9 @@ Future<void> main() async {
           // Only wire Firebase Remote Config in release builds; debug/profile fall
           // back to NoopRemoteConfigService which returns in-code defaults.
           remoteConfigService: kReleaseMode ? remoteConfigService : null,
+          // Wire locale persistence; AppContainer.overrides fetches the saved
+          // locale internally via getSavedLocale() and populates localeOverrideProvider.
+          localePreferenceService: localeService,
         ),
         child: const HabitLoopApp(),
       ),
@@ -131,16 +150,29 @@ Future<void> main() async {
   }
 }
 
-class HabitLoopApp extends StatelessWidget {
+class HabitLoopApp extends ConsumerWidget {
   const HabitLoopApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the locale override so the entire widget tree rebuilds immediately
+    // when the user picks a different language. null = follow system locale.
+    final localeOverride = ref.watch(localeOverrideProvider);
+
     return MaterialApp(
       title: 'Habit Loop',
       theme: HabitLoopTheme.materialTheme,
       darkTheme: HabitLoopTheme.darkMaterialTheme,
       themeMode: ThemeMode.system,
+      // Passing a non-null locale to MaterialApp suppresses Flutter's built-in
+      // localeResolutionCallback and localeListResolutionCallback entirely —
+      // Flutter simply uses the supplied locale without consulting those
+      // callbacks. This is intentional for a user-forced override: the user
+      // has explicitly chosen a language, so system negotiation is bypassed.
+      // If localeResolutionCallback or localeListResolutionCallback are ever
+      // added here, they will be silently ignored whenever localeOverride is
+      // non-null and must be removed or adapted accordingly.
+      locale: localeOverride,
       builder: (context, child) {
         return CupertinoTheme(
           data: HabitLoopTheme.cupertinoTheme.copyWith(

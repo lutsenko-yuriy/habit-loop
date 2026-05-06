@@ -2,7 +2,7 @@ name: habit_loop
 description: "Habit Loop — build habits through pacts and showups."
 publish_to: 'none'
 
-version: 0.18.3+32
+version: 0.18.4+32
 
 environment:
   sdk: ^3.6.0
@@ -22,6 +22,7 @@ dependencies:
   firebase_crashlytics: ^4.0.0
   firebase_remote_config: ^5.0.0
   talker_flutter: ^5.1.17
+  shared_preferences: ^2.3.0
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,26 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.18.4] — 2026-05-06 (PR #52 merged)
+
+### Added — Locale persistence infrastructure and AppContainer async overrides (HAB-40 WU2)
+
+- `shared_preferences: ^2.3.0` added as a production dependency for storing locale preference across sessions
+- `LocalePreferenceService` abstract interface introduced in `lib/infrastructure/locale/contracts/` with a no-throw contract: `getSavedLocale()`, `saveLocale(Locale)`, `clearLocale()`
+- `SharedPreferencesLocaleService` implements the interface — stores locale as a language code string; validates against `AppLocalizations.supportedLocales` on read so stale or invalid codes return `null` gracefully
+- `NoopLocalePreferenceService` returns `null` and no-ops on writes; used as the safe default in tests
+- `localePreferenceServiceProvider` and `localeOverrideProvider` (`StateProvider<Locale?>`, `null` = follow system) added to `app_providers.dart`
+- `AppContainer.overrides()` extended with optional `localePreferenceService` and `initialLocale` parameters; locale loading moved inside `AppContainer.overrides` so `main.dart` passes the `SharedPreferences` instance and the container resolves the saved locale itself
+- `HabitLoopApp` converted to `ConsumerWidget` watching `localeOverrideProvider` and forwarding it to `MaterialApp.locale`
+- `main.dart` loads `SharedPreferences` before `runApp` and passes it to `AppContainer.overrides`
+- `test/infrastructure/locale/data/shared_preferences_locale_service_test.dart` — 8 tests: save/read round-trip for en/fr/de/ru, clearLocale returns null, invalid stored value returns null, overwrite reflects on next read
+- `test/infrastructure/locale/data/noop_locale_preference_service_test.dart` — 4 tests: getSavedLocale returns null, saveLocale/clearLocale are no-ops, no state leak
+- `test/infrastructure/locale/fake_locale_preference_service.dart` — shared fake for WU3 UI tests
+- `test/infrastructure/injections/app_container_test.dart` extended — 4 new tests: localePreferenceServiceProvider resolves to noop default, localeOverrideProvider is null when not provided, both override correctly when provided, overrides list grows by 2
+- 692 tests passing, analyzer clean
+
+---
+
 ## [0.18.3] — 2026-05-06 (PR #51 merged)
 
 ### Added — Russian locale and language picker l10n keys (HAB-40 WU1)
