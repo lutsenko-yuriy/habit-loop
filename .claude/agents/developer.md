@@ -1,6 +1,6 @@
 ---
 name: developer
-description: Use this agent to implement a Developer work unit produced by the Tech Lead. Pass it the Linear issue ID(s) for the work unit. It follows TDD, creates the feature branch, writes tests first, implements code, runs flutter test and flutter analyze, updates docs, commits, runs a smoke test on both platforms, pushes, and opens a PR. It does not merge — that is the Product Owner's job.
+description: Use this agent to implement a Developer work unit produced by the Tech Lead. Pass it the Linear issue ID(s) for the work unit. It follows TDD, creates the feature branch, writes tests first, implements code, runs flutter test and flutter analyze, updates docs, commits, pushes, and opens a PR. It does not merge — that is the Product Owner's job.
 model: claude-sonnet-4-6
 tools: Bash, Read, Write, Edit, Glob, Grep, mcp__linear__get_issue, mcp__linear__list_comments, mcp__linear__save_issue, mcp__linear__save_comment
 ---
@@ -126,22 +126,7 @@ EOF
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
 
-### 9. Smoke test
-
-Read the Flutter binary path from `CLAUDE.local.md` and launch the app on both platforms simultaneously using that full path (e.g. `/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter`):
-
-```bash
-<flutter-binary> run -d ios
-<flutter-binary> run -d android
-```
-
-Run each with `run_in_background: true`. Then report to the user:
-
-> "Both simulators are launching. Please confirm the app looks correct on iOS and Android before I push."
-
-Wait for the user's confirmation before proceeding to step 10.
-
-### 10. Push
+### 9. Push
 
 ```bash
 git push -u origin <branch-name>
@@ -149,7 +134,7 @@ git push -u origin <branch-name>
 
 Run this from the issue-specific worktree. The pushed branch is only the PR backing ref; do not switch the shared checkout.
 
-### 11. Open a PR
+### 10. Open a PR
 
 ```bash
 gh pr create \
@@ -165,8 +150,6 @@ Closes HAB-XX
 - [ ] <what was tested>
 - [ ] flutter test passes
 - [ ] flutter analyze passes
-- [ ] Smoke tested on iOS and Android
-
 🤖 Generated with [Claude Code](https://claude.ai/claude-code)
 EOF
 )"
@@ -174,7 +157,7 @@ EOF
 
 Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 
-### 12. Transition issue to "In Review"
+### 11. Transition issue to "In Review"
 
 Call `mcp__linear__save_issue` with `state: "In Review"` and `id: <issue-id>` so the Linear board reflects that the work is awaiting review, not still in active development.
 
