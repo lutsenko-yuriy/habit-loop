@@ -1,13 +1,9 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/slices/dashboard/analytics/language_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
@@ -35,70 +31,12 @@ class DashboardPageAndroid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
 
-    Future<void> onLanguagePickerTapped() async {
-      final analytics = ref.read(analyticsServiceProvider);
-      final localeService = ref.read(localePreferenceServiceProvider);
-
-      // Read currentOverride and compute systemLocaleCode BEFORE the await so
-      // they are not captured after the async gap.
-      final currentOverride = ref.read(localeOverrideProvider);
-      final systemLocaleCode = Localizations.localeOf(context).languageCode;
-
-      unawaited(analytics.logEvent(LanguageChangeRequestedEvent()));
-      unawaited(analytics.logScreenView(const LanguagePickerAnalyticsScreen()));
-
-      if (!context.mounted) return;
-
-      // Build options list: (label, locale or null for system)
-      final options = <(String, Locale?)>[
-        (l10n.languageEnglish, const Locale('en')),
-        (l10n.languageFrench, const Locale('fr')),
-        (l10n.languageGerman, const Locale('de')),
-        (l10n.languageRussian, const Locale('ru')),
-        (l10n.languageSystem, null),
-      ];
-
-      // Returns (isSystem: true, locale: null) for "Use system language",
-      // (isSystem: false, locale: Locale) for a specific language,
-      // null if dismissed.
-      final result = await showDialog<(bool isSystem, Locale? locale)>(
-        context: context,
-        // ignore: use_build_context_synchronously — context.mounted checked above
-        builder: (ctx) => SimpleDialog(
-          title: Text(l10n.languagePickerTitle),
-          children: options.map(((String, Locale?) opt) {
-            final (label, locale) = opt;
-            final isSelected =
-                locale == null ? currentOverride == null : currentOverride?.languageCode == locale.languageCode;
-            return SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, (locale == null, locale)),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 28,
-                    child: isSelected ? const Icon(Icons.check, size: 18) : null,
-                  ),
-                  Text(label),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
-      );
-
-      if (result == null || !context.mounted) return;
-
-      final (isSystem, selectedLocale) = result;
-
-      await applyLanguageSelection(
-        selectedLocale: isSystem ? null : selectedLocale,
-        currentOverride: currentOverride,
-        systemLocaleCode: systemLocaleCode,
-        analyticsService: analytics,
-        localeService: localeService,
-        updateLocaleOverride: (locale) => ref.read(localeOverrideProvider.notifier).state = locale,
-      );
-    }
+    Future<void> onLanguagePickerTapped() => openLanguagePicker(
+          context: context,
+          ref: ref,
+          showPicker: ({required context, required options, required currentOverride}) =>
+              _showMaterialDialog(context, options, currentOverride, l10n),
+        );
 
     return Scaffold(
       appBar: AppBar(
@@ -360,4 +298,46 @@ class _ShowupTile extends StatelessWidget {
       subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Platform-specific picker UI — Android (SimpleDialog)
+// ---------------------------------------------------------------------------
+
+/// Shows a [SimpleDialog] with the given language [options] and returns the
+/// selected [Locale], or `null` for the system option or when dismissed.
+Future<Locale?> _showMaterialDialog(
+  BuildContext context,
+  List<({String label, Locale? locale})> options,
+  Locale? currentOverride,
+  AppLocalizations l10n,
+) async {
+  // Returns (isSystem, locale): isSystem=true means the system option was chosen.
+  final result = await showDialog<(bool isSystem, Locale? locale)>(
+    context: context,
+    // ignore: use_build_context_synchronously — caller guards context.mounted before this call
+    builder: (ctx) => SimpleDialog(
+      title: Text(l10n.languagePickerTitle),
+      children: options.map((opt) {
+        final isSelected =
+            opt.locale == null ? currentOverride == null : currentOverride?.languageCode == opt.locale!.languageCode;
+        return SimpleDialogOption(
+          onPressed: () => Navigator.pop(ctx, (opt.locale == null, opt.locale)),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 28,
+                child: isSelected ? const Icon(Icons.check, size: 18) : null,
+              ),
+              Text(opt.label),
+            ],
+          ),
+        );
+      }).toList(),
+    ),
+  );
+
+  if (result == null) return null; // dismissed
+  final (isSystem, selectedLocale) = result;
+  return isSystem ? null : selectedLocale;
 }

@@ -1,14 +1,10 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/slices/dashboard/analytics/language_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
@@ -36,70 +32,12 @@ class DashboardPageIos extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
 
-    Future<void> onLanguagePickerTapped() async {
-      final analytics = ref.read(analyticsServiceProvider);
-      final localeService = ref.read(localePreferenceServiceProvider);
-
-      // Read currentOverride and compute fromCode BEFORE the await so they
-      // are not captured after the async gap (fix for the stale-capture warning).
-      final currentOverride = ref.read(localeOverrideProvider);
-      final systemLocaleCode = Localizations.localeOf(context).languageCode;
-
-      unawaited(analytics.logEvent(LanguageChangeRequestedEvent()));
-      unawaited(analytics.logScreenView(const LanguagePickerAnalyticsScreen()));
-
-      if (!context.mounted) return;
-
-      // Build options list: (label, locale or null for system)
-      final options = <(String, Locale?)>[
-        (l10n.languageEnglish, const Locale('en')),
-        (l10n.languageFrench, const Locale('fr')),
-        (l10n.languageGerman, const Locale('de')),
-        (l10n.languageRussian, const Locale('ru')),
-        (l10n.languageSystem, null),
-      ];
-
-      String prefixed(String label, Locale? locale) {
-        // Use Locale equality for specific languages; check null-override for system.
-        final isSelected =
-            locale == null ? currentOverride == null : currentOverride?.languageCode == locale.languageCode;
-        return isSelected ? '✓ $label' : label;
-      }
-
-      // Returns (isSystem: true, locale: null) for "Use system language",
-      // (isSystem: false, locale: Locale) for a specific language,
-      // null if dismissed.
-      final result = await showCupertinoModalPopup<(bool isSystem, Locale? locale)>(
-        context: context,
-        builder: (ctx) => CupertinoActionSheet(
-          title: Text(l10n.languagePickerTitle),
-          actions: options.map(((String, Locale?) opt) {
-            final (label, locale) = opt;
-            return CupertinoActionSheetAction(
-              onPressed: () => Navigator.pop(ctx, (locale == null, locale)),
-              child: Text(prefixed(label, locale)),
-            );
-          }).toList(),
-          cancelButton: CupertinoActionSheetAction(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel),
-          ),
-        ),
-      );
-
-      if (result == null || !context.mounted) return;
-
-      final (isSystem, selectedLocale) = result;
-
-      await applyLanguageSelection(
-        selectedLocale: isSystem ? null : selectedLocale,
-        currentOverride: currentOverride,
-        systemLocaleCode: systemLocaleCode,
-        analyticsService: analytics,
-        localeService: localeService,
-        updateLocaleOverride: (locale) => ref.read(localeOverrideProvider.notifier).state = locale,
-      );
-    }
+    Future<void> onLanguagePickerTapped() => openLanguagePicker(
+          context: context,
+          ref: ref,
+          showPicker: ({required context, required options, required currentOverride}) =>
+              _showCupertinoActionSheet(context, options, currentOverride, l10n),
+        );
 
     return CupertinoPageScaffold(
       backgroundColor:
@@ -365,4 +303,45 @@ class _ShowupTile extends StatelessWidget {
       subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Platform-specific picker UI — iOS (CupertinoActionSheet)
+// ---------------------------------------------------------------------------
+
+/// Shows a [CupertinoActionSheet] with the given language [options] and returns
+/// the selected [Locale], or `null` for the system option or when dismissed.
+Future<Locale?> _showCupertinoActionSheet(
+  BuildContext context,
+  List<({String label, Locale? locale})> options,
+  Locale? currentOverride,
+  AppLocalizations l10n,
+) async {
+  String prefixed(String label, Locale? locale) {
+    final isSelected = locale == null ? currentOverride == null : currentOverride?.languageCode == locale.languageCode;
+    return isSelected ? '✓ $label' : label;
+  }
+
+  // Returns (isSystem, locale): isSystem=true means the system option was chosen.
+  final result = await showCupertinoModalPopup<(bool isSystem, Locale? locale)>(
+    context: context,
+    // ignore: use_build_context_synchronously — caller guards context.mounted before this call
+    builder: (ctx) => CupertinoActionSheet(
+      title: Text(l10n.languagePickerTitle),
+      actions: options.map((opt) {
+        return CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx, (opt.locale == null, opt.locale)),
+          child: Text(prefixed(opt.label, opt.locale)),
+        );
+      }).toList(),
+      cancelButton: CupertinoActionSheetAction(
+        onPressed: () => Navigator.pop(ctx),
+        child: Text(l10n.cancel),
+      ),
+    ),
+  );
+
+  if (result == null) return null; // dismissed
+  final (isSystem, selectedLocale) = result;
+  return isSystem ? null : selectedLocale;
 }
