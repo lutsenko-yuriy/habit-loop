@@ -8,6 +8,8 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
+import '../locale/fake_locale_preference_service.dart';
+
 void main() {
   group('AppContainer.overrides', () {
     late InMemoryPactRepository pactRepo;
@@ -20,8 +22,8 @@ void main() {
       txService = InMemoryPactTransactionService(pactRepo, showupRepo);
     });
 
-    test('returns a non-empty list of overrides', () {
-      final overrides = AppContainer.overrides(
+    test('returns a non-empty list of overrides', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -32,8 +34,8 @@ void main() {
       expect(overrides, hasLength(greaterThanOrEqualTo(3)));
     });
 
-    test('container with overrides resolves pactRepositoryProvider without throwing', () {
-      final overrides = AppContainer.overrides(
+    test('container with overrides resolves pactRepositoryProvider without throwing', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -44,8 +46,8 @@ void main() {
       expect(() => container.read(pactRepositoryProvider), returnsNormally);
     });
 
-    test('container with overrides resolves showupRepositoryProvider without throwing', () {
-      final overrides = AppContainer.overrides(
+    test('container with overrides resolves showupRepositoryProvider without throwing', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -56,8 +58,8 @@ void main() {
       expect(() => container.read(showupRepositoryProvider), returnsNormally);
     });
 
-    test('container with overrides resolves pactTransactionServiceProvider without throwing', () {
-      final overrides = AppContainer.overrides(
+    test('container with overrides resolves pactTransactionServiceProvider without throwing', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -68,8 +70,8 @@ void main() {
       expect(() => container.read(pactTransactionServiceProvider), returnsNormally);
     });
 
-    test('container with overrides resolves pactServiceProvider without throwing', () {
-      final overrides = AppContainer.overrides(
+    test('container with overrides resolves pactServiceProvider without throwing', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -80,8 +82,8 @@ void main() {
       expect(() => container.read(pactServiceProvider), returnsNormally);
     });
 
-    test('container with overrides resolves pactStatsServiceProvider without throwing', () {
-      final overrides = AppContainer.overrides(
+    test('container with overrides resolves pactStatsServiceProvider without throwing', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -92,8 +94,8 @@ void main() {
       expect(() => container.read(pactStatsServiceProvider), returnsNormally);
     });
 
-    test('optional services are omitted when null — providers fall back to noop defaults', () {
-      final overrides = AppContainer.overrides(
+    test('optional services are omitted when null — providers fall back to noop defaults', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -109,8 +111,8 @@ void main() {
       expect(() => container.read(remoteConfigServiceProvider), returnsNormally);
     });
 
-    test('localePreferenceServiceProvider resolves to noop default when not provided', () {
-      final overrides = AppContainer.overrides(
+    test('localePreferenceServiceProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -121,8 +123,22 @@ void main() {
       expect(() => container.read(localePreferenceServiceProvider), returnsNormally);
     });
 
-    test('localeOverrideProvider resolves to null when initialLocale not provided', () {
-      final overrides = AppContainer.overrides(
+    test('localeOverrideProvider resolves to null when no locale has been saved', () async {
+      // NoopLocalePreferenceService always returns null from getSavedLocale().
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        localePreferenceService: NoopLocalePreferenceService(),
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(localeOverrideProvider), isNull);
+    });
+
+    test('localeOverrideProvider resolves to null when localePreferenceService is not provided', () async {
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
@@ -133,39 +149,54 @@ void main() {
       expect(container.read(localeOverrideProvider), isNull);
     });
 
-    test('localePreferenceService and initialLocale overrides are included when provided', () {
-      const locale = Locale('fr');
+    test('localePreferenceService override is included when provided', () async {
       final localeService = NoopLocalePreferenceService();
 
-      final overrides = AppContainer.overrides(
+      final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         localePreferenceService: localeService,
-        initialLocale: locale,
       );
       final container = ProviderContainer(overrides: overrides);
       addTearDown(container.dispose);
 
       expect(container.read(localePreferenceServiceProvider), same(localeService));
-      expect(container.read(localeOverrideProvider), equals(locale));
     });
 
-    test('overrides list grows by 2 when both locale params are provided', () {
-      final baseOverrides = AppContainer.overrides(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-      );
-      final localeOverrides = AppContainer.overrides(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-        localePreferenceService: NoopLocalePreferenceService(),
-        initialLocale: const Locale('de'),
-      );
+    test('localeOverrideProvider reflects saved locale fetched internally from service', () async {
+      // Pre-populate the fake service with a saved locale so the internal
+      // getSavedLocale() call inside overrides() returns it.
+      final localeService = FakeLocalePreferenceService();
+      await localeService.saveLocale(const Locale('fr'));
 
-      expect(localeOverrides, hasLength(baseOverrides.length + 2));
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        localePreferenceService: localeService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(localePreferenceServiceProvider), same(localeService));
+      expect(container.read(localeOverrideProvider), equals(const Locale('fr')));
+    });
+
+    test('localeOverrideProvider reflects German locale when pre-populated in service', () async {
+      final localeService = FakeLocalePreferenceService();
+      await localeService.saveLocale(const Locale('de'));
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        localePreferenceService: localeService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(localeOverrideProvider), equals(const Locale('de')));
     });
   });
 }

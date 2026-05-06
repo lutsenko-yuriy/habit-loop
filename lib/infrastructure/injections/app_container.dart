@@ -23,6 +23,11 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 abstract final class AppContainer {
   /// Builds the complete list of Riverpod provider overrides for production.
   ///
+  /// This method is `async` because it calls [LocalePreferenceService.getSavedLocale]
+  /// internally when [localePreferenceService] is provided, so the saved locale is
+  /// fetched once before `runApp` and applied to [localeOverrideProvider] on the
+  /// first frame without a separate async step in `main.dart`.
+  ///
   /// Parameters that are `null` are omitted from the override list, meaning the
   /// corresponding provider falls back to its noop default. This is used for
   /// optional services (analytics, crashlytics, remoteConfig) that are only
@@ -39,14 +44,11 @@ abstract final class AppContainer {
   /// - [logService] — provided in debug/profile builds.
   /// - [remoteConfigService] — only provided in release builds.
   /// - [localePreferenceService] — provided when SharedPreferences is available;
-  ///   `null` falls back to [NoopLocalePreferenceService]. Independently
-  ///   optional: may be passed without [initialLocale] (e.g. first launch,
-  ///   no prior preference stored).
-  /// - [initialLocale] — the saved locale loaded before `runApp`; `null` means
-  ///   follow the system locale (i.e. [localeOverrideProvider] stays `null`).
-  ///   Independently optional: may be passed without [localePreferenceService]
-  ///   when the service is unavailable but a default locale is still desired.
-  static List<Override> overrides({
+  ///   `null` falls back to [NoopLocalePreferenceService]. When non-null, the
+  ///   saved locale is fetched internally via [LocalePreferenceService.getSavedLocale]
+  ///   and used to populate [localeOverrideProvider]. A `null` result means the
+  ///   app follows the system locale.
+  static Future<List<Override>> overrides({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
@@ -55,8 +57,14 @@ abstract final class AppContainer {
     LogService? logService,
     RemoteConfigService? remoteConfigService,
     LocalePreferenceService? localePreferenceService,
-    Locale? initialLocale,
-  }) {
+  }) async {
+    // Fetch the saved locale before building the override list so the correct
+    // locale is applied on the very first frame without an extra await in main.dart.
+    Locale? initialLocale;
+    if (localePreferenceService != null) {
+      initialLocale = await localePreferenceService.getSavedLocale();
+    }
+
     return [
       // Canonical repository providers.
       pactRepositoryProvider.overrideWithValue(pactRepository),
@@ -73,7 +81,7 @@ abstract final class AppContainer {
 
       // Locale persistence and initial locale override.
       if (localePreferenceService != null) localePreferenceServiceProvider.overrideWithValue(localePreferenceService),
-      if (initialLocale != null) localeOverrideProvider.overrideWith((ref) => initialLocale),
+      if (initialLocale != null) localeOverrideProvider.overrideWith((ref) => initialLocale!),
     ];
   }
 }

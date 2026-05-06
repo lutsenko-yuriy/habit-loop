@@ -92,15 +92,12 @@ Future<void> main() async {
   // SharedPreferences.getInstance() is fast (reads from an in-memory cache
   // after the first call) and independent of the SQLite database lifecycle.
   SharedPreferencesLocaleService? localeService;
-  Locale? savedLocale;
   try {
     final prefs = await SharedPreferences.getInstance();
     localeService = SharedPreferencesLocaleService(prefs);
-    savedLocale = await localeService.getSavedLocale();
   } catch (_) {
     // If SharedPreferences fails to initialise, fall back to system locale.
     localeService = null;
-    savedLocale = null;
   }
 
   // Open the SQLite database and construct the shared repository instances.
@@ -117,7 +114,7 @@ Future<void> main() async {
 
     runApp(
       ProviderScope(
-        overrides: AppContainer.overrides(
+        overrides: await AppContainer.overrides(
           pactRepository: pactRepo,
           showupRepository: showupRepo,
           transactionService: txService,
@@ -140,10 +137,9 @@ Future<void> main() async {
           // Only wire Firebase Remote Config in release builds; debug/profile fall
           // back to NoopRemoteConfigService which returns in-code defaults.
           remoteConfigService: kReleaseMode ? remoteConfigService : null,
-          // Wire locale persistence and restore the saved locale (or null to
-          // follow system).
+          // Wire locale persistence; AppContainer.overrides fetches the saved
+          // locale internally via getSavedLocale() and populates localeOverrideProvider.
           localePreferenceService: localeService,
-          initialLocale: savedLocale,
         ),
         child: const HabitLoopApp(),
       ),
