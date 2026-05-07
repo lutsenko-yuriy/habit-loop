@@ -393,6 +393,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showupHabitDeleted => '(habitude supprimée)';
 
   @override
+  String get showupNotFound => 'Ce rendez-vous n\'est plus disponible.';
+
+  @override
   String get languagePickerTitle => 'Langue';
 
   @override

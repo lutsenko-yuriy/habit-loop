@@ -736,6 +736,12 @@ abstract class AppLocalizations {
   /// **'(habit deleted)'**
   String get showupHabitDeleted;
 
+  /// No description provided for @showupNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This showup is no longer available.'**
+  String get showupNotFound;
+
   /// No description provided for @languagePickerTitle.
   ///
   /// In en, this message translates to:
