@@ -4,6 +4,22 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.19.0] — 2026-05-06 (PR #53 merged)
+
+### Added — In-app language picker UI, analytics, and Russian locale (HAB-40 WU3)
+
+- iOS language picker: `CupertinoActionSheet` launched from the dashboard nav bar globe icon; displays English, French, German, Russian, and "System default" options; selecting a locale writes via `localePreferenceServiceProvider` and updates `localeOverrideProvider` so the UI re-renders immediately
+- Android language picker: `AlertDialog` with a `RadioListTile` per locale, launched from a dashboard overflow menu item; same persistence and hot-swap behaviour
+- `LanguagePickerViewModel` (`autoDispose` notifier in `slices/settings/application/`) encapsulates the current locale read from `localeOverrideProvider` and a `selectLocale(Locale?)` action that writes to both the preference service and the provider
+- `LanguageSelectedEvent` analytics event (snake_case: `language_selected`, property `locale_code: String`) added to `slices/settings/analytics/` and logged on every user selection
+- `openLanguagePicker()` shared helper extracted to `slices/settings/ui/generic/` to eliminate duplication between the iOS and Android call sites
+- `docs/ANALYTICS_EVENTS.md` updated with `language_selected` event entry
+- `docs/ARCHITECTURE.md` updated with `slices/settings/` directory entries and locale infrastructure paragraph
+- Tests: `LanguagePickerViewModel` unit tests (selectLocale persists locale and updates provider, selectLocale with null reverts to system), iOS and Android widget tests asserting picker options appear and locale changes propagate
+- 720 tests passing, analyzer clean
+
+---
+
 ## [0.18.4] — 2026-05-06 (PR #52 merged)
 
 ### Added — Locale persistence infrastructure and AppContainer async overrides (HAB-40 WU2)

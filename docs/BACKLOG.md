@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-- [HAB-40](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-40/in-app-language-selection-without-leaving-the-app) **In-app language selection without leaving the app** (WU2 of 3 in progress)
+_(nothing in progress)_
 
 ---
 
@@ -27,6 +27,4 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## Unscheduled
 
-### Remaining work
-
-- [HAB-40](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-40/in-app-language-selection-without-leaving-the-app) **In-app language selection without leaving the app** — Add an in-app language selector so any user can switch between English, French, and German without going to system Settings. (Feature)
+_(no unscheduled items)_
