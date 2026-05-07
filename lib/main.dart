@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' show NotificationResponse;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/firebase_options.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_service.dart';
@@ -49,8 +51,96 @@ import 'package:talker_flutter/talker_flutter.dart';
 /// notification response callback (which fires outside the widget tree).
 final _navigatorKey = GlobalKey<NavigatorState>();
 
+/// Background notification response handler for Android.
+///
+/// Called by [flutter_local_notifications] in a **separate background isolate**
+/// when the user acts on a notification action button while the app is not in
+/// the foreground (e.g. taps "Mark done" from the notification tray while the
+/// app is in the background or killed state).
+///
+/// **Constraints:**
+/// - Must be a top-level function annotated with `@pragma('vm:entry-point')`.
+/// - Cannot access Riverpod providers — the isolate has no ProviderScope.
+/// - Cannot access the global `_navigatorKey` — UI is not mounted.
+/// - Dependencies must be constructed directly (no DI).
+///
+/// **Note:** This handler cannot be unit-tested in the Flutter test harness
+/// because it runs in a background isolate managed by the OS. Integration
+/// testing on a real device is required to verify end-to-end behaviour.
+@pragma('vm:entry-point')
+void _notificationBackgroundHandler(NotificationResponse response) {
+  // Only handle the "mark_done" action — ignore taps on the notification body
+  // (those are handled by the warm-start onDidReceiveNotificationResponse).
+  if (response.actionId != 'mark_done') return;
+
+  final parsed = NotificationRouter.parsePayload(response.payload);
+  if (parsed == null) return;
+
+  // Mark the showup done without Riverpod. We construct the SQLite repository
+  // directly using the production HabitLoopDatabase singleton.
+  //
+  // TODO(HAB-13-WU5): Update PactStats after marking done. Constructing
+  // PactStatsService in a background isolate requires both the pact repository
+  // and the showup repository, which adds complexity and risk of SQLite
+  // contention. For now, stats are refreshed on next foreground launch when
+  // PactDetailViewModel.load() is called.
+  unawaited(_markShowupDoneFromBackground(parsed.showupId, parsed.pactId));
+}
+
+/// Marks a showup as done from the background isolate.
+///
+/// Opens the production SQLite database, loads the showup by ID, updates its
+/// status to [ShowupStatus.done], and persists the change.
+///
+/// Also fires [ShowupMarkedDoneFromNotificationEvent] analytics in release
+/// builds (via a freshly constructed [FirebaseAnalyticsService]).
+Future<void> _markShowupDoneFromBackground(String showupId, String pactId) async {
+  try {
+    // Reuse the production database singleton. On Android, the background
+    // isolate shares the same app process when the app is in the background,
+    // so the singleton's file path is correct.
+    final db = await HabitLoopDatabase.instance.database;
+    final showupRepo = SqliteShowupRepository(db);
+
+    final Showup? showup = await showupRepo.getShowupById(showupId);
+    if (showup == null) return; // Already deleted or never persisted.
+    if (showup.status != ShowupStatus.pending) return; // Already resolved.
+
+    final updated = Showup(
+      id: showup.id,
+      pactId: showup.pactId,
+      scheduledAt: showup.scheduledAt,
+      duration: showup.duration,
+      status: ShowupStatus.done,
+      note: showup.note,
+    );
+    await showupRepo.updateShowup(updated);
+
+    // Fire analytics in release builds only.
+    if (kReleaseMode) {
+      try {
+        final analytics = FirebaseAnalyticsService(
+          FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
+        );
+        await analytics.logEvent(ShowupMarkedDoneFromNotificationEvent(pactId: pactId));
+      } catch (_) {
+        // Analytics failures must never crash the background handler.
+      }
+    }
+  } catch (_) {
+    // Background handlers must not throw — swallow all errors silently.
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // The background notification handler (_notificationBackgroundHandler) is
+  // registered on the FlutterLocalNotificationService instance during the
+  // notification service setup block below (before initialize() is called).
+  // It is an Android-only path; iOS action responses always use the foreground
+  // onDidReceiveNotificationResponse callback.
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -129,6 +219,11 @@ Future<void> main() async {
   if (kReleaseMode) {
     final realService = FlutterLocalNotificationService(earlycrashlytics);
     try {
+      // Wire the background handler before initialize() so the plugin passes it
+      // to the OS-spawned background isolate on Android. On iOS this path is
+      // never taken — iOS always calls the foreground callback below.
+      realService.setBackgroundNotificationHandler(_notificationBackgroundHandler);
+
       // Wire the warm-start callback before initialize() so the plugin picks
       // it up during setup. The callback parses the payload and pushes the
       // showup detail screen via the global navigator key.
@@ -137,24 +232,38 @@ Future<void> main() async {
       // (after runApp completes). The `?.` guard is a safety net only.
       realService.setNotificationResponseCallback((NotificationResponse response) {
         final parsed = NotificationRouter.parsePayload(response.payload);
-        if (parsed != null) {
-          NotificationNavigator.navigateToShowup(
-            navigatorKey: _navigatorKey,
-            showupId: parsed.showupId,
-          );
-          // Fire deep-link analytics. This is a warm start because the app
-          // was already running in the background when the user tapped the
-          // notification.
-          unawaited(
-            notificationAnalyticsService?.logEvent(
-              AppOpenedFromNotificationEvent(
-                pactId: parsed.pactId,
-                showupId: parsed.showupId,
-                coldStart: false,
-              ),
-            ),
-          );
+        if (parsed == null) return;
+
+        if (response.actionId == 'mark_done') {
+          // The user tapped "Mark done" from the notification tray while the
+          // app is in the foreground or warm-started. Mark the showup done via
+          // a direct DB call — do NOT navigate to ShowupDetailScreen because
+          // the user chose to act without opening the app.
+          //
+          // Analytics fires ShowupMarkedDoneFromNotificationEvent. The Riverpod
+          // container is not accessible here (no BuildContext), so we construct
+          // the repository directly, mirroring the background handler.
+          unawaited(_markShowupDoneFromBackground(parsed.showupId, parsed.pactId));
+          return;
         }
+
+        // Default: user tapped the notification body — navigate to showup detail.
+        NotificationNavigator.navigateToShowup(
+          navigatorKey: _navigatorKey,
+          showupId: parsed.showupId,
+        );
+        // Fire deep-link analytics. This is a warm start because the app
+        // was already running in the background when the user tapped the
+        // notification.
+        unawaited(
+          notificationAnalyticsService?.logEvent(
+            AppOpenedFromNotificationEvent(
+              pactId: parsed.pactId,
+              showupId: parsed.showupId,
+              coldStart: false,
+            ),
+          ),
+        );
       });
       await realService.initialize();
       await realService.requestPermission();

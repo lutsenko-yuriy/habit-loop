@@ -21,7 +21,15 @@ final class FakeNotificationService implements NotificationService {
   bool permissionGranted = false;
 
   /// Records of all [scheduleShowupReminder] calls in order.
-  final List<({Showup showup, Pact pact, String titleText, String bodyText})> scheduledReminders = [];
+  final List<({Showup showup, Pact pact, String titleText, String bodyText, bool includeMarkDoneAction})>
+      scheduledReminders = [];
+
+  /// Showup IDs that were marked done from the notification tray
+  /// (background or foreground action handler) — populated by the caller
+  /// test double to simulate the background isolate or warm-start callback.
+  ///
+  /// Reset by [reset].
+  final List<String> markedDoneFromNotificationIds = [];
 
   /// Records of all [scheduleDeadlineNotification] calls in order.
   final List<({Showup showup, String titleText, String bodyText})> scheduledDeadlines = [];
@@ -44,12 +52,14 @@ final class FakeNotificationService implements NotificationService {
     required Pact pact,
     required String titleText,
     required String bodyText,
+    bool includeMarkDoneAction = true,
   }) async {
     scheduledReminders.add((
       showup: showup,
       pact: pact,
       titleText: titleText,
       bodyText: bodyText,
+      includeMarkDoneAction: includeMarkDoneAction,
     ));
   }
 
@@ -89,5 +99,6 @@ final class FakeNotificationService implements NotificationService {
     scheduledDeadlines.clear();
     cancelledShowupIds.clear();
     cancelledPactIds.clear();
+    markedDoneFromNotificationIds.clear();
   }
 }
