@@ -8,9 +8,17 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart' show NotificationResponse;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
+    show
+        AndroidInitializationSettings,
+        DarwinInitializationSettings,
+        FlutterLocalNotificationsPlugin,
+        InitializationSettings,
+        NotificationResponse;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/firebase_options.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_service.dart';
@@ -22,6 +30,7 @@ import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/shared_preferences_locale_service.dart';
 import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
+import 'package:habit_loop/infrastructure/notifications/contracts/notification_constants.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/flutter_local_notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
@@ -49,8 +58,171 @@ import 'package:talker_flutter/talker_flutter.dart';
 /// notification response callback (which fires outside the widget tree).
 final _navigatorKey = GlobalKey<NavigatorState>();
 
+/// Top-level [ProviderContainer] used for foreground notification callbacks
+/// that fire outside the widget tree (e.g. "Mark done" from warm-start).
+///
+/// Assigned in [main] after the overrides list is computed — same overrides
+/// as the [ProviderScope] so Riverpod providers (e.g. [pactStatsServiceProvider])
+/// are correctly populated. The `?.` guards in the callback are a safety net
+/// in case the callback fires before [main] completes.
+ProviderContainer? _container;
+
+/// Background notification response handler for Android.
+///
+/// Called by [flutter_local_notifications] in a **separate background isolate**
+/// when the user acts on a notification action button while the app is not in
+/// the foreground (e.g. taps "Mark done" from the notification tray while the
+/// app is in the background or killed state).
+///
+/// **Constraints:**
+/// - Must be a top-level function annotated with `@pragma('vm:entry-point')`.
+/// - Cannot access Riverpod providers — the isolate has no ProviderScope.
+/// - Cannot access the global `_navigatorKey` — UI is not mounted.
+/// - Dependencies must be constructed directly (no DI).
+///
+/// **Note:** This handler cannot be unit-tested in the Flutter test harness
+/// because it runs in a background isolate managed by the OS. Integration
+/// testing on a real device is required to verify end-to-end behaviour.
+@pragma('vm:entry-point')
+void _notificationBackgroundHandler(NotificationResponse response) {
+  // Only handle the "mark_done" action — ignore taps on the notification body
+  // (those are handled by the warm-start onDidReceiveNotificationResponse).
+  if (response.actionId != NotificationConstants.markDoneActionId) return;
+
+  final parsed = NotificationRouter.parsePayload(response.payload);
+  if (parsed == null) return;
+
+  // Mark the showup done without Riverpod. We construct the SQLite repository
+  // directly using the production HabitLoopDatabase singleton.
+  //
+  // TODO(HAB-13-WU5): Update PactStats after marking done. Constructing
+  // PactStatsService in a background isolate requires both the pact repository
+  // and the showup repository, which adds complexity and risk of SQLite
+  // contention. For now, stats are refreshed on next foreground launch when
+  // PactDetailViewModel.load() is called.
+  unawaited(_markShowupDoneFromBackground(parsed.showupId, parsed.pactId));
+}
+
+/// Marks a showup as done from the background isolate.
+///
+/// Opens the production SQLite database, loads the showup by ID, updates its
+/// status to [ShowupStatus.done], and persists the change.
+///
+/// Also fires [ShowupMarkedDoneFromNotificationEvent] analytics in release
+/// builds (via a freshly constructed [FirebaseAnalyticsService]).
+Future<void> _markShowupDoneFromBackground(String showupId, String pactId) async {
+  try {
+    // Reuse the production database singleton. On Android, the background
+    // isolate shares the same app process when the app is in the background,
+    // so the singleton's file path is correct.
+    final db = await HabitLoopDatabase.instance.database;
+    final showupRepo = SqliteShowupRepository(db);
+
+    final Showup? showup = await showupRepo.getShowupById(showupId);
+    if (showup == null) return; // Already deleted or never persisted.
+    if (showup.status != ShowupStatus.pending) return; // Already resolved.
+
+    final updated = Showup(
+      id: showup.id,
+      pactId: showup.pactId,
+      scheduledAt: showup.scheduledAt,
+      duration: showup.duration,
+      status: ShowupStatus.done,
+      note: showup.note,
+    );
+    await showupRepo.updateShowup(updated);
+
+    // Cancel both the reminder and deadline notifications for this showup.
+    // The ID formulas must stay in sync with [NotificationConstants] — the
+    // single source of truth shared between this handler and
+    // [FlutterLocalNotificationService].
+    try {
+      final plugin = FlutterLocalNotificationsPlugin();
+      // Re-initialise minimally for cancellation only (no callbacks needed).
+      await plugin.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          iOS: DarwinInitializationSettings(),
+        ),
+      );
+      await plugin.cancel(NotificationConstants.reminderNotificationId(showupId));
+      await plugin.cancel(NotificationConstants.deadlineNotificationId(showupId));
+    } catch (_) {
+      // Cancellation failures must never crash the background handler.
+    }
+
+    // Fire analytics in release builds only.
+    if (kReleaseMode) {
+      try {
+        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      } catch (_) {
+        // Already initialised or init failed — proceed anyway.
+      }
+      try {
+        final analytics = FirebaseAnalyticsService(
+          FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
+        );
+        await analytics.logEvent(ShowupMarkedDoneFromNotificationEvent(pactId: pactId));
+      } catch (_) {
+        // Analytics failures must never crash the background handler.
+      }
+    }
+  } catch (_) {
+    // Background handlers must not throw — swallow all errors silently.
+  }
+}
+
+/// Marks a showup as done from the foreground warm-start callback.
+///
+/// Unlike [_markShowupDoneFromBackground], this runs on the **main isolate**
+/// where [_container] (a [ProviderContainer] with production overrides) is
+/// available. Using Riverpod ensures [PactStatsService] cache is invalidated
+/// correctly and the UI reflects the change without a manual reload.
+///
+/// Falls back to [_markShowupDoneFromBackground] if [_container] is not yet
+/// initialised (safety net for the unlikely case the callback fires before
+/// [main] completes).
+Future<void> _markShowupDoneFromForeground(String showupId, String pactId) async {
+  final container = _container;
+  if (container == null) {
+    // Container not yet ready — fall back to the background path.
+    await _markShowupDoneFromBackground(showupId, pactId);
+    return;
+  }
+  try {
+    final showupRepo = container.read(showupRepositoryProvider);
+    final pactStatsService = container.read(pactStatsServiceProvider);
+    final notificationService = container.read(notificationServiceProvider);
+    final analyticsService = container.read(analyticsServiceProvider);
+
+    final Showup? showup = await showupRepo.getShowupById(showupId);
+    if (showup == null) return; // Already deleted or never persisted.
+    if (showup.status != ShowupStatus.pending) return; // Idempotency guard — already resolved.
+
+    // persistShowupStatus atomically updates the showup status in the DB and
+    // refreshes the PactStatsService in-memory cache in one call.
+    await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.done);
+
+    // Cancel both reminder and deadline notifications for this showup.
+    await notificationService.cancelShowupReminder(showupId);
+
+    // Fire analytics event.
+    unawaited(analyticsService.logEvent(ShowupMarkedDoneFromNotificationEvent(pactId: pactId)));
+  } catch (_) {
+    // Foreground callback failures must be swallowed — analytics/UI staleness
+    // is preferable to a visible crash.
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // The background notification handler (_notificationBackgroundHandler) is
+  // registered on the FlutterLocalNotificationService instance during the
+  // notification service setup block below (before initialize() is called).
+  // It is an Android-only path; iOS action responses always use the foreground
+  // onDidReceiveNotificationResponse callback.
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -129,6 +301,11 @@ Future<void> main() async {
   if (kReleaseMode) {
     final realService = FlutterLocalNotificationService(earlycrashlytics);
     try {
+      // Wire the background handler before initialize() so the plugin passes it
+      // to the OS-spawned background isolate on Android. On iOS this path is
+      // never taken — iOS always calls the foreground callback below.
+      realService.setBackgroundNotificationHandler(_notificationBackgroundHandler);
+
       // Wire the warm-start callback before initialize() so the plugin picks
       // it up during setup. The callback parses the payload and pushes the
       // showup detail screen via the global navigator key.
@@ -137,24 +314,36 @@ Future<void> main() async {
       // (after runApp completes). The `?.` guard is a safety net only.
       realService.setNotificationResponseCallback((NotificationResponse response) {
         final parsed = NotificationRouter.parsePayload(response.payload);
-        if (parsed != null) {
-          NotificationNavigator.navigateToShowup(
-            navigatorKey: _navigatorKey,
-            showupId: parsed.showupId,
-          );
-          // Fire deep-link analytics. This is a warm start because the app
-          // was already running in the background when the user tapped the
-          // notification.
-          unawaited(
-            notificationAnalyticsService?.logEvent(
-              AppOpenedFromNotificationEvent(
-                pactId: parsed.pactId,
-                showupId: parsed.showupId,
-                coldStart: false,
-              ),
-            ),
-          );
+        if (parsed == null) return;
+
+        if (response.actionId == NotificationConstants.markDoneActionId) {
+          // The user tapped "Mark done" from the notification tray while the
+          // app is in the foreground or warm-started. Use the top-level
+          // ProviderContainer so PactStatsService cache is updated correctly —
+          // the widget tree will reflect the change without requiring a reload.
+          // Do NOT navigate to ShowupDetailScreen: the user chose to act
+          // without opening the app.
+          unawaited(_markShowupDoneFromForeground(parsed.showupId, parsed.pactId));
+          return;
         }
+
+        // Default: user tapped the notification body — navigate to showup detail.
+        NotificationNavigator.navigateToShowup(
+          navigatorKey: _navigatorKey,
+          showupId: parsed.showupId,
+        );
+        // Fire deep-link analytics. This is a warm start because the app
+        // was already running in the background when the user tapped the
+        // notification.
+        unawaited(
+          notificationAnalyticsService?.logEvent(
+            AppOpenedFromNotificationEvent(
+              pactId: parsed.pactId,
+              showupId: parsed.showupId,
+              coldStart: false,
+            ),
+          ),
+        );
       });
       await realService.initialize();
       await realService.requestPermission();
@@ -201,35 +390,46 @@ Future<void> main() async {
         kReleaseMode ? FirebaseAnalyticsService(FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance)) : null;
     final analyticsService = notificationAnalyticsService;
 
+    // Compute overrides once and reuse them for both ProviderScope (the widget
+    // tree) and _container (the top-level ProviderContainer used by the
+    // foreground "Mark done" callback outside the widget tree).
+    final overrides = await AppContainer.overrides(
+      pactRepository: pactRepo,
+      showupRepository: showupRepo,
+      transactionService: txService,
+      // Talker log service is active in debug and profile builds only; the
+      // in-app overlay is gated on kDebugMode inside TalkerLogService.
+      // Release builds fall back to the NoopLogService default.
+      logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
+      // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
+      analyticsService: analyticsService,
+      // Only send crash reports in release builds — debug/profile use NoopCrashlyticsService.
+      crashlyticsService: kReleaseMode
+          ? FirebaseCrashlyticsService(
+              FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
+            )
+          : null,
+      // Only wire Firebase Remote Config in release builds; debug/profile fall
+      // back to NoopRemoteConfigService which returns in-code defaults.
+      remoteConfigService: kReleaseMode ? remoteConfigService : null,
+      // Wire the notification service. In release builds this is the real plugin;
+      // in debug/profile it is the NoopNotificationService. Either way we pass it
+      // so that the notificationServiceProvider is always overridden and available.
+      notificationService: notificationService,
+      // Wire locale persistence; AppContainer.overrides fetches the saved
+      // locale internally via getSavedLocale() and populates localeOverrideProvider.
+      localePreferenceService: localeService,
+    );
+
+    // Create the top-level ProviderContainer with the same overrides so that
+    // the foreground "Mark done" notification callback (_markShowupDoneFromForeground)
+    // can read Riverpod providers (ShowupRepository, PactStatsService, etc.)
+    // without going through the widget tree.
+    _container = ProviderContainer(overrides: overrides);
+
     runApp(
       ProviderScope(
-        overrides: await AppContainer.overrides(
-          pactRepository: pactRepo,
-          showupRepository: showupRepo,
-          transactionService: txService,
-          // Talker log service is active in debug and profile builds only; the
-          // in-app overlay is gated on kDebugMode inside TalkerLogService.
-          // Release builds fall back to the NoopLogService default.
-          logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
-          // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
-          analyticsService: analyticsService,
-          // Only send crash reports in release builds — debug/profile use NoopCrashlyticsService.
-          crashlyticsService: kReleaseMode
-              ? FirebaseCrashlyticsService(
-                  FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
-                )
-              : null,
-          // Only wire Firebase Remote Config in release builds; debug/profile fall
-          // back to NoopRemoteConfigService which returns in-code defaults.
-          remoteConfigService: kReleaseMode ? remoteConfigService : null,
-          // Wire the notification service. In release builds this is the real plugin;
-          // in debug/profile it is the NoopNotificationService. Either way we pass it
-          // so that the notificationServiceProvider is always overridden and available.
-          notificationService: notificationService,
-          // Wire locale persistence; AppContainer.overrides fetches the saved
-          // locale internally via getSavedLocale() and populates localeOverrideProvider.
-          localePreferenceService: localeService,
-        ),
+        overrides: overrides,
         child: HabitLoopApp(navigatorKey: _navigatorKey),
       ),
     );

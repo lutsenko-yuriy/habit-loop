@@ -64,12 +64,18 @@ abstract interface class NotificationService {
   /// so it is deterministic, collision-resistant, and fits in a 32-bit signed integer.
   /// The payload JSON includes `showupId` and `pactId` for deep-link navigation.
   ///
+  /// When [includeMarkDoneAction] is `true` (the default), a "Mark done" action
+  /// button is added to the notification so the user can mark the showup done
+  /// directly from the notification tray without opening the app. Set to `false`
+  /// for deadline/missed notifications that should not have action buttons.
+  ///
   /// Never throws — implementations swallow failures silently.
   Future<void> scheduleShowupReminder({
     required Showup showup,
     required Pact pact,
     required String titleText,
     required String bodyText,
+    bool includeMarkDoneAction = true,
   });
 
   /// Schedules a "missed deadline" replacement notification for [showup].

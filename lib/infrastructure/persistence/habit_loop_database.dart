@@ -34,7 +34,14 @@ class HabitLoopDatabase {
     return openDatabase(
       path,
       version: 1,
-      onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+      onConfigure: (db) async {
+        // Enable WAL journal mode so concurrent readers (main isolate) and the
+        // background notification handler isolate can operate simultaneously
+        // without producing SQLITE_BUSY errors. WAL allows one writer and
+        // multiple readers at the same time.
+        await db.execute('PRAGMA journal_mode=WAL');
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: runMigrations,
     );
   }
@@ -103,7 +110,10 @@ class HabitLoopDatabase {
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
         version: 1,
-        onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+        onConfigure: (db) async {
+          await db.execute('PRAGMA journal_mode=WAL');
+          await db.execute('PRAGMA foreign_keys = ON');
+        },
         onCreate: runMigrations,
       ),
     );

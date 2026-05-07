@@ -195,6 +195,7 @@
   },
   "notificationMissedTitle": "Вы пропустили этот визит",
   "notificationMissedBody": "Ничего страшного — появитесь в следующий раз.",
+  "notificationMarkDone": "Отметить как выполнено",
   "notificationDurationMinutes": "{count} мин",
   "@notificationDurationMinutes": {
     "placeholders": {

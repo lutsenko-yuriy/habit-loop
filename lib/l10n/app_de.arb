@@ -195,6 +195,7 @@
   },
   "notificationMissedTitle": "Diesen hast du verpasst",
   "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal.",
+  "notificationMarkDone": "Als erledigt markieren",
   "notificationDurationMinutes": "{count} Min.",
   "@notificationDurationMinutes": {
     "placeholders": {

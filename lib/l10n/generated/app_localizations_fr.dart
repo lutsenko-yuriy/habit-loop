@@ -448,6 +448,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationMissedBody => 'Pas de panique — sois au rendez-vous la prochaine fois.';
 
   @override
+  String get notificationMarkDone => 'Marquer comme fait';
+
+  @override
   String notificationDurationMinutes(int count) {
     return '$count min';
   }
