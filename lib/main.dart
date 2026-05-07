@@ -19,6 +19,9 @@ import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/shared_preferences_locale_service.dart';
 import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
+import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
+import 'package:habit_loop/infrastructure/notifications/data/flutter_local_notification_service.dart';
+import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
@@ -87,6 +90,28 @@ Future<void> main() async {
     }
   }
 
+  // Initialise notification service before runApp so the plugin and Android
+  // channel are ready when the first frame renders. Only wire the real plugin
+  // in release builds — debug/profile use the silent NoopNotificationService.
+  //
+  // timezone.initializeTimeZones() and FlutterTimezone.getLocalTimezone() are
+  // called inside FlutterLocalNotificationService.initialize() so this block
+  // just constructs the service and awaits its initialisation.
+  NotificationService notificationService = NoopNotificationService();
+  if (kReleaseMode) {
+    final realService = FlutterLocalNotificationService();
+    try {
+      await realService.initialize();
+      await realService.requestPermission();
+      notificationService = realService;
+    } catch (_) {
+      // initialize()/requestPermission() already swallow, but guard here as
+      // well so a constructor failure cannot prevent runApp.
+      // Fall back to the noop — notifications simply won't work.
+      notificationService = NoopNotificationService();
+    }
+  }
+
   // Load the user's saved locale preference before runApp so the initial
   // MaterialApp.locale is set correctly on the very first frame.
   // SharedPreferences.getInstance() is fast (reads from an in-memory cache
@@ -137,6 +162,10 @@ Future<void> main() async {
           // Only wire Firebase Remote Config in release builds; debug/profile fall
           // back to NoopRemoteConfigService which returns in-code defaults.
           remoteConfigService: kReleaseMode ? remoteConfigService : null,
+          // Wire the notification service. In release builds this is the real plugin;
+          // in debug/profile it is the NoopNotificationService. Either way we pass it
+          // so that the notificationServiceProvider is always overridden and available.
+          notificationService: notificationService,
           // Wire locale persistence; AppContainer.overrides fetches the saved
           // locale internally via getSavedLocale() and populates localeOverrideProvider.
           localePreferenceService: localeService,
