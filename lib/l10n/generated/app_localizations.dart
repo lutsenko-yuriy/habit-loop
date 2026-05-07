@@ -771,6 +771,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use system language'**
   String get languageSystem;
+
+  /// No description provided for @notificationReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{habitName}, it\'s showup time!'**
+  String notificationReminderTitle(String habitName);
+
+  /// No description provided for @notificationReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to mark your showup.'**
+  String get notificationReminderBody;
+
+  /// No description provided for @notificationDeadlineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{habitName}: mark your showup done'**
+  String notificationDeadlineTitle(String habitName);
+
+  /// No description provided for @notificationDeadlineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Window closes at {time}.'**
+  String notificationDeadlineBody(String time);
+
+  /// No description provided for @notificationTimeLimitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{habitName}: showup time!'**
+  String notificationTimeLimitTitle(String habitName);
+
+  /// No description provided for @notificationTimeLimitBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You have {duration} to mark it done.'**
+  String notificationTimeLimitBody(String duration);
+
+  /// No description provided for @notificationMissedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You missed this one'**
+  String get notificationMissedTitle;
+
+  /// No description provided for @notificationMissedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s okay — show up next time.'**
+  String get notificationMissedBody;
+
+  /// No description provided for @notificationDurationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min'**
+  String notificationDurationMinutes(int count);
+
+  /// No description provided for @notificationDurationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h'**
+  String notificationDurationHours(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

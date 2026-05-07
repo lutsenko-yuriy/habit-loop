@@ -10,6 +10,8 @@
 /// because they are scoped to a single screen.
 library;
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
@@ -29,6 +31,7 @@ import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 
 // ---------------------------------------------------------------------------
 // Locale providers
@@ -167,5 +170,20 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
+  );
+});
+
+/// Provides [ReminderSchedulingService] as a singleton.
+///
+/// Composes [notificationServiceProvider], [remoteConfigServiceProvider], and
+/// [analyticsServiceProvider]. [AppLocalizations] is NOT stored in the service —
+/// callers pass it as a parameter at the call site so the service can remain a
+/// singleton while each screen uses its own locale.
+final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((ref) {
+  return ReminderSchedulingService(
+    notificationService: ref.watch(notificationServiceProvider),
+    remoteConfig: ref.watch(remoteConfigServiceProvider),
+    analytics: ref.watch(analyticsServiceProvider),
+    isIOS: Platform.isIOS,
   );
 });

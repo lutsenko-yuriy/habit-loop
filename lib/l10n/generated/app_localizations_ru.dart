@@ -421,4 +421,48 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get languageSystem => 'Использовать язык системы';
+
+  @override
+  String notificationReminderTitle(String habitName) {
+    return '$habitName, время для визита!';
+  }
+
+  @override
+  String get notificationReminderBody => 'Нажмите, чтобы отметить визит.';
+
+  @override
+  String notificationDeadlineTitle(String habitName) {
+    return '$habitName: отметьте визит выполненным';
+  }
+
+  @override
+  String notificationDeadlineBody(String time) {
+    return 'Окно закрывается в $time.';
+  }
+
+  @override
+  String notificationTimeLimitTitle(String habitName) {
+    return '$habitName: время визита!';
+  }
+
+  @override
+  String notificationTimeLimitBody(String duration) {
+    return 'У вас $duration, чтобы отметить визит.';
+  }
+
+  @override
+  String get notificationMissedTitle => 'Вы пропустили этот визит';
+
+  @override
+  String get notificationMissedBody => 'Ничего страшного — появитесь в следующий раз.';
+
+  @override
+  String notificationDurationMinutes(int count) {
+    return '$count мин';
+  }
+
+  @override
+  String notificationDurationHours(int count) {
+    return '$count ч';
+  }
 }
