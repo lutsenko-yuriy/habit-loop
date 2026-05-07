@@ -79,7 +79,14 @@ class DashboardViewModel extends Notifier<DashboardState> {
     // locale override (or falls back to English when no override is set).
     if (newShowupsByPact.isNotEmpty) {
       final activeLocale = ref.read(localeOverrideProvider) ?? const Locale('en');
-      final l10n = lookupAppLocalizations(activeLocale);
+      // lookupAppLocalizations throws FlutterError for any unsupported locale code.
+      // Catch and fall back to English so scheduling never fails due to a locale issue.
+      AppLocalizations l10n;
+      try {
+        l10n = lookupAppLocalizations(activeLocale);
+      } catch (_) {
+        l10n = lookupAppLocalizations(const Locale('en'));
+      }
       final schedulingService = ref.read(reminderSchedulingServiceProvider);
       var totalNewCount = 0;
       for (final entry in newShowupsByPact.entries) {
@@ -98,7 +105,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
       if (totalNewCount > 0) {
         unawaited(
           crashlytics.log(
-            'DashboardViewModel: scheduled reminders for $totalNewCount new showups',
+            'DashboardViewModel: scheduling reminders for $totalNewCount eligible new showups',
           ),
         );
       }

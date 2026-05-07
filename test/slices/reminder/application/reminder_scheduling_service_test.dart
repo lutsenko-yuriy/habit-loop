@@ -245,6 +245,68 @@ void main() {
     });
   });
 
+  group('iOS 64-notification cap', () {
+    test('on iOS, caps scheduled showups at 32 (64 notifications / 2 per showup)', () async {
+      // iOS allows at most 64 pending local notifications; each showup on iOS
+      // uses 2 (reminder + deadline). So the cap is 64 / 2 = 32.
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        isIOS: true,
+      );
+
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+
+      // Create 40 qualifying showups — more than the 32-showup iOS cap.
+      final showups = List.generate(40, (i) {
+        return _makeShowup(
+          id: 'su-$i',
+          scheduledAt: DateTime(2026, 5, 8 + i, 8, 0),
+        );
+      });
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, l10n: l10n, now: now);
+
+      // Only 32 reminders must be scheduled despite 40 qualifying showups.
+      expect(
+        notificationService.scheduledReminders,
+        hasLength(32),
+        reason: 'iOS cap: only 32 showups may be scheduled (64 notifications / 2 per showup)',
+      );
+      // Corresponding 32 deadline notifications must also be scheduled.
+      expect(
+        notificationService.scheduledDeadlines,
+        hasLength(32),
+        reason: 'iOS cap: 32 deadline notifications must accompany the 32 reminders',
+      );
+    });
+
+    test('on Android (isIOS=false), no cap is applied — all showups are scheduled', () async {
+      // Android has no practical pending-notification limit, so all showups pass through.
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+
+      // 40 qualifying showups on Android (isIOS=false, default dismiss config).
+      final showups = List.generate(40, (i) {
+        return _makeShowup(
+          id: 'su-$i',
+          scheduledAt: DateTime(2026, 5, 8 + i, 8, 0),
+        );
+      });
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, l10n: l10n, now: now);
+
+      // All 40 showups should be scheduled on Android.
+      expect(
+        notificationService.scheduledReminders,
+        hasLength(40),
+        reason: 'Android: all 40 qualifying showups must be scheduled without a cap',
+      );
+    });
+  });
+
   group('cancelRemindersForShowup', () {
     test('delegates to notificationService.cancelShowupReminder', () async {
       await service.cancelRemindersForShowup('su-123');
