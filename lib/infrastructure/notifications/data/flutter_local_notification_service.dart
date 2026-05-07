@@ -6,6 +6,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/notifications/contracts/notification_constants.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -21,7 +22,10 @@ const _kChannelName = 'Showup reminders';
 /// Used by both Android ([AndroidNotificationAction]) and iOS
 /// ([DarwinNotificationAction]) to identify the action in the
 /// [NotificationResponse.actionId] field.
-const _kMarkDoneActionId = 'mark_done';
+///
+/// Sourced from [NotificationConstants.markDoneActionId] — defined there as
+/// the single canonical value shared with `main.dart` background handler.
+const _kMarkDoneActionId = NotificationConstants.markDoneActionId;
 
 /// iOS notification category ID for showup reminder notifications with a
 /// "Mark done" action.
@@ -39,18 +43,6 @@ const _kShowupReminderCategoryId = 'showup_reminder';
 /// could in principle use a locale-aware string, but we also use the English
 /// constant here for simplicity and parity with iOS.
 const _kMarkDoneActionLabel = 'Mark done';
-
-/// Upper bound for reminder notification IDs (exclusive), equal to
-/// `2^31 - 1` — the maximum value for a 32-bit signed integer.
-const _kReminderIdBound = 2147483647;
-
-/// Upper bound for the modulo applied to deadline IDs before the offset.
-/// Combined with [_kDeadlineIdOffset] the result is always within 32-bit
-/// signed integer range: `[1073741824, 2147483646]`.
-const _kDeadlineIdModBound = 1073741823;
-
-/// Offset added to deadline IDs so they never collide with reminder IDs.
-const _kDeadlineIdOffset = 1073741824;
 
 /// Production [NotificationService] backed by [FlutterLocalNotificationsPlugin].
 ///
@@ -417,14 +409,15 @@ final class FlutterLocalNotificationService implements NotificationService {
 
   /// Reminder notification ID derived from the showup UUID.
   ///
-  /// Range: `[0, 2147483646]` — fits within a 32-bit signed integer.
-  int _reminderNotificationId(String showupId) => showupId.hashCode.abs() % _kReminderIdBound;
+  /// Delegates to [NotificationConstants.reminderNotificationId] — the single
+  /// canonical formula shared with `main.dart` background/foreground handlers.
+  int _reminderNotificationId(String showupId) => NotificationConstants.reminderNotificationId(showupId);
 
   /// Deadline notification ID derived from the showup UUID.
   ///
-  /// Range: `[1073741824, 2147483646]` — disjoint from [_reminderNotificationId]
-  /// so both notifications can coexist in the notification tray simultaneously.
-  int _deadlineNotificationId(String showupId) => (showupId.hashCode.abs() % _kDeadlineIdModBound) + _kDeadlineIdOffset;
+  /// Delegates to [NotificationConstants.deadlineNotificationId] — the single
+  /// canonical formula shared with `main.dart` background/foreground handlers.
+  int _deadlineNotificationId(String showupId) => NotificationConstants.deadlineNotificationId(showupId);
 
   void _registerNotificationId(String pactId, int notifId) {
     _pactNotificationIds.putIfAbsent(pactId, () => {}).add(notifId);

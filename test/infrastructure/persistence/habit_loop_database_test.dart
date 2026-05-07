@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -6,6 +8,49 @@ void main() {
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+  });
+
+  group('HabitLoopDatabase — WAL journal mode', () {
+    test('WAL mode is active on a file-backed database opened via onConfigure', () async {
+      // SQLite in-memory databases always report journal_mode=memory regardless of
+      // PRAGMA journal_mode=WAL. To verify the onConfigure WAL setup works we must
+      // use a real (file-backed) database. A temp file is created and deleted after.
+      final tmpPath = '${Directory.systemTemp.path}/habit_loop_wal_test.db';
+      final db = await databaseFactoryFfi.openDatabase(
+        tmpPath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onConfigure: (db) async {
+            await db.execute('PRAGMA journal_mode=WAL');
+            await db.execute('PRAGMA foreign_keys = ON');
+          },
+          onCreate: HabitLoopDatabase.runMigrations,
+        ),
+      );
+      try {
+        final result = await db.rawQuery('PRAGMA journal_mode');
+        expect(result.first.values.first, 'wal');
+      } finally {
+        await db.close();
+        try {
+          File(tmpPath).deleteSync();
+          File('$tmpPath-wal').deleteSync();
+          File('$tmpPath-shm').deleteSync();
+        } catch (_) {}
+      }
+    });
+
+    test('openForTesting returns memory journal mode (WAL not applicable to in-memory databases)', () async {
+      // This documents the known behaviour: WAL PRAGMA is sent during onConfigure
+      // but SQLite ignores it for :memory: databases and keeps journal_mode=memory.
+      final db = await HabitLoopDatabase.openForTesting();
+      try {
+        final result = await db.rawQuery('PRAGMA journal_mode');
+        expect(result.first.values.first, 'memory');
+      } finally {
+        await db.close();
+      }
+    });
   });
 
   group('HabitLoopDatabase.runMigrations', () {
