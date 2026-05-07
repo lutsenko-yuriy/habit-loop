@@ -7,6 +7,7 @@ import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_serv
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
+import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
@@ -43,6 +44,8 @@ abstract final class AppContainer {
   /// - [crashlyticsService] — only provided in release builds.
   /// - [logService] — provided in debug/profile builds.
   /// - [remoteConfigService] — only provided in release builds.
+  /// - [notificationService] — only provided in release builds; debug/profile
+  ///   fall back to [NoopNotificationService].
   /// - [localePreferenceService] — provided when SharedPreferences is available;
   ///   `null` falls back to [NoopLocalePreferenceService]. When non-null, the
   ///   saved locale is fetched internally via [LocalePreferenceService.getSavedLocale]
@@ -56,6 +59,7 @@ abstract final class AppContainer {
     CrashlyticsService? crashlyticsService,
     LogService? logService,
     RemoteConfigService? remoteConfigService,
+    NotificationService? notificationService,
     LocalePreferenceService? localePreferenceService,
   }) async {
     // Fetch the saved locale before building the override list so the correct
@@ -78,6 +82,7 @@ abstract final class AppContainer {
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),
       if (remoteConfigService != null) remoteConfigServiceProvider.overrideWithValue(remoteConfigService),
+      if (notificationService != null) notificationServiceProvider.overrideWithValue(notificationService),
 
       // Locale persistence and initial locale override.
       if (localePreferenceService != null) localePreferenceServiceProvider.overrideWithValue(localePreferenceService),

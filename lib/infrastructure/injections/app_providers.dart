@@ -22,6 +22,8 @@ import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_ser
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
 import 'package:habit_loop/infrastructure/logging/data/noop_log_service.dart';
+import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
+import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
@@ -92,6 +94,16 @@ final logServiceProvider = Provider<LogService>((ref) => NoopLogService());
 /// [AppContainer.overrides] with [FirebaseRemoteConfigService] in release builds.
 final remoteConfigServiceProvider = Provider<RemoteConfigService>(
   (ref) => NoopRemoteConfigService(),
+);
+
+/// Provides the active [NotificationService] to the app.
+///
+/// Defaults to [NoopNotificationService] so tests and debug/profile builds
+/// work without the real `flutter_local_notifications` plugin. Overridden in
+/// `main.dart` via [AppContainer.overrides] with [FlutterLocalNotificationService]
+/// in release builds.
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => NoopNotificationService(),
 );
 
 // ---------------------------------------------------------------------------

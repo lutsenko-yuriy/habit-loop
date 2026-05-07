@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
+import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -109,6 +110,34 @@ void main() {
       expect(() => container.read(crashlyticsServiceProvider), returnsNormally);
       expect(() => container.read(logServiceProvider), returnsNormally);
       expect(() => container.read(remoteConfigServiceProvider), returnsNormally);
+      expect(() => container.read(notificationServiceProvider), returnsNormally);
+    });
+
+    test('notificationServiceProvider resolves without throwing when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(notificationServiceProvider), returnsNormally);
+    });
+
+    test('notificationServiceProvider override is included when provided', () async {
+      final notificationService = NoopNotificationService();
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        notificationService: notificationService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(notificationServiceProvider), same(notificationService));
     });
 
     test('localePreferenceServiceProvider resolves to noop default when not provided', () async {
