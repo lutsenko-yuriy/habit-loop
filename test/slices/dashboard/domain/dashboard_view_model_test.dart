@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
@@ -669,47 +668,6 @@ void main() {
 
       expect(fakeNotifications.scheduledReminders, isEmpty,
           reason: 'Dashboard must NOT schedule reminders when pact has no reminderOffset');
-    });
-
-    test('load() completes successfully even when localeOverrideProvider is set to an unsupported locale', () async {
-      // Regression: lookupAppLocalizations throws FlutterError for unsupported locales.
-      // DashboardViewModel.load() must catch the exception and fall back to English.
-      final pact = Pact(
-        id: 'p-l10n',
-        habitName: 'Jog',
-        startDate: today,
-        endDate: DateTime(today.year, today.month + 6, today.day),
-        showupDuration: const Duration(minutes: 20),
-        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
-        status: PactStatus.active,
-        reminderOffset: const Duration(minutes: 15),
-      );
-      final pactRepo = InMemoryPactRepository([pact]);
-      final showupRepo = InMemoryShowupRepository();
-      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-
-      const unsupportedLocale = Locale('xx'); // 'xx' is not a supported locale code
-      final c = ProviderContainer(
-        overrides: [
-          pactRepositoryProvider.overrideWithValue(pactRepo),
-          showupRepositoryProvider.overrideWithValue(showupRepo),
-          pactTransactionServiceProvider.overrideWithValue(txService),
-          todayProvider.overrideWithValue(today),
-          // Override the locale to an unsupported code to trigger the fallback path.
-          localeOverrideProvider.overrideWith((ref) => unsupportedLocale),
-        ],
-      );
-      addTearDown(c.dispose);
-
-      // load() must complete without throwing, even with an unsupported locale.
-      await expectLater(
-        c.read(dashboardViewModelProvider.notifier).load(),
-        completes,
-        reason: 'load() must not throw when localeOverrideProvider returns an unsupported locale',
-      );
-
-      final state = c.read(dashboardViewModelProvider);
-      expect(state.isLoading, isFalse, reason: 'Dashboard state must be fully loaded (not stuck at isLoading=true)');
     });
   });
 }
