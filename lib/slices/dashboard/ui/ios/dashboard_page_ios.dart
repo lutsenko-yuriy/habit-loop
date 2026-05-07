@@ -1,16 +1,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Material, MaterialType, Theme;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
 
-class DashboardPageIos extends StatelessWidget {
+class DashboardPageIos extends ConsumerWidget {
   final DashboardState state;
   final bool hasPacts;
   final ValueChanged<int> onDaySelected;
@@ -27,13 +29,26 @@ class DashboardPageIos extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+
+    Future<void> onLanguagePickerTapped() => openLanguagePicker(
+          context: context,
+          ref: ref,
+          showPicker: ({required context, required options, required currentOverride}) =>
+              _showCupertinoActionSheet(context, options, currentOverride, l10n),
+        );
 
     return CupertinoPageScaffold(
       backgroundColor:
           hasPacts ? Theme.of(context).colorScheme.surface : CupertinoColors.systemBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
+        leading: CupertinoButton(
+          key: const Key('language-picker-button'),
+          padding: EdgeInsets.zero,
+          onPressed: onLanguagePickerTapped,
+          child: const Icon(CupertinoIcons.globe),
+        ),
         middle: Text(l10n.dashboardTitle),
         trailing: hasPacts
             ? CupertinoButton(
@@ -288,4 +303,45 @@ class _ShowupTile extends StatelessWidget {
       subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Platform-specific picker UI — iOS (CupertinoActionSheet)
+// ---------------------------------------------------------------------------
+
+/// Shows a [CupertinoActionSheet] with the given language [options] and returns
+/// the selected [Locale], or `null` for the system option or when dismissed.
+Future<Locale?> _showCupertinoActionSheet(
+  BuildContext context,
+  List<({String label, Locale? locale})> options,
+  Locale? currentOverride,
+  AppLocalizations l10n,
+) async {
+  String prefixed(String label, Locale? locale) {
+    final isSelected = locale == null ? currentOverride == null : currentOverride?.languageCode == locale.languageCode;
+    return isSelected ? '✓ $label' : label;
+  }
+
+  // Returns (isSystem, locale): isSystem=true means the system option was chosen.
+  final result = await showCupertinoModalPopup<(bool isSystem, Locale? locale)>(
+    context: context,
+    // ignore: use_build_context_synchronously — caller guards context.mounted before this call
+    builder: (ctx) => CupertinoActionSheet(
+      title: Text(l10n.languagePickerTitle),
+      actions: options.map((opt) {
+        return CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx, (opt.locale == null, opt.locale)),
+          child: Text(prefixed(opt.label, opt.locale)),
+        );
+      }).toList(),
+      cancelButton: CupertinoActionSheetAction(
+        onPressed: () => Navigator.pop(ctx),
+        child: Text(l10n.cancel),
+      ),
+    ),
+  );
+
+  if (result == null) return null; // dismissed
+  final (isSystem, selectedLocale) = result;
+  return isSystem ? null : selectedLocale;
 }
