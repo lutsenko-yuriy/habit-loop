@@ -409,4 +409,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageSystem => 'Use system language';
+
+  @override
+  String notificationReminderTitle(String habitName) {
+    return '$habitName, it\'s showup time!';
+  }
+
+  @override
+  String get notificationReminderBody => 'Tap to mark your showup.';
+
+  @override
+  String notificationDeadlineTitle(String habitName) {
+    return '$habitName: mark your showup done';
+  }
+
+  @override
+  String notificationDeadlineBody(String time) {
+    return 'Window closes at $time.';
+  }
+
+  @override
+  String notificationTimeLimitTitle(String habitName) {
+    return '$habitName: showup time!';
+  }
+
+  @override
+  String notificationTimeLimitBody(String duration) {
+    return 'You have $duration to mark it done.';
+  }
+
+  @override
+  String get notificationMissedTitle => 'You missed this one';
+
+  @override
+  String get notificationMissedBody => 'That\'s okay — show up next time.';
 }
