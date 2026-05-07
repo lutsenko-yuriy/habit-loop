@@ -12,6 +12,8 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
+import '../../../infrastructure/notifications/fake_notification_service.dart';
+
 /// Wraps [InMemoryShowupRepository] and counts calls to [getShowupsForPact].
 class _CountingShowupRepository extends InMemoryShowupRepository {
   _CountingShowupRepository([super.initialShowups]);
@@ -599,6 +601,73 @@ void main() {
       final callsAfterFirstAccess = showupRepo.getShowupsForPactCallCount;
       await statsService.currentStats(pact: activePact, showups: []);
       expect(showupRepo.getShowupsForPactCallCount, callsAfterFirstAccess);
+    });
+  });
+
+  group('notification scheduling on dashboard load', () {
+    test('schedules reminders for newly generated showups when pact has reminderOffset', () async {
+      final fakeNotifications = FakeNotificationService();
+      final pact = Pact(
+        id: 'p-notif',
+        habitName: 'Jog',
+        startDate: today,
+        endDate: DateTime(today.year, today.month + 6, today.day),
+        showupDuration: const Duration(minutes: 20),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+        reminderOffset: const Duration(minutes: 15),
+      );
+      final pactRepo = InMemoryPactRepository([pact]);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+      final c = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(today),
+          notificationServiceProvider.overrideWithValue(fakeNotifications),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(dashboardViewModelProvider.notifier).load();
+
+      expect(fakeNotifications.scheduledReminders, isNotEmpty,
+          reason: 'Dashboard must schedule reminders for newly generated showups when reminderOffset is set');
+    });
+
+    test('skips scheduling when pact has no reminderOffset', () async {
+      final fakeNotifications = FakeNotificationService();
+      final pact = Pact(
+        id: 'p-no-notif',
+        habitName: 'Jog',
+        startDate: today,
+        endDate: DateTime(today.year, today.month + 6, today.day),
+        showupDuration: const Duration(minutes: 20),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+      );
+      final pactRepo = InMemoryPactRepository([pact]);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+      final c = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(today),
+          notificationServiceProvider.overrideWithValue(fakeNotifications),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(dashboardViewModelProvider.notifier).load();
+
+      expect(fakeNotifications.scheduledReminders, isEmpty,
+          reason: 'Dashboard must NOT schedule reminders when pact has no reminderOffset');
     });
   });
 }

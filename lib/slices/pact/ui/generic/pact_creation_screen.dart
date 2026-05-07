@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_creation_page_android.dart';
@@ -36,7 +37,7 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
     final vm = ref.read(pactCreationViewModelProvider.notifier);
 
     Future<void> onSubmit() async {
-      await vm.submit();
+      await vm.submit(l10n: AppLocalizations.of(context));
       if (context.mounted) {
         ref.invalidate(hasActivePactsProvider);
         unawaited(ref.read(dashboardViewModelProvider.notifier).load());

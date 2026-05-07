@@ -146,6 +146,16 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
           );
       state = state.copyWith(showup: updatedShowup, isSaving: false);
 
+      // Cancel the pending reminder and deadline notifications now that the
+      // showup has been resolved. The no-throw contract on NotificationService
+      // means this will never throw.
+      unawaited(ref.read(notificationServiceProvider).cancelShowupReminder(updatedShowup.id));
+      unawaited(
+        ref.read(crashlyticsServiceProvider).log(
+              'ShowupDetailViewModel: cancelled notification for showup ${updatedShowup.id}',
+            ),
+      );
+
       // Determine the analytics event inside the try block so that a StateError
       // on an unexpected pending status is caught by the outer catch and
       // surfaced as markError rather than being swallowed.

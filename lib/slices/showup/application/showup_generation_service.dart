@@ -1,4 +1,5 @@
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 
@@ -29,9 +30,9 @@ class ShowupGenerationService {
   ///   already stored — so calling this method multiple times with the same or
   ///   overlapping windows is safe and produces no duplicates.
   ///
-  /// Returns normally even when all generated showups already existed (i.e.
-  /// the net saved count is 0).
-  Future<void> ensureShowupsExist(
+  /// Returns the list of showups that were newly saved (i.e. not previously
+  /// stored). Returns an empty list when all generated showups already existed.
+  Future<List<Showup>> ensureShowupsExist(
     Pact pact, {
     required DateTime from,
     required DateTime to,
@@ -40,7 +41,11 @@ class ShowupGenerationService {
     final candidates = ShowupGenerator.generateWindow(pact, from: from, to: to)
         .where((s) => !s.scheduledAt.isBefore(effectiveCreatedAt))
         .toList();
-    if (candidates.isEmpty) return;
-    await _repository.saveShowups(candidates);
+    if (candidates.isEmpty) return const [];
+    final result = await _repository.saveShowups(candidates);
+    if (result.savedCount == 0) return const [];
+    // Return only the newly saved showups (candidates not in skippedIds).
+    final skipped = result.skippedIds.toSet();
+    return candidates.where((s) => !skipped.contains(s.id)).toList();
   }
 }

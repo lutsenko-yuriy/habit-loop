@@ -1,6 +1,12 @@
+import 'dart:async' show unawaited;
+
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
 
@@ -50,12 +56,52 @@ class DashboardViewModel extends Notifier<DashboardState> {
     // -----------------------------------------------------------------------
     final generationWindowEnd = todayNorm.add(const Duration(days: 10));
     final generationService = ShowupGenerationService(repository: showupRepo);
+    // Accumulate newly generated showups per pact so we can schedule reminders
+    // only for the newly saved ones (already-scheduled notifications must not be
+    // duplicated on subsequent load calls).
+    final Map<Pact, List<Showup>> newShowupsByPact = {};
     for (final pact in activePacts) {
-      await generationService.ensureShowupsExist(
+      final newShowups = await generationService.ensureShowupsExist(
         pact,
         from: todayNorm,
         to: generationWindowEnd,
       );
+      if (newShowups.isNotEmpty) {
+        newShowupsByPact[pact] = newShowups;
+      }
+    }
+
+    // Schedule reminders for newly generated showups. Only pacts with a
+    // reminderOffset get notifications. This is fire-and-forget: notification
+    // scheduling failure must never surface to the user.
+    //
+    // The dashboard has no BuildContext so l10n is resolved from the active
+    // locale override (or falls back to English when no override is set).
+    if (newShowupsByPact.isNotEmpty) {
+      final activeLocale = ref.read(localeOverrideProvider) ?? const Locale('en');
+      final l10n = lookupAppLocalizations(activeLocale);
+      final schedulingService = ref.read(reminderSchedulingServiceProvider);
+      var totalNewCount = 0;
+      for (final entry in newShowupsByPact.entries) {
+        final pact = entry.key;
+        if (pact.reminderOffset == null) continue;
+        unawaited(
+          schedulingService.scheduleRemindersForShowups(
+            pact: pact,
+            showups: entry.value,
+            l10n: l10n,
+            now: todayNorm,
+          ),
+        );
+        totalNewCount += entry.value.length;
+      }
+      if (totalNewCount > 0) {
+        unawaited(
+          crashlytics.log(
+            'DashboardViewModel: scheduled reminders for $totalNewCount new showups',
+          ),
+        );
+      }
     }
 
     // -----------------------------------------------------------------------

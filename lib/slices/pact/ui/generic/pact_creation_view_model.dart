@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
@@ -125,7 +126,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     }
   }
 
-  Future<void> submit() async {
+  Future<void> submit({AppLocalizations? l10n}) async {
     if (!state.builder.isComplete) return;
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
@@ -159,6 +160,24 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
             pact: pact,
             showups: showups,
           );
+
+      // Schedule reminders for the initial window of showups when a reminder
+      // offset is configured and l10n is available from the call site.
+      // PII rule: l10n is only used for notification text — not logged.
+      if (pactWithStats.reminderOffset != null && l10n != null) {
+        unawaited(
+          ref.read(reminderSchedulingServiceProvider).scheduleRemindersForShowups(
+                pact: pactWithStats,
+                showups: showups,
+                l10n: l10n,
+              ),
+        );
+        unawaited(
+          ref.read(crashlyticsServiceProvider).log(
+                'PactCreationViewModel: scheduled reminders for ${showups.length} showups',
+              ),
+        );
+      }
 
       // Both pact and showups were persisted successfully — log breadcrumb and
       // fire analytics. CrashlyticsService, AnalyticsService, and LogService are
