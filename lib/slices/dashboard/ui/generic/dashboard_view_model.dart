@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
 
 final todayProvider = Provider<DateTime>((ref) => DateTime.now());
@@ -97,6 +99,48 @@ class DashboardViewModel extends Notifier<DashboardState> {
           ),
         );
       }
+    }
+
+    // -----------------------------------------------------------------------
+    // Auto-fail sweep: transition any past-due pending showups in the visible
+    // past window to ShowupStatus.failed so the calendar strip and today's
+    // list reflect the correct status without requiring the user to open each
+    // showup individually.
+    //
+    // Scope: [stripStart_preview, todayNorm] — only the past portion of the
+    // 7-day strip. We compute the earliest possible strip start (today - 3)
+    // because todayIndex is not yet finalised, but that is a safe upper bound:
+    // any showups outside the actual strip start are outside the visible range
+    // and will be swept on a future load when they scroll into view.
+    //
+    // A showup is eligible when ALL of the following hold:
+    //   1. status == ShowupStatus.pending
+    //   2. its pact is active
+    //   3. now.isAfter(scheduledAt + duration)  [window fully elapsed]
+    // -----------------------------------------------------------------------
+    final sweepWindowStart = todayNorm.subtract(const Duration(days: 3));
+    final pastShowups = await showupRepo.getShowupsForDateRange(sweepWindowStart, todayNorm);
+    final pactStatsService = ref.read(pactStatsServiceProvider);
+    final schedulingService = ref.read(reminderSchedulingServiceProvider);
+    var autoFailedCount = 0;
+    for (final showup in pastShowups) {
+      if (showup.status != ShowupStatus.pending) continue;
+      if (!activePactIds.contains(showup.pactId)) continue;
+      final windowEnd = showup.scheduledAt.add(showup.duration);
+      if (!today.isAfter(windowEnd)) continue;
+
+      // Persist the failed status and refresh the stats cache.
+      await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed);
+      // Fire analytics event (fire-and-forget — must not block the UI).
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+      );
+      // Cancel any scheduled reminder for this showup (fire-and-forget).
+      unawaited(schedulingService.cancelRemindersForShowup(showup.id));
+      autoFailedCount++;
+    }
+    if (autoFailedCount > 0) {
+      unawaited(crashlytics.log('auto_fail_sweep: count=$autoFailedCount'));
     }
 
     // -----------------------------------------------------------------------

@@ -42,7 +42,12 @@ Fired when the user manually marks a showup as failed from the showup detail scr
 
 ### `showup_auto_failed`
 
-Fired when a showup is automatically transitioned to failed because the showup detail screen was opened after the scheduled window has passed (`now > scheduledAt + duration`).
+Fired when a showup is automatically transitioned to failed because its scheduled window has passed (`now > scheduledAt + duration`). This event covers two triggers:
+
+- **Dashboard load/refresh sweep** — `DashboardViewModel.load()` sweeps all past-due pending showups in the visible strip window (up to 3 days before today through today) and auto-fails each one.
+- **Showup detail screen open** — `ShowupDetailViewModel.load()` auto-fails the specific showup being viewed if its window has elapsed.
+
+Both triggers use the same `ShowupAutoFailedEvent` class. No additional properties distinguish the trigger source, since the downstream action (showup is now failed) is identical in both cases.
 
 | Property | Type | Description |
 |---|---|---|
