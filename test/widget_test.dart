@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -19,7 +20,7 @@ void main() {
             InMemoryPactTransactionService(pactRepo, showupRepo),
           ),
         ],
-        child: const HabitLoopApp(),
+        child: HabitLoopApp(navigatorKey: GlobalKey<NavigatorState>()),
       ),
     );
     await tester.pumpAndSettle();

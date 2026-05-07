@@ -8,6 +8,7 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' show NotificationResponse;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/firebase_options.dart';
@@ -24,6 +25,7 @@ import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/flutter_local_notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
+import 'package:habit_loop/infrastructure/notifications/data/notification_router.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
@@ -36,6 +38,14 @@ import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+
+/// Global navigator key used for deep-link routing from notification taps.
+///
+/// Passed to [HabitLoopApp] which wires it into [MaterialApp.navigatorKey].
+/// [NotificationRouter.navigateToShowup] uses this key to push the showup
+/// detail screen without a [BuildContext], making it safe to call from the
+/// notification response callback (which fires outside the widget tree).
+final _navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -111,6 +121,23 @@ Future<void> main() async {
   if (kReleaseMode) {
     final realService = FlutterLocalNotificationService(earlycrashlytics);
     try {
+      // Wire the warm-start callback before initialize() so the plugin picks
+      // it up during setup. The callback parses the payload and pushes the
+      // showup detail screen via the global navigator key.
+      // Analytics note: we pass 0 as minutesBeforeShowup because computing the
+      // exact value requires a DB lookup (showup.scheduledAt) that is not
+      // available in main.dart without async repo access.
+      // TODO(HAB-13): resolve the exact minutesBeforeShowup from the repository.
+      realService.setNotificationResponseCallback((NotificationResponse response) {
+        final parsed = NotificationRouter.parsePayload(response.payload);
+        if (parsed != null) {
+          NotificationRouter.navigateToShowup(
+            navigatorKey: _navigatorKey,
+            showupId: parsed.showupId,
+            pactId: parsed.pactId,
+          );
+        }
+      });
       await realService.initialize();
       await realService.requestPermission();
       notificationService = realService;
@@ -180,9 +207,26 @@ Future<void> main() async {
           // locale internally via getSavedLocale() and populates localeOverrideProvider.
           localePreferenceService: localeService,
         ),
-        child: const HabitLoopApp(),
+        child: HabitLoopApp(navigatorKey: _navigatorKey),
       ),
     );
+
+    // Cold-start: if the app was launched by tapping a notification (i.e. the
+    // app was killed), navigate to the showup detail screen after the first
+    // frame is rendered and the widget tree is mounted.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final launchInfo = await notificationService.getAppLaunchDetails();
+      if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.payload != null) {
+        final parsed = NotificationRouter.parsePayload(launchInfo.payload);
+        if (parsed != null) {
+          NotificationRouter.navigateToShowup(
+            navigatorKey: _navigatorKey,
+            showupId: parsed.showupId,
+            pactId: parsed.pactId,
+          );
+        }
+      }
+    });
   } catch (e, st) {
     debugPrint('Failed to open database: $e\n$st');
     runApp(const _DatabaseErrorApp());
@@ -190,7 +234,15 @@ Future<void> main() async {
 }
 
 class HabitLoopApp extends ConsumerWidget {
-  const HabitLoopApp({super.key});
+  const HabitLoopApp({super.key, required this.navigatorKey});
+
+  /// Global navigator key used for deep-link routing from notification taps.
+  ///
+  /// Must be the same key instance that is passed to
+  /// [NotificationRouter.navigateToShowup] in `main.dart`. Wiring it through
+  /// [MaterialApp.navigatorKey] lets the notification callback resolve the
+  /// current [NavigatorState] even when called outside the widget tree.
+  final GlobalKey<NavigatorState> navigatorKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -199,6 +251,7 @@ class HabitLoopApp extends ConsumerWidget {
     final localeOverride = ref.watch(localeOverrideProvider);
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Habit Loop',
       theme: HabitLoopTheme.materialTheme,
       darkTheme: HabitLoopTheme.darkMaterialTheme,

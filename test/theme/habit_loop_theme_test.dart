@@ -23,7 +23,7 @@ void main() {
             InMemoryPactTransactionService(pactRepo, showupRepo),
           ),
         ],
-        child: const HabitLoopApp(),
+        child: HabitLoopApp(navigatorKey: GlobalKey<NavigatorState>()),
       ),
     );
     await tester.pumpAndSettle();
