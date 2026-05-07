@@ -159,5 +159,39 @@
   "languageFrench": "French",
   "languageGerman": "German",
   "languageRussian": "Russian",
-  "languageSystem": "Use system language"
+  "languageSystem": "Use system language",
+
+  "notificationReminderTitle": "{habitName}, it's showup time!",
+  "@notificationReminderTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationReminderBody": "Tap to mark your showup.",
+  "notificationDeadlineTitle": "{habitName}: mark your showup done",
+  "@notificationDeadlineTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationDeadlineBody": "Window closes at {time}.",
+  "@notificationDeadlineBody": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "notificationTimeLimitTitle": "{habitName}: showup time!",
+  "@notificationTimeLimitTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationTimeLimitBody": "You have {duration} to mark it done.",
+  "@notificationTimeLimitBody": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
+  "notificationMissedTitle": "You missed this one",
+  "notificationMissedBody": "That's okay — show up next time."
 }

@@ -13,6 +13,22 @@ abstract final class RemoteConfigDefaults {
   /// Config console to experiment with different limits without a release.
   static const int maxActivePacts = 3;
 
+  /// EXP-001: Notification text urgency variant.
+  ///
+  /// Controls the copy used in reminder notifications before the showup window.
+  /// Values: `'control'` (generic), `'deadline'` (shows close time),
+  /// `'time_limit'` (shows time remaining). Default is `'control'`.
+  static const String notificationTextVariant = 'control';
+
+  /// EXP-002: Post-deadline notification behaviour on Android.
+  ///
+  /// Controls what happens after the showup window closes on Android.
+  /// Values: `'dismiss'` (auto-dismiss original, no replacement) or
+  /// `'encourage'` (schedule a replacement notification with encouraging copy).
+  /// Default is `'dismiss'`. iOS always shows the encouraging replacement
+  /// regardless of this flag.
+  static const String postDeadlineNotificationBehavior = 'dismiss';
+
   /// All default values keyed by their Remote Config parameter name.
   ///
   /// Pass this map to `FirebaseRemoteConfig.setDefaults()` during initialisation
@@ -20,5 +36,7 @@ abstract final class RemoteConfigDefaults {
   /// successful fetch.
   static const Map<String, dynamic> all = {
     'max_active_pacts': maxActivePacts,
+    'notification_text_variant': notificationTextVariant,
+    'post_deadline_notification_behavior': postDeadlineNotificationBehavior,
   };
 }

@@ -159,5 +159,39 @@
   "languageFrench": "Français",
   "languageGerman": "Allemand",
   "languageRussian": "Russe",
-  "languageSystem": "Utiliser la langue du système"
+  "languageSystem": "Utiliser la langue du système",
+
+  "notificationReminderTitle": "{habitName}, c'est l'heure de ton rendez-vous !",
+  "@notificationReminderTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationReminderBody": "Appuie pour marquer ton rendez-vous.",
+  "notificationDeadlineTitle": "{habitName} : marque ton rendez-vous comme fait",
+  "@notificationDeadlineTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationDeadlineBody": "La fenêtre se ferme à {time}.",
+  "@notificationDeadlineBody": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "notificationTimeLimitTitle": "{habitName} : c'est l'heure du rendez-vous !",
+  "@notificationTimeLimitTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationTimeLimitBody": "Tu as {duration} pour le marquer comme fait.",
+  "@notificationTimeLimitBody": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
+  "notificationMissedTitle": "Tu as manqué celui-ci",
+  "notificationMissedBody": "Pas de panique — sois au rendez-vous la prochaine fois."
 }

@@ -159,5 +159,39 @@
   "languageFrench": "Französisch",
   "languageGerman": "Deutsch",
   "languageRussian": "Russisch",
-  "languageSystem": "Systemsprache verwenden"
+  "languageSystem": "Systemsprache verwenden",
+
+  "notificationReminderTitle": "{habitName}, Zeit für deinen Showup!",
+  "@notificationReminderTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationReminderBody": "Tippe, um deinen Showup zu markieren.",
+  "notificationDeadlineTitle": "{habitName}: markiere deinen Showup als erledigt",
+  "@notificationDeadlineTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationDeadlineBody": "Fenster schließt um {time}.",
+  "@notificationDeadlineBody": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "notificationTimeLimitTitle": "{habitName}: Showup-Zeit!",
+  "@notificationTimeLimitTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationTimeLimitBody": "Du hast {duration}, um es als erledigt zu markieren.",
+  "@notificationTimeLimitBody": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
+  "notificationMissedTitle": "Diesen hast du verpasst",
+  "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal."
 }

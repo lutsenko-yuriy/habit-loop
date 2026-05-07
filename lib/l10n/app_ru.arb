@@ -159,5 +159,39 @@
   "languageFrench": "Французский",
   "languageGerman": "Немецкий",
   "languageRussian": "Русский",
-  "languageSystem": "Использовать язык системы"
+  "languageSystem": "Использовать язык системы",
+
+  "notificationReminderTitle": "{habitName}, время для визита!",
+  "@notificationReminderTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationReminderBody": "Нажмите, чтобы отметить визит.",
+  "notificationDeadlineTitle": "{habitName}: отметьте визит выполненным",
+  "@notificationDeadlineTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationDeadlineBody": "Окно закрывается в {time}.",
+  "@notificationDeadlineBody": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "notificationTimeLimitTitle": "{habitName}: время визита!",
+  "@notificationTimeLimitTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationTimeLimitBody": "У вас {duration}, чтобы отметить визит.",
+  "@notificationTimeLimitBody": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
+  "notificationMissedTitle": "Вы пропустили этот визит",
+  "notificationMissedBody": "Ничего страшного — появитесь в следующий раз."
 }
