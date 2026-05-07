@@ -1,12 +1,10 @@
 import 'dart:async' show unawaited;
 
-import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
 
@@ -75,18 +73,9 @@ class DashboardViewModel extends Notifier<DashboardState> {
     // reminderOffset get notifications. This is fire-and-forget: notification
     // scheduling failure must never surface to the user.
     //
-    // The dashboard has no BuildContext so l10n is resolved from the active
-    // locale override (or falls back to English when no override is set).
+    // Locale resolution is handled internally by ReminderSchedulingService
+    // via LocalePreferenceService — no BuildContext needed here.
     if (newShowupsByPact.isNotEmpty) {
-      final activeLocale = ref.read(localeOverrideProvider) ?? const Locale('en');
-      // lookupAppLocalizations throws FlutterError for any unsupported locale code.
-      // Catch and fall back to English so scheduling never fails due to a locale issue.
-      AppLocalizations l10n;
-      try {
-        l10n = lookupAppLocalizations(activeLocale);
-      } catch (_) {
-        l10n = lookupAppLocalizations(const Locale('en'));
-      }
       final schedulingService = ref.read(reminderSchedulingServiceProvider);
       var totalNewCount = 0;
       for (final entry in newShowupsByPact.entries) {
@@ -96,7 +85,6 @@ class DashboardViewModel extends Notifier<DashboardState> {
           schedulingService.scheduleRemindersForShowups(
             pact: pact,
             showups: entry.value,
-            l10n: l10n,
             now: todayNorm,
           ),
         );

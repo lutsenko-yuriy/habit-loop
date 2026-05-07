@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
@@ -126,7 +125,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     }
   }
 
-  Future<void> submit({AppLocalizations? l10n}) async {
+  Future<void> submit() async {
     if (!state.builder.isComplete) return;
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
@@ -162,14 +161,13 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
           );
 
       // Schedule reminders for the initial window of showups when a reminder
-      // offset is configured and l10n is available from the call site.
-      // PII rule: l10n is only used for notification text — not logged.
-      if (pactWithStats.reminderOffset != null && l10n != null) {
+      // offset is configured. Locale resolution is handled internally by
+      // ReminderSchedulingService via LocalePreferenceService.
+      if (pactWithStats.reminderOffset != null) {
         unawaited(
           ref.read(reminderSchedulingServiceProvider).scheduleRemindersForShowups(
                 pact: pactWithStats,
                 showups: showups,
-                l10n: l10n,
               ),
         );
         unawaited(

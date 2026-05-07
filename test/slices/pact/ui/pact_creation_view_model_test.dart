@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
@@ -8,7 +7,6 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
@@ -734,11 +732,13 @@ void main() {
     test('schedules reminders after successful pact creation when reminderOffset is set', () async {
       final c = makeNotificationContainer();
       addTearDown(c.dispose);
-      final l10n = lookupAppLocalizations(const Locale('en'));
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpPactWithReminder(vm);
-      await vm.submit(l10n: l10n);
+      await vm.submit();
+      // Reminder scheduling is fire-and-forget (unawaited) and resolves the
+      // locale asynchronously, so pump the microtask queue to let it complete.
+      await Future<void>.delayed(Duration.zero);
 
       // At least one notification should be scheduled (one per qualifying showup).
       expect(fakeNotifications.scheduledReminders, isNotEmpty,
@@ -748,11 +748,11 @@ void main() {
     test('skips scheduling when reminderOffset is null', () async {
       final c = makeNotificationContainer();
       addTearDown(c.dispose);
-      final l10n = lookupAppLocalizations(const Locale('en'));
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpPactWithoutReminder(vm);
-      await vm.submit(l10n: l10n);
+      await vm.submit();
+      await Future<void>.delayed(Duration.zero);
 
       expect(fakeNotifications.scheduledReminders, isEmpty,
           reason: 'scheduleShowupReminder must NOT be called when reminderOffset is null');

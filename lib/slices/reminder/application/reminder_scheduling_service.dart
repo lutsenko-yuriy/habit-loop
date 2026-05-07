@@ -1,7 +1,9 @@
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
+import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -20,9 +22,11 @@ const _kPostDeadlineNotificationBehavior = 'post_deadline_notification_behavior'
 /// Reads Remote Config for both experiment keys, delegates text building to
 /// [NotificationTextBuilder], and calls [NotificationService] methods.
 ///
-/// [AppLocalizations] is accepted as a parameter at the call site (not stored
-/// as a field) so the service can be a Riverpod singleton while each caller
-/// passes the l10n it already holds from the current BuildContext.
+/// Resolves [AppLocalizations] internally via [LocalePreferenceService] so
+/// callers (view models, background services) need no BuildContext and carry
+/// no locale dependency. The saved locale is fetched on every
+/// [scheduleRemindersForShowups] call; falls back to English when no locale is
+/// saved or the saved locale is unsupported.
 ///
 /// [isIOS] is injected as a constructor parameter rather than calling
 /// `Platform.isIOS` directly, keeping the service fully testable on any host
@@ -46,15 +50,18 @@ final class ReminderSchedulingService {
     required NotificationService notificationService,
     required RemoteConfigService remoteConfig,
     required AnalyticsService analytics,
+    required LocalePreferenceService localePreference,
     bool isIOS = false,
   })  : _notificationService = notificationService,
         _remoteConfig = remoteConfig,
         _analytics = analytics,
+        _localePreference = localePreference,
         _isIOS = isIOS;
 
   final NotificationService _notificationService;
   final RemoteConfigService _remoteConfig;
   final AnalyticsService _analytics;
+  final LocalePreferenceService _localePreference;
   final bool _isIOS;
 
   /// Schedules reminder (and, where applicable, deadline) notifications for
@@ -82,10 +89,13 @@ final class ReminderSchedulingService {
   Future<void> scheduleRemindersForShowups({
     required Pact pact,
     required List<Showup> showups,
-    required AppLocalizations l10n,
     DateTime? now,
   }) async {
     if (pact.reminderOffset == null) return;
+
+    // Resolve locale from saved preference; fall back to English.
+    final savedLocale = await _localePreference.getSavedLocale() ?? const Locale('en');
+    final AppLocalizations l10n = _resolveL10n(savedLocale);
 
     final effectiveNow = now ?? DateTime.now();
     final variant = _remoteConfig.getString(_kNotificationTextVariant);
@@ -158,5 +168,18 @@ final class ReminderSchedulingService {
   /// Delegates directly to [NotificationService.cancelAllRemindersForPact].
   Future<void> cancelAllRemindersForPact(String pactId) async {
     await _notificationService.cancelAllRemindersForPact(pactId);
+  }
+
+  /// Resolves [AppLocalizations] for [locale], falling back to English when the
+  /// locale code is not in [AppLocalizations.supportedLocales].
+  ///
+  /// [lookupAppLocalizations] throws [FlutterError] for unsupported locales, so
+  /// this wrapper catches that and returns English l10n instead.
+  static AppLocalizations _resolveL10n(Locale locale) {
+    try {
+      return lookupAppLocalizations(locale);
+    } catch (_) {
+      return lookupAppLocalizations(const Locale('en'));
+    }
   }
 }
