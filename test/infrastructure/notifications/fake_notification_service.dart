@@ -1,4 +1,3 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
@@ -68,7 +67,7 @@ final class FakeNotificationService implements NotificationService {
   }
 
   @override
-  Future<void> cancelShowupReminder(String showupId, DateTime scheduledAt) async {
+  Future<void> cancelShowupReminder(String showupId) async {
     cancelledShowupIds.add(showupId);
   }
 
@@ -78,10 +77,10 @@ final class FakeNotificationService implements NotificationService {
   }
 
   @override
-  Future<List<PendingNotificationRequest>> getPendingNotifications() async => const [];
+  Future<List<PendingNotificationInfo>> getPendingNotifications() async => const [];
 
   @override
-  Future<NotificationAppLaunchDetails?> getAppLaunchDetails() async => null;
+  Future<NotificationLaunchInfo?> getAppLaunchDetails() async => null;
 
   /// Resets all recorded calls and the permission flag.
   void reset() {

@@ -13,8 +13,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/firebase_options.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_service.dart';
+import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/shared_preferences_locale_service.dart';
@@ -90,6 +92,14 @@ Future<void> main() async {
     }
   }
 
+  // Construct the crashlytics service early so it can be threaded into the
+  // notification service (which needs it to report scheduling failures).
+  // This mirrors the pattern used in AppContainer.overrides where a non-null
+  // crashlyticsService is only wired in release builds.
+  final CrashlyticsService earlycrashlytics = kReleaseMode
+      ? FirebaseCrashlyticsService(FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance))
+      : NoopCrashlyticsService();
+
   // Initialise notification service before runApp so the plugin and Android
   // channel are ready when the first frame renders. Only wire the real plugin
   // in release builds — debug/profile use the silent NoopNotificationService.
@@ -99,7 +109,7 @@ Future<void> main() async {
   // just constructs the service and awaits its initialisation.
   NotificationService notificationService = NoopNotificationService();
   if (kReleaseMode) {
-    final realService = FlutterLocalNotificationService();
+    final realService = FlutterLocalNotificationService(earlycrashlytics);
     try {
       await realService.initialize();
       await realService.requestPermission();

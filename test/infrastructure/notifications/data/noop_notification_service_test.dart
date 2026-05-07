@@ -4,6 +4,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 
 void main() {
@@ -66,19 +67,17 @@ void main() {
     });
 
     test('cancelShowupReminder completes without throwing', () async {
-      await expectLater(
-        service.cancelShowupReminder('su-1', DateTime(2026, 6, 1, 8, 0)),
-        completes,
-      );
+      await expectLater(service.cancelShowupReminder('su-1'), completes);
     });
 
     test('cancelAllRemindersForPact completes without throwing', () async {
       await expectLater(service.cancelAllRemindersForPact('p-1'), completes);
     });
 
-    test('getPendingNotifications returns empty list', () async {
+    test('getPendingNotifications returns empty list of PendingNotificationInfo', () async {
       final result = await service.getPendingNotifications();
       expect(result, isEmpty);
+      expect(result, isA<List<PendingNotificationInfo>>());
     });
 
     test('getAppLaunchDetails returns null', () async {
