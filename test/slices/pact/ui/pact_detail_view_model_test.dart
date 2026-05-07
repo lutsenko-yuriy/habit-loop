@@ -17,6 +17,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/notifications/fake_notification_service.dart';
 
 final _pact = Pact(
   id: 'p1',
@@ -588,6 +589,38 @@ void main() {
       final state = failContainer.read(pactDetailViewModelProvider('p1'));
       expect(state.stopError, isNotNull);
       expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+  });
+
+  group('PactDetailViewModel notification cancellation', () {
+    test('cancels all pact notifications when pact is stopped', () async {
+      final fakeNotifications = FakeNotificationService();
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository(_showups);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
+      );
+      final c = ProviderContainer(overrides: [
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
+        notificationServiceProvider.overrideWithValue(fakeNotifications),
+      ]);
+      addTearDown(c.dispose);
+
+      await c.read(pactDetailViewModelProvider('p1').notifier).load();
+      await c.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
+
+      expect(fakeNotifications.cancelledPactIds, contains('p1'),
+          reason: 'cancelAllRemindersForPact must be called with the pact id when pact is stopped');
     });
   });
 }

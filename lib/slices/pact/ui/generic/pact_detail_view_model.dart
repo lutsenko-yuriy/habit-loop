@@ -99,6 +99,17 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       final stats = updated.stats!;
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
 
+      // Cancel all pending notifications for the stopped pact. Routing through
+      // ReminderSchedulingService keeps the cancellation path symmetric with
+      // the scheduling path. Fire-and-forget: the no-throw contract on
+      // NotificationService guarantees this won't throw.
+      unawaited(ref.read(reminderSchedulingServiceProvider).cancelAllRemindersForPact(arg));
+      unawaited(
+        ref.read(crashlyticsServiceProvider).log(
+              'PactDetailViewModel: cancelled all notifications for pact $arg',
+            ),
+      );
+
       // Log breadcrumb and fire analytics for pact stop (fire-and-forget).
       // CrashlyticsService, AnalyticsService, and LogService are no-throw.
       // PII rule: log only counts and IDs — no habit name, no stop reason.

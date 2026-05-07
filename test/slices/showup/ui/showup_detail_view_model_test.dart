@@ -14,6 +14,7 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/notifications/fake_notification_service.dart';
 
 // A fixed reference "now" to make auto-fail tests deterministic.
 // We use a time clearly in the past so pending showups with past scheduledAt
@@ -565,6 +566,60 @@ void main() {
       await container.read(showupDetailViewModelProvider(showup.id).notifier).markFailed();
 
       expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+  });
+
+  group('ShowupDetailViewModel notification cancellation', () {
+    ProviderContainer makeNotificationContainer({
+      required Showup showup,
+      required FakeNotificationService fakeNotifications,
+      Pact? pact,
+    }) {
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = InMemoryPactRepository(pact != null ? [pact] : []);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      return ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          notificationServiceProvider.overrideWithValue(fakeNotifications),
+        ],
+      );
+    }
+
+    test('cancels notification when showup marked done', () async {
+      final fakeNotifications = FakeNotificationService();
+      final showup = _pendingFutureShowup();
+      final c = makeNotificationContainer(
+        showup: showup,
+        pact: _pact,
+        fakeNotifications: fakeNotifications,
+      );
+      addTearDown(c.dispose);
+
+      await c.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await c.read(showupDetailViewModelProvider(showup.id).notifier).markDone();
+
+      expect(fakeNotifications.cancelledShowupIds, contains(showup.id),
+          reason: 'cancelShowupReminder must be called with the showup id when marking done');
+    });
+
+    test('cancels notification when showup marked failed', () async {
+      final fakeNotifications = FakeNotificationService();
+      final showup = _pendingFutureShowup();
+      final c = makeNotificationContainer(
+        showup: showup,
+        pact: _pact,
+        fakeNotifications: fakeNotifications,
+      );
+      addTearDown(c.dispose);
+
+      await c.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await c.read(showupDetailViewModelProvider(showup.id).notifier).markFailed();
+
+      expect(fakeNotifications.cancelledShowupIds, contains(showup.id),
+          reason: 'cancelShowupReminder must be called with the showup id when marking failed');
     });
   });
 }

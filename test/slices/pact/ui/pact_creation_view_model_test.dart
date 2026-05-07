@@ -17,6 +17,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart'
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/notifications/fake_notification_service.dart';
 
 // ---------------------------------------------------------------------------
 // Helper: build a ProviderContainer with PactService + PactStatsService wired
@@ -686,6 +687,75 @@ void main() {
       // After the second (also failing) submit, error is set again — but it was
       // cleared in between. We verify it's non-null (set by the new failure).
       expect(readFailingState().submitError, isNotNull);
+    });
+  });
+
+  group('PactCreationViewModel notification scheduling', () {
+    late FakeNotificationService fakeNotifications;
+
+    ProviderContainer makeNotificationContainer({
+      InMemoryPactRepository? pactRepository,
+      InMemoryShowupRepository? showupRepository,
+      List<Override> extras = const [],
+    }) {
+      fakeNotifications = FakeNotificationService();
+      final pr = pactRepository ?? InMemoryPactRepository();
+      final sr = showupRepository ?? InMemoryShowupRepository();
+      return _makeContainer(
+        pactRepo: pr,
+        showupRepo: sr,
+        today: today,
+        extras: [
+          notificationServiceProvider.overrideWithValue(fakeNotifications),
+          ...extras,
+        ],
+      );
+    }
+
+    void setUpPactWithReminder(PactCreationViewModel vm) {
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setReminderOffset(const Duration(minutes: 15));
+      vm.setCommitmentAccepted(true);
+    }
+
+    void setUpPactWithoutReminder(PactCreationViewModel vm) {
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+    }
+
+    test('schedules reminders after successful pact creation when reminderOffset is set', () async {
+      final c = makeNotificationContainer();
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpPactWithReminder(vm);
+      await vm.submit();
+      // Reminder scheduling is fire-and-forget (unawaited) and resolves the
+      // locale asynchronously, so pump the microtask queue to let it complete.
+      await Future<void>.delayed(Duration.zero);
+
+      // At least one notification should be scheduled (one per qualifying showup).
+      expect(fakeNotifications.scheduledReminders, isNotEmpty,
+          reason: 'scheduleShowupReminder should be called for showups with reminderOffset set');
+    });
+
+    test('skips scheduling when reminderOffset is null', () async {
+      final c = makeNotificationContainer();
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpPactWithoutReminder(vm);
+      await vm.submit();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fakeNotifications.scheduledReminders, isEmpty,
+          reason: 'scheduleShowupReminder must NOT be called when reminderOffset is null');
     });
   });
 }

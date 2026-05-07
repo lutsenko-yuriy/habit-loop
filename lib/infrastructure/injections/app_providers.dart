@@ -175,15 +175,16 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
 
 /// Provides [ReminderSchedulingService] as a singleton.
 ///
-/// Composes [notificationServiceProvider], [remoteConfigServiceProvider], and
-/// [analyticsServiceProvider]. [AppLocalizations] is NOT stored in the service —
-/// callers pass it as a parameter at the call site so the service can remain a
-/// singleton while each screen uses its own locale.
+/// Composes [notificationServiceProvider], [remoteConfigServiceProvider],
+/// [analyticsServiceProvider], and [localePreferenceServiceProvider].
+/// [AppLocalizations] is resolved internally by the service from the saved
+/// locale preference — callers no longer pass a BuildContext or l10n object.
 final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((ref) {
   return ReminderSchedulingService(
     notificationService: ref.watch(notificationServiceProvider),
     remoteConfig: ref.watch(remoteConfigServiceProvider),
     analytics: ref.watch(analyticsServiceProvider),
+    localePreference: ref.watch(localePreferenceServiceProvider),
     isIOS: Platform.isIOS,
   );
 });

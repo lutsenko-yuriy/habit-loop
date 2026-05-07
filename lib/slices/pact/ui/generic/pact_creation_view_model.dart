@@ -160,6 +160,23 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
             showups: showups,
           );
 
+      // Schedule reminders for the initial window of showups when a reminder
+      // offset is configured. Locale resolution is handled internally by
+      // ReminderSchedulingService via LocalePreferenceService.
+      if (pactWithStats.reminderOffset != null) {
+        unawaited(
+          ref.read(reminderSchedulingServiceProvider).scheduleRemindersForShowups(
+                pact: pactWithStats,
+                showups: showups,
+              ),
+        );
+        unawaited(
+          ref.read(crashlyticsServiceProvider).log(
+                'PactCreationViewModel: scheduled reminders for ${showups.length} showups',
+              ),
+        );
+      }
+
       // Both pact and showups were persisted successfully — log breadcrumb and
       // fire analytics. CrashlyticsService, AnalyticsService, and LogService are
       // no-throw. Use unawaited so diagnostics never block the UI path.
