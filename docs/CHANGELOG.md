@@ -4,6 +4,27 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.20.0] — 2026-05-08 (PR #58 merged)
+
+### Added — Notifications and reminders (HAB-13)
+
+- `flutter_local_notifications`, `timezone`, `flutter_timezone` added as dependencies
+- `NotificationService` abstract interface (`lib/infrastructure/notifications/contracts/`) with no-throw contract; `FlutterLocalNotificationService` (production) and `NoopNotificationService` (debug/tests)
+- `NotificationConstants` shared class for action IDs and notification ID computation (deterministic, collision-free, two disjoint ID ranges for reminder vs deadline notifications)
+- `ReminderSchedulingService` orchestrates scheduling: reads EXP-001 (`notification_text_variant`) and EXP-002 (`post_deadline_notification_behavior`) from Remote Config; resolves locale internally via `LocalePreferenceService`; caps iOS to 32 showups per pass (64-slot limit divided by 2 notifications per showup)
+- `NotificationTextBuilder` — pure static class building notification text for three EXP-001 variants (`control`, `deadline`, `time_limit`) plus the missed-deadline replacement text
+- Reminder notifications scheduled at pact creation, during dashboard lazy-window generation, cancelled on showup done/failed and on pact stop
+- "Missed deadline" replacement notification: on iOS always scheduled (auto-dismiss not available); on Android controlled by EXP-002 (`dismiss` = `timeoutAfter` auto-dismiss, `encourage` = replacement notification)
+- Notification tap routing: `lib/navigation/notification_navigator.dart` (platform-correct `CupertinoPageRoute` on iOS, `MaterialPageRoute` on Android); cold-start via `addPostFrameCallback` + `getAppLaunchDetails()`; warm-start via `onDidReceiveNotificationResponse`
+- "Mark done" actionable notification button (stretch goal): background isolate handler on Android; foreground handler uses Riverpod container for correct cache invalidation; `PactStatsService` updated on foreground mark-done
+- WAL journal mode enabled on SQLite database for safe concurrent access from main + background isolates
+- Analytics events: `notifications_scheduled`, `notification_opened`, `app_opened_from_notification` (with `cold_start` bool), `showup_marked_done_from_notification`
+- EXP-001 (notification text urgency) and EXP-002 (post-deadline Android behavior) registered in `docs/experiments/`
+- Stale notification tap shows localised "This showup is no longer available." message instead of a raw error
+- 824 tests passing, analyzer clean
+
+---
+
 ## [0.19.0] — 2026-05-06 (PR #53 merged)
 
 ### Added — In-app language picker UI, analytics, and Russian locale (HAB-40 WU3)
