@@ -68,6 +68,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         state = state.copyWith(
           isLoading: false,
           loadError: StateError('Showup not found: $arg'),
+          isShowupNotFound: true,
         );
         return;
       }

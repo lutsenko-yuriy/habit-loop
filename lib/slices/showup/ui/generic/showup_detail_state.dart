@@ -30,6 +30,13 @@ class ShowupDetailState {
   /// on load because the current time was past `scheduledAt + duration`.
   final bool wasAutoFailed;
 
+  /// True when [ShowupDetailViewModel.load] could not find the showup in the
+  /// repository. This is a distinct case from a generic load failure — it
+  /// typically means the showup was deleted or the notification payload is
+  /// stale. The UI layer renders a localised "showup no longer available"
+  /// message rather than the raw error string.
+  final bool isShowupNotFound;
+
   const ShowupDetailState({
     this.showup,
     this.habitName,
@@ -39,6 +46,7 @@ class ShowupDetailState {
     this.markError,
     this.noteError,
     this.wasAutoFailed = false,
+    this.isShowupNotFound = false,
   });
 
   ShowupDetailState copyWith({
@@ -53,6 +61,7 @@ class ShowupDetailState {
     Object? noteError,
     bool clearNoteError = false,
     bool? wasAutoFailed,
+    bool? isShowupNotFound,
   }) {
     return ShowupDetailState(
       showup: showup ?? this.showup,
@@ -63,6 +72,7 @@ class ShowupDetailState {
       markError: clearMarkError ? null : (markError ?? this.markError),
       noteError: clearNoteError ? null : (noteError ?? this.noteError),
       wasAutoFailed: wasAutoFailed ?? this.wasAutoFailed,
+      isShowupNotFound: isShowupNotFound ?? this.isShowupNotFound,
     );
   }
 }

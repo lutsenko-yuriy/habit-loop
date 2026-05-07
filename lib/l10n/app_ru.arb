@@ -153,6 +153,7 @@
   "showupNoteError": "Не удалось сохранить заметку. Попробуйте ещё раз.",
   "showupMarkError": "Не удалось обновить статус визита. Попробуйте ещё раз.",
   "showupHabitDeleted": "(привычка удалена)",
+  "showupNotFound": "Этот визит больше недоступен.",
 
   "languagePickerTitle": "Язык",
   "languageEnglish": "Английский",

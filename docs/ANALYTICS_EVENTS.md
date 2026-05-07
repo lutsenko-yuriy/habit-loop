@@ -63,6 +63,20 @@ Fired when the user confirms stopping an active pact.
 
 ---
 
+### `app_opened_from_notification`
+
+Fired when the app is opened (cold-started or resumed from background) because the user tapped a reminder notification. This is the deep-link routing event and fires from the navigation layer using data already present in the notification payload — no DB round-trip is needed. It is distinct from the planned `notification_opened` event (which will include `minutes_before_showup` but requires a showup DB lookup and is tracked separately).
+
+Event class: `AppOpenedFromNotificationEvent` in `lib/slices/reminder/analytics/reminder_analytics_events.dart`
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the parent pact from the notification payload |
+| `showup_id` | `string` | ID of the showup from the notification payload |
+| `cold_start` | `bool` | `true` if the app was launched from a killed state; `false` if resumed from background |
+
+---
+
 ### `language_change_requested`
 
 Fired when the user opens the language picker (before any selection is made). Lets us measure how often users explore language switching without completing the change.

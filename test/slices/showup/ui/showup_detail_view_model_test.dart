@@ -124,6 +124,20 @@ void main() {
       expect(state.showup, isNull);
     });
 
+    test('load() sets isShowupNotFound when showup does not exist in repository', () async {
+      final container = _makeContainer(
+        showup: _pendingFutureShowup(),
+        pact: _pact,
+      );
+      addTearDown(container.dispose);
+      // Request a non-existent showup ID.
+      await container.read(showupDetailViewModelProvider('nonexistent').notifier).load();
+      final state = container.read(showupDetailViewModelProvider('nonexistent'));
+      expect(state.isShowupNotFound, isTrue);
+      expect(state.isLoading, false);
+      expect(state.showup, isNull);
+    });
+
     test('load() auto-fails a pending showup when current time is past scheduledAt + duration', () async {
       final showup = _pendingPastShowup(); // scheduledAt=08:00, duration=10min → ends 08:10
       final container = _makeContainer(

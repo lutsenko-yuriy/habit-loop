@@ -79,3 +79,38 @@ final class ShowupMarkedDoneFromNotificationEvent extends AnalyticsEvent {
         'pact_id': pactId,
       };
 }
+
+/// Fired when the app is opened (cold-started or resumed from background)
+/// because the user tapped a reminder notification.
+///
+/// This is the deep-link routing event and fires from the navigation layer
+/// using data already present in the notification payload — no DB round-trip
+/// is needed. It is distinct from `notification_opened` (which will include
+/// `minutes_before_showup` but requires a showup DB lookup).
+final class AppOpenedFromNotificationEvent extends AnalyticsEvent {
+  AppOpenedFromNotificationEvent({
+    required this.pactId,
+    required this.showupId,
+    required this.coldStart,
+  });
+
+  /// ID of the parent pact from the notification payload.
+  final String pactId;
+
+  /// ID of the showup from the notification payload.
+  final String showupId;
+
+  /// `true` if the app was launched from a killed state (cold start);
+  /// `false` if resumed from background (warm start).
+  final bool coldStart;
+
+  @override
+  String get name => 'app_opened_from_notification';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'showup_id': showupId,
+        'cold_start': coldStart,
+      };
+}

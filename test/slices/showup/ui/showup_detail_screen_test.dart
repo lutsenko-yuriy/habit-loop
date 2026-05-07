@@ -337,7 +337,7 @@ void main() {
       expect(find.text('Failed to save note. Please try again.'), findsNothing);
     });
 
-    testWidgets('shows error message when showup not found', (tester) async {
+    testWidgets('shows user-friendly not-found message when showup does not exist', (tester) async {
       final showup = _pendingFutureShowup();
 
       await tester.pumpWidget(
@@ -350,10 +350,12 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Should display an error, not a loading spinner.
+      // Should display a user-friendly message, not a loading spinner.
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      // An error message of some kind is shown.
-      expect(find.textContaining('nonexistent'), findsWidgets);
+      // The l10n "showupNotFound" string is shown (not a raw error/exception string).
+      expect(find.textContaining('no longer available'), findsWidgets);
+      // The raw "nonexistent" ID must NOT appear in the UI.
+      expect(find.textContaining('nonexistent'), findsNothing);
     });
   });
 }
