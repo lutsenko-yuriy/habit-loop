@@ -393,6 +393,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showupHabitDeleted => '(habit deleted)';
 
   @override
+  String get showupNotFound => 'This showup is no longer available.';
+
+  @override
   String get languagePickerTitle => 'Language';
 
   @override

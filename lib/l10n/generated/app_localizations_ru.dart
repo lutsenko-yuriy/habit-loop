@@ -405,6 +405,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get showupHabitDeleted => '(привычка удалена)';
 
   @override
+  String get showupNotFound => 'Этот визит больше недоступен.';
+
+  @override
   String get languagePickerTitle => 'Язык';
 
   @override

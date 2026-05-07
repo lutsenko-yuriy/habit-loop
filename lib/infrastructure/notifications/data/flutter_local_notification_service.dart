@@ -79,9 +79,21 @@ final class FlutterLocalNotificationService implements NotificationService {
 
   /// Callback invoked when the user taps a notification or an action button.
   ///
-  /// WU4 wires this to the navigator for deep-link routing.
-  // ignore: unused_field
+  /// Set by calling [setNotificationResponseCallback] **before** [initialize],
+  /// then forwarded to [FlutterLocalNotificationsPlugin.initialize].
+  ///
+  /// `main.dart` wires this to [NotificationRouter.navigateToShowup] for
+  /// deep-link routing (WU4). When null, [initialize] falls back to a debug log.
   void Function(NotificationResponse)? _onDidReceiveNotificationResponse;
+
+  /// Sets the callback that is forwarded to [FlutterLocalNotificationsPlugin.initialize].
+  ///
+  /// Must be called **before** [initialize]. The [FlutterLocalNotificationsPlugin]
+  /// does not expose a way to replace the callback after initialisation, so
+  /// main.dart must set this before awaiting [initialize].
+  void setNotificationResponseCallback(void Function(NotificationResponse) callback) {
+    _onDidReceiveNotificationResponse = callback;
+  }
 
   @override
   Future<void> initialize() async {
@@ -99,8 +111,9 @@ final class FlutterLocalNotificationService implements NotificationService {
       );
       const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
 
-      _onDidReceiveNotificationResponse = (NotificationResponse response) {
-        // WU4 will wire this to the navigator.
+      // Use the externally-set callback (from main.dart for deep-link routing)
+      // or fall back to a debug-only log for builds that do not wire navigation.
+      _onDidReceiveNotificationResponse ??= (NotificationResponse response) {
         debugPrint('[Notifications] response received: ${response.payload}');
       };
 

@@ -60,16 +60,33 @@ class _ShowupDetailPageAndroidState extends State<ShowupDetailPageAndroid> {
       appBar: AppBar(title: Text(l10n.showupDetailTitle)),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : state.loadError != null
-              ? Center(child: Text(state.loadError.toString()))
-              : _ShowupDetailContent(
-                  state: state,
-                  l10n: l10n,
-                  noteController: _noteController,
-                  onMarkDone: widget.onMarkDone,
-                  onMarkFailed: widget.onMarkFailed,
-                  onSaveNote: widget.onSaveNote,
-                ),
+          : state.isShowupNotFound
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.showupNotFound,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(l10n.back),
+                      ),
+                    ],
+                  ),
+                )
+              : state.loadError != null
+                  ? Center(child: Text(state.loadError.toString()))
+                  : _ShowupDetailContent(
+                      state: state,
+                      l10n: l10n,
+                      noteController: _noteController,
+                      onMarkDone: widget.onMarkDone,
+                      onMarkFailed: widget.onMarkFailed,
+                      onSaveNote: widget.onSaveNote,
+                    ),
     );
   }
 }

@@ -394,6 +394,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get showupHabitDeleted => '(Gewohnheit gelöscht)';
 
   @override
+  String get showupNotFound => 'Dieses Showup ist nicht mehr verfügbar.';
+
+  @override
   String get languagePickerTitle => 'Sprache';
 
   @override

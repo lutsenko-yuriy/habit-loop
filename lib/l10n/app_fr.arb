@@ -153,6 +153,7 @@
   "showupNoteError": "Impossible d'enregistrer la note. Veuillez réessayer.",
   "showupMarkError": "Impossible de mettre à jour le statut. Veuillez réessayer.",
   "showupHabitDeleted": "(habitude supprimée)",
+  "showupNotFound": "Ce rendez-vous n'est plus disponible.",
 
   "languagePickerTitle": "Langue",
   "languageEnglish": "Anglais",

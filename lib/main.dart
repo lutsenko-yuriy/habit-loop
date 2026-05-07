@@ -8,6 +8,7 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' show NotificationResponse;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/firebase_options.dart';
@@ -24,18 +25,29 @@ import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/flutter_local_notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
+import 'package:habit_loop/infrastructure/notifications/data/notification_router.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
+import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+
+/// Global navigator key used for deep-link routing from notification taps.
+///
+/// Passed to [HabitLoopApp] which wires it into [MaterialApp.navigatorKey].
+/// [NotificationRouter.navigateToShowup] uses this key to push the showup
+/// detail screen without a [BuildContext], making it safe to call from the
+/// notification response callback (which fires outside the widget tree).
+final _navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,6 +112,12 @@ Future<void> main() async {
       ? FirebaseCrashlyticsService(FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance))
       : NoopCrashlyticsService();
 
+  // Declare analyticsService early so the warm-start notification callback can
+  // close over it. The variable is assigned below (inside the try block after
+  // the database opens) before any user interaction can fire the callback.
+  // Using a nullable reference here is safe: the callback guards with `?.`.
+  FirebaseAnalyticsService? notificationAnalyticsService;
+
   // Initialise notification service before runApp so the plugin and Android
   // channel are ready when the first frame renders. Only wire the real plugin
   // in release builds — debug/profile use the silent NoopNotificationService.
@@ -111,6 +129,33 @@ Future<void> main() async {
   if (kReleaseMode) {
     final realService = FlutterLocalNotificationService(earlycrashlytics);
     try {
+      // Wire the warm-start callback before initialize() so the plugin picks
+      // it up during setup. The callback parses the payload and pushes the
+      // showup detail screen via the global navigator key.
+      // Analytics: the callback closes over `notificationAnalyticsService` which will be
+      // assigned by the time the user can interact with a notification
+      // (after runApp completes). The `?.` guard is a safety net only.
+      realService.setNotificationResponseCallback((NotificationResponse response) {
+        final parsed = NotificationRouter.parsePayload(response.payload);
+        if (parsed != null) {
+          NotificationNavigator.navigateToShowup(
+            navigatorKey: _navigatorKey,
+            showupId: parsed.showupId,
+          );
+          // Fire deep-link analytics. This is a warm start because the app
+          // was already running in the background when the user tapped the
+          // notification.
+          unawaited(
+            notificationAnalyticsService?.logEvent(
+              AppOpenedFromNotificationEvent(
+                pactId: parsed.pactId,
+                showupId: parsed.showupId,
+                coldStart: false,
+              ),
+            ),
+          );
+        }
+      });
       await realService.initialize();
       await realService.requestPermission();
       notificationService = realService;
@@ -147,6 +192,15 @@ Future<void> main() async {
     final showupRepo = SqliteShowupRepository(db);
     final txService = SqlitePactTransactionService(db);
 
+    // Construct (or reuse) the analytics service so it can be passed both to
+    // AppContainer.overrides (for Riverpod) and to the deep-link analytics
+    // events fired from the cold-start addPostFrameCallback below.
+    // Also assigns `notificationAnalyticsService` so the warm-start notification callback
+    // (closed over above) can fire events once the app is running.
+    notificationAnalyticsService =
+        kReleaseMode ? FirebaseAnalyticsService(FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance)) : null;
+    final analyticsService = notificationAnalyticsService;
+
     runApp(
       ProviderScope(
         overrides: await AppContainer.overrides(
@@ -158,11 +212,7 @@ Future<void> main() async {
           // Release builds fall back to the NoopLogService default.
           logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
           // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
-          analyticsService: kReleaseMode
-              ? FirebaseAnalyticsService(
-                  FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
-                )
-              : null,
+          analyticsService: analyticsService,
           // Only send crash reports in release builds — debug/profile use NoopCrashlyticsService.
           crashlyticsService: kReleaseMode
               ? FirebaseCrashlyticsService(
@@ -180,9 +230,36 @@ Future<void> main() async {
           // locale internally via getSavedLocale() and populates localeOverrideProvider.
           localePreferenceService: localeService,
         ),
-        child: const HabitLoopApp(),
+        child: HabitLoopApp(navigatorKey: _navigatorKey),
       ),
     );
+
+    // Cold-start: if the app was launched by tapping a notification (i.e. the
+    // app was killed), navigate to the showup detail screen after the first
+    // frame is rendered and the widget tree is mounted.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final launchInfo = await notificationService.getAppLaunchDetails();
+      if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.payload != null) {
+        final parsed = NotificationRouter.parsePayload(launchInfo.payload);
+        if (parsed != null) {
+          NotificationNavigator.navigateToShowup(
+            navigatorKey: _navigatorKey,
+            showupId: parsed.showupId,
+          );
+          // Fire deep-link analytics. This is a cold start because the app was
+          // launched from a killed state via notification tap.
+          unawaited(
+            analyticsService?.logEvent(
+              AppOpenedFromNotificationEvent(
+                pactId: parsed.pactId,
+                showupId: parsed.showupId,
+                coldStart: true,
+              ),
+            ),
+          );
+        }
+      }
+    });
   } catch (e, st) {
     debugPrint('Failed to open database: $e\n$st');
     runApp(const _DatabaseErrorApp());
@@ -190,7 +267,15 @@ Future<void> main() async {
 }
 
 class HabitLoopApp extends ConsumerWidget {
-  const HabitLoopApp({super.key});
+  const HabitLoopApp({super.key, required this.navigatorKey});
+
+  /// Global navigator key used for deep-link routing from notification taps.
+  ///
+  /// Must be the same key instance that is passed to
+  /// [NotificationRouter.navigateToShowup] in `main.dart`. Wiring it through
+  /// [MaterialApp.navigatorKey] lets the notification callback resolve the
+  /// current [NavigatorState] even when called outside the widget tree.
+  final GlobalKey<NavigatorState> navigatorKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -199,6 +284,7 @@ class HabitLoopApp extends ConsumerWidget {
     final localeOverride = ref.watch(localeOverrideProvider);
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Habit Loop',
       theme: HabitLoopTheme.materialTheme,
       darkTheme: HabitLoopTheme.darkMaterialTheme,

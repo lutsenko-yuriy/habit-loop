@@ -63,4 +63,40 @@ void main() {
       expect(params['pact_id'], equals('pact-abc'));
     });
   });
+
+  group('AppOpenedFromNotificationEvent', () {
+    test('has correct event name', () {
+      final event = AppOpenedFromNotificationEvent(
+        pactId: 'pact-1',
+        showupId: 'showup-1',
+        coldStart: true,
+      );
+
+      expect(event.name, equals('app_opened_from_notification'));
+    });
+
+    test('toParameters includes pact_id, showup_id, and cold_start', () {
+      final event = AppOpenedFromNotificationEvent(
+        pactId: 'pact-abc',
+        showupId: 'showup-xyz',
+        coldStart: false,
+      );
+
+      final params = event.toParameters();
+      expect(params['pact_id'], equals('pact-abc'));
+      expect(params['showup_id'], equals('showup-xyz'));
+      expect(params['cold_start'], equals(false));
+    });
+
+    test('toParameters sets cold_start true for cold start', () {
+      final event = AppOpenedFromNotificationEvent(
+        pactId: 'pact-1',
+        showupId: 'showup-1',
+        coldStart: true,
+      );
+
+      final params = event.toParameters();
+      expect(params['cold_start'], isTrue);
+    });
+  });
 }
