@@ -826,6 +826,12 @@ abstract class AppLocalizations {
   /// **'That\'s okay — show up next time.'**
   String get notificationMissedBody;
 
+  /// No description provided for @notificationMarkDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark done'**
+  String get notificationMarkDone;
+
   /// No description provided for @notificationDurationMinutes.
   ///
   /// In en, this message translates to:
