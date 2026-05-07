@@ -156,6 +156,74 @@ void main() {
       expect(stored, isEmpty);
     });
 
+    // -----------------------------------------------------------------------
+    // Return-value tests — these protect the DashboardViewModel invariant that
+    // newly generated showups are identified for deduplication-safe reminder
+    // scheduling.  ensureShowupsExist must return:
+    //   • non-empty on first call with a new pact
+    //   • empty on second call with the same window (all already exist)
+    //   • only delta (net-new showups) when windows overlap
+    // -----------------------------------------------------------------------
+
+    test('first call with a new pact returns all generated showups (non-empty)', () async {
+      final pact = makePact(
+        id: 'pact-rv-1',
+        startDate: DateTime(2026, 4, 1),
+        endDate: DateTime(2026, 4, 30),
+      );
+      final from = DateTime(2026, 4, 1);
+      final to = DateTime(2026, 4, 7);
+
+      final result = await service.ensureShowupsExist(pact, from: from, to: to);
+
+      // Daily Apr 1–7 = 7 showups; all are new on first call.
+      expect(result, hasLength(7), reason: 'First call must return all 7 newly generated showups');
+      expect(result.map((s) => s.scheduledAt.day).toSet(), equals({1, 2, 3, 4, 5, 6, 7}));
+    });
+
+    test('second call with the same window returns an empty list (all already exist)', () async {
+      final pact = makePact(
+        id: 'pact-rv-2',
+        startDate: DateTime(2026, 4, 1),
+        endDate: DateTime(2026, 4, 30),
+      );
+      final from = DateTime(2026, 4, 1);
+      final to = DateTime(2026, 4, 7);
+
+      await service.ensureShowupsExist(pact, from: from, to: to);
+      final secondResult = await service.ensureShowupsExist(pact, from: from, to: to);
+
+      expect(secondResult, isEmpty,
+          reason: 'Second call with the same window must return an empty list — no new showups');
+    });
+
+    test('overlapping window call returns only the delta (net-new showups)', () async {
+      final pact = makePact(
+        id: 'pact-rv-3',
+        startDate: DateTime(2026, 4, 1),
+        endDate: DateTime(2026, 4, 30),
+      );
+
+      // First call: Apr 1–5 → 5 new showups.
+      final firstResult = await service.ensureShowupsExist(
+        pact,
+        from: DateTime(2026, 4, 1),
+        to: DateTime(2026, 4, 5),
+      );
+      expect(firstResult, hasLength(5));
+
+      // Second call: Apr 3–9 — Apr 3–5 already exist; Apr 6–9 are new.
+      final secondResult = await service.ensureShowupsExist(
+        pact,
+        from: DateTime(2026, 4, 3),
+        to: DateTime(2026, 4, 9),
+      );
+
+      // Only Apr 6, 7, 8, 9 (4 days) are truly new.
+      expect(secondResult, hasLength(4), reason: 'Overlapping window must return only the 4 net-new showups (Apr 6–9)');
+      expect(secondResult.map((s) => s.scheduledAt.day).toSet(), equals({6, 7, 8, 9}));
+    });
+
     test(
         'skips showups scheduled before pact.createdAt — '
         'dashboard re-generation must not resurrect past-due slots '

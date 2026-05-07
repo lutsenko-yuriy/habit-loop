@@ -28,7 +28,20 @@ const _kPostDeadlineNotificationBehavior = 'post_deadline_notification_behavior'
 /// `Platform.isIOS` directly, keeping the service fully testable on any host
 /// platform.  Pass `isIOS: Platform.isIOS` at the composition root
 /// (`app_providers.dart`).
+///
+/// ## iOS 64-notification cap
+///
+/// iOS allows at most 64 pending local notifications at a time. Since we
+/// schedule 2 notifications per showup on iOS (reminder + deadline), the
+/// effective cap is 32 showups per scheduling pass. Any qualifying showups
+/// beyond position 32 are silently dropped — this is expected behaviour, not
+/// an error. As showups are completed or cancelled their notifications are
+/// removed, making room for future ones on the next dashboard load.
 final class ReminderSchedulingService {
+  // iOS allows at most 64 pending local notifications; we use 2 per showup
+  // on iOS (reminder + deadline).
+  static const int _iosMaxPendingNotifications = 64;
+  static const int _notificationsPerShowupIos = 2; // reminder + deadline
   const ReminderSchedulingService({
     required NotificationService notificationService,
     required RemoteConfigService remoteConfig,
@@ -81,11 +94,21 @@ final class ReminderSchedulingService {
 
     final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
 
-    var scheduledCount = 0;
-    for (final showup in showups) {
-      if (showup.status != ShowupStatus.pending) continue;
-      if (!showup.scheduledAt.subtract(pact.reminderOffset!).isAfter(effectiveNow)) continue;
+    // Filter qualifying showups first so we can apply the iOS cap correctly.
+    final qualifyingShowups = showups.where((s) {
+      if (s.status != ShowupStatus.pending) return false;
+      if (!s.scheduledAt.subtract(pact.reminderOffset!).isAfter(effectiveNow)) return false;
+      return true;
+    }).toList();
 
+    // iOS allows at most 64 pending local notifications. On iOS we schedule
+    // 2 per showup (reminder + deadline), so the effective cap is 32 showups.
+    // On Android there is no practical cap.
+    final maxShowups = _isIOS ? (_iosMaxPendingNotifications ~/ _notificationsPerShowupIos) : qualifyingShowups.length;
+    final showupsToSchedule = qualifyingShowups.take(maxShowups).toList();
+
+    var scheduledCount = 0;
+    for (final showup in showupsToSchedule) {
       final reminderText = NotificationTextBuilder.buildReminderText(
         variant: variant,
         habitName: pact.habitName,
