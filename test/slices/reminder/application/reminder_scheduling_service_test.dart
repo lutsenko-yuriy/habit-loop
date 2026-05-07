@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
@@ -59,6 +57,7 @@ void main() {
       notificationService: notificationService,
       remoteConfig: remoteConfig,
       analytics: analyticsService,
+      isIOS: false,
     );
   });
 
@@ -131,18 +130,12 @@ void main() {
       expect(analyticsService.loggedEvents, isEmpty);
     });
 
-    // Platform-specific tests:
-    // The macOS test runner returns Platform.isMacOS=true, Platform.isIOS=false, Platform.isAndroid=false.
-    // So we can verify the Android path (no iOS deadline scheduling) directly.
-    // iOS-specific path (always schedule deadline) requires a device and is tested manually.
+    // Platform-specific tests use the injected isIOS flag for full coverage on any host platform.
 
-    test('on non-iOS platform with dismiss config: only schedules reminder, no deadline', () async {
-      // Skip on iOS (not expected in CI but guard anyway)
-      if (Platform.isIOS) return;
-
+    test('isIOS=false with dismiss config: only schedules reminder, no deadline', () async {
+      // isIOS=false is the default set in setUp; 'dismiss' is FakeRemoteConfigService default.
       final pact = _makePact(reminderOffset: const Duration(minutes: 10));
       final now = DateTime(2026, 5, 7, 10, 0);
-      // 'dismiss' is the default in FakeRemoteConfigService (falls back to RemoteConfigDefaults)
 
       final showups = [
         _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
@@ -151,21 +144,41 @@ void main() {
       await service.scheduleRemindersForShowups(pact: pact, showups: showups, l10n: l10n, now: now);
 
       expect(notificationService.scheduledReminders, hasLength(1));
-      // Android with 'dismiss' should NOT schedule deadline notification
       expect(notificationService.scheduledDeadlines, isEmpty);
     });
 
-    test('on non-iOS platform with encourage config: schedules both reminder and deadline', () async {
-      if (Platform.isIOS) return;
+    test('isIOS=true always schedules both reminder and deadline regardless of remote config', () async {
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        isIOS: true,
+      );
 
       final pact = _makePact(reminderOffset: const Duration(minutes: 10));
       final now = DateTime(2026, 5, 7, 10, 0);
+
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, l10n: l10n, now: now);
+
+      expect(notificationService.scheduledReminders, hasLength(1));
+      expect(notificationService.scheduledDeadlines, hasLength(1));
+    });
+
+    test('isIOS=false with encourage config: schedules both reminder and deadline', () async {
       remoteConfig = FakeRemoteConfigService(overrides: {'post_deadline_notification_behavior': 'encourage'});
       service = ReminderSchedulingService(
         notificationService: notificationService,
         remoteConfig: remoteConfig,
         analytics: analyticsService,
+        isIOS: false,
       );
+
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
 
       final showups = [
         _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
@@ -174,8 +187,22 @@ void main() {
       await service.scheduleRemindersForShowups(pact: pact, showups: showups, l10n: l10n, now: now);
 
       expect(notificationService.scheduledReminders, hasLength(1));
-      // Android with 'encourage' SHOULD schedule deadline notification
       expect(notificationService.scheduledDeadlines, hasLength(1));
+    });
+
+    test('skips showup when reminder fire time (scheduledAt - reminderOffset) is in the past', () async {
+      // Showup is at 09:30, reminder offset is 60 min → fire time 08:30.
+      // now = 09:00 → fire time 08:30 is in the past → should NOT schedule.
+      final pact = _makePact(reminderOffset: const Duration(minutes: 60));
+      final now = DateTime(2026, 5, 8, 9, 0);
+
+      final showups = [
+        _makeShowup(id: 'su-future-but-reminder-past', scheduledAt: DateTime(2026, 5, 8, 9, 30)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, l10n: l10n, now: now);
+
+      expect(notificationService.scheduledReminders, isEmpty);
     });
 
     test('uses notification_text_variant from remote config', () async {

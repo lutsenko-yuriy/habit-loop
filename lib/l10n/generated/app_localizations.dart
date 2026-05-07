@@ -819,6 +819,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That\'s okay — show up next time.'**
   String get notificationMissedBody;
+
+  /// No description provided for @notificationDurationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min'**
+  String notificationDurationMinutes(int count);
+
+  /// No description provided for @notificationDurationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h'**
+  String notificationDurationHours(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

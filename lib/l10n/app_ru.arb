@@ -193,5 +193,17 @@
     }
   },
   "notificationMissedTitle": "Вы пропустили этот визит",
-  "notificationMissedBody": "Ничего страшного — появитесь в следующий раз."
+  "notificationMissedBody": "Ничего страшного — появитесь в следующий раз.",
+  "notificationDurationMinutes": "{count} мин",
+  "@notificationDurationMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "notificationDurationHours": "{count} ч",
+  "@notificationDurationHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

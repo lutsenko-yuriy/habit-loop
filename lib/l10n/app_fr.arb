@@ -193,5 +193,17 @@
     }
   },
   "notificationMissedTitle": "Tu as manqué celui-ci",
-  "notificationMissedBody": "Pas de panique — sois au rendez-vous la prochaine fois."
+  "notificationMissedBody": "Pas de panique — sois au rendez-vous la prochaine fois.",
+  "notificationDurationMinutes": "{count} min",
+  "@notificationDurationMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "notificationDurationHours": "{count} h",
+  "@notificationDurationHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

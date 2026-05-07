@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -24,19 +22,27 @@ const _kPostDeadlineNotificationBehavior = 'post_deadline_notification_behavior'
 ///
 /// [AppLocalizations] is accepted as a parameter at the call site (not stored
 /// as a field) so the service can be a Riverpod singleton while each caller
-/// passes the l10n it already holds from the current [BuildContext].
+/// passes the l10n it already holds from the current BuildContext.
+///
+/// [isIOS] is injected as a constructor parameter rather than calling
+/// `Platform.isIOS` directly, keeping the service fully testable on any host
+/// platform.  Pass `isIOS: Platform.isIOS` at the composition root
+/// (`app_providers.dart`).
 final class ReminderSchedulingService {
   const ReminderSchedulingService({
     required NotificationService notificationService,
     required RemoteConfigService remoteConfig,
     required AnalyticsService analytics,
+    bool isIOS = false,
   })  : _notificationService = notificationService,
         _remoteConfig = remoteConfig,
-        _analytics = analytics;
+        _analytics = analytics,
+        _isIOS = isIOS;
 
   final NotificationService _notificationService;
   final RemoteConfigService _remoteConfig;
   final AnalyticsService _analytics;
+  final bool _isIOS;
 
   /// Schedules reminder (and, where applicable, deadline) notifications for
   /// each qualifying showup in [showups].
@@ -71,14 +77,14 @@ final class ReminderSchedulingService {
     final effectiveNow = now ?? DateTime.now();
     final variant = _remoteConfig.getString(_kNotificationTextVariant);
     final postDeadlineBehavior = _remoteConfig.getString(_kPostDeadlineNotificationBehavior);
-    final scheduleDeadline = Platform.isIOS || postDeadlineBehavior == 'encourage';
+    final scheduleDeadline = _isIOS || postDeadlineBehavior == 'encourage';
 
     final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
 
     var scheduledCount = 0;
     for (final showup in showups) {
       if (showup.status != ShowupStatus.pending) continue;
-      if (!showup.scheduledAt.isAfter(effectiveNow)) continue;
+      if (!showup.scheduledAt.subtract(pact.reminderOffset!).isAfter(effectiveNow)) continue;
 
       final reminderText = NotificationTextBuilder.buildReminderText(
         variant: variant,
@@ -103,7 +109,7 @@ final class ReminderSchedulingService {
         );
       }
 
-      scheduledCount++;
+      scheduledCount += scheduleDeadline ? 2 : 1;
     }
 
     if (scheduledCount > 0) {

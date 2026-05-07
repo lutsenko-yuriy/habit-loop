@@ -10,6 +10,8 @@
 /// because they are scoped to a single screen.
 library;
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
@@ -182,5 +184,6 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
     notificationService: ref.watch(notificationServiceProvider),
     remoteConfig: ref.watch(remoteConfigServiceProvider),
     analytics: ref.watch(analyticsServiceProvider),
+    isIOS: Platform.isIOS,
   );
 });

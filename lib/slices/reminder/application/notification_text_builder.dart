@@ -97,7 +97,7 @@ abstract final class NotificationTextBuilder {
 
   /// Formats [remaining] as a human-readable string for the `time_limit` variant.
   ///
-  /// Examples:
+  /// Examples (EN):
   /// - `Duration(minutes: 30)` → `"30 min"`
   /// - `Duration(hours: 1)` → `"1 h"`
   /// - `Duration(hours: 1, minutes: 30)` → `"1 h 30 min"`
@@ -107,11 +107,11 @@ abstract final class NotificationTextBuilder {
     final minutes = totalMinutes % 60;
 
     if (hours == 0) {
-      return '$minutes min';
+      return l10n.notificationDurationMinutes(minutes);
     } else if (minutes == 0) {
-      return '$hours h';
+      return l10n.notificationDurationHours(hours);
     } else {
-      return '$hours h $minutes min';
+      return '${l10n.notificationDurationHours(hours)} ${l10n.notificationDurationMinutes(minutes)}';
     }
   }
 }

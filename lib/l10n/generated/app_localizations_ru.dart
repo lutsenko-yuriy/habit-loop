@@ -455,4 +455,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationMissedBody => 'Ничего страшного — появитесь в следующий раз.';
+
+  @override
+  String notificationDurationMinutes(int count) {
+    return '$count мин';
+  }
+
+  @override
+  String notificationDurationHours(int count) {
+    return '$count ч';
+  }
 }

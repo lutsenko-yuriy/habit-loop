@@ -444,4 +444,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get notificationMissedBody => 'Das ist okay — erscheine beim nächsten Mal.';
+
+  @override
+  String notificationDurationMinutes(int count) {
+    return '$count Min.';
+  }
+
+  @override
+  String notificationDurationHours(int count) {
+    return '$count Std.';
+  }
 }

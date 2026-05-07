@@ -193,5 +193,17 @@
     }
   },
   "notificationMissedTitle": "Diesen hast du verpasst",
-  "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal."
+  "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal.",
+  "notificationDurationMinutes": "{count} Min.",
+  "@notificationDurationMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "notificationDurationHours": "{count} Std.",
+  "@notificationDurationHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

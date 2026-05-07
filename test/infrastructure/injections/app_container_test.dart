@@ -140,6 +140,18 @@ void main() {
       expect(container.read(notificationServiceProvider), same(notificationService));
     });
 
+    test('container with overrides resolves reminderSchedulingServiceProvider without throwing', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(reminderSchedulingServiceProvider), returnsNormally);
+    });
+
     test('localePreferenceServiceProvider resolves to noop default when not provided', () async {
       final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,
