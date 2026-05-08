@@ -4,6 +4,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart' show ShowupUiState;
 
 /// Cupertino (iOS) implementation of the showup detail screen.
 class ShowupDetailPageIos extends StatefulWidget {
@@ -128,7 +129,11 @@ class _ShowupDetailContent extends StatelessWidget {
     final durationMins = showup.duration.inMinutes;
     final isPending = showup.status == ShowupStatus.pending;
 
-    final statusText = showupStatusText(l10n, showup.status);
+    // uiState is derived in ShowupDetailViewModel.load() using the injectable
+    // showupDetailNowProvider clock — not DateTime.now() — so it is testable
+    // and consistent with the auto-fail outcome computed at screen open time.
+    final uiState = state.uiState;
+    final statusText = showupUiStateText(l10n, uiState);
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -148,13 +153,13 @@ class _ShowupDetailContent extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: _statusColor(showup.status).withValues(alpha: 0.15),
+                color: _statusColor(uiState).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 statusText,
                 style: TextStyle(
-                  color: _statusColor(showup.status),
+                  color: _statusColor(uiState),
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -262,11 +267,13 @@ class _ShowupDetailContent extends StatelessWidget {
     );
   }
 
-  Color _statusColor(ShowupStatus status) {
-    return switch (status) {
-      ShowupStatus.pending => CupertinoColors.systemOrange,
-      ShowupStatus.done => CupertinoColors.activeGreen,
-      ShowupStatus.failed => CupertinoColors.destructiveRed,
+  Color _statusColor(ShowupUiState state) {
+    return switch (state) {
+      ShowupUiState.planned => CupertinoColors.systemGrey,
+      ShowupUiState.waitingForStart => CupertinoColors.systemYellow,
+      ShowupUiState.active => CupertinoColors.systemOrange,
+      ShowupUiState.done => CupertinoColors.activeGreen,
+      ShowupUiState.failed => CupertinoColors.destructiveRed,
     };
   }
 }

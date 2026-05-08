@@ -11,6 +11,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show P
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 class DashboardPageAndroid extends ConsumerWidget {
   final DashboardState state;
@@ -195,6 +196,7 @@ class _CalendarStrip extends StatelessWidget {
             isToday: isToday,
             isSelected: isSelected,
             onTap: () => onDaySelected(index),
+            reminderOffsetByPactId: state.reminderOffsetByPactId,
           );
         }),
       ),
@@ -207,12 +209,14 @@ class _CalendarDay extends StatelessWidget {
   final bool isToday;
   final bool isSelected;
   final VoidCallback onTap;
+  final Map<String, Duration?> reminderOffsetByPactId;
 
   const _CalendarDay({
     required this.entry,
     required this.isToday,
     required this.isSelected,
     required this.onTap,
+    required this.reminderOffsetByPactId,
   });
 
   @override
@@ -246,6 +250,7 @@ class _CalendarDay extends StatelessWidget {
             showups: entry.showups,
             date: entry.date,
             colors: ShowupStatusColors.material(theme.colorScheme),
+            uiStates: deriveUiStates(entry.showups, reminderOffsetByPactId),
           ),
         ],
       ),

@@ -10,6 +10,8 @@
   "showupDone": "Выполнено",
   "showupFailed": "Пропущено",
   "showupPending": "Ожидается",
+  "showupPlanned": "Запланировано",
+  "showupWaitingForStart": "Ожидание начала",
 
   "pactCreationTitle": "Новый пакт",
   "habitNameLabel": "Название привычки",

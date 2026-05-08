@@ -6,6 +6,7 @@ import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.da
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 /// Provides the current time. Overridable in tests to make auto-fail logic
 /// deterministic.
@@ -79,13 +80,16 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final pact = await pactRepo.getPactById(showup.pactId);
       final habitName = pact?.habitName;
 
+      // Sample the clock once using showupDetailNowProvider (invalidated by
+      // ShowupDetailScreen before load() is called so it always reflects the
+      // real current time). Shared between the auto-fail check and the UI state
+      // derivation so both are consistent.
+      final now = ref.read(showupDetailNowProvider);
+
       // Auto-fail if the showup is still pending but the window has passed.
-      // showupDetailNowProvider is invalidated by ShowupDetailScreen before
-      // load() is called, so this always reflects the real current time.
       bool wasAutoFailed = false;
       final pactStatsService = ref.read(pactStatsServiceProvider);
       if (showup.status == ShowupStatus.pending) {
-        final now = ref.read(showupDetailNowProvider);
         final endTime = showup.scheduledAt.add(showup.duration);
         if (now.isAfter(endTime)) {
           showup = await pactStatsService.persistShowupStatus(
@@ -102,9 +106,20 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         }
       }
 
+      // Derive the time-sensitive UI state using the same injectable clock so
+      // the badge is consistent with the auto-fail outcome.
+      final uiState = deriveShowupUiState(
+        showup: showup,
+        now: now,
+        reminderOffset: pact?.reminderOffset,
+      );
+
       state = state.copyWith(
         showup: showup,
         habitName: habitName,
+        reminderOffset: pact?.reminderOffset,
+        clearReminderOffset: pact?.reminderOffset == null,
+        uiState: uiState,
         isLoading: false,
         wasAutoFailed: wasAutoFailed,
       );
@@ -145,7 +160,14 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
             showup: state.showup!,
             status: newStatus,
           );
-      state = state.copyWith(showup: updatedShowup, isSaving: false);
+      // Update uiState to reflect the new resolved status so the badge
+      // updates immediately without requiring a screen reload.
+      final resolvedUiState = switch (newStatus) {
+        ShowupStatus.done => ShowupUiState.done,
+        ShowupStatus.failed => ShowupUiState.failed,
+        ShowupStatus.pending => state.uiState,
+      };
+      state = state.copyWith(showup: updatedShowup, uiState: resolvedUiState, isSaving: false);
 
       // Cancel the pending reminder and deadline notifications now that the
       // showup has been resolved. Routing through ReminderSchedulingService keeps

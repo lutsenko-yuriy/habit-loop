@@ -232,12 +232,15 @@ class DashboardViewModel extends Notifier<DashboardState> {
       return CalendarDayEntry(date: date, showups: dayShowups);
     });
 
+    final reminderOffsetByPactId = {for (final p in allPacts) p.id: p.reminderOffset};
+
     state = state.copyWith(
       calendarDays: days,
       pactNames: pactNames,
       isLoading: false,
       todayIndex: computedTodayIndex,
       selectedDayIndex: computedTodayIndex,
+      reminderOffsetByPactId: reminderOffsetByPactId,
     );
   }
 
