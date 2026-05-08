@@ -4,7 +4,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart' show ShowupUiState;
 
 /// Cupertino (iOS) implementation of the showup detail screen.
 class ShowupDetailPageIos extends StatefulWidget {
@@ -129,13 +129,10 @@ class _ShowupDetailContent extends StatelessWidget {
     final durationMins = showup.duration.inMinutes;
     final isPending = showup.status == ShowupStatus.pending;
 
-    // Derive the time-sensitive UI state so the badge shows "Planned" or
-    // "Waiting for start" rather than the raw domain "Pending" label.
-    final uiState = deriveShowupUiState(
-      showup: showup,
-      now: DateTime.now(),
-      reminderOffset: state.reminderOffset,
-    );
+    // uiState is derived in ShowupDetailViewModel.load() using the injectable
+    // showupDetailNowProvider clock — not DateTime.now() — so it is testable
+    // and consistent with the auto-fail outcome computed at screen open time.
+    final uiState = state.uiState;
     final statusText = showupUiStateText(l10n, uiState);
 
     return ListView(

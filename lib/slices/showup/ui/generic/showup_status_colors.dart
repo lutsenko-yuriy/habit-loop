@@ -94,4 +94,29 @@ class ShowupStatusColors {
     if (pendingCount > 0) return pending;
     return doneCount >= failedCount ? done : failed;
   }
+
+  /// Returns the overflow dot colour given a list of time-derived [uiStates].
+  ///
+  /// Priority rule (first match wins):
+  /// 1. Any [ShowupUiState.waitingForStart] or [ShowupUiState.pending] → amber
+  ///    (active: reminder fired or showup window is now)
+  /// 2. Any [ShowupUiState.planned] → gray (nothing has happened yet)
+  /// 3. All resolved: done >= failed → green; else → red
+  Color overflowForUiState(List<ShowupUiState> uiStates) {
+    var doneCount = 0, failedCount = 0;
+    for (final s in uiStates) {
+      switch (s) {
+        case ShowupUiState.waitingForStart:
+        case ShowupUiState.pending:
+          return waitingForStart;
+        case ShowupUiState.planned:
+          return pending;
+        case ShowupUiState.done:
+          doneCount++;
+        case ShowupUiState.failed:
+          failedCount++;
+      }
+    }
+    return doneCount >= failedCount ? done : failed;
+  }
 }

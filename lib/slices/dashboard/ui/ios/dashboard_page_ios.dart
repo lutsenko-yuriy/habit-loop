@@ -246,7 +246,7 @@ class _CalendarStrip extends StatelessWidget {
                   showups: entry.showups,
                   date: entry.date,
                   colors: ShowupStatusColors.cupertino(context),
-                  uiStates: _deriveUiStates(entry.showups, state.reminderOffsetByPactId),
+                  uiStates: deriveUiStates(entry.showups, state.reminderOffsetByPactId),
                 ),
               ],
             ),
@@ -254,23 +254,6 @@ class _CalendarStrip extends StatelessWidget {
         }),
       ),
     );
-  }
-
-  /// Derives the time-based [ShowupUiState] for each showup in [showups],
-  /// using the current time sampled once for the entire list.
-  static List<ShowupUiState> _deriveUiStates(
-    List<Showup> showups,
-    Map<String, Duration?> reminderOffsetByPactId,
-  ) {
-    final now = DateTime.now();
-    return [
-      for (final s in showups)
-        deriveShowupUiState(
-          showup: s,
-          now: now,
-          reminderOffset: reminderOffsetByPactId[s.pactId],
-        ),
-    ];
   }
 }
 

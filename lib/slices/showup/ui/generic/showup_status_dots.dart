@@ -48,58 +48,31 @@ class ShowupStatusDots extends StatelessWidget {
     final useUiStates = uiStates != null && uiStates!.length == showups.length;
 
     if (showups.length >= 4) {
-      if (useUiStates) {
-        // Derive counts from UI states for correct overflow dot colouring.
-        var done = 0, failed = 0, active = 0, planned = 0;
-        for (final s in uiStates!) {
-          switch (s) {
-            case ShowupUiState.done:
-              done++;
-            case ShowupUiState.failed:
-              failed++;
-            case ShowupUiState.pending:
-            case ShowupUiState.waitingForStart:
-              active++;
-            case ShowupUiState.planned:
-              planned++;
-          }
-        }
-        final overflowColor = active > 0
-            ? colors.waitingForStart
-            : planned > 0
-                ? colors.pending
-                : done >= failed
-                    ? colors.done
-                    : colors.failed;
-        return Container(
-          key: Key('status-dot-overflow-${_dateKey(date)}'),
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: overflowColor),
-        );
-      } else {
-        var done = 0, failed = 0, pending = 0;
-        for (final s in showups) {
-          switch (s.status) {
-            case ShowupStatus.done:
-              done++;
-            case ShowupStatus.failed:
-              failed++;
-            case ShowupStatus.pending:
-              pending++;
-          }
-        }
-        final dateKey = _dateKey(date);
-        return Container(
-          key: Key('status-dot-overflow-$dateKey'),
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: colors.overflow(doneCount: done, failedCount: failed, pendingCount: pending),
-          ),
-        );
-      }
+      // When UI states are available use the richer overflowForUiState()
+      // resolver so the amber "active" signal is surfaced; otherwise fall back
+      // to the simpler done/failed/pending count via overflow().
+      final overflowColor = useUiStates
+          ? colors.overflowForUiState(uiStates!)
+          : () {
+              var done = 0, failed = 0, pending = 0;
+              for (final s in showups) {
+                switch (s.status) {
+                  case ShowupStatus.done:
+                    done++;
+                  case ShowupStatus.failed:
+                    failed++;
+                  case ShowupStatus.pending:
+                    pending++;
+                }
+              }
+              return colors.overflow(doneCount: done, failedCount: failed, pendingCount: pending);
+            }();
+      return Container(
+        key: Key('status-dot-overflow-${_dateKey(date)}'),
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: overflowColor),
+      );
     }
 
     Widget dot(Showup s, int index) {

@@ -1,4 +1,5 @@
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 /// Immutable state for the showup detail screen.
 ///
@@ -16,6 +17,13 @@ class ShowupDetailState {
   /// labels ("Planned", "Waiting for start") instead of the raw domain status.
   /// Null when the pact has no reminder set or the pact could not be found.
   final Duration? reminderOffset;
+
+  /// The time-derived UI state for the loaded showup. Derived in
+  /// [ShowupDetailViewModel.load] using [showupDetailNowProvider] so the
+  /// badge always reflects the clock at the moment the screen opened, not
+  /// the widget-build time. Defaults to [ShowupUiState.planned] until loading
+  /// completes.
+  final ShowupUiState uiState;
 
   /// True while an initial load is in progress.
   final bool isLoading;
@@ -47,6 +55,7 @@ class ShowupDetailState {
     this.showup,
     this.habitName,
     this.reminderOffset,
+    this.uiState = ShowupUiState.planned,
     this.isLoading = true,
     this.loadError,
     this.isSaving = false,
@@ -61,6 +70,7 @@ class ShowupDetailState {
     String? habitName,
     Duration? reminderOffset,
     bool clearReminderOffset = false,
+    ShowupUiState? uiState,
     bool? isLoading,
     Object? loadError,
     bool clearLoadError = false,
@@ -76,6 +86,7 @@ class ShowupDetailState {
       showup: showup ?? this.showup,
       habitName: habitName ?? this.habitName,
       reminderOffset: clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
+      uiState: uiState ?? this.uiState,
       isLoading: isLoading ?? this.isLoading,
       loadError: clearLoadError ? null : (loadError ?? this.loadError),
       isSaving: isSaving ?? this.isSaving,

@@ -250,28 +250,11 @@ class _CalendarDay extends StatelessWidget {
             showups: entry.showups,
             date: entry.date,
             colors: ShowupStatusColors.material(theme.colorScheme),
-            uiStates: _deriveUiStates(entry.showups, reminderOffsetByPactId),
+            uiStates: deriveUiStates(entry.showups, reminderOffsetByPactId),
           ),
         ],
       ),
     );
-  }
-
-  /// Derives the time-based [ShowupUiState] for each showup in [showups],
-  /// using the current time sampled once for the entire list.
-  static List<ShowupUiState> _deriveUiStates(
-    List<Showup> showups,
-    Map<String, Duration?> reminderOffsetByPactId,
-  ) {
-    final now = DateTime.now();
-    return [
-      for (final s in showups)
-        deriveShowupUiState(
-          showup: s,
-          now: now,
-          reminderOffset: reminderOffsetByPactId[s.pactId],
-        ),
-    ];
   }
 }
 

@@ -3,7 +3,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 
 /// Material (Android) implementation of the showup detail screen.
 class ShowupDetailPageAndroid extends StatefulWidget {
@@ -124,13 +124,10 @@ class _ShowupDetailContent extends StatelessWidget {
     final durationMins = showup.duration.inMinutes;
     final isPending = showup.status == ShowupStatus.pending;
 
-    // Derive the time-sensitive UI state so the chip shows "Planned" or
-    // "Waiting for start" rather than the raw domain "Pending" label.
-    final uiState = deriveShowupUiState(
-      showup: showup,
-      now: DateTime.now(),
-      reminderOffset: state.reminderOffset,
-    );
+    // uiState is derived in ShowupDetailViewModel.load() using the injectable
+    // showupDetailNowProvider clock — not DateTime.now() — so it is testable
+    // and consistent with the auto-fail outcome computed at screen open time.
+    final uiState = state.uiState;
     final statusText = showupUiStateText(l10n, uiState);
 
     return ListView(
@@ -147,9 +144,10 @@ class _ShowupDetailContent extends StatelessWidget {
             ),
             Chip(
               label: Text(statusText),
-              backgroundColor: _statusChipBg(uiState, theme.colorScheme),
+              backgroundColor:
+                  ShowupStatusColors.material(theme.colorScheme).forUiState(uiState).withValues(alpha: 0.2),
               labelStyle: TextStyle(
-                color: _statusChipFg(uiState, theme.colorScheme),
+                color: ShowupStatusColors.material(theme.colorScheme).forUiState(uiState),
                 fontWeight: FontWeight.w600,
               ),
               side: BorderSide.none,
@@ -258,22 +256,6 @@ class _ShowupDetailContent extends StatelessWidget {
       ],
     );
   }
-
-  Color _statusChipBg(ShowupUiState state, ColorScheme cs) => switch (state) {
-        ShowupUiState.planned => cs.surfaceContainerHighest,
-        ShowupUiState.waitingForStart => Colors.amber.withValues(alpha: 0.2),
-        ShowupUiState.pending => cs.surfaceContainerHighest,
-        ShowupUiState.done => cs.secondaryContainer,
-        ShowupUiState.failed => cs.errorContainer,
-      };
-
-  Color _statusChipFg(ShowupUiState state, ColorScheme cs) => switch (state) {
-        ShowupUiState.planned => cs.onSurfaceVariant,
-        ShowupUiState.waitingForStart => Colors.amber.shade800,
-        ShowupUiState.pending => cs.onSurfaceVariant,
-        ShowupUiState.done => cs.onSecondaryContainer,
-        ShowupUiState.failed => cs.onErrorContainer,
-      };
 }
 
 class _InfoRow extends StatelessWidget {

@@ -55,3 +55,28 @@ ShowupUiState deriveShowupUiState({
   // Rule 5: nothing has happened yet.
   return ShowupUiState.planned;
 }
+
+/// Derives the time-based [ShowupUiState] for each showup in [showups],
+/// sampling [DateTime.now()] once for the entire list.
+///
+/// Pass the pact's reminder offset map so the reminder-fired window
+/// ([ShowupUiState.waitingForStart]) is correctly signalled on the calendar
+/// strip.
+///
+/// TODO(HAB-54): add a periodic timer in DashboardViewModel to invalidate
+/// the dashboard state at the next reminderFiresAt / scheduledAt crossing
+/// so dots auto-update while the screen is open (currently requires resume).
+List<ShowupUiState> deriveUiStates(
+  List<Showup> showups,
+  Map<String, Duration?> reminderOffsetByPactId,
+) {
+  final now = DateTime.now();
+  return [
+    for (final s in showups)
+      deriveShowupUiState(
+        showup: s,
+        now: now,
+        reminderOffset: reminderOffsetByPactId[s.pactId],
+      ),
+  ];
+}
