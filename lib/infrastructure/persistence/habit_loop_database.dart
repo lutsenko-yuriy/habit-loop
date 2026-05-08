@@ -39,7 +39,20 @@ class HabitLoopDatabase {
         // background notification handler isolate can operate simultaneously
         // without producing SQLITE_BUSY errors. WAL allows one writer and
         // multiple readers at the same time.
-        await db.execute('PRAGMA journal_mode=WAL');
+        //
+        // Use rawQuery (not execute) because PRAGMA journal_mode=WAL returns a
+        // result row — on Android, execSQL() (which backs execute()) throws for
+        // statements that return results.  We ignore the returned mode name;
+        // if WAL is unavailable the database silently falls back to the default
+        // journal mode and the app continues to work correctly.
+        try {
+          await db.rawQuery('PRAGMA journal_mode=WAL');
+        } catch (_) {
+          // WAL mode is best-effort; a failure must not prevent the database
+          // from opening.  The main risk without WAL is SQLITE_BUSY when the
+          // background notification isolate and the main isolate write
+          // simultaneously — acceptable given the low concurrency window.
+        }
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: runMigrations,
@@ -111,7 +124,9 @@ class HabitLoopDatabase {
       options: OpenDatabaseOptions(
         version: 1,
         onConfigure: (db) async {
-          await db.execute('PRAGMA journal_mode=WAL');
+          try {
+            await db.rawQuery('PRAGMA journal_mode=WAL');
+          } catch (_) {}
           await db.execute('PRAGMA foreign_keys = ON');
         },
         onCreate: runMigrations,

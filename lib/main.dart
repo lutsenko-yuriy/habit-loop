@@ -461,7 +461,12 @@ Future<void> main() async {
       }
     });
   } catch (e, st) {
-    debugPrint('Failed to open database: $e\n$st');
+    // Record to Crashlytics so we have a stack trace in production.
+    // earlycrashlytics is always constructed above (before this try block).
+    try {
+      unawaited(earlycrashlytics.recordError(e, st));
+    } catch (_) {}
+    debugPrint('Failed during app initialisation: $e\n$st');
     runApp(const _DatabaseErrorApp());
   }
 }
