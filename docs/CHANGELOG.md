@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.22.2] — 2026-05-08 (PR #62 merged)
+
+### Fixed — iOS cold-start notification tap navigation
+
+- On iOS, `flutter_local_notifications` v9+ calls `onDidReceiveNotificationResponse` during `initialize()` — before `runApp()` has mounted the widget tree — so `_navigatorKey.currentState` was `null` and the navigation was silently dropped, leaving the user on the dashboard instead of the showup detail screen
+- Fix: warm-start taps (navigator already mounted) navigate immediately; cold-start taps (navigator is `null`) defer the push via `addPostFrameCallback` so it fires after the first frame when the navigator is guaranteed to be ready
+- `_notificationNavigationHandled` flag prevents the `getAppLaunchDetails()` `addPostFrameCallback` path from also pushing a route on the same cold-start (double-navigation guard); the flag resets after the cold-start frame so subsequent warm-start taps are never blocked
+
+---
+
 ## [0.22.1] — 2026-05-08 (PR #61 merged)
 
 ### Fixed — WAL pragma crash on Android upgrade from v0.19.0

@@ -67,6 +67,20 @@ final _navigatorKey = GlobalKey<NavigatorState>();
 /// in case the callback fires before [main] completes.
 ProviderContainer? _container;
 
+/// Guards against double navigation when both [onDidReceiveNotificationResponse]
+/// and the cold-start [getAppLaunchDetails] path would each push a
+/// [ShowupDetailScreen] for the same tap.
+///
+/// On iOS, [flutter_local_notifications] calls [onDidReceiveNotificationResponse]
+/// during [FlutterLocalNotificationsPlugin.initialize] (before [runApp]) for
+/// cold-start notification taps. At that point [_navigatorKey.currentState] is
+/// null, so we defer navigation to a [WidgetsBinding.addPostFrameCallback].
+/// The [getAppLaunchDetails] path in [main] fires its own [addPostFrameCallback]
+/// and could push a second route. This flag ensures only one of the two paths
+/// actually navigates. It resets to `false` after the cold-start frame so
+/// subsequent warm-start taps are not suppressed.
+bool _notificationNavigationHandled = false;
+
 /// Background notification response handler for Android.
 ///
 /// Called by [flutter_local_notifications] in a **separate background isolate**
@@ -328,19 +342,44 @@ Future<void> main() async {
         }
 
         // Default: user tapped the notification body — navigate to showup detail.
-        NotificationNavigator.navigateToShowup(
-          navigatorKey: _navigatorKey,
-          showupId: parsed.showupId,
-        );
-        // Fire deep-link analytics. This is a warm start because the app
-        // was already running in the background when the user tapped the
-        // notification.
+        //
+        // On iOS, flutter_local_notifications invokes this callback during
+        // FlutterLocalNotificationsPlugin.initialize() for cold starts (before
+        // runApp mounts the widget tree). _navigatorKey.currentState is null at
+        // that moment, so we must defer the push to the next frame rather than
+        // dropping it. For warm starts the navigator is already mounted and the
+        // push happens immediately.
+        final coldStart = _navigatorKey.currentState == null;
+        if (!coldStart) {
+          // Warm start — navigator ready, push now.
+          _notificationNavigationHandled = true;
+          NotificationNavigator.navigateToShowup(
+            navigatorKey: _navigatorKey,
+            showupId: parsed.showupId,
+          );
+        } else {
+          // Cold start — defer to the first post-frame, at which point the
+          // navigator will be mounted. The _notificationNavigationHandled flag
+          // prevents the getAppLaunchDetails() path from also pushing a route.
+          final deferredShowupId = parsed.showupId;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!_notificationNavigationHandled) {
+              _notificationNavigationHandled = true;
+              NotificationNavigator.navigateToShowup(
+                navigatorKey: _navigatorKey,
+                showupId: deferredShowupId,
+              );
+            }
+          });
+        }
+        // Fire deep-link analytics. coldStart reflects whether the navigator was
+        // mounted when the callback fired — a reliable proxy for app lifecycle state.
         unawaited(
           notificationAnalyticsService?.logEvent(
             AppOpenedFromNotificationEvent(
               pactId: parsed.pactId,
               showupId: parsed.showupId,
-              coldStart: false,
+              coldStart: coldStart,
             ),
           ),
         );
@@ -434,14 +473,31 @@ Future<void> main() async {
       ),
     );
 
-    // Cold-start: if the app was launched by tapping a notification (i.e. the
-    // app was killed), navigate to the showup detail screen after the first
-    // frame is rendered and the widget tree is mounted.
+    // Cold-start fallback: if the notification response callback fired during
+    // initialize() and already deferred navigation via addPostFrameCallback,
+    // _notificationNavigationHandled will be set to true by that deferred
+    // callback before this one runs (both fire on the same first frame, in
+    // registration order: the callback's defer was registered first). In that
+    // case we skip getAppLaunchDetails() to avoid a double push.
+    //
+    // If the callback did NOT fire (e.g. Android cold start where the response
+    // is not replayed during initialize()), we fall back to getAppLaunchDetails()
+    // which is the correct cold-start path on Android.
+    //
+    // Reset _notificationNavigationHandled after this frame so future warm-start
+    // taps handled solely by onDidReceiveNotificationResponse are not blocked.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_notificationNavigationHandled) {
+        // Navigation was already triggered by the deferred callback from
+        // onDidReceiveNotificationResponse. Reset for next warm-start tap.
+        _notificationNavigationHandled = false;
+        return;
+      }
       final launchInfo = await notificationService.getAppLaunchDetails();
       if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.payload != null) {
         final parsed = NotificationRouter.parsePayload(launchInfo.payload);
         if (parsed != null) {
+          _notificationNavigationHandled = true;
           NotificationNavigator.navigateToShowup(
             navigatorKey: _navigatorKey,
             showupId: parsed.showupId,
@@ -457,6 +513,8 @@ Future<void> main() async {
               ),
             ),
           );
+          // Reset so future warm-start taps are not blocked.
+          _notificationNavigationHandled = false;
         }
       }
     });
