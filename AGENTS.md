@@ -40,7 +40,7 @@ Use the Flutter binary path from `CLAUDE.local.md` (it is not on the default she
 - **Run all tests:** `flutter test`
 - **Run a single test file:** `flutter test test/path/to/test_file.dart`
 - **Get dependencies:** `flutter pub get`
-- **Regenerate localizations:** `flutter gen-l10n`
+- **Regenerate localizations:** `flutter gen-l10n` — **must be run after editing any `lib/l10n/*.arb` file**; the generated `lib/l10n/generated/` files are in `.gitignore` and are not committed. CI runs this step automatically before tests and builds.
 
 ## Code style
 
