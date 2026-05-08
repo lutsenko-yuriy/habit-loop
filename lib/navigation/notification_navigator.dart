@@ -29,6 +29,7 @@ abstract final class NotificationNavigator {
       debugPrint('[NotificationNavigator] navigateToShowup: navigatorKey has no current state — skipping navigation');
       return;
     }
+    debugPrint('[NotificationNavigator] pushing ShowupDetailScreen for showupId=$showupId');
     unawaited(
       state.push(
         defaultTargetPlatform == TargetPlatform.iOS

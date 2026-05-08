@@ -305,14 +305,16 @@ Future<void> main() async {
   FirebaseAnalyticsService? notificationAnalyticsService;
 
   // Initialise notification service before runApp so the plugin and Android
-  // channel are ready when the first frame renders. Only wire the real plugin
-  // in release builds — debug/profile use the silent NoopNotificationService.
+  // channel are ready when the first frame renders. The real plugin is used in
+  // all build modes (debug, profile, release) so notification navigation can be
+  // tested with plain `flutter run`. Unit tests are unaffected because they
+  // never call main() — they override notificationServiceProvider directly.
   //
   // timezone.initializeTimeZones() and FlutterTimezone.getLocalTimezone() are
   // called inside FlutterLocalNotificationService.initialize() so this block
   // just constructs the service and awaits its initialisation.
   NotificationService notificationService = NoopNotificationService();
-  if (kReleaseMode) {
+  {
     final realService = FlutterLocalNotificationService(earlycrashlytics);
     try {
       // Wire the background handler before initialize() so the plugin passes it
@@ -327,8 +329,12 @@ Future<void> main() async {
       // assigned by the time the user can interact with a notification
       // (after runApp completes). The `?.` guard is a safety net only.
       realService.setNotificationResponseCallback((NotificationResponse response) {
+        debugPrint('[Notif] response received — actionId=${response.actionId} payload=${response.payload}');
         final parsed = NotificationRouter.parsePayload(response.payload);
-        if (parsed == null) return;
+        if (parsed == null) {
+          debugPrint('[Notif] payload parse failed — skipping navigation');
+          return;
+        }
 
         if (response.actionId == NotificationConstants.markDoneActionId) {
           // The user tapped "Mark done" from the notification tray while the
@@ -337,6 +343,7 @@ Future<void> main() async {
           // the widget tree will reflect the change without requiring a reload.
           // Do NOT navigate to ShowupDetailScreen: the user chose to act
           // without opening the app.
+          debugPrint('[Notif] mark-done action — showupId=${parsed.showupId}');
           unawaited(_markShowupDoneFromForeground(parsed.showupId, parsed.pactId));
           return;
         }
@@ -350,6 +357,7 @@ Future<void> main() async {
         // dropping it. For warm starts the navigator is already mounted and the
         // push happens immediately.
         final coldStart = _navigatorKey.currentState == null;
+        debugPrint('[Notif] body tap — coldStart=$coldStart showupId=${parsed.showupId}');
         if (!coldStart) {
           // Warm start — navigator ready, push now.
           _notificationNavigationHandled = true;
@@ -363,6 +371,7 @@ Future<void> main() async {
           // prevents the getAppLaunchDetails() path from also pushing a route.
           final deferredShowupId = parsed.showupId;
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            debugPrint('[Notif] cold-start deferred callback — handled=$_notificationNavigationHandled');
             if (!_notificationNavigationHandled) {
               _notificationNavigationHandled = true;
               NotificationNavigator.navigateToShowup(
@@ -487,6 +496,7 @@ Future<void> main() async {
     // Reset _notificationNavigationHandled after this frame so future warm-start
     // taps handled solely by onDidReceiveNotificationResponse are not blocked.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      debugPrint('[Notif] post-frame callback — handled=$_notificationNavigationHandled');
       if (_notificationNavigationHandled) {
         // Navigation was already triggered by the deferred callback from
         // onDidReceiveNotificationResponse. Reset for next warm-start tap.
@@ -494,6 +504,7 @@ Future<void> main() async {
         return;
       }
       final launchInfo = await notificationService.getAppLaunchDetails();
+      debugPrint('[Notif] getAppLaunchDetails — didLaunch=${launchInfo?.didNotificationLaunchApp} payload=${launchInfo?.payload}');
       if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.payload != null) {
         final parsed = NotificationRouter.parsePayload(launchInfo.payload);
         if (parsed != null) {
