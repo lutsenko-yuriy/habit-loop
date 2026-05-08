@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show P
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 class DashboardPageIos extends ConsumerWidget {
   final DashboardState state;
@@ -245,6 +246,7 @@ class _CalendarStrip extends StatelessWidget {
                   showups: entry.showups,
                   date: entry.date,
                   colors: ShowupStatusColors.cupertino(context),
+                  uiStates: _deriveUiStates(entry.showups, state.reminderOffsetByPactId),
                 ),
               ],
             ),
@@ -252,6 +254,23 @@ class _CalendarStrip extends StatelessWidget {
         }),
       ),
     );
+  }
+
+  /// Derives the time-based [ShowupUiState] for each showup in [showups],
+  /// using the current time sampled once for the entire list.
+  static List<ShowupUiState> _deriveUiStates(
+    List<Showup> showups,
+    Map<String, Duration?> reminderOffsetByPactId,
+  ) {
+    final now = DateTime.now();
+    return [
+      for (final s in showups)
+        deriveShowupUiState(
+          showup: s,
+          now: now,
+          reminderOffset: reminderOffsetByPactId[s.pactId],
+        ),
+    ];
   }
 }
 

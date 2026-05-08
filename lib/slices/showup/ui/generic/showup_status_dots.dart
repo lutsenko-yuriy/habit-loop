@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 /// Renders the small colored dot(s) shown under a day in the dashboard
 /// calendar strip. Extracted from `dashboard_page_ios.dart` and
@@ -24,56 +25,101 @@ class ShowupStatusDots extends StatelessWidget {
   final DateTime date;
   final ShowupStatusColors colors;
 
+  /// Optional time-derived UI states for each showup. When provided (and the
+  /// list length matches [showups]), dots are coloured using [ShowupStatusColors.forUiState]
+  /// instead of [ShowupStatusColors.forStatus]. This surfaces the
+  /// [ShowupUiState.waitingForStart] yellow signal on the calendar strip.
+  ///
+  /// When null or when lengths do not match, falls back to [forStatus] behaviour.
+  final List<ShowupUiState>? uiStates;
+
   const ShowupStatusDots({
     super.key,
     required this.showups,
     required this.date,
     required this.colors,
+    this.uiStates,
   });
 
   @override
   Widget build(BuildContext context) {
     if (showups.isEmpty) return const SizedBox.shrink();
 
+    final useUiStates = uiStates != null && uiStates!.length == showups.length;
+
     if (showups.length >= 4) {
-      var done = 0, failed = 0, pending = 0;
-      for (final s in showups) {
-        switch (s.status) {
-          case ShowupStatus.done:
-            done++;
-          case ShowupStatus.failed:
-            failed++;
-          case ShowupStatus.pending:
-            pending++;
+      if (useUiStates) {
+        // Derive counts from UI states for correct overflow dot colouring.
+        var done = 0, failed = 0, active = 0, planned = 0;
+        for (final s in uiStates!) {
+          switch (s) {
+            case ShowupUiState.done:
+              done++;
+            case ShowupUiState.failed:
+              failed++;
+            case ShowupUiState.pending:
+            case ShowupUiState.waitingForStart:
+              active++;
+            case ShowupUiState.planned:
+              planned++;
+          }
         }
+        final overflowColor = active > 0
+            ? colors.waitingForStart
+            : planned > 0
+                ? colors.pending
+                : done >= failed
+                    ? colors.done
+                    : colors.failed;
+        return Container(
+          key: Key('status-dot-overflow-${_dateKey(date)}'),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: overflowColor),
+        );
+      } else {
+        var done = 0, failed = 0, pending = 0;
+        for (final s in showups) {
+          switch (s.status) {
+            case ShowupStatus.done:
+              done++;
+            case ShowupStatus.failed:
+              failed++;
+            case ShowupStatus.pending:
+              pending++;
+          }
+        }
+        final dateKey = _dateKey(date);
+        return Container(
+          key: Key('status-dot-overflow-$dateKey'),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: colors.overflow(doneCount: done, failedCount: failed, pendingCount: pending),
+          ),
+        );
       }
-      final dateKey = _dateKey(date);
+    }
+
+    Widget dot(Showup s, int index) {
+      final color = useUiStates ? colors.forUiState(uiStates![index]) : colors.forStatus(s.status);
       return Container(
-        key: Key('status-dot-overflow-$dateKey'),
-        width: 10,
-        height: 10,
+        key: Key('status-dot-${s.id}'),
+        width: 6,
+        height: 6,
+        margin: const EdgeInsets.symmetric(horizontal: 1),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: colors.overflow(doneCount: done, failedCount: failed, pendingCount: pending),
+          color: color,
         ),
       );
     }
 
-    Widget dot(Showup s) => Container(
-          key: Key('status-dot-${s.id}'),
-          width: 6,
-          height: 6,
-          margin: const EdgeInsets.symmetric(horizontal: 1),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: colors.forStatus(s.status),
-          ),
-        );
-
     if (showups.length <= 2) {
       return Row(
         mainAxisSize: MainAxisSize.min,
-        children: showups.map(dot).toList(),
+        children: [for (var i = 0; i < showups.length; i++) dot(showups[i], i)],
       );
     }
 
@@ -81,8 +127,8 @@ class ShowupStatusDots extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(mainAxisSize: MainAxisSize.min, children: [dot(showups[0]), dot(showups[1])]),
-        Row(mainAxisSize: MainAxisSize.min, children: [dot(showups[2])]),
+        Row(mainAxisSize: MainAxisSize.min, children: [dot(showups[0], 0), dot(showups[1], 1)]),
+        Row(mainAxisSize: MainAxisSize.min, children: [dot(showups[2], 2)]),
       ],
     );
   }

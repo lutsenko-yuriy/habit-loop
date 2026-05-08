@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show ColorScheme;
+import 'package:flutter/material.dart' show Colors, ColorScheme;
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 /// Platform-agnostic showup-status color palette used by dashboard status
 /// dots and showup list-tile leading icons.
@@ -26,10 +27,17 @@ class ShowupStatusColors {
   final Color failed;
   final Color pending;
 
+  /// Colour used for the [ShowupUiState.waitingForStart] state (reminder fired
+  /// but showup has not started yet). Also used for [ShowupUiState.pending]
+  /// when derived via [forUiState] so that both active states share the same
+  /// yellow/amber visual signal.
+  final Color waitingForStart;
+
   const ShowupStatusColors({
     required this.done,
     required this.failed,
     required this.pending,
+    required this.waitingForStart,
   });
 
   /// Returns a Cupertino palette with Cupertino system colours resolved against
@@ -41,6 +49,7 @@ class ShowupStatusColors {
         done: CupertinoColors.activeGreen.resolveFrom(context),
         failed: CupertinoColors.destructiveRed.resolveFrom(context),
         pending: CupertinoColors.systemGrey.resolveFrom(context),
+        waitingForStart: CupertinoColors.systemYellow.resolveFrom(context),
       );
 
   /// Material palette derived from a [ColorScheme]: secondary / error /
@@ -49,6 +58,7 @@ class ShowupStatusColors {
         done: cs.secondary,
         failed: cs.error,
         pending: cs.onSurfaceVariant,
+        waitingForStart: Colors.amber,
       );
 
   /// Returns the color for a single showup status.
@@ -56,6 +66,21 @@ class ShowupStatusColors {
         ShowupStatus.done => done,
         ShowupStatus.failed => failed,
         ShowupStatus.pending => pending,
+      };
+
+  /// Returns the color for a time-derived [ShowupUiState].
+  ///
+  /// - [ShowupUiState.planned] → gray (same as unresolved pending color)
+  /// - [ShowupUiState.waitingForStart] → yellow / amber
+  /// - [ShowupUiState.pending] → yellow / amber (active window)
+  /// - [ShowupUiState.done] → green
+  /// - [ShowupUiState.failed] → red
+  Color forUiState(ShowupUiState state) => switch (state) {
+        ShowupUiState.planned => pending,
+        ShowupUiState.waitingForStart => waitingForStart,
+        ShowupUiState.pending => waitingForStart,
+        ShowupUiState.done => done,
+        ShowupUiState.failed => failed,
       };
 
   /// Returns the color shown for the single "overflow" dot on calendar days

@@ -11,6 +11,12 @@ class ShowupDetailState {
   /// Null until loading completes.
   final String? habitName;
 
+  /// The reminder offset from the pact associated with this showup. Used to
+  /// derive [ShowupUiState] so the detail screen can display time-sensitive
+  /// labels ("Planned", "Waiting for start") instead of the raw domain status.
+  /// Null when the pact has no reminder set or the pact could not be found.
+  final Duration? reminderOffset;
+
   /// True while an initial load is in progress.
   final bool isLoading;
 
@@ -40,6 +46,7 @@ class ShowupDetailState {
   const ShowupDetailState({
     this.showup,
     this.habitName,
+    this.reminderOffset,
     this.isLoading = true,
     this.loadError,
     this.isSaving = false,
@@ -52,6 +59,8 @@ class ShowupDetailState {
   ShowupDetailState copyWith({
     Showup? showup,
     String? habitName,
+    Duration? reminderOffset,
+    bool clearReminderOffset = false,
     bool? isLoading,
     Object? loadError,
     bool clearLoadError = false,
@@ -66,6 +75,7 @@ class ShowupDetailState {
     return ShowupDetailState(
       showup: showup ?? this.showup,
       habitName: habitName ?? this.habitName,
+      reminderOffset: clearReminderOffset ? null : (reminderOffset ?? this.reminderOffset),
       isLoading: isLoading ?? this.isLoading,
       loadError: clearLoadError ? null : (loadError ?? this.loadError),
       isSaving: isSaving ?? this.isSaving,

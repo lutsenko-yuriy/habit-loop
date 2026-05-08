@@ -295,7 +295,11 @@ void main() {
       expect(decoration.color, isNot(equals(Colors.grey)));
     });
 
-    testWidgets('overflow dot is grey when any showup is still pending', (tester) async {
+    testWidgets('overflow dot is amber when any showup is in active/past window (pending UI state)', (tester) async {
+      // All showups are scheduled in the past (March 2026) with domain status
+      // pending. Since now > scheduledAt for all of them, deriveShowupUiState
+      // returns ShowupUiState.pending → amber overflow dot. This is the
+      // time-derived "active window" signal, replacing the old grey behaviour.
       final showups = List.generate(
           4,
           (i) => Showup(
@@ -324,11 +328,17 @@ void main() {
         find.byKey(const Key('status-dot-overflow-2026-03-29')),
       );
       final decoration = dot.decoration! as BoxDecoration;
-      final expectedColor = Theme.of(tester.element(find.byType(DashboardScreen))).colorScheme.onSurfaceVariant;
-      expect(decoration.color, equals(expectedColor));
+      // All showups are past pending → amber (not grey, not green, not red).
+      final greyColor = Theme.of(tester.element(find.byType(DashboardScreen))).colorScheme.onSurfaceVariant;
+      expect(decoration.color, isNot(equals(greyColor)));
+      expect(decoration.color, equals(Colors.amber));
     });
 
-    testWidgets('overflow dot is grey when some done but some still pending', (tester) async {
+    testWidgets('overflow dot is amber when some done but one is in active/past window', (tester) async {
+      // The domain-pending showup 'd' is scheduled in the past (March 29,
+      // 10 AM). Since now > scheduledAt, its derived UI state is
+      // ShowupUiState.pending → amber overflow dot, regardless of the done
+      // majority. Any active/past-window showup colours the overflow amber.
       final showups = [
         Showup(
             id: 'a',
@@ -374,8 +384,8 @@ void main() {
         find.byKey(const Key('status-dot-overflow-2026-03-29')),
       );
       final decoration = dot.decoration! as BoxDecoration;
-      final expectedColor = Theme.of(tester.element(find.byType(DashboardScreen))).colorScheme.onSurfaceVariant;
-      expect(decoration.color, equals(expectedColor));
+      // One showup is past-pending → amber (not grey, not green).
+      expect(decoration.color, equals(Colors.amber));
     });
 
     testWidgets('shows dialog when 3 or more active pacts exist on create tap', (tester) async {

@@ -3,6 +3,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 /// Material (Android) implementation of the showup detail screen.
 class ShowupDetailPageAndroid extends StatefulWidget {
@@ -123,7 +124,14 @@ class _ShowupDetailContent extends StatelessWidget {
     final durationMins = showup.duration.inMinutes;
     final isPending = showup.status == ShowupStatus.pending;
 
-    final statusText = showupStatusText(l10n, showup.status);
+    // Derive the time-sensitive UI state so the chip shows "Planned" or
+    // "Waiting for start" rather than the raw domain "Pending" label.
+    final uiState = deriveShowupUiState(
+      showup: showup,
+      now: DateTime.now(),
+      reminderOffset: state.reminderOffset,
+    );
+    final statusText = showupUiStateText(l10n, uiState);
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -139,9 +147,9 @@ class _ShowupDetailContent extends StatelessWidget {
             ),
             Chip(
               label: Text(statusText),
-              backgroundColor: _statusChipBg(showup.status, theme.colorScheme),
+              backgroundColor: _statusChipBg(uiState, theme.colorScheme),
               labelStyle: TextStyle(
-                color: _statusChipFg(showup.status, theme.colorScheme),
+                color: _statusChipFg(uiState, theme.colorScheme),
                 fontWeight: FontWeight.w600,
               ),
               side: BorderSide.none,
@@ -251,16 +259,20 @@ class _ShowupDetailContent extends StatelessWidget {
     );
   }
 
-  Color _statusChipBg(ShowupStatus status, ColorScheme cs) => switch (status) {
-        ShowupStatus.pending => cs.surfaceContainerHighest,
-        ShowupStatus.done => cs.secondaryContainer,
-        ShowupStatus.failed => cs.errorContainer,
+  Color _statusChipBg(ShowupUiState state, ColorScheme cs) => switch (state) {
+        ShowupUiState.planned => cs.surfaceContainerHighest,
+        ShowupUiState.waitingForStart => Colors.amber.withValues(alpha: 0.2),
+        ShowupUiState.pending => cs.surfaceContainerHighest,
+        ShowupUiState.done => cs.secondaryContainer,
+        ShowupUiState.failed => cs.errorContainer,
       };
 
-  Color _statusChipFg(ShowupStatus status, ColorScheme cs) => switch (status) {
-        ShowupStatus.pending => cs.onSurfaceVariant,
-        ShowupStatus.done => cs.onSecondaryContainer,
-        ShowupStatus.failed => cs.onErrorContainer,
+  Color _statusChipFg(ShowupUiState state, ColorScheme cs) => switch (state) {
+        ShowupUiState.planned => cs.onSurfaceVariant,
+        ShowupUiState.waitingForStart => Colors.amber.shade800,
+        ShowupUiState.pending => cs.onSurfaceVariant,
+        ShowupUiState.done => cs.onSecondaryContainer,
+        ShowupUiState.failed => cs.onErrorContainer,
       };
 }
 

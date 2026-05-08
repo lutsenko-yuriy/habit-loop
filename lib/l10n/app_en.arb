@@ -10,6 +10,8 @@
   "showupDone": "Done",
   "showupFailed": "Failed",
   "showupPending": "Pending",
+  "showupPlanned": "Planned",
+  "showupWaitingForStart": "Waiting for start",
 
   "pactCreationTitle": "New Pact",
   "habitNameLabel": "Habit name",

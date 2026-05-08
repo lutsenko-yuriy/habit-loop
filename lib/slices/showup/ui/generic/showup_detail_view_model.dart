@@ -105,6 +105,8 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       state = state.copyWith(
         showup: showup,
         habitName: habitName,
+        reminderOffset: pact?.reminderOffset,
+        clearReminderOffset: pact?.reminderOffset == null,
         isLoading: false,
         wasAutoFailed: wasAutoFailed,
       );
