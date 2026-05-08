@@ -23,14 +23,24 @@ class DashboardScreen extends ConsumerStatefulWidget {
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsBindingObserver {
   bool _creatingPact = false;
+
+  /// The calendar date that was current the last time [load] was triggered.
+  /// Stored as a date-only value (time component stripped) so midnight crossings
+  /// are detected correctly regardless of the exact wall-clock time.
+  DateTime? _lastLoadDate;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(
       Future.microtask(() {
+        // Initialise _lastLoadDate from todayProvider so test overrides are
+        // respected: if a test injects a fixed date, the guard must compare
+        // against that same date rather than the wall-clock DateTime.now().
+        _lastLoadDate = _dateOnly(ref.read(todayProvider));
         unawaited(
           ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
         );
@@ -39,6 +49,34 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }),
     );
   }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final today = _dateOnly(ref.read(todayProvider));
+    if (today == _lastLoadDate) return;
+
+    // Calendar date has changed since the last load — invalidate providers and
+    // re-trigger the dashboard load so the calendar strip and showup list
+    // reflect the new day without requiring the user to restart the app.
+    _lastLoadDate = today;
+    ref.invalidate(todayProvider);
+    ref.invalidate(hasActivePactsProvider);
+    unawaited(
+      ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
+    );
+    unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+    unawaited(ref.read(pactListViewModelProvider.notifier).load());
+  }
+
+  /// Strips the time component from [dt], returning a midnight-normalised date.
+  DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 
   @override
   Widget build(BuildContext context) {
