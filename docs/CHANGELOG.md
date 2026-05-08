@@ -4,6 +4,21 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.23.0] — 2026-05-08 (PR #64 merged)
+
+### Added — Time-derived UI states: Planned and Waiting for start (HAB-54)
+
+- New `ShowupUiState` enum (`planned`, `waitingForStart`, `active`, `done`, `failed`) lives in the UI layer only — no domain model changes
+- `deriveShowupUiState()` pure function computes the UI state from `now`, `showup.scheduledAt`, `showup.duration`, `showup.status`, and the pact's `reminderOffset`; `reminderFiresAt = scheduledAt - reminderOffset` (null/zero offset collapses "Waiting for start" into "Planned")
+- Dashboard calendar strip: "planned" showups keep the existing empty gray circle; "waitingForStart" and "active" showups show a filled amber circle signalling "something is about to happen / happening now"
+- Showup detail status chip now shows all 5 derived state labels ("Planned", "Waiting for start", "Pending", "Done", "Failed") using the injectable `showupDetailNowProvider` clock
+- `ShowupStatusColors` extended with `waitingForStart` field, `forUiState()` and `overflowForUiState()` factory methods for consistent colour resolution across iOS and Android
+- `showupUiStateText()` formatter added to `showup_formatters.dart`
+- `deriveUiStates()` helper extracted to `generic/` eliminating iOS/Android duplication in the dashboard calendar strip
+- ARB keys added: `showupPlanned`, `showupWaitingForStart` in EN/FR/DE/RU; 852 tests passing, analyzer clean
+
+---
+
 ## [0.22.2] — 2026-05-08 (PR #62 merged)
 
 ### Fixed — iOS cold-start notification tap navigation
