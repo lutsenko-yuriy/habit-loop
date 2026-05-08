@@ -44,8 +44,9 @@ abstract final class AppContainer {
   /// - [crashlyticsService] — only provided in release builds.
   /// - [logService] — provided in debug/profile builds.
   /// - [remoteConfigService] — only provided in release builds.
-  /// - [notificationService] — only provided in release builds; debug/profile
-  ///   fall back to [NoopNotificationService].
+  /// - [notificationService] — provided in all build modes (debug, profile,
+  ///   release) so notification navigation can be tested with plain
+  ///   `flutter run`; `null` falls back to [NoopNotificationService].
   /// - [localePreferenceService] — provided when SharedPreferences is available;
   ///   `null` falls back to [NoopLocalePreferenceService]. When non-null, the
   ///   saved locale is fetched internally via [LocalePreferenceService.getSavedLocale]

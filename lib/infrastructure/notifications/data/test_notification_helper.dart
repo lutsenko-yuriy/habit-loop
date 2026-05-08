@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint, kReleaseMode;
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -23,6 +23,11 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 /// builds via tree-shaking once the call sites are guarded by [kDebugMode] /
 /// [kProfileMode].
 Future<void> scheduleTestNotification(NotificationService notificationService) async {
+  // Self-protection: call sites are guarded by kDebugMode/kProfileMode, but
+  // belt-and-suspenders ensures this never fires in production.
+  assert(!kReleaseMode, 'scheduleTestNotification must not be called in release builds');
+  if (kReleaseMode) return;
+
   final now = DateTime.now();
   // reminderOffset = Duration.zero means fireAt = scheduledAt (no subtraction).
   final fireAt = now.add(const Duration(seconds: 15));

@@ -329,11 +329,12 @@ Future<void> main() async {
       // assigned by the time the user can interact with a notification
       // (after runApp completes). The `?.` guard is a safety net only.
       realService.setNotificationResponseCallback((NotificationResponse response) {
-        if (kDebugMode)
+        if (kDebugMode) {
           debugPrint('[Notif] response received — actionId=${response.actionId} payload=${response.payload}');
+        }
         final parsed = NotificationRouter.parsePayload(response.payload);
         if (parsed == null) {
-          debugPrint('[Notif] payload parse failed — skipping navigation');
+          if (kDebugMode) debugPrint('[Notif] payload parse failed — skipping navigation');
           return;
         }
 
@@ -372,7 +373,8 @@ Future<void> main() async {
           // prevents the getAppLaunchDetails() path from also pushing a route.
           final deferredShowupId = parsed.showupId;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            debugPrint('[Notif] cold-start deferred callback — handled=$_notificationNavigationHandled');
+            if (kDebugMode)
+              debugPrint('[Notif] cold-start deferred callback — handled=$_notificationNavigationHandled');
             if (!_notificationNavigationHandled) {
               _notificationNavigationHandled = true;
               NotificationNavigator.navigateToShowup(
@@ -497,7 +499,7 @@ Future<void> main() async {
     // Reset _notificationNavigationHandled after this frame so future warm-start
     // taps handled solely by onDidReceiveNotificationResponse are not blocked.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      debugPrint('[Notif] post-frame callback — handled=$_notificationNavigationHandled');
+      if (kDebugMode) debugPrint('[Notif] post-frame callback — handled=$_notificationNavigationHandled');
       if (_notificationNavigationHandled) {
         // Navigation was already triggered by the deferred callback from
         // onDidReceiveNotificationResponse. Reset for next warm-start tap.
