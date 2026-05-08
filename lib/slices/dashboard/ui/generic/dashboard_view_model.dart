@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
 
 final todayProvider = Provider<DateTime>((ref) => DateTime.now());
@@ -21,12 +23,29 @@ final hasActivePactsProvider = FutureProvider<bool>((ref) async {
 });
 
 class DashboardViewModel extends Notifier<DashboardState> {
+  /// True while a [load] call is already awaiting completion.
+  ///
+  /// Guards against overlapping calls (e.g. initState + navigation-return both
+  /// triggering load simultaneously) which would run the auto-fail sweep twice
+  /// and fire duplicate [ShowupAutoFailedEvent]s.
+  bool _loadInProgress = false;
+
   @override
   DashboardState build() {
     return const DashboardState();
   }
 
   Future<void> load() async {
+    if (_loadInProgress) return;
+    _loadInProgress = true;
+    try {
+      await _loadInner();
+    } finally {
+      _loadInProgress = false;
+    }
+  }
+
+  Future<void> _loadInner() async {
     final today = ref.read(todayProvider);
     final todayNorm = DateTime(today.year, today.month, today.day);
     final pactRepo = ref.read(pactRepositoryProvider);
@@ -130,17 +149,86 @@ class DashboardViewModel extends Notifier<DashboardState> {
     }
 
     // -----------------------------------------------------------------------
-    // Build the 7-day strip starting from today - computedTodayIndex.
+    // Load the full 7-day strip in a single DB query.  The strip always starts
+    // at today - computedTodayIndex (≤ today - 3), so loading from today - 3
+    // covers the entire strip regardless of the final todayIndex value.
+    // This same list is reused for the auto-fail sweep below, eliminating a
+    // redundant round-trip.
     // -----------------------------------------------------------------------
     final stripStart = DateTime(todayNorm.year, todayNorm.month, todayNorm.day - computedTodayIndex);
     final stripEnd = DateTime(todayNorm.year, todayNorm.month, todayNorm.day + (6 - computedTodayIndex));
 
     final showups = await showupRepo.getShowupsForDateRange(stripStart, stripEnd);
 
+    // -----------------------------------------------------------------------
+    // Auto-fail sweep: transition any past-due pending showups in the past
+    // portion of the already-loaded strip list to ShowupStatus.failed.
+    //
+    // The strip query covers [stripStart, stripEnd] which includes today and
+    // past days; the wall-clock check (now.isAfter(scheduledAt + duration))
+    // guards against prematurely failing today's showups whose window has not
+    // yet elapsed.  The sweep is intentionally filtered in-memory from the
+    // strip list to avoid a second DB round-trip.
+    //
+    // A showup is eligible when ALL of the following hold:
+    //   1. status == ShowupStatus.pending
+    //   2. its pact is active
+    //   3. now.isAfter(scheduledAt + duration)  [window fully elapsed]
+    //
+    // TODO(perf): if multiple showups belong to the same pact, persistShowupStatus
+    //   is called once per showup, each triggering syncStats (getShowupsForPact +
+    //   updatePact).  A future optimisation could update all showup statuses in one
+    //   pass and then call syncStats once per distinct pact.  This is an N+1 against
+    //   the pacts table and is acceptable given the small sweep window (≤3 days).
+    // -----------------------------------------------------------------------
+    final pactStatsService = ref.read(pactStatsServiceProvider);
+    final schedulingService = ref.read(reminderSchedulingServiceProvider);
+    // Track showups that were successfully auto-failed so the calendar strip
+    // reflects the updated status without a second DB round-trip.
+    final Map<String, Showup> autoFailedById = {};
+    var autoFailedCount = 0;
+    for (final showup in showups) {
+      if (showup.status != ShowupStatus.pending) continue;
+      if (!activePactIds.contains(showup.pactId)) continue;
+      final windowEnd = showup.scheduledAt.add(showup.duration);
+      if (!today.isAfter(windowEnd)) continue;
+
+      try {
+        // Persist the failed status and refresh the stats cache.
+        await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed);
+      } catch (error, stackTrace) {
+        // A single bad row must not abort the entire sweep.  Log the error as
+        // a breadcrumb so production diagnostics capture it, then continue with
+        // the remaining showups.
+        unawaited(
+          crashlytics.log(
+            'auto_fail_sweep: error persisting showup ${showup.id}: $error',
+          ),
+        );
+        unawaited(ref.read(crashlyticsServiceProvider).recordError(error, stackTrace));
+        continue;
+      }
+      autoFailedById[showup.id] = showup.copyWith(status: ShowupStatus.failed);
+      // Fire analytics event (fire-and-forget — must not block the UI).
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+      );
+      // Cancel any scheduled reminder for this showup (fire-and-forget).
+      unawaited(schedulingService.cancelRemindersForShowup(showup.id));
+      autoFailedCount++;
+    }
+    if (autoFailedCount > 0) {
+      unawaited(crashlytics.log('auto_fail_sweep: count=$autoFailedCount'));
+    }
+
+    // Apply the auto-fail updates to the in-memory strip list so the calendar
+    // immediately reflects the new status without an extra DB round-trip.
+    final updatedShowups = autoFailedById.isEmpty ? showups : showups.map((s) => autoFailedById[s.id] ?? s).toList();
+
     final days = List.generate(7, (i) {
       final date = DateTime(stripStart.year, stripStart.month, stripStart.day + i);
       final dayShowups =
-          showups.where((s) => _sameDay(s.scheduledAt, date) && activePactIds.contains(s.pactId)).toList();
+          updatedShowups.where((s) => _sameDay(s.scheduledAt, date) && activePactIds.contains(s.pactId)).toList();
       return CalendarDayEntry(date: date, showups: dayShowups);
     });
 

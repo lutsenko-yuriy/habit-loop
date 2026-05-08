@@ -29,8 +29,9 @@ final class ShowupMarkedFailedEvent extends AnalyticsEvent {
   Map<String, Object?> toParameters() => {'pact_id': pactId};
 }
 
-/// Fired when a showup is automatically transitioned to failed because the
-/// showup detail screen was opened after the scheduled window has passed.
+/// Fired when a showup is automatically transitioned to failed because its
+/// scheduled window has passed — triggered on dashboard load/refresh or when
+/// the showup detail screen is opened.
 final class ShowupAutoFailedEvent extends AnalyticsEvent {
   ShowupAutoFailedEvent({required this.pactId});
 

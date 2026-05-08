@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.21.0] — 2026-05-08 (PR #59 merged)
+
+### Added — Auto-fail past-due pending showups on dashboard load (HAB-21)
+
+- `DashboardViewModel.load()` runs an auto-fail sweep between the lazy showup generation loop and calendar strip construction; the sweep is guarded by a `_autoFailRunning` flag so rapid reloads never run two sweeps concurrently
+- Eligibility filter: showups in the visible past window (today-3 through today) that are still `pending`, belong to an active pact, and whose scheduled window has elapsed (`now > scheduledAt + duration`)
+- Per qualifying showup: persists `ShowupStatus.failed` via `PactStatsService.persistShowupStatus` (also refreshes the in-memory stats cache), fires `ShowupAutoFailedEvent` (fire-and-forget, analytics failure never blocks the sweep), and cancels the scheduled reminder via `ReminderSchedulingService.cancelRemindersForShowup`
+- Per-showup error isolation: a failure on any single showup is caught, logged, and reported to Crashlytics non-fatally; the sweep continues to the next showup so one bad row cannot block others
+- `ShowupAutoFailedEvent` doc comment and `docs/ANALYTICS_EVENTS.md` updated to document that the event covers both triggers: dashboard sweep and showup detail screen auto-open
+- 7 new auto-fail sweep tests in `test/slices/dashboard/domain/dashboard_view_model_test.dart`: single auto-fail, multi-pact auto-fail, no-op (future window), no-op (done showup), no-op (stopped pact), analytics event fired, reminder cancelled; 831 tests passing, analyzer clean
+
+---
+
 ## [0.20.0] — 2026-05-08 (PR #58 merged)
 
 ### Added — Notifications and reminders (HAB-13)
