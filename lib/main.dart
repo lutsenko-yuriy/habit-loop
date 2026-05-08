@@ -329,7 +329,8 @@ Future<void> main() async {
       // assigned by the time the user can interact with a notification
       // (after runApp completes). The `?.` guard is a safety net only.
       realService.setNotificationResponseCallback((NotificationResponse response) {
-        debugPrint('[Notif] response received — actionId=${response.actionId} payload=${response.payload}');
+        if (kDebugMode)
+          debugPrint('[Notif] response received — actionId=${response.actionId} payload=${response.payload}');
         final parsed = NotificationRouter.parsePayload(response.payload);
         if (parsed == null) {
           debugPrint('[Notif] payload parse failed — skipping navigation');
@@ -343,7 +344,7 @@ Future<void> main() async {
           // the widget tree will reflect the change without requiring a reload.
           // Do NOT navigate to ShowupDetailScreen: the user chose to act
           // without opening the app.
-          debugPrint('[Notif] mark-done action — showupId=${parsed.showupId}');
+          if (kDebugMode) debugPrint('[Notif] mark-done action — showupId=${parsed.showupId}');
           unawaited(_markShowupDoneFromForeground(parsed.showupId, parsed.pactId));
           return;
         }
@@ -357,7 +358,7 @@ Future<void> main() async {
         // dropping it. For warm starts the navigator is already mounted and the
         // push happens immediately.
         final coldStart = _navigatorKey.currentState == null;
-        debugPrint('[Notif] body tap — coldStart=$coldStart showupId=${parsed.showupId}');
+        if (kDebugMode) debugPrint('[Notif] body tap — coldStart=$coldStart showupId=${parsed.showupId}');
         if (!coldStart) {
           // Warm start — navigator ready, push now.
           _notificationNavigationHandled = true;
@@ -504,8 +505,10 @@ Future<void> main() async {
         return;
       }
       final launchInfo = await notificationService.getAppLaunchDetails();
-      debugPrint(
-          '[Notif] getAppLaunchDetails — didLaunch=${launchInfo?.didNotificationLaunchApp} payload=${launchInfo?.payload}');
+      if (kDebugMode) {
+        debugPrint(
+            '[Notif] getAppLaunchDetails — didLaunch=${launchInfo?.didNotificationLaunchApp} payload=${launchInfo?.payload}');
+      }
       if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.payload != null) {
         final parsed = NotificationRouter.parsePayload(launchInfo.payload);
         if (parsed != null) {

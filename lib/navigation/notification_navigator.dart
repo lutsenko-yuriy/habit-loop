@@ -1,7 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kDebugMode, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
 
@@ -29,7 +29,7 @@ abstract final class NotificationNavigator {
       debugPrint('[NotificationNavigator] navigateToShowup: navigatorKey has no current state — skipping navigation');
       return;
     }
-    debugPrint('[NotificationNavigator] pushing ShowupDetailScreen for showupId=$showupId');
+    if (kDebugMode) debugPrint('[NotificationNavigator] pushing ShowupDetailScreen for showupId=$showupId');
     unawaited(
       state.push(
         defaultTargetPlatform == TargetPlatform.iOS

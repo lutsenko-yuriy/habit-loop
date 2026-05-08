@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/test_notification_helper.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
@@ -59,9 +59,9 @@ class DashboardPageAndroid extends ConsumerWidget {
         actions: [
           // ── DEV-ONLY: fire a test notification in 15 s ─────────────────
           if (kDebugMode || kProfileMode)
-            const IconButton(
-              icon: Icon(Icons.notifications_outlined),
-              onPressed: scheduleTestNotification,
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
             ),
           // ────────────────────────────────────────────────────────────────
           IconButton(
