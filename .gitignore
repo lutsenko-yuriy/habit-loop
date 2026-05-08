@@ -49,6 +49,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Generated l10n Dart files — source of truth is lib/l10n/*.arb; run `flutter gen-l10n` to regenerate
+lib/l10n/generated/
+
 # Firebase credentials — must NOT be committed; generate via flutterfire configure
 google-services.json
 GoogleService-Info.plist

@@ -45,6 +45,7 @@ jobs:
           channel: stable
 
       - run: flutter pub get
+      - run: flutter gen-l10n
       - name: Check formatting
         run: |
           find lib/ test/ -name "*.dart" \
@@ -125,6 +126,7 @@ jobs:
           channel: stable
 
       - run: flutter pub get
+      - run: flutter gen-l10n
 
       - id: build
         run: |
@@ -214,6 +216,7 @@ jobs:
           channel: stable
 
       - run: flutter pub get
+      - run: flutter gen-l10n
 
       - name: Generate ExportOptions.plist
         run: |
