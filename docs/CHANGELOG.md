@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.22.0] — 2026-05-08 (PR #60 merged)
+
+### Added — Auto-refresh dashboard when date changes at midnight (HAB-22)
+
+- `WidgetsBindingObserver` added to `_DashboardScreenState`; on `AppLifecycleState.resumed`, if the calendar date has changed since the last load, invalidates `todayProvider` and `hasActivePactsProvider` and re-triggers `load()` on both `DashboardViewModel` and `PactListViewModel`, then logs an analytics screen view
+- `_lastLoadDate` assigned synchronously before `addObserver` to close a null-window race where a resume event could fire before the field was set
+- `_loadInProgress` guard added to `PactListViewModel` to prevent concurrent load executions on rapid resume cycles
+- 4 new widget tests using in-place `StateProvider` date mutation to assert the dashboard refreshes only when the date actually changes; 838 tests passing, analyzer clean
+
+---
+
 ## [0.21.0] — 2026-05-08 (PR #59 merged)
 
 ### Added — Auto-fail past-due pending showups on dashboard load (HAB-21)

@@ -14,9 +14,7 @@ _(nothing in progress)_
 
 ## v1.0.0 — SQLite persistence + pre-persistence cleanup
 
-### Issues
-
-- [HAB-22](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-22/auto-refresh-dashboard-when-date-changes-at-midnight) **Auto-refresh dashboard when date changes at midnight** — `nowProvider` is evaluated once and not invalidated while the app stays open; after midnight the calendar strip still shows the previous day as "today" and new showups are not generated until relaunch. On foreground resume, invalidate `nowProvider` if the date has changed; stretch goal: midnight background trigger using the notification infrastructure from HAB-13. (Tech Debt / Feature)
+All issues in this milestone are now Done (HAB-13, HAB-21, HAB-22). This milestone is complete.
 
 ---
 
