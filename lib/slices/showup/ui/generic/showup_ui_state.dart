@@ -15,7 +15,11 @@ enum ShowupUiState {
 
   /// Active showup window: scheduledAt <= now < scheduledAt + duration.
   /// Also used when now is past the active window but the showup is still pending.
-  pending,
+  ///
+  /// Named [active] (not "pending") to avoid confusion with the domain
+  /// [ShowupStatus.pending], which covers all unresolved showups including
+  /// future ones that are still [planned].
+  active,
 
   /// Manually or automatically marked as done.
   done,
@@ -29,7 +33,7 @@ enum ShowupUiState {
 /// Rules (evaluated in order):
 /// 1. If [showup.status] is done → [ShowupUiState.done]
 /// 2. If [showup.status] is failed → [ShowupUiState.failed]
-/// 3. If now >= scheduledAt → [ShowupUiState.pending] (active window or past)
+/// 3. If now >= scheduledAt → [ShowupUiState.active] (active window or past)
 /// 4. If reminderOffset is not null and > Duration.zero:
 ///    - reminderFiresAt = scheduledAt - reminderOffset
 ///    - If now >= reminderFiresAt → [ShowupUiState.waitingForStart]
@@ -44,7 +48,7 @@ ShowupUiState deriveShowupUiState({
   if (showup.status == ShowupStatus.failed) return ShowupUiState.failed;
 
   // Rule 3: now is at or past the scheduled start.
-  if (!now.isBefore(showup.scheduledAt)) return ShowupUiState.pending;
+  if (!now.isBefore(showup.scheduledAt)) return ShowupUiState.active;
 
   // Rule 4: reminder has fired but showup hasn't started.
   if (reminderOffset != null && reminderOffset > Duration.zero) {

@@ -69,31 +69,31 @@ void main() {
       });
     });
 
-    group('pending (rule 3 — now >= scheduledAt, status is pending)', () {
-      test('returns pending exactly at scheduledAt', () {
+    group('active (rule 3 — now >= scheduledAt, status is pending)', () {
+      test('returns active exactly at scheduledAt', () {
         final showup = _showup(scheduledAt: baseTime);
         expect(
           deriveShowupUiState(showup: showup, now: baseTime),
-          ShowupUiState.pending,
+          ShowupUiState.active,
         );
       });
 
-      test('returns pending when now is inside the active window', () {
+      test('returns active when now is inside the active window', () {
         final showup = _showup(scheduledAt: baseTime.subtract(const Duration(minutes: 10)));
         expect(
           deriveShowupUiState(showup: showup, now: baseTime),
-          ShowupUiState.pending,
+          ShowupUiState.active,
         );
       });
 
-      test('returns pending when now is past the end of the active window (not yet auto-failed)', () {
+      test('returns active when now is past the end of the active window (not yet auto-failed)', () {
         final showup = _showup(
           scheduledAt: baseTime.subtract(const Duration(hours: 1)),
           duration: const Duration(minutes: 30),
         );
         expect(
           deriveShowupUiState(showup: showup, now: baseTime),
-          ShowupUiState.pending,
+          ShowupUiState.active,
         );
       });
     });

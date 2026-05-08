@@ -271,7 +271,7 @@ class _ShowupDetailContent extends StatelessWidget {
     return switch (state) {
       ShowupUiState.planned => CupertinoColors.systemGrey,
       ShowupUiState.waitingForStart => CupertinoColors.systemYellow,
-      ShowupUiState.pending => CupertinoColors.systemOrange,
+      ShowupUiState.active => CupertinoColors.systemOrange,
       ShowupUiState.done => CupertinoColors.activeGreen,
       ShowupUiState.failed => CupertinoColors.destructiveRed,
     };

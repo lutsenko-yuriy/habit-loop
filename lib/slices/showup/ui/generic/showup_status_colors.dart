@@ -27,10 +27,9 @@ class ShowupStatusColors {
   final Color failed;
   final Color pending;
 
-  /// Colour used for the [ShowupUiState.waitingForStart] state (reminder fired
-  /// but showup has not started yet). Also used for [ShowupUiState.pending]
-  /// when derived via [forUiState] so that both active states share the same
-  /// yellow/amber visual signal.
+  /// Colour used for the [ShowupUiState.waitingForStart] and
+  /// [ShowupUiState.active] states so that both "attention needed" states share
+  /// the same yellow/amber visual signal.
   final Color waitingForStart;
 
   const ShowupStatusColors({
@@ -72,13 +71,13 @@ class ShowupStatusColors {
   ///
   /// - [ShowupUiState.planned] → gray (same as unresolved pending color)
   /// - [ShowupUiState.waitingForStart] → yellow / amber
-  /// - [ShowupUiState.pending] → yellow / amber (active window)
+  /// - [ShowupUiState.active] → yellow / amber (active window)
   /// - [ShowupUiState.done] → green
   /// - [ShowupUiState.failed] → red
   Color forUiState(ShowupUiState state) => switch (state) {
         ShowupUiState.planned => pending,
         ShowupUiState.waitingForStart => waitingForStart,
-        ShowupUiState.pending => waitingForStart,
+        ShowupUiState.active => waitingForStart,
         ShowupUiState.done => done,
         ShowupUiState.failed => failed,
       };
@@ -98,25 +97,29 @@ class ShowupStatusColors {
   /// Returns the overflow dot colour given a list of time-derived [uiStates].
   ///
   /// Priority rule (first match wins):
-  /// 1. Any [ShowupUiState.waitingForStart] or [ShowupUiState.pending] → amber
-  ///    (active: reminder fired or showup window is now)
-  /// 2. Any [ShowupUiState.planned] → gray (nothing has happened yet)
+  /// 1. Any [ShowupUiState.waitingForStart] or [ShowupUiState.active]
+  ///    AND no [ShowupUiState.planned] → amber. The "AND no planned" condition
+  ///    prevents the dot from jumping to amber when only some showups have
+  ///    entered their active window while others are still planned ahead.
+  /// 2. Any [ShowupUiState.planned] → gray (showups still upcoming)
   /// 3. All resolved: done >= failed → green; else → red
   Color overflowForUiState(List<ShowupUiState> uiStates) {
-    var doneCount = 0, failedCount = 0;
+    var activeCount = 0, plannedCount = 0, doneCount = 0, failedCount = 0;
     for (final s in uiStates) {
       switch (s) {
         case ShowupUiState.waitingForStart:
-        case ShowupUiState.pending:
-          return waitingForStart;
+        case ShowupUiState.active:
+          activeCount++;
         case ShowupUiState.planned:
-          return pending;
+          plannedCount++;
         case ShowupUiState.done:
           doneCount++;
         case ShowupUiState.failed:
           failedCount++;
       }
     }
+    if (activeCount > 0 && plannedCount == 0) return waitingForStart;
+    if (plannedCount > 0) return pending;
     return doneCount >= failedCount ? done : failed;
   }
 }
