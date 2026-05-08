@@ -2,11 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
-    show
-        AndroidScheduleMode,
-        DarwinNotificationDetails,
-        FlutterLocalNotificationsPlugin,
-        NotificationDetails;
+    show AndroidScheduleMode, DarwinNotificationDetails, FlutterLocalNotificationsPlugin, NotificationDetails;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;

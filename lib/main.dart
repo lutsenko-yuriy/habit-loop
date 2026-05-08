@@ -504,7 +504,8 @@ Future<void> main() async {
         return;
       }
       final launchInfo = await notificationService.getAppLaunchDetails();
-      debugPrint('[Notif] getAppLaunchDetails — didLaunch=${launchInfo?.didNotificationLaunchApp} payload=${launchInfo?.payload}');
+      debugPrint(
+          '[Notif] getAppLaunchDetails — didLaunch=${launchInfo?.didNotificationLaunchApp} payload=${launchInfo?.payload}');
       if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.payload != null) {
         final parsed = NotificationRouter.parsePayload(launchInfo.payload);
         if (parsed != null) {
