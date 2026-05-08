@@ -14,6 +14,7 @@ import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart'
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/crashlytics/fake_crashlytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
 
 /// Wraps [InMemoryShowupRepository] and counts calls to [getShowupsForPact].
@@ -26,6 +27,31 @@ class _CountingShowupRepository extends InMemoryShowupRepository {
   Future<List<Showup>> getShowupsForPact(String pactId) async {
     getShowupsForPactCallCount++;
     return super.getShowupsForPact(pactId);
+  }
+}
+
+/// A [PactStatsService] that throws [StateError] when [persistShowupStatus] is
+/// called for a showup whose ID is in [errorOnShowupIds].  All other showups
+/// are handled by the real in-memory implementation.
+class _PartiallyFailingStatsService extends PactStatsService {
+  _PartiallyFailingStatsService({
+    required super.pactRepository,
+    required super.showupRepository,
+    required super.transactionService,
+    required this.errorOnShowupIds,
+  });
+
+  final Set<String> errorOnShowupIds;
+
+  @override
+  Future<Showup> persistShowupStatus({
+    required Showup showup,
+    required ShowupStatus status,
+  }) {
+    if (errorOnShowupIds.contains(showup.id)) {
+      throw StateError('simulated DB error for showup ${showup.id}');
+    }
+    return super.persistShowupStatus(showup: showup, status: status);
   }
 }
 
@@ -866,6 +892,100 @@ void main() {
 
       expect(notifications.cancelledShowupIds, contains('s-cancel'),
           reason: 'Reminder must be cancelled when a showup is auto-failed by the sweep');
+    });
+
+    test('concurrency guard: second load() while first is in progress is a no-op', () async {
+      // Verify that a second overlapping load() call (e.g. from initState AND
+      // onResume firing simultaneously) does not run the sweep twice.
+      final analytics = FakeAnalyticsService();
+      final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
+      final showup = pastDuePending(id: 's1', pactId: 'p1');
+
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = InMemoryPactRepository([pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+      final c = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(today),
+          analyticsServiceProvider.overrideWithValue(analytics),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      // Launch two concurrent loads — second must bail out immediately.
+      final vm = c.read(dashboardViewModelProvider.notifier);
+      final first = vm.load();
+      final second = vm.load(); // must be a no-op because _loadInProgress is true
+      await Future.wait([first, second]);
+
+      // Allow unawaited analytics calls to complete.
+      await Future<void>.delayed(Duration.zero);
+
+      final autoFailedEvents = analytics.loggedEvents.whereType<ShowupAutoFailedEvent>().toList();
+      expect(autoFailedEvents, hasLength(1),
+          reason: 'Concurrent load() calls must not fire duplicate ShowupAutoFailedEvents');
+    });
+
+    test('per-showup error: sweep continues past a failing showup and fails the rest', () async {
+      // When persistShowupStatus throws for one showup, the sweep must continue
+      // and auto-fail the remaining eligible showups.
+      final analytics = FakeAnalyticsService();
+      final crashlytics = FakeCrashlyticsService();
+      final pact1 = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
+      final pact2 = _dailyPact(id: 'p2', startDate: DateTime(2026, 3, 1));
+      // showup s-fail → persistShowupStatus will throw
+      final showupError = pastDuePending(id: 's-fail', pactId: 'p1');
+      // showup s-ok → must still be auto-failed despite the first error
+      final showupOk = pastDuePending(id: 's-ok', pactId: 'p2');
+
+      final showupRepo = InMemoryShowupRepository([showupError, showupOk]);
+      final pactRepo = InMemoryPactRepository([pact1, pact2]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = _PartiallyFailingStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        errorOnShowupIds: {'s-fail'},
+      );
+
+      final c = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          pactStatsServiceProvider.overrideWithValue(statsService),
+          todayProvider.overrideWithValue(today),
+          analyticsServiceProvider.overrideWithValue(analytics),
+          crashlyticsServiceProvider.overrideWithValue(crashlytics),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(dashboardViewModelProvider.notifier).load();
+      await Future<void>.delayed(Duration.zero);
+
+      // The erroring showup must remain pending in the repo.
+      final updatedError = await showupRepo.getShowupsForPact('p1');
+      expect(updatedError.first.status, ShowupStatus.pending,
+          reason: 'Showup that threw during persistShowupStatus must remain pending');
+
+      // The succeeding showup must be auto-failed.
+      final updatedOk = await showupRepo.getShowupsForPact('p2');
+      expect(updatedOk.first.status, ShowupStatus.failed,
+          reason: 'Showup after a per-showup error must still be auto-failed');
+
+      // Only one analytics event must be fired (for s-ok, not for s-fail).
+      final events = analytics.loggedEvents.whereType<ShowupAutoFailedEvent>().toList();
+      expect(events, hasLength(1));
+      expect(events.first.pactId, 'p2');
+
+      // Error must be recorded to Crashlytics.
+      expect(crashlytics.recordedErrors, isNotEmpty,
+          reason: 'persistShowupStatus error must be forwarded to CrashlyticsService.recordError');
     });
   });
 }
