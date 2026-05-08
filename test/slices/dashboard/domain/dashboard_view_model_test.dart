@@ -81,16 +81,21 @@ void main() {
   ProviderContainer createContainer({
     List<Pact> pacts = const [],
     List<Showup> showups = const [],
+    InMemoryShowupRepository? showupRepo,
+    FakeAnalyticsService? analytics,
+    FakeNotificationService? notifications,
   }) {
     final pactRepo = InMemoryPactRepository(pacts);
-    final showupRepo = InMemoryShowupRepository(showups);
-    final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+    final effectiveShowupRepo = showupRepo ?? InMemoryShowupRepository(showups);
+    final txService = InMemoryPactTransactionService(pactRepo, effectiveShowupRepo);
     return ProviderContainer(
       overrides: [
         pactRepositoryProvider.overrideWithValue(pactRepo),
-        showupRepositoryProvider.overrideWithValue(showupRepo),
+        showupRepositoryProvider.overrideWithValue(effectiveShowupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
         todayProvider.overrideWithValue(today),
+        if (analytics != null) analyticsServiceProvider.overrideWithValue(analytics),
+        if (notifications != null) notificationServiceProvider.overrideWithValue(notifications),
       ],
     );
   }
@@ -716,30 +721,6 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('auto-fail sweep', () {
-    // Build a container with optional extra overrides for analytics / notifications.
-    ProviderContainer buildContainer({
-      required List<Pact> pacts,
-      required List<Showup> showups,
-      FakeAnalyticsService? analytics,
-      FakeNotificationService? notifications,
-      InMemoryShowupRepository? showupRepoOverride,
-    }) {
-      final pactRepo = InMemoryPactRepository(pacts);
-      final showupRepo = showupRepoOverride ?? InMemoryShowupRepository(showups);
-      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-
-      return ProviderContainer(
-        overrides: [
-          pactRepositoryProvider.overrideWithValue(pactRepo),
-          showupRepositoryProvider.overrideWithValue(showupRepo),
-          pactTransactionServiceProvider.overrideWithValue(txService),
-          todayProvider.overrideWithValue(today),
-          if (analytics != null) analyticsServiceProvider.overrideWithValue(analytics),
-          if (notifications != null) notificationServiceProvider.overrideWithValue(notifications),
-        ],
-      );
-    }
-
     // Returns a pending showup scheduled 1 day before today whose window has
     // fully elapsed (scheduledAt + duration << now).
     Showup pastDuePending({required String id, required String pactId}) {
@@ -757,7 +738,7 @@ void main() {
       final showup = pastDuePending(id: 's1', pactId: 'p1');
 
       final showupRepo = InMemoryShowupRepository([showup]);
-      final c = buildContainer(pacts: [pact], showups: [], showupRepoOverride: showupRepo);
+      final c = createContainer(pacts: [pact], showupRepo: showupRepo);
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
@@ -774,7 +755,7 @@ void main() {
       final showup2 = pastDuePending(id: 's2', pactId: 'p2');
 
       final showupRepo = InMemoryShowupRepository([showup1, showup2]);
-      final c = buildContainer(pacts: [pact1, pact2], showups: [], showupRepoOverride: showupRepo);
+      final c = createContainer(pacts: [pact1, pact2], showupRepo: showupRepo);
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
@@ -800,7 +781,7 @@ void main() {
       );
 
       final showupRepo = InMemoryShowupRepository([futureWindowShowup]);
-      final c = buildContainer(pacts: [pact], showups: [], showupRepoOverride: showupRepo);
+      final c = createContainer(pacts: [pact], showupRepo: showupRepo);
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
@@ -821,7 +802,7 @@ void main() {
       );
 
       final showupRepo = InMemoryShowupRepository([doneShowup]);
-      final c = buildContainer(pacts: [pact], showups: [], showupRepoOverride: showupRepo);
+      final c = createContainer(pacts: [pact], showupRepo: showupRepo);
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
@@ -836,7 +817,7 @@ void main() {
       final pastDueShowup = pastDuePending(id: 's-stopped', pactId: 'p-stopped');
 
       final showupRepo = InMemoryShowupRepository([pastDueShowup]);
-      final c = buildContainer(pacts: [stoppedPact], showups: [], showupRepoOverride: showupRepo);
+      final c = createContainer(pacts: [stoppedPact], showupRepo: showupRepo);
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
@@ -855,12 +836,7 @@ void main() {
       final showup2 = pastDuePending(id: 's2', pactId: 'p2');
 
       final showupRepo = InMemoryShowupRepository([showup1, showup2]);
-      final c = buildContainer(
-        pacts: [pact1, pact2],
-        showups: [],
-        showupRepoOverride: showupRepo,
-        analytics: analytics,
-      );
+      final c = createContainer(pacts: [pact1, pact2], showupRepo: showupRepo, analytics: analytics);
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
@@ -878,12 +854,7 @@ void main() {
       final showup = pastDuePending(id: 's-cancel', pactId: 'p1');
 
       final showupRepo = InMemoryShowupRepository([showup]);
-      final c = buildContainer(
-        pacts: [pact],
-        showups: [],
-        showupRepoOverride: showupRepo,
-        notifications: notifications,
-      );
+      final c = createContainer(pacts: [pact], showupRepo: showupRepo, notifications: notifications);
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
@@ -902,18 +873,7 @@ void main() {
       final showup = pastDuePending(id: 's1', pactId: 'p1');
 
       final showupRepo = InMemoryShowupRepository([showup]);
-      final pactRepo = InMemoryPactRepository([pact]);
-      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-
-      final c = ProviderContainer(
-        overrides: [
-          pactRepositoryProvider.overrideWithValue(pactRepo),
-          showupRepositoryProvider.overrideWithValue(showupRepo),
-          pactTransactionServiceProvider.overrideWithValue(txService),
-          todayProvider.overrideWithValue(today),
-          analyticsServiceProvider.overrideWithValue(analytics),
-        ],
-      );
+      final c = createContainer(pacts: [pact], showupRepo: showupRepo, analytics: analytics);
       addTearDown(c.dispose);
 
       // Launch two concurrent loads — second must bail out immediately.

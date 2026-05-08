@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/showup/showup_date_utils.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -86,8 +87,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final pactStatsService = ref.read(pactStatsServiceProvider);
       if (showup.status == ShowupStatus.pending) {
         final now = ref.read(showupDetailNowProvider);
-        final endTime = showup.scheduledAt.add(showup.duration);
-        if (now.isAfter(endTime)) {
+        if (ShowupDateUtils.isPastDue(showup, now)) {
           showup = await pactStatsService.persistShowupStatus(
             showup: showup,
             status: ShowupStatus.failed,

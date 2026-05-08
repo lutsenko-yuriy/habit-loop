@@ -1,3 +1,5 @@
+import 'package:habit_loop/domain/showup/showup.dart';
+
 /// Shared date utilities for showup scheduling and querying.
 class ShowupDateUtils {
   ShowupDateUtils._();
@@ -10,4 +12,8 @@ class ShowupDateUtils {
 
   /// Returns a [DateTime] representing the start of [date]'s day (00:00:00).
   static DateTime startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  /// Returns `true` when [now] is after the end of [showup]'s scheduled window
+  /// (`scheduledAt + duration`), meaning the showup window has fully elapsed.
+  static bool isPastDue(Showup showup, DateTime now) => now.isAfter(showup.scheduledAt.add(showup.duration));
 }

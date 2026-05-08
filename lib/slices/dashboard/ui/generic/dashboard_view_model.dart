@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_date_utils.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
@@ -47,7 +48,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
 
   Future<void> _loadInner() async {
     final today = ref.read(todayProvider);
-    final todayNorm = DateTime(today.year, today.month, today.day);
+    final todayNorm = ShowupDateUtils.startOfDay(today);
     final pactRepo = ref.read(pactRepositoryProvider);
     final showupRepo = ref.read(showupRepositoryProvider);
     final crashlytics = ref.read(crashlyticsServiceProvider);
@@ -183,42 +184,29 @@ class DashboardViewModel extends Notifier<DashboardState> {
     // -----------------------------------------------------------------------
     final pactStatsService = ref.read(pactStatsServiceProvider);
     final schedulingService = ref.read(reminderSchedulingServiceProvider);
+    final analytics = ref.read(analyticsServiceProvider);
     // Track showups that were successfully auto-failed so the calendar strip
     // reflects the updated status without a second DB round-trip.
     final Map<String, Showup> autoFailedById = {};
-    var autoFailedCount = 0;
     for (final showup in showups) {
       if (showup.status != ShowupStatus.pending) continue;
       if (!activePactIds.contains(showup.pactId)) continue;
-      final windowEnd = showup.scheduledAt.add(showup.duration);
-      if (!today.isAfter(windowEnd)) continue;
+      if (!ShowupDateUtils.isPastDue(showup, today)) continue;
 
       try {
-        // Persist the failed status and refresh the stats cache.
         await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed);
       } catch (error, stackTrace) {
-        // A single bad row must not abort the entire sweep.  Log the error as
-        // a breadcrumb so production diagnostics capture it, then continue with
-        // the remaining showups.
-        unawaited(
-          crashlytics.log(
-            'auto_fail_sweep: error persisting showup ${showup.id}: $error',
-          ),
-        );
-        unawaited(ref.read(crashlyticsServiceProvider).recordError(error, stackTrace));
+        // A single bad row must not abort the entire sweep — log and continue.
+        unawaited(crashlytics.log('auto_fail_sweep: error persisting showup ${showup.id}: $error'));
+        unawaited(crashlytics.recordError(error, stackTrace));
         continue;
       }
       autoFailedById[showup.id] = showup.copyWith(status: ShowupStatus.failed);
-      // Fire analytics event (fire-and-forget — must not block the UI).
-      unawaited(
-        ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
-      );
-      // Cancel any scheduled reminder for this showup (fire-and-forget).
+      unawaited(analytics.logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)));
       unawaited(schedulingService.cancelRemindersForShowup(showup.id));
-      autoFailedCount++;
     }
-    if (autoFailedCount > 0) {
-      unawaited(crashlytics.log('auto_fail_sweep: count=$autoFailedCount'));
+    if (autoFailedById.isNotEmpty) {
+      unawaited(crashlytics.log('auto_fail_sweep: count=${autoFailedById.length}'));
     }
 
     // Apply the auto-fail updates to the in-memory strip list so the calendar
