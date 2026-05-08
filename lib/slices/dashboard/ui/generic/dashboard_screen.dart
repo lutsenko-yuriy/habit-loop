@@ -34,13 +34,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
   @override
   void initState() {
     super.initState();
+    // Capture the current date synchronously so that _lastLoadDate is never
+    // null when didChangeAppLifecycleState fires — even if resumed fires in
+    // the gap between addObserver and the microtask below.
+    //
+    // Reading todayProvider here (rather than using DateTime.now() directly)
+    // ensures that test overrides are respected: if a test injects a fixed
+    // date via ProviderScope, _lastLoadDate is initialised from that same
+    // value so the guard comparison is consistent.
+    //
+    // Note: ref.read is safe in initState; what must be deferred is any call
+    // that mutates provider state (e.g. load()), which is pushed to the
+    // microtask below.
+    _lastLoadDate = _dateOnly(ref.read(todayProvider));
     WidgetsBinding.instance.addObserver(this);
     unawaited(
       Future.microtask(() {
-        // Initialise _lastLoadDate from todayProvider so test overrides are
-        // respected: if a test injects a fixed date, the guard must compare
-        // against that same date rather than the wall-clock DateTime.now().
-        _lastLoadDate = _dateOnly(ref.read(todayProvider));
         unawaited(
           ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
         );
@@ -59,12 +68,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
+    // ref.read(todayProvider) captures the current wall-clock date for the
+    // _lastLoadDate update.  The value is derived from the provider — not
+    // DateTime.now() directly — so that test overrides (mutable date holders)
+    // are respected and the guard compares against the same source of truth as
+    // the load path.
     final today = _dateOnly(ref.read(todayProvider));
     if (today == _lastLoadDate) return;
 
     // Calendar date has changed since the last load — invalidate providers and
     // re-trigger the dashboard load so the calendar strip and showup list
     // reflect the new day without requiring the user to restart the app.
+    //
+    // Ordering note:
+    //   1. _lastLoadDate = today   — update the guard first so any re-entrant
+    //      resume event during the async load below is correctly no-op'd.
+    //   2. ref.invalidate(todayProvider) — discard the cached DateTime value so
+    //      the subsequent load() call inside DashboardViewModel._loadInner
+    //      resolves a fresh DateTime.now() rather than the midnight-old value
+    //      that was cached before the user went to background.  Both reads
+    //      (this one and the next inside load()) resolve to the same calendar
+    //      date because they are milliseconds apart.
     _lastLoadDate = today;
     ref.invalidate(todayProvider);
     ref.invalidate(hasActivePactsProvider);

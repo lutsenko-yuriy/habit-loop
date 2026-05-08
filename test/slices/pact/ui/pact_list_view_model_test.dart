@@ -184,5 +184,45 @@ void main() {
       expect(filtered.length, 1);
       expect(filtered.first.pact.id, 'a1');
     });
+
+    test('concurrent load() calls: only one runs at a time', () async {
+      // Arrange: a counting showup repository that lets us verify how many
+      // times getShowupsForPact is invoked during concurrent load() calls.
+      var callCount = 0;
+      final slowShowupRepo = _SlowShowupRepository(onCall: () => callCount++);
+      final c = ProviderContainer(overrides: [
+        pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([_pact('p1', PactStatus.active)])),
+        showupRepositoryProvider.overrideWithValue(slowShowupRepo),
+      ]);
+
+      // Act: fire two load() calls without awaiting — the guard must prevent
+      // the second call from entering the critical section while the first is
+      // still awaiting.
+      final f1 = c.read(pactListViewModelProvider.notifier).load();
+      final f2 = c.read(pactListViewModelProvider.notifier).load();
+      await Future.wait([f1, f2]);
+
+      // Assert: getShowupsForPact was called exactly once (by the first load).
+      expect(callCount, equals(1), reason: 'The in-progress guard must block the second concurrent load()');
+    });
   });
+}
+
+// ---------------------------------------------------------------------------
+// Test helper: a showup repository that records calls and can be made "slow"
+// ---------------------------------------------------------------------------
+
+class _SlowShowupRepository extends InMemoryShowupRepository {
+  _SlowShowupRepository({required this.onCall}) : super([]);
+
+  final void Function() onCall;
+
+  @override
+  Future<List<Showup>> getShowupsForPact(String pactId) async {
+    onCall();
+    // Yield to the event loop so a second concurrent load() can arrive before
+    // this one completes — this is what makes the race condition observable.
+    await Future<void>.delayed(Duration.zero);
+    return super.getShowupsForPact(pactId);
+  }
 }
