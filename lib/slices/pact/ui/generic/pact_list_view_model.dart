@@ -7,10 +7,27 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 final pactListViewModelProvider = NotifierProvider<PactListViewModel, PactListState>(PactListViewModel.new);
 
 class PactListViewModel extends Notifier<PactListState> {
+  /// True while a [load] call is already awaiting completion.
+  ///
+  /// Guards against overlapping calls (e.g. initState and a navigation-return
+  /// both triggering load simultaneously) which would execute redundant DB
+  /// round-trips and potentially emit inconsistent intermediate states.
+  bool _loadInProgress = false;
+
   @override
   PactListState build() => const PactListState();
 
   Future<void> load() async {
+    if (_loadInProgress) return;
+    _loadInProgress = true;
+    try {
+      await _loadInner();
+    } finally {
+      _loadInProgress = false;
+    }
+  }
+
+  Future<void> _loadInner() async {
     state = state.copyWith(isLoading: true);
     try {
       final pactRepo = ref.read(pactRepositoryProvider);
