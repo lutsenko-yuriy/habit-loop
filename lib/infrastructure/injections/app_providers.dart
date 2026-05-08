@@ -32,6 +32,25 @@ import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+// ---------------------------------------------------------------------------
+// App info providers
+// ---------------------------------------------------------------------------
+
+/// Provides the app version string, e.g. `"v1.2.3 (45)"`.
+///
+/// Resolved once by [PackageInfo.fromPlatform] and cached for the container
+/// lifetime. Returns an empty string on failure so version display is
+/// simply omitted rather than crashing.
+final appVersionProvider = FutureProvider<String>((ref) async {
+  try {
+    final info = await PackageInfo.fromPlatform();
+    return 'v${info.version} (${info.buildNumber})';
+  } catch (_) {
+    return '';
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Locale providers
