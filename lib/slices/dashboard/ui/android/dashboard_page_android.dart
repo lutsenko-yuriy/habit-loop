@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
@@ -30,6 +31,7 @@ class DashboardPageAndroid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final version = ref.watch(appVersionProvider).valueOrNull ?? '';
 
     Future<void> onLanguagePickerTapped() => openLanguagePicker(
           context: context,
@@ -40,7 +42,18 @@ class DashboardPageAndroid extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.dashboardTitle),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.dashboardTitle),
+            if (version.isNotEmpty)
+              Text(
+                version,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             key: const Key('language-picker-button'),

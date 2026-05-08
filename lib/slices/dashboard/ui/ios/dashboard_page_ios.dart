@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
@@ -31,6 +32,7 @@ class DashboardPageIos extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final version = ref.watch(appVersionProvider).valueOrNull ?? '';
 
     Future<void> onLanguagePickerTapped() => openLanguagePicker(
           context: context,
@@ -49,7 +51,17 @@ class DashboardPageIos extends ConsumerWidget {
           onPressed: onLanguagePickerTapped,
           child: const Icon(CupertinoIcons.globe),
         ),
-        middle: Text(l10n.dashboardTitle),
+        middle: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.dashboardTitle),
+            if (version.isNotEmpty)
+              Text(
+                version,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
+              ),
+          ],
+        ),
         trailing: hasPacts
             ? CupertinoButton(
                 key: const Key('create-pact-button'),

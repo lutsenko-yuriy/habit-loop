@@ -62,6 +62,20 @@ Check the current branch:
 - Remove duplication, improve naming, simplify logic.
 - Run `flutter test` after every refactor step to stay green.
 
+**Database migration — required when schema changes.**
+
+If your implementation adds, removes, or renames tables or columns, changes column types, or adds/drops indexes, you **must** write a migration before committing:
+
+1. Bump `HabitLoopDatabase` `version` by 1 (e.g. `version: 1` → `version: 2`).
+2. Add an `onUpgrade` handler in `HabitLoopDatabase` that applies the DDL changes for each version step.
+3. Write a migration test in `test/infrastructure/persistence/habit_loop_database_test.dart`:
+   - Open a database at the previous schema version (recreate the old DDL manually).
+   - Re-open with the new version so `onUpgrade` runs.
+   - Assert the new tables/columns exist and existing data is preserved.
+4. Never apply destructive DDL (e.g. `DROP COLUMN`) without an explicit user decision — raise it with the orchestrator first.
+
+**What does NOT require a migration:** connection-level pragmas (`journal_mode`, `foreign_keys`, `synchronous`), changes to Dart model fields that already have a nullable or default column, and in-memory-only changes (Riverpod state, caches).
+
 ### 4. Validate
 
 Run both commands and fix every failure before proceeding:

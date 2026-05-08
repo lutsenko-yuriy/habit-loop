@@ -4,6 +4,23 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.22.1] — 2026-05-08 (PR #61 merged)
+
+### Fixed — WAL pragma crash on Android upgrade from v0.19.0
+
+- `db.execute('PRAGMA journal_mode=WAL')` changed to `db.rawQuery('PRAGMA journal_mode=WAL')` in `HabitLoopDatabase.onConfigure`; on Android, `execSQL()` (which backs sqflite's `execute()`) throws for result-returning statements, causing "Unable to open the app database" for users upgrading from v0.19.0 (the first release without WAL); `rawQuery` does not assert on result rows and the call is wrapped in try/catch so WAL failure is non-fatal
+- `earlycrashlytics.recordError(e, st)` added to the broad catch block in `main()` so future database-init failures appear in Crashlytics rather than being silently swallowed
+- Misleading `'Failed to open database'` log message corrected
+
+### Added — App version displayed in dashboard nav bar
+
+- `package_info_plus` added as a dependency
+- `appVersionProvider` (`FutureProvider<String>`) returns `"vX.Y.Z (buildNumber)"` from the platform package info
+- Both iOS (`CupertinoNavigationBar`) and Android (`AppBar`) dashboard nav bars show a small version subtitle under the "Habit Loop" title; 833 tests passing, analyzer clean
+
+---
+
+
 ## [0.22.0] — 2026-05-08 (PR #60 merged)
 
 ### Added — Auto-refresh dashboard when date changes at midnight (HAB-22)
