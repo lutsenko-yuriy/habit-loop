@@ -175,11 +175,13 @@ final class FlutterLocalNotificationService implements NotificationService {
         debugPrint('[Notifications] response received: ${response.payload}');
       };
 
+      debugPrint('[Notif] calling _plugin.initialize()...');
       await _plugin.initialize(
         initSettings,
         onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
         onDidReceiveBackgroundNotificationResponse: _onDidReceiveBackgroundNotificationResponse,
       );
+      debugPrint('[Notif] _plugin.initialize() returned — callback wired');
 
       // Create Android notification channel.
       const androidChannel = AndroidNotificationChannel(
@@ -198,6 +200,7 @@ final class FlutterLocalNotificationService implements NotificationService {
         _canScheduleExact = await android.canScheduleExactNotifications() ?? false;
       }
     } catch (e, s) {
+      debugPrint('[Notif] initialize() CAUGHT EXCEPTION: $e');
       await _crashlytics.recordError(e, s, information: ['NotificationService.initialize']);
     }
   }
