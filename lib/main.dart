@@ -368,20 +368,36 @@ Future<void> main() async {
             showupId: parsed.showupId,
           );
         } else {
-          // Cold start — defer to the first post-frame, at which point the
-          // navigator will be mounted. The _notificationNavigationHandled flag
-          // prevents the getAppLaunchDetails() path from also pushing a route.
+          // Cold start — the navigator is not yet mounted when this callback
+          // fires. On debug/JIT builds the first post-frame callback can fire
+          // before runApp's warm-up frame has attached the NavigatorState, so
+          // we retry on each subsequent frame until the navigator is ready.
+          // Ten attempts is well above any real initialisation delay; if the
+          // navigator is still null after that, navigation is silently dropped.
           final deferredShowupId = parsed.showupId;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (kDebugMode)
-              debugPrint('[Notif] cold-start deferred callback — handled=$_notificationNavigationHandled');
-            if (!_notificationNavigationHandled) {
-              _notificationNavigationHandled = true;
-              NotificationNavigator.navigateToShowup(
-                navigatorKey: _navigatorKey,
-                showupId: deferredShowupId,
-              );
+          void tryNavigate(int attemptsLeft) {
+            if (_notificationNavigationHandled || attemptsLeft <= 0) return;
+            if (_navigatorKey.currentState == null) {
+              if (kDebugMode) {
+                debugPrint('[Notif] cold-start: navigator not ready, retrying (attempts left: $attemptsLeft)');
+              }
+              // ignore: avoid_dynamic_calls — local recursive fn, not dynamic dispatch
+              WidgetsBinding.instance.addPostFrameCallback((_) => tryNavigate(attemptsLeft - 1));
+              return;
             }
+            if (kDebugMode) debugPrint('[Notif] cold-start deferred push — showupId=$deferredShowupId');
+            _notificationNavigationHandled = true;
+            NotificationNavigator.navigateToShowup(
+              navigatorKey: _navigatorKey,
+              showupId: deferredShowupId,
+            );
+          }
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (kDebugMode) {
+              debugPrint('[Notif] cold-start deferred callback — handled=$_notificationNavigationHandled');
+            }
+            tryNavigate(10);
           });
         }
         // Fire deep-link analytics. coldStart reflects whether the navigator was
