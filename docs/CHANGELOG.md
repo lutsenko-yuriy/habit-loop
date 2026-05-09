@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.23.1] — 2026-05-09 (PR #63 merged)
+
+### Fixed — iOS notification tap navigation (UNUserNotificationCenter delegate)
+
+- Root cause: Flutter 3.x removed the automatic `UNUserNotificationCenter.current().delegate = self` assignment from `FlutterAppDelegate`; without it iOS has no delegate to call on notification tap, so `didReceiveNotificationResponse` was never invoked and the app opened on the dashboard instead of the showup detail screen
+- Fix: added `UNUserNotificationCenter.current().delegate = self` to `AppDelegate.application:didFinishLaunchingWithOptions:`; `FlutterAppDelegate` implements `UNUserNotificationCenterDelegate` and forwards via `FlutterPluginAppLifeCycleDelegate` to all registered plugin delegates including `FlutterLocalNotificationsPlugin`
+- Cold-start tap guard: retry loop polls until the navigator is mounted before pushing the route, with a `_notificationNavigationHandled` guard flag to prevent double-push
+- Notification service enabled in all build modes (removed `kReleaseMode` gate) so notification navigation can be tested on debug builds
+- Debug bell button added to the dashboard nav bar (debug builds only) to schedule a test notification for immediate manual verification
+
+---
+
 ## [0.23.0] — 2026-05-08 (PR #64 merged)
 
 ### Added — Time-derived UI states: Planned and Waiting for start (HAB-54)
