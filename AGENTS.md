@@ -136,9 +136,8 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
 Product experiments are tracked in `docs/experiments/`. The registry README (`docs/experiments/README.md`) contains the index table; each individual experiment has its own file named `EXP-NNN-<short-name>.md` following `docs/experiments/TEMPLATE.md`.
 
 When starting an experiment:
-1. Pick the next sequential `EXP-NNN` ID from the index table in `docs/experiments/README.md`.
-2. Invoke the `experiment` skill: `Invoke the experiment skill for EXP-NNN: <hypothesis>`.
-3. The skill will draft the spec, wait for approval, then create the file and update the registry.
+1. Invoke the `experiment` skill with a hypothesis description: `Invoke the experiment skill for: <hypothesis>`.
+2. The skill will assign the next EXP-NNN ID automatically, draft the spec, wait for approval, then create the file and update the registry.
 
 When an experiment concludes (status changes to `won`, `lost`, or `abandoned`):
 1. Update the experiment file with the final decision and learnings.

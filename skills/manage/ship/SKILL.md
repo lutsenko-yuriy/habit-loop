@@ -7,6 +7,10 @@ description: Post-merge housekeeping after a PR is approved. Closes the linked L
 
 The project management tool is **Linear**. The issue identifier prefix is **HAB**.
 
+Linear workspace IDs (use these when calling `mcp__linear__save_issue` or related tools):
+- Team ID: `2de84a9b-453b-4991-8e09-f88715fa926e`
+- Project ID: `c3afdc26-d306-4f72-bdb3-de9b01060d0f`
+
 ---
 
 ## Steps

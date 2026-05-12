@@ -7,6 +7,10 @@ description: Implement a work unit from an approved plan. Given a PM issue ID, f
 
 The project management tool is **Linear**. The Git host is **GitHub**. The issue identifier prefix is **HAB**.
 
+Linear workspace IDs (use these when calling `mcp__linear__save_issue` or related tools):
+- Team ID: `2de84a9b-453b-4991-8e09-f88715fa926e`
+- Project ID: `c3afdc26-d306-4f72-bdb3-de9b01060d0f`
+
 ---
 
 ## Setup (do this first, every time)
@@ -43,8 +47,8 @@ Branch naming: `feature/HAB-XX-<short-description>` (2–4 words, kebab-case).
 
 **Red — write failing tests first.**
 
-- Mirror the source path under `test/`: `lib/features/foo/domain/bar.dart` → `test/features/foo/domain/bar_test.dart`.
-- Tests must fail before you write any implementation. Run `/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter test <test-file>` to confirm failure.
+- Mirror the source path under `test/`: `lib/slices/foo/domain/bar.dart` → `test/slices/foo/domain/bar_test.dart`.
+- Tests must fail before you write any implementation. Run `<flutter binary> test <test-file>` (using the path from `CLAUDE.local.md`) to confirm failure.
 - Do not write implementation code until tests are red.
 
 **Green — implement the minimum code to pass.**
@@ -60,7 +64,7 @@ Branch naming: `feature/HAB-XX-<short-description>` (2–4 words, kebab-case).
 
 **Refactor — clean up without breaking tests.**
 
-Remove duplication, improve naming, simplify logic. Re-run `/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter test` after every refactor step.
+Remove duplication, improve naming, simplify logic. Re-run `<flutter binary> test` after every refactor step.
 
 ### 5. Schema / data migrations
 
@@ -81,14 +85,16 @@ If your implementation adds, removes, or renames tables or columns, changes colu
 Run both commands and fix every failure before proceeding:
 
 ```bash
-/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter test
-/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter analyze
+flutter test
+flutter analyze
 ```
+
+(Use the Flutter binary path from `CLAUDE.local.md` for all Flutter commands.)
 
 If `flutter pub get` is needed first (new dependency added), run it before the above:
 
 ```bash
-/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter pub get
+flutter pub get
 ```
 
 ### 7. Localisation
@@ -96,15 +102,15 @@ If `flutter pub get` is needed first (new dependency added), run it before the a
 If any user-visible strings were added:
 
 1. Add keys to all four ARB files: `lib/l10n/app_en.arb`, `app_fr.arb`, `app_de.arb`, `app_ru.arb`.
-2. Run `/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter gen-l10n` to regenerate the output.
+2. Run `flutter gen-l10n` to regenerate the output.
 3. Use the generated strings in the UI — never hardcode display text.
 
 ### 8. Request documentation updates
 
-If your changes affect architecture or user-visible functionality, **do not update those docs yourself** — ask the orchestrator to invoke the appropriate skill and wait for confirmation:
+If your changes affect architecture or user-visible functionality, **do not update those docs yourself** — ask the orchestrator and wait for confirmation before proceeding:
 
-- **`docs/ARCHITECTURE.md`** affected → ask orchestrator to invoke `plan` to update it.
-- **`docs/PRODUCT_SPEC.md`** affected → ask orchestrator to invoke `summarize` to update it.
+- **`docs/ARCHITECTURE.md`** affected → ask orchestrator to invoke the `plan` skill to update it.
+- **`docs/PRODUCT_SPEC.md`** affected → ask the orchestrator to update it directly (it is a markdown file in the repo, not owned by any specific skill) and wait for confirmation.
 
 Both can be requested simultaneously. Only proceed after the orchestrator confirms those updates are committed.
 
@@ -204,7 +210,7 @@ Return: what was built, PR number and URL, test results, any deviations from the
 
 - **TDD is non-negotiable.** Tests must be red before implementation starts.
 - **No plan = no code.** Stop and escalate if the plan comment is missing.
-- **Do not touch `pubspec.yaml` version fields** — version bumps require explicit user approval per `docs/VERSIONING.md`.
+- **Do not touch `pubspec.yaml` version fields** — version bumps are handled by the `ship` skill as part of post-merge housekeeping (no separate approval needed per `docs/VERSIONING.md`).
 - **Do not merge** — that is the `ship` skill's responsibility.
 - **Do not update `docs/ARCHITECTURE.md` or `docs/PRODUCT_SPEC.md` directly** — delegate as described in step 8.
 - **Do not modify `skills/`** — skill files are owned by the meta-workflow, not by feature work.

@@ -90,4 +90,4 @@ After posting all comments:
 <brief note on what was done correctly>
 ```
 
-Omit a section if empty. Do not flag style issues — those belong to the `audit` skill.
+Omit a section if empty. Do not flag style issues.
