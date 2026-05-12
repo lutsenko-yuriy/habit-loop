@@ -41,6 +41,14 @@ lib/
 │   ├── analytics/
 │   │   ├── contracts/                 # AnalyticsEvent (abstract base), AnalyticsScreen, AnalyticsService interface
 │   │   └── data/                      # FirebaseAnalyticsService, FirebaseAnalyticsClientAdapter, NoopAnalyticsService
+│   ├── auth/
+│   │   ├── contracts/
+│   │   │   ├── auth_state.dart        # AuthState value type — userId, isAnonymous, isSignedIn
+│   │   │   └── auth_service.dart      # AuthService abstract interface (no-throw on initialize/signOut; linkWithGoogle may throw FirebaseAuthException)
+│   │   └── data/
+│   │       ├── firebase_auth_service.dart         # FirebaseAuthService + FirebaseAuthClient interface (SDK isolation); signs in anonymously on initialize if no user
+│   │       ├── firebase_auth_client_adapter.dart  # wraps FirebaseAuth + GoogleSignIn.instance (lazy init); only used in main.dart
+│   │       └── noop_auth_service.dart             # default no-op (userId null, isAnonymous true)
 │   ├── crashlytics/
 │   │   ├── contracts/
 │   │   │   └── crashlytics_service.dart            # abstract CrashlyticsService interface (no-throw contract)
@@ -48,6 +56,12 @@ lib/
 │   │       ├── firebase_crashlytics_service.dart       # real implementation (swallows exceptions)
 │   │       ├── firebase_crashlytics_client_adapter.dart # wraps FirebaseCrashlytics SDK; only used in main.dart
 │   │       └── noop_crashlytics_service.dart           # default no-op
+│   ├── device/
+│   │   ├── contracts/
+│   │   │   └── device_id_service.dart # DeviceIdService interface — getOrCreateDeviceId() returns a stable per-install UUID
+│   │   └── data/
+│   │       ├── shared_preferences_device_id_service.dart  # UUID v4 generated on first call and persisted under 'habit_loop_device_id'
+│   │       └── noop_device_id_service.dart               # returns sentinel '00000000-0000-0000-0000-000000000000'
 │   ├── logging/
 │   │   ├── contracts/
 │   │   │   └── log_service.dart                    # abstract LogService interface (debug/info/warning/error/logLocal); PII rules documented
@@ -107,11 +121,21 @@ test/
 │   │   ├── domain/
 │   │   ├── data/
 │   │   └── fake_analytics_service.dart    # Shared fake for tests that assert on analytics calls
+│   ├── auth/
+│   │   ├── data/
+│   │   │   ├── firebase_auth_service_test.dart  # FirebaseAuthService: initialize, currentUserId, isAnonymous, linkWithGoogle, signOut, authStateChanges via _FakeFirebaseAuthClient
+│   │   │   └── noop_auth_service_test.dart
+│   │   └── fake_auth_service.dart     # Configurable fake for tests that need auth state
 │   ├── crashlytics/
 │   │   ├── data/
 │   │   │   ├── firebase_crashlytics_service_test.dart
 │   │   │   └── noop_crashlytics_service_test.dart
 │   │   └── fake_crashlytics_service.dart  # Shared fake for test overrides
+│   ├── device/
+│   │   ├── data/
+│   │   │   ├── shared_preferences_device_id_service_test.dart  # getOrCreateDeviceId: generates UUID, persists, returns same value on repeat calls
+│   │   │   └── noop_device_id_service_test.dart
+│   │   └── fake_device_id_service.dart    # Injectable fake returning a configurable device ID
 │   ├── logging/
 │   │   ├── data/
 │   │   │   ├── talker_log_service_test.dart
@@ -189,6 +213,10 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 
 **Analytics:** `lib/infrastructure/analytics/` contains the abstract base class (`AnalyticsEvent`, `AnalyticsScreen`), service interface (`AnalyticsService`), Firebase adapter, noop adapter, and Riverpod provider. It has no `ui/` directory because it contains no widgets.
 
+**Auth:** `lib/infrastructure/auth/` provides anonymous Firebase Auth with optional Google account linking. `AuthService` interface has a no-throw contract on `initialize()` and `signOut()`; `linkWithGoogle()` may throw `FirebaseAuthException` (callers are expected to handle it). `FirebaseAuthClient` is an intermediate adapter interface that isolates all Firebase and Google Sign-In SDK types — test fakes implement it without importing the SDKs. `FirebaseAuthClientAdapter` wraps `FirebaseAuth` and `GoogleSignIn.instance` (v7.x singleton API) and is only instantiated in `main.dart`. `initialize()` calls `signInAnonymously()` if no current user is cached, ensuring every install has a Firebase UID from first launch; the call is fire-and-forget in `main.dart` so it does not block `runApp`. `authStateChangesProvider` is a `StreamProvider<AuthState>` that re-emits whenever the Firebase Auth state changes.
+
+**Device ID:** `lib/infrastructure/device/` provides a stable per-install UUID. `SharedPreferencesDeviceIdService` generates a UUID v4 on first call, persists it under the `habit_loop_device_id` key, and returns the same value on all subsequent calls. The device ID is used to prefix new pact IDs (`{deviceId}-{uuid}`) for global uniqueness across devices, making multi-device sync conflict-free.
+
 **Crashlytics:** `lib/infrastructure/crashlytics/` wraps crash reporting. Activation is gated on `kReleaseMode` in `main.dart`, so debug and test runs fall back to `NoopCrashlyticsService`. The `CrashlyticsService` interface has a strict no-throw contract: implementations must swallow any exceptions raised by the underlying SDK so that crash reporting failures can never crash the app themselves. The interface exposes `log()` for breadcrumbs and `setCustomKey()` for runtime context (active pact count, current screen, locale). The raw `FirebaseCrashlytics` SDK is referenced in `main.dart` in two ways: via `FirebaseCrashlyticsClientAdapter` for the Riverpod provider override, and directly in the `FlutterError.onError` / `PlatformDispatcher.instance.onError` global error handlers (which must be installed before `runApp`, before the Riverpod container exists). The rest of the app depends only on the abstract interface.
 
 **Logging:** `lib/infrastructure/logging/` provides structured local logging via `talker_flutter`. The `LogService` interface exposes `debug()`, `info()`, `warning()`, `error()`, and `logLocal()` (for PII-safe local-only detail). `TalkerLogService` is active in debug and profile builds only; `NoopLogService` is the default in release and tests. The in-app log overlay is gated on `kDebugMode`. **PII rule:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
@@ -205,6 +233,8 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 - [sqflite](https://pub.dev/packages/sqflite) — local storage; `HabitLoopDatabase` manages the file-backed `Database` lifecycle; `SqlitePactRepository` and `SqliteShowupRepository` provide the production repository implementations
 - [sqflite_common_ffi](https://pub.dev/packages/sqflite_common_ffi) (dev) — enables in-memory SQLite for unit tests running on macOS/Linux without a device; used in `habit_loop_database_test.dart`, `sqlite_pact_repository_test.dart`, and `sqlite_showup_repository_test.dart`
 - [firebase_core](https://pub.dev/packages/firebase_core) — Firebase SDK bootstrap; `Firebase.initializeApp()` called in `main()` before `runApp`
+- [firebase_auth](https://pub.dev/packages/firebase_auth) — anonymous sign-in and Google account linking; wrapped by `AuthService` in `lib/infrastructure/auth/` and wired via `authServiceProvider`. The raw `FirebaseAuth` SDK is confined to `FirebaseAuthClientAdapter`, which is only instantiated in `main.dart`
+- [google_sign_in](https://pub.dev/packages/google_sign_in) — Google OAuth credential acquisition for account linking; used exclusively inside `FirebaseAuthClientAdapter` via the v7.x singleton `GoogleSignIn.instance`; lazily initialized on first `linkWithGoogleCredential()` call
 - [firebase_analytics](https://pub.dev/packages/firebase_analytics) — analytics / event tracking; wrapped by `AnalyticsService` in `lib/infrastructure/analytics/` and wired via `analyticsServiceProvider`. The raw `FirebaseAnalytics` SDK is only touched in `main.dart` through `FirebaseAnalyticsClientAdapter`; the rest of the app depends on the `AnalyticsService` interface
 - [firebase_crashlytics](https://pub.dev/packages/firebase_crashlytics) — crash reporting; wrapped by `CrashlyticsService` in `lib/infrastructure/crashlytics/` and provided via `crashlyticsServiceProvider`. `FlutterError.onError` and `PlatformDispatcher.instance.onError` are wired in `main.dart` under `kReleaseMode` only. The raw `FirebaseCrashlytics` SDK is referenced in `main.dart` via `FirebaseCrashlyticsClientAdapter` (for the provider override) and directly in the global error handlers (which run before `runApp`)
 - [firebase_remote_config](https://pub.dev/packages/firebase_remote_config) — feature flags and remote configuration; wrapped by `RemoteConfigService` in `lib/infrastructure/remote_config/` and provided via `remoteConfigServiceProvider`. The raw `FirebaseRemoteConfig` SDK is confined to `FirebaseRemoteConfigClientAdapter`, which is only instantiated in `main.dart` under `kReleaseMode`. Debug and profile builds fall back to `NoopRemoteConfigService` returning in-code defaults
@@ -212,4 +242,5 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 - [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications) — local notification scheduling; wrapped by `NotificationService` in `lib/infrastructure/notifications/` and provided via `notificationServiceProvider`. `FlutterLocalNotificationService` is used in all build modes (debug, profile, release) so notification navigation can be tested with plain `flutter run`
 - [timezone](https://pub.dev/packages/timezone) — required by `flutter_local_notifications` for `TZDateTime`-based `zonedSchedule()` calls; ensures DST-safe notification scheduling times
 - [flutter_timezone](https://pub.dev/packages/flutter_timezone) — resolves the device's current IANA timezone name at runtime; called during `FlutterLocalNotificationService.initialize()` to set `tz.local`
+- [uuid](https://pub.dev/packages/uuid) — RFC 4122 UUID v4 generation; used by `SharedPreferencesDeviceIdService` to create the stable per-install device ID
 - `lib/firebase_options.dart` — platform-specific Firebase configuration generated by `flutterfire configure`
