@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 import 'dart:io' show Platform;
 
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
@@ -22,10 +23,13 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/firebase_options.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_service.dart';
+import 'package:habit_loop/infrastructure/auth/data/firebase_auth_client_adapter.dart';
+import 'package:habit_loop/infrastructure/auth/data/firebase_auth_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/device/data/shared_preferences_device_id_service.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/shared_preferences_locale_service.dart';
@@ -436,6 +440,23 @@ Future<void> main() async {
     localeService = null;
   }
 
+  // Construct auth and device ID services. Auth uses anonymous sign-in so every
+  // install gets a Firebase UID immediately; initialize() is called after runApp
+  // (fire-and-forget) so a slow network never delays the first frame.
+  // Device ID reuses the already-loaded SharedPreferences instance.
+  final authService = FirebaseAuthService(
+    FirebaseAuthClientAdapter(FirebaseAuth.instance),
+  );
+  // SharedPreferences.getInstance() is cached after the first call (locale block above).
+  SharedPreferencesDeviceIdService? deviceIdService;
+  try {
+    deviceIdService = SharedPreferencesDeviceIdService(
+      await SharedPreferences.getInstance(),
+    );
+  } catch (_) {
+    deviceIdService = null;
+  }
+
   // Open the SQLite database and construct the shared repository instances.
   // HabitLoopDatabase.instance.database is a Future-based singleton: concurrent
   // callers all share the same Future so only one openDatabase call is ever made.
@@ -486,6 +507,8 @@ Future<void> main() async {
       // Wire locale persistence; AppContainer.overrides fetches the saved
       // locale internally via getSavedLocale() and populates localeOverrideProvider.
       localePreferenceService: localeService,
+      authService: authService,
+      deviceIdService: deviceIdService,
     );
 
     // Create the top-level ProviderContainer with the same overrides so that
@@ -500,6 +523,11 @@ Future<void> main() async {
         child: HabitLoopApp(navigatorKey: _navigatorKey),
       ),
     );
+
+    // Sign in anonymously after the widget tree is running so a slow network
+    // never delays the first frame. On repeat launches the cached Firebase user
+    // is available immediately and initialize() returns synchronously.
+    unawaited(authService.initialize());
 
     // Cold-start fallback: if the notification response callback fired during
     // initialize() and already deferred navigation via addPostFrameCallback,

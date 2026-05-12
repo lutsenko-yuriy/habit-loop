@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
+import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
@@ -62,6 +64,8 @@ abstract final class AppContainer {
     RemoteConfigService? remoteConfigService,
     NotificationService? notificationService,
     LocalePreferenceService? localePreferenceService,
+    AuthService? authService,
+    DeviceIdService? deviceIdService,
   }) async {
     // Fetch the saved locale before building the override list so the correct
     // locale is applied on the very first frame without an extra await in main.dart.
@@ -88,6 +92,10 @@ abstract final class AppContainer {
       // Locale persistence and initial locale override.
       if (localePreferenceService != null) localePreferenceServiceProvider.overrideWithValue(localePreferenceService),
       if (initialLocale != null) localeOverrideProvider.overrideWith((ref) => initialLocale!),
+
+      // Auth and device identity.
+      if (authService != null) authServiceProvider.overrideWithValue(authService),
+      if (deviceIdService != null) deviceIdServiceProvider.overrideWithValue(deviceIdService),
     ];
   }
 }
