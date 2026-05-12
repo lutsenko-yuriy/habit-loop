@@ -321,7 +321,7 @@ class _ShowupTile extends StatelessWidget {
       onTap: onTap,
       leading: Icon(icon, color: colors.forStatus(showup.status)),
       title: Text(habitName),
-      subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
+      subtitle: Text('${l10n.showupDurationMinutes(showup.duration.inMinutes)} — $statusText'),
     );
   }
 }

@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-_(nothing in progress)_
+- **[HAB-57] Bug: showup duration label uses English regardless of language setting** — [HAB-57](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-57/bug-the-time-under-the-pact-name-in-the-todo-list-is-in-english-even)
 
 ---
 
