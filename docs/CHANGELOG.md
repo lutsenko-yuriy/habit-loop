@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.23.2] — 2026-05-12 (PR #66 merged)
+
+### Changed — Migrate to skills-based Claude agent stack (HAB-58)
+
+- `.claude/agents/*.md` subagent files replaced with `skills/**/SKILL.md` structure; each skill is a self-contained directory with its own frontmatter, instructions, and output style
+- `MODEL_TIERS.md` added at the repo root with a tier mapping (Opus / Sonnet / Haiku) so agent files reference a tier name rather than a hard-coded model ID
+- `styles/` directory added with communication presets; each style file documents tone, verbosity, and formatting conventions
+- `output_style` field added to all skill frontmatters referencing the appropriate style preset
+- "When-to-use" guidance added inside each style file so orchestrators can select the correct preset automatically
+- No app code, tests, or l10n strings were changed; purely tooling and documentation
+
+---
+
 ## [0.23.1] — 2026-05-09 (PR #63 merged)
 
 ### Fixed — iOS notification tap navigation (UNUserNotificationCenter delegate)
