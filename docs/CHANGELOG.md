@@ -4,6 +4,21 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.24.0] — 2026-05-13 (PR #69 merged)
+
+### Added — Auth foundation: anonymous sign-in, device ID, Google account linking (HAB-59)
+
+- `firebase_auth ^6.0.0` and `google_sign_in ^7.0.0` added as dependencies; all existing Firebase packages bumped to latest major (`firebase_core ^4`, `firebase_analytics ^12`, `firebase_crashlytics ^5`, `firebase_remote_config ^6`)
+- Every install silently signs in anonymously on first launch via `FirebaseAuthService.initialize()` (fire-and-forget after `runApp`); a stable Firebase UID is available from day one without any user action
+- `DeviceIdService` / `SharedPreferencesDeviceIdService`: UUID v4 generated once, persisted under `habit_loop_device_id`, prefixes new pact IDs (`{deviceId}-{uuid}`) for global uniqueness across devices
+- `AuthService` interface with no-throw contract on `initialize()` / `signOut()`; `linkWithGoogle()` upgrades the anonymous account to a Google-linked account while preserving the UID
+- `FirebaseAuthClient` adapter interface isolates all Firebase + Google SDK types; test fakes implement it without importing any Firebase package
+- `AuthState` value type (`userId`, `isAnonymous`, `isSignedIn`) with `==`/`hashCode` and constructor assert guarding the impossible `userId==null && !isAnonymous` combination
+- Three new Riverpod providers: `authServiceProvider`, `deviceIdServiceProvider`, `authStateChangesProvider` (`StreamProvider<AuthState>`)
+- 880 tests passing
+
+---
+
 ## [0.23.4] — 2026-05-12 (PR #68 merged)
 
 ### Fixed — App no longer hangs on splash screen when offline (HAB-56)
