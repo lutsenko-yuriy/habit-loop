@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
@@ -21,6 +23,8 @@ Widget _buildTestApp({
   FakeAnalyticsService? analyticsService,
   FakeLocalePreferenceService? localeService,
   Locale? localeOverride,
+  Locale locale = const Locale('en'),
+  DashboardState state = const DashboardState(isLoading: false),
 }) {
   return ProviderScope(
     overrides: [
@@ -37,7 +41,7 @@ Widget _buildTestApp({
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en'),
+      locale: locale,
       home: MediaQuery(
         data: const MediaQueryData(
           size: Size(390, 844),
@@ -45,7 +49,7 @@ Widget _buildTestApp({
           viewPadding: EdgeInsets.only(bottom: 34),
         ),
         child: DashboardPageIos(
-          state: const DashboardState(isLoading: false),
+          state: state,
           hasPacts: hasPacts,
           onDaySelected: (_) {},
           onCreatePact: () async {},
@@ -221,6 +225,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(localeService.clearLocaleCallCount, 0);
+  });
+
+  testWidgets('showup tile subtitle uses locale-specific duration label', (tester) async {
+    final showup = Showup(
+      id: 's1',
+      pactId: 'pact-1',
+      scheduledAt: DateTime(2026, 3, 29, 7, 0),
+      duration: const Duration(minutes: 120),
+      status: ShowupStatus.pending,
+    );
+    final state = DashboardState(
+      isLoading: false,
+      selectedDayIndex: 0,
+      todayIndex: 0,
+      calendarDays: [
+        CalendarDayEntry(date: DateTime(2026, 3, 29), showups: [showup])
+      ],
+      pactNames: const {'pact-1': 'Meditate'},
+    );
+
+    await tester.pumpWidget(_buildTestApp(locale: const Locale('ru'), state: state));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('120 мин'), findsOneWidget);
+    expect(find.textContaining('120 min'), findsNothing);
   });
 }
 

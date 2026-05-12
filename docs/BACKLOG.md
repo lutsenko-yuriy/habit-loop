@@ -18,7 +18,6 @@ _(nothing in progress)_
 
 - **[HAB-55] EXC_BAD_ACCESS crash on iOS cold-start (JIT W^X protection)** — iOS cold-start crash due to JIT write-execute protection. (Bug)
 - **[HAB-56] Bug: cannot start the app while offline** — App fails to start when there is no internet connection. (Bug)
-- **[HAB-57] Bug: showup duration label uses English regardless of language setting** — The time shown under the pact name in the today todo list is always in English even when a different language is active. (Bug)
 
 ### Remaining work
 

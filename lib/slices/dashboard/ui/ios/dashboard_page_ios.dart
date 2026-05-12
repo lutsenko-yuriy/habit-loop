@@ -329,7 +329,7 @@ class _ShowupTile extends StatelessWidget {
         color: ShowupStatusColors.cupertino(context).forStatus(showup.status),
       ),
       title: Text(habitName),
-      subtitle: Text('${showup.duration.inMinutes} min — $statusText'),
+      subtitle: Text('${l10n.showupDurationMinutes(showup.duration.inMinutes)} — $statusText'),
     );
   }
 }
