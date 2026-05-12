@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
@@ -56,13 +58,25 @@ final class FirebaseRemoteConfigService implements RemoteConfigService {
   Future<void> initialize() async {
     try {
       await _client.setConfigSettings(
-        fetchTimeout: !kReleaseMode ? const Duration(seconds: 10) : const Duration(minutes: 1),
+        fetchTimeout: !kReleaseMode ? const Duration(seconds: 10) : const Duration(seconds: 15),
         minimumFetchInterval: !kReleaseMode ? Duration.zero : const Duration(hours: 12),
       );
       await _client.setDefaults(RemoteConfigDefaults.all);
-      await _client.fetchAndActivate();
     } catch (_) {
       // Remote Config failures must never prevent the app from launching.
+      return;
+    }
+    // Fire-and-forget the network fetch so a poor connection never blocks app
+    // startup. In-code defaults (applied above) are available immediately;
+    // fresh values activate in the background when the network is reachable.
+    unawaited(_fetchAndActivateSilently());
+  }
+
+  Future<void> _fetchAndActivateSilently() async {
+    try {
+      await _client.fetchAndActivate();
+    } catch (_) {
+      // Network failures are expected offline — swallow silently.
     }
   }
 
