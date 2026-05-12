@@ -39,10 +39,7 @@ Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor fo
 
 ### 3. Regenerate BACKLOG.md
 
-Open `docs/BACKLOG.md` and make two edits:
-
-1. **In Progress section** — replace the in-progress bullet with `_(nothing in progress)_`.
-2. **Milestone section** — remove the completed ticket(s) from the remaining-work list for their milestone. If all issues in the milestone are Done, note the milestone as complete.
+Open `docs/BACKLOG.md` and remove the completed ticket(s) from the remaining-work list for their milestone. If all issues in the milestone are Done, note the milestone as complete.
 
 Do not rewrite the rest of the file.
 

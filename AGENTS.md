@@ -78,7 +78,7 @@ At the beginning of every new session, before doing anything else:
 
 Follow TDD: write or update tests **before** implementing the feature or fix. Red → Green → Refactor.
 
-**Only one ticket may be in progress at a time.** Before picking up any new ticket, check the `## In Progress` section at the top of `docs/BACKLOG.md`. If a ticket is listed there, do not start new work until the current ticket is merged and the section is cleared.
+**Only one ticket may be in progress at a time.** Before picking up any new ticket, check Linear to confirm no other ticket is currently in progress.
 
 **For features with user-visible screens or interactions**: invoke the `analyze` skill first for analytics planning before planning implementation:
 
@@ -103,7 +103,7 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
    git fetch origin
    git checkout -b feature/HAB-XX-<short-description> origin/main
    ```
-   If the branch already exists, rebase it onto `origin/main` before writing any code (`git rebase origin/main`). This ensures the PR diff contains only the new work. Mark the ticket as In Progress in `docs/BACKLOG.md`: replace the `_(nothing in progress)_` placeholder with a single bullet linking to the issue (same format as in the milestone sections).
+   If the branch already exists, rebase it onto `origin/main` before writing any code (`git rebase origin/main`). This ensures the PR diff contains only the new work.
 4. Write failing tests that describe the expected behaviour.
 5. Implement the minimum code to make the tests pass.
 6. Refactor if needed.
