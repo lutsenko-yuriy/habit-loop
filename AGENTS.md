@@ -20,12 +20,19 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | @docs/CHANGELOG.md | Released version history |
 | @docs/VERSIONING.md | Version numbering rules and CI/CD pipeline |
 | @docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
+| @docs/MODEL_TIERS.md | Effort Tier and Reasoning Depth vocabulary; active model → tier mapping |
 | @docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
-| CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, etc.) — not committed |
-| .claude/agents/code-reviewer.md | PR review agent — invoked automatically in workflow step 11 |
-| .claude/agents/product-owner.md | Product Owner agent — invoked at session start, for analytics planning, and after PR merge |
-| .claude/agents/tech-lead.md | Tech Lead agent — invoked for large changes to produce an implementation plan before coding starts |
-| .claude/agents/developer.md | Developer agent — invoked to implement a Tech Lead work unit following TDD |
+| CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — not committed |
+| skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
+| skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
+| skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
+| skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |
+| skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |
+| skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
+| skills/design/experiment/SKILL.md | Experiment design: hypothesis, metrics, feature flag, registry entry |
+| skills/build/implement/SKILL.md | TDD implementation and PR |
+| skills/verify/review/SKILL.md | Architectural PR review |
+| skills/verify/audit/SKILL.md | Runtime and migration PR review |
 
 ## Architecture
 
@@ -41,6 +48,7 @@ Use the Flutter binary path from `CLAUDE.local.md` (it is not on the default she
 - **Run a single test file:** `flutter test test/path/to/test_file.dart`
 - **Get dependencies:** `flutter pub get`
 - **Regenerate localizations:** `flutter gen-l10n` — **must be run after editing any `lib/l10n/*.arb` file**; the generated `lib/l10n/generated/` files are in `.gitignore` and are not committed. CI runs this step automatically before tests and builds.
+- **Format:** `dart format -l 120 lib/ test/`
 
 ## Code style
 
@@ -61,9 +69,10 @@ Details: @docs/VERSIONING.md
 At the beginning of every new session, before doing anything else:
 
 1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
-2. Invoke the `product-owner` agent: `Use the product-owner agent to present the current backlog from Linear`.
-3. The Product Owner agent will summarise what has been done and what is remaining, then ask *"What goes into the next release?"*.
-4. Wait for the user's answer before proceeding.
+2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `styles/`). Default to DETAILED if absent.
+3. Invoke the `summarize` skill: `Invoke the summarize skill to present the current backlog from Linear`.
+4. The skill will summarise what has been done and what is remaining, then ask *"What goes into the next release?"*.
+5. Wait for the user's answer before proceeding.
 
 ## Workflow
 
@@ -71,24 +80,24 @@ Follow TDD: write or update tests **before** implementing the feature or fix. Re
 
 **Only one ticket may be in progress at a time.** Before picking up any new ticket, check the `## In Progress` section at the top of `docs/BACKLOG.md`. If a ticket is listed there, do not start new work until the current ticket is merged and the section is cleared.
 
-**For features with user-visible screens or interactions**: invoke the `product-owner` agent first for analytics planning before the Tech Lead:
+**For features with user-visible screens or interactions**: invoke the `analyze` skill first for analytics planning before planning implementation:
 
 ```
-Use the product-owner agent to plan analytics for HAB-XX: <issue title>
+Invoke the analyze skill for HAB-XX: <issue title>
 ```
 
-The Product Owner will propose which events and screen views to track, flag any PII concerns, update `docs/ANALYTICS_EVENTS.md`, and wait for approval. Pure infrastructure or CI changes with no user-facing screens skip this step.
+The skill will identify trackable moments, propose events and screen views, flag PII concerns, update `docs/ANALYTICS_EVENTS.md`, and wait for approval. Pure infrastructure or CI changes with no user-facing screens skip this step.
 
-**For large changes** (spanning multiple files, introducing new domain entities, new dependencies, or architectural shifts): invoke the `tech-lead` agent to produce the implementation plan **before writing any code**:
+**For large changes** (spanning multiple files, introducing new domain entities, new dependencies, or architectural shifts): invoke the `plan` skill to produce the implementation plan **before writing any code**:
 
 ```
-Use the tech-lead agent to plan HAB-XX: <issue title>
+Invoke the plan skill for HAB-XX: <issue title>
 ```
 
-The Tech Lead will produce a structured plan (dependencies, models, UI changes, test strategy, ordered phases, Developer work units) and wait for the user to approve or adjust it.
+The skill will produce a structured plan (dependencies, models, UI changes, test strategy, ordered phases, work units) and wait for the user to approve or adjust it.
 
-1. For features with user-facing screens/interactions, invoke the product-owner agent for analytics planning first and wait for approval.
-2. For large changes, invoke the tech-lead agent and wait for plan approval.
+1. For features with user-facing screens/interactions, invoke `analyze` first and wait for approval.
+2. For large changes, invoke `plan` and wait for plan approval.
 3. Create a new feature branch from the latest `main` and switch to it before writing any code. Always include the Linear ticket number after `feature/`:
    ```
    git fetch origin
@@ -110,18 +119,17 @@ The Tech Lead will produce a structured plan (dependencies, models, UI changes, 
 12. Push to the remote and open a PR — all in parallel:
     - Push the branch to the remote.
     - Open a PR.
-    - Request reviews in parallel once the PR is open (both agents are independent — launch them simultaneously):
-      - If `.claude/agents/tech-lead.md` exists, invoke it for an architectural review: `Use the tech-lead agent to review PR #<number>`.
-      - If `.claude/agents/code-reviewer.md` exists, invoke it for a runtime/launch/migration review: `Use the code-reviewer agent to review PR #<number>`.
-      - If neither agent exists, request a review from the user directly.
+    - Invoke both review skills simultaneously once the PR is open (they are independent — launch them simultaneously):
+      - `review` for architectural review: `Invoke the review skill for PR #<number>`.
+      - `audit` for runtime/launch/migration review: `Invoke the audit skill for PR #<number>`.
     - Inform the user of the PR URL.
-15. Remind the user to compact the context after each commit to keep the conversation lean.
-16. When the user approves the PR, invoke the `product-owner` agent **before merging**:
+13. Remind the user to compact the context after each commit to keep the conversation lean.
+14. When the user approves the PR, invoke the `ship` skill **before merging**:
     ```
-    Use the product-owner agent to prepare PR #<number> for merge: close the Linear issues, add a CHANGELOG entry, regenerate BACKLOG.md (restore the In Progress section to "_(nothing in progress)_" and remove the ticket from its milestone's remaining-work list), bump pubspec.yaml version, commit everything onto the feature branch, push, then merge the PR.
+    Invoke the ship skill for PR #<number>
     ```
-    The housekeeping commits land on the feature branch so the squash merge captures them. No separate approval is needed for the version bump.
-17. Clear the context after the PR with the changes is merged.
+    The skill closes the Linear issues, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
+15. Clear the context after the PR with the changes is merged.
 
 ## Experiments
 
@@ -129,9 +137,8 @@ Product experiments are tracked in `docs/experiments/`. The registry README (`do
 
 When starting an experiment:
 1. Pick the next sequential `EXP-NNN` ID from the index table in `docs/experiments/README.md`.
-2. Copy `docs/experiments/TEMPLATE.md` to `docs/experiments/EXP-NNN-<short-name>.md`.
-3. Fill in the hypothesis, setup, and metrics sections. Leave Decision and Learnings blank.
-4. Add a row to the index table with status `running`.
+2. Invoke the `experiment` skill: `Invoke the experiment skill for EXP-NNN: <hypothesis>`.
+3. The skill will draft the spec, wait for approval, then create the file and update the registry.
 
 When an experiment concludes (status changes to `won`, `lost`, or `abandoned`):
 1. Update the experiment file with the final decision and learnings.
