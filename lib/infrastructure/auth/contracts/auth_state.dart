@@ -21,8 +21,7 @@ class AuthState {
   bool get isSignedIn => userId != null;
 
   @override
-  bool operator ==(Object other) =>
-      other is AuthState && other.userId == userId && other.isAnonymous == isAnonymous;
+  bool operator ==(Object other) => other is AuthState && other.userId == userId && other.isAnonymous == isAnonymous;
 
   @override
   int get hashCode => Object.hash(userId, isAnonymous);
