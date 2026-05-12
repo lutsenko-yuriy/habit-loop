@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.23.3] — 2026-05-12 (PR #67 merged)
+
+### Fixed — Showup duration label uses locale-specific unit (HAB-57)
+
+- `_ShowupTile` in both iOS and Android dashboard pages was rendering the showup duration as a hardcoded English `min` suffix regardless of the active locale
+- Fix: replaced `'${showup.duration.inMinutes} min'` with `l10n.showupDurationMinutes(showup.duration.inMinutes)`, which already had correct translations for all four locales (`min` en/fr, `Min.` de, `мин` ru)
+- 2 new widget tests (iOS + Android) verify the Russian locale renders `мин`
+
+---
+
 ## [0.23.2] — 2026-05-12 (PR #66 merged)
 
 ### Changed — Migrate to skills-based Claude agent stack (HAB-58)

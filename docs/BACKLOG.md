@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-- **[HAB-57] Bug: showup duration label uses English regardless of language setting** — [HAB-57](https://linear.app/iurii-lutsenkos-workspace/issue/HAB-57/bug-the-time-under-the-pact-name-in-the-todo-list-is-in-english-even)
+_(nothing in progress)_
 
 ---
 
@@ -18,7 +18,6 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 - **[HAB-55] EXC_BAD_ACCESS crash on iOS cold-start (JIT W^X protection)** — iOS cold-start crash due to JIT write-execute protection. (Bug)
 - **[HAB-56] Bug: cannot start the app while offline** — App fails to start when there is no internet connection. (Bug)
-- **[HAB-57] Bug: showup duration label uses English regardless of language setting** — The time shown under the pact name in the today todo list is always in English even when a different language is active. (Bug)
 
 ### Remaining work
 
