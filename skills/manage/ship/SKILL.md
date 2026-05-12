@@ -2,6 +2,7 @@
 name: ship
 effort: RAPID
 reasoning: TACTICAL
+output_style: CONCISE
 description: Post-merge housekeeping after a PR is approved. Closes the linked Linear issues, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging.
 ---
 

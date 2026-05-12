@@ -11,13 +11,16 @@ description: Switch the active communication style for this session. Three style
 
 The style name is passed as the argument: `DETAILED`, `CONCISE`, or `SCHEMATIC`.
 
-If no argument is given or the name is unrecognised, list the available styles and ask the user to choose:
+If no argument is given or the name is unrecognised, list the available styles with their recommended use cases and ask the user to choose:
 
 ```
 Available styles:
-- DETAILED  — full prose, complete explanations (default)
-- CONCISE   — lecture-note shorthand, abbreviation-friendly
-- SCHEMATIC — minimal words, TeX-like symbols
+- DETAILED   — full prose, complete explanations (default)
+               Best for: long-form docs, specs, ADRs, onboarding material
+- CONCISE    — lecture-note shorthand, abbreviation-friendly
+               Best for: live chat, PR reviews, code comments, day-to-day session replies
+- SCHEMATIC  — TeX-math + Haskell notation, zero prose
+               Best for: agent-to-agent output, workflow/pipeline specs, type-level reasoning
 
 Which style?
 ```
@@ -43,6 +46,15 @@ Respond with the confirmation phrase defined at the bottom of the loaded style f
 
 ---
 
+---
+
+## Style resolution order
+
+1. **Active session style** — if `CLAUDE.local.md` contains `## Active communication style`, load it and apply it to all output, overriding every skill's own default.
+2. **Skill default** — if no session style is set, each skill uses the `output_style` declared in its own frontmatter.
+
+There is no global fallback. If neither is set, the skill chooses based on its own `output_style`.
+
 ## Notes for session start
 
-At session start, before invoking `summarize`, check `CLAUDE.local.md` for an `## Active communication style` section. If present, silently load that style file and apply it. If absent, default to DETAILED.
+At session start, before invoking `summarize`, check `CLAUDE.local.md` for an `## Active communication style` section. If present, silently load that style file — it overrides all skill defaults for this session. If absent, each skill will use its own `output_style`.
