@@ -8,7 +8,7 @@ The `## In Progress` section at the top is the one exception — it is maintaine
 
 ## In Progress
 
-_(nothing in progress)_
+- **[HAB-56] Bug: cannot start the app while offline** — App fails to start when there is no internet connection. (Bug)
 
 ---
 

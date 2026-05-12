@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
@@ -135,6 +137,38 @@ class _FetchThrowingClient implements FirebaseRemoteConfigClient {
   double getDouble(String key) => 0.0;
 }
 
+/// A client whose fetchAndActivate never completes — simulates a device that is
+/// fully offline and where the Firebase SDK hangs waiting for a connection.
+class _BlockingFetchClient implements FirebaseRemoteConfigClient {
+  bool defaultsApplied = false;
+
+  @override
+  Future<void> setConfigSettings({
+    required Duration fetchTimeout,
+    required Duration minimumFetchInterval,
+  }) async {}
+
+  @override
+  Future<void> setDefaults(Map<String, dynamic> defaults) async {
+    defaultsApplied = true;
+  }
+
+  @override
+  Future<bool> fetchAndActivate() => Completer<bool>().future; // never completes
+
+  @override
+  int getInt(String key) => 0;
+
+  @override
+  bool getBool(String key) => false;
+
+  @override
+  String getString(String key) => '';
+
+  @override
+  double getDouble(String key) => 0.0;
+}
+
 class _TrackingFirebaseRemoteConfigClient implements FirebaseRemoteConfigClient {
   _TrackingFirebaseRemoteConfigClient(this._log);
   final List<String> _log;
@@ -181,18 +215,31 @@ void main() {
   });
 
   group('FirebaseRemoteConfigService.initialize', () {
-    test('calls setConfigSettings, setDefaults, and fetchAndActivate in order', () async {
+    test('setConfigSettings and setDefaults are awaited before initialize returns', () async {
       final callOrder = <String>[];
       final trackingClient = _TrackingFirebaseRemoteConfigClient(callOrder);
       final trackingService = FirebaseRemoteConfigService(trackingClient);
 
       await trackingService.initialize();
 
-      expect(callOrder, [
-        'setConfigSettings',
-        'setDefaults',
-        'fetchAndActivate',
-      ]);
+      // setConfigSettings and setDefaults must be completed by the time initialize()
+      // returns — they provide the in-code defaults for offline use.
+      expect(callOrder, containsAllInOrder(['setConfigSettings', 'setDefaults']));
+    });
+
+    test('fetchAndActivate is called after initialize returns (fire-and-forget)', () async {
+      final callOrder = <String>[];
+      final trackingClient = _TrackingFirebaseRemoteConfigClient(callOrder);
+      final trackingService = FirebaseRemoteConfigService(trackingClient);
+
+      await trackingService.initialize();
+      // Drain the microtask queue so the fire-and-forget fetch completes.
+      await Future<void>.delayed(Duration.zero);
+
+      expect(callOrder, contains('fetchAndActivate'));
+      // Ordering: setConfigSettings and setDefaults come before fetchAndActivate.
+      expect(callOrder.indexOf('setConfigSettings'), lessThan(callOrder.indexOf('fetchAndActivate')));
+      expect(callOrder.indexOf('setDefaults'), lessThan(callOrder.indexOf('fetchAndActivate')));
     });
 
     test('calls setDefaults with RemoteConfigDefaults.all', () async {
@@ -202,6 +249,7 @@ void main() {
 
     test('calls fetchAndActivate once', () async {
       await service.initialize();
+      await Future<void>.delayed(Duration.zero);
       expect(fakeClient.fetchAndActivateCallCount, 1);
     });
 
@@ -219,6 +267,28 @@ void main() {
 
     test('completes without throwing on success', () async {
       await expectLater(service.initialize(), completes);
+    });
+
+    test('returns immediately even when fetchAndActivate blocks indefinitely', () async {
+      // Simulates a device that is fully offline — fetchAndActivate never resolves.
+      // initialize() must return so the app can reach runApp without blocking on the
+      // splash screen.
+      final blockingService = FirebaseRemoteConfigService(_BlockingFetchClient());
+      await expectLater(blockingService.initialize(), completes);
+    });
+
+    test('applies in-code defaults before returning even when fetch blocks', () async {
+      final client = _BlockingFetchClient();
+      final blockingService = FirebaseRemoteConfigService(client);
+      await blockingService.initialize();
+      expect(client.defaultsApplied, isTrue);
+    });
+
+    test('eventually calls fetchAndActivate after initialize returns', () async {
+      await service.initialize();
+      // Drain the microtask queue so the fire-and-forget fetch can complete.
+      await Future<void>.delayed(Duration.zero);
+      expect(fakeClient.fetchAndActivateCallCount, 1);
     });
   });
 
