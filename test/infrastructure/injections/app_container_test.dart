@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/auth/data/noop_auth_service.dart';
+import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
@@ -238,6 +240,77 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(localeOverrideProvider), equals(const Locale('de')));
+    });
+
+    test('authServiceProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(authServiceProvider), returnsNormally);
+    });
+
+    test('deviceIdServiceProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(deviceIdServiceProvider), returnsNormally);
+    });
+
+    test('authServiceProvider override is included when provided', () async {
+      final authService = NoopAuthService();
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        authService: authService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(authServiceProvider), same(authService));
+    });
+
+    test('deviceIdServiceProvider override is included when provided', () async {
+      final deviceIdService = NoopDeviceIdService();
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        deviceIdService: deviceIdService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(deviceIdServiceProvider), same(deviceIdService));
+    });
+
+    test('override count grows by 2 when both authService and deviceIdService are provided', () async {
+      final baseOverrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final withAuthOverrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        authService: NoopAuthService(),
+        deviceIdService: NoopDeviceIdService(),
+      );
+
+      expect(withAuthOverrides.length, equals(baseOverrides.length + 2));
     });
   });
 }

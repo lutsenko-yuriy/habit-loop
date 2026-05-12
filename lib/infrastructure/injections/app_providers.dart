@@ -18,8 +18,13 @@ import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.dart';
+import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
+import 'package:habit_loop/infrastructure/auth/contracts/auth_state.dart';
+import 'package:habit_loop/infrastructure/auth/data/noop_auth_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dart';
+import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
@@ -33,6 +38,33 @@ import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
+// ---------------------------------------------------------------------------
+// Auth and device identity providers
+// ---------------------------------------------------------------------------
+
+/// Provides the active [AuthService] to the app.
+///
+/// Defaults to [NoopAuthService] so tests and environments without Firebase
+/// Auth work without additional setup. Overridden in `main.dart` via
+/// [AppContainer.overrides] with [FirebaseAuthService] in all build modes.
+final authServiceProvider = Provider<AuthService>((ref) => NoopAuthService());
+
+/// Provides the active [DeviceIdService] to the app.
+///
+/// Defaults to [NoopDeviceIdService] so tests work without SharedPreferences.
+/// Overridden in `main.dart` via [AppContainer.overrides] with
+/// [SharedPreferencesDeviceIdService].
+final deviceIdServiceProvider = Provider<DeviceIdService>(
+  (ref) => NoopDeviceIdService(),
+);
+
+/// Stream of [AuthState] changes from the active [AuthService].
+///
+/// Watched by the sync status UI (WU6) to react to sign-in / sign-out events.
+final authStateChangesProvider = StreamProvider<AuthState>((ref) {
+  return ref.watch(authServiceProvider).authStateChanges;
+});
 
 // ---------------------------------------------------------------------------
 // App info providers
