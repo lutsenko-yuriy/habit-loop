@@ -4,6 +4,22 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.23.4] — 2026-05-12 (PR #68 merged)
+
+### Fixed — App no longer hangs on splash screen when offline (HAB-56)
+
+- `FirebaseRemoteConfigService.initialize()` was `await`ing `fetchAndActivate()` with a 1-minute release timeout, blocking `main()` and keeping the splash screen frozen when the device had no internet connection
+- Fix: `setDefaults()` (in-code defaults) is still awaited before `initialize()` returns, so feature flags are available on the first frame; `fetchAndActivate()` is now fire-and-forget and completes in the background whenever the network is reachable
+- Release `fetchTimeout` reduced from 1 minute to 15 seconds to limit how long an inflight fetch lingers on a poor connection
+- 4 new tests verify the offline-first behaviour; 858 tests passing
+
+### Changed — Remove manual In Progress tracking from BACKLOG.md
+
+- `## In Progress` section removed from `docs/BACKLOG.md`; Linear is the single source of truth for what is in progress
+- `AGENTS.md` and `skills/manage/ship/SKILL.md` updated to drop references to that section
+
+---
+
 ## [0.23.3] — 2026-05-12 (PR #67 merged)
 
 ### Fixed — Showup duration label uses locale-specific unit (HAB-57)
