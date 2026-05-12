@@ -58,7 +58,16 @@ The `calibrate` skill reads this list and proposes the mapping below. Re-run `ca
 
 ## Active mapping
 
-_Not yet configured — invoke the `calibrate` skill to populate this section._
+_Last updated: 2026-05-12._
+
+| Effort | Reasoning | Model |
+|---|---|---|
+| THOROUGH | ARCHITECTURAL | claude-opus-4-6 |
+| THOROUGH | TACTICAL | claude-opus-4-6 |
+| FOCUSED | ARCHITECTURAL | claude-sonnet-4-6 |
+| FOCUSED | TACTICAL | claude-sonnet-4-6 |
+| RAPID | TACTICAL | claude-haiku-4-5 |
+| RAPID | MECHANICAL | claude-haiku-4-5 |
 
 ---
 
