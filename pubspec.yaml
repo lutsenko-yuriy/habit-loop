@@ -2,7 +2,7 @@ name: habit_loop
 description: "Habit Loop — build habits through pacts and showups."
 publish_to: 'none'
 
-version: 0.24.0+49
+version: 0.24.0+50
 
 environment:
   sdk: ^3.6.0
