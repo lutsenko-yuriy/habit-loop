@@ -37,6 +37,7 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_service.dart';
+import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
@@ -275,3 +276,19 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
     isIOS: Platform.isIOS,
   );
 });
+
+// ---------------------------------------------------------------------------
+// Sync infrastructure providers
+// ---------------------------------------------------------------------------
+
+/// Provides the [SyncCircuitBreaker] that governs all Firestore network requests.
+///
+/// State is in-memory only and resets to [SyncCbState.closed] on every app
+/// restart. WU4 / WU5 sync operations check [SyncCircuitBreaker.canRequest]
+/// before making any Firestore call; WU6 (sync-status UI) watches this
+/// provider to display the current sync health.
+///
+/// No override is needed — the circuit breaker always starts Closed.
+final syncCircuitBreakerProvider = StateNotifierProvider<SyncCircuitBreaker, SyncCbState>(
+  (ref) => SyncCircuitBreaker(),
+);

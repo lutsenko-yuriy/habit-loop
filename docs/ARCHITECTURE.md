@@ -87,14 +87,16 @@ lib/
 │   │       ├── flutter_local_notification_service.dart  # FlutterLocalNotificationService — production implementation; DST-safe zonedSchedule() with TZDateTime; in-memory _pactNotificationIds registry for cancelAllRemindersForPact(); onDidReceiveNotificationResponse callback stored for WU4 to wire
 │   │       ├── noop_notification_service.dart           # NoopNotificationService — silent no-op used by unit tests (which override notificationServiceProvider directly and never call main())
 │   │       └── test_notification_helper.dart            # scheduleTestNotification(NotificationService) — debug/profile helper that schedules a fake 15-s notification via the service abstraction; tree-shaken from release builds
-│   └── remote_config/
-│       ├── contracts/
-│       │   ├── remote_config_service.dart          # abstract RemoteConfigService interface (no-throw contract)
-│       │   └── remote_config_defaults.dart         # RemoteConfigDefaults — in-code fallback values
-│       └── data/
-│           ├── firebase_remote_config_service.dart     # real implementation (swallows exceptions); also contains FirebaseRemoteConfigClient interface
-│           ├── firebase_remote_config_client_adapter.dart # wraps FirebaseRemoteConfig SDK; only used in main.dart
-│           └── noop_remote_config_service.dart         # default no-op returning in-code defaults
+│   ├── remote_config/
+│   │   ├── contracts/
+│   │   │   ├── remote_config_service.dart          # abstract RemoteConfigService interface (no-throw contract)
+│   │   │   └── remote_config_defaults.dart         # RemoteConfigDefaults — in-code fallback values
+│   │   └── data/
+│   │       ├── firebase_remote_config_service.dart     # real implementation (swallows exceptions); also contains FirebaseRemoteConfigClient interface
+│   │       ├── firebase_remote_config_client_adapter.dart # wraps FirebaseRemoteConfig SDK; only used in main.dart
+│   │       └── noop_remote_config_service.dart         # default no-op returning in-code defaults
+│   └── sync/
+│       └── sync_circuit_breaker.dart  # SyncCbState enum (closed/halfOpen/open) + SyncCircuitBreaker StateNotifier; governs all Firestore network requests; state is in-memory only (resets to closed on app restart); syncCircuitBreakerProvider declared in app_providers.dart
 └── slices/
     ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel
     │   ├── analytics/                 # DashboardAnalyticsScreen, LanguagePickerAnalyticsScreen, LanguageChangeRequestedEvent, LanguageChangedEvent
@@ -160,11 +162,13 @@ test/
 │   │   ├── fake_notification_service.dart              # Shared fake recording all calls (scheduledReminders, scheduledDeadlines, cancelledShowupIds, cancelledPactIds)
 │   │   └── data/
 │   │       └── noop_notification_service_test.dart
-│   └── remote_config/
-│       ├── data/
-│       │   ├── firebase_remote_config_service_test.dart
-│       │   └── noop_remote_config_service_test.dart
-│       └── fake_remote_config_service.dart  # Shared fake for test overrides
+│   ├── remote_config/
+│   │   ├── data/
+│   │   │   ├── firebase_remote_config_service_test.dart
+│   │   │   └── noop_remote_config_service_test.dart
+│   │   └── fake_remote_config_service.dart  # Shared fake for test overrides
+│   └── sync/
+│       └── sync_circuit_breaker_test.dart  # SyncCircuitBreaker: state machine (closed→halfOpen→open), failure counter, triggerManualSync, full cycle; syncCircuitBreakerProvider smoke tests
 └── slices/                            # Mirrors lib/slices/
     ├── dashboard/ (analytics/, ui/)
     ├── pact/
@@ -217,7 +221,7 @@ Platform-split presentation:
 
 ### Infrastructure (`lib/infrastructure/`)
 
-Cross-cutting services (analytics, crashlytics, logging, notifications, remote config) that are shared by the entire app. Each service follows the same internal structure: `contracts/` (abstract interface with a no-throw contract) and `data/` (production implementation + noop fallback). Provider declarations have been consolidated — see Injections below.
+Cross-cutting services (analytics, crashlytics, logging, notifications, remote config, sync) that are shared by the entire app. Each service follows the same internal structure: `contracts/` (abstract interface with a no-throw contract) and `data/` (production implementation + noop fallback). Provider declarations have been consolidated — see Injections below.
 
 Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/analytics/`, `slices/showup/analytics/`) with event classes extending `AnalyticsEvent`. This keeps event definitions co-located with the domain they describe.
 
@@ -233,7 +237,9 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 
 **Logging:** `lib/infrastructure/logging/` provides structured local logging via `talker_flutter`. The `LogService` interface exposes `debug()`, `info()`, `warning()`, `error()`, and `logLocal()` (for PII-safe local-only detail). `TalkerLogService` is active in debug and profile builds only; `NoopLogService` is the default in release and tests. The in-app log overlay is gated on `kDebugMode`. **PII rule:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
 
-**Firestore:** `lib/infrastructure/firestore/` wraps the Firestore remote storage layer. `FirestoreClient` is the abstract interface with a strict no-throw contract; all methods accept only plain `Map<String, dynamic>` data so no Firestore SDK types leak into the interface — test fakes implement it without importing `cloud_firestore`. The flat document schema mirrors the local SQLite structure: `/users/{userId}/pacts/{pactId}` and `/users/{userId}/showups/{showupId}`. `NoopFirestoreClient` is the default; the production `FirestoreClientAdapter` (wrapping the real SDK, only instantiated in `main.dart`) is planned for WU3. `firestoreClientProvider` follows the same optional-override pattern as other infrastructure providers.
+**Firestore:** `lib/infrastructure/firestore/` wraps the Firestore remote storage layer. `FirestoreClient` is the abstract interface with a strict no-throw contract; all methods accept only plain `Map<String, dynamic>` data so no Firestore SDK types leak into the interface — test fakes implement it without importing `cloud_firestore`. The flat document schema mirrors the local SQLite structure: `/users/{userId}/pacts/{pactId}` and `/users/{userId}/showups/{showupId}`. `NoopFirestoreClient` is the default; the production `FirestoreClientAdapter` (wrapping the real SDK, only instantiated in `main.dart`) is planned for a future work unit. `firestoreClientProvider` follows the same optional-override pattern as other infrastructure providers.
+
+**Sync:** `lib/infrastructure/sync/` contains the circuit breaker that governs all Firestore network requests. `SyncCbState` enum: `closed` (requests flow through), `halfOpen` (probing after a failure — requests still allowed but counted), `open` (suspended — no automatic requests). `SyncCircuitBreaker` (`StateNotifier<SyncCbState>`) implements the state machine: `closed` → `halfOpen` on any failure; `halfOpen` → `closed` on success or → `open` after 5 consecutive failures; `open` → `halfOpen` only via `triggerManualSync()` (called from the sync-status UI). CB state is in-memory only — always resets to `closed` on app restart. WU4 / WU5 sync operations check `canRequest` before every Firestore call; WU6 (sync-status UI) watches `syncCircuitBreakerProvider` to react to state changes.
 
 **Persistence:** `lib/infrastructure/persistence/` contains the database lifecycle manager and the codec/mapper utilities used by the SQLite repository implementations. `HabitLoopDatabase` owns the sqflite `Database` singleton for production use; exposes `HabitLoopDatabase.runMigrations` (creates the full current schema) and `HabitLoopDatabase.runUpgradeMigrations` (incremental v1→v2 upgrade) as public statics so tests can apply them to in-memory `databaseFactoryFfi` databases without going through the file-backed singleton; provides `@visibleForTesting openForTesting()` as a convenience wrapper. Current schema version: **2** (v2 added `dirty INTEGER NOT NULL DEFAULT 1` and `synced_at INTEGER` to both `pacts` and `showups`). `ScheduleCodec`, `PactMapper`, and `ShowupMapper` are `abstract final` classes with only `static` methods — they carry no sqflite dependency themselves (sqflite is introduced by the concrete repositories in `slices/*/data/`). `ScheduleCodec` encodes and decodes `ShowupSchedule` discriminated unions to and from a JSON string stored in the `schedule TEXT` column; its `decode` method applies a type guard before the `Map<String, dynamic>` cast so that syntactically valid but non-object JSON values produce a `FormatException` rather than an uncaught `TypeError`. `PactMapper` and `ShowupMapper` convert domain objects to column maps (for `INSERT`/`UPDATE`) and reconstruct them from row maps (for `SELECT`); `toRow()` always writes `dirty = 1` and `synced_at = null` so every local write is queued for the next sync pass; `fromRow()` intentionally ignores `dirty` and `synced_at` — sync state is internal to the repository layer and never surfaced on domain models. All `DateTime` fields are stored as epoch milliseconds and reconstructed as **local-time** values — matching the local-time `DateTime` objects produced by `PactBuilder` and `ShowupGenerator` — so that timezones are handled correctly throughout the app.
 
