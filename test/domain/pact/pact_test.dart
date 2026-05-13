@@ -158,6 +158,23 @@ void main() {
       expect(reDirtied.dirty, isTrue);
     });
 
+    test('copyWith(clearSyncedAt: true) resets syncedAt to null', () {
+      final pact = Pact(
+        id: '1',
+        habitName: 'Meditate',
+        startDate: DateTime(2026, 3, 29),
+        endDate: DateTime(2026, 9, 29),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+        dirty: false,
+        syncedAt: DateTime(2026, 4, 1),
+      );
+      final cleared = pact.copyWith(clearSyncedAt: true);
+      expect(cleared.syncedAt, isNull);
+      expect(cleared.dirty, isFalse);
+    });
+
     test('two pacts differing only in dirty are not equal', () {
       final a = Pact(
         id: '1',

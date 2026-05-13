@@ -85,7 +85,7 @@ abstract final class PactMapper {
       // total_showups is read-acknowledged but not propagated into the domain
       // model; it lives in the DB column only and is consumed by stats queries.
       stats: null,
-      dirty: (row['dirty'] as int) != 0,
+      dirty: (row['dirty'] as int? ?? 1) != 0,
       syncedAt: row['synced_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(
               (row['synced_at'] as num).toInt(),

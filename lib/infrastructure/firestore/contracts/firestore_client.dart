@@ -2,8 +2,8 @@
 ///
 /// Implementations must have a no-throw contract: all exceptions from the
 /// underlying SDK must be caught internally so a Firestore outage can never
-/// crash the app. Callers are responsible for checking success via return
-/// values or separate retry logic (WU4).
+/// crash the app. Write methods return void; callers use separate retry logic
+/// (WU4) to verify eventual consistency.
 ///
 /// The flat schema mirrors the local SQLite structure:
 ///   /users/{userId}/pacts/{pactId}

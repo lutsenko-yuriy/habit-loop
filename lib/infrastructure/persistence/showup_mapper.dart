@@ -38,7 +38,7 @@ abstract final class ShowupMapper {
       duration: Duration(microseconds: (row['duration'] as num).toInt()),
       status: _decodeStatus(row['status'] as String),
       note: row['note'] as String?,
-      dirty: (row['dirty'] as int) != 0,
+      dirty: (row['dirty'] as int? ?? 1) != 0,
       syncedAt: row['synced_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(
               (row['synced_at'] as num).toInt(),

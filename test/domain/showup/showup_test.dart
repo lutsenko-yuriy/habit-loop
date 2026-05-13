@@ -155,6 +155,21 @@ void main() {
       expect(synced.id, equals(showup.id));
     });
 
+    test('copyWith(clearSyncedAt: true) resets syncedAt to null', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+        dirty: false,
+        syncedAt: DateTime(2026, 4, 1),
+      );
+      final cleared = showup.copyWith(clearSyncedAt: true);
+      expect(cleared.syncedAt, isNull);
+      expect(cleared.dirty, isFalse);
+    });
+
     test('two showups differing only in dirty are not equal', () {
       final a = Showup(
         id: '1',
