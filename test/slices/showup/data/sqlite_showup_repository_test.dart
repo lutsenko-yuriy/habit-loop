@@ -365,5 +365,50 @@ void main() {
         expect(remaining, hasLength(1));
       });
     });
+
+    // -------------------------------------------------------------------------
+    // ShowupSyncRepository
+    // -------------------------------------------------------------------------
+
+    group('getDirtyShowups', () {
+      test('returns all showups after initial insert — all start dirty', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup(id: 's1'));
+        await repository.saveShowup(makeShowup(id: 's2'));
+        final dirty = await repository.getDirtyShowups();
+        expect(dirty.map((s) => s.id), containsAll(['s1', 's2']));
+      });
+
+      test('returns empty list when no showups exist', () async {
+        expect(await repository.getDirtyShowups(), isEmpty);
+      });
+
+      test('excludes showups marked as synced', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup(id: 's1'));
+        await repository.saveShowup(makeShowup(id: 's2'));
+        await repository.markShowupSynced('s1', DateTime(2026, 5, 1));
+        final dirty = await repository.getDirtyShowups();
+        expect(dirty.map((s) => s.id), equals(['s2']));
+      });
+    });
+
+    group('markShowupSynced', () {
+      test('removes showup from dirty list after marking synced', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup());
+        await repository.markShowupSynced('showup-1', DateTime(2026, 5, 1));
+        expect(await repository.getDirtyShowups(), isEmpty);
+      });
+
+      test('re-appears as dirty after updateShowup', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup());
+        await repository.markShowupSynced('showup-1', DateTime(2026, 5, 1));
+        await repository.updateShowup(makeShowup(status: ShowupStatus.done));
+        final dirty = await repository.getDirtyShowups();
+        expect(dirty.map((s) => s.id), contains('showup-1'));
+      });
+    });
   });
 }

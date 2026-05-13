@@ -256,5 +256,46 @@ void main() {
         expect(all.first.id, equals('p2'));
       });
     });
+
+    // -------------------------------------------------------------------------
+    // PactSyncRepository
+    // -------------------------------------------------------------------------
+
+    group('getDirtyPacts', () {
+      test('returns all pacts after initial insert — all start dirty', () async {
+        await repository.savePact(makePact(id: 'p1'));
+        await repository.savePact(makePact(id: 'p2'));
+        final dirty = await repository.getDirtyPacts();
+        expect(dirty.map((p) => p.id), containsAll(['p1', 'p2']));
+      });
+
+      test('returns empty list when no pacts exist', () async {
+        expect(await repository.getDirtyPacts(), isEmpty);
+      });
+
+      test('excludes pacts marked as synced', () async {
+        await repository.savePact(makePact(id: 'p1'));
+        await repository.savePact(makePact(id: 'p2'));
+        await repository.markPactSynced('p1', DateTime(2026, 5, 1));
+        final dirty = await repository.getDirtyPacts();
+        expect(dirty.map((p) => p.id), equals(['p2']));
+      });
+    });
+
+    group('markPactSynced', () {
+      test('removes pact from dirty list after marking synced', () async {
+        await repository.savePact(makePact());
+        await repository.markPactSynced('pact-1', DateTime(2026, 5, 1));
+        expect(await repository.getDirtyPacts(), isEmpty);
+      });
+
+      test('re-appears as dirty after updatePact', () async {
+        await repository.savePact(makePact());
+        await repository.markPactSynced('pact-1', DateTime(2026, 5, 1));
+        await repository.updatePact(makePact(status: PactStatus.stopped));
+        final dirty = await repository.getDirtyPacts();
+        expect(dirty.map((p) => p.id), contains('pact-1'));
+      });
+    });
   });
 }

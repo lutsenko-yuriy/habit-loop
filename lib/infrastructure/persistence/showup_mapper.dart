@@ -15,8 +15,9 @@ abstract final class ShowupMapper {
       'duration': showup.duration.inMicroseconds,
       'status': _encodeStatus(showup.status),
       'note': showup.note,
-      'dirty': showup.dirty ? 1 : 0,
-      'synced_at': showup.syncedAt?.millisecondsSinceEpoch,
+      // Every insert/update starts dirty=1 — queued for the first sync flush.
+      'dirty': 1,
+      'synced_at': null,
     };
   }
 
@@ -38,12 +39,7 @@ abstract final class ShowupMapper {
       duration: Duration(microseconds: (row['duration'] as num).toInt()),
       status: _decodeStatus(row['status'] as String),
       note: row['note'] as String?,
-      dirty: (row['dirty'] as int? ?? 1) != 0,
-      syncedAt: row['synced_at'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              (row['synced_at'] as num).toInt(),
-            )
-          : null,
+      // dirty and synced_at live only in the sync layer — not on the domain model.
     );
   }
 

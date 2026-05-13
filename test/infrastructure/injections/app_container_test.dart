@@ -297,6 +297,30 @@ void main() {
       expect(container.read(deviceIdServiceProvider), same(deviceIdService));
     });
 
+    test('pactSyncRepositoryProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(pactSyncRepositoryProvider), returnsNormally);
+    });
+
+    test('showupSyncRepositoryProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(showupSyncRepositoryProvider), returnsNormally);
+    });
+
     test('firestoreClientProvider resolves to noop default when not provided', () async {
       final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,

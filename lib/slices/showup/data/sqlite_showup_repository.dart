@@ -2,10 +2,11 @@ import 'package:habit_loop/domain/showup/save_showups_result.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_date_utils.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/persistence/showup_mapper.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// SQLite-backed implementation of [ShowupRepository].
+/// SQLite-backed implementation of [ShowupRepository] and [ShowupSyncRepository].
 ///
 /// Takes an open [Database] in its constructor. The database lifecycle is
 /// managed by [HabitLoopDatabase].
@@ -13,7 +14,11 @@ import 'package:sqflite/sqflite.dart';
 /// All [DateTime] fields are stored as epoch milliseconds and reconstructed as
 /// **local-time** values via [ShowupMapper], matching the local-time values
 /// produced by [ShowupGenerator].
-class SqliteShowupRepository implements ShowupRepository {
+///
+/// The `dirty` and `synced_at` columns are managed internally by this class
+/// and are never exposed through [ShowupRepository]. Only [ShowupSyncRepository]
+/// methods touch them.
+class SqliteShowupRepository implements ShowupRepository, ShowupSyncRepository {
   const SqliteShowupRepository(this._db);
 
   final Database _db;
@@ -133,5 +138,25 @@ class SqliteShowupRepository implements ShowupRepository {
   @override
   Future<void> deleteShowupsForPact(String pactId) async {
     await _db.delete(_table, where: 'pact_id = ?', whereArgs: [pactId]);
+  }
+
+  // ---------------------------------------------------------------------------
+  // ShowupSyncRepository
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<List<Showup>> getDirtyShowups() async {
+    final rows = await _db.query(_table, where: 'dirty = ?', whereArgs: [1]);
+    return rows.map(ShowupMapper.fromRow).toList();
+  }
+
+  @override
+  Future<void> markShowupSynced(String showupId, DateTime syncedAt) async {
+    await _db.update(
+      _table,
+      {'dirty': 0, 'synced_at': syncedAt.millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [showupId],
+    );
   }
 }

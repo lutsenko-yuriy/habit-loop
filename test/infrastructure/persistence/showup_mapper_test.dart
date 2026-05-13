@@ -55,39 +55,12 @@ void main() {
         expect(ShowupMapper.toRow(showup)['status'], equals('failed'));
       });
 
-      test('maps dirty as 1 when true (default)', () {
-        final showup = baseShowup();
-        expect(ShowupMapper.toRow(showup)['dirty'], equals(1));
+      test('always writes dirty=1 — every insert/update is queued for sync', () {
+        expect(ShowupMapper.toRow(baseShowup())['dirty'], equals(1));
       });
 
-      test('maps dirty as 0 when false', () {
-        final showup = Showup(
-          id: 'showup-1',
-          pactId: 'pact-1',
-          scheduledAt: scheduledAt,
-          duration: duration,
-          status: ShowupStatus.pending,
-          dirty: false,
-        );
-        expect(ShowupMapper.toRow(showup)['dirty'], equals(0));
-      });
-
-      test('maps synced_at as null when not set', () {
+      test('always writes synced_at=null — managed exclusively by the sync layer', () {
         expect(ShowupMapper.toRow(baseShowup())['synced_at'], isNull);
-      });
-
-      test('maps synced_at as epoch millis when set', () {
-        final syncedAt = DateTime(2026, 4, 1, 12, 0);
-        final showup = Showup(
-          id: 'showup-1',
-          pactId: 'pact-1',
-          scheduledAt: scheduledAt,
-          duration: duration,
-          status: ShowupStatus.pending,
-          dirty: false,
-          syncedAt: syncedAt,
-        );
-        expect(ShowupMapper.toRow(showup)['synced_at'], equals(syncedAt.millisecondsSinceEpoch));
       });
 
       test('maps duration as microseconds', () {
@@ -111,6 +84,7 @@ void main() {
             'duration': duration.inMicroseconds,
             'status': 'pending',
             'note': null,
+            // dirty and synced_at are present in the DB row but not on the domain model.
             'dirty': 1,
             'synced_at': null,
           };
@@ -150,24 +124,14 @@ void main() {
         expect(() => ShowupMapper.fromRow(row), throwsArgumentError);
       });
 
-      test('reconstructs dirty as true when column is 1', () {
-        final row = baseRow()..['dirty'] = 1;
-        expect(ShowupMapper.fromRow(row).dirty, isTrue);
-      });
-
-      test('reconstructs dirty as false when column is 0', () {
-        final row = baseRow()..['dirty'] = 0;
-        expect(ShowupMapper.fromRow(row).dirty, isFalse);
-      });
-
-      test('reconstructs syncedAt as null when column is null', () {
-        expect(ShowupMapper.fromRow(baseRow()).syncedAt, isNull);
-      });
-
-      test('reconstructs syncedAt from epoch millis when column is set', () {
+      test('dirty and synced_at columns in row are ignored — not on domain model', () {
+        // Verify fromRow succeeds with both dirty=0 and synced_at set,
+        // since the sync layer may later read back rows in a synced state.
         final syncedAt = DateTime(2026, 4, 1, 12, 0);
-        final row = baseRow()..['synced_at'] = syncedAt.millisecondsSinceEpoch;
-        expect(ShowupMapper.fromRow(row).syncedAt, equals(syncedAt));
+        final row = baseRow()
+          ..['dirty'] = 0
+          ..['synced_at'] = syncedAt.millisecondsSinceEpoch;
+        expect(() => ShowupMapper.fromRow(row), returnsNormally);
       });
 
       test('reconstructs scheduledAt as local-time DateTime (not UTC)', () {
@@ -214,23 +178,6 @@ void main() {
       test('failed showup without note round-trips correctly', () {
         final original = baseShowup(status: ShowupStatus.failed);
         final restored = ShowupMapper.fromRow(ShowupMapper.toRow(original));
-        expect(restored, equals(original));
-      });
-
-      test('showup with dirty=false and syncedAt set round-trips correctly', () {
-        final syncedAt = DateTime(2026, 5, 1, 9, 0);
-        final original = Showup(
-          id: 'showup-1',
-          pactId: 'pact-1',
-          scheduledAt: scheduledAt,
-          duration: duration,
-          status: ShowupStatus.done,
-          dirty: false,
-          syncedAt: syncedAt,
-        );
-        final restored = ShowupMapper.fromRow(ShowupMapper.toRow(original));
-        expect(restored.dirty, isFalse);
-        expect(restored.syncedAt, equals(syncedAt));
         expect(restored, equals(original));
       });
     });

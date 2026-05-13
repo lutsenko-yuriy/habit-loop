@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
+import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
@@ -59,6 +61,8 @@ abstract final class AppContainer {
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
+    PactSyncRepository? pactSyncRepository,
+    ShowupSyncRepository? showupSyncRepository,
     AnalyticsService? analyticsService,
     CrashlyticsService? crashlyticsService,
     LogService? logService,
@@ -83,6 +87,10 @@ abstract final class AppContainer {
 
       // Canonical transaction service provider.
       pactTransactionServiceProvider.overrideWithValue(transactionService),
+
+      // Sync repository providers — optional, default to noop when null.
+      if (pactSyncRepository != null) pactSyncRepositoryProvider.overrideWithValue(pactSyncRepository),
+      if (showupSyncRepository != null) showupSyncRepositoryProvider.overrideWithValue(showupSyncRepository),
 
       // Optional infrastructure services — only added when non-null.
       if (logService != null) logServiceProvider.overrideWithValue(logService),

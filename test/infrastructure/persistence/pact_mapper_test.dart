@@ -89,48 +89,14 @@ void main() {
         expect(row['created_at'], isNull);
       });
 
-      test('maps dirty as 1 when true (default)', () {
-        final pact = basePact();
-        final row = PactMapper.toRow(pact);
+      test('always writes dirty=1 — new inserts are always queued for sync', () {
+        final row = PactMapper.toRow(basePact());
         expect(row['dirty'], equals(1));
       });
 
-      test('maps dirty as 0 when false', () {
-        final pact = Pact(
-          id: 'pact-1',
-          habitName: 'Meditate',
-          startDate: startDate,
-          endDate: endDate,
-          showupDuration: showupDuration,
-          schedule: schedule,
-          status: PactStatus.active,
-          dirty: false,
-        );
-        final row = PactMapper.toRow(pact);
-        expect(row['dirty'], equals(0));
-      });
-
-      test('maps synced_at as null when not set', () {
-        final pact = basePact();
-        final row = PactMapper.toRow(pact);
+      test('always writes synced_at=null — new inserts have never been synced', () {
+        final row = PactMapper.toRow(basePact());
         expect(row['synced_at'], isNull);
-      });
-
-      test('maps synced_at as epoch millis when set', () {
-        final syncedAt = DateTime(2026, 4, 1, 12, 0);
-        final pact = Pact(
-          id: 'pact-1',
-          habitName: 'Meditate',
-          startDate: startDate,
-          endDate: endDate,
-          showupDuration: showupDuration,
-          schedule: schedule,
-          status: PactStatus.active,
-          dirty: false,
-          syncedAt: syncedAt,
-        );
-        final row = PactMapper.toRow(pact);
-        expect(row['synced_at'], equals(syncedAt.millisecondsSinceEpoch));
       });
 
       test('maps total_showups as null (written by savePactWithShowups, not by mapper)', () {
@@ -183,6 +149,7 @@ void main() {
             'stop_reason': null,
             'created_at': null,
             'total_showups': null,
+            // dirty and synced_at are present in the DB row but not on the domain model.
             'dirty': 1,
             'synced_at': null,
           };
@@ -264,24 +231,14 @@ void main() {
         expect(() => PactMapper.fromRow(row), throwsArgumentError);
       });
 
-      test('reconstructs dirty as true when column is 1', () {
-        final row = baseRow()..['dirty'] = 1;
-        expect(PactMapper.fromRow(row).dirty, isTrue);
-      });
-
-      test('reconstructs dirty as false when column is 0', () {
-        final row = baseRow()..['dirty'] = 0;
-        expect(PactMapper.fromRow(row).dirty, isFalse);
-      });
-
-      test('reconstructs syncedAt as null when column is null', () {
-        expect(PactMapper.fromRow(baseRow()).syncedAt, isNull);
-      });
-
-      test('reconstructs syncedAt from epoch millis when column is set', () {
+      test('dirty and synced_at columns in row are ignored — not on domain model', () {
+        // Verify fromRow succeeds with both dirty=0 and synced_at set,
+        // since the sync layer may later read back rows in a synced state.
         final syncedAt = DateTime(2026, 4, 1, 12, 0);
-        final row = baseRow()..['synced_at'] = syncedAt.millisecondsSinceEpoch;
-        expect(PactMapper.fromRow(row).syncedAt, equals(syncedAt));
+        final row = baseRow()
+          ..['dirty'] = 0
+          ..['synced_at'] = syncedAt.millisecondsSinceEpoch;
+        expect(() => PactMapper.fromRow(row), returnsNormally);
       });
 
       test('reconstructs startDate as local-time DateTime (not UTC)', () {
@@ -298,30 +255,15 @@ void main() {
 
     group('toUpdateRow', () {
       test('includes dirty column', () {
-        final pact = basePact();
-        expect(PactMapper.toUpdateRow(pact).containsKey('dirty'), isTrue);
+        expect(PactMapper.toUpdateRow(basePact()).containsKey('dirty'), isTrue);
       });
 
-      test('includes synced_at column', () {
-        final pact = basePact();
-        expect(PactMapper.toUpdateRow(pact).containsKey('synced_at'), isTrue);
+      test('always writes dirty=1 — every update re-queues the record for sync', () {
+        expect(PactMapper.toUpdateRow(basePact())['dirty'], equals(1));
       });
 
-      test('maps dirty false correctly in update row', () {
-        final pact = Pact(
-          id: 'pact-1',
-          habitName: 'Meditate',
-          startDate: startDate,
-          endDate: endDate,
-          showupDuration: showupDuration,
-          schedule: schedule,
-          status: PactStatus.active,
-          dirty: false,
-          syncedAt: DateTime(2026, 4, 1),
-        );
-        final row = PactMapper.toUpdateRow(pact);
-        expect(row['dirty'], equals(0));
-        expect(row['synced_at'], equals(DateTime(2026, 4, 1).millisecondsSinceEpoch));
+      test('does not include synced_at — managed exclusively by the sync layer', () {
+        expect(PactMapper.toUpdateRow(basePact()).containsKey('synced_at'), isFalse);
       });
     });
 
@@ -384,17 +326,7 @@ void main() {
         expect(restored.reminderOffset, equals(original.reminderOffset));
         expect(restored.stopReason, equals(original.stopReason));
         expect(restored.createdAt, equals(original.createdAt));
-        expect(restored.dirty, equals(original.dirty));
-        expect(restored.syncedAt, equals(original.syncedAt));
         expect(restored.stats, isNull);
-      });
-
-      test('pact with dirty=false and syncedAt set round-trips correctly', () {
-        final syncedAt = DateTime(2026, 5, 1, 9, 0);
-        final original = basePact().copyWith(dirty: false, syncedAt: syncedAt);
-        final restored = PactMapper.fromRow(PactMapper.toRow(original));
-        expect(restored.dirty, isFalse);
-        expect(restored.syncedAt, equals(syncedAt));
       });
     });
   });

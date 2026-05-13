@@ -41,8 +41,9 @@ abstract final class PactMapper {
       'stop_reason': pact.stopReason,
       'created_at': pact.createdAt?.millisecondsSinceEpoch,
       'total_showups': null,
-      'dirty': pact.dirty ? 1 : 0,
-      'synced_at': pact.syncedAt?.millisecondsSinceEpoch,
+      // Every insert starts dirty=1 — queued for the first sync flush.
+      'dirty': 1,
+      'synced_at': null,
     };
   }
 
@@ -84,13 +85,8 @@ abstract final class PactMapper {
           : null,
       // total_showups is read-acknowledged but not propagated into the domain
       // model; it lives in the DB column only and is consumed by stats queries.
+      // dirty and synced_at live only in the sync layer — not on the domain model.
       stats: null,
-      dirty: (row['dirty'] as int? ?? 1) != 0,
-      syncedAt: row['synced_at'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              (row['synced_at'] as num).toInt(),
-            )
-          : null,
     );
   }
 
@@ -110,6 +106,7 @@ abstract final class PactMapper {
   /// - `actual_end_date` — updated to the stop date when a pact is stopped
   /// - `reminder_offset` — may be changed in settings (future feature)
   /// - `stop_reason` — written when the user stops a pact
+  /// - `dirty` — always reset to `1` on every update so the sync layer re-uploads the record
   static Map<String, dynamic> toUpdateRow(Pact pact) {
     return {
       'habit_name': pact.habitName,
@@ -117,8 +114,8 @@ abstract final class PactMapper {
       'actual_end_date': pact.endDate.millisecondsSinceEpoch,
       'reminder_offset': pact.reminderOffset?.inMicroseconds,
       'stop_reason': pact.stopReason,
-      'dirty': pact.dirty ? 1 : 0,
-      'synced_at': pact.syncedAt?.millisecondsSinceEpoch,
+      // Every update re-marks the record dirty — the sync layer will re-upload it.
+      'dirty': 1,
     };
   }
 

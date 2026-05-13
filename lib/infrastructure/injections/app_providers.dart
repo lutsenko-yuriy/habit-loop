@@ -15,7 +15,9 @@ import 'dart:io' show Platform;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
+import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
@@ -27,6 +29,8 @@ import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dar
 import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/noop_firestore_client.dart';
+import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
+import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
@@ -183,6 +187,26 @@ final pactRepositoryProvider = Provider<PactRepository>((ref) {
 final showupRepositoryProvider = Provider<ShowupRepository>((ref) {
   throw UnimplementedError('showupRepositoryProvider must be overridden in main.dart');
 });
+
+/// Canonical [PactSyncRepository] provider.
+///
+/// Defaults to [NoopPactSyncRepository] so tests and environments without a
+/// real database work without additional setup. Overridden in `main.dart` via
+/// [AppContainer.overrides] with the same [SqlitePactRepository] instance
+/// used for [pactRepositoryProvider].
+final pactSyncRepositoryProvider = Provider<PactSyncRepository>(
+  (ref) => const NoopPactSyncRepository(),
+);
+
+/// Canonical [ShowupSyncRepository] provider.
+///
+/// Defaults to [NoopShowupSyncRepository] so tests and environments without a
+/// real database work without additional setup. Overridden in `main.dart` via
+/// [AppContainer.overrides] with the same [SqliteShowupRepository] instance
+/// used for [showupRepositoryProvider].
+final showupSyncRepositoryProvider = Provider<ShowupSyncRepository>(
+  (ref) => const NoopShowupSyncRepository(),
+);
 
 // ---------------------------------------------------------------------------
 // Application service providers
