@@ -20,7 +20,7 @@ void main() {
     // -------------------------------------------------------------------------
 
     test('starts in closed state', () {
-      expect(cb.state, SyncCbState.closed);
+      expect(cb.state, SyncCircuitBreakerState.closed);
     });
 
     test('canRequest is true when closed', () {
@@ -34,7 +34,7 @@ void main() {
     test('recordFailure when closed transitions to halfOpen', () {
       cb.recordFailure();
 
-      expect(cb.state, SyncCbState.halfOpen);
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
     });
 
     test('canRequest is true when halfOpen', () {
@@ -51,13 +51,13 @@ void main() {
       cb.recordFailure(); // → halfOpen
       cb.recordSuccess();
 
-      expect(cb.state, SyncCbState.closed);
+      expect(cb.state, SyncCircuitBreakerState.closed);
     });
 
     test('recordSuccess when closed is a no-op', () {
       cb.recordSuccess();
 
-      expect(cb.state, SyncCbState.closed);
+      expect(cb.state, SyncCircuitBreakerState.closed);
     });
 
     // -------------------------------------------------------------------------
@@ -70,7 +70,7 @@ void main() {
         cb.recordFailure(); // 5 failures while halfOpen
       }
 
-      expect(cb.state, SyncCbState.open);
+      expect(cb.state, SyncCircuitBreakerState.open);
     });
 
     test('4 consecutive failures in halfOpen do not transition to open', () {
@@ -79,7 +79,7 @@ void main() {
         cb.recordFailure();
       }
 
-      expect(cb.state, SyncCbState.halfOpen);
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
     });
 
     test('canRequest is false when open', () {
@@ -110,7 +110,7 @@ void main() {
         cb.recordFailure();
       }
 
-      expect(cb.state, SyncCbState.halfOpen);
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
     });
 
     // -------------------------------------------------------------------------
@@ -125,7 +125,7 @@ void main() {
 
       cb.triggerManualSync();
 
-      expect(cb.state, SyncCbState.halfOpen);
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
     });
 
     test('triggerManualSync resets failure counter — subsequent success closes CB', () {
@@ -137,20 +137,20 @@ void main() {
 
       cb.recordSuccess(); // → closed
 
-      expect(cb.state, SyncCbState.closed);
+      expect(cb.state, SyncCircuitBreakerState.closed);
     });
 
     test('triggerManualSync when closed is a no-op', () {
       cb.triggerManualSync();
 
-      expect(cb.state, SyncCbState.closed);
+      expect(cb.state, SyncCircuitBreakerState.closed);
     });
 
     test('triggerManualSync when halfOpen is a no-op', () {
       cb.recordFailure(); // closed → halfOpen
       cb.triggerManualSync();
 
-      expect(cb.state, SyncCbState.halfOpen);
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
     });
 
     // -------------------------------------------------------------------------
@@ -158,21 +158,21 @@ void main() {
     // -------------------------------------------------------------------------
 
     test('full cycle: closed → halfOpen → open → halfOpen → closed', () {
-      expect(cb.state, SyncCbState.closed);
+      expect(cb.state, SyncCircuitBreakerState.closed);
 
       cb.recordFailure();
-      expect(cb.state, SyncCbState.halfOpen);
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
 
       for (var i = 0; i < 5; i++) {
         cb.recordFailure();
       }
-      expect(cb.state, SyncCbState.open);
+      expect(cb.state, SyncCircuitBreakerState.open);
 
       cb.triggerManualSync();
-      expect(cb.state, SyncCbState.halfOpen);
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
 
       cb.recordSuccess();
-      expect(cb.state, SyncCbState.closed);
+      expect(cb.state, SyncCircuitBreakerState.closed);
     });
   });
 
@@ -181,7 +181,7 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      expect(container.read(syncCircuitBreakerProvider), SyncCbState.closed);
+      expect(container.read(syncCircuitBreakerProvider), SyncCircuitBreakerState.closed);
     });
 
     test('notifier canRequest is true initially', () {
@@ -197,7 +197,7 @@ void main() {
 
       container.read(syncCircuitBreakerProvider.notifier).recordFailure();
 
-      expect(container.read(syncCircuitBreakerProvider), SyncCbState.halfOpen);
+      expect(container.read(syncCircuitBreakerProvider), SyncCircuitBreakerState.halfOpen);
     });
   });
 }

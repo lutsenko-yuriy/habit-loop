@@ -71,7 +71,7 @@ to build the full `List<Override>` passed to `ProviderScope`.
 
 | Provider | Type | Default | Notes |
 |---|---|---|---|
-| `syncCircuitBreakerProvider` | `StateNotifierProvider<SyncCircuitBreaker, SyncCbState>` | `SyncCbState.closed` | No override needed — always starts closed; state is in-memory only (resets on restart) |
+| `syncCircuitBreakerProvider` | `StateNotifierProvider<SyncCircuitBreaker, SyncCircuitBreakerState>` | `SyncCircuitBreakerState.closed` | No override needed — always starts closed; state is in-memory only (resets on restart) |
 
 ---
 

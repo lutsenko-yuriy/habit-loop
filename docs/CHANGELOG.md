@@ -8,11 +8,11 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Circuit breaker sync service (HAB-61, WU3 of HAB-53)
 
-- `SyncCbState` enum (`closed`, `halfOpen`, `open`) and `SyncCircuitBreaker` (`StateNotifier<SyncCbState>`) in `lib/infrastructure/sync/sync_circuit_breaker.dart`
+- `SyncCircuitBreakerState` enum (`closed`, `halfOpen`, `open`) and `SyncCircuitBreaker` (`StateNotifier<SyncCircuitBreakerState>`) in `lib/infrastructure/sync/sync_circuit_breaker.dart`
 - State machine: `closed` → `halfOpen` on any Firestore failure; `halfOpen` → `closed` on success or → `open` after 5 consecutive failures; `open` → `halfOpen` only via `triggerManualSync()` (called from WU6 sync-status UI)
 - `canRequest` bool gates all WU4/WU5 sync operations — `false` only in `open` state; both `closed` and `halfOpen` allow requests so the app can probe its way back to `closed` after a transient outage
 - CB state is in-memory only — always resets to `closed` on app restart, giving the app a clean probe opportunity on each launch without requiring user action after e.g. an airplane-mode session
-- `syncCircuitBreakerProvider` (`StateNotifierProvider<SyncCircuitBreaker, SyncCbState>`) declared in `app_providers.dart`; no override needed
+- `syncCircuitBreakerProvider` (`StateNotifierProvider<SyncCircuitBreaker, SyncCircuitBreakerState>`) declared in `app_providers.dart`; no override needed
 - 19 new tests covering the full state machine, failure counter reset, `triggerManualSync`, and provider smoke tests; 937 tests passing, analyzer clean
 
 ---

@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// - [open] — suspended; no automatic sync requests are made. Only a manual
 ///   trigger via [SyncCircuitBreaker.triggerManualSync] can move back to
 ///   [halfOpen].
-enum SyncCbState { closed, halfOpen, open }
+enum SyncCircuitBreakerState { closed, halfOpen, open }
 
 /// Circuit breaker that governs all Firestore network requests.
 ///
@@ -19,32 +19,36 @@ enum SyncCbState { closed, halfOpen, open }
 /// - Open → Half-open only when the user manually triggers sync via
 ///   [triggerManualSync].
 ///
-/// CB state is held in memory only and resets to [SyncCbState.closed] on every
+/// CB state is held in memory only and resets to [SyncCircuitBreakerState.closed] on every
 /// app restart, giving the app a clean probe opportunity on each launch.
 ///
-/// All sync operations (WU4, WU5) must check [canRequest] before making a
-/// network call and call [recordSuccess] / [recordFailure] based on the result.
-class SyncCircuitBreaker extends StateNotifier<SyncCbState> {
+/// **Callers:**
+/// - WU4 write-through sync service — checks [canRequest] before each Firestore
+///   write; calls [recordSuccess] on success and [recordFailure] on error.
+/// - WU5 pull-on-start sync service — same pattern for Firestore reads.
+/// - WU6 sync-status UI — watches [syncCircuitBreakerProvider] to display sync
+///   health and calls [triggerManualSync] when the user taps the retry button.
+class SyncCircuitBreaker extends StateNotifier<SyncCircuitBreakerState> {
   static const int _maxConsecutiveFailures = 5;
 
   int _consecutiveFailures = 0;
 
-  SyncCircuitBreaker() : super(SyncCbState.closed);
+  SyncCircuitBreaker() : super(SyncCircuitBreakerState.closed);
 
   /// Whether a sync request is currently permitted.
   ///
-  /// Returns `false` only in [SyncCbState.open]; both [SyncCbState.closed] and
-  /// [SyncCbState.halfOpen] allow requests.
-  bool get canRequest => state != SyncCbState.open;
+  /// Returns `false` only in [SyncCircuitBreakerState.open]; both [SyncCircuitBreakerState.closed] and
+  /// [SyncCircuitBreakerState.halfOpen] allow requests.
+  bool get canRequest => state != SyncCircuitBreakerState.open;
 
   /// Records a successful Firestore operation.
   ///
   /// - [halfOpen] → [closed]: the service is healthy again, counter reset.
   /// - [closed]: no-op (success is the expected outcome).
   void recordSuccess() {
-    if (state == SyncCbState.halfOpen) {
+    if (state == SyncCircuitBreakerState.halfOpen) {
       _consecutiveFailures = 0;
-      state = SyncCbState.closed;
+      state = SyncCircuitBreakerState.closed;
     }
   }
 
@@ -56,15 +60,15 @@ class SyncCircuitBreaker extends StateNotifier<SyncCbState> {
   /// - [open]: no-op (callers should not invoke this when [canRequest] is false).
   void recordFailure() {
     switch (state) {
-      case SyncCbState.closed:
+      case SyncCircuitBreakerState.closed:
         _consecutiveFailures = 0;
-        state = SyncCbState.halfOpen;
-      case SyncCbState.halfOpen:
+        state = SyncCircuitBreakerState.halfOpen;
+      case SyncCircuitBreakerState.halfOpen:
         _consecutiveFailures++;
         if (_consecutiveFailures >= _maxConsecutiveFailures) {
-          state = SyncCbState.open;
+          state = SyncCircuitBreakerState.open;
         }
-      case SyncCbState.open:
+      case SyncCircuitBreakerState.open:
         break;
     }
   }
@@ -73,11 +77,11 @@ class SyncCircuitBreaker extends StateNotifier<SyncCbState> {
   /// allowing one new probe pass. Called from the sync-status UI (WU6) when
   /// the user manually requests a sync retry.
   ///
-  /// No-op when the CB is not in [SyncCbState.open].
+  /// No-op when the CB is not in [SyncCircuitBreakerState.open].
   void triggerManualSync() {
-    if (state == SyncCbState.open) {
+    if (state == SyncCircuitBreakerState.open) {
       _consecutiveFailures = 0;
-      state = SyncCbState.halfOpen;
+      state = SyncCircuitBreakerState.halfOpen;
     }
   }
 }

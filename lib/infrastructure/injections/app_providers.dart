@@ -283,12 +283,12 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
 
 /// Provides the [SyncCircuitBreaker] that governs all Firestore network requests.
 ///
-/// State is in-memory only and resets to [SyncCbState.closed] on every app
+/// State is in-memory only and resets to [SyncCircuitBreakerState.closed] on every app
 /// restart. WU4 / WU5 sync operations check [SyncCircuitBreaker.canRequest]
 /// before making any Firestore call; WU6 (sync-status UI) watches this
 /// provider to display the current sync health.
 ///
 /// No override is needed — the circuit breaker always starts Closed.
-final syncCircuitBreakerProvider = StateNotifierProvider<SyncCircuitBreaker, SyncCbState>(
+final syncCircuitBreakerProvider = StateNotifierProvider<SyncCircuitBreaker, SyncCircuitBreakerState>(
   (ref) => SyncCircuitBreaker(),
 );
