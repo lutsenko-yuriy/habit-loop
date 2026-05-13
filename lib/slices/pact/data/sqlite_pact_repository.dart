@@ -1,10 +1,11 @@
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/infrastructure/persistence/pact_mapper.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// SQLite-backed implementation of [PactRepository].
+/// SQLite-backed implementation of [PactRepository] and [PactSyncRepository].
 ///
 /// Takes an open [Database] in its constructor. The database lifecycle (open /
 /// close, schema migrations) is managed by [HabitLoopDatabase] — this class
@@ -13,7 +14,11 @@ import 'package:sqflite/sqflite.dart';
 /// All [DateTime] fields are stored as epoch milliseconds and reconstructed
 /// as **local-time** values via [PactMapper], preserving the invariant set by
 /// [PactBuilder] that all dates are local-time.
-class SqlitePactRepository implements PactRepository {
+///
+/// The `dirty` and `synced_at` columns are managed internally by this class
+/// and are never exposed through [PactRepository]. Only [PactSyncRepository]
+/// methods touch them.
+class SqlitePactRepository implements PactRepository, PactSyncRepository {
   const SqlitePactRepository(this._db);
 
   final Database _db;
@@ -80,6 +85,26 @@ class SqlitePactRepository implements PactRepository {
   @override
   Future<void> deletePact(String id) async {
     await _db.delete(_table, where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ---------------------------------------------------------------------------
+  // PactSyncRepository
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<List<Pact>> getDirtyPacts() async {
+    final rows = await _db.query(_table, where: 'dirty = ?', whereArgs: [1]);
+    return rows.map(PactMapper.fromRow).toList();
+  }
+
+  @override
+  Future<void> markPactSynced(String pactId, DateTime syncedAt) async {
+    await _db.update(
+      _table,
+      {'dirty': 0, 'synced_at': syncedAt.millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [pactId],
+    );
   }
 
   // ---------------------------------------------------------------------------

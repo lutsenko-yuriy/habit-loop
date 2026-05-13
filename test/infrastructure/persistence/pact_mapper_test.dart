@@ -89,6 +89,16 @@ void main() {
         expect(row['created_at'], isNull);
       });
 
+      test('always writes dirty=1 — new inserts are always queued for sync', () {
+        final row = PactMapper.toRow(basePact());
+        expect(row['dirty'], equals(1));
+      });
+
+      test('always writes synced_at=null — new inserts have never been synced', () {
+        final row = PactMapper.toRow(basePact());
+        expect(row['synced_at'], isNull);
+      });
+
       test('maps total_showups as null (written by savePactWithShowups, not by mapper)', () {
         final pact = basePact();
         final row = PactMapper.toRow(pact);
@@ -139,6 +149,9 @@ void main() {
             'stop_reason': null,
             'created_at': null,
             'total_showups': null,
+            // dirty and synced_at are present in the DB row but not on the domain model.
+            'dirty': 1,
+            'synced_at': null,
           };
 
       test('reconstructs required fields correctly', () {
@@ -218,6 +231,16 @@ void main() {
         expect(() => PactMapper.fromRow(row), throwsArgumentError);
       });
 
+      test('dirty and synced_at columns in row are ignored — not on domain model', () {
+        // Verify fromRow succeeds with both dirty=0 and synced_at set,
+        // since the sync layer may later read back rows in a synced state.
+        final syncedAt = DateTime(2026, 4, 1, 12, 0);
+        final row = baseRow()
+          ..['dirty'] = 0
+          ..['synced_at'] = syncedAt.millisecondsSinceEpoch;
+        expect(() => PactMapper.fromRow(row), returnsNormally);
+      });
+
       test('reconstructs startDate as local-time DateTime (not UTC)', () {
         // Regression: fromRow must not use isUtc: true; a UTC+N user would get
         // midnight UTC instead of midnight local, causing date boundary errors
@@ -227,6 +250,20 @@ void main() {
         final pact = PactMapper.fromRow(row);
         expect(pact.startDate.isUtc, isFalse);
         expect(pact.startDate.hour, equals(localStart.hour));
+      });
+    });
+
+    group('toUpdateRow', () {
+      test('includes dirty column', () {
+        expect(PactMapper.toUpdateRow(basePact()).containsKey('dirty'), isTrue);
+      });
+
+      test('always writes dirty=1 — every update re-queues the record for sync', () {
+        expect(PactMapper.toUpdateRow(basePact())['dirty'], equals(1));
+      });
+
+      test('does not include synced_at — managed exclusively by the sync layer', () {
+        expect(PactMapper.toUpdateRow(basePact()).containsKey('synced_at'), isFalse);
       });
     });
 

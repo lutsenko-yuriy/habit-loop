@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/auth/data/noop_auth_service.dart';
 import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
+import 'package:habit_loop/infrastructure/firestore/data/noop_firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
@@ -294,6 +295,57 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(deviceIdServiceProvider), same(deviceIdService));
+    });
+
+    test('pactSyncRepositoryProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(pactSyncRepositoryProvider), returnsNormally);
+    });
+
+    test('showupSyncRepositoryProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(showupSyncRepositoryProvider), returnsNormally);
+    });
+
+    test('firestoreClientProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(firestoreClientProvider), returnsNormally);
+    });
+
+    test('firestoreClientProvider override is included when provided', () async {
+      final firestoreClient = NoopFirestoreClient();
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        firestoreClient: firestoreClient,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(firestoreClientProvider), same(firestoreClient));
     });
 
     test('override count grows by 2 when both authService and deviceIdService are provided', () async {

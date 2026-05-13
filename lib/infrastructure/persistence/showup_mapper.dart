@@ -15,6 +15,9 @@ abstract final class ShowupMapper {
       'duration': showup.duration.inMicroseconds,
       'status': _encodeStatus(showup.status),
       'note': showup.note,
+      // Every insert/update starts dirty=1 — queued for the first sync flush.
+      'dirty': 1,
+      'synced_at': null,
     };
   }
 
@@ -36,6 +39,7 @@ abstract final class ShowupMapper {
       duration: Duration(microseconds: (row['duration'] as num).toInt()),
       status: _decodeStatus(row['status'] as String),
       note: row['note'] as String?,
+      // dirty and synced_at live only in the sync layer — not on the domain model.
     );
   }
 

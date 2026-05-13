@@ -111,6 +111,8 @@ void main() {
           'stop_reason',
           'total_showups',
           'created_at',
+          'dirty',
+          'synced_at',
         ]),
       );
     });
@@ -118,7 +120,10 @@ void main() {
     test('showups table has expected columns', () async {
       final result = await db.rawQuery('PRAGMA table_info(showups)');
       final columnNames = result.map((row) => row['name'] as String).toSet();
-      expect(columnNames, containsAll(['id', 'pact_id', 'scheduled_at', 'duration', 'status', 'note']));
+      expect(
+        columnNames,
+        containsAll(['id', 'pact_id', 'scheduled_at', 'duration', 'status', 'note', 'dirty', 'synced_at']),
+      );
     });
 
     test('can insert a pact row', () async {
@@ -141,6 +146,86 @@ void main() {
         ['showup-1', 'pact-1', 0, 600000000, 'pending'],
       );
       expect(rowsAffected, equals(1));
+    });
+  });
+
+  group('HabitLoopDatabase — migration v1 → v2', () {
+    late Database db;
+
+    // Raw v1 DDL without dirty/synced_at — used to simulate an existing
+    // v1 installation before the upgrade migration is applied.
+    Future<void> createV1Schema(Database db) async {
+      await db.execute('''
+        CREATE TABLE pacts (
+          id                   TEXT    NOT NULL PRIMARY KEY,
+          habit_name           TEXT    NOT NULL,
+          start_date           INTEGER NOT NULL,
+          scheduled_end_date   INTEGER NOT NULL,
+          actual_end_date      INTEGER NOT NULL,
+          showup_duration      INTEGER NOT NULL,
+          schedule             TEXT    NOT NULL,
+          status               TEXT    NOT NULL,
+          reminder_offset      INTEGER,
+          stop_reason          TEXT,
+          total_showups        INTEGER,
+          created_at           INTEGER
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE showups (
+          id           TEXT    NOT NULL PRIMARY KEY,
+          pact_id      TEXT    NOT NULL,
+          scheduled_at INTEGER NOT NULL,
+          duration     INTEGER NOT NULL,
+          status       TEXT    NOT NULL,
+          note         TEXT,
+          FOREIGN KEY (pact_id) REFERENCES pacts(id)
+        )
+      ''');
+      await db.execute('CREATE INDEX idx_showups_pact_id ON showups (pact_id)');
+      await db.execute('CREATE INDEX idx_showups_scheduled_at ON showups (scheduled_at)');
+    }
+
+    setUp(() async {
+      // Open a raw in-memory database with the v1 schema (no dirty/synced_at).
+      db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      await createV1Schema(db);
+      // Insert a pact and a showup so we can verify existing rows get dirty=1.
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        ['pact-1', 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active'],
+      );
+      await db.rawInsert(
+        'INSERT INTO showups (id, pact_id, scheduled_at, duration, status) VALUES (?, ?, ?, ?, ?)',
+        ['showup-1', 'pact-1', 0, 600000000, 'pending'],
+      );
+    });
+
+    tearDown(() async => db.close());
+
+    test('upgrade adds dirty column to pacts with default 1', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 1, 2);
+      final rows = await db.rawQuery('SELECT dirty FROM pacts WHERE id = ?', ['pact-1']);
+      expect(rows.first['dirty'], equals(1));
+    });
+
+    test('upgrade adds synced_at column to pacts as null', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 1, 2);
+      final rows = await db.rawQuery('SELECT synced_at FROM pacts WHERE id = ?', ['pact-1']);
+      expect(rows.first['synced_at'], isNull);
+    });
+
+    test('upgrade adds dirty column to showups with default 1', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 1, 2);
+      final rows = await db.rawQuery('SELECT dirty FROM showups WHERE id = ?', ['showup-1']);
+      expect(rows.first['dirty'], equals(1));
+    });
+
+    test('upgrade adds synced_at column to showups as null', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 1, 2);
+      final rows = await db.rawQuery('SELECT synced_at FROM showups WHERE id = ?', ['showup-1']);
+      expect(rows.first['synced_at'], isNull);
     });
   });
 }

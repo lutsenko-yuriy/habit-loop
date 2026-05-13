@@ -15,7 +15,9 @@ import 'dart:io' show Platform;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
+import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
@@ -25,6 +27,8 @@ import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_serv
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dart';
 import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
+import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
+import 'package:habit_loop/infrastructure/firestore/data/noop_firestore_client.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
@@ -36,7 +40,9 @@ import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
+import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 // ---------------------------------------------------------------------------
@@ -182,6 +188,26 @@ final showupRepositoryProvider = Provider<ShowupRepository>((ref) {
   throw UnimplementedError('showupRepositoryProvider must be overridden in main.dart');
 });
 
+/// Canonical [PactSyncRepository] provider.
+///
+/// Defaults to [NoopPactSyncRepository] so tests and environments without a
+/// real database work without additional setup. Overridden in `main.dart` via
+/// [AppContainer.overrides] with the same [SqlitePactRepository] instance
+/// used for [pactRepositoryProvider].
+final pactSyncRepositoryProvider = Provider<PactSyncRepository>(
+  (ref) => const NoopPactSyncRepository(),
+);
+
+/// Canonical [ShowupSyncRepository] provider.
+///
+/// Defaults to [NoopShowupSyncRepository] so tests and environments without a
+/// real database work without additional setup. Overridden in `main.dart` via
+/// [AppContainer.overrides] with the same [SqliteShowupRepository] instance
+/// used for [showupRepositoryProvider].
+final showupSyncRepositoryProvider = Provider<ShowupSyncRepository>(
+  (ref) => const NoopShowupSyncRepository(),
+);
+
 // ---------------------------------------------------------------------------
 // Application service providers
 // ---------------------------------------------------------------------------
@@ -223,6 +249,16 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
     transactionService: ref.watch(pactTransactionServiceProvider),
   );
 });
+
+/// Provides the active [FirestoreClient] to the app.
+///
+/// Defaults to [NoopFirestoreClient] so tests and offline scenarios work
+/// without the `cloud_firestore` SDK. Overridden in `main.dart` via
+/// [AppContainer.overrides] with [FirestoreClientAdapter] in all build modes
+/// once the user is signed in.
+final firestoreClientProvider = Provider<FirestoreClient>(
+  (ref) => NoopFirestoreClient(),
+);
 
 /// Provides [ReminderSchedulingService] as a singleton.
 ///

@@ -4,6 +4,21 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.25.0] — 2026-05-13 (PR #74 merged)
+
+### Added — Firestore schema + client infrastructure (HAB-60, WU2 of HAB-53)
+
+- SQLite schema bumped to **v2**: `runMigrations` (fresh installs) adds `dirty INTEGER NOT NULL DEFAULT 1` and `synced_at INTEGER` to both `pacts` and `showups` tables; `runUpgradeMigrations(db, 1, 2)` is an `ALTER TABLE` path for existing installations so existing rows are automatically queued for the first sync (default `dirty = 1`); sync state is internal to the repository layer — domain models (`Pact`, `Showup`) remain clean with no sync fields
+- `PactSyncRepository` / `ShowupSyncRepository` interfaces added to `lib/domain/` exposing `getDirtyPacts()` / `getDirtyShowups()` and `markPactSynced()` / `markShowupSynced()`; consumed solely by the upcoming WU4 sync service — view models and application services never depend on these interfaces
+- `SqlitePactRepository` and `SqliteShowupRepository` now implement both their respective CRUD repository interface and the corresponding sync repository interface; `NoopPactSyncRepository` / `NoopShowupSyncRepository` no-op defaults wired as `pactSyncRepositoryProvider` / `showupSyncRepositoryProvider`
+- `FirestoreClient` abstract interface (`lib/infrastructure/firestore/contracts/`) with a strict no-throw contract; flat `/users/{userId}/pacts/{pactId}` and `/users/{userId}/showups/{showupId}` document paths; all data passed as `Map<String, dynamic>` so the interface has no `cloud_firestore` SDK dependency
+- `NoopFirestoreClient` — silent no-op used as the default provider in tests and offline scenarios
+- `firestoreClientProvider` wired via `AppContainer.overrides()` following the same optional-override pattern as other infrastructure providers
+- `PactMapper` and `ShowupMapper` updated: `toRow()` always writes `dirty = 1` and `synced_at = null` so every local write is queued for the next sync pass; `fromRow()` ignores both columns; `toUpdateRow()` always resets `dirty = 1`
+- 918 tests passing, analyzer clean
+
+---
+
 ## [0.24.0] — 2026-05-13 (PR #69 merged)
 
 ### Added — Auth foundation: anonymous sign-in, device ID, Google account linking (HAB-59)

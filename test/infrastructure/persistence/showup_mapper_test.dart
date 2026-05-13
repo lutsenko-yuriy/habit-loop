@@ -55,6 +55,14 @@ void main() {
         expect(ShowupMapper.toRow(showup)['status'], equals('failed'));
       });
 
+      test('always writes dirty=1 — every insert/update is queued for sync', () {
+        expect(ShowupMapper.toRow(baseShowup())['dirty'], equals(1));
+      });
+
+      test('always writes synced_at=null — managed exclusively by the sync layer', () {
+        expect(ShowupMapper.toRow(baseShowup())['synced_at'], isNull);
+      });
+
       test('maps duration as microseconds', () {
         const dur = Duration(hours: 1, minutes: 30);
         final showup = Showup(
@@ -76,6 +84,9 @@ void main() {
             'duration': duration.inMicroseconds,
             'status': 'pending',
             'note': null,
+            // dirty and synced_at are present in the DB row but not on the domain model.
+            'dirty': 1,
+            'synced_at': null,
           };
 
       test('reconstructs required fields correctly', () {
@@ -111,6 +122,16 @@ void main() {
       test('throws ArgumentError for unknown status', () {
         final row = baseRow()..['status'] = 'unknown';
         expect(() => ShowupMapper.fromRow(row), throwsArgumentError);
+      });
+
+      test('dirty and synced_at columns in row are ignored — not on domain model', () {
+        // Verify fromRow succeeds with both dirty=0 and synced_at set,
+        // since the sync layer may later read back rows in a synced state.
+        final syncedAt = DateTime(2026, 4, 1, 12, 0);
+        final row = baseRow()
+          ..['dirty'] = 0
+          ..['synced_at'] = syncedAt.millisecondsSinceEpoch;
+        expect(() => ShowupMapper.fromRow(row), returnsNormally);
       });
 
       test('reconstructs scheduledAt as local-time DateTime (not UTC)', () {

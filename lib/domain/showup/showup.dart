@@ -48,12 +48,5 @@ class Showup {
           note == other.note;
 
   @override
-  int get hashCode => Object.hash(
-        id,
-        pactId,
-        scheduledAt,
-        duration,
-        status,
-        note,
-      );
+  int get hashCode => Object.hash(id, pactId, scheduledAt, duration, status, note);
 }
