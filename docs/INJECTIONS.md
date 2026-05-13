@@ -67,6 +67,12 @@ to build the full `List<Override>` passed to `ProviderScope`.
 | `pactStatsServiceProvider` | `Provider<PactStatsService>` | Composed via `ref.watch` | No override needed — Riverpod caches the instance for the container lifetime (effective singleton) |
 | `reminderSchedulingServiceProvider` | `Provider<ReminderSchedulingService>` | Composed via `ref.watch` | No override needed — composes notification, remote config, analytics, and locale providers |
 
+### Sync providers
+
+| Provider | Type | Default | Notes |
+|---|---|---|---|
+| `syncCircuitBreakerProvider` | `StateNotifierProvider<SyncCircuitBreaker, SyncCircuitBreakerState>` | `SyncCircuitBreakerState.closed` | No override needed — always starts closed; state is in-memory only (resets on restart) |
+
 ---
 
 ## Dependency graph
@@ -89,7 +95,8 @@ ProviderScope
         ├── logServiceProvider               ← TalkerLogService           (debug/profile only)
         ├── remoteConfigServiceProvider      ← FirebaseRemoteConfigService (release only)
         ├── notificationServiceProvider      ← FlutterLocalNotificationService (all modes)
-        ├── firestoreClientProvider          ← NoopFirestoreClient (WU3: FirestoreClientAdapter)
+        ├── firestoreClientProvider          ← NoopFirestoreClient (future: FirestoreClientAdapter)
+        ├── syncCircuitBreakerProvider       ← SyncCircuitBreaker (in-memory, no override)
         │
         ├── authServiceProvider              ← FirebaseAuthService (all modes)
         ├── deviceIdServiceProvider          ← SharedPreferencesDeviceIdService (all modes)
