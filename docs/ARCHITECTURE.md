@@ -21,16 +21,18 @@ lib/
 ├── theme/                             # Shared Habit Loop palette and Material/Cupertino theme data
 ├── domain/                            # Top-level shared domain — pure models and repository interfaces used by multiple features
 │   ├── pact/
-│   │   ├── pact.dart                  # Pact model — includes dirty/syncedAt for Firestore sync tracking
+│   │   ├── pact.dart                  # Pact model — pure domain value object
 │   │   ├── pact_status.dart           # PactStatus enum (active, stopped, completed)
 │   │   ├── pact_stats.dart            # PactStats computed stats model
 │   │   ├── pact_repository.dart       # PactRepository interface
+│   │   ├── pact_sync_repository.dart  # PactSyncRepository interface — getDirtyPacts(), markPactSynced(); implemented by SqlitePactRepository; consumed by WU4 sync service
 │   │   ├── showup_schedule.dart       # ShowupSchedule model (daily, weekly, monthly)
 │   │   └── schedule_type.dart         # ScheduleType enum
 │   └── showup/
-│       ├── showup.dart                # Showup model — includes dirty/syncedAt for Firestore sync tracking
+│       ├── showup.dart                # Showup model — pure domain value object
 │       ├── showup_status.dart         # ShowupStatus enum (pending, done, failed)
 │       ├── showup_repository.dart     # ShowupRepository interface
+│       ├── showup_sync_repository.dart # ShowupSyncRepository interface — getDirtyShowups(), markShowupSynced(); implemented by SqliteShowupRepository; consumed by WU4 sync service
 │       ├── showup_generator.dart      # ShowupGenerator — deterministic showup generation from a pact schedule
 │       ├── showup_date_utils.dart     # ShowupDateUtils — date arithmetic helpers
 │       └── save_showups_result.dart   # SaveShowupsResult — batch-save result type
@@ -99,12 +101,12 @@ lib/
     │   └── ui/ (generic/ — includes language_picker_handler.dart with shared applyLanguageSelection orchestration, ios/, android/)
     ├── pact/                          # Pact creation wizard + pact detail screen
     │   ├── application/               # PactBuilder, PactCreationState, PactStatsService, PactTransactionService
-    │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production)
+    │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production, implements PactRepository + PactSyncRepository), NoopPactSyncRepository (default provider)
     │   ├── analytics/                 # PactCreatedEvent, PactStoppedEvent
     │   └── ui/ (generic/, ios/, android/)
     ├── showup/                        # Showup detail, generation service
     │   ├── application/               # ShowupGenerationService
-    │   ├── data/                      # InMemoryShowupRepository (tests), SqliteShowupRepository (production)
+    │   ├── data/                      # InMemoryShowupRepository (tests), SqliteShowupRepository (production, implements ShowupRepository + ShowupSyncRepository), NoopShowupSyncRepository (default provider)
     │   ├── analytics/                 # ShowupMarkedDoneEvent, ShowupMarkedFailedEvent, ShowupAutoFailedEvent
     │   └── ui/ (generic/, ios/, android/)
     └── reminder/                      # Notification scheduling (not yet implemented)
@@ -171,11 +173,11 @@ test/
     │   │   ├── pact_stats_service_cache_test.dart # PactStatsService in-memory cache: lazy cache-on-miss, cache hit, write-through on persistShowupStatus, evict-only on stopPact, lazy fallback to pact.stats, onPactCompleted eviction
     │   │   └── pact_transaction_service_test.dart # PactTransactionService: savePactWithShowups atomicity + stopPactTransaction atomicity; sqflite_common_ffi in-memory db
     │   └── data/
-    │       └── sqlite_pact_repository_test.dart   # SqlitePactRepository CRUD tests using sqflite_common_ffi in-memory db
+    │       └── sqlite_pact_repository_test.dart   # SqlitePactRepository CRUD + PactSyncRepository (getDirtyPacts, markPactSynced) tests using sqflite_common_ffi in-memory db
     └── showup/
         ├── analytics/, application/, ui/
         └── data/
-            └── sqlite_showup_repository_test.dart # SqliteShowupRepository CRUD + date-boundary tests using sqflite_common_ffi
+            └── sqlite_showup_repository_test.dart # SqliteShowupRepository CRUD + date-boundary + ShowupSyncRepository (getDirtyShowups, markShowupSynced) tests using sqflite_common_ffi
 ```
 
 ## Layers
@@ -184,6 +186,7 @@ test/
 Pure business models and repository interfaces shared across features. No dependencies on data, UI, infrastructure, or application layers.
 - Models: `Pact`, `PactStatus`, `Showup`, `ShowupStatus`, `ShowupSchedule`, `PactStats`, `ScheduleType`
 - Repository interfaces: `PactRepository`, `ShowupRepository`
+- Sync repository interfaces: `PactSyncRepository`, `ShowupSyncRepository` — provide `getDirtyPacts()`/`getDirtyShowups()` and `markPactSynced()`/`markShowupSynced()`; implemented by the SQLite repositories and consumed solely by the WU4 sync service; view models and application services never depend on these interfaces
 - Generators: `ShowupGenerator`, `ShowupDateUtils`
 - Result types: `SaveShowupsResult`
 
@@ -197,8 +200,9 @@ Orchestration logic that coordinates domain objects and repository calls. Lives 
 
 ### Data (`lib/slices/*/data/`)
 Storage and persistence. Implements repository interfaces from `lib/domain/`.
-- `SqlitePactRepository` (`slices/pact/data/`) — production SQLite implementation of `PactRepository`; takes an injected `Database` from `HabitLoopDatabase`; uses `PactMapper` for row conversion.
-- `SqliteShowupRepository` (`slices/showup/data/`) — production SQLite implementation of `ShowupRepository`; takes an injected `Database`; uses `ShowupMapper` and `ShowupDateUtils` for date-range queries (all date filtering uses epoch milliseconds with local-time boundaries computed by `ShowupDateUtils.startOfDay`/`endOfDay`).
+- `SqlitePactRepository` (`slices/pact/data/`) — production implementation of both `PactRepository` and `PactSyncRepository`; takes an injected `Database` from `HabitLoopDatabase`; uses `PactMapper` for row conversion. Wired as both `pactRepositoryProvider` and `pactSyncRepositoryProvider` overrides in `main.dart`.
+- `SqliteShowupRepository` (`slices/showup/data/`) — production implementation of both `ShowupRepository` and `ShowupSyncRepository`; takes an injected `Database`; uses `ShowupMapper` and `ShowupDateUtils` for date-range queries (all date filtering uses epoch milliseconds with local-time boundaries computed by `ShowupDateUtils.startOfDay`/`endOfDay`). Wired as both `showupRepositoryProvider` and `showupSyncRepositoryProvider` overrides in `main.dart`.
+- `NoopPactSyncRepository`, `NoopShowupSyncRepository` — no-op defaults used when the sync providers are not explicitly overridden (e.g. in tests); `getDirtyPacts()`/`getDirtyShowups()` return empty lists, mark methods are no-ops.
 - `InMemoryPactRepository`, `InMemoryShowupRepository` — retained for use in tests that do not need a real database (all existing slice tests inject these).
 
 ### UI (`lib/slices/*/ui/`)
@@ -229,9 +233,9 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 
 **Logging:** `lib/infrastructure/logging/` provides structured local logging via `talker_flutter`. The `LogService` interface exposes `debug()`, `info()`, `warning()`, `error()`, and `logLocal()` (for PII-safe local-only detail). `TalkerLogService` is active in debug and profile builds only; `NoopLogService` is the default in release and tests. The in-app log overlay is gated on `kDebugMode`. **PII rule:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
 
-**Firestore:** `lib/infrastructure/firestore/` wraps the Firestore remote storage layer. `FirestoreClient` is the abstract interface with a strict no-throw contract; all methods accept only plain `Map<String, dynamic>` data so no Firestore SDK types leak into the interface — test fakes implement it without importing `cloud_firestore`. The flat document schema mirrors the local SQLite structure: `/users/{userId}/pacts/{pactId}` and `/users/{userId}/showups/{showupId}`. `NoopFirestoreClient` is the default; the production `FirestoreClientAdapter` (wrapping the real SDK, only instantiated in `main.dart`) is planned for WU3. `firestoreClientProvider` follows the same optional-override pattern as other infrastructure providers. `Pact` and `Showup` domain models carry two sync-tracking fields: `dirty: bool` (default `true` — queued for sync) and `syncedAt: DateTime?` (null until the first successful Firestore write); both are persisted in SQLite schema v2 columns `dirty INTEGER NOT NULL DEFAULT 1` and `synced_at INTEGER`.
+**Firestore:** `lib/infrastructure/firestore/` wraps the Firestore remote storage layer. `FirestoreClient` is the abstract interface with a strict no-throw contract; all methods accept only plain `Map<String, dynamic>` data so no Firestore SDK types leak into the interface — test fakes implement it without importing `cloud_firestore`. The flat document schema mirrors the local SQLite structure: `/users/{userId}/pacts/{pactId}` and `/users/{userId}/showups/{showupId}`. `NoopFirestoreClient` is the default; the production `FirestoreClientAdapter` (wrapping the real SDK, only instantiated in `main.dart`) is planned for WU3. `firestoreClientProvider` follows the same optional-override pattern as other infrastructure providers.
 
-**Persistence:** `lib/infrastructure/persistence/` contains the database lifecycle manager and the codec/mapper utilities used by the SQLite repository implementations. `HabitLoopDatabase` owns the sqflite `Database` singleton for production use; exposes `HabitLoopDatabase.runMigrations` (creates the full current schema) and `HabitLoopDatabase.runUpgradeMigrations` (incremental v1→v2 upgrade) as public statics so tests can apply them to in-memory `databaseFactoryFfi` databases without going through the file-backed singleton; provides `@visibleForTesting openForTesting()` as a convenience wrapper. Current schema version: **2** (v2 added `dirty` and `synced_at` to both `pacts` and `showups`). `ScheduleCodec`, `PactMapper`, and `ShowupMapper` are `abstract final` classes with only `static` methods — they carry no sqflite dependency themselves (sqflite is introduced by the concrete repositories in `slices/*/data/`). `ScheduleCodec` encodes and decodes `ShowupSchedule` discriminated unions to and from a JSON string stored in the `schedule TEXT` column; its `decode` method applies a type guard before the `Map<String, dynamic>` cast so that syntactically valid but non-object JSON values produce a `FormatException` rather than an uncaught `TypeError`. `PactMapper` and `ShowupMapper` convert domain objects to column maps (for `INSERT`/`UPDATE`) and reconstruct them from row maps (for `SELECT`). All `DateTime` fields are stored as epoch milliseconds and reconstructed as **local-time** values — matching the local-time `DateTime` objects produced by `PactBuilder` and `ShowupGenerator` — so that timezones are handled correctly throughout the app.
+**Persistence:** `lib/infrastructure/persistence/` contains the database lifecycle manager and the codec/mapper utilities used by the SQLite repository implementations. `HabitLoopDatabase` owns the sqflite `Database` singleton for production use; exposes `HabitLoopDatabase.runMigrations` (creates the full current schema) and `HabitLoopDatabase.runUpgradeMigrations` (incremental v1→v2 upgrade) as public statics so tests can apply them to in-memory `databaseFactoryFfi` databases without going through the file-backed singleton; provides `@visibleForTesting openForTesting()` as a convenience wrapper. Current schema version: **2** (v2 added `dirty INTEGER NOT NULL DEFAULT 1` and `synced_at INTEGER` to both `pacts` and `showups`). `ScheduleCodec`, `PactMapper`, and `ShowupMapper` are `abstract final` classes with only `static` methods — they carry no sqflite dependency themselves (sqflite is introduced by the concrete repositories in `slices/*/data/`). `ScheduleCodec` encodes and decodes `ShowupSchedule` discriminated unions to and from a JSON string stored in the `schedule TEXT` column; its `decode` method applies a type guard before the `Map<String, dynamic>` cast so that syntactically valid but non-object JSON values produce a `FormatException` rather than an uncaught `TypeError`. `PactMapper` and `ShowupMapper` convert domain objects to column maps (for `INSERT`/`UPDATE`) and reconstruct them from row maps (for `SELECT`); `toRow()` always writes `dirty = 1` and `synced_at = null` so every local write is queued for the next sync pass; `fromRow()` intentionally ignores `dirty` and `synced_at` — sync state is internal to the repository layer and never surfaced on domain models. All `DateTime` fields are stored as epoch milliseconds and reconstructed as **local-time** values — matching the local-time `DateTime` objects produced by `PactBuilder` and `ShowupGenerator` — so that timezones are handled correctly throughout the app.
 
 **Notifications:** `lib/infrastructure/notifications/` wraps local notification scheduling via `flutter_local_notifications`. The `NotificationService` interface has a strict no-throw contract: all implementations must swallow exceptions internally so a notification failure can never crash the app. `FlutterLocalNotificationService` is the production implementation; it uses `zonedSchedule()` with `TZDateTime` (from the `timezone` package) for DST-safe scheduling, and `flutter_timezone` to resolve the device's current IANA timezone at runtime. Notification IDs are derived deterministically from `scheduledAt.millisecondsSinceEpoch ~/ 1000` (no mapping table needed). An in-memory `_pactNotificationIds` registry (pact ID to set of notification IDs) supports `cancelAllRemindersForPact()` without iterating the OS pending-notification list; on app restart the registry is empty and cancellation falls back to `getPendingNotifications()` filtered by the `pactId` field in each notification's payload JSON. The Android notification channel ID is `showup_reminders`. The `onDidReceiveNotificationResponse` callback is wired to `NotificationRouter.navigateToShowup` for deep-link routing; cold-start taps are deferred via `addPostFrameCallback` so the navigator is guaranteed to be mounted. `UNUserNotificationCenter.current().delegate = self` is set in `AppDelegate.swift` before `super.application(...)` because Flutter 3.x no longer sets it automatically. `FlutterLocalNotificationService` is used in **all build modes** (debug, profile, release) so notification navigation can be tested with plain `flutter run`; unit tests are unaffected because they never call `main()` and override `notificationServiceProvider` directly. The provider `notificationServiceProvider` defaults to `NoopNotificationService` and is overridden in `main.dart` via `AppContainer.overrides(...)`.
 

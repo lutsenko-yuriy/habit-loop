@@ -17,6 +17,27 @@ to build the full `List<Override>` passed to `ProviderScope`.
 
 ## Providers
 
+### Auth and device identity providers
+
+| Provider | Type | Default | Overridden in production |
+|---|---|---|---|
+| `authServiceProvider` | `Provider<AuthService>` | `NoopAuthService` | `FirebaseAuthService` (all build modes) |
+| `deviceIdServiceProvider` | `Provider<DeviceIdService>` | `NoopDeviceIdService` | `SharedPreferencesDeviceIdService` (all build modes) |
+| `authStateChangesProvider` | `StreamProvider<AuthState>` | Derived from `authServiceProvider` | No override needed |
+
+### App info providers
+
+| Provider | Type | Default | Notes |
+|---|---|---|---|
+| `appVersionProvider` | `FutureProvider<String>` | `""` on failure | Resolved once from `PackageInfo.fromPlatform()` |
+
+### Locale providers
+
+| Provider | Type | Default | Overridden in production |
+|---|---|---|---|
+| `localePreferenceServiceProvider` | `Provider<LocalePreferenceService>` | `NoopLocalePreferenceService` | `SharedPreferencesLocaleService` (all build modes) |
+| `localeOverrideProvider` | `StateProvider<Locale?>` | `null` (follow system) | Initialised by `AppContainer.overrides()` from saved locale |
+
 ### Infrastructure service providers
 
 | Provider | Type | Default | Overridden in production |
@@ -25,6 +46,8 @@ to build the full `List<Override>` passed to `ProviderScope`.
 | `crashlyticsServiceProvider` | `Provider<CrashlyticsService>` | `NoopCrashlyticsService` | `FirebaseCrashlyticsService` (release builds only) |
 | `logServiceProvider` | `Provider<LogService>` | `NoopLogService` | `TalkerLogService` (debug/profile builds only) |
 | `remoteConfigServiceProvider` | `Provider<RemoteConfigService>` | `NoopRemoteConfigService` | `FirebaseRemoteConfigService` (release builds only) |
+| `notificationServiceProvider` | `Provider<NotificationService>` | `NoopNotificationService` | `FlutterLocalNotificationService` (all build modes) |
+| `firestoreClientProvider` | `Provider<FirestoreClient>` | `NoopFirestoreClient` | `FirestoreClientAdapter` (planned for WU3) |
 
 ### Repository providers
 
@@ -32,14 +55,17 @@ to build the full `List<Override>` passed to `ProviderScope`.
 |---|---|---|---|
 | `pactRepositoryProvider` | `Provider<PactRepository>` | `UnimplementedError` | `SqlitePactRepository` (production), `InMemoryPactRepository` (tests) |
 | `showupRepositoryProvider` | `Provider<ShowupRepository>` | `UnimplementedError` | `SqliteShowupRepository` (production), `InMemoryShowupRepository` (tests) |
+| `pactSyncRepositoryProvider` | `Provider<PactSyncRepository>` | `NoopPactSyncRepository` | Same `SqlitePactRepository` instance as `pactRepositoryProvider` |
+| `showupSyncRepositoryProvider` | `Provider<ShowupSyncRepository>` | `NoopShowupSyncRepository` | Same `SqliteShowupRepository` instance as `showupRepositoryProvider` |
 
 ### Application service providers
 
 | Provider | Type | Default | Notes |
 |---|---|---|---|
 | `pactTransactionServiceProvider` | `Provider<PactTransactionService>` | `UnimplementedError` | `SqlitePactTransactionService` (production); `InMemoryPactTransactionService` (tests) |
-| `pactServiceProvider` | `Provider<PactService>` | Composed via `ref.watch` | No override needed — reads from `pactRepositoryProvider`, `showupRepositoryProvider`, `pactTransactionServiceProvider` |
+| `pactServiceProvider` | `Provider<PactService>` | Composed via `ref.watch` | No override needed — reads from repository and stats providers |
 | `pactStatsServiceProvider` | `Provider<PactStatsService>` | Composed via `ref.watch` | No override needed — Riverpod caches the instance for the container lifetime (effective singleton) |
+| `reminderSchedulingServiceProvider` | `Provider<ReminderSchedulingService>` | Composed via `ref.watch` | No override needed — composes notification, remote config, analytics, and locale providers |
 
 ---
 
@@ -51,15 +77,26 @@ ProviderScope
         │
         ├── pactRepositoryProvider          ← SqlitePactRepository(db)
         ├── showupRepositoryProvider         ← SqliteShowupRepository(db)
+        ├── pactSyncRepositoryProvider       ← same SqlitePactRepository instance
+        ├── showupSyncRepositoryProvider     ← same SqliteShowupRepository instance
         ├── pactTransactionServiceProvider   ← SqlitePactTransactionService(db)
         │
-        ├── pactServiceProvider              ← PactService(pactRepo, showupRepo, txService)
+        ├── pactServiceProvider              ← PactService(pactRepo, showupRepo, txService, statsService)
         ├── pactStatsServiceProvider         ← PactStatsService(pactRepo, showupRepo, txService)
         │
         ├── analyticsServiceProvider         ← FirebaseAnalyticsService  (release only)
         ├── crashlyticsServiceProvider       ← FirebaseCrashlyticsService (release only)
         ├── logServiceProvider               ← TalkerLogService           (debug/profile only)
-        └── remoteConfigServiceProvider      ← FirebaseRemoteConfigService (release only)
+        ├── remoteConfigServiceProvider      ← FirebaseRemoteConfigService (release only)
+        ├── notificationServiceProvider      ← FlutterLocalNotificationService (all modes)
+        ├── firestoreClientProvider          ← NoopFirestoreClient (WU3: FirestoreClientAdapter)
+        │
+        ├── authServiceProvider              ← FirebaseAuthService (all modes)
+        ├── deviceIdServiceProvider          ← SharedPreferencesDeviceIdService (all modes)
+        ├── authStateChangesProvider         ← derived from authServiceProvider
+        │
+        ├── localePreferenceServiceProvider  ← SharedPreferencesLocaleService (all modes)
+        └── localeOverrideProvider           ← StateProvider initialised from saved locale
 ```
 
 ---
