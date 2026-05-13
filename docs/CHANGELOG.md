@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.25.0] — 2026-05-13 (PR #74 merged)
+
+### Added — Firestore schema + client infrastructure (HAB-60, WU2 of HAB-53)
+
+- `dirty: bool` (default `true`) and `syncedAt: DateTime?` (default `null`) fields added to `Pact` and `Showup` domain models so the upcoming sync layer can track which records need to be flushed to Firestore; both included in `==`/`hashCode`/`copyWith`
+- SQLite schema bumped to **v2**: `runMigrations` (fresh installs) adds `dirty INTEGER NOT NULL DEFAULT 1` and `synced_at INTEGER` to both `pacts` and `showups` tables; `runUpgradeMigrations(db, 1, 2)` is an `ALTER TABLE` path for existing installations so existing rows are automatically queued for the first sync (default `dirty = 1`)
+- `FirestoreClient` abstract interface (`lib/infrastructure/firestore/contracts/`) with a strict no-throw contract; flat `/users/{userId}/pacts/{pactId}` and `/users/{userId}/showups/{showupId}` document paths; all data passed as `Map<String, dynamic>` so the interface has no `cloud_firestore` SDK dependency
+- `NoopFirestoreClient` — silent no-op used as the default provider in tests and offline scenarios
+- `firestoreClientProvider` wired via `AppContainer.overrides()` following the same optional-override pattern as other infrastructure providers
+- `PactMapper` and `ShowupMapper` updated to serialize/deserialize `dirty` and `synced_at`; `PactMapper.toUpdateRow` includes both fields
+- 78 new tests; 930 tests passing, analyzer clean
+
+---
+
 ## [0.24.0] — 2026-05-13 (PR #69 merged)
 
 ### Added — Auth foundation: anonymous sign-in, device ID, Google account linking (HAB-59)

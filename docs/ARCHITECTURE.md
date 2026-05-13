@@ -21,14 +21,14 @@ lib/
 ├── theme/                             # Shared Habit Loop palette and Material/Cupertino theme data
 ├── domain/                            # Top-level shared domain — pure models and repository interfaces used by multiple features
 │   ├── pact/
-│   │   ├── pact.dart                  # Pact model
+│   │   ├── pact.dart                  # Pact model — includes dirty/syncedAt for Firestore sync tracking
 │   │   ├── pact_status.dart           # PactStatus enum (active, stopped, completed)
 │   │   ├── pact_stats.dart            # PactStats computed stats model
 │   │   ├── pact_repository.dart       # PactRepository interface
 │   │   ├── showup_schedule.dart       # ShowupSchedule model (daily, weekly, monthly)
 │   │   └── schedule_type.dart         # ScheduleType enum
 │   └── showup/
-│       ├── showup.dart                # Showup model
+│       ├── showup.dart                # Showup model — includes dirty/syncedAt for Firestore sync tracking
 │       ├── showup_status.dart         # ShowupStatus enum (pending, done, failed)
 │       ├── showup_repository.dart     # ShowupRepository interface
 │       ├── showup_generator.dart      # ShowupGenerator — deterministic showup generation from a pact schedule
@@ -68,8 +68,13 @@ lib/
 │   │   └── data/
 │   │       ├── talker_log_service.dart                 # talker_flutter implementation; in-app overlay gated on kDebugMode
 │   │       └── noop_log_service.dart                   # default no-op
+│   ├── firestore/
+│   │   ├── contracts/
+│   │   │   └── firestore_client.dart  # FirestoreClient — abstract interface (no-throw contract): getPacts/getShowups/upsertPact/upsertShowup/deletePact/deleteShowup; flat /users/{uid}/pacts/{id} and /users/{uid}/showups/{id} paths; all data as Map<String, dynamic> (no SDK types in interface)
+│   │   └── data/
+│   │       └── noop_firestore_client.dart  # NoopFirestoreClient — silent no-op; reads return empty lists
 │   ├── persistence/
-│   │   ├── habit_loop_database.dart   # HabitLoopDatabase — owns the sqflite Database lifecycle and schema DDL (runMigrations); production singleton + @visibleForTesting openForTesting()
+│   │   ├── habit_loop_database.dart   # HabitLoopDatabase — owns the sqflite Database lifecycle, schema DDL (runMigrations v2), and upgrade path (runUpgradeMigrations); production singleton + @visibleForTesting openForTesting()
 │   │   ├── schedule_codec.dart        # ScheduleCodec — encodes/decodes ShowupSchedule to/from JSON string (schedule TEXT column)
 │   │   ├── pact_mapper.dart           # PactMapper — maps Pact domain objects to/from SQLite row maps
 │   │   └── showup_mapper.dart         # ShowupMapper — maps Showup domain objects to/from SQLite row maps
@@ -141,10 +146,13 @@ test/
 │   │   │   ├── talker_log_service_test.dart
 │   │   │   └── noop_log_service_test.dart
 │   │   └── fake_log_service.dart              # Shared fake for test overrides
+│   ├── firestore/
+│   │   └── data/
+│   │       └── noop_firestore_client_test.dart  # NoopFirestoreClient: all operations no-throw; reads return empty lists
 │   ├── persistence/
-│   │   ├── habit_loop_database_test.dart  # schema creation, table/column/index existence checks
+│   │   ├── habit_loop_database_test.dart  # schema creation, column/index checks; v1→v2 upgrade migration adds dirty/synced_at
 │   │   ├── schedule_codec_test.dart       # ScheduleCodec encode/decode round-trips, type-guard FormatException cases
-│   │   ├── pact_mapper_test.dart          # PactMapper toRow/fromRow/round-trip, including local-time regression tests
+│   │   ├── pact_mapper_test.dart          # PactMapper toRow/fromRow/toUpdateRow/round-trip, including local-time regression tests
 │   │   └── showup_mapper_test.dart        # ShowupMapper toRow/fromRow/round-trip, including local-time regression tests
 │   ├── notifications/
 │   │   ├── fake_notification_service.dart              # Shared fake recording all calls (scheduledReminders, scheduledDeadlines, cancelledShowupIds, cancelledPactIds)
@@ -221,7 +229,9 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 
 **Logging:** `lib/infrastructure/logging/` provides structured local logging via `talker_flutter`. The `LogService` interface exposes `debug()`, `info()`, `warning()`, `error()`, and `logLocal()` (for PII-safe local-only detail). `TalkerLogService` is active in debug and profile builds only; `NoopLogService` is the default in release and tests. The in-app log overlay is gated on `kDebugMode`. **PII rule:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
 
-**Persistence:** `lib/infrastructure/persistence/` contains the database lifecycle manager and the codec/mapper utilities used by the SQLite repository implementations. `HabitLoopDatabase` owns the sqflite `Database` singleton for production use, exposes `HabitLoopDatabase.runMigrations` as a public static so tests can apply the v1 schema to an in-memory `databaseFactoryFfi` database without going through the file-backed singleton, and provides `@visibleForTesting openForTesting()` as a convenience wrapper. `ScheduleCodec`, `PactMapper`, and `ShowupMapper` are `abstract final` classes with only `static` methods — they carry no sqflite dependency themselves (sqflite is introduced by the concrete repositories in `slices/*/data/`). `ScheduleCodec` encodes and decodes `ShowupSchedule` discriminated unions to and from a JSON string stored in the `schedule TEXT` column; its `decode` method applies a type guard before the `Map<String, dynamic>` cast so that syntactically valid but non-object JSON values produce a `FormatException` rather than an uncaught `TypeError`. `PactMapper` and `ShowupMapper` convert domain objects to column maps (for `INSERT`/`UPDATE`) and reconstruct them from row maps (for `SELECT`). All `DateTime` fields are stored as epoch milliseconds and reconstructed as **local-time** values — matching the local-time `DateTime` objects produced by `PactBuilder` and `ShowupGenerator` — so that timezones are handled correctly throughout the app.
+**Firestore:** `lib/infrastructure/firestore/` wraps the Firestore remote storage layer. `FirestoreClient` is the abstract interface with a strict no-throw contract; all methods accept only plain `Map<String, dynamic>` data so no Firestore SDK types leak into the interface — test fakes implement it without importing `cloud_firestore`. The flat document schema mirrors the local SQLite structure: `/users/{userId}/pacts/{pactId}` and `/users/{userId}/showups/{showupId}`. `NoopFirestoreClient` is the default; the production `FirestoreClientAdapter` (wrapping the real SDK, only instantiated in `main.dart`) is planned for WU3. `firestoreClientProvider` follows the same optional-override pattern as other infrastructure providers. `Pact` and `Showup` domain models carry two sync-tracking fields: `dirty: bool` (default `true` — queued for sync) and `syncedAt: DateTime?` (null until the first successful Firestore write); both are persisted in SQLite schema v2 columns `dirty INTEGER NOT NULL DEFAULT 1` and `synced_at INTEGER`.
+
+**Persistence:** `lib/infrastructure/persistence/` contains the database lifecycle manager and the codec/mapper utilities used by the SQLite repository implementations. `HabitLoopDatabase` owns the sqflite `Database` singleton for production use; exposes `HabitLoopDatabase.runMigrations` (creates the full current schema) and `HabitLoopDatabase.runUpgradeMigrations` (incremental v1→v2 upgrade) as public statics so tests can apply them to in-memory `databaseFactoryFfi` databases without going through the file-backed singleton; provides `@visibleForTesting openForTesting()` as a convenience wrapper. Current schema version: **2** (v2 added `dirty` and `synced_at` to both `pacts` and `showups`). `ScheduleCodec`, `PactMapper`, and `ShowupMapper` are `abstract final` classes with only `static` methods — they carry no sqflite dependency themselves (sqflite is introduced by the concrete repositories in `slices/*/data/`). `ScheduleCodec` encodes and decodes `ShowupSchedule` discriminated unions to and from a JSON string stored in the `schedule TEXT` column; its `decode` method applies a type guard before the `Map<String, dynamic>` cast so that syntactically valid but non-object JSON values produce a `FormatException` rather than an uncaught `TypeError`. `PactMapper` and `ShowupMapper` convert domain objects to column maps (for `INSERT`/`UPDATE`) and reconstruct them from row maps (for `SELECT`). All `DateTime` fields are stored as epoch milliseconds and reconstructed as **local-time** values — matching the local-time `DateTime` objects produced by `PactBuilder` and `ShowupGenerator` — so that timezones are handled correctly throughout the app.
 
 **Notifications:** `lib/infrastructure/notifications/` wraps local notification scheduling via `flutter_local_notifications`. The `NotificationService` interface has a strict no-throw contract: all implementations must swallow exceptions internally so a notification failure can never crash the app. `FlutterLocalNotificationService` is the production implementation; it uses `zonedSchedule()` with `TZDateTime` (from the `timezone` package) for DST-safe scheduling, and `flutter_timezone` to resolve the device's current IANA timezone at runtime. Notification IDs are derived deterministically from `scheduledAt.millisecondsSinceEpoch ~/ 1000` (no mapping table needed). An in-memory `_pactNotificationIds` registry (pact ID to set of notification IDs) supports `cancelAllRemindersForPact()` without iterating the OS pending-notification list; on app restart the registry is empty and cancellation falls back to `getPendingNotifications()` filtered by the `pactId` field in each notification's payload JSON. The Android notification channel ID is `showup_reminders`. The `onDidReceiveNotificationResponse` callback is wired to `NotificationRouter.navigateToShowup` for deep-link routing; cold-start taps are deferred via `addPostFrameCallback` so the navigator is guaranteed to be mounted. `UNUserNotificationCenter.current().delegate = self` is set in `AppDelegate.swift` before `super.application(...)` because Flutter 3.x no longer sets it automatically. `FlutterLocalNotificationService` is used in **all build modes** (debug, profile, release) so notification navigation can be tested with plain `flutter run`; unit tests are unaffected because they never call `main()` and override `notificationServiceProvider` directly. The provider `notificationServiceProvider` defaults to `NoopNotificationService` and is overridden in `main.dart` via `AppContainer.overrides(...)`.
 
