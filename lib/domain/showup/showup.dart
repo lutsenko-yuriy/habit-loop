@@ -8,6 +8,17 @@ class Showup {
   final ShowupStatus status;
   final String? note;
 
+  /// True when the local state has not yet been flushed to Firestore.
+  ///
+  /// Defaults to `true` so every newly created showup is queued for sync.
+  /// Set to `false` (alongside [syncedAt]) by the sync layer after a
+  /// successful Firestore write.
+  final bool dirty;
+
+  /// The wall-clock instant of the last successful Firestore sync, or `null`
+  /// if this showup has never been synced.
+  final DateTime? syncedAt;
+
   const Showup({
     required this.id,
     required this.pactId,
@@ -15,6 +26,8 @@ class Showup {
     required this.duration,
     required this.status,
     this.note,
+    this.dirty = true,
+    this.syncedAt,
   });
 
   /// Returns a copy of this showup with the given fields replaced.
@@ -24,7 +37,10 @@ class Showup {
   Showup copyWith({
     ShowupStatus? status,
     String? note,
+    bool? dirty,
+    DateTime? syncedAt,
     bool clearNote = false,
+    bool clearSyncedAt = false,
   }) {
     return Showup(
       id: id,
@@ -33,6 +49,8 @@ class Showup {
       duration: duration,
       status: status ?? this.status,
       note: clearNote ? null : (note ?? this.note),
+      dirty: dirty ?? this.dirty,
+      syncedAt: clearSyncedAt ? null : (syncedAt ?? this.syncedAt),
     );
   }
 
@@ -45,7 +63,9 @@ class Showup {
           scheduledAt == other.scheduledAt &&
           duration == other.duration &&
           status == other.status &&
-          note == other.note;
+          note == other.note &&
+          dirty == other.dirty &&
+          syncedAt == other.syncedAt;
 
   @override
   int get hashCode => Object.hash(
@@ -55,5 +75,7 @@ class Showup {
         duration,
         status,
         note,
+        dirty,
+        syncedAt,
       );
 }

@@ -104,6 +104,71 @@ void main() {
     });
   });
 
+  group('dirty / syncedAt sync fields', () {
+    test('dirty defaults to true when not specified', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      expect(showup.dirty, isTrue);
+    });
+
+    test('syncedAt defaults to null when not specified', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      expect(showup.syncedAt, isNull);
+    });
+
+    test('dirty can be set to false with a syncedAt timestamp', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+        dirty: false,
+        syncedAt: DateTime(2026, 4, 1, 12, 0),
+      );
+      expect(showup.dirty, isFalse);
+      expect(showup.syncedAt, equals(DateTime(2026, 4, 1, 12, 0)));
+    });
+
+    test('copyWith can mark showup as clean', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final synced = showup.copyWith(dirty: false, syncedAt: DateTime(2026, 4, 1));
+      expect(synced.dirty, isFalse);
+      expect(synced.syncedAt, equals(DateTime(2026, 4, 1)));
+      expect(synced.id, equals(showup.id));
+    });
+
+    test('two showups differing only in dirty are not equal', () {
+      final a = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+        dirty: true,
+      );
+      final b = a.copyWith(dirty: false);
+      expect(a, isNot(equals(b)));
+    });
+  });
+
   group('ShowupStatus', () {
     test('has three values', () {
       expect(ShowupStatus.values, hasLength(3));

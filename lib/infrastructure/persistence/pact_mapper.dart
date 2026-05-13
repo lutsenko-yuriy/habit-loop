@@ -41,6 +41,8 @@ abstract final class PactMapper {
       'stop_reason': pact.stopReason,
       'created_at': pact.createdAt?.millisecondsSinceEpoch,
       'total_showups': null,
+      'dirty': pact.dirty ? 1 : 0,
+      'synced_at': pact.syncedAt?.millisecondsSinceEpoch,
     };
   }
 
@@ -83,6 +85,12 @@ abstract final class PactMapper {
       // total_showups is read-acknowledged but not propagated into the domain
       // model; it lives in the DB column only and is consumed by stats queries.
       stats: null,
+      dirty: (row['dirty'] as int) != 0,
+      syncedAt: row['synced_at'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              (row['synced_at'] as num).toInt(),
+            )
+          : null,
     );
   }
 
@@ -109,6 +117,8 @@ abstract final class PactMapper {
       'actual_end_date': pact.endDate.millisecondsSinceEpoch,
       'reminder_offset': pact.reminderOffset?.inMicroseconds,
       'stop_reason': pact.stopReason,
+      'dirty': pact.dirty ? 1 : 0,
+      'synced_at': pact.syncedAt?.millisecondsSinceEpoch,
     };
   }
 

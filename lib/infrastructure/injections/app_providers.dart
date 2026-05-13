@@ -25,6 +25,8 @@ import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_serv
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dart';
 import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
+import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
+import 'package:habit_loop/infrastructure/firestore/data/noop_firestore_client.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
@@ -223,6 +225,16 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
     transactionService: ref.watch(pactTransactionServiceProvider),
   );
 });
+
+/// Provides the active [FirestoreClient] to the app.
+///
+/// Defaults to [NoopFirestoreClient] so tests and offline scenarios work
+/// without the `cloud_firestore` SDK. Overridden in `main.dart` via
+/// [AppContainer.overrides] with [FirestoreClientAdapter] in all build modes
+/// once the user is signed in.
+final firestoreClientProvider = Provider<FirestoreClient>(
+  (ref) => NoopFirestoreClient(),
+);
 
 /// Provides [ReminderSchedulingService] as a singleton.
 ///

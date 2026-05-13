@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 /// [databaseFactoryFfi]-opened in-memory database — never use the singleton in
 /// tests (it would open a file-backed database on the test host).
 ///
-/// Schema version: 1.
+/// Schema version: 2.
 class HabitLoopDatabase {
   HabitLoopDatabase._();
 
@@ -33,7 +33,7 @@ class HabitLoopDatabase {
     final path = join(await getDatabasesPath(), 'habit_loop.db');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         // Enable WAL journal mode so concurrent readers (main isolate) and the
         // background notification handler isolate can operate simultaneously
@@ -56,6 +56,7 @@ class HabitLoopDatabase {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: runMigrations,
+      onUpgrade: runUpgradeMigrations,
     );
   }
 
@@ -91,7 +92,9 @@ class HabitLoopDatabase {
         reminder_offset      INTEGER,
         stop_reason          TEXT,
         total_showups        INTEGER,
-        created_at           INTEGER
+        created_at           INTEGER,
+        dirty                INTEGER NOT NULL DEFAULT 1,
+        synced_at            INTEGER
       )
     ''');
     await db.execute('''
@@ -102,11 +105,28 @@ class HabitLoopDatabase {
         duration     INTEGER NOT NULL,
         status       TEXT    NOT NULL,
         note         TEXT,
+        dirty        INTEGER NOT NULL DEFAULT 1,
+        synced_at    INTEGER,
         FOREIGN KEY (pact_id) REFERENCES pacts(id)
       )
     ''');
     await db.execute('CREATE INDEX idx_showups_pact_id ON showups (pact_id)');
     await db.execute('CREATE INDEX idx_showups_scheduled_at ON showups (scheduled_at)');
+  }
+
+  /// Incremental schema upgrades from [oldVersion] to [newVersion].
+  ///
+  /// Exposed as a public static so tests can verify the upgrade path without
+  /// going through the file-backed singleton.
+  static Future<void> runUpgradeMigrations(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // v2 adds dirty/synced_at columns for Firestore sync tracking.
+      // DEFAULT 1 means all existing rows are immediately queued for first sync.
+      await db.execute('ALTER TABLE pacts ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1');
+      await db.execute('ALTER TABLE pacts ADD COLUMN synced_at INTEGER');
+      await db.execute('ALTER TABLE showups ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1');
+      await db.execute('ALTER TABLE showups ADD COLUMN synced_at INTEGER');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -122,7 +142,7 @@ class HabitLoopDatabase {
     return databaseFactory.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
-        version: 1,
+        version: 2,
         onConfigure: (db) async {
           try {
             await db.rawQuery('PRAGMA journal_mode=WAL');
@@ -130,6 +150,7 @@ class HabitLoopDatabase {
           await db.execute('PRAGMA foreign_keys = ON');
         },
         onCreate: runMigrations,
+        onUpgrade: runUpgradeMigrations,
       ),
     );
   }

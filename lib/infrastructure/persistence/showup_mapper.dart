@@ -15,6 +15,8 @@ abstract final class ShowupMapper {
       'duration': showup.duration.inMicroseconds,
       'status': _encodeStatus(showup.status),
       'note': showup.note,
+      'dirty': showup.dirty ? 1 : 0,
+      'synced_at': showup.syncedAt?.millisecondsSinceEpoch,
     };
   }
 
@@ -36,6 +38,12 @@ abstract final class ShowupMapper {
       duration: Duration(microseconds: (row['duration'] as num).toInt()),
       status: _decodeStatus(row['status'] as String),
       note: row['note'] as String?,
+      dirty: (row['dirty'] as int) != 0,
+      syncedAt: row['synced_at'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              (row['synced_at'] as num).toInt(),
+            )
+          : null,
     );
   }
 

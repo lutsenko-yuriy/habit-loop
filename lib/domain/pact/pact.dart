@@ -24,6 +24,17 @@ class Pact {
   /// treat `null` as equivalent to `startDate` (no intra-day filtering).
   final DateTime? createdAt;
 
+  /// True when the local state has not yet been flushed to Firestore.
+  ///
+  /// Defaults to `true` so every newly created pact is queued for sync.
+  /// Set to `false` (alongside [syncedAt]) by the sync layer after a
+  /// successful Firestore write.
+  final bool dirty;
+
+  /// The wall-clock instant of the last successful Firestore sync, or `null`
+  /// if this pact has never been synced.
+  final DateTime? syncedAt;
+
   const Pact({
     required this.id,
     required this.habitName,
@@ -36,6 +47,8 @@ class Pact {
     this.stopReason,
     this.stats,
     this.createdAt,
+    this.dirty = true,
+    this.syncedAt,
   });
 
   /// Returns a copy of this pact with the given fields replaced.
@@ -52,9 +65,12 @@ class Pact {
     Duration? reminderOffset,
     String? stopReason,
     PactStats? stats,
+    bool? dirty,
+    DateTime? syncedAt,
     bool clearReminderOffset = false,
     bool clearStopReason = false,
     bool clearStats = false,
+    bool clearSyncedAt = false,
   }) {
     return Pact(
       id: id,
@@ -68,6 +84,8 @@ class Pact {
       stopReason: clearStopReason ? null : (stopReason ?? this.stopReason),
       stats: clearStats ? null : (stats ?? this.stats),
       createdAt: createdAt, // immutable — never overridden by copyWith
+      dirty: dirty ?? this.dirty,
+      syncedAt: clearSyncedAt ? null : (syncedAt ?? this.syncedAt),
     );
   }
 
@@ -85,7 +103,9 @@ class Pact {
           reminderOffset == other.reminderOffset &&
           stopReason == other.stopReason &&
           stats == other.stats &&
-          createdAt == other.createdAt;
+          createdAt == other.createdAt &&
+          dirty == other.dirty &&
+          syncedAt == other.syncedAt;
 
   @override
   int get hashCode => Object.hash(
@@ -100,5 +120,7 @@ class Pact {
         stopReason,
         stats,
         createdAt,
+        dirty,
+        syncedAt,
       );
 }
