@@ -29,8 +29,6 @@ import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dar
 import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/noop_firestore_client.dart';
-import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
-import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
@@ -42,7 +40,9 @@ import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
+import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 // ---------------------------------------------------------------------------
