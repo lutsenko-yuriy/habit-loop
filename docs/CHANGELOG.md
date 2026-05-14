@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.27.0] — 2026-05-14
+## [0.27.0] — 2026-05-14 (PR #76 merged)
 
 ### Added — Write-through sync service (HAB-62, WU4 of HAB-53)
 
