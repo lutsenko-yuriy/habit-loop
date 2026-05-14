@@ -209,5 +209,29 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "syncStatusTitle": "Synchronisierungsstatus",
+  "@syncStatusTitle": {},
+  "syncStatusSynced": "Aktuell",
+  "@syncStatusSynced": {},
+  "syncStatusDegraded": "Synchronisierung beeinträchtigt — letzter Versuch fehlgeschlagen",
+  "@syncStatusDegraded": {},
+  "syncStatusSuspended": "Synchronisierung pausiert — zum Wiederholen tippen",
+  "@syncStatusSuspended": {},
+  "syncStatusNoInternet": "Keine Internetverbindung",
+  "@syncStatusNoInternet": {},
+  "syncStatusConnecting": "Verbinde…",
+  "@syncStatusConnecting": {},
+  "syncStatusNotLinked": "Daten sind nur lokal. Mit Google anmelden, um auf mehreren Geräten zu sichern und zu synchronisieren.",
+  "@syncStatusNotLinked": {},
+  "syncNow": "Jetzt synchronisieren",
+  "@syncNow": {},
+  "signInWithGoogle": "Mit Google anmelden",
+  "@signInWithGoogle": {},
+  "signOut": "Abmelden",
+  "@signOut": {},
+  "notNow": "Nicht jetzt",
+  "@notNow": {},
+  "signInWithGoogleFailed": "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+  "@signInWithGoogleFailed": {}
 }

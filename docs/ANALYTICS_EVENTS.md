@@ -106,6 +106,62 @@ No PII risk — values are ISO 639-1 language codes drawn from a closed set.
 
 ---
 
+### `sync_status_opened`
+
+Fired when the user taps the sync icon in the dashboard nav bar and the sync status dialog opens. (HAB-64)
+
+| Property | Type | Description |
+|---|---|---|
+| `state` | `string` | Current sync state: `not_linked` \| `connecting` \| `synced` \| `degraded` \| `suspended` \| `no_internet` |
+
+---
+
+### `manual_sync_triggered`
+
+Fired when the user taps "Sync now" inside the sync status dialog. (HAB-64)
+
+| Property | Type | Description |
+|---|---|---|
+| `from_state` | `string` | CB state that prompted the action: `degraded` \| `suspended` |
+
+---
+
+### `sign_in_with_google_tapped`
+
+Fired when the user taps "Sign in with Google" inside the sync status dialog (shown when auth state is anonymous / not linked). (HAB-64)
+
+No properties — context is captured by `sync_status_opened` with `state=not_linked`.
+
+---
+
+### `sign_in_with_google_succeeded`
+
+Fired when Google account linking completes successfully. (HAB-64)
+
+No properties.
+
+---
+
+### `sign_in_with_google_failed`
+
+Fired when Google account linking throws a `FirebaseAuthException`. (HAB-64)
+
+| Property | Type | Description |
+|---|---|---|
+| `error_code` | `string` | Firebase error code (e.g. `account-exists-with-different-credential`) — not PII |
+
+---
+
+### `sign_out_tapped`
+
+Fired when the user taps "Sign out" inside the sync status dialog. (HAB-64)
+
+| Property | Type | Description |
+|---|---|---|
+| `from_state` | `string` | Sync state at the time of sign-out |
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.

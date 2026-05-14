@@ -4,6 +4,26 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.29.0] — 2026-05-14 (PR #78 merged)
+
+### Added — Sync status UI (HAB-64, WU6 of HAB-53)
+
+- `SyncUiState` enum (6 states, priority order): `noInternet` > `connecting` > `notLinked` > `suspended` > `degraded` > `synced`
+- `SyncStatusViewModel` (`AutoDisposeNotifier<SyncUiState>`) in `lib/slices/dashboard/ui/generic/` watches `connectivityProvider`, `authStateChangesProvider`, and `syncCircuitBreakerProvider` to derive the current sync health state; exposes `triggerManualSync()`, `linkWithGoogle()`, `signOut()` actions
+- `connectivityProvider` (`StreamProvider<bool>`) declared in `app_providers.dart` using `connectivity_plus`; emits `true` when any non-none interface is active; defaults to `true` while loading (optimistic) so the UI never flashes "no internet" on startup; `ConnectivityResult` is fully encapsulated inside the provider body
+- `sync_status_handler.dart` (shared): `syncStatusIconData(SyncUiState)`, `syncStatusIconColor(SyncUiState, BuildContext)`, `openSyncStatusDialog({context, ref, showFn})` — shared orchestration that fires `SyncStatusOpenedEvent` and builds state-appropriate message + action list; `SyncDialogAction` data class; icon colors use `CupertinoColors.systemGreen/Orange/Red/Grey.resolveFrom(context)` for correct dark-mode adaptation on both platforms
+- iOS dashboard nav bar gains a `sync-status-button` `CupertinoButton` with color-coded Material icon; tap shows `CupertinoAlertDialog` with state message and platform-native actions
+- Android dashboard AppBar gains a `sync-status-button` `IconButton`; tap shows `AlertDialog` with same state message and actions
+- Dialog actions by state: `notLinked` → Sign in with Google + Not now; `suspended`/`degraded` → Sync now + Not now; `synced` → Sign out + Not now; `noInternet`/`connecting` → Not now only
+- Sign-in failure surfaces a second dialog with a localised error message (`signInWithGoogleFailed`) instead of silently dismissing; `linkWithGoogle()` rethrows `AuthLinkException` after logging analytics so callers can react
+- 6 new analytics event classes (`final class`) in `lib/slices/dashboard/analytics/sync_analytics_events.dart`: `SyncStatusOpenedEvent`, `ManualSyncTriggeredEvent`, `SignInWithGoogleTappedEvent`, `SignInWithGoogleSucceededEvent`, `SignInWithGoogleFailedEvent`, `SignOutTappedEvent`
+- 12 l10n keys added across EN/FR/DE/RU: `syncStatusTitle`, `syncStatusSynced`, `syncStatusDegraded`, `syncStatusSuspended`, `syncStatusNoInternet`, `syncStatusConnecting`, `syncStatusNotLinked`, `syncNow`, `signInWithGoogle`, `signOut`, `notNow`, `signInWithGoogleFailed`
+- `REVERSED_CLIENT_ID` URL scheme registered in `ios/Runner/Info.plist` so the Google OAuth callback correctly returns to the app on iOS release builds
+- `connectivity_plus: ^6.1.4` added as production dependency
+- 1039 tests passing, analyzer clean
+
+---
+
 ## [0.28.0] — 2026-05-14 (PR #77 merged)
 
 ### Added — Pull-on-start sync (HAB-63, WU5 of HAB-53)

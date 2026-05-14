@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback, kDebugMode, kProfileMode;
-import 'package:flutter/material.dart' show Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Icon, Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -9,6 +9,8 @@ import 'package:habit_loop/infrastructure/notifications/data/test_notification_h
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
@@ -35,12 +37,20 @@ class DashboardPageIos extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final version = ref.watch(appVersionProvider).valueOrNull ?? '';
+    final syncState = ref.watch(syncStatusViewModelProvider);
 
     Future<void> onLanguagePickerTapped() => openLanguagePicker(
           context: context,
           ref: ref,
           showPicker: ({required context, required options, required currentOverride}) =>
               _showCupertinoActionSheet(context, options, currentOverride, l10n),
+        );
+
+    Future<void> onSyncStatusTapped() => openSyncStatusDialog(
+          context: context,
+          ref: ref,
+          showFn: ({required context, required title, required message, required actions}) =>
+              _showCupertinoSyncDialog(context, title, message, actions),
         );
 
     return CupertinoPageScaffold(
@@ -64,28 +74,36 @@ class DashboardPageIos extends ConsumerWidget {
               ),
           ],
         ),
-        trailing: (kDebugMode || kProfileMode || hasPacts)
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── DEV-ONLY: fire a test notification in 15 s ───────────
-                  if (kDebugMode || kProfileMode)
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
-                      child: const Icon(CupertinoIcons.bell),
-                    ),
-                  // ─────────────────────────────────────────────────────────
-                  if (hasPacts)
-                    CupertinoButton(
-                      key: const Key('create-pact-button'),
-                      padding: EdgeInsets.zero,
-                      onPressed: onCreatePact,
-                      child: const Icon(CupertinoIcons.add),
-                    ),
-                ],
-              )
-            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── DEV-ONLY: fire a test notification in 15 s ─────────────────
+            if (kDebugMode || kProfileMode)
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+                child: const Icon(CupertinoIcons.bell),
+              ),
+            // ── Sync status indicator ───────────────────────────────────────
+            CupertinoButton(
+              key: const Key('sync-status-button'),
+              padding: EdgeInsets.zero,
+              onPressed: onSyncStatusTapped,
+              child: Icon(
+                syncStatusIconData(syncState),
+                color: syncStatusIconColor(syncState, context),
+              ),
+            ),
+            // ─────────────────────────────────────────────────────────────
+            if (hasPacts)
+              CupertinoButton(
+                key: const Key('create-pact-button'),
+                padding: EdgeInsets.zero,
+                onPressed: onCreatePact,
+                child: const Icon(CupertinoIcons.add),
+              ),
+          ],
+        ),
       ),
       child: SafeArea(
         key: const Key('dashboard-ios-safe-area'),
@@ -332,6 +350,40 @@ class _ShowupTile extends StatelessWidget {
       subtitle: Text('${l10n.showupDurationMinutes(showup.duration.inMinutes)} — $statusText'),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Platform-specific picker UI — iOS (CupertinoActionSheet)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Platform-specific sync status dialog — iOS (CupertinoAlertDialog)
+// ---------------------------------------------------------------------------
+
+Future<void> _showCupertinoSyncDialog(
+  BuildContext context,
+  String title,
+  String message,
+  List<SyncDialogAction> actions,
+) async {
+  // ignore: use_build_context_synchronously — caller guards context.mounted before this call
+  await showCupertinoDialog<void>(
+    context: context,
+    builder: (ctx) => CupertinoAlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: actions.map((a) {
+        return CupertinoDialogAction(
+          isDestructiveAction: a.isDestructive,
+          onPressed: () {
+            Navigator.pop(ctx);
+            a.onPressed();
+          },
+          child: Text(a.label),
+        );
+      }).toList(),
+    ),
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ library;
 
 import 'dart:io' show Platform;
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
@@ -279,6 +280,28 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
     analytics: ref.watch(analyticsServiceProvider),
     localePreference: ref.watch(localePreferenceServiceProvider),
     isIOS: Platform.isIOS,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Connectivity provider
+// ---------------------------------------------------------------------------
+
+/// Stream of internet-availability booleans from `connectivity_plus`.
+///
+/// Emits `true` when at least one non-none interface is active, `false` when
+/// every interface reports [ConnectivityResult.none]. Re-emits on every
+/// network-state change. Defaults to `true` while loading so the UI never
+/// flashes a "no internet" state on startup.
+///
+/// [ConnectivityResult] is kept inside this provider body and never leaks into
+/// callers — the app-layer contract is a plain [bool].
+final connectivityProvider = StreamProvider<bool>((ref) async* {
+  final connectivity = Connectivity();
+  final initial = await connectivity.checkConnectivity();
+  yield !initial.every((r) => r == ConnectivityResult.none);
+  yield* connectivity.onConnectivityChanged.map(
+    (results) => !results.every((r) => r == ConnectivityResult.none),
   );
 });
 

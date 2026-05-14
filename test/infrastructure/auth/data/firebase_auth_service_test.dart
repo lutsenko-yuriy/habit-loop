@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_state.dart';
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_service.dart';
 
@@ -124,10 +126,25 @@ void main() {
       expect(client.linkWithGoogleCalled, isTrue);
     });
 
-    test('linkWithGoogle rethrows when client throws', () async {
+    test('linkWithGoogle wraps plain Exception as AuthLinkException', () async {
       client.linkError = Exception('credential-already-in-use');
       await service.initialize();
-      expect(() => service.linkWithGoogle(), throwsException);
+      await expectLater(service.linkWithGoogle(), throwsA(isA<AuthLinkException>()));
+    });
+
+    test('linkWithGoogle wraps FirebaseAuthException as AuthLinkException with correct code', () async {
+      client.linkError = FirebaseAuthException(code: 'account-exists-with-different-credential');
+      await service.initialize();
+      await expectLater(
+        service.linkWithGoogle(),
+        throwsA(
+          isA<AuthLinkException>().having(
+            (e) => e.code,
+            'code',
+            'account-exists-with-different-credential',
+          ),
+        ),
+      );
     });
 
     test('signOut delegates to client', () async {

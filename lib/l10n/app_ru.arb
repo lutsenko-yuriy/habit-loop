@@ -209,5 +209,29 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "syncStatusTitle": "Статус синхронизации",
+  "@syncStatusTitle": {},
+  "syncStatusSynced": "Актуально",
+  "@syncStatusSynced": {},
+  "syncStatusDegraded": "Синхронизация нарушена — последняя попытка не удалась",
+  "@syncStatusDegraded": {},
+  "syncStatusSuspended": "Синхронизация приостановлена — нажмите для повтора",
+  "@syncStatusSuspended": {},
+  "syncStatusNoInternet": "Нет подключения к интернету",
+  "@syncStatusNoInternet": {},
+  "syncStatusConnecting": "Подключение…",
+  "@syncStatusConnecting": {},
+  "syncStatusNotLinked": "Данные хранятся только локально. Войдите через Google, чтобы создать резервную копию и синхронизировать между устройствами.",
+  "@syncStatusNotLinked": {},
+  "syncNow": "Синхронизировать",
+  "@syncNow": {},
+  "signInWithGoogle": "Войти через Google",
+  "@signInWithGoogle": {},
+  "signOut": "Выйти",
+  "@signOut": {},
+  "notNow": "Не сейчас",
+  "@notNow": {},
+  "signInWithGoogleFailed": "Не удалось войти. Пожалуйста, попробуйте ещё раз.",
+  "@signInWithGoogleFailed": {}
 }
