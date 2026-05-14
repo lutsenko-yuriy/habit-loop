@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.30.1] — 2026-05-15 (PR #83 merged)
+
+### Changed — CI: cache CocoaPods to fix slow iOS build
+
+- `actions/cache@v4` added for `ios/Pods` keyed on `ios/Podfile.lock` hash in the `build-ios` job; eliminates 25-30 min cold-compile of gRPC-C++ and Abseil (transitive `cloud_firestore` pods) on every macOS runner — cache-hit builds drop to ~5-10 min
+- `AGENTS.md` workflow updated: require a pre-merge `git fetch origin && git rebase origin/main` before merging any feature branch
+
+---
+
 ## [0.30.0] — 2026-05-14 (PR #82 merged)
 
 ### Added — End-to-end Firestore sync (HAB-66, WU7 of HAB-53)
