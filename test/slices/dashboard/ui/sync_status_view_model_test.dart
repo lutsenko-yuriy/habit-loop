@@ -10,6 +10,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/auth/fake_auth_service.dart';
+import '../../../infrastructure/sync/fake_sync_service.dart';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -19,6 +20,7 @@ ProviderContainer _makeContainer({
   AuthService? authService,
   bool hasInternet = true,
   FakeAnalyticsService? analytics,
+  FakeSyncService? syncService,
 }) {
   return ProviderContainer(overrides: [
     authServiceProvider.overrideWithValue(
@@ -28,6 +30,7 @@ ProviderContainer _makeContainer({
       (ref) => Stream.value(hasInternet),
     ),
     analyticsServiceProvider.overrideWithValue(analytics ?? FakeAnalyticsService()),
+    syncServiceProvider.overrideWithValue(syncService ?? FakeSyncService()),
   ]);
 }
 
@@ -213,6 +216,23 @@ void main() {
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_tapped'), isTrue);
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_succeeded'), isTrue);
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_failed'), isFalse);
+    });
+
+    test('pulls remote changes and flushes dirty records on success', () async {
+      final analytics = FakeAnalyticsService();
+      final syncService = FakeSyncService();
+      final auth = FakeAuthService(userId: 'u1', isAnonymous: true);
+      final container = _makeContainer(authService: auth, analytics: analytics, syncService: syncService);
+      addTearDown(container.dispose);
+      final settling = _settle(container);
+      auth.emitState(userId: 'u1', isAnonymous: true);
+      await settling;
+
+      await container.read(syncStatusViewModelProvider.notifier).linkWithGoogle();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(syncService.pullRemoteChangesCount, 1);
+      expect(syncService.flushCount, 1);
     });
 
     test('fires tapped + failed events and rethrows on AuthLinkException', () async {

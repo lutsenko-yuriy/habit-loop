@@ -161,5 +161,14 @@ void main() {
       await sub.cancel();
       expect(states, isNotEmpty);
     });
+
+    test('linkWithGoogle succeeds after signOut (no current user)', () async {
+      await service.initialize();
+      await service.signOut();
+      // After sign-out currentUser is null; linkWithGoogle must not throw.
+      await service.linkWithGoogle();
+      expect(client.linkWithGoogleCalled, isTrue);
+      expect(service.isAnonymous, isFalse);
+    });
   });
 }
