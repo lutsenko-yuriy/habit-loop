@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.28.0] — 2026-05-14 (unreleased)
+## [0.28.0] — 2026-05-14 (PR #77 merged)
 
 ### Added — Pull-on-start sync (HAB-63, WU5 of HAB-53)
 

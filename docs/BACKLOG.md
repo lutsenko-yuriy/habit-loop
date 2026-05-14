@@ -13,4 +13,4 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ### Remaining work
 
-- **[HAB-53] Backend synchronization** — Sync pact and showup data to a backend so it persists across devices.
+_(none)_
