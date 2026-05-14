@@ -106,6 +106,7 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
    git checkout -b feature/HAB-XX-<short-description> origin/main
    ```
    If the branch already exists, rebase it onto `origin/main` before writing any code (`git rebase origin/main`). This ensures the PR diff contains only the new work.
+   **Before merging**, always rebase the branch onto the latest `origin/main` again (`git fetch origin && git rebase origin/main`) so the branch is up to date and the merge lands cleanly on the current tip.
 4. Write failing tests that describe the expected behaviour.
 5. Implement the minimum code to make the tests pass.
 6. Refactor if needed.
