@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 import 'dart:io' show Platform;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -30,6 +31,7 @@ import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/device/data/shared_preferences_device_id_service.dart';
+import 'package:habit_loop/infrastructure/firestore/data/firebase_firestore_client_adapter.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/shared_preferences_locale_service.dart';
@@ -509,6 +511,7 @@ Future<void> main() async {
       localePreferenceService: localeService,
       authService: authService,
       deviceIdService: deviceIdService,
+      firestoreClient: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
     );
 
     // Create the top-level ProviderContainer with the same overrides so that
