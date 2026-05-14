@@ -39,8 +39,22 @@ final class FirebaseAuthClientAdapter implements FirebaseAuthClient {
     await _ensureGoogleInitialized();
     final account = await GoogleSignIn.instance.authenticate();
     final idToken = account.authentication.idToken;
+    if (idToken == null) throw Exception('Google Sign-In returned a null idToken');
     final credential = GoogleAuthProvider.credential(idToken: idToken);
-    await _auth.currentUser!.linkWithCredential(credential);
+    try {
+      await _auth.currentUser!.linkWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'credential-already-in-use') {
+        // This Google account is linked to a different Firebase UID (e.g. from
+        // a previous install). Sign in directly to restore that account.
+        await _auth.signInWithCredential(credential);
+      } else if (e.code == 'provider-already-linked') {
+        // Already linked — nothing to do.
+        return;
+      } else {
+        rethrow;
+      }
+    }
   }
 
   @override

@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.29.2] — 2026-05-14 (PR #80 merged)
+
+### Fixed — Google Sign-In error handling on iOS
+
+- `credential-already-in-use`: Google account was already linked to a prior anonymous Firebase UID (e.g. after reinstall). Now falls back to `signInWithCredential` so the user recovers their existing Google-linked account instead of seeing "Could not sign in"
+- `_TypeError`: `idToken` was null in some cases, causing a Dart cast failure before reaching Firebase. Added an explicit null guard with a descriptive exception
+- `provider-already-linked`: current user already had Google linked — now treated as a success (no-op) instead of an error
+
+---
+
 ## [0.29.1] — 2026-05-14 (PR #79 merged)
 
 ### Fixed — Google Sign-In URL scheme on iOS
