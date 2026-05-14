@@ -10,6 +10,20 @@ Read `CLAUDE.local.md` for the Flutter binary path before running any command.
 
 ---
 
+## Prerequisites — gitignored credential files
+
+These files are not committed and must be present in the working tree before building.
+If running from a git worktree, copy them from the main working directory first:
+
+```bash
+cp <main-project>/lib/firebase_options.dart lib/firebase_options.dart
+cp <main-project>/ios/Runner/GoogleService-Info.plist ios/Runner/GoogleService-Info.plist
+```
+
+If either file is missing and the main project path is unknown, ask the user.
+
+---
+
 ## Steps
 
 ### 1. List connected devices

@@ -57,6 +57,8 @@ final class FirebaseAuthService implements AuthService {
       await _client.linkWithGoogleCredential();
     } on FirebaseAuthException catch (e) {
       throw AuthLinkException(code: e.code);
+    } catch (e) {
+      throw AuthLinkException(code: e.runtimeType.toString());
     }
   }
 
