@@ -194,6 +194,9 @@ class FirestoreSyncService implements SyncService {
     final remoteUpdatedAt = SyncMapper.updatedAtFromDocument(doc);
     if (remoteUpdatedAt == null || !remoteUpdatedAt.isAfter(localSyncedAt)) return; // not newer
 
+    // Re-check existence to guard the TOCTOU window: stopPactTransaction may
+    // have deleted this showup between the check above and now.
+    if (await _showupRepository.getShowupById(id) == null) return;
     final remoteShowup = SyncMapper.showupFromDocument(doc);
     await _showupRepository.updateShowup(remoteShowup);
     await _showupSyncRepository.markShowupSynced(id, now);

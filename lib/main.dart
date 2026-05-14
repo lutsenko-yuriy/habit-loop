@@ -527,16 +527,17 @@ Future<void> main() async {
     // Sign in anonymously after the widget tree is running so a slow network
     // never delays the first frame. On repeat launches the cached Firebase user
     // is available immediately and initialize() returns synchronously.
-    unawaited(authService.initialize());
-
-    // Pull remote changes from Firestore after auth initialises. Runs
-    // fire-and-forget so it never delays the first frame. The sync service gates
-    // this call on the circuit breaker being fully closed and userId being non-null.
-    // On first launch, authService.initialize() is also unawaited and the anonymous
-    // sign-in is a network call, so pullRemoteChanges() will find userId == null and
-    // exit silently — there is nothing to pull for a brand-new account anyway.
-    final syncService = _container?.read(syncServiceProvider);
-    if (syncService != null) unawaited(syncService.pullRemoteChanges());
+    //
+    // Pull remote changes after initialize() completes so userId is guaranteed
+    // non-null when pullRemoteChanges() runs. The then() chain is fire-and-forget
+    // and never blocks the UI. On first-ever install the anonymous sign-in is a
+    // network call; once it resolves the UID is fresh with no remote data, so the
+    // pull is a no-op. On repeat launches initialize() returns synchronously with
+    // the cached user and the pull proceeds immediately.
+    unawaited(authService.initialize().then((_) {
+      final syncService = _container?.read(syncServiceProvider);
+      if (syncService != null) unawaited(syncService.pullRemoteChanges());
+    }));
 
     // Cold-start fallback: if the notification response callback fired during
     // initialize() and already deferred navigation via addPostFrameCallback,
