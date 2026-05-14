@@ -54,11 +54,19 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
   }
 
   Future<void> linkWithGoogle() async {
+    // Capture all provider references before the await — Riverpod forbids
+    // ref.read() after a watched dependency changes (which happens when the
+    // auth state stream emits on successful sign-in).
     final analytics = ref.read(analyticsServiceProvider);
+    final sync = ref.read(syncServiceProvider);
     unawaited(analytics.logEvent(SignInWithGoogleTappedEvent()));
     try {
       await ref.read(authServiceProvider).linkWithGoogle();
       unawaited(analytics.logEvent(SignInWithGoogleSucceededEvent()));
+      // Pull historical data for the newly linked account and upload any dirty
+      // records that accumulated while the user was anonymous / signed out.
+      unawaited(sync.pullRemoteChanges());
+      unawaited(sync.flushDirtyRecords());
     } on AuthLinkException catch (e) {
       unawaited(analytics.logEvent(SignInWithGoogleFailedEvent(errorCode: e.code)));
       rethrow;
