@@ -15,9 +15,9 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
+import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
-import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../../infrastructure/sync/fake_sync_service.dart';
