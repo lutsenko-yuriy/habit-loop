@@ -31,6 +31,8 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
 | skills/design/experiment/SKILL.md | Experiment design: hypothesis, metrics, feature flag, registry entry |
 | skills/build/implement/SKILL.md | TDD implementation and PR |
+| skills/run/android/SKILL.md | Start the app on Android (physical device → running emulator → launch AVD) |
+| skills/run/ios/SKILL.md | Start the app on iOS (physical device → booted Simulator → boot Simulator) |
 | skills/verify/review/SKILL.md | Architectural PR review |
 | skills/verify/audit/SKILL.md | Runtime and migration PR review |
 
