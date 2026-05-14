@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
@@ -33,10 +36,12 @@ class PactService {
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
     required PactStatsService pactStatsService,
+    required SyncService syncService,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _transactionService = transactionService,
-        _pactStatsService = pactStatsService;
+        _pactStatsService = pactStatsService,
+        _syncService = syncService;
 
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
@@ -45,6 +50,8 @@ class PactService {
   /// Reference to [PactStatsService] used exclusively to notify the cache when
   /// [updatePact] persists a completed pact.
   final PactStatsService _pactStatsService;
+
+  final SyncService _syncService;
 
   // ---------------------------------------------------------------------------
   // Atomic creation
@@ -56,6 +63,10 @@ class PactService {
   /// the pact insert and all showup inserts commit together, or nothing does.
   Future<void> createPact(Pact pact, List<Showup> showups) async {
     await _transactionService.savePactWithShowups(pact, showups);
+    unawaited(_syncService.uploadPact(pact));
+    for (final s in showups) {
+      unawaited(_syncService.uploadShowup(s));
+    }
   }
 
   /// Builds a pact from [builder], generates the initial showup window, and
@@ -116,6 +127,7 @@ class PactService {
     if (pact.status == PactStatus.completed) {
       _pactStatsService.onPactCompleted(pact.id);
     }
+    unawaited(_syncService.uploadPact(pact));
   }
 
   /// Deletes the pact with [id]. No-op if the pact does not exist.

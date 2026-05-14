@@ -5,10 +5,13 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+
+import '../../../infrastructure/sync/fake_sync_service.dart';
 
 /// Wraps [InMemoryShowupRepository] and counts calls to [getShowupsForPact].
 class _CountingShowupRepository extends InMemoryShowupRepository {
@@ -42,6 +45,8 @@ final _pendingShowup = Showup(
 );
 
 void main() {
+  _syncHookTests();
+
   group('PactStatsService.currentStats — lazy cache-on-miss', () {
     test('first call with empty showups loads from DB and populates cache', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
@@ -50,6 +55,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
 
       // First call with empty showups — no cached entry yet → should hit DB.
@@ -66,6 +72,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
 
       // Warm the cache via the first call.
@@ -86,6 +93,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
 
       // First call loads 1 pending showup from DB.
@@ -104,6 +112,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
 
       // Passing showups directly always computes fresh — no DB needed.
@@ -120,6 +129,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
 
       // Warm the cache.
@@ -144,6 +154,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
 
       final updatedShowup = await service.persistShowupStatus(
@@ -170,6 +181,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
 
       final updatedShowup = await service.persistShowupStatus(
@@ -190,4 +202,63 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
 
   @override
   Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
+}
+
+// ---------------------------------------------------------------------------
+// Sync hook tests
+// ---------------------------------------------------------------------------
+
+void _syncHookTests() {
+  group('PactStatsService — sync hooks', () {
+    test('uploadPact called after persistStats', () async {
+      final fake = FakeSyncService();
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: fake,
+      );
+
+      await service.persistStats(pact: _pact, showups: [_pendingShowup]);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fake.uploadedPactIds, contains(_pact.id));
+    });
+
+    test('uploadShowup called after persistShowupStatus', () async {
+      final fake = FakeSyncService();
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: fake,
+      );
+
+      await service.persistShowupStatus(showup: _pendingShowup, status: ShowupStatus.done);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fake.uploadedShowupIds, contains(_pendingShowup.id));
+    });
+
+    test('uploadPact called after stopPact', () async {
+      final fake = FakeSyncService();
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: fake,
+      );
+
+      await service.stopPact(pact: _pact, pactId: _pact.id, now: DateTime(2026, 5, 1));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fake.uploadedPactIds, contains(_pact.id));
+    });
+  });
 }

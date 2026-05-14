@@ -37,7 +37,10 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_service.dart';
+import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
+import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
+import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
@@ -235,6 +238,7 @@ final pactServiceProvider = Provider<PactService>((ref) {
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
     pactStatsService: ref.watch(pactStatsServiceProvider),
+    syncService: ref.watch(syncServiceProvider),
   );
 });
 
@@ -248,6 +252,7 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
+    syncService: ref.watch(syncServiceProvider),
   );
 });
 
@@ -292,3 +297,21 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
 final syncCircuitBreakerProvider = StateNotifierProvider<SyncCircuitBreaker, SyncCircuitBreakerState>(
   (ref) => SyncCircuitBreaker(),
 );
+
+/// Provides the [SyncService] implementation.
+///
+/// Defaults to [NoopSyncService] when [firestoreClientProvider] resolves to
+/// [NoopFirestoreClient] (i.e. in tests), but composes the real
+/// [FirestoreSyncService] when all dependencies are wired.
+///
+/// No [AppContainer.overrides] entry is needed — this provider is fully
+/// self-composing from already-declared providers.
+final syncServiceProvider = Provider<SyncService>((ref) {
+  return FirestoreSyncService(
+    firestoreClient: ref.watch(firestoreClientProvider),
+    authService: ref.watch(authServiceProvider),
+    circuitBreaker: ref.watch(syncCircuitBreakerProvider.notifier),
+    pactSyncRepository: ref.watch(pactSyncRepositoryProvider),
+    showupSyncRepository: ref.watch(showupSyncRepositoryProvider),
+  );
+});

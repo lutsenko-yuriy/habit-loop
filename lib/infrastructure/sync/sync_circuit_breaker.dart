@@ -41,6 +41,10 @@ class SyncCircuitBreaker extends StateNotifier<SyncCircuitBreakerState> {
   /// [SyncCircuitBreakerState.halfOpen] allow requests.
   bool get canRequest => state != SyncCircuitBreakerState.open;
 
+  /// The current circuit breaker state, exposed for external callers that need
+  /// to read the state without subclassing [StateNotifier].
+  SyncCircuitBreakerState get currentState => state;
+
   /// Records a successful Firestore operation.
   ///
   /// - [halfOpen] → [closed]: the service is healthy again, counter reset.

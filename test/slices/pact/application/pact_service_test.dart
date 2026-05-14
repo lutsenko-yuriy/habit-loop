@@ -15,9 +15,12 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
+import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import '../../../infrastructure/sync/fake_sync_service.dart';
 
 // ---------------------------------------------------------------------------
 // Helper fixtures
@@ -74,11 +77,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
     });
@@ -103,11 +108,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: failingShowupRepo,
         transactionService: failTxService,
+        syncService: const NoopSyncService(),
       );
       final failService = PactService(
         pactRepository: pactRepo,
         showupRepository: failingShowupRepo,
         transactionService: failTxService,
+        syncService: const NoopSyncService(),
         pactStatsService: failStatsService,
       );
 
@@ -185,11 +192,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
       final serviceWithStats = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
 
@@ -219,11 +228,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
       final serviceWithStats = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
 
@@ -240,11 +251,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
       );
       final serviceWithStats = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
 
@@ -282,11 +295,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
     });
@@ -348,6 +363,66 @@ void main() {
       expect(pacts, hasLength(1));
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Sync hook tests
+  // ---------------------------------------------------------------------------
+
+  group('sync hooks', () {
+    test('uploadPact and uploadShowup called after createPact', () async {
+      final fake = FakeSyncService();
+      final pactRepo = InMemoryPactRepository();
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+      );
+      final svc = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
+        syncService: fake,
+      );
+
+      await svc.createPact(_pact, _showups);
+      // Let unawaited futures settle.
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fake.uploadedPactIds, contains(_pact.id));
+      expect(fake.uploadedShowupIds, containsAll(_showups.map((s) => s.id)));
+    });
+
+    test('uploadPact called after updatePact', () async {
+      final fake = FakeSyncService();
+      final pactRepo = InMemoryPactRepository();
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+      );
+      final svc = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactStatsService: statsService,
+        syncService: fake,
+      );
+
+      await pactRepo.savePact(_pact);
+      final updated = _pact.copyWith(habitName: 'Jog');
+      await svc.updatePact(updated);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fake.uploadedPactIds, contains(_pact.id));
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -372,6 +447,7 @@ class _TrackingPactStatsService extends PactStatsService {
     required super.pactRepository,
     required super.showupRepository,
     required super.transactionService,
+    super.syncService = const NoopSyncService(),
   });
 
   int onPactCompletedCallCount = 0;

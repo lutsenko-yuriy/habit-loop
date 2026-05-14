@@ -4,6 +4,7 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
@@ -38,11 +39,13 @@ void main() {
       pactRepository: pactRepo,
       showupRepository: showupRepo,
       transactionService: txService,
+      syncService: const NoopSyncService(),
     );
     final service = PactService(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
       transactionService: txService,
+      syncService: const NoopSyncService(),
       pactStatsService: statsService,
     );
     return ProviderContainer(

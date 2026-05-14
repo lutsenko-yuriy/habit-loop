@@ -7,6 +7,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
@@ -80,6 +81,7 @@ ProviderContainer _makeContainer({
       pactRepositoryProvider.overrideWithValue(pactRepo),
       showupRepositoryProvider.overrideWithValue(showupRepo),
       pactTransactionServiceProvider.overrideWithValue(txService),
+      syncServiceProvider.overrideWithValue(const NoopSyncService()),
       if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
     ],
   );
@@ -226,6 +228,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -254,6 +257,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -282,6 +286,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -305,6 +310,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -339,6 +345,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -360,6 +367,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -383,6 +391,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -403,6 +412,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -461,6 +471,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
       ]);
       addTearDown(container.dispose);
 
@@ -492,6 +503,7 @@ void main() {
           pactRepositoryProvider.overrideWithValue(pactRepo),
           showupRepositoryProvider.overrideWithValue(showupRepo),
           pactTransactionServiceProvider.overrideWithValue(txService),
+          syncServiceProvider.overrideWithValue(const NoopSyncService()),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
           if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
         ],
@@ -597,6 +609,7 @@ void main() {
           pactRepositoryProvider.overrideWithValue(pactRepo),
           showupRepositoryProvider.overrideWithValue(showupRepo),
           pactTransactionServiceProvider.overrideWithValue(txService),
+          syncServiceProvider.overrideWithValue(const NoopSyncService()),
           notificationServiceProvider.overrideWithValue(fakeNotifications),
         ],
       );
