@@ -14,6 +14,7 @@ import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
@@ -68,11 +69,13 @@ ProviderContainer _makeContainer({
     pactRepository: pactRepo,
     showupRepository: showupRepo,
     transactionService: txService,
+    syncService: const NoopSyncService(),
   );
   final service = PactService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
     transactionService: txService,
+    syncService: const NoopSyncService(),
     pactStatsService: statsService,
   );
   return ProviderContainer(
@@ -137,11 +140,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
@@ -167,11 +172,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
@@ -216,11 +223,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
@@ -250,11 +259,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
@@ -278,11 +289,13 @@ void main() {
         pactRepository: reloadedPactRepo,
         showupRepository: reloadedShowupRepo,
         transactionService: reloadedTxService,
+        syncService: const NoopSyncService(),
       );
       final reloadedService = PactService(
         pactRepository: reloadedPactRepo,
         showupRepository: reloadedShowupRepo,
         transactionService: reloadedTxService,
+        syncService: const NoopSyncService(),
         pactStatsService: reloadedStatsService,
       );
       final reloadedContainer = ProviderContainer(overrides: [
@@ -341,11 +354,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
@@ -395,11 +410,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
       // Inject a "now" that is one day past the end date.
@@ -448,11 +465,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
       final container = ProviderContainer(overrides: [
@@ -567,11 +586,13 @@ void main() {
         pactRepository: throwingPactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final throwingService = PactService(
         pactRepository: throwingPactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: throwingStatsService,
       );
       final failContainer = ProviderContainer(
@@ -602,11 +623,13 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         pactStatsService: statsService,
       );
       final c = ProviderContainer(overrides: [

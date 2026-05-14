@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
@@ -6,6 +8,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 /// Owns pact stats calculation and persistence across pact/showup mutations.
@@ -39,6 +42,7 @@ class PactStatsService {
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
   final PactTransactionService _transactionService;
+  final SyncService _syncService;
 
   /// Runtime-only stats cache; never persisted.
   final Map<String, PactStats> _statsCache = {};
@@ -47,9 +51,11 @@ class PactStatsService {
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
+    required SyncService syncService,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
-        _transactionService = transactionService;
+        _transactionService = transactionService,
+        _syncService = syncService;
 
   /// Returns all showups for the given pact from the showup repository.
   ///
@@ -125,6 +131,7 @@ class PactStatsService {
     await _pactRepository.updatePact(updatedPact);
     // Populate cache with the freshly persisted stats.
     _statsCache[pact.id] = stats;
+    unawaited(_syncService.uploadPact(updatedPact));
     return updatedPact;
   }
 
@@ -161,6 +168,7 @@ class PactStatsService {
   }) async {
     final updatedShowup = showup.copyWith(status: status);
     await _showupRepository.updateShowup(updatedShowup);
+    unawaited(_syncService.uploadShowup(updatedShowup));
     // Evict the stale cache entry *before* the write-through attempt so that
     // any read racing between the eviction and the repopulation falls back to
     // the DB rather than seeing outdated data.
@@ -202,6 +210,8 @@ class PactStatsService {
       updatedPact: updated,
       pactId: pactId,
     );
+
+    unawaited(_syncService.uploadPact(updated));
 
     // Evict-only: showups are deleted by the transaction, so there is nothing
     // valid to cache.  The next read will use the frozen pact.stats snapshot.

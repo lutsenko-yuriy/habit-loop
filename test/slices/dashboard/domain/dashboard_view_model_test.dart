@@ -11,6 +11,7 @@ import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
+import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
@@ -38,6 +39,7 @@ class _PartiallyFailingStatsService extends PactStatsService {
     required super.pactRepository,
     required super.showupRepository,
     required super.transactionService,
+    super.syncService = const NoopSyncService(),
     required this.errorOnShowupIds,
   });
 
@@ -553,6 +555,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
 
       final container = ProviderContainer(
@@ -602,6 +605,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
       );
 
       final container = ProviderContainer(
@@ -949,6 +953,7 @@ void main() {
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
+        syncService: const NoopSyncService(),
         errorOnShowupIds: {'s-fail'},
       );
 

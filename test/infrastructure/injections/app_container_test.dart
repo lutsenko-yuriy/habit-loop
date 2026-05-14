@@ -360,6 +360,18 @@ void main() {
       expect(() => container.read(syncCircuitBreakerProvider), returnsNormally);
     });
 
+    test('syncServiceProvider resolves without throwing', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(syncServiceProvider), returnsNormally);
+    });
+
     test('override count grows by 2 when both authService and deviceIdService are provided', () async {
       final baseOverrides = await AppContainer.overrides(
         pactRepository: pactRepo,

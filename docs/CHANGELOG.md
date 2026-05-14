@@ -4,6 +4,23 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.27.0] — 2026-05-14
+
+### Added — Write-through sync service (HAB-62, WU4 of HAB-53)
+
+- `SyncService` abstract interface (`lib/infrastructure/sync/sync_service.dart`) with no-throw contract: `uploadPact(Pact)`, `uploadShowup(Showup)`, `flushDirtyRecords()`, `triggerManualSync()`; every implementation must swallow exceptions so sync failures can never block the local write path
+- `NoopSyncService` — `const` no-op default wired as `syncServiceProvider`
+- `SyncMapper` — `abstract final` class with `static pactToDocument()` and `showupToDocument()` helpers; maps domain models to Firestore-ready `Map<String, dynamic>`; excludes SQLite-only columns (`dirty`, `synced_at`, `total_showups`); encodes `PactStatus` and `ShowupStatus` to strings
+- `FirestoreSyncService` — production `SyncService` implementation; checks `canRequest` before each Firestore call; calls `markPactSynced`/`markShowupSynced` on success; calls `recordSuccess`/`recordFailure` on the circuit breaker; fires `unawaited(flushDirtyRecords())` when the CB transitions halfOpen→closed to drain records accumulated during the outage; skips all uploads when `userId` is null (signed-out); `flushDirtyRecords()` caps a single pass at 400 items and stops early if the CB goes open mid-flush
+- `syncServiceProvider` (`Provider<SyncService>`) declared in `app_providers.dart`; self-composing from existing providers (`firestoreClientProvider`, `authServiceProvider`, `syncCircuitBreakerProvider`, `pactSyncRepositoryProvider`, `showupSyncRepositoryProvider`); no `AppContainer.overrides` change required
+- `SyncCircuitBreaker` gains a public `currentState` getter so external callers can read state without subclassing `StateNotifier`
+- `PactService.createPact` and `updatePact` fire `unawaited(_syncService.uploadPact/uploadShowup)` after every successful local write
+- `PactStatsService.persistStats`, `persistShowupStatus`, and `stopPact` fire `unawaited(_syncService.uploadPact/uploadShowup)` after every successful local write
+- `FakeSyncService` test double in `test/infrastructure/sync/` records `uploadedPactIds`, `uploadedShowupIds`, `flushCount`, and `triggerManualSyncCount`
+- 33 new tests: 9 `sync_mapper_test`, 4 `noop_sync_service_test`, 14 `firestore_sync_service_test`, 2 `pact_service_test` sync-hook tests, 3 `pact_stats_service_test` sync-hook tests, 1 `app_container_test` smoke test; 970 tests passing, analyzer clean
+
+---
+
 ## [0.26.0] — 2026-05-13 (PR #75 merged)
 
 ### Added — Circuit breaker sync service (HAB-61, WU3 of HAB-53)
