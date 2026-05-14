@@ -112,15 +112,15 @@ List<SyncDialogAction> _buildActions(
 ) {
   return switch (state) {
     SyncUiState.notLinked => [
-        SyncDialogAction(label: l10n.signInWithGoogle, onPressed: vm.linkWithGoogle),
+        SyncDialogAction(label: l10n.signInWithGoogle, onPressed: () => unawaited(vm.linkWithGoogle())),
         SyncDialogAction(label: l10n.notNow, onPressed: () {}),
       ],
     SyncUiState.suspended || SyncUiState.degraded => [
-        SyncDialogAction(label: l10n.syncNow, onPressed: vm.triggerManualSync),
+        SyncDialogAction(label: l10n.syncNow, onPressed: () => unawaited(vm.triggerManualSync())),
         SyncDialogAction(label: l10n.notNow, onPressed: () {}),
       ],
     SyncUiState.synced => [
-        SyncDialogAction(label: l10n.signOut, isDestructive: true, onPressed: vm.signOut),
+        SyncDialogAction(label: l10n.signOut, isDestructive: true, onPressed: () => unawaited(vm.signOut())),
         SyncDialogAction(label: l10n.notNow, onPressed: () {}),
       ],
     SyncUiState.noInternet || SyncUiState.connecting => [

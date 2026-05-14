@@ -1,8 +1,8 @@
 import 'dart:async' show unawaited;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/slices/dashboard/analytics/sync_analytics_events.dart';
@@ -54,7 +54,7 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
     try {
       await ref.read(authServiceProvider).linkWithGoogle();
       unawaited(analytics.logEvent(SignInWithGoogleSucceededEvent()));
-    } on FirebaseAuthException catch (e) {
+    } on AuthLinkException catch (e) {
       unawaited(analytics.logEvent(SignInWithGoogleFailedEvent(errorCode: e.code)));
     }
   }

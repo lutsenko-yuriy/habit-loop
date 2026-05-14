@@ -296,8 +296,9 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
 /// Defaults to `[ConnectivityResult.wifi]` while loading so the UI optimistically
 /// assumes connectivity rather than flashing a "no internet" state on startup.
 final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) async* {
-  yield await Connectivity().checkConnectivity();
-  yield* Connectivity().onConnectivityChanged;
+  final connectivity = Connectivity();
+  yield await connectivity.checkConnectivity();
+  yield* connectivity.onConnectivityChanged;
 });
 
 // ---------------------------------------------------------------------------

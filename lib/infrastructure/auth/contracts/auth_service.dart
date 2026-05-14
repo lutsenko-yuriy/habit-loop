@@ -1,3 +1,4 @@
+import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_state.dart';
 
 /// Abstract interface for Firebase Auth operations.
@@ -27,8 +28,8 @@ abstract interface class AuthService {
   /// Links the current anonymous account to a Google credential.
   ///
   /// On success the UID stays the same and [isAnonymous] becomes `false`.
-  /// Throws [FirebaseAuthException] with code `credential-already-in-use` if
-  /// the Google account is already linked to a different Firebase user.
+  /// Throws [AuthLinkException] if the Google account is already linked to a
+  /// different Firebase user (e.g. code `account-exists-with-different-credential`).
   Future<void> linkWithGoogle();
 
   /// Signs out the current user. Never throws.

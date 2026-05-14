@@ -355,9 +355,9 @@ Future<void> _showMaterialSyncDialog(
   String message,
   List<SyncDialogAction> actions,
 ) async {
+  // ignore: use_build_context_synchronously — caller guards context.mounted before this call
   await showDialog<void>(
     context: context,
-    // ignore: use_build_context_synchronously — caller guards context.mounted before this call
     builder: (ctx) => AlertDialog(
       title: Text(title),
       content: Text(message),

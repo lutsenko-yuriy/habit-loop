@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
+import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_state.dart';
 
@@ -50,7 +52,13 @@ final class FirebaseAuthService implements AuthService {
   Stream<AuthState> get authStateChanges => _client.authStateChanges;
 
   @override
-  Future<void> linkWithGoogle() => _client.linkWithGoogleCredential();
+  Future<void> linkWithGoogle() async {
+    try {
+      await _client.linkWithGoogleCredential();
+    } on FirebaseAuthException catch (e) {
+      throw AuthLinkException(code: e.code);
+    }
+  }
 
   @override
   Future<void> signOut() async {

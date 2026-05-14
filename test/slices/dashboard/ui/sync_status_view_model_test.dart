@@ -1,7 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_state.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -59,7 +59,7 @@ class _ThrowingAuthService extends FakeAuthService {
 
   @override
   Future<void> linkWithGoogle() async {
-    throw FirebaseAuthException(code: 'account-exists-with-different-credential');
+    throw const AuthLinkException(code: 'account-exists-with-different-credential');
   }
 }
 
@@ -149,6 +149,17 @@ void main() {
       await settling;
 
       expect(container.read(syncStatusViewModelProvider), SyncUiState.noInternet);
+    });
+
+    test('connecting when auth is still loading', () async {
+      final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
+      final container = _makeContainer(authService: auth);
+      addTearDown(container.dispose);
+      // Settle connectivity only — do NOT emit auth state so it stays AsyncLoading.
+      await container.read(connectivityProvider.future);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(syncStatusViewModelProvider), SyncUiState.connecting);
     });
 
     test('noInternet takes priority over suspended', () async {
