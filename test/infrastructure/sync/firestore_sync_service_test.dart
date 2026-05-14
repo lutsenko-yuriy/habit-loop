@@ -450,6 +450,19 @@ void main() {
       expect(await pactRepo.getAllPacts(), isEmpty);
     });
 
+    test('skips pull when CB is halfOpen', () async {
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
+      final cb = SyncCircuitBreaker()..recordFailure(); // closed → halfOpen
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
+
+      final pactRepo = InMemoryPactRepository();
+      final svc = _makeService(client: client, cb: cb, pactRepository: pactRepo);
+
+      await svc.pullRemoteChanges();
+
+      expect(await pactRepo.getAllPacts(), isEmpty);
+    });
+
     test('skips pull when userId is null', () async {
       final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
       final pactRepo = InMemoryPactRepository();

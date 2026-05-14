@@ -531,7 +531,10 @@ Future<void> main() async {
 
     // Pull remote changes from Firestore after auth initialises. Runs
     // fire-and-forget so it never delays the first frame. The sync service gates
-    // this call on the circuit breaker being closed and userId being non-null.
+    // this call on the circuit breaker being fully closed and userId being non-null.
+    // On first launch, authService.initialize() is also unawaited and the anonymous
+    // sign-in is a network call, so pullRemoteChanges() will find userId == null and
+    // exit silently — there is nothing to pull for a brand-new account anyway.
     final syncService = _container?.read(syncServiceProvider);
     if (syncService != null) unawaited(syncService.pullRemoteChanges());
 
