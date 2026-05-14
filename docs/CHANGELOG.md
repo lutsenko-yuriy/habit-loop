@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.30.2] — 2026-05-15 (PR #84 merged)
+
+### Fixed — Google sign-in: re-login after sign-out and missing historical data (HAB-67)
+
+- Re-login after sign-out no longer fails with `_TypeError`: `FirebaseAuthClientAdapter.linkWithGoogleCredential()` now checks for a null `currentUser` and falls back to `signInWithCredential` directly (the same recovery path already used for `credential-already-in-use`)
+- Historical pacts and showups now appear after signing in with Google: `SyncStatusViewModel.linkWithGoogle()` fires `pullRemoteChanges()` and `flushDirtyRecords()` after a successful sign-in so the user's Firestore data is hydrated immediately; provider refs captured before the `await` to comply with Riverpod's post-dependency-change ref guard
+
+---
+
 ## [0.30.1] — 2026-05-15 (PR #83 merged)
 
 ### Changed — CI: cache CocoaPods to fix slow iOS build
