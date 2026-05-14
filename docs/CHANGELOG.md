@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.30.0] — 2026-05-14 (PR #82 merged)
+
+### Added — End-to-end Firestore sync (HAB-66, WU7 of HAB-53)
+
+- `FirebaseFirestoreClientAdapter` implemented in `lib/infrastructure/firestore/data/` — wraps `FirebaseFirestore.instance`; no-throw contract on all 6 methods (`getPacts`, `getShowups`, `upsertPact`, `upsertShowup`, `deletePact`, `deleteShowup`); flat `/users/{uid}/pacts/{id}` and `/users/{uid}/showups/{id}` document paths; no SDK types leak through the `FirestoreClient` interface
+- Wired in `main.dart` via `AppContainer.overrides(firestoreClient: ...)` — active in all build modes
+- `cloud_firestore: ^6.0.0` added as a production dependency
+- Pacts and showups now actually sync to Firestore on every local write; `pullRemoteChanges()` on app start hydrates a fresh install from the remote
+- 1039 tests passing, analyzer clean
+
+---
+
 ## [0.29.3] — 2026-05-14 (PR #81 merged)
 
 ### Fixed — Android signing and Google Sign-In OAuth (HAB-65)
