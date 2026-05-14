@@ -12,6 +12,7 @@ library;
 
 import 'dart:io' show Platform;
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
@@ -280,6 +281,23 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
     localePreference: ref.watch(localePreferenceServiceProvider),
     isIOS: Platform.isIOS,
   );
+});
+
+// ---------------------------------------------------------------------------
+// Connectivity provider
+// ---------------------------------------------------------------------------
+
+/// Stream of [ConnectivityResult] lists from `connectivity_plus`.
+///
+/// Emits the current connectivity status immediately on first listen, then
+/// re-emits whenever the device's network state changes. Used by
+/// [SyncStatusViewModel] to derive the [SyncUiState.noInternet] state.
+///
+/// Defaults to `[ConnectivityResult.wifi]` while loading so the UI optimistically
+/// assumes connectivity rather than flashing a "no internet" state on startup.
+final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) async* {
+  yield await Connectivity().checkConnectivity();
+  yield* Connectivity().onConnectivityChanged;
 });
 
 // ---------------------------------------------------------------------------

@@ -2,7 +2,7 @@ name: habit_loop
 description: "Habit Loop — build habits through pacts and showups."
 publish_to: 'none'
 
-version: 0.28.0+56
+version: 0.29.0+56
 
 environment:
   sdk: ^3.6.0
@@ -30,6 +30,7 @@ dependencies:
   package_info_plus: ^10.1.0
   uuid: ^4.5.3
   google_sign_in: ^7.2.0
+  connectivity_plus: ^6.1.4
 
 dev_dependencies:
   flutter_test:

@@ -209,5 +209,27 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "syncStatusTitle": "Sync status",
+  "@syncStatusTitle": {},
+  "syncStatusSynced": "Up to date",
+  "@syncStatusSynced": {},
+  "syncStatusDegraded": "Sync degraded — last attempt failed",
+  "@syncStatusDegraded": {},
+  "syncStatusSuspended": "Sync paused — tap to retry",
+  "@syncStatusSuspended": {},
+  "syncStatusNoInternet": "No internet connection",
+  "@syncStatusNoInternet": {},
+  "syncStatusConnecting": "Connecting…",
+  "@syncStatusConnecting": {},
+  "syncStatusNotLinked": "Data is local only. Sign in with Google to back up and sync across devices.",
+  "@syncStatusNotLinked": {},
+  "syncNow": "Sync now",
+  "@syncNow": {},
+  "signInWithGoogle": "Sign in with Google",
+  "@signInWithGoogle": {},
+  "signOut": "Sign out",
+  "@signOut": {},
+  "notNow": "Not now",
+  "@notNow": {}
 }

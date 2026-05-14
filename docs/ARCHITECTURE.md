@@ -103,8 +103,8 @@ lib/
 │       └── firestore_sync_service.dart  # FirestoreSyncService implements SyncService; checks CB via canRequest; calls markPactSynced/markShowupSynced on success; fires flushDirtyRecords() when CB transitions halfOpen→closed; skips uploads when userId is null; pullRemoteChanges() fetches all remote docs and merges via last-writer-wins (remote updated_at vs local synced_at)
 └── slices/
     ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel
-    │   ├── analytics/                 # DashboardAnalyticsScreen, LanguagePickerAnalyticsScreen, LanguageChangeRequestedEvent, LanguageChangedEvent
-    │   └── ui/ (generic/ — includes language_picker_handler.dart with shared applyLanguageSelection orchestration, ios/, android/)
+    │   ├── analytics/                 # DashboardAnalyticsScreen, LanguagePickerAnalyticsScreen, LanguageChangeRequestedEvent, LanguageChangedEvent; SyncStatusOpenedEvent, ManualSyncTriggeredEvent, SignInWithGoogleTappedEvent, SignInWithGoogleSucceededEvent, SignInWithGoogleFailedEvent, SignOutTappedEvent
+    │   └── ui/ (generic/ — includes language_picker_handler.dart with shared applyLanguageSelection orchestration; sync_ui_state.dart (SyncUiState enum); sync_status_view_model.dart (SyncStatusViewModel AutoDisposeNotifier, syncStatusViewModelProvider); sync_status_handler.dart (syncStatusIconData, syncStatusIconColor, openSyncStatusDialog, SyncDialogAction), ios/, android/)
     ├── pact/                          # Pact creation wizard + pact detail screen
     │   ├── application/               # PactBuilder, PactCreationState, PactStatsService, PactTransactionService
     │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production, implements PactRepository + PactSyncRepository), NoopPactSyncRepository (default provider)
