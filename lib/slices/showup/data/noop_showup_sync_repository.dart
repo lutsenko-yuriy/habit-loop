@@ -13,4 +13,7 @@ class NoopShowupSyncRepository implements ShowupSyncRepository {
 
   @override
   Future<void> markShowupSynced(String showupId, DateTime syncedAt) async {}
+
+  @override
+  Future<DateTime?> getShowupSyncedAt(String showupId) async => null;
 }

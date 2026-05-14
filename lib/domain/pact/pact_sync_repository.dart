@@ -12,4 +12,10 @@ abstract class PactSyncRepository {
   /// Marks [pactId] as successfully synced: sets `dirty=0` and
   /// `synced_at` to [syncedAt] in the local database.
   Future<void> markPactSynced(String pactId, DateTime syncedAt);
+
+  /// Returns the `synced_at` timestamp for [pactId], or `null` if the pact
+  /// has local unsync'd changes (`dirty=1`) or has never been synced.
+  ///
+  /// Used by the pull-on-start sync (WU5) to compare remote vs local timestamps.
+  Future<DateTime?> getPactSyncedAt(String pactId);
 }

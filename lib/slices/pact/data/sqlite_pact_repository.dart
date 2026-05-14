@@ -107,6 +107,22 @@ class SqlitePactRepository implements PactRepository, PactSyncRepository {
     );
   }
 
+  @override
+  Future<DateTime?> getPactSyncedAt(String pactId) async {
+    final rows = await _db.query(
+      _table,
+      columns: ['dirty', 'synced_at'],
+      where: 'id = ?',
+      whereArgs: [pactId],
+    );
+    if (rows.isEmpty) return null;
+    final row = rows.first;
+    if ((row['dirty'] as int) == 1) return null; // dirty → unsync'd local changes
+    final ms = row['synced_at'];
+    if (ms == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch((ms as int));
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------

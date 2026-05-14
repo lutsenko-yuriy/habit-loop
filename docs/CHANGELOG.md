@@ -4,6 +4,25 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.28.0] — 2026-05-14 (PR #77 merged)
+
+### Added — Pull-on-start sync (HAB-63, WU5 of HAB-53)
+
+- `SyncService.pullRemoteChanges()` abstract method added with full no-throw contract and last-writer-wins merge rules documented
+- `NoopSyncService.pullRemoteChanges()` no-op implementation
+- `FirestoreSyncService.pullRemoteChanges()`: fetches all remote pacts and showups for the current user; merges into local SQLite using last-writer-wins — not-in-local → insert + mark synced; local dirty → keep local; remote `updated_at` > local `synced_at` → overwrite + mark synced; otherwise keep local; gated on CB being fully `closed`; calls `recordFailure()` on any network error; individual record errors isolated (one bad doc never blocks the rest)
+- `PactSyncRepository.getPactSyncedAt(String pactId) → Future<DateTime?>` added to interface and implementations: returns `null` when dirty (unsync'd local changes) or record not found, `synced_at` otherwise
+- `ShowupSyncRepository.getShowupSyncedAt(String showupId) → Future<DateTime?>` — mirrors `getPactSyncedAt`
+- `SqlitePactRepository` and `SqliteShowupRepository` implement both new methods via a single `SELECT dirty, synced_at` query
+- `NoopPactSyncRepository` and `NoopShowupSyncRepository` return `null`
+- `SyncMapper` extended with `pactFromDocument()`, `showupFromDocument()`, `updatedAtFromDocument()` decoders; `pactToDocument()` and `showupToDocument()` gain optional `updatedAt` param (defaults to `DateTime.now()`)
+- `FirestoreSyncService` constructor gains `pactRepository` and `showupRepository` required params; `syncServiceProvider` in `app_providers.dart` wires them in from existing providers
+- `pullRemoteChanges()` called fire-and-forget from `main.dart` after `authService.initialize()`
+- `FakeSyncService` gains `pullRemoteChangesCount` counter and `pullRemoteChanges()` increment method
+- 20 new tests: 4 `getPactSyncedAt` SQLite tests, 4 `getShowupSyncedAt` SQLite tests, 1 `pullRemoteChanges` noop test, 11 `FirestoreSyncService.pullRemoteChanges` tests; 1005 tests passing, analyzer clean (3 pre-existing errors from gitignored `firebase_options.dart`)
+
+---
+
 ## [0.27.0] — 2026-05-14 (PR #76 merged)
 
 ### Added — Write-through sync service (HAB-62, WU4 of HAB-53)

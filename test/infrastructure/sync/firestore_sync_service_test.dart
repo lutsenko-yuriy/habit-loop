@@ -1,14 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
+import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../infrastructure/auth/fake_auth_service.dart';
 
@@ -20,12 +25,18 @@ class _FakeFirestoreClient implements FirestoreClient {
   final List<Map<String, dynamic>> upsertedPacts = [];
   final List<Map<String, dynamic>> upsertedShowups = [];
   bool throwOnNext = false;
+  bool throwOnGetPacts = false;
+  List<Map<String, dynamic>> remotePactDocs = [];
+  List<Map<String, dynamic>> remoteShowupDocs = [];
 
   @override
-  Future<List<Map<String, dynamic>>> getPacts(String userId) async => [];
+  Future<List<Map<String, dynamic>>> getPacts(String userId) async {
+    if (throwOnGetPacts) throw Exception('network error');
+    return remotePactDocs;
+  }
 
   @override
-  Future<List<Map<String, dynamic>>> getShowups(String userId) async => [];
+  Future<List<Map<String, dynamic>>> getShowups(String userId) async => remoteShowupDocs;
 
   @override
   Future<void> upsertPact(String userId, String pactId, Map<String, dynamic> data) async {
@@ -76,8 +87,9 @@ class _ThrowingFirestoreClient implements FirestoreClient {
 class _InMemoryPactSyncRepo implements PactSyncRepository {
   final List<Pact> dirty;
   final List<String> synced = [];
+  final Map<String, DateTime> syncedAts;
 
-  _InMemoryPactSyncRepo(this.dirty);
+  _InMemoryPactSyncRepo(this.dirty, {Map<String, DateTime>? syncedAts}) : syncedAts = Map.of(syncedAts ?? {});
 
   @override
   Future<List<Pact>> getDirtyPacts() async => List.from(dirty);
@@ -86,14 +98,22 @@ class _InMemoryPactSyncRepo implements PactSyncRepository {
   Future<void> markPactSynced(String pactId, DateTime syncedAt) async {
     synced.add(pactId);
     dirty.removeWhere((p) => p.id == pactId);
+    syncedAts[pactId] = syncedAt;
+  }
+
+  @override
+  Future<DateTime?> getPactSyncedAt(String pactId) async {
+    if (dirty.any((p) => p.id == pactId)) return null;
+    return syncedAts[pactId];
   }
 }
 
 class _InMemoryShowupSyncRepo implements ShowupSyncRepository {
   final List<Showup> dirty;
   final List<String> synced = [];
+  final Map<String, DateTime> syncedAts;
 
-  _InMemoryShowupSyncRepo(this.dirty);
+  _InMemoryShowupSyncRepo(this.dirty, {Map<String, DateTime>? syncedAts}) : syncedAts = Map.of(syncedAts ?? {});
 
   @override
   Future<List<Showup>> getDirtyShowups() async => List.from(dirty);
@@ -102,6 +122,13 @@ class _InMemoryShowupSyncRepo implements ShowupSyncRepository {
   Future<void> markShowupSynced(String showupId, DateTime syncedAt) async {
     synced.add(showupId);
     dirty.removeWhere((s) => s.id == showupId);
+    syncedAts[showupId] = syncedAt;
+  }
+
+  @override
+  Future<DateTime?> getShowupSyncedAt(String showupId) async {
+    if (dirty.any((s) => s.id == showupId)) return null;
+    return syncedAts[showupId];
   }
 }
 
@@ -127,19 +154,31 @@ Showup _showup(String id) => Showup(
       status: ShowupStatus.pending,
     );
 
+Map<String, dynamic> _remotePactDoc(String id, {DateTime? updatedAt}) =>
+    SyncMapper.pactToDocument(_pact(id), updatedAt: updatedAt);
+
+Map<String, dynamic> _remoteShowupDoc(String id, {DateTime? updatedAt}) =>
+    SyncMapper.showupToDocument(_showup(id), updatedAt: updatedAt);
+
 FirestoreSyncService _makeService({
   _FakeFirestoreClient? client,
   FakeAuthService? auth,
   SyncCircuitBreaker? cb,
   List<Pact>? dirtyPacts,
   List<Showup>? dirtyShowups,
+  Map<String, DateTime>? pactSyncedAts,
+  Map<String, DateTime>? showupSyncedAts,
+  PactRepository? pactRepository,
+  ShowupRepository? showupRepository,
 }) {
   return FirestoreSyncService(
     firestoreClient: client ?? _FakeFirestoreClient(),
     authService: auth ?? FakeAuthService(userId: 'user-1'),
     circuitBreaker: cb ?? SyncCircuitBreaker(),
-    pactSyncRepository: _InMemoryPactSyncRepo(dirtyPacts ?? []),
-    showupSyncRepository: _InMemoryShowupSyncRepo(dirtyShowups ?? []),
+    pactSyncRepository: _InMemoryPactSyncRepo(dirtyPacts ?? [], syncedAts: pactSyncedAts),
+    showupSyncRepository: _InMemoryShowupSyncRepo(dirtyShowups ?? [], syncedAts: showupSyncedAts),
+    pactRepository: pactRepository ?? InMemoryPactRepository(),
+    showupRepository: showupRepository ?? InMemoryShowupRepository(),
   );
 }
 
@@ -158,6 +197,8 @@ void main() {
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
       );
 
       await svc.uploadPact(_pact('p1'));
@@ -201,6 +242,8 @@ void main() {
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
       );
 
       await svc.uploadPact(_pact('p1'));
@@ -228,6 +271,8 @@ void main() {
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: _InMemoryPactSyncRepo([]),
         showupSyncRepository: showupSyncRepo,
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
       );
 
       await svc.uploadShowup(_showup('s1'));
@@ -266,6 +311,8 @@ void main() {
         circuitBreaker: cb,
         pactSyncRepository: dirtyPactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
       );
 
       // A successful upload while halfOpen transitions CB to closed and triggers flush.
@@ -308,6 +355,8 @@ void main() {
         circuitBreaker: cb,
         pactSyncRepository: _InMemoryPactSyncRepo(dirtyPacts),
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
       );
 
       await svc.flushDirtyRecords();
@@ -380,6 +429,232 @@ void main() {
 
       // flush runs (CB is halfOpen which allows requests).
       expect(client.upsertedPacts.isNotEmpty, isTrue);
+    });
+  });
+
+  group('FirestoreSyncService.pullRemoteChanges', () {
+    test('skips pull when CB is open', () async {
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
+      final cb = SyncCircuitBreaker();
+      cb.recordFailure();
+      for (var i = 0; i < 5; i++) {
+        cb.recordFailure();
+      }
+      expect(cb.state, SyncCircuitBreakerState.open);
+
+      final pactRepo = InMemoryPactRepository();
+      final svc = _makeService(client: client, cb: cb, pactRepository: pactRepo);
+
+      await svc.pullRemoteChanges();
+
+      expect(await pactRepo.getAllPacts(), isEmpty);
+    });
+
+    test('skips pull when CB is halfOpen', () async {
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
+      final cb = SyncCircuitBreaker()..recordFailure(); // closed → halfOpen
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
+
+      final pactRepo = InMemoryPactRepository();
+      final svc = _makeService(client: client, cb: cb, pactRepository: pactRepo);
+
+      await svc.pullRemoteChanges();
+
+      expect(await pactRepo.getAllPacts(), isEmpty);
+    });
+
+    test('skips pull when userId is null', () async {
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
+      final pactRepo = InMemoryPactRepository();
+      final svc = _makeService(
+        client: client,
+        auth: FakeAuthService(userId: null),
+        pactRepository: pactRepo,
+      );
+
+      await svc.pullRemoteChanges();
+
+      expect(await pactRepo.getAllPacts(), isEmpty);
+    });
+
+    test('inserts a remote pact not found locally', () async {
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
+      final pactRepo = InMemoryPactRepository();
+      final pactSyncRepo = _InMemoryPactSyncRepo([]);
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: pactSyncRepo,
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: pactRepo,
+        showupRepository: InMemoryShowupRepository(),
+      );
+
+      await svc.pullRemoteChanges();
+
+      final pacts = await pactRepo.getAllPacts();
+      expect(pacts.map((p) => p.id), contains('p1'));
+      expect(pactSyncRepo.synced, contains('p1'));
+    });
+
+    test('marks newly inserted remote pact as synced (dirty=false)', () async {
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
+      final pactSyncRepo = _InMemoryPactSyncRepo([]);
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: pactSyncRepo,
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
+      );
+
+      await svc.pullRemoteChanges();
+
+      expect(pactSyncRepo.synced, contains('p1'));
+      expect(await pactSyncRepo.getPactSyncedAt('p1'), isNotNull);
+    });
+
+    test('skips remote pact when local copy is dirty', () async {
+      final localPact = _pact('p1');
+      final pactRepo = InMemoryPactRepository([localPact]);
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1', updatedAt: DateTime(2026, 6, 1))];
+      // local is dirty → pact is in dirty list
+      final pactSyncRepo = _InMemoryPactSyncRepo([localPact]);
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: pactSyncRepo,
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: pactRepo,
+        showupRepository: InMemoryShowupRepository(),
+      );
+
+      await svc.pullRemoteChanges();
+
+      // updatePact should NOT have been called — local habit name unchanged
+      final kept = await pactRepo.getPactById('p1');
+      expect(kept, equals(localPact));
+      // markPactSynced should NOT have been called (no new synced entries)
+      expect(pactSyncRepo.synced, isEmpty);
+    });
+
+    test('overwrites local pact when remote updated_at is newer than local syncedAt', () async {
+      final t1 = DateTime(2026, 3, 1);
+      final t2 = DateTime(2026, 4, 1); // remote is newer
+
+      final localPact = _pact('p1');
+      final pactRepo = InMemoryPactRepository([localPact]);
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1', updatedAt: t2)];
+      // local is clean with syncedAt=t1
+      final pactSyncRepo = _InMemoryPactSyncRepo([], syncedAts: {'p1': t1});
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: pactSyncRepo,
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: pactRepo,
+        showupRepository: InMemoryShowupRepository(),
+      );
+
+      await svc.pullRemoteChanges();
+
+      expect(pactSyncRepo.synced, contains('p1'));
+    });
+
+    test('keeps local pact when remote updated_at is not newer than local syncedAt', () async {
+      final t1 = DateTime(2026, 4, 1);
+      final t2 = DateTime(2026, 3, 1); // remote is OLDER
+
+      final localPact = _pact('p1').copyWith(habitName: 'Local version');
+      final pactRepo = InMemoryPactRepository([localPact]);
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1', updatedAt: t2)];
+      final pactSyncRepo = _InMemoryPactSyncRepo([], syncedAts: {'p1': t1});
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: pactSyncRepo,
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: pactRepo,
+        showupRepository: InMemoryShowupRepository(),
+      );
+
+      await svc.pullRemoteChanges();
+
+      // No overwrite — local version preserved
+      expect(pactSyncRepo.synced, isEmpty);
+      final kept = await pactRepo.getPactById('p1');
+      expect(kept?.habitName, 'Local version');
+    });
+
+    test('inserts a remote showup not found locally', () async {
+      final client = _FakeFirestoreClient()..remoteShowupDocs = [_remoteShowupDoc('s1')];
+      final showupRepo = InMemoryShowupRepository();
+      final showupSyncRepo = _InMemoryShowupSyncRepo([]);
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: _InMemoryPactSyncRepo([]),
+        showupSyncRepository: showupSyncRepo,
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: showupRepo,
+      );
+
+      await svc.pullRemoteChanges();
+
+      expect(await showupRepo.getShowupById('s1'), isNotNull);
+      expect(showupSyncRepo.synced, contains('s1'));
+    });
+
+    test('skips remote showup when local copy is dirty', () async {
+      final localShowup = _showup('s1');
+      final showupRepo = InMemoryShowupRepository([localShowup]);
+      final client = _FakeFirestoreClient()
+        ..remoteShowupDocs = [_remoteShowupDoc('s1', updatedAt: DateTime(2026, 6, 1))];
+      final showupSyncRepo = _InMemoryShowupSyncRepo([localShowup]);
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: _InMemoryPactSyncRepo([]),
+        showupSyncRepository: showupSyncRepo,
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: showupRepo,
+      );
+
+      await svc.pullRemoteChanges();
+
+      expect(showupSyncRepo.synced, isEmpty);
+    });
+
+    test('records CB failure when getPacts throws', () async {
+      final client = _FakeFirestoreClient()..throwOnGetPacts = true;
+      final cb = SyncCircuitBreaker();
+      final svc = _makeService(client: client, cb: cb);
+
+      await svc.pullRemoteChanges();
+
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
+    });
+
+    test('does not throw even when individual record decode fails', () async {
+      // A doc with a bad/missing id should be skipped gracefully.
+      final client = _FakeFirestoreClient()
+        ..remotePactDocs = [
+          {'id': null, 'habit_name': 'Bad'}, // bad doc
+          _remotePactDoc('p2'),
+        ];
+      final pactRepo = InMemoryPactRepository();
+      final svc = _makeService(client: client, pactRepository: pactRepo);
+
+      // Should not throw.
+      await expectLater(svc.pullRemoteChanges(), completes);
     });
   });
 }

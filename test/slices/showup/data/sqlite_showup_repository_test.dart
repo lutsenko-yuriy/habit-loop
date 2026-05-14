@@ -410,5 +410,35 @@ void main() {
         expect(dirty.map((s) => s.id), contains('showup-1'));
       });
     });
+
+    group('getShowupSyncedAt', () {
+      test('returns null for non-existent showup', () async {
+        expect(await repository.getShowupSyncedAt('no-such-id'), isNull);
+      });
+
+      test('returns null when showup is dirty (never synced)', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup());
+        expect(await repository.getShowupSyncedAt('showup-1'), isNull);
+      });
+
+      test('returns syncedAt timestamp after markShowupSynced', () async {
+        final syncedAt = DateTime(2026, 5, 1, 12, 0);
+        await insertPact();
+        await repository.saveShowup(makeShowup());
+        await repository.markShowupSynced('showup-1', syncedAt);
+        final result = await repository.getShowupSyncedAt('showup-1');
+        expect(result, isNotNull);
+        expect(result!.millisecondsSinceEpoch, syncedAt.millisecondsSinceEpoch);
+      });
+
+      test('returns null again after updateShowup re-dirtifies the record', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup());
+        await repository.markShowupSynced('showup-1', DateTime(2026, 5, 1));
+        await repository.updateShowup(makeShowup(status: ShowupStatus.done));
+        expect(await repository.getShowupSyncedAt('showup-1'), isNull);
+      });
+    });
   });
 }
