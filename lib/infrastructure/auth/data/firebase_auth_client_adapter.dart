@@ -18,7 +18,12 @@ final class FirebaseAuthClientAdapter implements FirebaseAuthClient {
 
   Future<void> _ensureGoogleInitialized() async {
     if (_googleInitialized) return;
-    await GoogleSignIn.instance.initialize();
+    await GoogleSignIn.instance.initialize(
+      // Web OAuth client ID — required on Android to include an idToken in the
+      // authentication response. iOS reads CLIENT_ID from GoogleService-Info.plist
+      // automatically but also benefits from having serverClientId set.
+      serverClientId: '935013168355-ogdf1gpqbngv3kdmft7g0rn0pk498dpt.apps.googleusercontent.com',
+    );
     _googleInitialized = true;
   }
 
