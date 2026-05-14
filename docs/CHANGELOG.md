@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.29.1] — 2026-05-14 (PR #79 merged)
+
+### Fixed — Google Sign-In URL scheme on iOS
+
+- `$(REVERSED_CLIENT_ID)` in `ios/Runner/Info.plist` had no Xcode build setting or build phase to resolve it — the URL scheme was passed through unexpanded, so the Google OAuth redirect back to the app never fired and sign-in always failed
+- Fixed by hardcoding the actual reversed client ID: `com.googleusercontent.apps.935013168355-3jecs4lf3l2rr4g7dktth2as259i0tve`
+
+---
+
 ## [0.29.0] — 2026-05-14 (PR #78 merged)
 
 ### Added — Sync status UI (HAB-64, WU6 of HAB-53)
