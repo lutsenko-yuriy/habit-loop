@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.29.3] — 2026-05-14 (PR #81 merged)
+
+### Fixed — Android signing and Google Sign-In OAuth (HAB-65)
+
+- New Android upload keystore generated and registered; CI `build-android` and `distribute-android` jobs restored
+- Debug and release SHA-1 fingerprints registered in Firebase Console → Android app
+- `google-services.json` re-downloaded with `oauth_client` entries after Google Sign-In was enabled
+- `serverClientId` (web OAuth client ID) now passed to `GoogleSignIn.instance.initialize()` — required on Android for `google_sign_in` v7 to include an `idToken` in the authentication response; without it Android sign-in silently produced a null token and failed
+
+---
+
 ## [0.29.2] — 2026-05-14 (PR #80 merged)
 
 ### Fixed — Google Sign-In error handling on iOS
