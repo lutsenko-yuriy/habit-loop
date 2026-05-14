@@ -22,6 +22,7 @@ dependencies:
   firebase_crashlytics: ^5.0.0
   firebase_remote_config: ^6.0.0
   firebase_auth: ^6.0.0
+  cloud_firestore: ^6.0.0
   talker_flutter: ^5.1.17
   shared_preferences: ^2.3.0
   flutter_local_notifications: ^19.0.0
