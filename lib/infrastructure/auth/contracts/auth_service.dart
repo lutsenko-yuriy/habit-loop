@@ -7,7 +7,7 @@ import 'package:habit_loop/infrastructure/auth/contracts/auth_state.dart';
 /// [FakeAuthService].
 ///
 /// **No-throw contract:** [initialize], [signOut] never throw.
-/// [linkWithGoogle] may throw [FirebaseAuthException] on credential conflict —
+/// [linkWithGoogle] may throw [AuthLinkException] on credential conflict —
 /// callers must handle it.
 abstract interface class AuthService {
   /// Signs in anonymously if no cached user exists.

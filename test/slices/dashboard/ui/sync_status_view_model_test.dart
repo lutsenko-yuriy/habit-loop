@@ -1,4 +1,3 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
@@ -18,7 +17,7 @@ import '../../../infrastructure/auth/fake_auth_service.dart';
 
 ProviderContainer _makeContainer({
   AuthService? authService,
-  List<ConnectivityResult> connectivity = const [ConnectivityResult.wifi],
+  bool hasInternet = true,
   FakeAnalyticsService? analytics,
 }) {
   return ProviderContainer(overrides: [
@@ -26,7 +25,7 @@ ProviderContainer _makeContainer({
       authService ?? FakeAuthService(userId: 'user-1', isAnonymous: false),
     ),
     connectivityProvider.overrideWith(
-      (ref) => Stream.value(connectivity),
+      (ref) => Stream.value(hasInternet),
     ),
     analyticsServiceProvider.overrideWithValue(analytics ?? FakeAnalyticsService()),
   ]);
@@ -45,7 +44,7 @@ Future<void> _settle(ProviderContainer container) async {
   // reading the view model state.
   await Future.wait<void>([
     container.read(authStateChangesProvider.future).catchError((_) => const AuthState(userId: null, isAnonymous: true)),
-    container.read(connectivityProvider.future).catchError((_) => <ConnectivityResult>[]),
+    container.read(connectivityProvider.future).catchError((_) => true),
   ]);
   await Future<void>.delayed(Duration.zero);
 }
@@ -123,12 +122,9 @@ void main() {
       expect(container.read(syncStatusViewModelProvider), SyncUiState.suspended);
     });
 
-    test('noInternet when connectivity is none', () async {
+    test('noInternet when connectivity is false', () async {
       final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
-      final container = _makeContainer(
-        authService: auth,
-        connectivity: const [ConnectivityResult.none],
-      );
+      final container = _makeContainer(authService: auth, hasInternet: false);
       addTearDown(container.dispose);
       final settling = _settle(container);
       auth.emitState(userId: 'u1', isAnonymous: false);
@@ -139,10 +135,7 @@ void main() {
 
     test('noInternet takes priority over notLinked', () async {
       final auth = FakeAuthService(userId: null, isAnonymous: true);
-      final container = _makeContainer(
-        authService: auth,
-        connectivity: const [ConnectivityResult.none],
-      );
+      final container = _makeContainer(authService: auth, hasInternet: false);
       addTearDown(container.dispose);
       final settling = _settle(container);
       auth.emitState(userId: null, isAnonymous: true);
@@ -164,10 +157,7 @@ void main() {
 
     test('noInternet takes priority over suspended', () async {
       final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
-      final container = _makeContainer(
-        authService: auth,
-        connectivity: const [ConnectivityResult.none],
-      );
+      final container = _makeContainer(authService: auth, hasInternet: false);
       addTearDown(container.dispose);
       final settling = _settle(container);
       auth.emitState(userId: 'u1', isAnonymous: false);
@@ -225,7 +215,7 @@ void main() {
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_failed'), isFalse);
     });
 
-    test('fires tapped + failed events on FirebaseAuthException', () async {
+    test('fires tapped + failed events and rethrows on AuthLinkException', () async {
       final analytics = FakeAnalyticsService();
       final container = _makeContainer(
         authService: _ThrowingAuthService(),
@@ -238,7 +228,10 @@ void main() {
       throwing.emitState(userId: 'user-1', isAnonymous: true);
       await settling;
 
-      await container.read(syncStatusViewModelProvider.notifier).linkWithGoogle();
+      await expectLater(
+        container.read(syncStatusViewModelProvider.notifier).linkWithGoogle(),
+        throwsA(isA<AuthLinkException>()),
+      );
 
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_tapped'), isTrue);
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_failed'), isTrue);

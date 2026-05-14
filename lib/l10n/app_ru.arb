@@ -231,5 +231,7 @@
   "signOut": "Выйти",
   "@signOut": {},
   "notNow": "Не сейчас",
-  "@notNow": {}
+  "@notNow": {},
+  "signInWithGoogleFailed": "Не удалось войти. Пожалуйста, попробуйте ещё раз.",
+  "@signInWithGoogleFailed": {}
 }

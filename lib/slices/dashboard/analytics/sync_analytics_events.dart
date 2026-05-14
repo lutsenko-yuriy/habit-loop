@@ -1,6 +1,6 @@
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 
-class SyncStatusOpenedEvent extends AnalyticsEvent {
+final class SyncStatusOpenedEvent extends AnalyticsEvent {
   SyncStatusOpenedEvent({required this.state});
 
   final String state;
@@ -12,7 +12,7 @@ class SyncStatusOpenedEvent extends AnalyticsEvent {
   Map<String, Object> toParameters() => {'state': state};
 }
 
-class ManualSyncTriggeredEvent extends AnalyticsEvent {
+final class ManualSyncTriggeredEvent extends AnalyticsEvent {
   ManualSyncTriggeredEvent({required this.fromState});
 
   final String fromState;
@@ -24,7 +24,7 @@ class ManualSyncTriggeredEvent extends AnalyticsEvent {
   Map<String, Object> toParameters() => {'from_state': fromState};
 }
 
-class SignInWithGoogleTappedEvent extends AnalyticsEvent {
+final class SignInWithGoogleTappedEvent extends AnalyticsEvent {
   @override
   String get name => 'sign_in_with_google_tapped';
 
@@ -32,7 +32,7 @@ class SignInWithGoogleTappedEvent extends AnalyticsEvent {
   Map<String, Object> toParameters() => {};
 }
 
-class SignInWithGoogleSucceededEvent extends AnalyticsEvent {
+final class SignInWithGoogleSucceededEvent extends AnalyticsEvent {
   @override
   String get name => 'sign_in_with_google_succeeded';
 
@@ -40,7 +40,7 @@ class SignInWithGoogleSucceededEvent extends AnalyticsEvent {
   Map<String, Object> toParameters() => {};
 }
 
-class SignInWithGoogleFailedEvent extends AnalyticsEvent {
+final class SignInWithGoogleFailedEvent extends AnalyticsEvent {
   SignInWithGoogleFailedEvent({required this.errorCode});
 
   final String errorCode;
@@ -52,7 +52,7 @@ class SignInWithGoogleFailedEvent extends AnalyticsEvent {
   Map<String, Object> toParameters() => {'error_code': errorCode};
 }
 
-class SignOutTappedEvent extends AnalyticsEvent {
+final class SignOutTappedEvent extends AnalyticsEvent {
   SignOutTappedEvent({required this.fromState});
 
   final String fromState;

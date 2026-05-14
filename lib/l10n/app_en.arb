@@ -231,5 +231,7 @@
   "signOut": "Sign out",
   "@signOut": {},
   "notNow": "Not now",
-  "@notNow": {}
+  "@notNow": {},
+  "signInWithGoogleFailed": "Could not sign in. Please try again.",
+  "@signInWithGoogleFailed": {}
 }

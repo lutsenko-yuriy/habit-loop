@@ -231,5 +231,7 @@
   "signOut": "Abmelden",
   "@signOut": {},
   "notNow": "Nicht jetzt",
-  "@notNow": {}
+  "@notNow": {},
+  "signInWithGoogleFailed": "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+  "@signInWithGoogleFailed": {}
 }

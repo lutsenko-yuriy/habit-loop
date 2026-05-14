@@ -231,5 +231,7 @@
   "signOut": "Se déconnecter",
   "@signOut": {},
   "notNow": "Pas maintenant",
-  "@notNow": {}
+  "@notNow": {},
+  "signInWithGoogleFailed": "Connexion impossible. Veuillez réessayer.",
+  "@signInWithGoogleFailed": {}
 }

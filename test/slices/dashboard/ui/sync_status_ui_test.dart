@@ -207,6 +207,20 @@ void main() {
 
       expect(find.byType(CupertinoAlertDialog), findsNothing);
     });
+
+    testWidgets('iOS dialog dismisses on Sync now tap', (tester) async {
+      await tester.pumpWidget(_buildIosApp(syncState: SyncUiState.suspended));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('sync-status-button')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CupertinoAlertDialog), findsOneWidget);
+
+      await tester.tap(find.text('Sync now'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CupertinoAlertDialog), findsNothing);
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -295,20 +309,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsNothing);
-    });
-
-    testWidgets('iOS dialog dismisses on Sync now tap', (tester) async {
-      await tester.pumpWidget(_buildIosApp(syncState: SyncUiState.suspended));
-      await tester.pump();
-
-      await tester.tap(find.byKey(const Key('sync-status-button')));
-      await tester.pumpAndSettle();
-      expect(find.byType(CupertinoAlertDialog), findsOneWidget);
-
-      await tester.tap(find.text('Sync now'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(CupertinoAlertDialog), findsNothing);
     });
   });
 }

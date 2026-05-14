@@ -287,18 +287,22 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
 // Connectivity provider
 // ---------------------------------------------------------------------------
 
-/// Stream of [ConnectivityResult] lists from `connectivity_plus`.
+/// Stream of internet-availability booleans from `connectivity_plus`.
 ///
-/// Emits the current connectivity status immediately on first listen, then
-/// re-emits whenever the device's network state changes. Used by
-/// [SyncStatusViewModel] to derive the [SyncUiState.noInternet] state.
+/// Emits `true` when at least one non-none interface is active, `false` when
+/// every interface reports [ConnectivityResult.none]. Re-emits on every
+/// network-state change. Defaults to `true` while loading so the UI never
+/// flashes a "no internet" state on startup.
 ///
-/// Defaults to `[ConnectivityResult.wifi]` while loading so the UI optimistically
-/// assumes connectivity rather than flashing a "no internet" state on startup.
-final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) async* {
+/// [ConnectivityResult] is kept inside this provider body and never leaks into
+/// callers — the app-layer contract is a plain [bool].
+final connectivityProvider = StreamProvider<bool>((ref) async* {
   final connectivity = Connectivity();
-  yield await connectivity.checkConnectivity();
-  yield* connectivity.onConnectivityChanged;
+  final initial = await connectivity.checkConnectivity();
+  yield !initial.every((r) => r == ConnectivityResult.none);
+  yield* connectivity.onConnectivityChanged.map(
+    (results) => !results.every((r) => r == ConnectivityResult.none),
+  );
 });
 
 // ---------------------------------------------------------------------------

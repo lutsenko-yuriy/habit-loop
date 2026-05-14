@@ -1,8 +1,10 @@
 import 'dart:async' show unawaited;
 
+import 'package:flutter/cupertino.dart' show CupertinoColors;
 import 'package:flutter/material.dart' show IconData, Icons, Theme;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/sync_analytics_events.dart';
@@ -24,10 +26,10 @@ IconData syncStatusIconData(SyncUiState state) => switch (state) {
 
 Color syncStatusIconColor(SyncUiState state, BuildContext context) {
   return switch (state) {
-    SyncUiState.synced => const Color(0xFF34C759), // system green
-    SyncUiState.degraded => const Color(0xFFFF9500), // system orange
-    SyncUiState.suspended => const Color(0xFFFF3B30), // system red
-    SyncUiState.noInternet || SyncUiState.notLinked => const Color(0xFF8E8E93), // system grey
+    SyncUiState.synced => CupertinoColors.systemGreen.resolveFrom(context),
+    SyncUiState.degraded => CupertinoColors.systemOrange.resolveFrom(context),
+    SyncUiState.suspended => CupertinoColors.systemRed.resolveFrom(context),
+    SyncUiState.noInternet || SyncUiState.notLinked => CupertinoColors.systemGrey.resolveFrom(context),
     SyncUiState.connecting => Theme.of(context).colorScheme.primary,
   };
 }
@@ -95,7 +97,7 @@ Future<void> openSyncStatusDialog({
     SyncUiState.notLinked => l10n.syncStatusNotLinked,
   };
 
-  final actions = _buildActions(state, vm, l10n);
+  final actions = _buildActions(state, vm, l10n, context, showFn);
 
   await showFn(
     context: context,
@@ -109,10 +111,28 @@ List<SyncDialogAction> _buildActions(
   SyncUiState state,
   SyncStatusViewModel vm,
   AppLocalizations l10n,
+  BuildContext outerContext,
+  SyncDialogShowFn showFn,
 ) {
   return switch (state) {
     SyncUiState.notLinked => [
-        SyncDialogAction(label: l10n.signInWithGoogle, onPressed: () => unawaited(vm.linkWithGoogle())),
+        SyncDialogAction(
+          label: l10n.signInWithGoogle,
+          onPressed: () => unawaited(() async {
+            try {
+              await vm.linkWithGoogle();
+            } on AuthLinkException {
+              if (outerContext.mounted) {
+                unawaited(showFn(
+                  context: outerContext,
+                  title: l10n.syncStatusTitle,
+                  message: l10n.signInWithGoogleFailed,
+                  actions: [SyncDialogAction(label: l10n.notNow, onPressed: () {})],
+                ));
+              }
+            }
+          }()),
+        ),
         SyncDialogAction(label: l10n.notNow, onPressed: () {}),
       ],
     SyncUiState.suspended || SyncUiState.degraded => [

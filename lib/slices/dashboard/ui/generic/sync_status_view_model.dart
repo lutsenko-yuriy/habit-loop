@@ -1,6 +1,5 @@
 import 'dart:async' show unawaited;
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -8,6 +7,8 @@ import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/slices/dashboard/analytics/sync_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 
+// Slice-local provider: lives here (not app_providers.dart) because it is
+// scoped exclusively to the dashboard sync-status icon and dialog.
 final syncStatusViewModelProvider = NotifierProvider.autoDispose<SyncStatusViewModel, SyncUiState>(
   SyncStatusViewModel.new,
 );
@@ -15,11 +16,13 @@ final syncStatusViewModelProvider = NotifierProvider.autoDispose<SyncStatusViewM
 class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
   @override
   SyncUiState build() {
-    final connectivity = ref.watch(connectivityProvider).valueOrNull ?? [ConnectivityResult.wifi];
+    // connectivityProvider emits bool (true = has internet); defaults to true
+    // while loading so the UI never flashes noInternet on startup.
+    final hasInternet = ref.watch(connectivityProvider).valueOrNull ?? true;
     final authAsync = ref.watch(authStateChangesProvider);
     final cbState = ref.watch(syncCircuitBreakerProvider);
 
-    if (connectivity.every((r) => r == ConnectivityResult.none)) {
+    if (!hasInternet) {
       return SyncUiState.noInternet;
     }
 
@@ -27,6 +30,8 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
       return SyncUiState.connecting;
     }
 
+    // authAsync.hasError collapses to notLinked: the stream re-emits on
+    // reconnect, so this is a transient state with no meaningful action.
     final auth = authAsync.valueOrNull;
     if (auth == null || auth.isAnonymous) {
       return SyncUiState.notLinked;
@@ -56,6 +61,7 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
       unawaited(analytics.logEvent(SignInWithGoogleSucceededEvent()));
     } on AuthLinkException catch (e) {
       unawaited(analytics.logEvent(SignInWithGoogleFailedEvent(errorCode: e.code)));
+      rethrow;
     }
   }
 
