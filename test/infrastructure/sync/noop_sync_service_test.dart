@@ -43,5 +43,9 @@ void main() {
     test('triggerManualSync does not throw', () {
       expect(() => svc.triggerManualSync(), returnsNormally);
     });
+
+    test('pullRemoteChanges does not throw', () async {
+      await expectLater(svc.pullRemoteChanges(), completes);
+    });
   });
 }

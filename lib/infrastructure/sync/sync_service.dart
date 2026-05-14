@@ -38,4 +38,24 @@ abstract class SyncService {
   /// Called by WU6 when the user manually requests a sync retry. No-op when
   /// the circuit breaker is not in [SyncCircuitBreakerState.open].
   void triggerManualSync();
+
+  /// Fetches all remote pacts and showups for the current user from Firestore
+  /// and merges them into the local SQLite database.
+  ///
+  /// Merge rules (per record):
+  /// - Not in local DB → insert as new, mark synced.
+  /// - Local record is dirty (unsync'd local changes) → keep local, skip.
+  /// - Remote `updated_at` > local `synced_at` → overwrite local with remote.
+  /// - Remote `updated_at` ≤ local `synced_at` (or missing) → keep local.
+  ///
+  /// **No-throw contract:** swallows all exceptions so a pull failure can never
+  /// crash the app. Individual record errors are also isolated — one bad
+  /// document never blocks the rest.
+  ///
+  /// **Circuit-breaker gate:** only runs when the CB is in the
+  /// [SyncCircuitBreakerState.closed] state. Failure transitions the CB to
+  /// half-open. No [recordSuccess] is emitted for read operations.
+  ///
+  /// Called fire-and-forget from `main.dart` after auth initialises.
+  Future<void> pullRemoteChanges();
 }

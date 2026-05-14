@@ -313,5 +313,7 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     circuitBreaker: ref.watch(syncCircuitBreakerProvider.notifier),
     pactSyncRepository: ref.watch(pactSyncRepositoryProvider),
     showupSyncRepository: ref.watch(showupSyncRepositoryProvider),
+    pactRepository: ref.watch(pactRepositoryProvider),
+    showupRepository: ref.watch(showupRepositoryProvider),
   );
 });

@@ -35,6 +35,18 @@ void main() {
       expect(doc.containsKey('total_showups'), isFalse);
     });
 
+    test('includes updated_at when provided', () {
+      final updatedAt = DateTime(2026, 5, 1);
+      final doc = SyncMapper.pactToDocument(pact, updatedAt: updatedAt);
+      expect(doc['updated_at'], updatedAt.millisecondsSinceEpoch);
+    });
+
+    test('includes updated_at as a non-null timestamp when not provided', () {
+      final doc = SyncMapper.pactToDocument(pact);
+      expect(doc.containsKey('updated_at'), isTrue);
+      expect(doc['updated_at'], isA<int>());
+    });
+
     test('encodes stopped status correctly', () {
       final stopped = pact.copyWith(status: PactStatus.stopped);
       expect(SyncMapper.pactToDocument(stopped)['status'], 'stopped');
@@ -69,6 +81,18 @@ void main() {
       expect(doc.containsKey('synced_at'), isFalse);
     });
 
+    test('includes updated_at when provided', () {
+      final updatedAt = DateTime(2026, 5, 1);
+      final doc = SyncMapper.showupToDocument(showup, updatedAt: updatedAt);
+      expect(doc['updated_at'], updatedAt.millisecondsSinceEpoch);
+    });
+
+    test('includes updated_at as a non-null timestamp when not provided', () {
+      final doc = SyncMapper.showupToDocument(showup);
+      expect(doc.containsKey('updated_at'), isTrue);
+      expect(doc['updated_at'], isA<int>());
+    });
+
     test('encodes done status correctly', () {
       final done = showup.copyWith(status: ShowupStatus.done);
       expect(SyncMapper.showupToDocument(done)['status'], 'done');
@@ -82,6 +106,103 @@ void main() {
     test('includes note when present', () {
       final withNote = showup.copyWith(note: 'felt good');
       expect(SyncMapper.showupToDocument(withNote)['note'], 'felt good');
+    });
+  });
+
+  group('SyncMapper.pactFromDocument', () {
+    final pact = Pact(
+      id: 'p1',
+      habitName: 'Meditate',
+      startDate: DateTime(2026, 1, 1),
+      endDate: DateTime(2026, 6, 30),
+      showupDuration: const Duration(minutes: 10),
+      schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+      status: PactStatus.active,
+      createdAt: DateTime(2026, 1, 1),
+    );
+
+    test('round-trips pact through pactToDocument → pactFromDocument', () {
+      final doc = SyncMapper.pactToDocument(pact);
+      final decoded = SyncMapper.pactFromDocument(doc);
+
+      expect(decoded.id, pact.id);
+      expect(decoded.habitName, pact.habitName);
+      expect(decoded.startDate, pact.startDate);
+      expect(decoded.endDate, pact.endDate);
+      expect(decoded.showupDuration, pact.showupDuration);
+      expect(decoded.status, pact.status);
+    });
+
+    test('decodes stopped pact status', () {
+      final stopped = pact.copyWith(status: PactStatus.stopped);
+      final doc = SyncMapper.pactToDocument(stopped);
+      expect(SyncMapper.pactFromDocument(doc).status, PactStatus.stopped);
+    });
+
+    test('decodes completed pact status', () {
+      final completed = pact.copyWith(status: PactStatus.completed);
+      final doc = SyncMapper.pactToDocument(completed);
+      expect(SyncMapper.pactFromDocument(doc).status, PactStatus.completed);
+    });
+
+    test('decodes nullable reminder_offset', () {
+      final withReminder = pact.copyWith(reminderOffset: const Duration(minutes: 10));
+      final doc = SyncMapper.pactToDocument(withReminder);
+      expect(SyncMapper.pactFromDocument(doc).reminderOffset, const Duration(minutes: 10));
+    });
+
+    test('decodes null reminder_offset', () {
+      final doc = SyncMapper.pactToDocument(pact);
+      expect(SyncMapper.pactFromDocument(doc).reminderOffset, isNull);
+    });
+  });
+
+  group('SyncMapper.showupFromDocument', () {
+    final showup = Showup(
+      id: 's1',
+      pactId: 'p1',
+      scheduledAt: DateTime(2026, 1, 1, 8, 0),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.pending,
+    );
+
+    test('round-trips showup through showupToDocument → showupFromDocument', () {
+      final doc = SyncMapper.showupToDocument(showup);
+      final decoded = SyncMapper.showupFromDocument(doc);
+
+      expect(decoded.id, showup.id);
+      expect(decoded.pactId, showup.pactId);
+      expect(decoded.scheduledAt, showup.scheduledAt);
+      expect(decoded.duration, showup.duration);
+      expect(decoded.status, showup.status);
+    });
+
+    test('decodes done showup status', () {
+      final done = showup.copyWith(status: ShowupStatus.done);
+      final doc = SyncMapper.showupToDocument(done);
+      expect(SyncMapper.showupFromDocument(doc).status, ShowupStatus.done);
+    });
+
+    test('decodes note', () {
+      final withNote = showup.copyWith(note: 'felt great');
+      final doc = SyncMapper.showupToDocument(withNote);
+      expect(SyncMapper.showupFromDocument(doc).note, 'felt great');
+    });
+  });
+
+  group('SyncMapper.updatedAtFromDocument', () {
+    test('extracts updated_at when present', () {
+      final t = DateTime(2026, 5, 14);
+      final doc = {'updated_at': t.millisecondsSinceEpoch};
+      expect(SyncMapper.updatedAtFromDocument(doc), t);
+    });
+
+    test('returns null when updated_at is absent', () {
+      expect(SyncMapper.updatedAtFromDocument({}), isNull);
+    });
+
+    test('returns null when updated_at is null', () {
+      expect(SyncMapper.updatedAtFromDocument({'updated_at': null}), isNull);
     });
   });
 }

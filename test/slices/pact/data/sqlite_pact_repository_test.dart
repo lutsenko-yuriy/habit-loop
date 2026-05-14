@@ -297,5 +297,32 @@ void main() {
         expect(dirty.map((p) => p.id), contains('pact-1'));
       });
     });
+
+    group('getPactSyncedAt', () {
+      test('returns null for non-existent pact', () async {
+        expect(await repository.getPactSyncedAt('no-such-id'), isNull);
+      });
+
+      test('returns null when pact is dirty (never synced)', () async {
+        await repository.savePact(makePact());
+        expect(await repository.getPactSyncedAt('pact-1'), isNull);
+      });
+
+      test('returns syncedAt timestamp after markPactSynced', () async {
+        final syncedAt = DateTime(2026, 5, 1, 12, 0);
+        await repository.savePact(makePact());
+        await repository.markPactSynced('pact-1', syncedAt);
+        final result = await repository.getPactSyncedAt('pact-1');
+        expect(result, isNotNull);
+        expect(result!.millisecondsSinceEpoch, syncedAt.millisecondsSinceEpoch);
+      });
+
+      test('returns null again after updatePact re-dirtifies the record', () async {
+        await repository.savePact(makePact());
+        await repository.markPactSynced('pact-1', DateTime(2026, 5, 1));
+        await repository.updatePact(makePact(status: PactStatus.stopped));
+        expect(await repository.getPactSyncedAt('pact-1'), isNull);
+      });
+    });
   });
 }

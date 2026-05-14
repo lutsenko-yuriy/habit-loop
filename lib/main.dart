@@ -529,6 +529,12 @@ Future<void> main() async {
     // is available immediately and initialize() returns synchronously.
     unawaited(authService.initialize());
 
+    // Pull remote changes from Firestore after auth initialises. Runs
+    // fire-and-forget so it never delays the first frame. The sync service gates
+    // this call on the circuit breaker being closed and userId being non-null.
+    final syncService = _container?.read(syncServiceProvider);
+    if (syncService != null) unawaited(syncService.pullRemoteChanges());
+
     // Cold-start fallback: if the notification response callback fired during
     // initialize() and already deferred navigation via addPostFrameCallback,
     // _notificationNavigationHandled will be set to true by that deferred
