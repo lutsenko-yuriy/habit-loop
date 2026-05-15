@@ -10,7 +10,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ### Issues
 
 - **[HAB-55] EXC_BAD_ACCESS crash on iOS cold-start (JIT W^X protection)** — iOS cold-start crash due to JIT write-execute protection. (Bug)
-- **[HAB-69] Full-sync button in sync status dialog with background progress feedback** — On-demand full bi-directional sync triggered from the sync status dialog; non-interrupting completion feedback. (Feature)
 
 ### Remaining work
 

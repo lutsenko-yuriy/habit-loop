@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.31.0] — 2026-05-15 (PR #86 merged)
+
+### Added — Full-sync button in sync status dialog (HAB-69)
+
+- "Full sync" action added to the sync status dialog; visible in `synced`, `degraded`, and `suspended` states (user is online and logged in); hidden in `notLinked`, `noInternet`, and `connecting`
+- Tapping Full sync marks all local records dirty, flushes them to Firestore, and shows a snackbar on completion: "Sync complete" on full success, or "Sync failed: N records could not be uploaded" on partial failure (plural-aware, all 4 locales)
+- `forceSyncAll()` return type changed from `Future<void>` to `Future<ForceSyncResult>` — a new data class with `attempted`, `pactsFailed`, `showupsFailed`, `failed`, and `succeeded` fields
+- `SyncStatusViewModel.fullSync()` fires analytics and returns the total failure count for the snackbar callback
+- `ScaffoldMessengerState` captured before dialog opens and threaded through `openSyncStatusDialog` so the snackbar fires correctly after the dialog dismisses on both iOS and Android
+- Three new analytics events: `full_sync_triggered` (`from_state`), `full_sync_completed` (`from_state`), `full_sync_failed` (`from_state`, `pacts_failed`, `showups_failed`)
+- 1056 tests passing, analyzer clean
+
+---
+
 ## [0.30.3] — 2026-05-15 (PR #85 merged)
 
 ### Fixed — Anonymous pacts not synced after Google login (HAB-68)
