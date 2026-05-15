@@ -82,6 +82,25 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
     }
   }
 
+  /// Marks all local records dirty, flushes them to Firestore, and fires the
+  /// appropriate analytics event. Returns the failure count from [forceSyncAll].
+  ///
+  /// Captures all [ref] reads before the first `await` to comply with
+  /// Riverpod's post-dependency-change ref guard.
+  Future<int> fullSync() async {
+    final analytics = ref.read(analyticsServiceProvider);
+    final sync = ref.read(syncServiceProvider);
+    final fromState = state.name;
+    unawaited(analytics.logEvent(FullSyncTriggeredEvent(fromState: fromState)));
+    final failed = await sync.forceSyncAll();
+    if (failed == 0) {
+      unawaited(analytics.logEvent(FullSyncCompletedEvent(fromState: fromState)));
+    } else {
+      unawaited(analytics.logEvent(FullSyncFailedEvent(fromState: fromState, recordsFailed: failed)));
+    }
+    return failed;
+  }
+
   Future<void> signOut() async {
     unawaited(
       ref.read(analyticsServiceProvider).logEvent(

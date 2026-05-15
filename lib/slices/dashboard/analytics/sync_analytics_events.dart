@@ -63,3 +63,40 @@ final class SignOutTappedEvent extends AnalyticsEvent {
   @override
   Map<String, Object> toParameters() => {'from_state': fromState};
 }
+
+final class FullSyncTriggeredEvent extends AnalyticsEvent {
+  FullSyncTriggeredEvent({required this.fromState});
+
+  final String fromState;
+
+  @override
+  String get name => 'full_sync_triggered';
+
+  @override
+  Map<String, Object> toParameters() => {'from_state': fromState};
+}
+
+final class FullSyncCompletedEvent extends AnalyticsEvent {
+  FullSyncCompletedEvent({required this.fromState});
+
+  final String fromState;
+
+  @override
+  String get name => 'full_sync_completed';
+
+  @override
+  Map<String, Object> toParameters() => {'from_state': fromState};
+}
+
+final class FullSyncFailedEvent extends AnalyticsEvent {
+  FullSyncFailedEvent({required this.fromState, required this.recordsFailed});
+
+  final String fromState;
+  final int recordsFailed;
+
+  @override
+  String get name => 'full_sync_failed';
+
+  @override
+  Map<String, Object> toParameters() => {'from_state': fromState, 'records_failed': recordsFailed};
+}

@@ -50,6 +50,7 @@ class DashboardPageAndroid extends ConsumerWidget {
           ref: ref,
           showFn: ({required context, required title, required message, required actions}) =>
               _showMaterialSyncDialog(context, title, message, actions),
+          messenger: ScaffoldMessenger.of(context),
         );
 
     return Scaffold(
