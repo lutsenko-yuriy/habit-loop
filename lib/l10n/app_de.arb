@@ -233,5 +233,15 @@
   "notNow": "Nicht jetzt",
   "@notNow": {},
   "signInWithGoogleFailed": "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
-  "@signInWithGoogleFailed": {}
+  "@signInWithGoogleFailed": {},
+  "fullSync": "Vollständige Synchronisation",
+  "@fullSync": {},
+  "fullSyncCompleted": "Synchronisation abgeschlossen",
+  "@fullSyncCompleted": {},
+  "fullSyncFailed": "{count, plural, one{Synchronisation fehlgeschlagen: {count} Element konnte nicht hochgeladen werden} other{Synchronisation fehlgeschlagen: {count} Elemente konnten nicht hochgeladen werden}}",
+  "@fullSyncFailed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

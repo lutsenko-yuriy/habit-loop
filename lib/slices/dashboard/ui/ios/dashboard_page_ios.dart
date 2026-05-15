@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback, kDebugMode, kProfileMode;
-import 'package:flutter/material.dart' show Icon, Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Icon, Material, MaterialType, ScaffoldMessenger, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -51,6 +51,7 @@ class DashboardPageIos extends ConsumerWidget {
           ref: ref,
           showFn: ({required context, required title, required message, required actions}) =>
               _showCupertinoSyncDialog(context, title, message, actions),
+          messenger: ScaffoldMessenger.of(context),
         );
 
     return CupertinoPageScaffold(

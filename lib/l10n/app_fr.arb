@@ -233,5 +233,15 @@
   "notNow": "Pas maintenant",
   "@notNow": {},
   "signInWithGoogleFailed": "Connexion impossible. Veuillez réessayer.",
-  "@signInWithGoogleFailed": {}
+  "@signInWithGoogleFailed": {},
+  "fullSync": "Synchronisation complète",
+  "@fullSync": {},
+  "fullSyncCompleted": "Synchronisation terminée",
+  "@fullSyncCompleted": {},
+  "fullSyncFailed": "{count, plural, one{Échec de la synchro : {count} élément n'a pas pu être envoyé} other{Échec de la synchro : {count} éléments n'ont pas pu être envoyés}}",
+  "@fullSyncFailed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

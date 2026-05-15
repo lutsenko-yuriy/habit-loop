@@ -233,5 +233,15 @@
   "notNow": "Not now",
   "@notNow": {},
   "signInWithGoogleFailed": "Could not sign in. Please try again.",
-  "@signInWithGoogleFailed": {}
+  "@signInWithGoogleFailed": {},
+  "fullSync": "Full sync",
+  "@fullSync": {},
+  "fullSyncCompleted": "Sync complete",
+  "@fullSyncCompleted": {},
+  "fullSyncFailed": "{count, plural, one{Sync failed: {count} item could not be uploaded} other{Sync failed: {count} items could not be uploaded}}",
+  "@fullSyncFailed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

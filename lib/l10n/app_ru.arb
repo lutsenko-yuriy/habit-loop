@@ -233,5 +233,15 @@
   "notNow": "Не сейчас",
   "@notNow": {},
   "signInWithGoogleFailed": "Не удалось войти. Пожалуйста, попробуйте ещё раз.",
-  "@signInWithGoogleFailed": {}
+  "@signInWithGoogleFailed": {},
+  "fullSync": "Полная синхронизация",
+  "@fullSync": {},
+  "fullSyncCompleted": "Синхронизация завершена",
+  "@fullSyncCompleted": {},
+  "fullSyncFailed": "{count, plural, one{Ошибка синхронизации: {count} запись не удалось загрузить} few{Ошибка синхронизации: {count} записи не удалось загрузить} many{Ошибка синхронизации: {count} записей не удалось загрузить} other{Ошибка синхронизации: {count} записи не удалось загрузить}}",
+  "@fullSyncFailed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

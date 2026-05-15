@@ -162,6 +162,38 @@ Fired when the user taps "Sign out" inside the sync status dialog. (HAB-64)
 
 ---
 
+### `full_sync_triggered`
+
+Fired when the user taps "Full sync" in the sync status dialog. The button is visible only in `synced`, `degraded`, and `suspended` states (online + logged in). (HAB-69)
+
+| Property | Type | Description |
+|---|---|---|
+| `from_state` | `string` | Sync state when the button was tapped: `synced` \| `degraded` \| `suspended` |
+
+---
+
+### `full_sync_completed`
+
+Fired when a user-triggered full sync finishes with zero record failures. (HAB-69)
+
+| Property | Type | Description |
+|---|---|---|
+| `from_state` | `string` | Sync state when the sync was triggered |
+
+---
+
+### `full_sync_failed`
+
+Fired when a user-triggered full sync finishes with at least one record that failed to upload. (HAB-69)
+
+| Property | Type | Description |
+|---|---|---|
+| `from_state` | `string` | Sync state when the sync was triggered |
+| `pacts_failed` | `int` | Number of pacts that failed to upload |
+| `showups_failed` | `int` | Number of showups that failed to upload |
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.

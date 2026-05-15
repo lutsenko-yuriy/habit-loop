@@ -1,7 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/cupertino.dart' show CupertinoColors;
-import 'package:flutter/material.dart' show IconData, Icons, Theme;
+import 'package:flutter/material.dart' show IconData, Icons, ScaffoldMessengerState, SnackBar, Text, Theme;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
@@ -68,6 +68,11 @@ class SyncDialogAction {
 /// supplies a [showFn] callback that renders its native dialog (a
 /// [CupertinoAlertDialog] for iOS, an [AlertDialog] for Android).
 ///
+/// [messenger] is captured from the dashboard page's context before the dialog
+/// opens so that the "Full sync" snackbar can be shown after the dialog has
+/// already been dismissed. Both iOS and Android dashboard pages are inside
+/// [MaterialApp], so [ScaffoldMessengerState] is available on both platforms.
+///
 /// Steps:
 /// 1. Fire [SyncStatusOpenedEvent] and capture state.
 /// 2. Guard on [BuildContext.mounted].
@@ -77,6 +82,7 @@ Future<void> openSyncStatusDialog({
   required BuildContext context,
   required WidgetRef ref,
   required SyncDialogShowFn showFn,
+  required ScaffoldMessengerState messenger,
 }) async {
   final state = ref.read(syncStatusViewModelProvider);
   final vm = ref.read(syncStatusViewModelProvider.notifier);
@@ -97,7 +103,7 @@ Future<void> openSyncStatusDialog({
     SyncUiState.notLinked => l10n.syncStatusNotLinked,
   };
 
-  final actions = _buildActions(state, vm, l10n, context, showFn);
+  final actions = _buildActions(state, vm, l10n, context, showFn, messenger);
 
   await showFn(
     context: context,
@@ -113,7 +119,15 @@ List<SyncDialogAction> _buildActions(
   AppLocalizations l10n,
   BuildContext outerContext,
   SyncDialogShowFn showFn,
+  ScaffoldMessengerState messenger,
 ) {
+  void startFullSync() {
+    unawaited(vm.fullSync().then((failed) {
+      final message = failed == 0 ? l10n.fullSyncCompleted : l10n.fullSyncFailed(failed);
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    }));
+  }
+
   return switch (state) {
     SyncUiState.notLinked => [
         SyncDialogAction(
@@ -137,9 +151,11 @@ List<SyncDialogAction> _buildActions(
       ],
     SyncUiState.suspended || SyncUiState.degraded => [
         SyncDialogAction(label: l10n.syncNow, onPressed: () => unawaited(vm.triggerManualSync())),
+        SyncDialogAction(label: l10n.fullSync, onPressed: startFullSync),
         SyncDialogAction(label: l10n.notNow, onPressed: () {}),
       ],
     SyncUiState.synced => [
+        SyncDialogAction(label: l10n.fullSync, onPressed: startFullSync),
         SyncDialogAction(label: l10n.signOut, isDestructive: true, onPressed: () => unawaited(vm.signOut())),
         SyncDialogAction(label: l10n.notNow, onPressed: () {}),
       ],

@@ -1,5 +1,6 @@
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 
 /// Abstract interface for the write-through sync service.
 ///
@@ -39,14 +40,21 @@ abstract class SyncService {
   /// the circuit breaker is not in [SyncCircuitBreakerState.open].
   void triggerManualSync();
 
-  /// Marks every local record as dirty and then calls [flushDirtyRecords].
+  /// Marks every local record as dirty, flushes them to Firestore, and returns
+  /// a [ForceSyncResult] describing how many records were attempted and how many
+  /// failed (split by entity type).
   ///
   /// Use this after a Firebase UID change (e.g. upgrading from anonymous to a
   /// Google-linked account via `signInWithCredential`) so that records
   /// previously synced under the old UID are re-uploaded under the new one.
+  /// Also used for user-triggered full-sync from the sync status dialog.
   ///
-  /// No-throw contract: swallows all exceptions internally.
-  Future<void> forceSyncAll();
+  /// [ForceSyncResult.failed] is `0` when every record uploaded successfully.
+  ///
+  /// No-throw contract: swallows all exceptions internally; outer catch returns
+  /// a zero result as a safety net (in practice dead code since all called
+  /// methods also have no-throw contracts).
+  Future<ForceSyncResult> forceSyncAll();
 
   /// Fetches all remote pacts and showups for the current user from Firestore
   /// and merges them into the local SQLite database.

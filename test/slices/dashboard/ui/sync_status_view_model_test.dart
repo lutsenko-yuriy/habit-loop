@@ -279,4 +279,76 @@ void main() {
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_out_tapped'), isTrue);
     });
   });
+
+  group('fullSync', () {
+    test('fires full_sync_triggered with correct from_state', () async {
+      final analytics = FakeAnalyticsService();
+      final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
+      final container = _makeContainer(authService: auth, analytics: analytics);
+      addTearDown(container.dispose);
+      final settling = _settle(container);
+      auth.emitState(userId: 'u1', isAnonymous: false);
+      await settling;
+      expect(container.read(syncStatusViewModelProvider), SyncUiState.synced);
+
+      await container.read(syncStatusViewModelProvider.notifier).fullSync();
+
+      final triggered = analytics.loggedEvents.where((e) => e.name == 'full_sync_triggered');
+      expect(triggered, hasLength(1));
+      expect(triggered.first.toParameters()['from_state'], 'synced');
+    });
+
+    test('calls forceSyncAll on the sync service', () async {
+      final syncService = FakeSyncService();
+      final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
+      final container = _makeContainer(authService: auth, syncService: syncService);
+      addTearDown(container.dispose);
+      final settling = _settle(container);
+      auth.emitState(userId: 'u1', isAnonymous: false);
+      await settling;
+
+      await container.read(syncStatusViewModelProvider.notifier).fullSync();
+
+      expect(syncService.forceSyncAllCount, 1);
+    });
+
+    test('fires full_sync_completed and returns 0 when forceSyncAll has no failures', () async {
+      final analytics = FakeAnalyticsService();
+      final syncService = FakeSyncService(); // pactsFailed + showupsFailed default to 0
+      final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
+      final container = _makeContainer(authService: auth, analytics: analytics, syncService: syncService);
+      addTearDown(container.dispose);
+      final settling = _settle(container);
+      auth.emitState(userId: 'u1', isAnonymous: false);
+      await settling;
+
+      final result = await container.read(syncStatusViewModelProvider.notifier).fullSync();
+
+      expect(result, equals(0));
+      expect(analytics.loggedEvents.any((e) => e.name == 'full_sync_completed'), isTrue);
+      expect(analytics.loggedEvents.any((e) => e.name == 'full_sync_failed'), isFalse);
+    });
+
+    test('fires full_sync_failed with split counts and returns total when forceSyncAll has failures', () async {
+      final analytics = FakeAnalyticsService();
+      final syncService = FakeSyncService()
+        ..forceSyncAllPactsFailed = 2
+        ..forceSyncAllShowupsFailed = 1;
+      final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
+      final container = _makeContainer(authService: auth, analytics: analytics, syncService: syncService);
+      addTearDown(container.dispose);
+      final settling = _settle(container);
+      auth.emitState(userId: 'u1', isAnonymous: false);
+      await settling;
+
+      final result = await container.read(syncStatusViewModelProvider.notifier).fullSync();
+
+      expect(result, equals(3)); // 2 + 1
+      expect(analytics.loggedEvents.any((e) => e.name == 'full_sync_failed'), isTrue);
+      expect(analytics.loggedEvents.any((e) => e.name == 'full_sync_completed'), isFalse);
+      final failedEvent = analytics.loggedEvents.firstWhere((e) => e.name == 'full_sync_failed');
+      expect(failedEvent.toParameters()['pacts_failed'], 2);
+      expect(failedEvent.toParameters()['showups_failed'], 1);
+    });
+  });
 }

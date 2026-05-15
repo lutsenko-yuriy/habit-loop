@@ -1,5 +1,6 @@
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 
 /// Test double for [SyncService] that records all calls.
@@ -9,6 +10,8 @@ class FakeSyncService implements SyncService {
   int flushCount = 0;
   int triggerManualSyncCount = 0;
   int forceSyncAllCount = 0;
+  int forceSyncAllPactsFailed = 0;
+  int forceSyncAllShowupsFailed = 0;
   int pullRemoteChangesCount = 0;
 
   @override
@@ -32,8 +35,13 @@ class FakeSyncService implements SyncService {
   }
 
   @override
-  Future<void> forceSyncAll() async {
+  Future<ForceSyncResult> forceSyncAll() async {
     forceSyncAllCount++;
+    return ForceSyncResult(
+      attempted: forceSyncAllPactsFailed + forceSyncAllShowupsFailed,
+      pactsFailed: forceSyncAllPactsFailed,
+      showupsFailed: forceSyncAllShowupsFailed,
+    );
   }
 
   @override

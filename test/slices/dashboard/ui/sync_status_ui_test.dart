@@ -33,6 +33,9 @@ class _FakeSyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> implemen
   Future<void> linkWithGoogle() async {}
 
   @override
+  Future<int> fullSync() async => 0;
+
+  @override
   Future<void> signOut() async {}
 }
 
