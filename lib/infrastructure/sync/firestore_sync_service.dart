@@ -8,6 +8,7 @@ import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
+import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
@@ -108,21 +109,29 @@ class FirestoreSyncService implements SyncService {
   }
 
   @override
-  Future<int> forceSyncAll() async {
+  Future<ForceSyncResult> forceSyncAll() async {
     try {
       await _pactSyncRepository.markAllPactsDirty();
       await _showupSyncRepository.markAllShowupsDirty();
+      // Count total after marking all dirty (= total attempted).
+      final allDirtyPacts = await _pactSyncRepository.getDirtyPacts();
+      final allDirtyShowups = await _showupSyncRepository.getDirtyShowups();
+      final attempted = allDirtyPacts.length + allDirtyShowups.length;
       await flushDirtyRecords();
       // Records that uploaded successfully were marked synced (dirty=0) and are
       // no longer returned by getDirtyPacts/getDirtyShowups. What remains are
       // the ones that failed to upload.
       final remainingPacts = await _pactSyncRepository.getDirtyPacts();
       final remainingShowups = await _showupSyncRepository.getDirtyShowups();
-      return remainingPacts.length + remainingShowups.length;
+      return ForceSyncResult(
+        attempted: attempted,
+        pactsFailed: remainingPacts.length,
+        showupsFailed: remainingShowups.length,
+      );
     } catch (_) {
       // No-throw safety net — in practice dead code since all called methods
       // also have no-throw contracts.
-      return 0;
+      return const ForceSyncResult(attempted: 0, pactsFailed: 0, showupsFailed: 0);
     }
   }
 

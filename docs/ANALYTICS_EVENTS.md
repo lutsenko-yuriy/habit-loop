@@ -189,7 +189,8 @@ Fired when a user-triggered full sync finishes with at least one record that fai
 | Property | Type | Description |
 |---|---|---|
 | `from_state` | `string` | Sync state when the sync was triggered |
-| `records_failed` | `int` | Number of records that failed to upload |
+| `pacts_failed` | `int` | Number of pacts that failed to upload |
+| `showups_failed` | `int` | Number of showups that failed to upload |
 
 ---
 

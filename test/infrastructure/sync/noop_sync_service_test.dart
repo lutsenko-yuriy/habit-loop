@@ -44,8 +44,11 @@ void main() {
       expect(() => svc.triggerManualSync(), returnsNormally);
     });
 
-    test('forceSyncAll returns 0 and does not throw', () async {
-      expect(await svc.forceSyncAll(), equals(0));
+    test('forceSyncAll returns zero result and does not throw', () async {
+      final result = await svc.forceSyncAll();
+      expect(result.attempted, equals(0));
+      expect(result.pactsFailed, equals(0));
+      expect(result.showupsFailed, equals(0));
     });
 
     test('pullRemoteChanges does not throw', () async {

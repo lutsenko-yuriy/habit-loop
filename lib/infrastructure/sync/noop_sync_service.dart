@@ -1,5 +1,6 @@
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 
 /// Silent no-op implementation of [SyncService].
@@ -22,7 +23,7 @@ class NoopSyncService implements SyncService {
   void triggerManualSync() {}
 
   @override
-  Future<int> forceSyncAll() async => 0;
+  Future<ForceSyncResult> forceSyncAll() async => const ForceSyncResult(attempted: 0, pactsFailed: 0, showupsFailed: 0);
 
   @override
   Future<void> pullRemoteChanges() async {}

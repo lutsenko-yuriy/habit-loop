@@ -730,7 +730,9 @@ void main() {
 
       expect(client.upsertedPacts.map((d) => d['id']), contains('p1'));
       expect(client.upsertedShowups.map((d) => d['id']), contains('s1'));
-      expect(result, equals(0));
+      expect(result.attempted, equals(2)); // p1 + s1
+      expect(result.pactsFailed, equals(0));
+      expect(result.showupsFailed, equals(0));
     });
 
     test('returns count of records that failed to upload', () async {
@@ -762,8 +764,10 @@ void main() {
 
       final result = await svc.forceSyncAll();
 
-      // p1 and s1 both failed to upload — 2 records remain dirty.
-      expect(result, equals(2));
+      // p1 failed as a pact, s1 failed as a showup — split by entity type.
+      expect(result.attempted, equals(2));
+      expect(result.pactsFailed, equals(1));
+      expect(result.showupsFailed, equals(1));
     });
 
     test('returns 0 when CB is open and no records were queued', () async {
@@ -775,7 +779,10 @@ void main() {
       expect(cb.state, SyncCircuitBreakerState.open);
 
       final svc = _makeService(cb: cb);
-      expect(await svc.forceSyncAll(), equals(0));
+      final result = await svc.forceSyncAll();
+      expect(result.attempted, equals(0));
+      expect(result.pactsFailed, equals(0));
+      expect(result.showupsFailed, equals(0));
     });
 
     test('swallows exception from markAllPactsDirty and returns 0 (no-throw contract)', () async {
@@ -792,7 +799,10 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
       );
 
-      expect(await svc.forceSyncAll(), equals(0));
+      final result = await svc.forceSyncAll();
+      expect(result.attempted, equals(0));
+      expect(result.pactsFailed, equals(0));
+      expect(result.showupsFailed, equals(0));
     });
   });
 }

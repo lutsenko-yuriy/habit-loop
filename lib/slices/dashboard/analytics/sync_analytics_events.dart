@@ -89,14 +89,19 @@ final class FullSyncCompletedEvent extends AnalyticsEvent {
 }
 
 final class FullSyncFailedEvent extends AnalyticsEvent {
-  FullSyncFailedEvent({required this.fromState, required this.recordsFailed});
+  FullSyncFailedEvent({required this.fromState, required this.pactsFailed, required this.showupsFailed});
 
   final String fromState;
-  final int recordsFailed;
+  final int pactsFailed;
+  final int showupsFailed;
 
   @override
   String get name => 'full_sync_failed';
 
   @override
-  Map<String, Object> toParameters() => {'from_state': fromState, 'records_failed': recordsFailed};
+  Map<String, Object> toParameters() => {
+        'from_state': fromState,
+        'pacts_failed': pactsFailed,
+        'showups_failed': showupsFailed,
+      };
 }

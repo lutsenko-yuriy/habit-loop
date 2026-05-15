@@ -312,9 +312,9 @@ void main() {
       expect(syncService.forceSyncAllCount, 1);
     });
 
-    test('fires full_sync_completed and returns 0 when forceSyncAll returns 0', () async {
+    test('fires full_sync_completed and returns 0 when forceSyncAll has no failures', () async {
       final analytics = FakeAnalyticsService();
-      final syncService = FakeSyncService(); // forceSyncAllFailedCount defaults to 0
+      final syncService = FakeSyncService(); // pactsFailed + showupsFailed default to 0
       final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
       final container = _makeContainer(authService: auth, analytics: analytics, syncService: syncService);
       addTearDown(container.dispose);
@@ -329,9 +329,11 @@ void main() {
       expect(analytics.loggedEvents.any((e) => e.name == 'full_sync_failed'), isFalse);
     });
 
-    test('fires full_sync_failed with records_failed and returns N when forceSyncAll returns N', () async {
+    test('fires full_sync_failed with split counts and returns total when forceSyncAll has failures', () async {
       final analytics = FakeAnalyticsService();
-      final syncService = FakeSyncService()..forceSyncAllFailedCount = 3;
+      final syncService = FakeSyncService()
+        ..forceSyncAllPactsFailed = 2
+        ..forceSyncAllShowupsFailed = 1;
       final auth = FakeAuthService(userId: 'u1', isAnonymous: false);
       final container = _makeContainer(authService: auth, analytics: analytics, syncService: syncService);
       addTearDown(container.dispose);
@@ -341,11 +343,12 @@ void main() {
 
       final result = await container.read(syncStatusViewModelProvider.notifier).fullSync();
 
-      expect(result, equals(3));
+      expect(result, equals(3)); // 2 + 1
       expect(analytics.loggedEvents.any((e) => e.name == 'full_sync_failed'), isTrue);
       expect(analytics.loggedEvents.any((e) => e.name == 'full_sync_completed'), isFalse);
       final failedEvent = analytics.loggedEvents.firstWhere((e) => e.name == 'full_sync_failed');
-      expect(failedEvent.toParameters()['records_failed'], 3);
+      expect(failedEvent.toParameters()['pacts_failed'], 2);
+      expect(failedEvent.toParameters()['showups_failed'], 1);
     });
   });
 }
