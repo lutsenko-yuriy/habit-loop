@@ -63,6 +63,20 @@ class _FakeFirestoreClient implements FirestoreClient {
   Future<void> deleteShowup(String userId, String showupId) async {}
 }
 
+class _ThrowingPactSyncRepo implements PactSyncRepository {
+  @override
+  Future<List<Pact>> getDirtyPacts() async => [];
+
+  @override
+  Future<void> markPactSynced(String pactId, DateTime syncedAt) async {}
+
+  @override
+  Future<DateTime?> getPactSyncedAt(String pactId) async => null;
+
+  @override
+  Future<void> markAllPactsDirty() async => throw Exception('simulated DB error');
+}
+
 class _ThrowingFirestoreClient implements FirestoreClient {
   @override
   Future<List<Map<String, dynamic>>> getPacts(String userId) async => [];
@@ -727,6 +741,23 @@ void main() {
       expect(cb.state, SyncCircuitBreakerState.open);
 
       final svc = _makeService(cb: cb);
+      await expectLater(svc.forceSyncAll(), completes);
+    });
+
+    test('swallows exception thrown by markAllPactsDirty (no-throw contract)', () async {
+      // Use a sync repo whose markAllPactsDirty throws to verify the outer
+      // try/catch in forceSyncAll honours the no-throw contract.
+      final throwingSyncRepo = _ThrowingPactSyncRepo();
+      final svc = FirestoreSyncService(
+        firestoreClient: _FakeFirestoreClient(),
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: throwingSyncRepo,
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
+      );
+
       await expectLater(svc.forceSyncAll(), completes);
     });
   });
