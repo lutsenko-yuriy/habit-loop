@@ -108,6 +108,17 @@ class FirestoreSyncService implements SyncService {
   }
 
   @override
+  Future<void> forceSyncAll() async {
+    try {
+      await _pactSyncRepository.markAllPactsDirty();
+      await _showupSyncRepository.markAllShowupsDirty();
+      await flushDirtyRecords();
+    } catch (_) {
+      // No-throw contract — swallow exceptions.
+    }
+  }
+
+  @override
   Future<void> pullRemoteChanges() async {
     if (_circuitBreaker.currentState != SyncCircuitBreakerState.closed) return;
 

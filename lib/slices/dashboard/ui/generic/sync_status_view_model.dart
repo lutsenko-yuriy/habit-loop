@@ -63,10 +63,12 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
     try {
       await ref.read(authServiceProvider).linkWithGoogle();
       unawaited(analytics.logEvent(SignInWithGoogleSucceededEvent()));
-      // Pull historical data for the newly linked account and upload any dirty
-      // records that accumulated while the user was anonymous / signed out.
+      // Pull historical data from the newly linked account's Firestore, then
+      // force-sync all local records. forceSyncAll re-marks everything dirty
+      // so records that were already synced under an anonymous UID are
+      // re-uploaded under the new Google-linked UID if the UID changed.
       unawaited(sync.pullRemoteChanges());
-      unawaited(sync.flushDirtyRecords());
+      unawaited(sync.forceSyncAll());
     } on AuthLinkException catch (e) {
       unawaited(analytics.logEvent(SignInWithGoogleFailedEvent(errorCode: e.code)));
       rethrow;

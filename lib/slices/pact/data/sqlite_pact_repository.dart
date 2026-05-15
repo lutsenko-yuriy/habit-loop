@@ -123,6 +123,11 @@ class SqlitePactRepository implements PactRepository, PactSyncRepository {
     return DateTime.fromMillisecondsSinceEpoch((ms as int));
   }
 
+  @override
+  Future<void> markAllPactsDirty() async {
+    await _db.update(_table, {'dirty': 1, 'synced_at': null});
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------

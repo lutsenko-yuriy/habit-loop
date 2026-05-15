@@ -16,4 +16,7 @@ class NoopPactSyncRepository implements PactSyncRepository {
 
   @override
   Future<DateTime?> getPactSyncedAt(String pactId) async => null;
+
+  @override
+  Future<void> markAllPactsDirty() async {}
 }

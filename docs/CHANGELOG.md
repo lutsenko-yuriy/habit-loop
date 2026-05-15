@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.30.3] — 2026-05-15 (PR #85 merged)
+
+### Fixed — Anonymous pacts not synced after Google login (HAB-68)
+
+- Pacts and showups created while anonymous and online were not re-uploaded to Firestore after linking a Google account when the Firebase UID changed (the `credential-already-in-use` recovery path). They had `dirty=0` after the initial anonymous sync, so `flushDirtyRecords()` silently skipped them
+- New `SyncService.forceSyncAll()` method marks every local record as dirty (`dirty=1, synced_at=NULL`) then calls `flushDirtyRecords()`, guaranteeing all records are uploaded under the current UID regardless of prior sync state
+- `SyncStatusViewModel.linkWithGoogle()` now calls `forceSyncAll()` instead of `flushDirtyRecords()` after a successful sign-in — safe for both the `linkWithCredential` path (UID unchanged, records re-uploaded harmlessly) and the `signInWithCredential` path (UID changed, records now uploaded correctly)
+- `PactSyncRepository.markAllPactsDirty()` and `ShowupSyncRepository.markAllShowupsDirty()` added to domain interfaces; implemented by `SqlitePactRepository` / `SqliteShowupRepository` (single `UPDATE … SET dirty=1, synced_at=NULL`) and no-op'd in the noop/fake implementations
+- 10 new tests: 3 `SqlitePactRepository.markAllPactsDirty`, 3 `SqliteShowupRepository.markAllShowupsDirty`, 2 `FirestoreSyncService.forceSyncAll`, 1 `NoopSyncService.forceSyncAll`, 1 `SyncStatusViewModel.linkWithGoogle` sync assertion updated; 1049 tests passing, analyzer clean
+
+---
+
 ## [0.30.2] — 2026-05-15 (PR #84 merged)
 
 ### Fixed — Google sign-in: re-login after sign-out and missing historical data (HAB-67)

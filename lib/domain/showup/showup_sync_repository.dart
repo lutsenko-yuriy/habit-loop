@@ -18,4 +18,11 @@ abstract class ShowupSyncRepository {
   ///
   /// Used by the pull-on-start sync (WU5) to compare remote vs local timestamps.
   Future<DateTime?> getShowupSyncedAt(String showupId);
+
+  /// Marks every showup in the local database as dirty (`dirty=1, synced_at=NULL`).
+  ///
+  /// Called by [SyncService.forceSyncAll] after a Firebase UID change so that
+  /// all local records are re-uploaded under the new UID regardless of their
+  /// previous sync state.
+  Future<void> markAllShowupsDirty();
 }
