@@ -39,6 +39,15 @@ abstract class SyncService {
   /// the circuit breaker is not in [SyncCircuitBreakerState.open].
   void triggerManualSync();
 
+  /// Marks every local record as dirty and then calls [flushDirtyRecords].
+  ///
+  /// Use this after a Firebase UID change (e.g. upgrading from anonymous to a
+  /// Google-linked account via `signInWithCredential`) so that records
+  /// previously synced under the old UID are re-uploaded under the new one.
+  ///
+  /// No-throw contract: swallows all exceptions internally.
+  Future<void> forceSyncAll();
+
   /// Fetches all remote pacts and showups for the current user from Firestore
   /// and merges them into the local SQLite database.
   ///

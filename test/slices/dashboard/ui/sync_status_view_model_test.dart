@@ -218,7 +218,7 @@ void main() {
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_failed'), isFalse);
     });
 
-    test('pulls remote changes and flushes dirty records on success', () async {
+    test('pulls remote changes and force-syncs all records on success', () async {
       final analytics = FakeAnalyticsService();
       final syncService = FakeSyncService();
       final auth = FakeAuthService(userId: 'u1', isAnonymous: true);
@@ -232,7 +232,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(syncService.pullRemoteChangesCount, 1);
-      expect(syncService.flushCount, 1);
+      expect(syncService.forceSyncAllCount, 1);
     });
 
     test('fires tapped + failed events and rethrows on AuthLinkException', () async {

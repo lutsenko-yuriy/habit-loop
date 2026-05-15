@@ -18,4 +18,11 @@ abstract class PactSyncRepository {
   ///
   /// Used by the pull-on-start sync (WU5) to compare remote vs local timestamps.
   Future<DateTime?> getPactSyncedAt(String pactId);
+
+  /// Marks every pact in the local database as dirty (`dirty=1, synced_at=NULL`).
+  ///
+  /// Called by [SyncService.forceSyncAll] after a Firebase UID change so that
+  /// all local records are re-uploaded under the new UID regardless of their
+  /// previous sync state.
+  Future<void> markAllPactsDirty();
 }

@@ -63,6 +63,20 @@ class _FakeFirestoreClient implements FirestoreClient {
   Future<void> deleteShowup(String userId, String showupId) async {}
 }
 
+class _ThrowingPactSyncRepo implements PactSyncRepository {
+  @override
+  Future<List<Pact>> getDirtyPacts() async => [];
+
+  @override
+  Future<void> markPactSynced(String pactId, DateTime syncedAt) async {}
+
+  @override
+  Future<DateTime?> getPactSyncedAt(String pactId) async => null;
+
+  @override
+  Future<void> markAllPactsDirty() async => throw Exception('simulated DB error');
+}
+
 class _ThrowingFirestoreClient implements FirestoreClient {
   @override
   Future<List<Map<String, dynamic>>> getPacts(String userId) async => [];
@@ -86,10 +100,13 @@ class _ThrowingFirestoreClient implements FirestoreClient {
 
 class _InMemoryPactSyncRepo implements PactSyncRepository {
   final List<Pact> dirty;
+  final List<Pact> all;
   final List<String> synced = [];
   final Map<String, DateTime> syncedAts;
 
-  _InMemoryPactSyncRepo(this.dirty, {Map<String, DateTime>? syncedAts}) : syncedAts = Map.of(syncedAts ?? {});
+  _InMemoryPactSyncRepo(this.dirty, {Map<String, DateTime>? syncedAts, List<Pact>? all})
+      : syncedAts = Map.of(syncedAts ?? {}),
+        all = all ?? List.from(dirty);
 
   @override
   Future<List<Pact>> getDirtyPacts() async => List.from(dirty);
@@ -106,14 +123,27 @@ class _InMemoryPactSyncRepo implements PactSyncRepository {
     if (dirty.any((p) => p.id == pactId)) return null;
     return syncedAts[pactId];
   }
+
+  @override
+  Future<void> markAllPactsDirty() async {
+    for (final p in all) {
+      if (!dirty.any((d) => d.id == p.id)) {
+        dirty.add(p);
+      }
+    }
+    syncedAts.clear();
+  }
 }
 
 class _InMemoryShowupSyncRepo implements ShowupSyncRepository {
   final List<Showup> dirty;
+  final List<Showup> all;
   final List<String> synced = [];
   final Map<String, DateTime> syncedAts;
 
-  _InMemoryShowupSyncRepo(this.dirty, {Map<String, DateTime>? syncedAts}) : syncedAts = Map.of(syncedAts ?? {});
+  _InMemoryShowupSyncRepo(this.dirty, {Map<String, DateTime>? syncedAts, List<Showup>? all})
+      : syncedAts = Map.of(syncedAts ?? {}),
+        all = all ?? List.from(dirty);
 
   @override
   Future<List<Showup>> getDirtyShowups() async => List.from(dirty);
@@ -129,6 +159,16 @@ class _InMemoryShowupSyncRepo implements ShowupSyncRepository {
   Future<DateTime?> getShowupSyncedAt(String showupId) async {
     if (dirty.any((s) => s.id == showupId)) return null;
     return syncedAts[showupId];
+  }
+
+  @override
+  Future<void> markAllShowupsDirty() async {
+    for (final s in all) {
+      if (!dirty.any((d) => d.id == s.id)) {
+        dirty.add(s);
+      }
+    }
+    syncedAts.clear();
   }
 }
 
@@ -655,6 +695,70 @@ void main() {
 
       // Should not throw.
       await expectLater(svc.pullRemoteChanges(), completes);
+    });
+  });
+
+  group('FirestoreSyncService.forceSyncAll', () {
+    test('marks all records dirty and then flushes them to Firestore', () async {
+      final client = _FakeFirestoreClient();
+      final pact = _pact('p1');
+      final showup = _showup('s1');
+
+      // Start with p1 and s1 as clean (synced) records
+      final pactSyncRepo = _InMemoryPactSyncRepo(
+        [], // not dirty
+        syncedAts: {'p1': DateTime(2026, 5, 1)},
+        all: [pact],
+      );
+      final showupSyncRepo = _InMemoryShowupSyncRepo(
+        [], // not dirty
+        syncedAts: {'s1': DateTime(2026, 5, 1)},
+        all: [showup],
+      );
+
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: pactSyncRepo,
+        showupSyncRepository: showupSyncRepo,
+        pactRepository: InMemoryPactRepository([pact]),
+        showupRepository: InMemoryShowupRepository([showup]),
+      );
+
+      await svc.forceSyncAll();
+
+      expect(client.upsertedPacts.map((d) => d['id']), contains('p1'));
+      expect(client.upsertedShowups.map((d) => d['id']), contains('s1'));
+    });
+
+    test('does not throw even when CB is open', () async {
+      final cb = SyncCircuitBreaker();
+      cb.recordFailure();
+      for (var i = 0; i < 5; i++) {
+        cb.recordFailure();
+      }
+      expect(cb.state, SyncCircuitBreakerState.open);
+
+      final svc = _makeService(cb: cb);
+      await expectLater(svc.forceSyncAll(), completes);
+    });
+
+    test('swallows exception thrown by markAllPactsDirty (no-throw contract)', () async {
+      // Use a sync repo whose markAllPactsDirty throws to verify the outer
+      // try/catch in forceSyncAll honours the no-throw contract.
+      final throwingSyncRepo = _ThrowingPactSyncRepo();
+      final svc = FirestoreSyncService(
+        firestoreClient: _FakeFirestoreClient(),
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: throwingSyncRepo,
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
+      );
+
+      await expectLater(svc.forceSyncAll(), completes);
     });
   });
 }

@@ -8,6 +8,7 @@ class FakeSyncService implements SyncService {
   final List<String> uploadedShowupIds = [];
   int flushCount = 0;
   int triggerManualSyncCount = 0;
+  int forceSyncAllCount = 0;
   int pullRemoteChangesCount = 0;
 
   @override
@@ -28,6 +29,11 @@ class FakeSyncService implements SyncService {
   @override
   void triggerManualSync() {
     triggerManualSyncCount++;
+  }
+
+  @override
+  Future<void> forceSyncAll() async {
+    forceSyncAllCount++;
   }
 
   @override

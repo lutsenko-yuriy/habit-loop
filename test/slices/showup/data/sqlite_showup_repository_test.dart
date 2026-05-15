@@ -440,5 +440,37 @@ void main() {
         expect(await repository.getShowupSyncedAt('showup-1'), isNull);
       });
     });
+
+    group('markAllShowupsDirty', () {
+      test('re-dirtifies all previously-synced showups', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup(id: 's1'));
+        await repository.saveShowup(makeShowup(id: 's2'));
+        await repository.markShowupSynced('s1', DateTime(2026, 5, 1));
+        await repository.markShowupSynced('s2', DateTime(2026, 5, 1));
+        expect(await repository.getDirtyShowups(), isEmpty);
+
+        await repository.markAllShowupsDirty();
+
+        final dirty = await repository.getDirtyShowups();
+        expect(dirty.map((s) => s.id), containsAll(['s1', 's2']));
+      });
+
+      test('no-op when no showups exist', () async {
+        await expectLater(repository.markAllShowupsDirty(), completes);
+        expect(await repository.getDirtyShowups(), isEmpty);
+      });
+
+      test('getShowupSyncedAt returns null after markAllShowupsDirty', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup());
+        await repository.markShowupSynced('showup-1', DateTime(2026, 5, 1));
+        expect(await repository.getShowupSyncedAt('showup-1'), isNotNull);
+
+        await repository.markAllShowupsDirty();
+
+        expect(await repository.getShowupSyncedAt('showup-1'), isNull);
+      });
+    });
   });
 }

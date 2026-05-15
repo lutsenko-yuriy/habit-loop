@@ -175,4 +175,9 @@ class SqliteShowupRepository implements ShowupRepository, ShowupSyncRepository {
     if (ms == null) return null;
     return DateTime.fromMillisecondsSinceEpoch((ms as int));
   }
+
+  @override
+  Future<void> markAllShowupsDirty() async {
+    await _db.update(_table, {'dirty': 1, 'synced_at': null});
+  }
 }
