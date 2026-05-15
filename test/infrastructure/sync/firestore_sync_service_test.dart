@@ -699,7 +699,7 @@ void main() {
   });
 
   group('FirestoreSyncService.forceSyncAll', () {
-    test('marks all records dirty and then flushes them to Firestore', () async {
+    test('marks all records dirty, flushes them, and returns 0 when all succeed', () async {
       final client = _FakeFirestoreClient();
       final pact = _pact('p1');
       final showup = _showup('s1');
@@ -726,13 +726,47 @@ void main() {
         showupRepository: InMemoryShowupRepository([showup]),
       );
 
-      await svc.forceSyncAll();
+      final result = await svc.forceSyncAll();
 
       expect(client.upsertedPacts.map((d) => d['id']), contains('p1'));
       expect(client.upsertedShowups.map((d) => d['id']), contains('s1'));
+      expect(result, equals(0));
     });
 
-    test('does not throw even when CB is open', () async {
+    test('returns count of records that failed to upload', () async {
+      final pact = _pact('p1');
+      final showup = _showup('s1');
+
+      // Records start as clean — forceSyncAll marks them dirty then tries to flush.
+      // _ThrowingFirestoreClient always throws, so both stay dirty.
+      final pactSyncRepo = _InMemoryPactSyncRepo(
+        [],
+        syncedAts: {'p1': DateTime(2026, 5, 1)},
+        all: [pact],
+      );
+      final showupSyncRepo = _InMemoryShowupSyncRepo(
+        [],
+        syncedAts: {'s1': DateTime(2026, 5, 1)},
+        all: [showup],
+      );
+
+      final svc = FirestoreSyncService(
+        firestoreClient: _ThrowingFirestoreClient(),
+        authService: FakeAuthService(userId: 'user-1'),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: pactSyncRepo,
+        showupSyncRepository: showupSyncRepo,
+        pactRepository: InMemoryPactRepository([pact]),
+        showupRepository: InMemoryShowupRepository([showup]),
+      );
+
+      final result = await svc.forceSyncAll();
+
+      // p1 and s1 both failed to upload — 2 records remain dirty.
+      expect(result, equals(2));
+    });
+
+    test('returns 0 when CB is open and no records were queued', () async {
       final cb = SyncCircuitBreaker();
       cb.recordFailure();
       for (var i = 0; i < 5; i++) {
@@ -741,10 +775,10 @@ void main() {
       expect(cb.state, SyncCircuitBreakerState.open);
 
       final svc = _makeService(cb: cb);
-      await expectLater(svc.forceSyncAll(), completes);
+      expect(await svc.forceSyncAll(), equals(0));
     });
 
-    test('swallows exception thrown by markAllPactsDirty (no-throw contract)', () async {
+    test('swallows exception from markAllPactsDirty and returns 0 (no-throw contract)', () async {
       // Use a sync repo whose markAllPactsDirty throws to verify the outer
       // try/catch in forceSyncAll honours the no-throw contract.
       final throwingSyncRepo = _ThrowingPactSyncRepo();
@@ -758,7 +792,7 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
       );
 
-      await expectLater(svc.forceSyncAll(), completes);
+      expect(await svc.forceSyncAll(), equals(0));
     });
   });
 }

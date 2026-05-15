@@ -39,14 +39,21 @@ abstract class SyncService {
   /// the circuit breaker is not in [SyncCircuitBreakerState.open].
   void triggerManualSync();
 
-  /// Marks every local record as dirty and then calls [flushDirtyRecords].
+  /// Marks every local record as dirty, flushes them to Firestore, and returns
+  /// the number of records that failed to upload (remained dirty after the flush).
   ///
   /// Use this after a Firebase UID change (e.g. upgrading from anonymous to a
   /// Google-linked account via `signInWithCredential`) so that records
   /// previously synced under the old UID are re-uploaded under the new one.
+  /// Also used for user-triggered full-sync from the sync status dialog.
   ///
-  /// No-throw contract: swallows all exceptions internally.
-  Future<void> forceSyncAll();
+  /// Returns `0` when every record uploaded successfully. Returns `n > 0` when
+  /// `n` records could not be uploaded (e.g. Firestore errors, CB blocked).
+  ///
+  /// No-throw contract: swallows all exceptions internally; outer catch returns
+  /// `0` as a safety net (in practice dead code since all called methods also
+  /// have no-throw contracts).
+  Future<int> forceSyncAll();
 
   /// Fetches all remote pacts and showups for the current user from Firestore
   /// and merges them into the local SQLite database.

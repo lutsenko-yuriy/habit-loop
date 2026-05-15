@@ -22,7 +22,7 @@ class NoopSyncService implements SyncService {
   void triggerManualSync() {}
 
   @override
-  Future<void> forceSyncAll() async {}
+  Future<int> forceSyncAll() async => 0;
 
   @override
   Future<void> pullRemoteChanges() async {}

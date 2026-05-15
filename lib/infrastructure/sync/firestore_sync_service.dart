@@ -108,13 +108,21 @@ class FirestoreSyncService implements SyncService {
   }
 
   @override
-  Future<void> forceSyncAll() async {
+  Future<int> forceSyncAll() async {
     try {
       await _pactSyncRepository.markAllPactsDirty();
       await _showupSyncRepository.markAllShowupsDirty();
       await flushDirtyRecords();
+      // Records that uploaded successfully were marked synced (dirty=0) and are
+      // no longer returned by getDirtyPacts/getDirtyShowups. What remains are
+      // the ones that failed to upload.
+      final remainingPacts = await _pactSyncRepository.getDirtyPacts();
+      final remainingShowups = await _showupSyncRepository.getDirtyShowups();
+      return remainingPacts.length + remainingShowups.length;
     } catch (_) {
-      // No-throw contract — swallow exceptions.
+      // No-throw safety net — in practice dead code since all called methods
+      // also have no-throw contracts.
+      return 0;
     }
   }
 

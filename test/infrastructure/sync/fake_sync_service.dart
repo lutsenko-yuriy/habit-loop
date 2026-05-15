@@ -9,6 +9,7 @@ class FakeSyncService implements SyncService {
   int flushCount = 0;
   int triggerManualSyncCount = 0;
   int forceSyncAllCount = 0;
+  int forceSyncAllFailedCount = 0;
   int pullRemoteChangesCount = 0;
 
   @override
@@ -32,8 +33,9 @@ class FakeSyncService implements SyncService {
   }
 
   @override
-  Future<void> forceSyncAll() async {
+  Future<int> forceSyncAll() async {
     forceSyncAllCount++;
+    return forceSyncAllFailedCount;
   }
 
   @override
