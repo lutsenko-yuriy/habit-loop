@@ -55,9 +55,12 @@ final class FirebaseAuthClientAdapter implements FirebaseAuthClient {
         await _auth.signInWithCredential(credential);
       }
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'credential-already-in-use') {
-        // This Google account is linked to a different Firebase UID (e.g. from
-        // a previous install). Sign in directly to restore that account.
+      if (e.code == 'credential-already-in-use' || e.code == 'user-not-found') {
+        // credential-already-in-use: Google account is linked to a different
+        // Firebase UID (e.g. from a previous install). Sign in directly.
+        // user-not-found: the Firebase user this credential was linked to was
+        // deleted (e.g. cleared from Firebase Console). Sign in directly so
+        // Firebase creates or restores the Google-linked account.
         await _auth.signInWithCredential(credential);
       } else if (e.code == 'provider-already-linked') {
         // Already linked — nothing to do.

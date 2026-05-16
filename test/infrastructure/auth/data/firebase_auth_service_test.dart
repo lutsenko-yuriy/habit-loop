@@ -147,6 +147,18 @@ void main() {
       );
     });
 
+    test('linkWithGoogle surfaces user-not-found as AuthLinkException when recovery fails', () async {
+      // Simulates the case where the adapter tried signInWithCredential as a
+      // fallback (e.g. after linkWithCredential threw user-not-found) but that
+      // also failed — the error must reach the caller as AuthLinkException.
+      client.linkError = FirebaseAuthException(code: 'user-not-found');
+      await service.initialize();
+      await expectLater(
+        service.linkWithGoogle(),
+        throwsA(isA<AuthLinkException>().having((e) => e.code, 'code', 'user-not-found')),
+      );
+    });
+
     test('signOut delegates to client', () async {
       await service.initialize();
       await service.signOut();
