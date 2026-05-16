@@ -182,5 +182,27 @@ void main() {
       expect(client.linkWithGoogleCalled, isTrue);
       expect(service.isAnonymous, isFalse);
     });
+
+    // Regression guard for the userChanges() fix: authStateChanges must re-emit
+    // after linkWithGoogle() flips isAnonymous from true to false (same UID).
+    // The real FirebaseAuthClientAdapter uses userChanges() — which fires on
+    // profile mutations — instead of authStateChanges() to capture this event.
+    test('authStateChanges emits isAnonymous=false after linkWithGoogle', () async {
+      client = _FakeFirebaseAuthClient(
+        initialUser: _FakeUser(uid: 'anon-uid', isAnonymous: true),
+      );
+      service = FirebaseAuthService(client);
+
+      final states = <AuthState>[];
+      final sub = service.authStateChanges.listen(states.add);
+
+      await service.linkWithGoogle();
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+
+      expect(states, isNotEmpty);
+      expect(states.last.isAnonymous, isFalse);
+      expect(states.last.userId, 'anon-uid');
+    });
   });
 }

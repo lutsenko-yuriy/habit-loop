@@ -877,5 +877,22 @@ void main() {
 
       expect(await pactRepo.getAllPacts(), isEmpty);
     });
+
+    test('triggerManualSync does not advance CB when user is anonymous', () async {
+      final cb = SyncCircuitBreaker();
+      cb.recordFailure();
+      for (var i = 0; i < 5; i++) {
+        cb.recordFailure();
+      }
+      expect(cb.state, SyncCircuitBreakerState.open);
+
+      final svc = _makeService(
+        cb: cb,
+        auth: FakeAuthService(userId: 'anon-uid', isAnonymous: true),
+      );
+      svc.triggerManualSync();
+
+      expect(cb.state, SyncCircuitBreakerState.open);
+    });
   });
 }

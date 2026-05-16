@@ -105,12 +105,14 @@ class FirestoreSyncService implements SyncService {
 
   @override
   void triggerManualSync() {
+    if (_authService.isAnonymous) return;
     _circuitBreaker.triggerManualSync();
     unawaited(flushDirtyRecords());
   }
 
   @override
   Future<ForceSyncResult> forceSyncAll() async {
+    if (_authService.isAnonymous) return const ForceSyncResult(attempted: 0, pactsFailed: 0, showupsFailed: 0);
     try {
       await _pactSyncRepository.markAllPactsDirty();
       await _showupSyncRepository.markAllShowupsDirty();
