@@ -7,6 +7,9 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/auth/fake_auth_service.dart';
@@ -22,6 +25,8 @@ ProviderContainer _makeContainer({
   FakeAnalyticsService? analytics,
   FakeSyncService? syncService,
 }) {
+  final pactRepo = InMemoryPactRepository();
+  final showupRepo = InMemoryShowupRepository();
   return ProviderContainer(overrides: [
     authServiceProvider.overrideWithValue(
       authService ?? FakeAuthService(userId: 'user-1', isAnonymous: false),
@@ -31,6 +36,11 @@ ProviderContainer _makeContainer({
     ),
     analyticsServiceProvider.overrideWithValue(analytics ?? FakeAnalyticsService()),
     syncServiceProvider.overrideWithValue(syncService ?? FakeSyncService()),
+    // dashboardViewModelProvider and pactListViewModelProvider need these
+    // when linkWithGoogle() reloads the dashboard after sign-in.
+    pactRepositoryProvider.overrideWithValue(pactRepo),
+    showupRepositoryProvider.overrideWithValue(showupRepo),
+    pactTransactionServiceProvider.overrideWithValue(InMemoryPactTransactionService(pactRepo, showupRepo)),
   ]);
 }
 
@@ -212,6 +222,10 @@ void main() {
       await settling;
 
       await container.read(syncStatusViewModelProvider.notifier).linkWithGoogle();
+      // Allow the unawaited dashboard/pactList load() futures to complete before
+      // the container is disposed by addTearDown, preventing "container disposed"
+      // errors from the background load triggered inside linkWithGoogle().
+      await Future<void>.delayed(Duration.zero);
 
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_tapped'), isTrue);
       expect(analytics.loggedEvents.any((e) => e.name == 'sign_in_with_google_succeeded'), isTrue);
