@@ -52,10 +52,10 @@ class FirestoreSyncService implements SyncService {
 
   @override
   Future<void> uploadPact(Pact pact) async {
+    final userId = _authService.currentUserId;
+    if (userId == null || _authService.isAnonymous) return;
     await _uploadWithCb(
       upload: () async {
-        final userId = _authService.currentUserId;
-        if (userId == null) return;
         final now = DateTime.now();
         await _firestoreClient.upsertPact(userId, pact.id, SyncMapper.pactToDocument(pact, updatedAt: now));
       },
@@ -67,10 +67,10 @@ class FirestoreSyncService implements SyncService {
 
   @override
   Future<void> uploadShowup(Showup showup) async {
+    final userId = _authService.currentUserId;
+    if (userId == null || _authService.isAnonymous) return;
     await _uploadWithCb(
       upload: () async {
-        final userId = _authService.currentUserId;
-        if (userId == null) return;
         final now = DateTime.now();
         await _firestoreClient.upsertShowup(userId, showup.id, SyncMapper.showupToDocument(showup, updatedAt: now));
       },
@@ -83,6 +83,7 @@ class FirestoreSyncService implements SyncService {
   @override
   Future<void> flushDirtyRecords() async {
     if (!_circuitBreaker.canRequest) return;
+    if (_authService.isAnonymous) return;
 
     final dirtyPacts = await _pactSyncRepository.getDirtyPacts();
     final dirtyShowups = await _showupSyncRepository.getDirtyShowups();
@@ -140,7 +141,7 @@ class FirestoreSyncService implements SyncService {
     if (_circuitBreaker.currentState != SyncCircuitBreakerState.closed) return;
 
     final userId = _authService.currentUserId;
-    if (userId == null) return;
+    if (userId == null || _authService.isAnonymous) return;
 
     final now = DateTime.now();
 

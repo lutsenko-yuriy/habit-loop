@@ -78,7 +78,7 @@ final class FirebaseAuthClientAdapter implements FirebaseAuthClient {
   }
 
   @override
-  Stream<AuthState> get authStateChanges => _auth.authStateChanges().map(
+  Stream<AuthState> get authStateChanges => _auth.userChanges().map(
         (user) => AuthState(
           userId: user?.uid,
           isAnonymous: user?.isAnonymous ?? true,
