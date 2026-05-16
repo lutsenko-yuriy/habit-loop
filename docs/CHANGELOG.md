@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.32.1] — 2026-05-16 (PR #88 merged)
+
+### Fixed — Fresh install shows user as already logged in on iOS (HAB-71)
+
+- On iOS, Firebase Auth credentials survive app uninstall/reinstall in the Keychain; a fresh install would find a non-null `currentUser` and skip anonymous sign-in, leaving the dashboard in a synced/Google-linked state with no local data
+- `clearStaleKeychainIfFirstLaunch()` added to `lib/infrastructure/auth/data/first_launch_auth_fix.dart`; called from `main.dart` before `authService.initialize()`: writes a dedicated `habit_loop_launched` SharedPreferences key on the very first launch and calls `signOut()` if a stale Firebase user is found
+- 6 unit tests in `test/infrastructure/auth/data/first_launch_auth_fix_test.dart`; 2 new integration flow tests in `integration_test/fresh_install_flow_test.dart` (fresh-install signs out stale user → `cloud_off` shown; returning user is unaffected)
+- `AppHarness` harness fixed to emit current auth state after `beforePump` callbacks rather than constructor-time values, so flow tests that mutate auth state in `beforePump` are not silently overwritten
+- 1062 tests passing, analyzer clean
+
+---
+
 ## [0.32.0] — 2026-05-16 (PR #87 merged)
 
 ### Added — Full-stack app harness and UI flow tests (HAB-70)
