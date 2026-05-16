@@ -26,6 +26,7 @@ import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_clie
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_service.dart';
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_client_adapter.dart';
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_service.dart';
+import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
@@ -532,15 +533,21 @@ Future<void> main() async {
     // is available immediately and initialize() returns synchronously.
     //
     // Pull remote changes after initialize() completes so userId is guaranteed
-    // non-null when pullRemoteChanges() runs. The then() chain is fire-and-forget
+    // non-null when pullRemoteChanges() runs. The async closure is fire-and-forget
     // and never blocks the UI. On first-ever install the anonymous sign-in is a
     // network call; once it resolves the UID is fresh with no remote data, so the
     // pull is a no-op. On repeat launches initialize() returns synchronously with
     // the cached user and the pull proceeds immediately.
-    unawaited(authService.initialize().then((_) {
+    unawaited(() async {
+      // iOS Keychain persists Firebase credentials across app reinstalls. If this
+      // is a fresh install (no device ID key in SharedPreferences) but Firebase
+      // has a cached user, sign out first so the app starts as anonymous.
+      final prefs = await SharedPreferences.getInstance();
+      await clearStaleKeychainIfFirstLaunch(authService: authService, prefs: prefs);
+      await authService.initialize();
       final syncService = _container?.read(syncServiceProvider);
       if (syncService != null) unawaited(syncService.pullRemoteChanges());
-    }));
+    }());
 
     // Cold-start fallback: if the notification response callback fired during
     // initialize() and already deferred navigation via addPostFrameCallback,
