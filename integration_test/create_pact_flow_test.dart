@@ -14,8 +14,6 @@ void main() {
 
   group('Create pact flow (Android)', () {
     late AppHarness h;
-
-    setUp(() async {});
     tearDown(() => h.dispose());
 
     testWidgets('full wizard creates a pact and showup appears on dashboard', (tester) async {
