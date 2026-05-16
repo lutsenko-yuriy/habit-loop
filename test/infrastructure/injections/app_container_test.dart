@@ -10,7 +10,9 @@ import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_ser
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
+import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 
 import '../locale/fake_locale_preference_service.dart';
 
@@ -319,6 +321,36 @@ void main() {
       addTearDown(container.dispose);
 
       expect(() => container.read(showupSyncRepositoryProvider), returnsNormally);
+    });
+
+    test('pactSyncRepositoryProvider override is included when provided', () async {
+      const syncRepo = NoopPactSyncRepository();
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactSyncRepository: syncRepo,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(pactSyncRepositoryProvider), same(syncRepo));
+    });
+
+    test('showupSyncRepositoryProvider override is included when provided', () async {
+      const syncRepo = NoopShowupSyncRepository();
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        showupSyncRepository: syncRepo,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(showupSyncRepositoryProvider), same(syncRepo));
     });
 
     test('firestoreClientProvider resolves to noop default when not provided', () async {

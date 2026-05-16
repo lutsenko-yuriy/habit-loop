@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.32.3] — 2026-05-16 (PR #90 merged)
+
+### Fixed — Local pacts/showups not uploaded to Firestore after Google sign-in (HAB-73)
+
+- `main.dart` was not passing `pactSyncRepository` and `showupSyncRepository` to `AppContainer.overrides()`, so both providers fell back to their noop defaults whose `getDirtyPacts()` / `getDirtyShowups()` always return empty lists
+- `flushDirtyRecords()` and `forceSyncAll()` therefore found zero dirty records in production and uploaded nothing — the bug was masked before HAB-72 because uploads went via direct `uploadPact/uploadShowup` calls; after HAB-72 blocked anonymous uploads, `forceSyncAll()` became the only post-login upload path, exposing the broken wiring
+- Fix: pass `pactSyncRepository: pactRepo` and `showupSyncRepository: showupRepo` (both backed by `SqlitePactRepository` / `SqliteShowupRepository`) to `AppContainer.overrides()` so the sync service can read and mark real dirty records
+- Two new `app_container_test.dart` unit tests guard against regression: `pactSyncRepositoryProvider` and `showupSyncRepositoryProvider` override is included when provided
+- New integration test in `sync_on_login_flow_test.dart` (spy sync repos + `_DirtyCapturingSyncService`) verifies that `forceSyncAll()` reads dirty records after sign-in — would fail if the providers reverted to noop defaults
+- 1072 unit tests passing, analyzer clean
+
+---
+
 ## [0.32.2] — 2026-05-16 (PR #89 merged)
 
 ### Fixed — Google sign-in: user-not-found error, grey icon after first login, and anonymous sync (HAB-72)

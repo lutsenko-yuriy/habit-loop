@@ -8,9 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -86,6 +90,77 @@ class _SeedingSyncService extends FakeSyncService {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Spy helpers for the dirty-records-uploaded-after-sign-in test
+// ---------------------------------------------------------------------------
+
+/// Spy [PactSyncRepository] that holds a pre-seeded dirty list and records
+/// nothing in storage — sufficient for verifying that [forceSyncAll] reads
+/// from whatever [pactSyncRepositoryProvider] is wired to.
+class _SpyPactSyncRepository implements PactSyncRepository {
+  final _dirty = <Pact>[];
+
+  void seedAsDirty(Pact pact) => _dirty.add(pact);
+
+  @override
+  Future<List<Pact>> getDirtyPacts() async => List.unmodifiable(_dirty);
+
+  @override
+  Future<void> markPactSynced(String pactId, DateTime syncedAt) async {
+    _dirty.removeWhere((p) => p.id == pactId);
+  }
+
+  @override
+  Future<DateTime?> getPactSyncedAt(String pactId) async => null;
+
+  @override
+  Future<void> markAllPactsDirty() async {}
+}
+
+/// Spy [ShowupSyncRepository] — mirrors [_SpyPactSyncRepository].
+class _SpyShowupSyncRepository implements ShowupSyncRepository {
+  final _dirty = <Showup>[];
+
+  void seedAsDirty(Showup showup) => _dirty.add(showup);
+
+  @override
+  Future<List<Showup>> getDirtyShowups() async => List.unmodifiable(_dirty);
+
+  @override
+  Future<void> markShowupSynced(String showupId, DateTime syncedAt) async {
+    _dirty.removeWhere((s) => s.id == showupId);
+  }
+
+  @override
+  Future<DateTime?> getShowupSyncedAt(String showupId) async => null;
+
+  @override
+  Future<void> markAllShowupsDirty() async {}
+}
+
+/// Sync service that, in [forceSyncAll], reads the spy repos and records which
+/// IDs were found dirty — without touching Firestore.
+class _DirtyCapturingSyncService extends FakeSyncService {
+  _DirtyCapturingSyncService(this._pactSyncRepo, this._showupSyncRepo);
+
+  final _SpyPactSyncRepository _pactSyncRepo;
+  final _SpyShowupSyncRepository _showupSyncRepo;
+
+  final flushedPactIds = <String>[];
+  final flushedShowupIds = <String>[];
+
+  @override
+  Future<ForceSyncResult> forceSyncAll() async {
+    for (final p in await _pactSyncRepo.getDirtyPacts()) {
+      flushedPactIds.add(p.id);
+    }
+    for (final s in await _showupSyncRepo.getDirtyShowups()) {
+      flushedShowupIds.add(s.id);
+    }
+    return super.forceSyncAll();
+  }
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
@@ -133,6 +208,61 @@ void main() {
       // ── 4. Wait for dashboard to reload with remote data ─────────────────
       await waitFor(tester, find.text('Morning Run'));
       expect(find.text('Morning Run'), findsOneWidget);
+    });
+
+    testWidgets('forceSyncAll reads dirty local records from the wired sync repos after sign-in', (tester) async {
+      // Regression guard for HAB-73: main.dart was not passing pactSyncRepository
+      // and showupSyncRepository to AppContainer.overrides(), so getDirtyPacts()
+      // always returned [] from the noop defaults and local records were never
+      // uploaded after sign-in.
+      //
+      // This test verifies the full sign-in → forceSyncAll → getDirtyPacts path
+      // using spy repos so that a regression to noop defaults would break it.
+      final pactSyncRepo = _SpyPactSyncRepository();
+      final showupSyncRepo = _SpyShowupSyncRepository();
+      late _DirtyCapturingSyncService capturer;
+
+      h = await AppHarness.create(
+        tester,
+        initiallyAnonymous: true,
+        syncServiceFactory: (_, __) {
+          capturer = _DirtyCapturingSyncService(pactSyncRepo, showupSyncRepo);
+          return capturer;
+        },
+        extraOverrides: [
+          todayProvider.overrideWithValue(_testNow),
+          showupDetailNowProvider.overrideWithValue(_testNow),
+          pactSyncRepositoryProvider.overrideWithValue(pactSyncRepo),
+          showupSyncRepositoryProvider.overrideWithValue(showupSyncRepo),
+        ],
+        beforePump: (h) async {
+          // Simulate records created while anonymous: present in the local
+          // repos and marked dirty in the sync repos.
+          await h.pactRepo.savePact(_localPact);
+          await h.showupRepo.saveShowups([_localShowup]);
+          pactSyncRepo.seedAsDirty(_localPact);
+          showupSyncRepo.seedAsDirty(_localShowup);
+        },
+      );
+
+      // ── 1. Dashboard shows the local pact; forceSyncAll not yet called ───
+      await waitFor(tester, find.text('Evening Walk'));
+      expect(capturer.forceSyncAllCount, isZero);
+
+      // ── 2. Open sync status dialog and sign in ────────────────────────────
+      await waitFor(tester, find.byIcon(Icons.cloud_off_outlined));
+      await tester.tap(find.byKey(const Key('sync-status-button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n(tester).signInWithGoogle));
+      await tester.pump();
+
+      // ── 3. Wait for the icon to flip to cloud_done (auth → synced state) ─
+      await waitFor(tester, find.byIcon(Icons.cloud_done_outlined));
+
+      // ── 4. forceSyncAll was called and found the dirty records ────────────
+      expect(capturer.forceSyncAllCount, equals(1));
+      expect(capturer.flushedPactIds, contains(_localPactId));
+      expect(capturer.flushedShowupIds, contains(_localShowupId));
     });
 
     testWidgets('sign-in merges remote data with pre-existing local pacts', (tester) async {

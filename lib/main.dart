@@ -487,6 +487,8 @@ Future<void> main() async {
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
+      pactSyncRepository: pactRepo,
+      showupSyncRepository: showupRepo,
       transactionService: txService,
       // Talker log service is active in debug and profile builds only; the
       // in-app overlay is gated on kDebugMode inside TalkerLogService.
