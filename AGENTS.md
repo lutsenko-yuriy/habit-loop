@@ -107,32 +107,37 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
    ```
    If the branch already exists, rebase it onto `origin/main` before writing any code (`git rebase origin/main`). This ensures the PR diff contains only the new work.
    **Before merging**, always rebase the branch onto the latest `origin/main` again (`git fetch origin && git rebase origin/main`) so the branch is up to date and the merge lands cleanly on the current tip.
-4. Write failing tests that describe the expected behaviour.
-5. Implement the minimum code to make the tests pass.
-6. Refactor if needed.
-7. Run `flutter test` and `flutter analyze` — fix **all** test failures and analyzer warnings/errors before proceeding. A clean analyzer output (`No issues found`) is required before committing; do not leave warnings unresolved on the assumption they are pre-existing.
-8. Apply formatting in a dedicated commit **before** the functional commit: run `dart format -l 120 lib/ test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
-9. Update documentation if affected by the changes:
+4. For features with user-visible screens or interactions: draft widget tests before writing production code:
+   - Create new widget tests covering each new screen and key user flow (swiping, tapping, navigation, locale changes, auto-advance, etc.).
+   - Update any existing widget tests that the new screens or UI changes will affect.
+   - Present all new and updated widget test files to the user and wait for approval.
+   - Do not continue to step 5 until the user approves the widget tests.
+5. Write failing unit tests that describe the expected business logic behaviour.
+6. Implement the minimum code to make the tests pass.
+7. Refactor if needed.
+8. Run `flutter test` and `flutter analyze` — fix **all** test failures and analyzer warnings/errors before proceeding. A clean analyzer output (`No issues found`) is required before committing; do not leave warnings unresolved on the assumption they are pre-existing.
+9. Apply formatting in a dedicated commit **before** the functional commit: run `dart format -l 120 lib/ test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
+10. Update documentation if affected by the changes:
     - `CLAUDE.md` — architecture, conventions, or workflow changed
     - `@docs/PRODUCT_SPEC.md` — functionality added, removed, or changed
     - `@docs/ARCHITECTURE.md` — code structure or dependencies changed
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
-10. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
-11. Commit all changes with a descriptive message.
-12. Push to the remote and open a PR — all in parallel:
+11. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
+12. Commit all changes with a descriptive message.
+13. Push to the remote and open a PR — all in parallel:
     - Push the branch to the remote.
     - Open a PR.
     - Invoke both review skills simultaneously once the PR is open (they are independent — launch them simultaneously):
       - `review` for architectural review: `Invoke the review skill for PR #<number>`.
       - `audit` for runtime/launch/migration review: `Invoke the audit skill for PR #<number>`.
     - Inform the user of the PR URL.
-13. Remind the user to compact the context after each commit to keep the conversation lean.
-14. When the user approves the PR, invoke the `ship` skill **before merging**:
+14. Remind the user to compact the context after each commit to keep the conversation lean.
+15. When the user approves the PR, invoke the `ship` skill **before merging**:
     ```
     Invoke the ship skill for PR #<number>
     ```
     The skill closes the Linear issues, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
-15. Clear the context after the PR with the changes is merged.
+16. Clear the context after the PR with the changes is merged.
 
 ## Experiments
 

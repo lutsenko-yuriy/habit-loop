@@ -6,25 +6,23 @@
   <line x1="100" y1="168" x2="224" y2="168" stroke="#004D40" stroke-width="3" stroke-linecap="round"/>
   <line x1="100" y1="168" x2="100" y2="76" stroke="#004D40" stroke-width="3" stroke-linecap="round"/>
 
-  <!-- Bars -->
-  <rect x="110" y="148" width="20" height="20" rx="3" fill="#8BC34A" opacity="0.7"/>
-  <rect x="138" y="128" width="20" height="40" rx="3" fill="#8BC34A" opacity="0.85"/>
-  <rect x="166" y="108" width="20" height="60" rx="3" fill="#00796B"/>
-  <rect x="194" y="90" width="20" height="78" rx="3" fill="#00796B"/>
+  <!-- Bars — no opacity, linearly interpolated color from #8BC34A → #00796B -->
+  <rect x="110" y="148" width="20" height="20" rx="3" fill="#8BC34A"/>
+  <rect x="138" y="128" width="20" height="40" rx="3" fill="#5DAA55"/>
+  <rect x="166" y="108" width="20" height="60" rx="3" fill="#2E9260"/>
+  <rect x="194" y="88" width="20" height="80" rx="3" fill="#00796B"/>
 
-  <!-- Trend line -->
-  <polyline points="120,144 148,124 176,104 204,86"
+  <!-- Trend line — connects all dots and the star -->
+  <polyline points="120,144 148,124 176,104 204,84"
             fill="none" stroke="#FFB74D" stroke-width="3"
-            stroke-linecap="round" stroke-linejoin="round"
-            stroke-dasharray="none"/>
+            stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- Trend dots -->
   <circle cx="120" cy="144" r="5" fill="#FFB74D"/>
   <circle cx="148" cy="124" r="5" fill="#FFB74D"/>
-  <circle cx="176" cy="104" r="5" fill="#FFB74D"/>
-  <circle cx="204" cy="86" r="7" fill="#FFB74D" stroke="white" stroke-width="2"/>
+  <circle cx="176" cy="104" r="7" fill="#FFB74D"/>
 
-  <!-- Star burst at top -->
-  <polygon points="204,72 207,80 216,80 209,85 212,94 204,89 196,94 199,85 192,80 201,80"
-           fill="#FFB74D"/>
+  <!-- Star burst at top — scaled up ~1.3× with stroke for definition -->
+  <polygon points="204,68 208,79 220,79 211,85 214,97 204,91 194,97 198,85 188,79 200,79"
+           fill="#FFB74D" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
 </svg>
