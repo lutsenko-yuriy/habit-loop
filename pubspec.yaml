@@ -2,7 +2,7 @@ name: habit_loop
 description: "Habit Loop — build habits through pacts and showups."
 publish_to: 'none'
 
-version: 0.32.3+68
+version: 0.33.0+68
 
 environment:
   sdk: ^3.6.0
@@ -32,6 +32,7 @@ dependencies:
   uuid: ^4.5.3
   google_sign_in: ^7.2.0
   connectivity_plus: ^6.1.4
+  flutter_svg: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -44,3 +45,6 @@ dev_dependencies:
 flutter:
   generate: true
   uses-material-design: true
+
+  assets:
+    - assets/onboarding/

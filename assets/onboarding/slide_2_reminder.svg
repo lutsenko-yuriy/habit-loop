@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240">
+  <!-- Background -->
+  <circle cx="160" cy="120" r="90" fill="#E0F2F1"/>
+
+  <!-- Bell body -->
+  <path d="M 130 130 Q 128 100 160 94 Q 192 100 190 130 Z" fill="#00796B"/>
+  <!-- Bell bottom rim -->
+  <ellipse cx="160" cy="130" rx="30" ry="7" fill="#004D40"/>
+  <!-- Clapper -->
+  <circle cx="160" cy="140" r="8" fill="#004D40"/>
+  <!-- Bell top knob -->
+  <circle cx="160" cy="94" r="5" fill="#004D40"/>
+
+  <!-- Calendar card -->
+  <rect x="188" y="82" width="52" height="50" rx="6" fill="white" stroke="#00796B" stroke-width="2"/>
+  <!-- Calendar header -->
+  <rect x="188" y="82" width="52" height="14" rx="6" fill="#00796B"/>
+  <rect x="188" y="89" width="52" height="7" fill="#00796B"/>
+  <!-- Calendar grid dots -->
+  <circle cx="200" cy="107" r="3" fill="#8BC34A"/>
+  <circle cx="214" cy="107" r="3" fill="#8BC34A"/>
+  <circle cx="228" cy="107" r="3" fill="#FFB74D"/>
+  <circle cx="200" cy="120" r="3" fill="#8BC34A"/>
+  <circle cx="214" cy="120" r="3" fill="#8BC34A"/>
+  <circle cx="228" cy="120" r="3" fill="#8BC34A"/>
+
+  <!-- Notification pulse rings -->
+  <circle cx="196" cy="90" r="10" fill="none" stroke="#FFB74D" stroke-width="2.5" opacity="0.7"/>
+  <circle cx="196" cy="90" r="16" fill="none" stroke="#FFB74D" stroke-width="1.5" opacity="0.4"/>
+  <circle cx="196" cy="90" r="6" fill="#FFB74D"/>
+</svg>

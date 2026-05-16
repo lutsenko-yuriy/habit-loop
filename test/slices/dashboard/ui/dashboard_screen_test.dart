@@ -51,11 +51,12 @@ Widget _buildApp({
 
 void main() {
   group('DashboardScreen', () {
-    testWidgets('shows empty state when no pacts exist', (tester) async {
+    testWidgets('shows onboarding carousel when no pacts exist', (tester) async {
       await tester.pumpWidget(_buildApp());
       await tester.pumpAndSettle();
 
-      expect(find.text('No pacts yet'), findsOneWidget);
+      // Onboarding carousel is shown instead of the old empty state.
+      expect(find.text('No pacts yet'), findsNothing);
       expect(find.text('Create a Pact'), findsOneWidget);
     });
 

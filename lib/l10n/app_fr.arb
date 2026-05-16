@@ -243,5 +243,21 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "onboardingSlide0Title": "Construis ton habitude. Pour de vrai cette fois.",
+  "@onboardingSlide0Title": {},
+  "onboardingSlide0Body": "Habit Loop t'aide à t'engager, à te montrer et à suivre ta progression — un pacte à la fois.",
+  "@onboardingSlide0Body": {},
+  "onboardingSlide1Title": "Fais un pacte avec toi-même",
+  "@onboardingSlide1Title": {},
+  "onboardingSlide1Body": "Choisis une habitude, fixe un horaire et promets de te montrer. Pas de pauses, pas d'exceptions — juste ta parole.",
+  "@onboardingSlide1Body": {},
+  "onboardingSlide2Title": "Nous te gardons sur la bonne voie",
+  "@onboardingSlide2Title": {},
+  "onboardingSlide2Body": "Quand c'est l'heure de te montrer, nous te le rappelons. Marque-le comme fait, garde ton streak vivant.",
+  "@onboardingSlide2Body": {},
+  "onboardingSlide3Title": "Vois ce qui fonctionne",
+  "@onboardingSlide3Title": {},
+  "onboardingSlide3Body": "Suis tes showups, repère des tendances et décide : continue, ajuste ou essaie autre chose.",
+  "@onboardingSlide3Body": {}
 }

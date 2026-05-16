@@ -86,11 +86,12 @@ void main() {
     expect(find.byIcon(CupertinoIcons.globe), findsOneWidget);
   });
 
-  testWidgets('iOS dashboard globe icon visible even when hasPacts is false', (tester) async {
+  testWidgets('iOS dashboard shows onboarding carousel when hasPacts is false', (tester) async {
     await tester.pumpWidget(_buildTestApp(hasPacts: false));
 
-    expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
-    expect(find.byIcon(CupertinoIcons.globe), findsOneWidget);
+    // Carousel replaces the regular scaffold — no nav bar or language-picker-button.
+    expect(find.byKey(const Key('language-picker-button')), findsNothing);
+    expect(find.text('Create a Pact'), findsOneWidget);
   });
 
   testWidgets('tapping globe icon shows CupertinoActionSheet with language options', (tester) async {

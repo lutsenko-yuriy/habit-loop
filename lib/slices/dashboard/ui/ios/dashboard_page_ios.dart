@@ -11,6 +11,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
+import 'package:habit_loop/slices/dashboard/ui/ios/onboarding_carousel_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
@@ -54,9 +55,13 @@ class DashboardPageIos extends ConsumerWidget {
           messenger: ScaffoldMessenger.of(context),
         );
 
+    // Show the onboarding carousel full-screen (no nav bar) when there are no pacts.
+    if (!hasPacts && !state.isLoading) {
+      return OnboardingCarouselIos(onCreatePact: onCreatePact);
+    }
+
     return CupertinoPageScaffold(
-      backgroundColor:
-          hasPacts ? Theme.of(context).colorScheme.surface : CupertinoColors.systemBackground.resolveFrom(context),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoButton(
           key: const Key('language-picker-button'),
@@ -115,55 +120,15 @@ class DashboardPageIos extends ConsumerWidget {
             children: [
               state.isLoading
                   ? const Center(child: CupertinoActivityIndicator())
-                  : !hasPacts
-                      ? _EmptyState(l10n: l10n, onCreatePact: onCreatePact)
-                      : _DashboardContent(
-                          state: state,
-                          l10n: l10n,
-                          onDaySelected: onDaySelected,
-                          onShowupTapped: onShowupTapped,
-                        ),
+                  : _DashboardContent(
+                      state: state,
+                      l10n: l10n,
+                      onDaySelected: onDaySelected,
+                      onShowupTapped: onShowupTapped,
+                    ),
               PactsPanel(onCreatePact: onCreatePact),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  final AppLocalizations l10n;
-  final AsyncCallback onCreatePact;
-
-  const _EmptyState({required this.l10n, required this.onCreatePact});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.noPactsYet,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.noPactsDescription,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            CupertinoButton.filled(
-              onPressed: onCreatePact,
-              child: Text(l10n.createPact),
-            ),
-          ],
         ),
       ),
     );

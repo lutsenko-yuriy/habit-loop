@@ -243,5 +243,22 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+
+  "onboardingSlide0Title": "Build your habit. For real this time.",
+  "@onboardingSlide0Title": {},
+  "onboardingSlide0Body": "Habit Loop helps you commit, show up, and track progress — one pact at a time.",
+  "@onboardingSlide0Body": {},
+  "onboardingSlide1Title": "Make a pact with yourself",
+  "@onboardingSlide1Title": {},
+  "onboardingSlide1Body": "Pick a habit, set a schedule, and promise to show up. No pauses, no exceptions — just your word.",
+  "@onboardingSlide1Body": {},
+  "onboardingSlide2Title": "We'll keep you on track",
+  "@onboardingSlide2Title": {},
+  "onboardingSlide2Body": "When it's time to show up, we'll remind you. Mark it done, keep your streak alive.",
+  "@onboardingSlide2Body": {},
+  "onboardingSlide3Title": "See what's working",
+  "@onboardingSlide3Title": {},
+  "onboardingSlide3Body": "Track your showups, spot patterns, and decide: keep going, adjust, or try something different.",
+  "@onboardingSlide3Body": {}
 }

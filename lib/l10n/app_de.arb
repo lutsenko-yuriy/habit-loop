@@ -243,5 +243,21 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "onboardingSlide0Title": "Bau deine Gewohnheit auf. Diesmal wirklich.",
+  "@onboardingSlide0Title": {},
+  "onboardingSlide0Body": "Habit Loop hilft dir, dich zu verpflichten, aufzutauchen und Fortschritte zu verfolgen — ein Pakt nach dem anderen.",
+  "@onboardingSlide0Body": {},
+  "onboardingSlide1Title": "Schließ einen Pakt mit dir selbst",
+  "@onboardingSlide1Title": {},
+  "onboardingSlide1Body": "Wähle eine Gewohnheit, setze einen Zeitplan und versprich, aufzutauchen. Keine Pausen, keine Ausnahmen — nur dein Wort.",
+  "@onboardingSlide1Body": {},
+  "onboardingSlide2Title": "Wir halten dich auf Kurs",
+  "@onboardingSlide2Title": {},
+  "onboardingSlide2Body": "Wenn es Zeit ist aufzutauchen, erinnern wir dich. Markiere es als erledigt, halte deinen Streak am Leben.",
+  "@onboardingSlide2Body": {},
+  "onboardingSlide3Title": "Sieh, was funktioniert",
+  "@onboardingSlide3Title": {},
+  "onboardingSlide3Body": "Verfolge deine Showups, erkenne Muster und entscheide: weitermachen, anpassen oder etwas anderes ausprobieren.",
+  "@onboardingSlide3Body": {}
 }

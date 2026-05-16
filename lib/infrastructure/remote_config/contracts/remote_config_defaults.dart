@@ -29,6 +29,12 @@ abstract final class RemoteConfigDefaults {
   /// regardless of this flag.
   static const String postDeadlineNotificationBehavior = 'dismiss';
 
+  /// Seconds each onboarding slide is displayed before auto-advancing to the next.
+  ///
+  /// Values below 5 are treated as 0 (no auto-advance). Set to 0 in the Firebase
+  /// Remote Config console to disable auto-advance for all users.
+  static const int onboardingAutoAdvanceSeconds = 10;
+
   /// All default values keyed by their Remote Config parameter name.
   ///
   /// Pass this map to `FirebaseRemoteConfig.setDefaults()` during initialisation
@@ -38,5 +44,6 @@ abstract final class RemoteConfigDefaults {
     'max_active_pacts': maxActivePacts,
     'notification_text_variant': notificationTextVariant,
     'post_deadline_notification_behavior': postDeadlineNotificationBehavior,
+    'onboarding_auto_advance_seconds': onboardingAutoAdvanceSeconds,
   };
 }

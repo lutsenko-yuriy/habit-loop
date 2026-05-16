@@ -60,11 +60,12 @@ void main() {
     expect(find.byIcon(Icons.language), findsOneWidget);
   });
 
-  testWidgets('Android dashboard globe icon visible even when hasPacts is false', (tester) async {
+  testWidgets('Android dashboard shows onboarding carousel when hasPacts is false', (tester) async {
     await tester.pumpWidget(_buildTestApp(hasPacts: false));
 
-    expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
-    expect(find.byIcon(Icons.language), findsOneWidget);
+    // Carousel replaces the regular scaffold — no app bar or language-picker-button.
+    expect(find.byKey(const Key('language-picker-button')), findsNothing);
+    expect(find.text('Create a Pact'), findsOneWidget);
   });
 
   testWidgets('tapping globe icon shows SimpleDialog with language options', (tester) async {

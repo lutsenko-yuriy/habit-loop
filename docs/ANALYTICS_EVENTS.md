@@ -194,6 +194,47 @@ Fired when a user-triggered full sync finishes with at least one record that fai
 
 ---
 
+### `onboarding_slide_viewed`
+
+Fired every time a slide becomes active — on first render (slide 0) and on every subsequent transition, whether triggered by auto-advance or a manual swipe. (HAB-73)
+
+| Property | Type | Description |
+|---|---|---|
+| `slide_index` | `int` | 0-based index of the slide that became active (0–3) |
+| `trigger` | `string` | `"auto"` — timer-driven advance; `"swipe"` — user-initiated swipe |
+
+---
+
+### `onboarding_completed`
+
+Fired the first time the user reaches slide 3 (the last slide) within a session. Marks full carousel exposure. (HAB-73)
+
+| Property | Type | Description |
+|---|---|---|
+| `reached_via` | `string` | `"auto"` — last auto-advance reached slide 3; `"swipe"` — user swiped to slide 3 |
+
+---
+
+### `onboarding_create_pact_tapped`
+
+Fired when the user taps "Create a pact" on the onboarding screen. (HAB-73)
+
+| Property | Type | Description |
+|---|---|---|
+| `slide_index` | `int` | Which slide (0–3) was visible when the button was tapped |
+
+---
+
+### `onboarding_sign_in_tapped`
+
+Fired when the user taps "Sign in with Google" on the onboarding screen. Distinct from `sign_in_with_google_tapped` (which fires from the sync-status dialog) so the two entry points can be compared. Sign-in outcome is captured by the existing `sign_in_with_google_succeeded` / `sign_in_with_google_failed` events. (HAB-73)
+
+| Property | Type | Description |
+|---|---|---|
+| `slide_index` | `int` | Which slide (0–3) was visible when the button was tapped |
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.
@@ -202,6 +243,7 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 
 | Concrete class | `screen_name` | Source file | When |
 |---|---|---|---|
+| `OnboardingAnalyticsScreen` | `onboarding` | `slices/dashboard/analytics/onboarding_analytics_events.dart` | Onboarding carousel shown (zero-pact state on dashboard); distinct from `dashboard` so onboarding funnels don't mix with returning-user data |
 | `DashboardAnalyticsScreen` | `dashboard` | `slices/dashboard/analytics/dashboard_screens.dart` | Dashboard screen opens or becomes visible again after returning from a detail/creation flow |
 | `LanguagePickerAnalyticsScreen` | `language_picker` | `slices/dashboard/analytics/language_analytics_events.dart` | Language picker sheet/dialog opens (iOS: `CupertinoActionSheet`; Android: `SimpleDialog`) |
 | `PactCreationAnalyticsScreen` | `pact_creation` | `slices/pact/analytics/pact_analytics_events.dart` | Pact creation wizard opens |
