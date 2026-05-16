@@ -147,6 +147,18 @@ void main() {
       );
     });
 
+    test('linkWithGoogle surfaces user-not-found as AuthLinkException when recovery fails', () async {
+      // Simulates the case where the adapter tried signInWithCredential as a
+      // fallback (e.g. after linkWithCredential threw user-not-found) but that
+      // also failed — the error must reach the caller as AuthLinkException.
+      client.linkError = FirebaseAuthException(code: 'user-not-found');
+      await service.initialize();
+      await expectLater(
+        service.linkWithGoogle(),
+        throwsA(isA<AuthLinkException>().having((e) => e.code, 'code', 'user-not-found')),
+      );
+    });
+
     test('signOut delegates to client', () async {
       await service.initialize();
       await service.signOut();
@@ -169,6 +181,28 @@ void main() {
       await service.linkWithGoogle();
       expect(client.linkWithGoogleCalled, isTrue);
       expect(service.isAnonymous, isFalse);
+    });
+
+    // Regression guard for the userChanges() fix: authStateChanges must re-emit
+    // after linkWithGoogle() flips isAnonymous from true to false (same UID).
+    // The real FirebaseAuthClientAdapter uses userChanges() — which fires on
+    // profile mutations — instead of authStateChanges() to capture this event.
+    test('authStateChanges emits isAnonymous=false after linkWithGoogle', () async {
+      client = _FakeFirebaseAuthClient(
+        initialUser: _FakeUser(uid: 'anon-uid', isAnonymous: true),
+      );
+      service = FirebaseAuthService(client);
+
+      final states = <AuthState>[];
+      final sub = service.authStateChanges.listen(states.add);
+
+      await service.linkWithGoogle();
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+
+      expect(states, isNotEmpty);
+      expect(states.last.isAnonymous, isFalse);
+      expect(states.last.userId, 'anon-uid');
     });
   });
 }

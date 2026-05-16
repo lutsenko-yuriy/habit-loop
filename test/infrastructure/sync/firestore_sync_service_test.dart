@@ -213,7 +213,7 @@ FirestoreSyncService _makeService({
 }) {
   return FirestoreSyncService(
     firestoreClient: client ?? _FakeFirestoreClient(),
-    authService: auth ?? FakeAuthService(userId: 'user-1'),
+    authService: auth ?? FakeAuthService(userId: 'user-1', isAnonymous: false),
     circuitBreaker: cb ?? SyncCircuitBreaker(),
     pactSyncRepository: _InMemoryPactSyncRepo(dirtyPacts ?? [], syncedAts: pactSyncedAts),
     showupSyncRepository: _InMemoryShowupSyncRepo(dirtyShowups ?? [], syncedAts: showupSyncedAts),
@@ -233,7 +233,7 @@ void main() {
       final pactSyncRepo = _InMemoryPactSyncRepo([]);
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -278,7 +278,7 @@ void main() {
       final pactSyncRepo = _InMemoryPactSyncRepo([]);
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -307,7 +307,7 @@ void main() {
       final showupSyncRepo = _InMemoryShowupSyncRepo([]);
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: _InMemoryPactSyncRepo([]),
         showupSyncRepository: showupSyncRepo,
@@ -347,7 +347,7 @@ void main() {
 
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: cb,
         pactSyncRepository: dirtyPactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -391,7 +391,7 @@ void main() {
 
       final svc = FirestoreSyncService(
         firestoreClient: throwingClient,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: cb,
         pactSyncRepository: _InMemoryPactSyncRepo(dirtyPacts),
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -523,7 +523,7 @@ void main() {
       final pactSyncRepo = _InMemoryPactSyncRepo([]);
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -543,7 +543,7 @@ void main() {
       final pactSyncRepo = _InMemoryPactSyncRepo([]);
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -565,7 +565,7 @@ void main() {
       final pactSyncRepo = _InMemoryPactSyncRepo([localPact]);
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -593,7 +593,7 @@ void main() {
       final pactSyncRepo = _InMemoryPactSyncRepo([], syncedAts: {'p1': t1});
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -616,7 +616,7 @@ void main() {
       final pactSyncRepo = _InMemoryPactSyncRepo([], syncedAts: {'p1': t1});
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -638,7 +638,7 @@ void main() {
       final showupSyncRepo = _InMemoryShowupSyncRepo([]);
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: _InMemoryPactSyncRepo([]),
         showupSyncRepository: showupSyncRepo,
@@ -660,7 +660,7 @@ void main() {
       final showupSyncRepo = _InMemoryShowupSyncRepo([localShowup]);
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: _InMemoryPactSyncRepo([]),
         showupSyncRepository: showupSyncRepo,
@@ -718,7 +718,7 @@ void main() {
 
       final svc = FirestoreSyncService(
         firestoreClient: client,
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: showupSyncRepo,
@@ -754,7 +754,7 @@ void main() {
 
       final svc = FirestoreSyncService(
         firestoreClient: _ThrowingFirestoreClient(),
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: pactSyncRepo,
         showupSyncRepository: showupSyncRepo,
@@ -791,7 +791,7 @@ void main() {
       final throwingSyncRepo = _ThrowingPactSyncRepo();
       final svc = FirestoreSyncService(
         firestoreClient: _FakeFirestoreClient(),
-        authService: FakeAuthService(userId: 'user-1'),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
         circuitBreaker: SyncCircuitBreaker(),
         pactSyncRepository: throwingSyncRepo,
         showupSyncRepository: _InMemoryShowupSyncRepo([]),
@@ -803,6 +803,96 @@ void main() {
       expect(result.attempted, equals(0));
       expect(result.pactsFailed, equals(0));
       expect(result.showupsFailed, equals(0));
+    });
+  });
+
+  group('FirestoreSyncService — anonymous user guard', () {
+    test('uploadPact does not upload when user is anonymous', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(
+        client: client,
+        auth: FakeAuthService(userId: 'anon-uid', isAnonymous: true),
+      );
+
+      await svc.uploadPact(_pact('p1'));
+
+      expect(client.upsertedPacts, isEmpty);
+    });
+
+    test('uploadPact does not mark pact synced when user is anonymous', () async {
+      final client = _FakeFirestoreClient();
+      final pactSyncRepo = _InMemoryPactSyncRepo([]);
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'anon-uid', isAnonymous: true),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: pactSyncRepo,
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
+      );
+
+      await svc.uploadPact(_pact('p1'));
+
+      expect(pactSyncRepo.synced, isEmpty);
+    });
+
+    test('uploadShowup does not upload when user is anonymous', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(
+        client: client,
+        auth: FakeAuthService(userId: 'anon-uid', isAnonymous: true),
+      );
+
+      await svc.uploadShowup(_showup('s1'));
+
+      expect(client.upsertedShowups, isEmpty);
+    });
+
+    test('flushDirtyRecords does not upload when user is anonymous', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(
+        client: client,
+        auth: FakeAuthService(userId: 'anon-uid', isAnonymous: true),
+        dirtyPacts: [_pact('p1')],
+        dirtyShowups: [_showup('s1')],
+      );
+
+      await svc.flushDirtyRecords();
+
+      expect(client.upsertedPacts, isEmpty);
+      expect(client.upsertedShowups, isEmpty);
+    });
+
+    test('pullRemoteChanges does not pull when user is anonymous', () async {
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
+      final pactRepo = InMemoryPactRepository();
+      final svc = _makeService(
+        client: client,
+        auth: FakeAuthService(userId: 'anon-uid', isAnonymous: true),
+        pactRepository: pactRepo,
+      );
+
+      await svc.pullRemoteChanges();
+
+      expect(await pactRepo.getAllPacts(), isEmpty);
+    });
+
+    test('triggerManualSync does not advance CB when user is anonymous', () async {
+      final cb = SyncCircuitBreaker();
+      cb.recordFailure();
+      for (var i = 0; i < 5; i++) {
+        cb.recordFailure();
+      }
+      expect(cb.state, SyncCircuitBreakerState.open);
+
+      final svc = _makeService(
+        cb: cb,
+        auth: FakeAuthService(userId: 'anon-uid', isAnonymous: true),
+      );
+      svc.triggerManualSync();
+
+      expect(cb.state, SyncCircuitBreakerState.open);
     });
   });
 }

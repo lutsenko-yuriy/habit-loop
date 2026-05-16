@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.32.2] — 2026-05-16 (PR #89 merged)
+
+### Fixed — Google sign-in: user-not-found error, grey icon after first login, and anonymous sync (HAB-72)
+
+- `user-not-found` no longer crashes sign-in: `linkWithGoogleCredential()` now handles `user-not-found` the same as `credential-already-in-use` — falls back to `signInWithCredential()` so the app recovers when a previously-linked Firebase user was deleted from the console
+- Sync icon now updates immediately after first-time Google login: `FirebaseAuthClientAdapter.authStateChanges` uses `userChanges()` instead of `authStateChanges()` so the stream re-emits when `linkWithCredential` flips `isAnonymous` to false (same UID, profile-only change)
+- Anonymous user data is no longer synced to Firestore: `FirestoreSyncService` guards `uploadPact`, `uploadShowup`, `flushDirtyRecords`, `pullRemoteChanges`, `triggerManualSync`, and `forceSyncAll` against anonymous users; dirty records accumulate in SQLite and are flushed after the user links their Google account
+- 1070 tests passing, analyzer clean
+
+---
+
 ## [0.32.1] — 2026-05-16 (PR #88 merged)
 
 ### Fixed — Fresh install shows user as already logged in on iOS (HAB-71)
