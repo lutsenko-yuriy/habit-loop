@@ -11,6 +11,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
+import 'package:habit_loop/slices/dashboard/ui/ios/language_picker_dialog_ios.dart';
 import 'package:habit_loop/slices/dashboard/ui/ios/onboarding_carousel_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
@@ -44,7 +45,7 @@ class DashboardPageIos extends ConsumerWidget {
           context: context,
           ref: ref,
           showPicker: ({required context, required options, required currentOverride}) =>
-              _showCupertinoActionSheet(context, options, currentOverride, l10n),
+              showCupertinoLanguagePicker(context, options, currentOverride, l10n),
         );
 
     Future<void> onSyncStatusTapped() => openSyncStatusDialog(
@@ -350,45 +351,4 @@ Future<void> _showCupertinoSyncDialog(
       }).toList(),
     ),
   );
-}
-
-// ---------------------------------------------------------------------------
-// Platform-specific picker UI — iOS (CupertinoActionSheet)
-// ---------------------------------------------------------------------------
-
-/// Shows a [CupertinoActionSheet] with the given language [options] and returns
-/// the selected [Locale], or `null` for the system option or when dismissed.
-Future<Locale?> _showCupertinoActionSheet(
-  BuildContext context,
-  List<({String label, Locale? locale})> options,
-  Locale? currentOverride,
-  AppLocalizations l10n,
-) async {
-  String prefixed(String label, Locale? locale) {
-    final isSelected = locale == null ? currentOverride == null : currentOverride?.languageCode == locale.languageCode;
-    return isSelected ? '✓ $label' : label;
-  }
-
-  // Returns (isSystem, locale): isSystem=true means the system option was chosen.
-  final result = await showCupertinoModalPopup<(bool isSystem, Locale? locale)>(
-    context: context,
-    // ignore: use_build_context_synchronously — caller guards context.mounted before this call
-    builder: (ctx) => CupertinoActionSheet(
-      title: Text(l10n.languagePickerTitle),
-      actions: options.map((opt) {
-        return CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(ctx, (opt.locale == null, opt.locale)),
-          child: Text(prefixed(opt.label, opt.locale)),
-        );
-      }).toList(),
-      cancelButton: CupertinoActionSheetAction(
-        onPressed: () => Navigator.pop(ctx),
-        child: Text(l10n.cancel),
-      ),
-    ),
-  );
-
-  if (result == null) return null; // dismissed
-  final (isSystem, selectedLocale) = result;
-  return isSystem ? null : selectedLocale;
 }

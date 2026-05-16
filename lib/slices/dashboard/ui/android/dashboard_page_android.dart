@@ -6,6 +6,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/dashboard/ui/android/language_picker_dialog_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/onboarding_carousel_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
@@ -43,7 +44,7 @@ class DashboardPageAndroid extends ConsumerWidget {
           context: context,
           ref: ref,
           showPicker: ({required context, required options, required currentOverride}) =>
-              _showMaterialDialog(context, options, currentOverride, l10n),
+              showMaterialLanguagePicker(context, options, currentOverride, l10n),
         );
 
     Future<void> onSyncStatusTapped() => openSyncStatusDialog(
@@ -342,46 +343,4 @@ Future<void> _showMaterialSyncDialog(
       }).toList(),
     ),
   );
-}
-
-// ---------------------------------------------------------------------------
-// Platform-specific picker UI — Android (SimpleDialog)
-// ---------------------------------------------------------------------------
-
-/// Shows a [SimpleDialog] with the given language [options] and returns the
-/// selected [Locale], or `null` for the system option or when dismissed.
-Future<Locale?> _showMaterialDialog(
-  BuildContext context,
-  List<({String label, Locale? locale})> options,
-  Locale? currentOverride,
-  AppLocalizations l10n,
-) async {
-  // Returns (isSystem, locale): isSystem=true means the system option was chosen.
-  final result = await showDialog<(bool isSystem, Locale? locale)>(
-    context: context,
-    // ignore: use_build_context_synchronously — caller guards context.mounted before this call
-    builder: (ctx) => SimpleDialog(
-      title: Text(l10n.languagePickerTitle),
-      children: options.map((opt) {
-        final isSelected =
-            opt.locale == null ? currentOverride == null : currentOverride?.languageCode == opt.locale!.languageCode;
-        return SimpleDialogOption(
-          onPressed: () => Navigator.pop(ctx, (opt.locale == null, opt.locale)),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 28,
-                child: isSelected ? const Icon(Icons.check, size: 18) : null,
-              ),
-              Text(opt.label),
-            ],
-          ),
-        );
-      }).toList(),
-    ),
-  );
-
-  if (result == null) return null; // dismissed
-  final (isSystem, selectedLocale) = result;
-  return isSystem ? null : selectedLocale;
 }

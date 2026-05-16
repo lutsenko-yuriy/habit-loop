@@ -3,12 +3,14 @@ import 'dart:async' show Timer, unawaited;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/analytics/onboarding_analytics_events.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
 
 final onboardingViewModelProvider = NotifierProvider.autoDispose<OnboardingViewModel, int>(OnboardingViewModel.new);
 
 class OnboardingViewModel extends AutoDisposeNotifier<int> {
-  static const int _slideCount = 4;
+  static final int _slideCount = OnboardingSlide.slides.length;
   static const int _minAutoAdvanceSeconds = 5;
+  static const String _rcKeyAutoAdvance = 'onboarding_auto_advance_seconds';
 
   Timer? _timer;
   bool _completedFired = false;
@@ -20,13 +22,13 @@ class OnboardingViewModel extends AutoDisposeNotifier<int> {
     ref.onDispose(_cancelTimer);
 
     unawaited(ref.read(analyticsServiceProvider).logScreenView(OnboardingAnalyticsScreen()));
-    _logSlideViewed(0, 'auto');
+    _logSlideViewed(0, 'initial');
 
     return 0;
   }
 
   int _effectiveAutoAdvanceSeconds() {
-    final raw = ref.read(remoteConfigServiceProvider).getInt('onboarding_auto_advance_seconds');
+    final raw = ref.read(remoteConfigServiceProvider).getInt(_rcKeyAutoAdvance);
     return raw < _minAutoAdvanceSeconds ? 0 : raw;
   }
 
@@ -49,7 +51,10 @@ class OnboardingViewModel extends AutoDisposeNotifier<int> {
 
   void _advance(String trigger) {
     final current = state;
-    if (current >= _slideCount - 1) return;
+    if (current >= _slideCount - 1) {
+      _cancelTimer();
+      return;
+    }
     _goToSlide(current + 1, trigger);
   }
 
