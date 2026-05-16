@@ -156,7 +156,10 @@ class AppHarness {
     // in AsyncLoading forever — causing SyncStatusViewModel to show "connecting"
     // instead of "notLinked" for anonymous users.
     await tester.pump(); // initState's Future.microtask fires; stream providers subscribe
-    auth.emitState(userId: 'test-user', isAnonymous: initiallyAnonymous);
+    // Emit the *current* auth state rather than the constructor-time value so
+    // that beforePump callbacks (e.g. clearStaleKeychainIfFirstLaunch) that
+    // call signOut() on auth are not silently undone by this emit.
+    auth.emitState(userId: auth.currentUserId, isAnonymous: auth.isAnonymous);
     await tester.pump(); // authStateChangesProvider receives event; notifiers rebuild
     await tester.pump(const Duration(milliseconds: 50)); // cascading updates
     await tester.pump(const Duration(milliseconds: 100)); // stream providers settle

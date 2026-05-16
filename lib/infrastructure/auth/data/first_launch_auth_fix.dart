@@ -1,23 +1,34 @@
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
-import 'package:habit_loop/infrastructure/device/data/shared_preferences_device_id_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// SharedPreferences key written on the first successful app launch.
+///
+/// Presence of this key means the app has run at least once on this install,
+/// so any Firebase Auth user found in the Keychain is legitimately from the
+/// current install (not a stale remnant from a previous install).
+const firstLaunchHandledKey = 'habit_loop_launched';
 
 /// Clears stale Keychain credentials on first launch after a reinstall.
 ///
 /// On iOS, Firebase Auth stores credentials in the Keychain, which survives
-/// app uninstall and reinstall. A fresh install (identified by the absence of
-/// [SharedPreferencesDeviceIdService.prefsKey], which is only written when the
-/// user creates their first pact) should start with a clean auth state.
+/// app uninstall and reinstall. A fresh install is detected by the absence of
+/// [firstLaunchHandledKey] in SharedPreferences, which is written on the very
+/// first launch and persisted for all subsequent launches.
 ///
-/// If a Firebase user is found but no device ID exists, this indicates a
-/// reinstall on iOS where the Keychain retained the previous session. Signing
-/// out here lets [AuthService.initialize] create a fresh anonymous user on the
-/// next call, matching what the user expects from a clean install.
+/// Sequence:
+/// 1. If the launched key is already present → returning user, return immediately.
+/// 2. Write the launched key so subsequent startups skip this block.
+/// 3. If a Firebase user exists → must be a stale Keychain entry → sign out.
+///    [AuthService.initialize] then creates a fresh anonymous user.
 Future<void> clearStaleKeychainIfFirstLaunch({
   required AuthService authService,
   required SharedPreferences prefs,
 }) async {
-  if (authService.currentUserId == null) return;
-  if (prefs.containsKey(SharedPreferencesDeviceIdService.prefsKey)) return;
-  await authService.signOut();
+  if (prefs.containsKey(firstLaunchHandledKey)) return;
+  // Mark as launched immediately — even if signOut() fails, subsequent startups
+  // skip this block rather than repeatedly clearing a legitimate returning user.
+  await prefs.setBool(firstLaunchHandledKey, true);
+  if (authService.currentUserId != null) {
+    await authService.signOut();
+  }
 }
