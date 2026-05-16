@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.32.0] — 2026-05-16 (PR #87 merged)
+
+### Added — Full-stack app harness and UI flow tests (HAB-70)
+
+- `AppHarness` in `integration_test/harness.dart` boots `HabitLoopApp` with in-memory repositories and fake Firebase services (auth, analytics, sync, notifications, remote config); supports `initiallyAnonymous`, `syncServiceFactory`, `beforePump`, and `extraOverrides` parameters for flexible scenario setup
+- 5 integration test flows: create-pact wizard (analytics assert), mark-showup-done (analytics assert), language-change to Russian, sync-on-login with empty start (remote pact appears on dashboard), sync-on-login merge (local + remote pacts both visible after sign-in)
+- `SyncStatusViewModel.linkWithGoogle()`: `pullRemoteChanges()` is now awaited before reloading the dashboard, closing a race where the dashboard could read empty repos before Firestore data arrived; `forceSyncAll()` remains unawaited (independent of the reload)
+- CI `test-android-integration` job runs integration tests on `android-emulator-runner@v2` (API 31, x86_64); integration tests removed from the host-only `test` job
+- `integration_test` SDK dev dependency added to `pubspec.yaml`
+
+---
+
 ## [0.31.0] — 2026-05-15 (PR #86 merged)
 
 ### Added — Full-sync button in sync status dialog (HAB-69)
