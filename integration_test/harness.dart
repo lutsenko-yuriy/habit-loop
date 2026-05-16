@@ -9,11 +9,11 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
-import '../infrastructure/analytics/fake_analytics_service.dart';
-import '../infrastructure/auth/fake_auth_service.dart';
-import '../infrastructure/locale/fake_locale_preference_service.dart';
-import '../infrastructure/notifications/fake_notification_service.dart';
-import '../infrastructure/sync/fake_sync_service.dart';
+import '../test/infrastructure/analytics/fake_analytics_service.dart';
+import '../test/infrastructure/auth/fake_auth_service.dart';
+import '../test/infrastructure/locale/fake_locale_preference_service.dart';
+import '../test/infrastructure/notifications/fake_notification_service.dart';
+import '../test/infrastructure/sync/fake_sync_service.dart';
 
 /// Full-stack test harness that boots [HabitLoopApp] with:
 /// - in-memory repository doubles (avoids sqflite_common_ffi isolate
@@ -76,19 +76,28 @@ class AppHarness {
   ///   instances are ready but *before* [tester.pumpWidget]. Use this to
   ///   pre-seed pacts and showups so they are visible on the very first
   ///   dashboard load without requiring wizard navigation.
+  /// - [initiallyAnonymous]: when `true`, the harness starts with an anonymous
+  ///   auth state. Use this for tests that drive the sign-in flow themselves
+  ///   (e.g. the sync-on-login flow).
+  /// - [syncServiceFactory]: optional factory for a custom [FakeSyncService]
+  ///   subclass that has access to the in-memory repos. Used to seed "remote"
+  ///   data via [FakeSyncService.pullRemoteChanges] without touching the repos
+  ///   before the test's sign-in step.
   static Future<AppHarness> create(
     WidgetTester tester, {
     List<Override> extraOverrides = const [],
     Future<void> Function(AppHarness h)? beforePump,
+    bool initiallyAnonymous = false,
+    FakeSyncService Function(InMemoryPactRepository, InMemoryShowupRepository)? syncServiceFactory,
   }) async {
     final pactRepo = InMemoryPactRepository();
     final showupRepo = InMemoryShowupRepository();
     final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
 
-    final auth = FakeAuthService(userId: 'test-user', isAnonymous: false);
+    final auth = FakeAuthService(userId: 'test-user', isAnonymous: initiallyAnonymous);
     final analytics = FakeAnalyticsService();
     final notifications = FakeNotificationService();
-    final syncService = FakeSyncService();
+    final syncService = syncServiceFactory?.call(pactRepo, showupRepo) ?? FakeSyncService();
     final localeService = FakeLocalePreferenceService();
 
     final overrides = await AppContainer.overrides(
@@ -136,15 +145,22 @@ class AppHarness {
       ),
     );
 
-    // Emit auth state before pumping so authStateChangesProvider transitions
-    // from AsyncLoading to AsyncData(signed-in) on the first pump.
-    auth.emitState(userId: 'test-user', isAnonymous: false);
-    // Three pumps to let the full async init chain complete without
+    // Multiple pumps to let the full async init chain complete without
     // pumpAndSettle(), which hangs on CircularProgressIndicator animations
     // from DashboardViewModel.isLoading and PactsPanel loading states.
-    await tester.pump(); // initState's Future.microtask fires; load() starts
-    await tester.pump(const Duration(milliseconds: 50)); // provider rebuilds
+    //
+    // Emit auth state AFTER the first pump so that authStateChangesProvider has
+    // already subscribed to the broadcast stream. FakeAuthService uses a plain
+    // BroadcastStreamController (no replay), so an event emitted before the
+    // provider subscribes would be silently dropped and the provider would stay
+    // in AsyncLoading forever — causing SyncStatusViewModel to show "connecting"
+    // instead of "notLinked" for anonymous users.
+    await tester.pump(); // initState's Future.microtask fires; stream providers subscribe
+    auth.emitState(userId: 'test-user', isAnonymous: initiallyAnonymous);
+    await tester.pump(); // authStateChangesProvider receives event; notifiers rebuild
     await tester.pump(const Duration(milliseconds: 50)); // cascading updates
+    await tester.pump(const Duration(milliseconds: 100)); // stream providers settle
+    await tester.pump(const Duration(milliseconds: 100)); // autoDispose rebuilds
 
     return harness;
   }

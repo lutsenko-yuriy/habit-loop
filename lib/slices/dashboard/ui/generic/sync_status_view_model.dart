@@ -5,7 +5,9 @@ import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dar
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/slices/dashboard/analytics/sync_analytics_events.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
 // Slice-local provider: lives here (not app_providers.dart) because it is
 // scoped exclusively to the dashboard sync-status icon and dialog.
@@ -59,6 +61,8 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
     // auth state stream emits on successful sign-in).
     final analytics = ref.read(analyticsServiceProvider);
     final sync = ref.read(syncServiceProvider);
+    final dashboardNotifier = ref.read(dashboardViewModelProvider.notifier);
+    final pactListNotifier = ref.read(pactListViewModelProvider.notifier);
     unawaited(analytics.logEvent(SignInWithGoogleTappedEvent()));
     try {
       await ref.read(authServiceProvider).linkWithGoogle();
@@ -76,6 +80,11 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
       // is abandoned on the credential-already-in-use path anyway.
       unawaited(sync.pullRemoteChanges());
       unawaited(sync.forceSyncAll());
+      // Reload the dashboard so data seeded by pullRemoteChanges is visible
+      // immediately after sign-in without requiring the user to restart.
+      ref.invalidate(hasActivePactsProvider);
+      unawaited(dashboardNotifier.load());
+      unawaited(pactListNotifier.load());
     } on AuthLinkException catch (e) {
       unawaited(analytics.logEvent(SignInWithGoogleFailedEvent(errorCode: e.code)));
       rethrow;
