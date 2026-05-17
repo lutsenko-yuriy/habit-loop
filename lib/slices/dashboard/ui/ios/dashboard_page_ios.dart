@@ -69,7 +69,7 @@ class DashboardPageIos extends ConsumerWidget {
     if (isCarouselPending) {
       return CupertinoPageScaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        child: const SizedBox.expand(),
+        child: const Center(child: CupertinoActivityIndicator()),
       );
     }
 

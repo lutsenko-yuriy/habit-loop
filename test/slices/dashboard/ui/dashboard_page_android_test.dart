@@ -106,9 +106,11 @@ void main() {
       ),
     );
 
-    // Neither carousel content nor dashboard app bar should be visible.
+    // Neither carousel content nor dashboard app bar should be visible —
+    // only a centered loading spinner.
     expect(find.byKey(const Key('language-picker-button')), findsNothing);
     expect(find.text('Create a Pact'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
   testWidgets('tapping globe icon shows SimpleDialog with language options', (tester) async {

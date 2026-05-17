@@ -64,7 +64,7 @@ class DashboardPageAndroid extends ConsumerWidget {
     if (isCarouselPending) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: const SizedBox.expand(),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
