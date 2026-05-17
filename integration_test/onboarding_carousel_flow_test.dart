@@ -72,7 +72,7 @@ void main() {
         const Offset(400, 0),
         const Duration(milliseconds: 300),
       );
-      await tester.pumpAndSettle();
+      await waitFor(tester, find.text(strings.onboardingSlide0Title));
 
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
     });
