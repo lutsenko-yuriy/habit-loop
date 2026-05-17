@@ -6,6 +6,7 @@ import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dar
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/language_picker_dialog_android.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_carousel_widgets.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
@@ -93,33 +94,27 @@ class _OnboardingCarouselAndroidState extends ConsumerState<OnboardingCarouselAn
                   ),
                   if (isAnonymous) ...[
                     const SizedBox(height: 12),
-                    if (isSigningIn)
-                      SizedBox(
-                        height: 48,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              l10n.fetchingPacts,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      OutlinedButton(
-                        onPressed: () => unawaited(_onSignIn(context, l10n)),
-                        child: Text(l10n.signInWithGoogle),
-                      ),
+                    OutlinedButton(
+                      onPressed: isSigningIn ? null : () => unawaited(_onSignIn(context, l10n)),
+                      child: isSigningIn
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(l10n.fetchingPacts),
+                              ],
+                            )
+                          : Text(l10n.signInWithGoogle),
+                    ),
                   ],
                   const SizedBox(height: 4),
                   TextButton(
@@ -150,9 +145,15 @@ class _OnboardingCarouselAndroidState extends ConsumerState<OnboardingCarouselAn
     ref.read(onboardingSignInLoadingProvider.notifier).state = true;
     try {
       await ref.read(syncStatusViewModelProvider.notifier).linkWithGoogle();
-      // linkWithGoogle() has already fired pullRemoteChanges + dashboard load.
-      // The carousel stays visible (via onboardingSignInLoadingProvider = true)
-      // until the dashboard_screen re-evaluates showCarousel in the next build.
+      // linkWithGoogle() invalidates hasActivePactsProvider and fires dashboard
+      // reload fire-and-forget.  Wait until the provider has resolved so the
+      // dashboard is ready before we reveal it by resetting isSigningIn — this
+      // prevents the carousel from disappearing while the dashboard is still
+      // in its loading state.
+      await Future<void>.delayed(Duration.zero); // yield so Riverpod processes the invalidation
+      while (context.mounted && ref.read(hasActivePactsProvider).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
     } on AuthLinkException {
       // Reset loading state before showing the error dialog so the
       // sign-in button reappears and the user can try again.
