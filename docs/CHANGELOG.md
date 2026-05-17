@@ -4,6 +4,23 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.33.0] — 2026-05-17 (PR #91 merged)
+
+### Added — Onboarding carousel for zero-pact empty state (HAB-73)
+
+- Four-slide onboarding carousel replaces the plain empty state shown to users with no pacts: "Build Real Habits" → "Make a Pact" → "Never Miss a Showup" → "Watch Yourself Grow"
+- Each slide shows an SVG illustration (`assets/onboarding/`), a bold title, and a body paragraph; all copy available in EN/FR/DE/RU
+- Auto-advances every N seconds (controlled by Remote Config `onboarding_auto_advance_seconds`, default 10); values < 5 treated as 0 (disabled); manual swipe resets the timer
+- `OnboardingViewModel` (`AutoDisposeNotifier<int>`) owns the slide index, timer lifecycle (`Timer.periodic` + `ref.onDispose`), and analytics
+- Analytics: `onboarding` screen view on first render; `onboarding_slide_viewed` on every transition (auto/swipe); `onboarding_completed` on first reach of slide 3; `onboarding_create_pact_tapped` and `onboarding_sign_in_tapped` on button taps
+- Layout: PageView → page indicator dots → "Create a Pact" primary button (always) → "Sign in with Google" secondary button (anonymous users only) → subtle language-picker button at bottom
+- iOS: `CupertinoPageScaffold(navigationBar: null)`; Android: `Scaffold(appBar: null)` — no top bar at all
+- Carousel is shown only when the user has zero pacts (`!hasPacts && !state.isLoading`); once pacts exist the carousel is never shown again
+- `flutter_svg: ^2.0.0` added as a production dependency
+- 1072 tests passing, analyzer clean
+
+---
+
 ## [0.32.3] — 2026-05-16 (PR #90 merged)
 
 ### Fixed — Local pacts/showups not uploaded to Firestore after Google sign-in (HAB-73)

@@ -243,5 +243,21 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "onboardingSlide0Title": "Строй привычку. По-настоящему.",
+  "@onboardingSlide0Title": {},
+  "onboardingSlide0Body": "Habit Loop помогает брать обязательства, выполнять их и отслеживать прогресс — один пакт за раз.",
+  "@onboardingSlide0Body": {},
+  "onboardingSlide1Title": "Заключи пакт с собой",
+  "@onboardingSlide1Title": {},
+  "onboardingSlide1Body": "Выбери привычку, составь расписание и пообещай показаться. Никаких пауз, никаких исключений — только твоё слово.",
+  "@onboardingSlide1Body": {},
+  "onboardingSlide2Title": "Мы тебя поддержим",
+  "@onboardingSlide2Title": {},
+  "onboardingSlide2Body": "Когда придёт время появиться, мы напомним. Отметь как выполнено — сохрани серию.",
+  "@onboardingSlide2Body": {},
+  "onboardingSlide3Title": "Смотри, что работает",
+  "@onboardingSlide3Title": {},
+  "onboardingSlide3Body": "Отслеживай свои явки, замечай закономерности и решай: продолжать, корректировать или пробовать что-то новое.",
+  "@onboardingSlide3Body": {}
 }

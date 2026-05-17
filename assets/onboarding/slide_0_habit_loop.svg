@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240">
+  <!-- Background circle -->
+  <circle cx="160" cy="120" r="90" fill="#E0F2F1"/>
+
+  <!-- Outer loop arrow — clockwise 270° arc, radius 80, close to background border -->
+  <path d="M 160 40 A 80 80 0 1 1 80 120" fill="none" stroke="#00796B" stroke-width="10" stroke-linecap="round"/>
+  <!-- Arrowhead: tip pointing up (direction of travel at left-side endpoint) -->
+  <polygon points="80,105 68,126 92,126" fill="#00796B"/>
+
+  <!-- Habit milestone dots along the arc -->
+  <circle cx="211" cy="59" r="6" fill="#FFB74D"/>
+  <circle cx="235" cy="147" r="6" fill="#8BC34A"/>
+  <circle cx="133" cy="195" r="6" fill="#00796B"/>
+
+  <!-- Inner circle (app icon background) -->
+  <circle cx="160" cy="120" r="38" fill="#004D40"/>
+
+  <!-- Habit loop icon — clockwise 270° arc with arrowhead, mirrors outer arrow -->
+  <path d="M 160 97 A 23 23 0 1 1 137 120" fill="none" stroke="#8BC34A" stroke-width="5" stroke-linecap="round"/>
+  <!-- Arrowhead: tip pointing up -->
+  <polygon points="137,108 128,124 146,124" fill="#8BC34A"/>
+</svg>

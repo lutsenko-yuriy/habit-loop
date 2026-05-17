@@ -4,8 +4,10 @@
 // Run on host: flutter test integration_test/create_pact_flow_test.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:integration_test/integration_test.dart';
 
+import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 void main() {
@@ -17,11 +19,18 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets('full wizard creates a pact and showup appears on dashboard', (tester) async {
-      h = await AppHarness.create(tester);
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          remoteConfigServiceProvider.overrideWithValue(
+            FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+          ),
+        ],
+      );
       final strings = l10n(tester);
 
-      // ── 1. Dashboard is empty ────────────────────────────────────────────
-      expect(find.text(strings.noPactsYet), findsOneWidget);
+      // ── 1. Dashboard shows the onboarding carousel (no pacts yet) ────────
+      expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
       expect(find.text(strings.createPact), findsOneWidget);
 
       // ── 2. Open pact creation wizard ────────────────────────────────────

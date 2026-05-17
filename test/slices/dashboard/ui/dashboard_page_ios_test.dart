@@ -17,11 +17,13 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/locale/fake_locale_preference_service.dart';
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 Widget _buildTestApp({
   bool hasPacts = true,
   FakeAnalyticsService? analyticsService,
   FakeLocalePreferenceService? localeService,
+  FakeRemoteConfigService? remoteConfig,
   Locale? localeOverride,
   Locale locale = const Locale('en'),
   DashboardState state = const DashboardState(isLoading: false),
@@ -31,6 +33,7 @@ Widget _buildTestApp({
       pactListViewModelProvider.overrideWith(_LoadedPactListViewModel.new),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
+      if (remoteConfig != null) remoteConfigServiceProvider.overrideWithValue(remoteConfig),
       if (localeOverride != null) localeOverrideProvider.overrideWith((ref) => localeOverride),
     ],
     child: MaterialApp(
@@ -86,11 +89,15 @@ void main() {
     expect(find.byIcon(CupertinoIcons.globe), findsOneWidget);
   });
 
-  testWidgets('iOS dashboard globe icon visible even when hasPacts is false', (tester) async {
-    await tester.pumpWidget(_buildTestApp(hasPacts: false));
+  testWidgets('iOS dashboard shows onboarding carousel when hasPacts is false', (tester) async {
+    await tester.pumpWidget(_buildTestApp(
+      hasPacts: false,
+      remoteConfig: FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+    ));
 
-    expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
-    expect(find.byIcon(CupertinoIcons.globe), findsOneWidget);
+    // Carousel replaces the regular scaffold — no nav bar or language-picker-button.
+    expect(find.byKey(const Key('language-picker-button')), findsNothing);
+    expect(find.text('Create a Pact'), findsOneWidget);
   });
 
   testWidgets('tapping globe icon shows CupertinoActionSheet with language options', (tester) async {
@@ -225,6 +232,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(localeService.clearLocaleCallCount, 0);
+  });
+
+  testWidgets('tapping language button in carousel (hasPacts=false) shows CupertinoActionSheet', (tester) async {
+    await tester.pumpWidget(_buildTestApp(
+      hasPacts: false,
+      remoteConfig: FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+      localeOverride: const Locale('en'),
+    ));
+    await tester.pump();
+
+    await tester.tap(find.text('Language'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CupertinoActionSheet), findsOneWidget);
+    expect(find.text('✓ English'), findsOneWidget);
+    expect(find.text('French'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
   });
 
   testWidgets('showup tile subtitle uses locale-specific duration label', (tester) async {

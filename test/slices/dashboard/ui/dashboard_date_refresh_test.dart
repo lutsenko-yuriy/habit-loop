@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.d
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 // A counting showup repository that records how many times getShowupsForDateRange
 // is called. This lets tests verify whether load() ran again.
@@ -76,6 +77,11 @@ ProviderContainer _makeContainer({
     // change the date in-place without rebuilding _DashboardScreenState.
     todayProvider.overrideWith((ref) => ref.watch(_testDateSourceProvider)),
     if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
+    // Disable onboarding carousel auto-advance timer so pumpAndSettle() does not
+    // hang on pending Timer when the carousel is shown (no-pact state).
+    remoteConfigServiceProvider.overrideWithValue(
+      FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+    ),
   ]);
   return container;
 }

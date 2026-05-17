@@ -10,8 +10,13 @@ Product experiments (hypothesis, metrics, decisions) are tracked in `docs/experi
 
 ```
 assets/
-└── app_icon/
-    └── habit_loop_icon.png            # Source launcher icon generated from the Habit Loop palette
+├── app_icon/
+│   └── habit_loop_icon.png            # Source launcher icon generated from the Habit Loop palette
+└── onboarding/
+    ├── slide_0_habit_loop.svg          # Onboarding slide 0 illustration — circular arrows loop motif
+    ├── slide_1_pact.svg                # Onboarding slide 1 illustration — document + handshake
+    ├── slide_2_reminder.svg            # Onboarding slide 2 illustration — bell with pulse rings
+    └── slide_3_progress.svg            # Onboarding slide 3 illustration — bar chart with trend line
 
 lib/
 ├── main.dart                          # App entry point (runApp)
@@ -102,9 +107,9 @@ lib/
 │       ├── sync_mapper.dart           # SyncMapper — static helpers pactToDocument(), showupToDocument(), pactFromDocument(), showupFromDocument(), updatedAtFromDocument(); maps domain models to/from Firestore Map<String, dynamic>; excludes SQLite-only columns (dirty, synced_at, total_showups); includes updated_at for merge timestamp comparison
 │       └── firestore_sync_service.dart  # FirestoreSyncService implements SyncService; checks CB via canRequest; calls markPactSynced/markShowupSynced on success; fires flushDirtyRecords() when CB transitions halfOpen→closed; skips uploads when userId is null; pullRemoteChanges() fetches all remote docs and merges via last-writer-wins (remote updated_at vs local synced_at)
 └── slices/
-    ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel
-    │   ├── analytics/                 # DashboardAnalyticsScreen, LanguagePickerAnalyticsScreen, LanguageChangeRequestedEvent, LanguageChangedEvent; SyncStatusOpenedEvent, ManualSyncTriggeredEvent, SignInWithGoogleTappedEvent, SignInWithGoogleSucceededEvent, SignInWithGoogleFailedEvent, SignOutTappedEvent
-    │   └── ui/ (generic/ — includes language_picker_handler.dart with shared applyLanguageSelection orchestration; sync_ui_state.dart (SyncUiState enum); sync_status_view_model.dart (SyncStatusViewModel AutoDisposeNotifier, syncStatusViewModelProvider); sync_status_handler.dart (syncStatusIconData, syncStatusIconColor, openSyncStatusDialog, SyncDialogAction), ios/, android/)
+    ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel; onboarding carousel (zero-pact state)
+    │   ├── analytics/                 # DashboardAnalyticsScreen, LanguagePickerAnalyticsScreen, LanguageChangeRequestedEvent, LanguageChangedEvent; SyncStatusOpenedEvent, ManualSyncTriggeredEvent, SignInWithGoogleTappedEvent, SignInWithGoogleSucceededEvent, SignInWithGoogleFailedEvent, SignOutTappedEvent; OnboardingAnalyticsScreen, OnboardingSlideViewedEvent, OnboardingCompletedEvent, OnboardingCreatePactTappedEvent, OnboardingSignInTappedEvent
+    │   └── ui/ (generic/ — includes language_picker_handler.dart with shared applyLanguageSelection orchestration; sync_ui_state.dart (SyncUiState enum); sync_status_view_model.dart (SyncStatusViewModel AutoDisposeNotifier, syncStatusViewModelProvider); sync_status_handler.dart (syncStatusIconData, syncStatusIconColor, openSyncStatusDialog, SyncDialogAction); onboarding_slide.dart (OnboardingSlide data class with 4 static slides); onboarding_view_model.dart (OnboardingViewModel AutoDisposeNotifier<int>, timer-driven auto-advance via remoteConfigServiceProvider 'onboarding_auto_advance_seconds', onUserSwiped/onCreatePactTapped/onSignInTapped actions); ios/ — onboarding_carousel_ios.dart (CupertinoPageScaffold, navigationBar: null); android/ — onboarding_carousel_android.dart (Scaffold, appBar: null))
     ├── pact/                          # Pact creation wizard + pact detail screen
     │   ├── application/               # PactBuilder, PactCreationState, PactStatsService, PactTransactionService
     │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production, implements PactRepository + PactSyncRepository), NoopPactSyncRepository (default provider)
@@ -271,4 +276,5 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 - [timezone](https://pub.dev/packages/timezone) — required by `flutter_local_notifications` for `TZDateTime`-based `zonedSchedule()` calls; ensures DST-safe notification scheduling times
 - [flutter_timezone](https://pub.dev/packages/flutter_timezone) — resolves the device's current IANA timezone name at runtime; called during `FlutterLocalNotificationService.initialize()` to set `tz.local`
 - [uuid](https://pub.dev/packages/uuid) — RFC 4122 UUID v4 generation; used by `SharedPreferencesDeviceIdService` to create the stable per-install device ID
+- [flutter_svg](https://pub.dev/packages/flutter_svg) — SVG asset rendering; used by the onboarding carousel (`OnboardingCarouselIos`, `OnboardingCarouselAndroid`) to display the four onboarding slide illustrations under `assets/onboarding/`
 - `lib/firebase_options.dart` — platform-specific Firebase configuration generated by `flutterfire configure`

@@ -10,10 +10,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
+
+/// Disables the onboarding auto-advance timer (RC value < _minAutoAdvanceSeconds=5).
+final _noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
+  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +43,7 @@ void main() {
           tester,
           // Simulate a stale Google-linked user from the iOS Keychain.
           initiallyAnonymous: false,
+          extraOverrides: [_noAutoAdvance],
           beforePump: (h) async {
             // Mirror what main.dart does: clear stale auth before initialize().
             final prefs = await SharedPreferences.getInstance();
@@ -44,9 +52,12 @@ void main() {
         );
 
         // After clearStaleKeychainIfFirstLaunch(), auth is anonymous.
-        // Dashboard shows cloud_off (notLinked) instead of synced.
-        await waitFor(tester, find.byIcon(Icons.cloud_off_outlined));
-        expect(find.byIcon(Icons.cloud_off_outlined), findsOneWidget);
+        // No pacts exist, so the onboarding carousel is shown. The carousel
+        // renders "Sign in with Google" only when isAnonymous is true —
+        // confirming the stale auth was cleared.
+        final strings = l10n(tester);
+        await waitFor(tester, find.text(strings.signInWithGoogle));
+        expect(find.text(strings.signInWithGoogle), findsOneWidget);
       },
     );
 
