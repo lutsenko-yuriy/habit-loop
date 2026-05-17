@@ -7,10 +7,11 @@
   <!-- Arrowhead: tip pointing up (direction of travel at left-side endpoint) -->
   <polygon points="80,105 68,126 92,126" fill="#00796B"/>
 
-  <!-- Habit milestone dots along the arc -->
-  <circle cx="211" cy="59" r="6" fill="#FFB74D"/>
-  <circle cx="235" cy="147" r="6" fill="#8BC34A"/>
-  <circle cx="133" cy="195" r="6" fill="#00796B"/>
+  <!-- Habit milestone dots between the outer arc (r=80) and the inner circle (r=38),
+       positioned at r≈60 from centre (160,120) on the same angular positions. -->
+  <circle cx="198" cy="74" r="6" fill="#FFB74D"/>
+  <circle cx="216" cy="140" r="6" fill="#8BC34A"/>
+  <circle cx="140" cy="176" r="6" fill="#00796B"/>
 
   <!-- Inner circle (app icon background) -->
   <circle cx="160" cy="120" r="38" fill="#004D40"/>
