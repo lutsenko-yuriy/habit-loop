@@ -51,7 +51,7 @@ void main() {
         expect(analytics.loggedScreens.any((s) => s.name == 'onboarding'), isTrue);
       });
 
-      test('fires onboarding_slide_viewed with slide_index 0 and trigger initial', () {
+      test('fires onboarding_slide_viewed with slide_index 0 and trigger auto', () {
         final analytics = FakeAnalyticsService();
         final container = _makeContainer(
           rcOverrides: {'onboarding_auto_advance_seconds': 0},
@@ -61,7 +61,7 @@ void main() {
         container.read(onboardingViewModelProvider);
         final event = analytics.loggedEvents.firstWhere((e) => e.name == 'onboarding_slide_viewed');
         expect(event.toParameters()['slide_index'], 0);
-        expect(event.toParameters()['trigger'], 'initial');
+        expect(event.toParameters()['trigger'], 'auto');
       });
     });
 

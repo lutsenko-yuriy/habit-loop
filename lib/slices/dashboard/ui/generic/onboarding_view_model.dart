@@ -22,7 +22,7 @@ class OnboardingViewModel extends AutoDisposeNotifier<int> {
     ref.onDispose(_cancelTimer);
 
     unawaited(ref.read(analyticsServiceProvider).logScreenView(OnboardingAnalyticsScreen()));
-    _logSlideViewed(0, 'initial');
+    _logSlideViewed(0, 'auto');
 
     return 0;
   }

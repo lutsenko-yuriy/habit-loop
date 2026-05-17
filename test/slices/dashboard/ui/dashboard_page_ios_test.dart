@@ -90,7 +90,10 @@ void main() {
   });
 
   testWidgets('iOS dashboard shows onboarding carousel when hasPacts is false', (tester) async {
-    await tester.pumpWidget(_buildTestApp(hasPacts: false));
+    await tester.pumpWidget(_buildTestApp(
+      hasPacts: false,
+      remoteConfig: FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+    ));
 
     // Carousel replaces the regular scaffold — no nav bar or language-picker-button.
     expect(find.byKey(const Key('language-picker-button')), findsNothing);

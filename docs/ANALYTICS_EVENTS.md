@@ -201,7 +201,7 @@ Fired every time a slide becomes active — on first render (slide 0) and on eve
 | Property | Type | Description |
 |---|---|---|
 | `slide_index` | `int` | 0-based index of the slide that became active (0–3) |
-| `trigger` | `string` | `"auto"` — timer-driven advance; `"swipe"` — user-initiated swipe |
+| `trigger` | `string` | `"auto"` — timer-driven advance or first render (slide 0 on carousel open); `"swipe"` — user-initiated swipe |
 
 ---
 
