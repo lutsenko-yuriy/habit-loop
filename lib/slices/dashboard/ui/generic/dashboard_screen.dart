@@ -228,38 +228,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     final isAnonymous = authState?.isAnonymous ?? true;
     final isSigningIn = ref.watch(onboardingSignInLoadingProvider);
 
-    return hasActivePacts.when(
-      data: (hasPacts) {
-        // Keep the carousel visible while:
-        //   (a) no pacts exist AND user is anonymous, OR
-        //   (b) sign-in is in progress (avoids a flash of empty dashboard while
-        //       pullRemoteChanges is fetching the user's pacts from Firestore).
-        final showCarousel = (!hasPacts && isAnonymous) || isSigningIn;
-        if (defaultTargetPlatform == TargetPlatform.iOS) {
-          return DashboardPageIos(
-            state: state,
-            hasPacts: hasPacts,
-            showCarousel: showCarousel,
-            onDaySelected: onDaySelected,
-            onCreatePact: onCreatePact,
-            onShowupTapped: onShowupTapped,
-          );
-        }
-        return DashboardPageAndroid(
-          state: state,
-          hasPacts: hasPacts,
-          showCarousel: showCarousel,
-          onDaySelected: onDaySelected,
-          onCreatePact: onCreatePact,
-          onShowupTapped: onShowupTapped,
-        );
-      },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (_, __) => const Scaffold(
-        body: Center(child: Text('Something went wrong')),
-      ),
+    // Use valueOrNull so there is no separate loading state that shows a bare
+    // Scaffold spinner — during the brief initial load hasPacts defaults to
+    // false and isAnonymous defaults to true, so the carousel is shown
+    // immediately rather than flashing a spinner on first launch.
+    // Errors are also treated as "no pacts" (safe fallback).
+    final hasPacts = hasActivePacts.valueOrNull ?? false;
+
+    // Keep the carousel visible while:
+    //   (a) no pacts exist AND user is anonymous, OR
+    //   (b) sign-in is in progress (avoids a flash of empty dashboard while
+    //       pullRemoteChanges is fetching the user's pacts from Firestore).
+    final showCarousel = (!hasPacts && isAnonymous) || isSigningIn;
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return DashboardPageIos(
+        state: state,
+        hasPacts: hasPacts,
+        showCarousel: showCarousel,
+        onDaySelected: onDaySelected,
+        onCreatePact: onCreatePact,
+        onShowupTapped: onShowupTapped,
+      );
+    }
+    return DashboardPageAndroid(
+      state: state,
+      hasPacts: hasPacts,
+      showCarousel: showCarousel,
+      onDaySelected: onDaySelected,
+      onCreatePact: onCreatePact,
+      onShowupTapped: onShowupTapped,
     );
   }
 }

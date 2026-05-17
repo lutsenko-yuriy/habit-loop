@@ -9,9 +9,9 @@
 
   <!-- Habit milestone dots between the outer arc (r=80) and the inner circle (r=38),
        positioned at r≈60 from centre (160,120) on the same angular positions. -->
-  <circle cx="198" cy="74" r="6" fill="#FFB74D"/>
-  <circle cx="216" cy="140" r="6" fill="#8BC34A"/>
-  <circle cx="140" cy="176" r="6" fill="#00796B"/>
+  <circle cx="198" cy="74" r="6" fill="#FFB74D" opacity="0.3"/>
+  <circle cx="216" cy="140" r="6" fill="#8BC34A" opacity="0.3"/>
+  <circle cx="140" cy="176" r="6" fill="#00796B" opacity="0.3"/>
 
   <!-- Inner circle (app icon background) -->
   <circle cx="160" cy="120" r="38" fill="#004D40"/>

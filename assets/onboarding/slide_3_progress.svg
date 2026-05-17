@@ -28,7 +28,7 @@
 
   <!-- Milestone dots floating around the composition, clear of bars and star:
        upper-left above axis (104,64), right below star (222,106), lower-left below baseline (102,178) -->
-  <circle cx="104" cy="64" r="6" fill="#8BC34A"/>
-  <circle cx="222" cy="106" r="6" fill="#FFB74D"/>
-  <circle cx="102" cy="178" r="6" fill="#00796B"/>
+  <circle cx="104" cy="64" r="6" fill="#8BC34A" opacity="0.3"/>
+  <circle cx="222" cy="106" r="6" fill="#FFB74D" opacity="0.3"/>
+  <circle cx="102" cy="178" r="6" fill="#00796B" opacity="0.3"/>
 </svg>

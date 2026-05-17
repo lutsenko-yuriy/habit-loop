@@ -4,14 +4,36 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.34.1] — 2026-05-17 (PR #93 merged)
+
+### Fixed — Onboarding carousel sign-in and dashboard flash (HAB-75)
+
+- [user] Sign-in button stays visible and shows a loading spinner while Google login is in progress
+- [user] Dashboard no longer flashes an empty state on first launch while data is loading
+- [user] Onboarding illustration accent dots softened for a cleaner look
+- `if (isAnonymous || isSigningIn)` guard prevents the sign-in section from vanishing the moment auth state flips, before the loading flag resets
+- `hasActivePactsProvider` polling loop (50 ms interval, 10 s deadline) waits for the dashboard to fully settle before the carousel unmounts
+- `valueOrNull ?? false` in `DashboardScreen` replaces the loading-state branch so the carousel renders immediately on cold start without a spinner flash
+- 6 new widget tests covering the polling lifecycle on iOS and Android (settles to data, settles to error, still loading at timeout)
+
+### Added — Automated "What's New" release notes in CI
+
+- [user] Release notes in Firebase App Distribution now show human-readable change summaries instead of a raw build number
+- `scripts/generate_release_notes.py`: parses `docs/CHANGELOG.md`, extracts entries newer than the last published build, strips HAB-XX/PR/WU references, and truncates to 4 000 chars for Firebase and App Store compatibility
+- `[user]` prefix on CHANGELOG bullets selects exactly which lines appear in release notes; lines without the tag are developer-only and skipped
+- `resolve-version` CI job generates notes and uploads a `release-notes` artifact (90-day retention) for manual App Store / Play Store submissions
+- Both distribute jobs now use `--release-notes-file` instead of a hardcoded build-number string
+
+---
+
 ## [0.34.0] — 2026-05-17 (PR #92 merged)
 
 ### Added / Fixed — UI polish: SVGs, sign-in spinner, stopped-pact dates, flaky test (HAB-74)
 
-- Onboarding slide 0: milestone dots moved to r≈60 (between outer arc and inner circle); slides 2 and 3 gain matching milestone dots
-- Onboarding slide 1: SVG content scaled 1.5× so all four slides use the same r=90 background circle
-- Sign-in loading state: tapping "Sign in with Google" replaces the button with a spinner + "Fetching pacts…" and keeps the carousel visible until `linkWithGoogle` + `pullRemoteChanges` + dashboard reload completes; `onboardingSignInLoadingProvider` (`StateProvider<bool>`) drives the state
-- `Pact` domain model gains `stoppedAt: DateTime?` mapped from the existing `actual_end_date` column; pact detail timeline now shows both "Stopped [date]" and "Target [date]" for stopped pacts; pacts-panel tile subtitle shows the same pair
+- [user] Onboarding slide 0: milestone dots moved to r≈60 (between outer arc and inner circle); slides 2 and 3 gain matching milestone dots
+- [user] Onboarding slide 1: SVG content scaled 1.5× so all four slides use the same r=90 background circle
+- [user] Sign-in loading state: tapping "Sign in with Google" replaces the button with a spinner + "Fetching pacts…" and keeps the carousel visible until `linkWithGoogle` + `pullRemoteChanges` + dashboard reload completes; `onboardingSignInLoadingProvider` (`StateProvider<bool>`) drives the state
+- [user] `Pact` domain model gains `stoppedAt: DateTime?` mapped from the existing `actual_end_date` column; pact detail timeline now shows both "Stopped [date]" and "Target [date]" for stopped pacts; pacts-panel tile subtitle shows the same pair
 - Flaky carousel swipe-right integration test fixed: replaced `pumpAndSettle` with `waitFor` retry
 - Integration tests: all carousel/language/create-pact flow tests now pass `initiallyAnonymous: true` to `AppHarness.create()` so they see the carousel after the auth-gated `showCarousel` change
 - 1117 tests passing, analyzer clean
@@ -22,14 +44,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Onboarding carousel for zero-pact empty state (HAB-73)
 
-- Four-slide onboarding carousel replaces the plain empty state shown to users with no pacts: "Build Real Habits" → "Make a Pact" → "Never Miss a Showup" → "Watch Yourself Grow"
-- Each slide shows an SVG illustration (`assets/onboarding/`), a bold title, and a body paragraph; all copy available in EN/FR/DE/RU
-- Auto-advances every N seconds (controlled by Remote Config `onboarding_auto_advance_seconds`, default 10); values < 5 treated as 0 (disabled); manual swipe resets the timer
+- [user] Four-slide onboarding carousel replaces the plain empty state shown to users with no pacts: "Build Real Habits" → "Make a Pact" → "Never Miss a Showup" → "Watch Yourself Grow"
+- [user] Each slide shows an SVG illustration (`assets/onboarding/`), a bold title, and a body paragraph; all copy available in EN/FR/DE/RU
+- [user] Auto-advances every N seconds (controlled by Remote Config `onboarding_auto_advance_seconds`, default 10); values < 5 treated as 0 (disabled); manual swipe resets the timer
 - `OnboardingViewModel` (`AutoDisposeNotifier<int>`) owns the slide index, timer lifecycle (`Timer.periodic` + `ref.onDispose`), and analytics
 - Analytics: `onboarding` screen view on first render; `onboarding_slide_viewed` on every transition (auto/swipe); `onboarding_completed` on first reach of slide 3; `onboarding_create_pact_tapped` and `onboarding_sign_in_tapped` on button taps
 - Layout: PageView → page indicator dots → "Create a Pact" primary button (always) → "Sign in with Google" secondary button (anonymous users only) → subtle language-picker button at bottom
 - iOS: `CupertinoPageScaffold(navigationBar: null)`; Android: `Scaffold(appBar: null)` — no top bar at all
-- Carousel is shown only when the user has zero pacts (`!hasPacts && !state.isLoading`); once pacts exist the carousel is never shown again
+- [user] Carousel is shown only when the user has zero pacts (`!hasPacts && !state.isLoading`); once pacts exist the carousel is never shown again
 - `flutter_svg: ^2.0.0` added as a production dependency
 - 1072 tests passing, analyzer clean
 
@@ -39,6 +61,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Local pacts/showups not uploaded to Firestore after Google sign-in (HAB-73)
 
+- [user] Pacts and showups created before signing in with Google are now correctly uploaded when you link your account
 - `main.dart` was not passing `pactSyncRepository` and `showupSyncRepository` to `AppContainer.overrides()`, so both providers fell back to their noop defaults whose `getDirtyPacts()` / `getDirtyShowups()` always return empty lists
 - `flushDirtyRecords()` and `forceSyncAll()` therefore found zero dirty records in production and uploaded nothing — the bug was masked before HAB-72 because uploads went via direct `uploadPact/uploadShowup` calls; after HAB-72 blocked anonymous uploads, `forceSyncAll()` became the only post-login upload path, exposing the broken wiring
 - Fix: pass `pactSyncRepository: pactRepo` and `showupSyncRepository: showupRepo` (both backed by `SqlitePactRepository` / `SqliteShowupRepository`) to `AppContainer.overrides()` so the sync service can read and mark real dirty records
@@ -52,8 +75,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Google sign-in: user-not-found error, grey icon after first login, and anonymous sync (HAB-72)
 
-- `user-not-found` no longer crashes sign-in: `linkWithGoogleCredential()` now handles `user-not-found` the same as `credential-already-in-use` — falls back to `signInWithCredential()` so the app recovers when a previously-linked Firebase user was deleted from the console
-- Sync icon now updates immediately after first-time Google login: `FirebaseAuthClientAdapter.authStateChanges` uses `userChanges()` instead of `authStateChanges()` so the stream re-emits when `linkWithCredential` flips `isAnonymous` to false (same UID, profile-only change)
+- [user] `user-not-found` no longer crashes sign-in: `linkWithGoogleCredential()` now handles `user-not-found` the same as `credential-already-in-use` — falls back to `signInWithCredential()` so the app recovers when a previously-linked Firebase user was deleted from the console
+- [user] Sync icon now updates immediately after first-time Google login: `FirebaseAuthClientAdapter.authStateChanges` uses `userChanges()` instead of `authStateChanges()` so the stream re-emits when `linkWithCredential` flips `isAnonymous` to false (same UID, profile-only change)
 - Anonymous user data is no longer synced to Firestore: `FirestoreSyncService` guards `uploadPact`, `uploadShowup`, `flushDirtyRecords`, `pullRemoteChanges`, `triggerManualSync`, and `forceSyncAll` against anonymous users; dirty records accumulate in SQLite and are flushed after the user links their Google account
 - 1070 tests passing, analyzer clean
 
@@ -63,6 +86,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Fresh install shows user as already logged in on iOS (HAB-71)
 
+- [user] Fresh installs on iOS no longer incorrectly show a previously signed-in state after reinstalling the app
 - On iOS, Firebase Auth credentials survive app uninstall/reinstall in the Keychain; a fresh install would find a non-null `currentUser` and skip anonymous sign-in, leaving the dashboard in a synced/Google-linked state with no local data
 - `clearStaleKeychainIfFirstLaunch()` added to `lib/infrastructure/auth/data/first_launch_auth_fix.dart`; called from `main.dart` before `authService.initialize()`: writes a dedicated `habit_loop_launched` SharedPreferences key on the very first launch and calls `signOut()` if a stale Firebase user is found
 - 6 unit tests in `test/infrastructure/auth/data/first_launch_auth_fix_test.dart`; 2 new integration flow tests in `integration_test/fresh_install_flow_test.dart` (fresh-install signs out stale user → `cloud_off` shown; returning user is unaffected)
@@ -75,6 +99,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Full-stack app harness and UI flow tests (HAB-70)
 
+- [user-none]
 - `AppHarness` in `integration_test/harness.dart` boots `HabitLoopApp` with in-memory repositories and fake Firebase services (auth, analytics, sync, notifications, remote config); supports `initiallyAnonymous`, `syncServiceFactory`, `beforePump`, and `extraOverrides` parameters for flexible scenario setup
 - 5 integration test flows: create-pact wizard (analytics assert), mark-showup-done (analytics assert), language-change to Russian, sync-on-login with empty start (remote pact appears on dashboard), sync-on-login merge (local + remote pacts both visible after sign-in)
 - `SyncStatusViewModel.linkWithGoogle()`: `pullRemoteChanges()` is now awaited before reloading the dashboard, closing a race where the dashboard could read empty repos before Firestore data arrived; `forceSyncAll()` remains unawaited (independent of the reload)
@@ -87,8 +112,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Full-sync button in sync status dialog (HAB-69)
 
-- "Full sync" action added to the sync status dialog; visible in `synced`, `degraded`, and `suspended` states (user is online and logged in); hidden in `notLinked`, `noInternet`, and `connecting`
-- Tapping Full sync marks all local records dirty, flushes them to Firestore, and shows a snackbar on completion: "Sync complete" on full success, or "Sync failed: N records could not be uploaded" on partial failure (plural-aware, all 4 locales)
+- [user] "Full sync" action added to the sync status dialog; visible in `synced`, `degraded`, and `suspended` states (user is online and logged in); hidden in `notLinked`, `noInternet`, and `connecting`
+- [user] Tapping Full sync marks all local records dirty, flushes them to Firestore, and shows a snackbar on completion: "Sync complete" on full success, or "Sync failed: N records could not be uploaded" on partial failure (plural-aware, all 4 locales)
 - `forceSyncAll()` return type changed from `Future<void>` to `Future<ForceSyncResult>` — a new data class with `attempted`, `pactsFailed`, `showupsFailed`, `failed`, and `succeeded` fields
 - `SyncStatusViewModel.fullSync()` fires analytics and returns the total failure count for the snackbar callback
 - `ScaffoldMessengerState` captured before dialog opens and threaded through `openSyncStatusDialog` so the snackbar fires correctly after the dialog dismisses on both iOS and Android
@@ -101,6 +126,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Anonymous pacts not synced after Google login (HAB-68)
 
+- [user] Pacts created before signing in with Google are now correctly synced to your account after login
 - Pacts and showups created while anonymous and online were not re-uploaded to Firestore after linking a Google account when the Firebase UID changed (the `credential-already-in-use` recovery path). They had `dirty=0` after the initial anonymous sync, so `flushDirtyRecords()` silently skipped them
 - New `SyncService.forceSyncAll()` method marks every local record as dirty (`dirty=1, synced_at=NULL`) then calls `flushDirtyRecords()`, guaranteeing all records are uploaded under the current UID regardless of prior sync state
 - `SyncStatusViewModel.linkWithGoogle()` now calls `forceSyncAll()` instead of `flushDirtyRecords()` after a successful sign-in — safe for both the `linkWithCredential` path (UID unchanged, records re-uploaded harmlessly) and the `signInWithCredential` path (UID changed, records now uploaded correctly)
@@ -113,8 +139,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Google sign-in: re-login after sign-out and missing historical data (HAB-67)
 
-- Re-login after sign-out no longer fails with `_TypeError`: `FirebaseAuthClientAdapter.linkWithGoogleCredential()` now checks for a null `currentUser` and falls back to `signInWithCredential` directly (the same recovery path already used for `credential-already-in-use`)
-- Historical pacts and showups now appear after signing in with Google: `SyncStatusViewModel.linkWithGoogle()` fires `pullRemoteChanges()` and `flushDirtyRecords()` after a successful sign-in so the user's Firestore data is hydrated immediately; provider refs captured before the `await` to comply with Riverpod's post-dependency-change ref guard
+- [user] Re-login after sign-out no longer fails with `_TypeError`: `FirebaseAuthClientAdapter.linkWithGoogleCredential()` now checks for a null `currentUser` and falls back to `signInWithCredential` directly (the same recovery path already used for `credential-already-in-use`)
+- [user] Historical pacts and showups now appear after signing in with Google: `SyncStatusViewModel.linkWithGoogle()` fires `pullRemoteChanges()` and `flushDirtyRecords()` after a successful sign-in so the user's Firestore data is hydrated immediately; provider refs captured before the `await` to comply with Riverpod's post-dependency-change ref guard
 
 ---
 
@@ -122,6 +148,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — CI: cache CocoaPods to fix slow iOS build
 
+- [user-none]
 - `actions/cache@v4` added for `ios/Pods` keyed on `ios/Podfile.lock` hash in the `build-ios` job; eliminates 25-30 min cold-compile of gRPC-C++ and Abseil (transitive `cloud_firestore` pods) on every macOS runner — cache-hit builds drop to ~5-10 min
 - `AGENTS.md` workflow updated: require a pre-merge `git fetch origin && git rebase origin/main` before merging any feature branch
 
@@ -134,7 +161,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - `FirebaseFirestoreClientAdapter` implemented in `lib/infrastructure/firestore/data/` — wraps `FirebaseFirestore.instance`; no-throw contract on all 6 methods (`getPacts`, `getShowups`, `upsertPact`, `upsertShowup`, `deletePact`, `deleteShowup`); flat `/users/{uid}/pacts/{id}` and `/users/{uid}/showups/{id}` document paths; no SDK types leak through the `FirestoreClient` interface
 - Wired in `main.dart` via `AppContainer.overrides(firestoreClient: ...)` — active in all build modes
 - `cloud_firestore: ^6.0.0` added as a production dependency
-- Pacts and showups now actually sync to Firestore on every local write; `pullRemoteChanges()` on app start hydrates a fresh install from the remote
+- [user] Pacts and showups now actually sync to Firestore on every local write; `pullRemoteChanges()` on app start hydrates a fresh install from the remote
 - 1039 tests passing, analyzer clean
 
 ---
@@ -146,7 +173,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - New Android upload keystore generated and registered; CI `build-android` and `distribute-android` jobs restored
 - Debug and release SHA-1 fingerprints registered in Firebase Console → Android app
 - `google-services.json` re-downloaded with `oauth_client` entries after Google Sign-In was enabled
-- `serverClientId` (web OAuth client ID) now passed to `GoogleSignIn.instance.initialize()` — required on Android for `google_sign_in` v7 to include an `idToken` in the authentication response; without it Android sign-in silently produced a null token and failed
+- [user] `serverClientId` (web OAuth client ID) now passed to `GoogleSignIn.instance.initialize()` — required on Android for `google_sign_in` v7 to include an `idToken` in the authentication response; without it Android sign-in silently produced a null token and failed
 
 ---
 
@@ -154,9 +181,9 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Google Sign-In error handling on iOS
 
-- `credential-already-in-use`: Google account was already linked to a prior anonymous Firebase UID (e.g. after reinstall). Now falls back to `signInWithCredential` so the user recovers their existing Google-linked account instead of seeing "Could not sign in"
-- `_TypeError`: `idToken` was null in some cases, causing a Dart cast failure before reaching Firebase. Added an explicit null guard with a descriptive exception
-- `provider-already-linked`: current user already had Google linked — now treated as a success (no-op) instead of an error
+- [user] `credential-already-in-use`: Google account was already linked to a prior anonymous Firebase UID (e.g. after reinstall). Now falls back to `signInWithCredential` so the user recovers their existing Google-linked account instead of seeing "Could not sign in"
+- [user] `_TypeError`: `idToken` was null in some cases, causing a Dart cast failure before reaching Firebase. Added an explicit null guard with a descriptive exception
+- [user] `provider-already-linked`: current user already had Google linked — now treated as a success (no-op) instead of an error
 
 ---
 
@@ -165,7 +192,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 ### Fixed — Google Sign-In URL scheme on iOS
 
 - `$(REVERSED_CLIENT_ID)` in `ios/Runner/Info.plist` had no Xcode build setting or build phase to resolve it — the URL scheme was passed through unexpanded, so the Google OAuth redirect back to the app never fired and sign-in always failed
-- Fixed by hardcoding the actual reversed client ID: `com.googleusercontent.apps.935013168355-3jecs4lf3l2rr4g7dktth2as259i0tve`
+- [user] Fixed by hardcoding the actual reversed client ID: `com.googleusercontent.apps.935013168355-3jecs4lf3l2rr4g7dktth2as259i0tve`
 
 ---
 
@@ -177,10 +204,10 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - `SyncStatusViewModel` (`AutoDisposeNotifier<SyncUiState>`) in `lib/slices/dashboard/ui/generic/` watches `connectivityProvider`, `authStateChangesProvider`, and `syncCircuitBreakerProvider` to derive the current sync health state; exposes `triggerManualSync()`, `linkWithGoogle()`, `signOut()` actions
 - `connectivityProvider` (`StreamProvider<bool>`) declared in `app_providers.dart` using `connectivity_plus`; emits `true` when any non-none interface is active; defaults to `true` while loading (optimistic) so the UI never flashes "no internet" on startup; `ConnectivityResult` is fully encapsulated inside the provider body
 - `sync_status_handler.dart` (shared): `syncStatusIconData(SyncUiState)`, `syncStatusIconColor(SyncUiState, BuildContext)`, `openSyncStatusDialog({context, ref, showFn})` — shared orchestration that fires `SyncStatusOpenedEvent` and builds state-appropriate message + action list; `SyncDialogAction` data class; icon colors use `CupertinoColors.systemGreen/Orange/Red/Grey.resolveFrom(context)` for correct dark-mode adaptation on both platforms
-- iOS dashboard nav bar gains a `sync-status-button` `CupertinoButton` with color-coded Material icon; tap shows `CupertinoAlertDialog` with state message and platform-native actions
-- Android dashboard AppBar gains a `sync-status-button` `IconButton`; tap shows `AlertDialog` with same state message and actions
-- Dialog actions by state: `notLinked` → Sign in with Google + Not now; `suspended`/`degraded` → Sync now + Not now; `synced` → Sign out + Not now; `noInternet`/`connecting` → Not now only
-- Sign-in failure surfaces a second dialog with a localised error message (`signInWithGoogleFailed`) instead of silently dismissing; `linkWithGoogle()` rethrows `AuthLinkException` after logging analytics so callers can react
+- [user] iOS dashboard nav bar gains a `sync-status-button` `CupertinoButton` with color-coded Material icon; tap shows `CupertinoAlertDialog` with state message and platform-native actions
+- [user] Android dashboard AppBar gains a `sync-status-button` `IconButton`; tap shows `AlertDialog` with same state message and actions
+- [user] Dialog actions by state: `notLinked` → Sign in with Google + Not now; `suspended`/`degraded` → Sync now + Not now; `synced` → Sign out + Not now; `noInternet`/`connecting` → Not now only
+- [user] Sign-in failure surfaces a second dialog with a localised error message (`signInWithGoogleFailed`) instead of silently dismissing; `linkWithGoogle()` rethrows `AuthLinkException` after logging analytics so callers can react
 - 6 new analytics event classes (`final class`) in `lib/slices/dashboard/analytics/sync_analytics_events.dart`: `SyncStatusOpenedEvent`, `ManualSyncTriggeredEvent`, `SignInWithGoogleTappedEvent`, `SignInWithGoogleSucceededEvent`, `SignInWithGoogleFailedEvent`, `SignOutTappedEvent`
 - 12 l10n keys added across EN/FR/DE/RU: `syncStatusTitle`, `syncStatusSynced`, `syncStatusDegraded`, `syncStatusSuspended`, `syncStatusNoInternet`, `syncStatusConnecting`, `syncStatusNotLinked`, `syncNow`, `signInWithGoogle`, `signOut`, `notNow`, `signInWithGoogleFailed`
 - `REVERSED_CLIENT_ID` URL scheme registered in `ios/Runner/Info.plist` so the Google OAuth callback correctly returns to the app on iOS release builds
@@ -193,6 +220,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Pull-on-start sync (HAB-63, WU5 of HAB-53)
 
+- [user] Your pacts and showups now sync automatically from the cloud each time you open the app
 - `SyncService.pullRemoteChanges()` abstract method added with full no-throw contract and last-writer-wins merge rules documented
 - `NoopSyncService.pullRemoteChanges()` no-op implementation
 - `FirestoreSyncService.pullRemoteChanges()`: fetches all remote pacts and showups for the current user; merges into local SQLite using last-writer-wins — not-in-local → insert + mark synced; local dirty → keep local; remote `updated_at` > local `synced_at` → overwrite + mark synced; otherwise keep local; gated on CB being fully `closed`; calls `recordFailure()` on any network error; individual record errors isolated (one bad doc never blocks the rest)
@@ -212,6 +240,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Write-through sync service (HAB-62, WU4 of HAB-53)
 
+- [user-none]
 - `SyncService` abstract interface (`lib/infrastructure/sync/sync_service.dart`) with no-throw contract: `uploadPact(Pact)`, `uploadShowup(Showup)`, `flushDirtyRecords()`, `triggerManualSync()`; every implementation must swallow exceptions so sync failures can never block the local write path
 - `NoopSyncService` — `const` no-op default wired as `syncServiceProvider`
 - `SyncMapper` — `abstract final` class with `static pactToDocument()` and `showupToDocument()` helpers; maps domain models to Firestore-ready `Map<String, dynamic>`; excludes SQLite-only columns (`dirty`, `synced_at`, `total_showups`); encodes `PactStatus` and `ShowupStatus` to strings
@@ -229,6 +258,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Circuit breaker sync service (HAB-61, WU3 of HAB-53)
 
+- [user-none]
 - `SyncCircuitBreakerState` enum (`closed`, `halfOpen`, `open`) and `SyncCircuitBreaker` (`StateNotifier<SyncCircuitBreakerState>`) in `lib/infrastructure/sync/sync_circuit_breaker.dart`
 - State machine: `closed` → `halfOpen` on any Firestore failure; `halfOpen` → `closed` on success or → `open` after 5 consecutive failures; `open` → `halfOpen` only via `triggerManualSync()` (called from WU6 sync-status UI)
 - `canRequest` bool gates all WU4/WU5 sync operations — `false` only in `open` state; both `closed` and `halfOpen` allow requests so the app can probe its way back to `closed` after a transient outage
@@ -242,6 +272,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Firestore schema + client infrastructure (HAB-60, WU2 of HAB-53)
 
+- [user-none]
 - SQLite schema bumped to **v2**: `runMigrations` (fresh installs) adds `dirty INTEGER NOT NULL DEFAULT 1` and `synced_at INTEGER` to both `pacts` and `showups` tables; `runUpgradeMigrations(db, 1, 2)` is an `ALTER TABLE` path for existing installations so existing rows are automatically queued for the first sync (default `dirty = 1`); sync state is internal to the repository layer — domain models (`Pact`, `Showup`) remain clean with no sync fields
 - `PactSyncRepository` / `ShowupSyncRepository` interfaces added to `lib/domain/` exposing `getDirtyPacts()` / `getDirtyShowups()` and `markPactSynced()` / `markShowupSynced()`; consumed solely by the upcoming WU4 sync service — view models and application services never depend on these interfaces
 - `SqlitePactRepository` and `SqliteShowupRepository` now implement both their respective CRUD repository interface and the corresponding sync repository interface; `NoopPactSyncRepository` / `NoopShowupSyncRepository` no-op defaults wired as `pactSyncRepositoryProvider` / `showupSyncRepositoryProvider`
@@ -257,6 +288,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Auth foundation: anonymous sign-in, device ID, Google account linking (HAB-59)
 
+- [user] You can now sign in with Google to back up and restore your pacts across devices
 - `firebase_auth ^6.0.0` and `google_sign_in ^7.0.0` added as dependencies; all existing Firebase packages bumped to latest major (`firebase_core ^4`, `firebase_analytics ^12`, `firebase_crashlytics ^5`, `firebase_remote_config ^6`)
 - Every install silently signs in anonymously on first launch via `FirebaseAuthService.initialize()` (fire-and-forget after `runApp`); a stable Firebase UID is available from day one without any user action
 - `DeviceIdService` / `SharedPreferencesDeviceIdService`: UUID v4 generated once, persisted under `habit_loop_device_id`, prefixes new pact IDs (`{deviceId}-{uuid}`) for global uniqueness across devices
@@ -272,6 +304,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — App no longer hangs on splash screen when offline (HAB-56)
 
+- [user] The app no longer freezes on the launch screen when you have no internet connection
 - `FirebaseRemoteConfigService.initialize()` was `await`ing `fetchAndActivate()` with a 1-minute release timeout, blocking `main()` and keeping the splash screen frozen when the device had no internet connection
 - Fix: `setDefaults()` (in-code defaults) is still awaited before `initialize()` returns, so feature flags are available on the first frame; `fetchAndActivate()` is now fire-and-forget and completes in the background whenever the network is reachable
 - Release `fetchTimeout` reduced from 1 minute to 15 seconds to limit how long an inflight fetch lingers on a poor connection
@@ -288,6 +321,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Showup duration label uses locale-specific unit (HAB-57)
 
+- [user] Showup duration now displays in the correct unit for your language (min, Min., мин)
 - `_ShowupTile` in both iOS and Android dashboard pages was rendering the showup duration as a hardcoded English `min` suffix regardless of the active locale
 - Fix: replaced `'${showup.duration.inMinutes} min'` with `l10n.showupDurationMinutes(showup.duration.inMinutes)`, which already had correct translations for all four locales (`min` en/fr, `Min.` de, `мин` ru)
 - 2 new widget tests (iOS + Android) verify the Russian locale renders `мин`
@@ -298,6 +332,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Migrate to skills-based Claude agent stack (HAB-58)
 
+- [user-none]
 - `.claude/agents/*.md` subagent files replaced with `skills/**/SKILL.md` structure; each skill is a self-contained directory with its own frontmatter, instructions, and output style
 - `MODEL_TIERS.md` added at the repo root with a tier mapping (Opus / Sonnet / Haiku) so agent files reference a tier name rather than a hard-coded model ID
 - `styles/` directory added with communication presets; each style file documents tone, verbosity, and formatting conventions
@@ -311,6 +346,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — iOS notification tap navigation (UNUserNotificationCenter delegate)
 
+- [user] Tapping a reminder notification now correctly opens the showup detail screen on iOS
 - Root cause: Flutter 3.x removed the automatic `UNUserNotificationCenter.current().delegate = self` assignment from `FlutterAppDelegate`; without it iOS has no delegate to call on notification tap, so `didReceiveNotificationResponse` was never invoked and the app opened on the dashboard instead of the showup detail screen
 - Fix: added `UNUserNotificationCenter.current().delegate = self` to `AppDelegate.application:didFinishLaunchingWithOptions:`; `FlutterAppDelegate` implements `UNUserNotificationCenterDelegate` and forwards via `FlutterPluginAppLifeCycleDelegate` to all registered plugin delegates including `FlutterLocalNotificationsPlugin`
 - Cold-start tap guard: retry loop polls until the navigator is mounted before pushing the route, with a `_notificationNavigationHandled` guard flag to prevent double-push
@@ -325,8 +361,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 - New `ShowupUiState` enum (`planned`, `waitingForStart`, `active`, `done`, `failed`) lives in the UI layer only — no domain model changes
 - `deriveShowupUiState()` pure function computes the UI state from `now`, `showup.scheduledAt`, `showup.duration`, `showup.status`, and the pact's `reminderOffset`; `reminderFiresAt = scheduledAt - reminderOffset` (null/zero offset collapses "Waiting for start" into "Planned")
-- Dashboard calendar strip: "planned" showups keep the existing empty gray circle; "waitingForStart" and "active" showups show a filled amber circle signalling "something is about to happen / happening now"
-- Showup detail status chip now shows all 5 derived state labels ("Planned", "Waiting for start", "Pending", "Done", "Failed") using the injectable `showupDetailNowProvider` clock
+- [user] Dashboard calendar strip: "planned" showups keep the existing empty gray circle; "waitingForStart" and "active" showups show a filled amber circle signalling "something is about to happen / happening now"
+- [user] Showup detail status chip now shows all 5 derived state labels ("Planned", "Waiting for start", "Pending", "Done", "Failed") using the injectable `showupDetailNowProvider` clock
 - `ShowupStatusColors` extended with `waitingForStart` field, `forUiState()` and `overflowForUiState()` factory methods for consistent colour resolution across iOS and Android
 - `showupUiStateText()` formatter added to `showup_formatters.dart`
 - `deriveUiStates()` helper extracted to `generic/` eliminating iOS/Android duplication in the dashboard calendar strip
@@ -338,6 +374,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — iOS cold-start notification tap navigation
 
+- [user] Tapping a notification when the app is closed now correctly opens the showup detail screen on iOS
 - On iOS, `flutter_local_notifications` v9+ calls `onDidReceiveNotificationResponse` during `initialize()` — before `runApp()` has mounted the widget tree — so `_navigatorKey.currentState` was `null` and the navigation was silently dropped, leaving the user on the dashboard instead of the showup detail screen
 - Fix: warm-start taps (navigator already mounted) navigate immediately; cold-start taps (navigator is `null`) defer the push via `addPostFrameCallback` so it fires after the first frame when the navigator is guaranteed to be ready
 - `_notificationNavigationHandled` flag prevents the `getAppLaunchDetails()` `addPostFrameCallback` path from also pushing a route on the same cold-start (double-navigation guard); the flag resets after the cold-start frame so subsequent warm-start taps are never blocked
@@ -348,6 +385,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — WAL pragma crash on Android upgrade from v0.19.0
 
+- [user] The app no longer crashes on startup when upgrading from older versions on Android
 - `db.execute('PRAGMA journal_mode=WAL')` changed to `db.rawQuery('PRAGMA journal_mode=WAL')` in `HabitLoopDatabase.onConfigure`; on Android, `execSQL()` (which backs sqflite's `execute()`) throws for result-returning statements, causing "Unable to open the app database" for users upgrading from v0.19.0 (the first release without WAL); `rawQuery` does not assert on result rows and the call is wrapped in try/catch so WAL failure is non-fatal
 - `earlycrashlytics.recordError(e, st)` added to the broad catch block in `main()` so future database-init failures appear in Crashlytics rather than being silently swallowed
 - Misleading `'Failed to open database'` log message corrected
@@ -356,7 +394,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 - `package_info_plus` added as a dependency
 - `appVersionProvider` (`FutureProvider<String>`) returns `"vX.Y.Z (buildNumber)"` from the platform package info
-- Both iOS (`CupertinoNavigationBar`) and Android (`AppBar`) dashboard nav bars show a small version subtitle under the "Habit Loop" title; 833 tests passing, analyzer clean
+- [user] Both iOS (`CupertinoNavigationBar`) and Android (`AppBar`) dashboard nav bars show a small version subtitle under the "Habit Loop" title; 833 tests passing, analyzer clean
 
 ---
 
@@ -365,6 +403,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Auto-refresh dashboard when date changes at midnight (HAB-22)
 
+- [user] The dashboard now automatically refreshes when the date changes at midnight, so today's showups are always current
 - `WidgetsBindingObserver` added to `_DashboardScreenState`; on `AppLifecycleState.resumed`, if the calendar date has changed since the last load, invalidates `todayProvider` and `hasActivePactsProvider` and re-triggers `load()` on both `DashboardViewModel` and `PactListViewModel`, then logs an analytics screen view
 - `_lastLoadDate` assigned synchronously before `addObserver` to close a null-window race where a resume event could fire before the field was set
 - `_loadInProgress` guard added to `PactListViewModel` to prevent concurrent load executions on rapid resume cycles
@@ -376,6 +415,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Auto-fail past-due pending showups on dashboard load (HAB-21)
 
+- [user] Showups that passed their scheduled time are now automatically marked as failed
 - `DashboardViewModel.load()` runs an auto-fail sweep between the lazy showup generation loop and calendar strip construction; the sweep is guarded by a `_autoFailRunning` flag so rapid reloads never run two sweeps concurrently
 - Eligibility filter: showups in the visible past window (today-3 through today) that are still `pending`, belong to an active pact, and whose scheduled window has elapsed (`now > scheduledAt + duration`)
 - Per qualifying showup: persists `ShowupStatus.failed` via `PactStatsService.persistShowupStatus` (also refreshes the in-memory stats cache), fires `ShowupAutoFailedEvent` (fire-and-forget, analytics failure never blocks the sweep), and cancels the scheduled reminder via `ReminderSchedulingService.cancelRemindersForShowup`
@@ -394,14 +434,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - `NotificationConstants` shared class for action IDs and notification ID computation (deterministic, collision-free, two disjoint ID ranges for reminder vs deadline notifications)
 - `ReminderSchedulingService` orchestrates scheduling: reads EXP-001 (`notification_text_variant`) and EXP-002 (`post_deadline_notification_behavior`) from Remote Config; resolves locale internally via `LocalePreferenceService`; caps iOS to 32 showups per pass (64-slot limit divided by 2 notifications per showup)
 - `NotificationTextBuilder` — pure static class building notification text for three EXP-001 variants (`control`, `deadline`, `time_limit`) plus the missed-deadline replacement text
-- Reminder notifications scheduled at pact creation, during dashboard lazy-window generation, cancelled on showup done/failed and on pact stop
-- "Missed deadline" replacement notification: on iOS always scheduled (auto-dismiss not available); on Android controlled by EXP-002 (`dismiss` = `timeoutAfter` auto-dismiss, `encourage` = replacement notification)
+- [user] Reminder notifications scheduled at pact creation, during dashboard lazy-window generation, cancelled on showup done/failed and on pact stop
+- [user] "Missed deadline" replacement notification: on iOS always scheduled (auto-dismiss not available); on Android controlled by EXP-002 (`dismiss` = `timeoutAfter` auto-dismiss, `encourage` = replacement notification)
 - Notification tap routing: `lib/navigation/notification_navigator.dart` (platform-correct `CupertinoPageRoute` on iOS, `MaterialPageRoute` on Android); cold-start via `addPostFrameCallback` + `getAppLaunchDetails()`; warm-start via `onDidReceiveNotificationResponse`
-- "Mark done" actionable notification button (stretch goal): background isolate handler on Android; foreground handler uses Riverpod container for correct cache invalidation; `PactStatsService` updated on foreground mark-done
+- [user] "Mark done" actionable notification button (stretch goal): background isolate handler on Android; foreground handler uses Riverpod container for correct cache invalidation; `PactStatsService` updated on foreground mark-done
 - WAL journal mode enabled on SQLite database for safe concurrent access from main + background isolates
 - Analytics events: `notifications_scheduled`, `notification_opened`, `app_opened_from_notification` (with `cold_start` bool), `showup_marked_done_from_notification`
 - EXP-001 (notification text urgency) and EXP-002 (post-deadline Android behavior) registered in `docs/experiments/`
-- Stale notification tap shows localised "This showup is no longer available." message instead of a raw error
+- [user] Stale notification tap shows localised "This showup is no longer available." message instead of a raw error
 - 824 tests passing, analyzer clean
 
 ---
@@ -410,8 +450,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — In-app language picker UI, analytics, and Russian locale (HAB-40 WU3)
 
-- iOS language picker: `CupertinoActionSheet` launched from the dashboard nav bar globe icon; displays English, French, German, Russian, and "System default" options; selecting a locale writes via `localePreferenceServiceProvider` and updates `localeOverrideProvider` so the UI re-renders immediately
-- Android language picker: `AlertDialog` with a `RadioListTile` per locale, launched from a dashboard overflow menu item; same persistence and hot-swap behaviour
+- [user] iOS language picker: `CupertinoActionSheet` launched from the dashboard nav bar globe icon; displays English, French, German, Russian, and "System default" options; selecting a locale writes via `localePreferenceServiceProvider` and updates `localeOverrideProvider` so the UI re-renders immediately
+- [user] Android language picker: `AlertDialog` with a `RadioListTile` per locale, launched from a dashboard overflow menu item; same persistence and hot-swap behaviour
 - `LanguagePickerViewModel` (`autoDispose` notifier in `slices/settings/application/`) encapsulates the current locale read from `localeOverrideProvider` and a `selectLocale(Locale?)` action that writes to both the preference service and the provider
 - `LanguageSelectedEvent` analytics event (snake_case: `language_selected`, property `locale_code: String`) added to `slices/settings/analytics/` and logged on every user selection
 - `openLanguagePicker()` shared helper extracted to `slices/settings/ui/generic/` to eliminate duplication between the iOS and Android call sites
@@ -426,6 +466,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Locale persistence infrastructure and AppContainer async overrides (HAB-40 WU2)
 
+- [user-none]
 - `shared_preferences: ^2.3.0` added as a production dependency for storing locale preference across sessions
 - `LocalePreferenceService` abstract interface introduced in `lib/infrastructure/locale/contracts/` with a no-throw contract: `getSavedLocale()`, `saveLocale(Locale)`, `clearLocale()`
 - `SharedPreferencesLocaleService` implements the interface — stores locale as a language code string; validates against `AppLocalizations.supportedLocales` on read so stale or invalid codes return `null` gracefully
@@ -446,7 +487,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Russian locale and language picker l10n keys (HAB-40 WU1)
 
-- `lib/l10n/app_ru.arb` added with Russian translations for all 55 existing l10n keys
+- [user] `lib/l10n/app_ru.arb` added with Russian translations for all 55 existing l10n keys
 - 6 new language picker keys (`languagePickerTitle`, `languageEnglish`, `languageFrench`, `languageGerman`, `languageRussian`, `languageSystem`) added to all four ARB files (en, fr, de, ru) and regenerated via `flutter gen-l10n`
 - `ru` declared in `ios/Runner/Info.plist` `CFBundleLocalizations` array (iOS per-app language picker support)
 - `<locale android:name="ru"/>` added to `android/app/src/main/res/xml/locales_config.xml` (Android 13+ locale config)
@@ -460,6 +501,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — In-memory stats cache in PactStatsService (HAB-51)
 
+- [user-none]
 - `PactStatsService` gained a private `Map<String, PactStats> _statsCache` keyed by pact ID; constructor is no longer `const`
 - `currentStats()` made async with lazy cache-on-miss: when called with empty showups, checks cache first; on miss loads from `ShowupRepository`, writes to cache, and returns; on hit returns immediately without a DB round-trip; when called with non-empty showups, computes fresh stats without touching cache
 - `persistShowupStatus()` evicts the stale cache entry before `_syncStatsBestEffort`, which then repopulates it via `syncStats → persistStats`
@@ -475,6 +517,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Centralise dependency injection into lib/infrastructure/injections/ (HAB-52)
 
+- [user-none]
 - `lib/infrastructure/injections/app_providers.dart` — single canonical file declaring all 9 app-wide Riverpod providers (analytics, crashlytics, logging, remote config, pact/showup repositories, pact transaction service, pact service, pact stats service); replaces 5 deleted `providers/` files and removes provider declarations from 3 application-service files
 - `lib/infrastructure/injections/app_container.dart` — `AppContainer` static class exposing `AppContainer.overrides(...)` that accepts constructed service instances and returns the full `List<Override>` for `ProviderScope`; `main.dart` calls only this method
 - `main.dart` slimmed to call `AppContainer.overrides(...)`; no provider declarations or override lists remain inline
@@ -496,7 +539,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - `PactTransactionService` interface made non-nullable in `PactService`; `SqlitePactTransactionService` is the production implementation wired via `main.dart`; `InMemoryPactTransactionService` is provided for tests
 - `lib/infrastructure/persistence/repository_providers.dart` — centralised Riverpod provider declarations for `SqlitePactRepository`, `SqliteShowupRepository`, and `PactTransactionService` so all infrastructure providers are declared in one place
 - `main.dart` opens `HabitLoopDatabase`, constructs `SqlitePactRepository`, `SqliteShowupRepository`, and `PactTransactionService`, and wires them as the single app-wide repository sources via `ProviderScope` overrides; `InMemoryPactRepository` and `InMemoryShowupRepository` are no longer used at runtime
-- `_DatabaseErrorApp` widget displayed when the database fails to open, giving the user a visible error rather than a silent crash
+- [user] `_DatabaseErrorApp` widget displayed when the database fails to open, giving the user a visible error rather than a silent crash
 - `PactCreationViewModel` and `PactDetailViewModel` refactored to delegate all persistence to `PactService` and `PactStatsService` respectively
 - `PactStatsService` extended with `loadShowupsForPact()` helper so `PactDetailViewModel` can load showups without reaching into `showupRepositoryProvider`
 - `pactServiceProvider` composed from the three lower-level providers; existing `ProviderContainer` overrides in tests continue to work
@@ -508,6 +551,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Atomic pact creation and stop-pact transaction (HAB-11 Work Unit 3)
 
+- [user-none]
 - `lib/slices/pact/application/pact_transaction_service.dart` — `PactTransactionService` encapsulates two atomic operations: `savePactWithShowups(pact, showups)` wraps pact insert and showup batch-save in a single sqflite transaction so a showup-write failure can never leave an orphan pact row; `stopPactTransaction(pactId, stoppedAt, reason)` atomically deletes pending showups and updates the pact status to stopped in one transaction
 - `PactCreationViewModel` wired to call `PactTransactionService.savePactWithShowups()` instead of the previous two-step insert + saveShowups path, resolving the HAB-16 rollback tech debt atomically
 - `PactDetailViewModel` wired to call `PactTransactionService.stopPactTransaction()` for the stop-pact flow, replacing the previous separate delete + update calls
@@ -520,6 +564,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — SQLite database and repository implementations (HAB-11 Work Unit 2)
 
+- [user-none]
 - `lib/infrastructure/persistence/habit_loop_database.dart` — `HabitLoopDatabase` owns the sqflite `Database` singleton lifecycle and schema v1 DDL via `runMigrations` (public static for test injection); canonical DDL for `pacts` and `showups` tables consolidated here
 - `lib/slices/pact/data/sqlite_pact_repository.dart` — `SqlitePactRepository` — production `PactRepository` implementation backed by sqflite; uses `PactMapper` for row conversion; `updatePact` issues a targeted `UPDATE` on the primary key
 - `lib/slices/showup/data/sqlite_showup_repository.dart` — `SqliteShowupRepository` — production `ShowupRepository` implementation; `getShowupsForDate` and `getShowupsInRange` use epoch-ms boundaries derived from local-time midnight via `ShowupDateUtils`; `saveShowups` uses `INSERT OR REPLACE` for idempotent batch upserts
@@ -535,6 +580,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — SQLite mappers and codec (HAB-11 Work Unit 1)
 
+- [user-none]
 - `lib/infrastructure/persistence/schedule_codec.dart` — JSON codec for `ShowupSchedule` supporting all three schedule types (`daily`, `weekly`, `monthly`); encodes to a plain `Map<String, dynamic>` suitable for SQLite text columns
 - `lib/infrastructure/persistence/pact_mapper.dart` — bidirectional mapper between `Pact` domain model and SQLite row (`Map<String, dynamic>`); handles all nullable fields and delegates schedule serialisation to `ScheduleCodec`
 - `lib/infrastructure/persistence/showup_mapper.dart` — bidirectional mapper between `Showup` domain model and SQLite row; handles `ShowupStatus` and `Duration` round-trips
@@ -548,6 +594,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Single-ticket workflow, pre-merge housekeeping, CI version-tag fix
 
+- [user-none]
 - `AGENTS.md`: only one ticket may be in progress at a time; `docs/BACKLOG.md` `## In Progress` section signals the active ticket; step 3 marks the ticket there when the branch is created; step 16 revised — product-owner commits CHANGELOG + BACKLOG + pubspec bump onto the feature branch *before* merge so all housekeeping lands in one squash commit; version bump no longer requires user approval
 - `docs/BACKLOG.md`: `## In Progress` section added at the top; HAB-47 and HAB-49 removed from Unscheduled (merged)
 - `.github/workflows/ci.yml` `version-tag` job: `git pull --rebase` moved to *before* the `sed`/commit instead of after — eliminates the rebase conflict when a prior build-number bump landed on main while the job was waiting for distribute steps to finish
@@ -558,6 +605,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Experiment registry and experimentation stack documentation (HAB-49)
 
+- [user-none]
 - `docs/experiments/README.md` added: index table of all experiments (empty to start), status definitions (`running`, `won`, `lost`, `abandoned`), and a step-by-step "Starting an experiment" protocol with ID numbering convention
 - `docs/experiments/TEMPLATE.md` added: per-experiment file template covering hypothesis, setup, primary and guardrail metrics, audience, ramp plan, stop rule, decision, and learnings; status field defaults to `running`
 - `docs/ARCHITECTURE.md` updated with a brief mention of `docs/experiments/` as the experiment registry location
@@ -579,6 +627,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — DDD-style layered architecture refactor (HAB-45)
 
+- [user-none]
 - `lib/features/` renamed to `lib/slices/`; all import sites updated to canonical paths
 - `lib/domain/` introduced as a top-level directory for pure domain models and repository interfaces shared across slices (`pact/`, `showup/`)
 - `lib/infrastructure/` groups all cross-cutting services (`analytics/`, `crashlytics/`, `remote_config/`); each service's `domain/` subdirectory renamed to `contracts/` to avoid shadowing the top-level `lib/domain/`
@@ -595,6 +644,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — iOS cold-start white screen (HAB-44)
 
+- [user] The app launch screen no longer shows a white flash on iOS
 - `LaunchScreen.storyboard` background changed from white to brand teal (`#00637B`); transparent foreground icon (from Android adaptive icon layer) replaces the flat opaque icon — logo now floats seamlessly on the teal background, matching Android's splash screen
 - `Main.storyboard` root view background changed from white to teal (`#00637B`) — eliminates the white flash during Firebase init between launch screen dismissal and first Flutter frame
 - `SceneDelegate.swift` sets `UIWindow.backgroundColor` to teal (`#00637B`) — closes the last remaining white gap caused by the UIKit window default white showing through the transparent `FlutterViewController` view during engine init
@@ -608,6 +658,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Refactored — Extract PactBuilder from PactCreationState (HAB-17)
 
+- [user-none]
 - `PactBuilder` introduced in `lib/features/pact/domain/pact_builder.dart`: owns the 7 pact-data fields (`habitName`, `startDate`, `endDate`, `showupDuration`, `scheduleType`, `schedule`, `reminderOffset`), the `_addMonths` month-clamping helper, and the `ScheduleType` enum; exposes validity predicates (`isDateRangeValid`, `isShowupDurationValid`, `isScheduleSet`, `isHabitNameValid`, `isComplete`) and a `build({id, createdAt})` factory that throws `StateError` if incomplete
 - `PactCreationState` slimmed to wizard-navigation concerns only: holds `builder: PactBuilder`, `currentStep`, `commitmentAccepted`, `isSubmitting`, `submitError`; data-field params removed from `copyWith`; proxy getters (`habitName`, `startDate`, etc.) delegate to `builder` so zero widget changes were needed; `canAdvanceFromStep` is now a pure dispatch table routing each step to the corresponding builder predicate
 - `PactCreationViewModel` gains private `_updateBuilder()` helper; all data-field setters route through it; `submit()` guard replaced with `if (!state.builder.isComplete) return;` and manual `Pact(...)` constructor replaced with `state.builder.build(id: ..., createdAt: now)`
@@ -620,6 +671,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — iOS builds wired to Firebase App Distribution (HAB-28)
 
+- [user-none]
 - `build-ios` job added to `.github/workflows/ci.yml` running on `macos-latest`; builds a release IPA using the Apple distribution certificate and ad-hoc provisioning profile stored as GitHub Actions secrets (`IOS_CERTIFICATE_P12`, `IOS_CERTIFICATE_PASSWORD`, `IOS_PROVISIONING_PROFILE`, `IOS_TEAM_ID`)
 - `distribute-ios` job added; uploads the signed IPA to Firebase App Distribution using the `FIREBASE_IOS_APP_ID` and `FIREBASE_SERVICE_ACCOUNT_IOS` secrets, running on every merge to `main` only
 - `version-tag` job updated to emit `both`, `android`, or `ios` suffix depending on which platform builds succeeded, and pinned to the triggering commit SHA to close a race window where a concurrent build-number bump could cause the tag to target the wrong commit
@@ -631,6 +683,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — CupertinoDynamicColor dark-mode resolution in ShowupStatusColors (HAB-41)
 
+- [user] Calendar strip dots and showup status icons now correctly adapt to dark mode on iOS
 - `ShowupStatusColors.cupertino` const factory removed; both iOS dashboard call sites now resolve `CupertinoColors.activeGreen`, `CupertinoColors.destructiveRed`, and `CupertinoColors.systemGrey` via `resolveFrom(context)` before passing them to the `ShowupStatusColors` constructor, restoring correct light/dark adaptation for calendar-strip dots and showup tile icons in iOS dark mode
 - 404 tests pass, analyzer clean
 
@@ -640,6 +693,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Extract shared formatLocaleDate helper to eliminate six-site duplication (HAB-42)
 
+- [user-none]
 - `formatLocaleDate(BuildContext context, DateTime date)` helper added to `lib/l10n/date_formatters.dart` as the single canonical definition of the `DateFormat.yMd(locale).format(date)` pattern
 - All six previous call sites unified: inline usages in `pact_duration_step_ios.dart`, `pact_duration_step_android.dart`, `pact_detail_page_ios.dart`, and `pact_detail_page_android.dart` replaced; `formatPactDate` in `pact_creation_formatters.dart` and `formatShowupDate` in `showup_formatters.dart` delegated to the shared helper
 - `docs/ARCHITECTURE.md` updated to document `lib/l10n/date_formatters.dart`
@@ -651,6 +705,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Align pubspec.yaml version name with changelog (HAB-43)
 
+- [user-none]
 - `pubspec.yaml` version name bumped from `0.1.0` to `0.11.5` so Firebase App Distribution labels builds with the correct version instead of the initial scaffold value
 - `AGENTS.md` workflow updated: step 10 now requires verifying that `pubspec.yaml` version name matches the latest `CHANGELOG.md` entry before committing, and updating it (with user approval) when a new changelog entry is added
 - 399 tests pass, analyzer clean
@@ -661,6 +716,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Reduce duplicated iOS/Android dashboard widget logic (HAB-15)
 
+- [user-none]
 - Extracted shared formatter helpers — `pact_creation_formatters.dart`, `pact_formatters.dart`, `showup_formatters.dart` — replacing duplicated date, schedule, reminder, and status formatting logic across commitment steps, schedule steps, pact detail pages, showup detail pages, and the pacts summary bar
 - Extracted `ShowupStatusColors` — a platform-agnostic colour-role resolver with Cupertino and Material factory constructors, replacing inline status-colour switches in both dashboard pages and showup tile implementations
 - Extracted `ShowupStatusDots` — a platform-agnostic calendar-strip dot widget encapsulating the 1/2/3/4+ overflow layout and key naming, replacing `_buildDots()` in both dashboard pages
@@ -674,6 +730,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Code quality baseline and dart format enforcement (HAB-33)
 
+- [user-none]
 - 13 lint rules added to `analysis_options.yaml` covering readability (`always_declare_return_types`, `avoid_print`, `prefer_single_quotes`, etc.), safety (`avoid_dynamic_calls`, `cast_nullable_to_non_nullable`), and Flutter-specific concerns (`use_build_context_synchronously`, `sized_box_for_whitespace`)
 - `dart format --line-length 120` applied across the entire codebase in a dedicated formatting commit, keeping style-only changes separate from functional work
 - CI (`github/workflows/ci.yml`) gains a `dart format --output=none --set-exit-if-changed` check on every push and PR, excluding generated files (`firebase_options.dart`, `lib/l10n/generated/*`)
@@ -685,8 +742,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Per-app language selection (HAB-39)
 
-- `CFBundleLocalizations` array added to `ios/Runner/Info.plist` listing `en`, `fr`, `de`, so iOS Settings shows a per-app language picker under the app's entry (iOS 13+)
-- `android/app/src/main/res/xml/locales_config.xml` created with the three supported locales and referenced via `android:localeConfig` on the `<application>` element in `AndroidManifest.xml` (Android 13+ / API 33; older versions are unaffected)
+- [user] `CFBundleLocalizations` array added to `ios/Runner/Info.plist` listing `en`, `fr`, `de`, so iOS Settings shows a per-app language picker under the app's entry (iOS 13+)
+- [user] `android/app/src/main/res/xml/locales_config.xml` created with the three supported locales and referenced via `android:localeConfig` on the `<application>` element in `AndroidManifest.xml` (Android 13+ / API 33; older versions are unaffected)
 - No Dart changes required — Flutter's existing `AppLocalizations` setup already handles locale switching once the platform declarations are in place
 
 ---
@@ -696,9 +753,9 @@ A record of all versioned releases. For planned work and known issues, see @docs
 ### Changed — Dark mode support (HAB-37)
 
 - `darkMaterialTheme` added to `HabitLoopTheme` using Material3 container tokens so all surfaces, text, and icons adapt automatically to the system colour scheme
-- `ThemeMode.system` wired into `MaterialApp` so the app follows the device's light/dark preference without any manual toggle
+- [user] `ThemeMode.system` wired into `MaterialApp` so the app follows the device's light/dark preference without any manual toggle
 - `CupertinoTheme` brightness propagated from the active `BuildContext` so iOS widgets also respond correctly to dark mode
-- All hardcoded non-adaptive colours replaced with Material3 container tokens across Android widgets (Dashboard, Pact creation wizard, Pact detail, Showup detail, pacts panel, calendar strip, status dots, tiles)
+- [user] All hardcoded non-adaptive colours replaced with Material3 container tokens across Android widgets (Dashboard, Pact creation wizard, Pact detail, Showup detail, pacts panel, calendar strip, status dots, tiles)
 
 ---
 
@@ -706,9 +763,9 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Lock app to portrait orientation (HAB-38)
 
-- `Info.plist` updated to list only `UIInterfaceOrientationPortrait` in `UISupportedInterfaceOrientations` (iPhone), so iOS phones stay portrait-only regardless of device rotation
+- [user] `Info.plist` updated to list only `UIInterfaceOrientationPortrait` in `UISupportedInterfaceOrientations` (iPhone), so iOS phones stay portrait-only regardless of device rotation
 - iPad landscape support preserved in `UISupportedInterfaceOrientations~ipad` to comply with App Store guideline 10.1, which requires iPad apps to support both landscape orientations
-- `AndroidManifest.xml` `MainActivity` entry updated with `android:screenOrientation="portrait"` so Android devices remain locked to portrait
+- [user] `AndroidManifest.xml` `MainActivity` entry updated with `android:screenOrientation="portrait"` so Android devices remain locked to portrait
 
 ---
 
@@ -716,6 +773,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — iOS home indicator gesture on dashboard bottom sheet (HAB-36)
 
+- [user] The swipe-up home gesture on iPhone now works correctly when the pacts panel is visible
 - Removed the invisible gesture-blocking overlay that was preventing the native iOS swipe-up home gesture while the dashboard bottom sheet was visible; the `DraggableScrollableSheet` now receives gestures correctly without any custom bottom reserve
 - The mint safe-area visual treatment (achieved via `CupertinoPageScaffold.backgroundColor`) is preserved, so no white stripe reappears below the bottom sheet
 - Focused widget test added to `dashboard_page_ios_test.dart` asserting that no custom home-indicator reserve or blocking overlay is present in the widget tree
@@ -727,9 +785,9 @@ A record of all versioned releases. For planned work and known issues, see @docs
 ### Added — App design foundation and launcher icon (HAB-35)
 
 - Shared Habit Loop visual foundation added in `lib/theme/`: Material and Cupertino themes now use the same teal/growth/sunrise palette, and pact status colors consume semantic app colors instead of ad-hoc Material defaults
-- New Habit Loop app icon source added under `assets/app_icon/` and integrated into iOS and Android launcher assets, using the approved original icon composition with opaque iOS PNGs
-- Android adaptive launcher icon and splash screen now share the same teal background color and tuned foreground sizing so the icon fills the launcher surface without the previous visible clipping
-- iOS pact creation now includes a small step indicator using the shared palette, improving consistency with the newly defined app visual language
+- [user] New Habit Loop app icon source added under `assets/app_icon/` and integrated into iOS and Android launcher assets, using the approved original icon composition with opaque iOS PNGs
+- [user] Android adaptive launcher icon and splash screen now share the same teal background color and tuned foreground sizing so the icon fills the launcher surface without the previous visible clipping
+- [user] iOS pact creation now includes a small step indicator using the shared palette, improving consistency with the newly defined app visual language
 - iOS dashboard keeps the bottom safe-area visually aligned with the mint bottom sheet via the scaffold background, with focused test coverage documenting that no custom home-indicator overlay or reserve is used
 - `docs/ARCHITECTURE.md` updated to document the shared theme layer and app icon asset source; tests added for the theme, iOS pact creation step indicator, and iOS dashboard safe-area treatment
 
@@ -739,6 +797,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Firebase Remote Config integration (HAB-25)
 
+- [user-none]
 - `firebase_remote_config` SDK added to `pubspec.yaml`; a new `remote_config/` vertical slice introduces `RemoteConfigService` (abstract interface with a no-throw contract), `FirebaseRemoteConfigService` (backed by `FirebaseRemoteConfigClientAdapter`), and `NoopRemoteConfigService` for debug/profile builds
 - `RemoteConfigDefaults` class acts as the single source of truth for all default values; `max_active_pacts` defaults to `3`
 - `remoteConfigServiceProvider` wired via Riverpod so the service can be overridden in tests; `main.dart` constructs the adapter, calls `initialize()`, and overrides the provider under `kReleaseMode`
@@ -753,6 +812,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — startDate normalization and injectable now in pact detail (HAB-34)
 
+- [user-none]
 - `PactCreationState` constructor and `PactCreationViewModel.setStartDate()` now normalize `startDate` to midnight, preventing a wall-clock time component from causing `duration_days` in `pact_created` analytics to under-count by 1 and `daysActive` in `pact_stopped` to report 0 when a pact is stopped the morning after an evening creation
 - `pactDetailNowProvider` (`Provider<DateTime>`) extracted and wired into both `load()` (auto-completion check) and `stopPact()` (analytics), matching the `showupDetailNowProvider` and `pactCreationTodayProvider` pattern; `PactDetailScreen.initState()` and `onStopPact()` both invalidate the provider before use so the clock is always fresh
 
@@ -762,6 +822,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Pact stats and dashboard analytics fixes (HAB-30, HAB-31, HAB-32)
 
+- [user] Pact statistics are now preserved correctly after stopping a pact
 - `pact_created` analytics now reports inclusive `duration_days`, aligning daily 6-month pact duration semantics with `showups_expected` and removing the apparent off-by-one mismatch
 - Stopped pacts now preserve historical showup stats after active showups are deleted, and showup status changes refresh persisted pact stats through a single service boundary
 - Dashboard `screen_view` analytics now fire every time the dashboard becomes visible again after returning from pact creation, pact detail, or showup detail flows
@@ -774,7 +835,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - `FlutterError.onError` and `PlatformDispatcher.instance.onError` wired to Crashlytics in `main.dart` so both Flutter-layer and native crashes are captured in release builds; debug and profile builds fall back to `NoopCrashlyticsService`
 - `crashlyticsServiceProvider` provided via Riverpod so the service can be overridden in tests; `FakeCrashlyticsService` in `test/crashlytics/` for dependency injection
 - `NoopAnalyticsService` and `NoopCrashlyticsService` now log via `debugPrint` in debug/profile builds for easier local debugging
-- `Pact.createdAt` field added; `ShowupGenerationService.ensureShowupsExist` and `ShowupGenerator.countTotal` now respect it to prevent past-due intra-day showups from being resurrected on dashboard load or causing a ghost "1 remaining" in pact stats
+- [user] `Pact.createdAt` field added; `ShowupGenerationService.ensureShowupsExist` and `ShowupGenerator.countTotal` now respect it to prevent past-due intra-day showups from being resurrected on dashboard load or causing a ghost "1 remaining" in pact stats
 - `ARCHITECTURE.md` corrected: raw `FirebaseCrashlytics` SDK is referenced both via the adapter and directly in pre-`runApp` error handlers
 
 ---
@@ -783,6 +844,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Firebase Analytics integration (HAB-26)
 
+- [user-none]
 - `firebase_analytics` SDK added to `pubspec.yaml`; a new `analytics` vertical slice introduces `AnalyticsService` (abstract interface), `FirebaseAnalyticsService` (backed by `FirebaseAnalyticsClientAdapter`), and `NoopAnalyticsService` — infrastructure only, no widgets
 - Per-vertical `analytics/` packages: `pact/analytics/` contains `PactCreatedEvent` and `PactStoppedEvent`; `showup/analytics/` contains `ShowupMarkedDoneEvent`, `ShowupMarkedFailedEvent`, and `ShowupAutoFailedEvent` — events live next to the domain they describe
 - Events tracked: `pact_created` (schedule type, duration days, showup duration minutes, reminder offset, showups expected), `pact_stopped` (days active, done/failed/remaining counts), `showup_marked_done`, `showup_marked_failed`, `showup_auto_failed`
@@ -798,6 +860,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Android CI/CD pipeline with Firebase App Distribution (HAB-20)
 
+- [user-none]
 - GitHub Actions `distribute-android` job updated to upload the Android AAB to Firebase App Distribution on every merge to `main` using the Firebase App Distribution GitHub Action
 - `FIREBASE_APP_ID_ANDROID` and `FIREBASE_TOKEN` GitHub Actions secrets wired into the workflow; build artifacts flow from the `build-android` job via uploaded artifacts
 - Distribution only runs on the `main` branch; feature branch builds continue to build without distributing or tagging
@@ -808,6 +871,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Firebase project setup (HAB-27)
 
+- [user-none]
 - `firebase_core` added to `pubspec.yaml`; `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` called in `main.dart` before `runApp`, so all subsequent Firebase SDKs (Analytics, Remote Config, App Distribution) can be added without further wiring
 - `com.google.gms:google-services` Gradle plugin applied to `android/settings.gradle.kts` and `android/app/build.gradle.kts`
 - `ios/Runner.xcodeproj/project.pbxproj` updated with Firebase configuration entries
@@ -820,7 +884,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 ### Changed — Showup generation window and date arithmetic
 
 - Replaced `DateTime(year, month, day + 7)` arithmetic in `pact_creation_view_model.dart` and `dashboard_view_model.dart` with `date.add(const Duration(days: 7))`, which handles month-end boundaries correctly and is consistent with the `_addMonths()` pattern introduced in v0.2.0
-- Expanded the showup generation window from 7 to 10 days to ensure the full 7-day calendar strip is always covered with a DST-safe buffer; updated tests to assert the wider window
+- [user] Expanded the showup generation window from 7 to 10 days to ensure the full 7-day calendar strip is always covered with a DST-safe buffer; updated tests to assert the wider window
 
 ---
 
@@ -828,6 +892,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Lazy DateTime candidate generation in ShowupGenerator
 
+- [user-none]
 - `_candidatesDaily`, `_candidatesWeekly`, `_candidatesMonthly`, and `_monthsInRange` converted from `List<DateTime>` builders to `sync*` / `yield` lazy `Iterable<DateTime>` generators
 - New private dispatcher `_candidates(Pact)` routes to the correct generator based on schedule type
 - `_generateInRange` and `_countInRange` now iterate lazily — no full-pact `DateTime` list is ever materialised, eliminating ~183 allocations per `DashboardViewModel.load()` call on a 6-month daily pact
@@ -843,7 +908,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - `PactStats` updated to accept a `totalShowups` override, enabling accurate stats using `countTotal()` rather than the persisted subset
 - `PactDetailViewModel` uses `ShowupGenerator.countTotal()` for remaining/total counts so stats are accurate even when only a window of showups is persisted
 - `DashboardViewModel` generates the next window on load and refreshes it lazily as the calendar scrolls into future dates
-- Calendar strip `todayIndex` offset ramps gradually over the first 3 days (day 1: today at index 0, day 2: index 1, day 3: index 2, day 4+: centered at index 3) to avoid a visual jump when a pact is first created
+- [user] Calendar strip `todayIndex` offset ramps gradually over the first 3 days (day 1: today at index 0, day 2: index 1, day 3: index 2, day 4+: centered at index 3) to avoid a visual jump when a pact is first created
 
 ---
 
@@ -852,12 +917,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 ### Added — Showup detail screen
 
 - `ShowupDetailState` and `ShowupDetailViewModel` (Riverpod `autoDispose` notifier) backed by `ShowupRepository`; loads showup and resolves the parent pact name for the header
-- iOS (`CupertinoPageScaffold`) and Android (`Scaffold`) detail screens: shows scheduled time, habit name, and showup status with Done / Failed action buttons
-- Auto-fail on open: if the screen is opened after the showup's scheduled window has passed (`now > scheduledAt + duration`), the showup is immediately persisted as `failed`; `nowProvider` is used so the clock is injectable and testable
-- Save Note button disabled until the note content differs from the persisted value, preventing spurious writes
+- [user] iOS (`CupertinoPageScaffold`) and Android (`Scaffold`) detail screens: shows scheduled time, habit name, and showup status with Done / Failed action buttons
+- [user] Auto-fail on open: if the screen is opened after the showup's scheduled window has passed (`now > scheduledAt + duration`), the showup is immediately persisted as `failed`; `nowProvider` is used so the clock is injectable and testable
+- [user] Save Note button disabled until the note content differs from the persisted value, preventing spurious writes
 - Split error fields: `markError` for Done/Failed status mutations and `noteError` for note saves, so each action reports failures independently
-- Localised `"(habit deleted)"` fallback displayed when the parent pact can no longer be found in the repository
-- Dashboard showup tiles now carry a chevron and navigate to the detail screen; `nowProvider` invalidated on return so stale timestamps do not persist across navigations
+- [user] Localised `"(habit deleted)"` fallback displayed when the parent pact can no longer be found in the repository
+- [user] Dashboard showup tiles now carry a chevron and navigate to the detail screen; `nowProvider` invalidated on return so stale timestamps do not persist across navigations
 - 12 new l10n keys across EN / FR / DE: `showupDetailTitle`, `showupDone`, `showupFailed`, `showupPending`, `markDone`, `markFailed`, `noteLabel`, `notePlaceholder`, `saveNote`, `markError`, `saveNoteError`, `habitDeleted`
 
 ---
@@ -866,6 +931,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Agent comment prefixes for distinguishability
 
+- [user-none]
 - Tech Lead PR comments now prefixed with **[Tech Lead]** and Code Reviewer PR comments with **[Code Reviewer]** on all inline and general comments, so both agents' findings are distinguishable when reviewing in parallel
 
 ---
@@ -874,6 +940,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Developer agent for TDD feature implementation
 
+- [user-none]
 - Developer agent (`.claude/agents/developer.md`, model `claude-sonnet-4-6`) that implements work units produced by the Tech Lead agent following a strict TDD cycle (Red → Green → Refactor)
 - Agent requires an approved Tech Lead implementation plan (read from Linear issue comments) before writing any code
 - Branch naming convention enforced: `feature/HAB-XX-description`
@@ -888,6 +955,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Tech Lead agent and review wiring
 
+- [user-none]
 - Tech Lead agent (`.claude/agents/tech-lead.md`, model `claude-opus-4-6`) that produces structured implementation plans from Linear issues: dependencies, models, UI changes, test strategy, ordered phases, and Developer work units
 - `CLAUDE.md` workflow updated: step 1 now invokes the Tech Lead agent for large changes instead of producing plans inline; step 11 invokes tech-lead and code-reviewer in parallel (they check independent concerns — architectural vs runtime/launch)
 - `model: claude-opus-4-6` field added to `tech-lead.md`; `model: claude-sonnet-4-6` added to `product-owner.md` and `code-reviewer.md` frontmatter
@@ -900,6 +968,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Multi-agent workflow and Linear integration
 
+- [user-none]
 - Product Owner agent (`.claude/agents/product-owner.md`) wired into session-start and post-merge workflow: reads Linear backlog, summarises released and remaining work, manages BACKLOG.md and CHANGELOG.md regeneration from Linear
 - `.mcp.json` committed — Linear MCP server configured for the workspace, enabling all agents to query and update Linear issues
 - `.claude/agents/` directory committed to the repository; `code-reviewer.md` (previously untracked) and `product-owner.md` now versioned
@@ -913,11 +982,11 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Pact detail screen and persistent pacts panel
 
-- Pact detail screen: stats (done / failed / remaining or cancelled / streak), timeline (start date, end date, days remaining), stop pact with confirmation dialog and optional explanation
-- Pact detail screen is accessible for active, stopped, and completed pacts
-- Persistent `DraggableScrollableSheet` panel on the dashboard listing all pacts with filter chips (Active / Done / Stopped) and a summary bar
-- Tapping a pact tile navigates to its detail screen; returning refreshes both the pact list and the dashboard calendar
-- Auto-completion: `PactDetailViewModel.load()` transitions an active pact to `completed` when its end date has passed (`daysLeft ≤ 0`) or all showups are resolved
+- [user] Pact detail screen: stats (done / failed / remaining or cancelled / streak), timeline (start date, end date, days remaining), stop pact with confirmation dialog and optional explanation
+- [user] Pact detail screen is accessible for active, stopped, and completed pacts
+- [user] Persistent `DraggableScrollableSheet` panel on the dashboard listing all pacts with filter chips (Active / Done / Stopped) and a summary bar
+- [user] Tapping a pact tile navigates to its detail screen; returning refreshes both the pact list and the dashboard calendar
+- [user] Auto-completion: `PactDetailViewModel.load()` transitions an active pact to `completed` when its end date has passed (`daysLeft ≤ 0`) or all showups are resolved
 - Locale-aware date and time formatting throughout (EN / FR / DE)
 - Localised section headers (Stats, Timeline, Stop reason) in all three locales
 - New l10n keys: `sectionStats`, `sectionTimeline`, `sectionStopReason`, `stopPactError`, `pactsActive`, `pactsDone`, `pactsCancelled`, `addPact`, `pactListTitle`, `filterActive`, `filterDone`, `filterCancelled`, `pactNextShowup`, `pactEndedOn`, `pactCancelledOn`
@@ -941,16 +1010,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Pact count warning and calendar dot layout
 
-- Warning dialog before pact creation when the user already has 3 or more active pacts; plural-aware copy in EN/FR/DE
+- [user] Warning dialog before pact creation when the user already has 3 or more active pacts; plural-aware copy in EN/FR/DE
 - iOS warning uses `CupertinoAlertDialog`; Android uses `AlertDialog`
-- Crossfade animation when switching days in the calendar strip
+- [user] Crossfade animation when switching days in the calendar strip
 - iOS nav-bar `+` button hidden on empty state (matching Android FAB behaviour)
 - New l10n keys: `cancel`, `tooManyPactsTitle`, `tooManyPactsBody` (plural), `tooManyPactsConfirm`
 
 ### Changed — Calendar strip dot layout
 
-- 1 showup → 1 dot; 2 → 2 dots on one row; 3 → 2+1 rows; 4+ → single large overflow dot
-- Overflow dot colour: grey while any showup is still pending; green if all resolved and done ≥ failed; red if failed > done
+- [user] 1 showup → 1 dot; 2 → 2 dots on one row; 3 → 2+1 rows; 4+ → single large overflow dot
+- [user] Overflow dot colour: grey while any showup is still pending; green if all resolved and done ≥ failed; red if failed > done
 - Overflow dot key includes date (`status-dot-overflow-YYYY-MM-DD`) to prevent key collisions across the 7-day strip
 
 ### Fixed
@@ -965,6 +1034,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Dashboard wiring
 
+- [user] Showups now appear in the calendar after you create a pact
 - Showups are now generated and persisted when a pact is created via `PactCreationViewModel.submit()`
 - `pactCreationShowupRepositoryProvider` — new Riverpod provider for the showup repository used during pact creation
 - `deletePact(String id)` added to `PactRepository` interface and `InMemoryPactRepository`
@@ -989,6 +1059,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Showup domain layer
 
+- [user-none]
 - `Showup` model with `id`, `pactId`, `scheduledAt`, `duration`, `status`, and optional `note`
 - `ShowupStatus` enum: `pending`, `done`, `failed`
 - `ShowupGenerator` — deterministically generates all `Showup` instances for a pact from its `ShowupSchedule`
@@ -1004,8 +1075,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Pact creation wizard
 
-- 5-step wizard: commitment confirmation → habit name → pact duration → showup duration → schedule → reminder
-- `ShowupSchedule` supporting three modes: every day at a time, specific weekdays, specific days of the month
+- [user] 5-step wizard: commitment confirmation → habit name → pact duration → showup duration → schedule → reminder
+- [user] `ShowupSchedule` supporting three modes: every day at a time, specific weekdays, specific days of the month
 - `PactCreationState` and `PactCreationViewModel` (Riverpod notifier) managing wizard state
 - `PactRepository` interface and `InMemoryPactRepository` implementation
 - `Pact` model and `PactStatus` enum (`active`, `stopped`, `completed`)
@@ -1014,7 +1085,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Dashboard
 
-- Dashboard screen with a 7-day calendar strip (3 days before / today / 3 days after)
+- [user] Dashboard screen with a 7-day calendar strip (3 days before / today / 3 days after)
 - Today's showup list placeholder (empty state)
 - Platform-split UI: `DashboardPageIos` and `DashboardPageAndroid`
 - `DashboardState` and `DashboardViewModel`
@@ -1025,6 +1096,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added
 
+- [user-none]
 - Flutter project scaffold targeting iOS and Android
 - Riverpod for state management and dependency injection
 - sqflite dependency for local storage (not yet used)
