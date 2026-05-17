@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.34.2] — 2026-05-18 (PR #94 merged)
+
+### Fixed — Dashboard loading blink and 24-hour time picker on iOS
+
+- [user] Dashboard no longer shows a brief nav-bar/spinner flash between the splash screen and the home screen on cold launch
+- [user] Time picker in pact creation now shows 24-hour format (e.g. 14:30) on devices set to European locales instead of always showing AM/PM
+- `isCarouselPending` flag propagated from `DashboardScreen` to both platform pages; a centered loading spinner is shown while `hasActivePactsProvider` resolves (~10–50 ms), eliminating the blink for both new and returning users
+- Removed the incorrect `!state.isLoading` guard from the carousel condition — it was the wrong proxy and caused the scaffold to flash
+- `CupertinoDatePicker` in `schedule_step_ios.dart` now passes `use24hFormat: MediaQuery.alwaysUse24HourFormatOf(ctx)`; display labels already used `TimeOfDay.format(context)` which was already locale-aware
+
+---
+
 ## [0.34.1] — 2026-05-17 (PR #93 merged)
 
 ### Fixed — Onboarding carousel sign-in and dashboard flash (HAB-75)
