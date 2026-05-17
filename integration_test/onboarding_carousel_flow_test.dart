@@ -2,6 +2,9 @@
 //
 // Run with: flutter test integration_test/onboarding_carousel_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/onboarding_carousel_flow_test.dart
+import 'dart:io' show Platform;
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -82,8 +85,12 @@ void main() {
       await tester.tap(find.text(strings.languagePickerTitle));
       await tester.pumpAndSettle();
 
-      // Android: language picker renders a SimpleDialog.
-      expect(find.byType(SimpleDialog), findsOneWidget);
+      // Platform-specific picker dialog type.
+      if (Platform.isAndroid) {
+        expect(find.byType(SimpleDialog), findsOneWidget);
+      } else {
+        expect(find.byType(CupertinoActionSheet), findsOneWidget);
+      }
       expect(find.text(strings.languageFrench), findsOneWidget);
 
       await tester.tap(find.text(strings.languageFrench));

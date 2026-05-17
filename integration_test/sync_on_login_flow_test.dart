@@ -21,8 +21,14 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
+import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import '../test/infrastructure/sync/fake_sync_service.dart';
 import 'harness.dart';
+
+/// Disables the onboarding auto-advance timer (RC value < _minAutoAdvanceSeconds=5).
+final _noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
+  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+);
 
 // Fixed clock: 5 minutes before the 08:00 remote showup window so the
 // auto-fail check (now > scheduledAt + duration) never triggers, and also
@@ -175,6 +181,7 @@ void main() {
         initiallyAnonymous: true,
         syncServiceFactory: (pactRepo, showupRepo) => _SeedingSyncService(pactRepo, showupRepo),
         extraOverrides: [
+          _noAutoAdvance,
           // Pin the clock so the seeded showup is not auto-failed.
           todayProvider.overrideWithValue(_testNow),
           showupDetailNowProvider.overrideWithValue(_testNow),
@@ -182,30 +189,21 @@ void main() {
       );
       final strings = l10n(tester);
 
-      // ── 1. Dashboard starts empty (anonymous user, no data yet) ─────────
-      await waitFor(tester, find.text(strings.noPactsYet));
+      // ── 1. Onboarding carousel shown (anonymous user, no data yet) ───────
+      // The carousel replaces the old "No pacts yet" empty state.
+      await waitFor(tester, find.text(strings.onboardingSlide0Title));
       expect(find.text('Morning Run'), findsNothing);
 
-      // ── 2. Open sync status dialog ───────────────────────────────────────
-      // Anonymous user → sync state = notLinked → cloud_off icon.
-      // Wait for the icon to confirm the auth stream has propagated to
-      // SyncStatusViewModel before tapping, so the dialog opens in the
-      // correct notLinked state and shows "Sign in with Google".
-      await waitFor(tester, find.byIcon(Icons.cloud_off_outlined));
-      await tester.tap(find.byKey(const Key('sync-status-button')));
-      await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
-
-      // ── 3. Tap "Sign in with Google" ────────────────────────────────────
-      // The dialog action closes the dialog first (Navigator.pop) then fires
-      // vm.linkWithGoogle() unawaited. linkWithGoogle():
-      //   1. calls FakeAuthService.linkWithGoogle() → auth state → non-anonymous
-      //   2. awaits _SeedingSyncService.pullRemoteChanges() → seeds repos
-      //   3. invalidates hasActivePactsProvider and calls dashboard load()
+      // ── 2. Tap "Sign in with Google" in the carousel ─────────────────────
+      // The carousel shows this button only when isAnonymous is true,
+      // confirming auth has propagated. Tapping it calls
+      // SyncStatusViewModel.linkWithGoogle() → _SeedingSyncService.pullRemoteChanges()
+      // seeds the in-memory repos → dashboard reloads with remote data.
+      await waitFor(tester, find.text(strings.signInWithGoogle));
       await tester.tap(find.text(strings.signInWithGoogle));
-      await tester.pump(); // dialog pops + linkWithGoogle() starts
+      await tester.pump(); // linkWithGoogle() starts
 
-      // ── 4. Wait for dashboard to reload with remote data ─────────────────
+      // ── 3. Wait for dashboard to reload with remote data ─────────────────
       await waitFor(tester, find.text('Morning Run'));
       expect(find.text('Morning Run'), findsOneWidget);
     });

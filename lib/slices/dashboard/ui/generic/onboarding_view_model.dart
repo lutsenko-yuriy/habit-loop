@@ -43,7 +43,10 @@ class OnboardingViewModel extends AutoDisposeNotifier<int> {
   }
 
   /// Called by the PageView's onPageChanged when the user swipes manually.
+  /// Also fires programmatically when animateToPage settles — the guard below
+  /// prevents a spurious timer reset when the index hasn't actually changed.
   void onUserSwiped(int newIndex) {
+    if (newIndex == state) return;
     final effectiveSeconds = _effectiveAutoAdvanceSeconds();
     if (effectiveSeconds > 0) _startTimer(effectiveSeconds);
     _goToSlide(newIndex, 'swipe');
