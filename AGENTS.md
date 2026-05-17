@@ -80,7 +80,13 @@ At the beginning of every new session, before doing anything else:
 
 Follow TDD: write or update tests **before** implementing the feature or fix. Red → Green → Refactor.
 
-**Only one ticket may be in progress at a time.** Before picking up any new ticket, check Linear to confirm no other ticket is currently in progress.
+**Ticket states and parallelism rules:**
+- **In Progress** → active development; only one ticket may be In Progress at a time.
+- **In Review** → PR is open; code review (architectural + audit) is happening.
+- **In QA** → PR is merged; CI/CD and human testers are validating on real devices. A new ticket **may** be picked up while another is In QA.
+- **Done** → QA has signed off; the user moves the ticket to Done manually.
+
+Before picking up any new ticket, check Linear to confirm no other ticket is In Progress (In QA is fine).
 
 **For features with user-visible screens or interactions**: invoke the `analyze` skill first for analytics planning before planning implementation:
 
@@ -130,14 +136,16 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
     - Invoke both review skills simultaneously once the PR is open (they are independent — launch them simultaneously):
       - `review` for architectural review: `Invoke the review skill for PR #<number>`.
       - `audit` for runtime/launch/migration review: `Invoke the audit skill for PR #<number>`.
+    - Move the Linear ticket to **In Review**.
     - Inform the user of the PR URL.
 14. Remind the user to compact the context after each commit to keep the conversation lean.
 15. When the user approves the PR, invoke the `ship` skill **before merging**:
     ```
     Invoke the ship skill for PR #<number>
     ```
-    The skill closes the Linear issues, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
-16. Clear the context after the PR with the changes is merged.
+    The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
+16. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
+17. A new ticket may be picked up while the previous one is In QA.
 
 ## Experiments
 

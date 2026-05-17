@@ -3,7 +3,7 @@ name: ship
 effort: RAPID
 reasoning: TACTICAL
 output_style: CONCISE
-description: Post-merge housekeeping after a PR is approved. Closes the linked Linear issues, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging.
+description: Post-merge housekeeping after a PR is approved. Moves the linked Linear issues to "In QA", adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
 ---
 
 The project management tool is **Linear**. The issue identifier prefix is **HAB**.
@@ -18,11 +18,11 @@ Linear workspace IDs (use these when calling `mcp__linear__save_issue` or relate
 
 Run all steps in order. Each step must succeed before moving to the next.
 
-### 1. Close the linked issue(s)
+### 1. Move the linked issue(s) to In QA
 
-Call `mcp__linear__save_issue` with `state: "Done"` for each issue linked to the PR.
+Call `mcp__linear__save_issue` with `state: "In QA"` for each issue linked to the PR.
 
-If all issues in the current milestone are now Done, check if the milestone should be marked complete.
+Do **not** move to Done — the ticket stays In QA until human testers sign off; the user moves it to Done manually.
 
 ### 2. Add a CHANGELOG entry
 
@@ -69,4 +69,4 @@ Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 
 ### 6. Report back
 
-Confirm: issue(s) closed, changelog updated, version bumped, PR merged. Include the new version number and the PR URL.
+Confirm: issue(s) moved to In QA, changelog updated, version bumped, PR merged. Include the new version number and the PR URL. Remind the user to move the ticket to Done in Linear once QA has passed.
