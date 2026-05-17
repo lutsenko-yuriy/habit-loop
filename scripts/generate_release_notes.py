@@ -190,7 +190,7 @@ _ELLIPSIS = '…'
 
 def _format(bullets: list[str]) -> str:
     if not bullets:
-        return 'Improved stability and performance of the app.'
+        return 'Bug fixes and improvements.'
 
     lines = [f'• {b}' for b in bullets]
     result = '\n'.join(lines)
@@ -231,7 +231,7 @@ def main() -> None:
     except Exception as exc:  # noqa: BLE001
         # Never fail the CI build — just emit a safe fallback.
         print(f'Warning: could not generate release notes: {exc}', file=sys.stderr)
-        print('Improved stability and performance of the app.')
+        print('Bug fixes and improvements.')
 
 
 if __name__ == '__main__':
