@@ -3,7 +3,6 @@
 // Run with: flutter test integration_test/onboarding_carousel_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/onboarding_carousel_flow_test.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:integration_test/integration_test.dart';
@@ -38,7 +37,13 @@ void main() {
       h = await AppHarness.create(tester, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
-      await tester.fling(find.byType(PageView), const Offset(-400, 0), 2000);
+      // timedDrag gives the gesture a release velocity, which PageScrollPhysics
+      // uses to determine whether to advance the page.
+      await tester.timedDrag(
+        find.text(strings.onboardingSlide0Title),
+        const Offset(-400, 0),
+        const Duration(milliseconds: 300),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
@@ -50,12 +55,20 @@ void main() {
       final strings = l10n(tester);
 
       // Advance to slide 1.
-      await tester.fling(find.byType(PageView), const Offset(-400, 0), 2000);
+      await tester.timedDrag(
+        find.text(strings.onboardingSlide0Title),
+        const Offset(-400, 0),
+        const Duration(milliseconds: 300),
+      );
       await tester.pumpAndSettle();
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
 
       // Swipe back to slide 0.
-      await tester.fling(find.byType(PageView), const Offset(400, 0), 2000);
+      await tester.timedDrag(
+        find.text(strings.onboardingSlide1Title),
+        const Offset(400, 0),
+        const Duration(milliseconds: 300),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
