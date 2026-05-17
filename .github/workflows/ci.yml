@@ -107,10 +107,11 @@ jobs:
     outputs:
       version_name: ${{ steps.resolve.outputs.version_name }}
       build_number: ${{ steps.resolve.outputs.build_number }}
+      release_notes: ${{ steps.release_notes.outputs.release_notes }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # need full tag history
+          fetch-depth: 0   # need full tag history + all version-* tags
 
       - id: resolve
         run: |
@@ -130,6 +131,41 @@ jobs:
 
           echo "version_name=$VERSION_NAME"  >> "$GITHUB_OUTPUT"
           echo "build_number=$BUILD_NUMBER"  >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - id: release_notes
+        name: Generate release notes
+        run: |
+          # Highest semver from any version-* git tag — that's the last published version.
+          LAST_VERSION=$(git tag --list 'version-*' \
+            | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
+            | sort -V | tail -1)
+          LAST_VERSION=${LAST_VERSION:-0.0.0}
+          echo "Last published version: $LAST_VERSION"
+
+          # Generate human-readable notes and write to a file for the artifact.
+          python3 scripts/generate_release_notes.py docs/CHANGELOG.md "$LAST_VERSION" \
+            > release-notes.txt
+
+          echo "=== Release notes preview ==="
+          cat release-notes.txt
+
+          # Emit as a multiline output using a random delimiter to avoid any
+          # chance that note content matches the delimiter line.
+          DELIM=$(head -c 12 /dev/urandom | base64 | tr -d '=+/')
+          echo "release_notes<<$DELIM" >> "$GITHUB_OUTPUT"
+          cat release-notes.txt       >> "$GITHUB_OUTPUT"
+          echo "$DELIM"               >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.txt
+          retention-days: 90
 
   # ── Build signed Android AAB ──────────────────────────────────────────────
   build-android:
@@ -208,13 +244,16 @@ jobs:
           fi
 
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT_ANDROID" > "$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$RELEASE_NOTES"                    > "$RUNNER_TEMP/release-notes.txt"
+
           firebase appdistribution:distribute app-release.apk \
             --app "$FIREBASE_ANDROID_APP_ID" \
-            --release-notes "Build ${{ needs.resolve-version.outputs.build_number }} — ${{ github.sha }}"
+            --release-notes-file "$RUNNER_TEMP/release-notes.txt"
         env:
           FIREBASE_ANDROID_APP_ID:          ${{ secrets.FIREBASE_ANDROID_APP_ID }}
           FIREBASE_SERVICE_ACCOUNT_ANDROID: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
           GOOGLE_APPLICATION_CREDENTIALS:   ${{ runner.temp }}/firebase-service-account.json
+          RELEASE_NOTES:                    ${{ needs.resolve-version.outputs.release_notes }}
 
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
@@ -387,13 +426,16 @@ jobs:
             exit 1
           fi
 
+          printf '%s' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.txt"
+
           firebase appdistribution:distribute "$IPA_PATH" \
             --app "$FIREBASE_IOS_APP_ID" \
-            --release-notes "Build ${{ needs.resolve-version.outputs.build_number }} — ${{ github.sha }}"
+            --release-notes-file "$RUNNER_TEMP/release-notes.txt"
         env:
           FIREBASE_IOS_APP_ID:            ${{ secrets.FIREBASE_IOS_APP_ID }}
           FIREBASE_SERVICE_ACCOUNT_IOS:   ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+          RELEASE_NOTES:                  ${{ needs.resolve-version.outputs.release_notes }}
 
   # ── Tag the release and bump pubspec build number ─────────────────────────
   version-tag:

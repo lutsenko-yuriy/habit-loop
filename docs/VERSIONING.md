@@ -30,6 +30,13 @@ check-skip → test → resolve-version → build-android → distribute-android
 
 Distribution and version tagging only run on the `main` branch. Feature branches can still build (useful for testing) but won't distribute or tag.
 
+**Release notes ("What's New"):**
+- `scripts/generate_release_notes.py` is run during `resolve-version` to produce user-friendly bullet-point release notes.
+- It parses `docs/CHANGELOG.md`, extracts all entries with a version number *higher* than the last published version (determined from `version-*` git tags), and strips developer-only references (HAB-XX issue numbers, PR #XX, WU work-unit markers).
+- Output is capped at 4 000 characters for compatibility with both Firebase App Distribution and App Store "What's New" fields.
+- The generated notes are passed to both `distribute-android` and `distribute-ios` via a job output and written to `--release-notes-file` so Firebase testers see human-readable text instead of a build number/SHA string.
+- A copy of the notes file is uploaded as a `release-notes` GitHub Actions artifact (retained for 90 days) for manual use in App Store / Play Store submissions.
+
 **Required GitHub Actions Secrets:**
 
 | Secret | Used by | How to obtain |
