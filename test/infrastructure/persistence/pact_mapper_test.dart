@@ -226,6 +226,20 @@ void main() {
         expect(PactMapper.fromRow(row).status, equals(PactStatus.completed));
       });
 
+      test('sets stoppedAt to actual_end_date value when status is stopped', () {
+        final stoppedAt = DateTime(2026, 3, 15);
+        final row = baseRow()
+          ..['status'] = 'stopped'
+          ..['actual_end_date'] = stoppedAt.millisecondsSinceEpoch;
+        final pact = PactMapper.fromRow(row);
+        expect(pact.stoppedAt, equals(stoppedAt));
+      });
+
+      test('stoppedAt is null when status is active', () {
+        final pact = PactMapper.fromRow(baseRow());
+        expect(pact.stoppedAt, isNull);
+      });
+
       test('throws ArgumentError for unknown status', () {
         final row = baseRow()..['status'] = 'unknown';
         expect(() => PactMapper.fromRow(row), throwsArgumentError);
@@ -264,6 +278,28 @@ void main() {
 
       test('does not include synced_at — managed exclusively by the sync layer', () {
         expect(PactMapper.toUpdateRow(basePact()).containsKey('synced_at'), isFalse);
+      });
+
+      test('actual_end_date uses stoppedAt when set', () {
+        final stoppedAt = DateTime(2026, 3, 15);
+        final pact = Pact(
+          id: 'pact-1',
+          habitName: 'Meditate',
+          startDate: startDate,
+          endDate: endDate,
+          showupDuration: showupDuration,
+          schedule: schedule,
+          status: PactStatus.stopped,
+          stoppedAt: stoppedAt,
+        );
+        final row = PactMapper.toUpdateRow(pact);
+        expect(row['actual_end_date'], equals(stoppedAt.millisecondsSinceEpoch));
+      });
+
+      test('actual_end_date uses endDate when stoppedAt is null', () {
+        final pact = basePact(status: PactStatus.stopped);
+        final row = PactMapper.toUpdateRow(pact);
+        expect(row['actual_end_date'], equals(endDate.millisecondsSinceEpoch));
       });
     });
 

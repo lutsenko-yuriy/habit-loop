@@ -16,6 +16,7 @@ Widget _buildCarouselApp({
   FakeLocalePreferenceService? localeService,
   Locale? localeOverride,
   Locale locale = const Locale('en'),
+  bool isSigningIn = false,
 }) {
   return ProviderScope(
     overrides: [
@@ -25,6 +26,7 @@ Widget _buildCarouselApp({
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
       if (localeOverride != null) localeOverrideProvider.overrideWith((ref) => localeOverride),
+      onboardingSignInLoadingProvider.overrideWith((ref) => isSigningIn),
     ],
     child: MaterialApp(
       localizationsDelegates: const [
@@ -130,5 +132,21 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600)); // complete page animation
 
     expect(find.text('Make a pact with yourself'), findsOneWidget);
+  });
+
+  testWidgets('shows Sign in with Google button when not signing in', (tester) async {
+    await tester.pumpWidget(_buildCarouselApp(isSigningIn: false));
+    await tester.pump();
+
+    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('hides Sign in button and shows spinner when signing in', (tester) async {
+    await tester.pumpWidget(_buildCarouselApp(isSigningIn: true));
+    await tester.pump();
+
+    expect(find.text('Sign in with Google'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
   });
 }

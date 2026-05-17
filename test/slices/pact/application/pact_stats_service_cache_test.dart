@@ -232,6 +232,35 @@ void main() {
         expect(stats, isA<PactStats>());
       });
 
+      test('stopPact result has stoppedAt equal to midnight of now', () async {
+        final pact = _makePact('p1');
+        final showup = _makeShowup('s1', 'p1');
+
+        final pactRepo = InMemoryPactRepository([pact]);
+        final showupRepo = _CountingShowupRepository([showup]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo);
+
+        final now = DateTime(2026, 4, 10, 14, 35); // 2:35 PM
+        final result = await service.stopPact(pact: pact, pactId: pact.id, now: now);
+
+        expect(result.stoppedAt, equals(DateTime(2026, 4, 10))); // midnight of now
+      });
+
+      test('stopPact result still has original endDate (not overwritten)', () async {
+        final pact = _makePact('p1');
+        final showup = _makeShowup('s1', 'p1');
+
+        final pactRepo = InMemoryPactRepository([pact]);
+        final showupRepo = _CountingShowupRepository([showup]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo);
+
+        final now = DateTime(2026, 4, 10);
+        final result = await service.stopPact(pact: pact, pactId: pact.id, now: now);
+
+        // Original endDate from _makePact is DateTime(2026, 10, 1).
+        expect(result.endDate, equals(DateTime(2026, 10, 1)));
+      });
+
       test('cache entries for other pacts survive stopPact of a single pact', () async {
         final pact1 = _makePact('p1');
         final pact2 = _makePact('p2');

@@ -224,12 +224,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       }
     }
 
+    final authState = ref.watch(authStateChangesProvider).valueOrNull;
+    final isAnonymous = authState?.isAnonymous ?? true;
+    final isSigningIn = ref.watch(onboardingSignInLoadingProvider);
+
     return hasActivePacts.when(
       data: (hasPacts) {
+        // Keep the carousel visible while:
+        //   (a) no pacts exist AND user is anonymous, OR
+        //   (b) sign-in is in progress (avoids a flash of empty dashboard while
+        //       pullRemoteChanges is fetching the user's pacts from Firestore).
+        final showCarousel = (!hasPacts && isAnonymous) || isSigningIn;
         if (defaultTargetPlatform == TargetPlatform.iOS) {
           return DashboardPageIos(
             state: state,
             hasPacts: hasPacts,
+            showCarousel: showCarousel,
             onDaySelected: onDaySelected,
             onCreatePact: onCreatePact,
             onShowupTapped: onShowupTapped,
@@ -238,6 +248,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
         return DashboardPageAndroid(
           state: state,
           hasPacts: hasPacts,
+          showCarousel: showCarousel,
           onDaySelected: onDaySelected,
           onCreatePact: onCreatePact,
           onShowupTapped: onShowupTapped,

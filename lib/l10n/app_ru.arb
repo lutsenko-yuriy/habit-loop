@@ -259,5 +259,15 @@
   "onboardingSlide3Title": "Смотри, что работает",
   "@onboardingSlide3Title": {},
   "onboardingSlide3Body": "Отслеживай свои явки, замечай закономерности и решай: продолжать, корректировать или пробовать что-то новое.",
-  "@onboardingSlide3Body": {}
+  "@onboardingSlide3Body": {},
+
+  "pactStoppedDate": "Остановлено",
+  "@pactStoppedDate": {},
+  "pactPlannedUntil": "Планировалось до {date}",
+  "@pactPlannedUntil": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "fetchingPacts": "Загрузка пактов…",
+  "@fetchingPacts": {}
 }

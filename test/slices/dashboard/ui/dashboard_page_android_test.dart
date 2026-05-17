@@ -47,6 +47,7 @@ Widget _buildTestApp({
       home: DashboardPageAndroid(
         state: state,
         hasPacts: hasPacts,
+        showCarousel: !hasPacts,
         onDaySelected: (_) {},
         onCreatePact: () async {},
         onShowupTapped: (_) async {},

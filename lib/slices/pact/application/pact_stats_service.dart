@@ -197,7 +197,7 @@ class PactStatsService {
     final statsBeforeStop = existingStats ?? await currentStats(pact: pact, showups: showups);
     final updated = pact.copyWith(
       status: PactStatus.stopped,
-      endDate: stoppedDate,
+      stoppedAt: stoppedDate,
       stopReason: reason,
       stats: statsBeforeStop.copyWith(
         startDate: pact.startDate,

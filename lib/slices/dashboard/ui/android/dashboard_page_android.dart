@@ -21,6 +21,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 class DashboardPageAndroid extends ConsumerWidget {
   final DashboardState state;
   final bool hasPacts;
+  final bool showCarousel;
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
   final Future<void> Function(String) onShowupTapped;
@@ -29,6 +30,7 @@ class DashboardPageAndroid extends ConsumerWidget {
     super.key,
     required this.state,
     required this.hasPacts,
+    required this.showCarousel,
     required this.onDaySelected,
     required this.onCreatePact,
     required this.onShowupTapped,
@@ -55,8 +57,10 @@ class DashboardPageAndroid extends ConsumerWidget {
           messenger: ScaffoldMessenger.of(context),
         );
 
-    // Show the onboarding carousel full-screen (no app bar) when there are no pacts.
-    if (!hasPacts && !state.isLoading) {
+    // Show the onboarding carousel full-screen (no app bar) when requested.
+    // showCarousel is true when there are no pacts + user is anonymous, OR
+    // when sign-in is in progress (to avoid a flash of empty dashboard).
+    if (showCarousel && !state.isLoading) {
       return OnboardingCarouselAndroid(onCreatePact: onCreatePact);
     }
 
