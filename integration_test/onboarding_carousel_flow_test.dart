@@ -47,7 +47,9 @@ void main() {
         const Offset(-400, 0),
         const Duration(milliseconds: 300),
       );
-      await tester.pumpAndSettle();
+      // waitFor instead of pumpAndSettle: on a real device the PageView
+      // animation can outlast pumpAndSettle's frame budget.
+      await waitFor(tester, find.text(strings.onboardingSlide1Title));
 
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
       expect(find.text(strings.onboardingSlide0Title), findsNothing);
@@ -63,7 +65,7 @@ void main() {
         const Offset(-400, 0),
         const Duration(milliseconds: 300),
       );
-      await tester.pumpAndSettle();
+      await waitFor(tester, find.text(strings.onboardingSlide1Title));
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
 
       // Swipe back to slide 0.
