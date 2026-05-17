@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.33.0] — 2026-05-16 (PR #XX merged)
+## [0.33.0] — 2026-05-17 (PR #91 merged)
 
 ### Added — Onboarding carousel for zero-pact empty state (HAB-73)
 
