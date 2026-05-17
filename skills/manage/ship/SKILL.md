@@ -18,11 +18,23 @@ Linear workspace IDs (use these when calling `mcp__linear__save_issue` or relate
 
 Run all steps in order. Each step must succeed before moving to the next.
 
-### 1. Move the linked issue(s) to In QA
+### 1. Move the linked issue(s) to the correct post-merge state
 
-Call `mcp__linear__save_issue` with `state: "In QA"` for each issue linked to the PR.
+First, determine the target state by inspecting the PR file list (`gh pr view <number> --json files`):
 
-Do **not** move to Done — the ticket stays In QA until human testers sign off; the user moves it to Done manually.
+**→ In QA** if the PR touches any of:
+- `lib/slices/*/ui/` — any widget or screen
+- `lib/infrastructure/persistence/` — schema or mapper changes
+- `lib/infrastructure/sync/` — Firestore or circuit-breaker behaviour
+- `lib/infrastructure/notifications/` — notification scheduling
+- `main.dart` — app wiring or startup sequence
+- `integration_test/` — **always In QA if integration tests were added or changed**
+
+**→ Done directly** if the PR touches only: pure domain/application logic, documentation, CI config, l10n strings without new screens, or pure refactors where `flutter test` fully owns correctness.
+
+When in doubt, use **In QA**.
+
+Call `mcp__linear__save_issue` with the chosen `state` for each issue linked to the PR. If moving to In QA, do **not** move to Done — the ticket stays there until human testers sign off; the user moves it to Done manually.
 
 ### 2. Add a CHANGELOG entry
 
