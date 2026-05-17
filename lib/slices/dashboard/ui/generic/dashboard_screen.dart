@@ -241,11 +241,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     //       pullRemoteChanges is fetching the user's pacts from Firestore).
     final showCarousel = (!hasPacts && isAnonymous) || isSigningIn;
 
+    // While hasActivePactsProvider is still resolving we don't yet know
+    // whether to show the carousel or the dashboard.  Propagate this to the
+    // platform pages so they can display a neutral blank screen instead of
+    // either option — this eliminates the visible scaffold/nav-bar flash that
+    // occurred because showCarousel flips true→false (returning user) or the
+    // dashboard loading spinner appeared briefly (new user) before the correct
+    // screen was selected.
+    final isCarouselPending = hasActivePacts.isLoading;
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return DashboardPageIos(
         state: state,
         hasPacts: hasPacts,
         showCarousel: showCarousel,
+        isCarouselPending: isCarouselPending,
         onDaySelected: onDaySelected,
         onCreatePact: onCreatePact,
         onShowupTapped: onShowupTapped,
@@ -255,6 +265,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       state: state,
       hasPacts: hasPacts,
       showCarousel: showCarousel,
+      isCarouselPending: isCarouselPending,
       onDaySelected: onDaySelected,
       onCreatePact: onCreatePact,
       onShowupTapped: onShowupTapped,

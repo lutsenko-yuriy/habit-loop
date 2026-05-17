@@ -176,6 +176,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                 height: 216,
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.time,
+                  use24hFormat: MediaQuery.alwaysUse24HourFormatOf(ctx),
                   initialDateTime: DateTime(
                     2026,
                     1,

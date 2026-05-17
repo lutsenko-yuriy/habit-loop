@@ -48,6 +48,7 @@ Widget _buildTestApp({
         state: state,
         hasPacts: hasPacts,
         showCarousel: !hasPacts,
+        isCarouselPending: false,
         onDaySelected: (_) {},
         onCreatePact: () async {},
         onShowupTapped: (_) async {},
@@ -73,6 +74,43 @@ void main() {
     // Carousel replaces the regular scaffold — no app bar or language-picker-button.
     expect(find.byKey(const Key('language-picker-button')), findsNothing);
     expect(find.text('Create a Pact'), findsOneWidget);
+  });
+
+  testWidgets('Android dashboard shows blank screen while isCarouselPending is true', (tester) async {
+    // isCarouselPending means hasActivePactsProvider hasn't resolved yet.
+    // Neither the carousel nor the dashboard should be visible.
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          pactListViewModelProvider.overrideWith(_LoadedPactListViewModel.new),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: DashboardPageAndroid(
+            state: const DashboardState(isLoading: false),
+            hasPacts: false,
+            showCarousel: true, // would normally show carousel
+            isCarouselPending: true, // but provider hasn't resolved yet
+            onDaySelected: (_) {},
+            onCreatePact: () async {},
+            onShowupTapped: (_) async {},
+          ),
+        ),
+      ),
+    );
+
+    // Neither carousel content nor dashboard app bar should be visible —
+    // only a centered loading spinner.
+    expect(find.byKey(const Key('language-picker-button')), findsNothing);
+    expect(find.text('Create a Pact'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
   testWidgets('tapping globe icon shows SimpleDialog with language options', (tester) async {
