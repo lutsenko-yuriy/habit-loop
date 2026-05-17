@@ -47,9 +47,11 @@ void main() {
         const Offset(-400, 0),
         const Duration(milliseconds: 300),
       );
-      // waitFor instead of pumpAndSettle: on a real device the PageView
-      // animation can outlast pumpAndSettle's frame budget.
+      // waitFor handles a slow page transition start on real devices;
+      // pumpAndSettle after it ensures the animation fully completes
+      // before asserting the previous slide is no longer visible.
       await waitFor(tester, find.text(strings.onboardingSlide1Title));
+      await tester.pumpAndSettle();
 
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
       expect(find.text(strings.onboardingSlide0Title), findsNothing);
