@@ -21,6 +21,7 @@ void main() {
     testWidgets('full wizard creates a pact and showup appears on dashboard', (tester) async {
       h = await AppHarness.create(
         tester,
+        initiallyAnonymous: true,
         extraOverrides: [
           remoteConfigServiceProvider.overrideWithValue(
             FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),

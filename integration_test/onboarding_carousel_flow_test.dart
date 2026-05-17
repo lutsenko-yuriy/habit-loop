@@ -27,7 +27,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets('carousel is shown on first launch when there are no pacts', (tester) async {
-      h = await AppHarness.create(tester, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
@@ -37,7 +37,7 @@ void main() {
     });
 
     testWidgets('swiping left advances to slide 1', (tester) async {
-      h = await AppHarness.create(tester, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
       // timedDrag gives the gesture a release velocity, which PageScrollPhysics
@@ -54,7 +54,7 @@ void main() {
     });
 
     testWidgets('swiping right returns to slide 0', (tester) async {
-      h = await AppHarness.create(tester, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
       // Advance to slide 1.
@@ -78,7 +78,7 @@ void main() {
     });
 
     testWidgets('tapping "Language" opens language picker and saving a locale persists it', (tester) async {
-      h = await AppHarness.create(tester, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
       // The carousel has a single "Language" button (dialog not yet open).

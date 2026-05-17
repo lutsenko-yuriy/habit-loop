@@ -24,7 +24,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets('selecting Russian re-renders carousel in Russian', (tester) async {
-      h = await AppHarness.create(tester, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
       // ── 1. Carousel is shown in English (first launch, no pacts) ──────────
