@@ -149,9 +149,7 @@ class _OnboardingCarouselIosState extends ConsumerState<OnboardingCarouselIos> {
       // frozen if hasActivePactsProvider stalls due to a database hang.
       await Future<void>.delayed(Duration.zero); // yield so Riverpod processes the invalidation
       final deadline = DateTime.now().add(const Duration(seconds: 10));
-      while (context.mounted &&
-          ref.read(hasActivePactsProvider).isLoading &&
-          DateTime.now().isBefore(deadline)) {
+      while (context.mounted && ref.read(hasActivePactsProvider).isLoading && DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       }
     } on AuthLinkException {
