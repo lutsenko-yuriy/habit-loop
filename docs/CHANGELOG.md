@@ -4,6 +4,28 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.34.1] — 2026-05-17 (PR #93 merged)
+
+### Fixed — Onboarding carousel sign-in and dashboard flash (HAB-75)
+
+- [user] Sign-in button stays visible and shows a loading spinner while Google login is in progress
+- [user] Dashboard no longer flashes an empty state on first launch while data is loading
+- [user] Onboarding illustration accent dots softened for a cleaner look
+- `if (isAnonymous || isSigningIn)` guard prevents the sign-in section from vanishing the moment auth state flips, before the loading flag resets
+- `hasActivePactsProvider` polling loop (50 ms interval, 10 s deadline) waits for the dashboard to fully settle before the carousel unmounts
+- `valueOrNull ?? false` in `DashboardScreen` replaces the loading-state branch so the carousel renders immediately on cold start without a spinner flash
+- 6 new widget tests covering the polling lifecycle on iOS and Android (settles to data, settles to error, still loading at timeout)
+
+### Added — Automated "What's New" release notes in CI
+
+- [user] Release notes in Firebase App Distribution now show human-readable change summaries instead of a raw build number
+- `scripts/generate_release_notes.py`: parses `docs/CHANGELOG.md`, extracts entries newer than the last published build, strips HAB-XX/PR/WU references, and truncates to 4 000 chars for Firebase and App Store compatibility
+- `[user]` prefix on CHANGELOG bullets selects exactly which lines appear in release notes; lines without the tag are developer-only and skipped
+- `resolve-version` CI job generates notes and uploads a `release-notes` artifact (90-day retention) for manual App Store / Play Store submissions
+- Both distribute jobs now use `--release-notes-file` instead of a hardcoded build-number string
+
+---
+
 ## [0.34.0] — 2026-05-17 (PR #92 merged)
 
 ### Added / Fixed — UI polish: SVGs, sign-in spinner, stopped-pact dates, flaky test (HAB-74)

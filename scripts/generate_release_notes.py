@@ -11,9 +11,21 @@ Usage:
 
 Output (stdout):
     Human-readable bullet list covering every version newer than
-    last_published_version, stripped of internal references (HAB-XX, PR #XX, WU
-    work-unit markers) and truncated to 4 000 characters — compatible with both
+    last_published_version, truncated to 4 000 characters — compatible with both
     Firebase App Distribution and App Store "What's New" fields.
+
+Bullet selection (per CHANGELOG entry):
+    - If an entry contains ANY bullets prefixed with "[user] ", only those bullets
+      are included (with the "[user] " tag stripped).  This is the preferred
+      approach for entries going forward — mark exactly which lines users care about.
+    - If an entry contains NO "[user] " bullets, all bullets are included after
+      stripping internal references (HAB-XX, PR #XX, WU work-unit markers).
+      This is the backwards-compatible fallback for older entries.
+
+Convention for CHANGELOG authors:
+    Prefix user-facing bullets with "[user] ":
+        - [user] Sign-in button stays visible while Google login is in progress
+        - isSigningIn guard extended to cover auth state flip  ← developer-only, not shown
 
 Exit codes:
     0  Success (notes written to stdout).
@@ -87,9 +99,20 @@ def _should_skip(text: str) -> bool:
 # Matches "## [0.30.2] — 2026-05-15 (PR #84 merged)" etc.
 _VERSION_HEADER = re.compile(r'^## \[(\d+\.\d+\.\d+)\]', re.MULTILINE)
 
+# Matches the "[user] " prefix that marks a bullet as user-facing.
+_USER_TAG = re.compile(r'^\[user\]\s+')
+
 
 def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
-    """Return cleaned bullet strings for all versions newer than last_version."""
+    """Return user-facing bullet strings for all versions newer than last_version.
+
+    Per-entry selection logic:
+    - If the entry has ≥1 "[user] "-tagged bullet, only those are returned
+      (tag stripped).  Developer-only lines are silently skipped.
+    - If the entry has no "[user] " bullets (old-style entry), all non-skip
+      lines are returned after stripping internal references — backwards-
+      compatible fallback.
+    """
     with open(path, encoding='utf-8') as fh:
         content = fh.read()
 
@@ -117,16 +140,27 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
         body_end = matches[idx + 1].start() if idx + 1 < len(matches) else len(content)
         body = content[body_start:body_end]
 
+        user_bullets: list[str] = []
+        fallback_bullets: list[str] = []
+
         for line in body.splitlines():
             stripped = line.strip()
             if not stripped.startswith('- '):
                 continue
             text = stripped[2:]  # drop leading "- "
-            if _should_skip(text):
-                continue
-            cleaned = _clean_bullet(text)
-            if cleaned:
-                bullets.append(cleaned)
+
+            if _USER_TAG.match(text):
+                # Explicitly marked as user-facing — strip the tag and keep.
+                user_bullets.append(_USER_TAG.sub('', text, count=1).strip())
+            else:
+                # Collect for the fallback path (used only if no [user] tags).
+                if not _should_skip(text):
+                    cleaned = _clean_bullet(text)
+                    if cleaned:
+                        fallback_bullets.append(cleaned)
+
+        # Prefer explicit [user] bullets; fall back to filtered set for old entries.
+        bullets.extend(user_bullets if user_bullets else fallback_bullets)
 
     return bullets
 
