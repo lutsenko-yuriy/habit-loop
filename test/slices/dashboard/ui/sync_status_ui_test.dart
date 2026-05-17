@@ -76,6 +76,7 @@ Widget _buildIosApp({
         child: DashboardPageIos(
           state: const DashboardState(isLoading: false),
           hasPacts: true,
+          showCarousel: false,
           onDaySelected: (_) {},
           onCreatePact: () async {},
           onShowupTapped: (_) async {},
@@ -106,6 +107,7 @@ Widget _buildAndroidApp({
       home: DashboardPageAndroid(
         state: const DashboardState(isLoading: false),
         hasPacts: true,
+        showCarousel: false,
         onDaySelected: (_) {},
         onCreatePact: () async {},
         onShowupTapped: (_) async {},

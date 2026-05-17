@@ -277,7 +277,10 @@ class _PactTile extends StatelessWidget {
     } else if (pact.status == PactStatus.completed) {
       subtitle = l10n.pactEndedOn(formatLocaleDate(context, pact.endDate));
     } else {
-      subtitle = l10n.pactCancelledOn(formatLocaleDate(context, pact.endDate));
+      final cancelledStr = l10n.pactCancelledOn(formatLocaleDate(context, pact.stoppedAt ?? pact.endDate));
+      subtitle = pact.stoppedAt != null
+          ? '$cancelledStr\n${l10n.pactPlannedUntil(formatLocaleDate(context, pact.endDate))}'
+          : cancelledStr;
     }
 
     final statusText = pactStatusText(l10n, pact.status);

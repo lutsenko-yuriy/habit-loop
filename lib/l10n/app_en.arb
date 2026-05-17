@@ -260,5 +260,15 @@
   "onboardingSlide3Title": "See what's working",
   "@onboardingSlide3Title": {},
   "onboardingSlide3Body": "Track your showups, spot patterns, and decide: keep going, adjust, or try something different.",
-  "@onboardingSlide3Body": {}
+  "@onboardingSlide3Body": {},
+
+  "pactStoppedDate": "Stopped",
+  "@pactStoppedDate": {},
+  "pactPlannedUntil": "Planned until {date}",
+  "@pactPlannedUntil": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "fetchingPacts": "Fetching pacts…",
+  "@fetchingPacts": {}
 }

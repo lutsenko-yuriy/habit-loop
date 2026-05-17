@@ -24,6 +24,14 @@ class Pact {
   /// treat `null` as equivalent to `startDate` (no intra-day filtering).
   final DateTime? createdAt;
 
+  /// The date on which the pact was actually stopped by the user (midnight
+  /// normalised to local time).
+  ///
+  /// `null` unless [status] is [PactStatus.stopped].  This preserves
+  /// [endDate] as the original scheduled end date so both values are
+  /// available: the user's original commitment and when they actually stopped.
+  final DateTime? stoppedAt;
+
   const Pact({
     required this.id,
     required this.habitName,
@@ -36,6 +44,7 @@ class Pact {
     this.stopReason,
     this.stats,
     this.createdAt,
+    this.stoppedAt,
   });
 
   /// Returns a copy of this pact with the given fields replaced.
@@ -52,9 +61,11 @@ class Pact {
     Duration? reminderOffset,
     String? stopReason,
     PactStats? stats,
+    DateTime? stoppedAt,
     bool clearReminderOffset = false,
     bool clearStopReason = false,
     bool clearStats = false,
+    bool clearStoppedAt = false,
   }) {
     return Pact(
       id: id,
@@ -68,6 +79,7 @@ class Pact {
       stopReason: clearStopReason ? null : (stopReason ?? this.stopReason),
       stats: clearStats ? null : (stats ?? this.stats),
       createdAt: createdAt, // immutable — never overridden by copyWith
+      stoppedAt: clearStoppedAt ? null : (stoppedAt ?? this.stoppedAt),
     );
   }
 
@@ -85,7 +97,8 @@ class Pact {
           reminderOffset == other.reminderOffset &&
           stopReason == other.stopReason &&
           stats == other.stats &&
-          createdAt == other.createdAt;
+          createdAt == other.createdAt &&
+          stoppedAt == other.stoppedAt;
 
   @override
   int get hashCode => Object.hash(
@@ -100,5 +113,6 @@ class Pact {
         stopReason,
         stats,
         createdAt,
+        stoppedAt,
       );
 }

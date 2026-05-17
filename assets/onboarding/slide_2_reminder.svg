@@ -28,4 +28,9 @@
   <circle cx="129" cy="107" r="10" fill="none" stroke="#FFB74D" stroke-width="2.5" opacity="0.7"/>
   <circle cx="129" cy="107" r="16" fill="none" stroke="#FFB74D" stroke-width="1.5" opacity="0.4"/>
   <circle cx="129" cy="107" r="6" fill="#FFB74D"/>
+
+  <!-- Milestone dots at r≈60 from centre (160,120), matching slide 0 positions -->
+  <circle cx="198" cy="74" r="6" fill="#FFB74D"/>
+  <circle cx="216" cy="140" r="6" fill="#8BC34A"/>
+  <circle cx="140" cy="176" r="6" fill="#00796B"/>
 </svg>

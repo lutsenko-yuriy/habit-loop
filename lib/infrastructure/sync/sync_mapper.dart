@@ -23,7 +23,8 @@ abstract final class SyncMapper {
       'habit_name': pact.habitName,
       'start_date': pact.startDate.millisecondsSinceEpoch,
       'scheduled_end_date': pact.endDate.millisecondsSinceEpoch,
-      'actual_end_date': pact.endDate.millisecondsSinceEpoch,
+      // For stopped pacts, actual_end_date holds the real stop date.
+      'actual_end_date': (pact.stoppedAt ?? pact.endDate).millisecondsSinceEpoch,
       'showup_duration': pact.showupDuration.inMicroseconds,
       'schedule': ScheduleCodec.encode(pact.schedule),
       'status': _encodeStatus(pact.status),
@@ -62,6 +63,7 @@ abstract final class SyncMapper {
   /// (e.g. unknown `status` string). Callers that want error isolation should
   /// wrap in try-catch.
   static Pact pactFromDocument(Map<String, dynamic> doc) {
+    final status = _decodeStatus(doc['status'] as String);
     return Pact(
       id: doc['id'] as String,
       habitName: doc['habit_name'] as String,
@@ -73,12 +75,15 @@ abstract final class SyncMapper {
       ),
       showupDuration: Duration(microseconds: (doc['showup_duration'] as num).toInt()),
       schedule: ScheduleCodec.decode(doc['schedule'] as String),
-      status: _decodeStatus(doc['status'] as String),
+      status: status,
       reminderOffset:
           doc['reminder_offset'] != null ? Duration(microseconds: (doc['reminder_offset'] as num).toInt()) : null,
       stopReason: doc['stop_reason'] as String?,
       createdAt:
           doc['created_at'] != null ? DateTime.fromMillisecondsSinceEpoch((doc['created_at'] as num).toInt()) : null,
+      stoppedAt: status == PactStatus.stopped && doc['actual_end_date'] != null
+          ? DateTime.fromMillisecondsSinceEpoch((doc['actual_end_date'] as num).toInt())
+          : null,
     );
   }
 

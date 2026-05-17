@@ -259,5 +259,15 @@
   "onboardingSlide3Title": "Vois ce qui fonctionne",
   "@onboardingSlide3Title": {},
   "onboardingSlide3Body": "Suis tes showups, repère des tendances et décide : continue, ajuste ou essaie autre chose.",
-  "@onboardingSlide3Body": {}
+  "@onboardingSlide3Body": {},
+
+  "pactStoppedDate": "Arrêté",
+  "@pactStoppedDate": {},
+  "pactPlannedUntil": "Prévu jusqu'au {date}",
+  "@pactPlannedUntil": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "fetchingPacts": "Récupération des pactes…",
+  "@fetchingPacts": {}
 }

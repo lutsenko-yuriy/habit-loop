@@ -120,6 +120,15 @@ final localePreferenceServiceProvider = Provider<LocalePreferenceService>(
 /// locale changes take effect immediately without an app restart.
 final localeOverrideProvider = StateProvider<Locale?>((ref) => null);
 
+/// Controls the sign-in loading state on the onboarding carousel.
+///
+/// Set to `true` when the user taps "Sign in with Google" and back to `false`
+/// once the full sign-in + data-pull + dashboard-load sequence completes (or
+/// fails). While `true`, the carousel stays visible even if [isAnonymous]
+/// transitions to `false` — preventing a flash of the empty dashboard while
+/// pacts are being fetched from Firestore.
+final onboardingSignInLoadingProvider = StateProvider<bool>((ref) => false);
+
 // ---------------------------------------------------------------------------
 // Infrastructure service providers
 // ---------------------------------------------------------------------------

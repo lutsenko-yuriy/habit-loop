@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240">
-  <!-- Content centered in 320×240 from user's 200×160 design (translate 60,40) -->
-  <g transform="translate(60,40)">
+  <!-- Content scaled 1.5× from original 200×160 design centre (100,80) to fill
+       the same 320×240 viewBox as the other three slides (background circle r=90). -->
+  <g transform="translate(160,120) scale(1.5) translate(-100,-80)">
     <!-- Background -->
     <circle cx="100" cy="80" r="60" fill="#E0F2F1"/>
     <!-- Document / scroll -->

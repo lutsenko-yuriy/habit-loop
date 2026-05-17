@@ -124,6 +124,10 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 8),
         _DateRow(label: l10n.pactStartDate, date: pact.startDate),
         const SizedBox(height: 8),
+        if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
+          _DateRow(label: l10n.pactStoppedDate, date: pact.stoppedAt!),
+          const SizedBox(height: 8),
+        ],
         _DateRow(
           label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
           date: pact.endDate,

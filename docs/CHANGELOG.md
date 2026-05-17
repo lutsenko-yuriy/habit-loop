@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.34.0] — 2026-05-17 (PR #92 merged)
+
+### Added / Fixed — UI polish: SVGs, sign-in spinner, stopped-pact dates, flaky test (HAB-74)
+
+- Onboarding slide 0: milestone dots moved to r≈60 (between outer arc and inner circle); slides 2 and 3 gain matching milestone dots
+- Onboarding slide 1: SVG content scaled 1.5× so all four slides use the same r=90 background circle
+- Sign-in loading state: tapping "Sign in with Google" replaces the button with a spinner + "Fetching pacts…" and keeps the carousel visible until `linkWithGoogle` + `pullRemoteChanges` + dashboard reload completes; `onboardingSignInLoadingProvider` (`StateProvider<bool>`) drives the state
+- `Pact` domain model gains `stoppedAt: DateTime?` mapped from the existing `actual_end_date` column; pact detail timeline now shows both "Stopped [date]" and "Target [date]" for stopped pacts; pacts-panel tile subtitle shows the same pair
+- Flaky carousel swipe-right integration test fixed: replaced `pumpAndSettle` with `waitFor` retry
+- Integration tests: all carousel/language/create-pact flow tests now pass `initiallyAnonymous: true` to `AppHarness.create()` so they see the carousel after the auth-gated `showCarousel` change
+- 1117 tests passing, analyzer clean
+
+---
+
 ## [0.33.0] — 2026-05-17 (PR #91 merged)
 
 ### Added — Onboarding carousel for zero-pact empty state (HAB-73)

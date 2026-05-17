@@ -54,6 +54,7 @@ Widget _buildTestApp({
         child: DashboardPageIos(
           state: state,
           hasPacts: hasPacts,
+          showCarousel: !hasPacts,
           onDaySelected: (_) {},
           onCreatePact: () async {},
           onShowupTapped: (_) async {},

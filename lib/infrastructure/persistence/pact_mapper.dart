@@ -63,6 +63,7 @@ abstract final class PactMapper {
   ///
   /// Throws [ArgumentError] if the `status` column contains an unknown value.
   static Pact fromRow(Map<String, dynamic> row) {
+    final status = _decodeStatus(row['status'] as String);
     return Pact(
       id: row['id'] as String,
       habitName: row['habit_name'] as String,
@@ -74,7 +75,7 @@ abstract final class PactMapper {
       ),
       showupDuration: Duration(microseconds: (row['showup_duration'] as num).toInt()),
       schedule: ScheduleCodec.decode(row['schedule'] as String),
-      status: _decodeStatus(row['status'] as String),
+      status: status,
       reminderOffset:
           row['reminder_offset'] != null ? Duration(microseconds: (row['reminder_offset'] as num).toInt()) : null,
       stopReason: row['stop_reason'] as String?,
@@ -82,6 +83,11 @@ abstract final class PactMapper {
           ? DateTime.fromMillisecondsSinceEpoch(
               (row['created_at'] as num).toInt(),
             )
+          : null,
+      // For stopped pacts, read actual_end_date back as stoppedAt so the UI
+      // can show both the actual stop date and the original scheduled end date.
+      stoppedAt: status == PactStatus.stopped && row['actual_end_date'] != null
+          ? DateTime.fromMillisecondsSinceEpoch((row['actual_end_date'] as num).toInt())
           : null,
       // total_showups is read-acknowledged but not propagated into the domain
       // model; it lives in the DB column only and is consumed by stats queries.
@@ -111,7 +117,9 @@ abstract final class PactMapper {
     return {
       'habit_name': pact.habitName,
       'status': _encodeStatus(pact.status),
-      'actual_end_date': pact.endDate.millisecondsSinceEpoch,
+      // For stopped pacts, actual_end_date holds the real stop date; for all
+      // others it mirrors scheduled_end_date (no effective change).
+      'actual_end_date': (pact.stoppedAt ?? pact.endDate).millisecondsSinceEpoch,
       'reminder_offset': pact.reminderOffset?.inMicroseconds,
       'stop_reason': pact.stopReason,
       // Every update re-marks the record dirty — the sync layer will re-upload it.
