@@ -92,7 +92,7 @@ class _OnboardingCarouselAndroidState extends ConsumerState<OnboardingCarouselAn
                           },
                     child: Text(l10n.createPact),
                   ),
-                  if (isAnonymous) ...[
+                  if (isAnonymous || isSigningIn) ...[
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: isSigningIn ? null : () => unawaited(_onSignIn(context, l10n)),
@@ -150,8 +150,13 @@ class _OnboardingCarouselAndroidState extends ConsumerState<OnboardingCarouselAn
       // dashboard is ready before we reveal it by resetting isSigningIn — this
       // prevents the carousel from disappearing while the dashboard is still
       // in its loading state.
+      // The deadline guard (10 s) ensures the carousel is never permanently
+      // frozen if hasActivePactsProvider stalls due to a database hang.
       await Future<void>.delayed(Duration.zero); // yield so Riverpod processes the invalidation
-      while (context.mounted && ref.read(hasActivePactsProvider).isLoading) {
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      while (context.mounted &&
+          ref.read(hasActivePactsProvider).isLoading &&
+          DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       }
     } on AuthLinkException {
@@ -172,8 +177,8 @@ class _OnboardingCarouselAndroidState extends ConsumerState<OnboardingCarouselAn
         ),
       ));
     } finally {
-      // Always reset the flag so a successful sign-in + carousel disappearance
-      // doesn't leave a stale true in the provider.
+      // Reset the flag — by this point hasActivePactsProvider has settled (or
+      // timed out) so the dashboard is ready to display when the carousel unmounts.
       if (context.mounted) ref.read(onboardingSignInLoadingProvider.notifier).state = false;
     }
   }

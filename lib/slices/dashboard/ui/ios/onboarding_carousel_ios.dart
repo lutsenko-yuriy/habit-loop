@@ -92,7 +92,7 @@ class _OnboardingCarouselIosState extends ConsumerState<OnboardingCarouselIos> {
                           },
                     child: Text(l10n.createPact),
                   ),
-                  if (isAnonymous) ...[
+                  if (isAnonymous || isSigningIn) ...[
                     const SizedBox(height: 12),
                     CupertinoButton(
                       onPressed: isSigningIn ? null : () => unawaited(_onSignIn(context, l10n)),
@@ -145,8 +145,13 @@ class _OnboardingCarouselIosState extends ConsumerState<OnboardingCarouselIos> {
       // dashboard is ready before we reveal it by resetting isSigningIn — this
       // prevents the carousel from disappearing while the dashboard is still
       // in its loading state.
+      // The deadline guard (10 s) ensures the carousel is never permanently
+      // frozen if hasActivePactsProvider stalls due to a database hang.
       await Future<void>.delayed(Duration.zero); // yield so Riverpod processes the invalidation
-      while (context.mounted && ref.read(hasActivePactsProvider).isLoading) {
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      while (context.mounted &&
+          ref.read(hasActivePactsProvider).isLoading &&
+          DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       }
     } on AuthLinkException {
