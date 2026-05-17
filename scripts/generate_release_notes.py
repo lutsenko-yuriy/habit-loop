@@ -18,14 +18,19 @@ Bullet selection (per CHANGELOG entry):
     - If an entry contains ANY bullets prefixed with "[user] ", only those bullets
       are included (with the "[user] " tag stripped).  This is the preferred
       approach for entries going forward — mark exactly which lines users care about.
-    - If an entry contains NO "[user] " bullets, all bullets are included after
-      stripping internal references (HAB-XX, PR #XX, WU work-unit markers).
-      This is the backwards-compatible fallback for older entries.
+    - If an entry contains the sentinel "- [user-none]", the entry is silently
+      skipped (contributes nothing to the output).  Use this for releases that
+      are purely internal (CI fixes, refactors, tooling) with no user-visible
+      impact.
+    - If an entry contains NO "[user] " or "[user-none]" bullets, all bullets
+      are included after stripping internal references (HAB-XX, PR #XX, WU
+      work-unit markers).  This is the backwards-compatible fallback for older
+      entries that predate the tagging convention.
 
 Convention for CHANGELOG authors:
-    Prefix user-facing bullets with "[user] ":
-        - [user] Sign-in button stays visible while Google login is in progress
-        - isSigningIn guard extended to cover auth state flip  ← developer-only, not shown
+    - User-facing change:       - [user] Sign-in button stays visible during Google login
+    - Developer-only line:      - isSigningIn guard extended to cover auth state flip
+    - Nothing for users at all: - [user-none]
 
 Exit codes:
     0  Success (notes written to stdout).
@@ -101,6 +106,8 @@ _VERSION_HEADER = re.compile(r'^## \[(\d+\.\d+\.\d+)\]', re.MULTILINE)
 
 # Matches the "[user] " prefix that marks a bullet as user-facing.
 _USER_TAG = re.compile(r'^\[user\]\s+')
+# Matches the "[user-none]" sentinel that explicitly suppresses an entry.
+_USER_NONE = re.compile(r'^\[user-none\]')
 
 
 def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
@@ -142,6 +149,7 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
 
         user_bullets: list[str] = []
         fallback_bullets: list[str] = []
+        suppress_entry = False
 
         for line in body.splitlines():
             stripped = line.strip()
@@ -149,7 +157,11 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
                 continue
             text = stripped[2:]  # drop leading "- "
 
-            if _USER_TAG.match(text):
+            if _USER_NONE.match(text):
+                # Author explicitly declared: no user-facing changes in this entry.
+                suppress_entry = True
+                break
+            elif _USER_TAG.match(text):
                 # Explicitly marked as user-facing — strip the tag and keep.
                 user_bullets.append(_USER_TAG.sub('', text, count=1).strip())
             else:
@@ -158,6 +170,9 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
                     cleaned = _clean_bullet(text)
                     if cleaned:
                         fallback_bullets.append(cleaned)
+
+        if suppress_entry:
+            continue  # skip the whole entry
 
         # Prefer explicit [user] bullets; fall back to filtered set for old entries.
         bullets.extend(user_bullets if user_bullets else fallback_bullets)
