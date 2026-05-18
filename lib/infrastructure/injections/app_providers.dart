@@ -36,6 +36,8 @@ import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
 import 'package:habit_loop/infrastructure/logging/data/noop_log_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
+import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
+import 'package:habit_loop/infrastructure/onboarding/data/noop_onboarding_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_service.dart';
 import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
@@ -106,6 +108,15 @@ final appVersionProvider = FutureProvider<String>((ref) async {
 /// `main.dart` via [AppContainer.overrides] with [SharedPreferencesLocaleService].
 final localePreferenceServiceProvider = Provider<LocalePreferenceService>(
   (ref) => NoopLocalePreferenceService(),
+);
+
+/// Provides the active [OnboardingPreferenceService] to the app.
+///
+/// Defaults to [NoopOnboardingService] so tests and environments without
+/// SharedPreferences work without additional setup. Overridden in `main.dart`
+/// via [AppContainer.overrides] with [SharedPreferencesOnboardingService].
+final onboardingPreferenceServiceProvider = Provider<OnboardingPreferenceService>(
+  (ref) => const NoopOnboardingService(),
 );
 
 /// Nullable locale override provider.

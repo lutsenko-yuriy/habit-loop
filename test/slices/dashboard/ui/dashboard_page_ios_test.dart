@@ -55,7 +55,6 @@ Widget _buildTestApp({
           state: state,
           hasPacts: hasPacts,
           showCarousel: !hasPacts,
-          isCarouselPending: false,
           onDaySelected: (_) {},
           onCreatePact: () async {},
           onShowupTapped: (_) async {},
@@ -114,48 +113,6 @@ void main() {
     // Carousel replaces the regular scaffold — no nav bar or language-picker-button.
     expect(find.byKey(const Key('language-picker-button')), findsNothing);
     expect(find.text('Create a Pact'), findsOneWidget);
-  });
-
-  testWidgets('iOS dashboard shows blank screen while isCarouselPending is true', (tester) async {
-    // isCarouselPending means hasActivePactsProvider hasn't resolved yet.
-    // Neither the carousel nor the dashboard should be visible during this
-    // brief window to prevent any visible blink on first launch.
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          pactListViewModelProvider.overrideWith(_LoadedPactListViewModel.new),
-        ],
-        child: MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: MediaQuery(
-            data: const MediaQueryData(size: Size(390, 844)),
-            child: DashboardPageIos(
-              state: const DashboardState(isLoading: false),
-              hasPacts: false,
-              showCarousel: true, // would normally show carousel
-              isCarouselPending: true, // but provider hasn't resolved yet
-              onDaySelected: (_) {},
-              onCreatePact: () async {},
-              onShowupTapped: (_) async {},
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // Neither carousel content nor dashboard nav bar should be visible —
-    // only a centered loading spinner.
-    expect(find.byKey(const Key('language-picker-button')), findsNothing);
-    expect(find.text('Create a Pact'), findsNothing);
-    expect(find.byKey(const Key('dashboard-ios-safe-area')), findsNothing);
-    expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
   });
 
   testWidgets('tapping globe icon shows CupertinoActionSheet with language options', (tester) async {

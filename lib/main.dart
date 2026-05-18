@@ -42,6 +42,7 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 import 'package:habit_loop/infrastructure/notifications/data/flutter_local_notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/notification_router.dart';
+import 'package:habit_loop/infrastructure/onboarding/data/shared_preferences_onboarding_service.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
@@ -484,6 +485,17 @@ Future<void> main() async {
     // Compute overrides once and reuse them for both ProviderScope (the widget
     // tree) and _container (the top-level ProviderContainer used by the
     // foreground "Mark done" callback outside the widget tree).
+    //
+    // SharedPreferences.getInstance() is cached after the first call (locale
+    // block above), so this second call is a synchronous in-memory lookup.
+    SharedPreferencesOnboardingService? onboardingService;
+    try {
+      onboardingService = SharedPreferencesOnboardingService(
+        await SharedPreferences.getInstance(),
+      );
+    } catch (_) {
+      onboardingService = null;
+    }
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
@@ -512,6 +524,9 @@ Future<void> main() async {
       // Wire locale persistence; AppContainer.overrides fetches the saved
       // locale internally via getSavedLocale() and populates localeOverrideProvider.
       localePreferenceService: localeService,
+      // Wire the onboarding flag so [DashboardScreen] can read it synchronously
+      // on the first frame and skip the carousel without any async wait.
+      onboardingPreferenceService: onboardingService,
       authService: authService,
       deviceIdService: deviceIdService,
       firestoreClient: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),

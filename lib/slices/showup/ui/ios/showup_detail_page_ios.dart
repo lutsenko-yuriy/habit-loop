@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Material, MaterialType, Colors;
+import 'package:flutter/material.dart' show Colors, Material, MaterialType, Theme;
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
@@ -57,6 +57,7 @@ class _ShowupDetailPageIosState extends State<ShowupDetailPageIos> {
     final state = widget.state;
 
     return CupertinoPageScaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         middle: Text(l10n.showupDetailTitle),
       ),

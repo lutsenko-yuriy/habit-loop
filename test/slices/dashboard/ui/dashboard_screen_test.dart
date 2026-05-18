@@ -16,6 +16,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.d
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/onboarding/fake_onboarding_preference_service.dart';
 
 final _today = DateTime(2026, 3, 29);
 
@@ -549,5 +550,172 @@ void main() {
         hasLength(2),
       );
     });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Cold-start blink prevention (HAB-77)
+  //
+  // The blink on cold start was caused by [hasActivePactsProvider] (a
+  // FutureProvider) going through AsyncLoading before resolving. The fix uses
+  // a write-once SharedPreferences flag ([onboarding_passed]) read synchronously
+  // on the first Flutter frame:
+  //   - Flag = false (new user / fresh install): carousel shown immediately.
+  //   - Flag = true  (returning user): dashboard shown immediately — no
+  //     AsyncLoading state, no intermediate blank+spinner, no blink.
+  //
+  // The flag is written by [DashboardScreen] the first time it renders the
+  // dashboard (not the carousel), guaranteeing both possible paths (pact
+  // created, or Google sign-in succeeded) set it before the next cold start.
+  // ---------------------------------------------------------------------------
+  group('cold-start blink prevention / onboarding flag (HAB-77)', () {
+    Widget buildWithOnboarding({
+      bool onboardingPassed = false,
+      List<Pact> pacts = const [],
+    }) {
+      final pactRepo = InMemoryPactRepository(pacts);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final onboardingService = FakeOnboardingPreferenceService(initialValue: onboardingPassed);
+      return ProviderScope(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(_today),
+          onboardingPreferenceServiceProvider.overrideWithValue(onboardingService),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: Locale('en'),
+          home: DashboardScreen(),
+        ),
+      );
+    }
+
+    testWidgets(
+      'shows carousel on first frame when onboarding not yet passed (new-user path)',
+      (tester) async {
+        // onboardingPassed=false, no pacts, anonymous (default) →
+        // showCarousel=true immediately — no spinner, carousel on first frame.
+        await tester.pumpWidget(buildWithOnboarding());
+
+        expect(find.text('Create a Pact'), findsOneWidget);
+        expect(find.byKey(const Key('language-picker-button')), findsNothing);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'shows dashboard on first frame when onboarding already passed (returning-user path)',
+      (tester) async {
+        // onboardingPassed=true → showCarousel=false immediately, regardless of
+        // whether hasActivePactsProvider has resolved. Language picker is in the
+        // dashboard nav bar / AppBar — its presence confirms the correct screen
+        // was selected on the very first frame, without any intermediate state.
+        await tester.pumpWidget(buildWithOnboarding(onboardingPassed: true));
+
+        expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
+        expect(find.text('Create a Pact'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'writes onboarding flag when dashboard first shown',
+      (tester) async {
+        // Pacts present → after hasActivePactsProvider resolves hasPacts=true →
+        // showCarousel=false → DashboardScreen calls markOnboardingPassed().
+        final pact = Pact(
+          id: 'p1',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+        );
+        final pactRepo = InMemoryPactRepository([pact]);
+        final showupRepo = InMemoryShowupRepository();
+        final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+        final onboardingService = FakeOnboardingPreferenceService();
+
+        await tester.pumpWidget(ProviderScope(
+          overrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            pactTransactionServiceProvider.overrideWithValue(txService),
+            todayProvider.overrideWithValue(_today),
+            onboardingPreferenceServiceProvider.overrideWithValue(onboardingService),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('en'),
+            home: DashboardScreen(),
+          ),
+        ));
+        await tester.pumpAndSettle();
+
+        // Dashboard was shown (pact exists) → flag must have been written.
+        expect(onboardingService.isOnboardingPassed, isTrue);
+        expect(onboardingService.markCalledCount, 1);
+      },
+    );
+
+    testWidgets(
+      'writes onboarding flag only once even across multiple rebuilds',
+      (tester) async {
+        final pact = Pact(
+          id: 'p1',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+        );
+        final onboardingService = FakeOnboardingPreferenceService();
+        final pactRepo = InMemoryPactRepository([pact]);
+        final showupRepo = InMemoryShowupRepository();
+        final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+        await tester.pumpWidget(ProviderScope(
+          overrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            pactTransactionServiceProvider.overrideWithValue(txService),
+            todayProvider.overrideWithValue(_today),
+            onboardingPreferenceServiceProvider.overrideWithValue(onboardingService),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('en'),
+            home: DashboardScreen(),
+          ),
+        ));
+        // Multiple pump calls to trigger additional rebuilds.
+        await tester.pump();
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(onboardingService.markCalledCount, 1);
+      },
+    );
   });
 }

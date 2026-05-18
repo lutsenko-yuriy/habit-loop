@@ -26,6 +26,11 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsBindingObserver {
   bool _creatingPact = false;
 
+  /// Guards the one-time [OnboardingPreferenceService.markOnboardingPassed]
+  /// write so it is called at most once per session, even across multiple
+  /// [build] calls before the async persist completes.
+  bool _onboardingMarkedThisSession = false;
+
   /// The calendar date that was current the last time [load] was triggered.
   /// Stored as a date-only value (time component stripped) so midnight crossings
   /// are detected correctly regardless of the exact wall-clock time.
@@ -228,34 +233,44 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     final isAnonymous = authState?.isAnonymous ?? true;
     final isSigningIn = ref.watch(onboardingSignInLoadingProvider);
 
-    // Use valueOrNull so there is no separate loading state that shows a bare
-    // Scaffold spinner — during the brief initial load hasPacts defaults to
-    // false and isAnonymous defaults to true, so the carousel is shown
-    // immediately rather than flashing a spinner on first launch.
-    // Errors are also treated as "no pacts" (safe fallback).
+    // Read the onboarding flag synchronously.  Since SharedPreferences holds
+    // values in memory after the first getInstance() call, this is a pure
+    // in-memory lookup — no I/O on the main thread.
+    final onboardingService = ref.read(onboardingPreferenceServiceProvider);
+    final onboardingPassed = onboardingService.isOnboardingPassed;
+
+    // Use valueOrNull so there is no separate loading state — during the brief
+    // initial load hasPacts defaults to false. Errors are treated as "no pacts".
     final hasPacts = hasActivePacts.valueOrNull ?? false;
 
-    // Keep the carousel visible while:
-    //   (a) no pacts exist AND user is anonymous, OR
-    //   (b) sign-in is in progress (avoids a flash of empty dashboard while
-    //       pullRemoteChanges is fetching the user's pacts from Firestore).
-    final showCarousel = (!hasPacts && isAnonymous) || isSigningIn;
+    // Anonymous user with no pacts — hasn't done anything yet.
+    final isNewUser = isAnonymous && !hasPacts;
 
-    // While hasActivePactsProvider is still resolving we don't yet know
-    // whether to show the carousel or the dashboard.  Propagate this to the
-    // platform pages so they can display a neutral blank screen instead of
-    // either option — this eliminates the visible scaffold/nav-bar flash that
-    // occurred because showCarousel flips true→false (returning user) or the
-    // dashboard loading spinner appeared briefly (new user) before the correct
-    // screen was selected.
-    final isCarouselPending = hasActivePacts.isLoading;
+    // Show carousel when onboarding hasn't been passed yet AND the user is
+    // either new or currently signing in.
+    //
+    // !onboardingPassed short-circuits on cold start for returning users so
+    // hasActivePactsProvider's AsyncLoading state never causes a carousel flash.
+    // isSigningIn keeps the carousel visible while pullRemoteChanges runs after
+    // a Google sign-in, preventing a flash of an empty dashboard.
+    final showCarousel = !onboardingPassed && (isNewUser || isSigningIn);
+
+    // Write the onboarding-passed flag the first time the dashboard is shown.
+    // The guard prevents multiple writes across build calls in the same session.
+    // The write is deferred to a post-frame callback so build() stays a pure
+    // function of state — side effects must not fire during the widget build phase.
+    if (!showCarousel && !_onboardingMarkedThisSession) {
+      _onboardingMarkedThisSession = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(onboardingService.markOnboardingPassed());
+      });
+    }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return DashboardPageIos(
         state: state,
         hasPacts: hasPacts,
         showCarousel: showCarousel,
-        isCarouselPending: isCarouselPending,
         onDaySelected: onDaySelected,
         onCreatePact: onCreatePact,
         onShowupTapped: onShowupTapped,
@@ -265,7 +280,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       state: state,
       hasPacts: hasPacts,
       showCarousel: showCarousel,
-      isCarouselPending: isCarouselPending,
       onDaySelected: onDaySelected,
       onCreatePact: onCreatePact,
       onShowupTapped: onShowupTapped,
