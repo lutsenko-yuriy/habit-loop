@@ -302,12 +302,23 @@ jobs:
       - run: flutter gen-l10n
 
       - name: Cache CocoaPods
+        id: cache-pods
         uses: actions/cache@v4
         with:
           path: ios/Pods
           key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-pods-
+
+      # Run pod install explicitly when the exact cache key misses (including
+      # fallback restore-key hits). A stale Pods directory from a prior build
+      # may have an incomplete FirebaseCrashlytics installation — flutter build
+      # ios trusts a matching Manifest.lock and skips pod install, leaving the
+      # missing run script that causes the Xcode build phase to fail.
+      - name: Install CocoaPods (cache miss)
+        if: steps.cache-pods.outputs.cache-hit != 'true'
+        working-directory: ios
+        run: pod install
 
       - name: Generate ExportOptions.plist
         run: |
