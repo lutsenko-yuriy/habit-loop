@@ -126,132 +126,136 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
               ),
             ],
           ),
-          child: CustomScrollView(
-            controller: scrollController,
-            slivers: [
-              // ── Drag handle + summary (collapsed peek) ──
-              SliverToBoxAdapter(
-                child: GestureDetector(
-                  onTap: _expand,
-                  behavior: HitTestBehavior.opaque,
+          child: Material(
+            type: MaterialType.transparency,
+            child: CustomScrollView(
+              controller: scrollController,
+              slivers: [
+                // ── Drag handle + summary (collapsed peek) ──
+                SliverToBoxAdapter(
+                  child: GestureDetector(
+                    onTap: _expand,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.outlineVariant,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              summaryLines,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── Title + add button (visible only when expanded) ──
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                    padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+                    child: Row(
                       children: [
-                        Container(
-                          width: 36,
-                          height: 4,
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                            borderRadius: BorderRadius.circular(2),
+                        Expanded(
+                          child: Text(
+                            l10n.pactListTitle,
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            summaryLines,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
+                        TextButton.icon(
+                          onPressed: _addPact,
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text(l10n.addPact),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
 
-              // ── Title + add button (visible only when expanded) ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.pactListTitle,
-                          style: Theme.of(context).textTheme.titleLarge,
+                // ── Filter chips ──
+                SliverToBoxAdapter(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        FilterChip(
+                          label: Text(l10n.filterActive),
+                          selected: state.activeFilters.contains(PactStatus.active),
+                          onSelected: (_) =>
+                              ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active),
                         ),
-                      ),
-                      TextButton.icon(
-                        onPressed: _addPact,
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(l10n.addPact),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        FilterChip(
+                          label: Text(l10n.filterDone),
+                          selected: state.activeFilters.contains(PactStatus.completed),
+                          onSelected: (_) =>
+                              ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed),
+                        ),
+                        const SizedBox(width: 8),
+                        FilterChip(
+                          label: Text(l10n.filterCancelled),
+                          selected: state.activeFilters.contains(PactStatus.stopped),
+                          onSelected: (_) =>
+                              ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              // ── Filter chips ──
-              SliverToBoxAdapter(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      FilterChip(
-                        label: Text(l10n.filterActive),
-                        selected: state.activeFilters.contains(PactStatus.active),
-                        onSelected: (_) => ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: Text(l10n.filterDone),
-                        selected: state.activeFilters.contains(PactStatus.completed),
-                        onSelected: (_) =>
-                            ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: Text(l10n.filterCancelled),
-                        selected: state.activeFilters.contains(PactStatus.stopped),
-                        onSelected: (_) =>
-                            ref.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped),
-                      ),
-                    ],
-                  ),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 8),
                 ),
-              ),
-
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 8),
-              ),
-              const SliverToBoxAdapter(
-                child: Divider(height: 1),
-              ),
-
-              // ── Pact list ──
-              if (state.isLoading)
-                SliverFillRemaining(
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                )
-              else if (entries.isEmpty)
-                SliverFillRemaining(
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
-                    child: Center(child: Text(l10n.noPactsYet)),
-                  ),
-                )
-              else
-                SliverList.separated(
-                  itemCount: entries.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
-                  itemBuilder: (context, index) {
-                    final entry = entries[index];
-                    return _PactTile(
-                      entry: entry,
-                      onTap: () => _navigateToPact(entry),
-                    );
-                  },
+                const SliverToBoxAdapter(
+                  child: Divider(height: 1),
                 ),
-              SliverToBoxAdapter(
-                child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
-              ),
-            ],
+
+                // ── Pact list ──
+                if (state.isLoading)
+                  SliverFillRemaining(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                  )
+                else if (entries.isEmpty)
+                  SliverFillRemaining(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
+                      child: Center(child: Text(l10n.noPactsYet)),
+                    ),
+                  )
+                else
+                  SliverList.separated(
+                    itemCount: entries.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
+                    itemBuilder: (context, index) {
+                      final entry = entries[index];
+                      return _PactTile(
+                        entry: entry,
+                        onTap: () => _navigateToPact(entry),
+                      );
+                    },
+                  ),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
+                ),
+              ],
+            ),
           ),
         );
       },
