@@ -243,15 +243,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     // initial load hasPacts defaults to false. Errors are treated as "no pacts".
     final hasPacts = hasActivePacts.valueOrNull ?? false;
 
-    // Show the carousel when onboarding has not yet been passed AND either:
-    //   (a) no active pacts AND user is anonymous, OR
-    //   (b) sign-in is in progress (avoids a flash of empty dashboard while
-    //       pullRemoteChanges is fetching the user's pacts from Firestore).
+    // Anonymous user with no pacts — hasn't done anything yet.
+    final isNewUser = isAnonymous && !hasPacts;
+
+    // Show carousel when onboarding hasn't been passed yet AND the user is
+    // either new or currently signing in.
     //
-    // Once onboardingPassed is true (flag written on first dashboard view),
-    // showCarousel is always false on cold start — no intermediate loading state
-    // and no blink even though hasActivePactsProvider is still resolving.
-    final showCarousel = !onboardingPassed && ((!hasPacts && isAnonymous) || isSigningIn);
+    // !onboardingPassed short-circuits on cold start for returning users so
+    // hasActivePactsProvider's AsyncLoading state never causes a carousel flash.
+    // isSigningIn keeps the carousel visible while pullRemoteChanges runs after
+    // a Google sign-in, preventing a flash of an empty dashboard.
+    final showCarousel = !onboardingPassed && (isNewUser || isSigningIn);
 
     // Write the onboarding-passed flag the first time the dashboard is shown.
     // The guard prevents multiple writes across build calls in the same session.
