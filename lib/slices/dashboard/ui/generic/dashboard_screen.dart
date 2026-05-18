@@ -255,9 +255,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
 
     // Write the onboarding-passed flag the first time the dashboard is shown.
     // The guard prevents multiple writes across build calls in the same session.
+    // The write is deferred to a post-frame callback so build() stays a pure
+    // function of state — side effects must not fire during the widget build phase.
     if (!showCarousel && !_onboardingMarkedThisSession) {
       _onboardingMarkedThisSession = true;
-      unawaited(onboardingService.markOnboardingPassed());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(onboardingService.markOnboardingPassed());
+      });
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {

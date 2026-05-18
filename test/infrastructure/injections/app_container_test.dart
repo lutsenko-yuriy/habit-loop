@@ -15,6 +15,7 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 
 import '../locale/fake_locale_preference_service.dart';
+import '../onboarding/fake_onboarding_preference_service.dart';
 
 void main() {
   group('AppContainer.overrides', () {
@@ -378,6 +379,33 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(firestoreClientProvider), same(firestoreClient));
+    });
+
+    test('onboardingPreferenceServiceProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(onboardingPreferenceServiceProvider), returnsNormally);
+    });
+
+    test('onboardingPreferenceServiceProvider override is included when provided', () async {
+      final onboardingService = FakeOnboardingPreferenceService(initialValue: true);
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        onboardingPreferenceService: onboardingService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(onboardingPreferenceServiceProvider), same(onboardingService));
     });
 
     test('syncCircuitBreakerProvider resolves without throwing', () async {
