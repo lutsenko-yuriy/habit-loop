@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -58,6 +59,7 @@ class _OnboardingCarouselIosState extends ConsumerState<OnboardingCarouselIos> {
     final isSigningIn = ref.watch(onboardingSignInLoadingProvider);
 
     return CupertinoPageScaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: null,
       child: SafeArea(
         child: Column(
