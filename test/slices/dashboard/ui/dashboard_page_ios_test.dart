@@ -66,6 +66,20 @@ Widget _buildTestApp({
 }
 
 void main() {
+  testWidgets('iOS dashboard nav bar has explicit surface backgroundColor to prevent white-on-drag', (tester) async {
+    // When the pacts panel is dragged upward, the CupertinoNavigationBar's
+    // default translucent background blurs the panel content (white list tiles)
+    // and the bar appears white.  Setting backgroundColor explicitly to
+    // colorScheme.surface makes the bar opaque and keeps it mint regardless of
+    // what scrolls behind it.
+    await tester.pumpWidget(_buildTestApp());
+
+    final navBar = tester.widget<CupertinoNavigationBar>(find.byType(CupertinoNavigationBar));
+    final theme = Theme.of(tester.element(find.byType(DashboardPageIos)));
+
+    expect(navBar.backgroundColor, theme.colorScheme.surface);
+  });
+
   testWidgets('iOS dashboard uses scaffold color without custom home indicator affordances', (tester) async {
     await tester.pumpWidget(_buildTestApp());
 

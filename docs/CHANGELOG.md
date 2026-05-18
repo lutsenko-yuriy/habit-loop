@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.34.3] — 2026-05-18 (PR #95 merged)
+
+### Fixed — iOS nav bar turns white when pacts panel is dragged up (HAB-78)
+
+- `CupertinoNavigationBar` had no explicit `backgroundColor`; it fell back to the translucent `barBackgroundColor` from `CupertinoThemeData` (system background). When the pacts `DraggableScrollableSheet` is dragged up, its white list-tile content entered the blur zone and the bar appeared white
+- Fix: `backgroundColor: Theme.of(context).colorScheme.surface` added to the nav bar — makes it opaque and keeps it mint regardless of what scrolls behind it
+
+---
+
 ## [0.34.2] — 2026-05-18 (PR #94 merged)
 
 ### Fixed — Dashboard loading blink and 24-hour time picker on iOS

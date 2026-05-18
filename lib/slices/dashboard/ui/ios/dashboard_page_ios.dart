@@ -83,6 +83,7 @@ class DashboardPageIos extends ConsumerWidget {
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         leading: CupertinoButton(
           key: const Key('language-picker-button'),
           padding: EdgeInsets.zero,
