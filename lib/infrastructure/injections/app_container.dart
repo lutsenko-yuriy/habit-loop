@@ -13,6 +13,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
+import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
@@ -57,6 +58,11 @@ abstract final class AppContainer {
   ///   saved locale is fetched internally via [LocalePreferenceService.getSavedLocale]
   ///   and used to populate [localeOverrideProvider]. A `null` result means the
   ///   app follows the system locale.
+  /// - [onboardingPreferenceService] — provided when SharedPreferences is
+  ///   available; `null` falls back to [NoopOnboardingService]. When non-null,
+  ///   [DashboardScreen] reads [OnboardingPreferenceService.isOnboardingPassed]
+  ///   synchronously to determine whether to show the carousel or the dashboard
+  ///   on the very first frame — eliminating the cold-start blink.
   static Future<List<Override>> overrides({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
@@ -69,6 +75,7 @@ abstract final class AppContainer {
     RemoteConfigService? remoteConfigService,
     NotificationService? notificationService,
     LocalePreferenceService? localePreferenceService,
+    OnboardingPreferenceService? onboardingPreferenceService,
     AuthService? authService,
     DeviceIdService? deviceIdService,
     FirestoreClient? firestoreClient,
@@ -102,6 +109,10 @@ abstract final class AppContainer {
       // Locale persistence and initial locale override.
       if (localePreferenceService != null) localePreferenceServiceProvider.overrideWithValue(localePreferenceService),
       if (initialLocale != null) localeOverrideProvider.overrideWith((ref) => initialLocale!),
+
+      // Onboarding preference — synchronous flag read on first frame.
+      if (onboardingPreferenceService != null)
+        onboardingPreferenceServiceProvider.overrideWithValue(onboardingPreferenceService),
 
       // Auth and device identity.
       if (authService != null) authServiceProvider.overrideWithValue(authService),

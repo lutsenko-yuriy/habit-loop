@@ -23,7 +23,6 @@ class DashboardPageIos extends ConsumerWidget {
   final DashboardState state;
   final bool hasPacts;
   final bool showCarousel;
-  final bool isCarouselPending;
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
   final Future<void> Function(String) onShowupTapped;
@@ -33,7 +32,6 @@ class DashboardPageIos extends ConsumerWidget {
     required this.state,
     required this.hasPacts,
     required this.showCarousel,
-    required this.isCarouselPending,
     required this.onDaySelected,
     required this.onCreatePact,
     required this.onShowupTapped,
@@ -59,19 +57,6 @@ class DashboardPageIos extends ConsumerWidget {
               _showCupertinoSyncDialog(context, title, message, actions),
           messenger: ScaffoldMessenger.of(context),
         );
-
-    // While we haven't yet resolved whether the user has pacts, show a neutral
-    // blank screen.  This prevents two types of blink:
-    //   - New user path: carousel → scaffold-with-spinner → carousel
-    //     (caused by state.isLoading toggling during the initial load())
-    //   - Returning user path: carousel flash before hasActivePacts resolves
-    //     (because showCarousel defaults to true while the provider is loading)
-    if (isCarouselPending) {
-      return CupertinoPageScaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        child: const Center(child: CupertinoActivityIndicator()),
-      );
-    }
 
     // Show the onboarding carousel full-screen (no nav bar) when requested.
     // showCarousel is true when there are no pacts + user is anonymous, OR

@@ -22,7 +22,6 @@ class DashboardPageAndroid extends ConsumerWidget {
   final DashboardState state;
   final bool hasPacts;
   final bool showCarousel;
-  final bool isCarouselPending;
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
   final Future<void> Function(String) onShowupTapped;
@@ -32,7 +31,6 @@ class DashboardPageAndroid extends ConsumerWidget {
     required this.state,
     required this.hasPacts,
     required this.showCarousel,
-    required this.isCarouselPending,
     required this.onDaySelected,
     required this.onCreatePact,
     required this.onShowupTapped,
@@ -58,15 +56,6 @@ class DashboardPageAndroid extends ConsumerWidget {
               _showMaterialSyncDialog(context, title, message, actions),
           messenger: ScaffoldMessenger.of(context),
         );
-
-    // While we haven't yet resolved whether the user has pacts, show a neutral
-    // blank screen (same logic as the iOS page — see dashboard_page_ios.dart).
-    if (isCarouselPending) {
-      return Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
 
     // Show the onboarding carousel full-screen (no app bar) when requested.
     // showCarousel is true when there are no pacts + user is anonymous, OR
