@@ -1,3 +1,5 @@
+import 'dart:async' show Completer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +18,16 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.d
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+
+/// A [InMemoryPactRepository] whose [getActivePacts] never resolves.
+///
+/// Used in cold-start tests to keep [hasActivePactsProvider] in the
+/// [AsyncLoading] state indefinitely — replicating the production window
+/// between app launch and the first DB response.
+class _NeverResolvingPactRepository extends InMemoryPactRepository {
+  @override
+  Future<List<Pact>> getActivePacts() => Completer<List<Pact>>().future;
+}
 
 final _today = DateTime(2026, 3, 29);
 
@@ -549,5 +561,98 @@ void main() {
         hasLength(2),
       );
     });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Cold-start blink prevention (HAB-77)
+  //
+  // [hasActivePactsProvider] is a FutureProvider that always starts in
+  // AsyncLoading.  On a real device this means the first Flutter frame sees
+  // isCarouselPending=true — a blank+spinner screen — before the DB responds
+  // and the correct screen (carousel or dashboard) is rendered.  The fix
+  // (main.dart) pre-fetches getActivePacts() *before* runApp and overrides
+  // [hasActivePactsProvider] with a synchronous bool so the first build
+  // already sees AsyncData — eliminating the intermediate state entirely.
+  //
+  // These tests use [_NeverResolvingPactRepository] so the FutureProvider
+  // never resolves on its own.  Without a sync override the tests are RED
+  // (spinner shown, carousel/dashboard not found).  With the sync override
+  // applied — as main.dart now does — the tests are GREEN.
+  // ---------------------------------------------------------------------------
+  group('cold-start blink prevention (HAB-77)', () {
+    // Builds a DashboardScreen backed by a never-resolving pact repo.
+    // [preResolvedHasPacts] simulates the main.dart pre-fetch: when non-null,
+    // [hasActivePactsProvider] is overridden with the given synchronous value
+    // so the first build sees AsyncData instead of AsyncLoading.
+    Widget buildColdStartApp({bool? preResolvedHasPacts}) {
+      final pactRepo = _NeverResolvingPactRepository();
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      return ProviderScope(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(_today),
+          // Simulate the main.dart pre-fetch: if provided, overrides the
+          // FutureProvider with a synchronous value so the first widget build
+          // sees AsyncData(hasPacts) instead of AsyncLoading.
+          if (preResolvedHasPacts != null) hasActivePactsProvider.overrideWith((ref) => preResolvedHasPacts),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: Locale('en'),
+          home: DashboardScreen(),
+        ),
+      );
+    }
+
+    testWidgets(
+      'shows blank+spinner when hasActivePactsProvider has not resolved (documents the problem)',
+      (tester) async {
+        // No sync override → hasActivePactsProvider stays in AsyncLoading
+        // (never-resolving repo) → isCarouselPending=true → spinner.
+        await tester.pumpWidget(buildColdStartApp());
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.text('Create a Pact'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'shows carousel immediately without spinner when no-pacts state pre-resolved (new-user path)',
+      (tester) async {
+        // Sync override (false) → AsyncData on first build → isCarouselPending=false
+        // → carousel shown immediately, no intermediate blank+spinner.
+        await tester.pumpWidget(buildColdStartApp(preResolvedHasPacts: false));
+
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.text('Create a Pact'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'shows dashboard nav bar immediately when pacts-present state pre-resolved (returning-user path)',
+      (tester) async {
+        // Sync override (true) → AsyncData on first build → isCarouselPending=false,
+        // showCarousel=false → Scaffold with AppBar/nav bar shown immediately.
+        // (CircularProgressIndicator may still be present from state.isLoading=true
+        // in the dashboard body — that is expected and distinct from the blink.)
+        await tester.pumpWidget(buildColdStartApp(preResolvedHasPacts: true));
+
+        // Language picker button lives in the dashboard nav bar / AppBar.
+        // Its presence means we rendered the full dashboard scaffold — not the
+        // carousel and not the isCarouselPending blank screen.
+        expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
+        // Carousel not shown — correct screen selected immediately.
+        expect(find.text('Create a Pact'), findsNothing);
+      },
+    );
   });
 }

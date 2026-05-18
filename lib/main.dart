@@ -48,6 +48,7 @@ import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_con
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show hasActivePactsProvider;
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
@@ -472,6 +473,19 @@ Future<void> main() async {
     final showupRepo = SqliteShowupRepository(db);
     final txService = SqlitePactTransactionService(db);
 
+    // Pre-fetch the active pact status before runApp.
+    //
+    // [hasActivePactsProvider] is a FutureProvider, so it always starts in
+    // AsyncLoading on the first observation.  Without this pre-fetch, the
+    // first Flutter frame sees isCarouselPending=true → a blank+spinner screen
+    // → then the correct screen: a visible two-frame blink on every cold start.
+    //
+    // By querying the DB here (before runApp) and overriding the provider with
+    // a synchronous bool value, the first build sees AsyncData immediately —
+    // no AsyncLoading state and therefore no blink.  The DB is already open at
+    // this point, so the query is fast (~1 ms).
+    final initialHasPacts = (await pactRepo.getActivePacts()).isNotEmpty;
+
     // Construct (or reuse) the analytics service so it can be passed both to
     // AppContainer.overrides (for Riverpod) and to the deep-link analytics
     // events fired from the cold-start addPostFrameCallback below.
@@ -484,7 +498,7 @@ Future<void> main() async {
     // Compute overrides once and reuse them for both ProviderScope (the widget
     // tree) and _container (the top-level ProviderContainer used by the
     // foreground "Mark done" callback outside the widget tree).
-    final overrides = await AppContainer.overrides(
+    final baseOverrides = await AppContainer.overrides(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
       pactSyncRepository: pactRepo,
@@ -516,6 +530,15 @@ Future<void> main() async {
       deviceIdService: deviceIdService,
       firestoreClient: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
     );
+
+    // Append the synchronous hasActivePactsProvider override so the first Flutter
+    // frame sees AsyncData (not AsyncLoading) — see the pre-fetch comment above.
+    // hasActivePactsProvider is a slice-level UI provider so it is not part of
+    // AppContainer.overrides (which handles only infrastructure providers).
+    final overrides = [
+      ...baseOverrides,
+      hasActivePactsProvider.overrideWith((ref) => initialHasPacts),
+    ];
 
     // Create the top-level ProviderContainer with the same overrides so that
     // the foreground "Mark done" notification callback (_markShowupDoneFromForeground)
