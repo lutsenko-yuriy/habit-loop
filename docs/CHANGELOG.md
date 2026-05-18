@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.34.4] — 2026-05-18 (PR #96 merged)
+
+### Fixed — Cold-start blink and dark-mode black background on iOS (HAB-77)
+
+- Write-once SharedPreferences flag (`habit_loop_onboarding_passed`) replaces the async DB pre-fetch approach: read synchronously before the first frame so the carousel/dashboard routing decision is available with no I/O and no `AsyncLoading` state
+- `isCarouselPending` spinner removed from `DashboardPageIos` and `DashboardPageAndroid` — no more blank+spinner intermediate frame on cold start
+- `OnboardingPreferenceService` interface + `SharedPreferencesOnboardingService` (production) + `NoopOnboardingService` (default) added under `lib/infrastructure/onboarding/`
+- `showCarousel` formula simplified: `!onboardingPassed && (isNewUser || isSigningIn)` — flag short-circuits for returning users; `isNewUser` names the concept clearly
+- `markOnboardingPassed()` deferred to `addPostFrameCallback` to keep `build()` a pure function of state
+- All `CupertinoPageScaffold` widgets (onboarding carousel, pact creation, pact detail, showup detail) now set `backgroundColor: Theme.of(context).colorScheme.surface` — fixes black background in dark mode and white (non-mint) background in light mode on iOS
+- 1140 tests passing, analyzer clean
+
+---
+
 ## [0.34.3] — 2026-05-18 (PR #95 merged)
 
 ### Fixed — iOS nav bar turns white when pacts panel is dragged up (HAB-78)
