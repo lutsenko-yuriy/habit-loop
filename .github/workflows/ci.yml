@@ -257,16 +257,7 @@ jobs:
 
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
-    needs: [check-skip, test, resolve-version]
-    # Run on main (after resolve-version) and on PRs (for early iOS validation).
-    # 'always()' is required so the job is not auto-skipped when resolve-version
-    # is skipped on pull requests. The explicit test == success guard ensures we
-    # don't spin up an expensive macOS runner when unit tests have already failed.
-    if: |
-      always() &&
-      needs.check-skip.outputs.should_skip != 'true' &&
-      needs.test.result == 'success' &&
-      (needs.resolve-version.result == 'success' || github.event_name == 'pull_request')
+    needs: resolve-version
     runs-on: macos-latest
     outputs:
       success: ${{ steps.build.outputs.success }}
@@ -348,10 +339,6 @@ jobs:
 
       - id: build
         run: |
-          # Determine build number: use resolved value on main, 0 on PRs.
-          BUILD_NUMBER="${{ needs.resolve-version.outputs.build_number }}"
-          BUILD_NUMBER="${BUILD_NUMBER:-0}"
-
           # 1. Compile Dart + Flutter without code signing.
           # flutter build ios generates .flutter-plugins-dependencies (with the
           # correct CI pub-cache paths) before running pod install internally,
@@ -364,14 +351,7 @@ jobs:
           # the Runner target's Release config, so settings are target-scoped
           # and never leak to CocoaPods static-library targets.
           flutter build ios --release --no-codesign \
-            --build-number="${BUILD_NUMBER}"
-
-          # On pull-request builds: compilation is all we need to verify.
-          # Skip the archive/export steps that require signing credentials.
-          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
-            echo "Pull-request build — skipping archive and IPA export."
-            exit 0
-          fi
+            --build-number=${{ needs.resolve-version.outputs.build_number }}
 
           # 2. Append manual signing settings to Release.xcconfig.
           # Use both unconditional and [sdk=iphoneos*] conditional forms since
