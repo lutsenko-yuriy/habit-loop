@@ -307,14 +307,22 @@ jobs:
         with:
           channel: stable
 
+      # Opt out of Flutter's Swift Package Manager integration so that all
+      # plugins — including firebase_crashlytics — are installed via CocoaPods.
+      # Without this, newer Flutter stable builds use SPM for plugins that
+      # support it, which means ios/Pods/FirebaseCrashlytics/ is never created
+      # and the "Crashlytics dSYM Upload" Xcode build phase fails with
+      # "Pods/FirebaseCrashlytics/run: No such file or directory".
+      - run: flutter config --no-enable-swift-package-manager
+
       - run: flutter pub get
       - run: flutter gen-l10n
 
-      # No CocoaPods caching. flutter build ios generates
-      # .flutter-plugins-dependencies (with correct CI pub-cache paths) before
-      # running pod install, so all Firebase plugins are always installed fresh
-      # and correctly. Caching ios/Pods or ~/Library/Caches/CocoaPods caused
-      # stale state that broke the build; correctness is more important here.
+      # No CocoaPods caching — correctness over speed. flutter build ios
+      # generates .flutter-plugins-dependencies (with correct CI pub-cache
+      # paths) before running pod install, so all Firebase plugins are always
+      # installed fresh. Caching ios/Pods or ~/Library/Caches/CocoaPods caused
+      # stale state in earlier attempts.
 
       - name: Generate ExportOptions.plist
         run: |
