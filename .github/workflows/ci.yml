@@ -310,14 +310,25 @@ jobs:
       - run: flutter pub get
       - run: flutter gen-l10n
 
-      # Cache the CocoaPods *download* cache (pod sources + specs), not the
-      # installed Pods directory. Caching the installed Pods directory caused
-      # recurring "Pods/FirebaseCrashlytics/run: No such file or directory"
-      # failures: a cached Pods dir with a matching Manifest.lock makes both
-      # flutter and pod install exit as "nothing to install", silently skipping
-      # the file that was missing from the cache. The download cache is safe to
-      # restore across Podfile.lock versions (worst case: a pod is re-downloaded
-      # and reinstalled) whereas the installed Pods dir must always match exactly.
+      # Cache the CocoaPods *download* cache only (pod sources downloaded from
+      # the CDN, not the installed Pods directory).
+      #
+      # Why NOT cache ios/Pods:
+      #   flutter build ios generates .flutter-plugins-dependencies with
+      #   correct CI pub-cache paths BEFORE running its internal pod install.
+      #   Any explicit pod install run *before* flutter build ios sees no
+      #   .flutter-plugins-dependencies (flutter pub get does not produce it),
+      #   installs only the 2 non-Firebase pods that CocoaPods can resolve
+      #   without it, and overwrites Podfile.lock with those 2 entries.
+      #   flutter build ios then compares Manifest.lock == new Podfile.lock
+      #   (both 2 pods) → "nothing to install" → skips its own pod install →
+      #   Xcode build phase fails with "Pods/FirebaseCrashlytics/run: No such
+      #   file or directory".
+      #
+      # Correct flow: let flutter build ios own the pod install step entirely.
+      # It always generates .flutter-plugins-dependencies first, so pod install
+      # picks up all Firebase plugins. The download cache makes that fast by
+      # avoiding network I/O for pod sources that were already downloaded.
       - name: Cache CocoaPods downloads
         uses: actions/cache@v4
         with:
@@ -325,10 +336,6 @@ jobs:
           key: ${{ runner.os }}-cocoapods-v1-${{ hashFiles('ios/Podfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-cocoapods-v1-
-
-      - name: Install CocoaPods
-        working-directory: ios
-        run: pod install
 
       - name: Generate ExportOptions.plist
         run: |
@@ -359,10 +366,10 @@ jobs:
           BUILD_NUMBER="${BUILD_NUMBER:-0}"
 
           # 1. Compile Dart + Flutter without code signing.
-          # flutter build ios also runs `pod install` internally, but only if
-          # Manifest.lock differs from Podfile.lock. Our explicit pod install
-          # step above always produces a fresh, complete Pods directory, so
-          # flutter's internal check is a fast no-op.
+          # flutter build ios generates .flutter-plugins-dependencies (with the
+          # correct CI pub-cache paths) before running pod install internally,
+          # so all Firebase plugins are installed and Pods/FirebaseCrashlytics/run
+          # is present when Xcode's build phase scripts execute.
           #
           # We append signing settings to ios/Flutter/Release.xcconfig rather
           # than touching project.pbxproj (which gets regenerated mid-build).
