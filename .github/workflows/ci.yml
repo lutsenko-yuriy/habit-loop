@@ -257,7 +257,16 @@ jobs:
 
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
-    needs: resolve-version
+    needs: [check-skip, test, resolve-version]
+    # Run on main (after resolve-version) and on PRs (for early iOS validation).
+    # 'always()' is required so the job is not auto-skipped when resolve-version
+    # is skipped on pull requests. The explicit test == success guard ensures we
+    # don't spin up an expensive macOS runner when unit tests have already failed.
+    if: |
+      always() &&
+      needs.check-skip.outputs.should_skip != 'true' &&
+      needs.test.result == 'success' &&
+      (needs.resolve-version.result == 'success' || github.event_name == 'pull_request')
     runs-on: macos-latest
     outputs:
       success: ${{ steps.build.outputs.success }}
@@ -301,22 +310,23 @@ jobs:
       - run: flutter pub get
       - run: flutter gen-l10n
 
-      - name: Cache CocoaPods
-        id: cache-pods
+      # Cache the CocoaPods *download* cache (pod sources + specs), not the
+      # installed Pods directory. Caching the installed Pods directory caused
+      # recurring "Pods/FirebaseCrashlytics/run: No such file or directory"
+      # failures: a cached Pods dir with a matching Manifest.lock makes both
+      # flutter and pod install exit as "nothing to install", silently skipping
+      # the file that was missing from the cache. The download cache is safe to
+      # restore across Podfile.lock versions (worst case: a pod is re-downloaded
+      # and reinstalled) whereas the installed Pods dir must always match exactly.
+      - name: Cache CocoaPods downloads
         uses: actions/cache@v4
         with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          path: ~/Library/Caches/CocoaPods
+          key: ${{ runner.os }}-cocoapods-v1-${{ hashFiles('ios/Podfile.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pods-
+            ${{ runner.os }}-cocoapods-v1-
 
-      # Run pod install explicitly when the exact cache key misses (including
-      # fallback restore-key hits). A stale Pods directory from a prior build
-      # may have an incomplete FirebaseCrashlytics installation — flutter build
-      # ios trusts a matching Manifest.lock and skips pod install, leaving the
-      # missing run script that causes the Xcode build phase to fail.
-      - name: Install CocoaPods (cache miss)
-        if: steps.cache-pods.outputs.cache-hit != 'true'
+      - name: Install CocoaPods
         working-directory: ios
         run: pod install
 
@@ -344,22 +354,30 @@ jobs:
 
       - id: build
         run: |
+          # Determine build number: use resolved value on main, 0 on PRs.
+          BUILD_NUMBER="${{ needs.resolve-version.outputs.build_number }}"
+          BUILD_NUMBER="${BUILD_NUMBER:-0}"
+
           # 1. Compile Dart + Flutter without code signing.
-          # This also runs `pod install`. We avoid touching project.pbxproj
-          # entirely (text injection silently failed in earlier attempts —
-          # the file gets regenerated mid-build) and instead append signing
-          # settings to ios/Flutter/Release.xcconfig, which is:
-          #  - referenced via baseConfigurationReference ONLY by the Runner
-          #    target's Release config, so settings are target-scoped and
-          #    never leak to CocoaPods static-library targets;
-          #  - a real file in the repo that flutter and CocoaPods don't
-          #    regenerate (CocoaPods writes a separate Pods-Runner.release.xcconfig
-          #    that this file `#include`s — those don't conflict);
-          #  - lower priority than target-level buildSettings, but the Runner
-          #    target's Release buildSettings have NO signing settings, so the
-          #    xcconfig values become authoritative.
+          # flutter build ios also runs `pod install` internally, but only if
+          # Manifest.lock differs from Podfile.lock. Our explicit pod install
+          # step above always produces a fresh, complete Pods directory, so
+          # flutter's internal check is a fast no-op.
+          #
+          # We append signing settings to ios/Flutter/Release.xcconfig rather
+          # than touching project.pbxproj (which gets regenerated mid-build).
+          # The xcconfig is referenced via baseConfigurationReference only by
+          # the Runner target's Release config, so settings are target-scoped
+          # and never leak to CocoaPods static-library targets.
           flutter build ios --release --no-codesign \
-            --build-number=${{ needs.resolve-version.outputs.build_number }}
+            --build-number="${BUILD_NUMBER}"
+
+          # On pull-request builds: compilation is all we need to verify.
+          # Skip the archive/export steps that require signing credentials.
+          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
+            echo "Pull-request build — skipping archive and IPA export."
+            exit 0
+          fi
 
           # 2. Append manual signing settings to Release.xcconfig.
           # Use both unconditional and [sdk=iphoneos*] conditional forms since
