@@ -298,27 +298,22 @@ jobs:
         with:
           channel: stable
 
+      # Opt out of Flutter's Swift Package Manager integration so that all
+      # plugins — including firebase_crashlytics — are installed via CocoaPods.
+      # Without this, newer Flutter stable builds use SPM for plugins that
+      # support it, which means ios/Pods/FirebaseCrashlytics/ is never created
+      # and the "Crashlytics dSYM Upload" Xcode build phase fails with
+      # "Pods/FirebaseCrashlytics/run: No such file or directory".
+      - run: flutter config --no-enable-swift-package-manager
+
       - run: flutter pub get
       - run: flutter gen-l10n
 
-      - name: Cache CocoaPods
-        id: cache-pods
-        uses: actions/cache@v4
-        with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      # Run pod install explicitly when the exact cache key misses (including
-      # fallback restore-key hits). A stale Pods directory from a prior build
-      # may have an incomplete FirebaseCrashlytics installation — flutter build
-      # ios trusts a matching Manifest.lock and skips pod install, leaving the
-      # missing run script that causes the Xcode build phase to fail.
-      - name: Install CocoaPods (cache miss)
-        if: steps.cache-pods.outputs.cache-hit != 'true'
-        working-directory: ios
-        run: pod install
+      # No CocoaPods caching — correctness over speed. flutter build ios
+      # generates .flutter-plugins-dependencies (with correct CI pub-cache
+      # paths) before running pod install, so all Firebase plugins are always
+      # installed fresh. Caching ios/Pods or ~/Library/Caches/CocoaPods caused
+      # stale state in earlier attempts.
 
       - name: Generate ExportOptions.plist
         run: |
@@ -345,19 +340,16 @@ jobs:
       - id: build
         run: |
           # 1. Compile Dart + Flutter without code signing.
-          # This also runs `pod install`. We avoid touching project.pbxproj
-          # entirely (text injection silently failed in earlier attempts —
-          # the file gets regenerated mid-build) and instead append signing
-          # settings to ios/Flutter/Release.xcconfig, which is:
-          #  - referenced via baseConfigurationReference ONLY by the Runner
-          #    target's Release config, so settings are target-scoped and
-          #    never leak to CocoaPods static-library targets;
-          #  - a real file in the repo that flutter and CocoaPods don't
-          #    regenerate (CocoaPods writes a separate Pods-Runner.release.xcconfig
-          #    that this file `#include`s — those don't conflict);
-          #  - lower priority than target-level buildSettings, but the Runner
-          #    target's Release buildSettings have NO signing settings, so the
-          #    xcconfig values become authoritative.
+          # flutter build ios generates .flutter-plugins-dependencies (with the
+          # correct CI pub-cache paths) before running pod install internally,
+          # so all Firebase plugins are installed and Pods/FirebaseCrashlytics/run
+          # is present when Xcode's build phase scripts execute.
+          #
+          # We append signing settings to ios/Flutter/Release.xcconfig rather
+          # than touching project.pbxproj (which gets regenerated mid-build).
+          # The xcconfig is referenced via baseConfigurationReference only by
+          # the Runner target's Release config, so settings are target-scoped
+          # and never leak to CocoaPods static-library targets.
           flutter build ios --release --no-codesign \
             --build-number=${{ needs.resolve-version.outputs.build_number }}
 
