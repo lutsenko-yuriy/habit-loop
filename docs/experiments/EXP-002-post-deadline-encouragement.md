@@ -4,7 +4,7 @@
 _We believe that showing an encouraging replacement notification after a missed showup deadline will cause a higher rate of next-showup completion for Android users who have missed at least one showup, because an encouraging nudge reduces discouragement and keeps users engaged with their pact._
 
 ## Status
-`running`
+`pending`
 
 <!-- Keep only one status. Valid transitions: pending → running → won | lost | abandoned -->
 

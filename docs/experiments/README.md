@@ -29,6 +29,6 @@ All product experiments are tracked here. One file per experiment under this dir
 
 | ID | Name | Status | Start date | End date | Primary metric result | Decision date |
 |---|---|---|---|---|---|---|
-| EXP-001 | notification-text-urgency | `running` | with v0.20.0 | 4 wks after 1.0.0 | | |
-| EXP-002 | post-deadline-encouragement | `running` | with v0.20.0 | 6 wks after 1.0.0 | | |
+| EXP-001 | notification-text-urgency | `pending` | with v0.20.0 | 4 wks after 1.0.0 | | |
+| EXP-002 | post-deadline-encouragement | `pending` | with v0.20.0 | 6 wks after 1.0.0 | | |
 | EXP-003 | commitment-confirmation-variant | `pending` | with HAB-82 | 8 wks after 1.0.0 | | |

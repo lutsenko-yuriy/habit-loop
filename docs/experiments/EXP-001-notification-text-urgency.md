@@ -4,7 +4,7 @@
 _We believe that urgency-framing in notification text will cause higher rates of showups being marked done or failed for users with active pacts and a reminder offset configured, because a concrete time deadline makes the cost of inaction salient and prompts immediate action._
 
 ## Status
-`running`
+`pending`
 
 <!-- Keep only one status. Valid transitions: pending → running → won | lost | abandoned -->
 
