@@ -4,9 +4,9 @@
 _We believe that requiring users to actively confirm their commitment during pact creation (checkbox or re-typing the habit name) will result in higher showup completion rates compared to a single button tap, because a more deliberate confirmation creates stronger psychological ownership over the habit. We further believe the re-type variant will outperform the checkbox variant for the same reason._
 
 ## Status
-`running`
+`pending`
 
-<!-- Keep only one status. Valid transitions: running → won | lost | abandoned -->
+<!-- Keep only one status. Valid transitions: pending → running → won | lost | abandoned -->
 
 ## Setup
 | Field | Value |

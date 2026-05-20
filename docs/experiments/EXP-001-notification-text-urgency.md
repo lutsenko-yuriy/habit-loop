@@ -6,7 +6,7 @@ _We believe that urgency-framing in notification text will cause higher rates of
 ## Status
 `running`
 
-<!-- Keep only one status. Valid transitions: running → won | lost | abandoned -->
+<!-- Keep only one status. Valid transitions: pending → running → won | lost | abandoned -->
 
 ## Setup
 | Field | Value |

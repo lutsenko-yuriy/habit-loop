@@ -6,7 +6,7 @@ _We believe that showing an encouraging replacement notification after a missed 
 ## Status
 `running`
 
-<!-- Keep only one status. Valid transitions: running → won | lost | abandoned -->
+<!-- Keep only one status. Valid transitions: pending → running → won | lost | abandoned -->
 
 ## Setup
 | Field | Value |
