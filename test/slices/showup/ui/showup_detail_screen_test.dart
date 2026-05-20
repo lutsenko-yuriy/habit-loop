@@ -358,7 +358,7 @@ void main() {
       expect(find.textContaining('nonexistent'), findsNothing);
     });
 
-    testWidgets('tapping habit name navigates to pact detail screen', (tester) async {
+    testWidgets('"View pact details" link navigates to pact detail screen', (tester) async {
       final showup = _pendingFutureShowup();
       final navKey = GlobalKey<NavigatorState>();
 
@@ -384,15 +384,20 @@ void main() {
       // Only the initial route is present.
       expect(navKey.currentState!.canPop(), isFalse);
 
-      // Tap the habit name — it should be a tappable link to pact detail.
+      // Habit name is plain text — tapping it must NOT navigate.
       await tester.tap(find.text('Meditate'));
+      await tester.pumpAndSettle();
+      expect(navKey.currentState!.canPop(), isFalse);
+
+      // Tap the "View pact details" link below the title.
+      await tester.tap(find.text('View pact details'));
       await tester.pumpAndSettle();
 
       // PactDetailScreen was pushed — navigator now has 2 routes.
       expect(navKey.currentState!.canPop(), isTrue);
     });
 
-    testWidgets('habit name is not tappable when pact is deleted', (tester) async {
+    testWidgets('"View pact details" link is absent when pact is deleted', (tester) async {
       final showup = _pendingFutureShowup();
       final navKey = GlobalKey<NavigatorState>();
 
@@ -416,11 +421,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // habitName is null → "(habit deleted)" is shown but is not tappable.
-      // Tapping should not push any route.
+      // habitName is null → link is not rendered at all.
+      expect(find.text('View pact details'), findsNothing);
+      // Tapping the "(habit deleted)" label must not navigate.
       await tester.tap(find.textContaining('deleted'));
       await tester.pumpAndSettle();
-
       expect(navKey.currentState!.canPop(), isFalse);
     });
   });

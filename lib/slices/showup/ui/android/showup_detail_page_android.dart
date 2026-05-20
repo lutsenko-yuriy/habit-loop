@@ -145,22 +145,10 @@ class _ShowupDetailContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: InkWell(
-                onTap: onOpenPact,
-                borderRadius: BorderRadius.circular(4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        state.habitName ?? l10n.showupHabitDeleted,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: onOpenPact != null ? theme.colorScheme.primary : null,
-                        ),
-                      ),
-                    ),
-                    if (onOpenPact != null) Icon(Icons.chevron_right, color: theme.colorScheme.primary),
-                  ],
+              child: Text(
+                state.habitName ?? l10n.showupHabitDeleted,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -176,6 +164,26 @@ class _ShowupDetailContent extends StatelessWidget {
             ),
           ],
         ),
+        // "View pact details" link — only shown when the parent pact exists.
+        if (onOpenPact != null) ...[
+          const SizedBox(height: 4),
+          InkWell(
+            onTap: onOpenPact,
+            borderRadius: BorderRadius.circular(4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.showupViewPactDetails,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                Icon(Icons.chevron_right, size: 14, color: theme.colorScheme.primary),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
 
         // Info cards

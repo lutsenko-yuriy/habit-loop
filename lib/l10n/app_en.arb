@@ -155,6 +155,7 @@
   "showupNoteError": "Failed to save note. Please try again.",
   "showupMarkError": "Failed to update showup status. Please try again.",
   "showupHabitDeleted": "(habit deleted)",
+  "showupViewPactDetails": "View pact details",
   "showupNotFound": "This showup is no longer available.",
 
   "languagePickerTitle": "Language",

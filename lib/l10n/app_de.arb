@@ -155,6 +155,7 @@
   "showupNoteError": "Notiz konnte nicht gespeichert werden. Bitte erneut versuchen.",
   "showupMarkError": "Status konnte nicht aktualisiert werden. Bitte erneut versuchen.",
   "showupHabitDeleted": "(Gewohnheit gelöscht)",
+  "showupViewPactDetails": "Pakt-Details anzeigen",
   "showupNotFound": "Dieses Showup ist nicht mehr verfügbar.",
 
   "languagePickerTitle": "Sprache",

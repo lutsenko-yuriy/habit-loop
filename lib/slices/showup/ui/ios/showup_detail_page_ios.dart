@@ -151,29 +151,11 @@ class _ShowupDetailContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: GestureDetector(
-                onTap: onOpenPact,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        state.habitName ?? l10n.showupHabitDeleted,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: onOpenPact != null
-                              ? CupertinoColors.activeBlue.resolveFrom(context)
-                              : null,
-                        ),
-                      ),
-                    ),
-                    if (onOpenPact != null)
-                      Icon(
-                        CupertinoIcons.chevron_right,
-                        size: 16,
-                        color: CupertinoColors.activeBlue.resolveFrom(context),
-                      ),
-                  ],
+              child: Text(
+                state.habitName ?? l10n.showupHabitDeleted,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -194,6 +176,30 @@ class _ShowupDetailContent extends StatelessWidget {
             ),
           ],
         ),
+        // "View pact details" link — only shown when the parent pact exists.
+        if (onOpenPact != null) ...[
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: onOpenPact,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.showupViewPactDetails,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: CupertinoColors.activeBlue.resolveFrom(context),
+                  ),
+                ),
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 13,
+                  color: CupertinoColors.activeBlue.resolveFrom(context),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
 
         // Info rows

@@ -75,15 +75,16 @@ void main() {
         await waitFor(tester, find.text(strings.markDone));
         expect(find.text(strings.markDone), findsOneWidget);
 
-        // ── 3. Showup detail is visible with tappable habit name ─────────
+        // ── 3. Showup detail is visible with plain habit name and link ───
         // After navigation, 'Morning Run' appears in both the dashboard tile
         // (offscreen, still mounted below in the navigator stack) and the
-        // showup detail content header. The active route's widgets are built
-        // last, so `.last` targets the showup detail header.
+        // showup detail content header as plain non-tappable text.
         expect(find.text('Morning Run'), findsWidgets);
+        // The "View pact details" link is rendered below the habit name.
+        expect(find.text(strings.showupViewPactDetails), findsOneWidget);
 
-        // ── 4. Tap the habit name → navigate to pact detail ──────────────
-        await tester.tap(find.text('Morning Run').last);
+        // ── 4. Tap "View pact details" → navigate to pact detail ─────────
+        await tester.tap(find.text(strings.showupViewPactDetails));
 
         // ── 5. Pact detail screen is shown ───────────────────────────────
         // Wait for the 'Stop Pact' button which is unique to pact detail.
@@ -172,8 +173,10 @@ void main() {
         await tester.tap(find.text('Deleted Habit'));
         await waitFor(tester, find.text(strings.showupHabitDeleted));
 
-        // ── 4. Habit name shows the "deleted" fallback, not tappable ─────
+        // ── 4. Habit name shows the "deleted" fallback; link is absent ───
         expect(find.text(strings.showupHabitDeleted), findsOneWidget);
+        // "View pact details" must not appear — pact no longer exists.
+        expect(find.text(strings.showupViewPactDetails), findsNothing);
 
         // ── 5. Tapping the fallback label does nothing ────────────────────
         await tester.tap(find.text(strings.showupHabitDeleted));
