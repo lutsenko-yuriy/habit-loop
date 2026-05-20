@@ -6,54 +6,56 @@ import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 // pact_creation_state.dart continue to resolve ScheduleType without change.
 export 'package:habit_loop/domain/pact/schedule_type.dart' show ScheduleType;
 
-enum PactCreationStep {
-  pactDuration(0),
-  showupDuration(1),
-  schedule(2),
-  reminder(3),
-  commitment(4);
+/// Steps in the pact wizard (creation or editing).
+///
+/// Each value's [value] matches the page index in the [PageView] so that
+/// [goToPage] and UI code can convert freely between int and enum without a
+/// separate mapping table.
+enum PactWizardStep {
+  habitName(0),
+  duration(1),
+  showupDuration(2),
+  schedule(3),
+  reminder(4),
+  summary(5);
 
-  const PactCreationStep(this.value);
+  const PactWizardStep(this.value);
   final int value;
 
-  static int get count => PactCreationStep.values.length;
+  static int get count => PactWizardStep.values.length;
 
-  bool get isFirst => this == PactCreationStep.values.first;
-  bool get isLast => this == PactCreationStep.values.last;
-
-  PactCreationStep? get next {
-    final i = index + 1;
-    return i < PactCreationStep.values.length ? PactCreationStep.values[i] : null;
-  }
-
-  PactCreationStep? get previous {
-    final i = index - 1;
-    return i >= 0 ? PactCreationStep.values[i] : null;
-  }
+  bool get isFirst => this == PactWizardStep.values.first;
+  bool get isLast => this == PactWizardStep.values.last;
 }
 
-/// Wizard-navigation state for the pact creation flow.
+/// Wizard-navigation state for the pact creation/editing flow.
 ///
 /// Pact-data fields (habit name, dates, schedule, etc.) are owned by
 /// [PactBuilder], which is held here as [builder]. Proxy getters expose the
 /// builder's fields directly so widget code that reads `state.habitName`,
 /// `state.startDate`, etc. requires no changes.
 class PactCreationState {
-  static int get totalSteps => PactCreationStep.count;
+  static int get totalSteps => PactWizardStep.count;
 
   /// The pact-data currently being assembled by the wizard.
   final PactBuilder builder;
 
-  final PactCreationStep currentStep;
+  final PactWizardStep currentStep;
   final bool commitmentAccepted;
+
+  /// `true` if the user tapped at least one Summary-screen row to jump back
+  /// to a step before submitting; `false` if they swiped through linearly.
+  final bool usedSummaryJump;
+
   final bool isSubmitting;
   final Object? submitError;
 
   PactCreationState({
     required DateTime today,
     PactBuilder? builder,
-    this.currentStep = PactCreationStep.pactDuration,
+    this.currentStep = PactWizardStep.habitName,
     this.commitmentAccepted = false,
+    this.usedSummaryJump = false,
     this.isSubmitting = false,
     this.submitError,
   }) : builder = builder ?? PactBuilder(today: today);
@@ -62,6 +64,7 @@ class PactCreationState {
     required this.builder,
     required this.currentStep,
     required this.commitmentAccepted,
+    required this.usedSummaryJump,
     required this.isSubmitting,
     required this.submitError,
   });
@@ -79,32 +82,14 @@ class PactCreationState {
   Duration? get reminderOffset => builder.reminderOffset;
 
   // ---------------------------------------------------------------------------
-  // Step-validation dispatch table — each step delegates to a builder predicate.
-  // ---------------------------------------------------------------------------
-
-  bool get canAdvanceFromStep {
-    switch (currentStep) {
-      case PactCreationStep.pactDuration:
-        return builder.isDateRangeValid;
-      case PactCreationStep.showupDuration:
-        return builder.isShowupDurationValid;
-      case PactCreationStep.schedule:
-        return builder.isScheduleSet;
-      case PactCreationStep.reminder:
-        return true;
-      case PactCreationStep.commitment:
-        return commitmentAccepted && builder.isHabitNameValid;
-    }
-  }
-
-  // ---------------------------------------------------------------------------
   // copyWith — wizard concerns only; data-field params removed.
   // ---------------------------------------------------------------------------
 
   PactCreationState copyWith({
     PactBuilder? builder,
-    PactCreationStep? currentStep,
+    PactWizardStep? currentStep,
     bool? commitmentAccepted,
+    bool? usedSummaryJump,
     bool? isSubmitting,
     Object? submitError,
     bool clearSubmitError = false,
@@ -113,6 +98,7 @@ class PactCreationState {
       builder: builder ?? this.builder,
       currentStep: currentStep ?? this.currentStep,
       commitmentAccepted: commitmentAccepted ?? this.commitmentAccepted,
+      usedSummaryJump: usedSummaryJump ?? this.usedSummaryJump,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
     );

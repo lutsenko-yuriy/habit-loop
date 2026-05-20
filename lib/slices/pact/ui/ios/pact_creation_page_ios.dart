@@ -3,7 +3,6 @@ import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
-import 'package:habit_loop/slices/pact/ui/ios/commitment_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_duration_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/reminder_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/schedule_step_ios.dart';
@@ -87,7 +86,9 @@ class PactCreationPageIos extends StatelessWidget {
 
   Widget _buildStep(BuildContext context, AppLocalizations l10n) {
     switch (state.currentStep) {
-      case PactCreationStep.pactDuration:
+      // TODO(WU2): replace this entire switch with the new PageView-based wizard.
+      case PactWizardStep.habitName:
+      case PactWizardStep.duration:
         return PactDurationStepIos(
           state: state,
           l10n: l10n,
@@ -95,38 +96,34 @@ class PactCreationPageIos extends StatelessWidget {
           onEndDateChanged: onEndDateChanged,
           onShowupDurationChanged: onShowupDurationChanged,
         );
-      case PactCreationStep.showupDuration:
+      case PactWizardStep.showupDuration:
         return ShowupDurationStepIos(
           state: state,
           l10n: l10n,
           onChanged: onShowupDurationChanged,
         );
-      case PactCreationStep.schedule:
+      case PactWizardStep.schedule:
         return ScheduleStepIos(
           state: state,
           l10n: l10n,
           onScheduleTypeChanged: onScheduleTypeChanged,
           onScheduleChanged: onScheduleChanged,
         );
-      case PactCreationStep.reminder:
+      case PactWizardStep.reminder:
         return ReminderStepIos(
           state: state,
           l10n: l10n,
           onReminderOffsetChanged: onReminderOffsetChanged,
           onClearReminder: onClearReminder,
         );
-      case PactCreationStep.commitment:
-        return CommitmentStepIos(
-          state: state,
-          l10n: l10n,
-          onCommitmentChanged: onCommitmentChanged,
-        );
+      case PactWizardStep.summary:
+        return const SizedBox.shrink(); // placeholder; replaced in WU2
     }
   }
 }
 
 class _StepIndicator extends StatelessWidget {
-  final PactCreationStep currentStep;
+  final PactWizardStep currentStep; // TODO(WU2): replaced by PageView indicator
 
   const _StepIndicator({required this.currentStep});
 
@@ -136,7 +133,7 @@ class _StepIndicator extends StatelessWidget {
       key: const Key('pact-creation-step-indicator-ios'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
-        children: List.generate(PactCreationStep.count, (index) {
+        children: List.generate(PactWizardStep.count, (index) {
           return Expanded(
             child: Container(
               key: Key('pact-creation-step-indicator-ios-segment-$index'),
@@ -208,14 +205,14 @@ class _BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLastStep = state.currentStep.isLast;
-    final canAdvance = state.canAdvanceFromStep;
+    // TODO(WU2): per-step gating removed; Create button on Summary page gates submission.
 
     return Padding(
       padding: const EdgeInsets.all(16),
       child: SizedBox(
         width: double.infinity,
         child: CupertinoButton.filled(
-          onPressed: canAdvance ? (isLastStep ? onSubmit : onNext) : null,
+          onPressed: isLastStep ? onSubmit : onNext,
           child: Text(
             isLastStep ? l10n.createPactConfirm : l10n.next,
           ),

@@ -4,6 +4,23 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.36.0] — 2026-05-21 (PR #99 merged)
+
+### Added — Application layer for swipeable modular wizard (HAB-82 WU1)
+
+- `PactWizardStep` enum replaces `PactCreationStep` with 6 values (`habitName`, `duration`, `showupDuration`, `schedule`, `reminder`, `summary`); each value's `int` matches the future `PageView` page index for zero-cost int↔enum conversion
+- `canAdvanceFromStep` removed — no per-step gating in the swipeable wizard; the Summary page Create button gates submission
+- `PactCreationViewModel.nextStep()`/`previousStep()` replaced by `goToPage(int page)` (clamped, logs breadcrumb, preserves the 10-min `showupDuration` default on first visit)
+- `markSummaryJumped()` added to VM — idempotent, sets `usedSummaryJump: true` for analytics
+- `submit()` gains `required commitmentVariant: String` forwarded to `PactCreatedEvent` (EXP-003)
+- `PactCreatedEvent` gains `usedSummaryJump: bool` and `commitmentVariant: String`; 4 new analytics classes: `PactCommitmentDialogDismissedEvent`, `PactWizardStepJumpedEvent`, `PactWizardAbandonedEvent`, `PactWizardSummaryAnalyticsScreen`
+- EXP-003 experiment file registered (`exp_003_commitment_confirmation`: `button` / `checkbox` / `retype`)
+- Experiment registry gains `pending` status, Start date and End date columns; all 3 experiments set to `pending`
+- Platform pages updated with minimal compile fixes and `TODO(WU2)` markers; full UI replacement in WU2
+- 1163 tests passing, analyzer clean
+
+---
+
 ## [0.35.0] — 2026-05-20 (PR #98 merged)
 
 ### Added — Navigate to pact detail from showup detail screen (HAB-81)

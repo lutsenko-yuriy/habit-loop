@@ -4,9 +4,9 @@
 _We believe that [change] will cause [outcome] for [audience] because [rationale]._
 
 ## Status
-`running`
+`pending`
 
-<!-- Keep only one status. Valid transitions: running → won | lost | abandoned -->
+<!-- Keep only one status. Valid transitions: pending → running → won | lost | abandoned -->
 
 ## Setup
 | Field | Value |

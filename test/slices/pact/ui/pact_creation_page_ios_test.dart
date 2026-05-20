@@ -10,7 +10,7 @@ void main() {
   testWidgets('iOS pact creation shows a themed step indicator', (tester) async {
     final state = PactCreationState(
       today: DateTime(2026, 3, 30),
-      currentStep: PactCreationStep.schedule,
+      currentStep: PactWizardStep.schedule,
     );
 
     await tester.pumpWidget(

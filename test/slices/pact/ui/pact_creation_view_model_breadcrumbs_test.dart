@@ -57,7 +57,7 @@ void main() {
       vm.setShowupDuration(const Duration(minutes: 10));
       vm.setScheduleType(ScheduleType.daily);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       expect(
         crashlytics.logs.any((msg) => msg.contains('pact_created')),
@@ -66,18 +66,17 @@ void main() {
       );
     });
 
-    test('nextStep logs step transition breadcrumb', () async {
+    test('goToPage logs step transition breadcrumb', () async {
       final crashlytics = FakeCrashlyticsService();
       final container = createContainer(crashlytics: crashlytics);
       final vm = container.read(pactCreationViewModelProvider.notifier);
 
-      vm.setCommitmentAccepted(true);
-      vm.nextStep();
+      vm.goToPage(1);
 
       expect(
         crashlytics.logs.any((msg) => msg.contains('pact_creation')),
         isTrue,
-        reason: 'nextStep() should log a pact_creation step transition breadcrumb',
+        reason: 'goToPage() should log a pact_creation step transition breadcrumb',
       );
     });
   });
