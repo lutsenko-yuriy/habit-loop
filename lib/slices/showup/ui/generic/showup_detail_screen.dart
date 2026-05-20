@@ -1,9 +1,11 @@
 import 'dart:async' show unawaited;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/android/showup_detail_page_android.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
@@ -58,12 +60,31 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).saveNote(note);
     }
 
+    // onOpenPact is only provided when the parent pact exists (habitName != null).
+    // When the pact has been deleted, the habit name label is non-tappable.
+    Future<void> onOpenPact() async {
+      if (!mounted) return;
+      final pactId = state.showup!.pactId;
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await Navigator.of(context).push(CupertinoPageRoute<void>(
+          builder: (_) => PactDetailScreen(pactId: pactId),
+        ));
+      } else {
+        await Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => PactDetailScreen(pactId: pactId),
+        ));
+      }
+    }
+
+    final openPactCallback = (state.showup != null && state.habitName != null) ? onOpenPact : null;
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return ShowupDetailPageIos(
         state: state,
         onMarkDone: onMarkDone,
         onMarkFailed: onMarkFailed,
         onSaveNote: onSaveNote,
+        onOpenPact: openPactCallback,
       );
     }
     return ShowupDetailPageAndroid(
@@ -71,6 +92,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       onMarkDone: onMarkDone,
       onMarkFailed: onMarkFailed,
       onSaveNote: onSaveNote,
+      onOpenPact: openPactCallback,
     );
   }
 }

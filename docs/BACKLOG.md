@@ -10,7 +10,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ### Issues
 
 - **[HAB-55] EXC_BAD_ACCESS crash on iOS cold-start (JIT W^X protection)** — iOS cold-start crash due to JIT write-execute protection. (Bug)
-- **[HAB-76] Research: stabilise flaky integration tests** — Integration test results are non-deterministic; some runs pass all tests, others fail one. Needs investigation and a stabilisation plan. (Research)
 ### Remaining work
 
 _(none)_

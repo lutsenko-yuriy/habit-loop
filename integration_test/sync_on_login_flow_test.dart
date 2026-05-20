@@ -288,8 +288,10 @@ void main() {
       // ── 2. Open sync status dialog ────────────────────────────────────────
       await waitFor(tester, find.byIcon(Icons.cloud_off_outlined));
       await tester.tap(find.byKey(const Key('sync-status-button')));
-      await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
+      // Verify the dialog opened by checking the sign-in action is present
+      // (platform-agnostic: Android shows AlertDialog, iOS shows CupertinoAlertDialog).
+      await waitFor(tester, find.text(strings.signInWithGoogle));
+      expect(find.text(strings.signInWithGoogle), findsOneWidget);
 
       // ── 3. Tap "Sign in with Google" ──────────────────────────────────────
       await tester.tap(find.text(strings.signInWithGoogle));

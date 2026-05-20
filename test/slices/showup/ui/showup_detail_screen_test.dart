@@ -357,5 +357,76 @@ void main() {
       // The raw "nonexistent" ID must NOT appear in the UI.
       expect(find.textContaining('nonexistent'), findsNothing);
     });
+
+    testWidgets('"View pact details" link navigates to pact detail screen', (tester) async {
+      final showup = _pendingFutureShowup();
+      final navKey = GlobalKey<NavigatorState>();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: _overrides(showup: showup, pact: _pact),
+          child: MaterialApp(
+            navigatorKey: navKey,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: ShowupDetailScreen(showupId: showup.id),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Only the initial route is present.
+      expect(navKey.currentState!.canPop(), isFalse);
+
+      // Habit name is plain text — tapping it must NOT navigate.
+      await tester.tap(find.text('Meditate'));
+      await tester.pumpAndSettle();
+      expect(navKey.currentState!.canPop(), isFalse);
+
+      // Tap the "View pact details" link below the title.
+      await tester.tap(find.text('View pact details'));
+      await tester.pumpAndSettle();
+
+      // PactDetailScreen was pushed — navigator now has 2 routes.
+      expect(navKey.currentState!.canPop(), isTrue);
+    });
+
+    testWidgets('"View pact details" link is absent when pact is deleted', (tester) async {
+      final showup = _pendingFutureShowup();
+      final navKey = GlobalKey<NavigatorState>();
+
+      // No pact in the repository — habitName will resolve to null.
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: _overrides(showup: showup, pact: null),
+          child: MaterialApp(
+            navigatorKey: navKey,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: ShowupDetailScreen(showupId: showup.id),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // habitName is null → link is not rendered at all.
+      expect(find.text('View pact details'), findsNothing);
+      // Tapping the "(habit deleted)" label must not navigate.
+      await tester.tap(find.textContaining('deleted'));
+      await tester.pumpAndSettle();
+      expect(navKey.currentState!.canPop(), isFalse);
+    });
   });
 }

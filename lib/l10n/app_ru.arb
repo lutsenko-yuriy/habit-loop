@@ -155,6 +155,7 @@
   "showupNoteError": "Не удалось сохранить заметку. Попробуйте ещё раз.",
   "showupMarkError": "Не удалось обновить статус визита. Попробуйте ещё раз.",
   "showupHabitDeleted": "(привычка удалена)",
+  "showupViewPactDetails": "Подробности пакта",
   "showupNotFound": "Этот визит больше недоступен.",
 
   "languagePickerTitle": "Язык",

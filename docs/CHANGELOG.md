@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.35.0] — 2026-05-20 (PR #98 merged)
+
+### Added — Navigate to pact detail from showup detail screen (HAB-81)
+
+- Showup detail screen now shows a small **"View pact details ›"** row beneath the habit name that navigates to the parent `PactDetailScreen`; uses `CupertinoPageRoute` on iOS and `MaterialPageRoute` on Android
+- When the parent pact has been deleted the link is absent and the habit name shows the localised "(habit deleted)" fallback as plain non-tappable text
+- New l10n key `showupViewPactDetails` added across EN/FR/DE/RU
+- Full end-to-end integration test covering the complete navigation chain (dashboard → showup detail → pact detail → back → showup detail → back → dashboard) and the deleted-pact guard case
+- Integration test platform-agnostic fixes: `create_pact_flow_test`, `language_change_flow_test`, and `sync_on_login_flow_test` replaced Material-only widget finders (`TextField`, `CheckboxListTile`, `SimpleDialog`, `AlertDialog`) with finders that work on both iOS and Android
+
+---
+
 ## [0.34.4] — 2026-05-18 (PR #96 merged)
 
 ### Fixed — Cold-start blink and dark-mode black background on iOS (HAB-77)

@@ -2,7 +2,6 @@
 //
 // Run with: flutter test integration_test/language_change_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/language_change_flow_test.dart
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:integration_test/integration_test.dart';
@@ -34,8 +33,9 @@ void main() {
       await tester.tap(find.text(strings.languagePickerTitle));
       await tester.pumpAndSettle();
 
-      // Android language picker renders a SimpleDialog.
-      expect(find.byType(SimpleDialog), findsOneWidget);
+      // Verify the picker opened by checking that the language options are visible
+      // (platform-agnostic: Android shows SimpleDialog, iOS shows CupertinoActionSheet).
+      expect(find.text(strings.languageRussian), findsOneWidget);
 
       // ── 3. Select Russian ─────────────────────────────────────────────────
       await tester.tap(find.text(strings.languageRussian));
