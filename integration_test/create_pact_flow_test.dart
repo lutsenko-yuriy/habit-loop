@@ -2,6 +2,7 @@
 //
 // Run with: flutter test integration_test/create_pact_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/create_pact_flow_test.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -40,8 +41,9 @@ void main() {
       expect(find.text(strings.pactCreationTitle), findsOneWidget);
 
       // ── 3. Enter habit name ──────────────────────────────────────────────
+      // Platform-agnostic: Android uses TextField, iOS uses CupertinoTextField.
       await tester.enterText(
-        find.byWidgetPredicate((w) => w is TextField),
+        find.byWidgetPredicate((w) => w is TextField || w is CupertinoTextField),
         'Meditate',
       );
       await tester.pump();
@@ -65,17 +67,18 @@ void main() {
       await tester.pumpAndSettle();
 
       // ── 8. Step 4 – commitment: tick checkbox ───────────────────────────
-      // The CheckboxListTile is below the fold in the commitment step's
-      // ListView. Multiple Scrollable widgets exist in the tree (the dashboard
-      // route stays mounted behind the wizard), so target the last one which
-      // belongs to the current commitment-step ListView.
+      // The commitment toggle is below the fold. Multiple Scrollable widgets
+      // exist in the tree (the dashboard route stays mounted behind the wizard),
+      // so target the last one which belongs to the commitment-step ListView.
+      // Platform-agnostic: Android uses CheckboxListTile, iOS uses a
+      // GestureDetector row — both show the commitmentAccept label text.
       await tester.scrollUntilVisible(
-        find.byType(CheckboxListTile),
+        find.text(strings.commitmentAccept),
         100,
         scrollable: find.byType(Scrollable).last,
       );
       await tester.pump();
-      await tester.tap(find.byType(CheckboxListTile));
+      await tester.tap(find.text(strings.commitmentAccept));
       await tester.pump();
       await tester.tap(find.text(strings.createPactConfirm));
       // Do not pumpAndSettle here: after submit the wizard pops and the
