@@ -13,12 +13,17 @@ class ShowupDetailPageIos extends StatefulWidget {
   final Future<void> Function() onMarkFailed;
   final Future<void> Function(String note) onSaveNote;
 
+  /// Called when the user taps the habit name to open the parent pact detail.
+  /// Null when the pact has been deleted (habitName is also null in that case).
+  final VoidCallback? onOpenPact;
+
   const ShowupDetailPageIos({
     super.key,
     required this.state,
     required this.onMarkDone,
     required this.onMarkFailed,
     required this.onSaveNote,
+    this.onOpenPact,
   });
 
   @override
@@ -92,6 +97,7 @@ class _ShowupDetailPageIosState extends State<ShowupDetailPageIos> {
                           onMarkDone: widget.onMarkDone,
                           onMarkFailed: widget.onMarkFailed,
                           onSaveNote: widget.onSaveNote,
+                          onOpenPact: widget.onOpenPact,
                         ),
         ),
       ),
@@ -106,6 +112,7 @@ class _ShowupDetailContent extends StatelessWidget {
   final Future<void> Function() onMarkDone;
   final Future<void> Function() onMarkFailed;
   final Future<void> Function(String note) onSaveNote;
+  final VoidCallback? onOpenPact;
 
   const _ShowupDetailContent({
     required this.state,
@@ -114,6 +121,7 @@ class _ShowupDetailContent extends StatelessWidget {
     required this.onMarkDone,
     required this.onMarkFailed,
     required this.onSaveNote,
+    this.onOpenPact,
   });
 
   @override
@@ -143,11 +151,27 @@ class _ShowupDetailContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
-                state.habitName ?? l10n.showupHabitDeleted,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+              child: GestureDetector(
+                onTap: onOpenPact,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        state.habitName ?? l10n.showupHabitDeleted,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: onOpenPact != null ? CupertinoColors.activeBlue : null,
+                        ),
+                      ),
+                    ),
+                    if (onOpenPact != null)
+                      const Icon(
+                        CupertinoIcons.chevron_right,
+                        size: 16,
+                        color: CupertinoColors.activeBlue,
+                      ),
+                  ],
                 ),
               ),
             ),

@@ -357,5 +357,71 @@ void main() {
       // The raw "nonexistent" ID must NOT appear in the UI.
       expect(find.textContaining('nonexistent'), findsNothing);
     });
+
+    testWidgets('tapping habit name navigates to pact detail screen', (tester) async {
+      final showup = _pendingFutureShowup();
+      final navKey = GlobalKey<NavigatorState>();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: _overrides(showup: showup, pact: _pact),
+          child: MaterialApp(
+            navigatorKey: navKey,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: ShowupDetailScreen(showupId: showup.id),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Only the initial route is present.
+      expect(navKey.currentState!.canPop(), isFalse);
+
+      // Tap the habit name — it should be a tappable link to pact detail.
+      await tester.tap(find.text('Meditate'));
+      await tester.pumpAndSettle();
+
+      // PactDetailScreen was pushed — navigator now has 2 routes.
+      expect(navKey.currentState!.canPop(), isTrue);
+    });
+
+    testWidgets('habit name is not tappable when pact is deleted', (tester) async {
+      final showup = _pendingFutureShowup();
+      final navKey = GlobalKey<NavigatorState>();
+
+      // No pact in the repository — habitName will resolve to null.
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: _overrides(showup: showup, pact: null),
+          child: MaterialApp(
+            navigatorKey: navKey,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: ShowupDetailScreen(showupId: showup.id),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // habitName is null → "(habit deleted)" is shown but is not tappable.
+      // Tapping should not push any route.
+      await tester.tap(find.textContaining('deleted'));
+      await tester.pumpAndSettle();
+
+      expect(navKey.currentState!.canPop(), isFalse);
+    });
   });
 }

@@ -12,12 +12,17 @@ class ShowupDetailPageAndroid extends StatefulWidget {
   final Future<void> Function() onMarkFailed;
   final Future<void> Function(String note) onSaveNote;
 
+  /// Called when the user taps the habit name to open the parent pact detail.
+  /// Null when the pact has been deleted (habitName is also null in that case).
+  final VoidCallback? onOpenPact;
+
   const ShowupDetailPageAndroid({
     super.key,
     required this.state,
     required this.onMarkDone,
     required this.onMarkFailed,
     required this.onSaveNote,
+    this.onOpenPact,
   });
 
   @override
@@ -87,6 +92,7 @@ class _ShowupDetailPageAndroidState extends State<ShowupDetailPageAndroid> {
                       onMarkDone: widget.onMarkDone,
                       onMarkFailed: widget.onMarkFailed,
                       onSaveNote: widget.onSaveNote,
+                      onOpenPact: widget.onOpenPact,
                     ),
     );
   }
@@ -99,6 +105,7 @@ class _ShowupDetailContent extends StatelessWidget {
   final Future<void> Function() onMarkDone;
   final Future<void> Function() onMarkFailed;
   final Future<void> Function(String note) onSaveNote;
+  final VoidCallback? onOpenPact;
 
   const _ShowupDetailContent({
     required this.state,
@@ -107,6 +114,7 @@ class _ShowupDetailContent extends StatelessWidget {
     required this.onMarkDone,
     required this.onMarkFailed,
     required this.onSaveNote,
+    this.onOpenPact,
   });
 
   @override
@@ -137,9 +145,23 @@ class _ShowupDetailContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
-                state.habitName ?? l10n.showupHabitDeleted,
-                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              child: InkWell(
+                onTap: onOpenPact,
+                borderRadius: BorderRadius.circular(4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        state.habitName ?? l10n.showupHabitDeleted,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: onOpenPact != null ? theme.colorScheme.primary : null,
+                        ),
+                      ),
+                    ),
+                    if (onOpenPact != null) Icon(Icons.chevron_right, color: theme.colorScheme.primary),
+                  ],
+                ),
               ),
             ),
             Chip(
