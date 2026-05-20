@@ -10,6 +10,8 @@ final class PactCreatedEvent extends AnalyticsEvent {
     required this.showupDurationMinutes,
     this.reminderOffsetMinutes,
     required this.showupsExpected,
+    required this.usedSummaryJump,
+    required this.commitmentVariant,
   });
 
   /// One of `daily`, `weekly`, or `monthly`.
@@ -27,6 +29,15 @@ final class PactCreatedEvent extends AnalyticsEvent {
   /// Total number of showups scheduled over the full pact.
   final int showupsExpected;
 
+  /// `true` if the user tapped at least one Summary-screen row to jump back
+  /// to a step before submitting; `false` if they swiped through linearly.
+  final bool usedSummaryJump;
+
+  /// Commitment confirmation dialog variant shown to this user: `button` |
+  /// `checkbox` | `retype`. Read from Remote Config flag
+  /// `exp_003_commitment_confirmation`.
+  final String commitmentVariant;
+
   @override
   String get name => 'pact_created';
 
@@ -38,6 +49,8 @@ final class PactCreatedEvent extends AnalyticsEvent {
       'showup_duration_minutes': showupDurationMinutes,
       if (reminderOffsetMinutes != null) 'reminder_offset_minutes': reminderOffsetMinutes!,
       'showups_expected': showupsExpected,
+      'used_summary_jump': usedSummaryJump,
+      'commitment_variant': commitmentVariant,
     };
   }
 }
@@ -75,6 +88,66 @@ final class PactStoppedEvent extends AnalyticsEvent {
       };
 }
 
+/// Fired when the user closes the commitment confirmation dialog without
+/// completing the confirmation action. Measures abandonment at the final gate.
+/// (HAB-82 / EXP-003)
+final class PactCommitmentDialogDismissedEvent extends AnalyticsEvent {
+  PactCommitmentDialogDismissedEvent({required this.variant});
+
+  /// Dialog variant that was shown: `button` | `checkbox` | `retype`.
+  final String variant;
+
+  @override
+  String get name => 'pact_commitment_dialog_dismissed';
+
+  @override
+  Map<String, Object?> toParameters() => {'variant': variant};
+}
+
+/// Fired when the user taps a row on the Summary screen to jump directly to a
+/// specific step page. (HAB-82)
+final class PactWizardStepJumpedEvent extends AnalyticsEvent {
+  PactWizardStepJumpedEvent({required this.stepName, required this.mode});
+
+  /// Step jumped to: `habit_name` | `duration` | `showup_duration` |
+  /// `schedule` | `reminder`.
+  final String stepName;
+
+  /// `creation` | `editing`.
+  final String mode;
+
+  @override
+  String get name => 'pact_wizard_step_jumped';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'step_name': stepName,
+        'mode': mode,
+      };
+}
+
+/// Fired when the user dismisses the wizard via back-navigation (`PopScope`)
+/// without completing it. (HAB-82)
+final class PactWizardAbandonedEvent extends AnalyticsEvent {
+  PactWizardAbandonedEvent({required this.mode, required this.lastStep});
+
+  /// `creation` | `editing`.
+  final String mode;
+
+  /// Page visible when the user exited: `commitment` | `habit_name` |
+  /// `duration` | `showup_duration` | `schedule` | `reminder` | `summary`.
+  final String lastStep;
+
+  @override
+  String get name => 'pact_wizard_abandoned';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'mode': mode,
+        'last_step': lastStep,
+      };
+}
+
 /// Screen identifier for the pact creation wizard.
 class PactCreationAnalyticsScreen implements AnalyticsScreen {
   const PactCreationAnalyticsScreen();
@@ -89,4 +162,19 @@ class PactDetailAnalyticsScreen implements AnalyticsScreen {
 
   @override
   String get name => 'pact_detail';
+}
+
+/// Screen identifier for the wizard summary page.
+///
+/// `mode` is passed as a constructor parameter and forwarded as a screen
+/// property so creation and editing funnels can be distinguished in analytics.
+/// (HAB-82)
+class PactWizardSummaryAnalyticsScreen implements AnalyticsScreen {
+  const PactWizardSummaryAnalyticsScreen({required this.mode});
+
+  /// `creation` | `editing`.
+  final String mode;
+
+  @override
+  String get name => 'pact_wizard_summary';
 }

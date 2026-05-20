@@ -80,11 +80,12 @@ void main() {
   group('PactCreationViewModel', () {
     test('initial state has correct defaults', () {
       final state = readState();
-      expect(state.currentStep, PactCreationStep.pactDuration);
+      expect(state.currentStep, PactWizardStep.habitName);
       expect(state.habitName, '');
       expect(state.startDate, today);
       expect(state.endDate, DateTime(2054, 9, 30));
       expect(state.commitmentAccepted, false);
+      expect(state.usedSummaryJump, false);
     });
 
     test('setHabitName updates habit name', () {
@@ -152,50 +153,63 @@ void main() {
       expect(readState().commitmentAccepted, true);
     });
 
-    test('nextStep advances when step is valid', () {
-      // Step 0 requires valid dates (defaults are valid)
-      readVM().nextStep();
-      expect(readState().currentStep, PactCreationStep.showupDuration);
+    test('goToPage updates currentStep to matching wizard step', () {
+      readVM().goToPage(1);
+      expect(readState().currentStep, PactWizardStep.duration);
     });
 
-    test('nextStep to step 1 defaults showupDuration to 10 min', () {
-      readVM().nextStep();
+    test('goToPage to showupDuration page defaults showupDuration to 10 min when unset', () {
+      readVM().goToPage(2);
       expect(readState().showupDuration, const Duration(minutes: 10));
     });
 
-    test('nextStep does not advance when step is invalid', () {
-      // Step 0 with invalid dates (end before start)
-      readVM().setStartDate(DateTime(2054, 10, 1));
-      readVM().setEndDate(DateTime(2054, 3, 1));
-      readVM().nextStep();
-      expect(readState().currentStep, PactCreationStep.pactDuration);
+    test('goToPage to showupDuration page does not overwrite existing showupDuration', () {
+      readVM().setShowupDuration(const Duration(minutes: 20));
+      readVM().goToPage(2);
+      expect(readState().showupDuration, const Duration(minutes: 20));
     });
 
-    test('previousStep goes back', () {
-      readVM().nextStep();
-      expect(readState().currentStep, PactCreationStep.showupDuration);
-
-      readVM().previousStep();
-      expect(readState().currentStep, PactCreationStep.pactDuration);
+    test('goToPage to page 0 sets habitName step', () {
+      readVM().goToPage(0);
+      expect(readState().currentStep, PactWizardStep.habitName);
     });
 
-    test('previousStep does not go below 0', () {
-      readVM().previousStep();
-      expect(readState().currentStep, PactCreationStep.pactDuration);
+    test('goToPage to page 5 sets summary step', () {
+      readVM().goToPage(5);
+      expect(readState().currentStep, PactWizardStep.summary);
+    });
+
+    test('goToPage clamps out-of-range page indices gracefully', () {
+      // An out-of-range value should not crash; index clamped to valid range.
+      readVM().goToPage(-1);
+      expect(readState().currentStep, PactWizardStep.habitName);
+      readVM().goToPage(100);
+      expect(readState().currentStep, PactWizardStep.summary);
+    });
+
+    test('markSummaryJumped sets usedSummaryJump to true', () {
+      expect(readState().usedSummaryJump, false);
+      readVM().markSummaryJumped();
+      expect(readState().usedSummaryJump, true);
+    });
+
+    test('markSummaryJumped is idempotent', () {
+      readVM().markSummaryJumped();
+      readVM().markSummaryJumped();
+      expect(readState().usedSummaryJump, true);
     });
 
     test('submit is a no-op when builder is incomplete', () async {
       final vm = readVM();
 
-      // Set enough to pass the commitment step's canAdvanceFromStep
-      // (commitmentAccepted + isHabitNameValid) but leave showupDuration null
-      // so builder.isComplete returns false. submit() should return immediately
+      // Set habitName and commitmentAccepted but leave showupDuration null so
+      // builder.isComplete returns false. submit() should return immediately
       // without touching the repositories or surfacing any error.
       vm.setHabitName('Meditate');
       vm.setCommitmentAccepted(true);
       // scheduleType and showupDuration are intentionally not set.
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final state = readState();
       expect(state.isSubmitting, false);
@@ -212,7 +226,7 @@ void main() {
       vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final pacts = await pactRepo.getActivePacts();
       expect(pacts, hasLength(1));
@@ -241,7 +255,7 @@ void main() {
       vm.setReminderOffset(const Duration(minutes: 15));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final pacts = await pactRepo.getActivePacts();
       expect(pacts.first.reminderOffset, const Duration(minutes: 15));
@@ -256,7 +270,7 @@ void main() {
       vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final pacts = await pactRepo.getActivePacts();
       final pact = pacts.first;
@@ -294,7 +308,7 @@ void main() {
       vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final pacts = await pactRepo.getActivePacts();
       final pact = pacts.first;
@@ -334,7 +348,7 @@ void main() {
       vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       // Pact save failed, so showups should not have been generated/saved
       final allShowups = await showupRepo.getShowupsForDateRange(
@@ -361,7 +375,7 @@ void main() {
       vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final state = failingContainer.read(pactCreationViewModelProvider);
       expect(state.submitError, isNotNull);
@@ -385,7 +399,7 @@ void main() {
       vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       // Pact should have been rolled back after showup save failure
       final pacts = await rollbackPactRepo.getAllPacts();
@@ -410,7 +424,7 @@ void main() {
       vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final state = failingContainer.read(pactCreationViewModelProvider);
       expect(state.submitError, isNotNull);
@@ -444,7 +458,7 @@ void main() {
       vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 8)));
       vm.setCommitmentAccepted(true);
 
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final pacts = await eveningPactRepo.getActivePacts();
       final showups = await eveningShowupRepo.getShowupsForPact(pacts.first.id);
@@ -508,7 +522,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpValidState(vm);
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first;
@@ -527,6 +541,38 @@ void main() {
       expect(pactCreatedEvent.reminderOffsetMinutes, isNull);
       expect(pactCreatedEvent.showupsExpected, ShowupGenerator.countTotal(pact));
       expect(pact.stats?.showupsRemaining, pactCreatedEvent.showupsExpected);
+      expect(pactCreatedEvent.usedSummaryJump, false);
+      expect(pactCreatedEvent.commitmentVariant, 'button');
+    });
+
+    test('submit fires PactCreatedEvent with usedSummaryJump true when markSummaryJumped was called', () async {
+      final pr = InMemoryPactRepository();
+      final sr = InMemoryShowupRepository();
+      final c = makeAnalyticsContainer(pactRepository: pr, showupRepository: sr);
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      setUpValidState(vm);
+      vm.markSummaryJumped();
+      await vm.submit(commitmentVariant: 'button');
+
+      final event = fakeAnalytics.loggedEvents.first as PactCreatedEvent;
+      expect(event.usedSummaryJump, true);
+    });
+
+    test('submit fires PactCreatedEvent with commitmentVariant matching argument', () async {
+      for (final variant in ['button', 'checkbox', 'retype']) {
+        fakeAnalytics = FakeAnalyticsService();
+        final c = makeAnalyticsContainer();
+        addTearDown(c.dispose);
+
+        final vm = c.read(pactCreationViewModelProvider.notifier);
+        setUpValidState(vm);
+        await vm.submit(commitmentVariant: variant);
+
+        final event = fakeAnalytics.loggedEvents.first as PactCreatedEvent;
+        expect(event.commitmentVariant, variant, reason: 'Expected commitmentVariant=$variant');
+      }
     });
 
     test('submit keeps daily showups_expected aligned with inclusive duration_days for a default 6-month pact',
@@ -536,7 +582,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpValidState(vm);
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final event = fakeAnalytics.loggedEvents.single as PactCreatedEvent;
       expect(event.scheduleType, 'daily');
@@ -560,7 +606,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpValidState(vm); // daily at 7am — all slots filtered since 7:00 < 22:00 createdAt
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       final pacts = await localPactRepo.getActivePacts();
       final pact = pacts.first;
@@ -583,7 +629,7 @@ void main() {
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpValidState(vm);
       vm.setReminderOffset(const Duration(minutes: 15));
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first as PactCreatedEvent;
@@ -596,7 +642,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpValidState(vm, scheduleType: ScheduleType.weekday);
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first as PactCreatedEvent;
@@ -609,7 +655,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpValidState(vm, scheduleType: ScheduleType.monthlyByDate);
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       expect(fakeAnalytics.loggedEvents, hasLength(1));
       final event = fakeAnalytics.loggedEvents.first as PactCreatedEvent;
@@ -624,7 +670,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpValidState(vm);
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
@@ -637,7 +683,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpValidState(vm);
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
 
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
@@ -670,23 +716,23 @@ void main() {
 
     test('isSubmitting is false after savePact throws', () async {
       setUpValidState(readFailingVM());
-      await readFailingVM().submit();
+      await readFailingVM().submit(commitmentVariant: 'button');
       expect(readFailingState().isSubmitting, false);
     });
 
     test('submitError is set when savePact throws', () async {
       setUpValidState(readFailingVM());
-      await readFailingVM().submit();
+      await readFailingVM().submit(commitmentVariant: 'button');
       expect(readFailingState().submitError, isNotNull);
     });
 
     test('submitError is cleared at the start of a new submit attempt', () async {
       setUpValidState(readFailingVM());
-      await readFailingVM().submit();
+      await readFailingVM().submit(commitmentVariant: 'button');
       expect(readFailingState().submitError, isNotNull);
 
       // Re-attempt: error should be cleared before the new attempt resolves
-      await readFailingVM().submit();
+      await readFailingVM().submit(commitmentVariant: 'button');
       // After the second (also failing) submit, error is set again — but it was
       // cleared in between. We verify it's non-null (set by the new failure).
       expect(readFailingState().submitError, isNotNull);
@@ -738,7 +784,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpPactWithReminder(vm);
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
       // Reminder scheduling is fire-and-forget (unawaited) and resolves the
       // locale asynchronously, so pump the microtask queue to let it complete.
       await Future<void>.delayed(Duration.zero);
@@ -754,7 +800,7 @@ void main() {
 
       final vm = c.read(pactCreationViewModelProvider.notifier);
       setUpPactWithoutReminder(vm);
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
       await Future<void>.delayed(Duration.zero);
 
       expect(fakeNotifications.scheduledReminders, isEmpty,

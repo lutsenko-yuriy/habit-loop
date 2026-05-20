@@ -35,8 +35,11 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
     final state = ref.watch(pactCreationViewModelProvider);
     final vm = ref.read(pactCreationViewModelProvider.notifier);
 
+    // TODO(WU2): read commitmentVariant from RemoteConfigService.
+    // For now the screen passes 'button' (control variant) until the PageView
+    // wizard and commitment dialog are wired up in WU2.
     Future<void> onSubmit() async {
-      await vm.submit();
+      await vm.submit(commitmentVariant: 'button');
       if (context.mounted) {
         ref.invalidate(hasActivePactsProvider);
         unawaited(ref.read(dashboardViewModelProvider.notifier).load());
@@ -44,6 +47,8 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
       }
     }
 
+    // TODO(WU2): onNext/onBack are replaced by the PageView swipe gesture.
+    // These are no-ops until the PageView container is built in WU2.
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return PactCreationPageIos(
         state: state,
@@ -56,8 +61,8 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
         onReminderOffsetChanged: vm.setReminderOffset,
         onClearReminder: vm.clearReminderOffset,
         onCommitmentChanged: vm.setCommitmentAccepted,
-        onNext: vm.nextStep,
-        onBack: vm.previousStep,
+        onNext: () {}, // TODO(WU2): remove; PageView handles navigation
+        onBack: () {}, // TODO(WU2): remove; PageView handles navigation
         onSubmit: onSubmit,
       );
     }
@@ -73,8 +78,8 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
       onReminderOffsetChanged: vm.setReminderOffset,
       onClearReminder: vm.clearReminderOffset,
       onCommitmentChanged: vm.setCommitmentAccepted,
-      onNext: vm.nextStep,
-      onBack: vm.previousStep,
+      onNext: () {}, // TODO(WU2): remove; PageView handles navigation
+      onBack: () {}, // TODO(WU2): remove; PageView handles navigation
       onSubmit: onSubmit,
     );
   }

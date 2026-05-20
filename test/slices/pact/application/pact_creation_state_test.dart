@@ -5,18 +5,23 @@ import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 
 void main() {
   group('PactCreationState', () {
-    test('totalSteps is 5', () {
-      expect(PactCreationState.totalSteps, 5);
+    test('totalSteps is 6', () {
+      expect(PactCreationState.totalSteps, 6);
     });
 
-    test('default currentStep is pactDuration', () {
+    test('default currentStep is habitName', () {
       final state = PactCreationState(today: DateTime(2026, 3, 30));
-      expect(state.currentStep, PactCreationStep.pactDuration);
+      expect(state.currentStep, PactWizardStep.habitName);
     });
 
     test('commitmentAccepted defaults to false', () {
       final state = PactCreationState(today: DateTime(2026, 3, 30));
       expect(state.commitmentAccepted, false);
+    });
+
+    test('usedSummaryJump defaults to false', () {
+      final state = PactCreationState(today: DateTime(2026, 3, 30));
+      expect(state.usedSummaryJump, false);
     });
 
     test('isSubmitting defaults to false', () {
@@ -99,113 +104,60 @@ void main() {
       });
     });
 
-    group('canAdvanceFromStep dispatches to builder predicates', () {
+    group('PactWizardStep enum', () {
+      test('has 6 values', () {
+        expect(PactWizardStep.values.length, 6);
+      });
+
+      test('values are in expected order', () {
+        expect(PactWizardStep.values[0], PactWizardStep.habitName);
+        expect(PactWizardStep.values[1], PactWizardStep.duration);
+        expect(PactWizardStep.values[2], PactWizardStep.showupDuration);
+        expect(PactWizardStep.values[3], PactWizardStep.schedule);
+        expect(PactWizardStep.values[4], PactWizardStep.reminder);
+        expect(PactWizardStep.values[5], PactWizardStep.summary);
+      });
+
+      test('value indices match expected page order', () {
+        expect(PactWizardStep.habitName.value, 0);
+        expect(PactWizardStep.duration.value, 1);
+        expect(PactWizardStep.showupDuration.value, 2);
+        expect(PactWizardStep.schedule.value, 3);
+        expect(PactWizardStep.reminder.value, 4);
+        expect(PactWizardStep.summary.value, 5);
+      });
+
+      test('isFirst is true only for habitName', () {
+        expect(PactWizardStep.habitName.isFirst, isTrue);
+        expect(PactWizardStep.duration.isFirst, isFalse);
+        expect(PactWizardStep.summary.isFirst, isFalse);
+      });
+
+      test('isLast is true only for summary', () {
+        expect(PactWizardStep.summary.isLast, isTrue);
+        expect(PactWizardStep.reminder.isLast, isFalse);
+        expect(PactWizardStep.habitName.isLast, isFalse);
+      });
+    });
+
+    group('usedSummaryJump', () {
       final today = DateTime(2026, 3, 30);
 
-      test('pactDuration step delegates to builder.isDateRangeValid (valid)', () {
+      test('defaults to false', () {
         final state = PactCreationState(today: today);
-        // Default builder has valid date range
-        expect(state.currentStep, PactCreationStep.pactDuration);
-        expect(state.canAdvanceFromStep, isTrue);
+        expect(state.usedSummaryJump, false);
       });
 
-      test('pactDuration step delegates to builder.isDateRangeValid (invalid)', () {
-        final state = PactCreationState(
-          today: today,
-          builder: PactBuilder(today: today).copyWith(
-            startDate: DateTime(2026, 10, 1),
-            endDate: DateTime(2026, 3, 1),
-          ),
-        );
-        expect(state.currentStep, PactCreationStep.pactDuration);
-        expect(state.canAdvanceFromStep, isFalse);
+      test('copyWith can set to true', () {
+        final state = PactCreationState(today: today);
+        final updated = state.copyWith(usedSummaryJump: true);
+        expect(updated.usedSummaryJump, true);
       });
 
-      test('showupDuration step delegates to builder.isShowupDurationValid (valid)', () {
-        final state = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.showupDuration,
-          builder: PactBuilder(today: today).copyWith(showupDuration: const Duration(minutes: 10)),
-        );
-        expect(state.canAdvanceFromStep, isTrue);
-      });
-
-      test('showupDuration step delegates to builder.isShowupDurationValid (null)', () {
-        final state = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.showupDuration,
-        );
-        expect(state.canAdvanceFromStep, isFalse);
-      });
-
-      test('showupDuration step delegates to builder.isShowupDurationValid (too long)', () {
-        final state = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.showupDuration,
-          builder: PactBuilder(today: today).copyWith(showupDuration: const Duration(hours: 3)),
-        );
-        expect(state.canAdvanceFromStep, isFalse);
-      });
-
-      test('schedule step delegates to builder.isScheduleSet (not set)', () {
-        final state = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.schedule,
-        );
-        expect(state.canAdvanceFromStep, isFalse);
-      });
-
-      test('schedule step delegates to builder.isScheduleSet (set)', () {
-        final state = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.schedule,
-          builder: PactBuilder(today: today).copyWith(
-            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
-          ),
-        );
-        expect(state.canAdvanceFromStep, isTrue);
-      });
-
-      test('reminder step always returns true', () {
-        final state = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.reminder,
-        );
-        expect(state.canAdvanceFromStep, isTrue);
-      });
-
-      test('commitment step requires commitmentAccepted AND builder.isHabitNameValid', () {
-        // Neither accepted nor name
-        final neitherState = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.commitment,
-        );
-        expect(neitherState.canAdvanceFromStep, isFalse);
-
-        // Accepted but no name
-        final acceptedNoName = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.commitment,
-          commitmentAccepted: true,
-        );
-        expect(acceptedNoName.canAdvanceFromStep, isFalse);
-
-        // Name but not accepted
-        final nameNotAccepted = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.commitment,
-          builder: PactBuilder(today: today).copyWith(habitName: 'Meditate'),
-        );
-        expect(nameNotAccepted.canAdvanceFromStep, isFalse);
-
-        // Both name and accepted
-        final ready = PactCreationState(
-          today: today,
-          currentStep: PactCreationStep.commitment,
-          commitmentAccepted: true,
-          builder: PactBuilder(today: today).copyWith(habitName: 'Meditate'),
-        );
-        expect(ready.canAdvanceFromStep, isTrue);
+      test('copyWith preserves true when not specified', () {
+        final state = PactCreationState(today: today).copyWith(usedSummaryJump: true);
+        final updated = state.copyWith(isSubmitting: true);
+        expect(updated.usedSummaryJump, true);
       });
     });
 
@@ -214,8 +166,8 @@ void main() {
 
       test('updates currentStep', () {
         final state = PactCreationState(today: today);
-        final updated = state.copyWith(currentStep: PactCreationStep.schedule);
-        expect(updated.currentStep, PactCreationStep.schedule);
+        final updated = state.copyWith(currentStep: PactWizardStep.schedule);
+        expect(updated.currentStep, PactWizardStep.schedule);
         expect(updated.builder.habitName, state.builder.habitName);
       });
 
@@ -231,6 +183,12 @@ void main() {
         final state = PactCreationState(today: today);
         final updated = state.copyWith(commitmentAccepted: true);
         expect(updated.commitmentAccepted, isTrue);
+      });
+
+      test('updates usedSummaryJump', () {
+        final state = PactCreationState(today: today);
+        final updated = state.copyWith(usedSummaryJump: true);
+        expect(updated.usedSummaryJump, isTrue);
       });
 
       test('updates isSubmitting', () {
@@ -256,12 +214,14 @@ void main() {
       test('unspecified fields are preserved', () {
         final state = PactCreationState(
           today: today,
-          currentStep: PactCreationStep.schedule,
+          currentStep: PactWizardStep.schedule,
           commitmentAccepted: true,
+          usedSummaryJump: true,
         );
         final updated = state.copyWith(isSubmitting: true);
-        expect(updated.currentStep, PactCreationStep.schedule);
+        expect(updated.currentStep, PactWizardStep.schedule);
         expect(updated.commitmentAccepted, isTrue);
+        expect(updated.usedSummaryJump, isTrue);
       });
     });
   });

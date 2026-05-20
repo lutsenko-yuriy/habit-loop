@@ -19,6 +19,8 @@ void main() {
           durationDays: 180,
           showupDurationMinutes: 10,
           showupsExpected: 180,
+          usedSummaryJump: false,
+          commitmentVariant: 'button',
         ),
         ShowupMarkedDoneEvent(pactId: 'p1'),
         ShowupMarkedFailedEvent(pactId: 'p2'),

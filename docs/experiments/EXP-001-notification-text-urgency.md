@@ -16,7 +16,7 @@ _We believe that urgency-framing in notification text will cause higher rates of
 | Audience | All users with at least one active pact that has a reminder offset configured |
 | Remote Config flag | `notification_text_variant` (`control` \| `deadline` \| `time_limit`) |
 | Ramp plan | Equal three-way split (33% / 33% / 33%) from launch |
-| Stop rule | Min 4 weeks, min 200 showup-notification impressions per group |
+| Stop rule | Min 4 weeks after 1.0.0 release, min 200 showup-notification impressions per group |
 
 ### Variants
 

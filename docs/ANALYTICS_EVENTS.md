@@ -17,6 +17,8 @@ Fired when the user successfully completes the pact creation wizard and the pact
 | `showup_duration_minutes` | `int` | Length of a single showup in minutes |
 | `reminder_offset_minutes` | `int?` | Minutes before showup for reminder; `null` if no reminder set |
 | `showups_expected` | `int` | Total number of showups scheduled over the full pact |
+| `used_summary_jump` | `bool` | `true` if the user tapped at least one Summary-screen row to jump back to a step before submitting; `false` if they swiped through linearly. Added in HAB-82. |
+| `commitment_variant` | `string` | Commitment confirmation dialog variant shown to this user: `button` \| `checkbox` \| `retype`. Read from Remote Config flag `exp_003_commitment_confirmation`. Added for EXP-003. |
 
 ---
 
@@ -235,6 +237,38 @@ Fired when the user taps "Sign in with Google" on the onboarding screen. Distinc
 
 ---
 
+### `pact_commitment_dialog_dismissed`
+
+Fired when the user closes the commitment confirmation dialog (the dialog that appears when they tap Create on the summary screen) without completing the confirmation action. Measures abandonment at the final gate — a guardrail for EXP-003. (HAB-82 / EXP-003)
+
+| Property | Type | Description |
+|---|---|---|
+| `variant` | `string` | Dialog variant that was shown: `button` \| `checkbox` \| `retype` |
+
+---
+
+### `pact_wizard_step_jumped`
+
+Fired when the user taps a row on the Summary screen to jump directly to a specific step page. Tells us which fields users most often revisit before committing — a proxy for what's confusing or needs iteration. (HAB-82)
+
+| Property | Type | Description |
+|---|---|---|
+| `step_name` | `string` | Step jumped to: `habit_name` \| `duration` \| `showup_duration` \| `schedule` \| `reminder` |
+| `mode` | `string` | `creation` \| `editing` |
+
+---
+
+### `pact_wizard_abandoned`
+
+Fired when the user dismisses the wizard via back-navigation (`PopScope`) without completing it — i.e. without `pact_created` (creation mode) or `pact_edit_saved` (editing mode) firing in the same session. Reveals at which step users drop off. (HAB-82)
+
+| Property | Type | Description |
+|---|---|---|
+| `mode` | `string` | `creation` \| `editing` |
+| `last_step` | `string` | Page visible when the user exited: `commitment` \| `habit_name` \| `duration` \| `showup_duration` \| `schedule` \| `reminder` \| `summary` |
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.
@@ -247,5 +281,6 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 | `DashboardAnalyticsScreen` | `dashboard` | `slices/dashboard/analytics/dashboard_screens.dart` | Dashboard screen opens or becomes visible again after returning from a detail/creation flow |
 | `LanguagePickerAnalyticsScreen` | `language_picker` | `slices/dashboard/analytics/language_analytics_events.dart` | Language picker sheet/dialog opens (iOS: `CupertinoActionSheet`; Android: `SimpleDialog`) |
 | `PactCreationAnalyticsScreen` | `pact_creation` | `slices/pact/analytics/pact_analytics_events.dart` | Pact creation wizard opens |
+| `PactWizardSummaryAnalyticsScreen` | `pact_wizard_summary` | `slices/pact/analytics/pact_analytics_events.dart` | User lands on the Summary page inside the wizard (creation or editing mode); `mode` passed as a constructor parameter and forwarded as a screen property — HAB-82 |
 | `PactDetailAnalyticsScreen` | `pact_detail` | `slices/pact/analytics/pact_analytics_events.dart` | Pact detail screen opens |
 | `ShowupDetailAnalyticsScreen` | `showup_detail` | `slices/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |

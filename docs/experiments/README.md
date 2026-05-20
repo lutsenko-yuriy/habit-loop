@@ -27,4 +27,6 @@ All product experiments are tracked here. One file per experiment under this dir
 
 | ID | Name | Status | Primary metric result | Decision date |
 |---|---|---|---|---|
-| _(no experiments yet)_ | | | | |
+| EXP-001 | notification-text-urgency | `running` | | |
+| EXP-002 | post-deadline-encouragement | `running` | | |
+| EXP-003 | commitment-confirmation-variant | `running` | | |

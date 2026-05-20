@@ -53,6 +53,8 @@ void main() {
           durationDays: 180,
           showupDurationMinutes: 10,
           showupsExpected: 180,
+          usedSummaryJump: false,
+          commitmentVariant: 'button',
           // reminderOffsetMinutes intentionally omitted (null)
         ),
       );

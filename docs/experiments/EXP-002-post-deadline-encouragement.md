@@ -16,7 +16,7 @@ _We believe that showing an encouraging replacement notification after a missed 
 | Audience | Android users with at least one active pact with a reminder offset configured, who have at least one missed (auto-failed or pending past-deadline) showup |
 | Remote Config flag | `post_deadline_notification_behavior` (values: `dismiss` = control, `encourage` = variant) |
 | Ramp plan | 50/50 split from launch |
-| Stop rule | Min 6 weeks AND min 150 missed-showup events per group |
+| Stop rule | Min 6 weeks after 1.0.0 release AND min 150 missed-showup events per group |
 
 ### Groups
 

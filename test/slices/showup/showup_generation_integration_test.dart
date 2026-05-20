@@ -128,7 +128,7 @@ void main() {
       creationVM.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
       creationVM.setCommitmentAccepted(true);
 
-      await creationVM.submit();
+      await creationVM.submit(commitmentVariant: 'button');
 
       // Verify pact was saved
       final creationState = container.read(pactCreationViewModelProvider);

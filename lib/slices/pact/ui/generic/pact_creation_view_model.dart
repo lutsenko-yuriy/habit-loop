@@ -89,43 +89,56 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     state = state.copyWith(commitmentAccepted: accepted);
   }
 
-  void nextStep() {
-    if (!state.canAdvanceFromStep) return;
-    final nextStep = state.currentStep.next;
-    if (nextStep == null) return;
+  /// Navigates the wizard to the given [page] index.
+  ///
+  /// Called from the [PageView]'s `onPageChanged` callback whenever a page
+  /// transition completes (swipe or programmatic jump). Updates [currentStep]
+  /// so the rest of the UI (step indicator, analytics) stays in sync.
+  ///
+  /// Out-of-range indices are clamped to the valid [PactWizardStep] range.
+  ///
+  /// When the [showupDuration] page (index 2) is first visited and
+  /// [showupDuration] is still null, defaults it to 10 minutes — identical to
+  /// the old `nextStep()` behaviour so existing tests and UX are preserved.
+  void goToPage(int page) {
+    final clamped = page.clamp(0, PactWizardStep.values.length - 1);
+    final targetStep = PactWizardStep.values[clamped];
 
     // Log step transition breadcrumb for production diagnostics (fire-and-forget).
     // PII rule: only step names — no user-entered text.
     unawaited(
       ref.read(crashlyticsServiceProvider).log(
-            'pact_creation: step ${state.currentStep.name} -> ${nextStep.name}',
+            'pact_creation: -> ${targetStep.name}',
           ),
     );
     unawaited(
-      ref.read(logServiceProvider).info('pact_creation: step ${state.currentStep.name} -> ${nextStep.name}'),
+      ref.read(logServiceProvider).info('pact_creation: -> ${targetStep.name}'),
     );
 
-    // Default showup duration to 10 min when entering the showup duration step.
-    // CRITICAL: both builder and currentStep updates are done in a single
-    // state = assignment to preserve atomicity — no intermediate state is emitted.
-    if (nextStep == PactCreationStep.showupDuration && state.showupDuration == null) {
+    // Default showup duration to 10 min when entering the showup duration step
+    // for the first time. Both builder and currentStep updates are done in a
+    // single assignment to preserve atomicity — no intermediate state emitted.
+    if (targetStep == PactWizardStep.showupDuration && state.showupDuration == null) {
       state = state.copyWith(
         builder: state.builder.copyWith(showupDuration: const Duration(minutes: 10)),
-        currentStep: nextStep,
+        currentStep: targetStep,
       );
     } else {
-      state = state.copyWith(currentStep: nextStep);
+      state = state.copyWith(currentStep: targetStep);
     }
   }
 
-  void previousStep() {
-    final prevStep = state.currentStep.previous;
-    if (prevStep != null) {
-      state = state.copyWith(currentStep: prevStep);
+  /// Marks that the user tapped a Summary-screen row to jump back to a step.
+  ///
+  /// Sets [usedSummaryJump] to `true` so the `pact_created` analytics event
+  /// can report whether the user reviewed any step before committing.
+  void markSummaryJumped() {
+    if (!state.usedSummaryJump) {
+      state = state.copyWith(usedSummaryJump: true);
     }
   }
 
-  Future<void> submit() async {
+  Future<void> submit({required String commitmentVariant}) async {
     if (!state.builder.isComplete) return;
 
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
@@ -198,6 +211,8 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
               showupDurationMinutes: pactWithStats.showupDuration.inMinutes,
               reminderOffsetMinutes: pactWithStats.reminderOffset?.inMinutes,
               showupsExpected: totalShowups,
+              usedSummaryJump: state.usedSummaryJump,
+              commitmentVariant: commitmentVariant,
             )),
       );
     } catch (e, st) {
