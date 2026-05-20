@@ -63,8 +63,8 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
     // onOpenPact is only provided when the parent pact exists (habitName != null).
     // When the pact has been deleted, the habit name label is non-tappable.
     Future<void> onOpenPact() async {
-      final pactId = state.showup?.pactId;
-      if (pactId == null) return;
+      if (!mounted) return;
+      final pactId = state.showup!.pactId;
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         await Navigator.of(context).push(CupertinoPageRoute<void>(
           builder: (_) => PactDetailScreen(pactId: pactId),
@@ -76,7 +76,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       }
     }
 
-    final openPactCallback = state.habitName != null ? onOpenPact : null;
+    final openPactCallback = (state.showup != null && state.habitName != null) ? onOpenPact : null;
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return ShowupDetailPageIos(

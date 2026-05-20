@@ -161,15 +161,17 @@ class _ShowupDetailContent extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: onOpenPact != null ? CupertinoColors.activeBlue : null,
+                          color: onOpenPact != null
+                              ? CupertinoColors.activeBlue.resolveFrom(context)
+                              : null,
                         ),
                       ),
                     ),
                     if (onOpenPact != null)
-                      const Icon(
+                      Icon(
                         CupertinoIcons.chevron_right,
                         size: 16,
-                        color: CupertinoColors.activeBlue,
+                        color: CupertinoColors.activeBlue.resolveFrom(context),
                       ),
                   ],
                 ),
