@@ -61,13 +61,13 @@ void main() {
       await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pumpAndSettle();
 
-      // ── 6. Page 2 → 3: select "Every day", then swipe to schedule ────────
-      await tester.tap(find.text(strings.scheduleDaily));
-      await tester.pump();
+      // ── 6. Page 2 → 3: swipe to schedule ────────────────────────────────
       await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pumpAndSettle();
 
-      // ── 7. Page 3 → 4: swipe to reminder – optional, skip ────────────────
+      // ── 7. Page 3: select "Every day", then swipe to reminder ────────────
+      await tester.tap(find.text(strings.scheduleDaily));
+      await tester.pump();
       await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pumpAndSettle();
 
