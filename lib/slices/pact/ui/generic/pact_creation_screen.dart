@@ -93,6 +93,8 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
       },
     );
 
+    if (!mounted) return;
+
     if (!accepted) {
       // User dismissed the dialog — fire the abandonment analytics event.
       unawaited(

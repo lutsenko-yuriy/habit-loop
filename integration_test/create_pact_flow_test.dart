@@ -53,26 +53,26 @@ void main() {
       );
       await tester.pump();
 
-      // ── 4. Page 0 → 1: pact duration (defaults are valid) ───────────────
-      await tester.tap(find.text(strings.next));
+      // ── 4. Page 0 → 1: swipe to pact duration (defaults are valid) ────────
+      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pumpAndSettle();
 
-      // ── 5. Page 1 → 2: showup duration (auto-set to 10 min) ─────────────
-      await tester.tap(find.text(strings.next));
+      // ── 5. Page 1 → 2: swipe to showup duration (auto-set to 10 min) ─────
+      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pumpAndSettle();
 
-      // ── 6. Page 2 → 3: schedule – select "Every day" ────────────────────
+      // ── 6. Page 2 → 3: select "Every day", then swipe to schedule ────────
       await tester.tap(find.text(strings.scheduleDaily));
       await tester.pump();
-      await tester.tap(find.text(strings.next));
+      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pumpAndSettle();
 
-      // ── 7. Page 3 → 4: reminder – optional, skip ────────────────────────
-      await tester.tap(find.text(strings.next));
+      // ── 7. Page 3 → 4: swipe to reminder – optional, skip ────────────────
+      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pumpAndSettle();
 
-      // ── 8. Page 4 → 5: summary – tap "Create Pact" to open dialog ───────
-      await tester.tap(find.text(strings.next));
+      // ── 8. Page 4 → 5: swipe to summary ─────────────────────────────────
+      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pumpAndSettle();
 
       // ── 9. Commitment dialog – tap "I Accept" (button variant) ──────────

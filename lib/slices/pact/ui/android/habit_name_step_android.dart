@@ -6,17 +6,51 @@ import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 ///
 /// The commitment rules are shown as body text so the user understands the
 /// terms before proceeding.
-class HabitNameStepAndroid extends StatelessWidget {
-  final PactCreationState state;
-  final AppLocalizations l10n;
-  final ValueChanged<String> onHabitNameChanged;
-
+class HabitNameStepAndroid extends StatefulWidget {
   const HabitNameStepAndroid({
     super.key,
     required this.state,
     required this.l10n,
     required this.onHabitNameChanged,
   });
+
+  final PactCreationState state;
+  final AppLocalizations l10n;
+  final ValueChanged<String> onHabitNameChanged;
+
+  @override
+  State<HabitNameStepAndroid> createState() => _HabitNameStepAndroidState();
+}
+
+class _HabitNameStepAndroidState extends State<HabitNameStepAndroid> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.state.habitName)
+      ..selection = TextSelection.collapsed(offset: widget.state.habitName.length);
+  }
+
+  /// Syncs the controller text when the external state changes from outside the
+  /// field (e.g. a programmatic clear), but skips the update when the user is
+  /// typing so that cursor position is never reset mid-keystroke.
+  @override
+  void didUpdateWidget(covariant HabitNameStepAndroid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.state.habitName != _controller.text) {
+      _controller.value = TextEditingValue(
+        text: widget.state.habitName,
+        selection: TextSelection.collapsed(offset: widget.state.habitName.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,19 +60,18 @@ class HabitNameStepAndroid extends StatelessWidget {
       children: [
         const SizedBox(height: 16),
         Text(
-          l10n.habitNameLabel,
+          widget.l10n.habitNameLabel,
           style: theme.textTheme.headlineSmall,
         ),
         const SizedBox(height: 16),
         TextField(
           key: const Key('pact-creation-habit-name-field'),
-          controller: TextEditingController(text: state.habitName)
-            ..selection = TextSelection.collapsed(offset: state.habitName.length),
+          controller: _controller,
           decoration: InputDecoration(
-            hintText: l10n.habitNameHint,
+            hintText: widget.l10n.habitNameHint,
             border: const OutlineInputBorder(),
           ),
-          onChanged: onHabitNameChanged,
+          onChanged: widget.onHabitNameChanged,
         ),
         const SizedBox(height: 24),
         Container(
@@ -49,7 +82,7 @@ class HabitNameStepAndroid extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            l10n.commitmentWarning,
+            widget.l10n.commitmentWarning,
             style: TextStyle(
               fontSize: 14,
               height: 1.5,
