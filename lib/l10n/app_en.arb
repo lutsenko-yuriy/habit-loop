@@ -69,6 +69,7 @@
   "commitmentCheckboxLabel": "I have read and accept the commitment rules",
   "commitmentRetypePrompt": "Enter your habit name to confirm",
   "wizardSummaryTitle": "Summary",
+  "wizardSwipeHint": "Swipe to move between steps",
   "createPactConfirm": "Create Pact",
   "next": "Next",
   "back": "Back",

@@ -69,6 +69,7 @@
   "commitmentCheckboxLabel": "Я прочитал(а) и принимаю правила обязательства",
   "commitmentRetypePrompt": "Введите название привычки для подтверждения",
   "wizardSummaryTitle": "Итог",
+  "wizardSwipeHint": "Листайте между шагами",
   "createPactConfirm": "Создать пакт",
   "next": "Далее",
   "back": "Назад",

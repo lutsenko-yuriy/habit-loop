@@ -6,7 +6,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_creation_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_creation_page_ios.dart';
@@ -18,6 +20,18 @@ import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 final _today = DateTime(2026, 3, 30);
 final _state = PactCreationState(today: _today);
+
+/// A fully-complete state on the summary page: every required field filled in.
+PactCreationState _completeSummaryState() => PactCreationState(
+      today: _today,
+      currentStep: PactWizardStep.summary,
+      builder: PactBuilder(
+        today: _today,
+        habitName: 'Meditate',
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+      ),
+    );
 
 // ---------------------------------------------------------------------------
 // Widget helpers
@@ -150,12 +164,31 @@ void main() {
       expect(find.byKey(const Key('pact-creation-create-button')), findsNothing);
     });
 
-    testWidgets('tapping Create Pact on summary calls onSubmit', (tester) async {
-      bool submitted = false;
+    testWidgets('Create Pact button is disabled when pact is incomplete', (tester) async {
+      // Default state: empty habit name, no schedule → isComplete == false.
       final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
+      bool submitted = false;
       await tester.pumpWidget(_iOSPage(state, onSubmit: () => submitted = true));
       await tester.tap(find.byKey(const Key('pact-creation-create-button')));
+      expect(submitted, isFalse);
+    });
+
+    testWidgets('tapping Create Pact on summary calls onSubmit when complete', (tester) async {
+      bool submitted = false;
+      await tester.pumpWidget(_iOSPage(_completeSummaryState(), onSubmit: () => submitted = true));
+      await tester.tap(find.byKey(const Key('pact-creation-create-button')));
       expect(submitted, isTrue);
+    });
+
+    testWidgets('shows swipe hint on non-summary pages', (tester) async {
+      await tester.pumpWidget(_iOSPage(_state));
+      expect(find.text('Swipe to move between steps'), findsOneWidget);
+    });
+
+    testWidgets('does not show swipe hint on summary page', (tester) async {
+      final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
+      await tester.pumpWidget(_iOSPage(state));
+      expect(find.text('Swipe to move between steps'), findsNothing);
     });
 
     testWidgets('onPageChanged is called when state.currentStep changes', (tester) async {
@@ -209,6 +242,32 @@ void main() {
     testWidgets('does not show Create Pact button on non-summary pages', (tester) async {
       await tester.pumpWidget(_androidPage(_state));
       expect(find.byKey(const Key('pact-creation-create-button')), findsNothing);
+    });
+
+    testWidgets('Create Pact button is disabled when pact is incomplete', (tester) async {
+      final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
+      bool submitted = false;
+      await tester.pumpWidget(_androidPage(state, onSubmit: () => submitted = true));
+      await tester.tap(find.byKey(const Key('pact-creation-create-button')));
+      expect(submitted, isFalse);
+    });
+
+    testWidgets('tapping Create Pact on summary calls onSubmit when complete', (tester) async {
+      bool submitted = false;
+      await tester.pumpWidget(_androidPage(_completeSummaryState(), onSubmit: () => submitted = true));
+      await tester.tap(find.byKey(const Key('pact-creation-create-button')));
+      expect(submitted, isTrue);
+    });
+
+    testWidgets('shows swipe hint on non-summary pages', (tester) async {
+      await tester.pumpWidget(_androidPage(_state));
+      expect(find.text('Swipe to move between steps'), findsOneWidget);
+    });
+
+    testWidgets('does not show swipe hint on summary page', (tester) async {
+      final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
+      await tester.pumpWidget(_androidPage(state));
+      expect(find.text('Swipe to move between steps'), findsNothing);
     });
   });
 

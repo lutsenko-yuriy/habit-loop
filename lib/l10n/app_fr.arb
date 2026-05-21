@@ -69,6 +69,7 @@
   "commitmentCheckboxLabel": "J'ai lu et j'accepte les règles d'engagement",
   "commitmentRetypePrompt": "Saisissez votre nom d'habitude pour confirmer",
   "wizardSummaryTitle": "Résumé",
+  "wizardSwipeHint": "Glissez entre les étapes",
   "createPactConfirm": "Créer le pacte",
   "next": "Suivant",
   "back": "Retour",

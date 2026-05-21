@@ -126,23 +126,20 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
               children: _buildPages(l10n),
             ),
           ),
-        ],
-      ),
-      bottomNavigationBar: isLastStep
-          ? SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    key: const Key('pact-creation-create-button'),
-                    onPressed: widget.onSubmit,
-                    child: Text(l10n.createPactConfirm),
-                  ),
+          if (!isLastStep)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Text(
+                l10n.wizardSwipeHint,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-            )
-          : null,
+            ),
+        ],
+      ),
     );
   }
 
@@ -179,6 +176,8 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
           state: widget.state,
           l10n: l10n,
           onJumpToStep: widget.onJumpToStep,
+          onSubmit: widget.onSubmit,
+          isComplete: widget.state.builder.isComplete,
         ),
       ];
 }
@@ -206,8 +205,11 @@ class _StepIndicator extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
-                color:
-                    index <= currentStep.index ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
+                color: index < currentStep.index
+                    ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                    : index == currentStep.index
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.surfaceContainerHighest,
               ),
             ),
           );
