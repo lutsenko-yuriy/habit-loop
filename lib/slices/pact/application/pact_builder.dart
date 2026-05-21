@@ -62,6 +62,29 @@ class PactBuilder {
         startDate = startDate ?? DateTime(today.year, today.month, today.day),
         endDate = endDate ?? _addMonths(today, 6);
 
+  /// Creates a [PactBuilder] pre-populated from an existing [pact].
+  ///
+  /// Used by the edit wizard to seed all fields from the pact being edited.
+  /// [today] is used only to satisfy the factory's signature; the pact's own
+  /// dates are used directly rather than computing defaults from today.
+  factory PactBuilder.fromPact(Pact pact, {required DateTime today}) {
+    final scheduleType = switch (pact.schedule) {
+      DailySchedule() => ScheduleType.daily,
+      WeekdaySchedule() => ScheduleType.weekday,
+      MonthlyByWeekdaySchedule() => ScheduleType.monthlyByWeekday,
+      MonthlyByDateSchedule() => ScheduleType.monthlyByDate,
+    };
+    return PactBuilder._internal(
+      habitName: pact.habitName,
+      startDate: pact.startDate,
+      endDate: pact.endDate,
+      showupDuration: pact.showupDuration,
+      scheduleType: scheduleType,
+      schedule: pact.schedule,
+      reminderOffset: pact.reminderOffset,
+    );
+  }
+
   PactBuilder._internal({
     required this.habitName,
     required this.startDate,

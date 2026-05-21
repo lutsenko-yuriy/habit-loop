@@ -275,5 +275,12 @@
   },
 
   "fetchingPacts": "Fetching pacts…",
-  "@fetchingPacts": {}
+  "@fetchingPacts": {},
+
+  "pactEditTitle": "Edit Pact",
+  "@pactEditTitle": {},
+  "saveChanges": "Save Changes",
+  "@saveChanges": {},
+  "pactEditSaveError": "Failed to save changes. Please try again.",
+  "@pactEditSaveError": {}
 }

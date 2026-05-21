@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
@@ -10,18 +11,36 @@ class PactDetailPageAndroid extends StatelessWidget {
   final PactDetailState state;
   final Future<void> Function(String? reason) onStopPact;
 
+  /// Called when the user taps the edit icon button in the AppBar.
+  ///
+  /// `null` (or hidden) when the pact is not active or not yet loaded.
+  final VoidCallback? onEditPact;
+
   const PactDetailPageAndroid({
     super.key,
     required this.state,
     required this.onStopPact,
+    this.onEditPact,
   });
+
+  bool get _isActive => state.pact?.status == PactStatus.active;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.pactDetailTitle)),
+      appBar: AppBar(
+        title: Text(l10n.pactDetailTitle),
+        actions: [
+          if (_isActive && onEditPact != null)
+            IconButton(
+              key: const Key('pact-detail-edit-button'),
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: onEditPact,
+            ),
+        ],
+      ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : state.loadError != null
@@ -126,6 +145,16 @@ class _PactDetailContent extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: 8),
+        _LabelValueRow(
+          label: l10n.summaryShowupDuration,
+          value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
+        ),
+        const SizedBox(height: 8),
+        _LabelValueRow(
+          label: l10n.summaryReminder,
+          value: reminderDescription(l10n, pact.reminderOffset),
+        ),
 
         // Stop reason (if stopped)
         if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
@@ -235,6 +264,34 @@ class _StatCard extends StatelessWidget {
             Text(label, style: Theme.of(context).textTheme.labelSmall),
             const SizedBox(height: 4),
             Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A timeline row that shows a [label] on the left and a [value] on the right,
+/// using the same card styling as [_DateRow].
+class _LabelValueRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _LabelValueRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(child: Text(label)),
+            const SizedBox(width: 8),
+            Text(
+              value,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
           ],
         ),
       ),

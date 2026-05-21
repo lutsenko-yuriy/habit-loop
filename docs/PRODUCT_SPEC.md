@@ -26,9 +26,11 @@ The Habit Loop app allows the user to:
     - How many showups left
     - Time details: when the pact started, when the pact ends (with remainder)
     - How long the current streak of showups he made it to is
+  - The user can edit an active pact to update its habit name and reminder offset via a 2-step wizard (habit name → reminder); all other pact fields (schedule, dates, showup duration) are immutable after creation
   - The user can stop the pact but he has to confirm it clearly
     - The user can give an explanation why he decided to stop the pact
   - The user can still see the details of the pact even when he stopped the pact or the time of the pact is passed by
+  - The pact detail screen shows showup duration and reminder offset in the Timeline section
 - See the details of a specific showup
   - The user must see the time of the showup
   - The user must see the habit in this showup

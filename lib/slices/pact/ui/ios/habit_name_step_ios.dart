@@ -12,11 +12,16 @@ class HabitNameStepIos extends StatefulWidget {
     required this.state,
     required this.l10n,
     required this.onHabitNameChanged,
+    this.showCommitmentWarning = true,
   });
 
   final PactCreationState state;
   final AppLocalizations l10n;
   final ValueChanged<String> onHabitNameChanged;
+
+  /// Whether to show the commitment-rules warning box below the text field.
+  /// Set to `false` in the edit wizard where the user already committed.
+  final bool showCommitmentWarning;
 
   @override
   State<HabitNameStepIos> createState() => _HabitNameStepIosState();
@@ -70,19 +75,21 @@ class _HabitNameStepIosState extends State<HabitNameStepIos> {
           onChanged: widget.onHabitNameChanged,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         ),
-        const SizedBox(height: 24),
-        Container(
-          key: const Key('pact-creation-habit-name-commitment-rules'),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: CupertinoColors.systemYellow.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
+        if (widget.showCommitmentWarning) ...[
+          const SizedBox(height: 24),
+          Container(
+            key: const Key('pact-creation-habit-name-commitment-rules'),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemYellow.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              widget.l10n.commitmentWarning,
+              style: const TextStyle(fontSize: 14, height: 1.5),
+            ),
           ),
-          child: Text(
-            widget.l10n.commitmentWarning,
-            style: const TextStyle(fontSize: 14, height: 1.5),
-          ),
-        ),
+        ],
         const SizedBox(height: 16),
       ],
     );

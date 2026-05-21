@@ -274,5 +274,12 @@
   },
 
   "fetchingPacts": "Pakte werden geladen…",
-  "@fetchingPacts": {}
+  "@fetchingPacts": {},
+
+  "pactEditTitle": "Pakt bearbeiten",
+  "@pactEditTitle": {},
+  "saveChanges": "Änderungen speichern",
+  "@saveChanges": {},
+  "pactEditSaveError": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
+  "@pactEditSaveError": {}
 }

@@ -274,5 +274,12 @@
   },
 
   "fetchingPacts": "Récupération des pactes…",
-  "@fetchingPacts": {}
+  "@fetchingPacts": {},
+
+  "pactEditTitle": "Modifier le pacte",
+  "@pactEditTitle": {},
+  "saveChanges": "Enregistrer les modifications",
+  "@saveChanges": {},
+  "pactEditSaveError": "Échec de l'enregistrement. Veuillez réessayer.",
+  "@pactEditSaveError": {}
 }

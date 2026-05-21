@@ -274,5 +274,12 @@
   },
 
   "fetchingPacts": "Загрузка пактов…",
-  "@fetchingPacts": {}
+  "@fetchingPacts": {},
+
+  "pactEditTitle": "Редактировать пакт",
+  "@pactEditTitle": {},
+  "saveChanges": "Сохранить изменения",
+  "@saveChanges": {},
+  "pactEditSaveError": "Не удалось сохранить. Попробуйте ещё раз.",
+  "@pactEditSaveError": {}
 }

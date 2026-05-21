@@ -4,6 +4,24 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.38.0] — 2026-05-21 (HAB-79)
+
+### Added — Edit pact: update habit name and reminder after creation
+
+- [user] Active pacts now have an edit button — tap it to rename the habit or change the reminder
+- `PactEditScreen` (ConsumerStatefulWidget) — orchestrates the edit wizard; calls `vm.load()` on mount, logs `PactEditAnalyticsScreen` screen view, fires `PactWizardAbandonedEvent(mode: 'editing')` via `PopScope` when dismissed without saving, and pops with `true` on successful save so `PactDetailScreen` can refresh
+- `PactEditViewModel` (Riverpod `NotifierProviderFamily<_, String>`) — loads the pact into a pre-populated `PactCreationState` via `PactBuilder.fromPact()`; exposes `setHabitName`, `setReminderOffset`, `clearReminderOffset`, `goToPage`, `markSummaryJumped`, and `save()`; `save()` uses `originalPact.copyWith(...)` to preserve all immutable pact fields (schedule, dates, duration, status), reschedules reminders after a successful write, and fires `PactEditSavedEvent`
+- `PactEditPageIos` / `PactEditPageAndroid` — 3-page swipeable wizard (habit name → reminder → summary); reuses `HabitNameStep{Ios/Android}` with `showCommitmentWarning: false` and `ReminderStep{Ios/Android}` unchanged; new `_EditSummaryStep{Ios/Android}` shows only habit + reminder rows as tappable jump-back rows; `_EditStepIndicator` with 3 segments using `kEditWizardPageCount`; `_TappableSummaryRow` fires `PactWizardStepJumpedEvent(mode: 'editing')` via `_onJumpToStep` in the screen
+- `kEditSteps` / `kEditWizardPageCount` constants exported from `pact_edit_view_model.dart`; `_editPageIndex()` helper maps `PactWizardStep` enum values to the edit PageView's 0-based index
+- `PactDetailPageIos` / `PactDetailPageAndroid` updated: pencil / edit icon button in the nav bar / AppBar shown only when pact is active; showup duration and reminder rows added to the Timeline section as `_LabelValueRow` widgets
+- `PactDetailScreen` wires `_onEditPact()` — pushes `PactEditScreen`, reloads detail VM on `pop(true)`
+- `PactBuilder.fromPact(Pact)` factory populates all wizard fields from an existing pact
+- Analytics: `PactEditSavedEvent` (properties: `has_reminder: bool`) and `PactEditAnalyticsScreen` (screen_name: `pact_edit`) added; `PactWizardAbandonedEvent` and `PactWizardStepJumpedEvent` reused with `mode: 'editing'`
+- l10n: `pactEditTitle`, `saveChanges`, `pactEditSaveError` added across EN/FR/DE/RU
+- 30 new `PactEditViewModel` unit tests covering all state transitions, save paths, analytics calls, and reminder scheduling; 1239 tests passing, analyzer clean
+
+---
+
 ## [0.37.1] — 2026-05-22 (PR #102 merged)
 
 ### Fixed — Release notes no longer leak implementation details (HAB-83)
