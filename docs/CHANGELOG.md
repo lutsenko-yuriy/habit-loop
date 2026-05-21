@@ -4,6 +4,25 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.37.0] — 2026-05-21 (PR #100 merged)
+
+### Added — Swipeable PageView wizard UI with EXP-003 commitment dialog (HAB-82 WU2)
+
+- Six-page `PageView` wizard on both iOS and Android replacing the old Next/Back button flow; users swipe horizontally between steps
+- Step indicator bar: current step = full primary colour, past steps = primary at 30% alpha, upcoming = surface-container grey
+- `SummaryStepIos` / `SummaryStepAndroid`: tappable rows jump back to the relevant step via `PactWizardStepJumpedEvent` + `PageController.animateToPage`; Create Pact button pinned inside the summary page so it slides in with the page
+- `CommitmentDialogContent` implements all three EXP-003 variants: `button` (single accept), `checkbox` (must tick before enabling accept), `retype` (must type habit name exactly, case-insensitive)
+- `HabitNameStepIos` / `HabitNameStepAndroid`: dedicated first step widgets with `TextEditingController` managed in `StatefulWidget` (create in `initState`, sync in `didUpdateWidget`, dispose in `dispose`) — eliminates controller leak from all-pages-mounted `PageView`
+- `PopScope` on `PactCreationScreen` fires `PactWizardAbandonedEvent` on back-navigation, guarded by `_pactCreated` flag so it never fires after a successful submission
+- `if (!mounted) return` guard added to `_onSubmit` after `await showDialog` to prevent `ref` access on a disposed widget
+- Swipe hint "Swipe to move between steps" shown on every wizard page including summary; Create Pact button appears above the hint on the summary page
+- Create Pact button disabled until `PactBuilder.isComplete` (non-empty habit name, valid date range, showup duration set, schedule set)
+- `wizardSwipeHint`, `wizardSummaryTitle`, `createPactConfirm`, `commitmentAccept` l10n keys added across EN/FR/DE/RU
+- Integration test uses `flingFrom(pageView.top + 40px)` to avoid the `Slider` on the showup-duration page intercepting horizontal gestures
+- 1209 tests passing, analyzer clean
+
+---
+
 ## [0.36.0] — 2026-05-21 (PR #99 merged)
 
 ### Added — Application layer for swipeable modular wizard (HAB-82 WU1)
