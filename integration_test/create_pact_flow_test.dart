@@ -25,7 +25,12 @@ void main() {
         initiallyAnonymous: true,
         extraOverrides: [
           remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+            FakeRemoteConfigService(overrides: {
+              'onboarding_auto_advance_seconds': 0,
+              // Use the 'button' variant (control) so the commitment dialog
+              // shows a single "I Accept" button — simplest to automate.
+              'exp_003_commitment_confirmation': 'button',
+            }),
           ),
         ],
       );
@@ -40,7 +45,7 @@ void main() {
       await waitFor(tester, find.text(strings.pactCreationTitle));
       expect(find.text(strings.pactCreationTitle), findsOneWidget);
 
-      // ── 3. Enter habit name ──────────────────────────────────────────────
+      // ── 3. Page 0 – habit name: enter text ──────────────────────────────
       // Platform-agnostic: Android uses TextField, iOS uses CupertinoTextField.
       await tester.enterText(
         find.byWidgetPredicate((w) => w is TextField || w is CupertinoTextField),
@@ -48,50 +53,46 @@ void main() {
       );
       await tester.pump();
 
-      // ── 4. Step 0 – pact duration: defaults are valid, tap Next ─────────
+      // ── 4. Page 0 → 1: pact duration (defaults are valid) ───────────────
       await tester.tap(find.text(strings.next));
       await tester.pumpAndSettle();
 
-      // ── 5. Step 1 – showup duration: auto-set to 10 min, tap Next ───────
+      // ── 5. Page 1 → 2: showup duration (auto-set to 10 min) ─────────────
       await tester.tap(find.text(strings.next));
       await tester.pumpAndSettle();
 
-      // ── 6. Step 2 – schedule: select "Every day" ────────────────────────
+      // ── 6. Page 2 → 3: schedule – select "Every day" ────────────────────
       await tester.tap(find.text(strings.scheduleDaily));
       await tester.pump();
       await tester.tap(find.text(strings.next));
       await tester.pumpAndSettle();
 
-      // ── 7. Step 3 – reminder: optional, skip ────────────────────────────
+      // ── 7. Page 3 → 4: reminder – optional, skip ────────────────────────
       await tester.tap(find.text(strings.next));
       await tester.pumpAndSettle();
 
-      // ── 8. Step 4 – commitment: tick checkbox ───────────────────────────
-      // The commitment toggle is below the fold. Multiple Scrollable widgets
-      // exist in the tree (the dashboard route stays mounted behind the wizard),
-      // so target the last one which belongs to the commitment-step ListView.
-      // Platform-agnostic: Android uses CheckboxListTile, iOS uses a
-      // GestureDetector row — both show the commitmentAccept label text.
-      await tester.scrollUntilVisible(
-        find.text(strings.commitmentAccept),
-        100,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pump();
-      await tester.tap(find.text(strings.commitmentAccept));
-      await tester.pump();
+      // ── 8. Page 4 → 5: summary – tap "Create Pact" to open dialog ───────
+      await tester.tap(find.text(strings.next));
+      await tester.pumpAndSettle();
+
+      // ── 9. Commitment dialog – tap "I Accept" (button variant) ──────────
+      // The summary page's "Create Pact" button is labeled createPactConfirm.
       await tester.tap(find.text(strings.createPactConfirm));
+      await tester.pumpAndSettle();
+
+      // The commitment dialog is now visible; tap the accept button.
+      await tester.tap(find.text(strings.commitmentAccept));
       // Do not pumpAndSettle here: after submit the wizard pops and the
       // dashboard reloads (isLoading = true → CircularProgressIndicator), which
       // blocks pumpAndSettle indefinitely. Let waitFor() below drive the pumps
       // until the new pact name appears on the dashboard.
 
-      // ── 9. Dashboard shows pact name and today's showup ─────────────────
+      // ── 10. Dashboard shows pact name and today's showup ─────────────────
       await waitFor(tester, find.text('Meditate'));
       // At least one showup tile is present for the current day.
       expect(find.text('Meditate'), findsWidgets);
 
-      // ── 10. pact_created analytics event was fired ───────────────────────
+      // ── 11. pact_created analytics event was fired ───────────────────────
       expect(
         h.analytics.loggedEvents.any((e) => e.name == 'pact_created'),
         isTrue,
