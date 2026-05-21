@@ -26,6 +26,7 @@ final _state = PactCreationState(today: _today);
 Widget _iOSPage(
   PactCreationState state, {
   VoidCallback? onSubmit,
+  VoidCallback? onClose,
   ValueChanged<int>? onJumpToStep,
   ValueChanged<int>? onPageChanged,
 }) {
@@ -50,6 +51,7 @@ Widget _iOSPage(
       onClearReminder: () {},
       onPageChanged: onPageChanged ?? (_) {},
       onJumpToStep: onJumpToStep ?? (_) {},
+      onClose: onClose ?? () {},
       onSubmit: onSubmit ?? () {},
     ),
   );
@@ -58,6 +60,7 @@ Widget _iOSPage(
 Widget _androidPage(
   PactCreationState state, {
   VoidCallback? onSubmit,
+  VoidCallback? onClose,
   ValueChanged<int>? onJumpToStep,
   ValueChanged<int>? onPageChanged,
 }) {
@@ -82,6 +85,7 @@ Widget _androidPage(
       onClearReminder: () {},
       onPageChanged: onPageChanged ?? (_) {},
       onJumpToStep: onJumpToStep ?? (_) {},
+      onClose: onClose ?? () {},
       onSubmit: onSubmit ?? () {},
     ),
   );
@@ -106,31 +110,44 @@ void main() {
 
     testWidgets('page 0 shows commitment rules text', (tester) async {
       await tester.pumpWidget(_iOSPage(_state));
-      // The commitment warning is shown on the habit name step.
       expect(find.byKey(const Key('pact-creation-habit-name-commitment-rules')), findsOneWidget);
     });
 
-    testWidgets('onPageChanged is called when state.currentStep changes', (tester) async {
-      final List<int> received = [];
-      // Simulate being on the duration page
-      final state = PactCreationState(today: _today, currentStep: PactWizardStep.duration);
-      await tester.pumpWidget(_iOSPage(state, onPageChanged: received.add));
-      // The pageController should reflect page 1 (duration) on first frame.
-      await tester.pump();
-      // No callback expected yet since no user interaction occurred.
-      expect(received, isEmpty);
-    });
-
-    testWidgets('shows Next button on non-summary pages', (tester) async {
+    testWidgets('shows close button on every page', (tester) async {
       await tester.pumpWidget(_iOSPage(_state));
-      expect(find.byKey(const Key('pact-creation-next-button')), findsOneWidget);
+      expect(find.byKey(const Key('pact-creation-close-button')), findsOneWidget);
     });
 
-    testWidgets('shows Create Pact button on summary page', (tester) async {
-      final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
+    testWidgets('tapping close button calls onClose', (tester) async {
+      bool closed = false;
+      await tester.pumpWidget(_iOSPage(_state, onClose: () => closed = true));
+      await tester.tap(find.byKey(const Key('pact-creation-close-button')));
+      expect(closed, isTrue);
+    });
+
+    testWidgets('nav bar shows habit name when state has one', (tester) async {
+      final state = PactCreationState(
+        today: _today,
+        builder: PactCreationState(today: _today).builder.copyWith(habitName: 'Meditate'),
+      );
       await tester.pumpWidget(_iOSPage(state));
-      expect(find.byKey(const Key('pact-creation-create-button')), findsOneWidget);
+      expect(find.text('Meditate'), findsWidgets); // title + field value
+    });
+
+    testWidgets('does not show Next or Back button on non-summary pages', (tester) async {
+      await tester.pumpWidget(_iOSPage(_state));
       expect(find.byKey(const Key('pact-creation-next-button')), findsNothing);
+    });
+
+    testWidgets('shows Create Pact button only on summary page', (tester) async {
+      final summaryState = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
+      await tester.pumpWidget(_iOSPage(summaryState));
+      expect(find.byKey(const Key('pact-creation-create-button')), findsOneWidget);
+    });
+
+    testWidgets('does not show Create Pact button on non-summary pages', (tester) async {
+      await tester.pumpWidget(_iOSPage(_state));
+      expect(find.byKey(const Key('pact-creation-create-button')), findsNothing);
     });
 
     testWidgets('tapping Create Pact on summary calls onSubmit', (tester) async {
@@ -139,6 +156,14 @@ void main() {
       await tester.pumpWidget(_iOSPage(state, onSubmit: () => submitted = true));
       await tester.tap(find.byKey(const Key('pact-creation-create-button')));
       expect(submitted, isTrue);
+    });
+
+    testWidgets('onPageChanged is called when state.currentStep changes', (tester) async {
+      final List<int> received = [];
+      final state = PactCreationState(today: _today, currentStep: PactWizardStep.duration);
+      await tester.pumpWidget(_iOSPage(state, onPageChanged: received.add));
+      await tester.pump();
+      expect(received, isEmpty);
     });
   });
 
@@ -158,16 +183,32 @@ void main() {
       expect(find.byKey(const Key('pact-creation-habit-name-field')), findsOneWidget);
     });
 
-    testWidgets('shows Next button on non-summary pages', (tester) async {
+    testWidgets('shows close button on every page', (tester) async {
       await tester.pumpWidget(_androidPage(_state));
-      expect(find.byKey(const Key('pact-creation-next-button')), findsOneWidget);
+      expect(find.byKey(const Key('pact-creation-close-button')), findsOneWidget);
     });
 
-    testWidgets('shows Create Pact button on summary page', (tester) async {
-      final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
-      await tester.pumpWidget(_androidPage(state));
-      expect(find.byKey(const Key('pact-creation-create-button')), findsOneWidget);
+    testWidgets('tapping close button calls onClose', (tester) async {
+      bool closed = false;
+      await tester.pumpWidget(_androidPage(_state, onClose: () => closed = true));
+      await tester.tap(find.byKey(const Key('pact-creation-close-button')));
+      expect(closed, isTrue);
+    });
+
+    testWidgets('does not show Next or Back button on non-summary pages', (tester) async {
+      await tester.pumpWidget(_androidPage(_state));
       expect(find.byKey(const Key('pact-creation-next-button')), findsNothing);
+    });
+
+    testWidgets('shows Create Pact button only on summary page', (tester) async {
+      final summaryState = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
+      await tester.pumpWidget(_androidPage(summaryState));
+      expect(find.byKey(const Key('pact-creation-create-button')), findsOneWidget);
+    });
+
+    testWidgets('does not show Create Pact button on non-summary pages', (tester) async {
+      await tester.pumpWidget(_androidPage(_state));
+      expect(find.byKey(const Key('pact-creation-create-button')), findsNothing);
     });
   });
 
@@ -180,7 +221,6 @@ void main() {
         state,
         onJumpToStep: jumped.add,
       ));
-      // Tap the habit row in the summary (expected key)
       await tester.tap(find.byKey(const Key('summary-row-tap-habit_name')));
       expect(jumped, [PactWizardStep.habitName.value]);
     });

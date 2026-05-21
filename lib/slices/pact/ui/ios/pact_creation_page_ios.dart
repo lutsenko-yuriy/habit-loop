@@ -19,10 +19,11 @@ import 'package:habit_loop/theme/habit_loop_theme.dart';
 /// habit name → pact duration → showup duration → schedule → reminder → summary.
 ///
 /// Navigation model:
-/// - Swipe left/right or use the "Next" / "Back" buttons.
-/// - Back button is shown in the nav bar for pages 1–5; on page 0 the system
-///   navigator provides the back gesture / button.
-/// - On the summary page the bottom bar shows "Create Pact" instead of "Next".
+/// - Swipe left/right to move between pages (no Next/Back buttons).
+/// - The nav bar always shows a × close button that dismisses the wizard.
+/// - The nav bar title shows the habit name once entered, otherwise the screen
+///   title (or "Summary" on the last page).
+/// - On the summary page a "Create Pact" button appears at the bottom.
 ///
 /// The parent ([PactCreationScreen]) wires all callbacks and provides the
 /// complete [PactCreationState] on every rebuild. When [state.currentStep]
@@ -42,6 +43,7 @@ class PactCreationPageIos extends StatefulWidget {
     required this.onClearReminder,
     required this.onPageChanged,
     required this.onJumpToStep,
+    required this.onClose,
     required this.onSubmit,
   });
 
@@ -63,6 +65,9 @@ class PactCreationPageIos extends StatefulWidget {
   /// The parent updates [state.currentStep]; [didUpdateWidget] then animates
   /// the [PageController] to match.
   final ValueChanged<int> onJumpToStep;
+
+  /// Called when the user taps the × button to dismiss the wizard.
+  final VoidCallback onClose;
 
   /// Called when "Create Pact" is tapped on the summary page.
   final VoidCallback onSubmit;
@@ -106,27 +111,25 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
     super.dispose();
   }
 
-  void _goToNextPage() => _pageController.nextPage(duration: _animationDuration, curve: _animationCurve);
-
-  void _goToPreviousPage() => _pageController.previousPage(duration: _animationDuration, curve: _animationCurve);
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final step = widget.state.currentStep;
     final isLastStep = step.isLast;
+    final habitName = widget.state.habitName;
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
-        middle: Text(isLastStep ? l10n.wizardSummaryTitle : l10n.pactCreationTitle),
-        leading: step.isFirst
-            ? null // system back button visible; tapping pops the wizard
-            : CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: _goToPreviousPage,
-                child: Text(l10n.back),
-              ),
+        leading: CupertinoButton(
+          key: const Key('pact-creation-close-button'),
+          padding: EdgeInsets.zero,
+          onPressed: widget.onClose,
+          child: const Icon(CupertinoIcons.xmark),
+        ),
+        middle: Text(
+          habitName.isNotEmpty ? habitName : (isLastStep ? l10n.wizardSummaryTitle : l10n.pactCreationTitle),
+        ),
       ),
       child: SafeArea(
         child: Material(
@@ -142,12 +145,18 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
                   children: _buildPages(l10n),
                 ),
               ),
-              _BottomBar(
-                isLastStep: isLastStep,
-                l10n: l10n,
-                onNext: _goToNextPage,
-                onSubmit: widget.onSubmit,
-              ),
+              if (isLastStep)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: CupertinoButton.filled(
+                      key: const Key('pact-creation-create-button'),
+                      onPressed: widget.onSubmit,
+                      child: Text(l10n.createPactConfirm),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -223,45 +232,6 @@ class _StepIndicator extends StatelessWidget {
             ),
           );
         }),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Bottom action bar
-// ---------------------------------------------------------------------------
-
-class _BottomBar extends StatelessWidget {
-  final bool isLastStep;
-  final AppLocalizations l10n;
-  final VoidCallback onNext;
-  final VoidCallback onSubmit;
-
-  const _BottomBar({
-    required this.isLastStep,
-    required this.l10n,
-    required this.onNext,
-    required this.onSubmit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: SizedBox(
-        width: double.infinity,
-        child: isLastStep
-            ? CupertinoButton.filled(
-                key: const Key('pact-creation-create-button'),
-                onPressed: onSubmit,
-                child: Text(l10n.createPactConfirm),
-              )
-            : CupertinoButton.filled(
-                key: const Key('pact-creation-next-button'),
-                onPressed: onNext,
-                child: Text(l10n.next),
-              ),
       ),
     );
   }

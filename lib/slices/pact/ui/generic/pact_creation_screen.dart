@@ -139,6 +139,7 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
         onClearReminder: vm.clearReminderOffset,
         onPageChanged: vm.goToPage,
         onJumpToStep: _onJumpToStep,
+        onClose: () => Navigator.of(context).pop(),
         onSubmit: _onSubmit,
       );
     } else {
@@ -154,6 +155,7 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
         onClearReminder: vm.clearReminderOffset,
         onPageChanged: vm.goToPage,
         onJumpToStep: _onJumpToStep,
+        onClose: () => Navigator.of(context).pop(),
         onSubmit: _onSubmit,
       );
     }

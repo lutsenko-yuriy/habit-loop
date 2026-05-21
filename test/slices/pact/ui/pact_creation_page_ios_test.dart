@@ -34,6 +34,7 @@ void main() {
           onClearReminder: () {},
           onPageChanged: (_) {},
           onJumpToStep: (_) {},
+          onClose: () {},
           onSubmit: () {},
         ),
       ),

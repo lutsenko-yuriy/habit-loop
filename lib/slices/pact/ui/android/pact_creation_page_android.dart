@@ -32,6 +32,7 @@ class PactCreationPageAndroid extends StatefulWidget {
     required this.onClearReminder,
     required this.onPageChanged,
     required this.onJumpToStep,
+    required this.onClose,
     required this.onSubmit,
   });
 
@@ -51,6 +52,9 @@ class PactCreationPageAndroid extends StatefulWidget {
 
   /// Called when the user taps a summary row to jump back to a step.
   final ValueChanged<int> onJumpToStep;
+
+  /// Called when the user taps the × button to dismiss the wizard.
+  final VoidCallback onClose;
 
   /// Called when "Create Pact" is tapped on the summary page.
   final VoidCallback onSubmit;
@@ -92,26 +96,24 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
     super.dispose();
   }
 
-  void _goToNextPage() => _pageController.nextPage(duration: _animationDuration, curve: _animationCurve);
-
-  void _goToPreviousPage() => _pageController.previousPage(duration: _animationDuration, curve: _animationCurve);
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final step = widget.state.currentStep;
     final isLastStep = step.isLast;
+    final habitName = widget.state.habitName;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isLastStep ? l10n.wizardSummaryTitle : l10n.pactCreationTitle),
-        leading: step.isFirst
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _goToPreviousPage,
-              ),
-        automaticallyImplyLeading: step.isFirst,
+        title: Text(
+          habitName.isNotEmpty ? habitName : (isLastStep ? l10n.wizardSummaryTitle : l10n.pactCreationTitle),
+        ),
+        leading: IconButton(
+          key: const Key('pact-creation-close-button'),
+          icon: const Icon(Icons.close),
+          onPressed: widget.onClose,
+        ),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
@@ -126,12 +128,21 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
           ),
         ],
       ),
-      bottomNavigationBar: _BottomBar(
-        isLastStep: isLastStep,
-        l10n: l10n,
-        onNext: _goToNextPage,
-        onSubmit: widget.onSubmit,
-      ),
+      bottomNavigationBar: isLastStep
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const Key('pact-creation-create-button'),
+                    onPressed: widget.onSubmit,
+                    child: Text(l10n.createPactConfirm),
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -201,47 +212,6 @@ class _StepIndicator extends StatelessWidget {
             ),
           );
         }),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Bottom action bar
-// ---------------------------------------------------------------------------
-
-class _BottomBar extends StatelessWidget {
-  final bool isLastStep;
-  final AppLocalizations l10n;
-  final VoidCallback onNext;
-  final VoidCallback onSubmit;
-
-  const _BottomBar({
-    required this.isLastStep,
-    required this.l10n,
-    required this.onNext,
-    required this.onSubmit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          width: double.infinity,
-          child: isLastStep
-              ? FilledButton(
-                  key: const Key('pact-creation-create-button'),
-                  onPressed: onSubmit,
-                  child: Text(l10n.createPactConfirm),
-                )
-              : FilledButton(
-                  key: const Key('pact-creation-next-button'),
-                  onPressed: onNext,
-                  child: Text(l10n.next),
-                ),
-        ),
       ),
     );
   }
