@@ -32,9 +32,8 @@ void main() {
           onScheduleChanged: (_) {},
           onReminderOffsetChanged: (_) {},
           onClearReminder: () {},
-          onCommitmentChanged: (_) {},
-          onNext: () {},
-          onBack: () {},
+          onPageChanged: (_) {},
+          onJumpToStep: (_) {},
           onSubmit: () {},
         ),
       ),
@@ -45,6 +44,8 @@ void main() {
       findsOneWidget,
     );
 
+    // The schedule step is index 3 (PactWizardStep.schedule.value == 3).
+    // Segments 0–3 should be active (HabitLoopColors.primary).
     final activeSegment = tester.widget<Container>(
       find.byKey(const Key('pact-creation-step-indicator-ios-segment-2')),
     );

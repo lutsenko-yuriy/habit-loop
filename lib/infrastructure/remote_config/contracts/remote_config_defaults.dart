@@ -35,6 +35,20 @@ abstract final class RemoteConfigDefaults {
   /// Remote Config console to disable auto-advance for all users.
   static const int onboardingAutoAdvanceSeconds = 10;
 
+  /// EXP-003: Commitment confirmation dialog variant shown during pact creation.
+  ///
+  /// Controls the confirmation UI shown when the user taps "Create Pact" on the
+  /// wizard summary screen. Values: `'button'` = control (single "I accept"
+  /// button), `'checkbox'` = variant A (checkbox must be ticked), `'retype'` =
+  /// variant B (user must type the habit name to enable the Create button).
+  /// Default is `'button'` (control group).
+  ///
+  /// Use [exp003CommitmentConfirmationKey] as the Remote Config parameter name.
+  static const String exp003CommitmentConfirmationKey = 'exp_003_commitment_confirmation';
+
+  /// Default value for [exp003CommitmentConfirmationKey].
+  static const String exp003CommitmentConfirmation = 'button';
+
   /// All default values keyed by their Remote Config parameter name.
   ///
   /// Pass this map to `FirebaseRemoteConfig.setDefaults()` during initialisation
@@ -45,5 +59,6 @@ abstract final class RemoteConfigDefaults {
     'notification_text_variant': notificationTextVariant,
     'post_deadline_notification_behavior': postDeadlineNotificationBehavior,
     'onboarding_auto_advance_seconds': onboardingAutoAdvanceSeconds,
+    'exp_003_commitment_confirmation': exp003CommitmentConfirmation,
   };
 }
