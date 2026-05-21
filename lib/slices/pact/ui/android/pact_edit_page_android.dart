@@ -225,13 +225,13 @@ class _EditSummaryStepAndroid extends StatelessWidget {
                       labelColor: labelColor,
                       onTap: () => onJumpToStep(0), // edit page 0 = habitName
                     ),
-                    const Divider(height: 1),
                     _TappableSummaryRow(
                       stepName: PactWizardStep.reminder.analyticsName,
                       label: l10n.summaryReminder,
                       value: reminderText,
                       labelColor: labelColor,
                       onTap: () => onJumpToStep(1), // edit page 1 = reminder
+                      isLast: true,
                     ),
                   ],
                 ),
@@ -285,30 +285,40 @@ class _TappableSummaryRow extends StatelessWidget {
   final Color labelColor;
   final VoidCallback onTap;
 
+  /// When `false`, a [Divider] is rendered below the row as a separator.
+  /// Set to `true` on the last row in a group to suppress the trailing divider.
+  final bool isLast;
+
   const _TappableSummaryRow({
     required this.stepName,
     required this.label,
     required this.value,
     required this.labelColor,
     required this.onTap,
+    this.isLast = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      key: Key('edit-summary-row-tap-$stepName'),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: SummaryRow(label: label, value: value, labelColor: labelColor),
+    return Column(
+      children: [
+        InkWell(
+          key: Key('edit-summary-row-tap-$stepName'),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SummaryRow(label: label, value: value, labelColor: labelColor),
+                ),
+                Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ],
             ),
-            Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ],
+          ),
         ),
-      ),
+        if (!isLast) const Divider(height: 1),
+      ],
     );
   }
 }

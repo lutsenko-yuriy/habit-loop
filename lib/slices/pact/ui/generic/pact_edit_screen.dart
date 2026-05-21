@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_edit_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_view_model.dart';
@@ -206,29 +207,18 @@ class _ErrorScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 16),
-            TextButton(onPressed: onClose, child: const Text('Close')),
-          ],
-        ),
-      );
-    }
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 16),
-            TextButton(onPressed: onClose, child: const Text('Close')),
-          ],
-        ),
+    final l10n = AppLocalizations.of(context)!;
+    final body = Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, size: 48),
+          const SizedBox(height: 16),
+          TextButton(onPressed: onClose, child: Text(l10n.cancel)),
+        ],
       ),
     );
+    if (defaultTargetPlatform == TargetPlatform.iOS) return body;
+    return Scaffold(body: body);
   }
 }

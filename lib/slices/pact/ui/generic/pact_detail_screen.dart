@@ -1,5 +1,6 @@
 import 'dart:async' show unawaited;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,16 +43,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   Future<void> _onEditPact() async {
     final result = await Navigator.of(context).push<bool>(
       defaultTargetPlatform == TargetPlatform.iOS
-          ? PageRouteBuilder<bool>(
-              pageBuilder: (_, __, ___) => PactEditScreen(pactId: widget.pactId),
-              transitionsBuilder: (_, animation, __, child) => SlideTransition(
-                position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(animation),
-                child: child,
-              ),
-            )
-          : MaterialPageRoute<bool>(
-              builder: (_) => PactEditScreen(pactId: widget.pactId),
-            ),
+          ? CupertinoPageRoute<bool>(builder: (_) => PactEditScreen(pactId: widget.pactId))
+          : MaterialPageRoute<bool>(builder: (_) => PactEditScreen(pactId: widget.pactId)),
     );
 
     // Reload pact detail if the edit was saved successfully.
