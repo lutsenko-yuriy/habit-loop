@@ -39,8 +39,8 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 
-import '../../../infrastructure/analytics/fake_analytics_service.dart';
-import '../../../infrastructure/notifications/fake_notification_service.dart';
+import '../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../infrastructure/notifications/fake_notification_service.dart';
 
 // ---------------------------------------------------------------------------
 // Fixtures
