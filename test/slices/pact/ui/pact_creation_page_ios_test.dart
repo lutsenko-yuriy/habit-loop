@@ -32,9 +32,9 @@ void main() {
           onScheduleChanged: (_) {},
           onReminderOffsetChanged: (_) {},
           onClearReminder: () {},
-          onCommitmentChanged: (_) {},
-          onNext: () {},
-          onBack: () {},
+          onPageChanged: (_) {},
+          onJumpToStep: (_) {},
+          onClose: () {},
           onSubmit: () {},
         ),
       ),
@@ -45,10 +45,19 @@ void main() {
       findsOneWidget,
     );
 
-    final activeSegment = tester.widget<Container>(
+    // The schedule step is index 3 (PactWizardStep.schedule.value == 3).
+    // Segment 2 (showupDuration) is a *past* step → faded primary (alpha 0.3).
+    // Segment 3 (schedule) is the *current* step → full primary.
+    final pastSegment = tester.widget<Container>(
       find.byKey(const Key('pact-creation-step-indicator-ios-segment-2')),
     );
-    final activeDecoration = activeSegment.decoration! as BoxDecoration;
-    expect(activeDecoration.color, HabitLoopColors.primary);
+    final pastDecoration = pastSegment.decoration! as BoxDecoration;
+    expect(pastDecoration.color, HabitLoopColors.primary.withValues(alpha: 0.3));
+
+    final currentSegment = tester.widget<Container>(
+      find.byKey(const Key('pact-creation-step-indicator-ios-segment-3')),
+    );
+    final currentDecoration = currentSegment.decoration! as BoxDecoration;
+    expect(currentDecoration.color, HabitLoopColors.primary);
   });
 }

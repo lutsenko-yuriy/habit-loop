@@ -26,6 +26,16 @@ enum PactWizardStep {
 
   bool get isFirst => this == PactWizardStep.values.first;
   bool get isLast => this == PactWizardStep.values.last;
+
+  /// snake_case name for analytics events and widget keys.
+  ///
+  /// Converts the camelCase enum name to snake_case so analytics events and
+  /// widget [Key] strings match the analytics specification. For example:
+  /// `PactWizardStep.habitName.analyticsName == 'habit_name'`.
+  String get analyticsName => name.replaceAllMapped(
+        RegExp(r'[A-Z]'),
+        (m) => '_${m[0]!.toLowerCase()}',
+      );
 }
 
 /// Wizard-navigation state for the pact creation/editing flow.
