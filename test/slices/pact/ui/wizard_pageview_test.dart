@@ -185,10 +185,10 @@ void main() {
       expect(find.text('Swipe to move between steps'), findsOneWidget);
     });
 
-    testWidgets('does not show swipe hint on summary page', (tester) async {
+    testWidgets('shows swipe hint on summary page too', (tester) async {
       final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
       await tester.pumpWidget(_iOSPage(state));
-      expect(find.text('Swipe to move between steps'), findsNothing);
+      expect(find.text('Swipe to move between steps'), findsOneWidget);
     });
 
     testWidgets('onPageChanged is called when state.currentStep changes', (tester) async {
@@ -264,10 +264,10 @@ void main() {
       expect(find.text('Swipe to move between steps'), findsOneWidget);
     });
 
-    testWidgets('does not show swipe hint on summary page', (tester) async {
+    testWidgets('shows swipe hint on summary page too', (tester) async {
       final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary);
       await tester.pumpWidget(_androidPage(state));
-      expect(find.text('Swipe to move between steps'), findsNothing);
+      expect(find.text('Swipe to move between steps'), findsOneWidget);
     });
   });
 

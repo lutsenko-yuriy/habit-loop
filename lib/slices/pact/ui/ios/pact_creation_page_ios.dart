@@ -145,18 +145,17 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
                   children: _buildPages(l10n),
                 ),
               ),
-              if (!isLastStep)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Text(
-                    l10n.wizardSwipeHint,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: CupertinoColors.systemGrey.resolveFrom(context),
-                    ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Text(
+                  l10n.wizardSwipeHint,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: CupertinoColors.systemGrey.resolveFrom(context),
                   ),
                 ),
+              ),
             ],
           ),
         ),
