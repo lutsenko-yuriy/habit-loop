@@ -123,24 +123,16 @@ class _CommitmentDialogContentState extends State<CommitmentDialogContent> {
         const SizedBox(height: 8),
 
         // ── Action buttons ─────────────────────────────────────────────────
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                key: const Key('commitment-dialog-cancel'),
-                onPressed: widget.onDismiss,
-                child: Text(l10n.cancel),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: FilledButton(
-                key: const Key('commitment-dialog-accept'),
-                onPressed: _canAccept ? widget.onAccept : null,
-                child: Text(acceptLabel),
-              ),
-            ),
-          ],
+        FilledButton(
+          key: const Key('commitment-dialog-accept'),
+          onPressed: _canAccept ? widget.onAccept : null,
+          child: Text(acceptLabel),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          key: const Key('commitment-dialog-cancel'),
+          onPressed: widget.onDismiss,
+          child: Text(l10n.cancel),
         ),
       ],
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider;
+import 'package:flutter/material.dart' show Divider, Icon, Icons;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
@@ -120,7 +120,14 @@ class _TappableSummaryRow extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Column(
         children: [
-          SummaryRow(label: label, value: value, labelColor: labelColor),
+          Row(
+            children: [
+              Expanded(
+                child: SummaryRow(label: label, value: value, labelColor: labelColor),
+              ),
+              Icon(Icons.chevron_right, size: 18, color: CupertinoColors.systemGrey.resolveFrom(context)),
+            ],
+          ),
           if (!isLast) Divider(color: CupertinoColors.separator.resolveFrom(context), height: 1),
         ],
       ),
