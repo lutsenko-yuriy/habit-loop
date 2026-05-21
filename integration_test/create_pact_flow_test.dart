@@ -11,6 +11,19 @@ import 'package:integration_test/integration_test.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
+/// Swipes the pact-creation [PageView] to the next page.
+///
+/// Starts the fling from near the **top** of the PageView (the static title
+/// area) so that interactive widgets lower on the page — in particular the
+/// [Slider] on the showup-duration step — cannot intercept the horizontal
+/// gesture and win the gesture arena before the PageView does.
+Future<void> _swipeWizardForward(WidgetTester tester) async {
+  final rect = tester.getRect(find.byKey(const Key('pact-creation-pageview-android')));
+  // Y = top + 40: safely inside the title text area on every wizard page.
+  await tester.flingFrom(Offset(rect.right - 10, rect.top + 40), const Offset(-400, 0), 1000);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
@@ -54,26 +67,23 @@ void main() {
       await tester.pump();
 
       // ── 4. Page 0 → 1: swipe to pact duration (defaults are valid) ────────
-      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
-      await tester.pumpAndSettle();
+      await _swipeWizardForward(tester);
 
       // ── 5. Page 1 → 2: swipe to showup duration (auto-set to 10 min) ─────
-      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
-      await tester.pumpAndSettle();
+      await _swipeWizardForward(tester);
 
       // ── 6. Page 2 → 3: swipe to schedule ────────────────────────────────
-      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
-      await tester.pumpAndSettle();
+      // NOTE: must start from the top of the PageView — the Slider on the
+      // showup-duration page intercepts horizontal flings from the center.
+      await _swipeWizardForward(tester);
 
       // ── 7. Page 3: select "Every day", then swipe to reminder ────────────
       await tester.tap(find.text(strings.scheduleDaily));
       await tester.pump();
-      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
-      await tester.pumpAndSettle();
+      await _swipeWizardForward(tester);
 
       // ── 8. Page 4 → 5: swipe to summary ─────────────────────────────────
-      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
-      await tester.pumpAndSettle();
+      await _swipeWizardForward(tester);
 
       // ── 9. Commitment dialog – tap "I Accept" (button variant) ──────────
       // The summary page's "Create Pact" button is labeled createPactConfirm.
