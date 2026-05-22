@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.37.1] — 2026-05-22 (PR #102 merged)
+
+### Fixed — Release notes no longer leak implementation details (HAB-83)
+
+- [user-none]
+- `skills/manage/ship/SKILL.md` step 2 now requires every CHANGELOG entry to carry `[user] <plain English description>` or `[user-none]`; entries missing both markers are flagged as a commit error
+- `AGENTS.md` step 11 adds a release note tagging reminder pointing to the ship skill convention
+- Retroactively tagged five CHANGELOG entries (0.34.3–0.37.0) that were missing markers and leaking implementation details into Firebase App Distribution release notes
+
+---
+
 ## [0.37.0] — 2026-05-21 (PR #100 merged)
 
 ### Added — Swipeable PageView wizard UI with EXP-003 commitment dialog (HAB-82 WU2)
