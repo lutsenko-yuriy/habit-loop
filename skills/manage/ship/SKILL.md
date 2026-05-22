@@ -44,10 +44,27 @@ Open `docs/CHANGELOG.md` and prepend a new entry at the top:
 ## [X.Y.Z] — YYYY-MM-DD (PR #N merged)
 
 ### Added / Changed / Fixed
-- HAB-XX: <one-line summary of what changed>
+
+- [user] <user-facing description — what the user sees or gains>
+- HAB-XX: <technical detail for developers>
 ```
 
 Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor for new features, major for breaking changes.
+
+**Release note tagging — required for every entry:**
+
+Each CHANGELOG entry MUST include exactly one of the following markers so `scripts/generate_release_notes.py` produces clean user-facing release notes for Firebase App Distribution:
+
+| Marker | When to use | What it does |
+|---|---|---|
+| `- [user] <description>` | There is at least one user-visible change | Only `[user]`-tagged lines appear in release notes (tag is stripped); technical bullets are skipped |
+| `- [user-none]` | The PR has **no** user-visible changes (CI fixes, refactors, tooling) | The entire entry is silently omitted from release notes |
+
+Rules:
+- Add `[user]` lines **before** the technical detail lines in the same section.
+- `[user]` descriptions must be plain English that a non-technical user can understand — no class names, file paths, or jargon.
+- Use `[user-none]` for PRs that touch only tests, CI config, documentation, internal refactors, or analytics instrumentation with no UI change.
+- Never omit the marker — entries without either `[user]` or `[user-none]` fall back to dumping all bullets into release notes, leaking implementation details.
 
 ### 3. Regenerate BACKLOG.md
 

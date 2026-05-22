@@ -148,6 +148,7 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
     - `@docs/ARCHITECTURE.md` — code structure or dependencies changed
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
 11. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
+    **Release note tagging:** Every CHANGELOG bullet must carry either `- [user] <plain English description>` (for user-visible changes) or `- [user-none]` (for internal-only PRs). This controls what `scripts/generate_release_notes.py` publishes to Firebase App Distribution — see `skills/manage/ship/SKILL.md` step 2 for the full convention. Never commit a CHANGELOG entry that lacks one of these markers.
 12. Commit all changes with a descriptive message.
 13. Push to the remote and open a PR — all in parallel:
     - Push the branch to the remote.
