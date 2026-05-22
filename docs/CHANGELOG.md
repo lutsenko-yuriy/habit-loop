@@ -8,6 +8,9 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Swipeable PageView wizard UI with EXP-003 commitment dialog (HAB-82 WU2)
 
+- [user] Pact creation wizard is now swipe-based — swipe left to advance between steps, right to go back
+- [user] A step indicator shows your progress through the wizard at a glance
+- [user] The final summary page lets you tap any section to jump back and edit it
 - Six-page `PageView` wizard on both iOS and Android replacing the old Next/Back button flow; users swipe horizontally between steps
 - Step indicator bar: current step = full primary colour, past steps = primary at 30% alpha, upcoming = surface-container grey
 - `SummaryStepIos` / `SummaryStepAndroid`: tappable rows jump back to the relevant step via `PactWizardStepJumpedEvent` + `PageController.animateToPage`; Create Pact button pinned inside the summary page so it slides in with the page
@@ -27,6 +30,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Application layer for swipeable modular wizard (HAB-82 WU1)
 
+- [user-none]
 - `PactWizardStep` enum replaces `PactCreationStep` with 6 values (`habitName`, `duration`, `showupDuration`, `schedule`, `reminder`, `summary`); each value's `int` matches the future `PageView` page index for zero-cost int↔enum conversion
 - `canAdvanceFromStep` removed — no per-step gating in the swipeable wizard; the Summary page Create button gates submission
 - `PactCreationViewModel.nextStep()`/`previousStep()` replaced by `goToPage(int page)` (clamped, logs breadcrumb, preserves the 10-min `showupDuration` default on first visit)
@@ -44,6 +48,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Navigate to pact detail from showup detail screen (HAB-81)
 
+- [user] Showup detail screen now has a "View pact details" link that opens the parent pact's detail screen
 - Showup detail screen now shows a small **"View pact details ›"** row beneath the habit name that navigates to the parent `PactDetailScreen`; uses `CupertinoPageRoute` on iOS and `MaterialPageRoute` on Android
 - When the parent pact has been deleted the link is absent and the habit name shows the localised "(habit deleted)" fallback as plain non-tappable text
 - New l10n key `showupViewPactDetails` added across EN/FR/DE/RU
@@ -56,6 +61,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — Cold-start blink and dark-mode black background on iOS (HAB-77)
 
+- [user] App opens without a brief blank screen on cold start
+- [user] Screens no longer show a black background when dark mode is enabled on iOS
 - Write-once SharedPreferences flag (`habit_loop_onboarding_passed`) replaces the async DB pre-fetch approach: read synchronously before the first frame so the carousel/dashboard routing decision is available with no I/O and no `AsyncLoading` state
 - `isCarouselPending` spinner removed from `DashboardPageIos` and `DashboardPageAndroid` — no more blank+spinner intermediate frame on cold start
 - `OnboardingPreferenceService` interface + `SharedPreferencesOnboardingService` (production) + `NoopOnboardingService` (default) added under `lib/infrastructure/onboarding/`
@@ -70,6 +77,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Fixed — iOS nav bar turns white when pacts panel is dragged up (HAB-78)
 
+- [user] Navigation bar no longer turns white when scrolling the pacts panel
 - `CupertinoNavigationBar` had no explicit `backgroundColor`; it fell back to the translucent `barBackgroundColor` from `CupertinoThemeData` (system background). When the pacts `DraggableScrollableSheet` is dragged up, its white list-tile content entered the blur zone and the bar appeared white
 - Fix: `backgroundColor: Theme.of(context).colorScheme.surface` added to the nav bar — makes it opaque and keeps it mint regardless of what scrolls behind it
 
