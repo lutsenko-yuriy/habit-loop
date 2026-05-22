@@ -10,9 +10,10 @@
 //   → edit wizard): verifies the new habit name propagates back to showup
 //   detail after saving — confirming the stale-name bug fix.
 //
-// Run on host:   flutter test integration_test/edit_pact_flow_test.dart
-// Run on device: flutter test integration_test/edit_pact_flow_test.dart -d <device>
+// Run on host:    flutter test integration_test/edit_pact_flow_test.dart
+// Run on device:  flutter test integration_test/edit_pact_flow_test.dart -d <device>
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
