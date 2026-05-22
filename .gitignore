@@ -1,6 +1,7 @@
 # Claude Code
 .claude/*
 !.claude/agents/
+!.claude/commands/
 CLAUDE.local.md
 
 # Miscellaneous

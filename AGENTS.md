@@ -36,6 +36,25 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | skills/verify/review/SKILL.md | Architectural PR review |
 | skills/verify/audit/SKILL.md | Runtime and migration PR review |
 
+## Slash commands
+
+Every skill is registered as a Claude Code slash command via a thin stub in `.claude/commands/`. Type `/` in Claude Code to see the full list.
+
+| Command | Skill | Usage |
+|---|---|---|
+| `/ship` | manage/ship | `/ship PR #N` |
+| `/summarize` | manage/summarize | `/summarize` |
+| `/review` | verify/review | `/review PR #N` |
+| `/audit` | verify/audit | `/audit PR #N` |
+| `/plan` | design/plan | `/plan HAB-XX: <title>` |
+| `/analyze` | design/analyze | `/analyze HAB-XX: <title>` |
+| `/experiment` | design/experiment | `/experiment <hypothesis>` |
+| `/implement` | build/implement | `/implement HAB-XX: <title>` |
+| `/calibrate` | configure/calibrate | `/calibrate` |
+| `/style` | configure/style | `/style CONCISE` |
+| `/ios` | run/ios | `/ios` |
+| `/android` | run/android | `/android` |
+
 ## Architecture
 
 Vertical-slice architecture with **Riverpod** (state management + DI) and **sqflite** (local storage). Details and directory layout: @docs/ARCHITECTURE.md.
