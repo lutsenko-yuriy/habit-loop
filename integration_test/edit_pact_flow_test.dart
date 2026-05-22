@@ -158,11 +158,16 @@ void main() {
         expect(find.text(strings.stopPact), findsOneWidget);
 
         // ── 4. Tap the edit button ───────────────────────────────────────
-        // The edit button is in CupertinoNavigationBar.trailing, which in
-        // the macOS integration test environment renders outside the 402px
-        // viewport bounds (~x=512). tester.tap() misses it silently.
-        // Directly invoke onPressed to bypass the hit-test limitation.
-        tester.widget<CupertinoButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
+        // On iOS the edit button lives in CupertinoNavigationBar.trailing,
+        // which in the macOS integration test environment renders outside the
+        // 402px viewport bounds (~x=512). tester.tap() silently misses it, so
+        // we call onPressed directly on iOS. On Android the button is a plain
+        // IconButton inside AppBar, which renders within bounds — tap() works.
+        if (defaultTargetPlatform == TargetPlatform.iOS) {
+          tester.widget<CupertinoButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
+        } else {
+          await tester.tap(find.byKey(const Key('pact-detail-edit-button')));
+        }
         // Do NOT pumpAndSettle here: PactEditScreen shows a spinner while
         // load() is in flight (CupertinoActivityIndicator on iOS never
         // settles). Pump once to let initState fire, then waitFor the field.
@@ -242,9 +247,13 @@ void main() {
         expect(find.text(strings.stopPact), findsOneWidget);
 
         // ── 4. Tap the edit button ───────────────────────────────────────
-        // Direct onPressed invocation — same reason as flow 1: the button
-        // renders outside the viewport in the macOS integration test runner.
-        tester.widget<CupertinoButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
+        // Same platform split as flow 1: call onPressed directly on iOS
+        // (off-screen nav bar), regular tap on Android (in-bounds AppBar).
+        if (defaultTargetPlatform == TargetPlatform.iOS) {
+          tester.widget<CupertinoButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
+        } else {
+          await tester.tap(find.byKey(const Key('pact-detail-edit-button')));
+        }
         // Do NOT pumpAndSettle: spinner in PactEditScreen never settles.
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
@@ -269,12 +278,14 @@ void main() {
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
 
         // ── 9. Navigate back → ShowupDetailScreen ────────────────────────
-        // Wait for the CupertinoNavigationBarBackButton to appear before
-        // calling pageBack(). The PactEditScreen pop animation may still be
-        // completing when 'Yoga' first becomes visible, leaving the nav bar
-        // in a transitioning state where the back button is not yet a fully
-        // independent widget.
-        await waitFor(tester, find.byType(CupertinoNavigationBarBackButton));
+        // On iOS, wait for CupertinoNavigationBarBackButton to become a fully
+        // independent widget before calling pageBack(). The PactEditScreen pop
+        // animation may still be completing when 'Yoga' first appears, leaving
+        // the nav bar in a transitioning state. On Android the Material back
+        // button is immediately stable — no extra wait needed.
+        if (defaultTargetPlatform == TargetPlatform.iOS) {
+          await waitFor(tester, find.byType(CupertinoNavigationBarBackButton));
+        }
         await tester.pageBack();
         await tester.pump(const Duration(milliseconds: 500));
 
