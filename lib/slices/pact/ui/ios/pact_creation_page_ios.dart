@@ -105,6 +105,11 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
     super.didUpdateWidget(oldWidget);
     final targetPage = widget.state.currentStep.value;
     if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
+      // Skip if a programmatic animation is already running, or if the user is
+      // currently scrolling (e.g. a rebuild fires mid-swipe before the page
+      // settles — calling animateToPage here would fight the user's gesture and
+      // set _isProgrammaticAnimation = true, silently suppressing onPageChanged).
+      if (_isProgrammaticAnimation || _pageController.position.isScrollingNotifier.value) return;
       _isProgrammaticAnimation = true;
       unawaited(
         _pageController
