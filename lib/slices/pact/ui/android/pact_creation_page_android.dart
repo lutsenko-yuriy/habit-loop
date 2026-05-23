@@ -65,6 +65,15 @@ class PactCreationPageAndroid extends StatefulWidget {
 
 class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
   late final PageController _pageController;
+  late final FocusNode _habitNameFocusNode;
+
+  /// True while a programmatic [PageController.animateToPage] call is in
+  /// progress (e.g. after a step-indicator or summary-row tap).
+  ///
+  /// Intermediate [onPageChanged] callbacks fired during the animation must
+  /// not update [state.currentStep] — doing so would cause the step indicator
+  /// to flash through all pages between the origin and the destination.
+  bool _isProgrammaticAnimation = false;
 
   static const _animationDuration = Duration(milliseconds: 300);
   static const _animationCurve = Curves.easeInOut;
@@ -73,6 +82,7 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: widget.state.currentStep.value);
+    _habitNameFocusNode = FocusNode();
   }
 
   @override
@@ -80,12 +90,18 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
     super.didUpdateWidget(oldWidget);
     final targetPage = widget.state.currentStep.value;
     if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
+      // Skip if a programmatic animation is already running, or if the user is
+      // currently scrolling (e.g. a rebuild fires mid-swipe before the page
+      // settles — calling animateToPage here would fight the user's gesture and
+      // set _isProgrammaticAnimation = true, silently suppressing onPageChanged).
+      if (_isProgrammaticAnimation || _pageController.position.isScrollingNotifier.value) return;
+      _isProgrammaticAnimation = true;
       unawaited(
-        _pageController.animateToPage(
-          targetPage,
-          duration: _animationDuration,
-          curve: _animationCurve,
-        ),
+        _pageController
+            .animateToPage(targetPage, duration: _animationDuration, curve: _animationCurve)
+            .whenComplete(() {
+          if (mounted) _isProgrammaticAnimation = false;
+        }),
       );
     }
   }
@@ -93,7 +109,21 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
   @override
   void dispose() {
     _pageController.dispose();
+    _habitNameFocusNode.dispose();
     super.dispose();
+  }
+
+  void _handlePageChanged(int page) {
+    // Suppress view-model updates for intermediate pages during a programmatic
+    // jump — the target step is already set by the jump callback.
+    if (!_isProgrammaticAnimation) {
+      widget.onPageChanged(page);
+    }
+    if (page == 0) {
+      _habitNameFocusNode.requestFocus();
+    } else {
+      _habitNameFocusNode.unfocus();
+    }
   }
 
   @override
@@ -117,12 +147,12 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
       ),
       body: Column(
         children: [
-          _StepIndicator(currentStep: step),
+          _StepIndicator(currentStep: step, onStepTapped: widget.onJumpToStep),
           Expanded(
             child: PageView(
               key: const Key('pact-creation-pageview-android'),
               controller: _pageController,
-              onPageChanged: widget.onPageChanged,
+              onPageChanged: _handlePageChanged,
               children: _buildPages(l10n),
             ),
           ),
@@ -147,6 +177,7 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
           state: widget.state,
           l10n: l10n,
           onHabitNameChanged: widget.onHabitNameChanged,
+          focusNode: _habitNameFocusNode,
         ),
         PactDurationStepAndroid(
           state: widget.state,
@@ -188,7 +219,10 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
 class _StepIndicator extends StatelessWidget {
   final PactWizardStep currentStep;
 
-  const _StepIndicator({required this.currentStep});
+  /// Called with the tapped page index when the user taps a segment.
+  final ValueChanged<int> onStepTapped;
+
+  const _StepIndicator({required this.currentStep, required this.onStepTapped});
 
   @override
   Widget build(BuildContext context) {
@@ -199,16 +233,21 @@ class _StepIndicator extends StatelessWidget {
       child: Row(
         children: List.generate(PactWizardStep.count, (index) {
           return Expanded(
-            child: Container(
-              height: 4,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(2),
-                color: index < currentStep.index
-                    ? theme.colorScheme.primary.withValues(alpha: 0.3)
-                    : index == currentStep.index
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.surfaceContainerHighest,
+            child: GestureDetector(
+              onTap: () => onStepTapped(index),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                key: Key('pact-creation-step-indicator-android-segment-$index'),
+                height: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(2),
+                  color: index < currentStep.index
+                      ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                      : index == currentStep.index
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.surfaceContainerHighest,
+                ),
               ),
             ),
           );

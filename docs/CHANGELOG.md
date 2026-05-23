@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.39.0] — 2026-05-23 (PR #103 merged)
+
+### Changed — Wizard UX: auto-keyboard on habit-name step; tappable step indicator (HAB-82)
+
+- [user] The keyboard now opens automatically when the creation or edit wizard starts on the habit-name step, and closes when swiping to any other page
+- [user] Tapping a segment in the step indicator bar now jumps directly to that step in all four wizards (creation iOS/Android, edit iOS/Android)
+- `HabitNameStep{Ios,Android}` gain an optional `FocusNode` param and `autofocus: true`; page containers manage focus via `_handlePageChanged` (request on page 0, unfocus otherwise)
+- `GestureDetector(behavior: HitTestBehavior.opaque)` wraps each step indicator segment, wired to `onJumpToStep`; missing widget keys added to Android creation segments for test parity
+- `_isProgrammaticAnimation` flag suppresses intermediate `onPageChanged` callbacks during `animateToPage` jumps, preventing the step indicator from flashing through intermediate pages
+- Guard in `didUpdateWidget`: skip `animateToPage` when `isScrollingNotifier.value` is true to avoid fighting a user swipe mid-scroll (fixed Flow 1 integration test regression on Android CI)
+- 10 new widget tests; fixed no-op cascade in summary-row test and added missing assertion; 1257 tests passing, analyzer clean
+
+---
+
 ## [0.38.0] — 2026-05-23 (PR #101 merged)
 
 ### Added — Edit pact: update habit name and reminder after creation

@@ -11,7 +11,9 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_creation_page_android.dart';
+import 'package:habit_loop/slices/pact/ui/android/pact_edit_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_creation_page_ios.dart';
+import 'package:habit_loop/slices/pact/ui/ios/pact_edit_page_ios.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 // ---------------------------------------------------------------------------
@@ -101,6 +103,66 @@ Widget _androidPage(
       onJumpToStep: onJumpToStep ?? (_) {},
       onClose: onClose ?? () {},
       onSubmit: onSubmit ?? () {},
+    ),
+  );
+}
+
+Widget _iOSEditPage(
+  PactCreationState state, {
+  ValueChanged<int>? onJumpToStep,
+  ValueChanged<int>? onPageChanged,
+  VoidCallback? onClose,
+  VoidCallback? onSubmit,
+}) {
+  return CupertinoApp(
+    theme: const CupertinoThemeData(),
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: PactEditPageIos(
+      state: state,
+      onHabitNameChanged: (_) {},
+      onReminderOffsetChanged: (_) {},
+      onClearReminder: () {},
+      onPageChanged: onPageChanged ?? (_) {},
+      onJumpToStep: onJumpToStep ?? (_) {},
+      onClose: onClose ?? () {},
+      onSubmit: onSubmit ?? () {},
+      isSaving: false,
+    ),
+  );
+}
+
+Widget _androidEditPage(
+  PactCreationState state, {
+  ValueChanged<int>? onJumpToStep,
+  ValueChanged<int>? onPageChanged,
+  VoidCallback? onClose,
+  VoidCallback? onSubmit,
+}) {
+  return MaterialApp(
+    theme: HabitLoopTheme.materialTheme,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: PactEditPageAndroid(
+      state: state,
+      onHabitNameChanged: (_) {},
+      onReminderOffsetChanged: (_) {},
+      onClearReminder: () {},
+      onPageChanged: onPageChanged ?? (_) {},
+      onJumpToStep: onJumpToStep ?? (_) {},
+      onClose: onClose ?? () {},
+      onSubmit: onSubmit ?? () {},
+      isSaving: false,
     ),
   );
 }
@@ -273,13 +335,14 @@ void main() {
 
   group('SummaryStep — tappable rows', () {
     testWidgets('iOS summary step shows habit name and calls onJumpToStep', (tester) async {
-      final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary)
-        ..builder.copyWith(habitName: 'Meditate');
+      final state = PactCreationState(
+        today: _today,
+        currentStep: PactWizardStep.summary,
+        builder: PactBuilder(today: _today, habitName: 'Meditate'),
+      );
       final List<int> jumped = [];
-      await tester.pumpWidget(_iOSPage(
-        state,
-        onJumpToStep: jumped.add,
-      ));
+      await tester.pumpWidget(_iOSPage(state, onJumpToStep: jumped.add));
+      expect(find.text('Meditate'), findsWidgets); // shown in the summary card
       await tester.tap(find.byKey(const Key('summary-row-tap-habit_name')));
       expect(jumped, [PactWizardStep.habitName.value]);
     });
@@ -293,6 +356,100 @@ void main() {
       ));
       await tester.tap(find.byKey(const Key('summary-row-tap-habit_name')));
       expect(jumped, [PactWizardStep.habitName.value]);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Keyboard autofocus
+  // ---------------------------------------------------------------------------
+
+  group('HabitNameStep — keyboard autofocus', () {
+    testWidgets('iOS: habit name field has autofocus enabled', (tester) async {
+      await tester.pumpWidget(_iOSPage(_state));
+      final field = tester.widget<CupertinoTextField>(
+        find.byKey(const Key('pact-creation-habit-name-field')),
+      );
+      expect(field.autofocus, isTrue);
+    });
+
+    testWidgets('Android: habit name field has autofocus enabled', (tester) async {
+      await tester.pumpWidget(_androidPage(_state));
+      final field = tester.widget<TextField>(
+        find.byKey(const Key('pact-creation-habit-name-field')),
+      );
+      expect(field.autofocus, isTrue);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Tappable step indicator — creation wizard
+  // ---------------------------------------------------------------------------
+
+  group('Creation wizard — tappable step indicator', () {
+    testWidgets('iOS: tapping segment 0 calls onJumpToStep(0)', (tester) async {
+      final List<int> jumped = [];
+      await tester.pumpWidget(_iOSPage(_state, onJumpToStep: jumped.add));
+      await tester.tap(find.byKey(const Key('pact-creation-step-indicator-ios-segment-0')));
+      await tester.pump();
+      expect(jumped, [0]);
+    });
+
+    testWidgets('iOS: tapping segment 3 calls onJumpToStep(3)', (tester) async {
+      final List<int> jumped = [];
+      await tester.pumpWidget(_iOSPage(_state, onJumpToStep: jumped.add));
+      await tester.tap(find.byKey(const Key('pact-creation-step-indicator-ios-segment-3')));
+      await tester.pump();
+      expect(jumped, [3]);
+    });
+
+    testWidgets('Android: tapping segment 0 calls onJumpToStep(0)', (tester) async {
+      final List<int> jumped = [];
+      await tester.pumpWidget(_androidPage(_state, onJumpToStep: jumped.add));
+      await tester.tap(find.byKey(const Key('pact-creation-step-indicator-android-segment-0')));
+      await tester.pump();
+      expect(jumped, [0]);
+    });
+
+    testWidgets('Android: tapping segment 3 calls onJumpToStep(3)', (tester) async {
+      final List<int> jumped = [];
+      await tester.pumpWidget(_androidPage(_state, onJumpToStep: jumped.add));
+      await tester.tap(find.byKey(const Key('pact-creation-step-indicator-android-segment-3')));
+      await tester.pump();
+      expect(jumped, [3]);
+    });
+  });
+
+  group('Edit wizard — tappable step indicator', () {
+    testWidgets('iOS: tapping segment 0 calls onJumpToStep(0)', (tester) async {
+      final List<int> jumped = [];
+      await tester.pumpWidget(_iOSEditPage(_state, onJumpToStep: jumped.add));
+      await tester.tap(find.byKey(const Key('pact-edit-step-indicator-ios-segment-0')));
+      await tester.pump();
+      expect(jumped, [0]);
+    });
+
+    testWidgets('iOS: tapping segment 2 calls onJumpToStep(2)', (tester) async {
+      final List<int> jumped = [];
+      await tester.pumpWidget(_iOSEditPage(_state, onJumpToStep: jumped.add));
+      await tester.tap(find.byKey(const Key('pact-edit-step-indicator-ios-segment-2')));
+      await tester.pump();
+      expect(jumped, [2]);
+    });
+
+    testWidgets('Android: tapping segment 0 calls onJumpToStep(0)', (tester) async {
+      final List<int> jumped = [];
+      await tester.pumpWidget(_androidEditPage(_state, onJumpToStep: jumped.add));
+      await tester.tap(find.byKey(const Key('pact-edit-step-indicator-android-segment-0')));
+      await tester.pump();
+      expect(jumped, [0]);
+    });
+
+    testWidgets('Android: tapping segment 2 calls onJumpToStep(2)', (tester) async {
+      final List<int> jumped = [];
+      await tester.pumpWidget(_androidEditPage(_state, onJumpToStep: jumped.add));
+      await tester.tap(find.byKey(const Key('pact-edit-step-indicator-android-segment-2')));
+      await tester.pump();
+      expect(jumped, [2]);
     });
   });
 }
