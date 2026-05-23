@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
@@ -11,20 +12,36 @@ class PactDetailPageIos extends StatelessWidget {
   final PactDetailState state;
   final Future<void> Function(String? reason) onStopPact;
 
+  /// Called when the user taps the pencil edit button in the nav bar.
+  ///
+  /// `null` (or hidden) when the pact is not active or not yet loaded.
+  final VoidCallback? onEditPact;
+
   const PactDetailPageIos({
     super.key,
     required this.state,
     required this.onStopPact,
+    this.onEditPact,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
+    final isActive = state.pact?.status == PactStatus.active;
+
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         middle: Text(l10n.pactDetailTitle),
+        trailing: isActive && onEditPact != null
+            ? CupertinoButton(
+                key: const Key('pact-detail-edit-button'),
+                padding: EdgeInsets.zero,
+                onPressed: onEditPact,
+                child: const Icon(CupertinoIcons.pencil),
+              )
+            : null,
       ),
       child: SafeArea(
         child: Material(
@@ -137,6 +154,16 @@ class _PactDetailContent extends StatelessWidget {
           const SizedBox(height: 8),
           _InfoRow(label: l10n.daysRemaining(daysLeft)),
         ],
+        const SizedBox(height: 8),
+        _LabelValueRow(
+          label: l10n.summaryShowupDuration,
+          value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
+        ),
+        const SizedBox(height: 8),
+        _LabelValueRow(
+          label: l10n.summaryReminder,
+          value: reminderDescription(l10n, pact.reminderOffset),
+        ),
 
         // Stop reason (if stopped)
         if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
@@ -294,6 +321,35 @@ class _DateRow extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             formatLocaleDate(context, date),
+            style: const TextStyle(color: CupertinoColors.systemGrey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A timeline row that shows a [label] on the left and a [value] on the right,
+/// using the same container styling as [_DateRow].
+class _LabelValueRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _LabelValueRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Text(label)),
+          const SizedBox(width: 8),
+          Text(
+            value,
             style: const TextStyle(color: CupertinoColors.systemGrey),
           ),
         ],

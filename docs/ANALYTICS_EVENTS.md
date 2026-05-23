@@ -237,6 +237,20 @@ Fired when the user taps "Sign in with Google" on the onboarding screen. Distinc
 
 ---
 
+### `pact_edit_saved`
+
+Fired when the user completes the edit pact wizard and the updated pact is persisted successfully. (HAB-79)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact that was edited |
+| `habit_name_changed` | `bool` | `true` if the habit name was modified from its original value |
+| `reminder_changed` | `bool` | `true` if the reminder offset was modified from its original value |
+| `new_reminder_offset_minutes` | `int?` | Resulting reminder offset in minutes; `null` if no reminder is set after the edit |
+| `used_summary_jump` | `bool` | `true` if the user tapped at least one Summary-screen row to jump back to a step before saving; `false` if they swiped through linearly |
+
+---
+
 ### `pact_commitment_dialog_dismissed`
 
 Fired when the user closes the commitment confirmation dialog (the dialog that appears when they tap Create on the summary screen) without completing the confirmation action. Measures abandonment at the final gate — a guardrail for EXP-003. (HAB-82 / EXP-003)
@@ -282,5 +296,6 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 | `LanguagePickerAnalyticsScreen` | `language_picker` | `slices/dashboard/analytics/language_analytics_events.dart` | Language picker sheet/dialog opens (iOS: `CupertinoActionSheet`; Android: `SimpleDialog`) |
 | `PactCreationAnalyticsScreen` | `pact_creation` | `slices/pact/analytics/pact_analytics_events.dart` | Pact creation wizard opens |
 | `PactWizardSummaryAnalyticsScreen` | `pact_wizard_summary` | `slices/pact/analytics/pact_analytics_events.dart` | User lands on the Summary page inside the wizard (creation or editing mode); `mode` passed as a constructor parameter and forwarded as a screen property — HAB-82 |
+| `PactEditAnalyticsScreen` | `pact_edit` | `slices/pact/analytics/pact_analytics_events.dart` | Edit pact wizard opens (pencil icon tapped on pact detail screen) — HAB-79 |
 | `PactDetailAnalyticsScreen` | `pact_detail` | `slices/pact/analytics/pact_analytics_events.dart` | Pact detail screen opens |
 | `ShowupDetailAnalyticsScreen` | `showup_detail` | `slices/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |

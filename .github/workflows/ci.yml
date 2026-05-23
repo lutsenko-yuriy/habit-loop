@@ -85,6 +85,19 @@ jobs:
       - run: flutter pub get
       - run: flutter gen-l10n
 
+      # Cache Gradle wrappers and downloaded dependencies so the Gradle phase
+      # (the dominant cost in the integration-test build) takes ~30 s on a
+      # cache hit instead of 3-5 min on a cold run.
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Enable KVM group perms
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -98,6 +111,7 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_5
+          disable-animations: true
           script: flutter test integration_test/
 
   # ── Resolve build number (push to main only) ─────────────────────────────

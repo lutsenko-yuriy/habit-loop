@@ -148,6 +148,45 @@ final class PactWizardAbandonedEvent extends AnalyticsEvent {
       };
 }
 
+/// Fired when the user completes the edit pact wizard and the updated pact is
+/// persisted successfully. (HAB-79)
+final class PactEditSavedEvent extends AnalyticsEvent {
+  PactEditSavedEvent({
+    required this.pactId,
+    required this.habitNameChanged,
+    required this.reminderChanged,
+    this.newReminderOffsetMinutes,
+    required this.usedSummaryJump,
+  });
+
+  /// ID of the pact that was edited.
+  final String pactId;
+
+  /// `true` if the habit name was modified from its original value.
+  final bool habitNameChanged;
+
+  /// `true` if the reminder offset was modified from its original value.
+  final bool reminderChanged;
+
+  /// Resulting reminder offset in minutes; `null` if no reminder after the edit.
+  final int? newReminderOffsetMinutes;
+
+  /// `true` if the user tapped at least one Summary-screen row to jump back.
+  final bool usedSummaryJump;
+
+  @override
+  String get name => 'pact_edit_saved';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'habit_name_changed': habitNameChanged,
+        'reminder_changed': reminderChanged,
+        if (newReminderOffsetMinutes != null) 'new_reminder_offset_minutes': newReminderOffsetMinutes!,
+        'used_summary_jump': usedSummaryJump,
+      };
+}
+
 /// Screen identifier for the pact creation wizard.
 class PactCreationAnalyticsScreen implements AnalyticsScreen {
   const PactCreationAnalyticsScreen();
@@ -162,6 +201,14 @@ class PactDetailAnalyticsScreen implements AnalyticsScreen {
 
   @override
   String get name => 'pact_detail';
+}
+
+/// Screen identifier for the edit pact wizard. (HAB-79)
+class PactEditAnalyticsScreen implements AnalyticsScreen {
+  const PactEditAnalyticsScreen();
+
+  @override
+  String get name => 'pact_edit';
 }
 
 /// Screen identifier for the wizard summary page.

@@ -12,11 +12,16 @@ class HabitNameStepAndroid extends StatefulWidget {
     required this.state,
     required this.l10n,
     required this.onHabitNameChanged,
+    this.showCommitmentWarning = true,
   });
 
   final PactCreationState state;
   final AppLocalizations l10n;
   final ValueChanged<String> onHabitNameChanged;
+
+  /// Whether to show the commitment-rules warning box below the text field.
+  /// Set to `false` in the edit wizard where the user already committed.
+  final bool showCommitmentWarning;
 
   @override
   State<HabitNameStepAndroid> createState() => _HabitNameStepAndroidState();
@@ -73,23 +78,25 @@ class _HabitNameStepAndroidState extends State<HabitNameStepAndroid> {
           ),
           onChanged: widget.onHabitNameChanged,
         ),
-        const SizedBox(height: 24),
-        Container(
-          key: const Key('pact-creation-habit-name-commitment-rules'),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.tertiaryContainer,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            widget.l10n.commitmentWarning,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              color: theme.colorScheme.onTertiaryContainer,
+        if (widget.showCommitmentWarning) ...[
+          const SizedBox(height: 24),
+          Container(
+            key: const Key('pact-creation-habit-name-commitment-rules'),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.tertiaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              widget.l10n.commitmentWarning,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: theme.colorScheme.onTertiaryContainer,
+              ),
             ),
           ),
-        ),
+        ],
         const SizedBox(height: 16),
       ],
     );

@@ -74,6 +74,14 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
           builder: (_) => PactDetailScreen(pactId: pactId),
         ));
       }
+      // Reload to reflect any pact changes made while in PactDetailScreen —
+      // most notably a habit-name rename via the edit wizard.
+      if (mounted) {
+        ref.invalidate(showupDetailNowProvider);
+        unawaited(
+          ref.read(showupDetailViewModelProvider(widget.showupId).notifier).load(),
+        );
+      }
     }
 
     final openPactCallback = (state.showup != null && state.habitName != null) ? onOpenPact : null;

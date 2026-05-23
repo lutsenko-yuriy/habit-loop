@@ -1,5 +1,6 @@
 import 'dart:async' show unawaited;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_edit_screen.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_detail_page_ios.dart';
 
 class PactDetailScreen extends ConsumerStatefulWidget {
@@ -38,6 +40,22 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     );
   }
 
+  Future<void> _onEditPact() async {
+    final result = await Navigator.of(context).push<bool>(
+      defaultTargetPlatform == TargetPlatform.iOS
+          ? CupertinoPageRoute<bool>(builder: (_) => PactEditScreen(pactId: widget.pactId))
+          : MaterialPageRoute<bool>(builder: (_) => PactEditScreen(pactId: widget.pactId)),
+    );
+
+    // Reload pact detail if the edit was saved successfully.
+    if (result == true && mounted) {
+      ref.invalidate(pactDetailNowProvider);
+      unawaited(
+        ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pactDetailViewModelProvider(widget.pactId));
@@ -50,8 +68,16 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return PactDetailPageIos(state: state, onStopPact: onStopPact);
+      return PactDetailPageIos(
+        state: state,
+        onStopPact: onStopPact,
+        onEditPact: _onEditPact,
+      );
     }
-    return PactDetailPageAndroid(state: state, onStopPact: onStopPact);
+    return PactDetailPageAndroid(
+      state: state,
+      onStopPact: onStopPact,
+      onEditPact: _onEditPact,
+    );
   }
 }
