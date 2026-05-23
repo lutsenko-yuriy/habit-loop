@@ -683,9 +683,31 @@ void main() {
 
         final count = ShowupGenerator.countTotal(pact);
 
-        // Apr 1 08:00 is before createdAt (22:00) → excluded.
+        // Apr 1 08:00 window ends 08:10, which is before createdAt (22:00) → excluded.
         // Apr 2 08:00 and Apr 3 08:00 → included. Total = 2.
         expect(count, 2);
+      });
+
+      test('countTotal includes slot when pact is created during the showup window (HAB-84)', () {
+        // A pact created at 09:05 while the 09:00–09:30 window is still open.
+        // The slot is reachable — the user has 25 minutes left — so it must be
+        // counted and consistent with what generateWindow produces.
+        final pact = Pact(
+          id: 'pact-1',
+          habitName: 'Meditate',
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 3), // 3-day pact: Apr 1, 2, 3
+          showupDuration: const Duration(minutes: 30), // window: 09:00–09:30
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 9)),
+          status: PactStatus.active,
+          createdAt: DateTime(2054, 4, 1, 9, 5), // created DURING the window
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+
+        // Apr 1 09:00 window ends 09:30 > 09:05 createdAt → included.
+        // Apr 2 and Apr 3 also included. Total = 3.
+        expect(count, 3);
       });
     });
   });

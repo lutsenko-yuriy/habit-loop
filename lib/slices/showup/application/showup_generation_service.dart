@@ -21,11 +21,14 @@ class ShowupGenerationService {
   ///
   /// - Uses [ShowupGenerator.generateWindow] to produce the candidate showups
   ///   for the requested window (automatically clamped to the pact boundaries).
-  /// - Skips any candidate whose [Showup.scheduledAt] is before
-  ///   [Pact.createdAt] (or [Pact.startDate] if [createdAt] is null). This
-  ///   prevents a dashboard reload from re-inserting intra-day slots that were
-  ///   intentionally omitted at pact-creation time — e.g. an 8am slot on a
-  ///   pact created at 10pm the same day.
+  /// - Skips any candidate whose showup window ([Showup.scheduledAt] +
+  ///   [Pact.showupDuration]) has already closed at [Pact.createdAt] (or
+  ///   [Pact.startDate] if [createdAt] is null). This prevents a dashboard
+  ///   reload from re-inserting intra-day slots that were intentionally omitted
+  ///   at pact-creation time — e.g. an 8am slot on a pact created at 10pm the
+  ///   same day.  Slots whose window is still open at [Pact.createdAt] are
+  ///   kept even if [scheduledAt] is slightly before [Pact.createdAt] (e.g. a
+  ///   09:00–09:30 slot on a pact created at 09:05 — HAB-84).
   /// - Delegates to [ShowupRepository.saveShowups], which skips IDs that are
   ///   already stored — so calling this method multiple times with the same or
   ///   overlapping windows is safe and produces no duplicates.
@@ -39,7 +42,7 @@ class ShowupGenerationService {
   }) async {
     final effectiveCreatedAt = pact.createdAt ?? pact.startDate;
     final candidates = ShowupGenerator.generateWindow(pact, from: from, to: to)
-        .where((s) => !s.scheduledAt.isBefore(effectiveCreatedAt))
+        .where((s) => s.scheduledAt.add(pact.showupDuration).isAfter(effectiveCreatedAt))
         .toList();
     if (candidates.isEmpty) return const [];
     final result = await _repository.saveShowups(candidates);

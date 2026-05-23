@@ -72,9 +72,12 @@ class PactService {
   /// Builds a pact from [builder], generates the initial showup window, and
   /// atomically persists both via [createPact].
   ///
-  /// Only showups whose [Showup.scheduledAt] is on or after [now] are included
-  /// (showups already in the past are excluded at creation time so a user who
-  /// creates a pact at 10 pm never sees an already-failed 8 am slot on day 1).
+  /// Only showups whose window ([Showup.scheduledAt] + [Pact.showupDuration])
+  /// ends after [now] are included.  This means:
+  /// - A showup scheduled entirely in the past is excluded (created at 10 pm,
+  ///   8 am slot is gone → no already-failed slot on day 1).
+  /// - A showup whose window is still open when the pact is created is included
+  ///   (created at 09:05, 09:00–09:30 window → user has 25 min left).
   ///
   /// Returns the built [Pact] so the caller can proceed with stat
   /// initialization without a second repository round-trip.
@@ -89,7 +92,7 @@ class PactService {
       pact,
       from: pact.startDate,
       to: windowEnd,
-    ).where((s) => !s.scheduledAt.isBefore(now)).toList();
+    ).where((s) => s.scheduledAt.add(pact.showupDuration).isAfter(now)).toList();
     await createPact(pact, showups);
     return pact;
   }

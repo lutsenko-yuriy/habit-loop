@@ -68,12 +68,16 @@ class ShowupGenerator {
   ///
   /// The count reflects the schedule structure only — it is **not** affected
   /// by [pact.reminderOffset] — but it **does** respect [pact.createdAt]:
-  /// slots scheduled before the pact was created are excluded, matching the
-  /// filtering applied by [generateWindow] and
-  /// [ShowupGenerationService.ensureShowupsExist]. This keeps the total
-  /// consistent with the number of showups that can actually exist in the
-  /// repository so that stats (remaining, streak) are never permanently off
-  /// by the number of intra-day slots that were dropped at creation time.
+  /// slots whose showup window ([scheduledAt, scheduledAt + showupDuration])
+  /// has already closed at [pact.createdAt] are excluded, matching the
+  /// filtering applied by [ShowupGenerationService.ensureShowupsExist] and
+  /// [PactService.createPactFromBuilder]. This keeps the total consistent with
+  /// the number of showups that can actually exist in the repository so that
+  /// stats (remaining, streak) are never permanently off.
+  ///
+  /// A slot whose window is still open at [pact.createdAt] is counted even if
+  /// [scheduledAt] is slightly before [pact.createdAt] — the user still had
+  /// time to complete it (e.g. created at 09:05 with a 09:00–09:30 window).
   ///
   /// If [pact.createdAt] is null, no intra-day filtering is applied.
   static int countTotal(Pact pact) {
@@ -83,7 +87,7 @@ class ShowupGenerator {
     }
     var count = 0;
     for (final dt in _candidates(pact)) {
-      if (_isWithinRange(dt, pact.startDate, pact.endDate) && !dt.isBefore(effectiveCreatedAt)) {
+      if (_isWithinRange(dt, pact.startDate, pact.endDate) && dt.add(pact.showupDuration).isAfter(effectiveCreatedAt)) {
         count++;
       }
     }
