@@ -335,13 +335,14 @@ void main() {
 
   group('SummaryStep — tappable rows', () {
     testWidgets('iOS summary step shows habit name and calls onJumpToStep', (tester) async {
-      final state = PactCreationState(today: _today, currentStep: PactWizardStep.summary)
-        ..builder.copyWith(habitName: 'Meditate');
+      final state = PactCreationState(
+        today: _today,
+        currentStep: PactWizardStep.summary,
+        builder: PactBuilder(today: _today, habitName: 'Meditate'),
+      );
       final List<int> jumped = [];
-      await tester.pumpWidget(_iOSPage(
-        state,
-        onJumpToStep: jumped.add,
-      ));
+      await tester.pumpWidget(_iOSPage(state, onJumpToStep: jumped.add));
+      expect(find.text('Meditate'), findsWidgets); // shown in the summary card
       await tester.tap(find.byKey(const Key('summary-row-tap-habit_name')));
       expect(jumped, [PactWizardStep.habitName.value]);
     });
