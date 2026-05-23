@@ -13,6 +13,7 @@ class HabitNameStepIos extends StatefulWidget {
     required this.l10n,
     required this.onHabitNameChanged,
     this.showCommitmentWarning = true,
+    this.focusNode,
   });
 
   final PactCreationState state;
@@ -22,6 +23,13 @@ class HabitNameStepIos extends StatefulWidget {
   /// Whether to show the commitment-rules warning box below the text field.
   /// Set to `false` in the edit wizard where the user already committed.
   final bool showCommitmentWarning;
+
+  /// Optional [FocusNode] managed by the page container.
+  ///
+  /// The container requests focus on this node when the wizard is on the habit
+  /// name page and unfocuses it when the user swipes to another page, keeping
+  /// the software keyboard in sync with the active page.
+  final FocusNode? focusNode;
 
   @override
   State<HabitNameStepIos> createState() => _HabitNameStepIosState();
@@ -72,6 +80,8 @@ class _HabitNameStepIosState extends State<HabitNameStepIos> {
           key: const Key('pact-creation-habit-name-field'),
           placeholder: widget.l10n.habitNameHint,
           controller: _controller,
+          focusNode: widget.focusNode,
+          autofocus: true,
           onChanged: widget.onHabitNameChanged,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         ),

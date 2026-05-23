@@ -66,6 +66,7 @@ class PactEditPageAndroid extends StatefulWidget {
 
 class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
   late final PageController _pageController;
+  late final FocusNode _habitNameFocusNode;
 
   static const _animationDuration = Duration(milliseconds: 300);
   static const _animationCurve = Curves.easeInOut;
@@ -74,6 +75,7 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _editPageIndex(widget.state.currentStep));
+    _habitNameFocusNode = FocusNode();
   }
 
   /// Animates to the new page when [PactEditViewModel.goToPage] changes
@@ -96,7 +98,17 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
   @override
   void dispose() {
     _pageController.dispose();
+    _habitNameFocusNode.dispose();
     super.dispose();
+  }
+
+  void _handlePageChanged(int page) {
+    widget.onPageChanged(page);
+    if (page == 0) {
+      _habitNameFocusNode.requestFocus();
+    } else {
+      _habitNameFocusNode.unfocus();
+    }
   }
 
   @override
@@ -120,12 +132,12 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
       ),
       body: Column(
         children: [
-          _EditStepIndicator(currentPage: currentPage),
+          _EditStepIndicator(currentPage: currentPage, onStepTapped: widget.onJumpToStep),
           Expanded(
             child: PageView(
               key: const Key('pact-edit-pageview-android'),
               controller: _pageController,
-              onPageChanged: widget.onPageChanged,
+              onPageChanged: _handlePageChanged,
               children: _buildPages(l10n),
             ),
           ),
@@ -151,6 +163,7 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
           l10n: l10n,
           onHabitNameChanged: widget.onHabitNameChanged,
           showCommitmentWarning: false,
+          focusNode: _habitNameFocusNode,
         ),
         ReminderStepAndroid(
           state: widget.state,
@@ -330,7 +343,10 @@ class _TappableSummaryRow extends StatelessWidget {
 class _EditStepIndicator extends StatelessWidget {
   final int currentPage;
 
-  const _EditStepIndicator({required this.currentPage});
+  /// Called with the tapped page index when the user taps a segment.
+  final ValueChanged<int> onStepTapped;
+
+  const _EditStepIndicator({required this.currentPage, required this.onStepTapped});
 
   @override
   Widget build(BuildContext context) {
@@ -341,17 +357,21 @@ class _EditStepIndicator extends StatelessWidget {
       child: Row(
         children: List.generate(kEditWizardPageCount, (index) {
           return Expanded(
-            child: Container(
-              key: Key('pact-edit-step-indicator-android-segment-$index'),
-              height: 4,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(2),
-                color: index < currentPage
-                    ? theme.colorScheme.primary.withValues(alpha: 0.3)
-                    : index == currentPage
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.surfaceContainerHighest,
+            child: GestureDetector(
+              onTap: () => onStepTapped(index),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                key: Key('pact-edit-step-indicator-android-segment-$index'),
+                height: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(2),
+                  color: index < currentPage
+                      ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                      : index == currentPage
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.surfaceContainerHighest,
+                ),
               ),
             ),
           );
