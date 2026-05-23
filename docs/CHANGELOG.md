@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.39.1] — 2026-05-23 (PR #104 merged)
+
+### Fixed — First showup appears already failed when wizard takes too long (HAB-84)
+
+- [user] Creating a pact now correctly skips the first showup's slot when you finish the wizard after the slot's window has already closed — no more instant auto-fail on the first showup.
+- `pactCreationSubmitNowProvider` introduced alongside `pactCreationTodayProvider`; `submit()` now reads the clock fresh at submit time instead of reusing the stale wizard-open timestamp, preventing a showup from being generated after its window has already closed.
+- Filter predicate upgraded from `scheduledAt >= now` to `scheduledAt + duration > now` across `PactService.createPactFromBuilder`, `ShowupGenerator.countTotal`, and `ShowupGenerationService.ensureShowupsExist`; the window-end comparison correctly keeps a slot that is still open at submit time (e.g. submitted at 9:05 inside a 9:00–9:30 window).
+
 ## [0.39.0] — 2026-05-23 (PR #103 merged)
 
 ### Changed — Wizard UX: auto-keyboard on habit-name step; tappable step indicator (HAB-82)
