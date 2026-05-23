@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.38.0] — 2026-05-21 (HAB-79)
+## [0.38.0] — 2026-05-23 (PR #101 merged)
 
 ### Added — Edit pact: update habit name and reminder after creation
 
