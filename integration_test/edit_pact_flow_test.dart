@@ -14,6 +14,7 @@
 // Run on device:  flutter test integration_test/edit_pact_flow_test.dart -d <device>
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -177,6 +178,11 @@ void main() {
 
         // ── 5. Edit wizard loaded — habit name text field visible ────────
         await waitFor(tester, find.byKey(const Key('pact-creation-habit-name-field')));
+        // Let the route slide-in animation finish before enterText. The
+        // field enters the widget tree partway through the animation; if
+        // we attempt to focus it while it is still off-screen, showKeyboard
+        // taps the wrong position and onChanged never fires.
+        await tester.pumpAndSettle();
 
         // ── 6. Type the new habit name ───────────────────────────────────
         await tester.enterText(
@@ -261,6 +267,8 @@ void main() {
 
         // ── 5. Edit wizard loaded ────────────────────────────────────────
         await waitFor(tester, find.byKey(const Key('pact-creation-habit-name-field')));
+        // Same as flow 1: settle the route animation before focusing the field.
+        await tester.pumpAndSettle();
 
         // ── 6. Type the new habit name ───────────────────────────────────
         await tester.enterText(
@@ -279,15 +287,19 @@ void main() {
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
 
         // ── 9. Navigate back → ShowupDetailScreen ────────────────────────
-        // On iOS, wait for CupertinoNavigationBarBackButton to become a fully
-        // independent widget before calling pageBack(). The PactEditScreen pop
-        // animation may still be completing when 'Yoga' first appears, leaving
-        // the nav bar in a transitioning state. On Android the Material back
-        // button is immediately stable — no extra wait needed.
+        // On iOS, wait for CupertinoNavigationBarBackButton to stabilise after
+        // the PactEditScreen pop animation, then use pageBack().
+        // On Android, pumpAndSettle first so the Material route-pop animation
+        // is done; then tap BackButton directly. tester.pageBack() uses
+        // find.byTooltip('Back') which fails while the AppBar is still
+        // transitioning from the pact-edit pop.
         if (defaultTargetPlatform == TargetPlatform.iOS) {
           await waitFor(tester, find.byType(CupertinoNavigationBarBackButton));
+          await tester.pageBack();
+        } else {
+          await tester.pumpAndSettle();
+          await tester.tap(find.byType(BackButton));
         }
-        await tester.pageBack();
         await tester.pump(const Duration(milliseconds: 500));
 
         // ── 10. ShowupDetailScreen shows the updated name ─────────────────
