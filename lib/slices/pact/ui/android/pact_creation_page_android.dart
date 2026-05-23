@@ -67,6 +67,14 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
   late final PageController _pageController;
   late final FocusNode _habitNameFocusNode;
 
+  /// True while a programmatic [PageController.animateToPage] call is in
+  /// progress (e.g. after a step-indicator or summary-row tap).
+  ///
+  /// Intermediate [onPageChanged] callbacks fired during the animation must
+  /// not update [state.currentStep] — doing so would cause the step indicator
+  /// to flash through all pages between the origin and the destination.
+  bool _isProgrammaticAnimation = false;
+
   static const _animationDuration = Duration(milliseconds: 300);
   static const _animationCurve = Curves.easeInOut;
 
@@ -82,12 +90,13 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
     super.didUpdateWidget(oldWidget);
     final targetPage = widget.state.currentStep.value;
     if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
+      _isProgrammaticAnimation = true;
       unawaited(
-        _pageController.animateToPage(
-          targetPage,
-          duration: _animationDuration,
-          curve: _animationCurve,
-        ),
+        _pageController
+            .animateToPage(targetPage, duration: _animationDuration, curve: _animationCurve)
+            .whenComplete(() {
+          if (mounted) _isProgrammaticAnimation = false;
+        }),
       );
     }
   }
@@ -100,7 +109,11 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
   }
 
   void _handlePageChanged(int page) {
-    widget.onPageChanged(page);
+    // Suppress view-model updates for intermediate pages during a programmatic
+    // jump — the target step is already set by the jump callback.
+    if (!_isProgrammaticAnimation) {
+      widget.onPageChanged(page);
+    }
     if (page == 0) {
       _habitNameFocusNode.requestFocus();
     } else {
