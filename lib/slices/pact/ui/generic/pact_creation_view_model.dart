@@ -8,7 +8,22 @@ import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 
+/// Provides the current time when the pact creation wizard is first opened.
+/// Used to initialise the wizard's start-date default.
+///
+/// Override in tests to freeze the wizard-open time.
 final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
+
+/// Provides a factory that returns the current time at submit.
+///
+/// Kept separate from [pactCreationTodayProvider] because the wizard can be
+/// open for minutes before the user taps "Create" — using wizard-open time as
+/// the submit instant causes showups whose window closes during wizard filling
+/// to be generated and then immediately auto-failed on the first dashboard load
+/// (HAB-84).
+///
+/// Override in tests via `overrideWithValue(() => fixedTime)`.
+final pactCreationSubmitNowProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 final pactCreationViewModelProvider = NotifierProvider<PactCreationViewModel, PactCreationState>(
   PactCreationViewModel.new,
@@ -144,7 +159,11 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
     try {
-      final now = ref.read(pactCreationTodayProvider);
+      // Use the actual current time at submit — not the cached wizard-open time.
+      // The wizard can be open for several minutes; using the stale provider
+      // value would allow showups whose window closes during wizard filling to
+      // be generated and then immediately auto-failed on dashboard load (HAB-84).
+      final now = ref.read(pactCreationSubmitNowProvider)();
 
       // Generate only the initial 11-day window (startDate through startDate+10)
       // to keep the repository lean. The window is intentionally wider than the

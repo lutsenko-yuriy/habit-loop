@@ -265,5 +265,35 @@ void main() {
       // Total: Apr 2–7 = 6 showups (Apr 1 skipped).
       expect(stored.length, 6);
     });
+
+    test('includes slot when pact is created during the showup window (HAB-84)', () async {
+      // A pact created at 09:05 while the 09:00–09:30 window is still open.
+      // The user has 25 minutes left — the showup is reachable and must be saved.
+      final pact = Pact(
+        id: 'pact-1',
+        habitName: 'Test habit',
+        startDate: DateTime(2026, 4, 1),
+        endDate: DateTime(2026, 4, 7),
+        showupDuration: const Duration(minutes: 30), // window: 09:00–09:30
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 9)),
+        status: PactStatus.active,
+        createdAt: DateTime(2026, 4, 1, 9, 5), // created DURING the 09:00–09:30 window
+      );
+
+      await service.ensureShowupsExist(
+        pact,
+        from: DateTime(2026, 4, 1),
+        to: DateTime(2026, 4, 7),
+      );
+
+      final stored = await repo.getShowupsForPact('pact-1');
+
+      // Apr 1 09:00 window (09:00–09:30) is still open at 09:05 → must be included.
+      expect(
+        stored.any((s) => s.scheduledAt == DateTime(2026, 4, 1, 9, 0)),
+        isTrue,
+        reason: 'Showup window (09:00–09:30) is still open at createdAt (09:05) — must be saved',
+      );
+    });
   });
 }

@@ -48,6 +48,10 @@ ProviderContainer _makeContainer({
   return ProviderContainer(
     overrides: [
       pactCreationTodayProvider.overrideWithValue(today),
+      // By default, submit time mirrors the wizard-open time so all existing
+      // tests remain unaffected. Tests that simulate a delayed submit (HAB-84)
+      // pass their own override via [extras].
+      pactCreationSubmitNowProvider.overrideWithValue(() => today),
       pactServiceProvider.overrideWithValue(service),
       pactStatsServiceProvider.overrideWithValue(statsService),
       ...extras,
@@ -474,6 +478,88 @@ void main() {
         showups.any((s) => s.scheduledAt == DateTime(2054, 3, 31, 8, 0)),
         isTrue,
         reason: 'First showup should be tomorrow since today\'s slot already passed',
+      );
+    });
+
+    test('submit does not persist first showup when its window closes before submit time (HAB-84)', () async {
+      // Wizard opens at 08:50 (pactCreationTodayProvider = 08:50).
+      // Daily showup at 09:00 with a 10-min duration → window closes at 09:10.
+      // The user takes time and submits at 09:20 (pactCreationSubmitNowProvider).
+      // At submit the window has already closed, so the 09:00 slot must NOT be
+      // saved — otherwise it would be immediately auto-failed on dashboard load.
+      final lateSubmitPactRepo = InMemoryPactRepository();
+      final lateSubmitShowupRepo = InMemoryShowupRepository();
+      final lateSubmitContainer = _makeContainer(
+        pactRepo: lateSubmitPactRepo,
+        showupRepo: lateSubmitShowupRepo,
+        today: DateTime(2054, 3, 30, 8, 50), // wizard opened at 08:50
+        extras: [
+          // Simulate submitting 30 minutes later — after the 09:00–09:10 window.
+          pactCreationSubmitNowProvider.overrideWithValue(() => DateTime(2054, 3, 30, 9, 20)),
+        ],
+      );
+      addTearDown(lateSubmitContainer.dispose);
+
+      final vm = lateSubmitContainer.read(pactCreationViewModelProvider.notifier);
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 9)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit(commitmentVariant: 'button');
+
+      final pacts = await lateSubmitPactRepo.getActivePacts();
+      final showups = await lateSubmitShowupRepo.getShowupsForPact(pacts.first.id);
+
+      // The 09:00 slot on creation day had its window close at 09:10, before
+      // submit time (09:20) — must not be saved.
+      expect(
+        showups.any((s) => s.scheduledAt == DateTime(2054, 3, 30, 9, 0)),
+        isFalse,
+        reason: 'Window closed at 09:10 before submit time (09:20) — must not be saved',
+      );
+      // Next day's slot must be the first saved showup.
+      expect(
+        showups.any((s) => s.scheduledAt == DateTime(2054, 3, 31, 9, 0)),
+        isTrue,
+        reason: 'The first day with an open window at submit time must be saved',
+      );
+    });
+
+    test('submit persists first showup when submitted during its window (HAB-84)', () async {
+      // Wizard opens at 08:50, daily showup at 09:00 with 30-min duration
+      // (window 09:00–09:30). User submits at 09:10 — still inside the window.
+      // The showup IS reachable, so it must be saved.
+      final duringWindowPactRepo = InMemoryPactRepository();
+      final duringWindowShowupRepo = InMemoryShowupRepository();
+      final duringWindowContainer = _makeContainer(
+        pactRepo: duringWindowPactRepo,
+        showupRepo: duringWindowShowupRepo,
+        today: DateTime(2054, 3, 30, 8, 50), // wizard opened at 08:50
+        extras: [
+          pactCreationSubmitNowProvider.overrideWithValue(() => DateTime(2054, 3, 30, 9, 10)),
+        ],
+      );
+      addTearDown(duringWindowContainer.dispose);
+
+      final vm = duringWindowContainer.read(pactCreationViewModelProvider.notifier);
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 30)); // window: 09:00–09:30
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 9)));
+      vm.setCommitmentAccepted(true);
+
+      await vm.submit(commitmentVariant: 'button');
+
+      final pacts = await duringWindowPactRepo.getActivePacts();
+      final showups = await duringWindowShowupRepo.getShowupsForPact(pacts.first.id);
+
+      // The 09:00 slot has 20 minutes left (09:10–09:30) at submit time — must be saved.
+      expect(
+        showups.any((s) => s.scheduledAt == DateTime(2054, 3, 30, 9, 0)),
+        isTrue,
+        reason: 'Window (09:00–09:30) is still open at submit time (09:10) — must be saved',
       );
     });
   });
