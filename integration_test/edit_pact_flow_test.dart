@@ -185,11 +185,20 @@ void main() {
         await tester.pumpAndSettle();
 
         // ── 6. Type the new habit name ───────────────────────────────────
+        // Tap the field first to establish a text-input connection so that
+        // testTextInput._client is set before enterText runs. On a real
+        // Android emulator the IME handshake is asynchronous; calling
+        // enterText without a prior tap leaves _client null and onChanged
+        // is silently never fired.
+        await tester.tap(find.byKey(const Key('pact-creation-habit-name-field')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
         await tester.enterText(
           find.byKey(const Key('pact-creation-habit-name-field')),
           'Morning Run',
         );
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
         // ── 7. Swipe to reminder page, then to summary page ──────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
@@ -271,11 +280,17 @@ void main() {
         await tester.pumpAndSettle();
 
         // ── 6. Type the new habit name ───────────────────────────────────
+        // Tap first to establish the text-input connection (same reason as
+        // flow 1 — real Android emulator IME handshake is asynchronous).
+        await tester.tap(find.byKey(const Key('pact-creation-habit-name-field')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
         await tester.enterText(
           find.byKey(const Key('pact-creation-habit-name-field')),
           'Yoga',
         );
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
         // ── 7. Swipe to summary ──────────────────────────────────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
