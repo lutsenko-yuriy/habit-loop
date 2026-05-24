@@ -281,5 +281,12 @@
   "saveChanges": "Enregistrer les modifications",
   "@saveChanges": {},
   "pactEditSaveError": "Échec de l'enregistrement. Veuillez réessayer.",
-  "@pactEditSaveError": {}
+  "@pactEditSaveError": {},
+
+  "scheduleCardWeekly": "Hebdomadaire",
+  "@scheduleCardWeekly": {},
+  "scheduleCardMonthly": "Mensuel",
+  "@scheduleCardMonthly": {},
+  "pickerDone": "OK",
+  "@pickerDone": {}
 }

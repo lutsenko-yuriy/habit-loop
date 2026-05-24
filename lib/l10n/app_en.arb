@@ -282,5 +282,12 @@
   "saveChanges": "Save Changes",
   "@saveChanges": {},
   "pactEditSaveError": "Failed to save changes. Please try again.",
-  "@pactEditSaveError": {}
+  "@pactEditSaveError": {},
+
+  "scheduleCardWeekly": "Weekly",
+  "@scheduleCardWeekly": {},
+  "scheduleCardMonthly": "Monthly",
+  "@scheduleCardMonthly": {},
+  "pickerDone": "Done",
+  "@pickerDone": {}
 }

@@ -6,6 +6,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart' as pf;
+import 'package:habit_loop/slices/pact/ui/generic/slot_schedule_editor.dart';
 
 class ScheduleStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -69,28 +70,40 @@ class ScheduleStepIos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // For the new card-based schedule type, skip the mode picker entirely and
+    // show the SlotScheduleEditor directly.  The details widget still handles
+    // legacy types (daily/weekday/monthly) which may be present when viewing
+    // old pact data through the edit wizard.
+    final isSlot = state.scheduleType == ScheduleType.slot;
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         const SizedBox(height: 16),
         Text(
           l10n.scheduleStep,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Text(l10n.scheduleTypeLabel),
-        const SizedBox(height: 16),
-        ..._scheduleOptions(context, l10n),
-        const SizedBox(height: 24),
-        if (state.scheduleType != null)
+        if (!isSlot) ...[
+          Text(l10n.scheduleTypeLabel),
+          const SizedBox(height: 16),
+          ..._scheduleOptions(context, l10n),
+          const SizedBox(height: 24),
+          if (state.scheduleType != null)
+            ScheduleDetailsIos(
+              state: state,
+              l10n: l10n,
+              onScheduleChanged: onScheduleChanged,
+            ),
+        ] else ...[
+          const SizedBox(height: 8),
           ScheduleDetailsIos(
             state: state,
             l10n: l10n,
             onScheduleChanged: onScheduleChanged,
           ),
+        ],
       ],
     );
   }
@@ -154,6 +167,44 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
 
   String _occurrenceName(int occurrence) => pf.occurrenceName(widget.l10n, occurrence);
 
+  /// Platform time picker for [SlotScheduleEditor] on iOS.
+  Future<Duration?> _showCupertinoTimePicker(BuildContext ctx, Duration initial) async {
+    Duration? result;
+    await showCupertinoModalPopup<void>(
+      context: ctx,
+      builder: (popupCtx) => ColoredBox(
+        color: CupertinoColors.systemBackground.resolveFrom(popupCtx),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CupertinoButton(
+                  onPressed: () => Navigator.pop(popupCtx),
+                  child: Text(widget.l10n.pickerDone),
+                ),
+              ],
+            ),
+            SizedBox(
+              height: 216,
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                use24hFormat: MediaQuery.alwaysUse24HourFormatOf(popupCtx),
+                initialDateTime: DateTime(2026, 1, 1, initial.inHours, initial.inMinutes % 60),
+                onDateTimeChanged: (dt) {
+                  result = Duration(hours: dt.hour, minutes: dt.minute);
+                },
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(popupCtx).viewPadding.bottom),
+          ],
+        ),
+      ),
+    );
+    return result;
+  }
+
   void _showTimePicker(Duration initial, ValueChanged<Duration> onChanged) {
     unawaited(
       showCupertinoModalPopup<void>(
@@ -168,7 +219,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                 children: [
                   CupertinoButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Done'),
+                    child: Text(widget.l10n.pickerDone),
                   ),
                 ],
               ),
@@ -208,6 +259,15 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
         return _buildMonthlyByWeekday();
       case ScheduleType.monthlyByDate:
         return _buildMonthlyByDate();
+      case ScheduleType.slot:
+        final slotSchedule = widget.state.schedule is SlotSchedule
+            ? widget.state.schedule as SlotSchedule
+            : const SlotSchedule(slots: []);
+        return SlotScheduleEditor(
+          schedule: slotSchedule,
+          onChanged: widget.onScheduleChanged,
+          showTimePicker: _showCupertinoTimePicker,
+        );
     }
   }
 
@@ -558,7 +618,7 @@ class _DropdownWeekday extends StatelessWidget {
                     children: [
                       CupertinoButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Done'),
+                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
                       ),
                     ],
                   ),
@@ -615,7 +675,7 @@ class _DropdownOccurrence extends StatelessWidget {
                     children: [
                       CupertinoButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Done'),
+                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
                       ),
                     ],
                   ),
@@ -671,7 +731,7 @@ class _DayOfMonthPicker extends StatelessWidget {
                     children: [
                       CupertinoButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Done'),
+                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
                       ),
                     ],
                   ),

@@ -4,6 +4,21 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.40.0] — 2026-05-24 (PR #105 merged)
+
+### Added — Card-based schedule editor in pact creation and editing (HAB-80)
+
+- [user] The schedule step in the pact creation and editing wizards now uses a clean card-based layout — add weekly or monthly time slots as individual cards, with a time picker per card and a toggle for each weekday.
+- [user] New pacts default to a Monday–Friday 08:00 weekly slot so most users can tap straight through the schedule step without any changes.
+- `SlotSchedule` sealed class (`WeeklySlot`, `MonthlySlot`) added to the domain; `PactBuilder.fromPact()` migrates legacy `DailySchedule`/`WeeklySchedule`/`MonthlyByWeekdaySchedule`/`MonthlyByDateSchedule` to `SlotSchedule` transparently on edit
+- `SlotScheduleEditor` shared widget (`generic/`) handles slot add/remove, weekday toggling, and time-picker callbacks; injected `showTimePicker` keeps iOS/Android pickers platform-native
+- `ScheduleCodec` extended to encode and decode `SlotSchedule` round-trips
+- `ShowupGenerator` extended to generate showups from `SlotSchedule`
+- `scheduleCardWeekly` / `scheduleCardMonthly` l10n keys added in EN/FR/DE/RU
+- 7 integration tests, 15 `SlotScheduleEditor` widget tests, and 223 `ShowupGenerator` slot tests added; 1333 tests passing, analyzer clean
+
+---
+
 ## [0.39.1] — 2026-05-23 (PR #104 merged)
 
 ### Fixed — First showup appears already failed when wizard takes too long (HAB-84)

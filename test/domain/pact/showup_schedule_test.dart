@@ -70,4 +70,133 @@ void main() {
       expect(schedule.entries[0].timeOfDay, const Duration(hours: 14));
     });
   });
+
+  group('WeeklySlot', () {
+    test('stores weekdays and timeOfDay', () {
+      final slot = WeeklySlot(
+        weekdays: {DateTime.monday, DateTime.wednesday},
+        timeOfDay: const Duration(hours: 8),
+      );
+
+      expect(slot.weekdays, containsAll([DateTime.monday, DateTime.wednesday]));
+      expect(slot.timeOfDay, const Duration(hours: 8));
+    });
+
+    test('equality — same weekdays (any insertion order) and same time are equal', () {
+      final a = WeeklySlot(weekdays: {1, 3, 5}, timeOfDay: const Duration(hours: 8));
+      final b = WeeklySlot(weekdays: {5, 1, 3}, timeOfDay: const Duration(hours: 8));
+
+      expect(a, equals(b));
+    });
+
+    test('equality — different time means not equal', () {
+      final a = WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8));
+      final b = WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 9));
+
+      expect(a, isNot(equals(b)));
+    });
+
+    test('equality — different weekdays means not equal', () {
+      final a = WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8));
+      final b = WeeklySlot(weekdays: {2}, timeOfDay: const Duration(hours: 8));
+
+      expect(a, isNot(equals(b)));
+    });
+
+    test('equality — extra weekday means not equal', () {
+      final a = WeeklySlot(weekdays: {1, 3}, timeOfDay: const Duration(hours: 8));
+      final b = WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8));
+
+      expect(a, isNot(equals(b)));
+    });
+
+    test('hashCode is stable regardless of weekday insertion order', () {
+      final a = WeeklySlot(weekdays: {1, 3, 5}, timeOfDay: const Duration(hours: 8));
+      final b = WeeklySlot(weekdays: {5, 1, 3}, timeOfDay: const Duration(hours: 8));
+
+      expect(a.hashCode, equals(b.hashCode));
+    });
+
+    test('is a ScheduleSlot', () {
+      final slot = WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8));
+      expect(slot, isA<ScheduleSlot>());
+    });
+  });
+
+  group('MonthlySlot', () {
+    test('stores dayOfMonth and timeOfDay', () {
+      const slot = MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 9));
+
+      expect(slot.dayOfMonth, 15);
+      expect(slot.timeOfDay, const Duration(hours: 9));
+    });
+
+    test('equality — same day and time are equal', () {
+      const a = MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 9));
+      const b = MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 9));
+
+      expect(a, equals(b));
+    });
+
+    test('equality — different day means not equal', () {
+      const a = MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 9));
+      const c = MonthlySlot(dayOfMonth: 16, timeOfDay: Duration(hours: 9));
+
+      expect(a, isNot(equals(c)));
+    });
+
+    test('equality — different time means not equal', () {
+      const a = MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 9));
+      const d = MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 10));
+
+      expect(a, isNot(equals(d)));
+    });
+
+    test('is a ScheduleSlot', () {
+      const slot = MonthlySlot(dayOfMonth: 1, timeOfDay: Duration(hours: 8));
+      expect(slot, isA<ScheduleSlot>());
+    });
+  });
+
+  group('SlotSchedule', () {
+    test('stores a list of slots', () {
+      final schedule = SlotSchedule(slots: [
+        WeeklySlot(weekdays: {1, 3}, timeOfDay: const Duration(hours: 8)),
+        const MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 9)),
+      ]);
+
+      expect(schedule.slots, hasLength(2));
+    });
+
+    test('equality — same slots in same order are equal', () {
+      final a = SlotSchedule(slots: [
+        WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+      ]);
+      final b = SlotSchedule(slots: [
+        WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+      ]);
+
+      expect(a, equals(b));
+    });
+
+    test('equality — different slots means not equal', () {
+      final a = SlotSchedule(slots: [
+        WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+      ]);
+      final b = SlotSchedule(slots: [
+        WeeklySlot(weekdays: {2}, timeOfDay: const Duration(hours: 8)),
+      ]);
+
+      expect(a, isNot(equals(b)));
+    });
+
+    test('empty slot list is valid and equal to another empty', () {
+      expect(const SlotSchedule(slots: []), equals(const SlotSchedule(slots: [])));
+    });
+
+    test('is a ShowupSchedule', () {
+      const schedule = SlotSchedule(slots: []);
+      expect(schedule, isA<ShowupSchedule>());
+    });
+  });
 }

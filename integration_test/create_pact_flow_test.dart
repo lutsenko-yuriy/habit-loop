@@ -77,9 +77,9 @@ void main() {
       // showup-duration page intercepts horizontal flings from the center.
       await _swipeWizardForward(tester);
 
-      // ── 7. Page 3: select "Every day", then swipe to reminder ────────────
-      await tester.tap(find.text(strings.scheduleDaily));
-      await tester.pump();
+      // ── 7. Page 3: schedule step — the slot-based editor is pre-selected
+      // (Mon-Fri at 08:00 WeeklySlot) so no user interaction is needed here;
+      // swipe directly to the reminder step.
       await _swipeWizardForward(tester);
 
       // ── 8. Page 4 → 5: swipe to summary ─────────────────────────────────

@@ -104,6 +104,47 @@ void main() {
       );
       expect(text, 'Monthly by date (3)');
     });
+
+    testWidgets('describes SlotSchedule with only WeeklySlots', (tester) async {
+      final (ctx, l10n) = await _pumpLocalised(tester);
+      final schedule = SlotSchedule(slots: [
+        WeeklySlot(weekdays: {1, 3, 5}, timeOfDay: const Duration(hours: 8)),
+        WeeklySlot(weekdays: {7}, timeOfDay: const Duration(hours: 10)),
+      ]);
+      final text = scheduleDescription(ctx, l10n, schedule);
+      // Should reference 'Weekly' and show 2 (number of weekly slots).
+      expect(text, contains('Weekly'));
+      expect(text, contains('2'));
+    });
+
+    testWidgets('describes SlotSchedule with only MonthlySlots', (tester) async {
+      final (ctx, l10n) = await _pumpLocalised(tester);
+      const schedule = SlotSchedule(slots: [
+        MonthlySlot(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
+        MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 18)),
+      ]);
+      final text = scheduleDescription(ctx, l10n, schedule);
+      expect(text, contains('Monthly'));
+      expect(text, contains('2'));
+    });
+
+    testWidgets('describes SlotSchedule with mixed weekly and monthly slots', (tester) async {
+      final (ctx, l10n) = await _pumpLocalised(tester);
+      final schedule = SlotSchedule(slots: [
+        WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+        const MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 18)),
+      ]);
+      final text = scheduleDescription(ctx, l10n, schedule);
+      // Mixed: must mention both types.
+      expect(text, contains('Weekly'));
+      expect(text, contains('Monthly'));
+    });
+
+    testWidgets('describes empty SlotSchedule as empty string', (tester) async {
+      final (ctx, l10n) = await _pumpLocalised(tester);
+      final text = scheduleDescription(ctx, l10n, const SlotSchedule(slots: []));
+      expect(text, '');
+    });
   });
 
   group('reminderDescription', () {

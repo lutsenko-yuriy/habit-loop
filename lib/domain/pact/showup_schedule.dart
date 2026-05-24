@@ -142,3 +142,86 @@ class MonthlyDateEntry {
   @override
   int get hashCode => Object.hash(dayOfMonth, timeOfDay);
 }
+
+// ---------------------------------------------------------------------------
+// Card-based schedule (new UX — HAB-80)
+// ---------------------------------------------------------------------------
+
+/// Base class for individual schedule cards in a [SlotSchedule].
+///
+/// A [ScheduleSlot] is either a [WeeklySlot] (fires on specific weekdays) or a
+/// [MonthlySlot] (fires on a specific day of the month).
+sealed class ScheduleSlot {
+  const ScheduleSlot();
+}
+
+/// A schedule card that triggers on the given [weekdays] at [timeOfDay].
+///
+/// [weekdays] uses [DateTime.weekday] values (1 = Monday … 7 = Sunday).
+/// All selected days share a single start time.
+///
+/// Equality is set-based: two [WeeklySlot]s are equal when they have the same
+/// [timeOfDay] and exactly the same set of [weekdays], regardless of insertion
+/// order.
+class WeeklySlot extends ScheduleSlot {
+  final Set<int> weekdays;
+  final Duration timeOfDay;
+
+  WeeklySlot({required this.weekdays, required this.timeOfDay});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is WeeklySlot &&
+          timeOfDay == other.timeOfDay &&
+          weekdays.length == other.weekdays.length &&
+          weekdays.containsAll(other.weekdays);
+
+  @override
+  int get hashCode => Object.hash(timeOfDay, Object.hashAll([...weekdays]..sort()));
+}
+
+/// A schedule card that triggers on a specific [dayOfMonth] at [timeOfDay].
+///
+/// Months where [dayOfMonth] does not exist (e.g. February 31) are silently
+/// skipped by [ShowupGenerator].
+class MonthlySlot extends ScheduleSlot {
+  final int dayOfMonth;
+  final Duration timeOfDay;
+
+  const MonthlySlot({required this.dayOfMonth, required this.timeOfDay});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is MonthlySlot && dayOfMonth == other.dayOfMonth && timeOfDay == other.timeOfDay;
+
+  @override
+  int get hashCode => Object.hash(dayOfMonth, timeOfDay);
+}
+
+/// A schedule composed of one or more [ScheduleSlot] cards.
+///
+/// Replaces the legacy single-mode schedules ([DailySchedule],
+/// [WeekdaySchedule], [MonthlyByDateSchedule]) in the new pact creation and
+/// edit wizard. Existing pacts stored with the old schedule types continue to
+/// load correctly — [ScheduleCodec] decodes them as before; [PactBuilder.fromPact]
+/// maps them to [SlotSchedule] when the user opens the edit wizard.
+class SlotSchedule extends ShowupSchedule {
+  final List<ScheduleSlot> slots;
+
+  const SlotSchedule({required this.slots});
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is SlotSchedule && _slotsEqual(other.slots);
+
+  bool _slotsEqual(List<ScheduleSlot> other) {
+    if (slots.length != other.length) return false;
+    for (var i = 0; i < slots.length; i++) {
+      if (slots[i] != other[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hashAll(slots);
+}

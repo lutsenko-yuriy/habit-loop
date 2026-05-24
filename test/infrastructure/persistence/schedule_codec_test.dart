@@ -124,6 +124,71 @@ void main() {
       });
     });
 
+    group('SlotSchedule', () {
+      test('round-trips a single WeeklySlot', () {
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1, 3, 5}, timeOfDay: const Duration(hours: 8)),
+        ]);
+        final decoded = ScheduleCodec.decode(ScheduleCodec.encode(schedule));
+        expect(decoded, equals(schedule));
+      });
+
+      test('round-trips a single MonthlySlot', () {
+        const schedule = SlotSchedule(slots: [
+          MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 9)),
+        ]);
+        final decoded = ScheduleCodec.decode(ScheduleCodec.encode(schedule));
+        expect(decoded, equals(schedule));
+      });
+
+      test('round-trips multiple mixed slots', () {
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1, 3}, timeOfDay: const Duration(hours: 8)),
+          const MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 20)),
+        ]);
+        final decoded = ScheduleCodec.decode(ScheduleCodec.encode(schedule));
+        expect(decoded, equals(schedule));
+      });
+
+      test('round-trips an empty slot list', () {
+        const schedule = SlotSchedule(slots: []);
+        final decoded = ScheduleCodec.decode(ScheduleCodec.encode(schedule));
+        expect(decoded, equals(schedule));
+      });
+
+      test('encoded JSON contains type discriminator "slot"', () {
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+        ]);
+        expect(ScheduleCodec.encode(schedule), contains('"type":"slot"'));
+      });
+
+      test('WeeklySlot encoded JSON contains kind "weekly"', () {
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+        ]);
+        expect(ScheduleCodec.encode(schedule), contains('"kind":"weekly"'));
+      });
+
+      test('MonthlySlot encoded JSON contains kind "monthly"', () {
+        const schedule = SlotSchedule(slots: [
+          MonthlySlot(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
+        ]);
+        expect(ScheduleCodec.encode(schedule), contains('"kind":"monthly"'));
+      });
+
+      test('weekday integers survive the round-trip', () {
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1, 3, 5, 7}, timeOfDay: const Duration(hours: 18, minutes: 30)),
+        ]);
+        final decoded = ScheduleCodec.decode(ScheduleCodec.encode(schedule)) as SlotSchedule;
+        final slot = decoded.slots.first as WeeklySlot;
+        expect(slot.weekdays, containsAll([1, 3, 5, 7]));
+        expect(slot.weekdays.length, 4);
+        expect(slot.timeOfDay, const Duration(hours: 18, minutes: 30));
+      });
+    });
+
     group('decode', () {
       test('throws ArgumentError for unknown type', () {
         expect(

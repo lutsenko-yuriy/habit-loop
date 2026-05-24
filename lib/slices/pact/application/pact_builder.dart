@@ -67,22 +67,57 @@ class PactBuilder {
   /// Used by the edit wizard to seed all fields from the pact being edited.
   /// [today] is used only to satisfy the factory's signature; the pact's own
   /// dates are used directly rather than computing defaults from today.
+  ///
+  /// **Lazy migration:** legacy schedule types ([DailySchedule], [WeekdaySchedule],
+  /// [MonthlyByDateSchedule], [MonthlyByWeekdaySchedule]) are converted to a
+  /// [SlotSchedule] so the new card-based wizard UI always receives a uniform
+  /// type. The conversion is best-effort:
+  /// - [DailySchedule] → one [WeeklySlot] covering all seven weekdays.
+  /// - [WeekdaySchedule] → [WeeklySlot]s grouped by `timeOfDay` (entries that
+  ///   share the same time are merged into a single slot).
+  /// - [MonthlyByDateSchedule] → one [MonthlySlot] per entry.
+  /// - [MonthlyByWeekdaySchedule] → one [MonthlySlot] per entry with
+  ///   `dayOfMonth = 1` (the "nth weekday of month" pattern cannot be expressed
+  ///   in [MonthlySlot]; day 1 is a safe placeholder the user can adjust).
   factory PactBuilder.fromPact(Pact pact, {required DateTime today}) {
-    final scheduleType = switch (pact.schedule) {
-      DailySchedule() => ScheduleType.daily,
-      WeekdaySchedule() => ScheduleType.weekday,
-      MonthlyByWeekdaySchedule() => ScheduleType.monthlyByWeekday,
-      MonthlyByDateSchedule() => ScheduleType.monthlyByDate,
-    };
+    final slotSchedule = _toSlotSchedule(pact.schedule);
     return PactBuilder._internal(
       habitName: pact.habitName,
       startDate: pact.startDate,
       endDate: pact.endDate,
       showupDuration: pact.showupDuration,
-      scheduleType: scheduleType,
-      schedule: pact.schedule,
+      scheduleType: ScheduleType.slot,
+      schedule: slotSchedule,
       reminderOffset: pact.reminderOffset,
     );
+  }
+
+  /// Converts any [ShowupSchedule] variant to a [SlotSchedule].
+  static SlotSchedule _toSlotSchedule(ShowupSchedule schedule) {
+    return switch (schedule) {
+      SlotSchedule() => schedule,
+      DailySchedule(:final timeOfDay) => SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1, 2, 3, 4, 5, 6, 7}, timeOfDay: timeOfDay),
+        ]),
+      WeekdaySchedule(:final entries) => SlotSchedule(slots: _weekdayEntriesToSlots(entries)),
+      MonthlyByDateSchedule(:final entries) => SlotSchedule(
+          slots: entries.map((e) => MonthlySlot(dayOfMonth: e.dayOfMonth, timeOfDay: e.timeOfDay)).toList(),
+        ),
+      MonthlyByWeekdaySchedule(:final entries) => SlotSchedule(
+          // "Nth weekday" can't be expressed as a MonthlySlot; fall back to day 1.
+          slots: entries.map((e) => MonthlySlot(dayOfMonth: 1, timeOfDay: e.timeOfDay)).toList(),
+        ),
+    };
+  }
+
+  /// Groups [WeekdayEntry] items by their `timeOfDay`, merging those with the
+  /// same time into a single [WeeklySlot] with multiple weekdays.
+  static List<WeeklySlot> _weekdayEntriesToSlots(List<WeekdayEntry> entries) {
+    final byTime = <Duration, Set<int>>{};
+    for (final entry in entries) {
+      byTime.putIfAbsent(entry.timeOfDay, () => {}).add(entry.weekday);
+    }
+    return byTime.entries.map((e) => WeeklySlot(weekdays: e.value, timeOfDay: e.key)).toList();
   }
 
   PactBuilder._internal({
@@ -106,8 +141,16 @@ class PactBuilder {
   bool get isShowupDurationValid =>
       showupDuration != null && showupDuration!.inMinutes >= 1 && showupDuration!.inMinutes <= 120;
 
-  /// Whether a schedule has been chosen.
-  bool get isScheduleSet => schedule != null;
+  /// Whether a valid schedule has been chosen.
+  ///
+  /// Returns `false` when [schedule] is `null` or when it is a [SlotSchedule]
+  /// with zero slots (an empty card list cannot generate any showups and is
+  /// therefore treated as "not yet configured").
+  bool get isScheduleSet {
+    if (schedule == null) return false;
+    if (schedule case SlotSchedule(:final slots)) return slots.isNotEmpty;
+    return true;
+  }
 
   /// Whether a non-blank habit name has been entered.
   bool get isHabitNameValid => habitName.trim().isNotEmpty;

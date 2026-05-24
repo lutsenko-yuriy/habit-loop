@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
@@ -182,6 +183,17 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
       }
 
       final today = ref.read(pactEditTodayProvider);
+
+      // Track legacy schedule usage so we know when it is safe to drop the
+      // legacy codec branches.  Logged only — no PII (schedule type is an enum).
+      if (pact.schedule is! SlotSchedule) {
+        unawaited(
+          ref.read(logServiceProvider).info(
+                'pact_edit: legacy schedule migration: type=${pact.schedule.runtimeType} id=$arg',
+              ),
+        );
+      }
+
       final builder = PactBuilder.fromPact(pact, today: today);
       final wizardState = PactCreationState(
         today: today,

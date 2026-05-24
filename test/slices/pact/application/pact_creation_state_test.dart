@@ -227,12 +227,13 @@ void main() {
   });
 
   group('ScheduleType re-exported from pact_creation_state', () {
-    test('has four values', () {
-      expect(ScheduleType.values.length, 4);
+    test('has five values (four legacy + slot)', () {
+      expect(ScheduleType.values.length, 5);
       expect(ScheduleType.values, contains(ScheduleType.daily));
       expect(ScheduleType.values, contains(ScheduleType.weekday));
       expect(ScheduleType.values, contains(ScheduleType.monthlyByWeekday));
       expect(ScheduleType.values, contains(ScheduleType.monthlyByDate));
+      expect(ScheduleType.values, contains(ScheduleType.slot));
     });
   });
 }

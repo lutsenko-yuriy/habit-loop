@@ -12,7 +12,7 @@ Fired when the user successfully completes the pact creation wizard and the pact
 
 | Property | Type | Description |
 |---|---|---|
-| `schedule_type` | `string` | `daily` \| `weekly` \| `monthly` |
+| `schedule_type` | `string` | `daily` \| `weekly` \| `monthly` \| `slot` |
 | `duration_days` | `int` | Pact length in calendar days, inclusive of both start and end dates |
 | `showup_duration_minutes` | `int` | Length of a single showup in minutes |
 | `reminder_offset_minutes` | `int?` | Minutes before showup for reminder; `null` if no reminder set |
