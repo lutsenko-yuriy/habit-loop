@@ -212,10 +212,10 @@ class SlotSchedule extends ShowupSchedule {
   const SlotSchedule({required this.slots});
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is SlotSchedule && slots.length == other.slots.length && _slotsEqual(other.slots);
+  bool operator ==(Object other) => identical(this, other) || other is SlotSchedule && _slotsEqual(other.slots);
 
   bool _slotsEqual(List<ScheduleSlot> other) {
+    if (slots.length != other.length) return false;
     for (var i = 0; i < slots.length; i++) {
       if (slots[i] != other[i]) return false;
     }
