@@ -40,6 +40,19 @@ String scheduleDescription(
   if (schedule is MonthlyByDateSchedule) {
     return '${l10n.scheduleMonthlyByDate} (${schedule.entries.length})';
   }
+  if (schedule is SlotSchedule) {
+    if (schedule.slots.isEmpty) return '';
+    final weeklyCount = schedule.slots.whereType<WeeklySlot>().length;
+    final monthlyCount = schedule.slots.whereType<MonthlySlot>().length;
+    if (weeklyCount > 0 && monthlyCount == 0) {
+      return '${l10n.scheduleCardWeekly} ($weeklyCount)';
+    }
+    if (monthlyCount > 0 && weeklyCount == 0) {
+      return '${l10n.scheduleCardMonthly} ($monthlyCount)';
+    }
+    // Mixed weekly + monthly.
+    return '${l10n.scheduleCardWeekly} ($weeklyCount) / ${l10n.scheduleCardMonthly} ($monthlyCount)';
+  }
   return '';
 }
 

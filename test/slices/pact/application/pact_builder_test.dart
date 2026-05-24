@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/schedule_type.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -317,6 +318,133 @@ void main() {
         final builder = PactBuilder(today: today);
         final updated = builder.copyWith(scheduleType: ScheduleType.weekday);
         expect(updated.scheduleType, ScheduleType.weekday);
+      });
+    });
+
+    group('fromPact — lazy migration to SlotSchedule', () {
+      final today = DateTime(2026, 4, 1);
+
+      Pact makePact(ShowupSchedule schedule) => Pact(
+            id: 'p1',
+            habitName: 'Run',
+            startDate: DateTime(2026, 4, 1),
+            endDate: DateTime(2026, 10, 1),
+            showupDuration: const Duration(minutes: 10),
+            schedule: schedule,
+            status: PactStatus.active,
+          );
+
+      test('DailySchedule → SlotSchedule with a single 7-day WeeklySlot', () {
+        final builder = PactBuilder.fromPact(
+          makePact(const DailySchedule(timeOfDay: Duration(hours: 7))),
+          today: today,
+        );
+
+        expect(builder.scheduleType, ScheduleType.slot);
+        final schedule = builder.schedule as SlotSchedule;
+        expect(schedule.slots, hasLength(1));
+        final slot = schedule.slots.first as WeeklySlot;
+        expect(slot.weekdays.length, 7);
+        expect(slot.weekdays, containsAll([1, 2, 3, 4, 5, 6, 7]));
+        expect(slot.timeOfDay, const Duration(hours: 7));
+      });
+
+      test('WeekdaySchedule — entries with same time merge into one WeeklySlot', () {
+        final builder = PactBuilder.fromPact(
+          makePact(const WeekdaySchedule(entries: [
+            WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 8)),
+            WeekdayEntry(weekday: DateTime.wednesday, timeOfDay: Duration(hours: 8)),
+          ])),
+          today: today,
+        );
+
+        final schedule = builder.schedule as SlotSchedule;
+        expect(schedule.slots, hasLength(1));
+        final slot = schedule.slots.first as WeeklySlot;
+        expect(slot.weekdays, containsAll([DateTime.monday, DateTime.wednesday]));
+        expect(slot.weekdays.length, 2);
+        expect(slot.timeOfDay, const Duration(hours: 8));
+      });
+
+      test('WeekdaySchedule — entries with different times produce separate WeeklySlots', () {
+        final builder = PactBuilder.fromPact(
+          makePact(const WeekdaySchedule(entries: [
+            WeekdayEntry(weekday: DateTime.monday, timeOfDay: Duration(hours: 8)),
+            WeekdayEntry(weekday: DateTime.saturday, timeOfDay: Duration(hours: 16)),
+          ])),
+          today: today,
+        );
+
+        final schedule = builder.schedule as SlotSchedule;
+        expect(schedule.slots, hasLength(2));
+        expect(schedule.slots.every((s) => s is WeeklySlot), isTrue);
+        expect((schedule.slots[0] as WeeklySlot).timeOfDay, const Duration(hours: 8));
+        expect((schedule.slots[1] as WeeklySlot).timeOfDay, const Duration(hours: 16));
+      });
+
+      test('MonthlyByDateSchedule → SlotSchedule with MonthlySlots preserving day and time', () {
+        final builder = PactBuilder.fromPact(
+          makePact(const MonthlyByDateSchedule(entries: [
+            MonthlyDateEntry(dayOfMonth: 15, timeOfDay: Duration(hours: 9)),
+            MonthlyDateEntry(dayOfMonth: 28, timeOfDay: Duration(hours: 20)),
+          ])),
+          today: today,
+        );
+
+        final schedule = builder.schedule as SlotSchedule;
+        expect(schedule.slots, hasLength(2));
+        expect((schedule.slots[0] as MonthlySlot).dayOfMonth, 15);
+        expect((schedule.slots[0] as MonthlySlot).timeOfDay, const Duration(hours: 9));
+        expect((schedule.slots[1] as MonthlySlot).dayOfMonth, 28);
+        expect((schedule.slots[1] as MonthlySlot).timeOfDay, const Duration(hours: 20));
+      });
+
+      test('MonthlyByWeekdaySchedule → best-effort MonthlySlots with dayOfMonth=1', () {
+        final builder = PactBuilder.fromPact(
+          makePact(const MonthlyByWeekdaySchedule(entries: [
+            MonthlyWeekdayEntry(occurrence: 2, weekday: DateTime.tuesday, timeOfDay: Duration(hours: 10)),
+          ])),
+          today: today,
+        );
+
+        final schedule = builder.schedule as SlotSchedule;
+        expect(schedule.slots, hasLength(1));
+        final slot = schedule.slots.first as MonthlySlot;
+        expect(slot.dayOfMonth, 1); // fallback — "nth weekday" can't be represented
+        expect(slot.timeOfDay, const Duration(hours: 10));
+      });
+
+      test('SlotSchedule passes through unchanged', () {
+        final original = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1, 3}, timeOfDay: const Duration(hours: 8)),
+          const MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 18)),
+        ]);
+
+        final builder = PactBuilder.fromPact(makePact(original), today: today);
+
+        expect(builder.scheduleType, ScheduleType.slot);
+        expect(builder.schedule, equals(original));
+      });
+
+      test('fromPact preserves all other pact fields', () {
+        final pact = Pact(
+          id: 'test-pact',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 5, 1),
+          endDate: DateTime(2026, 11, 1),
+          showupDuration: const Duration(minutes: 30),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          status: PactStatus.active,
+          reminderOffset: const Duration(minutes: 15),
+        );
+
+        final builder = PactBuilder.fromPact(pact, today: today);
+
+        expect(builder.habitName, 'Meditate');
+        expect(builder.startDate, DateTime(2026, 5, 1));
+        expect(builder.endDate, DateTime(2026, 11, 1));
+        expect(builder.showupDuration, const Duration(minutes: 30));
+        expect(builder.reminderOffset, const Duration(minutes: 15));
       });
     });
   });

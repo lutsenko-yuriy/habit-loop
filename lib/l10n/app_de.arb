@@ -281,5 +281,10 @@
   "saveChanges": "Änderungen speichern",
   "@saveChanges": {},
   "pactEditSaveError": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
-  "@pactEditSaveError": {}
+  "@pactEditSaveError": {},
+
+  "scheduleCardWeekly": "Wöchentlich",
+  "@scheduleCardWeekly": {},
+  "scheduleCardMonthly": "Monatlich",
+  "@scheduleCardMonthly": {}
 }

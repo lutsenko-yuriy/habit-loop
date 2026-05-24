@@ -168,7 +168,15 @@ void main() {
         await readVM('pact-1').load();
 
         final ws = readState('pact-1').wizardState!;
-        expect(ws.schedule, isA<DailySchedule>());
+        // fromPact() migrates legacy schedule types to SlotSchedule; a
+        // DailySchedule (every day at 08:00) becomes a WeeklySlot covering
+        // all 7 weekdays at the same time.
+        expect(ws.schedule, isA<SlotSchedule>());
+        final slot = ws.schedule as SlotSchedule;
+        expect(slot.slots.length, 1);
+        expect(slot.slots.first, isA<WeeklySlot>());
+        expect((slot.slots.first as WeeklySlot).weekdays, {1, 2, 3, 4, 5, 6, 7});
+        expect((slot.slots.first as WeeklySlot).timeOfDay, const Duration(hours: 8));
         expect(ws.showupDuration, const Duration(minutes: 15));
       });
 
