@@ -33,7 +33,18 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
   @override
   PactCreationState build() {
     final today = ref.read(pactCreationTodayProvider);
-    return PactCreationState(today: today);
+    final base = PactCreationState(today: today);
+    // Pre-select the slot schedule type with a sensible default (Mon-Fri at
+    // 08:00) so new pacts go straight to the card-based UI without requiring
+    // the user to choose a schedule mode first.
+    return base.copyWith(
+      builder: base.builder.copyWith(
+        scheduleType: ScheduleType.slot,
+        schedule: SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1, 2, 3, 4, 5}, timeOfDay: const Duration(hours: 8)),
+        ]),
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -80,9 +91,10 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       ScheduleType.monthlyByDate => const MonthlyByDateSchedule(entries: [
           MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
         ]),
-      // slot: default is an empty card list; the new schedule step UI will
-      // always supply at least one card before the wizard can advance.
-      ScheduleType.slot => const SlotSchedule(slots: []),
+      // slot: default is Mon-Fri at 08:00 — one ready-to-use card.
+      ScheduleType.slot => SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1, 2, 3, 4, 5}, timeOfDay: const Duration(hours: 8)),
+        ]),
     };
     _updateBuilder((b) => b.copyWith(scheduleType: type, schedule: defaultSchedule));
   }

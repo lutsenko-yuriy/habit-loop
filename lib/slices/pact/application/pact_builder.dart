@@ -141,8 +141,16 @@ class PactBuilder {
   bool get isShowupDurationValid =>
       showupDuration != null && showupDuration!.inMinutes >= 1 && showupDuration!.inMinutes <= 120;
 
-  /// Whether a schedule has been chosen.
-  bool get isScheduleSet => schedule != null;
+  /// Whether a valid schedule has been chosen.
+  ///
+  /// Returns `false` when [schedule] is `null` or when it is a [SlotSchedule]
+  /// with zero slots (an empty card list cannot generate any showups and is
+  /// therefore treated as "not yet configured").
+  bool get isScheduleSet {
+    if (schedule == null) return false;
+    if (schedule case SlotSchedule(:final slots)) return slots.isNotEmpty;
+    return true;
+  }
 
   /// Whether a non-blank habit name has been entered.
   bool get isHabitNameValid => habitName.trim().isNotEmpty;

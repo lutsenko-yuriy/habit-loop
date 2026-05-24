@@ -3,6 +3,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart' as pf;
+import 'package:habit_loop/slices/pact/ui/generic/slot_schedule_editor.dart';
 
 class ScheduleStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -53,22 +54,33 @@ class ScheduleStepAndroid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSlot = state.scheduleType == ScheduleType.slot;
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         const SizedBox(height: 16),
         Text(l10n.scheduleStep, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 8),
-        Text(l10n.scheduleTypeLabel),
-        const SizedBox(height: 16),
-        ..._scheduleOptions(context),
-        const SizedBox(height: 24),
-        if (state.scheduleType != null)
+        if (!isSlot) ...[
+          Text(l10n.scheduleTypeLabel),
+          const SizedBox(height: 16),
+          ..._scheduleOptions(context),
+          const SizedBox(height: 24),
+          if (state.scheduleType != null)
+            ScheduleDetailsAndroid(
+              state: state,
+              l10n: l10n,
+              onScheduleChanged: onScheduleChanged,
+            ),
+        ] else ...[
+          const SizedBox(height: 8),
           ScheduleDetailsAndroid(
             state: state,
             l10n: l10n,
             onScheduleChanged: onScheduleChanged,
           ),
+        ],
       ],
     );
   }
@@ -132,6 +144,14 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
 
   String _occurrenceName(int occurrence) => pf.occurrenceName(widget.l10n, occurrence);
 
+  /// Platform time picker for [SlotScheduleEditor] on Android.
+  Future<Duration?> _showMaterialTimePicker(BuildContext ctx, Duration initial) async {
+    final tod = TimeOfDay(hour: initial.inHours, minute: initial.inMinutes % 60);
+    final picked = await showTimePicker(context: ctx, initialTime: tod);
+    if (picked == null) return null;
+    return Duration(hours: picked.hour, minutes: picked.minute);
+  }
+
   Future<TimeOfDay?> _pickTime(TimeOfDay initial) {
     return showTimePicker(context: context, initialTime: initial);
   }
@@ -151,9 +171,15 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid> {
         return _buildMonthlyByWeekday();
       case ScheduleType.monthlyByDate:
         return _buildMonthlyByDate();
-      // TODO(HAB-80 WU3): replace this entire widget with the new card-based UI.
       case ScheduleType.slot:
-        return const SizedBox.shrink();
+        final slotSchedule = widget.state.schedule is SlotSchedule
+            ? widget.state.schedule as SlotSchedule
+            : const SlotSchedule(slots: []);
+        return SlotScheduleEditor(
+          schedule: slotSchedule,
+          onChanged: widget.onScheduleChanged,
+          showTimePicker: _showMaterialTimePicker,
+        );
     }
   }
 

@@ -146,6 +146,24 @@ void main() {
         );
         expect(builder.isScheduleSet, isTrue);
       });
+
+      test('returns false for an empty SlotSchedule (no slots)', () {
+        final builder = PactBuilder(today: today).copyWith(
+          scheduleType: ScheduleType.slot,
+          schedule: const SlotSchedule(slots: []),
+        );
+        expect(builder.isScheduleSet, isFalse);
+      });
+
+      test('returns true for a non-empty SlotSchedule', () {
+        final builder = PactBuilder(today: today).copyWith(
+          scheduleType: ScheduleType.slot,
+          schedule: SlotSchedule(slots: [
+            WeeklySlot(weekdays: {1, 2, 3}, timeOfDay: const Duration(hours: 8)),
+          ]),
+        );
+        expect(builder.isScheduleSet, isTrue);
+      });
     });
 
     group('isHabitNameValid', () {
