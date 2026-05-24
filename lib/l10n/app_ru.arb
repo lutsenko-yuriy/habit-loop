@@ -286,5 +286,7 @@
   "scheduleCardWeekly": "Еженедельно",
   "@scheduleCardWeekly": {},
   "scheduleCardMonthly": "Ежемесячно",
-  "@scheduleCardMonthly": {}
+  "@scheduleCardMonthly": {},
+  "pickerDone": "Готово",
+  "@pickerDone": {}
 }

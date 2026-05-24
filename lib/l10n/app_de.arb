@@ -286,5 +286,7 @@
   "scheduleCardWeekly": "Wöchentlich",
   "@scheduleCardWeekly": {},
   "scheduleCardMonthly": "Monatlich",
-  "@scheduleCardMonthly": {}
+  "@scheduleCardMonthly": {},
+  "pickerDone": "Fertig",
+  "@pickerDone": {}
 }

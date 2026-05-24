@@ -182,7 +182,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
               children: [
                 CupertinoButton(
                   onPressed: () => Navigator.pop(popupCtx),
-                  child: const Text('Done'),
+                  child: Text(widget.l10n.pickerDone),
                 ),
               ],
             ),
@@ -219,7 +219,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
                 children: [
                   CupertinoButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Done'),
+                    child: Text(widget.l10n.pickerDone),
                   ),
                 ],
               ),
@@ -618,7 +618,7 @@ class _DropdownWeekday extends StatelessWidget {
                     children: [
                       CupertinoButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Done'),
+                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
                       ),
                     ],
                   ),
@@ -675,7 +675,7 @@ class _DropdownOccurrence extends StatelessWidget {
                     children: [
                       CupertinoButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Done'),
+                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
                       ),
                     ],
                   ),
@@ -731,7 +731,7 @@ class _DayOfMonthPicker extends StatelessWidget {
                     children: [
                       CupertinoButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Done'),
+                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
                       ),
                     ],
                   ),
