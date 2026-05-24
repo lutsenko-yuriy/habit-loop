@@ -264,6 +264,128 @@ void main() {
       });
     });
 
+    group('SlotSchedule', () {
+      // April 2054 weekday structure (same 28-year cycle as April 2026):
+      // Apr 1=Wed(3), Apr 6=Mon(1), Apr 8=Wed(3), Apr 13=Mon(1), Apr 15=Wed(3)
+
+      test('WeeklySlot generates showups only on matching weekdays', () {
+        final pact = _pact(
+          schedule: SlotSchedule(slots: [
+            WeeklySlot(weekdays: {DateTime.monday, DateTime.wednesday}, timeOfDay: const Duration(hours: 8)),
+          ]),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 8),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        // Apr 1 (Wed), Apr 6 (Mon), Apr 8 (Wed) → 3 showups
+        expect(showups.length, 3);
+        expect(showups[0].scheduledAt, DateTime(2054, 4, 1, 8, 0));
+        expect(showups[1].scheduledAt, DateTime(2054, 4, 6, 8, 0));
+        expect(showups[2].scheduledAt, DateTime(2054, 4, 8, 8, 0));
+      });
+
+      test('MonthlySlot generates showup on matching day of each month', () {
+        final pact = _pact(
+          schedule: const SlotSchedule(slots: [
+            MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 9)),
+          ]),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 5, 31),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        expect(showups.length, 2);
+        expect(showups[0].scheduledAt, DateTime(2054, 4, 15, 9, 0));
+        expect(showups[1].scheduledAt, DateTime(2054, 5, 15, 9, 0));
+      });
+
+      test('MonthlySlot skips months where the day does not exist', () {
+        final pact = _pact(
+          schedule: const SlotSchedule(slots: [
+            MonthlySlot(dayOfMonth: 31, timeOfDay: Duration(hours: 8)),
+          ]),
+          startDate: DateTime(2054, 3, 1),
+          endDate: DateTime(2054, 6, 30),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        // March 31 and May 31 exist; April 31 and June 31 do not
+        expect(showups.length, 2);
+        expect(showups[0].scheduledAt, DateTime(2054, 3, 31, 8, 0));
+        expect(showups[1].scheduledAt, DateTime(2054, 5, 31, 8, 0));
+      });
+
+      test('mixed WeeklySlot and MonthlySlot both generate showups', () {
+        // Apr 1, 8, 15 = Wed; Apr 15 also matches MonthlySlot(15)
+        final pact = _pact(
+          schedule: SlotSchedule(slots: [
+            WeeklySlot(weekdays: {DateTime.wednesday}, timeOfDay: const Duration(hours: 8)),
+            const MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 18)),
+          ]),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 15),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+        final scheduledTimes = showups.map((s) => s.scheduledAt).toList();
+
+        // Apr 1 8am (Wed), Apr 8 8am (Wed), Apr 15 8am (Wed), Apr 15 18:00 (Monthly)
+        expect(showups.length, 4);
+        expect(scheduledTimes, contains(DateTime(2054, 4, 1, 8, 0)));
+        expect(scheduledTimes, contains(DateTime(2054, 4, 8, 8, 0)));
+        expect(scheduledTimes, contains(DateTime(2054, 4, 15, 8, 0)));
+        expect(scheduledTimes, contains(DateTime(2054, 4, 15, 18, 0)));
+      });
+
+      test('generates nothing when no slot matches the pact range', () {
+        // Only Sunday, but pact covers Mon–Fri (April 7–11, 2054)
+        final pact = _pact(
+          schedule: SlotSchedule(slots: [
+            WeeklySlot(weekdays: {DateTime.sunday}, timeOfDay: const Duration(hours: 9)),
+          ]),
+          startDate: DateTime(2054, 4, 7),
+          endDate: DateTime(2054, 4, 11),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        expect(showups, isEmpty);
+      });
+
+      test('all generated showups have unique IDs', () {
+        final pact = _pact(
+          schedule: SlotSchedule(slots: [
+            WeeklySlot(weekdays: {DateTime.monday, DateTime.wednesday}, timeOfDay: const Duration(hours: 8)),
+          ]),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 14),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+        final ids = showups.map((s) => s.id).toSet();
+
+        expect(ids.length, showups.length);
+      });
+
+      test('all generated showups are pending', () {
+        final pact = _pact(
+          schedule: SlotSchedule(slots: [
+            WeeklySlot(weekdays: {DateTime.monday}, timeOfDay: const Duration(hours: 8)),
+          ]),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 14),
+        );
+
+        final showups = ShowupGenerator.generate(pact);
+
+        expect(showups.every((s) => s.status == ShowupStatus.pending), isTrue);
+      });
+    });
+
     group('cutoff filtering', () {
       test('skips showup when scheduledAt - reminderOffset is already past', () {
         // scheduledAt = 10 days from now, reminderOffset = 20 days
@@ -547,6 +669,90 @@ void main() {
           expect(showups[0].scheduledAt, DateTime(2054, 4, 15, 8, 0));
         });
       });
+
+      group('SlotSchedule', () {
+        test('WeeklySlot returns only matching weekdays within window', () {
+          // Apr 5–10: Mon Apr 6, Wed Apr 8
+          final pact = _pact(
+            schedule: SlotSchedule(slots: [
+              WeeklySlot(weekdays: {DateTime.monday, DateTime.wednesday}, timeOfDay: const Duration(hours: 8)),
+            ]),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 5),
+            to: DateTime(2054, 4, 10),
+          );
+
+          expect(showups.length, 2);
+          expect(showups[0].scheduledAt, DateTime(2054, 4, 6, 8, 0));
+          expect(showups[1].scheduledAt, DateTime(2054, 4, 8, 8, 0));
+        });
+
+        test('MonthlySlot returns matching days within window', () {
+          final pact = _pact(
+            schedule: const SlotSchedule(slots: [
+              MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 8)),
+            ]),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 5, 31),
+          );
+
+          // Window: Apr 14–16 → only Apr 15
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 14),
+            to: DateTime(2054, 4, 16),
+          );
+
+          expect(showups.length, 1);
+          expect(showups[0].scheduledAt, DateTime(2054, 4, 15, 8, 0));
+        });
+
+        test('window IDs are consistent with generate() — window IDs are a subset of full IDs', () {
+          final pact = _pact(
+            schedule: SlotSchedule(slots: [
+              WeeklySlot(weekdays: {DateTime.monday}, timeOfDay: const Duration(hours: 8)),
+            ]),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          final full = ShowupGenerator.generate(pact);
+          final window = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 5),
+            to: DateTime(2054, 4, 15),
+          );
+
+          final fullIds = full.map((s) => s.id).toSet();
+          for (final s in window) {
+            expect(fullIds, contains(s.id));
+          }
+        });
+
+        test('returns empty list when window contains no matching weekday', () {
+          // Only Sunday, window covers Mon–Fri Apr 7–11
+          final pact = _pact(
+            schedule: SlotSchedule(slots: [
+              WeeklySlot(weekdays: {DateTime.sunday}, timeOfDay: const Duration(hours: 9)),
+            ]),
+            startDate: DateTime(2054, 4, 1),
+            endDate: DateTime(2054, 4, 30),
+          );
+
+          final showups = ShowupGenerator.generateWindow(
+            pact,
+            from: DateTime(2054, 4, 7),
+            to: DateTime(2054, 4, 11),
+          );
+
+          expect(showups, isEmpty);
+        });
+      });
     });
 
     // -------------------------------------------------------------------------
@@ -665,6 +871,23 @@ void main() {
 
         // All 3 days must be counted even though generate() would skip them
         expect(count, 3);
+      });
+
+      test('equals the number of showups generate() produces for SlotSchedule', () {
+        // Mon + Wed in April 2054: 4 Mondays (6,13,20,27) + 5 Wednesdays (1,8,15,22,29) = 9 total
+        final pact = _pact(
+          schedule: SlotSchedule(slots: [
+            WeeklySlot(weekdays: {DateTime.monday, DateTime.wednesday}, timeOfDay: const Duration(hours: 8)),
+          ]),
+          startDate: DateTime(2054, 4, 1),
+          endDate: DateTime(2054, 4, 30),
+        );
+
+        final count = ShowupGenerator.countTotal(pact);
+        final generated = ShowupGenerator.generate(pact);
+
+        expect(count, generated.length);
+        expect(count, 9);
       });
 
       test('countTotal respects createdAt — excludes slots before pact was created', () {

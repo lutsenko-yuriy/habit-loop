@@ -208,6 +208,9 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> {
         return _buildMonthlyByWeekday();
       case ScheduleType.monthlyByDate:
         return _buildMonthlyByDate();
+      // TODO(HAB-80 WU3): replace this entire widget with the new card-based UI.
+      case ScheduleType.slot:
+        return const SizedBox.shrink();
     }
   }
 

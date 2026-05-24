@@ -12,6 +12,8 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 /// { "type": "weekday",           "entries": [{ "weekday": 1, "timeOfDay": 25200000000 }] }
 /// { "type": "monthlyByWeekday",  "entries": [{ "occurrence": 1, "weekday": 1, "timeOfDay": 25200000000 }] }
 /// { "type": "monthlyByDate",     "entries": [{ "dayOfMonth": 1, "timeOfDay": 25200000000 }] }
+/// { "type": "slot",              "slots":   [{ "kind": "weekly",  "weekdays": [1,3,5], "timeOfDay": 28800000000 },
+///                                            { "kind": "monthly", "dayOfMonth": 15,    "timeOfDay": 32400000000 }] }
 /// ```
 ///
 /// All `timeOfDay` values are stored as `int` microseconds
@@ -81,6 +83,25 @@ abstract final class ScheduleCodec {
               )
               .toList(),
         },
+      SlotSchedule(:final slots) => {
+          'type': 'slot',
+          'slots': slots.map(_slotToJson).toList(),
+        },
+    };
+  }
+
+  static Map<String, dynamic> _slotToJson(ScheduleSlot slot) {
+    return switch (slot) {
+      WeeklySlot(:final weekdays, :final timeOfDay) => {
+          'kind': 'weekly',
+          'weekdays': ([...weekdays]..sort()),
+          'timeOfDay': timeOfDay.inMicroseconds,
+        },
+      MonthlySlot(:final dayOfMonth, :final timeOfDay) => {
+          'kind': 'monthly',
+          'dayOfMonth': dayOfMonth,
+          'timeOfDay': timeOfDay.inMicroseconds,
+        },
     };
   }
 
@@ -124,7 +145,25 @@ abstract final class ScheduleCodec {
               )
               .toList(),
         ),
+      'slot' => SlotSchedule(
+          slots: (map['slots'] as List<dynamic>).cast<Map<String, dynamic>>().map(_slotFromJson).toList(),
+        ),
       _ => throw ArgumentError.value(type, 'type', 'Unknown ShowupSchedule type'),
+    };
+  }
+
+  static ScheduleSlot _slotFromJson(Map<String, dynamic> map) {
+    final kind = map['kind'] as String?;
+    return switch (kind) {
+      'weekly' => WeeklySlot(
+          weekdays: (map['weekdays'] as List<dynamic>).map((v) => (v as num).toInt()).toSet(),
+          timeOfDay: Duration(microseconds: (map['timeOfDay'] as num).toInt()),
+        ),
+      'monthly' => MonthlySlot(
+          dayOfMonth: (map['dayOfMonth'] as num).toInt(),
+          timeOfDay: Duration(microseconds: (map['timeOfDay'] as num).toInt()),
+        ),
+      _ => throw ArgumentError.value(kind, 'kind', 'Unknown ScheduleSlot kind'),
     };
   }
 }

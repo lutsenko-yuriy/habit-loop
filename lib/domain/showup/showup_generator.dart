@@ -162,6 +162,7 @@ class ShowupGenerator {
       WeekdaySchedule() => _candidatesWeekday(pact, schedule),
       MonthlyByWeekdaySchedule() => _candidatesMonthlyByWeekday(pact, schedule),
       MonthlyByDateSchedule() => _candidatesMonthlyByDate(pact, schedule),
+      SlotSchedule() => _candidatesSlot(pact, schedule),
     };
   }
 
@@ -235,6 +236,41 @@ class ShowupGenerator {
           yield scheduledAt;
         }
       }
+    }
+  }
+
+  /// Yields one candidate [DateTime] per matching slot per day across the full
+  /// pact range.  Iterates day-by-day; for each day checks all [SlotSchedule]
+  /// slots in order.
+  ///
+  /// - [WeeklySlot]: fires when [date.weekday] is in [WeeklySlot.weekdays].
+  /// - [MonthlySlot]: fires when [date.day] equals [MonthlySlot.dayOfMonth]
+  ///   (months that don't have that day are naturally skipped since Dart's
+  ///   [DateTime] normalises overflowed days — the equality check never matches).
+  ///
+  /// The day-by-day order ensures that the sequence counter in [_generateInRange]
+  /// advances identically whether or not a window filter is applied, keeping IDs
+  /// deterministic and consistent between [generate] and [generateWindow].
+  static Iterable<DateTime> _candidatesSlot(
+    Pact pact,
+    SlotSchedule schedule,
+  ) sync* {
+    var date = pact.startDate;
+    final end = pact.endDate;
+
+    while (!date.isAfter(end)) {
+      for (final slot in schedule.slots) {
+        final matched = switch (slot) {
+          WeeklySlot(:final weekdays, :final timeOfDay) when weekdays.contains(date.weekday) =>
+            _combine(date, timeOfDay),
+          MonthlySlot(:final dayOfMonth, :final timeOfDay) when date.day == dayOfMonth => _combine(date, timeOfDay),
+          _ => null,
+        };
+        if (matched != null && _isWithinRange(matched, pact.startDate, pact.endDate)) {
+          yield matched;
+        }
+      }
+      date = DateTime(date.year, date.month, date.day + 1);
     }
   }
 

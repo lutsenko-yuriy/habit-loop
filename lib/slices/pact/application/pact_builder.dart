@@ -73,6 +73,7 @@ class PactBuilder {
       WeekdaySchedule() => ScheduleType.weekday,
       MonthlyByWeekdaySchedule() => ScheduleType.monthlyByWeekday,
       MonthlyByDateSchedule() => ScheduleType.monthlyByDate,
+      SlotSchedule() => ScheduleType.slot,
     };
     return PactBuilder._internal(
       habitName: pact.habitName,

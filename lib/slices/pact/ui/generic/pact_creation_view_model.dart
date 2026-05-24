@@ -80,6 +80,9 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       ScheduleType.monthlyByDate => const MonthlyByDateSchedule(entries: [
           MonthlyDateEntry(dayOfMonth: 1, timeOfDay: Duration(hours: 8)),
         ]),
+      // slot: default is an empty card list; the new schedule step UI will
+      // always supply at least one card before the wizard can advance.
+      ScheduleType.slot => const SlotSchedule(slots: []),
     };
     _updateBuilder((b) => b.copyWith(scheduleType: type, schedule: defaultSchedule));
   }
@@ -249,6 +252,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       WeekdaySchedule() => 'weekly',
       MonthlyByWeekdaySchedule() => 'monthly',
       MonthlyByDateSchedule() => 'monthly',
+      SlotSchedule() => 'slot',
     };
   }
 }
