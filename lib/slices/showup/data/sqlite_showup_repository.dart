@@ -67,6 +67,17 @@ class SqliteShowupRepository implements ShowupRepository, ShowupSyncRepository {
   }
 
   @override
+  Future<DateTime?> getLatestScheduledAtForPact(String pactId) async {
+    final rows = await _db.rawQuery(
+      'SELECT MAX(scheduled_at) AS max_at FROM $_table WHERE pact_id = ?',
+      [pactId],
+    );
+    final value = rows.first['max_at'];
+    if (value == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(value as int);
+  }
+
+  @override
   Future<int> countShowupsForPact(String pactId) async {
     final result = await _db.rawQuery(
       'SELECT COUNT(*) AS cnt FROM $_table WHERE pact_id = ?',

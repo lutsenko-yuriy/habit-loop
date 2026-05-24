@@ -65,14 +65,83 @@ class DashboardViewModel extends Notifier<DashboardState> {
     // filtered by user context. PII rule: count is safe — no habit names.
     await crashlytics.setCustomKey('active_pacts_count', activePacts.length);
 
+    final generationService = ShowupGenerationService(repository: showupRepo);
+    final pactStatsService = ref.read(pactStatsServiceProvider);
+    final schedulingService = ref.read(reminderSchedulingServiceProvider);
+
     // -----------------------------------------------------------------------
-    // Lazy generation: ensure showups exist for each active pact in the
-    // window [today, today + 10] before reading from the repository.
+    // Gap-fill pass: generate and immediately auto-fail any showups that were
+    // missed during a period of extended absence.
+    //
+    // On each load we query the most recently persisted showup date for each
+    // active pact. If there is a gap between that date and today the app was
+    // not opened for an extended period and showups that should have been
+    // generated during the absence were never created. We fill the gap by
+    // generating those showups and marking each one as failed immediately
+    // (their scheduled windows have fully elapsed).
+    //
+    // This is idempotent: once the gap is filled getLatestScheduledAtForPact
+    // returns a date >= today and no additional work is done on subsequent
+    // loads.
+    //
+    // The gap window ends at yesterday because today's showups are covered by
+    // the forward generation pass below. The two windows are adjacent and
+    // never overlap.
+    // -----------------------------------------------------------------------
+    final yesterday = DateTime(todayNorm.year, todayNorm.month, todayNorm.day - 1);
+    var gapFailedCount = 0;
+    for (final pact in activePacts) {
+      final latestDate = await showupRepo.getLatestScheduledAtForPact(pact.id);
+      final DateTime gapStart;
+      if (latestDate == null) {
+        // No showups at all yet.  Skip pacts that start today or in the future
+        // — only pacts that started before today can have a past gap.
+        if (!pact.startDate.isBefore(todayNorm)) continue;
+        gapStart = pact.startDate;
+      } else {
+        // Start from the day after the most recently generated showup.
+        gapStart = DateTime(latestDate.year, latestDate.month, latestDate.day + 1);
+      }
+      // No gap when the computed start has already reached today.
+      if (!gapStart.isBefore(todayNorm)) continue;
+
+      final gapShowups = await generationService.ensureShowupsExist(
+        pact,
+        from: gapStart,
+        to: yesterday,
+      );
+      // Immediately fail all gap showups — per-showup errors are isolated so
+      // that a single bad row cannot block the rest.
+      // TODO(perf): if many showups share the same pact, persistShowupStatus is
+      //   called once per showup (each triggers syncStats → getShowupsForPact +
+      //   updatePact). A batch variant would reduce this to one syncStats call
+      //   per pact. Acceptable for now given the infrequency of large gaps.
+      for (final showup in gapShowups) {
+        try {
+          await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed);
+        } catch (error, stackTrace) {
+          unawaited(crashlytics.log('gap_fill_sweep: error failing showup ${showup.id}: $error'));
+          unawaited(ref.read(crashlyticsServiceProvider).recordError(error, stackTrace));
+          continue;
+        }
+        unawaited(
+          ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+        );
+        unawaited(schedulingService.cancelRemindersForShowup(showup.id));
+        gapFailedCount++;
+      }
+    }
+    if (gapFailedCount > 0) {
+      unawaited(crashlytics.log('gap_fill_sweep: count=$gapFailedCount'));
+    }
+
+    // -----------------------------------------------------------------------
+    // Forward generation pass: ensure showups exist for each active pact in
+    // the window [today, today + 10] before reading from the repository.
     // The window is intentionally wider than the 7-day calendar strip so that
     // a DST-caused 1-day shortfall still covers all visible strip days.
     // -----------------------------------------------------------------------
     final generationWindowEnd = todayNorm.add(const Duration(days: 10));
-    final generationService = ShowupGenerationService(repository: showupRepo);
     // Accumulate newly generated showups per pact so we can schedule reminders
     // only for the newly saved ones (already-scheduled notifications must not be
     // duplicated on subsequent load calls).
@@ -95,7 +164,6 @@ class DashboardViewModel extends Notifier<DashboardState> {
     // Locale resolution is handled internally by ReminderSchedulingService
     // via LocalePreferenceService — no BuildContext needed here.
     if (newShowupsByPact.isNotEmpty) {
-      final schedulingService = ref.read(reminderSchedulingServiceProvider);
       var totalNewCount = 0;
       for (final entry in newShowupsByPact.entries) {
         final pact = entry.key;
@@ -181,8 +249,6 @@ class DashboardViewModel extends Notifier<DashboardState> {
     //   pass and then call syncStats once per distinct pact.  This is an N+1 against
     //   the pacts table and is acceptable given the small sweep window (≤3 days).
     // -----------------------------------------------------------------------
-    final pactStatsService = ref.read(pactStatsServiceProvider);
-    final schedulingService = ref.read(reminderSchedulingServiceProvider);
     // Track showups that were successfully auto-failed so the calendar strip
     // reflects the updated status without a second DB round-trip.
     final Map<String, Showup> autoFailedById = {};

@@ -441,6 +441,44 @@ void main() {
       });
     });
 
+    // -------------------------------------------------------------------------
+    // getLatestScheduledAtForPact
+    // -------------------------------------------------------------------------
+
+    group('getLatestScheduledAtForPact', () {
+      test('returns null when no showups exist for the pact', () async {
+        expect(await repository.getLatestScheduledAtForPact('pact-1'), isNull);
+      });
+
+      test('returns null when no showups exist for a different pact', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup(scheduledAt: DateTime(2026, 3, 1, 8, 0)));
+        // Query for a different pactId — must return null.
+        expect(await repository.getLatestScheduledAtForPact('other-pact'), isNull);
+      });
+
+      test('returns the scheduledAt of the only showup', () async {
+        final scheduledAt = DateTime(2026, 3, 15, 8, 0);
+        await insertPact();
+        await repository.saveShowup(makeShowup(scheduledAt: scheduledAt));
+
+        final result = await repository.getLatestScheduledAtForPact('pact-1');
+        expect(result, isNotNull);
+        expect(result!.millisecondsSinceEpoch, scheduledAt.millisecondsSinceEpoch);
+      });
+
+      test('returns the maximum scheduledAt across multiple showups', () async {
+        await insertPact();
+        await repository.saveShowup(makeShowup(id: 's1', scheduledAt: DateTime(2026, 3, 10, 8, 0)));
+        await repository.saveShowup(makeShowup(id: 's2', scheduledAt: DateTime(2026, 3, 20, 8, 0)));
+        await repository.saveShowup(makeShowup(id: 's3', scheduledAt: DateTime(2026, 3, 5, 8, 0)));
+
+        final result = await repository.getLatestScheduledAtForPact('pact-1');
+        expect(result, isNotNull);
+        expect(result!.millisecondsSinceEpoch, DateTime(2026, 3, 20, 8, 0).millisecondsSinceEpoch);
+      });
+    });
+
     group('markAllShowupsDirty', () {
       test('re-dirtifies all previously-synced showups', () async {
         await insertPact();

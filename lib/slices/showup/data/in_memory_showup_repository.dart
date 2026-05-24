@@ -79,6 +79,13 @@ class InMemoryShowupRepository implements ShowupRepository {
   }
 
   @override
+  Future<DateTime?> getLatestScheduledAtForPact(String pactId) async {
+    final dates = _showups.where((s) => s.pactId == pactId).map((s) => s.scheduledAt);
+    if (dates.isEmpty) return null;
+    return dates.reduce((a, b) => a.isAfter(b) ? a : b);
+  }
+
+  @override
   Future<int> countShowupsForPact(String pactId) async {
     return _showups.where((s) => s.pactId == pactId).length;
   }

@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.40.1] — 2026-05-24 (PR #106 merged)
+
+### Fixed — Past showups not generated when app is opened after a long absence (HAB-85)
+
+- When a user reopens the app after an extended absence all showups that fell in the gap between the last generated showup and today are now generated and immediately auto-failed, so pact history and stats accurately reflect the missed period
+- `getLatestScheduledAtForPact(pactId)` added to `ShowupRepository` interface and both implementations (`InMemoryShowupRepository`, `SqliteShowupRepository`) — returns the max `scheduledAt` for a pact, or `null` if no showups have been persisted
+- Gap-fill pass added to `DashboardViewModel._loadInner()`, running before the existing forward generation: for each active pact it checks the latest persisted showup date, and if there is a gap up to yesterday it generates the missing showups via `ShowupGenerationService` and marks each one failed immediately; `ShowupAutoFailedEvent` fires per gap showup; reminders are cancelled; per-showup errors are isolated so one bad row cannot block the rest
+- The pass is idempotent: once the gap is filled `getLatestScheduledAtForPact` returns a date ≥ today and no additional work is done on subsequent loads
+- 4 new SQLite tests and 5 new `DashboardViewModel` gap-fill tests; 1342 tests passing, analyzer clean
+
+---
+
 ## [0.40.0] — 2026-05-24 (PR #105 merged)
 
 ### Added — Card-based schedule editor in pact creation and editing (HAB-80)
