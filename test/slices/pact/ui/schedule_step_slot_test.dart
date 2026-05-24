@@ -165,8 +165,14 @@ void main() {
 
       // The first (and only) slot card must be present.
       expect(find.byKey(const Key('slot-card-0')), findsOneWidget);
-      // Only one card → remove button should be hidden.
-      expect(find.byKey(const Key('remove-slot-0')), findsNothing);
+      // Only one card → remove button is present in the tree (maintainSize)
+      // but wrapped in an invisible Visibility widget so layout is stable.
+      final visibilityFinder = find.ancestor(
+        of: find.byKey(const Key('remove-slot-0')),
+        matching: find.byType(Visibility),
+      );
+      expect(visibilityFinder, findsOneWidget);
+      expect(tester.widget<Visibility>(visibilityFinder).visible, isFalse);
     });
 
     testWidgets('tapping add-monthly-slot fires onScheduleChanged with new MonthlySlot appended', (tester) async {

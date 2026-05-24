@@ -226,8 +226,12 @@ class _WeeklySlotContent extends StatelessWidget {
             const SizedBox(width: 6),
             Text(l10n.scheduleCardWeekly, style: Theme.of(context).textTheme.labelLarge),
             const Spacer(),
-            if (canRemove)
-              IconButton(
+            Visibility(
+              visible: canRemove,
+              maintainSize: true,
+              maintainAnimation: true,
+              maintainState: true,
+              child: IconButton(
                 key: Key('remove-slot-$slotIndex'),
                 icon: const Icon(Icons.remove_circle_outline, size: 20),
                 color: Theme.of(context).colorScheme.error,
@@ -235,6 +239,7 @@ class _WeeklySlotContent extends StatelessWidget {
                 constraints: const BoxConstraints(),
                 onPressed: onRemove,
               ),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -248,12 +253,15 @@ class _WeeklySlotContent extends StatelessWidget {
         ),
         const SizedBox(height: 10),
 
-        // Time chip.
-        _TimeChipButton(
-          slotIndex: slotIndex,
-          time: slot.timeOfDay,
-          showTimePicker: showTimePicker,
-          onChanged: (newTime) => onChanged(WeeklySlot(weekdays: slot.weekdays, timeOfDay: newTime)),
+        // Time chip — right-aligned.
+        Align(
+          alignment: Alignment.centerRight,
+          child: _TimeChipButton(
+            slotIndex: slotIndex,
+            time: slot.timeOfDay,
+            showTimePicker: showTimePicker,
+            onChanged: (newTime) => onChanged(WeeklySlot(weekdays: slot.weekdays, timeOfDay: newTime)),
+          ),
         ),
       ],
     );
@@ -296,8 +304,12 @@ class _MonthlySlotContent extends StatelessWidget {
             const SizedBox(width: 6),
             Text(l10n.scheduleCardMonthly, style: theme.textTheme.labelLarge),
             const Spacer(),
-            if (canRemove)
-              IconButton(
+            Visibility(
+              visible: canRemove,
+              maintainSize: true,
+              maintainAnimation: true,
+              maintainState: true,
+              child: IconButton(
                 key: Key('remove-slot-$slotIndex'),
                 icon: const Icon(Icons.remove_circle_outline, size: 20),
                 color: theme.colorScheme.error,
@@ -305,6 +317,7 @@ class _MonthlySlotContent extends StatelessWidget {
                 constraints: const BoxConstraints(),
                 onPressed: onRemove,
               ),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -441,13 +454,13 @@ class _TimeChipButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primaryContainer,
+          color: theme.colorScheme.primary,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           tod.format(context),
           style: TextStyle(
-            color: theme.colorScheme.onPrimaryContainer,
+            color: theme.colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),

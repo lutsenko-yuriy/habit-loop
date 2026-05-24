@@ -79,7 +79,14 @@ void main() {
             showTimePicker: _noopTimePicker,
           ),
         ));
-        expect(find.byKey(const Key('remove-slot-0')), findsNothing);
+        // The button is kept in the tree (maintainSize) but wrapped in an
+        // invisible Visibility widget so layout is stable.
+        final visibilityFinder = find.ancestor(
+          of: find.byKey(const Key('remove-slot-0')),
+          matching: find.byType(Visibility),
+        );
+        expect(visibilityFinder, findsOneWidget);
+        expect(tester.widget<Visibility>(visibilityFinder).visible, isFalse);
       });
 
       testWidgets('remove button is shown for each card when two or more slots', (tester) async {
