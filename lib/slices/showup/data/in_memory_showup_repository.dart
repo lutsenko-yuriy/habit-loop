@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:habit_loop/domain/showup/save_showups_result.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_date_utils.dart';
@@ -80,9 +81,7 @@ class InMemoryShowupRepository implements ShowupRepository {
 
   @override
   Future<DateTime?> getLatestScheduledAtForPact(String pactId) async {
-    final dates = _showups.where((s) => s.pactId == pactId).map((s) => s.scheduledAt);
-    if (dates.isEmpty) return null;
-    return dates.reduce((a, b) => a.isAfter(b) ? a : b);
+    return _showups.where((s) => s.pactId == pactId).map((s) => s.scheduledAt).maxOrNull;
   }
 
   @override
