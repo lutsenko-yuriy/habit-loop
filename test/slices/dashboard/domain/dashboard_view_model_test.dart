@@ -18,6 +18,24 @@ import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/crashlytics/fake_crashlytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
 
+/// Returns [_firstPacts] on the first [getAllPacts] call; [_laterPacts] on every
+/// subsequent call.  Used to simulate a [computedTodayIndex] change between
+/// dashboard loads without needing to mutate the test clock.
+class _SecondLoadPactRepository extends InMemoryPactRepository {
+  _SecondLoadPactRepository({required List<Pact> first, required List<Pact> later})
+      : _laterPacts = later,
+        super(first);
+
+  final List<Pact> _laterPacts;
+  int _callCount = 0;
+
+  @override
+  Future<List<Pact>> getAllPacts() async {
+    _callCount++;
+    return _callCount == 1 ? await super.getAllPacts() : List<Pact>.from(_laterPacts);
+  }
+}
+
 /// Wraps [InMemoryShowupRepository] and counts calls to [getShowupsForPact].
 class _CountingShowupRepository extends InMemoryShowupRepository {
   _CountingShowupRepository([super.initialShowups]);
@@ -1087,6 +1105,87 @@ void main() {
           mar26Showups.every((s) => s.status == ShowupStatus.failed),
           isTrue,
           reason: 'Gap-filled showup on 3/26 must appear as failed in the strip',
+        );
+      });
+    });
+
+    // ---------------------------------------------------------------------------
+    // Selected-day preservation tests (HAB-87)
+    // ---------------------------------------------------------------------------
+    //
+    // load() is called on every return from showup-detail navigation.  The
+    // selected day must not silently reset to today on those reloads.
+    // ---------------------------------------------------------------------------
+
+    group('selectedDayIndex preservation across load() calls', () {
+      test('selectedDayIndex is preserved when load() is called again on the same date', () async {
+        // Pact started 3+ days ago → todayIndex = 3 on every load.
+        final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
+        container = createContainer(pacts: [pact]);
+
+        // First load — selects today (index 3) by default.
+        await container.read(dashboardViewModelProvider.notifier).load();
+        expect(container.read(dashboardViewModelProvider).selectedDayIndex, 3);
+
+        // User taps tomorrow (index 4).
+        container.read(dashboardViewModelProvider.notifier).selectDay(4);
+        expect(container.read(dashboardViewModelProvider).selectedDayIndex, 4);
+
+        // Reload triggered on return from showup detail — must preserve index 4.
+        await container.read(dashboardViewModelProvider.notifier).load();
+        expect(
+          container.read(dashboardViewModelProvider).selectedDayIndex,
+          4,
+          reason: 'load() must not reset selectedDayIndex when todayIndex has not changed',
+        );
+      });
+
+      test('selectedDayIndex resets to new todayIndex when todayIndex changes between loads', () async {
+        // Simulate a todayIndex change between loads by returning different pact
+        // data on the second getAllPacts() call (same effect as the real-world
+        // midnight transition where daysSince increases by 1).
+        //
+        // First load : pact startDate = today       → daysSince = 0 → todayIndex = 0.
+        // Second load: pact startDate = today - 1   → daysSince = 1 → todayIndex = 1.
+        //
+        // Because computedTodayIndex (1) ≠ state.todayIndex (0), the selected day
+        // must reset to 1.
+        final pactDay1 = _dailyPact(id: 'p1', startDate: today);
+        final pactDay2 = _dailyPact(id: 'p1', startDate: today.subtract(const Duration(days: 1)));
+
+        final switchingPactRepo = _SecondLoadPactRepository(first: [pactDay1], later: [pactDay2]);
+        final showupRepo = InMemoryShowupRepository();
+        final txService = InMemoryPactTransactionService(switchingPactRepo, showupRepo);
+
+        final c = ProviderContainer(
+          overrides: [
+            pactRepositoryProvider.overrideWithValue(switchingPactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            pactTransactionServiceProvider.overrideWithValue(txService),
+            todayProvider.overrideWithValue(today),
+          ],
+        );
+        addTearDown(c.dispose);
+
+        // First load: todayIndex = 0.
+        await c.read(dashboardViewModelProvider.notifier).load();
+        expect(c.read(dashboardViewModelProvider).todayIndex, 0);
+
+        // User selects a later day.
+        c.read(dashboardViewModelProvider.notifier).selectDay(5);
+        expect(c.read(dashboardViewModelProvider).selectedDayIndex, 5);
+
+        // Second load: pact repository now reports a different startDate so
+        // computedTodayIndex = 1.  The mismatch with state.todayIndex (0) must
+        // trigger a reset of selectedDayIndex.
+        await c.read(dashboardViewModelProvider.notifier).load();
+        final stateAfter = c.read(dashboardViewModelProvider);
+
+        expect(stateAfter.todayIndex, 1, reason: 'computedTodayIndex must be 1 on the second load');
+        expect(
+          stateAfter.selectedDayIndex,
+          1,
+          reason: 'selectedDayIndex must reset to new todayIndex when todayIndex changes between loads',
         );
       });
     });
