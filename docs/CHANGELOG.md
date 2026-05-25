@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.40.2] — 2026-05-25 (PR #107 merged)
+
+### Changed — Stabilise integration tests and migrate to iOS simulator (HAB-76)
+
+- [user-none] Integration test suite made platform-agnostic: `_swipeWizardForward` in `create_pact_flow_test.dart` now tries the iOS PageView key first, falling back to Android — tests run on both platforms without modification; `(Android)` suffix removed from all integration test group names
+- [user-none] `waitFor` default timeout increased from 5 s to 10 s; two fixed-time `pump(500 ms)` waits in `showup_to_pact_navigation_flow_test.dart` replaced with `pumpAndSettle()` for deterministic animation settling
+- [user-none] CI integration test job switched from Android emulator on `ubuntu-latest` to iOS simulator on `macos-latest` (Android emulator consistently hit a disk-space FATAL at AVD creation); job kept but disabled (`if: false`) — integration tests run locally as the pre-merge gate
+- [user-none] Workflow updated (AGENTS.md): integration tests authored after plan approval and before implementation; opportunistic changes during implementation require an integration test first; local integration test run required before invoking ship
+
+---
+
 ## [0.40.1] — 2026-05-24 (PR #106 merged)
 
 ### Fixed — Past showups not generated when app is opened after a long absence (HAB-85)
