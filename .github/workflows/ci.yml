@@ -325,6 +325,12 @@ jobs:
       # installed fresh. Caching ios/Pods or ~/Library/Caches/CocoaPods caused
       # stale state in earlier attempts.
 
+      # Refresh the CocoaPods specs index so pod install can resolve the
+      # current flutter_timezone pod version. The macOS runner's specs cache
+      # may be stale when a plugin bumps its podspec after the image was baked.
+      - name: Update CocoaPods specs
+        run: pod repo update
+
       - name: Generate ExportOptions.plist
         run: |
           cat > /tmp/ExportOptions.plist <<EOF
