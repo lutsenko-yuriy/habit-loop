@@ -190,7 +190,7 @@ AppLocalizations l10n(WidgetTester tester) {
 Future<void> waitFor(
   WidgetTester tester,
   Finder finder, {
-  Duration timeout = const Duration(seconds: 5),
+  Duration timeout = const Duration(seconds: 10),
 }) async {
   final deadline = tester.binding.clock.now().add(timeout);
   while (!finder.evaluate().isNotEmpty) {

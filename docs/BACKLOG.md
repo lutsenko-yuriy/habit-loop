@@ -9,7 +9,8 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ### Issues
 
-- **[HAB-55] EXC_BAD_ACCESS crash on iOS cold-start (JIT W^X protection)** — iOS cold-start crash due to JIT write-execute protection. (Bug)
+_(none)_
+
 ### Remaining work
 
 _(none)_
