@@ -140,7 +140,7 @@ final class FlutterLocalNotificationService implements NotificationService {
       // Initialise timezone database (loads all IANA timezone data into memory).
       tz_data.initializeTimeZones();
       final localTz = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(localTz));
+      tz.setLocalLocation(tz.getLocation(localTz.identifier));
 
       const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
       // Register the iOS notification category for showup reminders with the
