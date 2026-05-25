@@ -18,6 +18,24 @@ import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/crashlytics/fake_crashlytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
 
+/// Returns [_firstPacts] on the first [getAllPacts] call; [_laterPacts] on every
+/// subsequent call.  Used to simulate a [computedTodayIndex] change between
+/// dashboard loads without needing to mutate the test clock.
+class _SecondLoadPactRepository extends InMemoryPactRepository {
+  _SecondLoadPactRepository({required List<Pact> first, required List<Pact> later})
+      : _laterPacts = later,
+        super(first);
+
+  final List<Pact> _laterPacts;
+  int _callCount = 0;
+
+  @override
+  Future<List<Pact>> getAllPacts() async {
+    _callCount++;
+    return _callCount == 1 ? await super.getAllPacts() : List<Pact>.from(_laterPacts);
+  }
+}
+
 /// Wraps [InMemoryShowupRepository] and counts calls to [getShowupsForPact].
 class _CountingShowupRepository extends InMemoryShowupRepository {
   _CountingShowupRepository([super.initialShowups]);
@@ -1148,6 +1166,72 @@ void main() {
       // Error must be recorded to Crashlytics.
       expect(crashlytics.recordedErrors, isNotEmpty,
           reason: 'persistShowupStatus error must be forwarded to CrashlyticsService.recordError');
+    });
+  });
+
+  group('selectedDayIndex preservation across load() calls', () {
+    test('selectedDayIndex is preserved when load() is called again on the same date', () async {
+      // Arrange: pact started well before today so todayIndex is already 3 on
+      // the first load and will remain 3 on the second load.
+      final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
+      container = createContainer(pacts: [pact]);
+
+      // First load — selectedDayIndex defaults to todayIndex (3).
+      await container.read(dashboardViewModelProvider.notifier).load();
+      expect(container.read(dashboardViewModelProvider).selectedDayIndex, 3);
+
+      // User navigates to a different day.
+      container.read(dashboardViewModelProvider.notifier).selectDay(4);
+      expect(container.read(dashboardViewModelProvider).selectedDayIndex, 4);
+
+      // Simulate returning from showup detail (triggers another load on the same date).
+      await container.read(dashboardViewModelProvider.notifier).load();
+
+      // Selection must be preserved — the bug was that it reset to 3 (today).
+      expect(
+        container.read(dashboardViewModelProvider).selectedDayIndex,
+        4,
+        reason: 'load() must not reset selectedDayIndex when todayIndex has not changed',
+      );
+    });
+
+    test('selectedDayIndex resets to new todayIndex when todayIndex changes between loads', () async {
+      // Day 1: pact starts today → todayIndex = 0.
+      final pactDay1 = _dailyPact(id: 'p1', startDate: today);
+      // Day 2 (simulated via _SecondLoadPactRepository): pact started one day
+      // earlier → todayIndex = 1, so the strip shifts and selection should reset.
+      final pactDay2 = _dailyPact(id: 'p1', startDate: today.subtract(const Duration(days: 1)));
+      final switchingPactRepo = _SecondLoadPactRepository(first: [pactDay1], later: [pactDay2]);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(switchingPactRepo, showupRepo);
+      final c = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(switchingPactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(today),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      // First load: todayIndex = 0 (pact starts today).
+      await c.read(dashboardViewModelProvider.notifier).load();
+      expect(c.read(dashboardViewModelProvider).todayIndex, 0);
+
+      // User navigates away from today.
+      c.read(dashboardViewModelProvider.notifier).selectDay(5);
+      expect(c.read(dashboardViewModelProvider).selectedDayIndex, 5);
+
+      // Second load: _SecondLoadPactRepository now returns pactDay2 so
+      // computedTodayIndex becomes 1.  selectedDayIndex must reset to 1.
+      await c.read(dashboardViewModelProvider.notifier).load();
+      final stateAfter = c.read(dashboardViewModelProvider);
+      expect(stateAfter.todayIndex, 1, reason: 'computedTodayIndex must be 1 on the second load');
+      expect(
+        stateAfter.selectedDayIndex,
+        1,
+        reason: 'selectedDayIndex must reset to new todayIndex when todayIndex changes between loads',
+      );
     });
   });
 }

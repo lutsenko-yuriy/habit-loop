@@ -294,12 +294,21 @@ class DashboardViewModel extends Notifier<DashboardState> {
 
     final reminderOffsetByPactId = {for (final p in allPacts) p.id: p.reminderOffset};
 
+    // Preserve the user's selected day when this is a same-date reload (e.g.
+    // returning from showup detail).  Reset to today only when:
+    //   • this is the first load (calendarDays is empty — no selection exists), or
+    //   • todayIndex changed — the date crossed midnight and the strip shifted.
+    // In both reset cases, computedTodayIndex is the correct target.
+    final newSelectedDayIndex = (state.calendarDays.isNotEmpty && computedTodayIndex == state.todayIndex)
+        ? state.selectedDayIndex
+        : computedTodayIndex;
+
     state = state.copyWith(
       calendarDays: days,
       pactNames: pactNames,
       isLoading: false,
       todayIndex: computedTodayIndex,
-      selectedDayIndex: computedTodayIndex,
+      selectedDayIndex: newSelectedDayIndex,
       reminderOffsetByPactId: reminderOffsetByPactId,
     );
   }

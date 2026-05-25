@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.40.5] — 2026-05-25 (PR #110 merged)
+
+### Fixed — Calendar strip selected day resets to today on navigation return (HAB-87)
+
+- Selecting a day other than today in the dashboard calendar strip and then navigating to a showup detail and back no longer resets the selection to today
+- `DashboardViewModel._loadInner()` now preserves `selectedDayIndex` when reloading on the same calendar date; it only resets to today on the first load or when the date crosses midnight and `todayIndex` shifts
+
+---
+
 ## [0.40.4] — 2026-05-25 (PR #109 merged)
 
 ### Fixed — CI builds broken by builtInKotlin migration
