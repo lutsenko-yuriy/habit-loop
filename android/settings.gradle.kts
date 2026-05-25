@@ -24,6 +24,11 @@ plugins {
     id("com.google.gms.google-services") version("4.4.2") apply false
     id("com.google.firebase.crashlytics") version("3.0.2") apply false
     // END: FlutterFire Configuration
+    // Pin Kotlin version for Flutter's built-in Kotlin management (builtInKotlin=true).
+    // Flutter 3.44's built-in Kotlin defaults to 2.0.0, but Firebase packages compiled
+    // with Kotlin 2.2.0 are incompatible with 2.0.0. Declaring the version here with
+    // apply false pins it to 2.2.20 without the app applying KGP itself.
+    id("org.jetbrains.kotlin.android") version "2.2.20" apply false
 }
 
 include(":app")
