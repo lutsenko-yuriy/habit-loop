@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.40.4] — 2026-05-25 (PR #109 merged)
+
+### Fixed — CI builds broken by builtInKotlin migration
+
+- Android: pin `org.jetbrains.kotlin.android version 2.2.20 apply false` in `settings.gradle.kts` — Flutter 3.44's built-in Kotlin defaults to 2.0.0 but Firebase 12.4.1 requires Kotlin 2.2.0; the version declaration overrides the default without re-applying the plugin
+- iOS: add `pod repo update` step before `flutter build ios` in CI — macOS runner's CocoaPods specs index was stale, could not resolve `flutter_timezone` 5.0.2
+
+---
+
 ## [0.40.3] — 2026-05-25 (PR #108 merged)
 
 ### Fixed — Migrate Android build to Flutter built-in Kotlin (HAB-86)
