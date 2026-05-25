@@ -116,16 +116,12 @@ jobs:
           # the second covers emulator infrastructure flakiness (KVM slowdowns,
           # GC pauses, cold-JIT warmup on first launch). If both attempts fail,
           # the step exits non-zero and the job fails normally.
-          script: |
-            n=0
-            until flutter test integration_test/; do
-              n=$((n+1))
-              if [ $n -ge 2 ]; then
-                echo "Integration tests failed after $((n+1)) attempts." >&2
-                exit 1
-              fi
-              echo "Attempt $n failed — retrying integration tests..."
-            done
+          #
+          # Single-line ||: android-emulator-runner@v2 executes each line of the
+          # script block with '/usr/bin/sh -c <line>' individually, so multiline
+          # shell constructs (until/do/done) fail with a syntax error. The ||
+          # form is a single line and works correctly.
+          script: flutter test integration_test/ || flutter test integration_test/
 
   # ── Resolve build number (push to main only) ─────────────────────────────
   resolve-version:
