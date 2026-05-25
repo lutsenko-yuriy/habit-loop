@@ -34,6 +34,15 @@ abstract class ShowupRepository {
   /// Throws [ArgumentError] if no showup with the given id exists.
   Future<void> updateShowup(Showup showup);
 
+  /// Returns the maximum [Showup.scheduledAt] across all persisted showups
+  /// for [pactId], or null if no showups have been persisted for that pact.
+  ///
+  /// Used by [DashboardViewModel] to detect absence gaps: if the latest
+  /// scheduled date is more than one day before today the app was not opened
+  /// for an extended period, and past showups need to be generated and
+  /// auto-failed to keep the pact history accurate.
+  Future<DateTime?> getLatestScheduledAtForPact(String pactId);
+
   /// Returns the number of showups persisted for the given [pactId].
   ///
   /// Returns 0 if no showups exist for that pact.

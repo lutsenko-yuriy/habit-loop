@@ -934,6 +934,163 @@ void main() {
           reason: 'Concurrent load() calls must not fire duplicate ShowupAutoFailedEvents');
     });
 
+    // ---------------------------------------------------------------------------
+    // Gap-fill sweep tests
+    // ---------------------------------------------------------------------------
+    //
+    // The gap-fill sweep runs BEFORE the forward generation pass. It detects
+    // absence gaps by querying the latest persisted showup date for each pact.
+    // If the latest date is more than 1 day before today, showups are generated
+    // for the gap window and immediately marked as failed.
+    //
+    // today = DateTime(2026, 3, 29)
+    // ---------------------------------------------------------------------------
+
+    group('gap-fill sweep', () {
+      test('generates and fails showups for a pact with no prior showups', () async {
+        // Pact started 4 days ago; app was never opened before → no showups
+        // in the repo.  After load, showups for [3/25, 3/28] must be generated
+        // and immediately failed.
+        final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 25));
+        final showupRepo = InMemoryShowupRepository();
+        final pactRepo = InMemoryPactRepository([pact]);
+        final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+        final c = ProviderContainer(
+          overrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            pactTransactionServiceProvider.overrideWithValue(txService),
+            todayProvider.overrideWithValue(today),
+          ],
+        );
+        addTearDown(c.dispose);
+
+        await c.read(dashboardViewModelProvider.notifier).load();
+
+        final allShowups = await showupRepo.getShowupsForPact('p1');
+        final gapShowups = allShowups.where((s) => s.scheduledAt.isBefore(today)).toList();
+        expect(gapShowups, isNotEmpty, reason: 'Gap-fill must generate past-due showups');
+        expect(
+          gapShowups.every((s) => s.status == ShowupStatus.failed),
+          isTrue,
+          reason: 'Every gap-filled showup must be immediately failed',
+        );
+      });
+
+      test('skips gap-fill for pacts that start today', () async {
+        // A brand-new pact starting today has no gap — only forward generation
+        // should run.
+        final pact = _dailyPact(id: 'p1', startDate: today);
+        final showupRepo = InMemoryShowupRepository();
+        final pactRepo = InMemoryPactRepository([pact]);
+        final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+        final c = ProviderContainer(
+          overrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            pactTransactionServiceProvider.overrideWithValue(txService),
+            todayProvider.overrideWithValue(today),
+          ],
+        );
+        addTearDown(c.dispose);
+
+        await c.read(dashboardViewModelProvider.notifier).load();
+
+        final allShowups = await showupRepo.getShowupsForPact('p1');
+        final beforeToday = allShowups.where((s) => s.scheduledAt.isBefore(today)).toList();
+        expect(beforeToday, isEmpty, reason: 'Gap fill must not generate showups before the pact start date');
+      });
+
+      test('fires ShowupAutoFailedEvent for each gap-filled showup', () async {
+        final analytics = FakeAnalyticsService();
+        // Pact started 2 days ago → gap = [3/27, 3/28] = 2 showups.
+        final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 27));
+        final showupRepo = InMemoryShowupRepository();
+        final pactRepo = InMemoryPactRepository([pact]);
+        final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+        final c = ProviderContainer(
+          overrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            pactTransactionServiceProvider.overrideWithValue(txService),
+            todayProvider.overrideWithValue(today),
+            analyticsServiceProvider.overrideWithValue(analytics),
+          ],
+        );
+        addTearDown(c.dispose);
+
+        await c.read(dashboardViewModelProvider.notifier).load();
+        await Future<void>.delayed(Duration.zero);
+
+        final events = analytics.loggedEvents.whereType<ShowupAutoFailedEvent>().toList();
+        // At least one event per gap day (3/27 and 3/28).
+        expect(events.length, greaterThanOrEqualTo(2),
+            reason: 'ShowupAutoFailedEvent must fire for each gap-filled showup');
+        expect(events.every((e) => e.pactId == 'p1'), isTrue);
+      });
+
+      test('gap-fill is idempotent — second load produces no additional showups', () async {
+        final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 25));
+        final showupRepo = InMemoryShowupRepository();
+        final pactRepo = InMemoryPactRepository([pact]);
+        final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+        final c = ProviderContainer(
+          overrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            pactTransactionServiceProvider.overrideWithValue(txService),
+            todayProvider.overrideWithValue(today),
+          ],
+        );
+        addTearDown(c.dispose);
+
+        await c.read(dashboardViewModelProvider.notifier).load();
+        final countAfterFirst = (await showupRepo.getShowupsForPact('p1')).length;
+
+        await c.read(dashboardViewModelProvider.notifier).load();
+        final countAfterSecond = (await showupRepo.getShowupsForPact('p1')).length;
+
+        expect(countAfterSecond, countAfterFirst,
+            reason: 'Gap fill must be idempotent — a second load must not add new showups');
+      });
+
+      test('gap-filled showups appear as failed in the calendar strip', () async {
+        // Pact started 3 days ago (3/26); todayIndex = min(3,3) = 3.
+        // Strip: [3/26..4/1].  Gap days [3/26, 3/28] fall inside the strip.
+        final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 26));
+        final showupRepo = InMemoryShowupRepository();
+        final pactRepo = InMemoryPactRepository([pact]);
+        final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+        final c = ProviderContainer(
+          overrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            pactTransactionServiceProvider.overrideWithValue(txService),
+            todayProvider.overrideWithValue(today),
+          ],
+        );
+        addTearDown(c.dispose);
+
+        await c.read(dashboardViewModelProvider.notifier).load();
+        final state = c.read(dashboardViewModelProvider);
+
+        // calendarDays[0] = 3/26 (the first gap day).
+        expect(state.calendarDays[0].date, DateTime(2026, 3, 26));
+        final mar26Showups = state.calendarDays[0].showups;
+        expect(mar26Showups, isNotEmpty, reason: 'Gap-fill must generate the 3/26 showup');
+        expect(
+          mar26Showups.every((s) => s.status == ShowupStatus.failed),
+          isTrue,
+          reason: 'Gap-filled showup on 3/26 must appear as failed in the strip',
+        );
+      });
+    });
+
     test('per-showup error: sweep continues past a failing showup and fails the rest', () async {
       // When persistShowupStatus throws for one showup, the sweep must continue
       // and auto-fail the remaining eligible showups.

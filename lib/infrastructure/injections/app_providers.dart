@@ -49,6 +49,7 @@ import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
+import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
 import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -286,6 +287,17 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
 final firestoreClientProvider = Provider<FirestoreClient>(
   (ref) => NoopFirestoreClient(),
 );
+
+/// Provides [ShowupGenerationService] backed by [showupRepositoryProvider].
+///
+/// Used by [DashboardViewModel] to lazily generate showups on each load —
+/// both the forward window (today + 10 days) and the back-fill gap window
+/// (absence period since the last persisted showup). Injected via the
+/// provider so tests can supply their own [ShowupRepository] override without
+/// constructing the service directly.
+final showupGenerationServiceProvider = Provider<ShowupGenerationService>((ref) {
+  return ShowupGenerationService(repository: ref.watch(showupRepositoryProvider));
+});
 
 /// Provides [ReminderSchedulingService] as a singleton.
 ///
