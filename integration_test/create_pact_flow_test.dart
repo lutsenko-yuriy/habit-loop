@@ -17,8 +17,14 @@ import 'harness.dart';
 /// area) so that interactive widgets lower on the page — in particular the
 /// [Slider] on the showup-duration step — cannot intercept the horizontal
 /// gesture and win the gesture arena before the PageView does.
+///
+/// Tries the iOS key first, falls back to the Android key, so the same test
+/// runs on both platforms without modification.
 Future<void> _swipeWizardForward(WidgetTester tester) async {
-  final rect = tester.getRect(find.byKey(const Key('pact-creation-pageview-android')));
+  const iosKey = Key('pact-creation-pageview-ios');
+  const androidKey = Key('pact-creation-pageview-android');
+  final key = find.byKey(iosKey).evaluate().isNotEmpty ? iosKey : androidKey;
+  final rect = tester.getRect(find.byKey(key));
   // Y = top + 40: safely inside the title text area on every wizard page.
   await tester.flingFrom(Offset(rect.right - 10, rect.top + 40), const Offset(-400, 0), 1000);
   await tester.pumpAndSettle();
@@ -28,7 +34,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
-  group('Create pact flow (Android)', () {
+  group('Create pact flow', () {
     late AppHarness h;
     tearDown(() => h.dispose());
 

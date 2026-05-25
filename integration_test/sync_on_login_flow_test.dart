@@ -171,7 +171,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
-  group('Sync on login flow (Android)', () {
+  group('Sync on login flow', () {
     late AppHarness h;
     tearDown(() => h.dispose());
 

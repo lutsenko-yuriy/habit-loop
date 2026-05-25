@@ -18,7 +18,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
-  group('Language change flow (Android)', () {
+  group('Language change flow', () {
     late AppHarness h;
     tearDown(() => h.dispose());
 
