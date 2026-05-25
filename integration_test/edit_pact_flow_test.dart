@@ -205,8 +205,12 @@ void main() {
 
         // ── 8. Tap "Save Changes" ────────────────────────────────────────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
-        // Do NOT pumpAndSettle: the save fires async ops and pops the route,
-        // which can leave a loading indicator in the pact detail. Use waitFor.
+        // Two explicit pumps let the Dart microtask queue drain (save starts,
+        // route pop fires) before waitFor begins its polling loop.  Without
+        // them the first waitFor check can race against the isSaving transition
+        // and time out before PactDetailScreen finishes reloading.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
         await waitFor(tester, find.text('Morning Run'));
 
         // ── 9. Pact detail shows the new name; old name is gone ──────────
@@ -296,6 +300,8 @@ void main() {
 
         // ── 8. Tap "Save Changes" — wizard pops back to pact detail ──────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
         await waitFor(tester, find.text('Yoga'));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
 
