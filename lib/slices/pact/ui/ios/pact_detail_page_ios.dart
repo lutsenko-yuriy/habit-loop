@@ -33,6 +33,7 @@ class PactDetailPageIos extends StatelessWidget {
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         middle: Text(l10n.pactDetailTitle),
         trailing: isActive && onEditPact != null
             ? CupertinoButton(

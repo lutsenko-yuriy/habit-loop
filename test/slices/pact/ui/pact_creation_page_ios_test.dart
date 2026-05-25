@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show MaterialApp, Theme;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -59,5 +60,43 @@ void main() {
     );
     final currentDecoration = currentSegment.decoration! as BoxDecoration;
     expect(currentDecoration.color, HabitLoopColors.primary);
+  });
+
+  testWidgets('iOS pact creation nav bar has explicit surface backgroundColor to prevent white-on-scroll',
+      (tester) async {
+    final state = PactCreationState(today: DateTime(2026, 3, 30));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: HabitLoopTheme.materialTheme,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: PactCreationPageIos(
+          state: state,
+          onHabitNameChanged: (_) {},
+          onStartDateChanged: (_) {},
+          onEndDateChanged: (_) {},
+          onShowupDurationChanged: (_) {},
+          onScheduleTypeChanged: (_) {},
+          onScheduleChanged: (_) {},
+          onReminderOffsetChanged: (_) {},
+          onClearReminder: () {},
+          onPageChanged: (_) {},
+          onJumpToStep: (_) {},
+          onClose: () {},
+          onSubmit: () {},
+        ),
+      ),
+    );
+
+    final navBar = tester.widget<CupertinoNavigationBar>(find.byType(CupertinoNavigationBar));
+    final theme = Theme.of(tester.element(find.byType(PactCreationPageIos)));
+
+    expect(navBar.backgroundColor, theme.colorScheme.surface);
   });
 }
