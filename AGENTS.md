@@ -67,9 +67,10 @@ Use the Flutter binary path from `CLAUDE.local.md` (it is not on the default she
 - **Analyze:** `flutter analyze`
 - **Run all tests:** `flutter test`
 - **Run a single test file:** `flutter test test/path/to/test_file.dart`
+- **Run integration tests:** `flutter test integration_test/ -d <device-id>` (requires a running simulator or physical device — start one first with `/ios` or `/android`)
 - **Get dependencies:** `flutter pub get`
 - **Regenerate localizations:** `flutter gen-l10n` — **must be run after editing any `lib/l10n/*.arb` file**; the generated `lib/l10n/generated/` files are in `.gitignore` and are not committed. CI runs this step automatically before tests and builds.
-- **Format:** `dart format -l 120 lib/ test/`
+- **Format:** `dart format -l 120 lib/ test/ integration_test/`
 
 ## Code style
 
@@ -151,25 +152,31 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
    ```
    If the branch already exists, rebase it onto `origin/main` before writing any code (`git rebase origin/main`). This ensures the PR diff contains only the new work.
    **Before merging**, always rebase the branch onto the latest `origin/main` again (`git fetch origin && git rebase origin/main`) so the branch is up to date and the merge lands cleanly on the current tip.
-4. For features with user-visible screens or interactions: draft widget tests before writing production code:
+4. Write integration tests that describe the end-to-end behaviour being added or changed:
+   - For any feature with user-visible screens or flows, create one or more test files in `integration_test/` using `AppHarness` (see `integration_test/harness.dart`).
+   - Tests should cover the happy path and the most critical failure paths (e.g. missing data, deleted entities, navigation back-stack correctness).
+   - Present all new integration test files to the user and wait for approval before writing any production code.
+   - Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
+5. For features with user-visible screens or interactions: draft widget tests before writing production code:
    - Create new widget tests covering each new screen and key user flow (swiping, tapping, navigation, locale changes, auto-advance, etc.).
    - Update any existing widget tests that the new screens or UI changes will affect.
    - Present all new and updated widget test files to the user and wait for approval.
-   - Do not continue to step 5 until the user approves the widget tests.
-5. Write failing unit tests that describe the expected business logic behaviour.
-6. Implement the minimum code to make the tests pass.
-7. Refactor if needed.
-8. Run `flutter test` and `flutter analyze` — fix **all** test failures and analyzer warnings/errors before proceeding. A clean analyzer output (`No issues found`) is required before committing; do not leave warnings unresolved on the assumption they are pre-existing.
-9. Apply formatting in a dedicated commit **before** the functional commit: run `dart format -l 120 lib/ test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
-10. Update documentation if affected by the changes:
+   - Do not continue to step 6 until the user approves the widget tests.
+6. Write failing unit tests that describe the expected business logic behaviour.
+7. Implement the minimum code to make the tests pass.
+   **Opportunistic changes during implementation:** If an idea arises to modify existing or in-flight functionality (a bug fix, an edge-case handler, a UX improvement), write the integration test for that change first before touching production code. Never modify observable behaviour without a covering integration test.
+8. Refactor if needed.
+9. Run `flutter test` and `flutter analyze` — fix **all** test failures and analyzer warnings/errors before proceeding. A clean analyzer output (`No issues found`) is required before committing; do not leave warnings unresolved on the assumption they are pre-existing.
+10. Apply formatting in a dedicated commit **before** the functional commit: run `dart format -l 120 lib/ test/ integration_test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
+11. Update documentation if affected by the changes:
     - `CLAUDE.md` — architecture, conventions, or workflow changed
     - `@docs/PRODUCT_SPEC.md` — functionality added, removed, or changed
     - `@docs/ARCHITECTURE.md` — code structure or dependencies changed
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
-11. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
+12. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
     **Release note tagging:** Every CHANGELOG bullet must carry either `- [user] <plain English description>` (for user-visible changes) or `- [user-none]` (for internal-only PRs). This controls what `scripts/generate_release_notes.py` publishes to Firebase App Distribution — see `skills/manage/ship/SKILL.md` step 2 for the full convention. Never commit a CHANGELOG entry that lacks one of these markers.
-12. Commit all changes with a descriptive message.
-13. Push to the remote and open a PR — all in parallel:
+13. Commit all changes with a descriptive message.
+14. Push to the remote and open a PR — all in parallel:
     - Push the branch to the remote.
     - Open a PR.
     - Invoke both review skills simultaneously once the PR is open (they are independent — launch them simultaneously):
@@ -177,14 +184,18 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
       - `audit` for runtime/launch/migration review: `Invoke the audit skill for PR #<number>`.
     - Move the Linear ticket to **In Review**.
     - Inform the user of the PR URL.
-14. Remind the user to compact the context after each commit to keep the conversation lean.
-15. When the user approves the PR, invoke the `ship` skill **before merging**:
+15. Remind the user to compact the context after each commit to keep the conversation lean.
+16. When the user approves the PR, run the full integration test suite locally before invoking ship:
+    ```
+    flutter test integration_test/ -d <device-id>
+    ```
+    All integration tests must be green. Do not invoke `ship` if any integration test is failing. Once they pass, invoke the `ship` skill:
     ```
     Invoke the ship skill for PR #<number>
     ```
     The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
-16. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
-17. A new ticket may be picked up while the previous one is In QA.
+17. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
+18. A new ticket may be picked up while the previous one is In QA.
 
 ## Experiments
 

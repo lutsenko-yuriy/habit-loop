@@ -22,7 +22,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
-  group('Onboarding carousel flow (Android)', () {
+  group('Onboarding carousel flow', () {
     late AppHarness h;
     tearDown(() => h.dispose());
 

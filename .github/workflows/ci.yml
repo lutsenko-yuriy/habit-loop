@@ -56,63 +56,58 @@ jobs:
       - run: flutter analyze
       - run: flutter test
 
-  # ── Integration tests on Android emulator (runs on push and PRs) ─────────
-  test-android-integration:
+  # ── Integration tests on iOS Simulator ───────────────────────────────────
+  # Disabled — integration tests are run locally before merging (see AGENTS.md
+  # workflow step 16). Re-enable with `if: needs.check-skip.outputs.should_skip != 'true'`
+  # if CI coverage is desired in the future.
+  test-ios-integration:
     needs: check-skip
-    if: needs.check-skip.outputs.should_skip != 'true'
-    runs-on: ubuntu-latest
+    if: false
+    runs-on: macos-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
       - name: Restore Firebase config files
         run: |
-          echo "$FIREBASE_OPTIONS_DART" | base64 --decode > lib/firebase_options.dart
-          echo "$GOOGLE_SERVICES_JSON"  | base64 --decode > android/app/google-services.json
+          echo "$FIREBASE_OPTIONS_DART"     | base64 --decode > lib/firebase_options.dart
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
         env:
-          FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
-          GOOGLE_SERVICES_JSON:  ${{ secrets.GOOGLE_SERVICES_JSON }}
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+          FIREBASE_OPTIONS_DART:       ${{ secrets.FIREBASE_OPTIONS_DART }}
+          GOOGLE_SERVICE_INFO_PLIST:   ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
 
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
 
+      # Keep CocoaPods as the plugin installer — same reason as build-ios.
+      - run: flutter config --no-enable-swift-package-manager
       - run: flutter pub get
       - run: flutter gen-l10n
 
-      # Cache Gradle wrappers and downloaded dependencies so the Gradle phase
-      # (the dominant cost in the integration-test build) takes ~30 s on a
-      # cache hit instead of 3-5 min on a cold run.
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Enable KVM group perms
+      - name: Boot iOS Simulator
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
+          # Pick the first available iPhone simulator and boot it.
+          UDID=$(xcrun simctl list devices available -j \
+            | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          for runtime, devices in data['devices'].items():
+              if 'iOS' in runtime:
+                  for d in devices:
+                      if 'iPhone' in d['name'] and d['isAvailable']:
+                          print(d['udid'])
+                          sys.exit(0)
+          sys.exit(1)
+          ")
+          xcrun simctl boot "$UDID"
+          echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
 
-      - name: Run Android integration tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 33
-          target: google_apis
-          arch: x86_64
-          profile: pixel_5
-          disable-animations: true
-          script: flutter test integration_test/
+      - name: Run iOS integration tests
+        # Two-attempt retry covers transient simulator startup flakiness.
+        run: |
+          flutter test integration_test/ -d "$SIMULATOR_UDID" \
+            || flutter test integration_test/ -d "$SIMULATOR_UDID"
 
   # ── Resolve build number (push to main only) ─────────────────────────────
   resolve-version:

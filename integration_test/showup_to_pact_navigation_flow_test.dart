@@ -95,16 +95,22 @@ void main() {
         // alive below pact detail in the navigator stack) — don't assert it's
         // gone. What matters is that pact detail content is visible.
 
-        // Let the page-transition animation fully complete before navigating
-        // back; otherwise the back button may not yet be in the tree.
-        await tester.pump(const Duration(milliseconds: 500));
+        // Let the page-transition slide-in animation fully complete before
+        // navigating back; otherwise the back button may not yet be in the
+        // tree. pumpAndSettle() is safe here — the pact detail VM has already
+        // loaded (confirmed by waitFor(stopPact) above), so no spinner is running.
+        await tester.pumpAndSettle();
 
         // ── 6. Navigate back → return to showup detail ───────────────────
         await tester.pageBack();
         await waitFor(tester, find.text(strings.markDone));
         expect(find.text(strings.markDone), findsOneWidget);
-        // Pact detail was popped from the stack — stopPact should be gone.
-        await tester.pump(const Duration(milliseconds: 500));
+        // Pact detail was popped from the stack — wait for its exit animation
+        // to complete before asserting stopPact is gone.
+        // pumpAndSettle() is safe: the showup detail VM was never disposed
+        // (its route remained in the stack while pact detail was on top), so
+        // no reload spinner is running at this point.
+        await tester.pumpAndSettle();
         expect(find.text(strings.stopPact), findsNothing);
 
         // ── 7. Navigate back again → return to dashboard ─────────────────

@@ -23,7 +23,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
-  group('Mark showup done flow (Android)', () {
+  group('Mark showup done flow', () {
     late AppHarness h;
     tearDown(() => h.dispose());
 
