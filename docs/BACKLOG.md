@@ -9,7 +9,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ### Issues
 
-- **[HAB-86] Migrate Android build to Flutter Built-in Kotlin (remove explicit KGP)** — Flutter 3.44.0 warns about duplicate KGP registration; will become a build error in a future release. (Bug)
+_(none)_
 
 ### Remaining work
 

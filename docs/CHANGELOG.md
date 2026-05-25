@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.40.3] — 2026-05-25 (PR #108 merged)
+
+### Fixed — Migrate Android build to Flutter built-in Kotlin (HAB-86)
+
+- Set `android.builtInKotlin=true` in `gradle.properties` to opt in to Flutter 3.44's built-in KGP management; removes the duplicate-registration warning that will become a build error in a future Flutter release
+- Removed explicit `id("kotlin-android")` from `android/app/build.gradle.kts` and the KGP version declaration from `android/settings.gradle.kts`
+- Bumped `flutter_timezone ^3.0.0 → ^5.0.0`; adapted the one call site: `getLocalTimezone()` now returns `TimezoneInfo` — IANA string accessed via `.identifier`
+- Package upgrades: firebase_analytics 12.4.1, firebase_remote_config 6.5.1, firebase_auth 6.5.1, firebase_core 4.9.0, google_sign_in_android 7.2.11, cloud_firestore 6.4.1
+- iOS Firebase kept on CocoaPods (SPM migration deferred to a separate ticket)
+
+---
+
 ## [0.40.2] — 2026-05-25 (PR #107 merged)
 
 ### Changed — Stabilise integration tests and migrate to iOS simulator (HAB-76)
