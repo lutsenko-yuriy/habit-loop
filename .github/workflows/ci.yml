@@ -65,6 +65,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Free disk space for emulator
+        run: |
+          # The API 33 google_apis userdata partition needs ~7.4 GB.
+          # The ubuntu-latest runner pre-installs the Android NDK (~4 GB) and
+          # .NET SDK (~2 GB) which we never use — removing them frees enough
+          # space for the AVD to boot.
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /usr/share/dotnet
+          df -h
+
       - name: Restore Firebase config files
         run: |
           echo "$FIREBASE_OPTIONS_DART" | base64 --decode > lib/firebase_options.dart
