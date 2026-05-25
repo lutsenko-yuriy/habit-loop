@@ -56,10 +56,13 @@ jobs:
       - run: flutter analyze
       - run: flutter test
 
-  # ── Integration tests on iOS Simulator (runs on push and PRs) ───────────
+  # ── Integration tests on iOS Simulator ───────────────────────────────────
+  # Disabled — integration tests are run locally before merging (see AGENTS.md
+  # workflow step 16). Re-enable with `if: needs.check-skip.outputs.should_skip != 'true'`
+  # if CI coverage is desired in the future.
   test-ios-integration:
     needs: check-skip
-    if: needs.check-skip.outputs.should_skip != 'true'
+    if: false
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
