@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.40.6] — 2026-05-26 (PR #111 merged)
+
+### Fixed — iOS nav bar turns white on scroll in detail and wizard screens (HAB-88)
+
+- `CupertinoNavigationBar` now keeps the mint surface colour when content scrolls underneath it on pact detail, showup detail, pact creation, and pact edit screens
+- Root cause: all four screens set `backgroundColor` on `CupertinoPageScaffold` but not on `CupertinoNavigationBar`; Cupertino fell back to `CupertinoColors.systemBackground` (white) on scroll
+- Fix: added `backgroundColor: Theme.of(context).colorScheme.surface` to the `CupertinoNavigationBar` in all four affected files
+- 7 new widget tests verify the nav bar and scaffold background colors match the theme surface color
+
+---
+
 ## [0.40.5] — 2026-05-25 (PR #110 merged)
 
 ### Fixed — Calendar strip selected day resets to today on navigation return (HAB-87)
