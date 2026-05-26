@@ -151,6 +151,7 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         leading: CupertinoButton(
           key: const Key('pact-creation-close-button'),
           padding: EdgeInsets.zero,

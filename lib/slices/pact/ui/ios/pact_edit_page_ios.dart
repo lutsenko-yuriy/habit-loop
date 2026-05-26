@@ -142,6 +142,7 @@ class _PactEditPageIosState extends State<PactEditPageIos> {
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         leading: CupertinoButton(
           key: const Key('pact-edit-close-button'),
           padding: EdgeInsets.zero,

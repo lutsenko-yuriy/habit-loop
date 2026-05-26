@@ -64,6 +64,7 @@ class _ShowupDetailPageIosState extends State<ShowupDetailPageIos> {
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         middle: Text(l10n.showupDetailTitle),
       ),
       child: SafeArea(
