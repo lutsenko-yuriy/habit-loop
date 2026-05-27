@@ -35,6 +35,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - name: Lint CHANGELOG markers
+        run: |
+          # Determine the last published version from git tags so only new
+          # entries are checked.  Falls back to 0.0.0 on a fresh repo (no tags).
+          LAST_VERSION=$(git tag --list 'version-*' \
+            | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
+            | sort -V | tail -1)
+          LAST_VERSION=${LAST_VERSION:-0.0.0}
+          echo "Checking CHANGELOG entries newer than $LAST_VERSION"
+          python3 scripts/lint_changelog.py docs/CHANGELOG.md "$LAST_VERSION"
 
       - name: Restore Firebase Dart config
         run: echo "$FIREBASE_OPTIONS_DART" | base64 --decode > lib/firebase_options.dart

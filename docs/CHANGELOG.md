@@ -4,6 +4,23 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.41.0] — 2026-05-27 (PR #113 merged)
+
+### Added — Debug Remote Config override layer: service layer (HAB-89 WU1)
+
+- [user-none]
+- [non-user] `RemoteConfigOverrideStore` abstract interface (`lib/infrastructure/remote_config/contracts/`) — sync reads, async writes; `getOverride(key)` returns `null` when no override is set; `setOverride`/`clearOverride`/`getAllOverrides` round out the API
+- [non-user] `NoopRemoteConfigOverrideStore` — const no-op default; wired as `remoteConfigOverrideStoreProvider` in tests and release builds
+- [non-user] `SharedPreferencesRemoteConfigOverrideStore` — persists overrides under `rc_override_<key>` prefix; synchronous reads via SharedPreferences in-memory cache; async writes via `prefs.setString`/`prefs.remove`
+- [non-user] `OverridableRemoteConfigService` — wraps any inner `RemoteConfigService` + an `RemoteConfigOverrideStore`; checks the store first on every `getInt`/`getBool`/`getString`/`getDouble` call; falls back to the inner service when no override is set or the stored string can't be parsed to the target type
+- [non-user] `remoteConfigOverrideStoreProvider` added to `app_providers.dart`; defaults to `NoopRemoteConfigOverrideStore`; overridden in debug/profile builds via `AppContainer.overrides`
+- [non-user] `AppContainer.overrides` gains optional `remoteConfigOverrideStore` parameter
+- [non-user] `main.dart` debug/profile path: creates `SharedPreferencesRemoteConfigOverrideStore(prefs)` and `OverridableRemoteConfigService(inner: NoopRemoteConfigService(), store: store)`; wires both via `AppContainer.overrides`; release path unchanged (Firebase Remote Config directly)
+- [non-user] `docs/ARCHITECTURE.md` updated: `remote_config/` directory tree expanded with the four new files; Remote Config infrastructure paragraph updated to describe the debug override layer
+- [non-user] 63 new tests: `noop_remote_config_override_store_test.dart` (5), `shared_preferences_remote_config_override_store_test.dart` (10), `overridable_remote_config_service_test.dart` (15), `app_container_test.dart` +2; `integration_test/remote_config_overrides_flow_test.dart` (6); 1385 tests passing, analyzer clean
+
+---
+
 ## [0.40.6] — 2026-05-26 (PR #111 merged)
 
 ### Fixed — iOS nav bar turns white on scroll in detail and wizard screens (HAB-88)

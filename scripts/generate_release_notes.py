@@ -16,21 +16,21 @@ Output (stdout):
 
 Bullet selection (per CHANGELOG entry):
     - If an entry contains ANY bullets prefixed with "[user] ", only those bullets
-      are included (with the "[user] " tag stripped).  This is the preferred
-      approach for entries going forward — mark exactly which lines users care about.
+      are included (with the "[user] " tag stripped).  This is the required
+      approach — mark exactly which lines users care about.
     - If an entry contains the sentinel "- [user-none]", the entry is silently
       skipped (contributes nothing to the output).  Use this for releases that
       are purely internal (CI fixes, refactors, tooling) with no user-visible
       impact.
-    - If an entry contains NO "[user] " or "[user-none]" bullets, all bullets
-      are included after stripping internal references (HAB-XX, PR #XX, WU
-      work-unit markers).  This is the backwards-compatible fallback for older
-      entries that predate the tagging convention.
+    - If an entry contains NEITHER "[user] " bullets NOR "[user-none]", it is
+      also silently skipped.  Entries MUST be explicitly marked — see convention
+      below.  Use scripts/lint_changelog.py in CI to catch unmarked entries.
 
-Convention for CHANGELOG authors:
+Convention for CHANGELOG authors (enforced by scripts/lint_changelog.py):
     - User-facing change:       - [user] Sign-in button stays visible during Google login
-    - Developer-only line:      - isSigningIn guard extended to cover auth state flip
+    - Developer-only line:      - [non-user] isSigningIn guard extended to cover auth state flip
     - Nothing for users at all: - [user-none]
+    Every new ## entry must contain at least one [user] bullet or [user-none].
 
 Exit codes:
     0  Success (notes written to stdout).
@@ -115,10 +115,10 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
 
     Per-entry selection logic:
     - If the entry has ≥1 "[user] "-tagged bullet, only those are returned
-      (tag stripped).  Developer-only lines are silently skipped.
-    - If the entry has no "[user] " bullets (old-style entry), all non-skip
-      lines are returned after stripping internal references — backwards-
-      compatible fallback.
+      (tag stripped).  Developer-only "[non-user]" lines are silently skipped.
+    - If the entry has the "[user-none]" sentinel, the entry is silently skipped.
+    - If the entry has NEITHER "[user] " bullets NOR "[user-none]", it is also
+      silently skipped.  Use scripts/lint_changelog.py in CI to catch such entries.
     """
     with open(path, encoding='utf-8') as fh:
         content = fh.read()
@@ -148,7 +148,6 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
         body = content[body_start:body_end]
 
         user_bullets: list[str] = []
-        fallback_bullets: list[str] = []
         suppress_entry = False
 
         for line in body.splitlines():
@@ -164,18 +163,13 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
             elif _USER_TAG.match(text):
                 # Explicitly marked as user-facing — strip the tag and keep.
                 user_bullets.append(_USER_TAG.sub('', text, count=1).strip())
-            else:
-                # Collect for the fallback path (used only if no [user] tags).
-                if not _should_skip(text):
-                    cleaned = _clean_bullet(text)
-                    if cleaned:
-                        fallback_bullets.append(cleaned)
 
         if suppress_entry:
             continue  # skip the whole entry
 
-        # Prefer explicit [user] bullets; fall back to filtered set for old entries.
-        bullets.extend(user_bullets if user_bullets else fallback_bullets)
+        # Only include explicitly tagged [user] bullets.
+        # Entries with no [user] bullets and no [user-none] sentinel are skipped.
+        bullets.extend(user_bullets)
 
     return bullets
 

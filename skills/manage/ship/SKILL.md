@@ -57,14 +57,16 @@ Each CHANGELOG entry MUST include exactly one of the following markers so `scrip
 
 | Marker | When to use | What it does |
 |---|---|---|
-| `- [user] <description>` | There is at least one user-visible change | Only `[user]`-tagged lines appear in release notes (tag is stripped); technical bullets are skipped |
-| `- [user-none]` | The PR has **no** user-visible changes (CI fixes, refactors, tooling) | The entire entry is silently omitted from release notes |
+| `- [user] <description>` | User-visible change | Only `[user]`-tagged lines appear in release notes (tag stripped); all other bullets skipped |
+| `- [user-none]` | **No** user-visible changes (CI fixes, refactors, tooling) | Entire entry silently omitted from release notes |
+| `- [non-user] <detail>` | Developer-only detail within a tagged entry | Explicit marker for clarity; never appears in release notes |
 
 Rules:
-- Add `[user]` lines **before** the technical detail lines in the same section.
-- `[user]` descriptions must be plain English that a non-technical user can understand — no class names, file paths, or jargon.
-- Use `[user-none]` for PRs that touch only tests, CI config, documentation, internal refactors, or analytics instrumentation with no UI change.
-- Never omit the marker — entries without either `[user]` or `[user-none]` fall back to dumping all bullets into release notes, leaking implementation details.
+- **CI enforces this** (`scripts/lint_changelog.py` runs on every PR) — entries without `[user]` or `[user-none]` fail the build.
+- Add `[user]` lines **before** technical detail lines in the same section.
+- `[user]` descriptions must be plain English a non-technical user can understand — no class names, file paths, or jargon.
+- Use `[user-none]` (as a single sentinel line) for PRs touching only tests, CI config, docs, internal refactors, or analytics instrumentation with no UI change; mark the remaining bullets `[non-user]`.
+- Entries without any marker no longer fall back to dumping all bullets — they are silently skipped (same as `[user-none]`).
 
 ### 3. Regenerate BACKLOG.md
 

@@ -107,11 +107,15 @@ lib/
 │   ├── remote_config/
 │   │   ├── contracts/
 │   │   │   ├── remote_config_service.dart          # abstract RemoteConfigService interface (no-throw contract)
-│   │   │   └── remote_config_defaults.dart         # RemoteConfigDefaults — in-code fallback values
+│   │   │   ├── remote_config_defaults.dart         # RemoteConfigDefaults — in-code fallback values; `all` map is the single source of truth for every known key
+│   │   │   └── remote_config_override_store.dart   # RemoteConfigOverrideStore interface — getOverride(key)→String?, setOverride, clearOverride, getAllOverrides; debug/profile only
 │   │   └── data/
 │   │       ├── firebase_remote_config_service.dart     # real implementation (swallows exceptions); also contains FirebaseRemoteConfigClient interface
 │   │       ├── firebase_remote_config_client_adapter.dart # wraps FirebaseRemoteConfig SDK; only used in main.dart
-│   │       └── noop_remote_config_service.dart         # default no-op returning in-code defaults
+│   │       ├── noop_remote_config_service.dart         # default no-op returning in-code defaults
+│   │       ├── noop_remote_config_override_store.dart  # const no-op default for remoteConfigOverrideStoreProvider; getAllOverrides() returns {}
+│   │       ├── shared_preferences_remote_config_override_store.dart  # stores overrides as strings under rc_override_<key>; debug/profile only; wired in main.dart via AppContainer
+│   │       └── overridable_remote_config_service.dart  # wraps any RemoteConfigService + RemoteConfigOverrideStore; checks store first, delegates to inner on miss; honours no-throw contract; debug/profile only
 │   └── sync/
 │       ├── sync_circuit_breaker.dart  # SyncCircuitBreakerState enum (closed/halfOpen/open) + SyncCircuitBreaker StateNotifier; governs all Firestore network requests; state is in-memory only (resets to closed on app restart); syncCircuitBreakerProvider declared in app_providers.dart; exposes currentState getter for external callers
 │       ├── sync_service.dart          # SyncService abstract interface with no-throw contract: uploadPact(Pact), uploadShowup(Showup), flushDirtyRecords(), triggerManualSync(); called fire-and-forget (unawaited) from PactService and PactStatsService
@@ -132,10 +136,12 @@ lib/
     │   ├── data/                      # InMemoryShowupRepository (tests), SqliteShowupRepository (production, implements ShowupRepository + ShowupSyncRepository), NoopShowupSyncRepository (default provider)
     │   ├── analytics/                 # ShowupMarkedDoneEvent, ShowupMarkedFailedEvent, ShowupAutoFailedEvent
     │   └── ui/ (generic/, ios/, android/)
-    └── reminder/                      # Notification scheduling (not yet implemented)
-        ├── domain/
-        ├── data/
-        └── ui/ (generic/, ios/, android/)
+    ├── reminder/                      # Notification scheduling (not yet implemented)
+    │   ├── domain/
+    │   ├── data/
+    │   └── ui/ (generic/, ios/, android/)
+    └── debug/                         # Debug/profile-only tooling — not present in release builds
+        └── ui/ (generic/ — RemoteConfigOverridesViewModel (AutoDisposeNotifier); ios/ — RemoteConfigOverridesPageIos (CupertinoPageScaffold, form rows per key, OVERRIDE/DEFAULT badge, CupertinoAlertDialog editor, Reset all); android/ — RemoteConfigOverridesPageAndroid (Scaffold, ListTile per key, AlertDialog editor))
 
 test/
 ├── l10n/                              # Mirrors lib/l10n/
@@ -277,7 +283,7 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 
 **Notifications:** `lib/infrastructure/notifications/` wraps local notification scheduling via `flutter_local_notifications`. The `NotificationService` interface has a strict no-throw contract: all implementations must swallow exceptions internally so a notification failure can never crash the app. `FlutterLocalNotificationService` is the production implementation; it uses `zonedSchedule()` with `TZDateTime` (from the `timezone` package) for DST-safe scheduling, and `flutter_timezone` to resolve the device's current IANA timezone at runtime. Notification IDs are derived deterministically from `scheduledAt.millisecondsSinceEpoch ~/ 1000` (no mapping table needed). An in-memory `_pactNotificationIds` registry (pact ID to set of notification IDs) supports `cancelAllRemindersForPact()` without iterating the OS pending-notification list; on app restart the registry is empty and cancellation falls back to `getPendingNotifications()` filtered by the `pactId` field in each notification's payload JSON. The Android notification channel ID is `showup_reminders`. The `onDidReceiveNotificationResponse` callback is wired to `NotificationRouter.navigateToShowup` for deep-link routing; cold-start taps are deferred via `addPostFrameCallback` so the navigator is guaranteed to be mounted. `UNUserNotificationCenter.current().delegate = self` is set in `AppDelegate.swift` before `super.application(...)` because Flutter 3.x no longer sets it automatically. `FlutterLocalNotificationService` is used in **all build modes** (debug, profile, release) so notification navigation can be tested with plain `flutter run`; unit tests are unaffected because they never call `main()` and override `notificationServiceProvider` directly. The provider `notificationServiceProvider` defaults to `NoopNotificationService` and is overridden in `main.dart` via `AppContainer.overrides(...)`.
 
-**Remote Config:** `lib/infrastructure/remote_config/` wraps feature flag resolution. The `RemoteConfigService` interface has a strict no-throw contract: all implementations must swallow exceptions internally so a Remote Config outage can never crash the app. `FirebaseRemoteConfigClient` (defined in `data/`) is an intermediate adapter interface whose methods return only plain Dart primitives -- no Firebase SDK types leak through it, so test fakes can implement it without importing `firebase_remote_config`. The raw `FirebaseRemoteConfig` SDK is confined to `FirebaseRemoteConfigClientAdapter`, which is only instantiated in `main.dart`. Activation is gated on `kReleaseMode`: debug and profile builds use `NoopRemoteConfigService`, which returns in-code defaults from `RemoteConfigDefaults`. In debug and profile builds `!kReleaseMode` controls the fetch interval to `Duration.zero` so QA can verify flag changes without the 12-hour production throttle.
+**Remote Config:** `lib/infrastructure/remote_config/` wraps feature flag resolution. The `RemoteConfigService` interface has a strict no-throw contract: all implementations must swallow exceptions internally so a Remote Config outage can never crash the app. `FirebaseRemoteConfigClient` (defined in `data/`) is an intermediate adapter interface whose methods return only plain Dart primitives -- no Firebase SDK types leak through it, so test fakes can implement it without importing `firebase_remote_config`. The raw `FirebaseRemoteConfig` SDK is confined to `FirebaseRemoteConfigClientAdapter`, which is only instantiated in `main.dart`. Activation is gated on `kReleaseMode`: debug and profile builds use `NoopRemoteConfigService`, which returns in-code defaults from `RemoteConfigDefaults`. In debug and profile builds `!kReleaseMode` controls the fetch interval to `Duration.zero` so QA can verify flag changes without the 12-hour production throttle. **Debug overrides:** in debug/profile builds `main.dart` wraps the active service in `OverridableRemoteConfigService`, which checks `SharedPreferencesRemoteConfigOverrideStore` (key prefix `rc_override_`) before delegating to the inner service — allowing runtime override of any key without touching the Firebase Console. Overrides are managed via the `RemoteConfigOverridesViewModel` and the debug UI in `slices/debug/`. The override layer is invisible in release builds (`NoopRemoteConfigOverrideStore` default + `OverridableRemoteConfigService` never constructed).
 
 ## Dependencies
 
