@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
@@ -222,9 +223,9 @@ class _OverrideBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor =
-        isOverridden ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey5.resolveFrom(context);
-    final textColor = isOverridden ? CupertinoColors.white : CupertinoColors.secondaryLabel.resolveFrom(context);
+    final cs = Theme.of(context).colorScheme;
+    final bgColor = isOverridden ? cs.primary : cs.outlineVariant;
+    final textColor = isOverridden ? cs.onPrimary : cs.onSurfaceVariant;
 
     return Container(
       key: Key(isOverridden ? 'override-badge' : 'default-badge'),
