@@ -74,18 +74,32 @@ void main() {
     expect(find.byKey(const Key('reset-all-button')), findsOneWidget);
   });
 
-  testWidgets('Android — tapping a row opens the edit dialog with the key name', (tester) async {
+  testWidgets('Android — free-text key opens edit dialog with text field', (tester) async {
     await tester.pumpWidget(_buildTestApp());
     await tester.pump();
 
-    final firstKey = RemoteConfigDefaults.all.keys.first;
-    await tester.tap(find.byKey(Key('rc-entry-$firstKey')));
+    // max_active_pacts has no allowed values → text field.
+    await tester.tap(find.byKey(const Key('rc-entry-max_active_pacts')));
     await tester.pumpAndSettle();
 
-    expect(find.text(firstKey), findsWidgets);
     expect(find.byKey(const Key('override-value-field')), findsOneWidget);
+    expect(find.byKey(const Key('override-value-picker')), findsNothing);
     expect(find.byKey(const Key('save-action')), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
+  });
+
+  testWidgets('Android — constrained key opens edit dialog with radio picker', (tester) async {
+    await tester.pumpWidget(_buildTestApp());
+    await tester.pump();
+
+    // post_deadline_notification_behavior has allowed values → radio picker.
+    await tester.tap(find.byKey(const Key('rc-entry-post_deadline_notification_behavior')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('override-value-picker')), findsOneWidget);
+    expect(find.byKey(const Key('override-value-field')), findsNothing);
+    expect(find.byKey(const Key('override-option-dismiss')), findsOneWidget);
+    expect(find.byKey(const Key('override-option-encourage')), findsOneWidget);
   });
 
   testWidgets('Android — edit dialog shows "Use default" only for overridden entry', (tester) async {

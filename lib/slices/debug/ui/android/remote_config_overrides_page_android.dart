@@ -110,17 +110,28 @@ class _EditDialogAndroid extends StatefulWidget {
 }
 
 class _EditDialogAndroidState extends State<_EditDialogAndroid> {
-  late final TextEditingController _controller;
+  /// Used only when [RemoteConfigEntry.allowedValues] is `null`.
+  late final TextEditingController? _controller;
+
+  /// Used only when [RemoteConfigEntry.allowedValues] is non-`null`.
+  String? _selectedValue;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
+    if (widget.entry.hasAllowedValues) {
+      _controller = null;
+      final effective = widget.entry.overrideValue ?? widget.entry.effectiveValue;
+      _selectedValue =
+          (widget.entry.allowedValues!.contains(effective)) ? effective : widget.entry.allowedValues!.first;
+    } else {
+      _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -137,12 +148,32 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('override-value-field'),
-            controller: _controller,
-            decoration: InputDecoration(hintText: widget.entry.defaultValue),
-            autofocus: true,
-          ),
+          if (widget.entry.hasAllowedValues)
+            RadioGroup<String>(
+              key: const Key('override-value-picker'),
+              groupValue: _selectedValue,
+              onChanged: (v) => setState(() => _selectedValue = v),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final v in widget.entry.allowedValues!)
+                    RadioListTile<String>(
+                      key: Key('override-option-$v'),
+                      title: Text(v),
+                      value: v,
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                ],
+              ),
+            )
+          else
+            TextField(
+              key: const Key('override-value-field'),
+              controller: _controller,
+              decoration: InputDecoration(hintText: widget.entry.defaultValue),
+              autofocus: true,
+            ),
         ],
       ),
       actions: [
@@ -165,9 +196,15 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
         TextButton(
           key: const Key('save-action'),
           onPressed: () async {
-            final value = _controller.text.trim();
-            Navigator.of(context).pop();
-            if (value.isNotEmpty) await widget.onSave(value);
+            if (widget.entry.hasAllowedValues) {
+              final value = _selectedValue;
+              Navigator.of(context).pop();
+              if (value != null) await widget.onSave(value);
+            } else {
+              final value = _controller!.text.trim();
+              Navigator.of(context).pop();
+              if (value.isNotEmpty) await widget.onSave(value);
+            }
           },
           child: const Text('Save'),
         ),

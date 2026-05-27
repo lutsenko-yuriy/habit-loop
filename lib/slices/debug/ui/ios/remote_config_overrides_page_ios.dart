@@ -124,17 +124,28 @@ class _EditDialogIos extends StatefulWidget {
 }
 
 class _EditDialogIosState extends State<_EditDialogIos> {
-  late final TextEditingController _controller;
+  /// Used only when [RemoteConfigEntry.allowedValues] is `null`.
+  late final TextEditingController? _controller;
+
+  /// Used only when [RemoteConfigEntry.allowedValues] is non-`null`.
+  String? _selectedValue;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
+    if (widget.entry.hasAllowedValues) {
+      _controller = null;
+      final effective = widget.entry.overrideValue ?? widget.entry.effectiveValue;
+      _selectedValue =
+          (widget.entry.allowedValues!.contains(effective)) ? effective : widget.entry.allowedValues!.first;
+    } else {
+      _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -150,13 +161,21 @@ class _EditDialogIosState extends State<_EditDialogIos> {
             style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
           ),
           const SizedBox(height: 8),
-          CupertinoTextField(
-            key: const Key('override-value-field'),
-            controller: _controller,
-            placeholder: widget.entry.defaultValue,
-            autofocus: true,
-            clearButtonMode: OverlayVisibilityMode.editing,
-          ),
+          if (widget.entry.hasAllowedValues)
+            CupertinoSlidingSegmentedControl<String>(
+              key: const Key('override-value-picker'),
+              groupValue: _selectedValue,
+              children: {for (final v in widget.entry.allowedValues!) v: Text(v)},
+              onValueChanged: (v) => setState(() => _selectedValue = v),
+            )
+          else
+            CupertinoTextField(
+              key: const Key('override-value-field'),
+              controller: _controller,
+              placeholder: widget.entry.defaultValue,
+              autofocus: true,
+              clearButtonMode: OverlayVisibilityMode.editing,
+            ),
         ],
       ),
       actions: [
@@ -178,9 +197,15 @@ class _EditDialogIosState extends State<_EditDialogIos> {
           key: const Key('save-action'),
           isDefaultAction: true,
           onPressed: () async {
-            final value = _controller.text.trim();
-            Navigator.of(context).pop();
-            if (value.isNotEmpty) await widget.onSave(value);
+            if (widget.entry.hasAllowedValues) {
+              final value = _selectedValue;
+              Navigator.of(context).pop();
+              if (value != null) await widget.onSave(value);
+            } else {
+              final value = _controller!.text.trim();
+              Navigator.of(context).pop();
+              if (value.isNotEmpty) await widget.onSave(value);
+            }
           },
           child: const Text('Save'),
         ),
@@ -197,21 +222,23 @@ class _OverrideBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bgColor =
+        isOverridden ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey5.resolveFrom(context);
+    final textColor = isOverridden ? CupertinoColors.white : CupertinoColors.secondaryLabel.resolveFrom(context);
+
     return Container(
       key: Key(isOverridden ? 'override-badge' : 'default-badge'),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: isOverridden
-            ? CupertinoColors.activeBlue.resolveFrom(context)
-            : CupertinoColors.systemGrey4.resolveFrom(context),
+        color: bgColor,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         isOverridden ? 'OVERRIDE' : 'DEFAULT',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,
-          color: CupertinoColors.white,
+          color: textColor,
         ),
       ),
     );

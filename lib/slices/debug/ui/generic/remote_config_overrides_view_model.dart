@@ -15,6 +15,7 @@ final class RemoteConfigEntry {
     required this.defaultValue,
     required this.overrideValue,
     required this.effectiveValue,
+    this.allowedValues,
   });
 
   /// The Remote Config key name, e.g. `'max_active_pacts'`.
@@ -30,7 +31,12 @@ final class RemoteConfigEntry {
   /// What [RemoteConfigService] currently returns for this key, as a string.
   final String effectiveValue;
 
+  /// Fixed set of accepted values for enum-like keys, or `null` when any value
+  /// is acceptable (e.g. numeric keys). Sourced from [RemoteConfigDefaults.allowedValues].
+  final List<String>? allowedValues;
+
   bool get isOverridden => overrideValue != null;
+  bool get hasAllowedValues => allowedValues != null;
 }
 
 /// ViewModel for the debug Remote Config overrides screen.
@@ -61,6 +67,7 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
         defaultValue: defaultRaw.toString(),
         overrideValue: store.getOverride(key),
         effectiveValue: _readEffective(service, key, defaultRaw),
+        allowedValues: RemoteConfigDefaults.allowedValues[key],
       );
     }).toList();
   }

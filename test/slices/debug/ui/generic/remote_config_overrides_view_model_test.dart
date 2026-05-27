@@ -52,6 +52,24 @@ void main() {
       }
     });
 
+    test('allowedValues matches RemoteConfigDefaults.allowedValues for each key', () {
+      final entries = readEntries();
+      for (final e in entries) {
+        expect(e.allowedValues, RemoteConfigDefaults.allowedValues[e.key]);
+      }
+    });
+
+    test('hasAllowedValues is true for constrained keys and false for free-text keys', () {
+      final entries = readEntries();
+      final constrained = entries.where((e) => e.hasAllowedValues).map((e) => e.key).toSet();
+      final free = entries.where((e) => !e.hasAllowedValues).map((e) => e.key).toSet();
+      expect(
+          constrained,
+          containsAll(
+              ['notification_text_variant', 'post_deadline_notification_behavior', 'exp_003_commitment_confirmation']));
+      expect(free, containsAll(['max_active_pacts', 'onboarding_auto_advance_seconds']));
+    });
+
     test('effectiveValue reflects service getInt for int key', () {
       service.overrides['max_active_pacts'] = 7;
       final entries = readEntries();

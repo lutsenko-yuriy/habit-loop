@@ -42,7 +42,6 @@ void main() {
   testWidgets('iOS — non-overridden entries show DEFAULT badge', (tester) async {
     await tester.pumpWidget(_buildTestApp());
 
-    // All entries use default → every badge should say DEFAULT.
     expect(find.byKey(const Key('default-badge')), findsNWidgets(RemoteConfigDefaults.all.length));
     expect(find.byKey(const Key('override-badge')), findsNothing);
   });
@@ -52,7 +51,6 @@ void main() {
     await store.setOverride('max_active_pacts', '10');
     await tester.pumpWidget(_buildTestApp(store: store));
 
-    // Expect one OVERRIDE badge (for max_active_pacts) and the rest DEFAULT.
     expect(find.byKey(const Key('override-badge')), findsOneWidget);
     expect(
       find.byKey(const Key('default-badge')),
@@ -65,7 +63,6 @@ void main() {
     await tester.pump();
 
     final resetButton = tester.widget<CupertinoButton>(find.byKey(const Key('reset-all-button')));
-    // onPressed is null → button is disabled.
     expect(resetButton.onPressed, isNull);
   });
 
@@ -79,21 +76,32 @@ void main() {
     expect(resetButton.onPressed, isNotNull);
   });
 
-  testWidgets('iOS — tapping a row opens the edit dialog with the key name', (tester) async {
+  testWidgets('iOS — free-text key opens edit dialog with text field', (tester) async {
     await tester.pumpWidget(_buildTestApp());
     await tester.pump();
 
-    final firstKey = RemoteConfigDefaults.all.keys.first;
-    await tester.tap(find.byKey(Key('rc-entry-$firstKey')));
+    // max_active_pacts has no allowed values → text field.
+    await tester.tap(find.byKey(const Key('rc-entry-max_active_pacts')));
     await tester.pumpAndSettle();
 
-    // Dialog shows the key name as its title.
-    expect(find.text(firstKey), findsWidgets);
-    // Text field is present.
     expect(find.byKey(const Key('override-value-field')), findsOneWidget);
-    // Save and Cancel actions.
+    expect(find.byKey(const Key('override-value-picker')), findsNothing);
     expect(find.byKey(const Key('save-action')), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
+  });
+
+  testWidgets('iOS — constrained key opens edit dialog with segmented picker', (tester) async {
+    await tester.pumpWidget(_buildTestApp());
+    await tester.pump();
+
+    // post_deadline_notification_behavior has allowed values → picker.
+    await tester.tap(find.byKey(const Key('rc-entry-post_deadline_notification_behavior')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('override-value-picker')), findsOneWidget);
+    expect(find.byKey(const Key('override-value-field')), findsNothing);
+    expect(find.text('dismiss'), findsWidgets);
+    expect(find.text('encourage'), findsWidgets);
   });
 
   testWidgets('iOS — edit dialog shows "Use default" only for overridden entry', (tester) async {
@@ -102,20 +110,18 @@ void main() {
     await tester.pumpWidget(_buildTestApp(store: store));
     await tester.pump();
 
-    // Tap the overridden entry.
     await tester.tap(find.byKey(const Key('rc-entry-max_active_pacts')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('use-default-action')), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
-    // Tap a non-overridden entry.
     await tester.tap(find.byKey(Key('rc-entry-${RemoteConfigDefaults.all.keys.last}')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('use-default-action')), findsNothing);
   });
 
-  testWidgets('iOS — saving a value from the dialog updates the badge to OVERRIDE', (tester) async {
+  testWidgets('iOS — saving a free-text value updates the badge to OVERRIDE', (tester) async {
     final store = FakeRemoteConfigOverrideStore();
     await tester.pumpWidget(_buildTestApp(store: store));
     await tester.pump();
