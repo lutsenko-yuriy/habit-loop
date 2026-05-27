@@ -198,7 +198,8 @@ test/
 │   │   ├── data/
 │   │   │   ├── firebase_remote_config_service_test.dart
 │   │   │   └── noop_remote_config_service_test.dart
-│   │   └── fake_remote_config_service.dart  # Shared fake for test overrides
+│   │   ├── fake_remote_config_service.dart         # Shared fake for test overrides
+│   │   └── fake_remote_config_override_store.dart  # In-memory FakeRemoteConfigOverrideStore backed by Map<String, String>
 │   └── sync/
 │       ├── sync_circuit_breaker_test.dart  # SyncCircuitBreaker: state machine (closed→halfOpen→open), failure counter, triggerManualSync, full cycle; syncCircuitBreakerProvider smoke tests
 │       ├── sync_mapper_test.dart           # SyncMapper: pact and showup round-trips, status encoding, SQLite column exclusion
@@ -214,10 +215,12 @@ test/
     │   │   └── pact_transaction_service_test.dart # PactTransactionService: savePactWithShowups atomicity + stopPactTransaction atomicity; sqflite_common_ffi in-memory db
     │   └── data/
     │       └── sqlite_pact_repository_test.dart   # SqlitePactRepository CRUD + PactSyncRepository (getDirtyPacts, markPactSynced) tests using sqflite_common_ffi in-memory db
-    └── showup/
-        ├── analytics/, application/, ui/
-        └── data/
-            └── sqlite_showup_repository_test.dart # SqliteShowupRepository CRUD + date-boundary + ShowupSyncRepository (getDirtyShowups, markShowupSynced) tests using sqflite_common_ffi
+    ├── showup/
+    │   ├── analytics/, application/, ui/
+    │   └── data/
+    │       └── sqlite_showup_repository_test.dart # SqliteShowupRepository CRUD + date-boundary + ShowupSyncRepository (getDirtyShowups, markShowupSynced) tests using sqflite_common_ffi
+    └── debug/
+        └── ui/ (generic/ — remote_config_overrides_view_model_test.dart (11 unit tests: build, setOverride, clearOverride, clearAllOverrides, effective value dispatch); ios/ — remote_config_overrides_page_ios_test.dart (7 widget tests); android/ — remote_config_overrides_page_android_test.dart (7 widget tests))
 ```
 
 ## Layers
