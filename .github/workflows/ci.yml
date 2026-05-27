@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-tags: true
+          fetch-depth: 0  # full history + all tags needed for CHANGELOG lint
 
       - name: Lint CHANGELOG markers
         run: |
