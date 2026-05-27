@@ -61,4 +61,17 @@ abstract final class RemoteConfigDefaults {
     'onboarding_auto_advance_seconds': onboardingAutoAdvanceSeconds,
     'exp_003_commitment_confirmation': exp003CommitmentConfirmation,
   };
+
+  /// Allowed string values for keys that accept only a fixed set of values.
+  ///
+  /// The debug override screen uses this to show a picker instead of a free-
+  /// text field for enum-like keys. Keys absent from this map (or mapped to
+  /// `null`) accept any value — the screen shows a plain text field instead.
+  static const Map<String, List<String>?> allowedValues = {
+    'max_active_pacts': null,
+    'notification_text_variant': ['control', 'deadline', 'time_limit'],
+    'post_deadline_notification_behavior': ['dismiss', 'encourage'],
+    'onboarding_auto_advance_seconds': null,
+    'exp_003_commitment_confirmation': ['button', 'checkbox', 'retype'],
+  };
 }
