@@ -108,7 +108,7 @@ lib/
 │   │   ├── contracts/
 │   │   │   ├── remote_config_service.dart          # abstract RemoteConfigService interface (no-throw contract)
 │   │   │   ├── remote_config_defaults.dart         # RemoteConfigDefaults — in-code fallback values; `all` map is the single source of truth for every known key
-│   │   │   └── remote_config_override_store.dart   # RemoteConfigOverrideStore interface — getOverride(key)→String?, setOverride, clearOverride, clearAll, getAllOverrides; debug/profile only
+│   │   │   └── remote_config_override_store.dart   # RemoteConfigOverrideStore interface — getOverride(key)→String?, setOverride, clearOverride, getAllOverrides; debug/profile only
 │   │   └── data/
 │   │       ├── firebase_remote_config_service.dart     # real implementation (swallows exceptions); also contains FirebaseRemoteConfigClient interface
 │   │       ├── firebase_remote_config_client_adapter.dart # wraps FirebaseRemoteConfig SDK; only used in main.dart
