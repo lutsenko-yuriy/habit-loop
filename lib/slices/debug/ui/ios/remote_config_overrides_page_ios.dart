@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Theme;
+import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
@@ -18,7 +18,9 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
     final hasAnyOverride = entries.any((e) => e.isOverridden);
 
     return CupertinoPageScaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         middle: const Text('Remote Config'),
         trailing: CupertinoButton(
           key: const Key('reset-all-button'),
@@ -31,38 +33,26 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
         ),
       ),
       child: SafeArea(
-        child: ListView(
-          children: [
-            const SizedBox(height: 8),
-            CupertinoListSection.insetGrouped(
-              children: [
-                for (final entry in entries)
-                  CupertinoListTile.notched(
-                    key: Key('rc-entry-${entry.key}'),
-                    title: Text(
-                      entry.key,
-                      style: const TextStyle(fontFamily: 'Courier', fontSize: 13),
-                    ),
-                    subtitle: Text('Value: ${entry.effectiveValue}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _OverrideBadge(isOverridden: entry.isOverridden),
-                        const SizedBox(width: 4),
-                        const CupertinoListTileChevron(),
-                      ],
-                    ),
-                    onTap: () => _showEditDialog(
-                      context: context,
-                      entry: entry,
-                      onSave: (v) => notifier.setOverride(entry.key, v),
-                      onClear: () => notifier.clearOverride(entry.key),
-                    ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            children: [
+              for (final entry in entries) ...[
+                _RcEntryRow(
+                  key: Key('rc-entry-${entry.key}'),
+                  entry: entry,
+                  onTap: () => _showEditDialog(
+                    context: context,
+                    entry: entry,
+                    onSave: (v) => notifier.setOverride(entry.key, v),
+                    onClear: () => notifier.clearOverride(entry.key),
                   ),
+                ),
+                const SizedBox(height: 8),
               ],
-            ),
-            const SizedBox(height: 24),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -92,6 +82,56 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
       ),
     );
     if (confirm == true) await notifier.clearAllOverrides();
+  }
+}
+
+/// A single Remote Config entry row matching the app's iOS row style.
+class _RcEntryRow extends StatelessWidget {
+  const _RcEntryRow({super.key, required this.entry, required this.onTap});
+
+  final RemoteConfigEntry entry;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.key,
+                    style: const TextStyle(fontFamily: 'Courier', fontSize: 13),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Value: ${entry.effectiveValue}',
+                    style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _OverrideBadge(isOverridden: entry.isOverridden),
+            const SizedBox(width: 6),
+            Icon(
+              CupertinoIcons.chevron_right,
+              size: 14,
+              color: CupertinoColors.systemGrey.resolveFrom(context),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
