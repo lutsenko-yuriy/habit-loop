@@ -115,10 +115,10 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
 
     Per-entry selection logic:
     - If the entry has ≥1 "[user] "-tagged bullet, only those are returned
-      (tag stripped).  Developer-only lines are silently skipped.
-    - If the entry has no "[user] " bullets (old-style entry), all non-skip
-      lines are returned after stripping internal references — backwards-
-      compatible fallback.
+      (tag stripped).  Developer-only "[non-user]" lines are silently skipped.
+    - If the entry has the "[user-none]" sentinel, the entry is silently skipped.
+    - If the entry has NEITHER "[user] " bullets NOR "[user-none]", it is also
+      silently skipped.  Use scripts/lint_changelog.py in CI to catch such entries.
     """
     with open(path, encoding='utf-8') as fh:
         content = fh.read()
@@ -148,7 +148,6 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
         body = content[body_start:body_end]
 
         user_bullets: list[str] = []
-        fallback_bullets: list[str] = []
         suppress_entry = False
 
         for line in body.splitlines():
@@ -164,12 +163,6 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
             elif _USER_TAG.match(text):
                 # Explicitly marked as user-facing — strip the tag and keep.
                 user_bullets.append(_USER_TAG.sub('', text, count=1).strip())
-            else:
-                # Collect for the fallback path (used only if no [user] tags).
-                if not _should_skip(text):
-                    cleaned = _clean_bullet(text)
-                    if cleaned:
-                        fallback_bullets.append(cleaned)
 
         if suppress_entry:
             continue  # skip the whole entry
