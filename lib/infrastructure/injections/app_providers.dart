@@ -38,7 +38,9 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/data/noop_onboarding_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_override_store.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_override_store.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_service.dart';
 import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
@@ -177,9 +179,22 @@ final logServiceProvider = Provider<LogService>((ref) => NoopLogService());
 ///
 /// Defaults to [NoopRemoteConfigService] so tests and non-Firebase environments
 /// return in-code defaults. Overridden in `main.dart` via
-/// [AppContainer.overrides] with [FirebaseRemoteConfigService] in release builds.
+/// [AppContainer.overrides] with [FirebaseRemoteConfigService] (release) or
+/// [OverridableRemoteConfigService] wrapping [NoopRemoteConfigService]
+/// (debug/profile).
 final remoteConfigServiceProvider = Provider<RemoteConfigService>(
   (ref) => NoopRemoteConfigService(),
+);
+
+/// Provides the active [RemoteConfigOverrideStore] to the app.
+///
+/// Defaults to [NoopRemoteConfigOverrideStore] so tests and release builds are
+/// unaffected by the debug override layer. Overridden in `main.dart` via
+/// [AppContainer.overrides] with [SharedPreferencesRemoteConfigOverrideStore]
+/// in debug/profile builds. The debug UI uses this provider to read and write
+/// overrides at runtime.
+final remoteConfigOverrideStoreProvider = Provider<RemoteConfigOverrideStore>(
+  (ref) => const NoopRemoteConfigOverrideStore(),
 );
 
 /// Provides the active [NotificationService] to the app.

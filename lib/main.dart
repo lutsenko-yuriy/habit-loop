@@ -44,8 +44,13 @@ import 'package:habit_loop/infrastructure/notifications/data/noop_notification_s
 import 'package:habit_loop/infrastructure/notifications/data/notification_router.dart';
 import 'package:habit_loop/infrastructure/onboarding/data/shared_preferences_onboarding_service.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_override_store.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/data/overridable_remote_config_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/data/shared_preferences_remote_config_override_store.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
@@ -283,18 +288,36 @@ Future<void> main() async {
 
   // Initialise Remote Config before runApp so flags are ready on first frame.
   // Failures are swallowed by the service — they must not prevent app launch.
-  FirebaseRemoteConfigService? remoteConfigService;
+  //
+  // Release: use FirebaseRemoteConfigService directly.
+  // Debug/profile: wrap NoopRemoteConfigService with OverridableRemoteConfigService
+  // so Remote Config keys can be overridden at runtime via the debug UI.
+  RemoteConfigService? remoteConfigService;
+  RemoteConfigOverrideStore? remoteConfigOverrideStore;
   if (kReleaseMode) {
     try {
       final remoteConfigClient = FirebaseRemoteConfigClientAdapter(
         FirebaseRemoteConfig.instance,
       );
-      remoteConfigService = FirebaseRemoteConfigService(remoteConfigClient);
-      await remoteConfigService.initialize();
+      final firebaseService = FirebaseRemoteConfigService(remoteConfigClient);
+      await firebaseService.initialize();
+      remoteConfigService = firebaseService;
     } catch (_) {
       // initialize() already swallows, but guard here as well so a constructor
       // failure cannot prevent runApp.
       remoteConfigService = null;
+    }
+  } else {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final store = SharedPreferencesRemoteConfigOverrideStore(prefs);
+      remoteConfigOverrideStore = store;
+      remoteConfigService = OverridableRemoteConfigService(
+        inner: NoopRemoteConfigService(),
+        store: store,
+      );
+    } catch (_) {
+      // If SharedPreferences fails, fall back to noop (no override support).
     }
   }
 
@@ -514,9 +537,12 @@ Future<void> main() async {
               FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
             )
           : null,
-      // Only wire Firebase Remote Config in release builds; debug/profile fall
-      // back to NoopRemoteConfigService which returns in-code defaults.
-      remoteConfigService: kReleaseMode ? remoteConfigService : null,
+      // Release: FirebaseRemoteConfigService. Debug/profile: OverridableRemoteConfigService
+      // wrapping NoopRemoteConfigService, allowing runtime overrides via the debug UI.
+      remoteConfigService: remoteConfigService,
+      // Debug/profile only: exposes the override store to the debug UI via
+      // remoteConfigOverrideStoreProvider. null in release builds.
+      remoteConfigOverrideStore: remoteConfigOverrideStore,
       // Wire the notification service. In release builds this is the real plugin;
       // in debug/profile it is the NoopNotificationService. Either way we pass it
       // so that the notificationServiceProvider is always overridden and available.

@@ -14,6 +14,7 @@ import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_ser
 import 'package:habit_loop/infrastructure/logging/contracts/log_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_override_store.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
@@ -49,7 +50,10 @@ abstract final class AppContainer {
   /// - [analyticsService] — only provided in release builds.
   /// - [crashlyticsService] — only provided in release builds.
   /// - [logService] — provided in debug/profile builds.
-  /// - [remoteConfigService] — only provided in release builds.
+  /// - [remoteConfigService] — provided in all build modes (release:
+  ///   [FirebaseRemoteConfigService]; debug/profile: [OverridableRemoteConfigService]).
+  /// - [remoteConfigOverrideStore] — provided in debug/profile builds only;
+  ///   allows the debug UI to read and write in-app Remote Config overrides.
   /// - [notificationService] — provided in all build modes (debug, profile,
   ///   release) so notification navigation can be tested with plain
   ///   `flutter run`; `null` falls back to [NoopNotificationService].
@@ -73,6 +77,7 @@ abstract final class AppContainer {
     CrashlyticsService? crashlyticsService,
     LogService? logService,
     RemoteConfigService? remoteConfigService,
+    RemoteConfigOverrideStore? remoteConfigOverrideStore,
     NotificationService? notificationService,
     LocalePreferenceService? localePreferenceService,
     OnboardingPreferenceService? onboardingPreferenceService,
@@ -104,6 +109,8 @@ abstract final class AppContainer {
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),
       if (remoteConfigService != null) remoteConfigServiceProvider.overrideWithValue(remoteConfigService),
+      if (remoteConfigOverrideStore != null)
+        remoteConfigOverrideStoreProvider.overrideWithValue(remoteConfigOverrideStore),
       if (notificationService != null) notificationServiceProvider.overrideWithValue(notificationService),
 
       // Locale persistence and initial locale override.
