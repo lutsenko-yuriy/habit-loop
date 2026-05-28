@@ -8,7 +8,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added — Debug Remote Config overrides UI (HAB-89 WU2)
 
-- `RemoteConfigOverridesPageIos` and `RemoteConfigOverridesPageAndroid` — debug/profile-only screens listing all RC keys with effective values and OVERRIDE/DEFAULT badges; entry point gated on `kDebugMode || kProfileMode` via a wrench/tune icon in the dashboard nav bar
+- [user-none]
+- [non-user] `RemoteConfigOverridesPageIos` and `RemoteConfigOverridesPageAndroid` — debug/profile-only screens listing all RC keys with effective values and OVERRIDE/DEFAULT badges; entry point gated on `kDebugMode || kProfileMode` via a wrench/tune icon in the dashboard nav bar
 - `RemoteConfigOverridesViewModel` (`AutoDisposeNotifier`) — builds `RemoteConfigEntry` list from `RemoteConfigOverrideStore` + `RemoteConfigService`; exposes `setOverride`, `clearOverride`, `clearAllOverrides`
 - `RemoteConfigDefaults.allowedValues` map — declares constrained keys (`notification_text_variant`, `post_deadline_notification_behavior`, `exp_003_commitment_confirmation`) so the UI shows a segmented/radio picker instead of a free-text field for those keys
 - 32 new tests (11 unit + 11 iOS widget + 10 Android widget); analyzer clean
