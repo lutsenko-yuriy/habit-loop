@@ -131,6 +131,8 @@ $ARGUMENTS]
 
 Only update stubs whose alias changed — do not touch stubs that are already correct.
 
+If a stub is still in the **old passthrough format** (`@skills/... \n\n$ARGUMENTS`) and its tier is now assigned a Claude alias, the entire stub must be **rewritten** to the new routing format above — not just have an alias line inserted.
+
 ### 6. Report back
 
 Confirm the mapping has been written and remind the user:

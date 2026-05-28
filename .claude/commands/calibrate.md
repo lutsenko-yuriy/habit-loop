@@ -9,3 +9,5 @@ Steps:
 2. Spawn an Agent with:
    - `model`: `"opus"`
    - `prompt`: full content of the skill file.
+
+<!-- no arguments — calibrate takes none -->
