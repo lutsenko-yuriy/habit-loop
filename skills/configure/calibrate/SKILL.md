@@ -142,11 +142,13 @@ $ARGUMENTS
 
 **For `lm-studio` alias:** use the script stub format below. The script reads the skill frontmatter, looks up the mapped model, checks LM Studio availability, and streams the completion. On non-zero exit Claude falls back to local execution.
 
+> **Note:** Skills with `needs_mcp: true` in their frontmatter exit immediately with code 2 (no LM Studio call is made), forcing fallback to Claude Code where MCP and built-in tools are available. When assigning `lm-studio` to a tier, check whether any skill at that tier has `needs_mcp: true` — if all of them do, lm-studio routing is effectively a no-op for that tier and a Claude alias would be more honest.
+
 **Script stub format (use for lm-studio alias):**
 
 _With `$ARGUMENTS` (skills that take user-supplied input):_
 ```markdown
-Run via Bash: `python scripts/skill_router.py skills/<path>/SKILL.md --args '$ARGUMENTS'`
+Run via Bash: `python3 scripts/skill_router.py skills/<path>/SKILL.md --args '$ARGUMENTS'`
 If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/<path>/SKILL.md` and executing it yourself.
 
 $ARGUMENTS
@@ -154,7 +156,7 @@ $ARGUMENTS
 
 _Without `$ARGUMENTS` (skills that need no user input):_
 ```markdown
-Run via Bash: `python scripts/skill_router.py skills/<path>/SKILL.md`
+Run via Bash: `python3 scripts/skill_router.py skills/<path>/SKILL.md`
 If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/<path>/SKILL.md` and executing it yourself.
 ```
 
