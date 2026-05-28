@@ -109,7 +109,13 @@ Do not modify any other section of `docs/MODEL_TIERS.md`.
 
 After writing `docs/MODEL_TIERS.md`, update every `.claude/commands/*.md` stub that has changed alias. The stub format is:
 
-**For Claude aliases (`opus` / `sonnet` / `haiku`):**
+**Routing rule — only spawn when the target model differs from the current session model:**
+
+- **Spawn up** (`opus`) — target is more capable than the session model; use the Agent routing stub below.
+- **Run locally** (same alias as session, e.g. `sonnet` when session is sonnet) — spawning adds cold-start overhead with no benefit; use the passthrough format (`@skills/... + $ARGUMENTS`).
+- **Route to local model** (`lm-studio`) — target is a local LM Studio model; use the script stub (WU2 of HAB-91).
+
+**Agent routing stub format (use when spawning up to a more capable model):**
 ```markdown
 Route this invocation to a subagent. **Do not execute the skill yourself.**
 
@@ -127,11 +133,18 @@ Steps:
 $ARGUMENTS]
 ```
 
-**For `lm-studio` alias:** leave as-is if the LM Studio routing script is already wired (WU2 of HAB-91); otherwise use the Claude alias stub with the closest available Claude model as a temporary fallback and add a `<!-- TODO: wire LM Studio -->` comment.
+**Passthrough format (use when target model == session model):**
+```markdown
+@skills/<path>/SKILL.md
+
+$ARGUMENTS
+```
+
+**For `lm-studio` alias:** leave as-is if the LM Studio routing script is already wired (WU2 of HAB-91); otherwise add a `<!-- TODO: wire LM Studio (WU2) -->` comment and leave the existing passthrough as a fallback.
 
 Only update stubs whose alias changed — do not touch stubs that are already correct.
 
-If a stub is still in the **old passthrough format** (`@skills/... \n\n$ARGUMENTS`) and its tier is now assigned a Claude alias, the entire stub must be **rewritten** to the new routing format above — not just have an alias line inserted.
+If a stub is still in the **old passthrough format** (`@skills/... \n\n$ARGUMENTS`) and its tier is now assigned a **different** Claude alias (e.g. opus when session is sonnet), the entire stub must be **rewritten** to the Agent routing stub format above — not just have an alias line inserted.
 
 ### 6. Report back
 
