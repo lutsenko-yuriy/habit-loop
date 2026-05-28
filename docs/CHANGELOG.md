@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.1] — 2026-05-28 (PR #115 merged)
+
+### Changed — Skill tier routing: Claude-tier skills dispatched to correct model (HAB-91 WU1)
+
+- [user-none]
+- [non-user] `plan` and `calibrate` command stubs updated to spawn an `Agent(model: "opus")` subagent — these are THOROUGH+ARCHITECTURAL skills that benefit from the most capable model
+- [non-user] `analyze`, `experiment`, and `review` stubs remain local execution (FOCUSED+ARCHITECTURAL = sonnet = default session model; spawning adds overhead with no benefit)
+- [non-user] `docs/MODEL_TIERS.md` active mapping gains a `Claude Code alias` column (`opus`/`sonnet`/`lm-studio`) and lists models in a table with access method (Anthropic API vs LM Studio local)
+- [non-user] `qwen/qwen3-8b (MLX, 4-bit)` added to available models; replaces `claude-haiku-4-5` for RAPID+TACTICAL and RAPID+MECHANICAL tiers
+- [non-user] `calibrate` SKILL.md step 5a added: routing rule (spawn up / run locally / route to lm-studio) and stub maintenance instructions for future recalibrations
+- [non-user] TODO markers added to 7 lm-studio-tier stubs pending WU2 (LM Studio routing script)
+
+---
+
 ## [0.42.0] — 2026-05-27 (PR #114 merged)
 
 ### Added — Debug Remote Config overrides UI (HAB-89 WU2)
