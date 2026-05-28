@@ -1,4 +1,4 @@
-<!-- TODO: wire LM Studio (WU2 of HAB-91) — currently falls back to default model -->
-@skills/verify/audit/SKILL.md
+Run via Bash: `python scripts/skill_router.py skills/verify/audit/SKILL.md --args '$ARGUMENTS'`
+If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/verify/audit/SKILL.md` and executing it yourself.
 
 $ARGUMENTS

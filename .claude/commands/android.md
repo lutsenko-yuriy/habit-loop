@@ -1,2 +1,2 @@
-<!-- TODO: wire LM Studio (WU2 of HAB-91) — currently falls back to default model -->
-@skills/run/android/SKILL.md
+Run via Bash: `python scripts/skill_router.py skills/run/android/SKILL.md`
+If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/run/android/SKILL.md` and executing it yourself.

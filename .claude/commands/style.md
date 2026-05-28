@@ -1,4 +1,4 @@
-<!-- TODO: wire LM Studio (WU2 of HAB-91) — currently falls back to default model -->
-@skills/configure/style/SKILL.md
+Run via Bash: `python scripts/skill_router.py skills/configure/style/SKILL.md --args '$ARGUMENTS'`
+If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/configure/style/SKILL.md` and executing it yourself.
 
 $ARGUMENTS

@@ -140,7 +140,23 @@ $ARGUMENTS]
 $ARGUMENTS
 ```
 
-**For `lm-studio` alias:** leave as-is if the LM Studio routing script is already wired (WU2 of HAB-91); otherwise add a `<!-- TODO: wire LM Studio (WU2) -->` comment and leave the existing passthrough as a fallback.
+**For `lm-studio` alias:** use the script stub format below. The script reads the skill frontmatter, looks up the mapped model, checks LM Studio availability, and streams the completion. On non-zero exit Claude falls back to local execution.
+
+**Script stub format (use for lm-studio alias):**
+
+_With `$ARGUMENTS` (skills that take user-supplied input):_
+```markdown
+Run via Bash: `python scripts/skill_router.py skills/<path>/SKILL.md --args '$ARGUMENTS'`
+If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/<path>/SKILL.md` and executing it yourself.
+
+$ARGUMENTS
+```
+
+_Without `$ARGUMENTS` (skills that need no user input):_
+```markdown
+Run via Bash: `python scripts/skill_router.py skills/<path>/SKILL.md`
+If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/<path>/SKILL.md` and executing it yourself.
+```
 
 Only update stubs whose alias changed — do not touch stubs that are already correct.
 

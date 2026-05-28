@@ -1,2 +1,2 @@
-<!-- TODO: wire LM Studio (WU2 of HAB-91) — currently falls back to default model -->
-@skills/manage/summarize/SKILL.md
+Run via Bash: `python scripts/skill_router.py skills/manage/summarize/SKILL.md`
+If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/manage/summarize/SKILL.md` and executing it yourself.

@@ -34,6 +34,8 @@ First, determine the target state by inspecting the PR file list (`gh pr view <n
 
 When in doubt, use **In QA**.
 
+**Multi-WU check before closing:** Fetch the issue description (`mcp__linear__get_issue`). If it contains a **Work Units** section with any pending items (marked ⏳ or 🔄), do **not** move to Done or In QA — move to **In Progress** instead and add a Linear comment noting which WU just shipped and what remains. Only proceed to Done/In QA when all WUs are checked off (✅).
+
 Call `mcp__linear__save_issue` with the chosen `state` for each issue linked to the PR. If moving to In QA, do **not** move to Done — the ticket stays there until human testers sign off; the user moves it to Done manually.
 
 ### 2. Add a CHANGELOG entry
