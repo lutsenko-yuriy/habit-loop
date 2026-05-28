@@ -142,7 +142,7 @@ $ARGUMENTS
 
 **For `lm-studio` alias:** use the script stub format below. The script reads the skill frontmatter, looks up the mapped model, checks LM Studio availability, and streams the completion. On non-zero exit Claude falls back to local execution.
 
-> **Note:** Skills with `needs_mcp: true` in their frontmatter exit immediately with code 2 (no LM Studio call is made), forcing fallback to Claude Code where MCP and built-in tools are available. When assigning `lm-studio` to a tier, check whether any skill at that tier has `needs_mcp: true` — if all of them do, lm-studio routing is effectively a no-op for that tier and a Claude alias would be more honest.
+> **Note:** Skills with `needs_session_tools: true` in their frontmatter exit immediately with code 2 (no LM Studio call is made), forcing fallback to Claude Code where MCP and built-in tools are available. When assigning `lm-studio` to a tier, check whether any skill at that tier has `needs_session_tools: true` — if all of them do, lm-studio routing is effectively a no-op for that tier and a Claude alias would be more honest.
 
 **Script stub format (use for lm-studio alias):**
 

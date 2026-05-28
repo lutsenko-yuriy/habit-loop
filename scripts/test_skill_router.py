@@ -28,7 +28,7 @@ TIERS_MD_WITH_LMSTUDIO = """\
 """
 
 SKILL_CONTENT_PLAIN = "---\neffort: RAPID\nreasoning: MECHANICAL\n---\nDo the thing.\n"
-SKILL_CONTENT_NEEDS_MCP = "---\neffort: RAPID\nreasoning: MECHANICAL\nneeds_mcp: true\n---\nDo the thing.\n"
+SKILL_CONTENT_NEEDS_MCP = "---\neffort: RAPID\nreasoning: MECHANICAL\nneeds_session_tools: true\n---\nDo the thing.\n"
 SKILL_CONTENT_NO_FM = "No frontmatter here."
 
 
@@ -65,27 +65,27 @@ class TestReadFrontmatter(unittest.TestCase):
             return skill_router.read_frontmatter("fake/SKILL.md")
 
     def test_parses_effort_and_reasoning(self):
-        effort, reasoning, needs_mcp, body = self._parse(SKILL_CONTENT_PLAIN)
+        effort, reasoning, needs_session_tools, body = self._parse(SKILL_CONTENT_PLAIN)
         self.assertEqual(effort, "RAPID")
         self.assertEqual(reasoning, "MECHANICAL")
 
-    def test_needs_mcp_false_by_default(self):
-        _, _, needs_mcp, _ = self._parse(SKILL_CONTENT_PLAIN)
-        self.assertFalse(needs_mcp)
+    def test_needs_session_tools_false_by_default(self):
+        _, _, needs_session_tools, _ = self._parse(SKILL_CONTENT_PLAIN)
+        self.assertFalse(needs_session_tools)
 
-    def test_needs_mcp_true_when_set(self):
-        _, _, needs_mcp, _ = self._parse(SKILL_CONTENT_NEEDS_MCP)
-        self.assertTrue(needs_mcp)
+    def test_needs_session_tools_true_when_set(self):
+        _, _, needs_session_tools, _ = self._parse(SKILL_CONTENT_NEEDS_MCP)
+        self.assertTrue(needs_session_tools)
 
     def test_body_excludes_frontmatter(self):
         _, _, _, body = self._parse(SKILL_CONTENT_PLAIN)
         self.assertEqual(body, "Do the thing.\n")
 
     def test_no_frontmatter_returns_none_fields(self):
-        effort, reasoning, needs_mcp, body = self._parse(SKILL_CONTENT_NO_FM)
+        effort, reasoning, needs_session_tools, body = self._parse(SKILL_CONTENT_NO_FM)
         self.assertIsNone(effort)
         self.assertIsNone(reasoning)
-        self.assertFalse(needs_mcp)
+        self.assertFalse(needs_session_tools)
         self.assertEqual(body, SKILL_CONTENT_NO_FM)
 
 
@@ -241,7 +241,7 @@ class TestMain(unittest.TestCase):
 
     @patch("skill_router.read_frontmatter", return_value=("RAPID", "MECHANICAL", True, "body"))
     @patch("pathlib.Path.exists", return_value=True)
-    def test_needs_mcp_exits_2(self, *_):
+    def test_needs_session_tools_exits_2(self, *_):
         self.assertEqual(self._run(["skill_router.py", "fake/SKILL.md"]), 2)
 
     @patch("skill_router.lookup_lmstudio_model", return_value=None)

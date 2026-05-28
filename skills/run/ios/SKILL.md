@@ -2,7 +2,7 @@
 name: run-ios
 effort: RAPID
 reasoning: MECHANICAL
-needs_mcp: true
+needs_session_tools: true
 output_style: CONCISE
 description: Start the app on iOS. Prefers a connected physical device; falls back to a booted Simulator; if no Simulator is booted, boots the most recent iPhone Simulator and waits before starting the app.
 ---

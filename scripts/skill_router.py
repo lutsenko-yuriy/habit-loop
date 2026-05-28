@@ -28,7 +28,7 @@ MODEL_TIERS_PATH = "docs/MODEL_TIERS.md"
 
 
 def read_frontmatter(skill_path: str):
-    """Return (effort, reasoning, needs_mcp, body) parsed from a SKILL.md file."""
+    """Return (effort, reasoning, needs_session_tools, body) parsed from a SKILL.md file."""
     text = Path(skill_path).read_text()
     m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     if not m:
@@ -36,11 +36,11 @@ def read_frontmatter(skill_path: str):
     fm = m.group(1)
     effort = re.search(r"^effort:\s*(\S+)", fm, re.MULTILINE)
     reasoning = re.search(r"^reasoning:\s*(\S+)", fm, re.MULTILINE)
-    needs_mcp = bool(re.search(r"^needs_mcp:\s*true", fm, re.MULTILINE))
+    needs_session_tools = bool(re.search(r"^needs_session_tools:\s*true", fm, re.MULTILINE))
     return (
         effort.group(1) if effort else None,
         reasoning.group(1) if reasoning else None,
-        needs_mcp,
+        needs_session_tools,
         text[m.end():],
     )
 
@@ -160,12 +160,12 @@ def main():
         print(f"[skill_router] Skill file not found: {skill_path}", file=sys.stderr)
         sys.exit(2)
 
-    effort, reasoning, needs_mcp, body = read_frontmatter(skill_path)
+    effort, reasoning, needs_session_tools, body = read_frontmatter(skill_path)
     if not effort or not reasoning:
         print(f"[skill_router] Could not parse frontmatter in {skill_path}", file=sys.stderr)
         sys.exit(2)
 
-    if needs_mcp:
+    if needs_session_tools:
         print(
             f"[skill_router] {skill_path} requires session tools (MCP/Bash/Edit) — "
             "must run inside Claude Code, not via LM Studio",
