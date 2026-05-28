@@ -84,24 +84,52 @@ Do not proceed until the user explicitly approves or provides corrections.
 
 ### 5. Write the approved mapping
 
-Open `docs/MODEL_TIERS.md` and replace the content of the `## Active mapping` section with the approved table plus a datestamp:
+Open `docs/MODEL_TIERS.md` and replace the content of the `## Active mapping` section with the approved table plus a datestamp. Include the **Claude Code alias** column (`opus` / `sonnet` / `lm-studio`) so command stubs can read it:
 
 ```markdown
 ## Active mapping
 
 _Last updated: YYYY-MM-DD._
 
-| Effort | Reasoning | Model |
-|---|---|---|
-| THOROUGH | ARCHITECTURAL | <model> |
-| THOROUGH | TACTICAL | <model> |
-| FOCUSED | ARCHITECTURAL | <model> |
-| FOCUSED | TACTICAL | <model> |
-| RAPID | TACTICAL | <model> |
-| RAPID | MECHANICAL | <model> |
+| Effort | Reasoning | Model | Claude Code alias |
+|---|---|---|---|
+| THOROUGH | ARCHITECTURAL | <model> | `opus` or `sonnet` or `lm-studio` |
+| THOROUGH | TACTICAL | <model> | `opus` or `sonnet` or `lm-studio` |
+| FOCUSED | ARCHITECTURAL | <model> | `opus` or `sonnet` or `lm-studio` |
+| FOCUSED | TACTICAL | <model> | `opus` or `sonnet` or `lm-studio` |
+| RAPID | TACTICAL | <model> | `opus` or `sonnet` or `lm-studio` |
+| RAPID | MECHANICAL | <model> | `opus` or `sonnet` or `lm-studio` |
 ```
 
+Alias rules: `opus` for claude-opus-*; `sonnet` for claude-sonnet-*; `haiku` for claude-haiku-*; `lm-studio` for any local/MLX model.
+
 Do not modify any other section of `docs/MODEL_TIERS.md`.
+
+### 5a. Update command stubs
+
+After writing `docs/MODEL_TIERS.md`, update every `.claude/commands/*.md` stub that has changed alias. The stub format is:
+
+**For Claude aliases (`opus` / `sonnet` / `haiku`):**
+```markdown
+Route this invocation to a subagent. **Do not execute the skill yourself.**
+
+**Skill:** <name>
+**Tier:** <EFFORT> + <REASONING>
+**Model alias:** <alias>
+
+Steps:
+1. Read `skills/<path>/SKILL.md` using the Read tool.
+2. Spawn an Agent with:
+   - `model`: `"<alias>"`
+   - `prompt`: full content of the skill file[, followed by the arguments below].
+
+[**Arguments:**
+$ARGUMENTS]
+```
+
+**For `lm-studio` alias:** leave as-is if the LM Studio routing script is already wired (WU2 of HAB-91); otherwise use the Claude alias stub with the closest available Claude model as a temporary fallback and add a `<!-- TODO: wire LM Studio -->` comment.
+
+Only update stubs whose alias changed — do not touch stubs that are already correct.
 
 ### 6. Report back
 

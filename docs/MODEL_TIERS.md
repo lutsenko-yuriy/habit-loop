@@ -50,7 +50,7 @@ This project describes what each skill needs from a model using two axes: **Effo
 
 Models available to this project:
 
-**claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5, mistralai/devstral-small-2-2512 (MLX, 4-bit), qwen/qwen3-coder-30b (MLX, 5-bit)**
+**claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5, mistralai/devstral-small-2-2512 (MLX, 4-bit), qwen/qwen3-coder-30b (MLX, 5-bit), qwen/qwen3-8b (MLX, 4-bit)**
 
 The `calibrate` skill reads this list and proposes the mapping below. Re-run `calibrate` whenever the available models change.
 
@@ -58,16 +58,16 @@ The `calibrate` skill reads this list and proposes the mapping below. Re-run `ca
 
 ## Active mapping
 
-_Last updated: 2026-05-27._
+_Last updated: 2026-05-28._
 
-| Effort | Reasoning | Model |
-|---|---|---|
-| THOROUGH | ARCHITECTURAL | claude-opus-4-6 |
-| THOROUGH | TACTICAL | qwen/qwen3-coder-30b (MLX, 5-bit) |
-| FOCUSED | ARCHITECTURAL | claude-sonnet-4-6 |
-| FOCUSED | TACTICAL | mistralai/devstral-small-2-2512 (MLX, 4-bit) |
-| RAPID | TACTICAL | claude-haiku-4-5 |
-| RAPID | MECHANICAL | claude-haiku-4-5 |
+| Effort | Reasoning | Model | Claude Code alias |
+|---|---|---|---|
+| THOROUGH | ARCHITECTURAL | claude-opus-4-6 | `opus` |
+| THOROUGH | TACTICAL | qwen/qwen3-coder-30b (MLX, 5-bit) | `lm-studio` |
+| FOCUSED | ARCHITECTURAL | claude-sonnet-4-6 | `sonnet` |
+| FOCUSED | TACTICAL | mistralai/devstral-small-2-2512 (MLX, 4-bit) | `lm-studio` |
+| RAPID | TACTICAL | qwen/qwen3-8b (MLX, 4-bit) | `lm-studio` |
+| RAPID | MECHANICAL | qwen/qwen3-8b (MLX, 4-bit) | `lm-studio` |
 
 ---
 
