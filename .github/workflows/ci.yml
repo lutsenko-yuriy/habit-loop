@@ -38,6 +38,9 @@ jobs:
         with:
           fetch-depth: 0  # full history + all tags needed for CHANGELOG lint
 
+      - name: Python script tests
+        run: python3 scripts/test_skill_router.py
+
       - name: Lint CHANGELOG markers
         run: |
           # Determine the last published version from git tags so only new

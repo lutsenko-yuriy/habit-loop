@@ -2,6 +2,7 @@
 name: ship
 effort: RAPID
 reasoning: TACTICAL
+needs_session_tools: true
 output_style: CONCISE
 description: Post-merge housekeeping after a PR is approved. Moves the linked Linear issues to "In QA", adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
 ---
@@ -20,7 +21,16 @@ Run all steps in order. Each step must succeed before moving to the next.
 
 ### 1. Move the linked issue(s) to the correct post-merge state
 
-First, determine the target state by inspecting the PR file list (`gh pr view <number> --json files`):
+**Precondition — multi-WU check:** Fetch the issue description (`mcp__linear__get_issue`). If it contains a **Work Units** section with any items still marked ⏳ (not started) or 🔄 (in progress), skip the state determination below and instead:
+1. Call `mcp__linear__save_issue` with `state: "In Progress"`.
+2. Add a Linear comment: "WU[N] shipped (PR #…). Remaining: [list pending WU bullets]."
+3. Proceed to step 2 (CHANGELOG).
+
+Only continue to the state determination when all WUs are ✅.
+
+---
+
+Determine the target state by inspecting the PR file list (`gh pr view <number> --json files`):
 
 **→ In QA** if the PR touches any of:
 - `lib/slices/*/ui/` — any widget or screen

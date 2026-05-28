@@ -2,6 +2,7 @@
 name: run-android
 effort: RAPID
 reasoning: MECHANICAL
+needs_session_tools: true
 output_style: CONCISE
 description: Start the app on Android. Prefers a connected physical device; falls back to a running emulator; if no emulator is running, launches the first available AVD and waits for it to boot before starting the app.
 ---

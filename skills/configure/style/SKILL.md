@@ -2,6 +2,7 @@
 name: style
 effort: RAPID
 reasoning: MECHANICAL
+needs_session_tools: true
 description: Switch the active communication style for this session. Three styles available — DETAILED (full prose, default), CONCISE (lecture-note shorthand, abbreviation-friendly), SCHEMATIC (minimal words, TeX-like symbols). Invoke as: "Invoke the style skill with CONCISE" or "/style SCHEMATIC". Persists the choice to CLAUDE.local.md so the next session can restore it.
 ---
 

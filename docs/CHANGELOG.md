@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.2] — 2026-05-28 (PR #116 merged)
+
+### Changed — LM Studio routing script + session-tool guard (HAB-91 WU2)
+
+- [user-none]
+- [non-user] `scripts/skill_router.py` — new script routing lm-studio-tier skills to LM Studio's local OpenAI-compatible API; exits non-zero so the stub falls back to Claude Code on failure
+- [non-user] `scripts/test_skill_router.py` — 33 unit tests covering all exit-code paths; run via `python3 scripts/test_skill_router.py`; hooked into CI `test` job
+- [non-user] `needs_session_tools: true` frontmatter flag added to 7 skill files (summarize, ship, implement, audit, style, ios, android); script exits 2 immediately so these skills always fall back to Claude Code where MCP and Bash tools are available
+- [non-user] 7 lm-studio command stubs updated from TODO passthrough to script-routing format with fallback instructions; all stubs changed from `python` to `python3`
+- [non-user] `skills/manage/ship/SKILL.md` step 1 gains a multi-WU precondition: if the issue has pending ⏳/🔄 WU items, ship moves to In Progress and adds a comment instead of closing
+- [non-user] `skills/configure/calibrate/SKILL.md` step 5a fully defines the lm-studio stub format and documents `needs_session_tools` behaviour
+- [non-user] HAB-93 created: research ticket for enabling proper tool-calling in LM Studio-routed skills
+
 ## [0.42.1] — 2026-05-28 (PR #115 merged)
 
 ### Changed — Skill tier routing: Claude-tier skills dispatched to correct model (HAB-91 WU1)

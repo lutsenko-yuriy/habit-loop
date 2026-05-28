@@ -13,4 +13,5 @@ _(none)_
 
 ### Remaining work
 
-_(none)_
+- **HAB-92**: Port LM Studio routing system to yuriys-agentic-boyz — copy script + stubs after HAB-91 WU2 is merged and tested
+- **HAB-93**: Research — enable MCP/session tool calls for LM Studio-routed skills — tool-calling loop so local models can actually call Linear/GitHub APIs
