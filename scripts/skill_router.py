@@ -178,9 +178,11 @@ def main():
         )
         sys.exit(1)
 
+    # Strip quantization annotations (e.g. "(MLX, 4-bit)") — LM Studio rejects them
+    api_model_name = _normalize_model_name(model_name)
     prompt = f"{body}\n\n---\n\n{extra_args}" if extra_args else body
 
-    if not stream_completion(model_name, prompt):
+    if not stream_completion(api_model_name, prompt):
         sys.exit(1)
 
 
