@@ -20,7 +20,16 @@ Run all steps in order. Each step must succeed before moving to the next.
 
 ### 1. Move the linked issue(s) to the correct post-merge state
 
-First, determine the target state by inspecting the PR file list (`gh pr view <number> --json files`):
+**Precondition — multi-WU check:** Fetch the issue description (`mcp__linear__get_issue`). If it contains a **Work Units** section with any items still marked ⏳ (not started) or 🔄 (in progress), skip the state determination below and instead:
+1. Call `mcp__linear__save_issue` with `state: "In Progress"`.
+2. Add a Linear comment: "WU[N] shipped (PR #…). Remaining: [list pending WU bullets]."
+3. Proceed to step 2 (CHANGELOG).
+
+Only continue to the state determination when all WUs are ✅.
+
+---
+
+Determine the target state by inspecting the PR file list (`gh pr view <number> --json files`):
 
 **→ In QA** if the PR touches any of:
 - `lib/slices/*/ui/` — any widget or screen
@@ -33,8 +42,6 @@ First, determine the target state by inspecting the PR file list (`gh pr view <n
 **→ Done directly** if the PR touches only: pure domain/application logic, documentation, CI config, l10n strings without new screens, or pure refactors where `flutter test` fully owns correctness.
 
 When in doubt, use **In QA**.
-
-**Multi-WU check before closing:** Fetch the issue description (`mcp__linear__get_issue`). If it contains a **Work Units** section with any pending items (marked ⏳ or 🔄), do **not** move to Done or In QA — move to **In Progress** instead and add a Linear comment noting which WU just shipped and what remains. Only proceed to Done/In QA when all WUs are checked off (✅).
 
 Call `mcp__linear__save_issue` with the chosen `state` for each issue linked to the PR. If moving to In QA, do **not** move to Done — the ticket stays there until human testers sign off; the user moves it to Done manually.
 
