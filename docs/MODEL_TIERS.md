@@ -50,7 +50,14 @@ This project describes what each skill needs from a model using two axes: **Effo
 
 Models available to this project:
 
-**claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5, mistralai/devstral-small-2-2512 (MLX, 4-bit), qwen/qwen3-coder-30b (MLX, 5-bit), qwen/qwen3-8b (MLX, 4-bit)**
+| Model | Access |
+|---|---|
+| claude-opus-4-6 | Anthropic API |
+| claude-sonnet-4-6 | Anthropic API |
+| claude-haiku-4-5 | Anthropic API |
+| qwen/qwen3-coder-30b (MLX, 5-bit) | LM Studio (local) |
+| mistralai/devstral-small-2-2512 (MLX, 4-bit) | LM Studio (local) |
+| qwen/qwen3-8b (MLX, 4-bit) | LM Studio (local) |
 
 The `calibrate` skill reads this list and proposes the mapping below. Re-run `calibrate` whenever the available models change.
 
