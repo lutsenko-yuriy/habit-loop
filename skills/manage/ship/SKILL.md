@@ -2,7 +2,7 @@
 name: ship
 effort: RAPID
 reasoning: TACTICAL
-needs_session_tools: true
+tools: linear,github,files
 output_style: CONCISE
 description: Post-merge housekeeping after a PR is approved. Moves the linked Linear issues to "In QA", adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
 ---

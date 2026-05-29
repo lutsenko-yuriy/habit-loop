@@ -4,17 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.42.3] — 2026-05-28 (PR #117 merged)
+## [0.42.3] — 2026-05-29 (PR #117 merged)
 
-### Changed — Linear context pre-injection for LM Studio-routed skills (HAB-93)
+### Changed — LM Studio tool-calling loop + Linear context pre-injection (HAB-93)
 
 - [user-none]
-- [non-user] `skill_router.py` gains a `context: linear` frontmatter handler: fetches open issues and the active project milestone from the Linear GraphQL API (`LINEAR_API_KEY` env var) and prepends formatted markdown to the skill prompt before sending to LM Studio — local models can now produce real backlog data without MCP tools
-- [non-user] `format_linear_context()` outputs a verbatim-copy markdown block (sentinel header, `## Backlog` section, active milestone, issues grouped by label) so the model copies the block rather than re-applying the SKILL.md template; "Recently completed" placeholder removed
-- [non-user] `_auth_headers()` added — reads `LM_API_TOKEN` and attaches `Authorization: Bearer` header to all LM Studio API calls
-- [non-user] `skills/manage/summarize/SKILL.md` frontmatter: `needs_session_tools: true` → `context: linear` so `/summarize` routes to LM Studio instead of falling back to Claude Code
-- [non-user] 51 unit tests (up from 33); covers auth headers, Linear GraphQL fetch, context formatting, and all new `main()` paths
-- [non-user] Research conclusion: context pre-injection (REST + GraphQL) is the practical path for read-only data access in LM Studio-routed skills; full MCP tool-calling in LM Studio is deferred (no production support as of Qwen3/Devstral)
+- [non-user] `skill_router.py`: multi-turn OpenAI tool-calling loop (`chat_completion_with_tools`) — sends `tools` parameter, executes returned `tool_calls`, appends `role: "tool"` results, repeats until final answer or `MAX_TOOL_TURNS = 20`; replaces `needs_session_tools` guard for skills that declare `tools:` in frontmatter
+- [non-user] Tool groups supported: `linear` (4 tools: `linear_get_issue`, `linear_list_states`, `linear_update_issue_state`, `linear_create_comment`), `github` (5 tools: `github_get_pr`, `github_list_pr_files`, `github_post_pr_comment`, `github_post_pr_inline_comment`, `github_merge_pr`), `files` (3 tools: `read_file`, `write_file`, `run_bash`)
+- [non-user] `read_frontmatter` extended to 6-tuple `(effort, reasoning, needs_session_tools, context, tools, body)` — new `tools` field is a list parsed from `tools: linear,github,files` frontmatter
+- [non-user] `_build_tools(groups)` assembles the OpenAI tool-definitions list; `_execute_tool()` dispatches by name to Linear GraphQL, `gh` CLI subprocess, or filesystem/Bash executors
+- [non-user] `context: linear` frontmatter handler: pre-fetches open issues and active milestone from Linear GraphQL (`LINEAR_API_KEY` env var) and prepends formatted markdown block before sending to LM Studio — for read-only summarize use-case
+- [non-user] `skills/manage/ship/SKILL.md`, `skills/verify/audit/SKILL.md`, `skills/build/implement/SKILL.md`: `needs_session_tools: true` → `tools: linear,github,files` / `tools: github,files` so these skills route to the tool-calling loop on lm-studio-tier models
+- [non-user] `skills/manage/summarize/SKILL.md`: `needs_session_tools: true` → `context: linear`; body updated with dual-path instructions (LM Studio: copy pre-fetched block; Claude Code fallback: call `mcp__linear__*`)
+- [non-user] 72 unit tests (up from 33); covers `_build_tools`, `_execute_tool` dispatch, multi-turn loop (final answer, tool call+dispatch, max-turns, network error), and all new `main()` paths
 
 ## [0.42.2] — 2026-05-28 (PR #116 merged)
 
