@@ -282,5 +282,23 @@ void main() {
 
       expect(container.read(syncCircuitBreakerProvider), SyncCircuitBreakerState.halfOpen);
     });
+
+    test('falls back to RemoteConfigDefaults.syncMaxConsecutiveFailures when RC returns 0 (key missing/unset)', () {
+      // getInt returns 0 when the key is absent in both overrides and RemoteConfigDefaults.all.
+      // The > 0 guard in syncCircuitBreakerProvider must fall back to the in-code default (5).
+      final rc = FakeRemoteConfigService(overrides: {'sync_max_consecutive_failures': 0});
+      final container = ProviderContainer(
+        overrides: [remoteConfigServiceProvider.overrideWithValue(rc)],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(syncCircuitBreakerProvider.notifier);
+      notifier.recordFailure(); // closed → halfOpen
+      for (var i = 0; i < 4; i++) {
+        notifier.recordFailure(); // 4 failures — should not open (threshold is 5, not 0)
+      }
+
+      expect(container.read(syncCircuitBreakerProvider), SyncCircuitBreakerState.halfOpen);
+    });
   });
 }
