@@ -49,6 +49,15 @@ abstract final class RemoteConfigDefaults {
   /// Default value for [exp003CommitmentConfirmationKey].
   static const String exp003CommitmentConfirmation = 'button';
 
+  /// Maximum number of consecutive Firestore failures in the half-open state
+  /// before the [SyncCircuitBreaker] transitions to open (suspended) state.
+  ///
+  /// Increase this value in Firebase Remote Config to make the circuit breaker
+  /// more tolerant of transient failures; decrease it to react faster to
+  /// persistent outages. The value takes effect on the next app start because
+  /// [SyncCircuitBreaker] reads it once at provider initialisation time.
+  static const int syncMaxConsecutiveFailures = 5;
+
   /// All default values keyed by their Remote Config parameter name.
   ///
   /// Pass this map to `FirebaseRemoteConfig.setDefaults()` during initialisation
@@ -60,6 +69,7 @@ abstract final class RemoteConfigDefaults {
     'post_deadline_notification_behavior': postDeadlineNotificationBehavior,
     'onboarding_auto_advance_seconds': onboardingAutoAdvanceSeconds,
     'exp_003_commitment_confirmation': exp003CommitmentConfirmation,
+    'sync_max_consecutive_failures': syncMaxConsecutiveFailures,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -73,5 +83,6 @@ abstract final class RemoteConfigDefaults {
     'post_deadline_notification_behavior': ['dismiss', 'encourage'],
     'onboarding_auto_advance_seconds': null,
     'exp_003_commitment_confirmation': ['button', 'checkbox', 'retype'],
+    'sync_max_consecutive_failures': null,
   };
 }

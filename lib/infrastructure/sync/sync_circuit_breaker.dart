@@ -29,11 +29,22 @@ enum SyncCircuitBreakerState { closed, halfOpen, open }
 /// - WU6 sync-status UI — watches [syncCircuitBreakerProvider] to display sync
 ///   health and calls [triggerManualSync] when the user taps the retry button.
 class SyncCircuitBreaker extends StateNotifier<SyncCircuitBreakerState> {
-  static const int _maxConsecutiveFailures = 5;
+  final int _maxConsecutiveFailures;
 
   int _consecutiveFailures = 0;
 
-  SyncCircuitBreaker() : super(SyncCircuitBreakerState.closed);
+  /// Creates a [SyncCircuitBreaker] with an optional [maxConsecutiveFailures]
+  /// threshold.
+  ///
+  /// The threshold controls how many consecutive Firestore failures in the
+  /// half-open state are allowed before the breaker trips to open. Defaults to
+  /// 5 (matching `RemoteConfigDefaults.syncMaxConsecutiveFailures`).
+  ///
+  /// In production, [syncCircuitBreakerProvider] reads the threshold from
+  /// Remote Config so it can be tuned without a new release.
+  SyncCircuitBreaker({int maxConsecutiveFailures = 5})
+      : _maxConsecutiveFailures = maxConsecutiveFailures,
+        super(SyncCircuitBreakerState.closed);
 
   /// Whether a sync request is currently permitted.
   ///

@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 
+import '../remote_config/fake_remote_config_service.dart';
+
 void main() {
   group('SyncCircuitBreaker', () {
     late SyncCircuitBreaker cb;
@@ -154,6 +156,54 @@ void main() {
     });
 
     // -------------------------------------------------------------------------
+    // Custom maxConsecutiveFailures threshold
+    // -------------------------------------------------------------------------
+
+    test('constructor accepts custom maxConsecutiveFailures', () {
+      final custom = SyncCircuitBreaker(maxConsecutiveFailures: 3);
+      addTearDown(custom.dispose);
+
+      expect(custom.state, SyncCircuitBreakerState.closed);
+    });
+
+    test('opens after custom threshold of 3 failures in halfOpen', () {
+      final custom = SyncCircuitBreaker(maxConsecutiveFailures: 3);
+      addTearDown(custom.dispose);
+
+      custom.recordFailure(); // closed → halfOpen
+      for (var i = 0; i < 3; i++) {
+        custom.recordFailure(); // 3 consecutive failures in halfOpen
+      }
+
+      expect(custom.state, SyncCircuitBreakerState.open);
+    });
+
+    test('does not open before custom threshold — 2 of 3 failures stays halfOpen', () {
+      final custom = SyncCircuitBreaker(maxConsecutiveFailures: 3);
+      addTearDown(custom.dispose);
+
+      custom.recordFailure(); // closed → halfOpen
+      for (var i = 0; i < 2; i++) {
+        custom.recordFailure();
+      }
+
+      expect(custom.state, SyncCircuitBreakerState.halfOpen);
+    });
+
+    test('default threshold of 5 is preserved when no argument supplied', () {
+      // Re-validates existing behaviour after constructor signature change.
+      cb.recordFailure(); // closed → halfOpen
+      for (var i = 0; i < 4; i++) {
+        cb.recordFailure(); // 4 failures — not yet open
+      }
+
+      expect(cb.state, SyncCircuitBreakerState.halfOpen);
+
+      cb.recordFailure(); // 5th — should open
+      expect(cb.state, SyncCircuitBreakerState.open);
+    });
+
+    // -------------------------------------------------------------------------
     // Full cycle: Closed → HalfOpen → Open → HalfOpen → Closed
     // -------------------------------------------------------------------------
 
@@ -196,6 +246,39 @@ void main() {
       addTearDown(container.dispose);
 
       container.read(syncCircuitBreakerProvider.notifier).recordFailure();
+
+      expect(container.read(syncCircuitBreakerProvider), SyncCircuitBreakerState.halfOpen);
+    });
+
+    test('reads threshold from RemoteConfigService — opens after 3 failures with RC threshold=3', () {
+      final rc = FakeRemoteConfigService(overrides: {'sync_max_consecutive_failures': 3});
+      final container = ProviderContainer(
+        overrides: [remoteConfigServiceProvider.overrideWithValue(rc)],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(syncCircuitBreakerProvider.notifier);
+      notifier.recordFailure(); // closed → halfOpen
+      for (var i = 0; i < 3; i++) {
+        notifier.recordFailure();
+      }
+
+      expect(container.read(syncCircuitBreakerProvider), SyncCircuitBreakerState.open);
+    });
+
+    test('with default RC returns 5, does not open after 4 halfOpen failures', () {
+      // FakeRemoteConfigService falls back to RemoteConfigDefaults.all → 5
+      final rc = FakeRemoteConfigService();
+      final container = ProviderContainer(
+        overrides: [remoteConfigServiceProvider.overrideWithValue(rc)],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(syncCircuitBreakerProvider.notifier);
+      notifier.recordFailure(); // closed → halfOpen
+      for (var i = 0; i < 4; i++) {
+        notifier.recordFailure();
+      }
 
       expect(container.read(syncCircuitBreakerProvider), SyncCircuitBreakerState.halfOpen);
     });
