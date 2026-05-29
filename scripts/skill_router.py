@@ -570,6 +570,7 @@ def chat_completion_with_tools(
     tools: list,
     *,
     linear_api_key: str = None,
+    max_turns: int = MAX_TOOL_TURNS,
 ) -> bool:
     """Run a multi-turn tool-calling loop, printing the final response to stdout.
 
@@ -578,7 +579,7 @@ def chat_completion_with_tools(
     """
     messages = [{"role": "user", "content": prompt}]
 
-    for turn in range(MAX_TOOL_TURNS):
+    for turn in range(max_turns):
         payload = json.dumps({
             "model": model_name,
             "messages": messages,
@@ -632,7 +633,7 @@ def chat_completion_with_tools(
             print()
             return True
 
-    print(f"[skill_router] Tool loop hit max turns ({MAX_TOOL_TURNS})", file=sys.stderr)
+    print(f"[skill_router] Tool loop hit max turns ({max_turns})", file=sys.stderr)
     return False
 
 
@@ -641,15 +642,16 @@ def chat_completion_with_tools(
 # ---------------------------------------------------------------------------
 
 def read_frontmatter(skill_path: str):
-    """Return (effort, reasoning, needs_session_tools, context, tools, body) from a SKILL.md file.
+    """Return (effort, reasoning, needs_session_tools, context, tools, max_turns, body).
 
     tools is a list of group names parsed from the comma-separated `tools:` field,
     e.g. 'linear,github,files' → ['linear', 'github', 'files'].
+    max_turns defaults to MAX_TOOL_TURNS when the frontmatter field is absent.
     """
     text = Path(skill_path).read_text()
     m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     if not m:
-        return None, None, False, None, [], text
+        return None, None, False, None, [], MAX_TOOL_TURNS, text
     fm = m.group(1)
     effort = re.search(r"^effort:\s*(\S+)", fm, re.MULTILINE)
     reasoning = re.search(r"^reasoning:\s*(\S+)", fm, re.MULTILINE)
@@ -657,12 +659,15 @@ def read_frontmatter(skill_path: str):
     context_match = re.search(r"^context:\s*(\S+)", fm, re.MULTILINE)
     tools_match = re.search(r"^tools:\s*(.+)$", fm, re.MULTILINE)
     tools = [t.strip() for t in tools_match.group(1).split(",")] if tools_match else []
+    max_turns_match = re.search(r"^max_turns:\s*(\d+)", fm, re.MULTILINE)
+    max_turns = int(max_turns_match.group(1)) if max_turns_match else MAX_TOOL_TURNS
     return (
         effort.group(1) if effort else None,
         reasoning.group(1) if reasoning else None,
         needs_session_tools,
         context_match.group(1) if context_match else None,
         tools,
+        max_turns,
         text[m.end():],
     )
 
@@ -785,7 +790,7 @@ def main():
         print(f"[skill_router] Skill file not found: {skill_path}", file=sys.stderr)
         sys.exit(2)
 
-    effort, reasoning, needs_session_tools, context, tool_groups, body = read_frontmatter(skill_path)
+    effort, reasoning, needs_session_tools, context, tool_groups, max_turns, body = read_frontmatter(skill_path)
     if not effort or not reasoning:
         print(f"[skill_router] Could not parse frontmatter in {skill_path}", file=sys.stderr)
         sys.exit(2)
@@ -845,7 +850,7 @@ def main():
     tools = _build_tools(tool_groups)
     if tools:
         success = chat_completion_with_tools(
-            api_model_name, prompt, tools, linear_api_key=linear_api_key
+            api_model_name, prompt, tools, linear_api_key=linear_api_key, max_turns=max_turns
         )
     else:
         success = stream_completion(api_model_name, prompt)

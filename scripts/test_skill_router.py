@@ -33,14 +33,16 @@ SKILL_CONTENT_WITH_CONTEXT = "---\neffort: RAPID\nreasoning: MECHANICAL\ncontext
 SKILL_CONTENT_WITH_TOOLS = "---\neffort: RAPID\nreasoning: MECHANICAL\ntools: linear,github\n---\nDo the thing.\n"
 SKILL_CONTENT_NO_FM = "No frontmatter here."
 
-# Shorthand 6-tuples for read_frontmatter mocks
-_FM_PLAIN = ("RAPID", "MECHANICAL", False, None, [], "body")
-_FM_SESSION_TOOLS = ("RAPID", "MECHANICAL", True, None, [], "body")
-_FM_NO_EFFORT = (None, None, False, None, [], "body")
-_FM_FOCUSED = ("FOCUSED", "ARCHITECTURAL", False, None, [], "body")
-_FM_WITH_CONTEXT = ("RAPID", "MECHANICAL", False, "linear", [], "body")
-_FM_WITH_TOOLS_LINEAR = ("RAPID", "MECHANICAL", False, None, ["linear"], "body")
-_FM_WITH_TOOLS_GITHUB = ("RAPID", "MECHANICAL", False, None, ["github", "files"], "body")
+# Shorthand 7-tuples for read_frontmatter mocks
+# Format: (effort, reasoning, needs_session_tools, context, tools, max_turns, body)
+_MT = 40  # default MAX_TOOL_TURNS
+_FM_PLAIN = ("RAPID", "MECHANICAL", False, None, [], _MT, "body")
+_FM_SESSION_TOOLS = ("RAPID", "MECHANICAL", True, None, [], _MT, "body")
+_FM_NO_EFFORT = (None, None, False, None, [], _MT, "body")
+_FM_FOCUSED = ("FOCUSED", "ARCHITECTURAL", False, None, [], _MT, "body")
+_FM_WITH_CONTEXT = ("RAPID", "MECHANICAL", False, "linear", [], _MT, "body")
+_FM_WITH_TOOLS_LINEAR = ("RAPID", "MECHANICAL", False, None, ["linear"], _MT, "body")
+_FM_WITH_TOOLS_GITHUB = ("RAPID", "MECHANICAL", False, None, ["github", "files"], _MT, "body")
 
 
 # ---------------------------------------------------------------------------
@@ -94,45 +96,55 @@ class TestReadFrontmatter(unittest.TestCase):
             return skill_router.read_frontmatter("fake/SKILL.md")
 
     def test_parses_effort_and_reasoning(self):
-        effort, reasoning, _, _, _, _ = self._parse(SKILL_CONTENT_PLAIN)
+        effort, reasoning, _, _, _, _, _ = self._parse(SKILL_CONTENT_PLAIN)
         self.assertEqual(effort, "RAPID")
         self.assertEqual(reasoning, "MECHANICAL")
 
     def test_needs_session_tools_false_by_default(self):
-        _, _, needs_session_tools, _, _, _ = self._parse(SKILL_CONTENT_PLAIN)
+        _, _, needs_session_tools, _, _, _, _ = self._parse(SKILL_CONTENT_PLAIN)
         self.assertFalse(needs_session_tools)
 
     def test_needs_session_tools_true_when_set(self):
-        _, _, needs_session_tools, _, _, _ = self._parse(SKILL_CONTENT_NEEDS_MCP)
+        _, _, needs_session_tools, _, _, _, _ = self._parse(SKILL_CONTENT_NEEDS_MCP)
         self.assertTrue(needs_session_tools)
 
     def test_context_none_by_default(self):
-        _, _, _, context, _, _ = self._parse(SKILL_CONTENT_PLAIN)
+        _, _, _, context, _, _, _ = self._parse(SKILL_CONTENT_PLAIN)
         self.assertIsNone(context)
 
     def test_context_parsed_when_set(self):
-        _, _, _, context, _, _ = self._parse(SKILL_CONTENT_WITH_CONTEXT)
+        _, _, _, context, _, _, _ = self._parse(SKILL_CONTENT_WITH_CONTEXT)
         self.assertEqual(context, "linear")
 
     def test_tools_empty_by_default(self):
-        _, _, _, _, tools, _ = self._parse(SKILL_CONTENT_PLAIN)
+        _, _, _, _, tools, _, _ = self._parse(SKILL_CONTENT_PLAIN)
         self.assertEqual(tools, [])
 
     def test_tools_parsed_when_set(self):
-        _, _, _, _, tools, _ = self._parse(SKILL_CONTENT_WITH_TOOLS)
+        _, _, _, _, tools, _, _ = self._parse(SKILL_CONTENT_WITH_TOOLS)
         self.assertEqual(tools, ["linear", "github"])
 
+    def test_max_turns_defaults_to_constant(self):
+        _, _, _, _, _, max_turns, _ = self._parse(SKILL_CONTENT_PLAIN)
+        self.assertEqual(max_turns, skill_router.MAX_TOOL_TURNS)
+
+    def test_max_turns_parsed_when_set(self):
+        content = "---\neffort: RAPID\nreasoning: MECHANICAL\nmax_turns: 60\n---\nDo the thing.\n"
+        _, _, _, _, _, max_turns, _ = self._parse(content)
+        self.assertEqual(max_turns, 60)
+
     def test_body_excludes_frontmatter(self):
-        _, _, _, _, _, body = self._parse(SKILL_CONTENT_PLAIN)
+        _, _, _, _, _, _, body = self._parse(SKILL_CONTENT_PLAIN)
         self.assertEqual(body, "Do the thing.\n")
 
     def test_no_frontmatter_returns_none_fields(self):
-        effort, reasoning, needs_session_tools, context, tools, body = self._parse(SKILL_CONTENT_NO_FM)
+        effort, reasoning, needs_session_tools, context, tools, max_turns, body = self._parse(SKILL_CONTENT_NO_FM)
         self.assertIsNone(effort)
         self.assertIsNone(reasoning)
         self.assertFalse(needs_session_tools)
         self.assertIsNone(context)
         self.assertEqual(tools, [])
+        self.assertEqual(max_turns, skill_router.MAX_TOOL_TURNS)
         self.assertEqual(body, SKILL_CONTENT_NO_FM)
 
 
