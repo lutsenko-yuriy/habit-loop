@@ -13,5 +13,6 @@ _(none)_
 
 ### Remaining work
 
+- **HAB-90** (WU2–WU5): Debug mode config overrides — FakeFirestoreClient, FaultInjectingFirestoreClient, debug UI, AppHarness integration
 - **HAB-92**: Port LM Studio routing system to yuriys-agentic-boyz — copy script + stubs after HAB-91 WU2 is merged and tested
 - **HAB-94**: Refactor skill_router.py and test_skill_router.py — split into modules

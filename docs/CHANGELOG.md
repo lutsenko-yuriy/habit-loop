@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.4] — 2026-05-29 (PR #118 merged)
+
+### Changed — RC-configurable circuit breaker failure threshold (HAB-90 WU1)
+
+- [user-none]
+- [non-user] `RemoteConfigDefaults`: added `syncMaxConsecutiveFailures = 5` constant + `'sync_max_consecutive_failures'` key in `all` map and `allowedValues` map (null = free-value integer, shows text field in debug RC overrides UI)
+- [non-user] `SyncCircuitBreaker`: replaced hardcoded `static const _maxConsecutiveFailures = 5` with constructor parameter `{int maxConsecutiveFailures = 5}` — default preserved, all existing call sites unchanged
+- [non-user] `syncCircuitBreakerProvider`: reads threshold from `remoteConfigServiceProvider` via `ref.read` at construction time; `> 0` guard falls back to `RemoteConfigDefaults.syncMaxConsecutiveFailures` when RC key is absent/unset (returns 0)
+- [non-user] 9 new tests: custom threshold constructor, opens/stays halfOpen at custom threshold, default-5 validation, provider reads RC threshold, provider default, provider fallback-guard (RC returns 0); 1427 total passing, analyzer clean
+
 ## [0.42.3] — 2026-05-29 (PR #117 merged)
 
 ### Changed — LM Studio tool-calling loop + Linear context pre-injection (HAB-93)
