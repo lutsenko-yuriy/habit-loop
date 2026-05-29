@@ -17,6 +17,7 @@ Exit codes:
 """
 
 import json
+import os
 import re
 import sys
 import urllib.error
@@ -25,22 +26,141 @@ from pathlib import Path
 
 LMSTUDIO_BASE = "http://localhost:1234/v1"
 MODEL_TIERS_PATH = "docs/MODEL_TIERS.md"
+LINEAR_API_URL = "https://api.linear.app/graphql"
+LINEAR_PROJECT_ID = "c3afdc26-d306-4f72-bdb3-de9b01060d0f"
+
+_ISSUES_QUERY = f"""
+{{
+  issues(
+    filter: {{ state: {{ type: {{ nin: ["completed", "cancelled"] }} }} }}
+    orderBy: updatedAt
+    first: 50
+  ) {{
+    nodes {{
+      identifier
+      title
+      description
+      state {{ name type }}
+      labels {{ nodes {{ name }} }}
+    }}
+  }}
+}}
+"""
+
+_MILESTONES_QUERY = f"""
+{{
+  project(id: "{LINEAR_PROJECT_ID}") {{
+    projectMilestones {{
+      nodes {{
+        name
+        progress
+        targetDate
+        status
+      }}
+    }}
+  }}
+}}
+"""
+
+
+def _linear_graphql(api_key: str, query: str) -> dict:
+    """Execute a GraphQL query against the Linear API. Raises on HTTP errors."""
+    payload = json.dumps({"query": query}).encode()
+    req = urllib.request.Request(
+        LINEAR_API_URL,
+        data=payload,
+        headers={"Content-Type": "application/json", "Authorization": api_key},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.load(resp)
+
+
+def fetch_linear_context(api_key: str) -> dict:
+    """Fetch open issues and project milestones from Linear. Returns {issues, milestones}."""
+    issues_data = _linear_graphql(api_key, _ISSUES_QUERY)
+    milestones_data = _linear_graphql(api_key, _MILESTONES_QUERY)
+    return {
+        "issues": issues_data.get("data", {}).get("issues", {}).get("nodes", []),
+        "milestones": (
+            milestones_data.get("data", {})
+            .get("project", {})
+            .get("projectMilestones", {})
+            .get("nodes", [])
+        ),
+    }
+
+
+def format_linear_context(data: dict) -> str:
+    """Format fetched Linear data as ready-to-output markdown for the skill prompt.
+
+    Produces the final backlog markdown directly so the model copies it verbatim
+    rather than re-interpreting a data block through a template.
+    """
+    issues = data.get("issues", [])
+    milestones = data.get("milestones", [])
+
+    lines = [
+        "=== PRE-FETCHED BACKLOG (output this verbatim, then ask the release question) ===",
+        "",
+        "## Backlog — Habit Loop",
+        "",
+    ]
+
+    active = next(
+        (m for m in milestones if m.get("status") not in ("done", "overdue", "canceled")),
+        None,
+    )
+    lines.append(
+        f"### Active milestone: {active['name']} ({active['progress']}% complete)"
+        if active
+        else "### Active milestone: none"
+    )
+    lines.append("")
+
+    def _fmt_issue(i: dict) -> str:
+        desc = (i.get("description") or "").split("\n")[0].strip()[:120]
+        return f"- {i['identifier']}: {i['title']}" + (f" — {desc}" if desc else "")
+
+    bugs = [i for i in issues if any(l["name"] in ("Bug", "Tech Debt") for l in i["labels"]["nodes"])]
+    work = [i for i in issues if any(l["name"] in ("Feature", "Improvement") for l in i["labels"]["nodes"])]
+    unlabeled = [i for i in issues if not i["labels"]["nodes"]]
+
+    lines.append("### Issues (bugs & tech debt)")
+    lines.extend(_fmt_issue(i) for i in bugs) if bugs else lines.append("_(none)_")
+    lines.append("")
+
+    lines.append("### Remaining work")
+    all_work = work + unlabeled
+    lines.extend(_fmt_issue(i) for i in all_work) if all_work else lines.append("_(none)_")
+    lines.append("")
+
+    lines.append("=== END PRE-FETCHED BACKLOG ===")
+    return "\n".join(lines)
+
+
+def _auth_headers() -> dict:
+    """Return Authorization header dict if LM_API_TOKEN env var is set, else empty dict."""
+    token = os.environ.get("LM_API_TOKEN")
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 
 def read_frontmatter(skill_path: str):
-    """Return (effort, reasoning, needs_session_tools, body) parsed from a SKILL.md file."""
+    """Return (effort, reasoning, needs_session_tools, context, body) parsed from a SKILL.md file."""
     text = Path(skill_path).read_text()
     m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     if not m:
-        return None, None, False, text
+        return None, None, False, None, text
     fm = m.group(1)
     effort = re.search(r"^effort:\s*(\S+)", fm, re.MULTILINE)
     reasoning = re.search(r"^reasoning:\s*(\S+)", fm, re.MULTILINE)
     needs_session_tools = bool(re.search(r"^needs_session_tools:\s*true", fm, re.MULTILINE))
+    context_match = re.search(r"^context:\s*(\S+)", fm, re.MULTILINE)
     return (
         effort.group(1) if effort else None,
         reasoning.group(1) if reasoning else None,
         needs_session_tools,
+        context_match.group(1) if context_match else None,
         text[m.end():],
     )
 
@@ -92,7 +212,7 @@ def model_loaded(model_name: str) -> bool:
     id like 'qwen/qwen3-8b' or 'qwen/qwen3-8b-mlx'.
     """
     try:
-        req = urllib.request.Request(f"{LMSTUDIO_BASE}/models")
+        req = urllib.request.Request(f"{LMSTUDIO_BASE}/models", headers=_auth_headers())
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.load(resp)
         loaded_ids = [m["id"] for m in data.get("data", [])]
@@ -117,7 +237,7 @@ def stream_completion(model_name: str, prompt: str) -> bool:
     req = urllib.request.Request(
         f"{LMSTUDIO_BASE}/chat/completions",
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", **_auth_headers()},
         method="POST",
     )
     try:
@@ -160,7 +280,7 @@ def main():
         print(f"[skill_router] Skill file not found: {skill_path}", file=sys.stderr)
         sys.exit(2)
 
-    effort, reasoning, needs_session_tools, body = read_frontmatter(skill_path)
+    effort, reasoning, needs_session_tools, context, body = read_frontmatter(skill_path)
     if not effort or not reasoning:
         print(f"[skill_router] Could not parse frontmatter in {skill_path}", file=sys.stderr)
         sys.exit(2)
@@ -172,6 +292,21 @@ def main():
             file=sys.stderr,
         )
         sys.exit(2)
+
+    if context == "linear":
+        api_key = os.environ.get("LINEAR_API_KEY")
+        if not api_key:
+            print(
+                "[skill_router] LINEAR_API_KEY not set — required for skills with context: linear",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        try:
+            context_data = fetch_linear_context(api_key)
+            body = f"{format_linear_context(context_data)}\n\n{body}"
+        except Exception as e:
+            print(f"[skill_router] Failed to fetch Linear context: {e}", file=sys.stderr)
+            sys.exit(1)
 
     model_name = lookup_lmstudio_model(effort, reasoning)
     if not model_name:

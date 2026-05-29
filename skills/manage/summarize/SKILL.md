@@ -2,7 +2,7 @@
 name: summarize
 effort: RAPID
 reasoning: MECHANICAL
-needs_session_tools: true
+context: linear
 output_style: CONCISE
 description: Present the current backlog at session start. Fetches open issues from Linear, shows the active milestone and completion percentage, groups work by label, and asks "What goes into the next release?" Invoke at the start of every session before any work begins.
 ---

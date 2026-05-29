@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.3] — 2026-05-28 (PR #117 merged)
+
+### Changed — Linear context pre-injection for LM Studio-routed skills (HAB-93)
+
+- [user-none]
+- [non-user] `skill_router.py` gains a `context: linear` frontmatter handler: fetches open issues and the active project milestone from the Linear GraphQL API (`LINEAR_API_KEY` env var) and prepends formatted markdown to the skill prompt before sending to LM Studio — local models can now produce real backlog data without MCP tools
+- [non-user] `format_linear_context()` outputs a verbatim-copy markdown block (sentinel header, `## Backlog` section, active milestone, issues grouped by label) so the model copies the block rather than re-applying the SKILL.md template; "Recently completed" placeholder removed
+- [non-user] `_auth_headers()` added — reads `LM_API_TOKEN` and attaches `Authorization: Bearer` header to all LM Studio API calls
+- [non-user] `skills/manage/summarize/SKILL.md` frontmatter: `needs_session_tools: true` → `context: linear` so `/summarize` routes to LM Studio instead of falling back to Claude Code
+- [non-user] 51 unit tests (up from 33); covers auth headers, Linear GraphQL fetch, context formatting, and all new `main()` paths
+- [non-user] Research conclusion: context pre-injection (REST + GraphQL) is the practical path for read-only data access in LM Studio-routed skills; full MCP tool-calling in LM Studio is deferred (no production support as of Qwen3/Devstral)
+
 ## [0.42.2] — 2026-05-28 (PR #116 merged)
 
 ### Changed — LM Studio routing script + session-tool guard (HAB-91 WU2)
