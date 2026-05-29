@@ -38,6 +38,7 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/data/noop_onboarding_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_override_store.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_override_store.dart';
@@ -370,9 +371,11 @@ final connectivityProvider = StreamProvider<bool>((ref) async* {
 /// No override is needed — the circuit breaker always starts Closed.
 final syncCircuitBreakerProvider = StateNotifierProvider<SyncCircuitBreaker, SyncCircuitBreakerState>(
   (ref) {
-    final rc = ref.watch(remoteConfigServiceProvider);
+    final rc = ref.read(remoteConfigServiceProvider);
     final threshold = rc.getInt('sync_max_consecutive_failures');
-    return SyncCircuitBreaker(maxConsecutiveFailures: threshold > 0 ? threshold : 5);
+    return SyncCircuitBreaker(
+      maxConsecutiveFailures: threshold > 0 ? threshold : RemoteConfigDefaults.syncMaxConsecutiveFailures,
+    );
   },
 );
 
