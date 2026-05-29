@@ -13,18 +13,11 @@ The project management tool is **Linear**. The issue identifier prefix is **HAB*
 
 ## Steps
 
-### 1. Fetch open issues
+### 1. Output the pre-fetched backlog
 
-Call `mcp__linear__list_issues` to list all open issues and group them by label:
+When routed via `skill_router.py` (`context: linear`), the backlog data is injected above this text between `=== PRE-FETCHED BACKLOG ===` sentinels. Copy that block verbatim — do not reformat, do not call any tools.
 
-- **Issues** — label `Bug` or `Tech Debt` — known problems already in the codebase
-- **Remaining work** — label `Feature` or `Improvement` — planned work not yet started
-
-### 2. Fetch the active milestone
-
-Call `mcp__linear__list_milestones` with the project ID (`c3afdc26-d306-4f72-bdb3-de9b01060d0f`) to get all milestones and their completion percentage.
-
-### 3. Produce the backlog summary
+When running inside Claude Code (fallback path), call `mcp__linear__list_issues` and `mcp__linear__list_milestones` (project ID `c3afdc26-d306-4f72-bdb3-de9b01060d0f`) and produce the summary below:
 
 ```
 ## Backlog — Habit Loop
@@ -36,11 +29,8 @@ Call `mcp__linear__list_milestones` with the project ID (`c3afdc26-d306-4f72-bdb
 
 ### Remaining work
 - HAB-XX: <title> — <one-line description>
-
-### Recently completed
-- <version>: <summary of what shipped>
 ```
 
-### 4. Ask and wait
+### 2. Ask and wait
 
 End with: **"What goes into the next release?"** — do not proceed until the user answers.
