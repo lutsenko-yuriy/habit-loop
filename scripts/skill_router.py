@@ -297,6 +297,9 @@ _TOOLS_FILES = [
 ]
 
 
+_KNOWN_TOOL_GROUPS = {"linear", "github", "files"}
+
+
 def _build_tools(groups: list) -> list:
     """Assemble OpenAI tool-definition list for the given group names."""
     tools = []
@@ -307,6 +310,8 @@ def _build_tools(groups: list) -> list:
             tools.extend(_TOOLS_GITHUB)
         elif g == "files":
             tools.extend(_TOOLS_FILES)
+        else:
+            print(f"[skill_router] Unknown tool group '{g}' — skipping", file=sys.stderr)
     return tools
 
 

@@ -187,9 +187,12 @@ class TestBuildTools(unittest.TestCase):
         self.assertIn("github_get_pr", names)
         self.assertNotIn("read_file", names)
 
-    def test_unknown_group_ignored(self):
-        tools = skill_router._build_tools(["unknown_group"])
+    def test_unknown_group_logs_warning(self):
+        with patch("sys.stderr") as mock_err:
+            tools = skill_router._build_tools(["unknown_group"])
         self.assertEqual(tools, [])
+        written = "".join(c.args[0] for c in mock_err.write.call_args_list)
+        self.assertIn("Unknown tool group 'unknown_group'", written)
 
 
 # ---------------------------------------------------------------------------
