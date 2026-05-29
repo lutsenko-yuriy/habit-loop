@@ -58,6 +58,26 @@ abstract final class RemoteConfigDefaults {
   /// [SyncCircuitBreaker] reads it once at provider initialisation time.
   static const int syncMaxConsecutiveFailures = 5;
 
+  /// Debug-only: connectivity mode used by [FaultInjectingFirestoreClient].
+  ///
+  /// Values: `'perfect'` (all requests succeed), `'absent'` (all requests throw,
+  /// simulating no network), `'unstable'` (each request succeeds with probability
+  /// [debugConnectivityStabilityPercent] / 100).
+  ///
+  /// Default is `'perfect'` — fault injection is disabled. This key is only
+  /// read in debug/profile builds where [FaultInjectingFirestoreClient] is wired
+  /// in. Override via the in-app Remote Config overrides screen to exercise the
+  /// circuit breaker and partial-failure paths during QA.
+  static const String debugConnectivityState = 'perfect';
+
+  /// Debug-only: success probability (0–100) when [debugConnectivityState] is
+  /// `'unstable'`.
+  ///
+  /// `100` = all requests succeed (equivalent to `'perfect'`), `0` = all fail
+  /// (equivalent to `'absent'`), `50` = approximately half succeed. Only
+  /// meaningful when `debug_connectivity_state` is `'unstable'`.
+  static const int debugConnectivityStabilityPercent = 100;
+
   /// All default values keyed by their Remote Config parameter name.
   ///
   /// Pass this map to `FirebaseRemoteConfig.setDefaults()` during initialisation
@@ -70,6 +90,8 @@ abstract final class RemoteConfigDefaults {
     'onboarding_auto_advance_seconds': onboardingAutoAdvanceSeconds,
     'exp_003_commitment_confirmation': exp003CommitmentConfirmation,
     'sync_max_consecutive_failures': syncMaxConsecutiveFailures,
+    'debug_connectivity_state': debugConnectivityState,
+    'debug_connectivity_stability_percent': debugConnectivityStabilityPercent,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -84,5 +106,7 @@ abstract final class RemoteConfigDefaults {
     'onboarding_auto_advance_seconds': null,
     'exp_003_commitment_confirmation': ['button', 'checkbox', 'retype'],
     'sync_max_consecutive_failures': null,
+    'debug_connectivity_state': ['perfect', 'absent', 'unstable'],
+    'debug_connectivity_stability_percent': null,
   };
 }
