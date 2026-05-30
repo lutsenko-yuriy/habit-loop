@@ -235,19 +235,26 @@ class _EditDialogIosState extends State<_EditDialogIos> {
                 ),
               ],
             ),
-            // IntrinsicHeight + OverflowBox expand the slider to the full
-            // 270 pt dialog width, cancelling out CupertinoAlertDialog's 16 pt
-            // horizontal content padding so the track runs edge-to-edge.
+            // IntrinsicHeight + OverflowBox expand the slider so its track
+            // exactly spans the dialog's content area, aligning the min/max
+            // thumb positions with the "0" / "max" labels below.
+            //
+            // CupertinoSlider has a built-in track inset of
+            //   _kPadding (8) + _thumbRadius (11) = 19 pt per side.
+            // The dialog content padding is 16 pt per side.
+            // To make the track reach the content edges:
+            //   maxWidth = 270 (dialog) + 2 × (19 − 16) = 276 pt.
+            // The slider overflows the dialog border by 3 pt on each side;
+            // CupertinoAlertDialog clips this invisibly via ClipRRect.
             //
             // Why not LayoutBuilder? CupertinoAlertDialog probes intrinsic
             // dimensions of its content during sizing; LayoutBuilder throws
             // in that context. OverflowBox supports intrinsic queries natively.
-            // IntrinsicHeight is needed because a Column gives OverflowBox an
-            // unbounded vertical size; IntrinsicHeight fixes that by tightening
-            // the height to the slider's natural height before layout runs.
+            // IntrinsicHeight tightens the vertical constraint so OverflowBox
+            // doesn't receive an unbounded height from the parent Column.
             IntrinsicHeight(
               child: OverflowBox(
-                maxWidth: 270.0, // CupertinoAlertDialog fixed max-width
+                maxWidth: 276.0, // dialog width + 2×(slider inset − content padding)
                 alignment: Alignment.center,
                 child: CupertinoSlider(
                   key: const Key('override-value-slider'),
