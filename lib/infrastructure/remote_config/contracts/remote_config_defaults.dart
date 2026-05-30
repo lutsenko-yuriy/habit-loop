@@ -96,6 +96,17 @@ abstract final class RemoteConfigDefaults {
   /// **Debug/profile only.** This key is never read in release builds.
   static const String debugFirestoreBackend = 'firebase';
 
+  /// Optional short hint shown in the debug override dialog for keys whose
+  /// numeric range has a concrete semantic meaning.
+  ///
+  /// Keys absent from this map (or mapped to `null`) show no hint. Use `\n`
+  /// to break the hint into multiple lines when the content warrants it.
+  static const Map<String, String?> valueHints = {
+    'debug_connectivity_stability_percent':
+        '0 = all fail · 50 ≈ half succeed · 100 = all succeed\n'
+        '(only active when debug_connectivity_state = unstable)',
+  };
+
   /// All default values keyed by their Remote Config parameter name.
   ///
   /// Pass this map to `FirebaseRemoteConfig.setDefaults()` during initialisation

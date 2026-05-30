@@ -210,6 +210,13 @@ class _EditDialogIosState extends State<_EditDialogIos> {
             'Default: ${widget.entry.defaultValue}',
             style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
           ),
+          if (widget.entry.hasValueHint) ...[
+            const SizedBox(height: 4),
+            Text(
+              widget.entry.valueHint!,
+              style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
+            ),
+          ],
           const SizedBox(height: 8),
           if (widget.entry.hasAllowedValues)
             CupertinoSlidingSegmentedControl<String>(

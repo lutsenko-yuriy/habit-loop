@@ -156,6 +156,13 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
             'Default: ${widget.entry.defaultValue}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
+          if (widget.entry.hasValueHint) ...[
+            const SizedBox(height: 4),
+            Text(
+              widget.entry.valueHint!,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: 8),
           if (widget.entry.hasAllowedValues)
             RadioGroup<String>(
