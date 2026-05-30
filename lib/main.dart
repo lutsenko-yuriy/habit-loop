@@ -32,6 +32,8 @@ import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/device/data/shared_preferences_device_id_service.dart';
+import 'package:habit_loop/infrastructure/firestore/data/backend_switching_firestore_client.dart';
+import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fault_injecting_firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/firebase_firestore_client_adapter.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
@@ -556,13 +558,22 @@ Future<void> main() async {
       onboardingPreferenceService: onboardingService,
       authService: authService,
       deviceIdService: deviceIdService,
-      // Release: bare Firebase adapter. Debug/profile: wrap in FaultInjectingFirestoreClient
-      // so QA can change 'debug_connectivity_state' in the RC overrides screen to
-      // simulate absent or unstable connectivity and exercise the circuit breaker.
+      // Release: bare Firebase adapter.
+      // Debug/profile: chain two decorators:
+      //   1. BackendSwitchingFirestoreClient — routes calls to real Firebase or
+      //      an in-memory FakeFirestoreClient based on the 'debug_firestore_backend'
+      //      RC key (toggle via the in-app RC overrides screen).
+      //   2. FaultInjectingFirestoreClient (outer) — injects configurable
+      //      connectivity failures based on 'debug_connectivity_state', so QA
+      //      can exercise the circuit breaker without touching live Firestore.
       firestoreClient: kReleaseMode
           ? FirebaseFirestoreClientAdapter(FirebaseFirestore.instance)
           : FaultInjectingFirestoreClient(
-              inner: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
+              inner: BackendSwitchingFirestoreClient(
+                firebase: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
+                fake: FakeFirestoreClient(),
+                rc: remoteConfigService ?? NoopRemoteConfigService(),
+              ),
               rc: remoteConfigService ?? NoopRemoteConfigService(),
             ),
     );

@@ -78,6 +78,20 @@ abstract final class RemoteConfigDefaults {
   /// meaningful when `debug_connectivity_state` is `'unstable'`.
   static const int debugConnectivityStabilityPercent = 100;
 
+  /// Debug-only: which Firestore backend to use in debug/profile builds.
+  ///
+  /// Values: `'firebase'` (default, real Firebase adapter) or `'fake'`
+  /// (in-memory [FakeFirestoreClient] — starts empty; write operations still
+  /// succeed but data is only held in memory for the session). Switch via the
+  /// in-app RC overrides screen — takes effect on the next Firestore call
+  /// without an app restart.
+  ///
+  /// Useful for verifying the pull/merge path with no live Firebase project or
+  /// for isolating UI logic from a real backend during QA sessions.
+  ///
+  /// **Debug/profile only.** This key is never read in release builds.
+  static const String debugFirestoreBackend = 'firebase';
+
   /// All default values keyed by their Remote Config parameter name.
   ///
   /// Pass this map to `FirebaseRemoteConfig.setDefaults()` during initialisation
@@ -92,6 +106,7 @@ abstract final class RemoteConfigDefaults {
     'sync_max_consecutive_failures': syncMaxConsecutiveFailures,
     'debug_connectivity_state': debugConnectivityState,
     'debug_connectivity_stability_percent': debugConnectivityStabilityPercent,
+    'debug_firestore_backend': debugFirestoreBackend,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -108,5 +123,21 @@ abstract final class RemoteConfigDefaults {
     'sync_max_consecutive_failures': null,
     'debug_connectivity_state': ['perfect', 'absent', 'unstable'],
     'debug_connectivity_stability_percent': null,
+    'debug_firestore_backend': ['firebase', 'fake'],
+  };
+
+  /// Bounded integer ranges for keys whose values must fall within a known
+  /// [min, max] range (inclusive on both ends).
+  ///
+  /// The debug override screen uses this to display a slider instead of a
+  /// free-text input for these keys. Keys absent from this map (or mapped to
+  /// `null`) accept any value — the screen shows a plain text field.
+  ///
+  /// Only keys with both a meaningful lower and upper bound are listed here;
+  /// open-ended numeric keys (e.g. `max_active_pacts`) remain free-text.
+  static const Map<String, ({int min, int max})?> intRanges = {
+    'debug_connectivity_stability_percent': (min: 0, max: 100),
+    'sync_max_consecutive_failures': (min: 1, max: 20),
+    'onboarding_auto_advance_seconds': (min: 0, max: 60),
   };
 }

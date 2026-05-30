@@ -110,11 +110,15 @@ class _EditDialogAndroid extends StatefulWidget {
 }
 
 class _EditDialogAndroidState extends State<_EditDialogAndroid> {
-  /// Used only when [RemoteConfigEntry.allowedValues] is `null`.
+  /// Used only when [RemoteConfigEntry.allowedValues] is `null` and
+  /// [RemoteConfigEntry.intRange] is also `null` (plain free-text key).
   late final TextEditingController? _controller;
 
   /// Used only when [RemoteConfigEntry.allowedValues] is non-`null`.
   String? _selectedValue;
+
+  /// Used only when [RemoteConfigEntry.hasIntRange] is `true`.
+  double? _sliderValue;
 
   @override
   void initState() {
@@ -124,6 +128,11 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
       final effective = widget.entry.overrideValue ?? widget.entry.effectiveValue;
       _selectedValue =
           (widget.entry.allowedValues!.contains(effective)) ? effective : widget.entry.allowedValues!.first;
+    } else if (widget.entry.hasIntRange) {
+      _controller = null;
+      final range = widget.entry.intRange!;
+      final raw = int.tryParse(widget.entry.overrideValue ?? widget.entry.effectiveValue) ?? range.min;
+      _sliderValue = raw.clamp(range.min, range.max).toDouble();
     } else {
       _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
     }
@@ -167,7 +176,31 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
                 ],
               ),
             )
-          else
+          else if (widget.entry.hasIntRange) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${_sliderValue!.round()}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            Slider(
+              key: const Key('override-value-slider'),
+              value: _sliderValue!,
+              min: widget.entry.intRange!.min.toDouble(),
+              max: widget.entry.intRange!.max.toDouble(),
+              onChanged: (v) => setState(() => _sliderValue = v),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('${widget.entry.intRange!.min}', style: Theme.of(context).textTheme.bodySmall),
+                Text('${widget.entry.intRange!.max}', style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ] else
             TextField(
               key: const Key('override-value-field'),
               controller: _controller,
@@ -200,6 +233,10 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
               final value = _selectedValue;
               Navigator.of(context).pop();
               if (value != null) await widget.onSave(value);
+            } else if (widget.entry.hasIntRange) {
+              final value = _sliderValue!.round().toString();
+              Navigator.of(context).pop();
+              await widget.onSave(value);
             } else {
               final value = _controller!.text.trim();
               Navigator.of(context).pop();

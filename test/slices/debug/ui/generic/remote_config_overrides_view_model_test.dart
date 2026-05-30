@@ -70,6 +70,39 @@ void main() {
       expect(free, containsAll(['max_active_pacts', 'onboarding_auto_advance_seconds']));
     });
 
+    test('intRange matches RemoteConfigDefaults.intRanges for each key', () {
+      final entries = readEntries();
+      for (final e in entries) {
+        expect(e.intRange, RemoteConfigDefaults.intRanges[e.key]);
+      }
+    });
+
+    test('hasIntRange is true for bounded numeric keys', () {
+      final entries = readEntries();
+      final ranged = entries.where((e) => e.hasIntRange).map((e) => e.key).toSet();
+      expect(
+          ranged,
+          containsAll([
+            'debug_connectivity_stability_percent',
+            'sync_max_consecutive_failures',
+            'onboarding_auto_advance_seconds',
+          ]));
+    });
+
+    test('hasIntRange is false for free-text and enum keys', () {
+      final entries = readEntries();
+      final noRange = entries.where((e) => !e.hasIntRange).map((e) => e.key).toSet();
+      expect(noRange, containsAll(['max_active_pacts', 'debug_firestore_backend', 'debug_connectivity_state']));
+    });
+
+    test('debug_firestore_backend has allowedValues ["firebase", "fake"]', () {
+      final entries = readEntries();
+      final entry = entries.firstWhere((e) => e.key == 'debug_firestore_backend');
+      expect(entry.allowedValues, ['firebase', 'fake']);
+      expect(entry.hasAllowedValues, isTrue);
+      expect(entry.hasIntRange, isFalse);
+    });
+
     test('effectiveValue reflects service getInt for int key', () {
       service.overrides['max_active_pacts'] = 7;
       final entries = readEntries();

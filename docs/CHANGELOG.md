@@ -6,16 +6,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ## [0.42.5] — 2026-05-30 (in progress)
 
-### Added — FakeFirestoreClient, FaultInjectingFirestoreClient, AppHarness fake-Firestore mode (HAB-90 WU2–WU5)
+### Added — FakeFirestoreClient, FaultInjectingFirestoreClient, BackendSwitchingFirestoreClient, RC slider UI, AppHarness fake-Firestore mode (HAB-90 WU2–WU5)
 
 - [user-none]
 - [non-user] `FakeFirestoreClient` + `FakeFirestoreSeedData` (debug/profile only): in-memory `FirestoreClient`; `seed()` (additive), `clear()`, `snapshot()`; defensive copies; lets QA exercise pull/merge path without a live Firestore project
 - [non-user] `FaultInjectingFirestoreClient` (debug/profile only): decorator wrapping any `FirestoreClient`; reads `debug_connectivity_state` (perfect/absent/unstable) and `debug_connectivity_stability_percent` from `RemoteConfigService` on every call; injected `Random` for deterministic tests; change via RC overrides screen takes effect immediately without app restart
-- [non-user] `RemoteConfigDefaults`: added `debugConnectivityState = 'perfect'`, `debugConnectivityStabilityPercent = 100`, and `allowedValues` for both keys (segmented picker in debug RC overrides UI)
-- [non-user] `main.dart`: debug/profile builds wrap `FirebaseFirestoreClientAdapter` with `FaultInjectingFirestoreClient` so QA can toggle `debug_connectivity_state` in the in-app RC overrides screen to simulate absent or unstable connectivity and exercise the circuit breaker
+- [non-user] `BackendSwitchingFirestoreClient` (debug/profile only): decorator that reads `debug_firestore_backend` RC key (`'firebase'` / `'fake'`) on every call; delegates to real Firebase adapter or `FakeFirestoreClient` respectively; runtime switch via RC overrides screen takes effect immediately without restart
+- [non-user] `RemoteConfigDefaults`: added `debugConnectivityState = 'perfect'`, `debugConnectivityStabilityPercent = 100`, `debugFirestoreBackend = 'firebase'`; `allowedValues` for all three keys; new `intRanges` map declaring bounded numeric keys (`debug_connectivity_stability_percent` 0–100, `sync_max_consecutive_failures` 1–20, `onboarding_auto_advance_seconds` 0–60)
+- [non-user] `main.dart`: debug/profile builds chain `FaultInjectingFirestoreClient(inner: BackendSwitchingFirestoreClient(...))` so QA can toggle both connectivity faults and backend source from the in-app RC overrides screen
+- [non-user] `RemoteConfigEntry` gains `intRange: ({int min, int max})?` field + `hasIntRange` getter; populated from `RemoteConfigDefaults.intRanges`
+- [non-user] Debug RC overrides UI: bounded numeric keys (where both min and max are known via `intRanges`) show a `CupertinoSlider` (iOS) / `Slider` (Android) in the edit dialog instead of a free-text field; saves as integer string; priority order: `allowedValues` → slider → free text
 - [non-user] `AppHarness.create()` gains `firestoreClient` param: when provided, `firestoreClientProvider` is overridden instead of `syncServiceProvider`, letting the real `FirestoreSyncService` run end-to-end against `FakeFirestoreClient` or `FaultInjectingFirestoreClient`
 - [non-user] 2 new integration tests (`fake_firestore_sync_flow_test.dart`): (1) `pullRemoteChanges` merges `FakeFirestoreClient` data onto dashboard after sign-in; (2) `FaultInjectingFirestoreClient` absent mode prevents remote data from appearing
-- [non-user] 2 new `app_container_test.dart` unit tests: `FaultInjectingFirestoreClient` absent throws via `firestoreClientProvider`; perfect mode passes through to `FakeFirestoreClient`; 1480 total passing, analyzer clean
+- [non-user] 11 new `BackendSwitchingFirestoreClient` unit tests; 5 new `RemoteConfigOverridesViewModel` tests; 4 new slider/picker widget tests each on iOS and Android; 2 new `app_container_test.dart` unit tests; 1501 total passing, analyzer clean
 
 ## [0.42.4] — 2026-05-29 (PR #118 merged)
 
