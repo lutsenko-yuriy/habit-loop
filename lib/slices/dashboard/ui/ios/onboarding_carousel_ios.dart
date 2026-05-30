@@ -130,14 +130,14 @@ class _OnboardingCarouselIosState extends ConsumerState<OnboardingCarouselIos> {
                     ),
                   ),
                   // Debug/profile only — not visible in release builds.
-                  // minSize: 0.0 keeps the button height at ~14 pt (text only)
+                  // minimumSize: Size.zero keeps the button height at ~14 pt (text only)
                   // so it doesn't push the slide column out of view on small
                   // viewports.
                   if (kDebugMode || kProfileMode)
                     CupertinoButton(
                       key: const Key('onboarding-remote-config-debug-button'),
                       padding: EdgeInsets.zero,
-                      minSize: 0.0,
+                      minimumSize: Size.zero,
                       onPressed: () => Navigator.of(context).push(
                         CupertinoPageRoute<void>(
                           builder: (_) => const RemoteConfigOverridesPageIos(),
