@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Divider, Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
 /// Debug-only screen (iOS) for viewing and editing Remote Config overrides.
@@ -16,6 +17,8 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
     final entries = ref.watch(remoteConfigOverridesViewModelProvider);
     final notifier = ref.read(remoteConfigOverridesViewModelProvider.notifier);
     final hasAnyOverride = entries.any((e) => e.isOverridden);
+    final seedState = ref.watch(debugSeedDataViewModelProvider);
+    final seedNotifier = ref.read(debugSeedDataViewModelProvider.notifier);
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -51,6 +54,11 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
               ],
+              const SizedBox(height: 8),
+              const Divider(),
+              const SizedBox(height: 8),
+              _SeedSection(state: seedState, notifier: seedNotifier),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -324,6 +332,109 @@ class _EditDialogIosState extends State<_EditDialogIos> {
           child: const Text('Save'),
         ),
       ],
+    );
+  }
+}
+
+/// Seed-data section shown at the bottom of the RC overrides screen.
+///
+/// "Regenerate local pacts" is always visible.
+/// "Regenerate remote pacts" is visible only when a [FakeFirestoreClient] is
+/// wired (i.e. `debug_backend = local`).
+class _SeedSection extends StatelessWidget {
+  const _SeedSection({required this.state, required this.notifier});
+
+  final DebugSeedDataState state;
+  final DebugSeedDataViewModel notifier;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'SEED DATA',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: CupertinoColors.systemGrey,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SeedButton(
+                key: const Key('seed-local-button'),
+                label: 'Regenerate local pacts',
+                isBusy: state.isBusy,
+                onPressed: notifier.seedLocalPacts,
+              ),
+              if (notifier.hasFakeBackend) ...[
+                const Divider(height: 1, indent: 16),
+                _SeedButton(
+                  key: const Key('seed-remote-button'),
+                  label: 'Regenerate remote pacts',
+                  isBusy: state.isBusy,
+                  onPressed: notifier.seedRemotePacts,
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (state.status != DebugSeedState.idle) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              state.message ?? '',
+              key: const Key('seed-status-text'),
+              style: TextStyle(
+                fontSize: 12,
+                color: switch (state.status) {
+                  DebugSeedState.error => CupertinoColors.systemRed.resolveFrom(context),
+                  DebugSeedState.done => CupertinoColors.systemGreen.resolveFrom(context),
+                  _ => CupertinoColors.systemGrey.resolveFrom(context),
+                },
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SeedButton extends StatelessWidget {
+  const _SeedButton({
+    super.key,
+    required this.label,
+    required this.isBusy,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isBusy;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onPressed: isBusy ? null : onPressed,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(label),
+      ),
     );
   }
 }

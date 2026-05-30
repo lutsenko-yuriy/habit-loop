@@ -184,17 +184,17 @@ void main() {
     expect(find.byKey(const Key('override-badge')), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('iOS — debug_firestore_backend opens picker (allowedValues trumps intRange)', (tester) async {
+  testWidgets('iOS — debug_backend opens picker (allowedValues trumps intRange)', (tester) async {
     await pumpWithTallView(tester);
     await tester.pump();
 
-    await tester.tap(find.byKey(const Key('rc-entry-debug_firestore_backend')));
+    await tester.tap(find.byKey(const Key('rc-entry-debug_backend')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('override-value-picker')), findsOneWidget);
     expect(find.byKey(const Key('override-value-slider')), findsNothing);
     expect(find.byKey(const Key('override-value-field')), findsNothing);
-    expect(find.text('firebase'), findsWidgets);
-    expect(find.text('fake'), findsWidgets);
+    expect(find.text('real'), findsWidgets);
+    expect(find.text('local'), findsWidgets);
   });
 }

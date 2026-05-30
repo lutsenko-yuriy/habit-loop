@@ -182,17 +182,17 @@ void main() {
     expect(find.byKey(const Key('override-badge')), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('Android — debug_firestore_backend opens radio picker (allowedValues trumps intRange)', (tester) async {
+  testWidgets('Android — debug_backend opens radio picker (allowedValues trumps intRange)', (tester) async {
     await pumpWithTallView(tester);
     await tester.pump();
 
-    await tester.tap(find.byKey(const Key('rc-entry-debug_firestore_backend')));
+    await tester.tap(find.byKey(const Key('rc-entry-debug_backend')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('override-value-picker')), findsOneWidget);
     expect(find.byKey(const Key('override-value-slider')), findsNothing);
     expect(find.byKey(const Key('override-value-field')), findsNothing);
-    expect(find.byKey(const Key('override-option-firebase')), findsOneWidget);
-    expect(find.byKey(const Key('override-option-fake')), findsOneWidget);
+    expect(find.byKey(const Key('override-option-real')), findsOneWidget);
+    expect(find.byKey(const Key('override-option-local')), findsOneWidget);
   });
 }

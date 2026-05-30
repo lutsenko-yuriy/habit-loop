@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
 /// Debug-only screen (Android) for viewing and editing Remote Config overrides.
@@ -15,6 +16,8 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
     final entries = ref.watch(remoteConfigOverridesViewModelProvider);
     final notifier = ref.read(remoteConfigOverridesViewModelProvider.notifier);
     final hasAnyOverride = entries.any((e) => e.isOverridden);
+    final seedState = ref.watch(debugSeedDataViewModelProvider);
+    final seedNotifier = ref.read(debugSeedDataViewModelProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -28,27 +31,30 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
             ),
         ],
       ),
-      body: ListView.separated(
-        itemCount: entries.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final entry = entries[index];
-          return ListTile(
-            key: Key('rc-entry-${entry.key}'),
-            title: Text(
-              entry.key,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: [
+          for (final entry in entries) ...[
+            ListTile(
+              key: Key('rc-entry-${entry.key}'),
+              title: Text(
+                entry.key,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+              ),
+              subtitle: Text('Value: ${entry.effectiveValue}'),
+              trailing: _OverrideBadge(isOverridden: entry.isOverridden),
+              onTap: () => _showEditDialog(
+                context: context,
+                entry: entry,
+                onSave: (v) => notifier.setOverride(entry.key, v),
+                onClear: () => notifier.clearOverride(entry.key),
+              ),
             ),
-            subtitle: Text('Value: ${entry.effectiveValue}'),
-            trailing: _OverrideBadge(isOverridden: entry.isOverridden),
-            onTap: () => _showEditDialog(
-              context: context,
-              entry: entry,
-              onSave: (v) => notifier.setOverride(entry.key, v),
-              onClear: () => notifier.clearOverride(entry.key),
-            ),
-          );
-        },
+            const Divider(height: 1),
+          ],
+          const SizedBox(height: 8),
+          _SeedSection(state: seedState, notifier: seedNotifier),
+        ],
       ),
     );
   }
@@ -277,6 +283,98 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
           child: const Text('Save'),
         ),
       ],
+    );
+  }
+}
+
+/// Seed-data section shown at the bottom of the RC overrides screen.
+///
+/// "Regenerate local pacts" is always visible.
+/// "Regenerate remote pacts" is visible only when a [FakeFirestoreClient] is
+/// wired (i.e. `debug_backend = local`).
+class _SeedSection extends StatelessWidget {
+  const _SeedSection({required this.state, required this.notifier});
+
+  final DebugSeedDataState state;
+  final DebugSeedDataViewModel notifier;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'SEED DATA',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  letterSpacing: 0.5,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            margin: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SeedButton(
+                  key: const Key('seed-local-button'),
+                  label: 'Regenerate local pacts',
+                  isBusy: state.isBusy,
+                  onPressed: notifier.seedLocalPacts,
+                ),
+                if (notifier.hasFakeBackend) ...[
+                  const Divider(height: 1),
+                  _SeedButton(
+                    key: const Key('seed-remote-button'),
+                    label: 'Regenerate remote pacts',
+                    isBusy: state.isBusy,
+                    onPressed: notifier.seedRemotePacts,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (state.status != DebugSeedState.idle) ...[
+            const SizedBox(height: 8),
+            Text(
+              state.message ?? '',
+              key: const Key('seed-status-text'),
+              style: TextStyle(
+                fontSize: 12,
+                color: switch (state.status) {
+                  DebugSeedState.error => Theme.of(context).colorScheme.error,
+                  DebugSeedState.done => Colors.green,
+                  _ => Theme.of(context).colorScheme.onSurfaceVariant,
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SeedButton extends StatelessWidget {
+  const _SeedButton({
+    super.key,
+    required this.label,
+    required this.isBusy,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isBusy;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(label),
+      onTap: isBusy ? null : onPressed,
+      enabled: !isBusy,
     );
   }
 }

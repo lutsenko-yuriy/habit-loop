@@ -84,6 +84,9 @@ abstract final class AppContainer {
     AuthService? authService,
     DeviceIdService? deviceIdService,
     FirestoreClient? firestoreClient,
+    // Debug/profile only: the FakeFirestoreClient instance when debug_backend=local.
+    // Stored as Object? to avoid importing the debug-only class in this file.
+    Object? fakeFirestoreClient,
   }) async {
     // Fetch the saved locale before building the override list so the correct
     // locale is applied on the very first frame without an extra await in main.dart.
@@ -127,6 +130,10 @@ abstract final class AppContainer {
 
       // Firestore remote storage.
       if (firestoreClient != null) firestoreClientProvider.overrideWithValue(firestoreClient),
+
+      // Debug/profile only: expose the FakeFirestoreClient instance for the
+      // seed-data debug UI. null in release builds and when real backend is active.
+      if (fakeFirestoreClient != null) fakeFirestoreClientProvider.overrideWithValue(fakeFirestoreClient),
     ];
   }
 }

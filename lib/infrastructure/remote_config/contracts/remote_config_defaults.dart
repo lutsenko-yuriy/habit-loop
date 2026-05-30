@@ -82,33 +82,24 @@ abstract final class RemoteConfigDefaults {
   ///   and circuit-breaker retry paths.
   static const int debugConnectivityStabilityPercent = 100;
 
-  /// Debug-only: simulated authentication state.
+  /// Debug-only: which backend to use in debug/profile builds.
   ///
-  /// Values: `'real'` (default — delegates to real Firebase Auth) or
-  /// `'force_signed_in'` (treats the app as if the user is signed in with a
-  /// Google account, using a fixed fake user ID).
+  /// Values: `'real'` (default — real Firebase Auth + real/FaultInjecting
+  /// Firestore) or `'local'` ([LocalAuthService] + [FakeFirestoreClient] with
+  /// no network dependencies).
   ///
-  /// Useful for testing sync and dashboard behaviour with the fake Firestore
-  /// backend ([debugFirestoreBackend]) without going through the real Google
-  /// OAuth flow. The override takes effect immediately — no app restart needed.
+  /// In `'local'` mode:
+  /// - Auth starts anonymous; tapping "Sign in with Google" immediately
+  ///   succeeds and emits a non-anonymous state (no real OAuth required).
+  /// - Firestore operations target an in-memory [FakeFirestoreClient] so the
+  ///   full sync/pull/merge flow can be exercised without a live Firebase
+  ///   project.
   ///
-  /// **Debug/profile only.** Only read by [OverridableAuthService] which is
-  /// never constructed in release builds.
-  static const String debugAuthState = 'real';
-
-  /// Debug-only: which Firestore backend to use in debug/profile builds.
-  ///
-  /// Values: `'firebase'` (default, real Firebase adapter) or `'fake'`
-  /// (in-memory [FakeFirestoreClient] — starts empty; write operations still
-  /// succeed but data is only held in memory for the session). Switch via the
-  /// in-app RC overrides screen — takes effect on the next Firestore call
-  /// without an app restart.
-  ///
-  /// Useful for verifying the pull/merge path with no live Firebase project or
-  /// for isolating UI logic from a real backend during QA sessions.
+  /// **Requires an app restart to take effect** — the service instances are
+  /// wired at startup and cannot be swapped at runtime.
   ///
   /// **Debug/profile only.** This key is never read in release builds.
-  static const String debugFirestoreBackend = 'firebase';
+  static const String debugBackend = 'real';
 
   /// Optional short hint shown in the debug override dialog for keys whose
   /// numeric range has a concrete semantic meaning.
@@ -116,11 +107,10 @@ abstract final class RemoteConfigDefaults {
   /// Keys absent from this map (or mapped to `null`) show no hint. Use `\n`
   /// to break the hint into multiple lines when the content warrants it.
   static const Map<String, String?> valueHints = {
-    'debug_connectivity_stability_percent':
-        '0 = all fail · 50 ≈ half succeed · 100 = all succeed\n'
+    'debug_connectivity_stability_percent': '0 = all fail · 50 ≈ half succeed · 100 = all succeed\n'
         '(only active when debug_connectivity_state = unstable)',
-    'debug_auth_state': 'force_signed_in = fake non-anonymous user\n'
-        '(userId: debug_fake_user_id — no Google OAuth required)',
+    'debug_backend': 'local = LocalAuthService + FakeFirestoreClient\n'
+        '(requires app restart to take effect)',
   };
 
   /// All default values keyed by their Remote Config parameter name.
@@ -137,8 +127,7 @@ abstract final class RemoteConfigDefaults {
     'sync_max_consecutive_failures': syncMaxConsecutiveFailures,
     'debug_connectivity_state': debugConnectivityState,
     'debug_connectivity_stability_percent': debugConnectivityStabilityPercent,
-    'debug_firestore_backend': debugFirestoreBackend,
-    'debug_auth_state': debugAuthState,
+    'debug_backend': debugBackend,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -155,8 +144,7 @@ abstract final class RemoteConfigDefaults {
     'sync_max_consecutive_failures': null,
     'debug_connectivity_state': ['perfect', 'unstable', 'absent'],
     'debug_connectivity_stability_percent': null,
-    'debug_firestore_backend': ['firebase', 'fake'],
-    'debug_auth_state': ['real', 'force_signed_in'],
+    'debug_backend': ['real', 'local'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

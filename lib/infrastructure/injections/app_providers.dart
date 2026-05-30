@@ -304,6 +304,17 @@ final firestoreClientProvider = Provider<FirestoreClient>(
   (ref) => NoopFirestoreClient(),
 );
 
+/// Provides the [FakeFirestoreClient] instance used when `debug_backend = local`.
+///
+/// Returns `null` in release builds and when the real backend is active.
+/// The debug seed-data screen reads this provider to offer "Regenerate remote
+/// pacts" only when a fake backend is wired in.
+///
+/// **Debug/profile only.** This provider always returns `null` by default;
+/// it is overridden in `main.dart` when `debug_backend = local`.
+// ignore: avoid_dynamic_calls
+final fakeFirestoreClientProvider = Provider<Object?>((ref) => null);
+
 /// Provides [ShowupGenerationService] backed by [showupRepositoryProvider].
 ///
 /// Used by [DashboardViewModel] to lazily generate showups on each load —

@@ -114,13 +114,11 @@ class DashboardPageAndroid extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: hasPacts
-          ? FloatingActionButton(
-              key: const Key('create-pact-button'),
-              onPressed: onCreatePact,
-              child: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton(
+        key: const Key('create-pact-button'),
+        onPressed: onCreatePact,
+        child: const Icon(Icons.add),
+      ),
       body: Stack(
         children: [
           state.isLoading
@@ -128,6 +126,8 @@ class DashboardPageAndroid extends ConsumerWidget {
               : _DashboardContent(
                   state: state,
                   l10n: l10n,
+                  hasPacts: hasPacts,
+                  onCreatePact: onCreatePact,
                   onDaySelected: onDaySelected,
                   onShowupTapped: onShowupTapped,
                 ),
@@ -141,12 +141,16 @@ class DashboardPageAndroid extends ConsumerWidget {
 class _DashboardContent extends StatelessWidget {
   final DashboardState state;
   final AppLocalizations l10n;
+  final bool hasPacts;
+  final AsyncCallback onCreatePact;
   final ValueChanged<int> onDaySelected;
   final Future<void> Function(String) onShowupTapped;
 
   const _DashboardContent({
     required this.state,
     required this.l10n,
+    required this.hasPacts,
+    required this.onCreatePact,
     required this.onDaySelected,
     required this.onShowupTapped,
   });
@@ -164,10 +168,16 @@ class _DashboardContent extends StatelessWidget {
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: state.selectedDayShowups.isEmpty
-                ? Center(
-                    key: ValueKey('empty-${state.selectedDayIndex}'),
-                    child: Text(l10n.noShowupsForDay),
-                  )
+                ? hasPacts
+                    ? Center(
+                        key: ValueKey('empty-${state.selectedDayIndex}'),
+                        child: Text(l10n.noShowupsForDay),
+                      )
+                    : _NoPactsCta(
+                        key: const Key('no-pacts-cta'),
+                        l10n: l10n,
+                        onCreatePact: onCreatePact,
+                      )
                 : _ShowupList(
                     key: ValueKey('list-${state.selectedDayIndex}'),
                     showups: state.selectedDayShowups,
@@ -264,6 +274,43 @@ class _CalendarDay extends StatelessWidget {
             date: entry.date,
             colors: ShowupStatusColors.material(theme.colorScheme),
             uiStates: deriveUiStates(entry.showups, reminderOffsetByPactId),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Empty-state call-to-action shown when the user has no pacts at all.
+///
+/// Offers a shortcut to the pact creation wizard so users who logged in with
+/// an existing account (or who dismissed the onboarding carousel) can still
+/// create their first pact easily.
+class _NoPactsCta extends StatelessWidget {
+  const _NoPactsCta({super.key, required this.l10n, required this.onCreatePact});
+
+  final AppLocalizations l10n;
+  final AsyncCallback onCreatePact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.noPactsDescription,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            key: const Key('create-first-pact-button'),
+            onPressed: onCreatePact,
+            child: Text(l10n.createPact),
           ),
         ],
       ),
