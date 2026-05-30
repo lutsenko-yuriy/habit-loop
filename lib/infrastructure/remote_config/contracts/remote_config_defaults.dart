@@ -73,9 +73,13 @@ abstract final class RemoteConfigDefaults {
   /// Debug-only: success probability (0–100) when [debugConnectivityState] is
   /// `'unstable'`.
   ///
-  /// `100` = all requests succeed (equivalent to `'perfect'`), `0` = all fail
-  /// (equivalent to `'absent'`), `50` = approximately half succeed. Only
-  /// meaningful when `debug_connectivity_state` is `'unstable'`.
+  /// **Only active when `debug_connectivity_state` is `'unstable'`** — ignored
+  /// in `'perfect'` and `'absent'` modes.
+  ///
+  /// - `100` — every request succeeds (same as `'perfect'` mode).
+  /// - `0` — every request fails (same as `'absent'` mode).
+  /// - `50` — approximately half of requests succeed, exercising partial-failure
+  ///   and circuit-breaker retry paths.
   static const int debugConnectivityStabilityPercent = 100;
 
   /// Debug-only: which Firestore backend to use in debug/profile builds.
@@ -121,7 +125,7 @@ abstract final class RemoteConfigDefaults {
     'onboarding_auto_advance_seconds': null,
     'exp_003_commitment_confirmation': ['button', 'checkbox', 'retype'],
     'sync_max_consecutive_failures': null,
-    'debug_connectivity_state': ['perfect', 'absent', 'unstable'],
+    'debug_connectivity_state': ['perfect', 'unstable', 'absent'],
     'debug_connectivity_stability_percent': null,
     'debug_firestore_backend': ['firebase', 'fake'],
   };
