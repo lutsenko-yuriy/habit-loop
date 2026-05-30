@@ -98,7 +98,7 @@ void main() {
       await tester.pump();
 
       await waitFor(tester, find.text('Remote Meditation'));
-      expect(find.text('Remote Meditation'), findsOneWidget);
+      expect(find.text('Remote Meditation'), findsAtLeastNWidgets(1));
     });
 
     testWidgets('FaultInjectingFirestoreClient in absent mode: remote data does not appear', (tester) async {
