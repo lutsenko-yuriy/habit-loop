@@ -186,12 +186,36 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
                 ),
               ],
             ),
-            Slider(
-              key: const Key('override-value-slider'),
-              value: _sliderValue!,
-              min: widget.entry.intRange!.min.toDouble(),
-              max: widget.entry.intRange!.max.toDouble(),
-              onChanged: (v) => setState(() => _sliderValue = v),
+            // IntrinsicHeight + OverflowBox expand the slider to the full
+            // dialog width, cancelling out AlertDialog's 24 pt horizontal
+            // content padding so the track runs edge-to-edge.
+            //
+            // Why not LayoutBuilder? AlertDialog probes intrinsic dimensions
+            // of its content during sizing; LayoutBuilder throws in that
+            // context. OverflowBox supports intrinsic queries natively.
+            // IntrinsicHeight is needed because a Column gives OverflowBox an
+            // unbounded vertical size; IntrinsicHeight fixes that by tightening
+            // the height to the slider's natural height before layout runs.
+            // Builder (not LayoutBuilder) accesses MediaQuery for dialog width.
+            // AlertDialog has 40 pt margin on each side, constrained to 280–560 pt.
+            IntrinsicHeight(
+              child: Builder(
+                builder: (context) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final dialogWidth = (screenWidth - 80.0).clamp(280.0, 560.0);
+                  return OverflowBox(
+                    maxWidth: dialogWidth,
+                    alignment: Alignment.center,
+                    child: Slider(
+                      key: const Key('override-value-slider'),
+                      value: _sliderValue!,
+                      min: widget.entry.intRange!.min.toDouble(),
+                      max: widget.entry.intRange!.max.toDouble(),
+                      onChanged: (v) => setState(() => _sliderValue = v),
+                    ),
+                  );
+                },
+              ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

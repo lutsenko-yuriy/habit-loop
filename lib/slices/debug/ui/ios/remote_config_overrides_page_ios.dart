@@ -228,12 +228,28 @@ class _EditDialogIosState extends State<_EditDialogIos> {
                 ),
               ],
             ),
-            CupertinoSlider(
-              key: const Key('override-value-slider'),
-              value: _sliderValue!,
-              min: widget.entry.intRange!.min.toDouble(),
-              max: widget.entry.intRange!.max.toDouble(),
-              onChanged: (v) => setState(() => _sliderValue = v),
+            // IntrinsicHeight + OverflowBox expand the slider to the full
+            // 270 pt dialog width, cancelling out CupertinoAlertDialog's 16 pt
+            // horizontal content padding so the track runs edge-to-edge.
+            //
+            // Why not LayoutBuilder? CupertinoAlertDialog probes intrinsic
+            // dimensions of its content during sizing; LayoutBuilder throws
+            // in that context. OverflowBox supports intrinsic queries natively.
+            // IntrinsicHeight is needed because a Column gives OverflowBox an
+            // unbounded vertical size; IntrinsicHeight fixes that by tightening
+            // the height to the slider's natural height before layout runs.
+            IntrinsicHeight(
+              child: OverflowBox(
+                maxWidth: 270.0, // CupertinoAlertDialog fixed max-width
+                alignment: Alignment.center,
+                child: CupertinoSlider(
+                  key: const Key('override-value-slider'),
+                  value: _sliderValue!,
+                  min: widget.entry.intRange!.min.toDouble(),
+                  max: widget.entry.intRange!.max.toDouble(),
+                  onChanged: (v) => setState(() => _sliderValue = v),
+                ),
+              ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
