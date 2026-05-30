@@ -25,9 +25,19 @@ class LocalAuthService implements AuthService {
 
   AuthState _state = const AuthState(userId: null, isAnonymous: true);
 
+  /// Set to `true` after the first [initialize] call.
+  ///
+  /// [authStateChanges] uses this flag to replay the current state to
+  /// subscribers that attach after [initialize] has already emitted to nobody
+  /// (the typical production scenario: [initialize] is called fire-and-forget
+  /// from `main()`, before the first frame's [authStateChangesProvider]
+  /// subscription is established).
+  bool _initialized = false;
+
   @override
   Future<void> initialize() async {
     // Start anonymous — no Firebase call needed.
+    _initialized = true;
     _emit(_state);
   }
 
@@ -37,8 +47,39 @@ class LocalAuthService implements AuthService {
   @override
   bool get isAnonymous => _state.isAnonymous;
 
+  /// A stream of [AuthState] changes.
+  ///
+  /// **Late-subscriber replay:** if [initialize] has already been called when a
+  /// subscriber attaches, the subscriber synchronously receives the current
+  /// state before any future changes are forwarded. This prevents
+  /// [authStateChangesProvider] from staying [AsyncLoading] indefinitely when
+  /// it subscribes on the first frame and `main()` has already called
+  /// [initialize] fire-and-forget.
+  ///
+  /// If [initialize] has *not* yet been called, the raw controller stream is
+  /// returned so listeners receive events exactly as they fire — preserving the
+  /// behaviour expected by tests that subscribe before [initialize].
   @override
-  Stream<AuthState> get authStateChanges => _controller.stream;
+  Stream<AuthState> get authStateChanges {
+    if (!_initialized) {
+      return _controller.stream;
+    }
+    // initialize() has already run. Build a single-subscription stream that
+    // synchronously delivers the current state to the new subscriber and then
+    // forwards all future emissions from [_controller].
+    final sc = StreamController<AuthState>(sync: true);
+    late StreamSubscription<AuthState> inner;
+    sc.onListen = () {
+      sc.add(_state); // synchronous delivery — subscriber gets it before .listen() returns
+      inner = _controller.stream.listen(
+        sc.add,
+        onError: sc.addError,
+        onDone: sc.close,
+      );
+    };
+    sc.onCancel = () => inner.cancel();
+    return sc.stream;
+  }
 
   /// Immediately simulates a successful Google sign-in.
   ///

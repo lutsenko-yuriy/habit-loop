@@ -45,6 +45,23 @@ void main() {
       expect(states.first.userId, isNull);
     });
 
+    test('authStateChanges emits current state to subscriber that attaches after initialize', () async {
+      // initialize() runs first — as in production where main() calls it
+      // fire-and-forget before authStateChangesProvider subscribes.
+      await sut.initialize();
+
+      final states = <AuthState>[];
+      final sub = sut.authStateChanges.listen(states.add);
+      // Allow microtasks to flush the initial-state yield.
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+
+      // Subscriber should receive exactly one event: the current anonymous state.
+      expect(states.length, 1);
+      expect(states.first.isAnonymous, isTrue);
+      expect(states.first.userId, isNull);
+    });
+
     // ── linkWithGoogle ────────────────────────────────────────────────────────
 
     test('linkWithGoogle sets isAnonymous to false', () async {

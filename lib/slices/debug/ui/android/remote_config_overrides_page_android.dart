@@ -34,6 +34,10 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          if (entries.any((e) => e.key == 'debug_backend' && e.isOverridden))
+            const _RestartRequiredBanner(
+              key: Key('debug-backend-restart-banner'),
+            ),
           for (final entry in entries) ...[
             ListTile(
               key: Key('rc-entry-${entry.key}'),
@@ -375,6 +379,40 @@ class _SeedButton extends StatelessWidget {
       title: Text(label),
       onTap: isBusy ? null : onPressed,
       enabled: !isBusy,
+    );
+  }
+}
+
+/// Amber warning banner shown when [debug_backend] has been overridden.
+///
+/// The `debug_backend` key controls which auth service and Firestore client are
+/// wired at app startup. Changing it via the RC override store takes effect
+/// only after an app restart — this banner makes that requirement visible.
+class _RestartRequiredBanner extends StatelessWidget {
+  const _RestartRequiredBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber, width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.amber),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'debug_backend changed — restart the app to apply',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

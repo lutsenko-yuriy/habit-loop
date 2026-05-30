@@ -182,6 +182,21 @@ void main() {
     expect(find.byKey(const Key('override-badge')), findsAtLeastNWidgets(1));
   });
 
+  testWidgets('Android — no restart banner when debug_backend is not overridden', (tester) async {
+    await pumpWithTallView(tester);
+
+    expect(find.byKey(const Key('debug-backend-restart-banner')), findsNothing);
+  });
+
+  testWidgets('Android — shows restart banner when debug_backend is overridden', (tester) async {
+    final store = FakeRemoteConfigOverrideStore();
+    await store.setOverride('debug_backend', 'local');
+    await pumpWithTallView(tester, store: store);
+
+    expect(find.byKey(const Key('debug-backend-restart-banner')), findsOneWidget);
+    expect(find.textContaining('restart'), findsOneWidget);
+  });
+
   testWidgets('Android — debug_backend opens radio picker (allowedValues trumps intRange)', (tester) async {
     await pumpWithTallView(tester);
     await tester.pump();

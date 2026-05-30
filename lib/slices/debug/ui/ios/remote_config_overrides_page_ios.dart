@@ -41,6 +41,12 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             children: [
+              if (entries.any((e) => e.key == 'debug_backend' && e.isOverridden)) ...[
+                const _RestartRequiredBanner(
+                  key: Key('debug-backend-restart-banner'),
+                ),
+                const SizedBox(height: 8),
+              ],
               for (final entry in entries) ...[
                 _RcEntryRow(
                   key: Key('rc-entry-${entry.key}'),
@@ -434,6 +440,46 @@ class _SeedButton extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(label),
+      ),
+    );
+  }
+}
+
+/// Amber warning banner shown when [debug_backend] has been overridden.
+///
+/// The `debug_backend` key controls which auth service and Firestore client are
+/// wired at app startup. Changing it via the RC override store takes effect
+/// only after an app restart — this banner makes that requirement visible.
+class _RestartRequiredBanner extends StatelessWidget {
+  const _RestartRequiredBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemYellow.resolveFrom(context).withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: CupertinoColors.systemYellow.resolveFrom(context),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.exclamationmark_triangle_fill,
+            size: 16,
+            color: CupertinoColors.systemYellow.resolveFrom(context),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'debug_backend changed — restart the app to apply',
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
+        ],
       ),
     );
   }
