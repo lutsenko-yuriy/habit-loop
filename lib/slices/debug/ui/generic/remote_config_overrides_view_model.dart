@@ -101,23 +101,34 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
   }
 
   /// Persists [value] as the string-encoded override for [key] and refreshes state.
+  ///
+  /// If [key] is `'debug_auth_state'`, also invalidates [authStateChangesProvider]
+  /// so the UI immediately reflects the new simulated auth state.
   Future<void> setOverride(String key, String value) async {
     await ref.read(remoteConfigOverrideStoreProvider).setOverride(key, value);
+    if (key == 'debug_auth_state') ref.invalidate(authStateChangesProvider);
     state = _buildEntries();
   }
 
   /// Removes the override for [key] and refreshes state.
+  ///
+  /// If [key] is `'debug_auth_state'`, also invalidates [authStateChangesProvider].
   Future<void> clearOverride(String key) async {
     await ref.read(remoteConfigOverrideStoreProvider).clearOverride(key);
+    if (key == 'debug_auth_state') ref.invalidate(authStateChangesProvider);
     state = _buildEntries();
   }
 
   /// Removes all overrides for every key in [RemoteConfigDefaults.all].
+  ///
+  /// Always invalidates [authStateChangesProvider] since `debug_auth_state`
+  /// may have been active and is now being cleared.
   Future<void> clearAllOverrides() async {
     final store = ref.read(remoteConfigOverrideStoreProvider);
     for (final key in RemoteConfigDefaults.all.keys) {
       await store.clearOverride(key);
     }
+    ref.invalidate(authStateChangesProvider);
     state = _buildEntries();
   }
 }

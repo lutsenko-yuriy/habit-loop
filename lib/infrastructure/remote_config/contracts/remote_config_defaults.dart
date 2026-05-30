@@ -82,6 +82,20 @@ abstract final class RemoteConfigDefaults {
   ///   and circuit-breaker retry paths.
   static const int debugConnectivityStabilityPercent = 100;
 
+  /// Debug-only: simulated authentication state.
+  ///
+  /// Values: `'real'` (default — delegates to real Firebase Auth) or
+  /// `'force_signed_in'` (treats the app as if the user is signed in with a
+  /// Google account, using a fixed fake user ID).
+  ///
+  /// Useful for testing sync and dashboard behaviour with the fake Firestore
+  /// backend ([debugFirestoreBackend]) without going through the real Google
+  /// OAuth flow. The override takes effect immediately — no app restart needed.
+  ///
+  /// **Debug/profile only.** Only read by [OverridableAuthService] which is
+  /// never constructed in release builds.
+  static const String debugAuthState = 'real';
+
   /// Debug-only: which Firestore backend to use in debug/profile builds.
   ///
   /// Values: `'firebase'` (default, real Firebase adapter) or `'fake'`
@@ -105,6 +119,8 @@ abstract final class RemoteConfigDefaults {
     'debug_connectivity_stability_percent':
         '0 = all fail · 50 ≈ half succeed · 100 = all succeed\n'
         '(only active when debug_connectivity_state = unstable)',
+    'debug_auth_state': 'force_signed_in = fake non-anonymous user\n'
+        '(userId: debug_fake_user_id — no Google OAuth required)',
   };
 
   /// All default values keyed by their Remote Config parameter name.
@@ -122,6 +138,7 @@ abstract final class RemoteConfigDefaults {
     'debug_connectivity_state': debugConnectivityState,
     'debug_connectivity_stability_percent': debugConnectivityStabilityPercent,
     'debug_firestore_backend': debugFirestoreBackend,
+    'debug_auth_state': debugAuthState,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -139,6 +156,7 @@ abstract final class RemoteConfigDefaults {
     'debug_connectivity_state': ['perfect', 'unstable', 'absent'],
     'debug_connectivity_stability_percent': null,
     'debug_firestore_backend': ['firebase', 'fake'],
+    'debug_auth_state': ['real', 'force_signed_in'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

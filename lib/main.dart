@@ -27,6 +27,7 @@ import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_serv
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_client_adapter.dart';
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_service.dart';
 import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
+import 'package:habit_loop/infrastructure/auth/data/overridable_auth_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
@@ -556,7 +557,12 @@ Future<void> main() async {
       // Wire the onboarding flag so [DashboardScreen] can read it synchronously
       // on the first frame and skip the carousel without any async wait.
       onboardingPreferenceService: onboardingService,
-      authService: authService,
+      // Debug/profile: wrap with OverridableAuthService so the 'debug_auth_state'
+      // RC key can simulate a signed-in user without real Google OAuth. Useful for
+      // testing sync with the fake Firestore backend.
+      authService: !kReleaseMode && remoteConfigService != null
+          ? OverridableAuthService(inner: authService, rc: remoteConfigService)
+          : authService,
       deviceIdService: deviceIdService,
       // Release: bare Firebase adapter.
       // Debug/profile: chain two decorators:

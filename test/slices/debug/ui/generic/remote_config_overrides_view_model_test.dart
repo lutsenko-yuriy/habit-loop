@@ -65,8 +65,12 @@ void main() {
       final free = entries.where((e) => !e.hasAllowedValues).map((e) => e.key).toSet();
       expect(
           constrained,
-          containsAll(
-              ['notification_text_variant', 'post_deadline_notification_behavior', 'exp_003_commitment_confirmation']));
+          containsAll([
+            'notification_text_variant',
+            'post_deadline_notification_behavior',
+            'exp_003_commitment_confirmation',
+            'debug_auth_state',
+          ]));
       expect(free, containsAll(['max_active_pacts', 'onboarding_auto_advance_seconds']));
     });
 
@@ -92,7 +96,8 @@ void main() {
     test('hasIntRange is false for free-text and enum keys', () {
       final entries = readEntries();
       final noRange = entries.where((e) => !e.hasIntRange).map((e) => e.key).toSet();
-      expect(noRange, containsAll(['max_active_pacts', 'debug_firestore_backend', 'debug_connectivity_state']));
+      expect(
+          noRange, containsAll(['max_active_pacts', 'debug_firestore_backend', 'debug_connectivity_state', 'debug_auth_state']));
     });
 
     test('debug_firestore_backend has allowedValues ["firebase", "fake"]', () {
@@ -101,6 +106,15 @@ void main() {
       expect(entry.allowedValues, ['firebase', 'fake']);
       expect(entry.hasAllowedValues, isTrue);
       expect(entry.hasIntRange, isFalse);
+    });
+
+    test('debug_auth_state has allowedValues ["real", "force_signed_in"]', () {
+      final entries = readEntries();
+      final entry = entries.firstWhere((e) => e.key == 'debug_auth_state');
+      expect(entry.allowedValues, ['real', 'force_signed_in']);
+      expect(entry.hasAllowedValues, isTrue);
+      expect(entry.hasIntRange, isFalse);
+      expect(entry.hasValueHint, isTrue);
     });
 
     test('effectiveValue reflects service getInt for int key', () {
