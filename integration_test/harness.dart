@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -40,7 +39,6 @@ class AppHarness {
     required this.notifications,
     required this.syncService,
     required this.localeService,
-    this.firestoreClient,
   });
 
   final InMemoryPactRepository pactRepo;
@@ -50,14 +48,6 @@ class AppHarness {
   final FakeNotificationService notifications;
   final FakeSyncService syncService;
   final FakeLocalePreferenceService localeService;
-
-  /// Non-null when the harness was created with a custom [FirestoreClient].
-  ///
-  /// In this mode the real [FirestoreSyncService] is used (wired via the
-  /// self-composing [syncServiceProvider]) so that [pullRemoteChanges] runs
-  /// end-to-end against the provided client. [syncService] is still allocated
-  /// but is **not** wired into the [ProviderScope] in this mode.
-  final FirestoreClient? firestoreClient;
 
   /// No-op on host: in-memory repositories need no special initialisation.
   ///
@@ -93,20 +83,12 @@ class AppHarness {
   ///   subclass that has access to the in-memory repos. Used to seed "remote"
   ///   data via [FakeSyncService.pullRemoteChanges] without touching the repos
   ///   before the test's sign-in step.
-  /// - [firestoreClient]: when provided, the harness wires [firestoreClientProvider]
-  ///   with this client instead of overriding [syncServiceProvider] with a
-  ///   [FakeSyncService]. This lets the real [FirestoreSyncService] run
-  ///   end-to-end against a [FakeFirestoreClient] or
-  ///   [FaultInjectingFirestoreClient] for integration tests that exercise
-  ///   [pullRemoteChanges] and the circuit-breaker without touching live
-  ///   Firestore.
   static Future<AppHarness> create(
     WidgetTester tester, {
     List<Override> extraOverrides = const [],
     Future<void> Function(AppHarness h)? beforePump,
     bool initiallyAnonymous = false,
     FakeSyncService Function(InMemoryPactRepository, InMemoryShowupRepository)? syncServiceFactory,
-    FirestoreClient? firestoreClient,
   }) async {
     final pactRepo = InMemoryPactRepository();
     final showupRepo = InMemoryShowupRepository();
@@ -136,7 +118,6 @@ class AppHarness {
       notifications: notifications,
       syncService: syncService,
       localeService: localeService,
-      firestoreClient: firestoreClient,
     );
 
     if (beforePump != null) await beforePump(harness);
@@ -147,15 +128,9 @@ class AppHarness {
       ProviderScope(
         overrides: [
           ...overrides,
-          // When firestoreClient is provided, override firestoreClientProvider so
-          // the self-composed FirestoreSyncService runs against the supplied fake
-          // client (FakeFirestoreClient or FaultInjectingFirestoreClient).
-          // Otherwise, fall back to FakeSyncService so tests that don't need the
-          // full sync stack still run without touching any Firestore code.
-          if (firestoreClient != null)
-            firestoreClientProvider.overrideWithValue(firestoreClient)
-          else
-            syncServiceProvider.overrideWithValue(syncService),
+          // FakeSyncService replaces the self-composed FirestoreSyncService so
+          // tests never touch Firestore.
+          syncServiceProvider.overrideWithValue(syncService),
           // connectivity_plus calls a platform channel that blocks indefinitely
           // on the test host. Override with a static "has internet" stream so
           // pumpAndSettle() never hangs waiting for a platform response.

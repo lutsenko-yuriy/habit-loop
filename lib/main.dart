@@ -32,7 +32,6 @@ import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/device/data/shared_preferences_device_id_service.dart';
-import 'package:habit_loop/infrastructure/firestore/data/fault_injecting_firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/firebase_firestore_client_adapter.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -556,15 +555,7 @@ Future<void> main() async {
       onboardingPreferenceService: onboardingService,
       authService: authService,
       deviceIdService: deviceIdService,
-      // Release: bare Firebase adapter. Debug/profile: wrap in FaultInjectingFirestoreClient
-      // so QA can change 'debug_connectivity_state' in the RC overrides screen to
-      // simulate absent or unstable connectivity and exercise the circuit breaker.
-      firestoreClient: kReleaseMode
-          ? FirebaseFirestoreClientAdapter(FirebaseFirestore.instance)
-          : FaultInjectingFirestoreClient(
-              inner: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
-              rc: remoteConfigService ?? NoopRemoteConfigService(),
-            ),
+      firestoreClient: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
     );
 
     // Create the top-level ProviderContainer with the same overrides so that
