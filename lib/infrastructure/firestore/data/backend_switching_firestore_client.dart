@@ -1,17 +1,16 @@
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
-import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 
 /// Debug/profile-only [FirestoreClient] that reads the
 /// `debug_firestore_backend` Remote Config key on **every** call and delegates
-/// to either the real Firebase adapter or an in-memory [FakeFirestoreClient].
+/// to either the real Firebase adapter or an in-memory fake client.
 ///
 /// ## Backend modes (key `debug_firestore_backend`)
 ///
 /// | Value | Behaviour |
 /// |---|---|
 /// | `'firebase'` (default) | Delegates to [firebase], the real adapter. |
-/// | `'fake'` | Delegates to [fake], an in-memory [FakeFirestoreClient]. |
+/// | `'fake'` | Delegates to [fake], typically a [FakeFirestoreClient]. |
 ///
 /// Switching via the in-app RC overrides screen takes effect immediately on
 /// the next Firestore call without an app restart. The [fake] client starts
@@ -22,14 +21,14 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 class BackendSwitchingFirestoreClient implements FirestoreClient {
   BackendSwitchingFirestoreClient({
     required FirestoreClient firebase,
-    required FakeFirestoreClient fake,
+    required FirestoreClient fake,
     required RemoteConfigService rc,
   })  : _firebase = firebase,
         _fake = fake,
         _rc = rc;
 
   final FirestoreClient _firebase;
-  final FakeFirestoreClient _fake;
+  final FirestoreClient _fake;
   final RemoteConfigService _rc;
 
   static const _keyBackend = 'debug_firestore_backend';
