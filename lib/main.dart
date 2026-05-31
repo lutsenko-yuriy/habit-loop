@@ -598,9 +598,8 @@ Future<void> main() async {
           ? FirebaseFirestoreClientAdapter(FirebaseFirestore.instance)
           : FaultInjectingFirestoreClient(
               // sharedFakeFirestore is non-null when useLocalBackend=true (constructed above).
-              inner: useLocalBackend
-                  ? sharedFakeFirestore!
-                  : FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
+              inner:
+                  useLocalBackend ? sharedFakeFirestore! : FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
               rc: remoteConfigService ?? NoopRemoteConfigService(),
             ),
       // Debug/profile only: expose the same FakeFirestoreClient instance for the
