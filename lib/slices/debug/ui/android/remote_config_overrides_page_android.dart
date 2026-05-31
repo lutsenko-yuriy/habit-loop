@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
+import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
 /// Debug-only screen (Android) for viewing and editing Remote Config overrides.
@@ -15,6 +18,20 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
     final entries = ref.watch(remoteConfigOverridesViewModelProvider);
     final notifier = ref.read(remoteConfigOverridesViewModelProvider.notifier);
     final hasAnyOverride = entries.any((e) => e.isOverridden);
+    final seedState = ref.watch(debugSeedDataViewModelProvider);
+    final seedNotifier = ref.read(debugSeedDataViewModelProvider.notifier);
+
+    // Show the restart banner only when the pending debug_backend value (what
+    // will take effect on next restart) differs from the value currently
+    // running. This avoids false positives in two cases:
+    //   • App restarted with 'local' → override still 'local' in store → no banner.
+    //   • User sets override back to 'real' (the default) → no banner needed.
+    final startupBackend = ref.watch(debugBackendAtStartupProvider);
+    final showBackendRestartBanner = entries.any((e) {
+      if (e.key != 'debug_backend') return false;
+      final pendingValue = e.overrideValue ?? RemoteConfigDefaults.debugBackend;
+      return pendingValue != startupBackend;
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -28,27 +45,34 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
             ),
         ],
       ),
-      body: ListView.separated(
-        itemCount: entries.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final entry = entries[index];
-          return ListTile(
-            key: Key('rc-entry-${entry.key}'),
-            title: Text(
-              entry.key,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: [
+          if (showBackendRestartBanner)
+            const _RestartRequiredBanner(
+              key: Key('debug-backend-restart-banner'),
             ),
-            subtitle: Text('Value: ${entry.effectiveValue}'),
-            trailing: _OverrideBadge(isOverridden: entry.isOverridden),
-            onTap: () => _showEditDialog(
-              context: context,
-              entry: entry,
-              onSave: (v) => notifier.setOverride(entry.key, v),
-              onClear: () => notifier.clearOverride(entry.key),
+          for (final entry in entries) ...[
+            ListTile(
+              key: Key('rc-entry-${entry.key}'),
+              title: Text(
+                entry.key,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+              ),
+              subtitle: Text('Value: ${entry.effectiveValue}'),
+              trailing: _OverrideBadge(isOverridden: entry.isOverridden),
+              onTap: () => _showEditDialog(
+                context: context,
+                entry: entry,
+                onSave: (v) => notifier.setOverride(entry.key, v),
+                onClear: () => notifier.clearOverride(entry.key),
+              ),
             ),
-          );
-        },
+            const Divider(height: 1),
+          ],
+          const SizedBox(height: 8),
+          _SeedSection(state: seedState, notifier: seedNotifier),
+        ],
       ),
     );
   }
@@ -110,11 +134,15 @@ class _EditDialogAndroid extends StatefulWidget {
 }
 
 class _EditDialogAndroidState extends State<_EditDialogAndroid> {
-  /// Used only when [RemoteConfigEntry.allowedValues] is `null`.
+  /// Used only when [RemoteConfigEntry.allowedValues] is `null` and
+  /// [RemoteConfigEntry.intRange] is also `null` (plain free-text key).
   late final TextEditingController? _controller;
 
   /// Used only when [RemoteConfigEntry.allowedValues] is non-`null`.
   String? _selectedValue;
+
+  /// Used only when [RemoteConfigEntry.hasIntRange] is `true`.
+  double? _sliderValue;
 
   @override
   void initState() {
@@ -124,6 +152,11 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
       final effective = widget.entry.overrideValue ?? widget.entry.effectiveValue;
       _selectedValue =
           (widget.entry.allowedValues!.contains(effective)) ? effective : widget.entry.allowedValues!.first;
+    } else if (widget.entry.hasIntRange) {
+      _controller = null;
+      final range = widget.entry.intRange!;
+      final raw = int.tryParse(widget.entry.overrideValue ?? widget.entry.effectiveValue) ?? range.min;
+      _sliderValue = raw.clamp(range.min, range.max).toDouble();
     } else {
       _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
     }
@@ -147,6 +180,13 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
             'Default: ${widget.entry.defaultValue}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
+          if (widget.entry.hasValueHint) ...[
+            const SizedBox(height: 4),
+            Text(
+              widget.entry.valueHint!,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: 8),
           if (widget.entry.hasAllowedValues)
             RadioGroup<String>(
@@ -167,7 +207,55 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
                 ],
               ),
             )
-          else
+          else if (widget.entry.hasIntRange) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${_sliderValue!.round()}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            // IntrinsicHeight + OverflowBox expand the slider to the full
+            // dialog width, cancelling out AlertDialog's 24 pt horizontal
+            // content padding so the track runs edge-to-edge.
+            //
+            // Why not LayoutBuilder? AlertDialog probes intrinsic dimensions
+            // of its content during sizing; LayoutBuilder throws in that
+            // context. OverflowBox supports intrinsic queries natively.
+            // IntrinsicHeight is needed because a Column gives OverflowBox an
+            // unbounded vertical size; IntrinsicHeight fixes that by tightening
+            // the height to the slider's natural height before layout runs.
+            // Builder (not LayoutBuilder) accesses MediaQuery for dialog width.
+            // AlertDialog has 40 pt margin on each side, constrained to 280–560 pt.
+            IntrinsicHeight(
+              child: Builder(
+                builder: (context) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final dialogWidth = (screenWidth - 80.0).clamp(280.0, 560.0);
+                  return OverflowBox(
+                    maxWidth: dialogWidth,
+                    alignment: Alignment.center,
+                    child: Slider(
+                      key: const Key('override-value-slider'),
+                      value: _sliderValue!,
+                      min: widget.entry.intRange!.min.toDouble(),
+                      max: widget.entry.intRange!.max.toDouble(),
+                      onChanged: (v) => setState(() => _sliderValue = v),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('${widget.entry.intRange!.min}', style: Theme.of(context).textTheme.bodySmall),
+                Text('${widget.entry.intRange!.max}', style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ] else
             TextField(
               key: const Key('override-value-field'),
               controller: _controller,
@@ -200,6 +288,10 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
               final value = _selectedValue;
               Navigator.of(context).pop();
               if (value != null) await widget.onSave(value);
+            } else if (widget.entry.hasIntRange) {
+              final value = _sliderValue!.round().toString();
+              Navigator.of(context).pop();
+              await widget.onSave(value);
             } else {
               final value = _controller!.text.trim();
               Navigator.of(context).pop();
@@ -209,6 +301,132 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
           child: const Text('Save'),
         ),
       ],
+    );
+  }
+}
+
+/// Seed-data section shown at the bottom of the RC overrides screen.
+///
+/// "Regenerate local pacts" is always visible.
+/// "Regenerate remote pacts" is visible only when a [FakeFirestoreClient] is
+/// wired (i.e. `debug_backend = local`).
+class _SeedSection extends StatelessWidget {
+  const _SeedSection({required this.state, required this.notifier});
+
+  final DebugSeedDataState state;
+  final DebugSeedDataViewModel notifier;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'SEED DATA',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  letterSpacing: 0.5,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            margin: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SeedButton(
+                  key: const Key('seed-local-button'),
+                  label: 'Regenerate local pacts',
+                  isBusy: state.isBusy,
+                  onPressed: notifier.seedLocalPacts,
+                ),
+                if (notifier.hasFakeBackend) ...[
+                  const Divider(height: 1),
+                  _SeedButton(
+                    key: const Key('seed-remote-button'),
+                    label: 'Regenerate remote pacts',
+                    isBusy: state.isBusy,
+                    onPressed: notifier.seedRemotePacts,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (state.status != DebugSeedState.idle) ...[
+            const SizedBox(height: 8),
+            Text(
+              state.message ?? '',
+              key: const Key('seed-status-text'),
+              style: TextStyle(
+                fontSize: 12,
+                color: switch (state.status) {
+                  DebugSeedState.error => Theme.of(context).colorScheme.error,
+                  DebugSeedState.done => Colors.green,
+                  _ => Theme.of(context).colorScheme.onSurfaceVariant,
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SeedButton extends StatelessWidget {
+  const _SeedButton({
+    super.key,
+    required this.label,
+    required this.isBusy,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isBusy;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(label),
+      onTap: isBusy ? null : onPressed,
+      enabled: !isBusy,
+    );
+  }
+}
+
+/// Amber warning banner shown when [debug_backend] has been overridden.
+///
+/// The `debug_backend` key controls which auth service and Firestore client are
+/// wired at app startup. Changing it via the RC override store takes effect
+/// only after an app restart — this banner makes that requirement visible.
+class _RestartRequiredBanner extends StatelessWidget {
+  const _RestartRequiredBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber, width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.amber),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'debug_backend changed — restart the app to apply',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

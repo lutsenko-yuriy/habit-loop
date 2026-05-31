@@ -24,14 +24,18 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/firebase_options.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_service.dart';
+import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_client_adapter.dart';
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_service.dart';
 import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
+import 'package:habit_loop/infrastructure/auth/data/local_auth_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/device/data/shared_preferences_device_id_service.dart';
+import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
+import 'package:habit_loop/infrastructure/firestore/data/fault_injecting_firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/firebase_firestore_client_adapter.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -44,6 +48,7 @@ import 'package:habit_loop/infrastructure/notifications/data/noop_notification_s
 import 'package:habit_loop/infrastructure/notifications/data/notification_router.dart';
 import 'package:habit_loop/infrastructure/onboarding/data/shared_preferences_onboarding_service.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_override_store.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_config_client_adapter.dart';
@@ -321,6 +326,18 @@ Future<void> main() async {
     }
   }
 
+  // Debug/profile: read debug_backend from the persisted RC override store to
+  // decide which service instances to wire at startup. This is done before
+  // constructing auth/Firestore so the decision is available when needed.
+  //
+  // 'local' → LocalAuthService + FakeFirestoreClient (no Firebase network calls
+  //   for auth or Firestore; requires an app restart to take effect).
+  // 'real' (default) → FirebaseAuthService + Firebase/FaultInjecting Firestore.
+  final debugBackend = !kReleaseMode
+      ? (remoteConfigOverrideStore?.getOverride('debug_backend') ?? RemoteConfigDefaults.debugBackend)
+      : RemoteConfigDefaults.debugBackend;
+  final useLocalBackend = debugBackend == 'local';
+
   // Construct the crashlytics service early so it can be threaded into the
   // notification service (which needs it to report scheduling failures).
   // This mirrors the pattern used in AppContainer.overrides where a non-null
@@ -467,13 +484,16 @@ Future<void> main() async {
     localeService = null;
   }
 
-  // Construct auth and device ID services. Auth uses anonymous sign-in so every
-  // install gets a Firebase UID immediately; initialize() is called after runApp
-  // (fire-and-forget) so a slow network never delays the first frame.
+  // Construct auth and device ID services.
+  //
+  // debug_backend=local: use LocalAuthService so the full sign-in/sync flow
+  //   can be tested without real Google OAuth.
+  // All other modes: Firebase anonymous sign-in; initialize() called after
+  //   runApp (fire-and-forget) so a slow network never delays the first frame.
+  //
   // Device ID reuses the already-loaded SharedPreferences instance.
-  final authService = FirebaseAuthService(
-    FirebaseAuthClientAdapter(FirebaseAuth.instance),
-  );
+  final AuthService authService =
+      useLocalBackend ? LocalAuthService() : FirebaseAuthService(FirebaseAuthClientAdapter(FirebaseAuth.instance));
   // SharedPreferences.getInstance() is cached after the first call (locale block above).
   SharedPreferencesDeviceIdService? deviceIdService;
   try {
@@ -519,6 +539,13 @@ Future<void> main() async {
     } catch (_) {
       onboardingService = null;
     }
+
+    // When debug_backend=local, create a single FakeFirestoreClient instance
+    // shared between firestoreClientProvider (active backend) and
+    // fakeFirestoreClientProvider (seed-data debug UI). Same instance so
+    // seeding operations immediately affect the running sync service.
+    final FakeFirestoreClient? sharedFakeFirestore = (!kReleaseMode && useLocalBackend) ? FakeFirestoreClient() : null;
+
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
@@ -553,9 +580,36 @@ Future<void> main() async {
       // Wire the onboarding flag so [DashboardScreen] can read it synchronously
       // on the first frame and skip the carousel without any async wait.
       onboardingPreferenceService: onboardingService,
+      // Auth service wired at startup based on debug_backend:
+      //   'local'  → LocalAuthService (fake sign-in, no Google OAuth)
+      //   'real' (default) → FirebaseAuthService
       authService: authService,
       deviceIdService: deviceIdService,
-      firestoreClient: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
+      // Firestore client wired based on debug_backend:
+      //   Release          → bare Firebase adapter (no fault injection).
+      //   Debug/profile 'real'  → FaultInjectingFirestoreClient wrapping real Firebase.
+      //   Debug/profile 'local' → FaultInjectingFirestoreClient wrapping FakeFirestoreClient.
+      //
+      // Both debug/profile paths are wrapped in FaultInjectingFirestoreClient so
+      // QA can test circuit-breaker and partial-failure behaviour regardless of which
+      // backend is active. The seed-data UI still reaches FakeFirestoreClient directly
+      // via fakeFirestoreClientProvider (not through the fault-injecting wrapper).
+      firestoreClient: kReleaseMode
+          ? FirebaseFirestoreClientAdapter(FirebaseFirestore.instance)
+          : FaultInjectingFirestoreClient(
+              // sharedFakeFirestore is non-null when useLocalBackend=true (constructed above).
+              inner:
+                  useLocalBackend ? sharedFakeFirestore! : FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
+              rc: remoteConfigService ?? NoopRemoteConfigService(),
+            ),
+      // Debug/profile only: expose the same FakeFirestoreClient instance for the
+      // seed-data debug UI. null in release builds and when real backend is active.
+      fakeFirestoreClient: (!kReleaseMode && useLocalBackend) ? sharedFakeFirestore : null,
+      // Debug/profile only: the debug_backend value used this session so the RC
+      // overrides screen can show the restart banner only when the pending value
+      // differs from the one currently running. null in release builds (provider
+      // falls back to RemoteConfigDefaults.debugBackend which is also 'real').
+      debugBackendAtStartup: !kReleaseMode ? debugBackend : null,
     );
 
     // Create the top-level ProviderContainer with the same overrides so that
@@ -582,14 +636,20 @@ Future<void> main() async {
     // pull is a no-op. On repeat launches initialize() returns synchronously with
     // the cached user and the pull proceeds immediately.
     unawaited(() async {
-      // iOS Keychain persists Firebase credentials across app reinstalls. If this
-      // is a fresh install (no device ID key in SharedPreferences) but Firebase
-      // has a cached user, sign out first so the app starts as anonymous.
-      final prefs = await SharedPreferences.getInstance();
-      await clearStaleKeychainIfFirstLaunch(authService: authService, prefs: prefs);
-      await authService.initialize();
-      final syncService = _container?.read(syncServiceProvider);
-      if (syncService != null) unawaited(syncService.pullRemoteChanges());
+      if (useLocalBackend) {
+        // LocalAuthService: no Firebase Keychain to clear; initialize() sets
+        // anonymous state and the local FakeFirestoreClient needs no pull.
+        await authService.initialize();
+      } else {
+        // iOS Keychain persists Firebase credentials across app reinstalls. If this
+        // is a fresh install (no device ID key in SharedPreferences) but Firebase
+        // has a cached user, sign out first so the app starts as anonymous.
+        final prefs = await SharedPreferences.getInstance();
+        await clearStaleKeychainIfFirstLaunch(authService: authService, prefs: prefs);
+        await authService.initialize();
+        final syncService = _container?.read(syncServiceProvider);
+        if (syncService != null) unawaited(syncService.pullRemoteChanges());
+      }
     }());
 
     // Cold-start fallback: if the notification response callback fired during

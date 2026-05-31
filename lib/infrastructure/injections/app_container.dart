@@ -84,6 +84,14 @@ abstract final class AppContainer {
     AuthService? authService,
     DeviceIdService? deviceIdService,
     FirestoreClient? firestoreClient,
+    // Debug/profile only: the FakeFirestoreClient instance when debug_backend=local.
+    // Stored as Object? to avoid importing the debug-only class in this file.
+    Object? fakeFirestoreClient,
+    // Debug/profile only: the debug_backend value that was active when the app
+    // session started. Used by the RC overrides screen to show the restart-
+    // required banner only when the pending value differs from the running one.
+    // null in release builds (provider falls back to the in-code default).
+    String? debugBackendAtStartup,
   }) async {
     // Fetch the saved locale before building the override list so the correct
     // locale is applied on the very first frame without an extra await in main.dart.
@@ -127,6 +135,15 @@ abstract final class AppContainer {
 
       // Firestore remote storage.
       if (firestoreClient != null) firestoreClientProvider.overrideWithValue(firestoreClient),
+
+      // Debug/profile only: expose the FakeFirestoreClient instance for the
+      // seed-data debug UI. null in release builds and when real backend is active.
+      if (fakeFirestoreClient != null) fakeFirestoreClientProvider.overrideWithValue(fakeFirestoreClient),
+
+      // Debug/profile only: capture the debug_backend value active at startup so
+      // the RC overrides screen can show the restart banner only when the pending
+      // value differs from the one currently running.
+      if (debugBackendAtStartup != null) debugBackendAtStartupProvider.overrideWithValue(debugBackendAtStartup),
     ];
   }
 }

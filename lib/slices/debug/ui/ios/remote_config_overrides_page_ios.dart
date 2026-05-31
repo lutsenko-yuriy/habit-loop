@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Divider, Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
+import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
 /// Debug-only screen (iOS) for viewing and editing Remote Config overrides.
@@ -16,6 +19,20 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
     final entries = ref.watch(remoteConfigOverridesViewModelProvider);
     final notifier = ref.read(remoteConfigOverridesViewModelProvider.notifier);
     final hasAnyOverride = entries.any((e) => e.isOverridden);
+    final seedState = ref.watch(debugSeedDataViewModelProvider);
+    final seedNotifier = ref.read(debugSeedDataViewModelProvider.notifier);
+
+    // Show the restart banner only when the pending debug_backend value (what
+    // will take effect on next restart) differs from the value currently
+    // running. This avoids false positives in two cases:
+    //   • App restarted with 'local' → override still 'local' in store → no banner.
+    //   • User sets override back to 'real' (the default) → no banner needed.
+    final startupBackend = ref.watch(debugBackendAtStartupProvider);
+    final showBackendRestartBanner = entries.any((e) {
+      if (e.key != 'debug_backend') return false;
+      final pendingValue = e.overrideValue ?? RemoteConfigDefaults.debugBackend;
+      return pendingValue != startupBackend;
+    });
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -38,6 +55,12 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             children: [
+              if (showBackendRestartBanner) ...[
+                const _RestartRequiredBanner(
+                  key: Key('debug-backend-restart-banner'),
+                ),
+                const SizedBox(height: 8),
+              ],
               for (final entry in entries) ...[
                 _RcEntryRow(
                   key: Key('rc-entry-${entry.key}'),
@@ -51,6 +74,11 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
               ],
+              const SizedBox(height: 8),
+              const Divider(),
+              const SizedBox(height: 8),
+              _SeedSection(state: seedState, notifier: seedNotifier),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -165,11 +193,15 @@ class _EditDialogIos extends StatefulWidget {
 }
 
 class _EditDialogIosState extends State<_EditDialogIos> {
-  /// Used only when [RemoteConfigEntry.allowedValues] is `null`.
+  /// Used only when [RemoteConfigEntry.allowedValues] is `null` and
+  /// [RemoteConfigEntry.intRange] is also `null` (plain free-text key).
   late final TextEditingController? _controller;
 
   /// Used only when [RemoteConfigEntry.allowedValues] is non-`null`.
   String? _selectedValue;
+
+  /// Used only when [RemoteConfigEntry.hasIntRange] is `true`.
+  double? _sliderValue;
 
   @override
   void initState() {
@@ -179,6 +211,11 @@ class _EditDialogIosState extends State<_EditDialogIos> {
       final effective = widget.entry.overrideValue ?? widget.entry.effectiveValue;
       _selectedValue =
           (widget.entry.allowedValues!.contains(effective)) ? effective : widget.entry.allowedValues!.first;
+    } else if (widget.entry.hasIntRange) {
+      _controller = null;
+      final range = widget.entry.intRange!;
+      final raw = int.tryParse(widget.entry.overrideValue ?? widget.entry.effectiveValue) ?? range.min;
+      _sliderValue = raw.clamp(range.min, range.max).toDouble();
     } else {
       _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
     }
@@ -201,6 +238,13 @@ class _EditDialogIosState extends State<_EditDialogIos> {
             'Default: ${widget.entry.defaultValue}',
             style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
           ),
+          if (widget.entry.hasValueHint) ...[
+            const SizedBox(height: 4),
+            Text(
+              widget.entry.valueHint!,
+              style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
+            ),
+          ],
           const SizedBox(height: 8),
           if (widget.entry.hasAllowedValues)
             CupertinoSlidingSegmentedControl<String>(
@@ -209,7 +253,60 @@ class _EditDialogIosState extends State<_EditDialogIos> {
               children: {for (final v in widget.entry.allowedValues!) v: Text(v)},
               onValueChanged: (v) => setState(() => _selectedValue = v),
             )
-          else
+          else if (widget.entry.hasIntRange) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${_sliderValue!.round()}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            // IntrinsicHeight + OverflowBox expand the slider so its track
+            // exactly spans the dialog's content area, aligning the min/max
+            // thumb positions with the "0" / "max" labels below.
+            //
+            // CupertinoSlider has a built-in track inset of
+            //   _kPadding (8) + _thumbRadius (11) = 19 pt per side.
+            // The dialog content padding is 16 pt per side.
+            // To make the track reach the content edges:
+            //   maxWidth = 270 (dialog) + 2 × (19 − 16) = 276 pt.
+            // The slider overflows the dialog border by 3 pt on each side;
+            // CupertinoAlertDialog clips this invisibly via ClipRRect.
+            //
+            // Why not LayoutBuilder? CupertinoAlertDialog probes intrinsic
+            // dimensions of its content during sizing; LayoutBuilder throws
+            // in that context. OverflowBox supports intrinsic queries natively.
+            // IntrinsicHeight tightens the vertical constraint so OverflowBox
+            // doesn't receive an unbounded height from the parent Column.
+            IntrinsicHeight(
+              child: OverflowBox(
+                maxWidth: 276.0, // dialog width + 2×(slider inset − content padding)
+                alignment: Alignment.center,
+                child: CupertinoSlider(
+                  key: const Key('override-value-slider'),
+                  value: _sliderValue!,
+                  min: widget.entry.intRange!.min.toDouble(),
+                  max: widget.entry.intRange!.max.toDouble(),
+                  onChanged: (v) => setState(() => _sliderValue = v),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${widget.entry.intRange!.min}',
+                  style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
+                ),
+                Text(
+                  '${widget.entry.intRange!.max}',
+                  style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
+                ),
+              ],
+            ),
+          ] else
             CupertinoTextField(
               key: const Key('override-value-field'),
               controller: _controller,
@@ -242,6 +339,10 @@ class _EditDialogIosState extends State<_EditDialogIos> {
               final value = _selectedValue;
               Navigator.of(context).pop();
               if (value != null) await widget.onSave(value);
+            } else if (widget.entry.hasIntRange) {
+              final value = _sliderValue!.round().toString();
+              Navigator.of(context).pop();
+              await widget.onSave(value);
             } else {
               final value = _controller!.text.trim();
               Navigator.of(context).pop();
@@ -251,6 +352,149 @@ class _EditDialogIosState extends State<_EditDialogIos> {
           child: const Text('Save'),
         ),
       ],
+    );
+  }
+}
+
+/// Seed-data section shown at the bottom of the RC overrides screen.
+///
+/// "Regenerate local pacts" is always visible.
+/// "Regenerate remote pacts" is visible only when a [FakeFirestoreClient] is
+/// wired (i.e. `debug_backend = local`).
+class _SeedSection extends StatelessWidget {
+  const _SeedSection({required this.state, required this.notifier});
+
+  final DebugSeedDataState state;
+  final DebugSeedDataViewModel notifier;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'SEED DATA',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: CupertinoColors.systemGrey,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SeedButton(
+                key: const Key('seed-local-button'),
+                label: 'Regenerate local pacts',
+                isBusy: state.isBusy,
+                onPressed: notifier.seedLocalPacts,
+              ),
+              if (notifier.hasFakeBackend) ...[
+                const Divider(height: 1, indent: 16),
+                _SeedButton(
+                  key: const Key('seed-remote-button'),
+                  label: 'Regenerate remote pacts',
+                  isBusy: state.isBusy,
+                  onPressed: notifier.seedRemotePacts,
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (state.status != DebugSeedState.idle) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              state.message ?? '',
+              key: const Key('seed-status-text'),
+              style: TextStyle(
+                fontSize: 12,
+                color: switch (state.status) {
+                  DebugSeedState.error => CupertinoColors.systemRed.resolveFrom(context),
+                  DebugSeedState.done => CupertinoColors.systemGreen.resolveFrom(context),
+                  _ => CupertinoColors.systemGrey.resolveFrom(context),
+                },
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SeedButton extends StatelessWidget {
+  const _SeedButton({
+    super.key,
+    required this.label,
+    required this.isBusy,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isBusy;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onPressed: isBusy ? null : onPressed,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(label),
+      ),
+    );
+  }
+}
+
+/// Amber warning banner shown when [debug_backend] has been overridden.
+///
+/// The `debug_backend` key controls which auth service and Firestore client are
+/// wired at app startup. Changing it via the RC override store takes effect
+/// only after an app restart — this banner makes that requirement visible.
+class _RestartRequiredBanner extends StatelessWidget {
+  const _RestartRequiredBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemYellow.resolveFrom(context).withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: CupertinoColors.systemYellow.resolveFrom(context),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.exclamationmark_triangle_fill,
+            size: 16,
+            color: CupertinoColors.systemYellow.resolveFrom(context),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'debug_backend changed — restart the app to apply',
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

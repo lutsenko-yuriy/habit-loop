@@ -65,9 +65,47 @@ void main() {
       final free = entries.where((e) => !e.hasAllowedValues).map((e) => e.key).toSet();
       expect(
           constrained,
-          containsAll(
-              ['notification_text_variant', 'post_deadline_notification_behavior', 'exp_003_commitment_confirmation']));
+          containsAll([
+            'notification_text_variant',
+            'post_deadline_notification_behavior',
+            'exp_003_commitment_confirmation',
+            'debug_backend',
+          ]));
       expect(free, containsAll(['max_active_pacts', 'onboarding_auto_advance_seconds']));
+    });
+
+    test('intRange matches RemoteConfigDefaults.intRanges for each key', () {
+      final entries = readEntries();
+      for (final e in entries) {
+        expect(e.intRange, RemoteConfigDefaults.intRanges[e.key]);
+      }
+    });
+
+    test('hasIntRange is true for bounded numeric keys', () {
+      final entries = readEntries();
+      final ranged = entries.where((e) => e.hasIntRange).map((e) => e.key).toSet();
+      expect(
+          ranged,
+          containsAll([
+            'debug_connectivity_stability_percent',
+            'sync_max_consecutive_failures',
+            'onboarding_auto_advance_seconds',
+          ]));
+    });
+
+    test('hasIntRange is false for free-text and enum keys', () {
+      final entries = readEntries();
+      final noRange = entries.where((e) => !e.hasIntRange).map((e) => e.key).toSet();
+      expect(noRange, containsAll(['max_active_pacts', 'debug_connectivity_state', 'debug_backend']));
+    });
+
+    test('debug_backend has allowedValues ["real", "local"]', () {
+      final entries = readEntries();
+      final entry = entries.firstWhere((e) => e.key == 'debug_backend');
+      expect(entry.allowedValues, ['real', 'local']);
+      expect(entry.hasAllowedValues, isTrue);
+      expect(entry.hasIntRange, isFalse);
+      expect(entry.hasValueHint, isTrue);
     });
 
     test('effectiveValue reflects service getInt for int key', () {

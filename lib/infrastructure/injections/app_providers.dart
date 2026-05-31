@@ -83,6 +83,22 @@ final authStateChangesProvider = StreamProvider<AuthState>((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
 });
 
+/// The [debug_backend] Remote Config value that was active when this app
+/// session started (read from the override store before [runApp]).
+///
+/// Defaults to [RemoteConfigDefaults.debugBackend] (`'real'`). Overridden in
+/// `AppContainer.overrides` with the actual startup value in debug/profile
+/// builds so the RC overrides screen can show the restart-required banner only
+/// when the *pending* `debug_backend` value differs from the value *currently
+/// running* — eliminating false positives after restart and when re-selecting
+/// the already-active backend.
+///
+/// **Debug/profile only.** Always the default `'real'` in release builds
+/// because the override is never applied under [kReleaseMode].
+final debugBackendAtStartupProvider = Provider<String>(
+  (ref) => RemoteConfigDefaults.debugBackend,
+);
+
 // ---------------------------------------------------------------------------
 // App info providers
 // ---------------------------------------------------------------------------
@@ -303,6 +319,17 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
 final firestoreClientProvider = Provider<FirestoreClient>(
   (ref) => NoopFirestoreClient(),
 );
+
+/// Provides the [FakeFirestoreClient] instance used when `debug_backend = local`.
+///
+/// Returns `null` in release builds and when the real backend is active.
+/// The debug seed-data screen reads this provider to offer "Regenerate remote
+/// pacts" only when a fake backend is wired in.
+///
+/// **Debug/profile only.** This provider always returns `null` by default;
+/// it is overridden in `main.dart` when `debug_backend = local`.
+// ignore: avoid_dynamic_calls
+final fakeFirestoreClientProvider = Provider<Object?>((ref) => null);
 
 /// Provides [ShowupGenerationService] backed by [showupRepositoryProvider].
 ///

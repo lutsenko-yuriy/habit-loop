@@ -73,10 +73,45 @@ abstract final class RemoteConfigDefaults {
   /// Debug-only: success probability (0–100) when [debugConnectivityState] is
   /// `'unstable'`.
   ///
-  /// `100` = all requests succeed (equivalent to `'perfect'`), `0` = all fail
-  /// (equivalent to `'absent'`), `50` = approximately half succeed. Only
-  /// meaningful when `debug_connectivity_state` is `'unstable'`.
+  /// **Only active when `debug_connectivity_state` is `'unstable'`** — ignored
+  /// in `'perfect'` and `'absent'` modes.
+  ///
+  /// - `100` — every request succeeds (same as `'perfect'` mode).
+  /// - `0` — every request fails (same as `'absent'` mode).
+  /// - `50` — approximately half of requests succeed, exercising partial-failure
+  ///   and circuit-breaker retry paths.
   static const int debugConnectivityStabilityPercent = 100;
+
+  /// Debug-only: which backend to use in debug/profile builds.
+  ///
+  /// Values: `'real'` (default — real Firebase Auth + real/FaultInjecting
+  /// Firestore) or `'local'` ([LocalAuthService] + [FakeFirestoreClient] with
+  /// no network dependencies).
+  ///
+  /// In `'local'` mode:
+  /// - Auth starts anonymous; tapping "Sign in with Google" immediately
+  ///   succeeds and emits a non-anonymous state (no real OAuth required).
+  /// - Firestore operations target an in-memory [FakeFirestoreClient] so the
+  ///   full sync/pull/merge flow can be exercised without a live Firebase
+  ///   project.
+  ///
+  /// **Requires an app restart to take effect** — the service instances are
+  /// wired at startup and cannot be swapped at runtime.
+  ///
+  /// **Debug/profile only.** This key is never read in release builds.
+  static const String debugBackend = 'real';
+
+  /// Optional short hint shown in the debug override dialog for keys whose
+  /// numeric range has a concrete semantic meaning.
+  ///
+  /// Keys absent from this map (or mapped to `null`) show no hint. Use `\n`
+  /// to break the hint into multiple lines when the content warrants it.
+  static const Map<String, String?> valueHints = {
+    'debug_connectivity_stability_percent': '0 = all fail · 50 ≈ half succeed · 100 = all succeed\n'
+        '(only active when debug_connectivity_state = unstable)',
+    'debug_backend': 'local = LocalAuthService + FakeFirestoreClient\n'
+        '(requires app restart to take effect)',
+  };
 
   /// All default values keyed by their Remote Config parameter name.
   ///
@@ -92,6 +127,7 @@ abstract final class RemoteConfigDefaults {
     'sync_max_consecutive_failures': syncMaxConsecutiveFailures,
     'debug_connectivity_state': debugConnectivityState,
     'debug_connectivity_stability_percent': debugConnectivityStabilityPercent,
+    'debug_backend': debugBackend,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -106,7 +142,23 @@ abstract final class RemoteConfigDefaults {
     'onboarding_auto_advance_seconds': null,
     'exp_003_commitment_confirmation': ['button', 'checkbox', 'retype'],
     'sync_max_consecutive_failures': null,
-    'debug_connectivity_state': ['perfect', 'absent', 'unstable'],
+    'debug_connectivity_state': ['perfect', 'unstable', 'absent'],
     'debug_connectivity_stability_percent': null,
+    'debug_backend': ['real', 'local'],
+  };
+
+  /// Bounded integer ranges for keys whose values must fall within a known
+  /// [min, max] range (inclusive on both ends).
+  ///
+  /// The debug override screen uses this to display a slider instead of a
+  /// free-text input for these keys. Keys absent from this map (or mapped to
+  /// `null`) accept any value — the screen shows a plain text field.
+  ///
+  /// Only keys with both a meaningful lower and upper bound are listed here;
+  /// open-ended numeric keys (e.g. `max_active_pacts`) remain free-text.
+  static const Map<String, ({int min, int max})?> intRanges = {
+    'debug_connectivity_stability_percent': (min: 0, max: 100),
+    'sync_max_consecutive_failures': (min: 1, max: 20),
+    'onboarding_auto_advance_seconds': (min: 0, max: 60),
   };
 }

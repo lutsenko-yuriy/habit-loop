@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, kProfileMode;
 import 'package:flutter/material.dart' show Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
@@ -13,6 +14,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/ios/language_picker_dialog_ios.dart';
+import 'package:habit_loop/slices/debug/ui/ios/remote_config_overrides_page_ios.dart';
 
 class OnboardingCarouselIos extends ConsumerStatefulWidget {
   const OnboardingCarouselIos({super.key, required this.onCreatePact});
@@ -127,6 +129,28 @@ class _OnboardingCarouselIosState extends ConsumerState<OnboardingCarouselIos> {
                       ),
                     ),
                   ),
+                  // Debug/profile only — not visible in release builds.
+                  // minimumSize: Size.zero keeps the button height at ~14 pt (text only)
+                  // so it doesn't push the slide column out of view on small
+                  // viewports.
+                  if (kDebugMode || kProfileMode)
+                    CupertinoButton(
+                      key: const Key('onboarding-remote-config-debug-button'),
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      onPressed: () => Navigator.of(context).push(
+                        CupertinoPageRoute<void>(
+                          builder: (_) => const RemoteConfigOverridesPageIos(),
+                        ),
+                      ),
+                      child: Text(
+                        'Remote Config',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                        ),
+                      ),
+                    ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
                 ],
               ),

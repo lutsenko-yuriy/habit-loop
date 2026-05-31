@@ -16,6 +16,8 @@ final class RemoteConfigEntry {
     required this.overrideValue,
     required this.effectiveValue,
     this.allowedValues,
+    this.intRange,
+    this.valueHint,
   });
 
   /// The Remote Config key name, e.g. `'max_active_pacts'`.
@@ -35,8 +37,24 @@ final class RemoteConfigEntry {
   /// is acceptable (e.g. numeric keys). Sourced from [RemoteConfigDefaults.allowedValues].
   final List<String>? allowedValues;
 
+  /// Bounded integer range `(min, max)` for slider rendering, or `null` for
+  /// free-text keys. Sourced from [RemoteConfigDefaults.intRanges].
+  ///
+  /// When non-null (and [hasAllowedValues] is `false`), the debug override
+  /// screen shows a slider constrained to this range instead of a plain text
+  /// field, making it easy to explore the full value space without typos.
+  final ({int min, int max})? intRange;
+
+  /// Optional short hint explaining the semantic meaning of specific values for
+  /// this key (e.g. what 0 / 50 / 100 mean). Shown in the edit dialog below
+  /// the "Default:" line. `null` when no additional context is needed.
+  /// Sourced from [RemoteConfigDefaults.valueHints].
+  final String? valueHint;
+
   bool get isOverridden => overrideValue != null;
   bool get hasAllowedValues => allowedValues != null;
+  bool get hasIntRange => intRange != null;
+  bool get hasValueHint => valueHint != null;
 }
 
 /// ViewModel for the debug Remote Config overrides screen.
@@ -68,6 +86,8 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
         overrideValue: store.getOverride(key),
         effectiveValue: _readEffective(service, key, defaultRaw),
         allowedValues: RemoteConfigDefaults.allowedValues[key],
+        intRange: RemoteConfigDefaults.intRanges[key],
+        valueHint: RemoteConfigDefaults.valueHints[key],
       );
     }).toList();
   }

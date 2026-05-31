@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/auth/data/noop_auth_service.dart';
 import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
+import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
+import 'package:habit_loop/infrastructure/firestore/data/fault_injecting_firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/noop_firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_override_store.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
@@ -17,6 +20,7 @@ import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 
 import '../locale/fake_locale_preference_service.dart';
 import '../onboarding/fake_onboarding_preference_service.dart';
+import '../remote_config/fake_remote_config_service.dart';
 
 void main() {
   group('AppContainer.overrides', () {
@@ -458,6 +462,89 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(remoteConfigOverrideStoreProvider), same(store));
+    });
+
+    test('FaultInjectingFirestoreClient with absent connectivity throws on reads via firestoreClientProvider',
+        () async {
+      final inner = FakeFirestoreClient()
+        ..seed(const FakeFirestoreSeedData(
+          pacts: {
+            'user-1': {
+              'pact-1': <String, dynamic>{'id': 'pact-1', 'habit_name': 'Meditate'}
+            },
+          },
+        ));
+      final faultClient = FaultInjectingFirestoreClient(
+        inner: inner,
+        rc: FakeRemoteConfigService(overrides: {'debug_connectivity_state': 'absent'}),
+      );
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        firestoreClient: faultClient,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      final client = container.read(firestoreClientProvider);
+      await expectLater(() => client.getPacts('user-1'), throwsException);
+    });
+
+    test('FaultInjectingFirestoreClient with perfect connectivity passes through to FakeFirestoreClient', () async {
+      final inner = FakeFirestoreClient()
+        ..seed(const FakeFirestoreSeedData(
+          pacts: {
+            'user-1': {
+              'pact-1': <String, dynamic>{'id': 'pact-1', 'habit_name': 'Meditate'}
+            },
+          },
+        ));
+      final faultClient = FaultInjectingFirestoreClient(
+        inner: inner,
+        rc: FakeRemoteConfigService(overrides: {'debug_connectivity_state': 'perfect'}),
+      );
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        firestoreClient: faultClient,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      final client = container.read(firestoreClientProvider);
+      final pacts = await client.getPacts('user-1');
+      expect(pacts, hasLength(1));
+      expect(pacts.first['habit_name'], equals('Meditate'));
+    });
+
+    test('debugBackendAtStartupProvider resolves to default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      // Falls back to RemoteConfigDefaults.debugBackend ('real').
+      expect(container.read(debugBackendAtStartupProvider), equals(RemoteConfigDefaults.debugBackend));
+    });
+
+    test('debugBackendAtStartupProvider override is included when provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        debugBackendAtStartup: 'local',
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(debugBackendAtStartupProvider), equals('local'));
     });
 
     test('override count grows by 2 when both authService and deviceIdService are provided', () async {

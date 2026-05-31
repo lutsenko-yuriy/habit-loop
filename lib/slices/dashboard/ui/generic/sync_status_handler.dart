@@ -124,7 +124,14 @@ List<SyncDialogAction> _buildActions(
   void startFullSync() {
     unawaited(vm.fullSync().then((failed) {
       final message = failed == 0 ? l10n.fullSyncCompleted : l10n.fullSyncFailed(failed);
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      // iOS uses CupertinoPageScaffold which does not register with
+      // ScaffoldMessenger — guard against the assertion and swallow silently.
+      // The sync icon will update to reflect the new CB state regardless.
+      try {
+        messenger.showSnackBar(SnackBar(content: Text(message)));
+      } catch (_) {
+        // No-op on platforms without an active Scaffold.
+      }
     }));
   }
 
@@ -149,7 +156,15 @@ List<SyncDialogAction> _buildActions(
         ),
         SyncDialogAction(label: l10n.notNow, onPressed: () {}),
       ],
-    SyncUiState.suspended || SyncUiState.degraded => [
+    // CB open (suspended): flushDirtyRecords is blocked by the circuit breaker,
+    // so Full sync would upload nothing. Show only "Sync now" to let the user
+    // probe the half-open state and re-open the upload path.
+    SyncUiState.suspended => [
+        SyncDialogAction(label: l10n.syncNow, onPressed: () => unawaited(vm.triggerManualSync())),
+        SyncDialogAction(label: l10n.notNow, onPressed: () {}),
+      ],
+    // CB half-open (degraded): uploads are allowed as probes — Full sync is useful.
+    SyncUiState.degraded => [
         SyncDialogAction(label: l10n.syncNow, onPressed: () => unawaited(vm.triggerManualSync())),
         SyncDialogAction(label: l10n.fullSync, onPressed: startFullSync),
         SyncDialogAction(label: l10n.notNow, onPressed: () {}),

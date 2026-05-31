@@ -1,5 +1,6 @@
 import 'dart:async' show unawaited;
 
+import 'package:flutter/foundation.dart' show kDebugMode, kProfileMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_link_exception.dart';
@@ -12,6 +13,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_carousel_widge
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
+import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_android.dart';
 
 class OnboardingCarouselAndroid extends ConsumerStatefulWidget {
   const OnboardingCarouselAndroid({super.key, required this.onCreatePact});
@@ -130,6 +132,27 @@ class _OnboardingCarouselAndroidState extends ConsumerState<OnboardingCarouselAn
                     ),
                     child: Text(l10n.languagePickerTitle),
                   ),
+                  // Debug/profile only — not visible in release builds.
+                  // minimumSize: Size.zero + tapTargetSize keep the button
+                  // height at ~14 pt (text only) so the slide column is not
+                  // pushed out of view on small viewports.
+                  if (kDebugMode || kProfileMode)
+                    TextButton(
+                      key: const Key('onboarding-remote-config-debug-button'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const RemoteConfigOverridesPageAndroid(),
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                        textStyle: const TextStyle(fontSize: 12),
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Remote Config'),
+                    ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
                 ],
               ),
