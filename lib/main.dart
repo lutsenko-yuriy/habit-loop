@@ -586,18 +586,23 @@ Future<void> main() async {
       authService: authService,
       deviceIdService: deviceIdService,
       // Firestore client wired based on debug_backend:
-      //   Release + 'real' → bare Firebase adapter.
-      //   'local'          → sharedFakeFirestore (in-memory, no network).
-      //   Debug/profile 'real' → FaultInjectingFirestoreClient wrapping Firebase
-      //     so QA can exercise the circuit breaker via debug_connectivity_state.
+      //   Release          → bare Firebase adapter (no fault injection).
+      //   Debug/profile 'real'  → FaultInjectingFirestoreClient wrapping real Firebase.
+      //   Debug/profile 'local' → FaultInjectingFirestoreClient wrapping FakeFirestoreClient.
+      //
+      // Both debug/profile paths are wrapped in FaultInjectingFirestoreClient so
+      // QA can test circuit-breaker and partial-failure behaviour regardless of which
+      // backend is active. The seed-data UI still reaches FakeFirestoreClient directly
+      // via fakeFirestoreClientProvider (not through the fault-injecting wrapper).
       firestoreClient: kReleaseMode
           ? FirebaseFirestoreClientAdapter(FirebaseFirestore.instance)
-          : useLocalBackend
-              ? sharedFakeFirestore
-              : FaultInjectingFirestoreClient(
-                  inner: FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
-                  rc: remoteConfigService ?? NoopRemoteConfigService(),
-                ),
+          : FaultInjectingFirestoreClient(
+              // sharedFakeFirestore is non-null when useLocalBackend=true (constructed above).
+              inner: useLocalBackend
+                  ? sharedFakeFirestore!
+                  : FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
+              rc: remoteConfigService ?? NoopRemoteConfigService(),
+            ),
       // Debug/profile only: expose the same FakeFirestoreClient instance for the
       // seed-data debug UI. null in release builds and when real backend is active.
       fakeFirestoreClient: (!kReleaseMode && useLocalBackend) ? sharedFakeFirestore : null,
