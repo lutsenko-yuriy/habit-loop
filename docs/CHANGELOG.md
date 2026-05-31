@@ -4,15 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.42.5] — 2026-05-30 (in progress)
+## [0.42.5] — 2026-05-31 (PR #119 merged)
 
 ### Added — FakeFirestoreClient, FaultInjectingFirestoreClient, debug_backend flag, seed data UI, empty state CTA (HAB-90 WU2–WU5)
 
 - [user-none]
 - [non-user] `FakeFirestoreClient` + `FakeFirestoreSeedData` (debug/profile only): in-memory `FirestoreClient`; `seed()` (additive), `clear()`, `snapshot()`; defensive copies; lets QA exercise pull/merge path without a live Firestore project
 - [non-user] `FaultInjectingFirestoreClient` (debug/profile only): decorator wrapping any `FirestoreClient`; reads `debug_connectivity_state` (perfect/absent/unstable) and `debug_connectivity_stability_percent` from `RemoteConfigService` on every call; injected `Random` for deterministic tests; change via RC overrides screen takes effect immediately without app restart
-- [non-user] `debug_backend` RC key (`'real'` / `'local'`): `'local'` wires `LocalAuthService` (anonymous by default, `linkWithGoogle()` succeeds instantly) + `FakeFirestoreClient` so QA can test the full sync flow without a Firebase project; `'real'` is the default and uses the live Firebase stack unchanged
-- [non-user] `LocalAuthService` (debug/profile only): stateful fake `AuthService`; `initialize()` emits anonymous state; `linkWithGoogle()` upgrades to `localUserId` (`'local_user_id'`) and emits linked state; `signOut()` reverts to anonymous; no Firebase dependency
+- [non-user] `debug_backend` RC key (`'real'` / `'local'`): `'local'` wires `LocalAuthService` (auto-signed-in as `localUserId`) + `FaultInjectingFirestoreClient(inner: FakeFirestoreClient)` so QA can test the full sync + connectivity-fault flow without a Firebase project; `'real'` is the default and uses the live Firebase stack unchanged
+- [non-user] `LocalAuthService` (debug/profile only): stateful fake `AuthService`; `initialize()` auto-signs-in as `localUserId` (`'local_user_id'`) — no OAuth, no anonymous phase; `signOut()` reverts to anonymous; `linkWithGoogle()` signs back in; no Firebase dependency
 - [non-user] `fakeFirestoreClientProvider`: typed `Provider<Object?>` in `app_providers.dart`; avoids importing debug-only `FakeFirestoreClient` in production code; cast to `FakeFirestoreClient?` at debug-only call sites
 - [non-user] `RemoteConfigDefaults`: added `debugConnectivityState = 'perfect'`, `debugConnectivityStabilityPercent = 100`, `debugBackend = 'real'`; `allowedValues` for all three keys; new `intRanges` map declaring bounded numeric keys (`debug_connectivity_stability_percent` 0–100, `sync_max_consecutive_failures` 1–20, `onboarding_auto_advance_seconds` 0–60)
 - [non-user] `main.dart`: debug/profile builds wire `FaultInjectingFirestoreClient` + `LocalAuthService`/`FakeFirestoreClient` based on `debug_backend` RC key so QA can toggle backend and connectivity faults from the in-app RC overrides screen
