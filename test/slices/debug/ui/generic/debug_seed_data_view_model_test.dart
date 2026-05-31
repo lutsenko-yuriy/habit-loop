@@ -4,6 +4,7 @@ import 'package:habit_loop/infrastructure/auth/data/local_auth_service.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
@@ -121,6 +122,19 @@ void main() {
       expect(pacts.first.showupDuration, const Duration(minutes: 10));
     });
 
+    test('seedLocalPacts invalidates hasActivePactsProvider so dashboard refreshes', () async {
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 2});
+
+      // Before seeding there are no pacts.
+      expect(await container.read(hasActivePactsProvider.future), isFalse);
+
+      await container.read(debugSeedDataViewModelProvider.notifier).seedLocalPacts();
+
+      // After seeding, hasActivePactsProvider is invalidated and re-reads from
+      // pactRepo — should now reflect the freshly seeded pacts.
+      expect(await container.read(hasActivePactsProvider.future), isTrue);
+    });
+
     // ── seedRemotePacts ───────────────────────────────────────────────────────
 
     test('seedRemotePacts is no-op when no fake backend wired', () async {
@@ -168,6 +182,18 @@ void main() {
       final snapshot = fake.snapshot();
       final ids = snapshot.pacts[LocalAuthService.localUserId]?.keys.toList() ?? [];
       expect(ids, containsAll(['debug-seed-remote-0', 'debug-seed-remote-1']));
+    });
+
+    test('seedRemotePacts done message no longer instructs user to pull manually', () async {
+      // seedRemotePacts now calls pullRemoteChanges + reloads dashboard internally.
+      final fake = FakeFirestoreClient();
+      final container = makeContainer(fakeFirestore: fake, rcOverrides: {'max_active_pacts': 1});
+
+      await container.read(debugSeedDataViewModelProvider.notifier).seedRemotePacts();
+
+      final state = container.read(debugSeedDataViewModelProvider);
+      expect(state.status, DebugSeedState.done);
+      expect(state.message, isNot(contains('Pull sync')));
     });
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback, kDebugMode, kProfileMode;
 import 'package:flutter/material.dart' show Icon, Material, MaterialType, ScaffoldMessenger, Theme;
@@ -8,12 +10,14 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/ios/language_picker_dialog_ios.dart';
 import 'package:habit_loop/slices/dashboard/ui/ios/onboarding_carousel_ios.dart';
 import 'package:habit_loop/slices/debug/ui/ios/remote_config_overrides_page_ios.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
@@ -95,11 +99,16 @@ class DashboardPageIos extends ConsumerWidget {
               CupertinoButton(
                 key: const Key('remote-config-debug-button'),
                 padding: EdgeInsets.zero,
-                onPressed: () => Navigator.of(context).push(
-                  CupertinoPageRoute<void>(
-                    builder: (_) => const RemoteConfigOverridesPageIos(),
-                  ),
-                ),
+                onPressed: () => Navigator.of(context)
+                    .push(CupertinoPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageIos()))
+                    .then((_) {
+                  // Reload dashboard in case debug tools (seed data, etc.) changed
+                  // the local database while the RC overrides screen was open.
+                  if (!context.mounted) return;
+                  ref.invalidate(hasActivePactsProvider);
+                  unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+                  unawaited(ref.read(pactListViewModelProvider.notifier).load());
+                }),
                 child: const Icon(CupertinoIcons.wrench),
               ),
             // ── DEV-ONLY: fire a test notification in 15 s ─────────────────

@@ -10,6 +10,7 @@ import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.d
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 
 /// Exposes the seed state: idle, busy (with a message), done, or error.
 enum DebugSeedState { idle, busy, done, error }
@@ -110,6 +111,13 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
         status: DebugSeedState.done,
         message: 'Local pacts regenerated ($n pacts).',
       );
+
+      // Invalidate hasActivePactsProvider so the dashboard's carousel/content
+      // switch reflects the new pacts immediately when the user navigates back.
+      // The full dashboard reload is triggered by the RC overrides page's pop
+      // callback on the dashboard side (avoids timing issues with disposed
+      // containers in tests).
+      ref.invalidate(hasActivePactsProvider);
     } catch (e) {
       state = DebugSeedDataState(
         status: DebugSeedState.error,
@@ -118,11 +126,11 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
     }
   }
 
-  /// Clears and re-seeds the in-memory [FakeFirestoreClient].
+  /// Clears and re-seeds the in-memory [FakeFirestoreClient], then immediately
+  /// calls [SyncService.pullRemoteChanges] to merge the new remote records into
+  /// the local DB and reloads the dashboard.
   ///
-  /// Only callable when [hasFakeBackend] is true. The next
-  /// `pullRemoteChanges()` triggered from the sync status dialog will merge
-  /// the new remote records into the local DB.
+  /// Only callable when [hasFakeBackend] is true.
   Future<void> seedRemotePacts() async {
     if (state.isBusy) return;
     final fake = ref.read(fakeFirestoreClientProvider);
@@ -165,10 +173,19 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
         showups: {userId: showupDocs},
       ));
 
+      // Pull the freshly seeded remote data into the local DB immediately so
+      // the user doesn't need to trigger a manual sync.
+      final sync = ref.read(syncServiceProvider);
+      await sync.pullRemoteChanges();
+
       state = DebugSeedDataState(
         status: DebugSeedState.done,
-        message: 'Remote pacts seeded ($n pacts). Pull sync to merge.',
+        message: 'Remote pacts seeded ($n pacts).',
       );
+
+      // Invalidate so the dashboard carousel/content switch picks up the pull.
+      // Full reload is triggered by the RC overrides page pop callback.
+      ref.invalidate(hasActivePactsProvider);
     } catch (e) {
       state = DebugSeedDataState(
         status: DebugSeedState.error,

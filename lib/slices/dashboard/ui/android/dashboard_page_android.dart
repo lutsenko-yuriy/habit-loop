@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart' show AsyncCallback, kDebugMode, kProfileMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,10 +11,12 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/language_picker_dialog_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/onboarding_carousel_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_android.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
@@ -85,11 +89,16 @@ class DashboardPageAndroid extends ConsumerWidget {
             IconButton(
               key: const Key('remote-config-debug-button'),
               icon: const Icon(Icons.tune),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const RemoteConfigOverridesPageAndroid(),
-                ),
-              ),
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageAndroid()))
+                  .then((_) {
+                // Reload dashboard in case debug tools (seed data, etc.) changed
+                // the local database while the RC overrides screen was open.
+                if (!context.mounted) return;
+                ref.invalidate(hasActivePactsProvider);
+                unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+                unawaited(ref.read(pactListViewModelProvider.notifier).load());
+              }),
             ),
           // ── DEV-ONLY: fire a test notification in 15 s ─────────────────
           if (kDebugMode || kProfileMode)
