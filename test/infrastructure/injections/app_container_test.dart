@@ -10,6 +10,7 @@ import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_override_store.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
@@ -518,6 +519,32 @@ void main() {
       final pacts = await client.getPacts('user-1');
       expect(pacts, hasLength(1));
       expect(pacts.first['habit_name'], equals('Meditate'));
+    });
+
+    test('debugBackendAtStartupProvider resolves to default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      // Falls back to RemoteConfigDefaults.debugBackend ('real').
+      expect(container.read(debugBackendAtStartupProvider), equals(RemoteConfigDefaults.debugBackend));
+    });
+
+    test('debugBackendAtStartupProvider override is included when provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        debugBackendAtStartup: 'local',
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(debugBackendAtStartupProvider), equals('local'));
     });
 
     test('override count grows by 2 when both authService and deviceIdService are provided', () async {

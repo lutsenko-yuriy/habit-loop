@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Divider, Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
@@ -19,6 +21,18 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
     final hasAnyOverride = entries.any((e) => e.isOverridden);
     final seedState = ref.watch(debugSeedDataViewModelProvider);
     final seedNotifier = ref.read(debugSeedDataViewModelProvider.notifier);
+
+    // Show the restart banner only when the pending debug_backend value (what
+    // will take effect on next restart) differs from the value currently
+    // running. This avoids false positives in two cases:
+    //   • App restarted with 'local' → override still 'local' in store → no banner.
+    //   • User sets override back to 'real' (the default) → no banner needed.
+    final startupBackend = ref.watch(debugBackendAtStartupProvider);
+    final showBackendRestartBanner = entries.any((e) {
+      if (e.key != 'debug_backend') return false;
+      final pendingValue = e.overrideValue ?? RemoteConfigDefaults.debugBackend;
+      return pendingValue != startupBackend;
+    });
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -41,7 +55,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             children: [
-              if (entries.any((e) => e.key == 'debug_backend' && e.isOverridden)) ...[
+              if (showBackendRestartBanner) ...[
                 const _RestartRequiredBanner(
                   key: Key('debug-backend-restart-banner'),
                 ),

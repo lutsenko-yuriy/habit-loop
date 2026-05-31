@@ -28,21 +28,21 @@ void main() {
       await expectLater(sut.initialize(), completes);
     });
 
-    test('initialize does not change anonymous state', () async {
+    test('initialize signs in as localUserId', () async {
       await sut.initialize();
-      expect(sut.isAnonymous, isTrue);
-      expect(sut.currentUserId, isNull);
+      expect(sut.isAnonymous, isFalse);
+      expect(sut.currentUserId, LocalAuthService.localUserId);
     });
 
-    test('authStateChanges emits anonymous state after initialize', () async {
+    test('authStateChanges emits signed-in state after initialize', () async {
       final states = <AuthState>[];
       final sub = sut.authStateChanges.listen(states.add);
       await sut.initialize();
       await Future<void>.delayed(Duration.zero);
       await sub.cancel();
       expect(states.length, 1);
-      expect(states.first.isAnonymous, isTrue);
-      expect(states.first.userId, isNull);
+      expect(states.first.isAnonymous, isFalse);
+      expect(states.first.userId, LocalAuthService.localUserId);
     });
 
     test('authStateChanges emits current state to subscriber that attaches after initialize', () async {
@@ -56,10 +56,10 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       await sub.cancel();
 
-      // Subscriber should receive exactly one event: the current anonymous state.
+      // Subscriber should receive exactly one event: the current signed-in state.
       expect(states.length, 1);
-      expect(states.first.isAnonymous, isTrue);
-      expect(states.first.userId, isNull);
+      expect(states.first.isAnonymous, isFalse);
+      expect(states.first.userId, LocalAuthService.localUserId);
     });
 
     // ── linkWithGoogle ────────────────────────────────────────────────────────
@@ -110,17 +110,19 @@ void main() {
 
     // ── full sign-in → sign-out cycle ─────────────────────────────────────────
 
-    test('full cycle: initialize → linkWithGoogle → signOut', () async {
+    test('full cycle: initialize (signed-in) → signOut → linkWithGoogle', () async {
       await sut.initialize();
-      expect(sut.isAnonymous, isTrue);
-
-      await sut.linkWithGoogle();
+      // initialize() now auto-signs-in as localUserId.
       expect(sut.isAnonymous, isFalse);
       expect(sut.currentUserId, LocalAuthService.localUserId);
 
       await sut.signOut();
       expect(sut.isAnonymous, isTrue);
       expect(sut.currentUserId, isNull);
+
+      await sut.linkWithGoogle();
+      expect(sut.isAnonymous, isFalse);
+      expect(sut.currentUserId, LocalAuthService.localUserId);
     });
 
     // ── localUserId constant ──────────────────────────────────────────────────

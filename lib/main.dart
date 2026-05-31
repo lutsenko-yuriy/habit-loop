@@ -601,6 +601,11 @@ Future<void> main() async {
       // Debug/profile only: expose the same FakeFirestoreClient instance for the
       // seed-data debug UI. null in release builds and when real backend is active.
       fakeFirestoreClient: (!kReleaseMode && useLocalBackend) ? sharedFakeFirestore : null,
+      // Debug/profile only: the debug_backend value used this session so the RC
+      // overrides screen can show the restart banner only when the pending value
+      // differs from the one currently running. null in release builds (provider
+      // falls back to RemoteConfigDefaults.debugBackend which is also 'real').
+      debugBackendAtStartup: !kReleaseMode ? debugBackend : null,
     );
 
     // Create the top-level ProviderContainer with the same overrides so that

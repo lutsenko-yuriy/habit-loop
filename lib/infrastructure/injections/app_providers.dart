@@ -83,6 +83,22 @@ final authStateChangesProvider = StreamProvider<AuthState>((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
 });
 
+/// The [debug_backend] Remote Config value that was active when this app
+/// session started (read from the override store before [runApp]).
+///
+/// Defaults to [RemoteConfigDefaults.debugBackend] (`'real'`). Overridden in
+/// `AppContainer.overrides` with the actual startup value in debug/profile
+/// builds so the RC overrides screen can show the restart-required banner only
+/// when the *pending* `debug_backend` value differs from the value *currently
+/// running* — eliminating false positives after restart and when re-selecting
+/// the already-active backend.
+///
+/// **Debug/profile only.** Always the default `'real'` in release builds
+/// because the override is never applied under [kReleaseMode].
+final debugBackendAtStartupProvider = Provider<String>(
+  (ref) => RemoteConfigDefaults.debugBackend,
+);
+
 // ---------------------------------------------------------------------------
 // App info providers
 // ---------------------------------------------------------------------------

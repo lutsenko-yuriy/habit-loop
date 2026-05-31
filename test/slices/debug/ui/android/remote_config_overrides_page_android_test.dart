@@ -12,11 +12,13 @@ import '../../../../infrastructure/remote_config/fake_remote_config_service.dart
 Widget _buildTestApp({
   FakeRemoteConfigOverrideStore? store,
   FakeRemoteConfigService? service,
+  String? startupBackend,
 }) {
   return ProviderScope(
     overrides: [
       if (store != null) remoteConfigOverrideStoreProvider.overrideWithValue(store),
       if (service != null) remoteConfigServiceProvider.overrideWithValue(service),
+      if (startupBackend != null) debugBackendAtStartupProvider.overrideWithValue(startupBackend),
     ],
     child: const MaterialApp(
       localizationsDelegates: [
@@ -35,11 +37,12 @@ Future<void> pumpWithTallView(
   WidgetTester tester, {
   FakeRemoteConfigOverrideStore? store,
   FakeRemoteConfigService? service,
+  String? startupBackend,
 }) async {
   tester.view.physicalSize = const Size(800, 4000);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(_buildTestApp(store: store, service: service));
+  await tester.pumpWidget(_buildTestApp(store: store, service: service, startupBackend: startupBackend));
 }
 
 void main() {
@@ -195,6 +198,27 @@ void main() {
 
     expect(find.byKey(const Key('debug-backend-restart-banner')), findsOneWidget);
     expect(find.textContaining('restart'), findsOneWidget);
+  });
+
+  testWidgets('Android — no banner when app started with local and override is also local', (tester) async {
+    // Bug 2: after restarting with debug_backend=local the override store still
+    // holds 'local'. The banner must not show because the running backend already
+    // matches the pending value.
+    final store = FakeRemoteConfigOverrideStore();
+    await store.setOverride('debug_backend', 'local');
+    await pumpWithTallView(tester, store: store, startupBackend: 'local');
+
+    expect(find.byKey(const Key('debug-backend-restart-banner')), findsNothing);
+  });
+
+  testWidgets('Android — no banner when override is set to real and app started with real', (tester) async {
+    // Bug 3: setting debug_backend back to 'real' (the default) must not show
+    // the banner because the running and pending values are both 'real'.
+    final store = FakeRemoteConfigOverrideStore();
+    await store.setOverride('debug_backend', RemoteConfigDefaults.debugBackend); // 'real'
+    await pumpWithTallView(tester, store: store);
+
+    expect(find.byKey(const Key('debug-backend-restart-banner')), findsNothing);
   });
 
   testWidgets('Android — debug_backend opens radio picker (allowedValues trumps intRange)', (tester) async {

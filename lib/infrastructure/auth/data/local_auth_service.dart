@@ -5,16 +5,18 @@ import 'package:habit_loop/infrastructure/auth/contracts/auth_state.dart';
 
 /// Debug/profile-only [AuthService] that simulates auth without Firebase.
 ///
-/// Starts anonymous and immediately transitions to a signed-in state when
-/// [linkWithGoogle] is called — no real OAuth flow is performed. This pairs
-/// with [FakeFirestoreClient] when `debug_backend = local` to allow full
-/// sync-flow testing with no network dependencies.
+/// Immediately signs in as [localUserId] on [initialize] — no real OAuth flow
+/// is performed. This pairs with [FakeFirestoreClient] when
+/// `debug_backend = local` to allow full sync-flow testing with no network
+/// dependencies. The user is pre-signed-in on every app restart so the
+/// dashboard is accessible immediately without a manual "Sign in with Google"
+/// tap after switching to the local backend.
 ///
 /// | Lifecycle | Behaviour |
 /// |---|---|
-/// | After [initialize] | anonymous — [currentUserId] is null, [isAnonymous] is true |
-/// | After [linkWithGoogle] | signed-in — [currentUserId] returns [localUserId], [isAnonymous] is false |
-/// | After [signOut] | anonymous again |
+/// | After [initialize] | signed-in — [currentUserId] returns [localUserId], [isAnonymous] is false |
+/// | After [signOut] | anonymous — [currentUserId] is null, [isAnonymous] is true |
+/// | After [linkWithGoogle] | signed-in again — same as after [initialize] |
 ///
 /// **Debug/profile only.** Never constructed in release builds.
 class LocalAuthService implements AuthService {
@@ -36,9 +38,12 @@ class LocalAuthService implements AuthService {
 
   @override
   Future<void> initialize() async {
-    // Start anonymous — no Firebase call needed.
+    // Auto-sign-in as localUserId — no Firebase or OAuth call needed.
+    // With debug_backend = local the user is always pre-signed-in on every
+    // app restart so the dashboard is immediately accessible without a manual
+    // "Sign in with Google" tap after the backend switch.
     _initialized = true;
-    _emit(_state);
+    _emit(const AuthState(userId: localUserId, isAnonymous: false));
   }
 
   @override
