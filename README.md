@@ -113,6 +113,7 @@ For full details see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 |---|---|
 | [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) | Feature requirements |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Code organisation, layers, directory structure |
+| [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Ubiquitous language — canonical domain terms and known aliases |
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Released version history |
 | [`docs/BACKLOG.md`](docs/BACKLOG.md) | Known issues and planned work |
 | [`docs/VERSIONING.md`](docs/VERSIONING.md) | Version numbering and CI/CD pipeline |
