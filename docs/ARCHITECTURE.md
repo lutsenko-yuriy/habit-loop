@@ -55,7 +55,7 @@ lib/
 │   │   └── data/
 │   │       ├── firebase_auth_service.dart         # FirebaseAuthService + FirebaseAuthClient interface (SDK isolation); signs in anonymously on initialize if no user
 │   │       ├── firebase_auth_client_adapter.dart  # wraps FirebaseAuth + GoogleSignIn.instance (lazy init); only used in main.dart
-│   │       ├── local_auth_service.dart            # LocalAuthService — debug/profile-only stateful fake; initialize() auto-signs-in as localUserId (no OAuth, no anonymous phase); signOut() reverts to anonymous; linkWithGoogle() signs back in; wired when debug_backend = 'local'
+│   │       ├── local_auth_service.dart            # LocalAuthService — debug/profile stateful fake; auto-signs-in as localUserId; wired when debug_backend = 'local'. See Auth prose below.
 │   │       └── noop_auth_service.dart             # default no-op (userId null, isAnonymous true)
 │   ├── crashlytics/
 │   │   ├── contracts/
@@ -78,11 +78,11 @@ lib/
 │   │       └── noop_log_service.dart                   # default no-op
 │   ├── firestore/
 │   │   ├── contracts/
-│   │   │   └── firestore_client.dart  # FirestoreClient — abstract interface (no-throw contract): getPacts/getShowups/upsertPact/upsertShowup/deletePact/deleteShowup; flat /users/{uid}/pacts/{id} and /users/{uid}/showups/{id} paths; all data as Map<String, dynamic> (no SDK types in interface)
+│   │   │   └── firestore_client.dart  # FirestoreClient — abstract no-throw interface; flat /users/{uid}/... paths; Map<String, dynamic> only (no SDK types). See Firestore prose below.
 │   │   └── data/
 │   │       ├── noop_firestore_client.dart  # NoopFirestoreClient — silent no-op; reads return empty lists
-│   │       ├── fake_firestore_client.dart  # FakeFirestoreClient + FakeFirestoreSeedData — debug/profile-only in-memory FirestoreClient; stores Map<userId, Map<id, doc>> for pacts/showups; seed(), clear(), snapshot() helpers; all reads return defensive copies; lets QA exercise the pull/merge path without a live Firestore project
-│   │       └── fault_injecting_firestore_client.dart  # FaultInjectingFirestoreClient — debug/profile-only decorator wrapping any FirestoreClient; reads 'debug_connectivity_state' (perfect/absent/unstable) and 'debug_connectivity_stability_percent' from RemoteConfigService on every call; absent = always throws; unstable = throws probabilistically using injected Random; perfect = pass-through; state change via the in-app RC overrides screen takes effect immediately
+│   │       ├── fake_firestore_client.dart  # FakeFirestoreClient + FakeFirestoreSeedData — debug/profile in-memory client (seed/clear/snapshot) for QA pull/merge testing
+│   │       └── fault_injecting_firestore_client.dart  # FaultInjectingFirestoreClient — debug/profile decorator injecting connectivity faults (perfect/absent/unstable) read from RemoteConfigService
 │   ├── persistence/
 │   │   ├── habit_loop_database.dart   # HabitLoopDatabase — owns the sqflite Database lifecycle, schema DDL (runMigrations v2), and upgrade path (runUpgradeMigrations); production singleton + @visibleForTesting openForTesting()
 │   │   ├── schedule_codec.dart        # ScheduleCodec — encodes/decodes ShowupSchedule to/from JSON string (schedule TEXT column)
@@ -96,11 +96,11 @@ lib/
 │   │       └── noop_locale_preference_service.dart     # default no-op; getSavedLocale() returns null
 │   ├── notifications/
 │   │   ├── contracts/
-│   │   │   └── notification_service.dart   # NotificationService — abstract interface (no-throw contract): initialize(), requestPermission(), scheduleShowupReminder(), scheduleDeadlineNotification(), cancelShowupReminder(), cancelAllRemindersForPact(), getPendingNotifications(), getAppLaunchDetails()
+│   │   │   └── notification_service.dart   # NotificationService — abstract no-throw interface (schedule/cancel reminders + deadline notifications, pending list, launch details)
 │   │   └── data/
-│   │       ├── flutter_local_notification_service.dart  # FlutterLocalNotificationService — production implementation; DST-safe zonedSchedule() with TZDateTime; in-memory _pactNotificationIds registry for cancelAllRemindersForPact(); onDidReceiveNotificationResponse callback stored for WU4 to wire
-│   │       ├── noop_notification_service.dart           # NoopNotificationService — silent no-op used by unit tests (which override notificationServiceProvider directly and never call main())
-│   │       └── test_notification_helper.dart            # scheduleTestNotification(NotificationService) — debug/profile helper that schedules a fake 15-s notification via the service abstraction; tree-shaken from release builds
+│   │       ├── flutter_local_notification_service.dart  # FlutterLocalNotificationService — production; DST-safe zonedSchedule(). See Notifications prose below.
+│   │       ├── noop_notification_service.dart           # NoopNotificationService — silent no-op used by unit tests
+│   │       └── test_notification_helper.dart            # scheduleTestNotification() — debug/profile helper; tree-shaken from release builds
 │   ├── onboarding/
 │   │   ├── contracts/
 │   │   │   └── onboarding_preference_service.dart  # OnboardingPreferenceService interface — isOnboardingPassed (bool, synchronous), markOnboardingPassed() (async, no-throw); write-once flag
@@ -120,15 +120,15 @@ lib/
 │   │       ├── shared_preferences_remote_config_override_store.dart  # stores overrides as strings under rc_override_<key>; debug/profile only; wired in main.dart via AppContainer
 │   │       └── overridable_remote_config_service.dart  # wraps any RemoteConfigService + RemoteConfigOverrideStore; checks store first, delegates to inner on miss; honours no-throw contract; debug/profile only
 │   └── sync/
-│       ├── sync_circuit_breaker.dart  # SyncCircuitBreakerState enum (closed/halfOpen/open) + SyncCircuitBreaker StateNotifier; governs all Firestore network requests; state is in-memory only (resets to closed on app restart); syncCircuitBreakerProvider declared in app_providers.dart; exposes currentState getter for external callers; constructor accepts maxConsecutiveFailures (default 5); syncCircuitBreakerProvider reads threshold from remoteConfigServiceProvider key 'sync_max_consecutive_failures' so it can be tuned via Remote Config without a release
-│       ├── sync_service.dart          # SyncService abstract interface with no-throw contract: uploadPact(Pact), uploadShowup(Showup), flushDirtyRecords(), triggerManualSync(); called fire-and-forget (unawaited) from PactService and PactStatsService
+│       ├── sync_circuit_breaker.dart  # SyncCircuitBreakerState (closed/halfOpen/open) + SyncCircuitBreaker StateNotifier; governs Firestore requests; RC-tunable threshold. See Sync prose below.
+│       ├── sync_service.dart          # SyncService — abstract no-throw interface (uploadPact, uploadShowup, flushDirtyRecords, triggerManualSync, pullRemoteChanges); called fire-and-forget
 │       ├── noop_sync_service.dart     # NoopSyncService — const no-op default for syncServiceProvider
-│       ├── sync_mapper.dart           # SyncMapper — static helpers pactToDocument(), showupToDocument(), pactFromDocument(), showupFromDocument(), updatedAtFromDocument(); maps domain models to/from Firestore Map<String, dynamic>; excludes SQLite-only columns (dirty, synced_at, total_showups); includes updated_at for merge timestamp comparison
-│       └── firestore_sync_service.dart  # FirestoreSyncService implements SyncService; checks CB via canRequest; calls markPactSynced/markShowupSynced on success; fires flushDirtyRecords() when CB transitions halfOpen→closed; skips uploads when userId is null; pullRemoteChanges() fetches all remote docs and merges via last-writer-wins (remote updated_at vs local synced_at)
+│       ├── sync_mapper.dart           # SyncMapper — domain ↔ Firestore Map<String, dynamic>; excludes SQLite-only columns; carries updated_at for merge
+│       └── firestore_sync_service.dart  # FirestoreSyncService — production SyncService; CB-gated uploads + last-writer-wins pullRemoteChanges(). See Sync prose below.
 └── slices/
     ├── dashboard/                     # Home screen: calendar strip, showup list, pacts panel; onboarding carousel (zero-pact state)
-    │   ├── analytics/                 # DashboardAnalyticsScreen, LanguagePickerAnalyticsScreen, LanguageChangeRequestedEvent, LanguageChangedEvent; SyncStatusOpenedEvent, ManualSyncTriggeredEvent, SignInWithGoogleTappedEvent, SignInWithGoogleSucceededEvent, SignInWithGoogleFailedEvent, SignOutTappedEvent; OnboardingAnalyticsScreen, OnboardingSlideViewedEvent, OnboardingCompletedEvent, OnboardingCreatePactTappedEvent, OnboardingSignInTappedEvent
-    │   └── ui/ (generic/ — includes language_picker_handler.dart with shared applyLanguageSelection orchestration; sync_ui_state.dart (SyncUiState enum); sync_status_view_model.dart (SyncStatusViewModel AutoDisposeNotifier, syncStatusViewModelProvider); sync_status_handler.dart (syncStatusIconData, syncStatusIconColor, openSyncStatusDialog, SyncDialogAction); onboarding_slide.dart (OnboardingSlide data class with 4 static slides); onboarding_view_model.dart (OnboardingViewModel AutoDisposeNotifier<int>, timer-driven auto-advance via remoteConfigServiceProvider 'onboarding_auto_advance_seconds', onUserSwiped/onCreatePactTapped/onSignInTapped actions); ios/ — onboarding_carousel_ios.dart (CupertinoPageScaffold, navigationBar: null); android/ — onboarding_carousel_android.dart (Scaffold, appBar: null))
+    │   ├── analytics/                 # Dashboard, language-picker, sync-status, and onboarding screen/event classes (see docs/ANALYTICS_EVENTS.md for the full catalogue)
+    │   └── ui/ (generic/ — language picker handler, sync status (SyncUiState, SyncStatusViewModel, sync_status_handler), onboarding (OnboardingSlide, OnboardingViewModel); ios/ + android/ — platform carousels and dashboard pages)
     ├── pact/                          # Pact creation wizard + pact detail screen
     │   ├── application/               # PactBuilder, PactCreationState, PactStatsService, PactTransactionService
     │   ├── data/                      # InMemoryPactRepository (tests), SqlitePactRepository (production, implements PactRepository + PactSyncRepository), NoopPactSyncRepository (default provider)
@@ -143,7 +143,7 @@ lib/
     │   ├── application/               # ReminderSchedulingService (schedules/cancels reminders, reads EXP-001/EXP-002 flags), NotificationTextBuilder
     │   └── analytics/                 # reminder_analytics_events.dart (AppOpenedFromNotificationEvent, etc.)
     └── debug/                         # Debug/profile-only tooling — not present in release builds
-        └── ui/ (generic/ — RemoteConfigOverridesViewModel (AutoDisposeNotifier); DebugSeedDataViewModel (AutoDisposeNotifier) — seedLocalPacts() / seedRemotePacts() buttons; ios/ — RemoteConfigOverridesPageIos (CupertinoPageScaffold, form rows per key, OVERRIDE/DEFAULT badge, CupertinoAlertDialog editor, Reset all, seed-data section); android/ — RemoteConfigOverridesPageAndroid (Scaffold, ListTile per key, AlertDialog editor, seed-data section))
+        └── ui/ (generic/ — RemoteConfigOverridesViewModel, DebugSeedDataViewModel; ios/ + android/ — RC overrides pages with per-key editor + seed-data section)
 
 test/
 ├── l10n/                              # Mirrors lib/l10n/
@@ -203,7 +203,7 @@ test/
 │   │   ├── fake_remote_config_service.dart         # Shared fake for test overrides
 │   │   └── fake_remote_config_override_store.dart  # In-memory FakeRemoteConfigOverrideStore backed by Map<String, String>
 │   └── sync/
-│       ├── sync_circuit_breaker_test.dart  # SyncCircuitBreaker: state machine (closed→halfOpen→open), failure counter, triggerManualSync, full cycle; custom maxConsecutiveFailures threshold; syncCircuitBreakerProvider reads RC threshold + smoke tests
+│       ├── sync_circuit_breaker_test.dart  # SyncCircuitBreaker: state machine, failure counter, RC-tunable threshold, provider smoke tests
 │       ├── sync_mapper_test.dart           # SyncMapper: pact and showup round-trips, status encoding, SQLite column exclusion
 │       ├── noop_sync_service_test.dart     # NoopSyncService: all operations no-throw, returns normally
 │       ├── firestore_sync_service_test.dart  # FirestoreSyncService: upload/skip/failure paths, CB state transitions, flushDirtyRecords cap, triggerManualSync, null-userId guard, pullRemoteChanges merge rules
@@ -222,7 +222,7 @@ test/
     │   └── data/
     │       └── sqlite_showup_repository_test.dart # SqliteShowupRepository CRUD + date-boundary + ShowupSyncRepository (getDirtyShowups, markShowupSynced) tests using sqflite_common_ffi
     └── debug/
-        └── ui/ (generic/ — remote_config_overrides_view_model_test.dart (11 unit tests: build, setOverride, clearOverride, clearAllOverrides, effective value dispatch); debug_seed_data_view_model_test.dart (13 unit tests: idle state, hasFakeBackend, seedLocalPacts N/clamp/replace/stable-IDs/schedule, seedRemotePacts no-op/seeds/clears/stable-IDs); ios/ — remote_config_overrides_page_ios_test.dart (7 widget tests); android/ — remote_config_overrides_page_android_test.dart (7 widget tests))
+        └── ui/ (generic/ — remote_config_overrides_view_model_test.dart, debug_seed_data_view_model_test.dart; ios/ + android/ — RC overrides page widget tests)
 ```
 
 ## Layers
