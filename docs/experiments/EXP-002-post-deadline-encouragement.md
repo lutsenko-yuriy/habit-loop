@@ -11,8 +11,8 @@ _We believe that showing an encouraging replacement notification after a missed 
 ## Setup
 | Field | Value |
 |---|---|
-| Start date | |
-| End date | |
+| Start date | Ships with v0.20.0 (HAB-13) |
+| End date | At least 6 weeks after 1.0.0 release |
 | Audience | Android users with at least one active pact with a reminder offset configured, who have at least one missed (auto-failed or pending past-deadline) showup |
 | Remote Config flag | `post_deadline_notification_behavior` (values: `dismiss` = control, `encourage` = variant) |
 | Ramp plan | 50/50 split from launch |

@@ -11,8 +11,8 @@ _We believe that urgency-framing in notification text will cause higher rates of
 ## Setup
 | Field | Value |
 |---|---|
-| Start date | Ships with HAB-13 |
-| End date | At least 4 weeks after rollout |
+| Start date | Ships with v0.20.0 (HAB-13) |
+| End date | At least 4 weeks after 1.0.0 release |
 | Audience | All users with at least one active pact that has a reminder offset configured |
 | Remote Config flag | `notification_text_variant` (`control` \| `deadline` \| `time_limit`) |
 | Ramp plan | Equal three-way split (33% / 33% / 33%) from launch |

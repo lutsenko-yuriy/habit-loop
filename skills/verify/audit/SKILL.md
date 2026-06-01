@@ -20,7 +20,7 @@ The Git host is **GitHub**. The tech stack is **Flutter (Dart), Riverpod, sqflit
    - Dependencies expected to be injected but not overridden in `AppContainer.overrides(...)`
 
 2. **Migration issues** — anything that could break users upgrading from a previous version:
-   - SQLite schema changes without a migration path in `HabitLoopDatabase.onUpgrade` (new tables, renamed/dropped columns, changed column types)
+   - SQLite schema changes without a migration path in `HabitLoopDatabase.runUpgradeMigrations` (new tables, renamed/dropped columns, changed column types)
    - Persisted data format changes (renamed enum values, new required fields in a stored model, changed `schedule` JSON structure)
    - Shared preferences or storage keys that changed meaning or type
    - Notification identifiers that may conflict with older registrations
