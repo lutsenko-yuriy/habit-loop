@@ -22,7 +22,7 @@ Full product specifications: @docs/PRODUCT_SPEC.md
 | @docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
 | @docs/MODEL_TIERS.md | Effort Tier and Reasoning Depth vocabulary; active model → tier mapping |
 | @docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
-| CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — not committed |
+| CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 | skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
 | skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
 | skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |

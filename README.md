@@ -39,7 +39,7 @@ English · French · German · Russian
 
 ### Prerequisites
 
-- Flutter SDK (stable channel). On this machine: `/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter`
+- Flutter SDK (stable channel). Full binary path stored in `CLAUDE.local.md` (not on default `PATH` on all machines)
 - Xcode (iOS builds)
 - Android Studio or the Android SDK (Android builds)
 - CocoaPods (`gem install cocoapods`)
@@ -130,7 +130,7 @@ test → resolve-version → build-android → distribute-android ─┐
                                                                └→ version-tag
 ```
 
-- **Test job**: lint, format check, unit tests, Android integration tests
+- **Test job**: lint, format check, unit tests (integration tests run locally as the pre-merge gate)
 - **Build jobs**: signed AAB (Android) and IPA (iOS)
 - **Distribute jobs**: upload to Firebase App Distribution
 - **Version tag**: bumps the build number in `pubspec.yaml` and creates a `version-X.Y.Z-N-{platform}` git tag
