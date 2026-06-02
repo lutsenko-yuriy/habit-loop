@@ -4,6 +4,22 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.6] — 2026-06-02 (PR #120 merged)
+
+### Changed — Documentation audit: GLOSSARY.md, stale-doc removal, skill/experiment fixes (HAB-96)
+
+- [user-none]
+- [non-user] Deleted `docs/INJECTIONS.md` (stale since 0.18.1) and `docs/AGENTS.md` (old `.claude/agents/` architecture, superseded by `skills/` in 0.23.2)
+- [non-user] New `docs/GLOSSARY.md`: DDD ubiquitous language — canonical domain terms and a term-drift table (session→showup, made→done, cancelled→stopped, weekday→weekly, etc.); registered in AGENTS.md, README.md, and ARCHITECTURE.md
+- [non-user] `docs/ARCHITECTURE.md`: fixed stale `reminder/` slice entry and `FirebaseFirestoreClientAdapter` "planned" note; trimmed paragraph-length directory-tree entries to terse one-liners
+- [non-user] `README.md`: replaced machine-specific Flutter path with pointer to `CLAUDE.local.md`; fixed stale CI description
+- [non-user] `AGENTS.md`: tightened `CLAUDE.local.md` table note (gitignored, contains API keys, never commit)
+- [non-user] Skills: `experiment` registry-row format (7 cols, status `pending`); `calibrate` "used by" table added `experiment`+`style`; `audit` `runUpgradeMigrations` method name
+- [non-user] Experiments: EXP-002 dates filled; EXP-001/003 + registry start dates harmonised to version strings; EXP-003 stale analytics note removed
+- [non-user] `docs/BACKLOG.md`: regenerated with the HAB-95 audit epic and children
+
+---
+
 ## [0.42.5] — 2026-05-31 (PR #119 merged)
 
 ### Added — FakeFirestoreClient, FaultInjectingFirestoreClient, debug_backend flag, seed data UI, empty state CTA (HAB-90 WU2–WU5)
