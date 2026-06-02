@@ -74,6 +74,13 @@ void main() {
       await expectLater(service.cancelAllRemindersForPact('p-1'), completes);
     });
 
+    test('cancelAllRemindersForPact with showupIds completes without throwing', () async {
+      await expectLater(
+        service.cancelAllRemindersForPact('p-1', showupIds: ['su-1', 'su-2']),
+        completes,
+      );
+    });
+
     test('getPendingNotifications returns empty list of PendingNotificationInfo', () async {
       final result = await service.getPendingNotifications();
       expect(result, isEmpty);

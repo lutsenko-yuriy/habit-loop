@@ -307,13 +307,17 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
       final pactService = ref.read(pactServiceProvider);
       await pactService.updatePact(updatedPact);
 
+      // Load showups once — used both for deterministic notification cancellation
+      // (HAB-100) and for rescheduling when a reminder offset is set.
+      final showups = await pactService.getShowupsForPact(arg);
+      final showupIds = showups.map((s) => s.id).toList();
+
       // Cancel all pending reminder notifications — safe even when there was
       // no reminder configured before (no-op in that case).
-      await ref.read(reminderSchedulingServiceProvider).cancelAllRemindersForPact(arg);
+      await ref.read(reminderSchedulingServiceProvider).cancelAllRemindersForPact(arg, showupIds: showupIds);
 
       // Reschedule only when the updated pact has a reminder offset.
       if (newReminderOffset != null) {
-        final showups = await pactService.getShowupsForPact(arg);
         unawaited(
           ref.read(reminderSchedulingServiceProvider).scheduleRemindersForShowups(
                 pact: updatedPact,

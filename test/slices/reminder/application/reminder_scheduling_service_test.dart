@@ -379,10 +379,20 @@ void main() {
   });
 
   group('cancelAllRemindersForPact', () {
-    test('delegates to notificationService.cancelAllRemindersForPact', () async {
+    test('delegates pactId to notificationService', () async {
       await service.cancelAllRemindersForPact('pact-abc');
 
       expect(notificationService.cancelledPactIds, contains('pact-abc'));
+    });
+
+    test('forwards showupIds to notificationService', () async {
+      await service.cancelAllRemindersForPact(
+        'pact-abc',
+        showupIds: ['su-1', 'su-2'],
+      );
+
+      expect(notificationService.cancelledPactIds, contains('pact-abc'));
+      expect(notificationService.cancelledPactShowupIds.last, containsAll(['su-1', 'su-2']));
     });
   });
 }

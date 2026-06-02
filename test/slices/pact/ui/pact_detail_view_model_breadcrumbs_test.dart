@@ -52,6 +52,7 @@ void main() {
       overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
         pactDetailNowProvider.overrideWithValue(today),
         analyticsServiceProvider.overrideWithValue(FakeAnalyticsService()),

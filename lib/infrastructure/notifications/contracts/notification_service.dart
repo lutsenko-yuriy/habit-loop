@@ -102,14 +102,21 @@ abstract interface class NotificationService {
 
   /// Cancels all pending notifications for the given pact.
   ///
-  /// Because `flutter_local_notifications` has no cancel-by-tag API, this
-  /// implementation maintains an in-memory registry of notification IDs keyed
-  /// by pact ID. On app restart the registry is empty; the implementation falls
-  /// back to fetching all pending notifications and filtering by the `pactId`
-  /// field in their payload JSON.
+  /// When [showupIds] is provided the implementation computes notification IDs
+  /// deterministically from the showup IDs and cancels them directly — this is
+  /// the reliable path and works even after a cold restart when the in-memory
+  /// registry is empty. When [showupIds] is empty the implementation falls back
+  /// to the in-memory registry or an OS pending-notification query (which is
+  /// unreliable on iOS for notifications scheduled in a previous session).
+  ///
+  /// Callers that have access to the pact's showup IDs (e.g. stop-pact flow)
+  /// should always pass them.
   ///
   /// Never throws — implementations swallow failures silently.
-  Future<void> cancelAllRemindersForPact(String pactId);
+  Future<void> cancelAllRemindersForPact(
+    String pactId, {
+    List<String> showupIds = const [],
+  });
 
   /// Returns all currently pending notifications scheduled with the OS.
   ///

@@ -165,9 +165,13 @@ final class ReminderSchedulingService {
 
   /// Cancels all pending notifications for a pact (called on stop-pact).
   ///
-  /// Delegates directly to [NotificationService.cancelAllRemindersForPact].
-  Future<void> cancelAllRemindersForPact(String pactId) async {
-    await _notificationService.cancelAllRemindersForPact(pactId);
+  /// Pass [showupIds] whenever the caller has access to the pact's showup IDs —
+  /// this enables deterministic cancellation that works after a cold restart.
+  Future<void> cancelAllRemindersForPact(
+    String pactId, {
+    List<String> showupIds = const [],
+  }) async {
+    await _notificationService.cancelAllRemindersForPact(pactId, showupIds: showupIds);
   }
 
   /// Resolves [AppLocalizations] for [locale], falling back to English when the

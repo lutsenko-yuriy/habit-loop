@@ -347,11 +347,26 @@ final class FlutterLocalNotificationService implements NotificationService {
   }
 
   @override
-  Future<void> cancelAllRemindersForPact(String pactId) async {
+  Future<void> cancelAllRemindersForPact(
+    String pactId, {
+    List<String> showupIds = const [],
+  }) async {
     try {
+      if (showupIds.isNotEmpty) {
+        // Deterministic path: compute IDs from showup UUIDs directly.
+        // Works even after a cold restart when the in-memory registry is empty,
+        // and on iOS where pendingNotificationRequests() only returns notifications
+        // scheduled in the current app session.
+        for (final showupId in showupIds) {
+          await _plugin.cancel(_reminderNotificationId(showupId));
+          await _plugin.cancel(_deadlineNotificationId(showupId));
+        }
+        _pactNotificationIds.remove(pactId);
+        return;
+      }
+
       final idsFromRegistry = _pactNotificationIds[pactId];
       if (idsFromRegistry != null && idsFromRegistry.isNotEmpty) {
-        // Use the in-memory registry (fast path — no OS call needed).
         for (final id in idsFromRegistry) {
           await _plugin.cancel(id);
         }
@@ -359,7 +374,8 @@ final class FlutterLocalNotificationService implements NotificationService {
         return;
       }
 
-      // Fallback: query OS pending notifications and filter by pactId in payload.
+      // Last-resort fallback: query OS pending notifications and filter by pactId.
+      // Unreliable on iOS for notifications scheduled in a previous session.
       final pending = await _plugin.pendingNotificationRequests();
       for (final request in pending) {
         final payload = request.payload;
