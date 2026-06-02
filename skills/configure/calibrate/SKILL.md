@@ -41,10 +41,10 @@ Map each combination used by the project's skills to the single best available m
 |---|---|---|
 | THOROUGH | ARCHITECTURAL | `plan`, `calibrate` |
 | THOROUGH | TACTICAL | `audit` |
-| FOCUSED | ARCHITECTURAL | `review`, `analyze` |
+| FOCUSED | ARCHITECTURAL | `review`, `analyze`, `experiment` |
 | FOCUSED | TACTICAL | `implement` |
 | RAPID | TACTICAL | `ship` |
-| RAPID | MECHANICAL | `summarize` |
+| RAPID | MECHANICAL | `summarize`, `style` |
 
 Rules for the proposal:
 - Each combination must map to exactly one model from the available list.
@@ -59,7 +59,7 @@ Present the proposal in this format:
 ```
 ## Proposed model tier mapping — Habit Loop
 
-Available models: claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5
+Available models: <the models listed under "## Available models" in docs/MODEL_TIERS.md>
 
 | Effort | Reasoning | Model | Justification |
 |---|---|---|---|

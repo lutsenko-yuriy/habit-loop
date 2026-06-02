@@ -39,7 +39,7 @@ English · French · German · Russian
 
 ### Prerequisites
 
-- Flutter SDK (stable channel). On this machine: `/opt/homebrew/Caskroom/flutter/3.41.5/flutter/bin/flutter`
+- Flutter SDK (stable channel). Full binary path stored in `CLAUDE.local.md` (not on default `PATH` on all machines)
 - Xcode (iOS builds)
 - Android Studio or the Android SDK (Android builds)
 - CocoaPods (`gem install cocoapods`)
@@ -113,6 +113,7 @@ For full details see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 |---|---|
 | [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) | Feature requirements |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Code organisation, layers, directory structure |
+| [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Ubiquitous language — canonical domain terms and known aliases |
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Released version history |
 | [`docs/BACKLOG.md`](docs/BACKLOG.md) | Known issues and planned work |
 | [`docs/VERSIONING.md`](docs/VERSIONING.md) | Version numbering and CI/CD pipeline |
@@ -130,7 +131,7 @@ test → resolve-version → build-android → distribute-android ─┐
                                                                └→ version-tag
 ```
 
-- **Test job**: lint, format check, unit tests, Android integration tests
+- **Test job**: lint, format check, unit tests (integration tests run locally as the pre-merge gate)
 - **Build jobs**: signed AAB (Android) and IPA (iOS)
 - **Distribute jobs**: upload to Firebase App Distribution
 - **Version tag**: bumps the build number in `pubspec.yaml` and creates a `version-X.Y.Z-N-{platform}` git tag

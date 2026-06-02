@@ -31,4 +31,4 @@ All product experiments are tracked here. One file per experiment under this dir
 |---|---|---|---|---|---|---|
 | EXP-001 | notification-text-urgency | `pending` | with v0.20.0 | 4 wks after 1.0.0 | | |
 | EXP-002 | post-deadline-encouragement | `pending` | with v0.20.0 | 6 wks after 1.0.0 | | |
-| EXP-003 | commitment-confirmation-variant | `pending` | with HAB-82 | 8 wks after 1.0.0 | | |
+| EXP-003 | commitment-confirmation-variant | `pending` | with v0.37.0 | 8 wks after 1.0.0 | | |

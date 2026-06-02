@@ -63,13 +63,15 @@ Determine the short name: lowercase, hyphens, ≤ 4 words (e.g. `onboarding-skip
 
 ### 5. Update the registry index
 
-Open `docs/experiments/README.md` and add a row to the Index table:
+Open `docs/experiments/README.md` and add a row to the Index table. It has seven columns; register the experiment with status `pending` (designed and merged, but not yet live) and leave the result/decision columns blank:
 
 ```
-| EXP-NNN | <short name> | `running` | | |
+| ID | Name | Status | Start date | End date | Primary metric result | Decision date |
+|---|---|---|---|---|---|---|
+| EXP-NNN | <short name> | `pending` | <go-live, if known> | <planned end, if known> | | |
 ```
 
-Replace the "no experiments yet" placeholder row if it is still present.
+The status moves to `running` only when the experiment actually goes live — see the "Starting an experiment" protocol in the registry README.
 
 ### 6. Flag analytics gaps (if any)
 

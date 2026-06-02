@@ -11,7 +11,7 @@ _We believe that requiring users to actively confirm their commitment during pac
 ## Setup
 | Field | Value |
 |---|---|
-| Start date | Ships with HAB-82 |
+| Start date | Ships with v0.37.0 (HAB-82) |
 | End date | 8 weeks after 1.0.0 release |
 | Audience | All users who create a pact (3-way equal split) |
 | Remote Config flag | `exp_003_commitment_confirmation` (values: `button` = control, `checkbox` = variant_a, `retype` = variant_b) |
@@ -38,7 +38,7 @@ Single-layer experiment on the pact creation flow. Does not conflict with EXP-00
 ## Analytics events needed
 - `pact_created` gains new property `commitment_variant: string` (`button` \| `checkbox` \| `retype`) — required to group primary metric by variant
 - New event `pact_commitment_dialog_dismissed` with property `variant: string` — tracks guardrail abandonment at the dialog level
-- Both require a `docs/ANALYTICS_EVENTS.md` update (via `analyze` skill) before implementation
+- Both are now documented in `docs/ANALYTICS_EVENTS.md` (added with HAB-82)
 
 ## Decision
 _What was decided, why, and on what date._
