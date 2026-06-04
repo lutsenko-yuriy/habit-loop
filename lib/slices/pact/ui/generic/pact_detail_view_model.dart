@@ -91,7 +91,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       // Load showup IDs before the stop transaction deletes them from the DB.
       // Passing them to cancelAllRemindersForPact enables deterministic
       // notification cancellation that works after a cold restart (HAB-100).
-      final showupIds = (await ref.read(showupRepositoryProvider).getShowupsForPact(arg)).map((s) => s.id).toList();
+      final showupIds = (await ref.read(pactServiceProvider).getShowupsForPact(arg)).map((s) => s.id).toList();
 
       final now = ref.read(pactDetailNowProvider);
       final updated = await ref.read(pactStatsServiceProvider).stopPact(

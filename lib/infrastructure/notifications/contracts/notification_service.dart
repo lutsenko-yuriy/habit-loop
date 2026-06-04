@@ -60,8 +60,9 @@ abstract interface class NotificationService {
   /// Schedules a reminder notification for [showup].
   ///
   /// The notification fires at `showup.scheduledAt - pact.reminderOffset`.
-  /// The reminder notification ID is derived from `showup.id.hashCode.abs() % 2147483647`
-  /// so it is deterministic, collision-resistant, and fits in a 32-bit signed integer.
+  /// The reminder notification ID is derived via FNV-1a 32-bit hash of `showup.id`
+  /// so it is deterministic across Dart VM restarts, collision-resistant, and fits
+  /// in a 32-bit signed integer.
   /// The payload JSON includes `showupId` and `pactId` for deep-link navigation.
   ///
   /// When [includeMarkDoneAction] is `true` (the default), a "Mark done" action
@@ -81,7 +82,8 @@ abstract interface class NotificationService {
   /// Schedules a "missed deadline" replacement notification for [showup].
   ///
   /// Uses a different notification ID from the reminder so both can coexist in the
-  /// notification tray. The deadline ID is `(showup.id.hashCode.abs() % 1073741823) + 1073741824`.
+  /// notification tray. The deadline ID is computed via FNV-1a 32-bit hash in the
+  /// upper range `[1073741824, 2147483646]`, disjoint from the reminder range.
   /// Fires at `showup.scheduledAt + showup.duration`.
   /// Has no action buttons — the showup window has passed.
   ///

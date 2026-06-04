@@ -648,8 +648,6 @@ void main() {
       final c = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
-        showupRepositoryProvider.overrideWithValue(showupRepo),
-        showupRepositoryProvider.overrideWithValue(showupRepo),
         notificationServiceProvider.overrideWithValue(fakeNotifications),
       ]);
       addTearDown(c.dispose);

@@ -51,6 +51,16 @@ void main() {
       }
     });
 
+    test('IDs are stable across Dart VM restarts — hardcoded FNV-1a expected values', () {
+      // These values are locked in. If they ever change, the hash formula
+      // changed and all in-flight notifications become uncancellable after a
+      // cold restart. Do not update them without scheduling a migration.
+      expect(NotificationConstants.reminderNotificationId('a1b2c3d4-e5f6-7890-abcd-ef1234567890'), 112419231);
+      expect(NotificationConstants.deadlineNotificationId('a1b2c3d4-e5f6-7890-abcd-ef1234567890'), 1186161058);
+      expect(NotificationConstants.reminderNotificationId('showup-id-001'), 1049301351);
+      expect(NotificationConstants.deadlineNotificationId('showup-id-001'), 2123043176);
+    });
+
     test('two different showup IDs produce different reminder IDs (no collision on sample)', () {
       final reminderIds = _sampleIds.map(NotificationConstants.reminderNotificationId).toList();
       final deadlineIds = _sampleIds.map(NotificationConstants.deadlineNotificationId).toList();
