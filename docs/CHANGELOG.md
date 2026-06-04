@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.7] — 2026-06-04 (PR #121 merged)
+
+### Fixed — Notifications not cancelled after pact stop (HAB-100)
+
+- [user] Stopping a pact now reliably cancels all its pending reminder notifications, even after a cold app restart
+- [non-user] `NotificationConstants`: replaced `String.hashCode` (Dart randomises the hash seed per VM process) with FNV-1a 32-bit hash so notification IDs are stable across cold restarts; modulo corrected to `0x40000000` so reminder `[0x0, 0x3FFFFFFF]` and deadline `[0x40000000, 0x7FFFFFFE]` ranges are truly disjoint
+- [non-user] `cancelAllRemindersForPact` caller in `PactDetailViewModel.stopPact()` now passes showup IDs so cancellation uses the deterministic hash path instead of the unreliable in-memory registry fallback
+- [non-user] All notification ID range bounds written as hex literals for consistency; stability test with hardcoded FNV-1a expected values added
+- [non-user] Layer violation fix: `PactDetailViewModel` now reads showups via `pactServiceProvider.getShowupsForPact()` instead of `showupRepositoryProvider` directly
+- [non-user] `OnboardingSlideWidget`: spacer wrapped in `Flexible` to prevent column overflow on height-constrained screens (iPhone 17 Pro)
+
+---
+
 ## [0.42.6] — 2026-06-02 (PR #120 merged)
 
 ### Changed — Documentation audit: GLOSSARY.md, stale-doc removal, skill/experiment fixes (HAB-96)

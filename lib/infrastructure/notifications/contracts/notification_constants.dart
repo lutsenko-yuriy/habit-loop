@@ -18,12 +18,33 @@ abstract final class NotificationConstants {
 
   /// Computes the OS notification ID for a showup reminder.
   ///
-  /// Range: `[0, 2147483646]` — fits within a 32-bit signed integer.
-  static int reminderNotificationId(String showupId) => showupId.hashCode.abs() % 2147483647;
+  /// Range: `[0x0, 0x3FFFFFFF]` — lower half of the 32-bit signed integer
+  /// space, disjoint from [deadlineNotificationId].
+  ///
+  /// Uses FNV-1a 32-bit so the result is stable across Dart VM restarts.
+  /// `String.hashCode` must NOT be used here because Dart randomises the hash
+  /// seed per process, causing IDs to differ between the scheduling session
+  /// and a subsequent cancellation session after a cold restart.
+  static int reminderNotificationId(String showupId) => _fnv1a32(showupId) % 0x40000000;
 
   /// Computes the OS notification ID for a showup deadline notification.
   ///
-  /// Range: `[1073741824, 2147483646]` — disjoint from [reminderNotificationId]
+  /// Range: `[0x40000000, 0x7FFFFFFE]` — disjoint from [reminderNotificationId]
   /// so both notifications can coexist in the notification tray simultaneously.
-  static int deadlineNotificationId(String showupId) => (showupId.hashCode.abs() % 1073741823) + 1073741824;
+  ///
+  /// Uses FNV-1a 32-bit for the same stability reason as [reminderNotificationId].
+  static int deadlineNotificationId(String showupId) => (_fnv1a32(showupId) % 0x3FFFFFFF) + 0x40000000;
+
+  /// FNV-1a 32-bit hash — deterministic, no per-process seed, no dependencies.
+  ///
+  /// Produces values in `[0x0, 0xFFFFFFFF]`. Masking with `& 0xFFFFFFFF` keeps
+  /// Dart's arbitrary-precision integers within 32 bits after each multiply.
+  static int _fnv1a32(String s) {
+    var h = 0x811c9dc5; // FNV offset basis
+    for (final c in s.codeUnits) {
+      h ^= c;
+      h = (h * 0x01000193) & 0xFFFFFFFF; // FNV prime
+    }
+    return h;
+  }
 }

@@ -51,8 +51,8 @@ const _kMarkDoneActionLabel = 'Mark done';
 ///
 /// **Notification ID scheme** — each (showup, notificationType) pair gets a
 /// unique deterministic 32-bit signed integer ID:
-/// - Reminder ID: `showup.id.hashCode.abs() % 2147483647`
-/// - Deadline ID: `(showup.id.hashCode.abs() % 1073741823) + 1073741824`
+/// - Reminder ID: FNV-1a 32-bit hash of `showup.id` modulo `0x40000000`, range `[0x0, 0x3FFFFFFF]`
+/// - Deadline ID: FNV-1a 32-bit hash of `showup.id` modulo `0x3FFFFFFF` plus `0x40000000`, range `[0x40000000, 0x7FFFFFFE]`
 ///
 /// The two ranges are disjoint so reminder and deadline notifications can
 /// coexist in the notification tray simultaneously. Using the showup UUID
@@ -347,11 +347,26 @@ final class FlutterLocalNotificationService implements NotificationService {
   }
 
   @override
-  Future<void> cancelAllRemindersForPact(String pactId) async {
+  Future<void> cancelAllRemindersForPact(
+    String pactId, {
+    List<String> showupIds = const [],
+  }) async {
     try {
+      if (showupIds.isNotEmpty) {
+        // Deterministic path: compute IDs from showup UUIDs directly.
+        // Works even after a cold restart when the in-memory registry is empty,
+        // and on iOS where pendingNotificationRequests() only returns notifications
+        // scheduled in the current app session.
+        for (final showupId in showupIds) {
+          await _plugin.cancel(_reminderNotificationId(showupId));
+          await _plugin.cancel(_deadlineNotificationId(showupId));
+        }
+        _pactNotificationIds.remove(pactId);
+        return;
+      }
+
       final idsFromRegistry = _pactNotificationIds[pactId];
       if (idsFromRegistry != null && idsFromRegistry.isNotEmpty) {
-        // Use the in-memory registry (fast path — no OS call needed).
         for (final id in idsFromRegistry) {
           await _plugin.cancel(id);
         }
@@ -359,7 +374,8 @@ final class FlutterLocalNotificationService implements NotificationService {
         return;
       }
 
-      // Fallback: query OS pending notifications and filter by pactId in payload.
+      // Last-resort fallback: query OS pending notifications and filter by pactId.
+      // Unreliable on iOS for notifications scheduled in a previous session.
       final pending = await _plugin.pendingNotificationRequests();
       for (final request in pending) {
         final payload = request.payload;

@@ -52,7 +52,7 @@ class OnboardingSlideWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SvgPicture.asset(slide.assetPath, width: 200, height: 160),
-          const SizedBox(height: 32),
+          const Flexible(child: SizedBox(height: 32)),
           Text(
             slide.title(l10n),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),

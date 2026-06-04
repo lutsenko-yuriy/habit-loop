@@ -60,8 +60,9 @@ abstract interface class NotificationService {
   /// Schedules a reminder notification for [showup].
   ///
   /// The notification fires at `showup.scheduledAt - pact.reminderOffset`.
-  /// The reminder notification ID is derived from `showup.id.hashCode.abs() % 2147483647`
-  /// so it is deterministic, collision-resistant, and fits in a 32-bit signed integer.
+  /// The reminder notification ID is derived via FNV-1a 32-bit hash of `showup.id`
+  /// so it is deterministic across Dart VM restarts, collision-resistant, and fits
+  /// in a 32-bit signed integer.
   /// The payload JSON includes `showupId` and `pactId` for deep-link navigation.
   ///
   /// When [includeMarkDoneAction] is `true` (the default), a "Mark done" action
@@ -81,7 +82,8 @@ abstract interface class NotificationService {
   /// Schedules a "missed deadline" replacement notification for [showup].
   ///
   /// Uses a different notification ID from the reminder so both can coexist in the
-  /// notification tray. The deadline ID is `(showup.id.hashCode.abs() % 1073741823) + 1073741824`.
+  /// notification tray. The deadline ID is computed via FNV-1a 32-bit hash in the
+  /// upper range `[0x40000000, 0x7FFFFFFE]`, disjoint from the reminder range.
   /// Fires at `showup.scheduledAt + showup.duration`.
   /// Has no action buttons — the showup window has passed.
   ///
@@ -102,14 +104,21 @@ abstract interface class NotificationService {
 
   /// Cancels all pending notifications for the given pact.
   ///
-  /// Because `flutter_local_notifications` has no cancel-by-tag API, this
-  /// implementation maintains an in-memory registry of notification IDs keyed
-  /// by pact ID. On app restart the registry is empty; the implementation falls
-  /// back to fetching all pending notifications and filtering by the `pactId`
-  /// field in their payload JSON.
+  /// When [showupIds] is provided the implementation computes notification IDs
+  /// deterministically from the showup IDs and cancels them directly — this is
+  /// the reliable path and works even after a cold restart when the in-memory
+  /// registry is empty. When [showupIds] is empty the implementation falls back
+  /// to the in-memory registry or an OS pending-notification query (which is
+  /// unreliable on iOS for notifications scheduled in a previous session).
+  ///
+  /// Callers that have access to the pact's showup IDs (e.g. stop-pact flow)
+  /// should always pass them.
   ///
   /// Never throws — implementations swallow failures silently.
-  Future<void> cancelAllRemindersForPact(String pactId);
+  Future<void> cancelAllRemindersForPact(
+    String pactId, {
+    List<String> showupIds = const [],
+  });
 
   /// Returns all currently pending notifications scheduled with the OS.
   ///

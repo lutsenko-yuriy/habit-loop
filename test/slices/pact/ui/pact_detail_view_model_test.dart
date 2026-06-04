@@ -82,6 +82,9 @@ ProviderContainer _makeContainer({
     overrides: [
       pactServiceProvider.overrideWithValue(service),
       pactStatsServiceProvider.overrideWithValue(statsService),
+      // Required so stopPact can load showup IDs for deterministic notification
+      // cancellation (HAB-100) without hitting the default UnimplementedError.
+      showupRepositoryProvider.overrideWithValue(showupRepo),
       ...extras,
     ],
   );
@@ -152,6 +155,7 @@ void main() {
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
@@ -184,6 +188,7 @@ void main() {
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
@@ -235,6 +240,7 @@ void main() {
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(throwingShowupRepo),
       ]);
       addTearDown(container.dispose);
 
@@ -271,6 +277,7 @@ void main() {
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
 
@@ -301,6 +308,7 @@ void main() {
       final reloadedContainer = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(reloadedService),
         pactStatsServiceProvider.overrideWithValue(reloadedStatsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(reloadedContainer.dispose);
 
@@ -366,6 +374,7 @@ void main() {
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
 
@@ -424,6 +433,7 @@ void main() {
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
         pactDetailNowProvider.overrideWithValue(pastEndDate),
       ]);
       addTearDown(container.dispose);
@@ -477,6 +487,7 @@ void main() {
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
 
@@ -614,8 +625,10 @@ void main() {
   });
 
   group('PactDetailViewModel notification cancellation', () {
-    test('cancels all pact notifications when pact is stopped', () async {
-      final fakeNotifications = FakeNotificationService();
+    // Shared setup for notification-cancellation tests.
+    ProviderContainer makeNotifContainer({
+      required FakeNotificationService fakeNotifications,
+    }) {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
@@ -638,12 +651,36 @@ void main() {
         notificationServiceProvider.overrideWithValue(fakeNotifications),
       ]);
       addTearDown(c.dispose);
+      return c;
+    }
+
+    test('cancels all pact notifications when pact is stopped', () async {
+      final fakeNotifications = FakeNotificationService();
+      final c = makeNotifContainer(fakeNotifications: fakeNotifications);
 
       await c.read(pactDetailViewModelProvider('p1').notifier).load();
       await c.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
 
       expect(fakeNotifications.cancelledPactIds, contains('p1'),
           reason: 'cancelAllRemindersForPact must be called with the pact id when pact is stopped');
+    });
+
+    test('passes showup IDs to cancelAllRemindersForPact so cold-restart cancellation works', () async {
+      // Regression test for HAB-100: when the app is killed and restarted
+      // before stopping a pact, the in-memory notification registry is empty.
+      // The fix passes showup IDs so the notification service can cancel by
+      // deterministically computed ID rather than querying the OS list (which
+      // iOS does not populate for notifications scheduled in a previous session).
+      final fakeNotifications = FakeNotificationService();
+      final c = makeNotifContainer(fakeNotifications: fakeNotifications);
+
+      await c.read(pactDetailViewModelProvider('p1').notifier).load();
+      await c.read(pactDetailViewModelProvider('p1').notifier).stopPact(null);
+
+      expect(fakeNotifications.cancelledPactShowupIds, hasLength(1));
+      final passedIds = fakeNotifications.cancelledPactShowupIds.first;
+      expect(passedIds, containsAll(['s1', 's2', 's3', 's4']),
+          reason: 'all showup IDs must be passed so notifications can be cancelled by computed ID');
     });
   });
 }

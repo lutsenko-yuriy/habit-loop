@@ -35,7 +35,10 @@ final class NoopNotificationService implements NotificationService {
   Future<void> cancelShowupReminder(String showupId) async {}
 
   @override
-  Future<void> cancelAllRemindersForPact(String pactId) async {}
+  Future<void> cancelAllRemindersForPact(
+    String pactId, {
+    List<String> showupIds = const [],
+  }) async {}
 
   @override
   Future<List<PendingNotificationInfo>> getPendingNotifications() async => const [];

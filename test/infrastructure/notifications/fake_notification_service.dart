@@ -40,6 +40,10 @@ final class FakeNotificationService implements NotificationService {
   /// [pactId] values passed to [cancelAllRemindersForPact] in order.
   final List<String> cancelledPactIds = [];
 
+  /// [showupIds] lists passed to [cancelAllRemindersForPact] in order
+  /// (parallel to [cancelledPactIds]).
+  final List<List<String>> cancelledPactShowupIds = [];
+
   @override
   Future<void> initialize() async {}
 
@@ -82,8 +86,12 @@ final class FakeNotificationService implements NotificationService {
   }
 
   @override
-  Future<void> cancelAllRemindersForPact(String pactId) async {
+  Future<void> cancelAllRemindersForPact(
+    String pactId, {
+    List<String> showupIds = const [],
+  }) async {
     cancelledPactIds.add(pactId);
+    cancelledPactShowupIds.add(List.unmodifiable(showupIds));
   }
 
   @override
@@ -99,6 +107,7 @@ final class FakeNotificationService implements NotificationService {
     scheduledDeadlines.clear();
     cancelledShowupIds.clear();
     cancelledPactIds.clear();
+    cancelledPactShowupIds.clear();
     markedDoneFromNotificationIds.clear();
   }
 }

@@ -88,6 +88,11 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     if (pact == null) return;
     state = state.copyWith(isStopping: true, clearStopError: true);
     try {
+      // Load showup IDs before the stop transaction deletes them from the DB.
+      // Passing them to cancelAllRemindersForPact enables deterministic
+      // notification cancellation that works after a cold restart (HAB-100).
+      final showupIds = (await ref.read(pactServiceProvider).getShowupsForPact(arg)).map((s) => s.id).toList();
+
       final now = ref.read(pactDetailNowProvider);
       final updated = await ref.read(pactStatsServiceProvider).stopPact(
             pact: pact,
@@ -99,11 +104,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       final stats = updated.stats!;
       state = state.copyWith(pact: updated, stats: stats, isStopping: false);
 
-      // Cancel all pending notifications for the stopped pact. Routing through
-      // ReminderSchedulingService keeps the cancellation path symmetric with
-      // the scheduling path. Fire-and-forget: the no-throw contract on
-      // NotificationService guarantees this won't throw.
-      unawaited(ref.read(reminderSchedulingServiceProvider).cancelAllRemindersForPact(arg));
+      unawaited(ref.read(reminderSchedulingServiceProvider).cancelAllRemindersForPact(arg, showupIds: showupIds));
       unawaited(
         ref.read(crashlyticsServiceProvider).log(
               'PactDetailViewModel: cancelled all notifications for pact $arg',
