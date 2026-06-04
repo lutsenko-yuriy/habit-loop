@@ -2,11 +2,7 @@ import re
 import sys
 from pathlib import Path
 
-from .constants import MAX_TOOL_TURNS, MODEL_TIERS_PATH
-
-
-def _normalize_model_name(name: str) -> str:
-    return re.split(r"[\s(]", name.strip())[0].lower()
+from .constants import MAX_TOOL_TURNS, MODEL_TIERS_PATH, _normalize_model_name  # noqa: F401
 
 
 def read_frontmatter(skill_path: str):

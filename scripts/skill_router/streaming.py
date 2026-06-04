@@ -2,7 +2,7 @@ import json
 import os
 import urllib.request
 
-from .constants import LMSTUDIO_BASE
+from .constants import LMSTUDIO_BASE, _normalize_model_name
 
 
 def _auth_headers() -> dict:
@@ -11,7 +11,6 @@ def _auth_headers() -> dict:
 
 
 def model_loaded(model_name: str) -> bool:
-    from .frontmatter import _normalize_model_name
     try:
         req = urllib.request.Request(f"{LMSTUDIO_BASE}/models", headers=_auth_headers())
         with urllib.request.urlopen(req, timeout=3) as resp:
