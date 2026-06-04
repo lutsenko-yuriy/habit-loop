@@ -83,7 +83,7 @@ abstract interface class NotificationService {
   ///
   /// Uses a different notification ID from the reminder so both can coexist in the
   /// notification tray. The deadline ID is computed via FNV-1a 32-bit hash in the
-  /// upper range `[1073741824, 2147483646]`, disjoint from the reminder range.
+  /// upper range `[0x40000000, 0x7FFFFFFE]`, disjoint from the reminder range.
   /// Fires at `showup.scheduledAt + showup.duration`.
   /// Has no action buttons — the showup window has passed.
   ///

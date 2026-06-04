@@ -51,8 +51,8 @@ const _kMarkDoneActionLabel = 'Mark done';
 ///
 /// **Notification ID scheme** — each (showup, notificationType) pair gets a
 /// unique deterministic 32-bit signed integer ID:
-/// - Reminder ID: FNV-1a 32-bit hash of `showup.id` modulo 1073741824, range `[0, 1073741823]`
-/// - Deadline ID: FNV-1a 32-bit hash of `showup.id` modulo 1073741823 plus 1073741824, range `[1073741824, 2147483646]`
+/// - Reminder ID: FNV-1a 32-bit hash of `showup.id` modulo `0x40000000`, range `[0x0, 0x3FFFFFFF]`
+/// - Deadline ID: FNV-1a 32-bit hash of `showup.id` modulo `0x3FFFFFFF` plus `0x40000000`, range `[0x40000000, 0x7FFFFFFE]`
 ///
 /// The two ranges are disjoint so reminder and deadline notifications can
 /// coexist in the notification tray simultaneously. Using the showup UUID
