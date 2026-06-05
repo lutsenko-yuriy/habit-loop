@@ -26,4 +26,3 @@ _(none)_
   - **HAB-97**: Flutter codebase general audit — dead code, layer adherence, dependency direction
   - **HAB-98**: Flutter UI audit — deduplicate platform-specific code into `generic/`
   - **HAB-99**: Tests audit — coverage and quality review (unit + integration)
-  - **HAB-94**: Refactor skill_router.py and test_skill_router.py — split into modules

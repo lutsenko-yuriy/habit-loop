@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.8] — 2026-06-05 (PR #122 merged)
+
+### Changed — skill_router refactor (HAB-94)
+
+- [user-none]
+- [non-user] Split monolithic `scripts/skill_router.py` (~860 lines) into a focused package: `constants`, `frontmatter`, `streaming`, `tool_loop`, `linear_client`, `github_client`, `files_client`, `__main__`
+- [non-user] Mirrored test split in `scripts/test_skill_router/`; all 74 tests pass
+- [non-user] Stopped auto-loading all doc files into session context (AGENTS.md)
+
+---
+
 ## [0.42.7] — 2026-06-04 (PR #121 merged)
 
 ### Fixed — Notifications not cancelled after pact stop (HAB-100)
