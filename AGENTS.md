@@ -8,21 +8,21 @@ Habit Loop app ("Habit Loop") targeting mobile platforms (iOS, Android). Flutter
 
 As a person who wants to establish a new habit (e.g., meditate or jog) I want to create a pact to "show up" so that I could either build a habit when the pact is over, correct something after the pact is over and start again or realize that the habit is not mine. This is what Habit Loop app does.
 
-Full product specifications: @docs/PRODUCT_SPEC.md
+Full product specifications: docs/PRODUCT_SPEC.md
 
 ## Documentation
 
 | File | Purpose |
 |---|---|
-| @docs/PRODUCT_SPEC.md | What the app does — feature requirements |
-| @docs/ARCHITECTURE.md | How the code is organised — layers, directory structure, dependencies |
-| @docs/GLOSSARY.md | Ubiquitous language — canonical domain terms and known aliases |
-| @docs/BACKLOG.md | Known issues and remaining work not yet released |
-| @docs/CHANGELOG.md | Released version history |
-| @docs/VERSIONING.md | Version numbering rules and CI/CD pipeline |
-| @docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
-| @docs/MODEL_TIERS.md | Effort Tier and Reasoning Depth vocabulary; active model → tier mapping |
-| @docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
+| docs/PRODUCT_SPEC.md | What the app does — feature requirements |
+| docs/ARCHITECTURE.md | How the code is organised — layers, directory structure, dependencies |
+| docs/GLOSSARY.md | Ubiquitous language — canonical domain terms and known aliases |
+| docs/BACKLOG.md | Known issues and remaining work not yet released |
+| docs/CHANGELOG.md | Released version history |
+| docs/VERSIONING.md | Version numbering rules and CI/CD pipeline |
+| docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
+| docs/MODEL_TIERS.md | Effort Tier and Reasoning Depth vocabulary; active model → tier mapping |
+| docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 | skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
 | skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
@@ -58,7 +58,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 
 ## Architecture
 
-Vertical-slice architecture with **Riverpod** (state management + DI) and **sqflite** (local storage). Details and directory layout: @docs/ARCHITECTURE.md.
+Vertical-slice architecture with **Riverpod** (state management + DI) and **sqflite** (local storage). Details and directory layout: docs/ARCHITECTURE.md.
 
 ## Common Commands
 
