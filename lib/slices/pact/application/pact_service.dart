@@ -11,25 +11,9 @@ import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
-/// Application service that composes [PactRepository], [ShowupRepository], and
-/// [PactTransactionService] into a single façade for view models.
+/// Façade for view models — composes [PactRepository], [ShowupRepository], [PactTransactionService].
 ///
-/// View models depend only on [PactService] (and [PactStatsService] for stat
-/// computations) — they no longer import persistence-layer providers directly.
-///
-/// [createPact] delegates to [PactTransactionService.savePactWithShowups] which
-/// is always atomic: on SQLite it uses a single `db.transaction()` call so
-/// either everything commits or nothing does; the in-memory test double applies
-/// a best-effort manual rollback.
-///
-/// [updatePact] checks whether the pact being persisted has
-/// [PactStatus.completed] and, if so, notifies [_pactStatsService] via
-/// [PactStatsService.onPactCompleted] so the stale cache entry is evicted.
-/// This keeps the view model completely unaware of cache management.
-///
-/// Note on provider ordering: [pactServiceProvider] watches [pactStatsServiceProvider]
-/// (one-way dependency). [pactStatsServiceProvider] must never watch [pactServiceProvider]
-/// — doing so would create a circular dependency in the Riverpod graph.
+/// Invariant: [pactStatsServiceProvider] must NOT watch [pactServiceProvider] — circular dependency.
 class PactService {
   PactService({
     required PactRepository pactRepository,
@@ -47,8 +31,6 @@ class PactService {
   final ShowupRepository _showupRepository;
   final PactTransactionService _transactionService;
 
-  /// Reference to [PactStatsService] used exclusively to notify the cache when
-  /// [updatePact] persists a completed pact.
   final PactStatsService _pactStatsService;
 
   final SyncService _syncService;
@@ -57,10 +39,7 @@ class PactService {
   // Atomic creation
   // ---------------------------------------------------------------------------
 
-  /// Atomically creates [pact] and all [showups] via [PactTransactionService].
-  ///
-  /// Delegates to [PactTransactionService.savePactWithShowups] so either both
-  /// the pact insert and all showup inserts commit together, or nothing does.
+  // Atomic: delegates to PactTransactionService.savePactWithShowups.
   Future<void> createPact(Pact pact, List<Showup> showups) async {
     await _transactionService.savePactWithShowups(pact, showups);
     unawaited(_syncService.uploadPact(pact));
@@ -69,18 +48,8 @@ class PactService {
     }
   }
 
-  /// Builds a pact from [builder], generates the initial showup window, and
-  /// atomically persists both via [createPact].
-  ///
-  /// Only showups whose window ([Showup.scheduledAt] + [Pact.showupDuration])
-  /// ends after [now] are included.  This means:
-  /// - A showup scheduled entirely in the past is excluded (created at 10 pm,
-  ///   8 am slot is gone → no already-failed slot on day 1).
-  /// - A showup whose window is still open when the pact is created is included
-  ///   (created at 09:05, 09:00–09:30 window → user has 25 min left).
-  ///
-  /// Returns the built [Pact] so the caller can proceed with stat
-  /// initialization without a second repository round-trip.
+  // Only includes showups whose window ends after now (excludes entirely past slots).
+  // Returns the built Pact to avoid a second repository round-trip for stat initialization.
   Future<Pact> createPactFromBuilder({
     required PactBuilder builder,
     required String id,
@@ -101,30 +70,20 @@ class PactService {
   // Delegating reads
   // ---------------------------------------------------------------------------
 
-  /// Returns the pact with [id], or `null` if it does not exist.
   Future<Pact?> getPact(String id) => _pactRepository.getPactById(id);
 
-  /// Returns all pacts (active, stopped, and completed).
   Future<List<Pact>> getAllPacts() => _pactRepository.getAllPacts();
 
-  /// Returns only active pacts.
   Future<List<Pact>> getActivePacts() => _pactRepository.getActivePacts();
 
-  /// Returns showups for the given pact from the showup repository.
-  ///
-  /// Exposed so that view models can fetch showups without depending on the
-  /// [ShowupRepository] directly.
+  // Exposed so view models don't depend on ShowupRepository directly.
   Future<List<Showup>> getShowupsForPact(String pactId) => _showupRepository.getShowupsForPact(pactId);
 
   // ---------------------------------------------------------------------------
   // Delegating writes
   // ---------------------------------------------------------------------------
 
-  /// Updates [pact] in the repository.
-  ///
-  /// If [pact.status] is [PactStatus.completed], notifies [_pactStatsService]
-  /// via [PactStatsService.onPactCompleted] so the stale cache entry is evicted
-  /// atomically with the repository write.  Throws if the pact does not exist.
+  // On completed status, evicts the stale cache entry in PactStatsService.
   Future<void> updatePact(Pact pact) async {
     await _pactRepository.updatePact(pact);
     if (pact.status == PactStatus.completed) {
@@ -133,6 +92,5 @@ class PactService {
     unawaited(_syncService.uploadPact(pact));
   }
 
-  /// Deletes the pact with [id]. No-op if the pact does not exist.
   Future<void> deletePact(String id) => _pactRepository.deletePact(id);
 }

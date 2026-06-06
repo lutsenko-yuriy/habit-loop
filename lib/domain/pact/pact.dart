@@ -14,22 +14,11 @@ class Pact {
   final String? stopReason;
   final PactStats? stats;
 
-  /// The wall-clock instant at which this pact was created.
-  ///
-  /// Used to prevent showups scheduled *before* the pact was created from
-  /// ever being persisted — e.g. a daily-8am pact created at 10pm must not
-  /// generate a failing 8am showup for the same day.
-  ///
-  /// `null` for pacts loaded from storage that pre-date this field; callers
-  /// treat `null` as equivalent to `startDate` (no intra-day filtering).
+  // Prevents showups before pact creation from being persisted (e.g. daily-8am pact created at 10pm).
+  // null for pre-date pacts; callers treat null as equivalent to startDate.
   final DateTime? createdAt;
 
-  /// The date on which the pact was actually stopped by the user (midnight
-  /// normalised to local time).
-  ///
-  /// `null` unless [status] is [PactStatus.stopped].  This preserves
-  /// [endDate] as the original scheduled end date so both values are
-  /// available: the user's original commitment and when they actually stopped.
+  // null unless status is stopped; preserves endDate as the original planned end date.
   final DateTime? stoppedAt;
 
   const Pact({
@@ -47,10 +36,7 @@ class Pact {
     this.stoppedAt,
   });
 
-  /// Returns a copy of this pact with the given fields replaced.
-  ///
-  /// [id] is immutable and cannot be changed after creation — it is the
-  /// identity of a pact and is used as a foreign key by its showups.
+  // id is immutable — identity and foreign key for all showups of this pact.
   Pact copyWith({
     String? habitName,
     DateTime? startDate,

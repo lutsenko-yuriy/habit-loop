@@ -1,23 +1,9 @@
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
-/// Pure stateless helper that builds notification title + body strings.
-///
-/// All methods are static — no instance, no external state, no Riverpod, no
-/// Flutter imports beyond the generated [AppLocalizations] class.
-///
-/// Callers pass in the [AppLocalizations] they already hold from the UI layer
-/// so the service itself never needs a [BuildContext].
+// Static helper for notification text; callers provide AppLocalizations (no BuildContext needed).
 abstract final class NotificationTextBuilder {
-  /// Builds the reminder notification text for the given [variant].
-  ///
-  /// Variants:
-  /// - `'control'` — generic reminder using [AppLocalizations.notificationReminderTitle]
-  ///   and [AppLocalizations.notificationReminderBody].
-  /// - `'deadline'` — urgency copy showing the clock time when the window closes
-  ///   (`scheduledAt + showupDuration`), formatted as `HH:mm`.
-  /// - `'time_limit'` — shows how long the user has to mark the showup done
-  ///   (i.e. the [showupDuration] formatted as "Xh Ymin" or "Y min").
-  /// - any other value — falls back to `'control'` behaviour.
+  /// Variant dispatches copy: `'deadline'` shows closing time (`HH:mm`),
+  /// `'time_limit'` shows duration left; any other value → control (generic reminder).
   static ({String title, String body}) buildReminderText({
     required String variant,
     required String habitName,
@@ -44,11 +30,7 @@ abstract final class NotificationTextBuilder {
     };
   }
 
-  /// Builds the "missed deadline" replacement notification text.
-  ///
-  /// Scheduled after the showup window closes to replace (or accompany) the
-  /// original reminder notification. Has no action buttons — the window has
-  /// already passed.
+  // Replacement notification after the showup window closes; no action buttons.
   static ({String title, String body}) buildDeadlineExpiredText({
     required AppLocalizations l10n,
   }) {
@@ -88,19 +70,13 @@ abstract final class NotificationTextBuilder {
     );
   }
 
-  /// Formats [time] as `HH:mm` (24-hour, zero-padded).
   static String _formatHHmm(DateTime time) {
     final h = time.hour.toString().padLeft(2, '0');
     final m = time.minute.toString().padLeft(2, '0');
     return '$h:$m';
   }
 
-  /// Formats [remaining] as a human-readable string for the `time_limit` variant.
-  ///
-  /// Examples (EN):
-  /// - `Duration(minutes: 30)` → `"30 min"`
-  /// - `Duration(hours: 1)` → `"1 h"`
-  /// - `Duration(hours: 1, minutes: 30)` → `"1 h 30 min"`
+  // 30min → "30 min"; 1h → "1 h"; 1h 30min → "1 h 30 min".
   static String _formatTimeRemaining(Duration remaining, AppLocalizations l10n) {
     final totalMinutes = remaining.inMinutes;
     final hours = totalMinutes ~/ 60;

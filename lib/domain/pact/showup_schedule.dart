@@ -1,9 +1,5 @@
-/// Base class for all showup recurrence schedules.
-///
-/// All `timeOfDay` fields in subclasses represent the time within a day as a
-/// [Duration]. Only hours, minutes, and seconds are meaningful — sub-second
-/// precision is ignored during schedule generation. Values must satisfy:
-/// `0 <= hours <= 23`, `0 <= minutes <= 59`, `0 <= seconds <= 59`.
+/// `timeOfDay` is hours/minutes/seconds only — sub-second precision is ignored.
+/// Valid range: `0 <= hours <= 23`, `0 <= minutes <= 59`, `0 <= seconds <= 59`.
 sealed class ShowupSchedule {
   const ShowupSchedule();
 }
@@ -20,11 +16,7 @@ class DailySchedule extends ShowupSchedule {
   int get hashCode => timeOfDay.hashCode;
 }
 
-/// A schedule that triggers on specific weekdays.
-///
-/// If [entries] contains two entries for the same weekday and time-of-day,
-/// [ShowupGenerator] will produce two separate showups for that occurrence,
-/// each with a unique ID.
+// Duplicate weekday+time entries produce two separate showups with unique IDs.
 class WeekdaySchedule extends ShowupSchedule {
   final List<WeekdayEntry> entries;
 
@@ -147,22 +139,11 @@ class MonthlyDateEntry {
 // Card-based schedule (new UX — HAB-80)
 // ---------------------------------------------------------------------------
 
-/// Base class for individual schedule cards in a [SlotSchedule].
-///
-/// A [ScheduleSlot] is either a [WeeklySlot] (fires on specific weekdays) or a
-/// [MonthlySlot] (fires on a specific day of the month).
 sealed class ScheduleSlot {
   const ScheduleSlot();
 }
 
-/// A schedule card that triggers on the given [weekdays] at [timeOfDay].
-///
-/// [weekdays] uses [DateTime.weekday] values (1 = Monday … 7 = Sunday).
-/// All selected days share a single start time.
-///
-/// Equality is set-based: two [WeeklySlot]s are equal when they have the same
-/// [timeOfDay] and exactly the same set of [weekdays], regardless of insertion
-/// order.
+// Equality is set-based: same timeOfDay + same weekday set regardless of insertion order.
 class WeeklySlot extends ScheduleSlot {
   final Set<int> weekdays;
   final Duration timeOfDay;
@@ -181,10 +162,7 @@ class WeeklySlot extends ScheduleSlot {
   int get hashCode => Object.hash(timeOfDay, Object.hashAll([...weekdays]..sort()));
 }
 
-/// A schedule card that triggers on a specific [dayOfMonth] at [timeOfDay].
-///
-/// Months where [dayOfMonth] does not exist (e.g. February 31) are silently
-/// skipped by [ShowupGenerator].
+// Months where dayOfMonth doesn't exist (e.g. Feb 31) are silently skipped by ShowupGenerator.
 class MonthlySlot extends ScheduleSlot {
   final int dayOfMonth;
   final Duration timeOfDay;
@@ -199,13 +177,7 @@ class MonthlySlot extends ScheduleSlot {
   int get hashCode => Object.hash(dayOfMonth, timeOfDay);
 }
 
-/// A schedule composed of one or more [ScheduleSlot] cards.
-///
-/// Replaces the legacy single-mode schedules ([DailySchedule],
-/// [WeekdaySchedule], [MonthlyByDateSchedule]) in the new pact creation and
-/// edit wizard. Existing pacts stored with the old schedule types continue to
-/// load correctly — [ScheduleCodec] decodes them as before; [PactBuilder.fromPact]
-/// maps them to [SlotSchedule] when the user opens the edit wizard.
+// Existing pacts with legacy schedule types continue to load correctly (backward compatible).
 class SlotSchedule extends ShowupSchedule {
   final List<ScheduleSlot> slots;
 

@@ -1,9 +1,5 @@
-/// Result of a bulk [saveShowups] operation.
 class SaveShowupsResult {
-  /// Number of showups that were successfully saved.
   final int savedCount;
-
-  /// IDs of showups that were skipped because they already existed.
   final List<String> skippedIds;
 
   SaveShowupsResult({
@@ -11,7 +7,6 @@ class SaveShowupsResult {
     required List<String> skippedIds,
   }) : skippedIds = List.unmodifiable(skippedIds);
 
-  /// True if all showups were saved and none were skipped.
   bool get allSaved => skippedIds.isEmpty;
 
   @override

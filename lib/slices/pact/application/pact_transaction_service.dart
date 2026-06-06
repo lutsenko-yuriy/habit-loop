@@ -1,17 +1,8 @@
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 
-/// Abstract interface for atomic write paths that span both the `pacts` and
-/// `showups` tables.
-///
-/// Two concrete implementations exist:
-/// - [SqlitePactTransactionService] — production implementation backed by
-///   sqflite; wraps both mutations in a single `db.transaction()` call.
-/// - [InMemoryPactTransactionService] — test double backed by in-memory
-///   repositories; falls back to the sequential save + manual rollback path.
-///
-/// Keeping the interface abstract allows view models and application services to
-/// depend on [PactTransactionService] without importing sqflite.
+/// Abstract interface for atomic write paths spanning both the `pacts` and `showups` tables.
+/// Keeping it abstract lets services depend on this without importing sqflite.
 abstract class PactTransactionService {
   /// Atomically creates [pact] and all [showups].
   ///
