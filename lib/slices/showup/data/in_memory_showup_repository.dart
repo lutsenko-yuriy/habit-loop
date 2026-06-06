@@ -4,7 +4,8 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_date_utils.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 
-// TODO(HAB-11): remove once all tests migrate to sqflite_common_ffi.
+// Fast in-memory fake used by unit tests that don't need SQLite fidelity.
+// Migration to sqflite_common_ffi is tracked in HAB-99.
 class InMemoryShowupRepository implements ShowupRepository {
   final List<Showup> _showups;
 

@@ -2,7 +2,8 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 
-// TODO(HAB-11): remove once all tests migrate to sqflite_common_ffi.
+// Fast in-memory fake used by unit tests that don't need SQLite fidelity.
+// Migration to sqflite_common_ffi is tracked in HAB-99.
 class InMemoryPactRepository implements PactRepository {
   final List<Pact> _pacts;
 
