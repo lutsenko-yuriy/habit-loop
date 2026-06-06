@@ -14,7 +14,7 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 /// Owns pact stats calculation and the in-memory stats cache.
 ///
 /// Cache (keyed by pactId, session-scoped):
-/// - Lazy hit: [currentStats] with empty showups returns cached value.
+/// - Lazy hit: [currentStats] with no showups returns cached value; non-empty showups always recompute.
 /// - Write-through: [persistShowupStatus] evicts stale entry, then repopulates.
 /// - Evict-only: [stopPact] and [onPactCompleted] evict without re-populating.
 /// - [stopPact] wraps pact update + showup delete atomically.
