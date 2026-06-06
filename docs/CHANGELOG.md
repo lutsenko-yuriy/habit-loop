@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.42.11] — 2026-06-07
+## [0.42.11] — 2026-06-07 (PR #125 merged)
 
 ### Changed — Flutter codebase audit WU3: comment hygiene — domain + application (HAB-97)
 
