@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.9] — 2026-06-07 (PR #123 merged)
+
+### Changed — Flutter codebase audit WU1: housekeeping (HAB-97)
+
+- [user-none]
+- [non-user] Delete stale `lib/features/pact/` directory
+- [non-user] Resolve `TODO(HAB-11)` in in-memory repos — convert to "why" note referencing HAB-99
+- [non-user] Confirm `first_launch_auth_fix.dart` still needed
+
+---
+
 ## [0.42.8] — 2026-06-05 (PR #122 merged)
 
 ### Changed — skill_router refactor (HAB-94)
