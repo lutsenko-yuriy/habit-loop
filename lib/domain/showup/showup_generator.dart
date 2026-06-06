@@ -4,19 +4,10 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_date_utils.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 
-/// Generates [Showup] instances from a [Pact]'s schedule.
 class ShowupGenerator {
   ShowupGenerator._();
 
-  /// Returns a list of pending [Showup] instances for every scheduled
-  /// occurrence within [pact.startDate]…[pact.endDate] (inclusive).
-  ///
-  /// IDs are deterministic: regenerating for the same pact always produces
-  /// the same IDs in the same order.
-  ///
-  /// Only showups whose reminder window hasn't started yet are included. This
-  /// means past showups (or showups whose reminder cutoff has passed) are
-  /// silently omitted when [pact.reminderOffset] is set.
+  /// IDs are deterministic. Showups past their reminder cutoff are silently omitted.
   static List<Showup> generate(Pact pact) {
     final now = DateTime.now();
     bool isActionable(DateTime scheduledAt) {
@@ -32,18 +23,8 @@ class ShowupGenerator {
     );
   }
 
-  /// Returns a list of pending [Showup] instances for every scheduled
-  /// occurrence that falls within the intersection of [pact.startDate]…[pact.endDate]
-  /// and [from]…[to] (all bounds inclusive).
-  ///
-  /// IDs are deterministic and consistent with [generate]: a showup produced by
-  /// [generateWindow] for a given date will always have the same ID as the
-  /// same showup produced by [generate] or any other [generateWindow] call,
-  /// making regenerating the same window idempotent.
-  ///
-  /// Unlike [generate], this method does **not** apply the reminder-offset
-  /// cutoff filter — it returns all showups scheduled in the window regardless
-  /// of whether their reminder time is in the past.
+  /// Unlike [generate], does NOT apply the reminder-offset cutoff — returns all window showups.
+  /// IDs are deterministic and consistent with [generate] (same pact+date → same ID).
   static List<Showup> generateWindow(
     Pact pact, {
     required DateTime from,
@@ -61,25 +42,9 @@ class ShowupGenerator {
     );
   }
 
-  /// Returns the total number of showups scheduled across the full pact
-  /// duration ([pact.startDate]…[pact.endDate]) without materialising any
-  /// [Showup] objects or building a [List<DateTime>].  Candidate dates are
-  /// produced lazily by [_candidates] and counted in a single pass.
-  ///
-  /// The count reflects the schedule structure only — it is **not** affected
-  /// by [pact.reminderOffset] — but it **does** respect [pact.createdAt]:
-  /// slots whose showup window ([scheduledAt, scheduledAt + showupDuration])
-  /// has already closed at [pact.createdAt] are excluded, matching the
-  /// filtering applied by [ShowupGenerationService.ensureShowupsExist] and
-  /// [PactService.createPactFromBuilder]. This keeps the total consistent with
-  /// the number of showups that can actually exist in the repository so that
-  /// stats (remaining, streak) are never permanently off.
-  ///
-  /// A slot whose window is still open at [pact.createdAt] is counted even if
-  /// [scheduledAt] is slightly before [pact.createdAt] — the user still had
-  /// time to complete it (e.g. created at 09:05 with a 09:00–09:30 window).
-  ///
-  /// If [pact.createdAt] is null, no intra-day filtering is applied.
+  /// Not affected by reminderOffset, but DOES respect createdAt: slots whose window
+  /// has already closed at createdAt are excluded — keeps total consistent with
+  /// what can actually exist in the repository (so remaining/streak stats stay correct).
   static int countTotal(Pact pact) {
     final effectiveCreatedAt = pact.createdAt;
     if (effectiveCreatedAt == null) {
@@ -98,15 +63,7 @@ class ShowupGenerator {
   // Core range-based generation (used by both generate() and generateWindow())
   // ---------------------------------------------------------------------------
 
-  /// Generates showups for all schedule occurrences in the full pact range,
-  /// but emits only those that fall within [effectiveFrom]…[effectiveTo].
-  ///
-  /// The sequence counter is always advanced for every occurrence in the full
-  /// pact range — even skipped ones — so that IDs are deterministic and
-  /// independent of the requested window.
-  ///
-  /// Candidate [DateTime] values are produced lazily via [_candidates] — no
-  /// full-pact [List] is ever materialised.
+  // Seq counter advances for every full-pact occurrence (even skipped) — keeps IDs deterministic.
   static List<Showup> _generateInRange(
     Pact pact, {
     required DateTime effectiveFrom,
@@ -126,19 +83,14 @@ class ShowupGenerator {
     return result;
   }
 
-  /// Counts schedule occurrences in the full pact range without materialising
-  /// [Showup] objects or a [List<DateTime>].  No filter is applied — all
-  /// schedule slots are counted.
   static int _countInRange(
     Pact pact, {
     required DateTime from,
     required DateTime to,
   }) {
-    // Clamp range to pact boundaries.
     final effectiveFrom = from.isBefore(pact.startDate) ? pact.startDate : from;
     final effectiveTo = to.isAfter(pact.endDate) ? pact.endDate : to;
 
-    // If the range is inverted after clamping, there is nothing to count.
     if (effectiveTo.isBefore(effectiveFrom)) return 0;
 
     var count = 0;
@@ -152,9 +104,6 @@ class ShowupGenerator {
   // Candidate-datetime generators (lazy, full pact range, no Showup allocation)
   // ---------------------------------------------------------------------------
 
-  /// Lazily yields every candidate [DateTime] across the full pact range for
-  /// any schedule type.  No [List] is ever built — each value is produced
-  /// on demand as the caller iterates.
   static Iterable<DateTime> _candidates(Pact pact) {
     final schedule = pact.schedule;
     return switch (schedule) {
@@ -239,18 +188,8 @@ class ShowupGenerator {
     }
   }
 
-  /// Yields one candidate [DateTime] per matching slot per day across the full
-  /// pact range.  Iterates day-by-day; for each day checks all [SlotSchedule]
-  /// slots in order.
-  ///
-  /// - [WeeklySlot]: fires when [date.weekday] is in [WeeklySlot.weekdays].
-  /// - [MonthlySlot]: fires when [date.day] equals [MonthlySlot.dayOfMonth]
-  ///   (months that don't have that day are naturally skipped since Dart's
-  ///   [DateTime] normalises overflowed days — the equality check never matches).
-  ///
-  /// The day-by-day order ensures that the sequence counter in [_generateInRange]
-  /// advances identically whether or not a window filter is applied, keeping IDs
-  /// deterministic and consistent between [generate] and [generateWindow].
+  // Day-by-day iteration ensures seq counter in _generateInRange advances identically
+  // with or without a window filter — keeps IDs consistent between generate and generateWindow.
   static Iterable<DateTime> _candidatesSlot(
     Pact pact,
     SlotSchedule schedule,
@@ -278,28 +217,22 @@ class ShowupGenerator {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  /// Returns the [occurrence]-th [weekday] of the given month/year,
-  /// or null if it does not exist (e.g. 5th Monday in a 4-Monday month).
+  // Returns null if the occurrence doesn't exist (e.g. 5th Monday in a 4-Monday month).
   static DateTime? _nthWeekdayOfMonth({
     required int year,
     required int month,
     required int weekday,
     required int occurrence,
   }) {
-    // Find the first occurrence of the weekday in the month.
     var day = DateTime(year, month, 1);
     while (day.weekday != weekday) {
       day = DateTime(day.year, day.month, day.day + 1);
     }
-    // Advance to the requested occurrence.
     day = day.add(Duration(days: (occurrence - 1) * 7));
-    // If we overflowed into the next month, this occurrence doesn't exist.
     if (day.month != month) return null;
     return day;
   }
 
-  /// Lazily yields one [DateTime] per distinct year-month combination between
-  /// [start] and [end] (inclusive).
   static Iterable<DateTime> _monthsInRange(
     DateTime start,
     DateTime end,
@@ -317,10 +250,7 @@ class ShowupGenerator {
     }
   }
 
-  /// Combines a date and a time-of-day [Duration] into a single [DateTime].
-  ///
-  /// Preserves hours, minutes, and seconds. Sub-second precision is not
-  /// supported — [timeOfDay] should only contain hours, minutes, and seconds.
+  // Sub-second precision is not supported — timeOfDay must contain only h/m/s.
   static DateTime _combine(DateTime date, Duration timeOfDay) {
     return DateTime(
       date.year,
@@ -332,7 +262,6 @@ class ShowupGenerator {
     );
   }
 
-  /// Returns true if [dt] is within [start]…[end] day boundaries (inclusive).
   static bool _isWithinRange(DateTime dt, DateTime start, DateTime end) {
     return !dt.isBefore(ShowupDateUtils.startOfDay(start)) && dt.isBefore(ShowupDateUtils.endOfDay(end));
   }

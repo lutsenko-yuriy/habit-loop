@@ -6,11 +6,7 @@ import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 // pact_creation_state.dart continue to resolve ScheduleType without change.
 export 'package:habit_loop/domain/pact/schedule_type.dart' show ScheduleType;
 
-/// Steps in the pact wizard (creation or editing).
-///
-/// Each value's [value] matches the page index in the [PageView] so that
-/// [goToPage] and UI code can convert freely between int and enum without a
-/// separate mapping table.
+// Each value maps to its PageView page index — matches [goToPage] and int conversion.
 enum PactWizardStep {
   habitName(0),
   duration(1),
@@ -27,23 +23,14 @@ enum PactWizardStep {
   bool get isFirst => this == PactWizardStep.values.first;
   bool get isLast => this == PactWizardStep.values.last;
 
-  /// snake_case name for analytics events and widget keys.
-  ///
-  /// Converts the camelCase enum name to snake_case so analytics events and
-  /// widget [Key] strings match the analytics specification. For example:
-  /// `PactWizardStep.habitName.analyticsName == 'habit_name'`.
+  // Camel→snake for analytics events, e.g. habitName → 'habit_name'.
   String get analyticsName => name.replaceAllMapped(
         RegExp(r'[A-Z]'),
         (m) => '_${m[0]!.toLowerCase()}',
       );
 }
 
-/// Wizard-navigation state for the pact creation/editing flow.
-///
-/// Pact-data fields (habit name, dates, schedule, etc.) are owned by
-/// [PactBuilder], which is held here as [builder]. Proxy getters expose the
-/// builder's fields directly so widget code that reads `state.habitName`,
-/// `state.startDate`, etc. requires no changes.
+// Wizard-navigation state; pact-data fields are owned by [PactBuilder] (accessed via proxy getters).
 class PactCreationState {
   static int get totalSteps => PactWizardStep.count;
 
@@ -53,8 +40,7 @@ class PactCreationState {
   final PactWizardStep currentStep;
   final bool commitmentAccepted;
 
-  /// `true` if the user tapped at least one Summary-screen row to jump back
-  /// to a step before submitting; `false` if they swiped through linearly.
+  // true if user jumped back from the summary screen; false if they swiped linearly.
   final bool usedSummaryJump;
 
   final bool isSubmitting;

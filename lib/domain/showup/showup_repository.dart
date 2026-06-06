@@ -1,11 +1,7 @@
 import 'package:habit_loop/domain/showup/save_showups_result.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 
-/// Repository for persisting and querying [Showup] instances.
-///
-/// Cascade behaviour: when a [Pact] is deleted, all associated showups
-/// (matched by [Showup.pactId]) must be deleted by the caller or by the
-/// underlying storage layer. This contract is not enforced here.
+/// Cascade: when a Pact is deleted, the caller must also delete its showups.
 abstract class ShowupRepository {
   Future<List<Showup>> getShowupsForDate(DateTime date);
   Future<List<Showup>> getShowupsForDateRange(DateTime start, DateTime end);
@@ -17,16 +13,8 @@ abstract class ShowupRepository {
   /// Throws [ArgumentError] if a showup with the same id already exists.
   Future<void> saveShowup(Showup showup);
 
-  /// Persists multiple showups in one operation.
-  ///
-  /// Showups whose ids already exist are skipped (not saved). Returns a
-  /// [SaveShowupsResult] with the count of saved showups and the ids of
-  /// any that were skipped.
-  ///
-  /// **Implementations must treat this as an atomic operation**: either all
-  /// new showups are written or none are. Partial writes are not permitted.
-  /// Callers (e.g. pact creation) rely on this guarantee to avoid leaving a
-  /// pact with an incomplete set of showups.
+  /// Skips showups whose ids already exist. Returns saved/skipped counts.
+  /// Atomic: either all new showups are written or none are.
   Future<SaveShowupsResult> saveShowups(List<Showup> showups);
 
   /// Updates an existing showup by id.
@@ -34,23 +22,11 @@ abstract class ShowupRepository {
   /// Throws [ArgumentError] if no showup with the given id exists.
   Future<void> updateShowup(Showup showup);
 
-  /// Returns the maximum [Showup.scheduledAt] across all persisted showups
-  /// for [pactId], or null if no showups have been persisted for that pact.
-  ///
-  /// Used by [DashboardViewModel] to detect absence gaps: if the latest
-  /// scheduled date is more than one day before today the app was not opened
-  /// for an extended period, and past showups need to be generated and
-  /// auto-failed to keep the pact history accurate.
+  /// Used by DashboardViewModel to detect absence gaps (extended periods without opening the app).
   Future<DateTime?> getLatestScheduledAtForPact(String pactId);
 
-  /// Returns the number of showups persisted for the given [pactId].
-  ///
-  /// Returns 0 if no showups exist for that pact.
   Future<int> countShowupsForPact(String pactId);
 
-  /// Deletes all showups associated with [pactId].
-  ///
-  /// Implementations must treat this as an atomic operation: either all
-  /// showups for the pact are deleted or none are.
+  /// Atomic: either all showups for the pact are deleted or none are.
   Future<void> deleteShowupsForPact(String pactId);
 }
