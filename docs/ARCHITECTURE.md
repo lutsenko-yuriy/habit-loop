@@ -256,10 +256,6 @@ Platform-split presentation:
 - `ios/` — Cupertino widgets
 - `android/` — Material widgets
 
-**Strict layer rule (no repository access from UI).** Code under `lib/slices/*/ui/` must never depend on `pactRepositoryProvider`, `showupRepositoryProvider`, or any other repository provider — for **reads or writes**. Every domain query or mutation goes through an application service in `lib/slices/*/application/` (e.g. `PactService`, `PactStatsService`, `PactTransactionService`, `ShowupGenerationService`, or a slice-specific `*Service` introduced for the purpose). View models compose application services; they do not assemble repository calls themselves. The only exemption is `slices/debug/` tooling, which may touch repositories directly for diagnostic seed/clear flows because it is excluded from release builds.
-
-**Cross-slice coordination via signals.** When one slice needs to inform another that it should refresh (e.g. the pact creation flow finishes and the dashboard should reload), the consumer slice owns a small Riverpod signal provider and the producer slice posts to it. The canonical pattern is `DashboardRefreshSignal` in `lib/slices/dashboard/ui/generic/dashboard_refresh_signal.dart`: the dashboard view model watches the signal and reloads on bump; `pact/` posts to the signal after a successful create/stop instead of importing `dashboardViewModelProvider`. This keeps the dependency direction one-way (dashboard ← pact, via a dashboard-owned contract) and avoids `pact → dashboard` imports.
-
 ### Theme
 
 `lib/theme/` contains the cross-platform Habit Loop visual foundation: the shared brand palette and the Material/Cupertino theme data applied from `HabitLoopApp`. Feature UI should consume the theme via `Theme.of(context)`, `CupertinoTheme.of(context)`, or the shared semantic colors when a reusable status color is needed. Launcher icon assets under `assets/app_icon/`, `ios/Runner/Assets.xcassets/AppIcon.appiconset/`, and `android/app/src/main/res/mipmap-*/` use the same palette so the installed app icon matches the in-app design language.
