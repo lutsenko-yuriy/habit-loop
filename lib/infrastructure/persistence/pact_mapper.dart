@@ -10,23 +10,9 @@ import 'package:habit_loop/infrastructure/persistence/schedule_codec.dart';
 /// `PactStats` is **not** persisted — it is always computed from SQL aggregates
 /// at read time. [fromRow] therefore always returns a [Pact] with `stats: null`.
 abstract final class PactMapper {
-  /// Converts [pact] to a column map ready for SQLite insertion or update.
-  ///
-  /// `total_showups` is written as `null` by this method — it is set by
-  /// `savePactWithShowups()` which has access to the full showup count.
-  ///
-  /// `actual_end_date` is initialised to `scheduled_end_date` here; the
-  /// stop-pact transaction overwrites it to the actual stop date.
-  ///
-  /// **`scheduled_end_date` is immutable after initial insert.**
-  /// It must never be updated via this method in a subsequent `UPDATE` statement.
-  /// The stop-pact transaction (WU3) must update `actual_end_date` directly:
-  /// ```sql
-  /// UPDATE pacts SET actual_end_date = ? WHERE id = ?
-  /// ```
-  /// Going through `PactMapper.toRow` in the stop-pact path would overwrite
-  /// `scheduled_end_date` with the stop date, breaking the invariant that
-  /// `scheduled_end_date` always holds the original planned end date.
+  /// `scheduled_end_date` is immutable after initial insert — never call [toRow]
+  /// in an UPDATE statement or it will overwrite the original planned end date.
+  /// The stop-pact transaction updates `actual_end_date` directly instead.
   static Map<String, dynamic> toRow(Pact pact) {
     return {
       'id': pact.id,
@@ -47,21 +33,8 @@ abstract final class PactMapper {
     };
   }
 
-  /// Reconstructs a [Pact] from a SQLite row map.
-  ///
-  /// Always returns a [Pact] with `stats: null` — stats are computed from SQL
-  /// aggregates, not stored in a column.
-  ///
-  /// All [DateTime] fields are reconstructed as **local-time** values, matching
-  /// the local-time [DateTime] objects produced by [PactBuilder] (which
-  /// normalises `startDate` to local midnight). Using `isUtc: true` would silently
-  /// shift timestamps in non-UTC timezones, causing [ShowupGenerator]'s date
-  /// iteration to produce off-by-timezone-offset boundary errors.
-  ///
-  /// `total_showups` may be `null` for legacy rows or rows written before the
-  /// first `savePactWithShowups()` call; this is handled gracefully.
-  ///
-  /// Throws [ArgumentError] if the `status` column contains an unknown value.
+  /// [DateTime] fields are local-time, not UTC — using `isUtc: true` would
+  /// silently shift timestamps and break ShowupGenerator's date iteration.
   static Pact fromRow(Map<String, dynamic> row) {
     final status = _decodeStatus(row['status'] as String);
     return Pact(
@@ -96,23 +69,9 @@ abstract final class PactMapper {
     );
   }
 
-  /// Returns only the columns that may legitimately change after a pact is
-  /// created — for use by [SqlitePactRepository.updatePact].
-  ///
-  /// The following columns are intentionally **excluded** because they are
-  /// immutable after initial insert and must never be overwritten:
-  /// - `id`, `start_date`, `scheduled_end_date`, `showup_duration`, `schedule`,
-  ///   `created_at` — structural / historical facts
-  /// - `total_showups` — set by `savePactWithShowups()` (WU3); overwriting it
-  ///   here would null it out and break pact stats
-  ///
-  /// The following mutable columns ARE included:
-  /// - `habit_name` — user may rename (future feature)
-  /// - `status` — transitions active → stopped / completed
-  /// - `actual_end_date` — updated to the stop date when a pact is stopped
-  /// - `reminder_offset` — may be changed in settings (future feature)
-  /// - `stop_reason` — written when the user stops a pact
-  /// - `dirty` — always reset to `1` on every update so the sync layer re-uploads the record
+  /// Mutable-only columns for UPDATE — excludes immutable structural fields
+  /// (`id`, `start_date`, `scheduled_end_date`, `showup_duration`, `schedule`,
+  /// `created_at`, `total_showups`) that must never be overwritten after insert.
   static Map<String, dynamic> toUpdateRow(Pact pact) {
     return {
       'habit_name': pact.habitName,

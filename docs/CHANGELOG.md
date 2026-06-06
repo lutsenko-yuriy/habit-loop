@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.10] — 2026-06-07 (PR #124 merged)
+
+### Changed — Flutter codebase audit WU2: comment hygiene — infrastructure + main.dart (HAB-97)
+
+- [user-none]
+- [non-user] ~50% reduction in `//` lines, ~30% reduction in `///` lines across `lib/main.dart` and `lib/infrastructure/`
+- [non-user] Removed narration comments and boilerplate provider docs; kept invariants, no-throw contracts, and non-obvious WHY notes
+
+---
+
 ## [0.42.9] — 2026-06-07 (PR #123 merged)
 
 ### Changed — Flutter codebase audit WU1: housekeeping (HAB-97)

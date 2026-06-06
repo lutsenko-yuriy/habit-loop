@@ -18,55 +18,13 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
-/// Composition root for the Habit Loop app.
-///
-/// [AppContainer.overrides] returns the full [List<Override>] consumed by
-/// [ProviderScope] in `main.dart`. This class knows *which* instances to wire
-/// to *which* providers; `main.dart` knows *how* to construct those instances
-/// (Firebase init, kReleaseMode branching, SQLite opening).
-///
-/// The class is mode-agnostic: it contains no `kReleaseMode` checks. Callers
-/// pass already-constructed service instances so [AppContainer] is testable
-/// without importing `package:flutter/foundation.dart`.
+/// Composition root. Knows which instances to wire to which providers;
+/// `main.dart` knows how to construct those instances.
+/// Mode-agnostic — no kReleaseMode checks here.
 abstract final class AppContainer {
-  /// Builds the complete list of Riverpod provider overrides for production.
-  ///
-  /// This method is `async` because it calls [LocalePreferenceService.getSavedLocale]
-  /// internally when [localePreferenceService] is provided, so the saved locale is
-  /// fetched once before `runApp` and applied to [localeOverrideProvider] on the
-  /// first frame without a separate async step in `main.dart`.
-  ///
-  /// Parameters that are `null` are omitted from the override list, meaning the
-  /// corresponding provider falls back to its noop default. This is used for
-  /// optional services (analytics, crashlytics, remoteConfig) that are only
-  /// wired in release builds.
-  ///
-  /// Required parameters:
-  /// - [pactRepository] — SQLite-backed [PactRepository].
-  /// - [showupRepository] — SQLite-backed [ShowupRepository].
-  /// - [transactionService] — SQLite-backed [PactTransactionService].
-  ///
-  /// Optional parameters (omitted → noop default):
-  /// - [analyticsService] — only provided in release builds.
-  /// - [crashlyticsService] — only provided in release builds.
-  /// - [logService] — provided in debug/profile builds.
-  /// - [remoteConfigService] — provided in all build modes (release:
-  ///   [FirebaseRemoteConfigService]; debug/profile: [OverridableRemoteConfigService]).
-  /// - [remoteConfigOverrideStore] — provided in debug/profile builds only;
-  ///   allows the debug UI to read and write in-app Remote Config overrides.
-  /// - [notificationService] — provided in all build modes (debug, profile,
-  ///   release) so notification navigation can be tested with plain
-  ///   `flutter run`; `null` falls back to [NoopNotificationService].
-  /// - [localePreferenceService] — provided when SharedPreferences is available;
-  ///   `null` falls back to [NoopLocalePreferenceService]. When non-null, the
-  ///   saved locale is fetched internally via [LocalePreferenceService.getSavedLocale]
-  ///   and used to populate [localeOverrideProvider]. A `null` result means the
-  ///   app follows the system locale.
-  /// - [onboardingPreferenceService] — provided when SharedPreferences is
-  ///   available; `null` falls back to [NoopOnboardingService]. When non-null,
-  ///   [DashboardScreen] reads [OnboardingPreferenceService.isOnboardingPassed]
-  ///   synchronously to determine whether to show the carousel or the dashboard
-  ///   on the very first frame — eliminating the cold-start blink.
+  /// `async` because it fetches the saved locale before building the list so
+  /// [localeOverrideProvider] is populated on the first frame.
+  /// `null` parameters fall back to their noop provider defaults.
   static Future<List<Override>> overrides({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
@@ -84,35 +42,20 @@ abstract final class AppContainer {
     AuthService? authService,
     DeviceIdService? deviceIdService,
     FirestoreClient? firestoreClient,
-    // Debug/profile only: the FakeFirestoreClient instance when debug_backend=local.
-    // Stored as Object? to avoid importing the debug-only class in this file.
     Object? fakeFirestoreClient,
-    // Debug/profile only: the debug_backend value that was active when the app
-    // session started. Used by the RC overrides screen to show the restart-
-    // required banner only when the pending value differs from the running one.
-    // null in release builds (provider falls back to the in-code default).
     String? debugBackendAtStartup,
   }) async {
-    // Fetch the saved locale before building the override list so the correct
-    // locale is applied on the very first frame without an extra await in main.dart.
     Locale? initialLocale;
     if (localePreferenceService != null) {
       initialLocale = await localePreferenceService.getSavedLocale();
     }
 
     return [
-      // Canonical repository providers.
       pactRepositoryProvider.overrideWithValue(pactRepository),
       showupRepositoryProvider.overrideWithValue(showupRepository),
-
-      // Canonical transaction service provider.
       pactTransactionServiceProvider.overrideWithValue(transactionService),
-
-      // Sync repository providers — optional, default to noop when null.
       if (pactSyncRepository != null) pactSyncRepositoryProvider.overrideWithValue(pactSyncRepository),
       if (showupSyncRepository != null) showupSyncRepositoryProvider.overrideWithValue(showupSyncRepository),
-
-      // Optional infrastructure services — only added when non-null.
       if (logService != null) logServiceProvider.overrideWithValue(logService),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),
@@ -120,29 +63,14 @@ abstract final class AppContainer {
       if (remoteConfigOverrideStore != null)
         remoteConfigOverrideStoreProvider.overrideWithValue(remoteConfigOverrideStore),
       if (notificationService != null) notificationServiceProvider.overrideWithValue(notificationService),
-
-      // Locale persistence and initial locale override.
       if (localePreferenceService != null) localePreferenceServiceProvider.overrideWithValue(localePreferenceService),
       if (initialLocale != null) localeOverrideProvider.overrideWith((ref) => initialLocale!),
-
-      // Onboarding preference — synchronous flag read on first frame.
       if (onboardingPreferenceService != null)
         onboardingPreferenceServiceProvider.overrideWithValue(onboardingPreferenceService),
-
-      // Auth and device identity.
       if (authService != null) authServiceProvider.overrideWithValue(authService),
       if (deviceIdService != null) deviceIdServiceProvider.overrideWithValue(deviceIdService),
-
-      // Firestore remote storage.
       if (firestoreClient != null) firestoreClientProvider.overrideWithValue(firestoreClient),
-
-      // Debug/profile only: expose the FakeFirestoreClient instance for the
-      // seed-data debug UI. null in release builds and when real backend is active.
       if (fakeFirestoreClient != null) fakeFirestoreClientProvider.overrideWithValue(fakeFirestoreClient),
-
-      // Debug/profile only: capture the debug_backend value active at startup so
-      // the RC overrides screen can show the restart banner only when the pending
-      // value differs from the one currently running.
       if (debugBackendAtStartup != null) debugBackendAtStartupProvider.overrideWithValue(debugBackendAtStartup),
     ];
   }
