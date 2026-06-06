@@ -68,53 +68,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-/// Global navigator key used for deep-link routing from notification taps.
-///
-/// Passed to [HabitLoopApp] which wires it into [MaterialApp.navigatorKey].
-/// [NotificationRouter.navigateToShowup] uses this key to push the showup
-/// detail screen without a [BuildContext], making it safe to call from the
-/// notification response callback (which fires outside the widget tree).
+// Navigator key wired into MaterialApp so notification callbacks can push
+// routes without a BuildContext (they fire outside the widget tree).
 final _navigatorKey = GlobalKey<NavigatorState>();
 
-/// Top-level [ProviderContainer] used for foreground notification callbacks
-/// that fire outside the widget tree (e.g. "Mark done" from warm-start).
-///
-/// Assigned in [main] after the overrides list is computed — same overrides
-/// as the [ProviderScope] so Riverpod providers (e.g. [pactStatsServiceProvider])
-/// are correctly populated. The `?.` guards in the callback are a safety net
-/// in case the callback fires before [main] completes.
+// Mirrors ProviderScope overrides — lets the foreground "Mark done" callback
+// read Riverpod providers outside the widget tree.
 ProviderContainer? _container;
 
-/// Guards against double navigation when both [onDidReceiveNotificationResponse]
-/// and the cold-start [getAppLaunchDetails] path would each push a
-/// [ShowupDetailScreen] for the same tap.
-///
-/// On iOS, [flutter_local_notifications] calls [onDidReceiveNotificationResponse]
-/// during [FlutterLocalNotificationsPlugin.initialize] (before [runApp]) for
-/// cold-start notification taps. At that point [_navigatorKey.currentState] is
-/// null, so we defer navigation to a [WidgetsBinding.addPostFrameCallback].
-/// The [getAppLaunchDetails] path in [main] fires its own [addPostFrameCallback]
-/// and could push a second route. This flag ensures only one of the two paths
-/// actually navigates. It resets to `false` after the cold-start frame so
-/// subsequent warm-start taps are not suppressed.
+// On iOS, flutter_local_notifications calls onDidReceiveNotificationResponse
+// during initialize() (before runApp). Both the deferred callback and the
+// getAppLaunchDetails() path in main() would push a route for the same tap —
+// this flag ensures only one of the two paths navigates. Reset after first frame.
 bool _notificationNavigationHandled = false;
 
-/// Background notification response handler for Android.
-///
-/// Called by [flutter_local_notifications] in a **separate background isolate**
-/// when the user acts on a notification action button while the app is not in
-/// the foreground (e.g. taps "Mark done" from the notification tray while the
-/// app is in the background or killed state).
-///
-/// **Constraints:**
-/// - Must be a top-level function annotated with `@pragma('vm:entry-point')`.
-/// - Cannot access Riverpod providers — the isolate has no ProviderScope.
-/// - Cannot access the global `_navigatorKey` — UI is not mounted.
-/// - Dependencies must be constructed directly (no DI).
-///
-/// **Note:** This handler cannot be unit-tested in the Flutter test harness
-/// because it runs in a background isolate managed by the OS. Integration
-/// testing on a real device is required to verify end-to-end behaviour.
+// Android background isolate handler for notification actions (e.g. "Mark done"
+// from the tray while the app is killed). Must be top-level + vm:entry-point.
+// No Riverpod/DI available — dependencies are constructed directly.
 @pragma('vm:entry-point')
 void _notificationBackgroundHandler(NotificationResponse response) {
   // Only handle the "mark_done" action — ignore taps on the notification body
@@ -135,18 +105,10 @@ void _notificationBackgroundHandler(NotificationResponse response) {
   unawaited(_markShowupDoneFromBackground(parsed.showupId, parsed.pactId));
 }
 
-/// Marks a showup as done from the background isolate.
-///
-/// Opens the production SQLite database, loads the showup by ID, updates its
-/// status to [ShowupStatus.done], and persists the change.
-///
-/// Also fires [ShowupMarkedDoneFromNotificationEvent] analytics in release
-/// builds (via a freshly constructed [FirebaseAnalyticsService]).
 Future<void> _markShowupDoneFromBackground(String showupId, String pactId) async {
   try {
-    // Reuse the production database singleton. On Android, the background
-    // isolate shares the same app process when the app is in the background,
-    // so the singleton's file path is correct.
+    // Android background isolate shares the same app process, so the
+    // singleton's file path is correct.
     final db = await HabitLoopDatabase.instance.database;
     final showupRepo = SqliteShowupRepository(db);
 
@@ -164,13 +126,9 @@ Future<void> _markShowupDoneFromBackground(String showupId, String pactId) async
     );
     await showupRepo.updateShowup(updated);
 
-    // Cancel both the reminder and deadline notifications for this showup.
-    // The ID formulas must stay in sync with [NotificationConstants] — the
-    // single source of truth shared between this handler and
-    // [FlutterLocalNotificationService].
     try {
       final plugin = FlutterLocalNotificationsPlugin();
-      // Re-initialise minimally for cancellation only (no callbacks needed).
+      // Minimal re-init for cancellation only (no callbacks needed).
       await plugin.initialize(
         const InitializationSettings(
           android: AndroidInitializationSettings('@mipmap/ic_launcher'),
@@ -180,10 +138,9 @@ Future<void> _markShowupDoneFromBackground(String showupId, String pactId) async
       await plugin.cancel(NotificationConstants.reminderNotificationId(showupId));
       await plugin.cancel(NotificationConstants.deadlineNotificationId(showupId));
     } catch (_) {
-      // Cancellation failures must never crash the background handler.
+      // Cancellation failures must not crash the background handler.
     }
 
-    // Fire analytics in release builds only.
     if (kReleaseMode) {
       try {
         await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -196,28 +153,19 @@ Future<void> _markShowupDoneFromBackground(String showupId, String pactId) async
         );
         await analytics.logEvent(ShowupMarkedDoneFromNotificationEvent(pactId: pactId));
       } catch (_) {
-        // Analytics failures must never crash the background handler.
+        // Analytics failures must not crash the background handler.
       }
     }
   } catch (_) {
-    // Background handlers must not throw — swallow all errors silently.
+    // Background handlers must not throw.
   }
 }
 
-/// Marks a showup as done from the foreground warm-start callback.
-///
-/// Unlike [_markShowupDoneFromBackground], this runs on the **main isolate**
-/// where [_container] (a [ProviderContainer] with production overrides) is
-/// available. Using Riverpod ensures [PactStatsService] cache is invalidated
-/// correctly and the UI reflects the change without a manual reload.
-///
-/// Falls back to [_markShowupDoneFromBackground] if [_container] is not yet
-/// initialised (safety net for the unlikely case the callback fires before
-/// [main] completes).
+// Foreground variant: uses Riverpod so PactStatsService cache is invalidated correctly.
+// Falls back to background path if _container is not yet ready.
 Future<void> _markShowupDoneFromForeground(String showupId, String pactId) async {
   final container = _container;
   if (container == null) {
-    // Container not yet ready — fall back to the background path.
     await _markShowupDoneFromBackground(showupId, pactId);
     return;
   }
@@ -229,60 +177,37 @@ Future<void> _markShowupDoneFromForeground(String showupId, String pactId) async
 
     final Showup? showup = await showupRepo.getShowupById(showupId);
     if (showup == null) return; // Already deleted or never persisted.
-    if (showup.status != ShowupStatus.pending) return; // Idempotency guard — already resolved.
+    if (showup.status != ShowupStatus.pending) return; // Idempotency guard.
 
-    // persistShowupStatus atomically updates the showup status in the DB and
-    // refreshes the PactStatsService in-memory cache in one call.
     await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.done);
-
-    // Cancel both reminder and deadline notifications for this showup.
     await notificationService.cancelShowupReminder(showupId);
-
-    // Fire analytics event.
     unawaited(analyticsService.logEvent(ShowupMarkedDoneFromNotificationEvent(pactId: pactId)));
   } catch (_) {
-    // Foreground callback failures must be swallowed — analytics/UI staleness
-    // is preferable to a visible crash.
+    // Failures must not crash — UI staleness is preferable to a visible crash.
   }
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // The background notification handler (_notificationBackgroundHandler) is
-  // registered on the FlutterLocalNotificationService instance during the
-  // notification service setup block below (before initialize() is called).
-  // It is an Android-only path; iOS action responses always use the foreground
-  // onDidReceiveNotificationResponse callback.
-
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
   if (kReleaseMode) {
-    // Forward Flutter framework errors to Crashlytics.
     FlutterError.onError = (details) {
       try {
-        unawaited(
-          FirebaseCrashlytics.instance.recordFlutterFatalError(details),
-        );
+        unawaited(FirebaseCrashlytics.instance.recordFlutterFatalError(details));
       } catch (_) {}
     };
-    // Forward Dart async / platform errors to Crashlytics.
     PlatformDispatcher.instance.onError = (error, stack) {
       try {
-        // recordError returns a Future but the callback must return bool synchronously.
-        // Errors from the native layer are caught here to prevent a re-entrant error loop.
-        unawaited(
-          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
-        );
+        // recordError is async but this callback must return bool synchronously.
+        // Errors from the native layer are caught here to prevent a re-entrant loop.
+        unawaited(FirebaseCrashlytics.instance.recordError(error, stack, fatal: true));
       } catch (_) {}
       return true;
     };
-
-    // Set session-scoped custom keys so every crash report carries locale and
-    // session start time. These are fire-and-forget diagnostics; failures are
-    // swallowed by the no-throw CrashlyticsService contract.
     try {
       unawaited(FirebaseCrashlytics.instance.setCustomKey('locale', Platform.localeName));
       unawaited(
@@ -292,11 +217,6 @@ Future<void> main() async {
   }
 
   // Initialise Remote Config before runApp so flags are ready on first frame.
-  // Failures are swallowed by the service — they must not prevent app launch.
-  //
-  // Release: use FirebaseRemoteConfigService directly.
-  // Debug/profile: wrap NoopRemoteConfigService with OverridableRemoteConfigService
-  // so Remote Config keys can be overridden at runtime via the debug UI.
   RemoteConfigService? remoteConfigService;
   RemoteConfigOverrideStore? remoteConfigOverrideStore;
   if (kReleaseMode) {
@@ -308,8 +228,8 @@ Future<void> main() async {
       await firebaseService.initialize();
       remoteConfigService = firebaseService;
     } catch (_) {
-      // initialize() already swallows, but guard here as well so a constructor
-      // failure cannot prevent runApp.
+      // initialize() already swallows; guard here so a constructor failure
+      // cannot prevent runApp.
       remoteConfigService = null;
     }
   } else {
@@ -321,61 +241,34 @@ Future<void> main() async {
         inner: NoopRemoteConfigService(),
         store: store,
       );
-    } catch (_) {
-      // If SharedPreferences fails, fall back to noop (no override support).
-    }
+    } catch (_) {}
   }
 
-  // Debug/profile: read debug_backend from the persisted RC override store to
-  // decide which service instances to wire at startup. This is done before
-  // constructing auth/Firestore so the decision is available when needed.
-  //
-  // 'local' → LocalAuthService + FakeFirestoreClient (no Firebase network calls
-  //   for auth or Firestore; requires an app restart to take effect).
-  // 'real' (default) → FirebaseAuthService + Firebase/FaultInjecting Firestore.
+  // Read debug_backend before constructing auth/Firestore — decision needed at startup.
   final debugBackend = !kReleaseMode
       ? (remoteConfigOverrideStore?.getOverride('debug_backend') ?? RemoteConfigDefaults.debugBackend)
       : RemoteConfigDefaults.debugBackend;
   final useLocalBackend = debugBackend == 'local';
 
-  // Construct the crashlytics service early so it can be threaded into the
-  // notification service (which needs it to report scheduling failures).
-  // This mirrors the pattern used in AppContainer.overrides where a non-null
-  // crashlyticsService is only wired in release builds.
   final CrashlyticsService earlycrashlytics = kReleaseMode
       ? FirebaseCrashlyticsService(FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance))
       : NoopCrashlyticsService();
 
-  // Declare analyticsService early so the warm-start notification callback can
-  // close over it. The variable is assigned below (inside the try block after
-  // the database opens) before any user interaction can fire the callback.
-  // Using a nullable reference here is safe: the callback guards with `?.`.
+  // Declared early so the warm-start notification callback can close over it.
+  // Assigned after the database opens; the `?.` guard is a safety net if the
+  // callback fires before the DB try-block completes.
   FirebaseAnalyticsService? notificationAnalyticsService;
 
-  // Initialise notification service before runApp so the plugin and Android
-  // channel are ready when the first frame renders. The real plugin is used in
-  // all build modes (debug, profile, release) so notification navigation can be
-  // tested with plain `flutter run`. Unit tests are unaffected because they
-  // never call main() — they override notificationServiceProvider directly.
-  //
-  // timezone.initializeTimeZones() and FlutterTimezone.getLocalTimezone() are
-  // called inside FlutterLocalNotificationService.initialize() so this block
-  // just constructs the service and awaits its initialisation.
+  // Initialise before runApp so the plugin and Android channel are ready on the
+  // first frame. Used in all build modes so navigation can be tested with
+  // `flutter run` — unit tests override notificationServiceProvider directly.
   NotificationService notificationService = NoopNotificationService();
   {
     final realService = FlutterLocalNotificationService(earlycrashlytics);
     try {
-      // Wire the background handler before initialize() so the plugin passes it
-      // to the OS-spawned background isolate on Android. On iOS this path is
-      // never taken — iOS always calls the foreground callback below.
+      // Both handlers must be set before initialize() so the plugin wires them
+      // during setup. Background handler: Android only, background isolate.
       realService.setBackgroundNotificationHandler(_notificationBackgroundHandler);
-
-      // Wire the warm-start callback before initialize() so the plugin picks
-      // it up during setup. The callback parses the payload and pushes the
-      // showup detail screen via the global navigator key.
-      // Analytics: the callback closes over `notificationAnalyticsService` which will be
-      // assigned by the time the user can interact with a notification
-      // (after runApp completes). The `?.` guard is a safety net only.
       realService.setNotificationResponseCallback((NotificationResponse response) {
         if (kDebugMode) {
           debugPrint('[Notif] response received — actionId=${response.actionId} payload=${response.payload}');
@@ -387,25 +280,15 @@ Future<void> main() async {
         }
 
         if (response.actionId == NotificationConstants.markDoneActionId) {
-          // The user tapped "Mark done" from the notification tray while the
-          // app is in the foreground or warm-started. Use the top-level
-          // ProviderContainer so PactStatsService cache is updated correctly —
-          // the widget tree will reflect the change without requiring a reload.
-          // Do NOT navigate to ShowupDetailScreen: the user chose to act
-          // without opening the app.
+          // Do NOT navigate — the user acted without opening the app.
           if (kDebugMode) debugPrint('[Notif] mark-done action — showupId=${parsed.showupId}');
           unawaited(_markShowupDoneFromForeground(parsed.showupId, parsed.pactId));
           return;
         }
 
-        // Default: user tapped the notification body — navigate to showup detail.
-        //
-        // On iOS, flutter_local_notifications invokes this callback during
-        // FlutterLocalNotificationsPlugin.initialize() for cold starts (before
-        // runApp mounts the widget tree). _navigatorKey.currentState is null at
-        // that moment, so we must defer the push to the next frame rather than
-        // dropping it. For warm starts the navigator is already mounted and the
-        // push happens immediately.
+        // Notification body tap → navigate to showup detail.
+        // On iOS, this callback fires during initialize() for cold starts —
+        // _navigatorKey.currentState is null, so we must defer to the next frame.
         final coldStart = _navigatorKey.currentState == null;
         if (kDebugMode) debugPrint('[Notif] body tap — coldStart=$coldStart showupId=${parsed.showupId}');
         if (!coldStart) {
@@ -448,8 +331,6 @@ Future<void> main() async {
             tryNavigate(10);
           });
         }
-        // Fire deep-link analytics. coldStart reflects whether the navigator was
-        // mounted when the callback fired — a reliable proxy for app lifecycle state.
         unawaited(
           notificationAnalyticsService?.logEvent(
             AppOpenedFromNotificationEvent(
@@ -464,37 +345,23 @@ Future<void> main() async {
       await realService.requestPermission();
       notificationService = realService;
     } catch (_) {
-      // initialize()/requestPermission() already swallow, but guard here as
-      // well so a constructor failure cannot prevent runApp.
-      // Fall back to the noop — notifications simply won't work.
+      // initialize() already swallows; guard here so a constructor failure
+      // cannot prevent runApp.
       notificationService = NoopNotificationService();
     }
   }
 
-  // Load the user's saved locale preference before runApp so the initial
-  // MaterialApp.locale is set correctly on the very first frame.
-  // SharedPreferences.getInstance() is fast (reads from an in-memory cache
-  // after the first call) and independent of the SQLite database lifecycle.
+  // Load saved locale before runApp so the initial frame uses the correct locale.
   SharedPreferencesLocaleService? localeService;
   try {
     final prefs = await SharedPreferences.getInstance();
     localeService = SharedPreferencesLocaleService(prefs);
   } catch (_) {
-    // If SharedPreferences fails to initialise, fall back to system locale.
     localeService = null;
   }
 
-  // Construct auth and device ID services.
-  //
-  // debug_backend=local: use LocalAuthService so the full sign-in/sync flow
-  //   can be tested without real Google OAuth.
-  // All other modes: Firebase anonymous sign-in; initialize() called after
-  //   runApp (fire-and-forget) so a slow network never delays the first frame.
-  //
-  // Device ID reuses the already-loaded SharedPreferences instance.
   final AuthService authService =
       useLocalBackend ? LocalAuthService() : FirebaseAuthService(FirebaseAuthClientAdapter(FirebaseAuth.instance));
-  // SharedPreferences.getInstance() is cached after the first call (locale block above).
   SharedPreferencesDeviceIdService? deviceIdService;
   try {
     deviceIdService = SharedPreferencesDeviceIdService(
@@ -504,33 +371,19 @@ Future<void> main() async {
     deviceIdService = null;
   }
 
-  // Open the SQLite database and construct the shared repository instances.
-  // HabitLoopDatabase.instance.database is a Future-based singleton: concurrent
-  // callers all share the same Future so only one openDatabase call is ever made.
-  //
-  // If the database cannot be opened (e.g. disk full, corrupt file), fall back
-  // to a minimal error screen rather than crashing to a black screen.
+  // If the database cannot be opened, fall back to an error screen.
   try {
     final Database db = await HabitLoopDatabase.instance.database;
     final pactRepo = SqlitePactRepository(db);
     final showupRepo = SqliteShowupRepository(db);
     final txService = SqlitePactTransactionService(db);
 
-    // Construct (or reuse) the analytics service so it can be passed both to
-    // AppContainer.overrides (for Riverpod) and to the deep-link analytics
-    // events fired from the cold-start addPostFrameCallback below.
-    // Also assigns `notificationAnalyticsService` so the warm-start notification callback
-    // (closed over above) can fire events once the app is running.
+    // Assign notificationAnalyticsService so the warm-start callback (closed
+    // over above) can fire events. Also used in the cold-start post-frame callback.
     notificationAnalyticsService =
         kReleaseMode ? FirebaseAnalyticsService(FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance)) : null;
     final analyticsService = notificationAnalyticsService;
 
-    // Compute overrides once and reuse them for both ProviderScope (the widget
-    // tree) and _container (the top-level ProviderContainer used by the
-    // foreground "Mark done" callback outside the widget tree).
-    //
-    // SharedPreferences.getInstance() is cached after the first call (locale
-    // block above), so this second call is a synchronous in-memory lookup.
     SharedPreferencesOnboardingService? onboardingService;
     try {
       onboardingService = SharedPreferencesOnboardingService(
@@ -540,82 +393,43 @@ Future<void> main() async {
       onboardingService = null;
     }
 
-    // When debug_backend=local, create a single FakeFirestoreClient instance
-    // shared between firestoreClientProvider (active backend) and
-    // fakeFirestoreClientProvider (seed-data debug UI). Same instance so
-    // seeding operations immediately affect the running sync service.
+    // Shared instance so seed-data UI operations immediately affect the live sync service.
     final FakeFirestoreClient? sharedFakeFirestore = (!kReleaseMode && useLocalBackend) ? FakeFirestoreClient() : null;
 
+    // Same overrides list for both ProviderScope and _container.
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
       pactSyncRepository: pactRepo,
       showupSyncRepository: showupRepo,
       transactionService: txService,
-      // Talker log service is active in debug and profile builds only; the
-      // in-app overlay is gated on kDebugMode inside TalkerLogService.
-      // Release builds fall back to the NoopLogService default.
       logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
-      // Only send analytics in release builds — debug/profile use NoopAnalyticsService.
       analyticsService: analyticsService,
-      // Only send crash reports in release builds — debug/profile use NoopCrashlyticsService.
       crashlyticsService: kReleaseMode
           ? FirebaseCrashlyticsService(
               FirebaseCrashlyticsClientAdapter(FirebaseCrashlytics.instance),
             )
           : null,
-      // Release: FirebaseRemoteConfigService. Debug/profile: OverridableRemoteConfigService
-      // wrapping NoopRemoteConfigService, allowing runtime overrides via the debug UI.
       remoteConfigService: remoteConfigService,
-      // Debug/profile only: exposes the override store to the debug UI via
-      // remoteConfigOverrideStoreProvider. null in release builds.
       remoteConfigOverrideStore: remoteConfigOverrideStore,
-      // Wire the notification service. In release builds this is the real plugin;
-      // in debug/profile it is the NoopNotificationService. Either way we pass it
-      // so that the notificationServiceProvider is always overridden and available.
       notificationService: notificationService,
-      // Wire locale persistence; AppContainer.overrides fetches the saved
-      // locale internally via getSavedLocale() and populates localeOverrideProvider.
       localePreferenceService: localeService,
-      // Wire the onboarding flag so [DashboardScreen] can read it synchronously
-      // on the first frame and skip the carousel without any async wait.
       onboardingPreferenceService: onboardingService,
-      // Auth service wired at startup based on debug_backend:
-      //   'local'  → LocalAuthService (fake sign-in, no Google OAuth)
-      //   'real' (default) → FirebaseAuthService
       authService: authService,
       deviceIdService: deviceIdService,
-      // Firestore client wired based on debug_backend:
-      //   Release          → bare Firebase adapter (no fault injection).
-      //   Debug/profile 'real'  → FaultInjectingFirestoreClient wrapping real Firebase.
-      //   Debug/profile 'local' → FaultInjectingFirestoreClient wrapping FakeFirestoreClient.
-      //
-      // Both debug/profile paths are wrapped in FaultInjectingFirestoreClient so
-      // QA can test circuit-breaker and partial-failure behaviour regardless of which
-      // backend is active. The seed-data UI still reaches FakeFirestoreClient directly
-      // via fakeFirestoreClientProvider (not through the fault-injecting wrapper).
       firestoreClient: kReleaseMode
           ? FirebaseFirestoreClientAdapter(FirebaseFirestore.instance)
           : FaultInjectingFirestoreClient(
-              // sharedFakeFirestore is non-null when useLocalBackend=true (constructed above).
               inner:
                   useLocalBackend ? sharedFakeFirestore! : FirebaseFirestoreClientAdapter(FirebaseFirestore.instance),
               rc: remoteConfigService ?? NoopRemoteConfigService(),
             ),
-      // Debug/profile only: expose the same FakeFirestoreClient instance for the
-      // seed-data debug UI. null in release builds and when real backend is active.
       fakeFirestoreClient: (!kReleaseMode && useLocalBackend) ? sharedFakeFirestore : null,
-      // Debug/profile only: the debug_backend value used this session so the RC
-      // overrides screen can show the restart banner only when the pending value
-      // differs from the one currently running. null in release builds (provider
-      // falls back to RemoteConfigDefaults.debugBackend which is also 'real').
       debugBackendAtStartup: !kReleaseMode ? debugBackend : null,
     );
 
-    // Create the top-level ProviderContainer with the same overrides so that
-    // the foreground "Mark done" notification callback (_markShowupDoneFromForeground)
-    // can read Riverpod providers (ShowupRepository, PactStatsService, etc.)
-    // without going through the widget tree.
+    // Mirrors ProviderScope — lets the foreground "Mark done" callback read
+    // Riverpod providers without going through the widget tree.
     _container = ProviderContainer(overrides: overrides);
 
     runApp(
@@ -625,25 +439,12 @@ Future<void> main() async {
       ),
     );
 
-    // Sign in anonymously after the widget tree is running so a slow network
-    // never delays the first frame. On repeat launches the cached Firebase user
-    // is available immediately and initialize() returns synchronously.
-    //
-    // Pull remote changes after initialize() completes so userId is guaranteed
-    // non-null when pullRemoteChanges() runs. The async closure is fire-and-forget
-    // and never blocks the UI. On first-ever install the anonymous sign-in is a
-    // network call; once it resolves the UID is fresh with no remote data, so the
-    // pull is a no-op. On repeat launches initialize() returns synchronously with
-    // the cached user and the pull proceeds immediately.
+    // Sign in after runApp so a slow network never delays the first frame.
+    // Pull remote changes only after initialize() so userId is guaranteed non-null.
     unawaited(() async {
       if (useLocalBackend) {
-        // LocalAuthService: no Firebase Keychain to clear; initialize() sets
-        // anonymous state and the local FakeFirestoreClient needs no pull.
         await authService.initialize();
       } else {
-        // iOS Keychain persists Firebase credentials across app reinstalls. If this
-        // is a fresh install (no device ID key in SharedPreferences) but Firebase
-        // has a cached user, sign out first so the app starts as anonymous.
         final prefs = await SharedPreferences.getInstance();
         await clearStaleKeychainIfFirstLaunch(authService: authService, prefs: prefs);
         await authService.initialize();
@@ -652,24 +453,14 @@ Future<void> main() async {
       }
     }());
 
-    // Cold-start fallback: if the notification response callback fired during
-    // initialize() and already deferred navigation via addPostFrameCallback,
-    // _notificationNavigationHandled will be set to true by that deferred
-    // callback before this one runs (both fire on the same first frame, in
-    // registration order: the callback's defer was registered first). In that
-    // case we skip getAppLaunchDetails() to avoid a double push.
-    //
-    // If the callback did NOT fire (e.g. Android cold start where the response
-    // is not replayed during initialize()), we fall back to getAppLaunchDetails()
-    // which is the correct cold-start path on Android.
-    //
-    // Reset _notificationNavigationHandled after this frame so future warm-start
-    // taps handled solely by onDidReceiveNotificationResponse are not blocked.
+    // Cold-start dedup: if onDidReceiveNotificationResponse already deferred a
+    // push via addPostFrameCallback, _notificationNavigationHandled is true when
+    // this callback fires (both are on the same first frame, in registration order).
+    // Skip getAppLaunchDetails() to avoid a double push; reset so warm-start taps
+    // after this are not suppressed.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (kDebugMode) debugPrint('[Notif] post-frame callback — handled=$_notificationNavigationHandled');
       if (_notificationNavigationHandled) {
-        // Navigation was already triggered by the deferred callback from
-        // onDidReceiveNotificationResponse. Reset for next warm-start tap.
         _notificationNavigationHandled = false;
         return;
       }
@@ -686,8 +477,6 @@ Future<void> main() async {
             navigatorKey: _navigatorKey,
             showupId: parsed.showupId,
           );
-          // Fire deep-link analytics. This is a cold start because the app was
-          // launched from a killed state via notification tap.
           unawaited(
             analyticsService?.logEvent(
               AppOpenedFromNotificationEvent(
@@ -697,14 +486,11 @@ Future<void> main() async {
               ),
             ),
           );
-          // Reset so future warm-start taps are not blocked.
           _notificationNavigationHandled = false;
         }
       }
     });
   } catch (e, st) {
-    // Record to Crashlytics so we have a stack trace in production.
-    // earlycrashlytics is always constructed above (before this try block).
     try {
       unawaited(earlycrashlytics.recordError(e, st));
     } catch (_) {}
@@ -716,18 +502,10 @@ Future<void> main() async {
 class HabitLoopApp extends ConsumerWidget {
   const HabitLoopApp({super.key, required this.navigatorKey});
 
-  /// Global navigator key used for deep-link routing from notification taps.
-  ///
-  /// Must be the same key instance that is passed to
-  /// [NotificationRouter.navigateToShowup] in `main.dart`. Wiring it through
-  /// [MaterialApp.navigatorKey] lets the notification callback resolve the
-  /// current [NavigatorState] even when called outside the widget tree.
   final GlobalKey<NavigatorState> navigatorKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the locale override so the entire widget tree rebuilds immediately
-    // when the user picks a different language. null = follow system locale.
     final localeOverride = ref.watch(localeOverrideProvider);
 
     return MaterialApp(
@@ -736,14 +514,9 @@ class HabitLoopApp extends ConsumerWidget {
       theme: HabitLoopTheme.materialTheme,
       darkTheme: HabitLoopTheme.darkMaterialTheme,
       themeMode: ThemeMode.system,
-      // Passing a non-null locale to MaterialApp suppresses Flutter's built-in
-      // localeResolutionCallback and localeListResolutionCallback entirely —
-      // Flutter simply uses the supplied locale without consulting those
-      // callbacks. This is intentional for a user-forced override: the user
-      // has explicitly chosen a language, so system negotiation is bypassed.
-      // If localeResolutionCallback or localeListResolutionCallback are ever
-      // added here, they will be silently ignored whenever localeOverride is
-      // non-null and must be removed or adapted accordingly.
+      // Non-null locale bypasses Flutter's localeResolutionCallback entirely —
+      // intentional for user-forced overrides. Any future localeResolutionCallback
+      // will be silently ignored when localeOverride is non-null.
       locale: localeOverride,
       builder: (context, child) {
         return CupertinoTheme(
@@ -765,12 +538,8 @@ class HabitLoopApp extends ConsumerWidget {
   }
 }
 
-/// Minimal fallback app shown when the SQLite database cannot be opened.
-///
-/// Displayed instead of a black screen when [HabitLoopDatabase.instance.database]
-/// throws during startup (e.g. disk full, corrupt database file). The message is
-/// English-only because the localisation delegates are not available at this
-/// point — the error is a fatal infrastructure failure, not a user-facing flow.
+// Shown when the SQLite database cannot be opened (e.g. disk full).
+// English-only — localisation delegates are unavailable at this point.
 class _DatabaseErrorApp extends StatelessWidget {
   const _DatabaseErrorApp();
 

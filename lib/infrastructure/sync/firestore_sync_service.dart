@@ -13,16 +13,8 @@ import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 
-/// Production implementation of [SyncService].
-///
-/// Governs all Firestore writes via [SyncCircuitBreaker]: checks [canRequest]
-/// before every upload and calls [recordSuccess] / [recordFailure] depending on
-/// the outcome. Automatically triggers [flushDirtyRecords] whenever a
-/// successful upload transitions the CB from half-open to closed.
-///
-/// Pull-on-start ([pullRemoteChanges]) only runs when the CB is fully
-/// [SyncCircuitBreakerState.closed] and uses a last-writer-wins merge strategy
-/// based on the `updated_at` / `synced_at` timestamps.
+/// Governs all Firestore writes through [SyncCircuitBreaker].
+/// [pullRemoteChanges] uses last-writer-wins on `updated_at` / `synced_at`.
 class FirestoreSyncService implements SyncService {
   static const int _flushCap = 400;
 
@@ -116,14 +108,12 @@ class FirestoreSyncService implements SyncService {
     try {
       await _pactSyncRepository.markAllPactsDirty();
       await _showupSyncRepository.markAllShowupsDirty();
-      // Count total after marking all dirty (= total attempted).
       final allDirtyPacts = await _pactSyncRepository.getDirtyPacts();
       final allDirtyShowups = await _showupSyncRepository.getDirtyShowups();
       final attempted = allDirtyPacts.length + allDirtyShowups.length;
       await flushDirtyRecords();
-      // Records that uploaded successfully were marked synced (dirty=0) and are
-      // no longer returned by getDirtyPacts/getDirtyShowups. What remains are
-      // the ones that failed to upload.
+      // Successfully uploaded records are marked synced (dirty=0) and no longer
+      // returned here — what remains are upload failures.
       final remainingPacts = await _pactSyncRepository.getDirtyPacts();
       final remainingShowups = await _showupSyncRepository.getDirtyShowups();
       return ForceSyncResult(
@@ -132,8 +122,6 @@ class FirestoreSyncService implements SyncService {
         showupsFailed: remainingShowups.length,
       );
     } catch (_) {
-      // No-throw safety net — in practice dead code since all called methods
-      // also have no-throw contracts.
       return const ForceSyncResult(attempted: 0, pactsFailed: 0, showupsFailed: 0);
     }
   }
@@ -176,13 +164,7 @@ class FirestoreSyncService implements SyncService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  /// Merges a single remote pact document into the local database.
-  ///
-  /// Merge rules:
-  /// - Not in local DB → insert, mark synced.
-  /// - Local is dirty → keep local, skip.
-  /// - Remote `updated_at` > local `synced_at` → overwrite, mark synced.
-  /// - Otherwise → keep local.
+  // Merge rules: absent → insert; dirty → keep local; remote newer → overwrite; else → keep local.
   Future<void> _mergeRemotePact(Map<String, dynamic> doc, DateTime now) async {
     final String id = doc['id'] as String;
     final localPact = await _pactRepository.getPactById(id);
@@ -205,9 +187,7 @@ class FirestoreSyncService implements SyncService {
     await _pactSyncRepository.markPactSynced(id, now);
   }
 
-  /// Merges a single remote showup document into the local database.
-  ///
-  /// Same merge rules as [_mergeRemotePact].
+  // Same merge rules as _mergeRemotePact.
   Future<void> _mergeRemoteShowup(Map<String, dynamic> doc, DateTime now) async {
     final String id = doc['id'] as String;
     final localShowup = await _showupRepository.getShowupById(id);
@@ -233,13 +213,8 @@ class FirestoreSyncService implements SyncService {
     await _showupSyncRepository.markShowupSynced(id, now);
   }
 
-  /// Executes [upload] if the CB allows requests, then calls [onSynced] and
-  /// [recordSuccess] on success, or [recordFailure] on any error.
-  ///
-  /// If the CB was in [SyncCircuitBreakerState.halfOpen] before this call and
-  /// transitions to [SyncCircuitBreakerState.closed] via [recordSuccess], a
-  /// [flushDirtyRecords] pass is automatically fired to pick up all records
-  /// that accumulated while the CB was non-closed.
+  // If CB transitions halfOpen → closed on success, fires flushDirtyRecords
+  // to pick up records that accumulated while the CB was non-closed.
   Future<void> _uploadWithCb({
     required Future<void> Function() upload,
     required Future<void> Function() onSynced,

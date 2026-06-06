@@ -17,21 +17,8 @@ const _kChannelId = 'showup_reminders';
 /// Android notification channel display name.
 const _kChannelName = 'Showup reminders';
 
-/// Action ID for the "Mark done" notification action.
-///
-/// Used by both Android ([AndroidNotificationAction]) and iOS
-/// ([DarwinNotificationAction]) to identify the action in the
-/// [NotificationResponse.actionId] field.
-///
-/// Sourced from [NotificationConstants.markDoneActionId] — defined there as
-/// the single canonical value shared with `main.dart` background handler.
 const _kMarkDoneActionId = NotificationConstants.markDoneActionId;
 
-/// iOS notification category ID for showup reminder notifications with a
-/// "Mark done" action.
-///
-/// Registered once during [initialize]. All showup reminder notifications
-/// reference this category so the OS attaches the action button automatically.
 const _kShowupReminderCategoryId = 'showup_reminder';
 
 /// Label for the "Mark done" action button.
@@ -46,33 +33,17 @@ const _kMarkDoneActionLabel = 'Mark done';
 
 /// Production [NotificationService] backed by [FlutterLocalNotificationsPlugin].
 ///
-/// Schedule notifications using [zonedSchedule] with [TZDateTime] to ensure
-/// correct DST-safe scheduling.
+/// Notification ID scheme (FNV-1a 32-bit, disjoint ranges):
+/// - Reminder: `[0x0, 0x3FFFFFFF]`
+/// - Deadline: `[0x40000000, 0x7FFFFFFE]`
 ///
-/// **Notification ID scheme** — each (showup, notificationType) pair gets a
-/// unique deterministic 32-bit signed integer ID:
-/// - Reminder ID: FNV-1a 32-bit hash of `showup.id` modulo `0x40000000`, range `[0x0, 0x3FFFFFFF]`
-/// - Deadline ID: FNV-1a 32-bit hash of `showup.id` modulo `0x3FFFFFFF` plus `0x40000000`, range `[0x40000000, 0x7FFFFFFE]`
+/// `_pactNotificationIds` maps pact ID → notification IDs for fast cancellation.
+/// On restart the registry is empty; fallback queries the OS-managed pending list.
 ///
-/// The two ranges are disjoint so reminder and deadline notifications can
-/// coexist in the notification tray simultaneously. Using the showup UUID
-/// as the hash source means two pacts that schedule showups at the same
-/// clock second produce different IDs.
+/// Android 14+: `_canScheduleExact` is resolved during [initialize]; if exact
+/// alarms are unavailable, falls back to inexact (notification still delivered).
 ///
-/// An in-memory `_pactNotificationIds` registry maps pact ID → set of
-/// notification IDs so [cancelAllRemindersForPact] can cancel all pending
-/// notifications for a stopped pact without iterating the OS-managed list.
-/// On app restart the registry is empty; cancellation falls back to fetching
-/// pending notifications and filtering by the `pactId` in their payload JSON.
-///
-/// **Android 14+ SCHEDULE_EXACT_ALARM** — on Android the implementation
-/// checks `canScheduleExactNotifications()` during [initialize] and caches the
-/// result in [_canScheduleExact]. If exact alarms are unavailable it falls back
-/// to [AndroidScheduleMode.inexactAllowWhileIdle] so the notification is still
-/// delivered (albeit within a short OS-determined window) rather than crashing.
-///
-/// **No-throw contract:** all methods are wrapped in try/catch. Failures are
-/// recorded via [CrashlyticsService] in all builds.
+/// No-throw contract: all methods catch and record via [CrashlyticsService].
 final class FlutterLocalNotificationService implements NotificationService {
   FlutterLocalNotificationService(this._crashlytics);
 
@@ -80,56 +51,23 @@ final class FlutterLocalNotificationService implements NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 
-  /// Cached result of `canScheduleExactNotifications()` on Android.
-  ///
-  /// Set to `true` on iOS (exact alarms are always available) and resolved
-  /// at runtime during [initialize] on Android.
+  // `true` on iOS always; resolved during initialize() on Android 14+.
   bool _canScheduleExact = true;
 
-  /// In-memory registry: pact ID → set of notification IDs.
-  ///
-  /// Populated on [scheduleShowupReminder] and [scheduleDeadlineNotification].
-  /// Cleared on cancellation. Not persisted — rebuilt via [getPendingNotifications]
-  /// after an app restart if needed.
+  // Pact ID → notification IDs. Rebuilt from OS-pending list after a restart.
   final Map<String, Set<int>> _pactNotificationIds = {};
 
-  /// Callback invoked when the user taps a notification or an action button
-  /// while the app is in the foreground or warm-started from background.
-  ///
-  /// Set by calling [setNotificationResponseCallback] **before** [initialize],
-  /// then forwarded to [FlutterLocalNotificationsPlugin.initialize].
-  ///
-  /// `main.dart` wires this to [NotificationRouter.navigateToShowup] for
-  /// deep-link routing (WU4). When null, [initialize] falls back to a debug log.
+  // Both callbacks must be set before initialize() — the plugin wires them
+  // during setup and provides no way to replace them afterwards.
   void Function(NotificationResponse)? _onDidReceiveNotificationResponse;
-
-  /// Callback invoked on a **background isolate** (Android only) when the user
-  /// acts on a notification action button while the app is not in the foreground.
-  ///
-  /// Set by calling [setBackgroundNotificationHandler] **before** [initialize].
-  /// The function must be annotated with `@pragma('vm:entry-point')` — this is
-  /// enforced at the call site in `main.dart`. When null, background actions
-  /// are silently ignored.
   void Function(NotificationResponse)? _onDidReceiveBackgroundNotificationResponse;
 
-  /// Sets the callback that is forwarded to [FlutterLocalNotificationsPlugin.initialize].
-  ///
-  /// Must be called **before** [initialize]. The [FlutterLocalNotificationsPlugin]
-  /// does not expose a way to replace the callback after initialisation, so
-  /// main.dart must set this before awaiting [initialize].
+  // Must be called before initialize().
   void setNotificationResponseCallback(void Function(NotificationResponse) callback) {
     _onDidReceiveNotificationResponse = callback;
   }
 
-  /// Sets the background handler that is forwarded to [FlutterLocalNotificationsPlugin.initialize].
-  ///
-  /// Must be called **before** [initialize]. The [callback] function must be a
-  /// top-level function annotated with `@pragma('vm:entry-point')` — Android
-  /// requires this for background isolate entry points.
-  ///
-  /// On iOS, notification action responses always use the
-  /// [onDidReceiveNotificationResponse] path regardless of app state, so this
-  /// callback is Android-specific.
+  // Must be called before initialize(). Callback must be top-level + vm:entry-point (Android).
   void setBackgroundNotificationHandler(void Function(NotificationResponse) callback) {
     _onDidReceiveBackgroundNotificationResponse = callback;
   }
@@ -137,20 +75,14 @@ final class FlutterLocalNotificationService implements NotificationService {
   @override
   Future<void> initialize() async {
     try {
-      // Initialise timezone database (loads all IANA timezone data into memory).
       tz_data.initializeTimeZones();
       final localTz = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(localTz.identifier));
 
       const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-      // Register the iOS notification category for showup reminders with the
-      // "Mark done" action button. The label is hardcoded to the English string
-      // because iOS category labels are fixed at registration time — they cannot
-      // be localised per-notification. This is a known iOS platform limitation.
-      //
-      // DarwinNotificationAction.plain() is a non-const factory so the settings
-      // object cannot be const. This is fine — it's only constructed once during
-      // initialization.
+      // iOS category labels are fixed at registration time — English constant is
+      // intentional (known iOS platform limitation, cannot be localised per-notification).
+      // DarwinNotificationAction.plain() is non-const, so iosSettings cannot be const.
       final iosSettings = DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
@@ -169,8 +101,6 @@ final class FlutterLocalNotificationService implements NotificationService {
       );
       final initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
 
-      // Use the externally-set callback (from main.dart for deep-link routing)
-      // or fall back to a debug-only log for builds that do not wire navigation.
       _onDidReceiveNotificationResponse ??= (NotificationResponse response) {
         debugPrint('[Notifications] response received: ${response.payload}');
       };
@@ -183,7 +113,6 @@ final class FlutterLocalNotificationService implements NotificationService {
       );
       debugPrint('[Notif] _plugin.initialize() returned — callback wired');
 
-      // Create Android notification channel.
       const androidChannel = AndroidNotificationChannel(
         _kChannelId,
         _kChannelName,
@@ -193,8 +122,7 @@ final class FlutterLocalNotificationService implements NotificationService {
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidChannel);
 
-      // Android 14+: resolve whether exact alarm permission has been granted.
-      // On iOS _canScheduleExact stays true (no permission required).
+      // Android 14+: exact alarm permission may not be granted.
       final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       if (android != null) {
         _canScheduleExact = await android.canScheduleExactNotifications() ?? false;
@@ -237,11 +165,6 @@ final class FlutterLocalNotificationService implements NotificationService {
 
       final payload = jsonEncode({'showupId': showup.id, 'pactId': pact.id});
 
-      // Build platform-specific notification details. When includeMarkDoneAction
-      // is true, attach the "Mark done" action button so users can mark a showup
-      // done directly from the notification tray without opening the app.
-      // Deadline notifications must never include action buttons — the showup
-      // window has passed, so marking done is no longer valid.
       final androidDetails = includeMarkDoneAction
           ? const AndroidNotificationDetails(
               _kChannelId,
@@ -251,10 +174,7 @@ final class FlutterLocalNotificationService implements NotificationService {
               actions: [
                 AndroidNotificationAction(
                   _kMarkDoneActionId,
-                  // Android supports per-notification labels; we still use the
-                  // English constant for parity with iOS (see _kMarkDoneActionLabel).
                   _kMarkDoneActionLabel,
-                  // Handle in background without launching the app UI.
                   showsUserInterface: false,
                 ),
               ],
@@ -266,9 +186,6 @@ final class FlutterLocalNotificationService implements NotificationService {
               priority: Priority.high,
             );
 
-      // iOS: reference the registered category so the "Mark done" action button
-      // is attached automatically. When includeMarkDoneAction is false, omit the
-      // category identifier so no action buttons appear.
       final iosDetails = includeMarkDoneAction
           ? const DarwinNotificationDetails(categoryIdentifier: _kShowupReminderCategoryId)
           : const DarwinNotificationDetails();
@@ -426,16 +343,7 @@ final class FlutterLocalNotificationService implements NotificationService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  /// Reminder notification ID derived from the showup UUID.
-  ///
-  /// Delegates to [NotificationConstants.reminderNotificationId] — the single
-  /// canonical formula shared with `main.dart` background/foreground handlers.
   int _reminderNotificationId(String showupId) => NotificationConstants.reminderNotificationId(showupId);
-
-  /// Deadline notification ID derived from the showup UUID.
-  ///
-  /// Delegates to [NotificationConstants.deadlineNotificationId] — the single
-  /// canonical formula shared with `main.dart` background/foreground handlers.
   int _deadlineNotificationId(String showupId) => NotificationConstants.deadlineNotificationId(showupId);
 
   void _registerNotificationId(String pactId, int notifId) {
