@@ -9,7 +9,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/dashboard_screens.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
@@ -78,7 +78,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
         ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
       );
       unawaited(ref.read(pactListViewModelProvider.notifier).load());
-      unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+      ref.read(dashboardRefreshSignalProvider.notifier).update((n) => n + 1);
     }
   }
 

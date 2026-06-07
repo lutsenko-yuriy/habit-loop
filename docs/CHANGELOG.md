@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.14] — 2026-06-07
+
+### Changed — Flutter codebase audit WU6: cross-slice inversion (HAB-97)
+
+- [user-none]
+- [non-user] Added `dashboardRefreshSignalProvider` (`StateProvider<int>`) in `slices/dashboard/ui/generic/dashboard_refresh_signal.dart`
+- [non-user] `DashboardViewModel.build()` listens to the signal and calls `load()` + invalidates `hasActivePactsProvider`
+- [non-user] `pact_creation_screen.dart` and `pacts_summary_bar.dart` now post to the signal instead of importing `dashboardViewModelProvider` directly — cross-slice dependency removed
+- [non-user] Cross-slice signals pattern documented in `docs/ARCHITECTURE.md`
+- [non-user] 3 new unit tests covering `dashboardRefreshSignalProvider` and signal → VM reload integration
+
+---
+
 ## [0.42.13] — 2026-06-07
 
 ### Changed — Flutter codebase audit WU5: strict layer rule enforcement (HAB-97)
