@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/slices/pact/ui/generic/option_tile.dart';
 
 class ReminderStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -26,6 +27,9 @@ class ReminderStepAndroid extends StatelessWidget {
       _ReminderOption(label: l10n.reminderMinutesBefore(60), offset: const Duration(minutes: 60)),
     ];
 
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final unselectedColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
@@ -38,20 +42,9 @@ class ReminderStepAndroid extends StatelessWidget {
           final isSelected = state.reminderOffset == option.offset;
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: isSelected ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2) : BorderSide.none,
-              ),
-              tileColor: isSelected
-                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
-                  : Theme.of(context).colorScheme.surfaceContainerHighest,
-              leading: Icon(
-                isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                color:
-                    isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              title: Text(option.label),
+            child: OptionTile(
+              isSelected: isSelected,
+              label: option.label,
               onTap: () {
                 if (option.offset == null) {
                   onClearReminder();
@@ -59,6 +52,8 @@ class ReminderStepAndroid extends StatelessWidget {
                   onReminderOffsetChanged(option.offset!);
                 }
               },
+              selectedColor: primaryColor,
+              unselectedColor: unselectedColor,
             ),
           );
         }),

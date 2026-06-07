@@ -3,10 +3,13 @@ import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/ui/generic/date_row_tile.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
+import 'package:habit_loop/slices/pact/ui/generic/section_header.dart';
+import 'package:habit_loop/slices/pact/ui/generic/status_badge.dart';
 
 class PactDetailPageIos extends StatelessWidget {
   final PactDetailState state;
@@ -83,6 +86,8 @@ class _PactDetailContent extends StatelessWidget {
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
 
     final statusText = pactStatusText(l10n, pact.status);
+    final statusColor = PactStatusColors.cupertino.forStatus(pact.status);
+    final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -96,27 +101,13 @@ class _PactDetailContent extends StatelessWidget {
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: _statusColor(pact.status).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                statusText,
-                style: TextStyle(
-                  color: _statusColor(pact.status),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-            ),
+            StatusBadge(text: statusText, color: statusColor),
           ],
         ),
         const SizedBox(height: 24),
 
         // Stats cards
-        _SectionHeader(title: l10n.sectionStats),
+        SectionHeader(title: l10n.sectionStats, labelColor: CupertinoColors.systemGrey),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -139,43 +130,59 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Time details
-        _SectionHeader(title: l10n.sectionTimeline),
+        SectionHeader(title: l10n.sectionTimeline, labelColor: CupertinoColors.systemGrey),
         const SizedBox(height: 8),
-        _DateRow(label: l10n.pactStartDate, date: pact.startDate),
+        DateRowTile(
+          label: l10n.pactStartDate,
+          value: formatLocaleDate(context, pact.startDate),
+          valueColor: CupertinoColors.systemGrey,
+          backgroundColor: fill,
+        ),
         const SizedBox(height: 8),
         if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
-          _DateRow(label: l10n.pactStoppedDate, date: pact.stoppedAt!),
+          DateRowTile(
+            label: l10n.pactStoppedDate,
+            value: formatLocaleDate(context, pact.stoppedAt!),
+            valueColor: CupertinoColors.systemGrey,
+            backgroundColor: fill,
+          ),
           const SizedBox(height: 8),
         ],
-        _DateRow(
+        DateRowTile(
           label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
-          date: pact.endDate,
+          value: formatLocaleDate(context, pact.endDate),
+          valueColor: CupertinoColors.systemGrey,
+          backgroundColor: fill,
         ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
           const SizedBox(height: 8),
-          _InfoRow(label: l10n.daysRemaining(daysLeft)),
+          DateRowTile(label: l10n.daysRemaining(daysLeft), backgroundColor: fill),
         ],
         const SizedBox(height: 8),
-        _LabelValueRow(
+        DateRowTile(
           label: l10n.summaryShowupDuration,
           value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
+          valueColor: CupertinoColors.systemGrey,
+          backgroundColor: fill,
         ),
         const SizedBox(height: 8),
-        _LabelValueRow(
+        DateRowTile(
           label: l10n.summaryReminder,
           value: reminderDescription(l10n, pact.reminderOffset),
+          valueColor: CupertinoColors.systemGrey,
+          backgroundColor: fill,
         ),
 
         // Stop reason (if stopped)
         if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
           const SizedBox(height: 24),
-          _SectionHeader(title: l10n.sectionStopReason),
+          SectionHeader(title: l10n.sectionStopReason, labelColor: CupertinoColors.systemGrey),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+              color: fill,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(pact.stopReason!),
@@ -205,14 +212,6 @@ class _PactDetailContent extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  Color _statusColor(PactStatus status) {
-    return switch (status) {
-      PactStatus.active => HabitLoopColors.primary,
-      PactStatus.stopped => CupertinoColors.destructiveRed,
-      PactStatus.completed => CupertinoColors.activeGreen,
-    };
   }
 
   Future<void> _showStopDialog(BuildContext context) async {
@@ -260,24 +259,6 @@ class _PactDetailContent extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title.toUpperCase(),
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: CupertinoColors.systemGrey,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-}
-
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
@@ -299,79 +280,6 @@ class _StatCard extends StatelessWidget {
           Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         ],
       ),
-    );
-  }
-}
-
-class _DateRow extends StatelessWidget {
-  final String label;
-  final DateTime date;
-  const _DateRow({required this.label, required this.date});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: Text(label)),
-          const SizedBox(width: 8),
-          Text(
-            formatLocaleDate(context, date),
-            style: const TextStyle(color: CupertinoColors.systemGrey),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A timeline row that shows a [label] on the left and a [value] on the right,
-/// using the same container styling as [_DateRow].
-class _LabelValueRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _LabelValueRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: Text(label)),
-          const SizedBox(width: 8),
-          Text(
-            value,
-            style: const TextStyle(color: CupertinoColors.systemGrey),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  const _InfoRow({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(label),
     );
   }
 }
