@@ -11,6 +11,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - [user-none]
 - [non-user] 1062 net lines removed across 25 files in `lib/slices/*/ui/`, `lib/theme/`, `lib/navigation/`, `lib/l10n/date_formatters.dart`
 - [non-user] Removed narration comments, boilerplate field/class docs, divider lines; kept invariants, PII rules, platform quirks, and non-obvious WHY notes
+- [non-user] Added `docs/CODE_STYLE.md` (formatting, linting, comment hygiene rules); updated `AGENTS.md` and `skills/build/implement/SKILL.md` to reference it
+- [non-user] Added comment hygiene check to `skills/verify/review/SKILL.md`
 
 ---
 
