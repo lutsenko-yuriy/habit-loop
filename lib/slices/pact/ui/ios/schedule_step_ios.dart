@@ -44,6 +44,7 @@ class ScheduleStepIos extends StatelessWidget {
           unselectedColor: unselectedColor,
           selectedIcon: CupertinoIcons.check_mark_circled_solid,
           unselectedIcon: CupertinoIcons.circle,
+          unselectedIconColor: CupertinoColors.systemGrey.resolveFrom(context),
         ),
       );
     }).toList();
@@ -108,9 +109,6 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
 
   @override
   AppLocalizations get detailsL10n => widget.l10n;
-
-  @override
-  ValueChanged<ShowupSchedule> get detailsOnScheduleChanged => widget.onScheduleChanged;
 
   @override
   void initState() {

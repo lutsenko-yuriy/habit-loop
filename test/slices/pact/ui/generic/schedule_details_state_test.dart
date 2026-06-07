@@ -27,9 +27,6 @@ class _TestDetailsWidgetState extends State<_TestDetailsWidget> with ScheduleDet
   AppLocalizations get detailsL10n => AppLocalizations.of(context)!;
 
   @override
-  ValueChanged<ShowupSchedule> get detailsOnScheduleChanged => (_) {};
-
-  @override
   void initState() {
     super.initState();
     initScheduleDetails();

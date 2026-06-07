@@ -8,6 +8,7 @@ class OptionTile extends StatelessWidget {
   final Color unselectedColor;
   final IconData? selectedIcon;
   final IconData? unselectedIcon;
+  final Color? unselectedIconColor;
 
   const OptionTile({
     super.key,
@@ -18,6 +19,7 @@ class OptionTile extends StatelessWidget {
     required this.unselectedColor,
     this.selectedIcon,
     this.unselectedIcon,
+    this.unselectedIconColor,
   });
 
   @override
@@ -35,7 +37,8 @@ class OptionTile extends StatelessWidget {
           children: [
             Icon(
               isSelected ? (selectedIcon ?? Icons.check_circle) : (unselectedIcon ?? Icons.radio_button_unchecked),
-              color: isSelected ? selectedColor : Theme.of(context).colorScheme.onSurfaceVariant,
+              color:
+                  isSelected ? selectedColor : (unselectedIconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(width: 12),
             Text(label),

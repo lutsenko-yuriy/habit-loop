@@ -12,7 +12,6 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart'
 mixin ScheduleDetailsState<T extends StatefulWidget> on State<T> {
   PactCreationState get detailsState;
   AppLocalizations get detailsL10n;
-  ValueChanged<ShowupSchedule> get detailsOnScheduleChanged;
 
   late Duration dailyTime;
   late List<WeekdayEntry> weekdayEntries;
@@ -43,6 +42,7 @@ mixin ScheduleDetailsState<T extends StatefulWidget> on State<T> {
   Widget buildSlotDetails();
 
   Widget buildScheduleDetails(BuildContext context) {
+    assert(detailsState.scheduleType != null, 'buildScheduleDetails called before scheduleType is set');
     switch (detailsState.scheduleType!) {
       case ScheduleType.daily:
         return buildDailyDetails();

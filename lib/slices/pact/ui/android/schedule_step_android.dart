@@ -102,9 +102,6 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid>
   AppLocalizations get detailsL10n => widget.l10n;
 
   @override
-  ValueChanged<ShowupSchedule> get detailsOnScheduleChanged => widget.onScheduleChanged;
-
-  @override
   void initState() {
     super.initState();
     initScheduleDetails();
