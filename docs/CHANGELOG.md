@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.15] — 2026-06-07 (PR #129 merged)
+
+### Changed — Flutter UI audit WU1: shared UI primitives (HAB-98)
+
+- [user-none]
+- [non-user] Added 7 generic widgets/helpers: `PactStatusColors`, `SectionHeader`, `StatusBadge`, `DateRowTile`, `OptionTile`, `OverrideBadge`, `RestartRequiredBanner`
+- [non-user] Adopted in `pact_detail_page`, `pact_duration_step`, `reminder_step`, `remote_config_overrides_page` — ~200 LOC of byte-identical private classes removed
+- [non-user] 7 new widget/unit tests in `test/slices/{pact,debug}/ui/generic/`
+
+---
+
 ## [0.42.14] — 2026-06-07
 
 ### Changed — Flutter codebase audit WU6: cross-slice inversion (HAB-97)

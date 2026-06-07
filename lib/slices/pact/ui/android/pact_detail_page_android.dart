@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/ui/generic/date_row_tile.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
+import 'package:habit_loop/slices/pact/ui/generic/section_header.dart';
+import 'package:habit_loop/slices/pact/ui/generic/status_badge.dart';
 
 class PactDetailPageAndroid extends StatelessWidget {
   final PactDetailState state;
@@ -76,6 +79,9 @@ class _PactDetailContent extends StatelessWidget {
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
 
     final statusText = pactStatusText(l10n, pact.status);
+    final statusColor = PactStatusColors.material.forStatus(pact.status);
+    final tileColor = theme.colorScheme.surfaceContainerHighest;
+    final valueColor = theme.colorScheme.onSurfaceVariant;
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -89,18 +95,13 @@ class _PactDetailContent extends StatelessWidget {
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
-            Chip(
-              label: Text(statusText),
-              backgroundColor: _statusColor(pact.status).withValues(alpha: 0.15),
-              labelStyle: TextStyle(color: _statusColor(pact.status), fontWeight: FontWeight.w600),
-              side: BorderSide.none,
-            ),
+            StatusBadge(text: statusText, color: statusColor),
           ],
         ),
         const SizedBox(height: 24),
 
         // Stats cards
-        Text(l10n.sectionStats.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+        SectionHeader(title: l10n.sectionStats, labelColor: theme.colorScheme.onSurfaceVariant),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -123,43 +124,62 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Time details
-        Text(l10n.sectionTimeline.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+        SectionHeader(title: l10n.sectionTimeline, labelColor: theme.colorScheme.onSurfaceVariant),
         const SizedBox(height: 8),
-        _DateRow(label: l10n.pactStartDate, date: pact.startDate),
+        DateRowTile(
+          label: l10n.pactStartDate,
+          value: formatLocaleDate(context, pact.startDate),
+          valueColor: valueColor,
+          backgroundColor: tileColor,
+          cornerRadius: 12,
+        ),
         const SizedBox(height: 8),
         if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
-          _DateRow(label: l10n.pactStoppedDate, date: pact.stoppedAt!),
+          DateRowTile(
+            label: l10n.pactStoppedDate,
+            value: formatLocaleDate(context, pact.stoppedAt!),
+            valueColor: valueColor,
+            backgroundColor: tileColor,
+            cornerRadius: 12,
+          ),
           const SizedBox(height: 8),
         ],
-        _DateRow(
+        DateRowTile(
           label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
-          date: pact.endDate,
+          value: formatLocaleDate(context, pact.endDate),
+          valueColor: valueColor,
+          backgroundColor: tileColor,
+          cornerRadius: 12,
         ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
           const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Text(l10n.daysRemaining(daysLeft)),
-            ),
+          DateRowTile(
+            label: l10n.daysRemaining(daysLeft),
+            backgroundColor: tileColor,
+            cornerRadius: 12,
           ),
         ],
         const SizedBox(height: 8),
-        _LabelValueRow(
+        DateRowTile(
           label: l10n.summaryShowupDuration,
           value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
+          valueColor: valueColor,
+          backgroundColor: tileColor,
+          cornerRadius: 12,
         ),
         const SizedBox(height: 8),
-        _LabelValueRow(
+        DateRowTile(
           label: l10n.summaryReminder,
           value: reminderDescription(l10n, pact.reminderOffset),
+          valueColor: valueColor,
+          backgroundColor: tileColor,
+          cornerRadius: 12,
         ),
 
         // Stop reason (if stopped)
         if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
           const SizedBox(height: 24),
-          Text(l10n.sectionStopReason.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+          SectionHeader(title: l10n.sectionStopReason, labelColor: theme.colorScheme.onSurfaceVariant),
           const SizedBox(height: 8),
           Card(
             margin: EdgeInsets.zero,
@@ -193,14 +213,6 @@ class _PactDetailContent extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  Color _statusColor(PactStatus status) {
-    return switch (status) {
-      PactStatus.active => HabitLoopColors.primary,
-      PactStatus.stopped => HabitLoopColors.danger,
-      PactStatus.completed => HabitLoopColors.success,
-    };
   }
 
   Future<void> _showStopDialog(BuildContext context) async {
@@ -264,60 +276,6 @@ class _StatCard extends StatelessWidget {
             Text(label, style: Theme.of(context).textTheme.labelSmall),
             const SizedBox(height: 4),
             Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A timeline row that shows a [label] on the left and a [value] on the right,
-/// using the same card styling as [_DateRow].
-class _LabelValueRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _LabelValueRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(child: Text(label)),
-            const SizedBox(width: 8),
-            Text(
-              value,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DateRow extends StatelessWidget {
-  final String label;
-  final DateTime date;
-  const _DateRow({required this.label, required this.date});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(child: Text(label)),
-            const SizedBox(width: 8),
-            Text(
-              formatLocaleDate(context, date),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
           ],
         ),
       ),

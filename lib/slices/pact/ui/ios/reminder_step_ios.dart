@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/slices/pact/ui/generic/option_tile.dart';
 
 class ReminderStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -26,6 +27,9 @@ class ReminderStepIos extends StatelessWidget {
       _ReminderOption(label: l10n.reminderMinutesBefore(60), offset: const Duration(minutes: 60)),
     ];
 
+    final primaryColor = CupertinoTheme.of(context).primaryColor;
+    final unselectedColor = CupertinoColors.tertiarySystemFill.resolveFrom(context);
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
@@ -44,7 +48,9 @@ class ReminderStepIos extends StatelessWidget {
           final isSelected = state.reminderOffset == option.offset;
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: GestureDetector(
+            child: OptionTile(
+              isSelected: isSelected,
+              label: option.label,
               onTap: () {
                 if (option.offset == null) {
                   onClearReminder();
@@ -52,31 +58,10 @@ class ReminderStepIos extends StatelessWidget {
                   onReminderOffsetChanged(option.offset!);
                 }
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? CupertinoTheme.of(context).primaryColor.withValues(alpha: 0.1)
-                      : CupertinoColors.tertiarySystemFill.resolveFrom(context),
-                  borderRadius: BorderRadius.circular(10),
-                  border: isSelected
-                      ? Border.all(
-                          color: CupertinoTheme.of(context).primaryColor,
-                          width: 2,
-                        )
-                      : null,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isSelected ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
-                      color: isSelected ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(option.label),
-                  ],
-                ),
-              ),
+              selectedColor: primaryColor,
+              unselectedColor: unselectedColor,
+              selectedIcon: CupertinoIcons.check_mark_circled_solid,
+              unselectedIcon: CupertinoIcons.circle,
             ),
           );
         }),

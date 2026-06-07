@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
+import 'package:habit_loop/slices/debug/ui/generic/override_badge.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
+import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
 
 class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
   const RemoteConfigOverridesPageAndroid({super.key});
@@ -40,8 +42,12 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           if (showBackendRestartBanner)
-            const _RestartRequiredBanner(
-              key: Key('debug-backend-restart-banner'),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: RestartRequiredBanner(
+                key: Key('debug-backend-restart-banner'),
+                color: Colors.amber,
+              ),
             ),
           for (final entry in entries) ...[
             ListTile(
@@ -51,7 +57,7 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                 style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
               ),
               subtitle: Text('Value: ${entry.effectiveValue}'),
-              trailing: _OverrideBadge(isOverridden: entry.isOverridden),
+              trailing: OverrideBadge(isOverridden: entry.isOverridden),
               onTap: () => _showEditDialog(
                 context: context,
                 entry: entry,
@@ -364,64 +370,6 @@ class _SeedButton extends StatelessWidget {
       title: Text(label),
       onTap: isBusy ? null : onPressed,
       enabled: !isBusy,
-    );
-  }
-}
-
-// debug_backend takes effect only after a restart — banner makes that visible.
-class _RestartRequiredBanner extends StatelessWidget {
-  const _RestartRequiredBanner({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.amber, width: 1),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.amber),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'debug_backend changed — restart the app to apply',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OverrideBadge extends StatelessWidget {
-  const _OverrideBadge({required this.isOverridden});
-
-  final bool isOverridden;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isOverridden ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant;
-    return Container(
-      key: Key(isOverridden ? 'override-badge' : 'default-badge'),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        isOverridden ? 'OVERRIDE' : 'DEFAULT',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color:
-              isOverridden ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
     );
   }
 }

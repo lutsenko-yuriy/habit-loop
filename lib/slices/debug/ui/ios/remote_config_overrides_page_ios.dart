@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
+import 'package:habit_loop/slices/debug/ui/generic/override_badge.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
+import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
 
 class RemoteConfigOverridesPageIos extends ConsumerWidget {
   const RemoteConfigOverridesPageIos({super.key});
@@ -47,8 +49,10 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             children: [
               if (showBackendRestartBanner) ...[
-                const _RestartRequiredBanner(
-                  key: Key('debug-backend-restart-banner'),
+                RestartRequiredBanner(
+                  key: const Key('debug-backend-restart-banner'),
+                  color: CupertinoColors.systemYellow.resolveFrom(context),
+                  icon: CupertinoIcons.exclamationmark_triangle_fill,
                 ),
                 const SizedBox(height: 8),
               ],
@@ -139,7 +143,7 @@ class _RcEntryRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            _OverrideBadge(isOverridden: entry.isOverridden),
+            OverrideBadge(isOverridden: entry.isOverridden),
             const SizedBox(width: 6),
             Icon(
               CupertinoIcons.chevron_right,
@@ -419,72 +423,6 @@ class _SeedButton extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(label),
-      ),
-    );
-  }
-}
-
-// debug_backend takes effect only after a restart — banner makes that visible.
-class _RestartRequiredBanner extends StatelessWidget {
-  const _RestartRequiredBanner({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: CupertinoColors.systemYellow.resolveFrom(context).withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: CupertinoColors.systemYellow.resolveFrom(context),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            CupertinoIcons.exclamationmark_triangle_fill,
-            size: 16,
-            color: CupertinoColors.systemYellow.resolveFrom(context),
-          ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text(
-              'debug_backend changed — restart the app to apply',
-              style: TextStyle(fontSize: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OverrideBadge extends StatelessWidget {
-  const _OverrideBadge({required this.isOverridden});
-
-  final bool isOverridden;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final bgColor = isOverridden ? cs.primary : cs.outlineVariant;
-    final textColor = isOverridden ? cs.onPrimary : cs.onSurfaceVariant;
-
-    return Container(
-      key: Key(isOverridden ? 'override-badge' : 'default-badge'),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        isOverridden ? 'OVERRIDE' : 'DEFAULT',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
       ),
     );
   }

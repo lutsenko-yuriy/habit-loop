@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/slices/pact/ui/generic/date_row_tile.dart';
 
 class PactDurationStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -23,6 +24,9 @@ class PactDurationStepIos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = CupertinoTheme.of(context).primaryColor;
+    final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
@@ -35,9 +39,11 @@ class PactDurationStepIos extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        _DateRow(
+        DateRowTile(
           label: l10n.startDateLabel,
-          date: state.startDate,
+          value: formatLocaleDate(context, state.startDate),
+          valueColor: primaryColor,
+          backgroundColor: fill,
           onTap: () => _showDatePicker(
             context,
             state.startDate,
@@ -46,9 +52,11 @@ class PactDurationStepIos extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _DateRow(
+        DateRowTile(
           label: l10n.endDateLabel,
-          date: state.endDate,
+          value: formatLocaleDate(context, state.endDate),
+          valueColor: primaryColor,
+          backgroundColor: fill,
           onTap: () => _showDatePicker(
             context,
             state.endDate,
@@ -95,44 +103,6 @@ class PactDurationStepIos extends StatelessWidget {
               SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DateRow extends StatelessWidget {
-  final String label;
-  final DateTime date;
-  final VoidCallback onTap;
-
-  const _DateRow({
-    required this.label,
-    required this.date,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label),
-            Text(
-              formatLocaleDate(context, date),
-              style: TextStyle(
-                color: CupertinoTheme.of(context).primaryColor,
-              ),
-            ),
-          ],
         ),
       ),
     );
