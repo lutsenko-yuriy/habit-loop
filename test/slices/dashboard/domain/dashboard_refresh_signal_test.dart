@@ -53,7 +53,6 @@ void main() {
       // The VM reacts asynchronously — wait for the load triggered by the signal.
       await Future<void>.delayed(Duration.zero);
       expect(container.read(dashboardViewModelProvider).isLoading, isFalse);
-      // State remains valid and loaded after signal-triggered reload.
       expect(container.read(dashboardViewModelProvider).calendarDays, hasLength(7));
     });
   });
