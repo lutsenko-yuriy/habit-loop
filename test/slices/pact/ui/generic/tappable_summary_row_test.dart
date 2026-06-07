@@ -9,6 +9,7 @@ Widget _wrap({
   Color labelColor = Colors.grey,
   VoidCallback? onTap,
   Widget? divider,
+  bool useInkWell = false,
 }) {
   return MaterialApp(
     home: Scaffold(
@@ -19,6 +20,7 @@ Widget _wrap({
         labelColor: labelColor,
         onTap: onTap ?? () {},
         divider: divider,
+        useInkWell: useInkWell,
       ),
     ),
   );
@@ -56,5 +58,24 @@ void main() {
   testWidgets('shows chevron_right icon', (tester) async {
     await tester.pumpWidget(_wrap());
     expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+  });
+
+  testWidgets('uses InkWell when useInkWell is true', (tester) async {
+    await tester.pumpWidget(_wrap(useInkWell: true));
+    final inRow = find.descendant(of: find.byType(TappableSummaryRow), matching: find.byType(InkWell));
+    expect(inRow, findsOneWidget);
+  });
+
+  testWidgets('uses GestureDetector (not InkWell) when useInkWell is false', (tester) async {
+    await tester.pumpWidget(_wrap());
+    final inRow = find.descendant(of: find.byType(TappableSummaryRow), matching: find.byType(InkWell));
+    expect(inRow, findsNothing);
+  });
+
+  testWidgets('InkWell variant calls onTap when tapped', (tester) async {
+    var tapped = false;
+    await tester.pumpWidget(_wrap(onTap: () => tapped = true, useInkWell: true));
+    await tester.tap(find.byType(TappableSummaryRow));
+    expect(tapped, isTrue);
   });
 }

@@ -83,8 +83,8 @@ class PactEditPageAndroid extends StatelessWidget {
   }
 
   Widget _buildPage(int index, FocusNode focusNode, AppLocalizations l10n, WizardStyle style, BuildContext context) {
-    switch (index) {
-      case 0:
+    switch (kEditSteps[index]) {
+      case PactWizardStep.habitName:
         return HabitNameStepAndroid(
           state: state,
           l10n: l10n,
@@ -92,14 +92,14 @@ class PactEditPageAndroid extends StatelessWidget {
           showCommitmentWarning: false,
           focusNode: focusNode,
         );
-      case 1:
+      case PactWizardStep.reminder:
         return ReminderStepAndroid(
           state: state,
           l10n: l10n,
           onReminderOffsetChanged: onReminderOffsetChanged,
           onClearReminder: onClearReminder,
         );
-      default:
+      case PactWizardStep.summary:
         return _EditSummaryStepAndroid(
           state: state,
           l10n: l10n,
@@ -109,6 +109,11 @@ class PactEditPageAndroid extends StatelessWidget {
           isSaving: isSaving,
           saveError: saveError,
         );
+      case PactWizardStep.duration:
+      case PactWizardStep.showupDuration:
+      case PactWizardStep.schedule:
+        // kEditSteps only contains habitName/reminder/summary — these are unreachable.
+        throw StateError('Unexpected edit wizard step: ${kEditSteps[index]}');
     }
   }
 }
@@ -164,6 +169,7 @@ class _EditSummaryStepAndroid extends StatelessWidget {
                       labelColor: style.labelColor,
                       onTap: () => onJumpToStep(0),
                       divider: const Divider(height: 1),
+                      useInkWell: true,
                     ),
                     TappableSummaryRow(
                       tapKey: 'edit-summary-row-tap-${PactWizardStep.reminder.analyticsName}',
@@ -171,6 +177,7 @@ class _EditSummaryStepAndroid extends StatelessWidget {
                       value: reminderText,
                       labelColor: style.labelColor,
                       onTap: () => onJumpToStep(1),
+                      useInkWell: true,
                     ),
                   ],
                 ),

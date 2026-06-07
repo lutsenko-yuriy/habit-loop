@@ -51,6 +51,7 @@ class SummaryStepAndroid extends StatelessWidget {
                       labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.habitName.value),
                       divider: const Divider(height: 1),
+                      useInkWell: true,
                     ),
                     TappableSummaryRow(
                       tapKey: 'summary-row-tap-${PactWizardStep.duration.analyticsName}',
@@ -59,6 +60,7 @@ class SummaryStepAndroid extends StatelessWidget {
                       labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.duration.value),
                       divider: const Divider(height: 1),
+                      useInkWell: true,
                     ),
                     TappableSummaryRow(
                       tapKey: 'summary-row-tap-${PactWizardStep.showupDuration.analyticsName}',
@@ -67,6 +69,7 @@ class SummaryStepAndroid extends StatelessWidget {
                       labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.showupDuration.value),
                       divider: const Divider(height: 1),
+                      useInkWell: true,
                     ),
                     TappableSummaryRow(
                       tapKey: 'summary-row-tap-${PactWizardStep.schedule.analyticsName}',
@@ -75,6 +78,7 @@ class SummaryStepAndroid extends StatelessWidget {
                       labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.schedule.value),
                       divider: const Divider(height: 1),
+                      useInkWell: true,
                     ),
                     TappableSummaryRow(
                       tapKey: 'summary-row-tap-${PactWizardStep.reminder.analyticsName}',
@@ -82,6 +86,7 @@ class SummaryStepAndroid extends StatelessWidget {
                       value: reminderText,
                       labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.reminder.value),
+                      useInkWell: true,
                     ),
                   ],
                 ),

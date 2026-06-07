@@ -91,8 +91,8 @@ class PactEditPageIos extends StatelessWidget {
   }
 
   Widget _buildPage(int index, FocusNode focusNode, AppLocalizations l10n, WizardStyle style, BuildContext context) {
-    switch (index) {
-      case 0:
+    switch (kEditSteps[index]) {
+      case PactWizardStep.habitName:
         return HabitNameStepIos(
           state: state,
           l10n: l10n,
@@ -100,14 +100,14 @@ class PactEditPageIos extends StatelessWidget {
           showCommitmentWarning: false,
           focusNode: focusNode,
         );
-      case 1:
+      case PactWizardStep.reminder:
         return ReminderStepIos(
           state: state,
           l10n: l10n,
           onReminderOffsetChanged: onReminderOffsetChanged,
           onClearReminder: onClearReminder,
         );
-      default:
+      case PactWizardStep.summary:
         return _EditSummaryStepIos(
           state: state,
           l10n: l10n,
@@ -117,6 +117,11 @@ class PactEditPageIos extends StatelessWidget {
           isSaving: isSaving,
           saveError: saveError,
         );
+      case PactWizardStep.duration:
+      case PactWizardStep.showupDuration:
+      case PactWizardStep.schedule:
+        // kEditSteps only contains habitName/reminder/summary — these are unreachable.
+        throw StateError('Unexpected edit wizard step: ${kEditSteps[index]}');
     }
   }
 }

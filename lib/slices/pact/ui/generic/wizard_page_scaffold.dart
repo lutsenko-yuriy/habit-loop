@@ -5,11 +5,15 @@ import 'package:flutter/widgets.dart';
 class WizardPageScaffold extends StatefulWidget {
   final int currentPage;
   final int pageCount;
-  final Widget Function(int index, FocusNode habitNameFocusNode) pageBuilder;
+  final Widget Function(int index, FocusNode focusNode) pageBuilder;
   final ValueChanged<int> onPageChanged;
   final String hintText;
   final Color hintTextColor;
   final Key? pageViewKey;
+
+  // Index of the page that owns the text field. requestFocus is called when
+  // the user navigates to this page; unfocus is called for all other pages.
+  final int firstFocusPageIndex;
 
   const WizardPageScaffold({
     super.key,
@@ -20,6 +24,7 @@ class WizardPageScaffold extends StatefulWidget {
     required this.hintText,
     required this.hintTextColor,
     this.pageViewKey,
+    this.firstFocusPageIndex = 0,
   });
 
   @override
@@ -71,7 +76,7 @@ class _WizardPageScaffoldState extends State<WizardPageScaffold> {
     if (!_isProgrammaticAnimation) {
       widget.onPageChanged(page);
     }
-    if (page == 0) {
+    if (page == widget.firstFocusPageIndex) {
       _habitNameFocusNode.requestFocus();
     } else {
       _habitNameFocusNode.unfocus();
