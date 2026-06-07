@@ -2,27 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
-import 'package:habit_loop/slices/pact/ui/generic/summary_row.dart';
+import 'package:habit_loop/slices/pact/ui/generic/tappable_summary_row.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
 
-/// Summary wizard page on Android.
-///
-/// Displays all the collected pact data as tappable rows. Tapping a row
-/// navigates back to that step so the user can revise their choice before
-/// committing. The "Create Pact" button is pinned at the bottom of this widget
-/// so it slides in as part of the page rather than appearing separately.
 class SummaryStepAndroid extends StatelessWidget {
   final PactCreationState state;
   final AppLocalizations l10n;
-
-  /// Called with the target page index when the user taps a summary row to
-  /// jump back to that step.
   final ValueChanged<int> onJumpToStep;
-
-  /// Called when the user taps "Create Pact".
   final VoidCallback onSubmit;
-
-  /// Whether the pact builder is complete enough to allow submission.
-  /// When false the button is rendered disabled.
   final bool isComplete;
 
   const SummaryStepAndroid({
@@ -36,9 +23,9 @@ class SummaryStepAndroid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style = WizardStyle.material(context);
     final theme = Theme.of(context);
     final reminderText = reminderDescription(l10n, state.reminderOffset);
-    final labelColor = theme.colorScheme.onSurfaceVariant;
 
     return Column(
       children: [
@@ -52,48 +39,48 @@ class SummaryStepAndroid extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
+                  color: style.cardColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   children: [
-                    _TappableSummaryRow(
-                      stepName: PactWizardStep.habitName.analyticsName,
+                    TappableSummaryRow(
+                      tapKey: 'summary-row-tap-${PactWizardStep.habitName.analyticsName}',
                       label: l10n.summaryHabit,
                       value: state.habitName.isEmpty ? '—' : state.habitName,
-                      labelColor: labelColor,
+                      labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.habitName.value),
+                      divider: const Divider(height: 1),
                     ),
-                    const Divider(height: 1),
-                    _TappableSummaryRow(
-                      stepName: PactWizardStep.duration.analyticsName,
+                    TappableSummaryRow(
+                      tapKey: 'summary-row-tap-${PactWizardStep.duration.analyticsName}',
                       label: l10n.summaryDuration,
                       value: '${formatPactDate(context, state.startDate)} → ${formatPactDate(context, state.endDate)}',
-                      labelColor: labelColor,
+                      labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.duration.value),
+                      divider: const Divider(height: 1),
                     ),
-                    const Divider(height: 1),
-                    _TappableSummaryRow(
-                      stepName: PactWizardStep.showupDuration.analyticsName,
+                    TappableSummaryRow(
+                      tapKey: 'summary-row-tap-${PactWizardStep.showupDuration.analyticsName}',
                       label: l10n.summaryShowupDuration,
                       value: l10n.showupDurationMinutes(state.showupDuration?.inMinutes ?? 0),
-                      labelColor: labelColor,
+                      labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.showupDuration.value),
+                      divider: const Divider(height: 1),
                     ),
-                    const Divider(height: 1),
-                    _TappableSummaryRow(
-                      stepName: PactWizardStep.schedule.analyticsName,
+                    TappableSummaryRow(
+                      tapKey: 'summary-row-tap-${PactWizardStep.schedule.analyticsName}',
                       label: l10n.summarySchedule,
                       value: scheduleDescription(context, l10n, state.schedule),
-                      labelColor: labelColor,
+                      labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.schedule.value),
+                      divider: const Divider(height: 1),
                     ),
-                    const Divider(height: 1),
-                    _TappableSummaryRow(
-                      stepName: PactWizardStep.reminder.analyticsName,
+                    TappableSummaryRow(
+                      tapKey: 'summary-row-tap-${PactWizardStep.reminder.analyticsName}',
                       label: l10n.summaryReminder,
                       value: reminderText,
-                      labelColor: labelColor,
+                      labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.reminder.value),
                     ),
                   ],
@@ -115,41 +102,6 @@ class SummaryStepAndroid extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _TappableSummaryRow extends StatelessWidget {
-  final String stepName;
-  final String label;
-  final String value;
-  final Color labelColor;
-  final VoidCallback onTap;
-
-  const _TappableSummaryRow({
-    required this.stepName,
-    required this.label,
-    required this.value,
-    required this.labelColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      key: Key('summary-row-tap-$stepName'),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: SummaryRow(label: label, value: value, labelColor: labelColor),
-            ),
-            Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ],
-        ),
-      ),
     );
   }
 }

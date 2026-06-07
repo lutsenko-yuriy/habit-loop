@@ -1,5 +1,3 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -10,15 +8,12 @@ import 'package:habit_loop/slices/pact/ui/android/reminder_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/android/schedule_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/android/showup_duration_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/android/summary_step_android.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_page_scaffold.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_step_indicator.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
 
-/// Android pact creation wizard.
-///
-/// Uses a [PageView] with six wizard steps:
-/// habit name → pact duration → showup duration → schedule → reminder → summary.
-///
-/// See [PactCreationPageIos] for the shared navigation model. This widget
-/// follows the same pattern but uses Material widgets throughout.
-class PactCreationPageAndroid extends StatefulWidget {
+// Android pact creation wizard: 6-page PageView (habit name → duration → showup duration → schedule → reminder → summary).
+class PactCreationPageAndroid extends StatelessWidget {
   const PactCreationPageAndroid({
     super.key,
     required this.state,
@@ -45,126 +40,48 @@ class PactCreationPageAndroid extends StatefulWidget {
   final ValueChanged<ShowupSchedule> onScheduleChanged;
   final ValueChanged<Duration> onReminderOffsetChanged;
   final VoidCallback onClearReminder;
-
-  /// Called whenever the visible page changes. Wired to
-  /// [PactCreationViewModel.goToPage] in [PactCreationScreen].
   final ValueChanged<int> onPageChanged;
-
-  /// Called when the user taps a summary row to jump back to a step.
   final ValueChanged<int> onJumpToStep;
-
-  /// Called when the user taps the × button to dismiss the wizard.
   final VoidCallback onClose;
-
-  /// Called when "Create Pact" is tapped on the summary page.
   final VoidCallback onSubmit;
-
-  @override
-  State<PactCreationPageAndroid> createState() => _PactCreationPageAndroidState();
-}
-
-class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
-  late final PageController _pageController;
-  late final FocusNode _habitNameFocusNode;
-
-  /// True while a programmatic [PageController.animateToPage] call is in
-  /// progress (e.g. after a step-indicator or summary-row tap).
-  ///
-  /// Intermediate [onPageChanged] callbacks fired during the animation must
-  /// not update [state.currentStep] — doing so would cause the step indicator
-  /// to flash through all pages between the origin and the destination.
-  bool _isProgrammaticAnimation = false;
-
-  static const _animationDuration = Duration(milliseconds: 300);
-  static const _animationCurve = Curves.easeInOut;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: widget.state.currentStep.value);
-    _habitNameFocusNode = FocusNode();
-  }
-
-  @override
-  void didUpdateWidget(covariant PactCreationPageAndroid oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final targetPage = widget.state.currentStep.value;
-    if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
-      // Skip if a programmatic animation is already running, or if the user is
-      // currently scrolling (e.g. a rebuild fires mid-swipe before the page
-      // settles — calling animateToPage here would fight the user's gesture and
-      // set _isProgrammaticAnimation = true, silently suppressing onPageChanged).
-      if (_isProgrammaticAnimation || _pageController.position.isScrollingNotifier.value) return;
-      _isProgrammaticAnimation = true;
-      unawaited(
-        _pageController
-            .animateToPage(targetPage, duration: _animationDuration, curve: _animationCurve)
-            .whenComplete(() {
-          if (mounted) _isProgrammaticAnimation = false;
-        }),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _habitNameFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _handlePageChanged(int page) {
-    // Suppress view-model updates for intermediate pages during a programmatic
-    // jump — the target step is already set by the jump callback.
-    if (!_isProgrammaticAnimation) {
-      widget.onPageChanged(page);
-    }
-    if (page == 0) {
-      _habitNameFocusNode.requestFocus();
-    } else {
-      _habitNameFocusNode.unfocus();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final step = widget.state.currentStep;
-    final isLastStep = step.isLast;
-    final habitName = widget.state.habitName;
+    final style = WizardStyle.material(context);
+    final step = state.currentStep;
+    final habitName = state.habitName;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          habitName.isNotEmpty ? habitName : (isLastStep ? l10n.wizardSummaryTitle : l10n.pactCreationTitle),
+          habitName.isNotEmpty ? habitName : (step.isLast ? l10n.wizardSummaryTitle : l10n.pactCreationTitle),
         ),
         leading: IconButton(
           key: const Key('pact-creation-close-button'),
           icon: const Icon(Icons.close),
-          onPressed: widget.onClose,
+          onPressed: onClose,
         ),
         automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
-          _StepIndicator(currentStep: step, onStepTapped: widget.onJumpToStep),
-          Expanded(
-            child: PageView(
-              key: const Key('pact-creation-pageview-android'),
-              controller: _pageController,
-              onPageChanged: _handlePageChanged,
-              children: _buildPages(l10n),
-            ),
+          WizardStepIndicator(
+            style: style,
+            currentIndex: step.value,
+            stepCount: PactWizardStep.count,
+            onStepTapped: onJumpToStep,
+            keyPrefix: 'pact-creation-step-indicator-android',
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Text(
-              l10n.wizardSwipeHint,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+          Expanded(
+            child: WizardPageScaffold(
+              currentPage: step.value,
+              pageCount: PactWizardStep.count,
+              pageViewKey: const Key('pact-creation-pageview-android'),
+              onPageChanged: onPageChanged,
+              hintText: l10n.wizardSwipeHint,
+              hintTextColor: style.hintTextColor,
+              pageBuilder: (index, focusNode) => _buildPage(index, focusNode, l10n),
             ),
           ),
         ],
@@ -172,87 +89,46 @@ class _PactCreationPageAndroidState extends State<PactCreationPageAndroid> {
     );
   }
 
-  List<Widget> _buildPages(AppLocalizations l10n) => [
-        HabitNameStepAndroid(
-          state: widget.state,
+  Widget _buildPage(int index, FocusNode focusNode, AppLocalizations l10n) {
+    switch (PactWizardStep.values[index]) {
+      case PactWizardStep.habitName:
+        return HabitNameStepAndroid(
+          state: state,
           l10n: l10n,
-          onHabitNameChanged: widget.onHabitNameChanged,
-          focusNode: _habitNameFocusNode,
-        ),
-        PactDurationStepAndroid(
-          state: widget.state,
+          onHabitNameChanged: onHabitNameChanged,
+          focusNode: focusNode,
+        );
+      case PactWizardStep.duration:
+        return PactDurationStepAndroid(
+          state: state,
           l10n: l10n,
-          onStartDateChanged: widget.onStartDateChanged,
-          onEndDateChanged: widget.onEndDateChanged,
-        ),
-        ShowupDurationStepAndroid(
-          state: widget.state,
+          onStartDateChanged: onStartDateChanged,
+          onEndDateChanged: onEndDateChanged,
+        );
+      case PactWizardStep.showupDuration:
+        return ShowupDurationStepAndroid(state: state, l10n: l10n, onChanged: onShowupDurationChanged);
+      case PactWizardStep.schedule:
+        return ScheduleStepAndroid(
+          state: state,
           l10n: l10n,
-          onChanged: widget.onShowupDurationChanged,
-        ),
-        ScheduleStepAndroid(
-          state: widget.state,
+          onScheduleTypeChanged: onScheduleTypeChanged,
+          onScheduleChanged: onScheduleChanged,
+        );
+      case PactWizardStep.reminder:
+        return ReminderStepAndroid(
+          state: state,
           l10n: l10n,
-          onScheduleTypeChanged: widget.onScheduleTypeChanged,
-          onScheduleChanged: widget.onScheduleChanged,
-        ),
-        ReminderStepAndroid(
-          state: widget.state,
+          onReminderOffsetChanged: onReminderOffsetChanged,
+          onClearReminder: onClearReminder,
+        );
+      case PactWizardStep.summary:
+        return SummaryStepAndroid(
+          state: state,
           l10n: l10n,
-          onReminderOffsetChanged: widget.onReminderOffsetChanged,
-          onClearReminder: widget.onClearReminder,
-        ),
-        SummaryStepAndroid(
-          state: widget.state,
-          l10n: l10n,
-          onJumpToStep: widget.onJumpToStep,
-          onSubmit: widget.onSubmit,
-          isComplete: widget.state.builder.isComplete,
-        ),
-      ];
-}
-
-// ---------------------------------------------------------------------------
-// Step indicator bar
-// ---------------------------------------------------------------------------
-
-class _StepIndicator extends StatelessWidget {
-  final PactWizardStep currentStep;
-
-  /// Called with the tapped page index when the user taps a segment.
-  final ValueChanged<int> onStepTapped;
-
-  const _StepIndicator({required this.currentStep, required this.onStepTapped});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      key: const Key('pact-creation-step-indicator-android'),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: List.generate(PactWizardStep.count, (index) {
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onStepTapped(index),
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                key: Key('pact-creation-step-indicator-android-segment-$index'),
-                height: 4,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  color: index < currentStep.index
-                      ? theme.colorScheme.primary.withValues(alpha: 0.3)
-                      : index == currentStep.index
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surfaceContainerHighest,
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
+          onJumpToStep: onJumpToStep,
+          onSubmit: onSubmit,
+          isComplete: state.builder.isComplete,
+        );
+    }
   }
 }
