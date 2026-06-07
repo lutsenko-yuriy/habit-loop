@@ -38,12 +38,15 @@ import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_
 import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
+import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_list_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
+import 'package:habit_loop/slices/showup/application/showup_service.dart';
 import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -192,6 +195,27 @@ final fakeFirestoreClientProvider = Provider<Object?>((ref) => null);
 
 final showupGenerationServiceProvider = Provider<ShowupGenerationService>((ref) {
   return ShowupGenerationService(repository: ref.watch(showupRepositoryProvider));
+});
+
+final showupServiceProvider = Provider<ShowupService>((ref) {
+  return ShowupService(
+    pactRepository: ref.watch(pactRepositoryProvider),
+    showupRepository: ref.watch(showupRepositoryProvider),
+  );
+});
+
+final dashboardQueryServiceProvider = Provider<DashboardQueryService>((ref) {
+  return DashboardQueryService(
+    pactRepository: ref.watch(pactRepositoryProvider),
+    showupRepository: ref.watch(showupRepositoryProvider),
+  );
+});
+
+final pactListQueryServiceProvider = Provider<PactListQueryService>((ref) {
+  return PactListQueryService(
+    pactRepository: ref.watch(pactRepositoryProvider),
+    showupRepository: ref.watch(showupRepositoryProvider),
+  );
 });
 
 final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((ref) {
