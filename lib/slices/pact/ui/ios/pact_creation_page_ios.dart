@@ -1,20 +1,20 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_page_scaffold.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_step_indicator.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
 import 'package:habit_loop/slices/pact/ui/ios/habit_name_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_duration_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/reminder_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/schedule_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/showup_duration_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/summary_step_ios.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 // iOS creation wizard: 6-page PageView (habit name → duration → showup duration → schedule → reminder → summary).
-class PactCreationPageIos extends StatefulWidget {
+class PactCreationPageIos extends StatelessWidget {
   const PactCreationPageIos({
     super.key,
     required this.state,
@@ -41,75 +41,17 @@ class PactCreationPageIos extends StatefulWidget {
   final ValueChanged<ShowupSchedule> onScheduleChanged;
   final ValueChanged<Duration> onReminderOffsetChanged;
   final VoidCallback onClearReminder;
-
   final ValueChanged<int> onPageChanged;
   final ValueChanged<int> onJumpToStep;
   final VoidCallback onClose;
   final VoidCallback onSubmit;
 
   @override
-  State<PactCreationPageIos> createState() => _PactCreationPageIosState();
-}
-
-class _PactCreationPageIosState extends State<PactCreationPageIos> {
-  late final PageController _pageController;
-  late final FocusNode _habitNameFocusNode;
-
-  // Guards against mid-animation onPageChanged callbacks flashing through intermediate steps.
-  bool _isProgrammaticAnimation = false;
-
-  static const _animationDuration = Duration(milliseconds: 300);
-  static const _animationCurve = Curves.easeInOut;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: widget.state.currentStep.value);
-    _habitNameFocusNode = FocusNode();
-  }
-
-  @override
-  void didUpdateWidget(covariant PactCreationPageIos oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final targetPage = widget.state.currentStep.value;
-    if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
-      // Skip mid-swipe: animateToPage would fight the gesture and suppress onPageChanged.
-      if (_isProgrammaticAnimation || _pageController.position.isScrollingNotifier.value) return;
-      _isProgrammaticAnimation = true;
-      unawaited(
-        _pageController
-            .animateToPage(targetPage, duration: _animationDuration, curve: _animationCurve)
-            .whenComplete(() {
-          if (mounted) _isProgrammaticAnimation = false;
-        }),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _habitNameFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _handlePageChanged(int page) {
-    if (!_isProgrammaticAnimation) {
-      widget.onPageChanged(page);
-    }
-    if (page == 0) {
-      _habitNameFocusNode.requestFocus();
-    } else {
-      _habitNameFocusNode.unfocus();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final step = widget.state.currentStep;
-    final isLastStep = step.isLast;
-    final habitName = widget.state.habitName;
+    final style = WizardStyle.cupertino(context);
+    final step = state.currentStep;
+    final habitName = state.habitName;
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -118,11 +60,11 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
         leading: CupertinoButton(
           key: const Key('pact-creation-close-button'),
           padding: EdgeInsets.zero,
-          onPressed: widget.onClose,
+          onPressed: onClose,
           child: const Icon(CupertinoIcons.xmark),
         ),
         middle: Text(
-          habitName.isNotEmpty ? habitName : (isLastStep ? l10n.wizardSummaryTitle : l10n.pactCreationTitle),
+          habitName.isNotEmpty ? habitName : (step.isLast ? l10n.wizardSummaryTitle : l10n.pactCreationTitle),
         ),
       ),
       child: SafeArea(
@@ -130,24 +72,22 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
           type: MaterialType.transparency,
           child: Column(
             children: [
-              _StepIndicator(currentStep: step, onStepTapped: widget.onJumpToStep),
-              Expanded(
-                child: PageView(
-                  key: const Key('pact-creation-pageview-ios'),
-                  controller: _pageController,
-                  onPageChanged: _handlePageChanged,
-                  children: _buildPages(l10n),
-                ),
+              WizardStepIndicator(
+                style: style,
+                currentIndex: step.value,
+                stepCount: PactWizardStep.count,
+                onStepTapped: onJumpToStep,
+                keyPrefix: 'pact-creation-step-indicator-ios',
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Text(
-                  l10n.wizardSwipeHint,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: CupertinoColors.systemGrey.resolveFrom(context),
-                  ),
+              Expanded(
+                child: WizardPageScaffold(
+                  currentPage: step.value,
+                  pageCount: PactWizardStep.count,
+                  pageViewKey: const Key('pact-creation-pageview-ios'),
+                  onPageChanged: onPageChanged,
+                  hintText: l10n.wizardSwipeHint,
+                  hintTextColor: style.hintTextColor,
+                  pageBuilder: (index, focusNode) => _buildPage(index, focusNode, l10n),
                 ),
               ),
             ],
@@ -157,86 +97,47 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
     );
   }
 
-  List<Widget> _buildPages(AppLocalizations l10n) => [
-        HabitNameStepIos(
-          state: widget.state,
+  Widget _buildPage(int index, FocusNode focusNode, AppLocalizations l10n) {
+    switch (PactWizardStep.values[index]) {
+      case PactWizardStep.habitName:
+        return HabitNameStepIos(
+          state: state,
           l10n: l10n,
-          onHabitNameChanged: widget.onHabitNameChanged,
-          focusNode: _habitNameFocusNode,
-        ),
-        PactDurationStepIos(
-          state: widget.state,
+          onHabitNameChanged: onHabitNameChanged,
+          focusNode: focusNode,
+        );
+      case PactWizardStep.duration:
+        return PactDurationStepIos(
+          state: state,
           l10n: l10n,
-          onStartDateChanged: widget.onStartDateChanged,
-          onEndDateChanged: widget.onEndDateChanged,
-          onShowupDurationChanged: widget.onShowupDurationChanged,
-        ),
-        ShowupDurationStepIos(
-          state: widget.state,
+          onStartDateChanged: onStartDateChanged,
+          onEndDateChanged: onEndDateChanged,
+          onShowupDurationChanged: onShowupDurationChanged,
+        );
+      case PactWizardStep.showupDuration:
+        return ShowupDurationStepIos(state: state, l10n: l10n, onChanged: onShowupDurationChanged);
+      case PactWizardStep.schedule:
+        return ScheduleStepIos(
+          state: state,
           l10n: l10n,
-          onChanged: widget.onShowupDurationChanged,
-        ),
-        ScheduleStepIos(
-          state: widget.state,
+          onScheduleTypeChanged: onScheduleTypeChanged,
+          onScheduleChanged: onScheduleChanged,
+        );
+      case PactWizardStep.reminder:
+        return ReminderStepIos(
+          state: state,
           l10n: l10n,
-          onScheduleTypeChanged: widget.onScheduleTypeChanged,
-          onScheduleChanged: widget.onScheduleChanged,
-        ),
-        ReminderStepIos(
-          state: widget.state,
+          onReminderOffsetChanged: onReminderOffsetChanged,
+          onClearReminder: onClearReminder,
+        );
+      case PactWizardStep.summary:
+        return SummaryStepIos(
+          state: state,
           l10n: l10n,
-          onReminderOffsetChanged: widget.onReminderOffsetChanged,
-          onClearReminder: widget.onClearReminder,
-        ),
-        SummaryStepIos(
-          state: widget.state,
-          l10n: l10n,
-          onJumpToStep: widget.onJumpToStep,
-          onSubmit: widget.onSubmit,
-          isComplete: widget.state.builder.isComplete,
-        ),
-      ];
-}
-
-// ---------------------------------------------------------------------------
-// Step indicator bar
-// ---------------------------------------------------------------------------
-
-class _StepIndicator extends StatelessWidget {
-  final PactWizardStep currentStep;
-
-  final ValueChanged<int> onStepTapped;
-
-  const _StepIndicator({required this.currentStep, required this.onStepTapped});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      key: const Key('pact-creation-step-indicator-ios'),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: List.generate(PactWizardStep.count, (index) {
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onStepTapped(index),
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                key: Key('pact-creation-step-indicator-ios-segment-$index'),
-                height: 4,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  color: index < currentStep.index
-                      ? HabitLoopColors.primary.withValues(alpha: 0.3)
-                      : index == currentStep.index
-                          ? HabitLoopColors.primary
-                          : CupertinoColors.tertiarySystemFill.resolveFrom(context),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
+          onJumpToStep: onJumpToStep,
+          onSubmit: onSubmit,
+          isComplete: state.builder.isComplete,
+        );
+    }
   }
 }

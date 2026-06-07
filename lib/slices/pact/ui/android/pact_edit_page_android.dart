@@ -1,5 +1,3 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
@@ -7,10 +5,13 @@ import 'package:habit_loop/slices/pact/ui/android/habit_name_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/android/reminder_step_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_view_model.dart';
-import 'package:habit_loop/slices/pact/ui/generic/summary_row.dart';
+import 'package:habit_loop/slices/pact/ui/generic/tappable_summary_row.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_page_scaffold.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_step_indicator.dart';
+import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
 
 // Android edit wizard: 3-page PageView (habit name → reminder → summary). × dismisses without saving.
-class PactEditPageAndroid extends StatefulWidget {
+class PactEditPageAndroid extends StatelessWidget {
   const PactEditPageAndroid({
     super.key,
     required this.state,
@@ -29,7 +30,6 @@ class PactEditPageAndroid extends StatefulWidget {
   final ValueChanged<String> onHabitNameChanged;
   final ValueChanged<Duration> onReminderOffsetChanged;
   final VoidCallback onClearReminder;
-
   final ValueChanged<int> onPageChanged;
   final ValueChanged<int> onJumpToStep;
   final VoidCallback onClose;
@@ -38,68 +38,12 @@ class PactEditPageAndroid extends StatefulWidget {
   final Object? saveError;
 
   @override
-  State<PactEditPageAndroid> createState() => _PactEditPageAndroidState();
-}
-
-class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
-  late final PageController _pageController;
-  late final FocusNode _habitNameFocusNode;
-
-  // Guards against mid-animation onPageChanged callbacks flashing through intermediate steps.
-  bool _isProgrammaticAnimation = false;
-
-  static const _animationDuration = Duration(milliseconds: 300);
-  static const _animationCurve = Curves.easeInOut;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: _editPageIndex(widget.state.currentStep));
-    _habitNameFocusNode = FocusNode();
-  }
-
-  @override
-  void didUpdateWidget(covariant PactEditPageAndroid oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final targetPage = _editPageIndex(widget.state.currentStep);
-    if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
-      // Skip mid-swipe: animateToPage would fight the gesture and suppress onPageChanged.
-      if (_isProgrammaticAnimation || _pageController.position.isScrollingNotifier.value) return;
-      _isProgrammaticAnimation = true;
-      unawaited(
-        _pageController
-            .animateToPage(targetPage, duration: _animationDuration, curve: _animationCurve)
-            .whenComplete(() {
-          if (mounted) _isProgrammaticAnimation = false;
-        }),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _habitNameFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _handlePageChanged(int page) {
-    if (!_isProgrammaticAnimation) {
-      widget.onPageChanged(page);
-    }
-    if (page == 0) {
-      _habitNameFocusNode.requestFocus();
-    } else {
-      _habitNameFocusNode.unfocus();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final currentPage = _editPageIndex(widget.state.currentStep);
+    final style = WizardStyle.material(context);
+    final currentPage = _editPageIndex(state.currentStep);
     final isSummary = currentPage == kEditWizardPageCount - 1;
-    final habitName = widget.state.habitName;
+    final habitName = state.habitName;
 
     return Scaffold(
       appBar: AppBar(
@@ -109,30 +53,28 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
         leading: IconButton(
           key: const Key('pact-edit-close-button'),
           icon: const Icon(Icons.close),
-          onPressed: widget.onClose,
+          onPressed: onClose,
         ),
         automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
-          _EditStepIndicator(currentPage: currentPage, onStepTapped: widget.onJumpToStep),
-          Expanded(
-            child: PageView(
-              key: const Key('pact-edit-pageview-android'),
-              controller: _pageController,
-              onPageChanged: _handlePageChanged,
-              children: _buildPages(l10n),
-            ),
+          WizardStepIndicator(
+            style: style,
+            currentIndex: currentPage,
+            stepCount: kEditWizardPageCount,
+            onStepTapped: onJumpToStep,
+            keyPrefix: 'pact-edit-step-indicator-android',
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Text(
-              l10n.wizardSwipeHint,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+          Expanded(
+            child: WizardPageScaffold(
+              currentPage: currentPage,
+              pageCount: kEditWizardPageCount,
+              pageViewKey: const Key('pact-edit-pageview-android'),
+              onPageChanged: onPageChanged,
+              hintText: l10n.wizardSwipeHint,
+              hintTextColor: style.hintTextColor,
+              pageBuilder: (index, focusNode) => _buildPage(index, focusNode, l10n, style, context),
             ),
           ),
         ],
@@ -140,29 +82,40 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
     );
   }
 
-  List<Widget> _buildPages(AppLocalizations l10n) => [
-        HabitNameStepAndroid(
-          state: widget.state,
+  Widget _buildPage(int index, FocusNode focusNode, AppLocalizations l10n, WizardStyle style, BuildContext context) {
+    switch (kEditSteps[index]) {
+      case PactWizardStep.habitName:
+        return HabitNameStepAndroid(
+          state: state,
           l10n: l10n,
-          onHabitNameChanged: widget.onHabitNameChanged,
+          onHabitNameChanged: onHabitNameChanged,
           showCommitmentWarning: false,
-          focusNode: _habitNameFocusNode,
-        ),
-        ReminderStepAndroid(
-          state: widget.state,
+          focusNode: focusNode,
+        );
+      case PactWizardStep.reminder:
+        return ReminderStepAndroid(
+          state: state,
           l10n: l10n,
-          onReminderOffsetChanged: widget.onReminderOffsetChanged,
-          onClearReminder: widget.onClearReminder,
-        ),
-        _EditSummaryStepAndroid(
-          state: widget.state,
+          onReminderOffsetChanged: onReminderOffsetChanged,
+          onClearReminder: onClearReminder,
+        );
+      case PactWizardStep.summary:
+        return _EditSummaryStepAndroid(
+          state: state,
           l10n: l10n,
-          onJumpToStep: widget.onJumpToStep,
-          onSubmit: widget.onSubmit,
-          isSaving: widget.isSaving,
-          saveError: widget.saveError,
-        ),
-      ];
+          style: style,
+          onJumpToStep: onJumpToStep,
+          onSubmit: onSubmit,
+          isSaving: isSaving,
+          saveError: saveError,
+        );
+      case PactWizardStep.duration:
+      case PactWizardStep.showupDuration:
+      case PactWizardStep.schedule:
+        // kEditSteps only contains habitName/reminder/summary — these are unreachable.
+        throw StateError('Unexpected edit wizard step: ${kEditSteps[index]}');
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -174,6 +127,7 @@ class _EditSummaryStepAndroid extends StatelessWidget {
   const _EditSummaryStepAndroid({
     required this.state,
     required this.l10n,
+    required this.style,
     required this.onJumpToStep,
     required this.onSubmit,
     required this.isSaving,
@@ -182,6 +136,7 @@ class _EditSummaryStepAndroid extends StatelessWidget {
 
   final PactCreationState state;
   final AppLocalizations l10n;
+  final WizardStyle style;
   final ValueChanged<int> onJumpToStep;
   final VoidCallback onSubmit;
   final bool isSaving;
@@ -191,7 +146,6 @@ class _EditSummaryStepAndroid extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final reminderText = reminderDescription(l10n, state.reminderOffset);
-    final labelColor = theme.colorScheme.onSurfaceVariant;
 
     return Column(
       children: [
@@ -205,26 +159,25 @@ class _EditSummaryStepAndroid extends StatelessWidget {
               Container(
                 key: const Key('pact-edit-summary-card'),
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                decoration: BoxDecoration(color: style.cardColor, borderRadius: BorderRadius.circular(12)),
                 child: Column(
                   children: [
-                    _TappableSummaryRow(
-                      stepName: PactWizardStep.habitName.analyticsName,
+                    TappableSummaryRow(
+                      tapKey: 'edit-summary-row-tap-${PactWizardStep.habitName.analyticsName}',
                       label: l10n.summaryHabit,
                       value: state.habitName.isEmpty ? '—' : state.habitName,
-                      labelColor: labelColor,
-                      onTap: () => onJumpToStep(0), // edit page 0 = habitName
+                      labelColor: style.labelColor,
+                      onTap: () => onJumpToStep(0),
+                      divider: const Divider(height: 1),
+                      useInkWell: true,
                     ),
-                    _TappableSummaryRow(
-                      stepName: PactWizardStep.reminder.analyticsName,
+                    TappableSummaryRow(
+                      tapKey: 'edit-summary-row-tap-${PactWizardStep.reminder.analyticsName}',
                       label: l10n.summaryReminder,
                       value: reminderText,
-                      labelColor: labelColor,
-                      onTap: () => onJumpToStep(1), // edit page 1 = reminder
-                      isLast: true,
+                      labelColor: style.labelColor,
+                      onTap: () => onJumpToStep(1),
+                      useInkWell: true,
                     ),
                   ],
                 ),
@@ -266,101 +219,6 @@ class _EditSummaryStepAndroid extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Shared tappable summary row (Android)
-// ---------------------------------------------------------------------------
-
-class _TappableSummaryRow extends StatelessWidget {
-  final String stepName;
-  final String label;
-  final String value;
-  final Color labelColor;
-  final VoidCallback onTap;
-
-  final bool isLast;
-
-  const _TappableSummaryRow({
-    required this.stepName,
-    required this.label,
-    required this.value,
-    required this.labelColor,
-    required this.onTap,
-    this.isLast = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        InkWell(
-          key: Key('edit-summary-row-tap-$stepName'),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SummaryRow(label: label, value: value, labelColor: labelColor),
-                ),
-                Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ],
-            ),
-          ),
-        ),
-        if (!isLast) const Divider(height: 1),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Edit step indicator (3 segments, Android)
-// ---------------------------------------------------------------------------
-
-class _EditStepIndicator extends StatelessWidget {
-  final int currentPage;
-
-  final ValueChanged<int> onStepTapped;
-
-  const _EditStepIndicator({required this.currentPage, required this.onStepTapped});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      key: const Key('pact-edit-step-indicator-android'),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: List.generate(kEditWizardPageCount, (index) {
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onStepTapped(index),
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                key: Key('pact-edit-step-indicator-android-segment-$index'),
-                height: 4,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  color: index < currentPage
-                      ? theme.colorScheme.primary.withValues(alpha: 0.3)
-                      : index == currentPage
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surfaceContainerHighest,
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Helper
-// ---------------------------------------------------------------------------
 
 int _editPageIndex(PactWizardStep step) {
   final idx = kEditSteps.indexOf(step);

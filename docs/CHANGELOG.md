@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.16] — 2026-06-07 (PR #130 merged)
+
+### Changed — Flutter UI audit WU2: wizard scaffolding generics (HAB-98)
+
+- [user-none]
+- [non-user] Added 5 generic widgets: `WizardStyle`, `WizardStepIndicator`, `WizardPageScaffold`, `HabitNameStep`, `TappableSummaryRow`
+- [non-user] Collapsed `pact_creation_page` and `pact_edit_page` (iOS + Android) to navbar/AppBar shell — `PageController`, `FocusNode`, animation guard now in `WizardPageScaffold`
+- [non-user] `HabitNameStep` owns controller lifecycle; platform wrappers provide field + warning via callbacks
+- [non-user] `TappableSummaryRow` replaces 4 private `_TappableSummaryRow` duplicates; `useInkWell` flag restores Material ripple on Android
+- [non-user] 5 new test files; 286 pact UI tests green
+
+---
+
 ## [0.42.15] — 2026-06-07 (PR #129 merged)
 
 ### Changed — Flutter UI audit WU1: shared UI primitives (HAB-98)
