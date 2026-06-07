@@ -52,6 +52,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                 RestartRequiredBanner(
                   key: const Key('debug-backend-restart-banner'),
                   color: CupertinoColors.systemYellow.resolveFrom(context),
+                  icon: CupertinoIcons.exclamationmark_triangle_fill,
                 ),
                 const SizedBox(height: 8),
               ],

@@ -86,7 +86,7 @@ class _PactDetailContent extends StatelessWidget {
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
 
     final statusText = pactStatusText(l10n, pact.status);
-    final statusColor = PactStatusColors.cupertino.forStatus(pact.status);
+    final statusColor = PactStatusColors.cupertino(context).forStatus(pact.status);
     final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
     return ListView(

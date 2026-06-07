@@ -75,6 +75,36 @@ void main() {
     expect(decoration.border, isNotNull);
   });
 
+  testWidgets('uses custom selectedIcon when provided', (tester) async {
+    await tester.pumpWidget(wrap(OptionTile(
+      isSelected: true,
+      label: 'Option',
+      onTap: () {},
+      selectedColor: Colors.teal,
+      unselectedColor: Colors.grey,
+      selectedIcon: Icons.star,
+      unselectedIcon: Icons.star_border,
+    )));
+
+    expect(find.byIcon(Icons.star), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle), findsNothing);
+  });
+
+  testWidgets('uses custom unselectedIcon when provided', (tester) async {
+    await tester.pumpWidget(wrap(OptionTile(
+      isSelected: false,
+      label: 'Option',
+      onTap: () {},
+      selectedColor: Colors.teal,
+      unselectedColor: Colors.grey,
+      selectedIcon: Icons.star,
+      unselectedIcon: Icons.star_border,
+    )));
+
+    expect(find.byIcon(Icons.star_border), findsOneWidget);
+    expect(find.byIcon(Icons.radio_button_unchecked), findsNothing);
+  });
+
   testWidgets('unselected tile has no border', (tester) async {
     await tester.pumpWidget(wrap(OptionTile(
       isSelected: false,

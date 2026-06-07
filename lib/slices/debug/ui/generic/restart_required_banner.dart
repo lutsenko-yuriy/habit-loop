@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 // debug_backend takes effect only after a restart — banner makes that visible.
 class RestartRequiredBanner extends StatelessWidget {
   final Color color;
+  final IconData? icon;
 
-  const RestartRequiredBanner({super.key, required this.color});
+  const RestartRequiredBanner({super.key, required this.color, this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +18,7 @@ class RestartRequiredBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, size: 16, color: color),
+          Icon(icon ?? Icons.warning_amber_rounded, size: 16, color: color),
           const SizedBox(width: 8),
           const Expanded(
             child: Text(

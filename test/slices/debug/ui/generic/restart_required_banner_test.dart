@@ -11,10 +11,20 @@ void main() {
     expect(find.textContaining('restart'), findsOneWidget);
   });
 
-  testWidgets('shows warning icon', (tester) async {
+  testWidgets('shows default warning icon when none provided', (tester) async {
     await tester.pumpWidget(wrap(const RestartRequiredBanner(color: Colors.amber)));
 
     expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+  });
+
+  testWidgets('shows custom icon when provided', (tester) async {
+    await tester.pumpWidget(wrap(const RestartRequiredBanner(
+      color: Colors.amber,
+      icon: Icons.info_outline,
+    )));
+
+    expect(find.byIcon(Icons.info_outline), findsOneWidget);
+    expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
   });
 
   testWidgets('applies color to icon and border', (tester) async {

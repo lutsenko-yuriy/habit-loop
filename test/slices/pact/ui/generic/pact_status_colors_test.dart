@@ -6,16 +6,37 @@ import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 void main() {
   group('PactStatusColors.cupertino', () {
-    test('active → HabitLoopColors.primary', () {
-      expect(PactStatusColors.cupertino.forStatus(PactStatus.active), HabitLoopColors.primary);
+    testWidgets('active → HabitLoopColors.primary', (tester) async {
+      late PactStatusColors colors;
+      await tester.pumpWidget(CupertinoApp(
+        home: Builder(builder: (ctx) {
+          colors = PactStatusColors.cupertino(ctx);
+          return const SizedBox.shrink();
+        }),
+      ));
+      expect(colors.forStatus(PactStatus.active), HabitLoopColors.primary);
     });
 
-    test('stopped → CupertinoColors.destructiveRed', () {
-      expect(PactStatusColors.cupertino.forStatus(PactStatus.stopped), CupertinoColors.destructiveRed);
+    testWidgets('stopped → resolved destructiveRed', (tester) async {
+      late PactStatusColors colors;
+      await tester.pumpWidget(CupertinoApp(
+        home: Builder(builder: (ctx) {
+          colors = PactStatusColors.cupertino(ctx);
+          return const SizedBox.shrink();
+        }),
+      ));
+      expect(colors.forStatus(PactStatus.stopped), CupertinoColors.destructiveRed.resolveFrom(tester.element(find.byType(SizedBox))));
     });
 
-    test('completed → CupertinoColors.activeGreen', () {
-      expect(PactStatusColors.cupertino.forStatus(PactStatus.completed), CupertinoColors.activeGreen);
+    testWidgets('completed → resolved activeGreen', (tester) async {
+      late PactStatusColors colors;
+      await tester.pumpWidget(CupertinoApp(
+        home: Builder(builder: (ctx) {
+          colors = PactStatusColors.cupertino(ctx);
+          return const SizedBox.shrink();
+        }),
+      ));
+      expect(colors.forStatus(PactStatus.completed), CupertinoColors.activeGreen.resolveFrom(tester.element(find.byType(SizedBox))));
     });
   });
 

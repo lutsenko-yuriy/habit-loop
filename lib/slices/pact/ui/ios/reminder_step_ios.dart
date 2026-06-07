@@ -60,6 +60,8 @@ class ReminderStepIos extends StatelessWidget {
               },
               selectedColor: primaryColor,
               unselectedColor: unselectedColor,
+              selectedIcon: CupertinoIcons.check_mark_circled_solid,
+              unselectedIcon: CupertinoIcons.circle,
             ),
           );
         }),

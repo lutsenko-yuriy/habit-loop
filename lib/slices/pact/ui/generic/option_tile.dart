@@ -6,6 +6,8 @@ class OptionTile extends StatelessWidget {
   final VoidCallback onTap;
   final Color selectedColor;
   final Color unselectedColor;
+  final IconData? selectedIcon;
+  final IconData? unselectedIcon;
 
   const OptionTile({
     super.key,
@@ -14,6 +16,8 @@ class OptionTile extends StatelessWidget {
     required this.onTap,
     required this.selectedColor,
     required this.unselectedColor,
+    this.selectedIcon,
+    this.unselectedIcon,
   });
 
   @override
@@ -30,7 +34,9 @@ class OptionTile extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+              isSelected
+                  ? (selectedIcon ?? Icons.check_circle)
+                  : (unselectedIcon ?? Icons.radio_button_unchecked),
               color: isSelected ? selectedColor : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 12),
