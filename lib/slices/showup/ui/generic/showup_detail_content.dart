@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/slices/pact/ui/generic/date_row_tile.dart';
-import 'package:habit_loop/slices/pact/ui/generic/section_header.dart';
-import 'package:habit_loop/slices/pact/ui/generic/status_badge.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/theme/widgets/date_row_tile.dart';
+import 'package:habit_loop/theme/widgets/section_header.dart';
+import 'package:habit_loop/theme/widgets/status_badge.dart';
 
 /// Platform-specific UI slots for [ShowupDetailContent].
 typedef ShowupDetailSlots = ({
@@ -155,9 +155,10 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: _noteController,
           builder: (context, value, _) {
-            final savedNote = state.showup?.note ?? '';
+            final savedNote = widget.state.showup?.note ?? '';
             final hasChanged = value.text != savedNote;
-            final onPressed = (state.isSaving || !hasChanged) ? null : () => widget.onSaveNote(_noteController.text);
+            final onPressed =
+                (widget.state.isSaving || !hasChanged) ? null : () => widget.onSaveNote(_noteController.text);
             return Align(
               alignment: Alignment.centerRight,
               child: widget.slots.buildSaveButton(context, onPressed),

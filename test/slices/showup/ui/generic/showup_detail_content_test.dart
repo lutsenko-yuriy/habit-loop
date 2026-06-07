@@ -4,16 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/slices/pact/ui/generic/section_header.dart';
-import 'package:habit_loop/slices/pact/ui/generic/status_badge.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/theme/widgets/section_header.dart';
+import 'package:habit_loop/theme/widgets/status_badge.dart';
 
-// ---------------------------------------------------------------------------
 // Fixtures
-// ---------------------------------------------------------------------------
 
 Showup _showup({ShowupStatus status = ShowupStatus.pending, String? note}) => Showup(
       id: 'su-1',
@@ -45,9 +43,7 @@ ShowupDetailState _loadedState({
       wasAutoFailed: wasAutoFailed,
     );
 
-// ---------------------------------------------------------------------------
 // Slot builders (deterministic test doubles)
-// ---------------------------------------------------------------------------
 
 ShowupDetailSlots _slots({
   String actionKey = 'action-buttons',
@@ -66,9 +62,7 @@ ShowupDetailSlots _slots({
       buildErrorContainer: (ctx) => SizedBox(key: Key(errorKey)),
     );
 
-// ---------------------------------------------------------------------------
 // Wrap helper
-// ---------------------------------------------------------------------------
 
 Widget _wrap(
   ShowupDetailState state, {
@@ -102,9 +96,7 @@ Widget _wrap(
   );
 }
 
-// ---------------------------------------------------------------------------
 // Tests
-// ---------------------------------------------------------------------------
 
 void main() {
   group('ShowupDetailContent — controller lifecycle', () {

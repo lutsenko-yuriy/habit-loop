@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
-import 'package:habit_loop/slices/pact/ui/generic/date_row_tile.dart';
+import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 
 class PactDurationStepAndroid extends StatelessWidget {
   final PactCreationState state;
