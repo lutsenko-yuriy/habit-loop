@@ -45,6 +45,7 @@ Evaluate each changed file against:
 - **Interface coverage** — repository interfaces updated when implementations change their contract
 - **Architectural drift** — patterns inconsistent with the rest of the codebase without justification (e.g. inline `PactStatsService(...)` construction instead of using the Riverpod provider)
 - **Provider graph safety** — no circular dependencies in Riverpod providers (e.g. `pactStatsServiceProvider` must never watch `pactServiceProvider`)
+- **Comment hygiene** — flag any comments that narrate WHAT the code does, duplicate field names as docs, use `// ---` dividers, or could be removed without confusing a future reader. Only WHY comments are acceptable: hidden constraints, invariants, platform quirks, PII rules, no-throw contracts. Flag excess as 🟡.
 
 Before flagging a finding, verify:
 - Is the scenario already handled by a path not visible in the diff?
