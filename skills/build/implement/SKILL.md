@@ -56,15 +56,13 @@ Branch naming: `feature/HAB-XX-<short-description>` (2–4 words, kebab-case).
 
 **Green — implement the minimum code to pass.**
 
-- Write only what is needed to make the failing tests pass. Follow `docs/ARCHITECTURE.md` for structure and `CLAUDE.md` for code style.
-- **Comment hygiene** — see `docs/CODE_STYLE.md`. Comments are a last resort; code must read without them.
+- Write only what is needed to make the failing tests pass. Follow `docs/ARCHITECTURE.md` for structure and `docs/CODE_STYLE.md` for code style.
 - Follow the vertical-slice structure:
   - Domain (`domain/`) — models, interfaces, pure business logic. No Flutter, no sqflite imports.
   - Data (`data/`) — repository implementations. Imports sqflite; depends on domain interfaces only.
   - UI generic (`ui/generic/`) — Riverpod notifiers and shared state. No platform widgets.
   - UI platform (`ui/ios/`, `ui/android/`) — Cupertino and Material widgets respectively.
 - Never import across feature boundaries except through shared Riverpod providers.
-- Follow the [Flutter style guide](https://github.com/flutter/flutter/blob/master/docs/contributing/Style-guide-for-Flutter-repo.md).
 
 **Refactor — clean up without breaking tests.**
 
@@ -214,7 +212,6 @@ Return: what was built, PR number and URL, test results, any deviations from the
 
 - **TDD is non-negotiable.** Tests must be red before implementation starts.
 - **No plan = no code.** Stop and escalate if the plan comment is missing.
-- **Comments are a last resort** — see `docs/CODE_STYLE.md` for what is and isn't acceptable.
 - **Do not touch `pubspec.yaml` version fields** — version bumps are handled by the `ship` skill as part of post-merge housekeeping (no separate approval needed per `docs/VERSIONING.md`).
 - **Do not merge** — that is the `ship` skill's responsibility.
 - **Do not update `docs/ARCHITECTURE.md` or `docs/PRODUCT_SPEC.md` directly** — delegate as described in step 8.
