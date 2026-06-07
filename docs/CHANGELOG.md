@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.13] — 2026-06-07
+
+### Changed — Flutter codebase audit WU5: strict layer rule enforcement (HAB-97)
+
+- [user-none]
+- [non-user] Introduced `ShowupService`, `DashboardQueryService`, `PactListQueryService` so UI view models never import repositories directly
+- [non-user] `hasActivePactsProvider` now delegates to `PactListQueryService`
+- [non-user] 18 new unit tests covering all three services
+- [non-user] Strict layer rule documented in `docs/ARCHITECTURE.md`
+
+---
+
 ## [0.42.12] — 2026-06-07
 
 ### Changed — Flutter codebase audit WU4: comment hygiene — UI + theme + navigation + l10n (HAB-97)

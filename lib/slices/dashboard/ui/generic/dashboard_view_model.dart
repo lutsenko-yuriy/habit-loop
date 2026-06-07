@@ -16,9 +16,7 @@ final dashboardViewModelProvider = NotifierProvider<DashboardViewModel, Dashboar
 );
 
 final hasActivePactsProvider = FutureProvider<bool>((ref) async {
-  final pactRepo = ref.watch(pactRepositoryProvider);
-  final pacts = await pactRepo.getActivePacts();
-  return pacts.isNotEmpty;
+  return ref.watch(pactListQueryServiceProvider).hasActivePacts();
 });
 
 class DashboardViewModel extends Notifier<DashboardState> {
@@ -43,13 +41,12 @@ class DashboardViewModel extends Notifier<DashboardState> {
   Future<void> _loadInner() async {
     final today = ref.read(todayProvider);
     final todayNorm = DateTime(today.year, today.month, today.day);
-    final pactRepo = ref.read(pactRepositoryProvider);
-    final showupRepo = ref.read(showupRepositoryProvider);
+    final queryService = ref.read(dashboardQueryServiceProvider);
     final crashlytics = ref.read(crashlyticsServiceProvider);
 
     await crashlytics.log('screen: dashboard');
 
-    final allPacts = await pactRepo.getAllPacts();
+    final allPacts = await queryService.getAllPacts();
     final activePacts = allPacts.where((p) => p.status == PactStatus.active).toList();
     final pactNames = {for (final p in allPacts) p.id: p.habitName};
     final activePactIds = {for (final p in activePacts) p.id};
@@ -69,7 +66,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
     final Map<Pact, List<Showup>> newShowupsByPact = {};
     var gapFailedCount = 0;
     for (final pact in activePacts) {
-      final latestDate = await showupRepo.getLatestScheduledAtForPact(pact.id);
+      final latestDate = await queryService.getLatestScheduledAtForPact(pact.id);
 
       final DateTime windowStart;
       if (latestDate == null) {
@@ -158,7 +155,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
     final stripStart = DateTime(todayNorm.year, todayNorm.month, todayNorm.day - computedTodayIndex);
     final stripEnd = DateTime(todayNorm.year, todayNorm.month, todayNorm.day + (6 - computedTodayIndex));
 
-    final showups = await showupRepo.getShowupsForDateRange(stripStart, stripEnd);
+    final showups = await queryService.getShowupsForDateRange(stripStart, stripEnd);
 
     // Auto-fail sweep: pending showups whose window has fully elapsed (status==pending, pact active, now > scheduledAt+duration).
     // TODO(perf): batch persistShowupStatus per pact to reduce syncStats round-trips (N+1, small window ≤3 days).

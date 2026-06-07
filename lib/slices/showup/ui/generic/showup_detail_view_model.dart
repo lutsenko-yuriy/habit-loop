@@ -36,10 +36,9 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       unawaited(ref.read(crashlyticsServiceProvider).log('screen: showup_detail(id=$arg)'));
       unawaited(ref.read(logServiceProvider).info('showup_detail: load(id=$arg)'));
 
-      final showupRepo = ref.read(showupRepositoryProvider);
-      final pactRepo = ref.read(pactRepositoryProvider);
+      final showupService = ref.read(showupServiceProvider);
 
-      var showup = await showupRepo.getShowupById(arg);
+      var showup = await showupService.getShowupById(arg);
       if (showup == null) {
         state = state.copyWith(
           isLoading: false,
@@ -49,7 +48,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         return;
       }
 
-      final pact = await pactRepo.getPactById(showup.pactId);
+      final pact = await showupService.getPactById(showup.pactId);
       final habitName = pact?.habitName;
 
       final now = ref.read(showupDetailNowProvider);
@@ -160,7 +159,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
     state = state.copyWith(isSaving: true, clearNoteError: true);
     try {
       final updatedShowup = note.isEmpty ? showup.copyWith(clearNote: true) : showup.copyWith(note: note);
-      await ref.read(showupRepositoryProvider).updateShowup(updatedShowup);
+      await ref.read(showupServiceProvider).updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
     } catch (e) {
       state = state.copyWith(isSaving: false, noteError: e);
