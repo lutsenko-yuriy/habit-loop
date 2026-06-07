@@ -6,6 +6,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 
@@ -25,6 +26,10 @@ class DashboardViewModel extends Notifier<DashboardState> {
 
   @override
   DashboardState build() {
+    ref.listen(dashboardRefreshSignalProvider, (_, __) {
+      ref.invalidate(hasActivePactsProvider);
+      unawaited(load());
+    });
     return const DashboardState();
   }
 

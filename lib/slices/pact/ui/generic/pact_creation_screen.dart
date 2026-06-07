@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_creation_page_android.dart';
@@ -113,8 +113,7 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
     if (ref.read(pactCreationViewModelProvider).submitError != null) return;
 
     _pactCreated = true;
-    ref.invalidate(hasActivePactsProvider);
-    unawaited(ref.read(dashboardViewModelProvider.notifier).load());
+    ref.read(dashboardRefreshSignalProvider.notifier).update((n) => n + 1);
     Navigator.of(context).pop();
   }
 

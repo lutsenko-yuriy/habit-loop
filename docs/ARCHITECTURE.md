@@ -248,6 +248,8 @@ Orchestration logic that coordinates domain objects and repository calls. Lives 
 
 **Strict layer rule:** UI view models (`lib/slices/*/ui/`) must never import `PactRepository`, `ShowupRepository`, or any other repository interface directly. All reads and writes go through an application service. The only exception is `slices/debug/ui/` (release-excluded tooling).
 
+**Cross-slice signals:** When one slice needs to notify another of a state change (e.g. pact created → dashboard must reload), it must not import the target slice's view model. Instead, post to a lightweight `StateProvider<int>` signal owned by the target slice and exposed from a dedicated `*_refresh_signal.dart` file. The target slice's view model listens to the signal in `build()` and reacts internally. Example: `dashboardRefreshSignalProvider` in `slices/dashboard/ui/generic/dashboard_refresh_signal.dart` — the pact and showup slices increment it after mutations; the dashboard VM invalidates `hasActivePactsProvider` and calls `load()` in response.
+
 ### Data (`lib/slices/*/data/`)
 Storage and persistence. Implements repository interfaces from `lib/domain/`.
 - `SqlitePactRepository` (`slices/pact/data/`) — production implementation of both `PactRepository` and `PactSyncRepository`; takes an injected `Database` from `HabitLoopDatabase`; uses `PactMapper` for row conversion. Wired as both `pactRepositoryProvider` and `pactSyncRepositoryProvider` overrides in `main.dart`.
