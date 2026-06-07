@@ -34,9 +34,7 @@ class OptionTile extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              isSelected
-                  ? (selectedIcon ?? Icons.check_circle)
-                  : (unselectedIcon ?? Icons.radio_button_unchecked),
+              isSelected ? (selectedIcon ?? Icons.check_circle) : (unselectedIcon ?? Icons.radio_button_unchecked),
               color: isSelected ? selectedColor : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 12),

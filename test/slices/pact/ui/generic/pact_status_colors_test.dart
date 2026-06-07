@@ -25,7 +25,8 @@ void main() {
           return const SizedBox.shrink();
         }),
       ));
-      expect(colors.forStatus(PactStatus.stopped), CupertinoColors.destructiveRed.resolveFrom(tester.element(find.byType(SizedBox))));
+      expect(colors.forStatus(PactStatus.stopped),
+          CupertinoColors.destructiveRed.resolveFrom(tester.element(find.byType(SizedBox))));
     });
 
     testWidgets('completed → resolved activeGreen', (tester) async {
@@ -36,7 +37,8 @@ void main() {
           return const SizedBox.shrink();
         }),
       ));
-      expect(colors.forStatus(PactStatus.completed), CupertinoColors.activeGreen.resolveFrom(tester.element(find.byType(SizedBox))));
+      expect(colors.forStatus(PactStatus.completed),
+          CupertinoColors.activeGreen.resolveFrom(tester.element(find.byType(SizedBox))));
     });
   });
 
