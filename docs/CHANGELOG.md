@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.42.17] — 2026-06-07
+## [0.42.17] — 2026-06-07 (PR #131 merged)
 
 ### Changed — Flutter UI audit WU3: schedule step extraction (HAB-98)
 
