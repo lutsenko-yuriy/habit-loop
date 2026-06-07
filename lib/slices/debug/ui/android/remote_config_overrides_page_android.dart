@@ -5,11 +5,6 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
-/// Debug-only screen (Android) for viewing and editing Remote Config overrides.
-///
-/// Shows all keys from [RemoteConfigDefaults.all] with their effective values
-/// and override status. Only reachable in debug and profile builds — the
-/// dashboard AppBar action is gated on `kDebugMode || kProfileMode`.
 class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
   const RemoteConfigOverridesPageAndroid({super.key});
 
@@ -21,11 +16,7 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
     final seedState = ref.watch(debugSeedDataViewModelProvider);
     final seedNotifier = ref.read(debugSeedDataViewModelProvider.notifier);
 
-    // Show the restart banner only when the pending debug_backend value (what
-    // will take effect on next restart) differs from the value currently
-    // running. This avoids false positives in two cases:
-    //   • App restarted with 'local' → override still 'local' in store → no banner.
-    //   • User sets override back to 'real' (the default) → no banner needed.
+    // Banner only when pending debug_backend differs from the value running at startup.
     final startupBackend = ref.watch(debugBackendAtStartupProvider);
     final showBackendRestartBanner = entries.any((e) {
       if (e.key != 'debug_backend') return false;
@@ -105,7 +96,6 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
   }
 }
 
-/// Opens an edit dialog for a single Remote Config key.
 Future<void> _showEditDialog({
   required BuildContext context,
   required RemoteConfigEntry entry,
@@ -134,14 +124,8 @@ class _EditDialogAndroid extends StatefulWidget {
 }
 
 class _EditDialogAndroidState extends State<_EditDialogAndroid> {
-  /// Used only when [RemoteConfigEntry.allowedValues] is `null` and
-  /// [RemoteConfigEntry.intRange] is also `null` (plain free-text key).
   late final TextEditingController? _controller;
-
-  /// Used only when [RemoteConfigEntry.allowedValues] is non-`null`.
   String? _selectedValue;
-
-  /// Used only when [RemoteConfigEntry.hasIntRange] is `true`.
   double? _sliderValue;
 
   @override
@@ -217,18 +201,10 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
                 ),
               ],
             ),
-            // IntrinsicHeight + OverflowBox expand the slider to the full
-            // dialog width, cancelling out AlertDialog's 24 pt horizontal
-            // content padding so the track runs edge-to-edge.
-            //
-            // Why not LayoutBuilder? AlertDialog probes intrinsic dimensions
-            // of its content during sizing; LayoutBuilder throws in that
-            // context. OverflowBox supports intrinsic queries natively.
-            // IntrinsicHeight is needed because a Column gives OverflowBox an
-            // unbounded vertical size; IntrinsicHeight fixes that by tightening
-            // the height to the slider's natural height before layout runs.
-            // Builder (not LayoutBuilder) accesses MediaQuery for dialog width.
-            // AlertDialog has 40 pt margin on each side, constrained to 280–560 pt.
+            // OverflowBox cancels AlertDialog's 24 pt content padding so track runs edge-to-edge.
+            // LayoutBuilder can't be used — AlertDialog probes intrinsic dimensions and it throws.
+            // IntrinsicHeight prevents OverflowBox from receiving unbounded height from Column.
+            // dialogWidth = (screenWidth - 80).clamp(280, 560) — AlertDialog 40 pt margin per side.
             IntrinsicHeight(
               child: Builder(
                 builder: (context) {
@@ -305,11 +281,6 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
   }
 }
 
-/// Seed-data section shown at the bottom of the RC overrides screen.
-///
-/// "Regenerate local pacts" is always visible.
-/// "Regenerate remote pacts" is visible only when a [FakeFirestoreClient] is
-/// wired (i.e. `debug_backend = local`).
 class _SeedSection extends StatelessWidget {
   const _SeedSection({required this.state, required this.notifier});
 
@@ -397,11 +368,7 @@ class _SeedButton extends StatelessWidget {
   }
 }
 
-/// Amber warning banner shown when [debug_backend] has been overridden.
-///
-/// The `debug_backend` key controls which auth service and Firestore client are
-/// wired at app startup. Changing it via the RC override store takes effect
-/// only after an app restart — this banner makes that requirement visible.
+// debug_backend takes effect only after a restart — banner makes that visible.
 class _RestartRequiredBanner extends StatelessWidget {
   const _RestartRequiredBanner({super.key});
 
@@ -431,7 +398,6 @@ class _RestartRequiredBanner extends StatelessWidget {
   }
 }
 
-/// Small badge indicating whether a key is overridden or using its default.
 class _OverrideBadge extends StatelessWidget {
   const _OverrideBadge({required this.isOverridden});
 

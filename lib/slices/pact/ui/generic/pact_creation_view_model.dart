@@ -8,21 +8,11 @@ import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 
-/// Provides the current time when the pact creation wizard is first opened.
-/// Used to initialise the wizard's start-date default.
-///
-/// Override in tests to freeze the wizard-open time.
+// Overridable in tests to freeze wizard-open time.
 final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
 
-/// Provides a factory that returns the current time at submit.
-///
-/// Kept separate from [pactCreationTodayProvider] because the wizard can be
-/// open for minutes before the user taps "Create" — using wizard-open time as
-/// the submit instant causes showups whose window closes during wizard filling
-/// to be generated and then immediately auto-failed on the first dashboard load
-/// (HAB-84).
-///
-/// Override in tests via `overrideWithValue(() => fixedTime)`.
+// Separate from pactCreationTodayProvider: wizard can be open for minutes before submit,
+// using stale time would generate showups that immediately auto-fail (HAB-84).
 final pactCreationSubmitNowProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 final pactCreationViewModelProvider = NotifierProvider<PactCreationViewModel, PactCreationState>(
@@ -34,9 +24,6 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
   PactCreationState build() {
     final today = ref.read(pactCreationTodayProvider);
     final base = PactCreationState(today: today);
-    // Pre-select the slot schedule type with a sensible default (Mon-Fri at
-    // 08:00) so new pacts go straight to the card-based UI without requiring
-    // the user to choose a schedule mode first.
     return base.copyWith(
       builder: base.builder.copyWith(
         scheduleType: ScheduleType.slot,
@@ -47,27 +34,17 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Private helper — routes all data-field mutations through the builder.
-  // ---------------------------------------------------------------------------
-
   void _updateBuilder(PactBuilder Function(PactBuilder) update) {
     state = state.copyWith(builder: update(state.builder));
   }
-
-  // ---------------------------------------------------------------------------
-  // Data-field setters — all delegate through _updateBuilder.
-  // ---------------------------------------------------------------------------
 
   void setHabitName(String name) {
     _updateBuilder((b) => b.copyWith(habitName: name));
   }
 
   void setStartDate(DateTime date) {
-    // Normalize to midnight so that startDate is always a pure date value.
-    // Date pickers on some platforms return a DateTime with a time component,
-    // which would cause durationDays analytics to under-count and daysActive
-    // to report 0 when the pact is stopped the following morning.
+    // Normalize to midnight — pickers on some platforms return a time component
+    // that would cause durationDays analytics to under-count and daysActive to report 0.
     _updateBuilder((b) => b.copyWith(startDate: DateTime(date.year, date.month, date.day)));
   }
 
@@ -111,30 +88,15 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     _updateBuilder((b) => b.copyWith(clearReminderOffset: true));
   }
 
-  // ---------------------------------------------------------------------------
-  // Wizard-concern setters — operate directly on PactCreationState.
-  // ---------------------------------------------------------------------------
-
   void setCommitmentAccepted(bool accepted) {
     state = state.copyWith(commitmentAccepted: accepted);
   }
 
-  /// Navigates the wizard to the given [page] index.
-  ///
-  /// Called from the [PageView]'s `onPageChanged` callback whenever a page
-  /// transition completes (swipe or programmatic jump). Updates [currentStep]
-  /// so the rest of the UI (step indicator, analytics) stays in sync.
-  ///
-  /// Out-of-range indices are clamped to the valid [PactWizardStep] range.
-  ///
-  /// When the [showupDuration] page (index 2) is first visited and
-  /// [showupDuration] is still null, defaults it to 10 minutes — identical to
-  /// the old `nextStep()` behaviour so existing tests and UX are preserved.
+  // Clamps page index; defaults showupDuration to 10 min on first visit to step 2.
   void goToPage(int page) {
     final clamped = page.clamp(0, PactWizardStep.values.length - 1);
     final targetStep = PactWizardStep.values[clamped];
 
-    // Log step transition breadcrumb for production diagnostics (fire-and-forget).
     // PII rule: only step names — no user-entered text.
     unawaited(
       ref.read(crashlyticsServiceProvider).log(
@@ -145,9 +107,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
       ref.read(logServiceProvider).info('pact_creation: -> ${targetStep.name}'),
     );
 
-    // Default showup duration to 10 min when entering the showup duration step
-    // for the first time. Both builder and currentStep updates are done in a
-    // single assignment to preserve atomicity — no intermediate state emitted.
+    // Single assignment keeps builder + currentStep atomic — no intermediate state emitted.
     if (targetStep == PactWizardStep.showupDuration && state.showupDuration == null) {
       state = state.copyWith(
         builder: state.builder.copyWith(showupDuration: const Duration(minutes: 10)),
@@ -158,10 +118,6 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     }
   }
 
-  /// Marks that the user tapped a Summary-screen row to jump back to a step.
-  ///
-  /// Sets [usedSummaryJump] to `true` so the `pact_created` analytics event
-  /// can report whether the user reviewed any step before committing.
   void markSummaryJumped() {
     if (!state.usedSummaryJump) {
       state = state.copyWith(usedSummaryJump: true);
@@ -174,23 +130,10 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
 
     try {
-      // Use the actual current time at submit — not the cached wizard-open time.
-      // The wizard can be open for several minutes; using the stale provider
-      // value would allow showups whose window closes during wizard filling to
-      // be generated and then immediately auto-failed on dashboard load (HAB-84).
+      // Use fresh now, not cached wizard-open time (HAB-84).
       final now = ref.read(pactCreationSubmitNowProvider)();
 
-      // Generate only the initial 11-day window (startDate through startDate+10)
-      // to keep the repository lean. The window is intentionally wider than the
-      // 7-day calendar strip so that a DST fall-back transition (which can make
-      // Duration arithmetic land 1 hour early) still covers all visible strip
-      // days. Further windows are generated lazily by ShowupGenerationService
-      // when the dashboard loads each day.
-      //
-      // Showups scheduled before pact.createdAt are excluded by
-      // createPactFromBuilder (and in ShowupGenerationService.ensureShowupsExist)
-      // so that a user who creates a pact at 10 pm never sees an already-failed
-      // 8 am slot on day 1.
+      // Initial window +10 days (wider than 7-day strip for DST safety); further windows generated lazily.
       final windowEnd = state.startDate.add(const Duration(days: 10));
       final service = ref.read(pactServiceProvider);
       final pact = await service.createPactFromBuilder(
@@ -207,9 +150,6 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
             showups: showups,
           );
 
-      // Schedule reminders for the initial window of showups when a reminder
-      // offset is configured. Locale resolution is handled internally by
-      // ReminderSchedulingService via LocalePreferenceService.
       if (pactWithStats.reminderOffset != null) {
         unawaited(
           ref.read(reminderSchedulingServiceProvider).scheduleRemindersForShowups(
@@ -224,9 +164,6 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
         );
       }
 
-      // Both pact and showups were persisted successfully — log breadcrumb and
-      // fire analytics. CrashlyticsService, AnalyticsService, and LogService are
-      // no-throw. Use unawaited so diagnostics never block the UI path.
       // PII rule: log only schedule type and counts — no habit name.
       final scheduleTypeName = _scheduleTypeName(pactWithStats.schedule);
       unawaited(

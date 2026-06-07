@@ -4,32 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
-/// Platform-agnostic card-based editor for a [SlotSchedule].
-///
-/// Renders one card per [ScheduleSlot] in [schedule.slots] and provides
-/// "Add weekly slot" / "Add monthly slot" action buttons.
-///
-/// The [showTimePicker] callback is injected by the platform-specific caller
-/// so that iOS can use [CupertinoDatePicker] while Android uses Material's
-/// [showTimePicker].  If the callback returns `null` the user cancelled and
-/// the schedule is left unchanged.
-///
-/// Key contract for automated tests:
-/// - Slot card container: `Key('slot-card-<index>')`
-/// - Remove button: `Key('remove-slot-<index>')`
-/// - Add-weekly button: `Key('add-weekly-slot')`
-/// - Add-monthly button: `Key('add-monthly-slot')`
-/// - Weekday toggle for slot i, weekday d: `Key('weekday-<i>-<d>')`
-/// - Time chip for slot i: `Key('time-chip-<i>')`
-/// - Day-of-month widget for slot i: `Key('day-of-month-<i>')`
+// Card-based SlotSchedule editor. showTimePicker is platform-injected (null = cancelled).
+// Test keys: slot-card-<i>, remove-slot-<i>, add-weekly-slot, add-monthly-slot,
+//            weekday-<i>-<d>, time-chip-<i>, day-of-month-<i>.
 class SlotScheduleEditor extends StatelessWidget {
   final SlotSchedule schedule;
   final ValueChanged<SlotSchedule> onChanged;
-
-  /// Called when the user taps the time chip for a slot.
-  ///
-  /// Receives the current [Duration] and must return the user-selected
-  /// [Duration], or `null` if the user cancelled.
   final Future<Duration?> Function(BuildContext context, Duration current) showTimePicker;
 
   const SlotScheduleEditor({
@@ -38,10 +18,6 @@ class SlotScheduleEditor extends StatelessWidget {
     required this.onChanged,
     required this.showTimePicker,
   });
-
-  // ---------------------------------------------------------------------------
-  // Mutation helpers
-  // ---------------------------------------------------------------------------
 
   void _updateSlot(int index, ScheduleSlot slot) {
     final newSlots = List<ScheduleSlot>.of(schedule.slots);
@@ -68,10 +44,6 @@ class SlotScheduleEditor extends StatelessWidget {
     ]));
   }
 
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -80,7 +52,6 @@ class SlotScheduleEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- Slot cards ---
         ...schedule.slots.asMap().entries.map((entry) {
           final index = entry.key;
           final slot = entry.value;
@@ -95,8 +66,6 @@ class SlotScheduleEditor extends StatelessWidget {
             onRemove: () => _removeSlot(index),
           );
         }),
-
-        // --- Add buttons ---
         const SizedBox(height: 8),
         Row(
           children: [
@@ -119,10 +88,6 @@ class SlotScheduleEditor extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Private — individual slot card
-// ---------------------------------------------------------------------------
 
 class _SlotCard extends StatelessWidget {
   final ScheduleSlot slot;
@@ -179,10 +144,6 @@ class _SlotCard extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Private — weekly slot content
-// ---------------------------------------------------------------------------
-
 class _WeeklySlotContent extends StatelessWidget {
   final WeeklySlot slot;
   final int slotIndex;
@@ -219,7 +180,6 @@ class _WeeklySlotContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header row: label + remove button.
         Row(
           children: [
             Icon(Icons.calendar_view_week, size: 16, color: Theme.of(context).colorScheme.primary),
@@ -243,8 +203,6 @@ class _WeeklySlotContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-
-        // Weekday toggle row.
         _WeekdayToggleRow(
           slotIndex: slotIndex,
           selected: slot.weekdays,
@@ -252,8 +210,6 @@ class _WeeklySlotContent extends StatelessWidget {
           onToggle: _toggleWeekday,
         ),
         const SizedBox(height: 10),
-
-        // Time chip — right-aligned.
         Align(
           alignment: Alignment.centerRight,
           child: _TimeChipButton(
@@ -267,10 +223,6 @@ class _WeeklySlotContent extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Private — monthly slot content
-// ---------------------------------------------------------------------------
 
 class _MonthlySlotContent extends StatelessWidget {
   final MonthlySlot slot;
@@ -297,7 +249,6 @@ class _MonthlySlotContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header row.
         Row(
           children: [
             Icon(Icons.calendar_month, size: 16, color: theme.colorScheme.primary),
@@ -321,8 +272,6 @@ class _MonthlySlotContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-
-        // Day-of-month selector.
         Row(
           children: [
             Text(l10n.dayOfMonthLabel, style: theme.textTheme.bodyMedium),
@@ -341,8 +290,6 @@ class _MonthlySlotContent extends StatelessWidget {
               },
             ),
             const Spacer(),
-
-            // Time chip.
             _TimeChipButton(
               slotIndex: slotIndex,
               time: slot.timeOfDay,
@@ -356,13 +303,7 @@ class _MonthlySlotContent extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Private — weekday toggle row
-// ---------------------------------------------------------------------------
-
-/// 7 small toggle buttons, Mon..Sun (1..7 per [DateTime.weekday]).
-///
-/// Each button has a key `weekday-<slotIndex>-<weekday>`.
+// 7 toggle buttons Mon..Sun (weekday keys: weekday-<slotIndex>-<weekday>).
 class _WeekdayToggleRow extends StatelessWidget {
   final int slotIndex;
   final Set<int> selected;
@@ -379,7 +320,6 @@ class _WeekdayToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Short day names in order Mon..Sun (weekdays 1..7).
     final dayLabels = [
       l10n.weekdayMon,
       l10n.weekdayTue,
@@ -426,10 +366,6 @@ class _WeekdayToggleRow extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Private — time chip button
-// ---------------------------------------------------------------------------
 
 class _TimeChipButton extends StatelessWidget {
   final int slotIndex;

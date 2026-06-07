@@ -6,11 +6,6 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
-/// Debug-only screen (iOS) for viewing and editing Remote Config overrides.
-///
-/// Shows all keys from [RemoteConfigDefaults.all] with their effective values
-/// and override status. Only reachable in debug and profile builds — the
-/// dashboard nav bar button is gated on `kDebugMode || kProfileMode`.
 class RemoteConfigOverridesPageIos extends ConsumerWidget {
   const RemoteConfigOverridesPageIos({super.key});
 
@@ -22,11 +17,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
     final seedState = ref.watch(debugSeedDataViewModelProvider);
     final seedNotifier = ref.read(debugSeedDataViewModelProvider.notifier);
 
-    // Show the restart banner only when the pending debug_backend value (what
-    // will take effect on next restart) differs from the value currently
-    // running. This avoids false positives in two cases:
-    //   • App restarted with 'local' → override still 'local' in store → no banner.
-    //   • User sets override back to 'real' (the default) → no banner needed.
+    // Banner only when pending debug_backend differs from the value running at startup.
     final startupBackend = ref.watch(debugBackendAtStartupProvider);
     final showBackendRestartBanner = entries.any((e) {
       if (e.key != 'debug_backend') return false;
@@ -113,7 +104,6 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
   }
 }
 
-/// A single Remote Config entry row matching the app's iOS row style.
 class _RcEntryRow extends StatelessWidget {
   const _RcEntryRow({super.key, required this.entry, required this.onTap});
 
@@ -163,7 +153,6 @@ class _RcEntryRow extends StatelessWidget {
   }
 }
 
-/// Opens an edit dialog for a single Remote Config key.
 Future<void> _showEditDialog({
   required BuildContext context,
   required RemoteConfigEntry entry,
@@ -193,14 +182,8 @@ class _EditDialogIos extends StatefulWidget {
 }
 
 class _EditDialogIosState extends State<_EditDialogIos> {
-  /// Used only when [RemoteConfigEntry.allowedValues] is `null` and
-  /// [RemoteConfigEntry.intRange] is also `null` (plain free-text key).
   late final TextEditingController? _controller;
-
-  /// Used only when [RemoteConfigEntry.allowedValues] is non-`null`.
   String? _selectedValue;
-
-  /// Used only when [RemoteConfigEntry.hasIntRange] is `true`.
   double? _sliderValue;
 
   @override
@@ -263,23 +246,10 @@ class _EditDialogIosState extends State<_EditDialogIos> {
                 ),
               ],
             ),
-            // IntrinsicHeight + OverflowBox expand the slider so its track
-            // exactly spans the dialog's content area, aligning the min/max
-            // thumb positions with the "0" / "max" labels below.
-            //
-            // CupertinoSlider has a built-in track inset of
-            //   _kPadding (8) + _thumbRadius (11) = 19 pt per side.
-            // The dialog content padding is 16 pt per side.
-            // To make the track reach the content edges:
-            //   maxWidth = 270 (dialog) + 2 × (19 − 16) = 276 pt.
-            // The slider overflows the dialog border by 3 pt on each side;
-            // CupertinoAlertDialog clips this invisibly via ClipRRect.
-            //
-            // Why not LayoutBuilder? CupertinoAlertDialog probes intrinsic
-            // dimensions of its content during sizing; LayoutBuilder throws
-            // in that context. OverflowBox supports intrinsic queries natively.
-            // IntrinsicHeight tightens the vertical constraint so OverflowBox
-            // doesn't receive an unbounded height from the parent Column.
+            // OverflowBox expands track to dialog edges. LayoutBuilder can't be used —
+            // CupertinoAlertDialog probes intrinsic dimensions and LayoutBuilder throws there.
+            // IntrinsicHeight prevents OverflowBox from receiving unbounded height.
+            // maxWidth = 270 (dialog) + 2×(slider inset 19 − content padding 16) = 276 pt.
             IntrinsicHeight(
               child: OverflowBox(
                 maxWidth: 276.0, // dialog width + 2×(slider inset − content padding)
@@ -356,11 +326,6 @@ class _EditDialogIosState extends State<_EditDialogIos> {
   }
 }
 
-/// Seed-data section shown at the bottom of the RC overrides screen.
-///
-/// "Regenerate local pacts" is always visible.
-/// "Regenerate remote pacts" is visible only when a [FakeFirestoreClient] is
-/// wired (i.e. `debug_backend = local`).
 class _SeedSection extends StatelessWidget {
   const _SeedSection({required this.state, required this.notifier});
 
@@ -459,11 +424,7 @@ class _SeedButton extends StatelessWidget {
   }
 }
 
-/// Amber warning banner shown when [debug_backend] has been overridden.
-///
-/// The `debug_backend` key controls which auth service and Firestore client are
-/// wired at app startup. Changing it via the RC override store takes effect
-/// only after an app restart — this banner makes that requirement visible.
+// debug_backend takes effect only after a restart — banner makes that visible.
 class _RestartRequiredBanner extends StatelessWidget {
   const _RestartRequiredBanner({super.key});
 
@@ -499,7 +460,6 @@ class _RestartRequiredBanner extends StatelessWidget {
   }
 }
 
-/// Small badge indicating whether a key is overridden or using its default.
 class _OverrideBadge extends StatelessWidget {
   const _OverrideBadge({required this.isOverridden});
 

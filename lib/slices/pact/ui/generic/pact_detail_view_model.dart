@@ -6,10 +6,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 
-/// Provides the current time for pact detail operations.
-///
-/// Overridable in tests to make [PactDetailViewModel.stopPact] (specifically
-/// the `daysActive` computation in the analytics event) deterministic.
+// Overridable in tests to make daysActive computation in stopPact deterministic.
 final pactDetailNowProvider = Provider<DateTime>((ref) => DateTime.now());
 
 final pactDetailViewModelProvider = NotifierProviderFamily<PactDetailViewModel, PactDetailState, String>(
@@ -26,7 +23,6 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     state = state.copyWith(isLoading: true, clearLoadError: true);
 
     try {
-      // Log screen breadcrumb for production diagnostics (fire-and-forget).
       // PII rule: only pact ID — no habit name.
       unawaited(ref.read(crashlyticsServiceProvider).log('screen: pact_detail(id=$arg)'));
       unawaited(ref.read(logServiceProvider).info('pact_detail: load(id=$arg)'));
@@ -43,17 +39,11 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         return;
       }
 
-      // Load showups directly from the stats service (which owns the showup repository).
-      // Note: showup reads for stats computation go through PactStatsService.
       final showups = await pactStatsService.loadShowupsForPact(arg);
       var stats = await pactStatsService.currentStats(pact: pact, showups: showups);
 
-      // Auto-complete the pact when its end date has passed or all showups
-      // across the entire schedule have been resolved (showupsRemaining == 0).
-      // Using stats.showupsRemaining (derived from countTotal - done - failed)
-      // rather than the pending count in the persisted window ensures that, with
-      // lazy generation, we do not fire prematurely after only the first window
-      // is resolved.
+      // Uses showupsRemaining (from countTotal) not pending count — lazy generation
+      // would fire prematurely after only the first window is resolved.
       if (pact.status == PactStatus.active) {
         final today = ref.read(pactDetailNowProvider);
         final todayDate = DateTime(today.year, today.month, today.day);
@@ -67,10 +57,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
               endDate: pact.endDate,
             ),
           );
-          // Delegate to PactService.updatePact which internally notifies
-          // PactStatsService.onPactCompleted to evict the cache entry
-          // atomically with the repository write.  The view model is
-          // completely unaware of cache management.
+          // updatePact notifies PactStatsService.onPactCompleted to evict cache atomically.
           await pactService.updatePact(pact);
           stats = pact.stats!;
         }
@@ -88,9 +75,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     if (pact == null) return;
     state = state.copyWith(isStopping: true, clearStopError: true);
     try {
-      // Load showup IDs before the stop transaction deletes them from the DB.
-      // Passing them to cancelAllRemindersForPact enables deterministic
-      // notification cancellation that works after a cold restart (HAB-100).
+      // Load IDs before stop deletes them — deterministic cancellation (HAB-100).
       final showupIds = (await ref.read(pactServiceProvider).getShowupsForPact(arg)).map((s) => s.id).toList();
 
       final now = ref.read(pactDetailNowProvider);
@@ -111,9 +96,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
             ),
       );
 
-      // Log breadcrumb and fire analytics for pact stop (fire-and-forget).
-      // CrashlyticsService, AnalyticsService, and LogService are no-throw.
-      // PII rule: log only counts and IDs — no habit name, no stop reason.
+      // PII rule: log only counts and IDs — no habit name or stop reason.
       unawaited(
         ref.read(crashlyticsServiceProvider).log(
               'pact_stopped: id=$arg'

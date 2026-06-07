@@ -18,8 +18,7 @@ final syncStatusViewModelProvider = NotifierProvider.autoDispose<SyncStatusViewM
 class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
   @override
   SyncUiState build() {
-    // connectivityProvider emits bool (true = has internet); defaults to true
-    // while loading so the UI never flashes noInternet on startup.
+    // Defaults to true while loading so the UI never flashes noInternet on startup.
     final hasInternet = ref.watch(connectivityProvider).valueOrNull ?? true;
     final authAsync = ref.watch(authStateChangesProvider);
     final cbState = ref.watch(syncCircuitBreakerProvider);
@@ -32,8 +31,7 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
       return SyncUiState.connecting;
     }
 
-    // authAsync.hasError collapses to notLinked: the stream re-emits on
-    // reconnect, so this is a transient state with no meaningful action.
+    // hasError collapses to notLinked: stream re-emits on reconnect, so it's transient.
     final auth = authAsync.valueOrNull;
     if (auth == null || auth.isAnonymous) {
       return SyncUiState.notLinked;
@@ -56,9 +54,7 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
   }
 
   Future<void> linkWithGoogle() async {
-    // Capture all provider references before the await — Riverpod forbids
-    // ref.read() after a watched dependency changes (which happens when the
-    // auth state stream emits on successful sign-in).
+    // Capture all refs before the await — Riverpod forbids ref.read after watched deps change.
     final analytics = ref.read(analyticsServiceProvider);
     final sync = ref.read(syncServiceProvider);
     final dashboardNotifier = ref.read(dashboardViewModelProvider.notifier);
@@ -67,24 +63,11 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
     try {
       await ref.read(authServiceProvider).linkWithGoogle();
       unawaited(analytics.logEvent(SignInWithGoogleSucceededEvent()));
-      // Pull historical data from the newly linked account's Firestore, then
-      // force-sync all local records. pullRemoteChanges is awaited so that
-      // the dashboard reload below sees the fully-merged local DB — if we
-      // fired it unawaited the dashboard could read empty repos and show no
-      // data until the user restarted the app. Both methods have a no-throw
-      // contract so awaiting is safe.
-      //
-      // forceSyncAll / pullRemoteChanges race: forceSyncAll re-marks everything
-      // dirty so records already synced under an anonymous UID are re-uploaded
-      // under the new Google-linked UID; if pullRemoteChanges also reads those
-      // records it may write the old-UID Firestore copy, but forceSyncAll then
-      // re-uploads the correct local copy. Final Firestore state is always
-      // correct; the old UID namespace is abandoned on the
-      // credential-already-in-use path anyway.
+      // pullRemoteChanges awaited so dashboard reload sees the merged local DB.
+      // forceSyncAll race: re-marks everything dirty so anonymous-UID records are re-uploaded
+      // under the new Google UID; final Firestore state is always correct.
       await sync.pullRemoteChanges();
       unawaited(sync.forceSyncAll());
-      // Reload the dashboard so data seeded by pullRemoteChanges is visible
-      // immediately after sign-in without requiring the user to restart.
       ref.invalidate(hasActivePactsProvider);
       unawaited(dashboardNotifier.load());
       unawaited(pactListNotifier.load());
@@ -94,12 +77,7 @@ class SyncStatusViewModel extends AutoDisposeNotifier<SyncUiState> {
     }
   }
 
-  /// Marks all local records dirty, flushes them to Firestore, and fires the
-  /// appropriate analytics event. Returns the total failure count
-  /// ([ForceSyncResult.failed]) so callers can show a snackbar.
-  ///
-  /// Captures all [ref] reads before the first `await` to comply with
-  /// Riverpod's post-dependency-change ref guard.
+  // Returns ForceSyncResult.failed so callers can show a snackbar.
   Future<int> fullSync() async {
     final analytics = ref.read(analyticsServiceProvider);
     final sync = ref.read(syncServiceProvider);

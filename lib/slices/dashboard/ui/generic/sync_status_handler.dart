@@ -11,10 +11,6 @@ import 'package:habit_loop/slices/dashboard/analytics/sync_analytics_events.dart
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 
-// ---------------------------------------------------------------------------
-// Icon helpers
-// ---------------------------------------------------------------------------
-
 IconData syncStatusIconData(SyncUiState state) => switch (state) {
       SyncUiState.synced => Icons.cloud_done_outlined,
       SyncUiState.degraded => Icons.sync_problem_outlined,
@@ -34,14 +30,6 @@ Color syncStatusIconColor(SyncUiState state, BuildContext context) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Dialog orchestration
-// ---------------------------------------------------------------------------
-
-/// Platform-specific dialog callback type.
-///
-/// Receives all content and action data, shows the native UI, and returns
-/// when the dialog is dismissed. Return value is ignored.
 typedef SyncDialogShowFn = Future<void> Function({
   required BuildContext context,
   required String title,
@@ -49,7 +37,6 @@ typedef SyncDialogShowFn = Future<void> Function({
   required List<SyncDialogAction> actions,
 });
 
-/// A single action button in the sync status dialog.
 class SyncDialogAction {
   const SyncDialogAction({
     required this.label,
@@ -62,22 +49,7 @@ class SyncDialogAction {
   final bool isDestructive;
 }
 
-/// Opens the sync status dialog using the provided platform-specific [showFn].
-///
-/// Shared between [DashboardPageIos] and [DashboardPageAndroid]. Each platform
-/// supplies a [showFn] callback that renders its native dialog (a
-/// [CupertinoAlertDialog] for iOS, an [AlertDialog] for Android).
-///
-/// [messenger] is captured from the dashboard page's context before the dialog
-/// opens so that the "Full sync" snackbar can be shown after the dialog has
-/// already been dismissed. Both iOS and Android dashboard pages are inside
-/// [MaterialApp], so [ScaffoldMessengerState] is available on both platforms.
-///
-/// Steps:
-/// 1. Fire [SyncStatusOpenedEvent] and capture state.
-/// 2. Guard on [BuildContext.mounted].
-/// 3. Build message and action list from state.
-/// 4. Delegate to [showFn].
+// Shared between iOS and Android dashboard. Fires analytics, guards on mounted, delegates to showFn.
 Future<void> openSyncStatusDialog({
   required BuildContext context,
   required WidgetRef ref,

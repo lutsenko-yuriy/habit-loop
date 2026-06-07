@@ -11,18 +11,7 @@ import 'package:habit_loop/slices/pact/ui/ios/habit_name_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/reminder_step_ios.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
-/// iOS edit-pact wizard.
-///
-/// A 3-page [PageView] containing:
-/// - Page 0: habit name (commitment warning hidden — the user already committed)
-/// - Page 1: reminder
-/// - Page 2: summary with a "Save Changes" button
-///
-/// The step indicator shows 3 segments. The × button in the nav bar dismisses
-/// the wizard without saving.
-///
-/// All state mutations are delegated to [PactEditViewModel] via callbacks
-/// provided by [PactEditScreen].
+// iOS edit wizard: 3-page PageView (habit name → reminder → summary). × dismisses without saving.
 class PactEditPageIos extends StatefulWidget {
   const PactEditPageIos({
     super.key,
@@ -43,23 +32,11 @@ class PactEditPageIos extends StatefulWidget {
   final ValueChanged<Duration> onReminderOffsetChanged;
   final VoidCallback onClearReminder;
 
-  /// Called when the [PageView] page changes (swipe or programmatic).
   final ValueChanged<int> onPageChanged;
-
-  /// Called with the edit-wizard page index (0 = habitName, 1 = reminder) when
-  /// the user taps a summary row to jump back to that step.
   final ValueChanged<int> onJumpToStep;
-
-  /// Called when the user taps the × button.
   final VoidCallback onClose;
-
-  /// Called when the user taps "Save Changes" on the summary page.
   final VoidCallback onSubmit;
-
-  /// True while the save operation is in progress.
   final bool isSaving;
-
-  /// Non-null when the save operation failed; shown as an error message.
   final Object? saveError;
 
   @override
@@ -70,12 +47,7 @@ class _PactEditPageIosState extends State<PactEditPageIos> {
   late final PageController _pageController;
   late final FocusNode _habitNameFocusNode;
 
-  /// True while a programmatic [PageController.animateToPage] call is in
-  /// progress (e.g. after a step-indicator or summary-row tap).
-  ///
-  /// Intermediate [onPageChanged] callbacks fired during the animation must
-  /// not update [state.currentStep] — doing so would cause the step indicator
-  /// to flash through all pages between the origin and the destination.
+  // Guards against mid-animation onPageChanged callbacks flashing through intermediate steps.
   bool _isProgrammaticAnimation = false;
 
   static const _animationDuration = Duration(milliseconds: 300);
@@ -84,22 +56,16 @@ class _PactEditPageIosState extends State<PactEditPageIos> {
   @override
   void initState() {
     super.initState();
-    // initialPage is always 0 because load() seeds currentStep = habitName.
     _pageController = PageController(initialPage: _editPageIndex(widget.state.currentStep));
     _habitNameFocusNode = FocusNode();
   }
 
-  /// Animates to the new page when [PactEditViewModel.goToPage] changes
-  /// [state.currentStep] programmatically (e.g. after a summary-row jump).
   @override
   void didUpdateWidget(covariant PactEditPageIos oldWidget) {
     super.didUpdateWidget(oldWidget);
     final targetPage = _editPageIndex(widget.state.currentStep);
     if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
-      // Skip if a programmatic animation is already running, or if the user is
-      // currently scrolling (e.g. a rebuild fires mid-swipe before the page
-      // settles — calling animateToPage here would fight the user's gesture and
-      // set _isProgrammaticAnimation = true, silently suppressing onPageChanged).
+      // Skip mid-swipe: animateToPage would fight the gesture and suppress onPageChanged.
       if (_isProgrammaticAnimation || _pageController.position.isScrollingNotifier.value) return;
       _isProgrammaticAnimation = true;
       unawaited(
@@ -120,8 +86,6 @@ class _PactEditPageIosState extends State<PactEditPageIos> {
   }
 
   void _handlePageChanged(int page) {
-    // Suppress view-model updates for intermediate pages during a programmatic
-    // jump — the target step is already set by the jump callback.
     if (!_isProgrammaticAnimation) {
       widget.onPageChanged(page);
     }
@@ -214,13 +178,7 @@ class _PactEditPageIosState extends State<PactEditPageIos> {
 // Edit summary step (iOS)
 // ---------------------------------------------------------------------------
 
-/// Summary page for the edit wizard.
-///
-/// Shows only the two editable fields (habit name and reminder) as tappable
-/// rows, so the user can jump back to revise before saving.
-///
-/// The "Save Changes" button is always enabled (the builder is always complete
-/// in the edit wizard since unchanged fields are pre-populated from the pact).
+// Tappable habit name + reminder rows; save button always enabled (pre-populated from pact).
 class _EditSummaryStepIos extends StatelessWidget {
   const _EditSummaryStepIos({
     required this.state,
@@ -366,7 +324,6 @@ class _TappableSummaryRow extends StatelessWidget {
 class _EditStepIndicator extends StatelessWidget {
   final int currentPage;
 
-  /// Called with the tapped page index when the user taps a segment.
   final ValueChanged<int> onStepTapped;
 
   const _EditStepIndicator({required this.currentPage, required this.onStepTapped});
@@ -407,10 +364,6 @@ class _EditStepIndicator extends StatelessWidget {
 // Helper
 // ---------------------------------------------------------------------------
 
-/// Returns the [PageView] page index (0-2) for [step] in the edit wizard.
-///
-/// Falls back to 0 if [step] is not in [kEditSteps] (should not happen in
-/// normal usage).
 int _editPageIndex(PactWizardStep step) {
   final idx = kEditSteps.indexOf(step);
   return idx < 0 ? 0 : idx;

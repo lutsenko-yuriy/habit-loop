@@ -21,6 +21,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/CHANGELOG.md | Released version history |
 | docs/VERSIONING.md | Version numbering rules and CI/CD pipeline |
 | docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
+| docs/CODE_STYLE.md | Code style rules — formatting, linting, comment hygiene |
 | docs/MODEL_TIERS.md | Effort Tier and Reasoning Depth vocabulary; active model → tier mapping |
 | docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
@@ -75,11 +76,7 @@ Use the Flutter binary path from `CLAUDE.local.md` (it is not on the default she
 
 ## Code style
 
-By default as defined at [the Flutter style guide](https://github.com/flutter/flutter/blob/master/docs/contributing/Style-guide-for-Flutter-repo.md).
-
-## Linting
-
-Uses `package:flutter_lints` (configured in `analysis_options.yaml`).
+See `docs/CODE_STYLE.md`. Flutter style guide is the base; the document adds project-specific formatting, linting, and comment rules.
 
 ## Versioning
 

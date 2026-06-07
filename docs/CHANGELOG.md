@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.12] — 2026-06-07
+
+### Changed — Flutter codebase audit WU4: comment hygiene — UI + theme + navigation + l10n (HAB-97)
+
+- [user-none]
+- [non-user] 1062 net lines removed across 25 files in `lib/slices/*/ui/`, `lib/theme/`, `lib/navigation/`, `lib/l10n/date_formatters.dart`
+- [non-user] Removed narration comments, boilerplate field/class docs, divider lines; kept invariants, PII rules, platform quirks, and non-obvious WHY notes
+- [non-user] Added `docs/CODE_STYLE.md` (formatting, linting, comment hygiene rules); updated `AGENTS.md` and `skills/build/implement/SKILL.md` to reference it
+- [non-user] Added comment hygiene check to `skills/verify/review/SKILL.md`
+
+---
+
 ## [0.42.11] — 2026-06-07 (PR #125 merged)
 
 ### Changed — Flutter codebase audit WU3: comment hygiene — domain + application (HAB-97)
