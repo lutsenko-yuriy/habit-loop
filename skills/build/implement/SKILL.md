@@ -57,7 +57,7 @@ Branch naming: `feature/HAB-XX-<short-description>` (2–4 words, kebab-case).
 **Green — implement the minimum code to pass.**
 
 - Write only what is needed to make the failing tests pass. Follow `docs/ARCHITECTURE.md` for structure and `CLAUDE.md` for code style.
-- **Comment hygiene — comments are a last resort.** Write code that is self-documenting through naming and structure. Only add a comment when the WHY is genuinely non-obvious: a hidden constraint, a subtle invariant, a platform quirk, a PII rule, or a no-throw contract. Never add narration, boilerplate field/class docs, `// ---` divider lines, or WHAT descriptions that the code already states. If a comment can be removed without confusing a future reader, don't write it. When a comment is unavoidable, keep it to one concise line.
+- **Comment hygiene** — see `docs/CODE_STYLE.md`. Comments are a last resort; code must read without them.
 - Follow the vertical-slice structure:
   - Domain (`domain/`) — models, interfaces, pure business logic. No Flutter, no sqflite imports.
   - Data (`data/`) — repository implementations. Imports sqflite; depends on domain interfaces only.
@@ -214,7 +214,7 @@ Return: what was built, PR number and URL, test results, any deviations from the
 
 - **TDD is non-negotiable.** Tests must be red before implementation starts.
 - **No plan = no code.** Stop and escalate if the plan comment is missing.
-- **Comments are a last resort.** Code must be readable without them. If a comment is added, it must state WHY (invariant, constraint, platform quirk, PII rule) — never WHAT. One line max.
+- **Comments are a last resort** — see `docs/CODE_STYLE.md` for what is and isn't acceptable.
 - **Do not touch `pubspec.yaml` version fields** — version bumps are handled by the `ship` skill as part of post-merge housekeeping (no separate approval needed per `docs/VERSIONING.md`).
 - **Do not merge** — that is the `ship` skill's responsibility.
 - **Do not update `docs/ARCHITECTURE.md` or `docs/PRODUCT_SPEC.md` directly** — delegate as described in step 8.
