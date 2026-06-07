@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.17] — 2026-06-07 (PR #131 merged)
+
+### Changed — Flutter UI audit WU3: schedule step extraction (HAB-98)
+
+- [user-none]
+- [non-user] Added `ScheduleDetailsState` mixin — owns `dailyTime`, `weekdayEntries`, `monthlyWeekdayEntries`, `monthlyDateEntries`; provides `initScheduleDetails()` bootstrapper and `buildScheduleDetails()` dispatch
+- [non-user] `ScheduleDetailsIosState` and `ScheduleDetailsAndroidState` now mix in `ScheduleDetailsState`; platform state reduces to 5 abstract `buildXxxDetails()` overrides + picker chrome
+- [non-user] Mode-picker tile rows in both schedule steps replaced with `OptionTile` (WU1 generic)
+- [non-user] 11 new tests in `schedule_details_state_test.dart`
+
+---
+
 ## [0.42.16] — 2026-06-07 (PR #130 merged)
 
 ### Changed — Flutter UI audit WU2: wizard scaffolding generics (HAB-98)
