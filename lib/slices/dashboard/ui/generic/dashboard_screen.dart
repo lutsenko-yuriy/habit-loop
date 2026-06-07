@@ -26,31 +26,17 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsBindingObserver {
   bool _creatingPact = false;
 
-  /// Guards the one-time [OnboardingPreferenceService.markOnboardingPassed]
-  /// write so it is called at most once per session, even across multiple
-  /// [build] calls before the async persist completes.
+  // Guards one-time markOnboardingPassed write — prevents re-entrant build calls from firing it twice.
   bool _onboardingMarkedThisSession = false;
 
-  /// The calendar date that was current the last time [load] was triggered.
-  /// Stored as a date-only value (time component stripped) so midnight crossings
-  /// are detected correctly regardless of the exact wall-clock time.
+  // Midnight-normalised date of the last load; enables midnight-crossing detection.
   DateTime? _lastLoadDate;
 
   @override
   void initState() {
     super.initState();
-    // Capture the current date synchronously so that _lastLoadDate is never
-    // null when didChangeAppLifecycleState fires — even if resumed fires in
-    // the gap between addObserver and the microtask below.
-    //
-    // Reading todayProvider here (rather than using DateTime.now() directly)
-    // ensures that test overrides are respected: if a test injects a fixed
-    // date via ProviderScope, _lastLoadDate is initialised from that same
-    // value so the guard comparison is consistent.
-    //
-    // Note: ref.read is safe in initState; what must be deferred is any call
-    // that mutates provider state (e.g. load()), which is pushed to the
-    // microtask below.
+    // ref.read is safe in initState; captures date synchronously so _lastLoadDate
+    // is never null when didChangeAppLifecycleState fires.
     _lastLoadDate = _dateOnly(ref.read(todayProvider));
     WidgetsBinding.instance.addObserver(this);
     unawaited(
@@ -73,27 +59,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
-    // ref.read(todayProvider) captures the current wall-clock date for the
-    // _lastLoadDate update.  The value is derived from the provider — not
-    // DateTime.now() directly — so that test overrides (mutable date holders)
-    // are respected and the guard compares against the same source of truth as
-    // the load path.
     final today = _dateOnly(ref.read(todayProvider));
     if (today == _lastLoadDate) return;
 
-    // Calendar date has changed since the last load — invalidate providers and
-    // re-trigger the dashboard load so the calendar strip and showup list
-    // reflect the new day without requiring the user to restart the app.
-    //
-    // Ordering note:
-    //   1. _lastLoadDate = today   — update the guard first so any re-entrant
-    //      resume event during the async load below is correctly no-op'd.
-    //   2. ref.invalidate(todayProvider) — discard the cached DateTime value so
-    //      the subsequent load() call inside DashboardViewModel._loadInner
-    //      resolves a fresh DateTime.now() rather than the midnight-old value
-    //      that was cached before the user went to background.  Both reads
-    //      (this one and the next inside load()) resolve to the same calendar
-    //      date because they are milliseconds apart.
+    // Update guard first so re-entrant resume during the async load below is no-op'd.
     _lastLoadDate = today;
     ref.invalidate(todayProvider);
     ref.invalidate(hasActivePactsProvider);
@@ -104,7 +73,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     unawaited(ref.read(pactListViewModelProvider.notifier).load());
   }
 
-  /// Strips the time component from [dt], returning a midnight-normalised date.
   DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 
   @override
@@ -233,32 +201,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     final isAnonymous = authState?.isAnonymous ?? true;
     final isSigningIn = ref.watch(onboardingSignInLoadingProvider);
 
-    // Read the onboarding flag synchronously.  Since SharedPreferences holds
-    // values in memory after the first getInstance() call, this is a pure
-    // in-memory lookup — no I/O on the main thread.
     final onboardingService = ref.read(onboardingPreferenceServiceProvider);
     final onboardingPassed = onboardingService.isOnboardingPassed;
 
-    // Use valueOrNull so there is no separate loading state — during the brief
-    // initial load hasPacts defaults to false. Errors are treated as "no pacts".
     final hasPacts = hasActivePacts.valueOrNull ?? false;
-
-    // Anonymous user with no pacts — hasn't done anything yet.
     final isNewUser = isAnonymous && !hasPacts;
 
-    // Show carousel when onboarding hasn't been passed yet AND the user is
-    // either new or currently signing in.
-    //
-    // !onboardingPassed short-circuits on cold start for returning users so
-    // hasActivePactsProvider's AsyncLoading state never causes a carousel flash.
-    // isSigningIn keeps the carousel visible while pullRemoteChanges runs after
-    // a Google sign-in, preventing a flash of an empty dashboard.
+    // !onboardingPassed short-circuits on cold start so AsyncLoading never causes a carousel flash.
+    // isSigningIn keeps carousel visible during pullRemoteChanges after Google sign-in.
     final showCarousel = !onboardingPassed && (isNewUser || isSigningIn);
 
-    // Write the onboarding-passed flag the first time the dashboard is shown.
-    // The guard prevents multiple writes across build calls in the same session.
-    // The write is deferred to a post-frame callback so build() stays a pure
-    // function of state — side effects must not fire during the widget build phase.
+    // Deferred to post-frame so build() stays a pure function of state.
     if (!showCarousel && !_onboardingMarkedThisSession) {
       _onboardingMarkedThisSession = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -1,11 +1,7 @@
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 
-/// Time-derived UI state for a showup.
-///
-/// This is NOT a domain state — it is computed from the current time,
-/// [Showup.scheduledAt], [Showup.duration], [Showup.status], and
-/// the pact's [reminderOffset].
+// NOT a domain state — computed from time, scheduledAt, duration, status, and reminderOffset.
 enum ShowupUiState {
   /// Before the reminder fires (or before start time if no reminder).
   planned,
@@ -43,33 +39,17 @@ ShowupUiState deriveShowupUiState({
   required DateTime now,
   Duration? reminderOffset,
 }) {
-  // Rule 1 & 2: domain status overrides everything.
   if (showup.status == ShowupStatus.done) return ShowupUiState.done;
   if (showup.status == ShowupStatus.failed) return ShowupUiState.failed;
-
-  // Rule 3: now is at or past the scheduled start.
   if (!now.isBefore(showup.scheduledAt)) return ShowupUiState.active;
-
-  // Rule 4: reminder has fired but showup hasn't started.
   if (reminderOffset != null && reminderOffset > Duration.zero) {
     final reminderFiresAt = showup.scheduledAt.subtract(reminderOffset);
     if (!now.isBefore(reminderFiresAt)) return ShowupUiState.waitingForStart;
   }
-
-  // Rule 5: nothing has happened yet.
   return ShowupUiState.planned;
 }
 
-/// Derives the time-based [ShowupUiState] for each showup in [showups],
-/// sampling [DateTime.now()] once for the entire list.
-///
-/// Pass the pact's reminder offset map so the reminder-fired window
-/// ([ShowupUiState.waitingForStart]) is correctly signalled on the calendar
-/// strip.
-///
-/// TODO(HAB-54): add a periodic timer in DashboardViewModel to invalidate
-/// the dashboard state at the next reminderFiresAt / scheduledAt crossing
-/// so dots auto-update while the screen is open (currently requires resume).
+// TODO(HAB-54): add a periodic timer to invalidate state at reminderFiresAt / scheduledAt crossings.
 List<ShowupUiState> deriveUiStates(
   List<Showup> showups,
   Map<String, Duration?> reminderOffsetByPactId,

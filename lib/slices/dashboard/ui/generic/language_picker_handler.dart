@@ -8,31 +8,7 @@ import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_ser
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/language_analytics_events.dart';
 
-// ---------------------------------------------------------------------------
-// openLanguagePicker — shared orchestration for both platforms
-// ---------------------------------------------------------------------------
-
-/// Opens the language picker using the provided platform-specific [showPicker]
-/// callback, then applies the result via [applyLanguageSelection].
-///
-/// Shared between [DashboardPageIos] and [DashboardPageAndroid]. Each platform
-/// supplies a [showPicker] callback that renders its native UI (a
-/// [CupertinoActionSheet] for iOS, a [SimpleDialog] for Android) and returns
-/// the selected [Locale], or `null` to indicate either "use system language"
-/// or "dismissed".
-///
-/// The options list passed to [showPicker] uses named-record fields:
-/// `({String label, Locale? locale})` where `locale == null` means the system
-/// option.
-///
-/// Steps performed inside [openLanguagePicker]:
-/// 1. Snapshot [currentOverride] and [systemLocaleCode] **before** any `await`.
-/// 2. Fire [LanguageChangeRequestedEvent] and [LanguagePickerAnalyticsScreen].
-/// 3. Guard on [BuildContext.mounted].
-/// 4. Build the options list from [AppLocalizations].
-/// 5. Delegate to [showPicker] to show the native UI.
-/// 6. Guard on [BuildContext.mounted].
-/// 7. Delegate to [applyLanguageSelection] with the result.
+// Shared between iOS and Android dashboard. Captures state before any await; guards on mounted.
 Future<void> openLanguagePicker({
   required BuildContext context,
   required WidgetRef ref,
@@ -44,12 +20,12 @@ Future<void> openLanguagePicker({
     required BuildContext context,
     required List<({String label, Locale? locale})> options,
     required Locale? currentOverride,
-  }) showPicker,
+  }) showPicker, // null return = "Use system language" or dismissed
 }) async {
   final analytics = ref.read(analyticsServiceProvider);
   final localeService = ref.read(localePreferenceServiceProvider);
 
-  // Capture before any await to avoid async-gap stale reads.
+  // Capture before any await — async-gap reads would be stale after auth state changes.
   final currentOverride = ref.read(localeOverrideProvider);
   final systemLocaleCode = Localizations.localeOf(context).languageCode;
 
@@ -85,33 +61,7 @@ Future<void> openLanguagePicker({
   );
 }
 
-// ---------------------------------------------------------------------------
-// applyLanguageSelection — shared persistence + analytics logic
-// ---------------------------------------------------------------------------
-
-/// Shared orchestration logic for the language picker.
-///
-/// Called by both [DashboardPageIos] and [DashboardPageAndroid] after the
-/// platform-specific picker UI has returned a user selection.
-///
-/// Parameters:
-/// - [selectedLocale] — the locale the user chose, or `null` to revert to the
-///   system locale.
-/// - [currentOverride] — the current value of `localeOverrideProvider` (read
-///   *before* the picker is shown so that `fromCode` is not captured after an
-///   `await`).
-/// - [systemLocaleCode] — the ISO 639-1 code of the resolved system locale,
-///   used as `from_language` when the current override is `null`.
-/// - [analyticsService] — used to fire [LanguageChangedEvent].
-/// - [localeService] — used to persist or clear the selected locale.
-/// - [updateLocaleOverride] — callback to write the new value back into the
-///   Riverpod `localeOverrideProvider.notifier`.
-///
-/// Guard rules (no-op conditions):
-/// - If [selectedLocale] is non-null and its language code equals
-///   [currentOverride]'s language code, the selection is the same → skip.
-/// - If [selectedLocale] is `null` (system) and [currentOverride] is already
-///   `null`, nothing has changed → skip.
+// Persists + fires analytics. No-op when same language or both null (already on system).
 Future<void> applyLanguageSelection({
   required Locale? selectedLocale,
   required Locale? currentOverride,
@@ -121,13 +71,11 @@ Future<void> applyLanguageSelection({
   required void Function(Locale?) updateLocaleOverride,
 }) async {
   if (selectedLocale == null) {
-    // User chose "Use system language".
     if (currentOverride == null) return; // already on system — no-op
 
     await localeService.clearLocale();
     updateLocaleOverride(null);
   } else {
-    // User chose a specific language.
     if (selectedLocale.languageCode == currentOverride?.languageCode) return; // same language — no-op
 
     final fromCode = currentOverride?.languageCode ?? systemLocaleCode;

@@ -13,22 +13,7 @@ import 'package:habit_loop/slices/pact/ui/ios/showup_duration_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/summary_step_ios.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
-/// iOS pact creation wizard.
-///
-/// Uses a [PageView] to allow the user to swipe between the six wizard steps:
-/// habit name → pact duration → showup duration → schedule → reminder → summary.
-///
-/// Navigation model:
-/// - Swipe left/right to move between pages (no Next/Back buttons).
-/// - The nav bar always shows a × close button that dismisses the wizard.
-/// - The nav bar title shows the habit name once entered, otherwise the screen
-///   title (or "Summary" on the last page).
-/// - On the summary page a "Create Pact" button appears at the bottom.
-///
-/// The parent ([PactCreationScreen]) wires all callbacks and provides the
-/// complete [PactCreationState] on every rebuild. When [state.currentStep]
-/// changes programmatically (e.g. summary-row jump), [didUpdateWidget]
-/// animates the [PageController] to the new page.
+// iOS creation wizard: 6-page PageView (habit name → duration → showup duration → schedule → reminder → summary).
 class PactCreationPageIos extends StatefulWidget {
   const PactCreationPageIos({
     super.key,
@@ -57,19 +42,9 @@ class PactCreationPageIos extends StatefulWidget {
   final ValueChanged<Duration> onReminderOffsetChanged;
   final VoidCallback onClearReminder;
 
-  /// Called whenever the visible page changes (swipe or programmatic).
-  /// Wired to [PactCreationViewModel.goToPage] in [PactCreationScreen].
   final ValueChanged<int> onPageChanged;
-
-  /// Called when the user taps a row on the summary page to jump back.
-  /// The parent updates [state.currentStep]; [didUpdateWidget] then animates
-  /// the [PageController] to match.
   final ValueChanged<int> onJumpToStep;
-
-  /// Called when the user taps the × button to dismiss the wizard.
   final VoidCallback onClose;
-
-  /// Called when "Create Pact" is tapped on the summary page.
   final VoidCallback onSubmit;
 
   @override
@@ -80,12 +55,7 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
   late final PageController _pageController;
   late final FocusNode _habitNameFocusNode;
 
-  /// True while a programmatic [PageController.animateToPage] call is in
-  /// progress (e.g. after a step-indicator or summary-row tap).
-  ///
-  /// Intermediate [onPageChanged] callbacks fired during the animation must
-  /// not update [state.currentStep] — doing so would cause the step indicator
-  /// to flash through all pages between the origin and the destination.
+  // Guards against mid-animation onPageChanged callbacks flashing through intermediate steps.
   bool _isProgrammaticAnimation = false;
 
   static const _animationDuration = Duration(milliseconds: 300);
@@ -98,17 +68,12 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
     _habitNameFocusNode = FocusNode();
   }
 
-  /// Animates to the new page when the ViewModel's currentStep changes
-  /// (e.g. after a summary-row jump sets a different step).
   @override
   void didUpdateWidget(covariant PactCreationPageIos oldWidget) {
     super.didUpdateWidget(oldWidget);
     final targetPage = widget.state.currentStep.value;
     if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
-      // Skip if a programmatic animation is already running, or if the user is
-      // currently scrolling (e.g. a rebuild fires mid-swipe before the page
-      // settles — calling animateToPage here would fight the user's gesture and
-      // set _isProgrammaticAnimation = true, silently suppressing onPageChanged).
+      // Skip mid-swipe: animateToPage would fight the gesture and suppress onPageChanged.
       if (_isProgrammaticAnimation || _pageController.position.isScrollingNotifier.value) return;
       _isProgrammaticAnimation = true;
       unawaited(
@@ -129,8 +94,6 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
   }
 
   void _handlePageChanged(int page) {
-    // Suppress view-model updates for intermediate pages during a programmatic
-    // jump — the target step is already set by the jump callback.
     if (!_isProgrammaticAnimation) {
       widget.onPageChanged(page);
     }
@@ -242,7 +205,6 @@ class _PactCreationPageIosState extends State<PactCreationPageIos> {
 class _StepIndicator extends StatelessWidget {
   final PactWizardStep currentStep;
 
-  /// Called with the tapped page index when the user taps a segment.
   final ValueChanged<int> onStepTapped;
 
   const _StepIndicator({required this.currentStep, required this.onStepTapped});

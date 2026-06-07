@@ -9,18 +9,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/summary_row.dart';
 
-/// Android edit-pact wizard.
-///
-/// A 3-page [PageView] containing:
-/// - Page 0: habit name (commitment warning hidden — the user already committed)
-/// - Page 1: reminder
-/// - Page 2: summary with a "Save Changes" button
-///
-/// The step indicator shows 3 segments. The × button in the AppBar dismisses
-/// the wizard without saving.
-///
-/// All state mutations are delegated to [PactEditViewModel] via callbacks
-/// provided by [PactEditScreen].
+// Android edit wizard: 3-page PageView (habit name → reminder → summary). × dismisses without saving.
 class PactEditPageAndroid extends StatefulWidget {
   const PactEditPageAndroid({
     super.key,
@@ -41,23 +30,11 @@ class PactEditPageAndroid extends StatefulWidget {
   final ValueChanged<Duration> onReminderOffsetChanged;
   final VoidCallback onClearReminder;
 
-  /// Called when the [PageView] page changes (swipe or programmatic).
   final ValueChanged<int> onPageChanged;
-
-  /// Called with the edit-wizard page index (0 = habitName, 1 = reminder) when
-  /// the user taps a summary row to jump back to that step.
   final ValueChanged<int> onJumpToStep;
-
-  /// Called when the user taps the × button.
   final VoidCallback onClose;
-
-  /// Called when the user taps "Save Changes" on the summary page.
   final VoidCallback onSubmit;
-
-  /// True while the save operation is in progress.
   final bool isSaving;
-
-  /// Non-null when the save operation failed; shown as an error message.
   final Object? saveError;
 
   @override
@@ -68,12 +45,7 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
   late final PageController _pageController;
   late final FocusNode _habitNameFocusNode;
 
-  /// True while a programmatic [PageController.animateToPage] call is in
-  /// progress (e.g. after a step-indicator or summary-row tap).
-  ///
-  /// Intermediate [onPageChanged] callbacks fired during the animation must
-  /// not update [state.currentStep] — doing so would cause the step indicator
-  /// to flash through all pages between the origin and the destination.
+  // Guards against mid-animation onPageChanged callbacks flashing through intermediate steps.
   bool _isProgrammaticAnimation = false;
 
   static const _animationDuration = Duration(milliseconds: 300);
@@ -86,17 +58,12 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
     _habitNameFocusNode = FocusNode();
   }
 
-  /// Animates to the new page when [PactEditViewModel.goToPage] changes
-  /// [state.currentStep] programmatically (e.g. after a summary-row jump).
   @override
   void didUpdateWidget(covariant PactEditPageAndroid oldWidget) {
     super.didUpdateWidget(oldWidget);
     final targetPage = _editPageIndex(widget.state.currentStep);
     if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
-      // Skip if a programmatic animation is already running, or if the user is
-      // currently scrolling (e.g. a rebuild fires mid-swipe before the page
-      // settles — calling animateToPage here would fight the user's gesture and
-      // set _isProgrammaticAnimation = true, silently suppressing onPageChanged).
+      // Skip mid-swipe: animateToPage would fight the gesture and suppress onPageChanged.
       if (_isProgrammaticAnimation || _pageController.position.isScrollingNotifier.value) return;
       _isProgrammaticAnimation = true;
       unawaited(
@@ -117,8 +84,6 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
   }
 
   void _handlePageChanged(int page) {
-    // Suppress view-model updates for intermediate pages during a programmatic
-    // jump — the target step is already set by the jump callback.
     if (!_isProgrammaticAnimation) {
       widget.onPageChanged(page);
     }
@@ -204,10 +169,7 @@ class _PactEditPageAndroidState extends State<PactEditPageAndroid> {
 // Edit summary step (Android)
 // ---------------------------------------------------------------------------
 
-/// Summary page for the edit wizard (Android).
-///
-/// Shows only the two editable fields (habit name and reminder) as tappable
-/// rows, so the user can jump back to revise before saving.
+// Tappable habit name + reminder rows; save button always enabled (pre-populated from pact).
 class _EditSummaryStepAndroid extends StatelessWidget {
   const _EditSummaryStepAndroid({
     required this.state,
@@ -316,8 +278,6 @@ class _TappableSummaryRow extends StatelessWidget {
   final Color labelColor;
   final VoidCallback onTap;
 
-  /// When `false`, a [Divider] is rendered below the row as a separator.
-  /// Set to `true` on the last row in a group to suppress the trailing divider.
   final bool isLast;
 
   const _TappableSummaryRow({
@@ -361,7 +321,6 @@ class _TappableSummaryRow extends StatelessWidget {
 class _EditStepIndicator extends StatelessWidget {
   final int currentPage;
 
-  /// Called with the tapped page index when the user taps a segment.
   final ValueChanged<int> onStepTapped;
 
   const _EditStepIndicator({required this.currentPage, required this.onStepTapped});
@@ -403,7 +362,6 @@ class _EditStepIndicator extends StatelessWidget {
 // Helper
 // ---------------------------------------------------------------------------
 
-/// Returns the [PageView] page index (0-2) for [step] in the edit wizard.
 int _editPageIndex(PactWizardStep step) {
   final idx = kEditSteps.indexOf(step);
   return idx < 0 ? 0 : idx;

@@ -4,33 +4,14 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
-/// Renders the small colored dot(s) shown under a day in the dashboard
-/// calendar strip. Extracted from `dashboard_page_ios.dart` and
-/// `dashboard_page_android.dart` where the same layout and overflow logic
-/// were duplicated with only the color source differing.
-///
-/// Layout rules:
-/// - 0 showups → [SizedBox.shrink]
-/// - 1..2 showups → one horizontal row of small dots
-/// - 3 showups → two rows (2 on top, 1 on bottom)
-/// - 4+ showups → a single larger "overflow" dot whose color reflects the
-///   aggregate state (see [ShowupStatusColors.overflow]).
-///
-/// Keys:
-/// - Per-showup dots use `Key('status-dot-<showup.id>')`
-/// - The overflow dot uses `Key('status-dot-overflow-YYYY-MM-DD')` so keys
-///   do not collide across the 7-day strip.
+// Calendar-strip dot cluster. Layout: 0=shrink, 1-2=row, 3=2+1 rows, 4+=overflow dot.
+// Keys: status-dot-<showup.id>, status-dot-overflow-YYYY-MM-DD.
 class ShowupStatusDots extends StatelessWidget {
   final List<Showup> showups;
   final DateTime date;
   final ShowupStatusColors colors;
 
-  /// Optional time-derived UI states for each showup. When provided (and the
-  /// list length matches [showups]), dots are coloured using [ShowupStatusColors.forUiState]
-  /// instead of [ShowupStatusColors.forStatus]. This surfaces the
-  /// [ShowupUiState.waitingForStart] yellow signal on the calendar strip.
-  ///
-  /// When null or when lengths do not match, falls back to [forStatus] behaviour.
+  // When provided and length matches showups, uses forUiState (surfaces amber waitingForStart signal).
   final List<ShowupUiState>? uiStates;
 
   const ShowupStatusDots({
@@ -48,9 +29,6 @@ class ShowupStatusDots extends StatelessWidget {
     final useUiStates = uiStates != null && uiStates!.length == showups.length;
 
     if (showups.length >= 4) {
-      // When UI states are available use the richer overflowForUiState()
-      // resolver so the amber "active" signal is surfaced; otherwise fall back
-      // to the simpler done/failed/pending count via overflow().
       final overflowColor = useUiStates
           ? colors.overflowForUiState(uiStates!)
           : () {

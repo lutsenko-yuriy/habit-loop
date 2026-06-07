@@ -8,48 +8,19 @@ import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 
-/// Maps the 3 edit wizard page indices to their corresponding [PactWizardStep]
-/// values.
-///
-/// The edit wizard skips duration, showup-duration, and schedule steps, which
-/// the user cannot change after a pact is created.
-///
-/// | PageView index | Step                  |
-/// |---|---|
-/// | 0 | [PactWizardStep.habitName] |
-/// | 1 | [PactWizardStep.reminder]  |
-/// | 2 | [PactWizardStep.summary]   |
-///
-/// Platform page widgets import this constant to drive their step indicators
-/// and [PageController] target-page computations.
+// 3-page edit wizard step indices: 0 = habitName, 1 = reminder, 2 = summary.
+// Platform pages import this to drive step indicators and PageController targets.
 const List<PactWizardStep> kEditSteps = [
   PactWizardStep.habitName,
   PactWizardStep.reminder,
   PactWizardStep.summary,
 ];
 
-/// Number of pages in the edit wizard (= [kEditSteps.length]).
 const int kEditWizardPageCount = 3;
 
-// ---------------------------------------------------------------------------
-// Clock provider — overridable in tests
-// ---------------------------------------------------------------------------
-
-/// Provides the current date for the edit wizard.
-///
-/// Overridable in tests to make the initial [PactBuilder] snapshot
-/// deterministic without relying on [DateTime.now].
+// Overridable in tests to keep the initial PactBuilder snapshot deterministic.
 final pactEditTodayProvider = Provider<DateTime>((ref) => DateTime.now());
 
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
-
-/// Combined loading / wizard / saving state for the edit-pact wizard.
-///
-/// [wizardState] and [originalPact] are `null` until [PactEditViewModel.load]
-/// completes successfully; the UI should show a loading indicator or error
-/// screen when they are null.
 class PactEditWizardState {
   const PactEditWizardState({
     this.isLoading = false,
@@ -60,27 +31,13 @@ class PactEditWizardState {
     this.saveError,
   });
 
-  /// True while [PactEditViewModel.load] is running.
   final bool isLoading;
-
-  /// Non-null when [PactEditViewModel.load] failed.
   final Object? loadError;
-
-  /// The wizard navigation state seeded from the original pact.
-  ///
-  /// `null` until [PactEditViewModel.load] completes successfully.
+  // null until load completes.
   final PactCreationState? wizardState;
-
-  /// The pact as it existed before the user made any edits.
-  ///
-  /// `null` until [PactEditViewModel.load] completes successfully.
-  /// Used in [PactEditViewModel.save] to compute which fields changed.
+  // null until load completes; used in save to compute changed fields.
   final Pact? originalPact;
-
-  /// True while [PactEditViewModel.save] is running.
   final bool isSaving;
-
-  /// Non-null when [PactEditViewModel.save] failed.
   final Object? saveError;
 
   PactEditWizardState copyWith({
@@ -104,69 +61,27 @@ class PactEditWizardState {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Provider
-// ---------------------------------------------------------------------------
-
-/// Provides a [PactEditViewModel] instance keyed by pact ID.
 final pactEditViewModelProvider = NotifierProviderFamily<PactEditViewModel, PactEditWizardState, String>(
   PactEditViewModel.new,
 );
 
-// ---------------------------------------------------------------------------
-// ViewModel
-// ---------------------------------------------------------------------------
-
-/// View model for the edit-pact wizard.
-///
-/// The edit wizard lets users update two fields on an existing active pact:
-/// the habit name and the reminder offset. All other pact fields (dates,
-/// schedule, showup duration) are fixed after creation.
-///
-/// ## Lifecycle
-///
-/// 1. Call [load] on screen init to seed [PactEditWizardState.wizardState]
-///    from the persisted pact.
-/// 2. Use the field setters ([setHabitName], [setReminderOffset],
-///    [clearReminderOffset]) to mutate the wizard state as the user types.
-/// 3. Call [goToPage] from the [PageView.onPageChanged] callback to keep
-///    [PactCreationState.currentStep] in sync with the visible page.
-/// 4. Call [markSummaryJumped] when the user taps a summary row to jump back
-///    to a step before saving.
-/// 5. Call [save] from the summary page's "Save Changes" button to persist
-///    the changes, reschedule reminders, and fire analytics.
+// Updates only habitName and reminderOffset — all other pact fields are fixed post-creation.
 class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
   @override
   PactEditWizardState build(String pactId) => const PactEditWizardState();
 
-  // ---------------------------------------------------------------------------
-  // Private helpers
-  // ---------------------------------------------------------------------------
-
-  /// Applies [update] to [PactEditWizardState.wizardState].
-  ///
-  /// A no-op when [wizardState] is `null` (i.e. before [load] completes),
-  /// which prevents crashes from UI callbacks that fire before load finishes.
+  // No-op before load completes — prevents crashes from UI callbacks on uninitialized state.
   void _updateWizardState(PactCreationState Function(PactCreationState) update) {
     final ws = state.wizardState;
     if (ws == null) return;
     state = state.copyWith(wizardState: update(ws));
   }
 
-  /// Routes all builder-level mutations through [_updateWizardState].
   void _updateBuilder(PactBuilder Function(PactBuilder) update) {
     _updateWizardState((ws) => ws.copyWith(builder: update(ws.builder)));
   }
 
-  // ---------------------------------------------------------------------------
-  // load
-  // ---------------------------------------------------------------------------
-
-  /// Loads the pact from the repository and seeds [PactEditWizardState.wizardState].
-  ///
-  /// A [PactBuilder] is constructed from the pact via [PactBuilder.fromPact],
-  /// and a [PactCreationState] is initialised from that builder so the edit
-  /// wizard shares the same state structure as the creation wizard.
+  // Seeds wizardState from the pact repo; migrates legacy schedule types via PactBuilder.fromPact.
   Future<void> load() async {
     state = state.copyWith(isLoading: true, clearLoadError: true);
     try {
@@ -184,8 +99,7 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
 
       final today = ref.read(pactEditTodayProvider);
 
-      // Track legacy schedule usage so we know when it is safe to drop the
-      // legacy codec branches.  Logged only — no PII (schedule type is an enum).
+      // Track legacy schedule type for codec-drop telemetry (no PII — enum only).
       if (pact.schedule is! SlotSchedule) {
         unawaited(
           ref.read(logServiceProvider).info(
@@ -214,30 +128,11 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Field setters
-  // ---------------------------------------------------------------------------
-
-  /// Updates the habit name in the wizard state.
   void setHabitName(String name) => _updateBuilder((b) => b.copyWith(habitName: name));
-
-  /// Updates the reminder offset in the wizard state.
   void setReminderOffset(Duration offset) => _updateBuilder((b) => b.copyWith(reminderOffset: offset));
-
-  /// Clears the reminder offset in the wizard state (no reminder after save).
   void clearReminderOffset() => _updateBuilder((b) => b.copyWith(clearReminderOffset: true));
 
-  // ---------------------------------------------------------------------------
-  // Wizard navigation
-  // ---------------------------------------------------------------------------
-
-  /// Syncs [PactCreationState.currentStep] to the given [PageView] page index.
-  ///
-  /// The edit wizard has 3 pages — indices 0, 1, 2 — mapped to
-  /// [PactWizardStep.habitName], [PactWizardStep.reminder], and
-  /// [PactWizardStep.summary] respectively. Out-of-range indices are clamped.
-  ///
-  /// A no-op when [wizardState] is null.
+  // Clamps to valid range; no-op when wizardState is null.
   void goToPage(int page) {
     final clamped = page.clamp(0, kEditSteps.length - 1);
     final targetStep = kEditSteps[clamped];
@@ -246,12 +141,7 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
     _updateWizardState((ws) => ws.copyWith(currentStep: targetStep));
   }
 
-  /// Marks that the user tapped a summary row to jump back to a step.
-  ///
-  /// Sets [PactCreationState.usedSummaryJump] to `true` so the
-  /// [PactEditSavedEvent] analytics event can report it. Idempotent.
-  ///
-  /// A no-op when [wizardState] is null.
+  // Sets usedSummaryJump = true for analytics. Idempotent; no-op when wizardState is null.
   void markSummaryJumped() {
     _updateWizardState((ws) {
       if (ws.usedSummaryJump) return ws;
@@ -259,32 +149,7 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // save
-  // ---------------------------------------------------------------------------
-
-  /// Persists the edited pact, reschedules reminders, and fires analytics.
-  ///
-  /// Guard: returns immediately when [wizardState] or [originalPact] is null
-  /// (i.e. when called before [load] completes).
-  ///
-  /// ## What changes
-  ///
-  /// Only [Pact.habitName] and [Pact.reminderOffset] are writable in the edit
-  /// wizard. All other pact fields are preserved via [Pact.copyWith] from
-  /// [originalPact].
-  ///
-  /// ## Reminders
-  ///
-  /// All existing reminder notifications are cancelled unconditionally. If the
-  /// updated pact has a non-null reminder offset, reminders are rescheduled for
-  /// the existing window of showups (fire-and-forget).
-  ///
-  /// ## Analytics
-  ///
-  /// Fires [PactEditSavedEvent] with boolean flags indicating which fields
-  /// changed, the resulting reminder offset in minutes (or null if cleared),
-  /// and whether the user jumped back to a step from the summary screen.
+  // Guards on null wizardState/originalPact. PII rule: logs only change flags — no habit name.
   Future<void> save() async {
     final wizardState = state.wizardState;
     final originalPact = state.originalPact;
@@ -307,16 +172,12 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
       final pactService = ref.read(pactServiceProvider);
       await pactService.updatePact(updatedPact);
 
-      // Load showups once — used both for deterministic notification cancellation
-      // (HAB-100) and for rescheduling when a reminder offset is set.
+      // Load showups once — deterministic cancellation (HAB-100) + rescheduling if offset set.
       final showups = await pactService.getShowupsForPact(arg);
       final showupIds = showups.map((s) => s.id).toList();
 
-      // Cancel all pending reminder notifications — safe even when there was
-      // no reminder configured before (no-op in that case).
       await ref.read(reminderSchedulingServiceProvider).cancelAllRemindersForPact(arg, showupIds: showupIds);
 
-      // Reschedule only when the updated pact has a reminder offset.
       if (newReminderOffset != null) {
         unawaited(
           ref.read(reminderSchedulingServiceProvider).scheduleRemindersForShowups(
@@ -326,8 +187,7 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
         );
       }
 
-      // Log breadcrumb and fire analytics (fire-and-forget — no-throw contract).
-      // PII rule: log only field lengths and change flags — no habit name or reason.
+      // PII rule: log only change flags — no habit name or reason.
       unawaited(
         ref.read(logServiceProvider).info(
               'pact_edit_saved: id=$arg'
