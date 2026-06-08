@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.19] — 2026-06-08 (PR #133 merged)
+
+### Changed — Flutter UI audit WU5: dashboard + onboarding extraction (HAB-98)
+
+- [user-none]
+- [non-user] Added `DashboardBody` with `buildShowupTile` + `buildNoPactsCta` slots; collapsed `_DashboardContent`, `_CalendarStrip`, `_ShowupList` duplication across both platform pages
+- [non-user] Added `DashboardActionDescriptor` / `buildDashboardActions` consolidating `kDebugMode` guards; `onDashboardRcOverridesClosed` deduplicates the reload callback
+- [non-user] Added `OnboardingSignInController.signIn` extracting the byte-identical `_onSignIn` async block; platform carousels collapsed from `ConsumerStatefulWidget` to `ConsumerWidget` shells
+- [non-user] Added `OnboardingCarouselScaffold` owning `PageController` lifecycle and `ref.listen` animation hook
+- [non-user] Fixed fire-and-forget `unawaited()` on sign-in button; now properly awaited
+- [non-user] 27 new tests across 4 generic test files; 1671 total tests green
+
+---
+
 ## [0.42.18] — 2026-06-08 (PR #132 merged)
 
 ### Changed — Flutter UI audit WU4: showup detail extraction (HAB-98)

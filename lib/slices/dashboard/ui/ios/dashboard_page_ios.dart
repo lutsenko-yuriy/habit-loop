@@ -1,7 +1,5 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart' show AsyncCallback, kDebugMode, kProfileMode;
+import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Icon, Material, MaterialType, ScaffoldMessenger, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -9,20 +7,18 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_actions.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_body.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/ios/language_picker_dialog_ios.dart';
 import 'package:habit_loop/slices/dashboard/ui/ios/onboarding_carousel_ios.dart';
 import 'package:habit_loop/slices/debug/ui/ios/remote_config_overrides_page_ios.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 class DashboardPageIos extends ConsumerWidget {
   final DashboardState state;
@@ -70,14 +66,28 @@ class DashboardPageIos extends ConsumerWidget {
       return OnboardingCarouselIos(onCreatePact: onCreatePact);
     }
 
+    final actions = buildDashboardActions(
+      onRcOverridesPressed: () => Navigator.of(context)
+          .push(CupertinoPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageIos()))
+          // ignore: use_build_context_synchronously — onDashboardRcOverridesClosed guards context.mounted
+          .then((_) => onDashboardRcOverridesClosed(context, ref)),
+      onTestNotificationPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+      onSyncStatusPressed: onSyncStatusTapped,
+      onLanguagePickerPressed: onLanguagePickerTapped,
+      onCreatePactPressed: onCreatePact,
+    );
+
+    final langAction = actions.firstWhere((a) => a.type == DashboardActionType.languagePicker);
+    final trailingActions = actions.where((a) => a.type != DashboardActionType.languagePicker).toList();
+
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         leading: CupertinoButton(
-          key: const Key('language-picker-button'),
+          key: langAction.key,
           padding: EdgeInsets.zero,
-          onPressed: onLanguagePickerTapped,
+          onPressed: langAction.onPressed,
           child: const Icon(CupertinoIcons.globe),
         ),
         middle: Column(
@@ -93,49 +103,7 @@ class DashboardPageIos extends ConsumerWidget {
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── DEV-ONLY: Remote Config overrides debug screen ─────────────
-            if (kDebugMode || kProfileMode)
-              CupertinoButton(
-                key: const Key('remote-config-debug-button'),
-                padding: EdgeInsets.zero,
-                onPressed: () => Navigator.of(context)
-                    .push(CupertinoPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageIos()))
-                    .then((_) {
-                  // Reload dashboard in case debug tools (seed data, etc.) changed
-                  // the local database while the RC overrides screen was open.
-                  if (!context.mounted) return;
-                  ref.invalidate(hasActivePactsProvider);
-                  unawaited(ref.read(dashboardViewModelProvider.notifier).load());
-                  unawaited(ref.read(pactListViewModelProvider.notifier).load());
-                }),
-                child: const Icon(CupertinoIcons.wrench),
-              ),
-            // ── DEV-ONLY: fire a test notification in 15 s ─────────────────
-            if (kDebugMode || kProfileMode)
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
-                child: const Icon(CupertinoIcons.bell),
-              ),
-            // ── Sync status indicator ───────────────────────────────────────
-            CupertinoButton(
-              key: const Key('sync-status-button'),
-              padding: EdgeInsets.zero,
-              onPressed: onSyncStatusTapped,
-              child: Icon(
-                syncStatusIconData(syncState),
-                color: syncStatusIconColor(syncState, context),
-              ),
-            ),
-            // ─────────────────────────────────────────────────────────────
-            CupertinoButton(
-              key: const Key('create-pact-button'),
-              padding: EdgeInsets.zero,
-              onPressed: onCreatePact,
-              child: const Icon(CupertinoIcons.add),
-            ),
-          ],
+          children: trailingActions.map((a) => _buildNavBarButton(context, a, syncState)).toList(),
         ),
       ),
       child: SafeArea(
@@ -147,13 +115,25 @@ class DashboardPageIos extends ConsumerWidget {
             children: [
               state.isLoading
                   ? const Center(child: CupertinoActivityIndicator())
-                  : _DashboardContent(
+                  : DashboardBody(
                       state: state,
-                      l10n: l10n,
                       hasPacts: hasPacts,
+                      statusColors: ShowupStatusColors.cupertino(context),
+                      separator: Container(height: 0.5, color: CupertinoColors.separator),
+                      noPactsTextColor: CupertinoColors.systemGrey.resolveFrom(context),
                       onCreatePact: onCreatePact,
                       onDaySelected: onDaySelected,
                       onShowupTapped: onShowupTapped,
+                      buildShowupTile: (ctx, showup, habitName, onTap) => _ShowupTile(
+                        showup: showup,
+                        habitName: habitName,
+                        onTap: onTap,
+                      ),
+                      buildNoPactsCta: (ctx, createPact) => CupertinoButton.filled(
+                        key: const Key('create-first-pact-button'),
+                        onPressed: createPact,
+                        child: Text(l10n.createPact),
+                      ),
                     ),
               PactsPanel(onCreatePact: onCreatePact),
             ],
@@ -164,199 +144,37 @@ class DashboardPageIos extends ConsumerWidget {
   }
 }
 
-class _DashboardContent extends StatelessWidget {
-  final DashboardState state;
-  final AppLocalizations l10n;
-  final bool hasPacts;
-  final AsyncCallback onCreatePact;
-  final ValueChanged<int> onDaySelected;
-  final Future<void> Function(String) onShowupTapped;
-
-  const _DashboardContent({
-    required this.state,
-    required this.l10n,
-    required this.hasPacts,
-    required this.onCreatePact,
-    required this.onDaySelected,
-    required this.onShowupTapped,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _CalendarStrip(
-          state: state,
-          onDaySelected: onDaySelected,
-        ),
-        const _Separator(),
-        Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: state.selectedDayShowups.isEmpty
-                ? hasPacts
-                    ? Center(
-                        key: ValueKey('empty-${state.selectedDayIndex}'),
-                        child: Text(l10n.noShowupsForDay),
-                      )
-                    : _NoPactsCta(
-                        key: const Key('no-pacts-cta'),
-                        l10n: l10n,
-                        onCreatePact: onCreatePact,
-                      )
-                : _ShowupList(
-                    key: ValueKey('list-${state.selectedDayIndex}'),
-                    showups: state.selectedDayShowups,
-                    state: state,
-                    onShowupTapped: onShowupTapped,
-                  ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Separator extends StatelessWidget {
-  const _Separator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 0.5,
-      color: CupertinoColors.separator,
-    );
-  }
-}
-
-/// Empty-state call-to-action shown when the user has no pacts at all.
-///
-/// Offers a shortcut to the pact creation wizard so users who logged in with
-/// an existing account (or who dismissed the onboarding carousel) can still
-/// create their first pact easily.
-class _NoPactsCta extends StatelessWidget {
-  const _NoPactsCta({super.key, required this.l10n, required this.onCreatePact});
-
-  final AppLocalizations l10n;
-  final AsyncCallback onCreatePact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            l10n.noPactsDescription,
-            style: const TextStyle(color: CupertinoColors.systemGrey),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          CupertinoButton.filled(
-            key: const Key('create-first-pact-button'),
-            onPressed: onCreatePact,
-            child: Text(l10n.createPact),
-          ),
-        ],
+Widget _buildNavBarButton(BuildContext context, DashboardActionDescriptor action, dynamic syncState) {
+  return switch (action.type) {
+    DashboardActionType.rcOverrides => CupertinoButton(
+        key: action.key,
+        padding: EdgeInsets.zero,
+        onPressed: action.onPressed,
+        child: const Icon(CupertinoIcons.wrench),
       ),
-    );
-  }
-}
-
-class _CalendarStrip extends StatelessWidget {
-  final DashboardState state;
-  final ValueChanged<int> onDaySelected;
-
-  const _CalendarStrip({
-    required this.state,
-    required this.onDaySelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final today = state.calendarDays.isNotEmpty ? state.calendarDays[state.todayIndex].date : DateTime.now();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(state.calendarDays.length, (index) {
-          final entry = state.calendarDays[index];
-          final isToday =
-              entry.date.day == today.day && entry.date.month == today.month && entry.date.year == today.year;
-          final isSelected = index == state.selectedDayIndex;
-
-          return GestureDetector(
-            onTap: () => onDaySelected(index),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? CupertinoTheme.of(context).primaryColor : null,
-                    border: isToday && !isSelected
-                        ? Border.all(
-                            color: CupertinoTheme.of(context).primaryColor,
-                            width: 2,
-                          )
-                        : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${entry.date.day}',
-                    style: TextStyle(
-                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? CupertinoColors.white : null,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ShowupStatusDots(
-                  showups: entry.showups,
-                  date: entry.date,
-                  colors: ShowupStatusColors.cupertino(context),
-                  uiStates: deriveUiStates(entry.showups, state.reminderOffsetByPactId),
-                ),
-              ],
-            ),
-          );
-        }),
+    DashboardActionType.testNotification => CupertinoButton(
+        key: action.key,
+        padding: EdgeInsets.zero,
+        onPressed: action.onPressed,
+        child: const Icon(CupertinoIcons.bell),
       ),
-    );
-  }
-}
-
-class _ShowupList extends StatelessWidget {
-  final List<Showup> showups;
-  final DashboardState state;
-  final Future<void> Function(String) onShowupTapped;
-
-  const _ShowupList({
-    super.key,
-    required this.showups,
-    required this.state,
-    required this.onShowupTapped,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: showups.length,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemBuilder: (context, index) {
-        final showup = showups[index];
-        return _ShowupTile(
-          showup: showup,
-          habitName: state.habitName(showup.pactId),
-          onTap: () => onShowupTapped(showup.id),
-        );
-      },
-    );
-  }
+    DashboardActionType.syncStatus => CupertinoButton(
+        key: action.key,
+        padding: EdgeInsets.zero,
+        onPressed: action.onPressed,
+        child: Icon(
+          syncStatusIconData(syncState),
+          color: syncStatusIconColor(syncState, context),
+        ),
+      ),
+    DashboardActionType.createPact => CupertinoButton(
+        key: action.key,
+        padding: EdgeInsets.zero,
+        onPressed: action.onPressed,
+        child: const Icon(CupertinoIcons.add),
+      ),
+    DashboardActionType.languagePicker => const SizedBox.shrink(),
+  };
 }
 
 class _ShowupTile extends StatelessWidget {
@@ -391,14 +209,6 @@ class _ShowupTile extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Platform-specific picker UI — iOS (CupertinoActionSheet)
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Platform-specific sync status dialog — iOS (CupertinoAlertDialog)
-// ---------------------------------------------------------------------------
 
 Future<void> _showCupertinoSyncDialog(
   BuildContext context,

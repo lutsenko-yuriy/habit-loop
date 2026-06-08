@@ -1,6 +1,4 @@
-import 'dart:async' show unawaited;
-
-import 'package:flutter/foundation.dart' show AsyncCallback, kDebugMode, kProfileMode;
+import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -10,18 +8,16 @@ import 'package:habit_loop/infrastructure/notifications/data/test_notification_h
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/language_picker_dialog_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/onboarding_carousel_android.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_actions.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_body.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_android.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
-import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 class DashboardPageAndroid extends ConsumerWidget {
   final DashboardState state;
@@ -69,6 +65,19 @@ class DashboardPageAndroid extends ConsumerWidget {
       return OnboardingCarouselAndroid(onCreatePact: onCreatePact);
     }
 
+    final actions = buildDashboardActions(
+      onRcOverridesPressed: () => Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageAndroid()))
+          // ignore: use_build_context_synchronously — onDashboardRcOverridesClosed guards context.mounted
+          .then((_) => onDashboardRcOverridesClosed(context, ref)),
+      onTestNotificationPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+      onSyncStatusPressed: onSyncStatusTapped,
+      onLanguagePickerPressed: onLanguagePickerTapped,
+      onCreatePactPressed: onCreatePact,
+    );
+
+    final appBarActions = actions.where((a) => a.type != DashboardActionType.createPact).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -83,45 +92,7 @@ class DashboardPageAndroid extends ConsumerWidget {
               ),
           ],
         ),
-        actions: [
-          // ── DEV-ONLY: Remote Config overrides debug screen ─────────────
-          if (kDebugMode || kProfileMode)
-            IconButton(
-              key: const Key('remote-config-debug-button'),
-              icon: const Icon(Icons.tune),
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageAndroid()))
-                  .then((_) {
-                // Reload dashboard in case debug tools (seed data, etc.) changed
-                // the local database while the RC overrides screen was open.
-                if (!context.mounted) return;
-                ref.invalidate(hasActivePactsProvider);
-                unawaited(ref.read(dashboardViewModelProvider.notifier).load());
-                unawaited(ref.read(pactListViewModelProvider.notifier).load());
-              }),
-            ),
-          // ── DEV-ONLY: fire a test notification in 15 s ─────────────────
-          if (kDebugMode || kProfileMode)
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
-            ),
-          // ── Sync status indicator ──────────────────────────────────────
-          IconButton(
-            key: const Key('sync-status-button'),
-            icon: Icon(
-              syncStatusIconData(syncState),
-              color: syncStatusIconColor(syncState, context),
-            ),
-            onPressed: onSyncStatusTapped,
-          ),
-          // ────────────────────────────────────────────────────────────────
-          IconButton(
-            key: const Key('language-picker-button'),
-            icon: const Icon(Icons.language),
-            onPressed: onLanguagePickerTapped,
-          ),
-        ],
+        actions: appBarActions.map((a) => _buildAppBarButton(context, a, syncState)).toList(),
       ),
       floatingActionButton: FloatingActionButton(
         key: const Key('create-pact-button'),
@@ -132,13 +103,25 @@ class DashboardPageAndroid extends ConsumerWidget {
         children: [
           state.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _DashboardContent(
+              : DashboardBody(
                   state: state,
-                  l10n: l10n,
                   hasPacts: hasPacts,
+                  statusColors: ShowupStatusColors.material(Theme.of(context).colorScheme),
+                  separator: const Divider(height: 1),
+                  noPactsTextColor: Theme.of(context).colorScheme.onSurfaceVariant,
                   onCreatePact: onCreatePact,
                   onDaySelected: onDaySelected,
                   onShowupTapped: onShowupTapped,
+                  buildShowupTile: (ctx, showup, habitName, onTap) => _ShowupTile(
+                    showup: showup,
+                    habitName: habitName,
+                    onTap: onTap,
+                  ),
+                  buildNoPactsCta: (ctx, createPact) => ElevatedButton(
+                    key: const Key('create-first-pact-button'),
+                    onPressed: createPact,
+                    child: Text(l10n.createPact),
+                  ),
                 ),
           PactsPanel(onCreatePact: onCreatePact),
         ],
@@ -147,213 +130,33 @@ class DashboardPageAndroid extends ConsumerWidget {
   }
 }
 
-class _DashboardContent extends StatelessWidget {
-  final DashboardState state;
-  final AppLocalizations l10n;
-  final bool hasPacts;
-  final AsyncCallback onCreatePact;
-  final ValueChanged<int> onDaySelected;
-  final Future<void> Function(String) onShowupTapped;
-
-  const _DashboardContent({
-    required this.state,
-    required this.l10n,
-    required this.hasPacts,
-    required this.onCreatePact,
-    required this.onDaySelected,
-    required this.onShowupTapped,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _CalendarStrip(
-          state: state,
-          onDaySelected: onDaySelected,
+Widget _buildAppBarButton(BuildContext context, DashboardActionDescriptor action, dynamic syncState) {
+  return switch (action.type) {
+    DashboardActionType.rcOverrides => IconButton(
+        key: action.key,
+        icon: const Icon(Icons.tune),
+        onPressed: action.onPressed,
+      ),
+    DashboardActionType.testNotification => IconButton(
+        key: action.key,
+        icon: const Icon(Icons.notifications_outlined),
+        onPressed: action.onPressed,
+      ),
+    DashboardActionType.syncStatus => IconButton(
+        key: action.key,
+        icon: Icon(
+          syncStatusIconData(syncState),
+          color: syncStatusIconColor(syncState, context),
         ),
-        const Divider(height: 1),
-        Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: state.selectedDayShowups.isEmpty
-                ? hasPacts
-                    ? Center(
-                        key: ValueKey('empty-${state.selectedDayIndex}'),
-                        child: Text(l10n.noShowupsForDay),
-                      )
-                    : _NoPactsCta(
-                        key: const Key('no-pacts-cta'),
-                        l10n: l10n,
-                        onCreatePact: onCreatePact,
-                      )
-                : _ShowupList(
-                    key: ValueKey('list-${state.selectedDayIndex}'),
-                    showups: state.selectedDayShowups,
-                    state: state,
-                    onShowupTapped: onShowupTapped,
-                  ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CalendarStrip extends StatelessWidget {
-  final DashboardState state;
-  final ValueChanged<int> onDaySelected;
-
-  const _CalendarStrip({
-    required this.state,
-    required this.onDaySelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final today = state.calendarDays.isNotEmpty ? state.calendarDays[state.todayIndex].date : DateTime.now();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(state.calendarDays.length, (index) {
-          final entry = state.calendarDays[index];
-          final isToday =
-              entry.date.day == today.day && entry.date.month == today.month && entry.date.year == today.year;
-          final isSelected = index == state.selectedDayIndex;
-
-          return _CalendarDay(
-            entry: entry,
-            isToday: isToday,
-            isSelected: isSelected,
-            onTap: () => onDaySelected(index),
-            reminderOffsetByPactId: state.reminderOffsetByPactId,
-          );
-        }),
+        onPressed: action.onPressed,
       ),
-    );
-  }
-}
-
-class _CalendarDay extends StatelessWidget {
-  final CalendarDayEntry entry;
-  final bool isToday;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final Map<String, Duration?> reminderOffsetByPactId;
-
-  const _CalendarDay({
-    required this.entry,
-    required this.isToday,
-    required this.isSelected,
-    required this.onTap,
-    required this.reminderOffsetByPactId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isSelected ? theme.colorScheme.primary : null,
-              border: isToday && !isSelected ? Border.all(color: theme.colorScheme.primary, width: 2) : null,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '${entry.date.day}',
-              style: TextStyle(
-                fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? theme.colorScheme.onPrimary : null,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          ShowupStatusDots(
-            showups: entry.showups,
-            date: entry.date,
-            colors: ShowupStatusColors.material(theme.colorScheme),
-            uiStates: deriveUiStates(entry.showups, reminderOffsetByPactId),
-          ),
-        ],
+    DashboardActionType.languagePicker => IconButton(
+        key: action.key,
+        icon: const Icon(Icons.language),
+        onPressed: action.onPressed,
       ),
-    );
-  }
-}
-
-/// Empty-state call-to-action shown when the user has no pacts at all.
-///
-/// Offers a shortcut to the pact creation wizard so users who logged in with
-/// an existing account (or who dismissed the onboarding carousel) can still
-/// create their first pact easily.
-class _NoPactsCta extends StatelessWidget {
-  const _NoPactsCta({super.key, required this.l10n, required this.onCreatePact});
-
-  final AppLocalizations l10n;
-  final AsyncCallback onCreatePact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            l10n.noPactsDescription,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            key: const Key('create-first-pact-button'),
-            onPressed: onCreatePact,
-            child: Text(l10n.createPact),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ShowupList extends StatelessWidget {
-  final List<Showup> showups;
-  final DashboardState state;
-  final Future<void> Function(String) onShowupTapped;
-
-  const _ShowupList({
-    super.key,
-    required this.showups,
-    required this.state,
-    required this.onShowupTapped,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: showups.length,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemBuilder: (context, index) {
-        final showup = showups[index];
-        return _ShowupTile(
-          showup: showup,
-          habitName: state.habitName(showup.pactId),
-          onTap: () => onShowupTapped(showup.id),
-        );
-      },
-    );
-  }
+    DashboardActionType.createPact => const SizedBox.shrink(),
+  };
 }
 
 class _ShowupTile extends StatelessWidget {
@@ -386,10 +189,6 @@ class _ShowupTile extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Platform-specific sync status dialog — Android (AlertDialog)
-// ---------------------------------------------------------------------------
 
 Future<void> _showMaterialSyncDialog(
   BuildContext context,
