@@ -71,6 +71,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                           linkColor: linkColor,
                           slots: (
                             buildActionButtons: (ctx, s) => Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     CupertinoButton.filled(
                                       onPressed: s.isSaving ? null : onMarkDone,
