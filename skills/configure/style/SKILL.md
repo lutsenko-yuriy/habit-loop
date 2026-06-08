@@ -28,7 +28,7 @@ Which style?
 
 ### 2. Load the style rules
 
-Read `styles/<STYLE>.md` in full and internalise the rules. Apply them immediately — every response from this point forward must conform to the loaded style.
+Read `skills/configure/style/<STYLE>.md` in full and internalise the rules. Apply them immediately — every response from this point forward must conform to the loaded style.
 
 ### 3. Persist the active style
 
@@ -40,6 +40,8 @@ CONCISE
 ```
 
 Replace any existing `## Active communication style` section. Do not touch any other content in `CLAUDE.local.md`.
+
+The style definition files live at `skills/configure/style/<STYLE>.md`.
 
 ### 4. Confirm
 

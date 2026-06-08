@@ -26,6 +26,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 | skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
+| skills/configure/skill-creator/SKILL.md | Refactor a skill into lean SKILL.md + resource files; run against one skill or all |
 | skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
 | skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
 | skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |
@@ -53,6 +54,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/experiment` | design/experiment | `/experiment <hypothesis>` |
 | `/implement` | build/implement | `/implement HAB-XX: <title>` |
 | `/calibrate` | configure/calibrate | `/calibrate` |
+| `/skill-creator` | configure/skill-creator | `/skill-creator skills/<path>` or `/skill-creator all` |
 | `/style` | configure/style | `/style CONCISE` |
 | `/ios` | run/ios | `/ios` |
 | `/android` | run/android | `/android` |
@@ -89,7 +91,7 @@ Details: @docs/VERSIONING.md
 At the beginning of every new session, before doing anything else:
 
 1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
-2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `styles/`). Default to DETAILED if absent.
+2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `skills/configure/style/`). Default to DETAILED if absent.
 3. Invoke the `summarize` skill: `Invoke the summarize skill to present the current backlog from Linear`.
 4. The skill will summarise what has been done and what is remaining, then ask *"What goes into the next release?"*.
 5. Wait for the user's answer before proceeding.

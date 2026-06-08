@@ -35,17 +35,7 @@ Read the full source of every changed file that is relevant to the architecture.
 
 Evaluate each changed file against:
 
-- **Layer violations** — wrong import direction between layers:
-  - Domain (`lib/domain/`) must not import from data, UI, or infrastructure
-  - Data (`lib/slices/*/data/`) must not import from UI
-  - UI must not import data repositories directly — only through Riverpod providers declared in `lib/infrastructure/injections/app_providers.dart`
-- **Dependency direction** — new dependencies that point inward (e.g. domain depending on sqflite, or UI importing sqflite)
-- **Vertical-slice boundaries** — code from one slice (`lib/slices/<feature>/`) reaching into another slice's internals rather than through a shared provider or interface in `lib/infrastructure/injections/`
-- **Naming and placement** — files in the right directories per `docs/ARCHITECTURE.md` (models in `domain/`, implementations in `data/`, notifiers in `ui/generic/`, widgets in `ui/ios/` or `ui/android/`)
-- **Interface coverage** — repository interfaces updated when implementations change their contract
-- **Architectural drift** — patterns inconsistent with the rest of the codebase without justification (e.g. inline `PactStatsService(...)` construction instead of using the Riverpod provider)
-- **Provider graph safety** — no circular dependencies in Riverpod providers (e.g. `pactStatsServiceProvider` must never watch `pactServiceProvider`)
-- **Comment hygiene** — flag any comments that narrate WHAT the code does, duplicate field names as docs, use `// ---` dividers, or could be removed without confusing a future reader. Only WHY comments are acceptable: hidden constraints, invariants, platform quirks, PII rules, no-throw contracts. Flag excess as 🟡.
+@skills/verify/review/resources/architectural-checks.md
 
 Before flagging a finding, verify:
 - Is the scenario already handled by a path not visible in the diff?
