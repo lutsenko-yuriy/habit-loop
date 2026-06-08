@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.42.18] — 2026-06-07
+## [0.42.18] — 2026-06-08 (PR #132 merged)
 
 ### Changed — Flutter UI audit WU4: showup detail extraction (HAB-98)
 
