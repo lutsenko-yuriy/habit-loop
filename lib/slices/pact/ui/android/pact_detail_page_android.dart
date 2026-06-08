@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
-import 'package:habit_loop/slices/pact/ui/generic/date_row_tile.dart';
+
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
-import 'package:habit_loop/slices/pact/ui/generic/section_header.dart';
-import 'package:habit_loop/slices/pact/ui/generic/status_badge.dart';
+import 'package:habit_loop/theme/widgets/date_row_tile.dart';
+import 'package:habit_loop/theme/widgets/section_header.dart';
+import 'package:habit_loop/theme/widgets/status_badge.dart';
 
 class PactDetailPageAndroid extends StatelessWidget {
   final PactDetailState state;

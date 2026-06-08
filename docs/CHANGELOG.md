@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.18] — 2026-06-08 (PR #132 merged)
+
+### Changed — Flutter UI audit WU4: showup detail extraction (HAB-98)
+
+- [user-none]
+- [non-user] Added `ShowupDetailContent` StatefulWidget owning `TextEditingController` lifecycle; accepts `ShowupDetailSlots` record (`buildActionButtons`, `buildNoteField`, `buildSaveButton`, `buildErrorContainer`)
+- [non-user] Collapsed `showup_detail_page_ios/android` to `StatelessWidget` Scaffold shells; `ShowupDetailContent` renders common layout using `StatusBadge`, `SectionHeader`, `DateRowTile` from WU1
+- [non-user] iOS page now uses `ShowupStatusColors.cupertino` replacing the private `_statusColor` switch
+- [non-user] 14 new tests in `showup_detail_content_test.dart`; 1644 total tests green
+
+---
+
 ## [0.42.17] — 2026-06-07 (PR #131 merged)
 
 ### Changed — Flutter UI audit WU3: schedule step extraction (HAB-98)

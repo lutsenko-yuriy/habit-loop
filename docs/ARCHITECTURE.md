@@ -267,6 +267,8 @@ Platform-split presentation:
 
 `lib/theme/` contains the cross-platform Habit Loop visual foundation: the shared brand palette and the Material/Cupertino theme data applied from `HabitLoopApp`. Feature UI should consume the theme via `Theme.of(context)`, `CupertinoTheme.of(context)`, or the shared semantic colors when a reusable status color is needed. Launcher icon assets under `assets/app_icon/`, `ios/Runner/Assets.xcassets/AppIcon.appiconset/`, and `android/app/src/main/res/mipmap-*/` use the same palette so the installed app icon matches the in-app design language.
 
+`lib/theme/widgets/` holds domain-agnostic presentational widgets used by more than one feature slice — currently `StatusBadge`, `SectionHeader`, and `DateRowTile`. Any purely decorative, parameter-driven widget that would create a cross-slice dependency if kept inside a single slice belongs here.
+
 ### Infrastructure (`lib/infrastructure/`)
 
 Cross-cutting services (analytics, crashlytics, logging, notifications, remote config, sync) that are shared by the entire app. Each service follows the same internal structure: `contracts/` (abstract interface with a no-throw contract) and `data/` (production implementation + noop fallback). Provider declarations have been consolidated — see Injections below.
