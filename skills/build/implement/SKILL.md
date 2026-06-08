@@ -151,7 +151,7 @@ PR opened: <PR URL>
 
 Report back to the orchestrator:
 
-> "PR #<N> is open at <url>. Please invoke `review` and `audit` simultaneously."
+> "PR #<N> is open at <url>. Please invoke `review-architecture` and `audit-code` simultaneously."
 
 ### 16. Report back
 
