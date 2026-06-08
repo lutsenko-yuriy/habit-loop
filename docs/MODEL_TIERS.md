@@ -29,6 +29,7 @@ This project describes what each skill needs from a model using two axes: **Effo
 | Skill | Effort | Reasoning | Why |
 |---|---|---|---|
 | `calibrate` | THOROUGH | ARCHITECTURAL | Reasoning about model strengths requires the most capable model available |
+| `skill-creator` | FOCUSED | ARCHITECTURAL | Designing skill structure requires understanding the whole skill system and tier routing |
 | `style` | RAPID | MECHANICAL | Load and apply a communication style definition |
 
 ### Product skills — operate on the codebase and product

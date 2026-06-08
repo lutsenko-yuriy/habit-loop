@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.20] — 2026-06-08 (PR #134 merged)
+
+### Changed — skill-creator skill + skill refactor to lean SKILL.md + resources (HAB-103)
+
+- [user-none]
+- [non-user] Added `/skill-creator` slash command (guided new-skill creation and existing-skill refactor)
+- [non-user] Renamed `/review` → `/review-architecture`, `/audit` → `/audit-code`; both default to latest merged PR when called with no argument
+- [non-user] Extracted reference material from 8 skills into `resources/` sibling files; SKILL.md files now reference them via `@path`
+
+---
+
 ## [0.42.19] — 2026-06-08 (PR #133 merged)
 
 ### Changed — Flutter UI audit WU5: dashboard + onboarding extraction (HAB-98)

@@ -48,39 +48,11 @@ Branch naming: `feature/HAB-XX-<short-description>` (2–4 words, kebab-case).
 
 ### 4. TDD cycle
 
-**Red — write failing tests first.**
-
-- Mirror the source path under `test/`: `lib/slices/foo/domain/bar.dart` → `test/slices/foo/domain/bar_test.dart`.
-- Tests must fail before you write any implementation. Run `<flutter binary> test <test-file>` (using the path from `CLAUDE.local.md`) to confirm failure.
-- Do not write implementation code until tests are red.
-
-**Green — implement the minimum code to pass.**
-
-- Write only what is needed to make the failing tests pass. Follow `docs/ARCHITECTURE.md` for structure and `docs/CODE_STYLE.md` for code style.
-- Follow the vertical-slice structure:
-  - Domain (`domain/`) — models, interfaces, pure business logic. No Flutter, no sqflite imports.
-  - Data (`data/`) — repository implementations. Imports sqflite; depends on domain interfaces only.
-  - UI generic (`ui/generic/`) — Riverpod notifiers and shared state. No platform widgets.
-  - UI platform (`ui/ios/`, `ui/android/`) — Cupertino and Material widgets respectively.
-- Never import across feature boundaries except through shared Riverpod providers.
-
-**Refactor — clean up without breaking tests.**
-
-Remove duplication, improve naming, simplify logic. Re-run `<flutter binary> test` after every refactor step.
+@skills/build/implement/resources/tdd-cycle.md
 
 ### 5. Schema / data migrations
 
-If your implementation adds, removes, or renames tables or columns, changes column types, or adds/drops indexes, write a migration before committing:
-
-1. Bump `HabitLoopDatabase` `version` by 1 (e.g. `version: 1` → `version: 2`).
-2. Add an `onUpgrade` handler in `HabitLoopDatabase` that applies the DDL changes for each version step.
-3. Write a migration test in `test/infrastructure/persistence/habit_loop_database_test.dart`:
-   - Open a database at the previous schema version (recreate the old DDL manually).
-   - Re-open with the new version so `onUpgrade` runs.
-   - Assert the new tables/columns exist and existing data is preserved.
-4. Never apply destructive DDL (e.g. `DROP COLUMN`) without an explicit user decision — stop and ask first.
-
-**What does NOT require a migration:** connection-level pragmas (`journal_mode`, `foreign_keys`, `synchronous`), changes to Dart model fields that already have a nullable or default column, and in-memory-only changes (Riverpod state, caches).
+@skills/build/implement/resources/migration-guide.md
 
 ### 6. Validate
 
@@ -161,28 +133,7 @@ git push -u origin <branch-name>
 
 ### 12. Open a PR
 
-```bash
-gh pr create \
-  --title "<type>: <summary>" \
-  --body "$(cat <<'EOF'
-## Summary
-- <bullet points>
-
-## Linear
-Closes HAB-XX
-
-## Test plan
-- [ ] <what was tested>
-- [ ] flutter test passes
-- [ ] flutter analyze passes
-- [ ] Smoke tested
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-EOF
-)"
-```
-
-Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
+@skills/build/implement/resources/pr-body-template.md
 
 ### 13. Move issue to In Review
 
