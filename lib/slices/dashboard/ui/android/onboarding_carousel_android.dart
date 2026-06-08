@@ -43,11 +43,13 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
                 OutlinedButton(
                   onPressed: isSigningIn
                       ? null
-                      : () => unawaited(OnboardingSignInController.signIn(
+                      : () async {
+                          await OnboardingSignInController.signIn(
                             ref: ref,
                             context: ctx,
                             showFailureDialog: _showSignInFailureDialogAndroid(l10n),
-                          )),
+                          );
+                        },
                   child: isSigningIn
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
