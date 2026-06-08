@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.21] — 2026-06-09 (PR #135 merged)
+
+### Fixed — stale skill names in implement report-back (follow-up to PR #134)
+
+- [user-none]
+- [non-user] `implement/SKILL.md` step 15 now references `review-architecture` and `audit-code` (was `review`/`audit`)
+
+---
+
 ## [0.42.20] — 2026-06-08 (PR #134 merged)
 
 ### Changed — skill-creator skill + skill refactor to lean SKILL.md + resources (HAB-103)
