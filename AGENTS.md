@@ -26,7 +26,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 | skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
-| skills/configure/skill-creator/SKILL.md | Refactor a skill into lean SKILL.md + resource files; run against one skill or all |
+| skills/configure/skill-creator/SKILL.md | Create a new skill from scratch (guided wizard), or refactor an existing skill into lean SKILL.md + resource files |
 | skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
 | skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
 | skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |

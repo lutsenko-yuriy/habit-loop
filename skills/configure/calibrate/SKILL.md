@@ -37,7 +37,7 @@ If you lack benchmark data for a model, reason from its known tier (e.g. "large 
 
 Map each combination used by the project's skills to the single best available model. The combinations are:
 
-@docs/MODEL_TIERS.md
+@skills/configure/calibrate/resources/skill-tier-map.md
 
 Rules for the proposal:
 - Each combination must map to exactly one model from the available list.

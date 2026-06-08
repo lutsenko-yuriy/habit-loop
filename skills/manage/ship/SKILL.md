@@ -63,7 +63,7 @@ Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor fo
 
 **Release note tagging — required for every entry:**
 
-@docs/VERSIONING.md
+@skills/manage/ship/resources/changelog-tags.md
 
 ### 3. Regenerate BACKLOG.md
 

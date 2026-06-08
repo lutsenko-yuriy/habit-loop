@@ -31,7 +31,7 @@ Read `docs/experiments/README.md` to:
 
 Present a draft spec for approval. Do **not** write any files yet.
 
-@docs/experiments/TEMPLATE.md
+@skills/design/experiment/resources/draft-spec-template.md
 
 Ask: **"Does this look right? Any adjustments before I create the files?"**
 
