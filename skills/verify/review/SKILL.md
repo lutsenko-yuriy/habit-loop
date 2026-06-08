@@ -16,6 +16,14 @@ This skill produces reviews, not code.
 
 ### 1. Resolve the repository and PR details
 
+If a PR number was supplied in `$ARGUMENTS`, use it. Otherwise resolve the most recently merged PR on `main`:
+
+```bash
+gh pr list --state merged --base main --limit 1 --json number --jq '.[0].number'
+```
+
+Then fetch details:
+
 ```bash
 git remote get-url origin   # extract {owner}/{repo}
 gh pr view <number> --json headRefOid,files

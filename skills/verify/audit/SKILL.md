@@ -19,7 +19,15 @@ The Git host is **GitHub**. The tech stack is **Flutter (Dart), Riverpod, sqflit
 
 ## How to review
 
-### 1. Fetch the PR diff and file list
+### 1. Resolve the PR and fetch diff + file list
+
+If a PR number was supplied in `$ARGUMENTS`, use it. Otherwise resolve the most recently merged PR on `main`:
+
+```bash
+gh pr list --state merged --base main --limit 1 --json number --jq '.[0].number'
+```
+
+Then fetch:
 
 ```bash
 gh pr diff <number>

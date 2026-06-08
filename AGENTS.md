@@ -47,8 +47,8 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 |---|---|---|
 | `/ship` | manage/ship | `/ship PR #N` |
 | `/summarize` | manage/summarize | `/summarize` |
-| `/review` | verify/review | `/review PR #N` |
-| `/audit` | verify/audit | `/audit PR #N` |
+| `/review-architecture` | verify/review | `/review-architecture PR #N` |
+| `/audit-code` | verify/audit | `/audit-code PR #N` |
 | `/plan` | design/plan | `/plan HAB-XX: <title>` |
 | `/analyze` | design/analyze | `/analyze HAB-XX: <title>` |
 | `/experiment` | design/experiment | `/experiment <hypothesis>` |
@@ -185,8 +185,8 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
     - Push the branch to the remote.
     - Open a PR.
     - Invoke both review skills simultaneously once the PR is open (they are independent — launch them simultaneously):
-      - `review` for architectural review: `Invoke the review skill for PR #<number>`.
-      - `audit` for runtime/launch/migration review: `Invoke the audit skill for PR #<number>`.
+      - `review-architecture` for architectural review: `Invoke the review-architecture skill for PR #<number>`.
+      - `audit-code` for runtime/launch/migration review: `Invoke the audit-code skill for PR #<number>`.
     - Move the Linear ticket to **In Review**.
     - Inform the user of the PR URL.
 15. Remind the user to compact the context after each commit to keep the conversation lean.
