@@ -5,6 +5,8 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/override_badge.dart';
+import 'package:habit_loop/slices/debug/ui/generic/rc_entry_edit_state.dart';
+import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_scroll_view.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
 
@@ -45,36 +47,81 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
       child: SafeArea(
         child: Material(
           type: MaterialType.transparency,
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            children: [
-              if (showBackendRestartBanner) ...[
-                RestartRequiredBanner(
-                  key: const Key('debug-backend-restart-banner'),
-                  color: CupertinoColors.systemYellow.resolveFrom(context),
-                  icon: CupertinoIcons.exclamationmark_triangle_fill,
-                ),
-                const SizedBox(height: 8),
-              ],
-              for (final entry in entries) ...[
-                _RcEntryRow(
-                  key: Key('rc-entry-${entry.key}'),
-                  entry: entry,
-                  onTap: () => _showEditDialog(
-                    context: context,
+          child: RemoteConfigOverridesScrollView(
+            entries: entries,
+            showBackendRestartBanner: showBackendRestartBanner,
+            seedState: seedState,
+            hasFakeBackend: seedNotifier.hasFakeBackend,
+            onSeedLocal: seedNotifier.seedLocalPacts,
+            onSeedRemote: seedNotifier.seedRemotePacts,
+            onEntryTap: (entry) => _showEditDialog(
+              context: context,
+              entry: entry,
+              onSave: (v) => notifier.setOverride(entry.key, v),
+              onClear: () => notifier.clearOverride(entry.key),
+            ),
+            slots: (
+              buildEntryTile: (ctx, entry, onTap) => _RcEntryRow(
+                    key: Key('rc-entry-${entry.key}'),
                     entry: entry,
-                    onSave: (v) => notifier.setOverride(entry.key, v),
-                    onClear: () => notifier.clearOverride(entry.key),
+                    onTap: onTap,
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              const SizedBox(height: 8),
-              const Divider(),
-              const SizedBox(height: 8),
-              _SeedSection(state: seedState, notifier: seedNotifier),
-              const SizedBox(height: 16),
-            ],
+              buildEntrySeparator: (ctx) => const SizedBox(height: 8),
+              buildSectionDivider: (ctx) => const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [SizedBox(height: 8), Divider(), SizedBox(height: 8)],
+                  ),
+              buildRestartBanner: (ctx) => RestartRequiredBanner(
+                    key: const Key('debug-backend-restart-banner'),
+                    color: CupertinoColors.systemYellow.resolveFrom(ctx),
+                    icon: CupertinoIcons.exclamationmark_triangle_fill,
+                  ),
+              seedSlots: (
+                buildHeader: (ctx) => const Padding(
+                      padding: EdgeInsets.only(left: 4, bottom: 8),
+                      child: Text(
+                        'SEED DATA',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: CupertinoColors.systemGrey,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                buildButton: (ctx, key, label, isBusy, onPressed) => CupertinoButton(
+                      key: key,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      onPressed: isBusy ? null : onPressed,
+                      child: Align(alignment: Alignment.centerLeft, child: Text(label)),
+                    ),
+                buildButtonContainer: (ctx, buttons) => Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttons),
+                    ),
+                buildStatusText: (ctx, key, message, status) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        message,
+                        key: key,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: switch (status) {
+                            DebugSeedState.error => CupertinoColors.systemRed.resolveFrom(ctx),
+                            DebugSeedState.done => CupertinoColors.systemGreen.resolveFrom(ctx),
+                            _ => CupertinoColors.systemGrey.resolveFrom(ctx),
+                          },
+                        ),
+                      ),
+                    ),
+              ),
+              wrapSeedSection: (ctx, child) => child,
+              listPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            ),
           ),
         ),
       ),
@@ -186,31 +233,19 @@ class _EditDialogIos extends StatefulWidget {
 }
 
 class _EditDialogIosState extends State<_EditDialogIos> {
-  late final TextEditingController? _controller;
-  String? _selectedValue;
-  double? _sliderValue;
+  late RcEntryEditState _editState;
 
   @override
   void initState() {
     super.initState();
-    if (widget.entry.hasAllowedValues) {
-      _controller = null;
-      final effective = widget.entry.overrideValue ?? widget.entry.effectiveValue;
-      _selectedValue =
-          (widget.entry.allowedValues!.contains(effective)) ? effective : widget.entry.allowedValues!.first;
-    } else if (widget.entry.hasIntRange) {
-      _controller = null;
-      final range = widget.entry.intRange!;
-      final raw = int.tryParse(widget.entry.overrideValue ?? widget.entry.effectiveValue) ?? range.min;
-      _sliderValue = raw.clamp(range.min, range.max).toDouble();
-    } else {
-      _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
-    }
+    _editState = RcEntryEditState.fromEntry(widget.entry);
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    if (_editState case RcEntryEditFreeText(:final controller)) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -233,61 +268,66 @@ class _EditDialogIosState extends State<_EditDialogIos> {
             ),
           ],
           const SizedBox(height: 8),
-          if (widget.entry.hasAllowedValues)
-            CupertinoSlidingSegmentedControl<String>(
-              key: const Key('override-value-picker'),
-              groupValue: _selectedValue,
-              children: {for (final v in widget.entry.allowedValues!) v: Text(v)},
-              onValueChanged: (v) => setState(() => _selectedValue = v),
-            )
-          else if (widget.entry.hasIntRange) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${_sliderValue!.round()}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            // OverflowBox expands track to dialog edges. LayoutBuilder can't be used —
-            // CupertinoAlertDialog probes intrinsic dimensions and LayoutBuilder throws there.
-            // IntrinsicHeight prevents OverflowBox from receiving unbounded height.
-            // maxWidth = 270 (dialog) + 2×(slider inset 19 − content padding 16) = 276 pt.
-            IntrinsicHeight(
-              child: OverflowBox(
-                maxWidth: 276.0, // dialog width + 2×(slider inset − content padding)
-                alignment: Alignment.center,
-                child: CupertinoSlider(
-                  key: const Key('override-value-slider'),
-                  value: _sliderValue!,
-                  min: widget.entry.intRange!.min.toDouble(),
-                  max: widget.entry.intRange!.max.toDouble(),
-                  onChanged: (v) => setState(() => _sliderValue = v),
-                ),
+          switch (_editState) {
+            RcEntryEditAllowedValues(:final selected) => CupertinoSlidingSegmentedControl<String>(
+                key: const Key('override-value-picker'),
+                groupValue: selected,
+                children: {for (final v in widget.entry.allowedValues!) v: Text(v)},
+                onValueChanged: (v) =>
+                    setState(() => _editState = (_editState as RcEntryEditAllowedValues).withSelected(v)),
               ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${widget.entry.intRange!.min}',
-                  style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
-                ),
-                Text(
-                  '${widget.entry.intRange!.max}',
-                  style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
-                ),
-              ],
-            ),
-          ] else
-            CupertinoTextField(
-              key: const Key('override-value-field'),
-              controller: _controller,
-              placeholder: widget.entry.defaultValue,
-              autofocus: true,
-              clearButtonMode: OverlayVisibilityMode.editing,
-            ),
+            RcEntryEditIntRange(:final sliderValue) => Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${sliderValue.round()}',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  // OverflowBox expands track to dialog edges. LayoutBuilder can't be used —
+                  // CupertinoAlertDialog probes intrinsic dimensions and LayoutBuilder throws there.
+                  // IntrinsicHeight prevents OverflowBox from receiving unbounded height.
+                  // maxWidth = 270 (dialog) + 2×(slider inset 19 − content padding 16) = 276 pt.
+                  IntrinsicHeight(
+                    child: OverflowBox(
+                      maxWidth: 276.0, // dialog width + 2×(slider inset − content padding)
+                      alignment: Alignment.center,
+                      child: CupertinoSlider(
+                        key: const Key('override-value-slider'),
+                        value: sliderValue,
+                        min: widget.entry.intRange!.min.toDouble(),
+                        max: widget.entry.intRange!.max.toDouble(),
+                        onChanged: (v) =>
+                            setState(() => _editState = (_editState as RcEntryEditIntRange).withSliderValue(v)),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${widget.entry.intRange!.min}',
+                        style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
+                      ),
+                      Text(
+                        '${widget.entry.intRange!.max}',
+                        style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            RcEntryEditFreeText(:final controller) => CupertinoTextField(
+                key: const Key('override-value-field'),
+                controller: controller,
+                placeholder: widget.entry.defaultValue,
+                autofocus: true,
+                clearButtonMode: OverlayVisibilityMode.editing,
+              ),
+          },
         ],
       ),
       actions: [
@@ -309,121 +349,13 @@ class _EditDialogIosState extends State<_EditDialogIos> {
           key: const Key('save-action'),
           isDefaultAction: true,
           onPressed: () async {
-            if (widget.entry.hasAllowedValues) {
-              final value = _selectedValue;
-              Navigator.of(context).pop();
-              if (value != null) await widget.onSave(value);
-            } else if (widget.entry.hasIntRange) {
-              final value = _sliderValue!.round().toString();
-              Navigator.of(context).pop();
-              await widget.onSave(value);
-            } else {
-              final value = _controller!.text.trim();
-              Navigator.of(context).pop();
-              if (value.isNotEmpty) await widget.onSave(value);
-            }
+            final value = _editState.computeSaveValue();
+            Navigator.of(context).pop();
+            if (value != null) await widget.onSave(value);
           },
           child: const Text('Save'),
         ),
       ],
-    );
-  }
-}
-
-class _SeedSection extends StatelessWidget {
-  const _SeedSection({required this.state, required this.notifier});
-
-  final DebugSeedDataState state;
-  final DebugSeedDataViewModel notifier;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            'SEED DATA',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: CupertinoColors.systemGrey,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _SeedButton(
-                key: const Key('seed-local-button'),
-                label: 'Regenerate local pacts',
-                isBusy: state.isBusy,
-                onPressed: notifier.seedLocalPacts,
-              ),
-              if (notifier.hasFakeBackend) ...[
-                const Divider(height: 1, indent: 16),
-                _SeedButton(
-                  key: const Key('seed-remote-button'),
-                  label: 'Regenerate remote pacts',
-                  isBusy: state.isBusy,
-                  onPressed: notifier.seedRemotePacts,
-                ),
-              ],
-            ],
-          ),
-        ),
-        if (state.status != DebugSeedState.idle) ...[
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              state.message ?? '',
-              key: const Key('seed-status-text'),
-              style: TextStyle(
-                fontSize: 12,
-                color: switch (state.status) {
-                  DebugSeedState.error => CupertinoColors.systemRed.resolveFrom(context),
-                  DebugSeedState.done => CupertinoColors.systemGreen.resolveFrom(context),
-                  _ => CupertinoColors.systemGrey.resolveFrom(context),
-                },
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _SeedButton extends StatelessWidget {
-  const _SeedButton({
-    super.key,
-    required this.label,
-    required this.isBusy,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool isBusy;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return CupertinoButton(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      onPressed: isBusy ? null : onPressed,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(label),
-      ),
     );
   }
 }
