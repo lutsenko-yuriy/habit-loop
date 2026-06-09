@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.23] — 2026-06-09 (PR #137 merged)
+
+### Changed — debug menu consolidated, section order established (HAB-104)
+
+- [user-none]
+- [non-user] Removed bell icon from dashboard nav bar (debug/profile builds); test notification moved to debug menu top
+- [non-user] Debug menu section order: Fire test notification → Seed data → RC overrides
+- [non-user] Added nullable `buildTopSection` function slot to `RemoteConfigOverridesScrollView`; scroll view reordered (seed before RC entries)
+
+---
+
 ## [0.42.22] — 2026-06-09 (PR #136 merged)
 
 ### Changed — Flutter UI audit WU6: debug RC overrides extraction (HAB-98)

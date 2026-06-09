@@ -7,6 +7,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-104**: Debug menu consolidated — test notification moved from dashboard, section order established (PR #137)
 - **HAB-98**: Flutter UI audit — deduplicate platform-specific code into `generic/` (PR #136)
 - **HAB-100**: Bug: notifications fire after a pact is stopped — deterministic FNV-1a hash, layer violation fix, hex literal consistency (PR #121)
 
