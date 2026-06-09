@@ -46,7 +46,7 @@ void main() {
     final pactRepo = InMemoryPactRepository([pact]);
     final showupRepo = InMemoryShowupRepository([showup]);
     final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-    final container = ProviderContainer(
+    return ProviderContainer(
       overrides: [
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
@@ -56,8 +56,6 @@ void main() {
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),
       ],
     );
-    addTearDown(container.dispose);
-    return container;
   }
 
   group('ShowupDetailViewModel breadcrumbs', () {
@@ -66,6 +64,7 @@ void main() {
       final pact = buildPact('p1');
       final showup = buildShowup('s1', pactId: 'p1');
       final container = createContainer(pact: pact, showup: showup, crashlytics: crashlytics);
+      addTearDown(container.dispose);
 
       await container.read(showupDetailViewModelProvider('s1').notifier).load();
 
@@ -81,6 +80,7 @@ void main() {
       final pact = buildPact('p2');
       final showup = buildShowup('s2', pactId: 'p2');
       final container = createContainer(pact: pact, showup: showup, crashlytics: crashlytics);
+      addTearDown(container.dispose);
       final notifier = container.read(showupDetailViewModelProvider('s2').notifier);
       await notifier.load();
       crashlytics.reset();
@@ -99,6 +99,7 @@ void main() {
       final pact = buildPact('p3');
       final showup = buildShowup('s3', pactId: 'p3');
       final container = createContainer(pact: pact, showup: showup, crashlytics: crashlytics);
+      addTearDown(container.dispose);
       final notifier = container.read(showupDetailViewModelProvider('s3').notifier);
       await notifier.load();
       crashlytics.reset();

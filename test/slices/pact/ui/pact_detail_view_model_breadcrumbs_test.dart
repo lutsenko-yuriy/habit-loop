@@ -48,7 +48,7 @@ void main() {
       syncService: const NoopSyncService(),
       pactStatsService: statsService,
     );
-    final container = ProviderContainer(
+    return ProviderContainer(
       overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
@@ -59,8 +59,6 @@ void main() {
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),
       ],
     );
-    addTearDown(container.dispose);
-    return container;
   }
 
   group('PactDetailViewModel breadcrumbs', () {
@@ -68,6 +66,7 @@ void main() {
       final crashlytics = FakeCrashlyticsService();
       final pact = buildActivePact('p1');
       final container = createContainer(pact: pact, crashlytics: crashlytics);
+      addTearDown(container.dispose);
 
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
 
@@ -82,6 +81,7 @@ void main() {
       final crashlytics = FakeCrashlyticsService();
       final pact = buildActivePact('p2');
       final container = createContainer(pact: pact, crashlytics: crashlytics);
+      addTearDown(container.dispose);
       final notifier = container.read(pactDetailViewModelProvider('p2').notifier);
       await notifier.load();
       crashlytics.reset();

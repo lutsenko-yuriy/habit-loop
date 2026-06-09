@@ -32,18 +32,17 @@ ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
 }) {
-  final container = ProviderContainer(overrides: [
+  return ProviderContainer(overrides: [
     pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
     showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
   ]);
-  addTearDown(container.dispose);
-  return container;
 }
 
 void main() {
   group('PactListViewModel', () {
     test('initial state: empty entries, all filters on, not loading', () {
       final c = _makeContainer();
+      addTearDown(c.dispose);
       final state = c.read(pactListViewModelProvider);
       expect(state.entries, isEmpty);
       expect(state.isLoading, false);
@@ -52,6 +51,7 @@ void main() {
 
     test('load with no pacts → empty entries', () async {
       final c = _makeContainer();
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       expect(c.read(pactListViewModelProvider).entries, isEmpty);
     });
@@ -69,6 +69,7 @@ void main() {
           _showup('s2', 'p1', earlier),
         ],
       );
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       final entry = c.read(pactListViewModelProvider).entries.first;
       expect(entry.nextShowupAt, earlier);
@@ -85,6 +86,7 @@ void main() {
           _showup('s2', 'p1', future),
         ],
       );
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       final entry = c.read(pactListViewModelProvider).entries.first;
       expect(entry.nextShowupAt, future);
@@ -96,6 +98,7 @@ void main() {
         pacts: [pact],
         showups: [_showup('s1', 'p1', DateTime(2026, 12, 5, 9))],
       );
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       final entry = c.read(pactListViewModelProvider).entries.first;
       expect(entry.nextShowupAt, isNull);
@@ -104,6 +107,7 @@ void main() {
     test('load with completed pact: nextShowupAt is null', () async {
       final pact = _pact('p1', PactStatus.completed);
       final c = _makeContainer(pacts: [pact]);
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       final entry = c.read(pactListViewModelProvider).entries.first;
       expect(entry.nextShowupAt, isNull);
@@ -115,6 +119,7 @@ void main() {
         _pact('completed', PactStatus.completed),
         _pact('active', PactStatus.active),
       ]);
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       final ids = c.read(pactListViewModelProvider).entries.map((e) => e.pact.id).toList();
       expect(ids, ['active', 'completed', 'stopped']);
@@ -130,6 +135,7 @@ void main() {
           _showup('s2', 'p2', DateTime(2026, 12, 5)),
         ],
       );
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       final ids = c.read(pactListViewModelProvider).entries.map((e) => e.pact.id).toList();
       expect(ids, ['p2', 'p1']);
@@ -142,6 +148,7 @@ void main() {
         _pact('d1', PactStatus.completed),
         _pact('c1', PactStatus.stopped),
       ]);
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       final state = c.read(pactListViewModelProvider);
       expect(state.activeCount, 2);
@@ -151,6 +158,7 @@ void main() {
 
     test('toggleFilter deselects when multiple filters selected', () {
       final c = _makeContainer();
+      addTearDown(c.dispose);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
       final filters = c.read(pactListViewModelProvider).activeFilters;
       expect(filters, {PactStatus.completed, PactStatus.stopped});
@@ -158,6 +166,7 @@ void main() {
 
     test('toggleFilter can deselect all filters', () {
       final c = _makeContainer();
+      addTearDown(c.dispose);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped);
@@ -167,6 +176,7 @@ void main() {
 
     test('toggleFilter selects a deselected filter', () {
       final c = _makeContainer();
+      addTearDown(c.dispose);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
       final filters = c.read(pactListViewModelProvider).activeFilters;
@@ -179,6 +189,7 @@ void main() {
         _pact('d1', PactStatus.completed),
         _pact('c1', PactStatus.stopped),
       ]);
+      addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped);

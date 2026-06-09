@@ -20,7 +20,7 @@ void main() {
     final pactRepo = InMemoryPactRepository(pacts);
     final showupRepo = InMemoryShowupRepository();
     final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-    final container = ProviderContainer(
+    return ProviderContainer(
       overrides: [
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
@@ -29,8 +29,6 @@ void main() {
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),
       ],
     );
-    addTearDown(container.dispose);
-    return container;
   }
 
   group('DashboardViewModel breadcrumbs', () {
@@ -50,6 +48,7 @@ void main() {
         ],
         crashlytics: crashlytics,
       );
+      addTearDown(container.dispose);
 
       await container.read(dashboardViewModelProvider.notifier).load();
 
@@ -63,6 +62,7 @@ void main() {
     test('load logs screen breadcrumb', () async {
       final crashlytics = FakeCrashlyticsService();
       final container = createContainer(crashlytics: crashlytics);
+      addTearDown(container.dispose);
 
       await container.read(dashboardViewModelProvider.notifier).load();
 
