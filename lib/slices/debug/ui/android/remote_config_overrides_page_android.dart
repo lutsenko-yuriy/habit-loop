@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/override_badge.dart';
@@ -54,6 +55,12 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
           onClear: () => notifier.clearOverride(entry.key),
         ),
         slots: (
+          buildTopSection: (ctx) => ListTile(
+                key: const Key('test-notification-button'),
+                leading: const Icon(Icons.notifications_outlined),
+                title: const Text('Fire test notification'),
+                onTap: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+              ),
           buildEntryTile: (ctx, entry, onTap) => ListTile(
                 key: Key('rc-entry-${entry.key}'),
                 title: Text(

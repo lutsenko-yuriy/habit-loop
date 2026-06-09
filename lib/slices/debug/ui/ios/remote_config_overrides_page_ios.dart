@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Divider, Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/override_badge.dart';
@@ -61,6 +62,24 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
               onClear: () => notifier.clearOverride(entry.key),
             ),
             slots: (
+              buildTopSection: (ctx) => DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: CupertinoButton(
+                      key: const Key('test-notification-button'),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+                      child: const Row(
+                        children: [
+                          Icon(CupertinoIcons.bell),
+                          SizedBox(width: 10),
+                          Text('Fire test notification'),
+                        ],
+                      ),
+                    ),
+                  ),
               buildEntryTile: (ctx, entry, onTap) => _RcEntryRow(
                     key: Key('rc-entry-${entry.key}'),
                     entry: entry,

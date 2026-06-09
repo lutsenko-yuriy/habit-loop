@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_actions.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_body.dart';
@@ -71,7 +70,6 @@ class DashboardPageIos extends ConsumerWidget {
           .push(CupertinoPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageIos()))
           // ignore: use_build_context_synchronously — onDashboardRcOverridesClosed guards context.mounted
           .then((_) => onDashboardRcOverridesClosed(context, ref)),
-      onTestNotificationPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
       onSyncStatusPressed: onSyncStatusTapped,
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
@@ -151,12 +149,6 @@ Widget _buildNavBarButton(BuildContext context, DashboardActionDescriptor action
         padding: EdgeInsets.zero,
         onPressed: action.onPressed,
         child: const Icon(CupertinoIcons.wrench),
-      ),
-    DashboardActionType.testNotification => CupertinoButton(
-        key: action.key,
-        padding: EdgeInsets.zero,
-        onPressed: action.onPressed,
-        child: const Icon(CupertinoIcons.bell),
       ),
     DashboardActionType.syncStatus => CupertinoButton(
         key: action.key,

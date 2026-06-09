@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/language_picker_dialog_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/onboarding_carousel_android.dart';
@@ -70,7 +69,6 @@ class DashboardPageAndroid extends ConsumerWidget {
           .push(MaterialPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageAndroid()))
           // ignore: use_build_context_synchronously — onDashboardRcOverridesClosed guards context.mounted
           .then((_) => onDashboardRcOverridesClosed(context, ref)),
-      onTestNotificationPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
       onSyncStatusPressed: onSyncStatusTapped,
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
@@ -135,11 +133,6 @@ Widget _buildAppBarButton(BuildContext context, DashboardActionDescriptor action
     DashboardActionType.rcOverrides => IconButton(
         key: action.key,
         icon: const Icon(Icons.tune),
-        onPressed: action.onPressed,
-      ),
-    DashboardActionType.testNotification => IconButton(
-        key: action.key,
-        icon: const Icon(Icons.notifications_outlined),
         onPressed: action.onPressed,
       ),
     DashboardActionType.syncStatus => IconButton(

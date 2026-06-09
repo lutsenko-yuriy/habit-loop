@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
-enum DashboardActionType { rcOverrides, testNotification, syncStatus, languagePicker, createPact }
+enum DashboardActionType { rcOverrides, syncStatus, languagePicker, createPact }
 
 class DashboardActionDescriptor {
   final DashboardActionType type;
@@ -18,7 +18,6 @@ class DashboardActionDescriptor {
 
 List<DashboardActionDescriptor> buildDashboardActions({
   required VoidCallback onRcOverridesPressed,
-  required VoidCallback onTestNotificationPressed,
   required VoidCallback onSyncStatusPressed,
   required VoidCallback onLanguagePickerPressed,
   required VoidCallback onCreatePactPressed,
@@ -29,11 +28,6 @@ List<DashboardActionDescriptor> buildDashboardActions({
           type: DashboardActionType.rcOverrides,
           key: const Key('remote-config-debug-button'),
           onPressed: onRcOverridesPressed,
-        ),
-      if (kDebugMode || kProfileMode)
-        DashboardActionDescriptor(
-          type: DashboardActionType.testNotification,
-          onPressed: onTestNotificationPressed,
         ),
       DashboardActionDescriptor(
         type: DashboardActionType.syncStatus,
