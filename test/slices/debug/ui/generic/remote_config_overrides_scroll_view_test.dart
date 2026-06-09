@@ -11,8 +11,8 @@ RemoteConfigEntry _entry(String key) => RemoteConfigEntry(
       effectiveValue: '5',
     );
 
-RemoteConfigOverridesSlots _stubSlots({Widget? Function(BuildContext)? buildTopSection}) => (
-      buildTopSection: buildTopSection ?? (ctx) => null,
+RemoteConfigOverridesSlots _stubSlots({Widget Function(BuildContext)? buildTopSection}) => (
+      buildTopSection: buildTopSection,
       buildEntryTile: (ctx, entry, onTap) => TextButton(
             key: Key('rc-entry-${entry.key}'),
             onPressed: onTap,
@@ -40,7 +40,7 @@ Widget _wrap({
   bool showRestartBanner = false,
   DebugSeedDataState seedState = const DebugSeedDataState(),
   bool hasFakeBackend = false,
-  Widget? Function(BuildContext)? buildTopSection,
+  Widget Function(BuildContext)? buildTopSection,
 }) =>
     MaterialApp(
       home: Scaffold(

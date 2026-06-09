@@ -4,9 +4,9 @@ import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_
 import 'package:habit_loop/slices/debug/ui/generic/seed_section.dart';
 
 typedef RemoteConfigOverridesSlots = ({
-  /// Optional widget rendered at the very top, before the seed section.
-  /// Return null to omit the top section entirely.
-  Widget? Function(BuildContext context) buildTopSection,
+  /// Optional builder for a section rendered above seed data.
+  /// Null means no top section is rendered.
+  Widget Function(BuildContext context)? buildTopSection,
   Widget Function(BuildContext context, RemoteConfigEntry entry, VoidCallback onTap) buildEntryTile,
   Widget Function(BuildContext context) buildEntrySeparator,
   Widget Function(BuildContext context) buildSectionDivider,
@@ -43,7 +43,7 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final topSection = slots.buildTopSection(context);
+    final topSection = slots.buildTopSection?.call(context);
     final seedSection = slots.wrapSeedSection(
       context,
       SeedSection(
