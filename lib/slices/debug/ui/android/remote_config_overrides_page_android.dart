@@ -4,6 +4,8 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/override_badge.dart';
+import 'package:habit_loop/slices/debug/ui/generic/rc_entry_edit_state.dart';
+import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_scroll_view.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
 
@@ -38,38 +40,76 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
             ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          if (showBackendRestartBanner)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: RestartRequiredBanner(
-                key: Key('debug-backend-restart-banner'),
-                color: Colors.amber,
+      body: RemoteConfigOverridesScrollView(
+        entries: entries,
+        showBackendRestartBanner: showBackendRestartBanner,
+        seedState: seedState,
+        hasFakeBackend: seedNotifier.hasFakeBackend,
+        onSeedLocal: seedNotifier.seedLocalPacts,
+        onSeedRemote: seedNotifier.seedRemotePacts,
+        onEntryTap: (entry) => _showEditDialog(
+          context: context,
+          entry: entry,
+          onSave: (v) => notifier.setOverride(entry.key, v),
+          onClear: () => notifier.clearOverride(entry.key),
+        ),
+        slots: (
+          buildEntryTile: (ctx, entry, onTap) => ListTile(
+                key: Key('rc-entry-${entry.key}'),
+                title: Text(
+                  entry.key,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                ),
+                subtitle: Text('Value: ${entry.effectiveValue}'),
+                trailing: OverrideBadge(isOverridden: entry.isOverridden),
+                onTap: onTap,
               ),
-            ),
-          for (final entry in entries) ...[
-            ListTile(
-              key: Key('rc-entry-${entry.key}'),
-              title: Text(
-                entry.key,
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+          buildEntrySeparator: (ctx) => const Divider(height: 1),
+          buildSectionDivider: (ctx) => const SizedBox(height: 8),
+          buildRestartBanner: (ctx) => const Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: RestartRequiredBanner(
+                  key: Key('debug-backend-restart-banner'),
+                  color: Colors.amber,
+                ),
               ),
-              subtitle: Text('Value: ${entry.effectiveValue}'),
-              trailing: OverrideBadge(isOverridden: entry.isOverridden),
-              onTap: () => _showEditDialog(
-                context: context,
-                entry: entry,
-                onSave: (v) => notifier.setOverride(entry.key, v),
-                onClear: () => notifier.clearOverride(entry.key),
+          seedSlots: (
+            buildHeader: (ctx) => Text(
+                  'SEED DATA',
+                  style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                        letterSpacing: 0.5,
+                      ),
+                ),
+            buildButton: (ctx, key, label, isBusy, onPressed) => ListTile(
+                  key: key,
+                  title: Text(label),
+                  onTap: isBusy ? null : onPressed,
+                  enabled: !isBusy,
+                ),
+            buildButtonContainer: (ctx, buttons) => Card(
+                  margin: EdgeInsets.zero,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttons),
+                ),
+            buildStatusText: (ctx, key, message, status) => Text(
+                  message,
+                  key: key,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: switch (status) {
+                      DebugSeedState.error => Theme.of(ctx).colorScheme.error,
+                      DebugSeedState.done => Colors.green,
+                      _ => Theme.of(ctx).colorScheme.onSurfaceVariant,
+                    },
+                  ),
+                ),
+          ),
+          wrapSeedSection: (ctx, child) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: child,
               ),
-            ),
-            const Divider(height: 1),
-          ],
-          const SizedBox(height: 8),
-          _SeedSection(state: seedState, notifier: seedNotifier),
-        ],
+          listPadding: const EdgeInsets.symmetric(vertical: 8),
+        ),
       ),
     );
   }
@@ -130,31 +170,19 @@ class _EditDialogAndroid extends StatefulWidget {
 }
 
 class _EditDialogAndroidState extends State<_EditDialogAndroid> {
-  late final TextEditingController? _controller;
-  String? _selectedValue;
-  double? _sliderValue;
+  late RcEntryEditState _editState;
 
   @override
   void initState() {
     super.initState();
-    if (widget.entry.hasAllowedValues) {
-      _controller = null;
-      final effective = widget.entry.overrideValue ?? widget.entry.effectiveValue;
-      _selectedValue =
-          (widget.entry.allowedValues!.contains(effective)) ? effective : widget.entry.allowedValues!.first;
-    } else if (widget.entry.hasIntRange) {
-      _controller = null;
-      final range = widget.entry.intRange!;
-      final raw = int.tryParse(widget.entry.overrideValue ?? widget.entry.effectiveValue) ?? range.min;
-      _sliderValue = raw.clamp(range.min, range.max).toDouble();
-    } else {
-      _controller = TextEditingController(text: widget.entry.overrideValue ?? '');
-    }
+    _editState = RcEntryEditState.fromEntry(widget.entry);
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    if (_editState case RcEntryEditFreeText(:final controller)) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -178,72 +206,76 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
             ),
           ],
           const SizedBox(height: 8),
-          if (widget.entry.hasAllowedValues)
-            RadioGroup<String>(
-              key: const Key('override-value-picker'),
-              groupValue: _selectedValue,
-              onChanged: (v) => setState(() => _selectedValue = v),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+          switch (_editState) {
+            RcEntryEditAllowedValues(:final selected) => RadioGroup<String>(
+                key: const Key('override-value-picker'),
+                groupValue: selected,
+                onChanged: (v) => setState(() => _editState = (_editState as RcEntryEditAllowedValues).withSelected(v)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final v in widget.entry.allowedValues!)
+                      RadioListTile<String>(
+                        key: Key('override-option-$v'),
+                        title: Text(v),
+                        value: v,
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                  ],
+                ),
+              ),
+            RcEntryEditIntRange(:final sliderValue) => Column(
                 children: [
-                  for (final v in widget.entry.allowedValues!)
-                    RadioListTile<String>(
-                      key: Key('override-option-$v'),
-                      title: Text(v),
-                      value: v,
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${sliderValue.round()}',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                  // OverflowBox cancels AlertDialog's 24 pt content padding so track runs edge-to-edge.
+                  // LayoutBuilder can't be used — AlertDialog probes intrinsic dimensions and it throws.
+                  // IntrinsicHeight prevents OverflowBox from receiving unbounded height from Column.
+                  // dialogWidth = (screenWidth - 80).clamp(280, 560) — AlertDialog 40 pt margin per side.
+                  IntrinsicHeight(
+                    child: Builder(
+                      builder: (context) {
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final dialogWidth = (screenWidth - 80.0).clamp(280.0, 560.0);
+                        return OverflowBox(
+                          maxWidth: dialogWidth,
+                          alignment: Alignment.center,
+                          child: Slider(
+                            key: const Key('override-value-slider'),
+                            value: sliderValue,
+                            min: widget.entry.intRange!.min.toDouble(),
+                            max: widget.entry.intRange!.max.toDouble(),
+                            onChanged: (v) =>
+                                setState(() => _editState = (_editState as RcEntryEditIntRange).withSliderValue(v)),
+                          ),
+                        );
+                      },
                     ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('${widget.entry.intRange!.min}', style: Theme.of(context).textTheme.bodySmall),
+                      Text('${widget.entry.intRange!.max}', style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
                 ],
               ),
-            )
-          else if (widget.entry.hasIntRange) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${_sliderValue!.round()}',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-            // OverflowBox cancels AlertDialog's 24 pt content padding so track runs edge-to-edge.
-            // LayoutBuilder can't be used — AlertDialog probes intrinsic dimensions and it throws.
-            // IntrinsicHeight prevents OverflowBox from receiving unbounded height from Column.
-            // dialogWidth = (screenWidth - 80).clamp(280, 560) — AlertDialog 40 pt margin per side.
-            IntrinsicHeight(
-              child: Builder(
-                builder: (context) {
-                  final screenWidth = MediaQuery.of(context).size.width;
-                  final dialogWidth = (screenWidth - 80.0).clamp(280.0, 560.0);
-                  return OverflowBox(
-                    maxWidth: dialogWidth,
-                    alignment: Alignment.center,
-                    child: Slider(
-                      key: const Key('override-value-slider'),
-                      value: _sliderValue!,
-                      min: widget.entry.intRange!.min.toDouble(),
-                      max: widget.entry.intRange!.max.toDouble(),
-                      onChanged: (v) => setState(() => _sliderValue = v),
-                    ),
-                  );
-                },
+            RcEntryEditFreeText(:final controller) => TextField(
+                key: const Key('override-value-field'),
+                controller: controller,
+                decoration: InputDecoration(hintText: widget.entry.defaultValue),
+                autofocus: true,
               ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('${widget.entry.intRange!.min}', style: Theme.of(context).textTheme.bodySmall),
-                Text('${widget.entry.intRange!.max}', style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ),
-          ] else
-            TextField(
-              key: const Key('override-value-field'),
-              controller: _controller,
-              decoration: InputDecoration(hintText: widget.entry.defaultValue),
-              autofocus: true,
-            ),
+          },
         ],
       ),
       actions: [
@@ -266,110 +298,13 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
         TextButton(
           key: const Key('save-action'),
           onPressed: () async {
-            if (widget.entry.hasAllowedValues) {
-              final value = _selectedValue;
-              Navigator.of(context).pop();
-              if (value != null) await widget.onSave(value);
-            } else if (widget.entry.hasIntRange) {
-              final value = _sliderValue!.round().toString();
-              Navigator.of(context).pop();
-              await widget.onSave(value);
-            } else {
-              final value = _controller!.text.trim();
-              Navigator.of(context).pop();
-              if (value.isNotEmpty) await widget.onSave(value);
-            }
+            final value = _editState.computeSaveValue();
+            Navigator.of(context).pop();
+            if (value != null) await widget.onSave(value);
           },
           child: const Text('Save'),
         ),
       ],
-    );
-  }
-}
-
-class _SeedSection extends StatelessWidget {
-  const _SeedSection({required this.state, required this.notifier});
-
-  final DebugSeedDataState state;
-  final DebugSeedDataViewModel notifier;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'SEED DATA',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.5,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _SeedButton(
-                  key: const Key('seed-local-button'),
-                  label: 'Regenerate local pacts',
-                  isBusy: state.isBusy,
-                  onPressed: notifier.seedLocalPacts,
-                ),
-                if (notifier.hasFakeBackend) ...[
-                  const Divider(height: 1),
-                  _SeedButton(
-                    key: const Key('seed-remote-button'),
-                    label: 'Regenerate remote pacts',
-                    isBusy: state.isBusy,
-                    onPressed: notifier.seedRemotePacts,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (state.status != DebugSeedState.idle) ...[
-            const SizedBox(height: 8),
-            Text(
-              state.message ?? '',
-              key: const Key('seed-status-text'),
-              style: TextStyle(
-                fontSize: 12,
-                color: switch (state.status) {
-                  DebugSeedState.error => Theme.of(context).colorScheme.error,
-                  DebugSeedState.done => Colors.green,
-                  _ => Theme.of(context).colorScheme.onSurfaceVariant,
-                },
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SeedButton extends StatelessWidget {
-  const _SeedButton({
-    super.key,
-    required this.label,
-    required this.isBusy,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool isBusy;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(label),
-      onTap: isBusy ? null : onPressed,
-      enabled: !isBusy,
     );
   }
 }
