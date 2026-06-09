@@ -20,7 +20,7 @@ void main() {
     final pactRepo = InMemoryPactRepository(pacts);
     final showupRepo = InMemoryShowupRepository();
     final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-    return ProviderContainer(
+    final container = ProviderContainer(
       overrides: [
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
@@ -29,6 +29,8 @@ void main() {
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),
       ],
     );
+    addTearDown(container.dispose);
+    return container;
   }
 
   group('DashboardViewModel breadcrumbs', () {

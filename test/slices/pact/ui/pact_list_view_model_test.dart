@@ -32,10 +32,12 @@ ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
 }) {
-  return ProviderContainer(overrides: [
+  final container = ProviderContainer(overrides: [
     pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
     showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
   ]);
+  addTearDown(container.dispose);
+  return container;
 }
 
 void main() {
@@ -194,6 +196,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([_pact('p1', PactStatus.active)])),
         showupRepositoryProvider.overrideWithValue(slowShowupRepo),
       ]);
+      addTearDown(c.dispose);
 
       // Act: fire two load() calls without awaiting — the guard must prevent
       // the second call from entering the critical section while the first is

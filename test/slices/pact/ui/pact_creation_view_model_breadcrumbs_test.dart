@@ -32,7 +32,7 @@ void main() {
       syncService: const NoopSyncService(),
       pactStatsService: statsService,
     );
-    return ProviderContainer(
+    final container = ProviderContainer(
       overrides: [
         pactCreationTodayProvider.overrideWithValue(today),
         pactServiceProvider.overrideWithValue(service),
@@ -41,6 +41,8 @@ void main() {
         if (crashlytics != null) crashlyticsServiceProvider.overrideWithValue(crashlytics),
       ],
     );
+    addTearDown(container.dispose);
+    return container;
   }
 
   group('PactCreationViewModel breadcrumbs', () {
