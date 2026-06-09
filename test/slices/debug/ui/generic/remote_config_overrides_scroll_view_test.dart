@@ -11,7 +11,8 @@ RemoteConfigEntry _entry(String key) => RemoteConfigEntry(
       effectiveValue: '5',
     );
 
-RemoteConfigOverridesSlots _stubSlots() => (
+RemoteConfigOverridesSlots _stubSlots({Widget Function(BuildContext)? buildTopSection}) => (
+      buildTopSection: buildTopSection,
       buildEntryTile: (ctx, entry, onTap) => TextButton(
             key: Key('rc-entry-${entry.key}'),
             onPressed: onTap,
@@ -39,6 +40,7 @@ Widget _wrap({
   bool showRestartBanner = false,
   DebugSeedDataState seedState = const DebugSeedDataState(),
   bool hasFakeBackend = false,
+  Widget Function(BuildContext)? buildTopSection,
 }) =>
     MaterialApp(
       home: Scaffold(
@@ -50,7 +52,7 @@ Widget _wrap({
           onSeedLocal: () {},
           onSeedRemote: () {},
           onEntryTap: (_) {},
-          slots: _stubSlots(),
+          slots: _stubSlots(buildTopSection: buildTopSection),
         ),
       ),
     );
@@ -85,6 +87,30 @@ void main() {
   testWidgets('does not show seed-remote-button without fake backend', (tester) async {
     await tester.pumpWidget(_wrap());
     expect(find.byKey(const Key('seed-remote-button')), findsNothing);
+  });
+
+  testWidgets('does not show top section when buildTopSection returns null', (tester) async {
+    await tester.pumpWidget(_wrap());
+    expect(find.byKey(const Key('top-section')), findsNothing);
+  });
+
+  testWidgets('shows top section when buildTopSection returns a widget', (tester) async {
+    await tester.pumpWidget(_wrap(
+      buildTopSection: (ctx) => const Text('top', key: Key('top-section')),
+    ));
+    expect(find.byKey(const Key('top-section')), findsOneWidget);
+  });
+
+  testWidgets('seed section appears before entry tiles', (tester) async {
+    tester.view.physicalSize = const Size(800, 4000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(entries: [_entry('z')]));
+
+    final seedOffset = tester.getTopLeft(find.byKey(const Key('seed-local-button'))).dy;
+    final entryOffset = tester.getTopLeft(find.byKey(const Key('rc-entry-z'))).dy;
+    expect(seedOffset, lessThan(entryOffset));
   });
 
   testWidgets('invokes onEntryTap when entry tile is tapped', (tester) async {

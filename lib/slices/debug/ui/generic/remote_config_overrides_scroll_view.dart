@@ -4,6 +4,9 @@ import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_
 import 'package:habit_loop/slices/debug/ui/generic/seed_section.dart';
 
 typedef RemoteConfigOverridesSlots = ({
+  /// Optional builder for a section rendered above seed data.
+  /// Null means no top section is rendered.
+  Widget Function(BuildContext context)? buildTopSection,
   Widget Function(BuildContext context, RemoteConfigEntry entry, VoidCallback onTap) buildEntryTile,
   Widget Function(BuildContext context) buildEntrySeparator,
   Widget Function(BuildContext context) buildSectionDivider,
@@ -13,6 +16,9 @@ typedef RemoteConfigOverridesSlots = ({
   EdgeInsets listPadding,
 });
 
+/// Shared scrollable body for the debug RC overrides page.
+///
+/// Section order: top (notification) → seed data → RC entries (with banner).
 class RemoteConfigOverridesScrollView extends StatelessWidget {
   const RemoteConfigOverridesScrollView({
     super.key,
@@ -37,6 +43,7 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topSection = slots.buildTopSection?.call(context);
     final seedSection = slots.wrapSeedSection(
       context,
       SeedSection(
@@ -51,6 +58,12 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
     return ListView(
       padding: slots.listPadding,
       children: [
+        if (topSection != null) ...[
+          topSection,
+          slots.buildSectionDivider(context),
+        ],
+        seedSection,
+        slots.buildSectionDivider(context),
         if (showBackendRestartBanner) ...[
           slots.buildRestartBanner(context),
           const SizedBox(height: 8),
@@ -59,8 +72,6 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
           slots.buildEntryTile(context, entry, () => onEntryTap(entry)),
           slots.buildEntrySeparator(context),
         ],
-        slots.buildSectionDivider(context),
-        seedSection,
         const SizedBox(height: 16),
       ],
     );

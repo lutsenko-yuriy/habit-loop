@@ -7,14 +7,12 @@ void main() {
   group('buildDashboardActions', () {
     List<DashboardActionDescriptor> makeActions({
       void Function()? onRc,
-      void Function()? onNotif,
       void Function()? onSync,
       void Function()? onLang,
       void Function()? onCreate,
     }) =>
         buildDashboardActions(
           onRcOverridesPressed: onRc ?? () {},
-          onTestNotificationPressed: onNotif ?? () {},
           onSyncStatusPressed: onSync ?? () {},
           onLanguagePickerPressed: onLang ?? () {},
           onCreatePactPressed: onCreate ?? () {},
@@ -27,11 +25,10 @@ void main() {
       expect(actions.any((a) => a.type == DashboardActionType.createPact), isTrue);
     });
 
-    test('includes rcOverrides and testNotification in debug mode', () {
+    test('includes rcOverrides in debug mode', () {
       expect(kDebugMode, isTrue, reason: 'test environment must be a debug build');
       final actions = makeActions();
       expect(actions.any((a) => a.type == DashboardActionType.rcOverrides), isTrue);
-      expect(actions.any((a) => a.type == DashboardActionType.testNotification), isTrue);
     });
 
     test('rcOverrides descriptor has Key(remote-config-debug-button)', () {
