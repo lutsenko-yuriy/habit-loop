@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.22] — 2026-06-09 (PR #136 merged)
+
+### Changed — Flutter UI audit WU6: debug RC overrides extraction (HAB-98)
+
+- [user-none]
+- [non-user] Added `RcEntryEditState` sealed class (`AllowedValues` / `IntRange` / `FreeText`) with `computeSaveValue()`; eliminates duplicated `initState`/`dispose` logic from iOS and Android edit dialogs
+- [non-user] Added `SeedSection` with `SeedSectionSlots` for platform-agnostic seed-data rendering; owns `seed-local-button`, `seed-remote-button`, `seed-status-text` keys
+- [non-user] Added `RemoteConfigOverridesScrollView` with `RemoteConfigOverridesSlots`; both platform pages now contain only Scaffold chrome and slot definitions
+- [non-user] 37 new tests across 3 generic test files; 1708 total tests green
+
+---
+
 ## [0.42.21] — 2026-06-09 (PR #135 merged)
 
 ### Fixed — stale skill names in implement report-back (follow-up to PR #134)
