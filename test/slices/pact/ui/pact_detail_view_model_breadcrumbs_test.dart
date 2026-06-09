@@ -66,6 +66,7 @@ void main() {
       final crashlytics = FakeCrashlyticsService();
       final pact = buildActivePact('p1');
       final container = createContainer(pact: pact, crashlytics: crashlytics);
+      addTearDown(container.dispose);
 
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
 
@@ -80,6 +81,7 @@ void main() {
       final crashlytics = FakeCrashlyticsService();
       final pact = buildActivePact('p2');
       final container = createContainer(pact: pact, crashlytics: crashlytics);
+      addTearDown(container.dispose);
       final notifier = container.read(pactDetailViewModelProvider('p2').notifier);
       await notifier.load();
       crashlytics.reset();

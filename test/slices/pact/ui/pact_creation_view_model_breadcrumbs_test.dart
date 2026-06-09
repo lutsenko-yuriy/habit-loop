@@ -47,6 +47,7 @@ void main() {
     test('submit logs pact_creation action breadcrumb', () async {
       final crashlytics = FakeCrashlyticsService();
       final container = createContainer(crashlytics: crashlytics);
+      addTearDown(container.dispose);
       final vm = container.read(pactCreationViewModelProvider.notifier);
 
       // Set up a complete pact
@@ -69,6 +70,7 @@ void main() {
     test('goToPage logs step transition breadcrumb', () async {
       final crashlytics = FakeCrashlyticsService();
       final container = createContainer(crashlytics: crashlytics);
+      addTearDown(container.dispose);
       final vm = container.read(pactCreationViewModelProvider.notifier);
 
       vm.goToPage(1);

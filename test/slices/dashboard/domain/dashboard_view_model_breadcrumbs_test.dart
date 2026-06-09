@@ -48,6 +48,7 @@ void main() {
         ],
         crashlytics: crashlytics,
       );
+      addTearDown(container.dispose);
 
       await container.read(dashboardViewModelProvider.notifier).load();
 
@@ -61,6 +62,7 @@ void main() {
     test('load logs screen breadcrumb', () async {
       final crashlytics = FakeCrashlyticsService();
       final container = createContainer(crashlytics: crashlytics);
+      addTearDown(container.dispose);
 
       await container.read(dashboardViewModelProvider.notifier).load();
 

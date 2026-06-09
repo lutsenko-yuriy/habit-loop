@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.24] — 2026-06-09 (PR #138 merged)
+
+### Changed — tests audit: tearDown fixes, ShowupDateUtils coverage, stop-pact flow (HAB-99)
+
+- [user-none]
+- [non-user] Added `addTearDown(container.dispose)` at each call site in 5 test files that leaked `ProviderContainer`
+- [non-user] Added `showup_date_utils_test.dart` covering `startOfDay`/`endOfDay` including month-end, year-end, and leap-year boundaries
+- [non-user] Added `stop_pact_flow_test.dart`: integration test that stops a pact via pact detail and asserts status + notification cancellation (HAB-100 regression guard)
+
+---
+
 ## [0.42.23] — 2026-06-09 (PR #137 merged)
 
 ### Changed — debug menu consolidated, section order established (HAB-104)
