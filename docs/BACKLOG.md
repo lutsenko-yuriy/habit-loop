@@ -22,5 +22,4 @@ _(none)_
 
 - **HAB-95**: Code's deep and wide audit (epic) — systematic review and cleanup of every project component
   - **HAB-97**: Flutter codebase general audit — dead code, layer adherence, dependency direction, self-documenting code
-- **HAB-101**: Create a generalized skill_router package as a standalone repo — extract skill routing into a reusable, project-agnostic Python package
 - **HAB-102**: Update yuriys-agentic-boyz with skill_router improvements from HAB-91/HAB-93/HAB-94
