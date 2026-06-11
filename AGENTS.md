@@ -174,7 +174,7 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
     - `@docs/ARCHITECTURE.md` — code structure or dependencies changed
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
 12. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
-    **Release note tagging (enforced by CI — `scripts/lint_changelog.py` runs on every PR):**
+    **Release note tagging (enforced by CI — `scripts/changelog/lint.py` runs on every PR):**
     Every new `## [X.Y.Z]` CHANGELOG entry MUST contain at least one of:
     - `- [user-none]` — the entire entry is internal-only (CI fixes, refactors, tooling). Use this as a single sentinel line; all other bullets in the entry should use `[non-user]`.
     - `- [user] <plain English>` — one or more user-facing bullets in plain English (no ticket refs, no code identifiers). Only these lines appear in Firebase App Distribution release notes.

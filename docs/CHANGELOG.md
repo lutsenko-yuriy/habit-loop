@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.25] — 2026-06-11 (HAB-101)
+
+### Changed — skill_router domain-driven refactor
+
+- [user-none]
+- [non-user] Reorganised `scripts/` into `skill_router/` (core, llm, agentic, providers subpackages) and `changelog/`
+- [non-user] Introduced `ToolProvider`/`PMToolProvider`/`VCSToolProvider`/`FilesToolProvider` protocols; replaced string-prefix dispatch with `ProviderRegistry`
+- [non-user] Moved `LINEAR_PROJECT_ID` and other constants from hardcoded `constants.py` into domain submodules; `skill_router.toml` now holds project-specific config
+- [non-user] Split `__main__.py` into thin shim + testable `app.py`; entry point is now `python3 scripts/skill_router` (no `.py`)
+- [non-user] Co-located tests under each module's `tests/` subdir; added GitHub/Files provider coverage (79 tests total, up from 62)
+- [non-user] Updated CI test discovery command, all skill stubs, and docs references
+
+---
+
 ## [0.42.24] — 2026-06-09 (PR #138 merged)
 
 ### Changed — tests audit: tearDown fixes, ShowupDateUtils coverage, stop-pact flow (HAB-99)
