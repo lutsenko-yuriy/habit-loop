@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 0  # full history + all tags needed for CHANGELOG lint
 
       - name: Python script tests
-        run: python3 scripts/test_skill_router.py
+        run: python3 -m unittest discover -s scripts -p 'test_*.py' -t scripts
 
       - name: Lint CHANGELOG markers
         run: |
@@ -50,7 +50,7 @@ jobs:
             | sort -V | tail -1)
           LAST_VERSION=${LAST_VERSION:-0.0.0}
           echo "Checking CHANGELOG entries newer than $LAST_VERSION"
-          python3 scripts/lint_changelog.py docs/CHANGELOG.md "$LAST_VERSION"
+          python3 scripts/changelog/lint.py docs/CHANGELOG.md "$LAST_VERSION"
 
       - name: Restore Firebase Dart config
         run: echo "$FIREBASE_OPTIONS_DART" | base64 --decode > lib/firebase_options.dart
@@ -174,7 +174,7 @@ jobs:
           echo "Last published version: $LAST_VERSION"
 
           # Generate human-readable notes and write to a file for the artifact.
-          python3 scripts/generate_release_notes.py docs/CHANGELOG.md "$LAST_VERSION" \
+          python3 scripts/changelog/release_notes.py docs/CHANGELOG.md "$LAST_VERSION" \
             > release-notes.txt
 
           echo "=== Release notes preview ==="

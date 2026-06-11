@@ -1,0 +1,1 @@
+MODEL_TIERS_PATH = "docs/MODEL_TIERS.md"

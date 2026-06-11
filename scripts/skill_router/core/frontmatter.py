@@ -1,12 +1,10 @@
 import re
-import sys
 from pathlib import Path
-
-from .constants import MAX_TOOL_TURNS, MODEL_TIERS_PATH, _normalize_model_name  # noqa: F401
 
 
 def read_frontmatter(skill_path: str):
     """Return (effort, reasoning, needs_session_tools, context, tools, max_turns, body)."""
+    from ..agentic.constants import MAX_TOOL_TURNS
     text = Path(skill_path).read_text()
     m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     if not m:
@@ -29,27 +27,3 @@ def read_frontmatter(skill_path: str):
         max_turns,
         text[m.end():],
     )
-
-
-def lookup_lmstudio_model(effort: str, reasoning: str):
-    """Return the model name if the tier maps to lm-studio, else None."""
-    try:
-        tiers_text = Path(MODEL_TIERS_PATH).read_text()
-    except FileNotFoundError:
-        print(f"[skill_router] {MODEL_TIERS_PATH} not found", file=sys.stderr)
-        return None
-
-    section = re.search(r"## Active mapping\n(.*?)\n---", tiers_text, re.DOTALL)
-    if not section:
-        print(f"[skill_router] '## Active mapping' section not found in {MODEL_TIERS_PATH}", file=sys.stderr)
-        return None
-
-    for line in section.group(1).splitlines():
-        parts = [p.strip() for p in line.split("|")]
-        if len(parts) < 5:
-            continue
-        row_effort, row_reasoning, model, alias = parts[1], parts[2], parts[3], parts[4]
-        if row_effort == effort and row_reasoning == reasoning:
-            return model if alias.strip("`") == "lm-studio" else None
-
-    return None

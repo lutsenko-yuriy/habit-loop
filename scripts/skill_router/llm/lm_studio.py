@@ -2,7 +2,8 @@ import json
 import os
 import urllib.request
 
-from .constants import LMSTUDIO_BASE, _normalize_model_name
+from .constants import LMSTUDIO_BASE
+from ..core.model_resolver import normalize_model_name
 
 
 def _auth_headers() -> dict:
@@ -16,9 +17,9 @@ def model_loaded(model_name: str) -> bool:
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.load(resp)
         loaded_ids = [m["id"] for m in data.get("data", [])]
-        needle = _normalize_model_name(model_name)
+        needle = normalize_model_name(model_name)
         return any(
-            needle in _normalize_model_name(mid) or _normalize_model_name(mid) in needle
+            needle in normalize_model_name(mid) or normalize_model_name(mid) in needle
             for mid in loaded_ids
         )
     except Exception:
