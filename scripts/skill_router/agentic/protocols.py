@@ -23,9 +23,5 @@ class PMToolProvider(ToolProvider, Protocol):
     def format_context(self, data: dict) -> str: ...
 
 
-class VCSToolProvider(ToolProvider, Protocol):
-    pass
-
-
 class FilesToolProvider(ToolProvider, Protocol):
     def project_root(self) -> str: ...

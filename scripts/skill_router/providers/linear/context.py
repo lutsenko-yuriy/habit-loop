@@ -1,7 +1,7 @@
 from .client import _linear_graphql
 
 
-_ISSUES_QUERY = """
+ISSUES_QUERY = """
 {
   issues(
     filter: { state: { type: { nin: ["completed", "cancelled"] } } }
@@ -38,7 +38,7 @@ def _build_milestones_query(project_id: str) -> str:
 
 
 def fetch_linear_context(api_key: str, project_id: str) -> dict:
-    issues_data = _linear_graphql(api_key, _ISSUES_QUERY)
+    issues_data = _linear_graphql(api_key, ISSUES_QUERY)
     milestones_data = _linear_graphql(api_key, _build_milestones_query(project_id))
     return {
         "issues": issues_data.get("data", {}).get("issues", {}).get("nodes", []),

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from .client import _linear_graphql
-from .context import fetch_linear_context, format_linear_context, _ISSUES_QUERY
+from .context import fetch_linear_context, format_linear_context, ISSUES_QUERY
 
 
 _GET_ISSUE_QUERY = """
@@ -81,7 +81,7 @@ class LinearProvider:
         api_key = self._api_key
         try:
             if name == "linear_list_issues":
-                data = _linear_graphql(api_key, _ISSUES_QUERY)
+                data = _linear_graphql(api_key, ISSUES_QUERY)
                 return json.dumps(data.get("data", {}).get("issues", {}).get("nodes", []))
 
             if name == "linear_get_issue":

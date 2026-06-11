@@ -4,7 +4,7 @@ from pathlib import Path
 
 def read_frontmatter(skill_path: str):
     """Return (effort, reasoning, needs_session_tools, context, tools, max_turns, body)."""
-    from ..agentic.constants import MAX_TOOL_TURNS
+    from .constants import DEFAULT_MAX_TURNS as MAX_TOOL_TURNS
     text = Path(skill_path).read_text()
     m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     if not m:
