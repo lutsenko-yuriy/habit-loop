@@ -274,4 +274,11 @@ void main() {
 
     expect(find.text('Language'), findsNothing);
   });
+
+  testWidgets('hides sign-in button when network_sync_enabled is false', (tester) async {
+    await tester.pumpWidget(_buildCarouselApp(rcOverrides: {'network_sync_enabled': false}));
+    await tester.pump();
+
+    expect(find.text('Sign in with Google'), findsNothing);
+  });
 }

@@ -10,6 +10,7 @@ typedef RemoteConfigOverridesSlots = ({
   Widget Function(BuildContext context, RemoteConfigEntry entry, VoidCallback onTap) buildEntryTile,
   Widget Function(BuildContext context) buildEntrySeparator,
   Widget Function(BuildContext context) buildSectionDivider,
+  Widget Function(BuildContext context, String title) buildSectionHeader,
   Widget Function(BuildContext context) buildRestartBanner,
   SeedSectionSlots seedSlots,
   Widget Function(BuildContext context, Widget seedSection) wrapSeedSection,
@@ -55,6 +56,9 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
       ),
     );
 
+    final toggleEntries = entries.where((e) => e.isFeatureToggle).toList();
+    final experimentEntries = entries.where((e) => !e.isFeatureToggle).toList();
+
     return ListView(
       padding: slots.listPadding,
       children: [
@@ -68,9 +72,24 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
           slots.buildRestartBanner(context),
           const SizedBox(height: 8),
         ],
-        for (final entry in entries) ...[
-          slots.buildEntryTile(context, entry, () => onEntryTap(entry)),
-          slots.buildEntrySeparator(context),
+        if (toggleEntries.isNotEmpty) ...[
+          slots.buildSectionHeader(context, 'FEATURE TOGGLES'),
+          const SizedBox(height: 8),
+          for (final entry in toggleEntries) ...[
+            slots.buildEntryTile(context, entry, () => onEntryTap(entry)),
+            slots.buildEntrySeparator(context),
+          ],
+        ],
+        if (toggleEntries.isNotEmpty && experimentEntries.isNotEmpty) ...[
+          slots.buildSectionDivider(context),
+        ],
+        if (experimentEntries.isNotEmpty) ...[
+          slots.buildSectionHeader(context, 'A/B TESTS'),
+          const SizedBox(height: 8),
+          for (final entry in experimentEntries) ...[
+            slots.buildEntryTile(context, entry, () => onEntryTap(entry)),
+            slots.buildEntrySeparator(context),
+          ],
         ],
         const SizedBox(height: 16),
       ],

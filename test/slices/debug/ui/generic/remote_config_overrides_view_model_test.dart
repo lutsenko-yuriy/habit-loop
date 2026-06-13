@@ -176,6 +176,20 @@ void main() {
       expect(entries.every((e) => !e.isOverridden), isTrue);
     });
 
+    test('isFeatureToggle is true for feature toggle keys', () {
+      final entries = readEntries();
+      final toggleKeys = entries.where((e) => e.isFeatureToggle).map((e) => e.key).toSet();
+      expect(toggleKeys, equals(RemoteConfigDefaults.featureToggleKeys));
+    });
+
+    test('isFeatureToggle is false for non-toggle keys', () {
+      final entries = readEntries();
+      final nonToggle = entries.where((e) => !e.isFeatureToggle);
+      for (final e in nonToggle) {
+        expect(RemoteConfigDefaults.featureToggleKeys, isNot(contains(e.key)));
+      }
+    });
+
     test('clearAllOverrides only clears keys in RemoteConfigDefaults.all', () async {
       // A stale key in the store that is NOT in RemoteConfigDefaults.all
       // should not cause errors — clearAllOverrides only touches known keys.

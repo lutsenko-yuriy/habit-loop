@@ -40,7 +40,7 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
                       },
                 child: Text(l10n.createPact),
               ),
-              if (isAnonymous || isSigningIn) ...[
+              if (featureFlags.networkSyncEnabled && (isAnonymous || isSigningIn)) ...[
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: isSigningIn

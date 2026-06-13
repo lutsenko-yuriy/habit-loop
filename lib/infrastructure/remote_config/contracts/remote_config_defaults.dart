@@ -101,6 +101,13 @@ abstract final class RemoteConfigDefaults {
   /// **Debug/profile only.** This key is never read in release builds.
   static const String debugBackend = 'real';
 
+  /// Keys belonging to the feature-toggle category shown in a dedicated section
+  /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
+  static const Set<String> featureToggleKeys = {
+    'language_selection_enabled',
+    'network_sync_enabled',
+  };
+
   /// Feature toggle: show the language-selection UI on the dashboard.
   ///
   /// When `false`, the language-picker button is hidden from the dashboard

@@ -90,6 +90,18 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [SizedBox(height: 8), Divider(), SizedBox(height: 8)],
                   ),
+              buildSectionHeader: (ctx, title) => Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 6),
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: CupertinoColors.systemGrey,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
               buildRestartBanner: (ctx) => RestartRequiredBanner(
                     key: const Key('debug-backend-restart-banner'),
                     color: CupertinoColors.systemYellow.resolveFrom(ctx),

@@ -4,11 +4,12 @@ import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.da
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_scroll_view.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 
-RemoteConfigEntry _entry(String key) => RemoteConfigEntry(
+RemoteConfigEntry _entry(String key, {bool isFeatureToggle = false}) => RemoteConfigEntry(
       key: key,
       defaultValue: '5',
       overrideValue: null,
       effectiveValue: '5',
+      isFeatureToggle: isFeatureToggle,
     );
 
 RemoteConfigOverridesSlots _stubSlots({Widget Function(BuildContext)? buildTopSection}) => (
@@ -20,6 +21,7 @@ RemoteConfigOverridesSlots _stubSlots({Widget Function(BuildContext)? buildTopSe
           ),
       buildEntrySeparator: (ctx) => const SizedBox(key: Key('entry-sep'), height: 4),
       buildSectionDivider: (ctx) => const Divider(key: Key('section-div')),
+      buildSectionHeader: (ctx, title) => Text(title, key: Key('section-header-$title')),
       buildRestartBanner: (ctx) => const Text('restart required', key: Key('debug-backend-restart-banner')),
       seedSlots: (
         buildHeader: (ctx) => const Text('SEED DATA'),
@@ -111,6 +113,20 @@ void main() {
     final seedOffset = tester.getTopLeft(find.byKey(const Key('seed-local-button'))).dy;
     final entryOffset = tester.getTopLeft(find.byKey(const Key('rc-entry-z'))).dy;
     expect(seedOffset, lessThan(entryOffset));
+  });
+
+  testWidgets('renders section headers for feature toggle and experiment entries', (tester) async {
+    tester.view.physicalSize = const Size(800, 4000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(entries: [
+      _entry('toggle_key', isFeatureToggle: true),
+      _entry('exp_key', isFeatureToggle: false),
+    ]));
+
+    expect(find.byKey(const Key('section-header-FEATURE TOGGLES')), findsOneWidget);
+    expect(find.byKey(const Key('section-header-A/B TESTS')), findsOneWidget);
   });
 
   testWidgets('invokes onEntryTap when entry tile is tapped', (tester) async {
