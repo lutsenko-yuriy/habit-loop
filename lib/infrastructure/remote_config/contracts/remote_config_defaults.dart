@@ -103,6 +103,9 @@ abstract final class RemoteConfigDefaults {
 
   /// Keys belonging to the feature-toggle category shown in a dedicated section
   /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
+  ///
+  /// When adding a new key to [all], also add it here if it is a kill-switch
+  /// toggle; omitting it silently places it in the A/B Tests section instead.
   static const Set<String> featureToggleKeys = {
     'language_selection_enabled',
     'network_sync_enabled',
