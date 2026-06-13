@@ -94,9 +94,10 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
               if (kDebugMode || kProfileMode)
                 TextButton(
                   key: const Key('onboarding-remote-config-debug-button'),
-                  onPressed: () => Navigator.of(ctx).push(
-                    MaterialPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageAndroid()),
-                  ),
+                  onPressed: () => Navigator.of(ctx)
+                      .push(MaterialPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageAndroid()))
+                      // ignore: use_build_context_synchronously — context.mounted checked inside
+                      .then((_) { if (ctx.mounted) ref.invalidate(featureFlagsProvider); }),
                   style: TextButton.styleFrom(
                     foregroundColor: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.4),
                     textStyle: const TextStyle(fontSize: 12),

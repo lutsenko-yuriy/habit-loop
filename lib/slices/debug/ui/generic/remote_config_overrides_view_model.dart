@@ -67,11 +67,13 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
   Future<void> setOverride(String key, String value) async {
     await ref.read(remoteConfigOverrideStoreProvider).setOverride(key, value);
     state = _buildEntries();
+    ref.invalidate(featureFlagsProvider);
   }
 
   Future<void> clearOverride(String key) async {
     await ref.read(remoteConfigOverrideStoreProvider).clearOverride(key);
     state = _buildEntries();
+    ref.invalidate(featureFlagsProvider);
   }
 
   Future<void> clearAllOverrides() async {
@@ -80,6 +82,7 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
       await store.clearOverride(key);
     }
     state = _buildEntries();
+    ref.invalidate(featureFlagsProvider);
   }
 }
 
