@@ -43,7 +43,6 @@ class DashboardPageIos extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final version = ref.watch(appVersionProvider).valueOrNull ?? '';
     final syncState = ref.watch(syncStatusViewModelProvider);
-    final featureFlags = ref.watch(featureFlagsProvider);
 
     Future<void> onLanguagePickerTapped() => openLanguagePicker(
           context: context,
@@ -66,6 +65,8 @@ class DashboardPageIos extends ConsumerWidget {
     if (showCarousel) {
       return OnboardingCarouselIos(onCreatePact: onCreatePact);
     }
+
+    final featureFlags = ref.watch(featureFlagsProvider);
 
     final actions = buildDashboardActions(
       onRcOverridesPressed: () => Navigator.of(context)

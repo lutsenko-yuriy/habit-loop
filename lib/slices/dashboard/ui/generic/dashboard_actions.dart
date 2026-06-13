@@ -3,6 +3,7 @@ import 'dart:async' show unawaited;
 import 'package:flutter/foundation.dart' show kDebugMode, kProfileMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
@@ -51,6 +52,7 @@ List<DashboardActionDescriptor> buildDashboardActions({
 void onDashboardRcOverridesClosed(BuildContext context, WidgetRef ref) {
   if (!context.mounted) return;
   ref.invalidate(hasActivePactsProvider);
+  ref.invalidate(featureFlagsProvider);
   unawaited(ref.read(dashboardViewModelProvider.notifier).load());
   unawaited(ref.read(pactListViewModelProvider.notifier).load());
 }
