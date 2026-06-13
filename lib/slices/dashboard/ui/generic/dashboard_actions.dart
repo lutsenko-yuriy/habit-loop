@@ -23,6 +23,7 @@ List<DashboardActionDescriptor> buildDashboardActions({
   required VoidCallback onLanguagePickerPressed,
   required VoidCallback onCreatePactPressed,
   required bool languageSelectionEnabled,
+  required bool networkSyncEnabled,
 }) =>
     [
       if (kDebugMode || kProfileMode)
@@ -31,11 +32,12 @@ List<DashboardActionDescriptor> buildDashboardActions({
           key: const Key('remote-config-debug-button'),
           onPressed: onRcOverridesPressed,
         ),
-      DashboardActionDescriptor(
-        type: DashboardActionType.syncStatus,
-        key: const Key('sync-status-button'),
-        onPressed: onSyncStatusPressed,
-      ),
+      if (networkSyncEnabled)
+        DashboardActionDescriptor(
+          type: DashboardActionType.syncStatus,
+          key: const Key('sync-status-button'),
+          onPressed: onSyncStatusPressed,
+        ),
       if (languageSelectionEnabled)
         DashboardActionDescriptor(
           type: DashboardActionType.languagePicker,

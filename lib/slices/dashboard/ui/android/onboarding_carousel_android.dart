@@ -3,6 +3,7 @@ import 'dart:async' show unawaited;
 import 'package:flutter/foundation.dart' show kDebugMode, kProfileMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/language_picker_dialog_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
@@ -19,6 +20,7 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final featureFlags = ref.watch(featureFlagsProvider);
 
     return Scaffold(
       appBar: null,
@@ -71,19 +73,20 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 4),
-              TextButton(
-                onPressed: () => unawaited(openLanguagePicker(
-                  context: ctx,
-                  ref: ref,
-                  showPicker: ({required context, required options, required currentOverride}) =>
-                      showMaterialLanguagePicker(context, options, currentOverride, l10n),
-                )),
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.5),
-                  textStyle: const TextStyle(fontSize: 13),
+              if (featureFlags.languageSelectionEnabled)
+                TextButton(
+                  onPressed: () => unawaited(openLanguagePicker(
+                    context: ctx,
+                    ref: ref,
+                    showPicker: ({required context, required options, required currentOverride}) =>
+                        showMaterialLanguagePicker(context, options, currentOverride, l10n),
+                  )),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.5),
+                    textStyle: const TextStyle(fontSize: 13),
+                  ),
+                  child: Text(l10n.languagePickerTitle),
                 ),
-                child: Text(l10n.languagePickerTitle),
-              ),
               // Debug/profile only — not visible in release builds.
               // minimumSize: Size.zero + tapTargetSize keep the button
               // height at ~14 pt (text only) so the slide column is not

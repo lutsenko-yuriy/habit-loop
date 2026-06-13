@@ -75,6 +75,7 @@ class DashboardPageAndroid extends ConsumerWidget {
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
       languageSelectionEnabled: featureFlags.languageSelectionEnabled,
+      networkSyncEnabled: featureFlags.networkSyncEnabled,
     );
 
     final appBarActions = actions.where((a) => a.type != DashboardActionType.createPact).toList();

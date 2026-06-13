@@ -77,6 +77,7 @@ class DashboardPageIos extends ConsumerWidget {
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
       languageSelectionEnabled: featureFlags.languageSelectionEnabled,
+      networkSyncEnabled: featureFlags.networkSyncEnabled,
     );
 
     final langAction = actions.firstWhereOrNull((a) => a.type == DashboardActionType.languagePicker);

@@ -11,6 +11,7 @@ void main() {
       void Function()? onLang,
       void Function()? onCreate,
       bool languageSelectionEnabled = true,
+      bool networkSyncEnabled = true,
     }) =>
         buildDashboardActions(
           onRcOverridesPressed: onRc ?? () {},
@@ -18,12 +19,22 @@ void main() {
           onLanguagePickerPressed: onLang ?? () {},
           onCreatePactPressed: onCreate ?? () {},
           languageSelectionEnabled: languageSelectionEnabled,
+          networkSyncEnabled: networkSyncEnabled,
         );
 
-    test('always includes syncStatus and createPact', () {
+    test('always includes createPact', () {
       final actions = makeActions();
-      expect(actions.any((a) => a.type == DashboardActionType.syncStatus), isTrue);
       expect(actions.any((a) => a.type == DashboardActionType.createPact), isTrue);
+    });
+
+    test('includes syncStatus when networkSyncEnabled is true', () {
+      final actions = makeActions(networkSyncEnabled: true);
+      expect(actions.any((a) => a.type == DashboardActionType.syncStatus), isTrue);
+    });
+
+    test('omits syncStatus when networkSyncEnabled is false', () {
+      final actions = makeActions(networkSyncEnabled: false);
+      expect(actions.any((a) => a.type == DashboardActionType.syncStatus), isFalse);
     });
 
     test('includes languagePicker when languageSelectionEnabled is true', () {
