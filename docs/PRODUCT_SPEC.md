@@ -44,11 +44,4 @@ The Habit Loop app allows the user to:
 
 ## Remote feature toggles
 
-Two boolean Firebase Remote Config flags control optional features without requiring a release:
-
-| Flag | Default | Effect when `false` |
-|---|---|---|
-| `language_selection_enabled` | `true` | The language-picker button is hidden from the dashboard; the underlying locale preference is unchanged and will replay when the flag is re-enabled |
-| `network_sync_enabled` | `true` | All Firestore sync methods are disabled; local writes continue to be persisted as dirty and will be uploaded when the flag is re-enabled |
-
-Both flags are immediately accessible on the in-app Remote Config overrides screen (debug/profile builds only).
+See @docs/FEATURE_TOGGLES.md.
