@@ -95,7 +95,9 @@ class OnboardingCarouselIos extends ConsumerWidget {
                   onPressed: () => Navigator.of(ctx)
                       .push(CupertinoPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageIos()))
                       // ignore: use_build_context_synchronously — context.mounted checked inside
-                      .then((_) { if (ctx.mounted) ref.invalidate(featureFlagsProvider); }),
+                      .then((_) {
+                    if (ctx.mounted) ref.invalidate(featureFlagsProvider);
+                  }),
                   child: Text(
                     'Remote Config',
                     style: TextStyle(
