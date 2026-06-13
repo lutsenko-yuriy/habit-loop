@@ -21,6 +21,7 @@ List<DashboardActionDescriptor> buildDashboardActions({
   required VoidCallback onSyncStatusPressed,
   required VoidCallback onLanguagePickerPressed,
   required VoidCallback onCreatePactPressed,
+  required bool languageSelectionEnabled,
 }) =>
     [
       if (kDebugMode || kProfileMode)
@@ -34,11 +35,12 @@ List<DashboardActionDescriptor> buildDashboardActions({
         key: const Key('sync-status-button'),
         onPressed: onSyncStatusPressed,
       ),
-      DashboardActionDescriptor(
-        type: DashboardActionType.languagePicker,
-        key: const Key('language-picker-button'),
-        onPressed: onLanguagePickerPressed,
-      ),
+      if (languageSelectionEnabled)
+        DashboardActionDescriptor(
+          type: DashboardActionType.languagePicker,
+          key: const Key('language-picker-button'),
+          onPressed: onLanguagePickerPressed,
+        ),
       DashboardActionDescriptor(
         type: DashboardActionType.createPact,
         key: const Key('create-pact-button'),

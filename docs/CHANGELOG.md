@@ -4,6 +4,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.26] — 2026-06-13 (HAB-107)
+
+### Added — Firebase Remote Config feature toggles
+
+- [user-none]
+- [non-user] `FeatureFlags` value object (`lib/infrastructure/remote_config/contracts/feature_flags.dart`) with `languageSelectionEnabled` and `networkSyncEnabled` bool getters; built via `FeatureFlags.fromRemoteConfig(rc)` factory
+- [non-user] `featureFlagsProvider` added to `app_providers.dart`; self-composes from `remoteConfigServiceProvider`
+- [non-user] `language_selection_enabled` RC flag (default `true`): hides the language-picker button on the dashboard when `false`
+- [non-user] `network_sync_enabled` RC flag (default `true`): all `FirestoreSyncService` methods early-return when `false`; CB state and local dirty-writes are preserved
+- [non-user] Both flags appear automatically in the debug RC overrides screen with a `true`/`false` picker
+- [non-user] Updated `docs/ARCHITECTURE.md` and `docs/PRODUCT_SPEC.md`
+
+---
+
 ## [0.42.25] — 2026-06-11 (HAB-101)
 
 ### Changed — skill_router domain-driven refactor

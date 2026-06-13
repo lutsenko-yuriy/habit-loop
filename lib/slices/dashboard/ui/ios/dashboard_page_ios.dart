@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Icon, Material, MaterialType, ScaffoldMessenger, Theme;
@@ -42,6 +43,7 @@ class DashboardPageIos extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final version = ref.watch(appVersionProvider).valueOrNull ?? '';
     final syncState = ref.watch(syncStatusViewModelProvider);
+    final featureFlags = ref.watch(featureFlagsProvider);
 
     Future<void> onLanguagePickerTapped() => openLanguagePicker(
           context: context,
@@ -73,21 +75,24 @@ class DashboardPageIos extends ConsumerWidget {
       onSyncStatusPressed: onSyncStatusTapped,
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
+      languageSelectionEnabled: featureFlags.languageSelectionEnabled,
     );
 
-    final langAction = actions.firstWhere((a) => a.type == DashboardActionType.languagePicker);
+    final langAction = actions.firstWhereOrNull((a) => a.type == DashboardActionType.languagePicker);
     final trailingActions = actions.where((a) => a.type != DashboardActionType.languagePicker).toList();
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        leading: CupertinoButton(
-          key: langAction.key,
-          padding: EdgeInsets.zero,
-          onPressed: langAction.onPressed,
-          child: const Icon(CupertinoIcons.globe),
-        ),
+        leading: langAction == null
+            ? null
+            : CupertinoButton(
+                key: langAction.key,
+                padding: EdgeInsets.zero,
+                onPressed: langAction.onPressed,
+                child: const Icon(CupertinoIcons.globe),
+              ),
         middle: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

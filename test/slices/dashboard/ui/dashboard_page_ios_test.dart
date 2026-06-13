@@ -104,6 +104,15 @@ void main() {
     expect(find.byIcon(CupertinoIcons.globe), findsOneWidget);
   });
 
+  testWidgets('iOS dashboard hides globe button when language_selection_enabled is false', (tester) async {
+    await tester.pumpWidget(_buildTestApp(
+      remoteConfig: FakeRemoteConfigService(overrides: {'language_selection_enabled': false}),
+    ));
+
+    expect(find.byKey(const Key('language-picker-button')), findsNothing);
+    expect(find.byIcon(CupertinoIcons.globe), findsNothing);
+  });
+
   testWidgets('iOS dashboard shows onboarding carousel when hasPacts is false', (tester) async {
     await tester.pumpWidget(_buildTestApp(
       hasPacts: false,

@@ -65,5 +65,54 @@ void main() {
         expect(RemoteConfigDefaults.allowedValues['debug_connectivity_stability_percent'], isNull);
       });
     });
+
+    group('language_selection_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('language_selection_enabled'), isTrue);
+      });
+
+      test('default value is true', () {
+        expect(RemoteConfigDefaults.all['language_selection_enabled'], isTrue);
+      });
+
+      test('constant matches all map value', () {
+        expect(RemoteConfigDefaults.languageSelectionEnabled,
+            equals(RemoteConfigDefaults.all['language_selection_enabled']));
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('language_selection_enabled'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['language_selection_enabled'], containsAll(['true', 'false']));
+      });
+
+      test('appears in intRanges as null (boolean, not int-bounded)', () {
+        expect(RemoteConfigDefaults.intRanges.containsKey('language_selection_enabled'), isTrue);
+        expect(RemoteConfigDefaults.intRanges['language_selection_enabled'], isNull);
+      });
+    });
+
+    group('network_sync_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('network_sync_enabled'), isTrue);
+      });
+
+      test('default value is true', () {
+        expect(RemoteConfigDefaults.all['network_sync_enabled'], isTrue);
+      });
+
+      test('constant matches all map value', () {
+        expect(RemoteConfigDefaults.networkSyncEnabled, equals(RemoteConfigDefaults.all['network_sync_enabled']));
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('network_sync_enabled'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['network_sync_enabled'], containsAll(['true', 'false']));
+      });
+
+      test('appears in intRanges as null (boolean, not int-bounded)', () {
+        expect(RemoteConfigDefaults.intRanges.containsKey('network_sync_enabled'), isTrue);
+        expect(RemoteConfigDefaults.intRanges['network_sync_enabled'], isNull);
+      });
+    });
   });
 }

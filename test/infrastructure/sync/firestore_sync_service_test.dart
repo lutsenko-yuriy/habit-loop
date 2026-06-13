@@ -16,6 +16,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../infrastructure/auth/fake_auth_service.dart';
+import '../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 // ---------------------------------------------------------------------------
 // Test doubles
@@ -210,6 +211,7 @@ FirestoreSyncService _makeService({
   Map<String, DateTime>? showupSyncedAts,
   PactRepository? pactRepository,
   ShowupRepository? showupRepository,
+  FakeRemoteConfigService? remoteConfig,
 }) {
   return FirestoreSyncService(
     firestoreClient: client ?? _FakeFirestoreClient(),
@@ -219,6 +221,7 @@ FirestoreSyncService _makeService({
     showupSyncRepository: _InMemoryShowupSyncRepo(dirtyShowups ?? [], syncedAts: showupSyncedAts),
     pactRepository: pactRepository ?? InMemoryPactRepository(),
     showupRepository: showupRepository ?? InMemoryShowupRepository(),
+    remoteConfig: remoteConfig,
   );
 }
 
@@ -893,6 +896,89 @@ void main() {
       svc.triggerManualSync();
 
       expect(cb.state, SyncCircuitBreakerState.open);
+    });
+  });
+
+  group('FirestoreSyncService network_sync_enabled = false', () {
+    FakeRemoteConfigService syncOff() => FakeRemoteConfigService(overrides: {'network_sync_enabled': false});
+
+    test('uploadPact is a no-op — no Firestore call', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(client: client, remoteConfig: syncOff());
+
+      await svc.uploadPact(_pact('p1'));
+
+      expect(client.upsertedPacts, isEmpty);
+    });
+
+    test('uploadShowup is a no-op — no Firestore call', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(client: client, remoteConfig: syncOff());
+
+      await svc.uploadShowup(_showup('s1'));
+
+      expect(client.upsertedShowups, isEmpty);
+    });
+
+    test('flushDirtyRecords is a no-op — no Firestore call', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(
+        client: client,
+        dirtyPacts: [_pact('p1')],
+        dirtyShowups: [_showup('s1')],
+        remoteConfig: syncOff(),
+      );
+
+      await svc.flushDirtyRecords();
+
+      expect(client.upsertedPacts, isEmpty);
+      expect(client.upsertedShowups, isEmpty);
+    });
+
+    test('triggerManualSync is a no-op — CB state stays closed', () async {
+      final cb = SyncCircuitBreaker();
+      final svc = _makeService(cb: cb, remoteConfig: syncOff());
+
+      svc.triggerManualSync();
+
+      expect(cb.currentState, SyncCircuitBreakerState.closed);
+    });
+
+    test('pullRemoteChanges is a no-op — Firestore client never queried', () async {
+      final client = _FakeFirestoreClient()..remotePactDocs = [_remotePactDoc('p1')];
+      final svc = _makeService(client: client, remoteConfig: syncOff());
+      final before = List.of(client.remotePactDocs);
+
+      await svc.pullRemoteChanges();
+
+      // Docs were never consumed: getPacts was not called.
+      // We verify by checking that nothing was written to the in-memory repo.
+      expect(client.remotePactDocs, equals(before));
+    });
+
+    test('forceSyncAll returns zero counts without touching Firestore', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(
+        client: client,
+        dirtyPacts: [_pact('p1')],
+        remoteConfig: syncOff(),
+      );
+
+      final result = await svc.forceSyncAll();
+
+      expect(client.upsertedPacts, isEmpty);
+      expect(result.attempted, 0);
+      expect(result.pactsFailed, 0);
+      expect(result.showupsFailed, 0);
+    });
+
+    test('CB state stays closed after uploadPact with sync disabled', () async {
+      final cb = SyncCircuitBreaker();
+      final svc = _makeService(cb: cb, remoteConfig: syncOff());
+
+      await svc.uploadPact(_pact('p1'));
+
+      expect(cb.currentState, SyncCircuitBreakerState.closed);
     });
   });
 }

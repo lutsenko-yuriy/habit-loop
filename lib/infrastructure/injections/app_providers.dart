@@ -30,6 +30,7 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/data/noop_onboarding_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/feature_flags.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_override_store.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
@@ -124,6 +125,10 @@ final logServiceProvider = Provider<LogService>((ref) => NoopLogService());
 
 final remoteConfigServiceProvider = Provider<RemoteConfigService>(
   (ref) => NoopRemoteConfigService(),
+);
+
+final featureFlagsProvider = Provider<FeatureFlags>(
+  (ref) => FeatureFlags.fromRemoteConfig(ref.watch(remoteConfigServiceProvider)),
 );
 
 final remoteConfigOverrideStoreProvider = Provider<RemoteConfigOverrideStore>(
@@ -269,5 +274,6 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     showupSyncRepository: ref.watch(showupSyncRepositoryProvider),
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
+    remoteConfig: ref.watch(remoteConfigServiceProvider),
   );
 });

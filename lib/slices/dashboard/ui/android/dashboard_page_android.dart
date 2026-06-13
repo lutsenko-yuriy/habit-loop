@@ -64,6 +64,8 @@ class DashboardPageAndroid extends ConsumerWidget {
       return OnboardingCarouselAndroid(onCreatePact: onCreatePact);
     }
 
+    final featureFlags = ref.watch(featureFlagsProvider);
+
     final actions = buildDashboardActions(
       onRcOverridesPressed: () => Navigator.of(context)
           .push(MaterialPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageAndroid()))
@@ -72,6 +74,7 @@ class DashboardPageAndroid extends ConsumerWidget {
       onSyncStatusPressed: onSyncStatusTapped,
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
+      languageSelectionEnabled: featureFlags.languageSelectionEnabled,
     );
 
     final appBarActions = actions.where((a) => a.type != DashboardActionType.createPact).toList();

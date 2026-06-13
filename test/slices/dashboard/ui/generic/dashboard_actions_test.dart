@@ -10,19 +10,30 @@ void main() {
       void Function()? onSync,
       void Function()? onLang,
       void Function()? onCreate,
+      bool languageSelectionEnabled = true,
     }) =>
         buildDashboardActions(
           onRcOverridesPressed: onRc ?? () {},
           onSyncStatusPressed: onSync ?? () {},
           onLanguagePickerPressed: onLang ?? () {},
           onCreatePactPressed: onCreate ?? () {},
+          languageSelectionEnabled: languageSelectionEnabled,
         );
 
-    test('always includes syncStatus, languagePicker, createPact', () {
+    test('always includes syncStatus and createPact', () {
       final actions = makeActions();
       expect(actions.any((a) => a.type == DashboardActionType.syncStatus), isTrue);
-      expect(actions.any((a) => a.type == DashboardActionType.languagePicker), isTrue);
       expect(actions.any((a) => a.type == DashboardActionType.createPact), isTrue);
+    });
+
+    test('includes languagePicker when languageSelectionEnabled is true', () {
+      final actions = makeActions(languageSelectionEnabled: true);
+      expect(actions.any((a) => a.type == DashboardActionType.languagePicker), isTrue);
+    });
+
+    test('omits languagePicker when languageSelectionEnabled is false', () {
+      final actions = makeActions(languageSelectionEnabled: false);
+      expect(actions.any((a) => a.type == DashboardActionType.languagePicker), isFalse);
     });
 
     test('includes rcOverrides in debug mode', () {
