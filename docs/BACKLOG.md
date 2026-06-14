@@ -7,7 +7,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
-_(nothing in QA)_
+- **HAB-107**: Firebase Remote Config feature toggles (PR #141)
 
 ## Unscheduled
 
