@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.27] — 2026-06-14 (HAB-108)
+
+### Added — Licensing research
+
+- [user-none]
+- [non-user] `docs/LICENSING.md`: WU1–WU3 research — licence type primer, MIT recommendation, full dependency compatibility audit (all deps are MIT/BSD/Apache-2.0); WU4 pending licence selection
+
+---
+
 ## [0.42.26] — 2026-06-14 (PR #141 merged)
 
 ### Added — Firebase Remote Config feature toggles (HAB-107)
