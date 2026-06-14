@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.26] — 2026-06-14 (PR #141 merged)
+
+### Added — Firebase Remote Config feature toggles (HAB-107)
+
+- [user-none]
+- [non-user] `FeatureFlags` value object + `featureFlagsProvider`; reads `language_selection_enabled` and `network_sync_enabled` from RC
+- [non-user] `language_selection_enabled` (default `true`): hides language-picker on dashboard and onboarding carousel when `false`
+- [non-user] `network_sync_enabled` (default `true`): all `FirestoreSyncService` methods no-op when `false`; sync status button and Sign in with Google hidden; dirty writes preserved for replay
+- [non-user] Debug RC overrides screen split into "FEATURE TOGGLES" and "A/B TESTS" sections; overrides take effect immediately without navigation
+- [non-user] `docs/FEATURE_TOGGLES.md` added as flag catalogue; `docs/ARCHITECTURE.md` and `docs/PRODUCT_SPEC.md` updated
+
+---
+
 ## [0.42.25] — 2026-06-11 (HAB-101)
 
 ### Changed — skill_router domain-driven refactor

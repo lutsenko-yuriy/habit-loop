@@ -73,6 +73,16 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
               ),
           buildEntrySeparator: (ctx) => const Divider(height: 1),
           buildSectionDivider: (ctx) => const SizedBox(height: 8),
+          buildSectionHeader: (ctx, title) => Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 6, top: 4),
+                child: Text(
+                  title,
+                  style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                        letterSpacing: 0.5,
+                      ),
+                ),
+              ),
           buildRestartBanner: (ctx) => const Padding(
                 padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: RestartRequiredBanner(

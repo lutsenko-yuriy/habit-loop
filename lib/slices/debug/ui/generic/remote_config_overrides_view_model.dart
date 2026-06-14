@@ -9,6 +9,7 @@ final class RemoteConfigEntry {
     required this.defaultValue,
     required this.overrideValue,
     required this.effectiveValue,
+    required this.isFeatureToggle,
     this.allowedValues,
     this.intRange,
     this.valueHint,
@@ -18,6 +19,7 @@ final class RemoteConfigEntry {
   final String defaultValue;
   final String? overrideValue;
   final String effectiveValue;
+  final bool isFeatureToggle;
   final List<String>? allowedValues;
   // When non-null, shows a slider instead of a plain text field.
   final ({int min, int max})? intRange;
@@ -47,6 +49,7 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
         defaultValue: defaultRaw.toString(),
         overrideValue: store.getOverride(key),
         effectiveValue: _readEffective(service, key, defaultRaw),
+        isFeatureToggle: RemoteConfigDefaults.featureToggleKeys.contains(key),
         allowedValues: RemoteConfigDefaults.allowedValues[key],
         intRange: RemoteConfigDefaults.intRanges[key],
         valueHint: RemoteConfigDefaults.valueHints[key],
@@ -64,11 +67,13 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
   Future<void> setOverride(String key, String value) async {
     await ref.read(remoteConfigOverrideStoreProvider).setOverride(key, value);
     state = _buildEntries();
+    ref.invalidate(featureFlagsProvider);
   }
 
   Future<void> clearOverride(String key) async {
     await ref.read(remoteConfigOverrideStoreProvider).clearOverride(key);
     state = _buildEntries();
+    ref.invalidate(featureFlagsProvider);
   }
 
   Future<void> clearAllOverrides() async {
@@ -77,6 +82,7 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
       await store.clearOverride(key);
     }
     state = _buildEntries();
+    ref.invalidate(featureFlagsProvider);
   }
 }
 

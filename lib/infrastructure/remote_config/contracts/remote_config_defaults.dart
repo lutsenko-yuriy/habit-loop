@@ -101,6 +101,32 @@ abstract final class RemoteConfigDefaults {
   /// **Debug/profile only.** This key is never read in release builds.
   static const String debugBackend = 'real';
 
+  /// Keys belonging to the feature-toggle category shown in a dedicated section
+  /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
+  ///
+  /// When adding a new key to [all], also add it here if it is a kill-switch
+  /// toggle; omitting it silently places it in the A/B Tests section instead.
+  static const Set<String> featureToggleKeys = {
+    'language_selection_enabled',
+    'network_sync_enabled',
+  };
+
+  /// Feature toggle: show the language-selection UI on the dashboard.
+  ///
+  /// When `false`, the language-picker button is hidden from the dashboard
+  /// nav bar / app bar. The underlying locale preference logic is unchanged;
+  /// only the entry point is removed. Override to `false` in the Firebase
+  /// Remote Config console to hide the feature without a release.
+  static const bool languageSelectionEnabled = true;
+
+  /// Feature toggle: enable Firestore network sync.
+  ///
+  /// When `false`, all [FirestoreSyncService] methods return immediately
+  /// without contacting Firestore. Local writes are still persisted as dirty
+  /// and will be replayed when the flag is re-enabled. Override to `false`
+  /// in the Firebase Remote Config console to disable sync without a release.
+  static const bool networkSyncEnabled = true;
+
   /// Optional short hint shown in the debug override dialog for keys whose
   /// numeric range has a concrete semantic meaning.
   ///
@@ -128,6 +154,8 @@ abstract final class RemoteConfigDefaults {
     'debug_connectivity_state': debugConnectivityState,
     'debug_connectivity_stability_percent': debugConnectivityStabilityPercent,
     'debug_backend': debugBackend,
+    'language_selection_enabled': languageSelectionEnabled,
+    'network_sync_enabled': networkSyncEnabled,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -145,6 +173,8 @@ abstract final class RemoteConfigDefaults {
     'debug_connectivity_state': ['perfect', 'unstable', 'absent'],
     'debug_connectivity_stability_percent': null,
     'debug_backend': ['real', 'local'],
+    'language_selection_enabled': ['true', 'false'],
+    'network_sync_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known
@@ -160,5 +190,7 @@ abstract final class RemoteConfigDefaults {
     'debug_connectivity_stability_percent': (min: 0, max: 100),
     'sync_max_consecutive_failures': (min: 1, max: 20),
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
+    'language_selection_enabled': null,
+    'network_sync_enabled': null,
   };
 }

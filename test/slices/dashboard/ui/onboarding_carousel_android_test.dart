@@ -44,11 +44,15 @@ Widget _buildCarouselApp({
   Locale? localeOverride,
   Locale locale = const Locale('en'),
   bool isSigningIn = false,
+  Map<String, dynamic> rcOverrides = const {},
 }) {
   return ProviderScope(
     overrides: [
       remoteConfigServiceProvider.overrideWithValue(
-        FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': autoAdvanceSeconds}),
+        FakeRemoteConfigService(overrides: {
+          'onboarding_auto_advance_seconds': autoAdvanceSeconds,
+          ...rcOverrides,
+        }),
       ),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
@@ -262,5 +266,19 @@ void main() {
       expect(find.text('Sign in with Google'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
+  });
+
+  testWidgets('hides language button when language_selection_enabled is false', (tester) async {
+    await tester.pumpWidget(_buildCarouselApp(rcOverrides: {'language_selection_enabled': false}));
+    await tester.pump();
+
+    expect(find.text('Language'), findsNothing);
+  });
+
+  testWidgets('hides sign-in button when network_sync_enabled is false', (tester) async {
+    await tester.pumpWidget(_buildCarouselApp(rcOverrides: {'network_sync_enabled': false}));
+    await tester.pump();
+
+    expect(find.text('Sign in with Google'), findsNothing);
   });
 }

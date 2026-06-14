@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kProfileMode;
 import 'package:flutter/material.dart' show Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_carousel_scaffold.dart';
@@ -20,6 +21,7 @@ class OnboardingCarouselIos extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final featureFlags = ref.watch(featureFlagsProvider);
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -40,7 +42,7 @@ class OnboardingCarouselIos extends ConsumerWidget {
                       },
                 child: Text(l10n.createPact),
               ),
-              if (isAnonymous || isSigningIn) ...[
+              if (featureFlags.networkSyncEnabled && (isAnonymous || isSigningIn)) ...[
                 const SizedBox(height: 12),
                 CupertinoButton(
                   onPressed: isSigningIn
@@ -65,22 +67,23 @@ class OnboardingCarouselIos extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 4),
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: () => unawaited(openLanguagePicker(
-                  context: ctx,
-                  ref: ref,
-                  showPicker: ({required context, required options, required currentOverride}) =>
-                      showCupertinoLanguagePicker(context, options, currentOverride, l10n),
-                )),
-                child: Text(
-                  l10n.languagePickerTitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: CupertinoColors.secondaryLabel.resolveFrom(ctx),
+              if (featureFlags.languageSelectionEnabled)
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => unawaited(openLanguagePicker(
+                    context: ctx,
+                    ref: ref,
+                    showPicker: ({required context, required options, required currentOverride}) =>
+                        showCupertinoLanguagePicker(context, options, currentOverride, l10n),
+                  )),
+                  child: Text(
+                    l10n.languagePickerTitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: CupertinoColors.secondaryLabel.resolveFrom(ctx),
+                    ),
                   ),
                 ),
-              ),
               // Debug/profile only — not visible in release builds.
               // minimumSize: Size.zero keeps the button height at ~14 pt (text only)
               // so it doesn't push the slide column out of view on small viewports.
@@ -89,9 +92,12 @@ class OnboardingCarouselIos extends ConsumerWidget {
                   key: const Key('onboarding-remote-config-debug-button'),
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
-                  onPressed: () => Navigator.of(ctx).push(
-                    CupertinoPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageIos()),
-                  ),
+                  onPressed: () => Navigator.of(ctx)
+                      .push(CupertinoPageRoute<void>(builder: (_) => const RemoteConfigOverridesPageIos()))
+                      // ignore: use_build_context_synchronously — context.mounted checked inside
+                      .then((_) {
+                    if (ctx.mounted) ref.invalidate(featureFlagsProvider);
+                  }),
                   child: Text(
                     'Remote Config',
                     style: TextStyle(

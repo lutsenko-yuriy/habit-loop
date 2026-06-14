@@ -16,6 +16,7 @@ RemoteConfigEntry _entry({
       defaultValue: defaultValue,
       overrideValue: overrideValue,
       effectiveValue: effectiveValue,
+      isFeatureToggle: false,
       allowedValues: allowedValues,
       intRange: intRange,
     );

@@ -41,3 +41,7 @@ The Habit Loop app allows the user to:
   - A notification with a reminder will appear to the user if he defined a reminder
   - If the platform (iOS, Android) supports actionable notifications, the user can mark a showup as done directly from the notification without opening the app. *(Stretch goal — implement if the platform supports it.)*
   - The user can see the showup by clicking on the notification
+
+## Remote feature toggles
+
+See @docs/FEATURE_TOGGLES.md.

@@ -64,6 +64,23 @@ void main() {
     expect(find.byIcon(Icons.language), findsOneWidget);
   });
 
+  testWidgets('Android dashboard hides sync button when network_sync_enabled is false', (tester) async {
+    await tester.pumpWidget(_buildTestApp(
+      remoteConfig: FakeRemoteConfigService(overrides: {'network_sync_enabled': false}),
+    ));
+
+    expect(find.byKey(const Key('sync-status-button')), findsNothing);
+  });
+
+  testWidgets('Android dashboard hides language button when language_selection_enabled is false', (tester) async {
+    await tester.pumpWidget(_buildTestApp(
+      remoteConfig: FakeRemoteConfigService(overrides: {'language_selection_enabled': false}),
+    ));
+
+    expect(find.byKey(const Key('language-picker-button')), findsNothing);
+    expect(find.byIcon(Icons.language), findsNothing);
+  });
+
   testWidgets('Android dashboard shows onboarding carousel when hasPacts is false', (tester) async {
     await tester.pumpWidget(_buildTestApp(
       hasPacts: false,

@@ -8,6 +8,7 @@ import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
@@ -25,6 +26,9 @@ class FirestoreSyncService implements SyncService {
   final ShowupSyncRepository _showupSyncRepository;
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
+  final RemoteConfigService? _remoteConfig;
+
+  bool get _syncEnabled => _remoteConfig?.getBool('network_sync_enabled') ?? true;
 
   FirestoreSyncService({
     required FirestoreClient firestoreClient,
@@ -34,16 +38,19 @@ class FirestoreSyncService implements SyncService {
     required ShowupSyncRepository showupSyncRepository,
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
+    RemoteConfigService? remoteConfig,
   })  : _firestoreClient = firestoreClient,
         _authService = authService,
         _circuitBreaker = circuitBreaker,
         _pactSyncRepository = pactSyncRepository,
         _showupSyncRepository = showupSyncRepository,
         _pactRepository = pactRepository,
-        _showupRepository = showupRepository;
+        _showupRepository = showupRepository,
+        _remoteConfig = remoteConfig;
 
   @override
   Future<void> uploadPact(Pact pact) async {
+    if (!_syncEnabled) return;
     final userId = _authService.currentUserId;
     if (userId == null || _authService.isAnonymous) return;
     await _uploadWithCb(
@@ -59,6 +66,7 @@ class FirestoreSyncService implements SyncService {
 
   @override
   Future<void> uploadShowup(Showup showup) async {
+    if (!_syncEnabled) return;
     final userId = _authService.currentUserId;
     if (userId == null || _authService.isAnonymous) return;
     await _uploadWithCb(
@@ -74,6 +82,7 @@ class FirestoreSyncService implements SyncService {
 
   @override
   Future<void> flushDirtyRecords() async {
+    if (!_syncEnabled) return;
     if (!_circuitBreaker.canRequest) return;
     if (_authService.isAnonymous) return;
 
@@ -97,6 +106,7 @@ class FirestoreSyncService implements SyncService {
 
   @override
   void triggerManualSync() {
+    if (!_syncEnabled) return;
     if (_authService.isAnonymous) return;
     _circuitBreaker.triggerManualSync();
     unawaited(flushDirtyRecords());
@@ -104,6 +114,7 @@ class FirestoreSyncService implements SyncService {
 
   @override
   Future<ForceSyncResult> forceSyncAll() async {
+    if (!_syncEnabled) return const ForceSyncResult(attempted: 0, pactsFailed: 0, showupsFailed: 0);
     if (_authService.isAnonymous) return const ForceSyncResult(attempted: 0, pactsFailed: 0, showupsFailed: 0);
     try {
       await _pactSyncRepository.markAllPactsDirty();
@@ -128,6 +139,7 @@ class FirestoreSyncService implements SyncService {
 
   @override
   Future<void> pullRemoteChanges() async {
+    if (!_syncEnabled) return;
     if (_circuitBreaker.currentState != SyncCircuitBreakerState.closed) return;
 
     final userId = _authService.currentUserId;
