@@ -42,7 +42,7 @@ A significant portion of Habit Loop's implementation was produced via AI-assiste
 
 - Code where a human provided architectural direction, domain modelling, prompt design, review, and approval likely retains *some* human authorship — but how much is an open question.
 - Code generated mechanically with no meaningful human creative input may not be copyrightable at all.
-- Anthropic's Terms of Service ([Consumer](https://www.anthropic.com/legal/consumer-terms) / [Commercial](https://www.anthropic.com/legal/commercial-terms)) grant the user ownership of Claude's output (subject to applicable law), so Anthropic makes no competing ownership claim.
+- Anthropic's [Consumer Terms of Service](https://www.anthropic.com/legal/consumer-terms) (applicable here, as the code was produced via Claude.ai/Claude Code by an individual developer — not via the API under the [Commercial Terms](https://www.anthropic.com/legal/commercial-terms)) grant the user ownership of Claude's output (subject to applicable law), so Anthropic makes no competing ownership claim.
 
 **Practical effect:** asserting strong proprietary rights ("all rights reserved") over AI-generated code is legally shakier than it would be for hand-written code. Conversely, applying a permissive open-source licence is more honest — you are explicitly allowing reuse rather than claiming exclusive rights you may not fully hold.
 
