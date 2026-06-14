@@ -38,11 +38,11 @@ The main families:
 
 A significant portion of Habit Loop's implementation was produced via AI-assisted ("vibe") coding with Claude. This has a real legal implication:
 
-**Copyright requires human authorship.** The US Copyright Office (and most comparable jurisdictions) will not register purely AI-generated works. The legal status of AI-assisted code is still evolving, but the current consensus is:
+**Copyright requires human authorship.** The [US Copyright Office](https://www.copyright.gov/ai/ai_policy_guidance.pdf) (and most comparable jurisdictions) will not register purely AI-generated works. The legal status of AI-assisted code is still evolving, but the current consensus is:
 
 - Code where a human provided architectural direction, domain modelling, prompt design, review, and approval likely retains *some* human authorship — but how much is an open question.
 - Code generated mechanically with no meaningful human creative input may not be copyrightable at all.
-- Anthropic's Terms of Service grant the user ownership of Claude's output (subject to applicable law), so Anthropic makes no competing ownership claim.
+- Anthropic's Terms of Service ([Consumer](https://www.anthropic.com/legal/consumer-terms) / [Commercial](https://www.anthropic.com/legal/commercial-terms)) grant the user ownership of Claude's output (subject to applicable law), so Anthropic makes no competing ownership claim.
 
 **Practical effect:** asserting strong proprietary rights ("all rights reserved") over AI-generated code is legally shakier than it would be for hand-written code. Conversely, applying a permissive open-source licence is more honest — you are explicitly allowing reuse rather than claiming exclusive rights you may not fully hold.
 
