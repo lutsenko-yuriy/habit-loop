@@ -1,5 +1,11 @@
 # Habit Loop
 
+[![CI](https://github.com/lutsenko-yuriy/habit-loop/actions/workflows/ci.yml/badge.svg)](https://github.com/lutsenko-yuriy/habit-loop/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/lutsenko-yuriy/habit-loop/graph/badge.svg)](https://codecov.io/gh/lutsenko-yuriy/habit-loop)
+[![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-lightgrey)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-stable-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Version](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Flutsenko-yuriy%2Fhabit-loop%2Fmain%2Fpubspec.yaml&query=%24.version&label=version&color=blue)](https://github.com/lutsenko-yuriy/habit-loop/blob/main/docs/CHANGELOG.md)
+
 Build habits through pacts and showups.
 
 Habit Loop lets you make a **pact** with yourself: commit to showing up for a habit for a fixed period. Each scheduled session is a **showup**. At the end, you know exactly how you did — no excuses, no pauses.

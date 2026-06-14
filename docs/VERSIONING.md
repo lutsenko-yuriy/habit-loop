@@ -56,3 +56,4 @@ Distribution and version tagging only run on the `main` branch. Feature branches
 | `FIREBASE_SERVICE_ACCOUNT_ANDROID` | `distribute-android` | Firebase service account JSON with App Distribution role |
 | `FIREBASE_IOS_APP_ID` | `distribute-ios` | Firebase Console → iOS app → App ID (e.g. `1:123456789012:ios:abc123`) |
 | `FIREBASE_SERVICE_ACCOUNT_IOS` | `distribute-ios` | Firebase service account JSON with App Distribution role (may reuse the Android service account) |
+| `CODECOV_TOKEN` | `test` | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability |

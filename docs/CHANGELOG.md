@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.28] — 2026-06-14 (HAB-110)
+
+### Added — README badges and Codecov coverage
+
+- [user-none]
+- [non-user] CI: `flutter test --coverage` + `codecov/codecov-action@v4` upload in the test job
+- [non-user] README.md: CI status, coverage, platform, Flutter, and version badges
+- [non-user] `docs/VERSIONING.md`: `CODECOV_TOKEN` secret documented
+
+---
+
 ## [0.42.27] — 2026-06-14 (HAB-108)
 
 ### Added — Licensing research
