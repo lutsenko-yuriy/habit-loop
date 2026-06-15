@@ -8,10 +8,10 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Improved — Dashboard bottom sheet UX
 
-- [user] Pact summary (counts) is now always visible at the top of the bottom sheet and never scrolls away.
-- [user] The bottom sheet now stops exactly at the calendar separator when pulled up; its shadow falls on the calendar.
-- [user] The pact summary area is visually elevated above the pact list with a subtle shadow and a divider at the sheet's collapsed edge.
-- [non-user] Pact list is now independently scrollable below the fixed header; dragging from the handle area works correctly on both platforms.
+- [user] Your pact counts (active, done, cancelled) now stay visible as you scroll through the list.
+- [non-user] Panel max height computed dynamically so the top edge contacts the calendar/content separator; shadow falls on the calendar.
+- [non-user] Sticky header separated from list by a divider that lands at the collapsed sheet bottom edge; header has a subtle drop-shadow for visual hierarchy.
+- [non-user] Pact list is independently scrollable below the fixed header; dragging from the handle area works correctly on both platforms.
 - [non-user] `NotificationListener` blocks `ScrollNotification` from reaching the `Scaffold` to prevent AppBar elevation-tint changes on Android.
 
 ---
