@@ -7,7 +7,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
-- **HAB-107**: Firebase Remote Config feature toggles (PR #141)
 - **HAB-111**: Dashboard bottom sheet UX improvements (PR #147)
 
 ## Unscheduled
