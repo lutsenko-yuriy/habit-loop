@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.29] — 2026-06-16
+
+### Improved — Dashboard bottom sheet UX
+
+- [user] Your pact counts (active, done, cancelled) now stay visible as you scroll through the list.
+- [non-user] Panel max height computed dynamically so the top edge contacts the calendar/content separator; shadow falls on the calendar.
+- [non-user] Sticky header separated from list by a divider that lands at the collapsed sheet bottom edge; header has a subtle drop-shadow for visual hierarchy.
+- [non-user] Pact list is independently scrollable below the fixed header; dragging from the handle area works correctly on both platforms.
+- [non-user] `NotificationListener` blocks `ScrollNotification` from reaching the `Scaffold` to prevent AppBar elevation-tint changes on Android.
+
+---
+
 ## [0.42.28] — 2026-06-14 (HAB-110)
 
 ### Added — README badges and Codecov coverage

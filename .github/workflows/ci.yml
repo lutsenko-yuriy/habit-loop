@@ -282,7 +282,8 @@ jobs:
 
           firebase appdistribution:distribute app-release.apk \
             --app "$FIREBASE_ANDROID_APP_ID" \
-            --release-notes-file "$RUNNER_TEMP/release-notes.txt"
+            --release-notes-file "$RUNNER_TEMP/release-notes.txt" \
+            --groups "internal-testers"
         env:
           FIREBASE_ANDROID_APP_ID:          ${{ secrets.FIREBASE_ANDROID_APP_ID }}
           FIREBASE_SERVICE_ACCOUNT_ANDROID: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
@@ -473,7 +474,8 @@ jobs:
 
           firebase appdistribution:distribute "$IPA_PATH" \
             --app "$FIREBASE_IOS_APP_ID" \
-            --release-notes-file "$RUNNER_TEMP/release-notes.txt"
+            --release-notes-file "$RUNNER_TEMP/release-notes.txt" \
+            --groups "internal-testers"
         env:
           FIREBASE_IOS_APP_ID:            ${{ secrets.FIREBASE_IOS_APP_ID }}
           FIREBASE_SERVICE_ACCOUNT_IOS:   ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
