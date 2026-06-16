@@ -15,6 +15,25 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
+/// Returns the snap target for the pact panel drag gesture.
+///
+/// Velocity thresholds (±300 px/s) gate fast-flick shortcuts; slow releases
+/// snap to the nearest position in [snapSizes].
+@visibleForTesting
+double pactsPickSnapTarget({
+  required double velocity,
+  required double currentSize,
+  required List<double> snapSizes,
+  required double maxSize,
+  required double minSize,
+}) {
+  if (velocity < -300) return maxSize;
+  if (velocity > 300) return minSize;
+  return snapSizes.reduce(
+    (a, b) => (a - currentSize).abs() < (b - currentSize).abs() ? a : b,
+  );
+}
+
 /// A persistent draggable panel at the bottom of the dashboard.
 ///
 /// The panel header (drag handle + pact counts) is always visible and never
@@ -48,6 +67,8 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
   // Computed each build from LayoutBuilder so the divider lands exactly at the
   // bottom edge of the collapsed sheet: minSize = (_maxHeaderHeight + 1) / bodyH.
   double _computedMinSize = 0.127; // reasonable fallback (≈ 97dp / 760dp body)
+
+  double _computedMaxSize = 0.55; // reasonable fallback (= _expandedSize)
 
   double _dragStartSize = 0.0;
   double _dragStartGlobalY = 0.0;
@@ -133,9 +154,10 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
         // minSize positions the divider at the bottom of the collapsed sheet.
         final minSize =
             parentHeight > 0 ? ((_maxHeaderHeight + 1.0) / parentHeight).clamp(0.05, _expandedSize) : _computedMinSize;
-        // Plain field update (no setState) — safe inside LayoutBuilder.builder.
+        // Plain field updates (no setState) — safe inside LayoutBuilder.builder.
         _computedMinSize = minSize;
         final maxSize = _computeMaxSize(parentHeight);
+        _computedMaxSize = maxSize;
         final snapSizes = <double>{minSize, _expandedSize, maxSize}.toList()..sort();
 
         return DraggableScrollableSheet(
@@ -187,6 +209,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                           child: SizedBox(
                             height: headerH,
                             child: GestureDetector(
+                              key: const Key('pacts-panel-drag-handle'),
                               onTap: _expand,
                               behavior: HitTestBehavior.opaque,
                               onVerticalDragStart: (d) {
@@ -201,22 +224,18 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                 );
                               },
                               onVerticalDragEnd: (d) {
-                                final velocity = d.velocity.pixelsPerSecond.dy;
-                                if (velocity < -300) {
-                                  _expand();
-                                } else if (velocity > 300) {
-                                  _collapse();
-                                } else {
-                                  final current = _controller.size;
-                                  final snap = snapSizes.reduce(
-                                    (a, b) => (a - current).abs() < (b - current).abs() ? a : b,
-                                  );
-                                  unawaited(_controller.animateTo(
-                                    snap,
-                                    duration: const Duration(milliseconds: 250),
-                                    curve: Curves.easeOut,
-                                  ));
-                                }
+                                final target = pactsPickSnapTarget(
+                                  velocity: d.velocity.pixelsPerSecond.dy,
+                                  currentSize: _controller.size,
+                                  snapSizes: snapSizes,
+                                  maxSize: _computedMaxSize,
+                                  minSize: _computedMinSize,
+                                );
+                                unawaited(_controller.animateTo(
+                                  target,
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeOut,
+                                ));
                               },
                               child: Padding(
                                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
