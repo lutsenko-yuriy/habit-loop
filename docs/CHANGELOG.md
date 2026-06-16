@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.30] — 2026-06-16 (HAB-113, PR #149)
+
+### Fixed — Dashboard bottom sheet drag behaviour
+
+- [user] Flicking the pact panel upward now reliably opens it fully instead of stopping halfway.
+- [non-user] HAB-113: store `_computedMaxSize` alongside `_computedMinSize`; extract `pactsPickSnapTarget` so fast-up velocity targets `maxSize` (fully expanded) rather than the hardcoded 0.55 semi-expanded constant.
+
+---
+
 ## [0.42.29] — 2026-06-16
 
 ### Improved — Dashboard bottom sheet UX
