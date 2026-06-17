@@ -77,11 +77,22 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
     - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
 12. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
     **Release note tagging (enforced by CI — `scripts/changelog/lint.py` runs on every PR):**
-    Every new `## [X.Y.Z]` CHANGELOG entry MUST contain at least one of:
-    - `- [user-none]` — the entire entry is internal-only (CI fixes, refactors, tooling). Use this as a single sentinel line; all other bullets in the entry should use `[non-user]`.
-    - `- [user] <plain English>` — one or more user-facing bullets in plain English (no ticket refs, no code identifiers). Only these lines appear in Firebase App Distribution release notes.
-    Developer-only bullets within a tagged entry must be prefixed with `- [non-user] …` so the distinction is explicit.
-    **Never commit a CHANGELOG entry that has no `[user]` bullet and no `[user-none]` sentinel — CI will fail.**
+    Every new `## [X.Y.Z]` CHANGELOG entry MUST contain at least one classification tag. Pick the tag that best describes the change:
+
+    | Tag | Meaning | Firebase distribution? | Release notes? |
+    |---|---|---|---|
+    | `[user]` | User-visible app change | Yes | Yes |
+    | `[app]` | App code change, not user-visible | Yes | No |
+    | `[meta]` | Skills / agent / workflow change | No | No |
+    | `[ci]` | CI/CD process change | No | No |
+    | `[user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
+
+    `[non-user]` may be used as a supplementary tag on individual bullets within an entry that already has a classification tag. It does **not** satisfy the classification requirement on its own.
+
+    Only `[user]` lines appear in Firebase App Distribution release notes. All other tags are stripped.
+    The tag list may be extended over time; any new tag must declare its distribution and release-note behaviour.
+
+    **Never commit a CHANGELOG entry with no classification tag — CI will fail.**
 13. Commit all changes with a descriptive message.
 14. Push to the remote and open a PR — all in parallel:
     - Push the branch to the remote.
