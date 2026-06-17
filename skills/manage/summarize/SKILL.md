@@ -33,4 +33,12 @@ When running inside Claude Code (fallback path), call `mcp__linear__list_issues`
 
 ### 2. Ask and wait
 
-End with: **"What goes into the next release?"** — do not proceed until the user answers.
+End with: **"What goes into the next release? Pick an existing ticket or describe something new."** — do not proceed until the user answers.
+
+If the user chooses to describe something new (says "something new", "new idea", "new feature", or otherwise indicates they want to start from scratch rather than pick an existing ticket), invoke the `describe-feature` skill:
+
+```
+Invoke the describe-feature skill
+```
+
+Do not jump to `plan` or `implement` for a new idea — always go through `describe-feature` first so the idea is validated and a ticket is created before any planning begins.

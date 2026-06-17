@@ -34,6 +34,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
 | skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |
 | skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |
+| skills/design/describe-feature/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
 | skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
 | skills/design/experiment/SKILL.md | Experiment design: hypothesis, metrics, feature flag, registry entry |
 | skills/build/implement/SKILL.md | TDD implementation and PR |
@@ -54,6 +55,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/audit-code` | verify/audit | `/audit-code PR #N` |
 | `/plan` | design/plan | `/plan HAB-XX: <title>` |
 | `/analyze` | design/analyze | `/analyze HAB-XX: <title>` |
+| `/describe-feature` | design/describe-feature | `/describe-feature` |
 | `/experiment` | design/experiment | `/experiment <hypothesis>` |
 | `/implement` | build/implement | `/implement HAB-XX: <title>` |
 | `/calibrate` | configure/calibrate | `/calibrate` |
@@ -96,8 +98,8 @@ At the beginning of every new session, before doing anything else:
 1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
 2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `skills/configure/style/`). Default to DETAILED if absent.
 3. Invoke the `summarize` skill: `Invoke the summarize skill to present the current backlog from Linear`.
-4. The skill will summarise what has been done and what is remaining, then ask *"What goes into the next release?"*.
-5. Wait for the user's answer before proceeding.
+4. The skill will summarise what has been done and what is remaining, then ask *"What goes into the next release? Pick an existing ticket or describe something new."*.
+5. Wait for the user's answer before proceeding. If the user wants to describe something new, invoke the `describe-feature` skill before any planning begins.
 
 ## Workflow
 
