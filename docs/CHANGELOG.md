@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.32] — 2026-06-17 (HAB-117, PR #151)
+
+### Added — describe-feature skill
+
+- [user-none]
+- [non-user] HAB-117: new `describe-feature` skill — iterative product dialog that validates a rough idea against the spec and glossary, then creates a scoped Linear ticket. Slash command `/describe-feature`. `summarize` updated to offer "describe something new" at session start.
+
+---
+
 ## [0.42.31] — 2026-06-17 (HAB-121, PR #150)
 
 ### Changed — Developer workflow docs
