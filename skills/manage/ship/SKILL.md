@@ -79,7 +79,7 @@ Do not touch the build number (`+N` part) — CI manages it automatically.
 
 ### 5. Update PRODUCT_SPEC.md and GLOSSARY.md
 
-Skip this step only if the PR touches nothing user-facing or domain-related (e.g. pure CI, pure skills/docs). For all other PRs, proceed as follows:
+Skip this step if the new CHANGELOG entry (added in step 2) contains only `[meta]`, `[ci]`, or `[app]` tags — those PRs introduce no observable user-facing behaviour change. For all other PRs (`[user]` entries), proceed as follows:
 
 1. Fetch the PR diff: `gh pr diff <number>`
 2. Re-read the ticket description (already fetched in step 1).
