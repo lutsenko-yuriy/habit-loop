@@ -51,6 +51,7 @@ List the files written and confirm that `implement` can proceed with a clear red
 ## Constraints
 
 - Do not write production code.
+- All scenario files must be written under `integration_test/`.
 - Scenarios must be red when written.
 - Use `AppHarness` from `integration_test/harness.dart` for all scenario setup.
 - Do not duplicate scenarios that already cover the same behaviour.
