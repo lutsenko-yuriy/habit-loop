@@ -6,6 +6,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
@@ -14,6 +15,7 @@ import 'package:habit_loop/theme/widgets/status_badge.dart';
 class PactDetailPageAndroid extends StatelessWidget {
   final PactDetailState state;
   final Future<void> Function(String? reason) onStopPact;
+  final Future<void> Function(String note) onSaveNote;
 
   /// Called when the user taps the edit icon button in the AppBar.
   ///
@@ -24,6 +26,7 @@ class PactDetailPageAndroid extends StatelessWidget {
     super.key,
     required this.state,
     required this.onStopPact,
+    required this.onSaveNote,
     this.onEditPact,
   });
 
@@ -53,6 +56,7 @@ class PactDetailPageAndroid extends StatelessWidget {
                   state: state,
                   l10n: l10n,
                   onStopPact: onStopPact,
+                  onSaveNote: onSaveNote,
                 ),
     );
   }
@@ -62,11 +66,13 @@ class _PactDetailContent extends StatelessWidget {
   final PactDetailState state;
   final AppLocalizations l10n;
   final Future<void> Function(String? reason) onStopPact;
+  final Future<void> Function(String note) onSaveNote;
 
   const _PactDetailContent({
     required this.state,
     required this.l10n,
     required this.onStopPact,
+    required this.onSaveNote,
   });
 
   @override
@@ -177,16 +183,28 @@ class _PactDetailContent extends StatelessWidget {
           cornerRadius: 12,
         ),
 
-        // Stop reason (if stopped)
-        if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
+        // Editable note section for inactive pacts
+        if (pact.status != PactStatus.active) ...[
           const SizedBox(height: 24),
-          SectionHeader(title: l10n.sectionStopReason, labelColor: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(pact.stopReason!),
+          PactNoteSection(
+            savedNote: pact.stopReason,
+            isSaving: state.isSavingNote,
+            noteError: state.noteError,
+            labelColor: theme.colorScheme.onSurfaceVariant,
+            onSaveNote: onSaveNote,
+            slots: (
+              buildNoteField: (context, controller) => TextField(
+                    key: const Key('pact-note-field'),
+                    controller: controller,
+                    decoration: InputDecoration(hintText: l10n.stopPactReasonHint),
+                    maxLines: null,
+                    minLines: 3,
+                  ),
+              buildSaveButton: (context, onPressed) => ElevatedButton(
+                    key: const Key('pact-note-save-button'),
+                    onPressed: onPressed,
+                    child: Text(l10n.pactNoteSave),
+                  ),
             ),
           ),
         ],

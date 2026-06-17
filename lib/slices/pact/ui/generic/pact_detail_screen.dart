@@ -67,16 +67,22 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).stopPact(reason);
     }
 
+    Future<void> onSaveNote(String note) async {
+      await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).saveNote(note);
+    }
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return PactDetailPageIos(
         state: state,
         onStopPact: onStopPact,
+        onSaveNote: onSaveNote,
         onEditPact: _onEditPact,
       );
     }
     return PactDetailPageAndroid(
       state: state,
       onStopPact: onStopPact,
+      onSaveNote: onSaveNote,
       onEditPact: _onEditPact,
     );
   }

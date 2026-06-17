@@ -44,6 +44,7 @@ Widget _buildApp(PactDetailState state) {
     home: PactDetailPageIos(
       state: state,
       onStopPact: (_) async {},
+      onSaveNote: (_) async {},
     ),
   );
 }

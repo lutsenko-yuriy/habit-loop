@@ -91,6 +91,8 @@ ProviderContainer _makeContainer({
 }
 
 void main() {
+  _saveNoteTests();
+
   group('PactDetailViewModel', () {
     test('initial state is loading with no data', () {
       final container = _makeContainer(pacts: [_pact], showups: _showups);
@@ -692,9 +694,214 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
   Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
 }
 
+final _stoppedPact = Pact(
+  id: 'sp1',
+  habitName: 'Evening Walk',
+  startDate: DateTime(2026, 1, 1),
+  endDate: DateTime(2026, 3, 31),
+  showupDuration: const Duration(minutes: 20),
+  schedule: const DailySchedule(timeOfDay: Duration(hours: 18)),
+  status: PactStatus.stopped,
+  stopReason: 'Got injured',
+  stoppedAt: DateTime(2026, 3, 1),
+);
+
+final _completedPact = Pact(
+  id: 'cp1',
+  habitName: 'Jog',
+  startDate: DateTime(2026, 1, 1),
+  endDate: DateTime(2026, 3, 31),
+  showupDuration: const Duration(minutes: 30),
+  schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+  status: PactStatus.completed,
+);
+
 class _ThrowingOnDeleteShowupRepository extends InMemoryShowupRepository {
   _ThrowingOnDeleteShowupRepository(super.initialShowups);
 
   @override
   Future<void> deleteShowupsForPact(String pactId) async => throw Exception('delete failed intentionally');
+}
+
+// ---------------------------------------------------------------------------
+// saveNote tests
+// ---------------------------------------------------------------------------
+
+void _saveNoteTests() {
+  group('PactDetailViewModel.saveNote', () {
+    late FakeAnalyticsService fakeAnalytics;
+
+    ProviderContainer makeContainer(Pact pact) {
+      fakeAnalytics = FakeAnalyticsService();
+      final pactRepo = InMemoryPactRepository([pact]);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+        pactStatsService: statsService,
+      );
+      final c = ProviderContainer(overrides: [
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+      ]);
+      addTearDown(c.dispose);
+      return c;
+    }
+
+    test('saves new note text on a stopped pact and updates state', () async {
+      final c = makeContainer(_stoppedPact);
+      await c.read(pactDetailViewModelProvider('sp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('sp1').notifier).saveNote('Resting now');
+
+      final state = c.read(pactDetailViewModelProvider('sp1'));
+      expect(state.pact?.stopReason, 'Resting now');
+      expect(state.isSavingNote, false);
+      expect(state.noteError, isNull);
+    });
+
+    test('saves note on a completed pact', () async {
+      final c = makeContainer(_completedPact);
+      await c.read(pactDetailViewModelProvider('cp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('cp1').notifier).saveNote('Felt great!');
+
+      final state = c.read(pactDetailViewModelProvider('cp1'));
+      expect(state.pact?.stopReason, 'Felt great!');
+    });
+
+    test('clearing note sets stopReason to null', () async {
+      final c = makeContainer(_stoppedPact);
+      await c.read(pactDetailViewModelProvider('sp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('sp1').notifier).saveNote('');
+
+      final state = c.read(pactDetailViewModelProvider('sp1'));
+      expect(state.pact?.stopReason, isNull);
+    });
+
+    test('fires PactNoteSavedEvent with correct properties', () async {
+      final c = makeContainer(_stoppedPact);
+      await c.read(pactDetailViewModelProvider('sp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('sp1').notifier).saveNote('Resting now');
+
+      final events = fakeAnalytics.loggedEvents.whereType<PactNoteSavedEvent>().toList();
+      expect(events, hasLength(1));
+      final e = events.first;
+      expect(e.pactId, 'sp1');
+      expect(e.pactStatus, 'stopped');
+      expect(e.noteLength, 'Resting now'.length);
+      expect(e.wasEdit, true); // pact already had 'Got injured'
+    });
+
+    test('wasEdit is false when pact had no prior note', () async {
+      final c = makeContainer(_completedPact);
+      await c.read(pactDetailViewModelProvider('cp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('cp1').notifier).saveNote('First note');
+
+      final e = fakeAnalytics.loggedEvents.whereType<PactNoteSavedEvent>().first;
+      expect(e.wasEdit, false);
+    });
+
+    test('sets noteError and does not fire event on repository failure', () async {
+      final throwingPactRepo = _ThrowingOnUpdatePactRepository([_stoppedPact]);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(throwingPactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: throwingPactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+      );
+      final service = PactService(
+        pactRepository: throwingPactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+        pactStatsService: statsService,
+      );
+      fakeAnalytics = FakeAnalyticsService();
+      final c = ProviderContainer(overrides: [
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+      ]);
+      addTearDown(c.dispose);
+
+      await c.read(pactDetailViewModelProvider('sp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('sp1').notifier).saveNote('oops');
+
+      final state = c.read(pactDetailViewModelProvider('sp1'));
+      expect(state.noteError, isNotNull);
+      expect(state.isSavingNote, false);
+      expect(fakeAnalytics.loggedEvents.whereType<PactNoteSavedEvent>(), isEmpty);
+    });
+
+    test('clears noteError on the next successful save', () async {
+      final throwingRepo = _ThrowingOnUpdatePactRepository([_stoppedPact]);
+      final workingRepo = InMemoryPactRepository([_stoppedPact]);
+
+      // First call uses throwing repo to set noteError.
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(throwingRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: throwingRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+      );
+      final throwingService = PactService(
+        pactRepository: throwingRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+        pactStatsService: statsService,
+      );
+      final workingStatsService = PactStatsService(
+        pactRepository: workingRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(workingRepo, showupRepo),
+        syncService: const NoopSyncService(),
+      );
+      final workingService = PactService(
+        pactRepository: workingRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(workingRepo, showupRepo),
+        syncService: const NoopSyncService(),
+        pactStatsService: workingStatsService,
+      );
+
+      fakeAnalytics = FakeAnalyticsService();
+      final c = ProviderContainer(overrides: [
+        pactServiceProvider.overrideWithValue(throwingService),
+        pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+      ]);
+      addTearDown(c.dispose);
+
+      await c.read(pactDetailViewModelProvider('sp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('sp1').notifier).saveNote('fail');
+      expect(c.read(pactDetailViewModelProvider('sp1')).noteError, isNotNull);
+
+      // Override with working service and retry.
+      c.updateOverrides([
+        pactServiceProvider.overrideWithValue(workingService),
+        pactStatsServiceProvider.overrideWithValue(workingStatsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+      ]);
+      await c.read(pactDetailViewModelProvider('sp1').notifier).saveNote('success');
+      expect(c.read(pactDetailViewModelProvider('sp1')).noteError, isNull);
+    });
+  });
 }

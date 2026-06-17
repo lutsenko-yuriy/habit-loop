@@ -124,4 +124,29 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       state = state.copyWith(isStopping: false, stopError: e);
     }
   }
+
+  Future<void> saveNote(String note) async {
+    final pact = state.pact;
+    if (pact == null) return;
+
+    final wasEdit = pact.stopReason != null && pact.stopReason!.isNotEmpty;
+    state = state.copyWith(isSavingNote: true, clearNoteError: true);
+    try {
+      final updated = note.isEmpty ? pact.copyWith(clearStopReason: true) : pact.copyWith(stopReason: note);
+      await ref.read(pactServiceProvider).updatePact(updated);
+      state = state.copyWith(pact: updated, isSavingNote: false);
+
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(PactNoteSavedEvent(
+              pactId: arg,
+              pactStatus: pact.status == PactStatus.completed ? 'completed' : 'stopped',
+              noteLength: note.length,
+              wasEdit: wasEdit,
+            )),
+      );
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('pact_save_note_failed: id=$arg', exception: e, stackTrace: st));
+      state = state.copyWith(isSavingNote: false, noteError: e);
+    }
+  }
 }
