@@ -147,11 +147,14 @@ Call `mcp__linear__save_comment` on the issue with the PR URL:
 PR opened: <PR URL>
 ```
 
-### 15. Request reviews
+### 15. Invoke reviews
 
-Report back to the orchestrator:
+Invoke both review skills simultaneously — they are independent and can run in parallel:
 
-> "PR #<N> is open at <url>. Please invoke `review-architecture` and `audit-code` simultaneously."
+- **`review-architecture`** — architectural review (`/review-architecture PR #<N>`)
+- **`audit-code`** — runtime/launch/migration review (`/audit-code PR #<N>`)
+
+In Claude Code, call the `Skill` tool for both in a single response so they run in parallel. Via skill_router, run both scripts concurrently.
 
 ### 16. Report back
 

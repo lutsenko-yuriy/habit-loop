@@ -45,6 +45,14 @@ Invoke the plan skill for HAB-XX: <issue title>
 
 The skill will produce a structured plan (dependencies, models, UI changes, test strategy, ordered phases, work units) and wait for the user to approve or adjust it.
 
+**For every ticket with user-facing flows**: invoke the `draft-scenarios` skill to write scenarios (integration tests) from the spec before any production code:
+
+```
+Invoke the draft-scenarios skill for HAB-XX: <issue title>
+```
+
+The skill reads the ticket and any plan comment, drafts scenarios covering the happy path and critical failure cases using `AppHarness`, waits for approval, and writes the approved scenario files. Scenarios are intentionally red — `implement` uses them as its red-green target. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
+
 1. For features with user-facing screens/interactions, invoke `analyze` first and wait for approval.
 2. For large changes, invoke `plan` and wait for plan approval.
 3. Create a new feature branch from the latest `main` and switch to it before writing any code. Always include the Linear ticket number after `feature/`:
@@ -54,11 +62,13 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
    ```
    If the branch already exists, rebase it onto `origin/main` before writing any code (`git rebase origin/main`). This ensures the PR diff contains only the new work.
    **Before merging**, always rebase the branch onto the latest `origin/main` again (`git fetch origin && git rebase origin/main`) so the branch is up to date and the merge lands cleanly on the current tip.
-4. Write integration tests that describe the end-to-end behaviour being added or changed:
-   - For any feature with user-visible screens or flows, create one or more test files in `integration_test/` using `AppHarness` (see `integration_test/harness.dart`).
-   - Tests should cover the happy path and the most critical failure paths (e.g. missing data, deleted entities, navigation back-stack correctness).
-   - Present all new integration test files to the user and wait for approval before writing any production code.
-   - Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
+4. Invoke the `draft-scenarios` skill to draft scenarios (integration tests) from the ticket spec:
+
+   ```
+   Invoke the draft-scenarios skill for HAB-XX: <issue title>
+   ```
+
+   The skill reads the ticket (and any `plan` comment), drafts scenario files in `integration_test/` using `AppHarness`, waits for approval, and writes the approved scenarios. Scenarios are intentionally red at this point — no production code exists yet. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
 5. For features with user-visible screens or interactions: draft widget tests before writing production code:
    - Create new widget tests covering each new screen and key user flow (swiping, tapping, navigation, locale changes, auto-advance, etc.).
    - Update any existing widget tests that the new screens or UI changes will affect.
@@ -97,11 +107,9 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
 14. Push to the remote and open a PR — all in parallel:
     - Push the branch to the remote.
     - Open a PR.
-    - Invoke both review skills simultaneously once the PR is open (they are independent — launch them simultaneously):
-      - `review-architecture` for architectural review: `Invoke the review-architecture skill for PR #<number>`.
-      - `audit-code` for runtime/launch/migration review: `Invoke the audit-code skill for PR #<number>`.
     - Move the Linear ticket to **In Review**.
     - Inform the user of the PR URL.
+    - The `implement` skill invokes `review-architecture` and `audit-code` automatically after the PR is open.
 15. Remind the user to compact the context after each commit to keep the conversation lean.
 16. When the user approves the PR, run the full integration test suite locally before invoking ship:
     ```
