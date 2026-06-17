@@ -187,6 +187,7 @@ class _PactDetailContent extends StatelessWidget {
             isSaving: state.isSavingNote,
             noteError: state.noteError,
             labelColor: CupertinoColors.systemGrey,
+            errorColor: CupertinoColors.destructiveRed,
             onSaveNote: onSaveNote,
             slots: (
               buildNoteField: (context, controller) => CupertinoTextField(

@@ -191,6 +191,7 @@ class _PactDetailContent extends StatelessWidget {
             isSaving: state.isSavingNote,
             noteError: state.noteError,
             labelColor: theme.colorScheme.onSurfaceVariant,
+            errorColor: theme.colorScheme.error,
             onSaveNote: onSaveNote,
             slots: (
               buildNoteField: (context, controller) => TextField(

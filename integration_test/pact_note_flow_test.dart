@@ -2,6 +2,7 @@
 //
 // Run on host:   flutter test integration_test/pact_note_flow_test.dart
 // Run on device: flutter test integration_test/pact_note_flow_test.dart -d <device>
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
@@ -69,6 +70,13 @@ final _activeShowup = Showup(
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/// Returns whether the pact-note-save-button is enabled on any platform.
+bool _saveButtonEnabled(WidgetTester tester) {
+  final w = tester.widget(find.byKey(const Key('pact-note-save-button')));
+  if (w is ButtonStyleButton) return w.onPressed != null;
+  return (w as CupertinoButton).onPressed != null;
+}
+
 /// Expands the pacts panel and taps [habitName] to open PactDetailScreen.
 Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) async {
   await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
@@ -108,10 +116,7 @@ void main() {
       expect(find.text('Got injured'), findsOneWidget);
 
       // ── 2. Save button is disabled (no changes yet) ────────────────────────
-      expect(
-        tester.widget<ButtonStyleButton>(find.byKey(const Key('pact-note-save-button'))).onPressed,
-        isNull,
-      );
+      expect(_saveButtonEnabled(tester), isFalse);
 
       // ── 3. Edit the note ───────────────────────────────────────────────────
       await tester.tap(find.byKey(const Key('pact-note-field')));
@@ -120,10 +125,7 @@ void main() {
       await tester.pump();
 
       // ── 4. Save button becomes enabled ────────────────────────────────────
-      expect(
-        tester.widget<ButtonStyleButton>(find.byKey(const Key('pact-note-save-button'))).onPressed,
-        isNotNull,
-      );
+      expect(_saveButtonEnabled(tester), isTrue);
 
       // ── 5. Tap Save ────────────────────────────────────────────────────────
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
@@ -136,10 +138,7 @@ void main() {
 
       // ── 7. Save button is disabled again (no new unsaved changes) ─────────
       await waitFor(tester, find.byKey(const Key('pact-note-save-button')));
-      expect(
-        tester.widget<ButtonStyleButton>(find.byKey(const Key('pact-note-save-button'))).onPressed,
-        isNull,
-      );
+      expect(_saveButtonEnabled(tester), isFalse);
 
       // ── 8. pact_note_saved analytics event was fired ───────────────────────
       expect(h.analytics.loggedEvents.any((e) => e.name == 'pact_note_saved'), isTrue);

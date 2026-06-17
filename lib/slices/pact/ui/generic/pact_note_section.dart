@@ -16,6 +16,7 @@ class PactNoteSection extends StatefulWidget {
   final bool isSaving;
   final Object? noteError;
   final Color labelColor;
+  final Color errorColor;
   final Future<void> Function(String note) onSaveNote;
   final PactNoteSlots slots;
 
@@ -25,6 +26,7 @@ class PactNoteSection extends StatefulWidget {
     required this.isSaving,
     required this.noteError,
     required this.labelColor,
+    required this.errorColor,
     required this.onSaveNote,
     required this.slots,
   });
@@ -83,7 +85,7 @@ class _PactNoteSectionState extends State<PactNoteSection> {
           const SizedBox(height: 4),
           Text(
             l10n.pactNoteError,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+            style: TextStyle(color: widget.errorColor),
             textAlign: TextAlign.center,
           ),
         ],
