@@ -17,9 +17,10 @@ Version name changes are manual and require reasoning presented to the user befo
 - A `resolve-version` job runs before builds to prevent build number conflicts: it compares the `pubspec.yaml` build number against the highest existing `version-*` git tag and uses whichever is greater. Both platform builds receive this resolved number via `--build-number`.
 
 **Git tags:** Created automatically by CI in the format `version-{X.Y.Z}-{buildNumber}-{suffix}` where suffix is:
-- `both` — both Android and iOS builds succeeded
-- `android` — only Android succeeded
-- `ios` — only iOS succeeded
+- `both` — both Android and iOS builds distributed
+- `android` — only Android distributed
+- `ios` — only iOS distributed
+- `none` — builds succeeded but distribution was intentionally skipped (no `[user]` or `[app]` change in this CHANGELOG entry)
 
 **CI/CD pipeline structure:**
 ```
@@ -30,12 +31,34 @@ check-skip → test → resolve-version → build-android → distribute-android
 
 Distribution and version tagging only run on the `main` branch. Feature branches can still build (useful for testing) but won't distribute or tag.
 
+**Selective distribution:** `resolve-version` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only or `[ci]`-only entry), the `distribute-android` and `distribute-ios` jobs are skipped. The build still compiles, the build number is still bumped, and a `version-*-none` git tag is created — keeping build numbers monotonic.
+
+**CHANGELOG tag taxonomy** (enforced by `scripts/changelog/lint.py`):
+
+| Tag | Meaning | Triggers distribution? | Release notes? |
+|---|---|---|---|
+| `[user]` | User-visible app change | Yes | Yes |
+| `[app]` | App code change, not user-visible | Yes | No |
+| `[meta]` | Skills / agent / workflow change | No | No |
+| `[ci]` | CI/CD process change | No | No |
+| `[user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
+| `[non-user]` | Supplementary bullet descriptor (not a classification) | — | No |
+
+Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]`, `[app]`, `[meta]`, `[ci]`, or `[user-none]`). The tag list may be extended; each new tag must declare its distribution and release-note behaviour.
+
 **Release notes ("What's New"):**
 - `scripts/changelog/release_notes.py` is run during `resolve-version` to produce user-friendly bullet-point release notes.
 - It parses `docs/CHANGELOG.md`, extracts all entries with a version number *higher* than the last published version (determined from `version-*` git tags), and strips developer-only references (HAB-XX issue numbers, PR #XX, WU work-unit markers).
+- Only `[user]` bullets are included; all other tags are silently excluded.
 - Output is capped at 4 000 characters for compatibility with both Firebase App Distribution and App Store "What's New" fields.
 - The generated notes are passed to both `distribute-android` and `distribute-ios` via a job output and written to `--release-notes-file` so Firebase testers see human-readable text instead of a build number/SHA string.
 - A copy of the notes file is uploaded as a `release-notes` GitHub Actions artifact (retained for 90 days) for manual use in App Store / Play Store submissions.
+
+**On-demand build cleanup:**
+- The `cleanup-firebase-builds` workflow (`.github/workflows/cleanup-firebase-builds.yml`) is triggered manually from the GitHub Actions tab.
+- Inputs: `keep_count` (default 10) and `dry_run` (default false).
+- Deletes all Firebase App Distribution releases for both Android and iOS except the most recent N, using the Firebase App Distribution REST API via `scripts/firebase/cleanup_builds.py`.
+- Uses `FIREBASE_SERVICE_ACCOUNT_ANDROID` and `FIREBASE_SERVICE_ACCOUNT_IOS` secrets for authentication (via `gcloud auth activate-service-account`).
 
 **Required GitHub Actions Secrets:**
 

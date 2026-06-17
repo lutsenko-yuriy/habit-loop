@@ -1,0 +1,54 @@
+name: Cleanup Firebase App Distribution builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep_count:
+        description: Number of most recent builds to keep per platform
+        required: false
+        default: '10'
+        type: string
+      dry_run:
+        description: List deletions without executing them
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cleanup Android releases
+        run: |
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa-android.json"
+          gcloud auth activate-service-account --key-file="$RUNNER_TEMP/sa-android.json" --quiet
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+
+          APP_ID="$FIREBASE_ANDROID_APP_ID" \
+          ACCESS_TOKEN="$ACCESS_TOKEN" \
+          KEEP_COUNT="${{ github.event.inputs.keep_count }}" \
+          DRY_RUN="${{ github.event.inputs.dry_run }}" \
+          python3 scripts/firebase/cleanup_builds.py
+        env:
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
+
+      - name: Cleanup iOS releases
+        run: |
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa-ios.json"
+          gcloud auth activate-service-account --key-file="$RUNNER_TEMP/sa-ios.json" --quiet
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+
+          APP_ID="$FIREBASE_IOS_APP_ID" \
+          ACCESS_TOKEN="$ACCESS_TOKEN" \
+          KEEP_COUNT="${{ github.event.inputs.keep_count }}" \
+          DRY_RUN="${{ github.event.inputs.dry_run }}" \
+          python3 scripts/firebase/cleanup_builds.py
+        env:
+          FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}

@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.33] — 2026-06-17 (HAB-124)
+
+### Changed — Firebase App Distribution: selective publishing + on-demand cleanup
+
+- [ci] Selective distribution gate: CI now skips Firebase App Distribution when the CHANGELOG entry has no `[user]` or `[app]` bullet; builds still compile and the build number is still bumped (tagged `version-*-none`).
+- [ci] New `cleanup-firebase-builds` workflow (manual `workflow_dispatch`): deletes all Firebase builds except the most recent N (default 10, configurable) on both platforms.
+- [ci] `scripts/changelog/distribute.py`: new script that determines the `should_distribute` output used by `resolve-version`.
+- [ci] `scripts/changelog/lint.py`: extended with `[app]`, `[meta]`, `[ci]` classification tags; fails on unknown `[xxx]` tags.
+- [meta] `docs/VERSIONING.md` and `docs/WORKFLOW.md` updated with the new four-tag taxonomy and pipeline diagram.
+
+---
+
 ## [0.42.32] — 2026-06-17 (HAB-117, PR #151)
 
 ### Added — describe-feature skill

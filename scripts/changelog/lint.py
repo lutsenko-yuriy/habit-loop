@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""lint_changelog.py — Validate that new CHANGELOG entries have [user]/[user-none] markers.
+"""lint_changelog.py — Validate that new CHANGELOG entries are correctly tagged.
 
 Usage:
-    python3 scripts/lint_changelog.py <changelog_path> [last_published_version]
+    python3 scripts/changelog/lint.py <changelog_path> [last_published_version]
 
     changelog_path          Path to docs/CHANGELOG.md
     last_published_version  Semver string like "0.30.2".  Only entries NEWER than
@@ -10,17 +10,22 @@ Usage:
                             all entries).
 
 Exit codes:
-    0  All checked entries have at least one [user] bullet or [user-none] sentinel.
-    1  One or more entries are missing markers — details printed to stdout.
+    0  All checked entries pass.
+    1  One or more entries have missing or invalid markers.
 
-Convention:
-    Every new ## [X.Y.Z] entry must contain either:
-      - At least one bullet starting with "- [user] ..."   (user-facing change)
-      - The sentinel line                "- [user-none]"   (no user-visible impact)
+Tag taxonomy (enforced by this linter):
 
-    Developer-only bullets within a tagged entry should be prefixed with
-    "- [non-user] ..." for clarity, but this is not enforced by this linter
-    (only the [user] / [user-none] distinction matters for release notes).
+  Classification tags — every entry must have at least one:
+    [user]      User-visible app change. Triggers distribution; appears in release notes.
+    [app]       App source code change, not user-visible. Triggers distribution.
+    [meta]      Skills / agent / workflow change. No distribution.
+    [ci]        CI/CD process change. No distribution.
+    [user-none] Entire entry is internal-only (legacy sentinel, still accepted).
+
+  Supplementary tag — describes an individual bullet but does not classify the entry:
+    [non-user]  Developer-only detail within an entry that has a classification tag.
+
+  Unknown tags — any [xxx] not in the set above — cause a lint failure.
 """
 
 from __future__ import annotations
@@ -31,7 +36,7 @@ from typing import Optional
 
 
 # ---------------------------------------------------------------------------
-# Semver helpers (duplicated from generate_release_notes.py to stay self-contained)
+# Semver helpers
 # ---------------------------------------------------------------------------
 
 def _parse_semver(version: str) -> tuple[int, int, int]:
@@ -42,12 +47,30 @@ def _parse_semver(version: str) -> tuple[int, int, int]:
 
 
 # ---------------------------------------------------------------------------
+# Tag sets
+# ---------------------------------------------------------------------------
+
+# All tags whose presence in a bullet is intentional.
+KNOWN_TAGS: frozenset[str] = frozenset({
+    'user', 'user-none', 'non-user',  # legacy / backward-compat
+    'app', 'meta', 'ci',              # new taxonomy
+})
+
+# Tags that classify an entry. Every entry must have at least one bullet
+# whose tag is in this set. [non-user] is supplementary only.
+CLASSIFICATION_TAGS: frozenset[str] = frozenset({
+    'user', 'user-none', 'app', 'meta', 'ci',
+})
+
+
+# ---------------------------------------------------------------------------
 # Patterns
 # ---------------------------------------------------------------------------
 
 _VERSION_HEADER = re.compile(r'^## \[(\d+\.\d+\.\d+)\]', re.MULTILINE)
-_USER_TAG = re.compile(r'^\[user\]\s+')
-_USER_NONE = re.compile(r'^\[user-none\]')
+
+# Matches "[tag]" at the start of a bullet's text (after the leading "- ").
+_BRACKET_TAG = re.compile(r'^\[([^\]]+)\]')
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +78,7 @@ _USER_NONE = re.compile(r'^\[user-none\]')
 # ---------------------------------------------------------------------------
 
 def lint(path: str, last_version: Optional[str]) -> list[str]:
-    """Return a list of error messages for entries missing markers.
+    """Return a list of error messages for entries with missing or invalid markers.
 
     An empty list means all checked entries are correctly marked.
     """
@@ -81,26 +104,38 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
         body_end = matches[idx + 1].start() if idx + 1 < len(matches) else len(content)
         body = content[body_start:body_end]
 
-        has_user_bullet = False
-        has_user_none = False
+        has_classification = False
+        unknown_tags: list[str] = []
 
         for line in body.splitlines():
             stripped = line.strip()
             if not stripped.startswith('- '):
                 continue
-            text = stripped[2:]
-            if _USER_NONE.match(text):
-                has_user_none = True
-                break
-            if _USER_TAG.match(text):
-                has_user_bullet = True
-                break
+            text = stripped[2:]  # drop leading "- "
 
-        if not has_user_bullet and not has_user_none:
+            tag_match = _BRACKET_TAG.match(text)
+            if tag_match:
+                tag = tag_match.group(1)
+                if tag not in KNOWN_TAGS:
+                    unknown_tags.append(tag)
+                elif tag in CLASSIFICATION_TAGS:
+                    has_classification = True
+
+        for tag in unknown_tags:
             errors.append(
-                f'  [{version_str}]: missing [user] bullet or [user-none] sentinel\n'
-                f'    Add "- [user] <user-facing description>" for each user-visible change,\n'
-                f'    or "- [user-none]" if this release has no user-visible impact.'
+                f'  [{version_str}]: unknown tag [{tag}]\n'
+                f'    Known tags: {", ".join(sorted(KNOWN_TAGS))}'
+            )
+
+        if not has_classification:
+            errors.append(
+                f'  [{version_str}]: missing classification tag\n'
+                f'    Add one of:\n'
+                f'      "- [user] <description>"     — user-visible change (triggers distribution)\n'
+                f'      "- [app] <description>"      — app code change, not user-visible (triggers distribution)\n'
+                f'      "- [meta] <description>"     — skills/agent/workflow change (no distribution)\n'
+                f'      "- [ci] <description>"       — CI/CD change (no distribution)\n'
+                f'      "- [user-none]"              — entire entry is internal-only (no distribution)'
             )
 
     return errors
@@ -128,16 +163,16 @@ def main() -> None:
         sys.exit(1)
 
     if errors:
-        print('CHANGELOG lint failed — the following entries are missing markers:')
+        print('CHANGELOG lint failed — the following entries have issues:')
         print()
         for err in errors:
             print(err)
         print()
-        print('Every new ## [X.Y.Z] entry must have at least one "- [user] ..." bullet')
-        print('or the sentinel "- [user-none]" (for internal-only releases).')
+        print('Every ## [X.Y.Z] entry must have at least one classification tag')
+        print('and all [xxx] tags must be from the known set.')
         sys.exit(1)
 
-    print(f'CHANGELOG lint passed — all new entries are correctly marked.')
+    print('CHANGELOG lint passed — all new entries are correctly marked.')
 
 
 if __name__ == '__main__':
