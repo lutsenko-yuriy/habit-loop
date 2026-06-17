@@ -44,7 +44,7 @@ After each user response, do exactly one of the following:
 
 The dialog is **product-level only**: no architecture, no implementation details, no data models. The goal is clarity on *what* and *why*, not *how*.
 
-If at any point the user signals abandonment ("I guess we don't need it", "let's postpone", "forget it", or similar), jump to step 5.
+If at any point the user signals abandonment ("I guess we don't need it", "let's postpone", "forget it", or similar), jump to step 6.
 
 ### 4. Create the ticket
 
