@@ -45,6 +45,8 @@ Ask the user to describe their feature idea in their own words. One open questio
 | "You can't have both — they contradict each other." | "You mentioned X earlier and now Y — I'm not sure how to reconcile them. Which takes priority?" |
 | "That's not what a pact is in this app." | "When you say 'goal', do you mean the same thing as a pact, or something different?" |
 
+**Staying on topic:** the dialog has a clear goal — a scoped ticket. If the conversation drifts (the user starts discussing unrelated ideas, broader strategy, or goes off on a tangent), gently acknowledge what was said and redirect: "That's interesting — let's note it and come back. For now, can we finish pinning down [the feature we started with]?" Do not chase tangents, even interesting ones.
+
 After each user response, do exactly one of the following:
 
 - **Ask one clarifying question** — if anything is ambiguous, undefined, or contradicts the spec or glossary. Do not ask multiple questions at once.
