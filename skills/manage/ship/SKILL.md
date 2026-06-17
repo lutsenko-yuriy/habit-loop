@@ -4,7 +4,7 @@ effort: RAPID
 reasoning: TACTICAL
 tools: linear,github,files
 output_style: CONCISE
-description: Post-merge housekeeping after a PR is approved. Moves the linked Linear issues to "In QA", adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
+description: Post-merge housekeeping after a PR is approved. Moves the linked Linear issues to "In QA", adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, proposes PRODUCT_SPEC.md and GLOSSARY.md updates for approval, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
 ---
 
 The project management tool is **Linear**. The issue identifier prefix is **HAB**.
@@ -77,12 +77,28 @@ Open `pubspec.yaml` and update the version name (`X.Y.Z` part of the `version:` 
 
 Do not touch the build number (`+N` part) — CI manages it automatically.
 
-### 5. Commit, push, and merge
+### 5. Update PRODUCT_SPEC.md and GLOSSARY.md
 
-Stage only the files changed above and commit onto the feature branch:
+Skip this step only if the PR touches nothing user-facing or domain-related (e.g. pure CI, pure skills/docs). For all other PRs, proceed as follows:
+
+1. Fetch the PR diff: `gh pr diff <number>`
+2. Re-read the ticket description (already fetched in step 1).
+3. Determine what changed or was added:
+   - **PRODUCT_SPEC.md** — identify any new or modified user-facing behaviour. Propose a minimal, precise addition or edit to the relevant section (append a new bullet or update an existing one; never rewrite unrelated content).
+   - **GLOSSARY.md** — identify any new canonical domain terms introduced by the feature. For each, propose a new row in the appropriate table with a definition and code symbol.
+4. Present the proposed changes to the user **before writing anything**. Show the exact text to be added or replaced (diff-style if helpful). Wait for explicit approval or revision instructions.
+5. Apply only the approved changes.
+
+If no changes are needed for a file, skip it. If the user declines all changes, skip to step 6.
+
+### 6. Commit, push, and merge
+
+Stage the files changed above and commit onto the feature branch. Include `docs/PRODUCT_SPEC.md` and `docs/GLOSSARY.md` only if they were modified in step 5:
 
 ```bash
 git add docs/CHANGELOG.md docs/BACKLOG.md pubspec.yaml
+# add only if modified:
+git add docs/PRODUCT_SPEC.md docs/GLOSSARY.md
 git commit -m "chore: release HAB-XX, bump version to X.Y.Z"
 git push
 ```
@@ -95,6 +111,6 @@ gh pr merge <number> --squash --delete-branch
 
 Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 
-### 6. Report back
+### 7. Report back
 
-Confirm: issue(s) moved to In QA, changelog updated, version bumped, PR merged. Include the new version number and the PR URL. Remind the user to move the ticket to Done in Linear once QA has passed.
+Confirm: issue(s) moved to In QA (or Done), changelog updated, version bumped, docs updated (list which files changed), PR merged. Include the new version number and the PR URL. Remind the user to move the ticket to Done in Linear once QA has passed.
