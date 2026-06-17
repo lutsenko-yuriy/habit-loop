@@ -36,7 +36,14 @@ Write the minimum set of scenarios that verifies the ticket's acceptance criteri
 
 ### 4. Present and wait
 
-Show all proposed scenario files to the user and wait for approval. Do not write any files to disk until the user approves. Incorporate any requested changes before writing.
+Show all proposed scenarios to the user and wait for approval. Do not write any files to disk until the user approves. Incorporate any requested changes before writing.
+
+For each scenario present:
+1. **Name** — the test name as it will appear in code.
+2. **Description** — one sentence on what behaviour it verifies.
+3. **Steps** — a numbered list of the interactions and assertions in order (e.g. "1. Seed a stopped pact with an existing note", "2. Open pact detail", "3. Verify note field is pre-populated", "4. Edit the text — Save button becomes enabled", "5. Tap Save — note is persisted in the repository").
+
+This level of detail lets the user verify the test logic before anything is written to disk.
 
 ### 5. Write the scenarios
 

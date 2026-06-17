@@ -110,8 +110,14 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
     - Move the Linear ticket to **In Review**.
     - Inform the user of the PR URL.
     - The `implement` skill invokes `review-architecture` and `audit-code` automatically after the PR is open.
-15. Remind the user to compact the context after each commit to keep the conversation lean.
-16. When the user approves the PR, run the full integration test suite locally before invoking ship:
+15. **Review loop** — repeat until the user explicitly approves the PR:
+    1. Wait for both review skills (`review-architecture`, `audit-code`) and the user to finish leaving comments.
+    2. For each comment: either fix it in a new commit and push, or post a one-sentence explanation of why the fix will not be implemented.
+    3. If the cumulative changes since the last review pass are non-trivial (new files, logic changes, interface changes), re-invoke both review skills and return to step 15.1.
+    4. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
+    5. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.).
+16. Remind the user to compact the context after each commit to keep the conversation lean.
+17. When the user approves the PR, run the full integration test suite locally before invoking ship:
     ```
     flutter test integration_test/ -d <device-id>
     ```
@@ -120,5 +126,5 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
     Invoke the ship skill for PR #<number>
     ```
     The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
-17. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
-18. A new ticket may be picked up while the previous one is In QA.
+18. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
+19. A new ticket may be picked up while the previous one is In QA.
