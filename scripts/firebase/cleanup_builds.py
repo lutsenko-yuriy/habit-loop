@@ -21,6 +21,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 
 
@@ -32,16 +33,29 @@ def _auth_headers(access_token: str) -> dict[str, str]:
 
 
 def list_releases(app_id: str, access_token: str) -> list[dict]:
-    """Return releases sorted newest-first (up to 100)."""
+    """Return all releases sorted newest-first, following pagination."""
     project_number = app_id.split(':')[1]
-    url = (
+    base_url = (
         f'{_API_BASE}/projects/{project_number}/apps/{app_id}/releases'
         f'?pageSize=100&orderBy=createTime%20desc'
     )
-    req = urllib.request.Request(url, headers=_auth_headers(access_token))
-    with urllib.request.urlopen(req) as resp:
-        data = json.loads(resp.read().decode())
-    return data.get('releases', [])
+
+    all_releases: list[dict] = []
+    page_token: str | None = None
+
+    while True:
+        url = base_url
+        if page_token:
+            url += f'&pageToken={urllib.parse.quote(page_token)}'
+        req = urllib.request.Request(url, headers=_auth_headers(access_token))
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode())
+        all_releases.extend(data.get('releases', []))
+        page_token = data.get('nextPageToken')
+        if not page_token:
+            break
+
+    return all_releases
 
 
 def delete_release(release_name: str, access_token: str) -> None:

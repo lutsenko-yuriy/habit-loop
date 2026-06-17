@@ -6,18 +6,19 @@ import unittest
 from changelog.distribute import should_distribute
 
 
-class TestShouldDistribute(unittest.TestCase):
+def _tmp(content: str) -> str:
+    f = tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8')
+    f.write(textwrap.dedent(content))
+    f.close()
+    return f.name
 
-    def _tmp(self, content: str) -> str:
-        f = tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8')
-        f.write(textwrap.dedent(content))
-        f.close()
-        return f.name
+
+class TestShouldDistribute(unittest.TestCase):
 
     # --- distributing cases ---
 
     def test_user_bullet_triggers_distribution(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [user] Button label improved.
         """)
@@ -27,7 +28,7 @@ class TestShouldDistribute(unittest.TestCase):
             os.unlink(path)
 
     def test_app_bullet_triggers_distribution(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [app] Refactored persistence layer.
         """)
@@ -38,7 +39,7 @@ class TestShouldDistribute(unittest.TestCase):
 
     def test_user_and_meta_triggers_distribution(self):
         """An entry mixing [user] and [meta] bullets should still distribute."""
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [user] New onboarding screen.
             - [meta] Updated plan skill.
@@ -50,7 +51,7 @@ class TestShouldDistribute(unittest.TestCase):
 
     def test_any_new_entry_with_app_triggers_distribution(self):
         """If one of multiple new entries has [app], the result is true."""
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.1.0] — 2026-02-01
             - [app] DB migration.
 
@@ -65,7 +66,7 @@ class TestShouldDistribute(unittest.TestCase):
     # --- non-distributing cases ---
 
     def test_meta_only_skips_distribution(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [meta] Updated describe-feature skill.
         """)
@@ -75,7 +76,7 @@ class TestShouldDistribute(unittest.TestCase):
             os.unlink(path)
 
     def test_ci_only_skips_distribution(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [ci] Fixed CHANGELOG lint step.
         """)
@@ -85,7 +86,7 @@ class TestShouldDistribute(unittest.TestCase):
             os.unlink(path)
 
     def test_user_none_skips_distribution(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [user-none]
             - [non-user] Internal refactor.
@@ -96,7 +97,7 @@ class TestShouldDistribute(unittest.TestCase):
             os.unlink(path)
 
     def test_non_user_only_skips_distribution(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [non-user] Just a developer note.
         """)
@@ -106,7 +107,7 @@ class TestShouldDistribute(unittest.TestCase):
             os.unlink(path)
 
     def test_meta_and_ci_together_skips_distribution(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [meta] New skill.
             - [ci] Lint fix.
@@ -117,7 +118,7 @@ class TestShouldDistribute(unittest.TestCase):
             os.unlink(path)
 
     def test_no_new_entries_returns_false(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [0.9.0] — 2025-12-01
             - [user] Old feature.
         """)
@@ -127,7 +128,7 @@ class TestShouldDistribute(unittest.TestCase):
             os.unlink(path)
 
     def test_all_new_entries_meta_returns_false(self):
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.1.0] — 2026-02-01
             - [meta] Skill A.
 
@@ -143,7 +144,7 @@ class TestShouldDistribute(unittest.TestCase):
 
     def test_only_new_entries_are_considered(self):
         """Entries at or below last_published_version must be ignored."""
-        path = self._tmp("""\
+        path = _tmp("""\
             ## [1.0.0] — 2026-01-01
             - [meta] New skill (newer entry, no dist).
 

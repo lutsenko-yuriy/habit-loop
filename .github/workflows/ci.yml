@@ -172,15 +172,20 @@ jobs:
         with:
           python-version: '3.12'
 
-      - id: release_notes
-        name: Generate release notes
+      - id: last-published
+        name: Resolve last published version
         run: |
-          # Highest semver from any version-* git tag — that's the last published version.
           LAST_VERSION=$(git tag --list 'version-*' \
             | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
             | sort -V | tail -1)
           LAST_VERSION=${LAST_VERSION:-0.0.0}
+          echo "last_version=$LAST_VERSION" >> "$GITHUB_OUTPUT"
           echo "Last published version: $LAST_VERSION"
+
+      - id: release_notes
+        name: Generate release notes
+        run: |
+          LAST_VERSION=${{ steps.last-published.outputs.last_version }}
 
           # Generate human-readable notes and write to a file for the artifact.
           python3 scripts/changelog/release_notes.py docs/CHANGELOG.md "$LAST_VERSION" \
@@ -199,10 +204,7 @@ jobs:
       - id: should_distribute
         name: Check if distribution is needed
         run: |
-          LAST_VERSION=$(git tag --list 'version-*' \
-            | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
-            | sort -V | tail -1)
-          LAST_VERSION=${LAST_VERSION:-0.0.0}
+          LAST_VERSION=${{ steps.last-published.outputs.last_version }}
           RESULT=$(python3 scripts/changelog/distribute.py docs/CHANGELOG.md "$LAST_VERSION")
           echo "should_distribute=$RESULT" >> "$GITHUB_OUTPUT"
           echo "Distribution needed: $RESULT"
@@ -521,10 +523,12 @@ jobs:
             SUFFIX="android"
           elif [[ "$IOS_OK" == "success" ]]; then
             SUFFIX="ios"
-          else
-            # Builds succeeded but distribution was intentionally skipped
-            # (no [user] or [app] change in this CHANGELOG entry).
+          elif [[ "${{ needs.resolve-version.outputs.should_distribute }}" == "false" ]]; then
+            # Distribution intentionally skipped: no [user] or [app] change.
             SUFFIX="none"
+          else
+            echo "version-tag: distribution was expected but no platform succeeded: android=$ANDROID_OK ios=$IOS_OK" >&2
+            exit 1
           fi
 
           git config user.name  "github-actions[bot]"

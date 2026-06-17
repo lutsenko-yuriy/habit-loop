@@ -33,6 +33,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
 | skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
 | skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |
+| skills/manage/cleanup-firebase/SKILL.md | Delete old Firebase App Distribution builds locally, keeping the N most recent per platform |
 | skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |
 | skills/design/describe-feature/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
 | skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
@@ -63,6 +64,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/style` | configure/style | `/style CONCISE` |
 | `/ios` | run/ios | `/ios` |
 | `/android` | run/android | `/android` |
+| `/cleanup-firebase` | manage/cleanup-firebase | `/cleanup-firebase [N] [--dry-run]` |
 
 ## Architecture
 

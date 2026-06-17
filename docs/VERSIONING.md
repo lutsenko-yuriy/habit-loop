@@ -55,10 +55,10 @@ Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]
 - A copy of the notes file is uploaded as a `release-notes` GitHub Actions artifact (retained for 90 days) for manual use in App Store / Play Store submissions.
 
 **On-demand build cleanup:**
-- The `cleanup-firebase-builds` workflow (`.github/workflows/cleanup-firebase-builds.yml`) is triggered manually from the GitHub Actions tab.
-- Inputs: `keep_count` (default 10) and `dry_run` (default false).
-- Deletes all Firebase App Distribution releases for both Android and iOS except the most recent N, using the Firebase App Distribution REST API via `scripts/firebase/cleanup_builds.py`.
-- Uses `FIREBASE_SERVICE_ACCOUNT_ANDROID` and `FIREBASE_SERVICE_ACCOUNT_IOS` secrets for authentication (via `gcloud auth activate-service-account`).
+- Run `/cleanup-firebase [N] [--dry-run]` from Claude Code (skill: `skills/manage/cleanup-firebase/SKILL.md`).
+- Deletes all Firebase App Distribution releases for both Android and iOS except the most recent N (default 10).
+- Runs locally via `scripts/firebase/cleanup_builds.py` using `gcloud auth print-access-token` for authentication.
+- Requires: `gcloud` CLI authenticated, `FIREBASE_ANDROID_APP_ID` and `FIREBASE_IOS_APP_ID` set in the environment.
 
 **Required GitHub Actions Secrets:**
 
