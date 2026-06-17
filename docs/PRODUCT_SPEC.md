@@ -30,6 +30,7 @@ The Habit Loop app allows the user to:
   - The user can stop the pact but he has to confirm it clearly
     - The user can give an explanation why he decided to stop the pact
   - The user can still see the details of the pact even when he stopped the pact or the time of the pact is passed by
+  - On a finished (completed or stopped) pact the user can write or edit a free-form note; the note is pre-populated with the stop reason if one was given
   - The pact detail screen shows showup duration and reminder offset in the Timeline section
 - See the details of a specific showup
   - The user must see the time of the showup

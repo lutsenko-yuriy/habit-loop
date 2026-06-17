@@ -8,6 +8,8 @@ class PactDetailState {
   final Object? loadError;
   final bool isStopping;
   final Object? stopError;
+  final bool isSavingNote;
+  final Object? noteError;
 
   const PactDetailState({
     this.pact,
@@ -16,6 +18,8 @@ class PactDetailState {
     this.loadError,
     this.isStopping = false,
     this.stopError,
+    this.isSavingNote = false,
+    this.noteError,
   });
 
   PactDetailState copyWith({
@@ -27,6 +31,9 @@ class PactDetailState {
     bool? isStopping,
     Object? stopError,
     bool clearStopError = false,
+    bool? isSavingNote,
+    Object? noteError,
+    bool clearNoteError = false,
   }) {
     return PactDetailState(
       pact: pact ?? this.pact,
@@ -35,6 +42,8 @@ class PactDetailState {
       loadError: clearLoadError ? null : (loadError ?? this.loadError),
       isStopping: isStopping ?? this.isStopping,
       stopError: clearStopError ? null : (stopError ?? this.stopError),
+      isSavingNote: isSavingNote ?? this.isSavingNote,
+      noteError: clearNoteError ? null : (noteError ?? this.noteError),
     );
   }
 }

@@ -204,6 +204,27 @@ void main() {
     });
   });
 
+  group('PactNoteSavedEvent', () {
+    test('has correct name', () {
+      final event = PactNoteSavedEvent(pactId: 'p1', pactStatus: 'stopped', noteLength: 12, wasEdit: false);
+      expect(event.name, 'pact_note_saved');
+    });
+
+    test('toParameters includes all fields', () {
+      final event = PactNoteSavedEvent(pactId: 'p1', pactStatus: 'completed', noteLength: 42, wasEdit: true);
+      final params = event.toParameters();
+      expect(params['pact_id'], 'p1');
+      expect(params['pact_status'], 'completed');
+      expect(params['note_length'], 42);
+      expect(params['was_edit'], true);
+    });
+
+    test('toParameters note_length is 0 when note was cleared', () {
+      final event = PactNoteSavedEvent(pactId: 'p1', pactStatus: 'stopped', noteLength: 0, wasEdit: true);
+      expect(event.toParameters()['note_length'], 0);
+    });
+  });
+
   group('PactDetailAnalyticsScreen', () {
     test('implements AnalyticsScreen', () {
       expect(const PactDetailAnalyticsScreen(), isA<AnalyticsScreen>());

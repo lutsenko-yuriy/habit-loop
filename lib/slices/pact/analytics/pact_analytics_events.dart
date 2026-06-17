@@ -187,6 +187,38 @@ final class PactEditSavedEvent extends AnalyticsEvent {
       };
 }
 
+/// Fired when the user saves a note on an inactive pact detail screen. (HAB-115)
+final class PactNoteSavedEvent extends AnalyticsEvent {
+  PactNoteSavedEvent({
+    required this.pactId,
+    required this.pactStatus,
+    required this.noteLength,
+    required this.wasEdit,
+  });
+
+  final String pactId;
+
+  /// `completed` | `stopped`
+  final String pactStatus;
+
+  /// Character count of the saved note; `0` means the note was cleared.
+  final int noteLength;
+
+  /// `true` if a non-empty note already existed before this save.
+  final bool wasEdit;
+
+  @override
+  String get name => 'pact_note_saved';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'pact_status': pactStatus,
+        'note_length': noteLength,
+        'was_edit': wasEdit,
+      };
+}
+
 /// Screen identifier for the pact creation wizard.
 class PactCreationAnalyticsScreen implements AnalyticsScreen {
   const PactCreationAnalyticsScreen();

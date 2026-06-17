@@ -283,6 +283,21 @@ Fired when the user dismisses the wizard via back-navigation (`PopScope`) withou
 
 ---
 
+### `pact_note_saved`
+
+Fired when the user taps Save on the Notes section of an inactive pact detail screen. The button is active only when unsaved changes exist. (HAB-115)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact whose note was saved |
+| `pact_status` | `string` | `completed` \| `stopped` |
+| `note_length` | `int` | Character count of the saved note; `0` means the note was cleared |
+| `was_edit` | `bool` | `true` if a non-empty note already existed before this save; `false` if this is the first note |
+
+No PII risk — note content is never included; only its length.
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.

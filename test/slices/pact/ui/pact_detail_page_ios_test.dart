@@ -21,6 +21,13 @@ final _pact = Pact(
   status: PactStatus.active,
 );
 
+final _stoppedPact = _pact.copyWith(
+  status: PactStatus.stopped,
+  stoppedAt: DateTime(2026, 4, 1),
+);
+
+final _completedPact = _pact.copyWith(status: PactStatus.completed);
+
 final _stats = PactStats(
   showupsDone: 5,
   showupsFailed: 2,
@@ -44,11 +51,45 @@ Widget _buildApp(PactDetailState state) {
     home: PactDetailPageIos(
       state: state,
       onStopPact: (_) async {},
+      onSaveNote: (_) async {},
     ),
   );
 }
 
+PactDetailState _loadedState(Pact pact) => PactDetailState(pact: pact, stats: _stats, isLoading: false);
+
 void main() {
+  group('PactDetailPageIos – note section visibility', () {
+    testWidgets('shows note field for a stopped pact', (tester) async {
+      await tester.pumpWidget(_buildApp(_loadedState(_stoppedPact)));
+      await tester.pumpAndSettle();
+
+      // Scroll down — the extra "stopped on" date row pushes the note section
+      // below the default test viewport height.
+      await tester.scrollUntilVisible(find.byKey(const Key('pact-note-field')), 200);
+
+      expect(find.byKey(const Key('pact-note-field')), findsOneWidget);
+      expect(find.byKey(const Key('pact-note-save-button')), findsOneWidget);
+    });
+
+    testWidgets('shows note field for a completed pact', (tester) async {
+      await tester.pumpWidget(_buildApp(_loadedState(_completedPact)));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-note-field')), findsOneWidget);
+      expect(find.byKey(const Key('pact-note-save-button')), findsOneWidget);
+    });
+
+    testWidgets('does not show note field for an active pact', (tester) async {
+      final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(state));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-note-field')), findsNothing);
+      expect(find.byKey(const Key('pact-note-save-button')), findsNothing);
+    });
+  });
+
   testWidgets('iOS pact detail nav bar has explicit surface backgroundColor to prevent white-on-scroll',
       (tester) async {
     final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);

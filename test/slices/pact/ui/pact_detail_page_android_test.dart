@@ -76,6 +76,7 @@ void main() {
           child: PactDetailPageAndroid(
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
+            onSaveNote: (_) async {},
             onEditPact: () {},
           ),
         ),
@@ -91,6 +92,7 @@ void main() {
           child: PactDetailPageAndroid(
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
+            onSaveNote: (_) async {},
             // onEditPact intentionally omitted
           ),
         ),
@@ -106,6 +108,7 @@ void main() {
           child: PactDetailPageAndroid(
             state: _loadedState(_stoppedPact),
             onStopPact: (_) async {},
+            onSaveNote: (_) async {},
             onEditPact: () {},
           ),
         ),
@@ -121,6 +124,7 @@ void main() {
           child: PactDetailPageAndroid(
             state: _loadedState(_completedPact),
             onStopPact: (_) async {},
+            onSaveNote: (_) async {},
             onEditPact: () {},
           ),
         ),
@@ -137,6 +141,7 @@ void main() {
           child: PactDetailPageAndroid(
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
+            onSaveNote: (_) async {},
             onEditPact: () => tapped = true,
           ),
         ),
@@ -155,6 +160,7 @@ void main() {
           child: PactDetailPageAndroid(
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
+            onSaveNote: (_) async {},
           ),
         ),
       );
@@ -170,6 +176,7 @@ void main() {
           child: PactDetailPageAndroid(
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
+            onSaveNote: (_) async {},
           ),
         ),
       );
@@ -188,6 +195,7 @@ void main() {
           child: PactDetailPageAndroid(
             state: _loadedState(pactNoReminder),
             onStopPact: (_) async {},
+            onSaveNote: (_) async {},
           ),
         ),
       );

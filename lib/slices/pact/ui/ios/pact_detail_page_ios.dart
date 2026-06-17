@@ -6,6 +6,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
@@ -14,6 +15,7 @@ import 'package:habit_loop/theme/widgets/status_badge.dart';
 class PactDetailPageIos extends StatelessWidget {
   final PactDetailState state;
   final Future<void> Function(String? reason) onStopPact;
+  final Future<void> Function(String note) onSaveNote;
 
   /// Called when the user taps the pencil edit button in the nav bar.
   ///
@@ -24,6 +26,7 @@ class PactDetailPageIos extends StatelessWidget {
     super.key,
     required this.state,
     required this.onStopPact,
+    required this.onSaveNote,
     this.onEditPact,
   });
 
@@ -58,6 +61,7 @@ class PactDetailPageIos extends StatelessWidget {
                       state: state,
                       l10n: l10n,
                       onStopPact: onStopPact,
+                      onSaveNote: onSaveNote,
                     ),
         ),
       ),
@@ -69,11 +73,13 @@ class _PactDetailContent extends StatelessWidget {
   final PactDetailState state;
   final AppLocalizations l10n;
   final Future<void> Function(String? reason) onStopPact;
+  final Future<void> Function(String note) onSaveNote;
 
   const _PactDetailContent({
     required this.state,
     required this.l10n,
     required this.onStopPact,
+    required this.onSaveNote,
   });
 
   @override
@@ -173,19 +179,36 @@ class _PactDetailContent extends StatelessWidget {
           backgroundColor: fill,
         ),
 
-        // Stop reason (if stopped)
-        if (pact.status == PactStatus.stopped && pact.stopReason != null) ...[
+        // Editable note section for inactive pacts
+        if (pact.status != PactStatus.active) ...[
           const SizedBox(height: 24),
-          SectionHeader(title: l10n.sectionStopReason, labelColor: CupertinoColors.systemGrey),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: fill,
-              borderRadius: BorderRadius.circular(10),
+          PactNoteSection(
+            savedNote: pact.stopReason,
+            isSaving: state.isSavingNote,
+            noteError: state.noteError,
+            labelColor: CupertinoColors.systemGrey,
+            errorColor: CupertinoColors.destructiveRed,
+            onSaveNote: onSaveNote,
+            slots: (
+              buildNoteField: (context, controller) => CupertinoTextField(
+                    key: const Key('pact-note-field'),
+                    controller: controller,
+                    placeholder: l10n.stopPactReasonHint,
+                    maxLines: null,
+                    minLines: 3,
+                  ),
+              buildSaveButton: (context, onPressed) => CupertinoButton(
+                    key: const Key('pact-note-save-button'),
+                    padding: EdgeInsets.zero,
+                    onPressed: onPressed,
+                    child: Text(
+                      l10n.pactNoteSave,
+                      style: TextStyle(
+                        color: onPressed != null ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
+                      ),
+                    ),
+                  ),
             ),
-            child: Text(pact.stopReason!),
           ),
         ],
 
