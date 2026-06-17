@@ -41,7 +41,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/build/implement/SKILL.md | TDD implementation and PR |
 | skills/run/android/SKILL.md | Start the app on Android (physical device → running emulator → launch AVD) |
 | skills/run/ios/SKILL.md | Start the app on iOS (physical device → booted Simulator → boot Simulator) |
-| skills/verify/validate/SKILL.md | Pre-implementation integration tests: generate red tests from the ticket spec |
+| skills/verify/draft-scenarios/SKILL.md | Pre-implementation scenario drafting: write red scenarios (integration tests) from the ticket spec |
 | skills/verify/review/SKILL.md | Architectural PR review |
 | skills/verify/audit/SKILL.md | Runtime and migration PR review |
 
@@ -59,7 +59,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/analyze` | design/analyze | `/analyze HAB-XX: <title>` |
 | `/describe-feature` | design/describe-feature | `/describe-feature` |
 | `/experiment` | design/experiment | `/experiment <hypothesis>` |
-| `/validate` | verify/validate | `/validate HAB-XX: <title>` |
+| `/draft-scenarios` | verify/draft-scenarios | `/draft-scenarios HAB-XX: <title>` |
 | `/implement` | build/implement | `/implement HAB-XX: <title>` |
 | `/calibrate` | configure/calibrate | `/calibrate` |
 | `/skill-creator` | configure/skill-creator | `/skill-creator skills/<path>` or `/skill-creator all` |
