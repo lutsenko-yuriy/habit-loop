@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.34] — 2026-06-17 (HAB-118, PR #153)
+
+### Added — draft-scenarios skill + auto-review invocation
+
+- [meta] HAB-118: new `draft-scenarios` skill — drafts scenarios (integration tests) from the ticket spec before implementation begins; scenarios start red and give `implement` a clear red-green target. Slash command `/draft-scenarios HAB-XX: <title>`.
+- [meta] `implement` skill now auto-invokes `review-architecture` and `audit-code` simultaneously after opening a PR, removing the need for the orchestrator to trigger them manually.
+- [meta] `docs/WORKFLOW.md` step 4 updated to invoke `draft-scenarios`; pre-list callout added alongside `analyze` and `plan`.
+
+---
+
 ## [0.42.33] — 2026-06-17 (HAB-124)
 
 ### Changed — Firebase App Distribution: selective publishing + on-demand cleanup
