@@ -77,6 +77,13 @@ bool _saveButtonEnabled(WidgetTester tester) {
   return (w as CupertinoButton).onPressed != null;
 }
 
+/// Returns the current text of the pact-note-field on any platform.
+String _noteFieldText(WidgetTester tester) {
+  final w = tester.widget(find.byKey(const Key('pact-note-field')));
+  if (w is TextField) return w.controller?.text ?? '';
+  return (w as CupertinoTextField).controller?.text ?? '';
+}
+
 /// Expands the pacts panel and taps [habitName] to open PactDetailScreen.
 Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) async {
   await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
@@ -193,10 +200,7 @@ void main() {
       await waitFor(tester, find.byKey(const Key('pact-note-field')));
 
       // ── 1. Field starts empty ─────────────────────────────────────────────
-      expect(
-        tester.widget<TextField>(find.byKey(const Key('pact-note-field'))).controller?.text ?? '',
-        isEmpty,
-      );
+      expect(_noteFieldText(tester), isEmpty);
 
       // ── 2. Write and save ─────────────────────────────────────────────────
       await tester.tap(find.byKey(const Key('pact-note-field')));
