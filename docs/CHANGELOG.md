@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.31] — 2026-06-17 (HAB-121, PR #150)
+
+### Changed — Developer workflow docs
+
+- [user-none]
+- [non-user] HAB-121: extracted Workflow section from AGENTS.md into docs/WORKFLOW.md; imported via @docs/WORKFLOW.md reference.
+
+---
+
 ## [0.42.30] — 2026-06-16 (HAB-113, PR #149)
 
 ### Fixed — Dashboard bottom sheet drag behaviour
