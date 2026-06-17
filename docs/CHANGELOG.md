@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.43.0] — 2026-06-18 (HAB-115, PR #155)
+
+### Added — editable notes on finished and cancelled pacts
+
+- [user] You can now write or edit a free-form note on any finished or cancelled pact. The note appears in a dedicated Notes section on the pact detail screen, pre-filled with the cancellation reason if one was given. The Save button activates only when you have unsaved changes.
+- [non-user] HAB-115: `PactNoteSection` shared StatefulWidget with platform-split slots; saves to existing `stop_reason` column — no schema change. Fires `pact_note_saved` analytics event.
+- [meta] Review loop added to `docs/WORKFLOW.md` (step 15): wait for both review skills + Codecov patch-coverage report + human comments, fix or explain each, re-review on non-trivial changes, loop until explicit approval.
+- [meta] `draft-scenarios` skill step 4 now requires presenting name, description, and numbered steps per scenario before writing to disk.
+
+---
+
 ## [0.42.35] — 2026-06-17 (HAB-119, PR #154)
 
 ### Changed — ship skill: automatic PRODUCT_SPEC + GLOSSARY update
