@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.42.35] — 2026-06-17 (HAB-119, PR #154)
+
+### Changed — ship skill: automatic PRODUCT_SPEC + GLOSSARY update
+
+- [meta] HAB-119: `ship` skill now includes a step 5 that reads the merged PR diff and ticket, proposes edits to `docs/PRODUCT_SPEC.md` and `docs/GLOSSARY.md` for user approval, and includes approved changes in the release commit. Step is skipped for `[meta]`/`[ci]`/`[app]`-only CHANGELOG entries.
+
+---
+
 ## [0.42.34] — 2026-06-17 (HAB-118, PR #153)
 
 ### Added — draft-scenarios skill + auto-review invocation
