@@ -35,6 +35,8 @@ Ask the user to describe their feature idea in their own words. One open questio
 
 ### 3. Iterate — one question at a time
 
+**Spirit of the dialog:** the goal is mutual clarity — the user ends the conversation with a shared, unambiguous picture of what they want to build. Asking a hard question or flagging a contradiction is expected and helpful. But every challenge must read as *help*, not judgement. Name the problem ("this overlaps with the existing pact-end flow — how should they interact?"), not a verdict ("that won't work"). Frame contradictions as open questions, not blockers. If the user's direction is unclear, ask in order to understand — not in order to correct.
+
 After each user response, do exactly one of the following:
 
 - **Ask one clarifying question** — if anything is ambiguous, undefined, or contradicts the spec or glossary. Do not ask multiple questions at once.
