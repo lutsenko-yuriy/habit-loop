@@ -107,11 +107,9 @@ The skill reads the ticket and any plan comment, drafts integration tests coveri
 14. Push to the remote and open a PR — all in parallel:
     - Push the branch to the remote.
     - Open a PR.
-    - Invoke both review skills simultaneously once the PR is open (they are independent — launch them simultaneously):
-      - `review-architecture` for architectural review: `Invoke the review-architecture skill for PR #<number>`.
-      - `audit-code` for runtime/launch/migration review: `Invoke the audit-code skill for PR #<number>`.
     - Move the Linear ticket to **In Review**.
     - Inform the user of the PR URL.
+    - The `implement` skill invokes `review-architecture` and `audit-code` automatically after the PR is open.
 15. Remind the user to compact the context after each commit to keep the conversation lean.
 16. When the user approves the PR, run the full integration test suite locally before invoking ship:
     ```
