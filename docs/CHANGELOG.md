@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.43.1] — 2026-06-19 (HAB-122, PR #156)
+
+### Meta — PR comprehensibility improvements
+
+- [meta] HAB-122: WU0 scenarios-only PR convention — plan skill always generates a scenarios-first work unit; each subsequent WU lists which scenarios it makes green
+- [meta] HAB-122: TDD micro-cycle commits — red→green→refactor→commit per logical unit; PRs are reviewable commit-by-commit
+- [meta] HAB-122: `[test]` CHANGELOG tag for test-only PRs (no production code); enforced by `lint.py`, excluded from Firebase distribution
+- [meta] HAB-122: new `run-scenarios` skill and `/run-scenarios` command — pre-ship integration test gate with optional HAB-XX filter
+- [meta] HAB-122: `ios`/`android` skills now execute all setup steps; `flutter run` handed off to user via `!` prefix
+
 ## [0.43.0] — 2026-06-18 (HAB-115, PR #155)
 
 ### Added — editable notes on finished and cancelled pacts
