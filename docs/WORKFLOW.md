@@ -70,7 +70,7 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
 
    The skill reads the ticket (and any `plan` comment), drafts scenario files in `integration_test/` using `AppHarness`, waits for approval, and writes the approved scenarios. Scenarios are intentionally red at this point — no production code exists yet. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
 
-   **For multi-WU plans:** after the scenarios are approved and written, commit them to a dedicated branch (`feature/HAB-XX-WU0-scenarios`), push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge this PR before starting WU1. Each subsequent WU's plan entry lists which scenarios it makes green.
+   **For multi-WU plans:** after the scenarios are approved and written, commit them to a dedicated branch (`feature/HAB-XX-WU0-scenarios`), push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly (no `ship` needed — no version bump, no CHANGELOG entry beyond the `[test]` line). Each subsequent WU's plan entry lists which scenarios it makes green.
 5. For features with user-visible screens or interactions: draft widget tests before writing production code:
    - Create new widget tests covering each new screen and key user flow (swiping, tapping, navigation, locale changes, auto-advance, etc.).
    - Update any existing widget tests that the new screens or UI changes will affect.

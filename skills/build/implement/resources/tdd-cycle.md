@@ -23,11 +23,13 @@ When one logical unit is complete (tests pass, refactor done), commit immediatel
 
 ```bash
 git commit -m "$(cat <<'EOF'
-feat: <what this logical unit does>
+<type>: <what this logical unit does>
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
+
+Types: `feat` (new behaviour), `fix` (bug-fix cycle), `refactor` (restructure-only), `test` (test-only change).
 
 Repeat the full red→green→refactor→commit cycle for each logical unit within the WU. The PR accumulates one commit per cycle — reviewable commit-by-commit on GitHub.

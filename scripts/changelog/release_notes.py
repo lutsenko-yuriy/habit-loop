@@ -30,7 +30,8 @@ Convention for CHANGELOG authors (enforced by scripts/lint_changelog.py):
     - User-facing change:       - [user] Sign-in button stays visible during Google login
     - Developer-only line:      - [non-user] isSigningIn guard extended to cover auth state flip
     - Nothing for users at all: - [user-none]
-    Every new ## entry must contain at least one [user] bullet or [user-none].
+    Every new ## entry must carry at least one classification tag ([user], [app], [test],
+    [meta], [ci], or [user-none]). Entries without [user] bullets produce no release notes.
 
 Exit codes:
     0  Success (notes written to stdout).
