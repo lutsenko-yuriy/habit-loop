@@ -39,12 +39,13 @@ Distribution and version tagging only run on the `main` branch. Feature branches
 |---|---|---|---|
 | `[user]` | User-visible app change | Yes | Yes |
 | `[app]` | App code change, not user-visible | Yes | No |
+| `[test]` | Test-only changes (unit tests, scenarios, widget tests) — no production code | No | No |
 | `[meta]` | Skills / agent / workflow change | No | No |
 | `[ci]` | CI/CD process change | No | No |
 | `[user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
 | `[non-user]` | Supplementary bullet descriptor (not a classification) | — | No |
 
-Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]`, `[app]`, `[meta]`, `[ci]`, or `[user-none]`). The tag list may be extended; each new tag must declare its distribution and release-note behaviour.
+Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]`, `[app]`, `[test]`, `[meta]`, `[ci]`, or `[user-none]`). The tag list may be extended; each new tag must declare its distribution and release-note behaviour.
 
 **Release notes ("What's New"):**
 - `scripts/changelog/release_notes.py` is run during `resolve-version` to produce user-friendly bullet-point release notes.

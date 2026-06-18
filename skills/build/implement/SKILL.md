@@ -94,7 +94,7 @@ Never update `docs/BACKLOG.md` or `docs/CHANGELOG.md` — those are owned by the
 
 ### 9. Format
 
-Apply `dart format` in a **separate, formatting-only commit before the functional commit**:
+Apply `dart format` in a **separate, formatting-only commit after all TDD micro-cycles, before opening the PR**:
 
 ```bash
 dart format -l 120 lib/ test/
@@ -108,28 +108,23 @@ git commit -m "style: apply dart format (HAB-XX)"
 
 If no files changed, skip this step. Never mix formatting changes with functional changes in the same commit — keeping them separate makes the PR diff reviewable and ensures CI's `dart format -l 120 --set-exit-if-changed` check always passes.
 
-### 10. Commit
+### 10. Push
 
-Stage only the files you changed (never `git add -A` or `git add .`):
-
-```bash
-git commit -m "$(cat <<'EOF'
-<type>: <short summary>
-
-<optional body explaining why this change was needed>
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-EOF
-)"
-```
-
-Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
-
-### 11. Push
+All commits from TDD micro-cycles and the formatting commit already exist locally. Push them:
 
 ```bash
 git push -u origin <branch-name>
 ```
+
+### 11. PR size check
+
+Before opening the PR, count the total LoC changed (excluding generated files):
+
+```bash
+git diff origin/main --stat -- ':(exclude)lib/l10n/generated/' | tail -1
+```
+
+If the total exceeds **400 LoC**, print a warning and ask the user to confirm before proceeding. Do not block — this is a soft gate.
 
 ### 12. Open a PR
 

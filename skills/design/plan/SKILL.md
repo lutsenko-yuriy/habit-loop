@@ -36,6 +36,11 @@ The vertical-slice structure to keep in mind:
 
 Use this format exactly. Omit a section entirely if it has no content.
 
+**Work unit rules (apply before writing the WU table):**
+- WU0 is always the first unit: integration scenarios from `draft-scenarios`, committed as a `[test]`-tagged PR before any production code lands.
+- Each subsequent WU must include an estimated LoC count. Target ≤ 300 LoC and ≤ 10 files. If a WU would exceed this, split it into two or more units.
+- Each WU must list which scenarios it makes green.
+
 @skills/design/plan/resources/plan-template.md
 
 ### 4. Post the plan as a Linear comment

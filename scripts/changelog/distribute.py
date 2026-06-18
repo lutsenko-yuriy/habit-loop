@@ -10,7 +10,7 @@ Usage:
 
 Output (stdout):
     'true'  — at least one new entry contains a [user] or [app] bullet.
-    'false' — all new entries contain only [meta]/[ci]/[user-none]/[non-user] bullets.
+    'false' — all new entries contain only [test]/[meta]/[ci]/[user-none]/[non-user] bullets.
 
 Exit code: always 0 — never fails the CI pipeline.
 """

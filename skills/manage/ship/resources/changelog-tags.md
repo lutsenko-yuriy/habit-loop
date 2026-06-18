@@ -2,6 +2,7 @@
 |---|---|---|---|
 | `- [user] <description>` | User-visible app change | Yes | Yes — tag stripped |
 | `- [app] <description>` | App code change, not user-visible | Yes | No |
+| `- [test] <description>` | Test-only changes (unit tests, scenarios, widget tests) — no production code | No | No |
 | `- [meta] <description>` | Skills / agent / workflow change | No | No |
 | `- [ci] <description>` | CI/CD process change | No | No |
 | `- [user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
@@ -9,7 +10,7 @@
 
 Rules:
 - **CI enforces this** (`scripts/changelog/lint.py` runs on every PR) — entries without a classification tag fail the build.
-- Every `## [X.Y.Z]` entry must carry at least one of: `[user]`, `[app]`, `[meta]`, `[ci]`, or `[user-none]`.
+- Every `## [X.Y.Z]` entry must carry at least one of: `[user]`, `[app]`, `[test]`, `[meta]`, `[ci]`, or `[user-none]`.
 - `[non-user]` is supplementary only — it does **not** satisfy the classification requirement on its own.
 - `[user]` descriptions must be plain English a non-technical user can understand — no class names, file paths, or jargon.
 - Place `[user]` lines before technical detail lines within the same section.
