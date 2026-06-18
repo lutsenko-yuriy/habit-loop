@@ -1,7 +1,7 @@
 ---
 name: run-scenarios
 effort: RAPID
-reasoning: TACTICAL
+reasoning: MECHANICAL
 needs_session_tools: true
 output_style: CONCISE
 description: Run integration test scenarios locally before merging. Finds a running device, executes flutter test integration_test/, and reports pass/fail with a per-scenario breakdown. Invoke after the review loop passes and before invoking ship. Optionally accepts a HAB-XX ticket number to run only that ticket's scenario files.
