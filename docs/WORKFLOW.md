@@ -124,7 +124,7 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
     4. If the cumulative changes since the last review pass are non-trivial (new files, logic changes, interface changes), re-invoke both review skills and return to step 15.1.
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
     6. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.).
-16. Remind the user to compact the context after each commit to keep the conversation lean.
+16. Remind the user to clear the context after each commit to keep the conversation lean.
 17. When the user approves the PR, run the full integration test suite locally before invoking ship:
     ```
     flutter test integration_test/ -d <device-id>
