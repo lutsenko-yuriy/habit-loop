@@ -125,11 +125,12 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
     6. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.).
 16. Remind the user to clear the context after each commit to keep the conversation lean.
-17. When the user approves the PR, run the full integration test suite locally before invoking ship:
+17. When the user approves the PR, run the full integration test suite via the `run-scenarios` skill before invoking `ship`:
     ```
-    flutter test integration_test/ -d <device-id>
+    Invoke the run-scenarios skill
     ```
-    All integration tests must be green. Do not invoke `ship` if any integration test is failing. Once they pass, invoke the `ship` skill:
+    Or: `/run-scenarios`
+    All scenarios must be green. Do not invoke `ship` if any scenario is failing. Once they pass, invoke the `ship` skill:
     ```
     Invoke the ship skill for PR #<number>
     ```
