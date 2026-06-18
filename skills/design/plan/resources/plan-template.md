@@ -28,9 +28,10 @@
 2. **Phase 2 — <name>**: <what gets done; deliverable>
 
 ### Work units
-Each unit is one focused session. Keep units small enough to fit in a single PR.
+WU0 always contains integration scenarios only (no production code). Subsequent WUs should target ≤ 300 LoC changed and ≤ 10 files; split further if a WU would exceed these. Each WU lists which scenarios it makes green.
 
-| # | Unit | Issues | Files touched (approx) |
-|---|------|--------|------------------------|
-| 1 | <unit name> | HAB-XX | <files> |
+| # | Unit | Issues | Scenarios made green | Est. LoC | Files touched (approx) |
+|---|------|--------|----------------------|----------|------------------------|
+| 0 | Integration scenarios (`draft-scenarios` output) | HAB-XX | — (all start red) | ~50 | `integration_test/...` |
+| 1 | <unit name> | HAB-XX | S1, S2 | ~150 | <files> |
 ```

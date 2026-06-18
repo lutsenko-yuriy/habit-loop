@@ -18,6 +18,7 @@ Tag taxonomy (enforced by this linter):
   Classification tags — every entry must have at least one:
     [user]      User-visible app change. Triggers distribution; appears in release notes.
     [app]       App source code change, not user-visible. Triggers distribution.
+    [test]      Test-only changes (unit tests, scenarios, widget tests). No production code. No distribution.
     [meta]      Skills / agent / workflow change. No distribution.
     [ci]        CI/CD process change. No distribution.
     [user-none] Entire entry is internal-only (legacy sentinel, still accepted).
@@ -53,13 +54,13 @@ def _parse_semver(version: str) -> tuple[int, int, int]:
 # All tags whose presence in a bullet is intentional.
 KNOWN_TAGS: frozenset[str] = frozenset({
     'user', 'user-none', 'non-user',  # legacy / backward-compat
-    'app', 'meta', 'ci',              # new taxonomy
+    'app', 'test', 'meta', 'ci',      # new taxonomy
 })
 
 # Tags that classify an entry. Every entry must have at least one bullet
 # whose tag is in this set. [non-user] is supplementary only.
 CLASSIFICATION_TAGS: frozenset[str] = frozenset({
-    'user', 'user-none', 'app', 'meta', 'ci',
+    'user', 'user-none', 'app', 'test', 'meta', 'ci',
 })
 
 
@@ -133,6 +134,7 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
                 f'    Add one of:\n'
                 f'      "- [user] <description>"     — user-visible change (triggers distribution)\n'
                 f'      "- [app] <description>"      — app code change, not user-visible (triggers distribution)\n'
+                f'      "- [test] <description>"     — test-only changes, no production code (no distribution)\n'
                 f'      "- [meta] <description>"     — skills/agent/workflow change (no distribution)\n'
                 f'      "- [ci] <description>"       — CI/CD change (no distribution)\n'
                 f'      "- [user-none]"              — entire entry is internal-only (no distribution)'

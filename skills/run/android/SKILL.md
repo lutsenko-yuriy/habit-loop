@@ -37,20 +37,22 @@ Parse the output for Android devices:
 - **Physical device** — a line containing `android` but NOT containing `emulator`.
 - **Running emulator** — a line containing `emulator` or `android` with an ID like `emulator-5554`.
 
-### 2a. Physical device found → run on it
+### 2a. Physical device found → hand off to the user
 
-```bash
-<flutter> run -d <device-id>
+Report the device ID and tell the user to run in their terminal (or via `!` in Claude Code):
+
+```
+! <flutter-binary-path> run -d <device-id>
 ```
 
 Stop here.
 
 ### 2b. No physical device — check for a running emulator
 
-If a running emulator appears in `flutter devices`, use it:
+If a running emulator appears in `flutter devices`, hand off to the user:
 
-```bash
-<flutter> run -d <emulator-device-id>
+```
+! <flutter-binary-path> run -d <emulator-device-id>
 ```
 
 Stop here.
@@ -75,10 +77,10 @@ Wait up to 60 seconds for the emulator to appear in `flutter devices` by polling
 <flutter> devices
 ```
 
-Once the emulator device ID appears, run:
+Once the emulator device ID appears, hand off to the user:
 
-```bash
-<flutter> run -d <emulator-device-id>
+```
+! <flutter-binary-path> run -d <emulator-device-id>
 ```
 
 ### 3. No devices and no AVDs available
@@ -93,4 +95,4 @@ Report:
 
 - Never use `flutter run` without `-d` — always specify the target device explicitly.
 - Do not start more than one emulator.
-- `flutter run` will stream logs to the terminal; leave it running in the foreground unless the user asks to stop it.
+- All setup steps (device detection, emulator launch, boot wait) are executed by Claude. The final `flutter run` command is handed off to the user — it is interactive and long-running and cannot be executed by Claude.

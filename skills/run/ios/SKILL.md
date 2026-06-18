@@ -37,20 +37,22 @@ Parse the output for iOS devices:
 - **Physical device** — a line containing `ios` but NOT containing `simulator`.
 - **Running simulator** — a line containing `simulator` or `Simulator`.
 
-### 2a. Physical device found → run on it
+### 2a. Physical device found → hand off to the user
 
-```bash
-<flutter> run -d <device-id>
+Report the device ID and tell the user to run in their terminal (or via `!` in Claude Code):
+
+```
+! <flutter-binary-path> run -d <device-id>
 ```
 
 Stop here.
 
 ### 2b. No physical device — check for a booted Simulator
 
-If a booted Simulator appears in `flutter devices`, use it:
+If a booted Simulator appears in `flutter devices`, hand off to the user:
 
-```bash
-<flutter> run -d <simulator-device-id>
+```
+! <flutter-binary-path> run -d <simulator-device-id>
 ```
 
 Stop here.
@@ -76,10 +78,10 @@ Wait up to 60 seconds for the Simulator to appear in `flutter devices` by pollin
 <flutter> devices
 ```
 
-Once the Simulator device ID appears, run:
+Once the Simulator device ID appears, hand off to the user:
 
-```bash
-<flutter> run -d <simulator-device-id>
+```
+! <flutter-binary-path> run -d <simulator-device-id>
 ```
 
 ### 3. No devices and no Simulators available
@@ -94,4 +96,4 @@ Report:
 
 - Never use `flutter run` without `-d` — always specify the target device explicitly.
 - Do not boot more than one Simulator.
-- `flutter run` will stream logs to the terminal; leave it running in the foreground unless the user asks to stop it.
+- All setup steps (device detection, Simulator boot, boot wait) are executed by Claude. The final `flutter run` command is handed off to the user — it is interactive and long-running and cannot be executed by Claude.

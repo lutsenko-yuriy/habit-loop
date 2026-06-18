@@ -41,6 +41,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/build/implement/SKILL.md | TDD implementation and PR |
 | skills/run/android/SKILL.md | Start the app on Android (physical device → running emulator → launch AVD) |
 | skills/run/ios/SKILL.md | Start the app on iOS (physical device → booted Simulator → boot Simulator) |
+| skills/run/run-scenarios/SKILL.md | Run integration test scenarios before merging — finds device, runs flutter test integration_test/, reports pass/fail |
 | skills/verify/draft-scenarios/SKILL.md | Pre-implementation scenario drafting: write red scenarios (integration tests) from the ticket spec |
 | skills/verify/review/SKILL.md | Architectural PR review |
 | skills/verify/audit/SKILL.md | Runtime and migration PR review |
@@ -66,6 +67,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/style` | configure/style | `/style CONCISE` |
 | `/ios` | run/ios | `/ios` |
 | `/android` | run/android | `/android` |
+| `/run-scenarios` | run/run-scenarios | `/run-scenarios` or `/run-scenarios HAB-XX` |
 | `/cleanup-firebase` | manage/cleanup-firebase | `/cleanup-firebase [N] [--dry-run]` |
 
 ## Architecture

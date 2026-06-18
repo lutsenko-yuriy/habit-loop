@@ -16,3 +16,20 @@
 **Refactor — clean up without breaking tests.**
 
 Remove duplication, improve naming, simplify logic. Re-run `<flutter binary> test` after every step.
+
+**Commit — after each red→green→refactor cycle.**
+
+When one logical unit is complete (tests pass, refactor done), commit immediately before starting the next:
+
+```bash
+git commit -m "$(cat <<'EOF'
+<type>: <what this logical unit does>
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
+```
+
+Types: `feat` (new behaviour), `fix` (bug-fix cycle), `refactor` (restructure-only), `test` (test-only change).
+
+Repeat the full red→green→refactor→commit cycle for each logical unit within the WU. The PR accumulates one commit per cycle — reviewable commit-by-commit on GitHub.

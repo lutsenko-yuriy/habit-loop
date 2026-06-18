@@ -69,17 +69,23 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
    ```
 
    The skill reads the ticket (and any `plan` comment), drafts scenario files in `integration_test/` using `AppHarness`, waits for approval, and writes the approved scenarios. Scenarios are intentionally red at this point — no production code exists yet. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
+
+   **For multi-WU plans:** after the scenarios are approved and written, commit them to a dedicated branch (`feature/HAB-XX-WU0-scenarios`), push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly (no `ship` needed — no version bump, no CHANGELOG entry beyond the `[test]` line). Each subsequent WU's plan entry lists which scenarios it makes green.
 5. For features with user-visible screens or interactions: draft widget tests before writing production code:
    - Create new widget tests covering each new screen and key user flow (swiping, tapping, navigation, locale changes, auto-advance, etc.).
    - Update any existing widget tests that the new screens or UI changes will affect.
    - Present all new and updated widget test files to the user and wait for approval.
    - Do not continue to step 6 until the user approves the widget tests.
-6. Write failing unit tests that describe the expected business logic behaviour.
-7. Implement the minimum code to make the tests pass.
-   **Opportunistic changes during implementation:** If an idea arises to modify existing or in-flight functionality (a bug fix, an edge-case handler, a UX improvement), write the integration test for that change first before touching production code. Never modify observable behaviour without a covering integration test.
-8. Refactor if needed.
+6. **Red** — Write a small set of failing unit tests for one logical unit of work.
+7. **Green** — Implement the minimum code to make them pass.
+   **Opportunistic changes:** If an idea arises to modify existing or in-flight functionality, write the integration test for that change first. Never modify observable behaviour without a covering integration test.
+8. **Refactor and commit** — Clean up without breaking tests, then commit this TDD micro-cycle as one atomic commit before moving to the next logical unit:
+   ```
+   git commit -m "feat: <what this logical unit does>"
+   ```
+   Repeat steps 6–8 for each logical unit within the WU. Each PR accumulates one commit per cycle — reviewable commit-by-commit on GitHub.
 9. Run `flutter test` and `flutter analyze` — fix **all** test failures and analyzer warnings/errors before proceeding. A clean analyzer output (`No issues found`) is required before committing; do not leave warnings unresolved on the assumption they are pre-existing.
-10. Apply formatting in a dedicated commit **before** the functional commit: run `dart format -l 120 lib/ test/ integration_test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
+10. After all TDD micro-cycles are complete, apply formatting in a dedicated commit before opening the PR: run `dart format -l 120 lib/ test/ integration_test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
 11. Update documentation if affected by the changes:
     - `CLAUDE.md` — architecture, conventions, or workflow changed
     - `@docs/PRODUCT_SPEC.md` — functionality added, removed, or changed
@@ -93,6 +99,7 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
     |---|---|---|---|
     | `[user]` | User-visible app change | Yes | Yes |
     | `[app]` | App code change, not user-visible | Yes | No |
+    | `[test]` | Test-only changes (unit tests, scenarios, widget tests) — no production code | No | No |
     | `[meta]` | Skills / agent / workflow change | No | No |
     | `[ci]` | CI/CD process change | No | No |
     | `[user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
@@ -117,12 +124,13 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
     4. If the cumulative changes since the last review pass are non-trivial (new files, logic changes, interface changes), re-invoke both review skills and return to step 15.1.
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
     6. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.).
-16. Remind the user to compact the context after each commit to keep the conversation lean.
-17. When the user approves the PR, run the full integration test suite locally before invoking ship:
+16. Remind the user to clear the context after each commit to keep the conversation lean.
+17. When the user approves the PR, run the full integration test suite via the `run-scenarios` skill before invoking `ship`:
     ```
-    flutter test integration_test/ -d <device-id>
+    Invoke the run-scenarios skill
     ```
-    All integration tests must be green. Do not invoke `ship` if any integration test is failing. Once they pass, invoke the `ship` skill:
+    Or: `/run-scenarios`
+    All scenarios must be green. Do not invoke `ship` if any scenario is failing. Once they pass, invoke the `ship` skill:
     ```
     Invoke the ship skill for PR #<number>
     ```
