@@ -92,6 +92,7 @@ ProviderContainer _makeContainer({
 
 void main() {
   _saveNoteTests();
+  _archivePactTests();
 
   group('PactDetailViewModel', () {
     test('initial state is loading with no data', () {
@@ -723,6 +724,13 @@ class _ThrowingOnDeleteShowupRepository extends InMemoryShowupRepository {
   Future<void> deleteShowupsForPact(String pactId) async => throw Exception('delete failed intentionally');
 }
 
+class _ThrowingOnArchivePactRepository extends InMemoryPactRepository {
+  _ThrowingOnArchivePactRepository(super.initialPacts);
+
+  @override
+  Future<void> archivePact(String id, bool archived) async => throw Exception('archive failed intentionally');
+}
+
 // ---------------------------------------------------------------------------
 // saveNote tests
 // ---------------------------------------------------------------------------
@@ -902,6 +910,125 @@ void _saveNoteTests() {
       ]);
       await c.read(pactDetailViewModelProvider('sp1').notifier).saveNote('success');
       expect(c.read(pactDetailViewModelProvider('sp1')).noteError, isNull);
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// archivePact tests
+// ---------------------------------------------------------------------------
+
+void _archivePactTests() {
+  group('PactDetailViewModel.archivePact', () {
+    late FakeAnalyticsService fakeAnalytics;
+
+    ProviderContainer makeContainer(Pact pact) {
+      fakeAnalytics = FakeAnalyticsService();
+      final pactRepo = InMemoryPactRepository([pact]);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+        pactStatsService: statsService,
+      );
+      final c = ProviderContainer(overrides: [
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+      ]);
+      addTearDown(c.dispose);
+      return c;
+    }
+
+    test('archives a completed pact and updates state', () async {
+      final c = makeContainer(_completedPact);
+      await c.read(pactDetailViewModelProvider('cp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('cp1').notifier).archivePact(true, source: 'detail_screen');
+
+      final state = c.read(pactDetailViewModelProvider('cp1'));
+      expect(state.pact?.archived, isTrue);
+      expect(state.isArchiving, isFalse);
+      expect(state.archiveError, isNull);
+    });
+
+    test('unarchives a stopped pact and updates state', () async {
+      final archivedStopped = _stoppedPact.copyWith(archived: true);
+      final c = makeContainer(archivedStopped);
+      await c.read(pactDetailViewModelProvider('sp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('sp1').notifier).archivePact(false, source: 'detail_screen');
+
+      final state = c.read(pactDetailViewModelProvider('sp1'));
+      expect(state.pact?.archived, isFalse);
+    });
+
+    test('fires PactArchivedEvent with correct properties', () async {
+      final c = makeContainer(_completedPact);
+      await c.read(pactDetailViewModelProvider('cp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('cp1').notifier).archivePact(true, source: 'detail_screen');
+
+      final events = fakeAnalytics.loggedEvents.whereType<PactArchivedEvent>().toList();
+      expect(events, hasLength(1));
+      expect(events.first.pactId, 'cp1');
+      expect(events.first.pactStatus, 'completed');
+      expect(events.first.source, 'detail_screen');
+    });
+
+    test('fires PactUnarchivedEvent with correct properties', () async {
+      final archivedStopped = _stoppedPact.copyWith(archived: true);
+      final c = makeContainer(archivedStopped);
+      await c.read(pactDetailViewModelProvider('sp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('sp1').notifier).archivePact(false, source: 'detail_screen');
+
+      final events = fakeAnalytics.loggedEvents.whereType<PactUnarchivedEvent>().toList();
+      expect(events, hasLength(1));
+      expect(events.first.pactId, 'sp1');
+      expect(events.first.pactStatus, 'stopped');
+      expect(events.first.source, 'detail_screen');
+    });
+
+    test('sets archiveError and does not fire event on failure', () async {
+      fakeAnalytics = FakeAnalyticsService();
+      final throwingRepo = _ThrowingOnArchivePactRepository([_completedPact]);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(throwingRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: throwingRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+      );
+      final service = PactService(
+        pactRepository: throwingRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+        pactStatsService: statsService,
+      );
+      final c = ProviderContainer(overrides: [
+        pactServiceProvider.overrideWithValue(service),
+        pactStatsServiceProvider.overrideWithValue(statsService),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+      ]);
+      addTearDown(c.dispose);
+
+      await c.read(pactDetailViewModelProvider('cp1').notifier).load();
+      await c.read(pactDetailViewModelProvider('cp1').notifier).archivePact(true, source: 'detail_screen');
+
+      final state = c.read(pactDetailViewModelProvider('cp1'));
+      expect(state.archiveError, isNotNull);
+      expect(state.isArchiving, isFalse);
+      expect(fakeAnalytics.loggedEvents.whereType<PactArchivedEvent>(), isEmpty);
     });
   });
 }

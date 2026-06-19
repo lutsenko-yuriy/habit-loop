@@ -125,6 +125,28 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     }
   }
 
+  Future<void> archivePact(bool archive, {required String source}) async {
+    final pact = state.pact;
+    if (pact == null) return;
+    state = state.copyWith(isArchiving: true, clearArchiveError: true);
+    try {
+      await ref.read(pactServiceProvider).archivePact(arg, archive);
+      final updated = pact.copyWith(archived: archive);
+      state = state.copyWith(pact: updated, isArchiving: false);
+      final statusStr = pact.status == PactStatus.completed ? 'completed' : 'stopped';
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(
+              archive
+                  ? PactArchivedEvent(pactId: arg, pactStatus: statusStr, source: source)
+                  : PactUnarchivedEvent(pactId: arg, pactStatus: statusStr, source: source),
+            ),
+      );
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('pact_archive_failed: id=$arg', exception: e, stackTrace: st));
+      state = state.copyWith(isArchiving: false, archiveError: e);
+    }
+  }
+
   Future<void> saveNote(String note) async {
     final pact = state.pact;
     if (pact == null) return;

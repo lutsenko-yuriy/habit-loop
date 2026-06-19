@@ -16,6 +16,7 @@ class PactDetailPageAndroid extends StatelessWidget {
   final PactDetailState state;
   final Future<void> Function(String? reason) onStopPact;
   final Future<void> Function(String note) onSaveNote;
+  final Future<void> Function(bool archive) onArchivePact;
 
   /// Called when the user taps the edit icon button in the AppBar.
   ///
@@ -27,6 +28,7 @@ class PactDetailPageAndroid extends StatelessWidget {
     required this.state,
     required this.onStopPact,
     required this.onSaveNote,
+    required this.onArchivePact,
     this.onEditPact,
   });
 
@@ -57,6 +59,7 @@ class PactDetailPageAndroid extends StatelessWidget {
                   l10n: l10n,
                   onStopPact: onStopPact,
                   onSaveNote: onSaveNote,
+                  onArchivePact: onArchivePact,
                 ),
     );
   }
@@ -67,12 +70,14 @@ class _PactDetailContent extends StatelessWidget {
   final AppLocalizations l10n;
   final Future<void> Function(String? reason) onStopPact;
   final Future<void> Function(String note) onSaveNote;
+  final Future<void> Function(bool archive) onArchivePact;
 
   const _PactDetailContent({
     required this.state,
     required this.l10n,
     required this.onStopPact,
     required this.onSaveNote,
+    required this.onArchivePact,
   });
 
   @override
@@ -207,6 +212,18 @@ class _PactDetailContent extends StatelessWidget {
                     child: Text(l10n.pactNoteSave),
                   ),
             ),
+          ),
+        ],
+
+        // Archive / Unarchive button for completed and stopped pacts
+        if (pact.status != PactStatus.active) ...[
+          const SizedBox(height: 16),
+          OutlinedButton(
+            key: const Key('archive-pact-button'),
+            onPressed: state.isArchiving ? null : () => onArchivePact(!pact.archived),
+            child: state.isArchiving
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text(pact.archived ? l10n.unarchivePact : l10n.archivePact),
           ),
         ],
 

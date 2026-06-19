@@ -52,6 +52,7 @@ Widget _buildApp(PactDetailState state) {
       state: state,
       onStopPact: (_) async {},
       onSaveNote: (_) async {},
+      onArchivePact: (_) async {},
     ),
   );
 }

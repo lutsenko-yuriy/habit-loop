@@ -93,4 +93,10 @@ class PactService {
   }
 
   Future<void> deletePact(String id) => _pactRepository.deletePact(id);
+
+  Future<void> archivePact(String pactId, bool archived) async {
+    await _pactRepository.archivePact(pactId, archived);
+    final updated = await _pactRepository.getPactById(pactId);
+    if (updated != null) unawaited(_syncService.uploadPact(updated));
+  }
 }

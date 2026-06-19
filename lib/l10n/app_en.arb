@@ -292,5 +292,26 @@
   "scheduleCardMonthly": "Monthly",
   "@scheduleCardMonthly": {},
   "pickerDone": "Done",
-  "@pickerDone": {}
+  "@pickerDone": {},
+
+  "archivePact": "Archive",
+  "@archivePact": {},
+  "unarchivePact": "Unarchive",
+  "@unarchivePact": {},
+  "filterArchived": "Archived",
+  "@filterArchived": {},
+  "showArchivedPacts": "Show archived pacts ({count})",
+  "@showArchivedPacts": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactsArchivedParenthetical": "({count} more archived)",
+  "@pactsArchivedParenthetical": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactsAllArchived": "(all archived)",
+  "@pactsAllArchived": {}
 }

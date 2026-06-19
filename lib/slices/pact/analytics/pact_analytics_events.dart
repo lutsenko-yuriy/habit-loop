@@ -219,6 +219,68 @@ final class PactNoteSavedEvent extends AnalyticsEvent {
       };
 }
 
+/// Fired when the user archives a pact. (HAB-114)
+final class PactArchivedEvent extends AnalyticsEvent {
+  PactArchivedEvent({required this.pactId, required this.pactStatus, required this.source});
+
+  /// ID of the archived pact.
+  final String pactId;
+
+  /// `completed` | `stopped`
+  final String pactStatus;
+
+  /// `detail_screen` | `pact_list_swipe`
+  final String source;
+
+  @override
+  String get name => 'pact_archived';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'pact_status': pactStatus,
+        'source': source,
+      };
+}
+
+/// Fired when the user unarchives a pact. (HAB-114)
+final class PactUnarchivedEvent extends AnalyticsEvent {
+  PactUnarchivedEvent({required this.pactId, required this.pactStatus, required this.source});
+
+  /// ID of the unarchived pact.
+  final String pactId;
+
+  /// `completed` | `stopped`
+  final String pactStatus;
+
+  /// `detail_screen` | `pact_list_swipe`
+  final String source;
+
+  @override
+  String get name => 'pact_unarchived';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'pact_status': pactStatus,
+        'source': source,
+      };
+}
+
+/// Fired when the user taps the Archived filter chip or the "Show archived pacts" row. (HAB-114)
+final class ArchiveFilterToggledEvent extends AnalyticsEvent {
+  ArchiveFilterToggledEvent({required this.newState});
+
+  /// `true` if archived pacts are now visible; `false` if hidden.
+  final bool newState;
+
+  @override
+  String get name => 'archive_filter_toggled';
+
+  @override
+  Map<String, Object?> toParameters() => {'new_state': newState};
+}
+
 /// Screen identifier for the pact creation wizard.
 class PactCreationAnalyticsScreen implements AnalyticsScreen {
   const PactCreationAnalyticsScreen();

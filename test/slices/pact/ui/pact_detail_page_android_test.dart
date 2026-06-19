@@ -77,6 +77,7 @@ void main() {
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
             onEditPact: () {},
           ),
         ),
@@ -93,6 +94,7 @@ void main() {
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
             // onEditPact intentionally omitted
           ),
         ),
@@ -109,6 +111,7 @@ void main() {
             state: _loadedState(_stoppedPact),
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
             onEditPact: () {},
           ),
         ),
@@ -125,6 +128,7 @@ void main() {
             state: _loadedState(_completedPact),
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
             onEditPact: () {},
           ),
         ),
@@ -142,6 +146,7 @@ void main() {
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
             onEditPact: () => tapped = true,
           ),
         ),
@@ -161,6 +166,7 @@ void main() {
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
           ),
         ),
       );
@@ -177,6 +183,7 @@ void main() {
             state: _loadedState(_activePact),
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
           ),
         ),
       );
@@ -196,6 +203,7 @@ void main() {
             state: _loadedState(pactNoReminder),
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
           ),
         ),
       );
