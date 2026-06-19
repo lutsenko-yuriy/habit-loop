@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 /// [databaseFactoryFfi]-opened in-memory database — never use the singleton in
 /// tests (it would open a file-backed database on the test host).
 ///
-/// Schema version: 2.
+/// Schema version: 3.
 class HabitLoopDatabase {
   HabitLoopDatabase._();
 
@@ -33,7 +33,7 @@ class HabitLoopDatabase {
     final path = join(await getDatabasesPath(), 'habit_loop.db');
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         // Enable WAL journal mode so concurrent readers (main isolate) and the
         // background notification handler isolate can operate simultaneously
@@ -94,7 +94,8 @@ class HabitLoopDatabase {
         total_showups        INTEGER,
         created_at           INTEGER,
         dirty                INTEGER NOT NULL DEFAULT 1,
-        synced_at            INTEGER
+        synced_at            INTEGER,
+        archived             INTEGER NOT NULL DEFAULT 0
       )
     ''');
     await db.execute('''
@@ -127,6 +128,10 @@ class HabitLoopDatabase {
       await db.execute('ALTER TABLE showups ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1');
       await db.execute('ALTER TABLE showups ADD COLUMN synced_at INTEGER');
     }
+    if (oldVersion < 3) {
+      // v3 adds the archived flag; existing pacts default to not archived.
+      await db.execute('ALTER TABLE pacts ADD COLUMN archived INTEGER NOT NULL DEFAULT 0');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -142,7 +147,7 @@ class HabitLoopDatabase {
     return databaseFactory.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         onConfigure: (db) async {
           try {
             await db.rawQuery('PRAGMA journal_mode=WAL');

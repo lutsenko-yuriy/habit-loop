@@ -116,7 +116,8 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('archive_completed_pact_from_detail: archiving marks pact archived and fires analytics', (tester) async {
+    testWidgets('archive_completed_pact_from_detail: archiving marks pact archived and fires analytics',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -232,7 +233,8 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('archived_chip_row_hidden_then_revealed: chip row absent at N_A=0 and appears after first archive', (tester) async {
+    testWidgets('archived_chip_row_hidden_then_revealed: chip row absent at N_A=0 and appears after first archive',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -296,7 +298,8 @@ void main() {
       expect(find.text('Cycling'), findsNothing);
     });
 
-    testWidgets('swipe_to_archive_pact: swipe-left reveals Archive; tapping archives pact with correct analytics', (tester) async {
+    testWidgets('swipe_to_archive_pact: swipe-left reveals Archive; tapping archives pact with correct analytics',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -338,7 +341,8 @@ void main() {
       );
     });
 
-    testWidgets('sort_order_with_archived_pacts: active→unarch-done→unarch-stopped→arch-done→arch-stopped', (tester) async {
+    testWidgets('sort_order_with_archived_pacts: active→unarch-done→unarch-stopped→arch-done→arch-stopped',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [

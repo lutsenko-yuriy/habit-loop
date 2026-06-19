@@ -30,6 +30,7 @@ abstract final class PactMapper {
       // Every insert starts dirty=1 — queued for the first sync flush.
       'dirty': 1,
       'synced_at': null,
+      'archived': pact.archived ? 1 : 0,
     };
   }
 
@@ -65,6 +66,8 @@ abstract final class PactMapper {
       // total_showups is read-acknowledged but not propagated into the domain
       // model; it lives in the DB column only and is consumed by stats queries.
       // dirty and synced_at live only in the sync layer — not on the domain model.
+      // archived absent means the row predates v3 — treat as false.
+      archived: (row['archived'] as int? ?? 0) == 1,
       stats: null,
     );
   }
@@ -83,6 +86,7 @@ abstract final class PactMapper {
       'stop_reason': pact.stopReason,
       // Every update re-marks the record dirty — the sync layer will re-upload it.
       'dirty': 1,
+      'archived': pact.archived ? 1 : 0,
     };
   }
 

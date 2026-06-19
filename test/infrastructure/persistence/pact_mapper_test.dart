@@ -22,6 +22,7 @@ void main() {
     String? stopReason,
     DateTime? pactCreatedAt,
     PactStats? stats,
+    bool archived = false,
   }) =>
       Pact(
         id: 'pact-1',
@@ -35,6 +36,7 @@ void main() {
         stopReason: stopReason,
         createdAt: pactCreatedAt,
         stats: stats,
+        archived: archived,
       );
 
   group('PactMapper', () {
@@ -133,6 +135,14 @@ void main() {
         final pact = basePact(status: PactStatus.completed);
         expect(PactMapper.toRow(pact)['status'], equals('completed'));
       });
+
+      test('archived false maps to 0', () {
+        expect(PactMapper.toRow(basePact())['archived'], equals(0));
+      });
+
+      test('archived true maps to 1', () {
+        expect(PactMapper.toRow(basePact(archived: true))['archived'], equals(1));
+      });
     });
 
     group('fromRow', () {
@@ -152,6 +162,7 @@ void main() {
             // dirty and synced_at are present in the DB row but not on the domain model.
             'dirty': 1,
             'synced_at': null,
+            'archived': 0,
           };
 
       test('reconstructs required fields correctly', () {
@@ -245,6 +256,20 @@ void main() {
         expect(() => PactMapper.fromRow(row), throwsArgumentError);
       });
 
+      test('archived 0 in row reconstructs as false', () {
+        expect(PactMapper.fromRow(baseRow()).archived, isFalse);
+      });
+
+      test('archived 1 in row reconstructs as true', () {
+        final row = baseRow()..['archived'] = 1;
+        expect(PactMapper.fromRow(row).archived, isTrue);
+      });
+
+      test('archived absent in row defaults to false (backward compat)', () {
+        final row = baseRow()..remove('archived');
+        expect(PactMapper.fromRow(row).archived, isFalse);
+      });
+
       test('dirty and synced_at columns in row are ignored — not on domain model', () {
         // Verify fromRow succeeds with both dirty=0 and synced_at set,
         // since the sync layer may later read back rows in a synced state.
@@ -300,6 +325,14 @@ void main() {
         final pact = basePact(status: PactStatus.stopped);
         final row = PactMapper.toUpdateRow(pact);
         expect(row['actual_end_date'], equals(endDate.millisecondsSinceEpoch));
+      });
+
+      test('archived false maps to 0 in update row', () {
+        expect(PactMapper.toUpdateRow(basePact())['archived'], equals(0));
+      });
+
+      test('archived true maps to 1 in update row', () {
+        expect(PactMapper.toUpdateRow(basePact(archived: true))['archived'], equals(1));
       });
     });
 
@@ -363,6 +396,23 @@ void main() {
         expect(restored.stopReason, equals(original.stopReason));
         expect(restored.createdAt, equals(original.createdAt));
         expect(restored.stats, isNull);
+      });
+
+      test('archived: true survives round-trip', () {
+        final pact = Pact(
+          id: 'pact-arch-rt',
+          habitName: 'Jog',
+          startDate: startDate,
+          endDate: endDate,
+          showupDuration: showupDuration,
+          schedule: schedule,
+          status: PactStatus.completed,
+          archived: true,
+          createdAt: createdAt,
+        );
+        final row = PactMapper.toRow(pact);
+        final restored = PactMapper.fromRow({...row, 'total_showups': null, 'dirty': 1, 'synced_at': null});
+        expect(restored.archived, isTrue);
       });
     });
   });

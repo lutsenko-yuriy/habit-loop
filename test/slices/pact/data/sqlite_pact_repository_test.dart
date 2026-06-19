@@ -25,6 +25,7 @@ void main() {
       String habitName = 'Meditate',
       PactStatus status = PactStatus.active,
       String? stopReason,
+      bool archived = false,
     }) =>
         Pact(
           id: id,
@@ -36,6 +37,7 @@ void main() {
           status: status,
           createdAt: createdAt,
           stopReason: stopReason,
+          archived: archived,
         );
 
     setUp(() async {
@@ -352,6 +354,46 @@ void main() {
         await repository.markAllPactsDirty();
 
         expect(await repository.getPactSyncedAt('pact-1'), isNull);
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // archivePact
+    // -------------------------------------------------------------------------
+
+    group('archivePact', () {
+      test('sets archived=true and dirty=1 on the pact', () async {
+        await repository.savePact(makePact(status: PactStatus.completed));
+        await repository.markPactSynced('pact-1', DateTime(2026, 5, 1));
+
+        await repository.archivePact('pact-1', true);
+
+        final rows = await db.rawQuery('SELECT archived, dirty FROM pacts WHERE id = ?', ['pact-1']);
+        expect(rows.first['archived'], equals(1));
+        expect(rows.first['dirty'], equals(1));
+      });
+
+      test('sets archived=false and dirty=1 on the pact', () async {
+        await repository.savePact(makePact(status: PactStatus.completed, archived: true));
+        await repository.markPactSynced('pact-1', DateTime(2026, 5, 1));
+
+        await repository.archivePact('pact-1', false);
+
+        final rows = await db.rawQuery('SELECT archived, dirty FROM pacts WHERE id = ?', ['pact-1']);
+        expect(rows.first['archived'], equals(0));
+        expect(rows.first['dirty'], equals(1));
+      });
+
+      test('getPactById after archivePact returns pact with updated archived field', () async {
+        await repository.savePact(makePact(status: PactStatus.completed));
+        await repository.archivePact('pact-1', true);
+
+        final retrieved = await repository.getPactById('pact-1');
+        expect(retrieved?.archived, isTrue);
+      });
+
+      test('throws ArgumentError when pact does not exist', () async {
+        await expectLater(() => repository.archivePact('non-existent', true), throwsArgumentError);
       });
     });
   });
