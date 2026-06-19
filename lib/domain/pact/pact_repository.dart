@@ -20,4 +20,7 @@ abstract class PactRepository {
   /// Used for rollback when a dependent write (e.g. saving showups) fails
   /// after the pact was already persisted. No-op if the id does not exist.
   Future<void> deletePact(String id);
+
+  /// Sets the archived flag on a pact and marks it dirty for sync.
+  Future<void> archivePact(String id, bool archived);
 }

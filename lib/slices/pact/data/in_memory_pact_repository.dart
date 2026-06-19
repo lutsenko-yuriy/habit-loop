@@ -49,4 +49,10 @@ class InMemoryPactRepository implements PactRepository {
   Future<void> deletePact(String id) async {
     _pacts.removeWhere((p) => p.id == id);
   }
+
+  @override
+  Future<void> archivePact(String id, bool archived) async {
+    final index = _pacts.indexWhere((p) => p.id == id);
+    if (index != -1) _pacts[index] = _pacts[index].copyWith(archived: archived);
+  }
 }

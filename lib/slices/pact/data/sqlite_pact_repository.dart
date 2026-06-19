@@ -87,6 +87,16 @@ class SqlitePactRepository implements PactRepository, PactSyncRepository {
     await _db.delete(_table, where: 'id = ?', whereArgs: [id]);
   }
 
+  @override
+  Future<void> archivePact(String id, bool archived) async {
+    await _db.update(
+      _table,
+      {'archived': archived ? 1 : 0, 'dirty': 1},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // PactSyncRepository
   // ---------------------------------------------------------------------------

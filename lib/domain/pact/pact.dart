@@ -21,6 +21,8 @@ class Pact {
   // null unless status is stopped; preserves endDate as the original planned end date.
   final DateTime? stoppedAt;
 
+  final bool archived;
+
   const Pact({
     required this.id,
     required this.habitName,
@@ -34,6 +36,7 @@ class Pact {
     this.stats,
     this.createdAt,
     this.stoppedAt,
+    this.archived = false,
   });
 
   // id is immutable — identity and foreign key for all showups of this pact.
@@ -48,6 +51,7 @@ class Pact {
     String? stopReason,
     PactStats? stats,
     DateTime? stoppedAt,
+    bool? archived,
     bool clearReminderOffset = false,
     bool clearStopReason = false,
     bool clearStats = false,
@@ -66,6 +70,7 @@ class Pact {
       stats: clearStats ? null : (stats ?? this.stats),
       createdAt: createdAt, // immutable — never overridden by copyWith
       stoppedAt: clearStoppedAt ? null : (stoppedAt ?? this.stoppedAt),
+      archived: archived ?? this.archived,
     );
   }
 
@@ -84,7 +89,8 @@ class Pact {
           stopReason == other.stopReason &&
           stats == other.stats &&
           createdAt == other.createdAt &&
-          stoppedAt == other.stoppedAt;
+          stoppedAt == other.stoppedAt &&
+          archived == other.archived;
 
   @override
   int get hashCode => Object.hash(
@@ -100,5 +106,6 @@ class Pact {
         stats,
         createdAt,
         stoppedAt,
+        archived,
       );
 }

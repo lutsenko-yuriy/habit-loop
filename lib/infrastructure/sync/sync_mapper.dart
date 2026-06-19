@@ -32,6 +32,7 @@ abstract final class SyncMapper {
       'stop_reason': pact.stopReason,
       'created_at': pact.createdAt?.millisecondsSinceEpoch,
       'updated_at': (updatedAt ?? DateTime.now()).millisecondsSinceEpoch,
+      'archived': pact.archived,
     };
   }
 
@@ -84,6 +85,8 @@ abstract final class SyncMapper {
       stoppedAt: status == PactStatus.stopped && doc['actual_end_date'] != null
           ? DateTime.fromMillisecondsSinceEpoch((doc['actual_end_date'] as num).toInt())
           : null,
+      // archived absent means the document predates v3 — treat as false.
+      archived: (doc['archived'] as bool?) ?? false,
     );
   }
 

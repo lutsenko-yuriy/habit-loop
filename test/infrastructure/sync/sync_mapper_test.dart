@@ -155,6 +155,22 @@ void main() {
       final doc = SyncMapper.pactToDocument(pact);
       expect(SyncMapper.pactFromDocument(doc).reminderOffset, isNull);
     });
+
+    test('archived false round-trips through pactToDocument → pactFromDocument', () {
+      final doc = SyncMapper.pactToDocument(pact);
+      expect(SyncMapper.pactFromDocument(doc).archived, isFalse);
+    });
+
+    test('archived true round-trips through pactToDocument → pactFromDocument', () {
+      final archived = pact.copyWith(archived: true);
+      final doc = SyncMapper.pactToDocument(archived);
+      expect(SyncMapper.pactFromDocument(doc).archived, isTrue);
+    });
+
+    test('archived absent in document defaults to false (backward compat for old docs)', () {
+      final doc = SyncMapper.pactToDocument(pact)..remove('archived');
+      expect(SyncMapper.pactFromDocument(doc).archived, isFalse);
+    });
   });
 
   group('SyncMapper.showupFromDocument', () {
