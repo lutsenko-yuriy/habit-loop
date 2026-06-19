@@ -298,6 +298,40 @@ No PII risk — note content is never included; only its length.
 
 ---
 
+### `pact_archived`
+
+Fired when the user archives a pact. (HAB-114)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the archived pact |
+| `pact_status` | `string` | `completed` \| `stopped` |
+| `source` | `string` | `detail_screen` \| `pact_list_swipe` |
+
+---
+
+### `pact_unarchived`
+
+Fired when the user unarchives a pact. (HAB-114)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the unarchived pact |
+| `pact_status` | `string` | `completed` \| `stopped` |
+| `source` | `string` | `detail_screen` \| `pact_list_swipe` |
+
+---
+
+### `archive_filter_toggled`
+
+Fired when the user taps the Archived filter chip or the "Show archived pacts" row. Only reachable when N_A ≥ 1 (both controls are hidden otherwise). (HAB-114)
+
+| Property | Type | Description |
+|---|---|---|
+| `new_state` | `bool` | `true` if archived pacts are now visible; `false` if hidden |
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.
