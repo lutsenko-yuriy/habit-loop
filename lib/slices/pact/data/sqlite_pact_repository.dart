@@ -89,6 +89,10 @@ class SqlitePactRepository implements PactRepository, PactSyncRepository {
 
   @override
   Future<void> archivePact(String id, bool archived) async {
+    final existing = await getPactById(id);
+    if (existing == null) {
+      throw ArgumentError('Pact with id "$id" not found.');
+    }
     await _db.update(
       _table,
       {'archived': archived ? 1 : 0, 'dirty': 1},

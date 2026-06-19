@@ -391,6 +391,10 @@ void main() {
         final retrieved = await repository.getPactById('pact-1');
         expect(retrieved?.archived, isTrue);
       });
+
+      test('throws ArgumentError when pact does not exist', () async {
+        await expectLater(() => repository.archivePact('non-existent', true), throwsArgumentError);
+      });
     });
   });
 }

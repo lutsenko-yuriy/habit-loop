@@ -121,5 +121,11 @@ void main() {
 
       expect(() => repo.savePact(activePact), throwsArgumentError);
     });
+
+    test('archivePact throws if pact id not found', () async {
+      repo = InMemoryPactRepository([activePact]);
+
+      expect(() => repo.archivePact('non-existent', true), throwsArgumentError);
+    });
   });
 }
