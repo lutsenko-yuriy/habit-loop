@@ -14,6 +14,7 @@ class PactListState {
   final List<PactListEntry> entries;
   final bool isLoading;
   final Set<PactStatus> activeFilters;
+  final bool showArchived;
 
   const PactListState({
     this.entries = const [],
@@ -23,6 +24,7 @@ class PactListState {
       PactStatus.completed,
       PactStatus.stopped,
     },
+    this.showArchived = false,
   });
 
   int get activeCount => entries.where((e) => e.pact.status == PactStatus.active).length;
@@ -31,17 +33,24 @@ class PactListState {
 
   int get cancelledCount => entries.where((e) => e.pact.status == PactStatus.stopped).length;
 
-  List<PactListEntry> get filteredEntries => entries.where((e) => activeFilters.contains(e.pact.status)).toList();
+  int get archivedCount => entries.where((e) => e.pact.archived).length;
+
+  List<PactListEntry> get filteredEntries => entries
+      .where((e) => activeFilters.contains(e.pact.status))
+      .where((e) => showArchived || !e.pact.archived)
+      .toList();
 
   PactListState copyWith({
     List<PactListEntry>? entries,
     bool? isLoading,
     Set<PactStatus>? activeFilters,
+    bool? showArchived,
   }) {
     return PactListState(
       entries: entries ?? this.entries,
       isLoading: isLoading ?? this.isLoading,
       activeFilters: activeFilters ?? this.activeFilters,
+      showArchived: showArchived ?? this.showArchived,
     );
   }
 }

@@ -47,8 +47,9 @@ class PactListViewModel extends Notifier<PactListState> {
       }
 
       entries.sort((a, b) {
-        final statusCmp = _statusOrder(a.pact.status).compareTo(_statusOrder(b.pact.status));
-        if (statusCmp != 0) return statusCmp;
+        final groupCmp =
+            _sortOrder(a.pact.archived, a.pact.status).compareTo(_sortOrder(b.pact.archived, b.pact.status));
+        if (groupCmp != 0) return groupCmp;
         if (a.pact.status == PactStatus.active) {
           final aT = a.nextShowupAt ?? DateTime(9999);
           final bT = b.nextShowupAt ?? DateTime(9999);
@@ -74,9 +75,21 @@ class PactListViewModel extends Notifier<PactListState> {
     state = state.copyWith(activeFilters: next);
   }
 
-  int _statusOrder(PactStatus s) => switch (s) {
-        PactStatus.active => 0,
-        PactStatus.completed => 1,
-        PactStatus.stopped => 2,
+  void toggleArchived() {
+    state = state.copyWith(showArchived: !state.showArchived);
+  }
+
+  Future<void> archivePact(String pactId, bool archived) async {
+    await ref.read(pactServiceProvider).archivePact(pactId, archived);
+    await load();
+  }
+
+  int _sortOrder(bool isArchived, PactStatus s) => switch ((isArchived, s)) {
+        (false, PactStatus.active) => 0,
+        (false, PactStatus.completed) => 1,
+        (false, PactStatus.stopped) => 2,
+        (true, PactStatus.completed) => 3,
+        (true, PactStatus.stopped) => 4,
+        _ => 5,
       };
 }
