@@ -291,5 +291,26 @@
   "scheduleCardMonthly": "Monatlich",
   "@scheduleCardMonthly": {},
   "pickerDone": "Fertig",
-  "@pickerDone": {}
+  "@pickerDone": {},
+
+  "archivePact": "Archivieren",
+  "@archivePact": {},
+  "unarchivePact": "Archivierung aufheben",
+  "@unarchivePact": {},
+  "filterArchived": "Archiviert",
+  "@filterArchived": {},
+  "showArchivedPacts": "Archivierte Pakte anzeigen ({count})",
+  "@showArchivedPacts": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactsArchivedParenthetical": "({count} weitere archiviert)",
+  "@pactsArchivedParenthetical": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactsAllArchived": "(alle archiviert)",
+  "@pactsAllArchived": {}
 }

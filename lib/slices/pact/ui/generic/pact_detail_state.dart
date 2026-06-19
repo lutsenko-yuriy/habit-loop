@@ -10,6 +10,8 @@ class PactDetailState {
   final Object? stopError;
   final bool isSavingNote;
   final Object? noteError;
+  final bool isArchiving;
+  final Object? archiveError;
 
   const PactDetailState({
     this.pact,
@@ -20,6 +22,8 @@ class PactDetailState {
     this.stopError,
     this.isSavingNote = false,
     this.noteError,
+    this.isArchiving = false,
+    this.archiveError,
   });
 
   PactDetailState copyWith({
@@ -34,6 +38,9 @@ class PactDetailState {
     bool? isSavingNote,
     Object? noteError,
     bool clearNoteError = false,
+    bool? isArchiving,
+    Object? archiveError,
+    bool clearArchiveError = false,
   }) {
     return PactDetailState(
       pact: pact ?? this.pact,
@@ -44,6 +51,8 @@ class PactDetailState {
       stopError: clearStopError ? null : (stopError ?? this.stopError),
       isSavingNote: isSavingNote ?? this.isSavingNote,
       noteError: clearNoteError ? null : (noteError ?? this.noteError),
+      isArchiving: isArchiving ?? this.isArchiving,
+      archiveError: clearArchiveError ? null : (archiveError ?? this.archiveError),
     );
   }
 }

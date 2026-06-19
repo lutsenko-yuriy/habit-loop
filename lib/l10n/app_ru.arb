@@ -291,5 +291,26 @@
   "scheduleCardMonthly": "Ежемесячно",
   "@scheduleCardMonthly": {},
   "pickerDone": "Готово",
-  "@pickerDone": {}
+  "@pickerDone": {},
+
+  "archivePact": "Архивировать",
+  "@archivePact": {},
+  "unarchivePact": "Разархивировать",
+  "@unarchivePact": {},
+  "filterArchived": "Архив",
+  "@filterArchived": {},
+  "showArchivedPacts": "Показать архивные пакты ({count})",
+  "@showArchivedPacts": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactsArchivedParenthetical": "(ещё {count} в архиве)",
+  "@pactsArchivedParenthetical": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pactsAllArchived": "(все в архиве)",
+  "@pactsAllArchived": {}
 }
