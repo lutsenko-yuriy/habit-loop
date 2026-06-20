@@ -216,9 +216,11 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Archive / Unarchive button for completed and stopped pacts
+        // Archive section for completed and stopped pacts
         if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          SectionHeader(title: l10n.sectionArchive, labelColor: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(height: 8),
           OutlinedButton(
             key: const Key('archive-pact-button'),
             onPressed: state.isArchiving ? null : () => onArchivePact(!pact.archived),

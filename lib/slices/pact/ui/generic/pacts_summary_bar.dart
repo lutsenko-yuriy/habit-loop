@@ -104,8 +104,6 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       );
 
   Future<void> _navigateToPact(PactListEntry entry) async {
-    _collapse();
-    await Future<void>.delayed(const Duration(milliseconds: 260));
     if (!mounted) return;
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await Navigator.of(context).push(CupertinoPageRoute<void>(
@@ -122,7 +120,6 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       );
       unawaited(ref.read(pactListViewModelProvider.notifier).load());
       ref.read(dashboardRefreshSignalProvider.notifier).update((n) => n + 1);
-      _expand();
     }
   }
 
@@ -420,12 +417,12 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                               if (!state.showArchived) _expandMax();
                                             },
                                             child: Padding(
-                                              padding: const EdgeInsets.fromLTRB(20, 8, 16, 8),
+                                              padding: const EdgeInsets.fromLTRB(20, 14, 16, 8),
                                               child: Row(
                                                 children: [
                                                   Expanded(
                                                     child: Text(
-                                                      l10n.showArchivedPacts(state.archivedCount),
+                                                      l10n.archivedPacts(state.archivedCount),
                                                       style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                                                             color: Theme.of(ctx).colorScheme.primary,
                                                           ),
@@ -447,15 +444,27 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                         ],
                                       ),
                                     ),
-                                  if (archivedEntries.isNotEmpty)
-                                    SliverList.separated(
-                                      itemCount: archivedEntries.length,
-                                      separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
-                                      itemBuilder: (_, i) => _PactTile(
-                                        entry: archivedEntries[i],
-                                        onTap: () => _navigateToPact(archivedEntries[i]),
-                                      ),
+                                  SliverToBoxAdapter(
+                                    child: AnimatedSize(
+                                      duration: const Duration(milliseconds: 250),
+                                      curve: Curves.easeInOut,
+                                      alignment: Alignment.topCenter,
+                                      child: archivedEntries.isEmpty
+                                          ? const SizedBox.shrink()
+                                          : Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                for (int i = 0; i < archivedEntries.length; i++) ...[
+                                                  if (i > 0) const Divider(height: 1, indent: 16),
+                                                  _PactTile(
+                                                    entry: archivedEntries[i],
+                                                    onTap: () => _navigateToPact(archivedEntries[i]),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
                                     ),
+                                  ),
                                   SliverToBoxAdapter(
                                     child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
                                   ),

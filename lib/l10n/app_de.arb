@@ -87,6 +87,7 @@
   "sectionStats": "Statistiken",
   "sectionTimeline": "Zeitleiste",
   "sectionStopReason": "Stoppgrund",
+  "sectionArchive": "Archiv",
   "stopPactError": "Pakt konnte nicht gestoppt werden. Bitte erneut versuchen.",
   "statsDone": "Erledigt",
   "statsFailed": "Verpasst",
@@ -299,8 +300,8 @@
   "@unarchivePact": {},
   "filterArchived": "Archiviert",
   "@filterArchived": {},
-  "showArchivedPacts": "Archivierte Pakte anzeigen ({count})",
-  "@showArchivedPacts": {
+  "archivedPacts": "Archivierte Pakte ({count})",
+  "@archivedPacts": {
     "placeholders": {
       "count": { "type": "int" }
     }
