@@ -10,7 +10,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
-Pact _pact(String id, PactStatus status, {DateTime? endDate}) => Pact(
+Pact _pact(String id, PactStatus status, {DateTime? endDate, bool archived = false}) => Pact(
       id: id,
       habitName: 'Habit $id',
       startDate: DateTime(2026, 1, 1),
@@ -18,6 +18,7 @@ Pact _pact(String id, PactStatus status, {DateTime? endDate}) => Pact(
       showupDuration: const Duration(minutes: 15),
       schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
       status: status,
+      archived: archived,
     );
 
 Showup _showup(String id, String pactId, DateTime scheduledAt, {ShowupStatus status = ShowupStatus.pending}) => Showup(
@@ -196,6 +197,67 @@ void main() {
       final filtered = c.read(pactListViewModelProvider).filteredEntries;
       expect(filtered.length, 1);
       expect(filtered.first.pact.id, 'a1');
+    });
+
+    test('archivedCount: counts archived entries', () async {
+      final c = _makeContainer(pacts: [
+        _pact('a1', PactStatus.active),
+        _pact('c1', PactStatus.completed, archived: true),
+        _pact('s1', PactStatus.stopped, archived: true),
+        _pact('c2', PactStatus.completed),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      expect(c.read(pactListViewModelProvider).archivedCount, 2);
+    });
+
+    test('filteredEntries excludes archived when showArchived is false', () async {
+      final c = _makeContainer(pacts: [
+        _pact('c1', PactStatus.completed),
+        _pact('c2', PactStatus.completed, archived: true),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final filtered = c.read(pactListViewModelProvider).filteredEntries;
+      expect(filtered.length, 1);
+      expect(filtered.first.pact.id, 'c1');
+    });
+
+    test('filteredEntries includes archived when showArchived is true', () async {
+      final c = _makeContainer(pacts: [
+        _pact('c1', PactStatus.completed),
+        _pact('c2', PactStatus.completed, archived: true),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      c.read(pactListViewModelProvider.notifier).toggleArchived();
+      final filtered = c.read(pactListViewModelProvider).filteredEntries;
+      expect(filtered.length, 2);
+    });
+
+    test('toggleArchived toggles showArchived flag', () {
+      final c = _makeContainer();
+      addTearDown(c.dispose);
+      expect(c.read(pactListViewModelProvider).showArchived, false);
+      c.read(pactListViewModelProvider.notifier).toggleArchived();
+      expect(c.read(pactListViewModelProvider).showArchived, true);
+      c.read(pactListViewModelProvider.notifier).toggleArchived();
+      expect(c.read(pactListViewModelProvider).showArchived, false);
+    });
+
+    test('sort: active → unarchived-completed → unarchived-stopped → archived-completed → archived-stopped', () async {
+      final c = _makeContainer(pacts: [
+        _pact('arch-stopped', PactStatus.stopped, archived: true),
+        _pact('arch-completed', PactStatus.completed, archived: true),
+        _pact('unarch-stopped', PactStatus.stopped),
+        _pact('unarch-completed', PactStatus.completed),
+        _pact('active', PactStatus.active),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      c.read(pactListViewModelProvider.notifier).toggleArchived();
+      final ids = c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toList();
+      expect(ids, ['active', 'unarch-completed', 'unarch-stopped', 'arch-completed', 'arch-stopped']);
     });
 
     test('concurrent load() calls: only one runs at a time', () async {

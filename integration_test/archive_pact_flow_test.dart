@@ -96,6 +96,9 @@ final _activeShowup = Showup(
 
 Future<void> _openPactsPanel(WidgetTester tester) async {
   await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
+  // Bare pump flushes the tap handler synchronously before the 400 ms animation
+  // clock starts — without this the panel may still be collapsed on entry.
+  await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
 }
 
@@ -178,15 +181,32 @@ void main() {
       // ── 1. Enable Show archived pacts to make the pact visible ────────────
       await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
-      await tester.pump(const Duration(milliseconds: 200));
+      // Allow AnimatedSize (250 ms) + DraggableScrollableSheet _expandMax (300 ms) to finish.
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Scroll the archived tile into view in case it extends below the panel.
+      await waitFor(tester, find.text('Yoga'));
+      await tester.ensureVisible(find.text('Yoga').last);
+      await tester.pump();
 
       await _openPactDetail(tester, 'Yoga');
 
-      // ── 2. Unarchive button is visible ────────────────────────────────────
+      // ── 2. Confirm we reached the pact detail screen ──────────────────────
+      await waitFor(tester, find.text(strings.pactDetailTitle));
+      // Wait for load() to complete — habit name appears at the top of the content.
+      await waitFor(tester, find.text('Yoga'));
+
+      // ── 3. Unarchive button is visible ────────────────────────────────────
+      // The stopped-pact detail has extra content (stopped date row + note section)
+      // that pushes the archive button below the initial viewport. Drag the habit
+      // name upward to scroll the detail ListView until the button is built.
+      await tester.drag(find.text('Yoga').last, const Offset(0, -300));
+      await tester.pump(const Duration(milliseconds: 100));
+
       await waitFor(tester, find.byKey(const Key('archive-pact-button')));
       expect(find.text(strings.unarchivePact), findsOneWidget);
 
-      // ── 3. Tap Unarchive ──────────────────────────────────────────────────
+      // ── 4. Tap Unarchive ─────────────────────────────────────────────────
       await tester.tap(find.byKey(const Key('archive-pact-button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
@@ -255,11 +275,15 @@ void main() {
       await _openPactDetail(tester, 'Evening Walk');
       await waitFor(tester, find.byKey(const Key('archive-pact-button')));
       await tester.tap(find.byKey(const Key('archive-pact-button')));
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       // ── 3. Navigate back to pacts panel ───────────────────────────────────
+      // pumpAndSettle drains AnimatedSize animation before pageBack() tries to
+      // hit-test the back button.
+      await tester.pumpAndSettle(const Duration(milliseconds: 50));
       await tester.pageBack();
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 500));
 
       // ── 4. Archived chip row now visible (N_A = 1) ────────────────────────
       await waitFor(tester, find.byKey(const Key('archive-filter-chip')));
@@ -290,55 +314,12 @@ void main() {
       expect(find.text('Cycling'), findsOneWidget);
 
       // ── 3. Show-archived row is also toggled on ────────────────────────────
-      expect(find.text(strings.showArchivedPacts(1)), findsOneWidget);
+      expect(find.text(strings.archivedPacts(1)), findsOneWidget);
 
       // ── 4. Tap show row → archived pact disappears; chip deselected ───────
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Cycling'), findsNothing);
-    });
-
-    testWidgets('swipe_to_archive_pact: swipe-left reveals Archive; tapping archives pact with correct analytics',
-        (tester) async {
-      h = await AppHarness.create(
-        tester,
-        extraOverrides: [
-          todayProvider.overrideWithValue(_testNow),
-        ],
-        beforePump: (h) async {
-          await h.pactRepo.savePact(_stoppedPact);
-        },
-      );
-
-      final strings = l10n(tester);
-
-      await _openPactsPanel(tester);
-      await waitFor(tester, find.text('Morning Run'));
-
-      // ── 1. Swipe left on the pact tile ────────────────────────────────────
-      await tester.drag(find.text('Morning Run'), const Offset(-150, 0));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // ── 2. Archive action button is revealed ──────────────────────────────
-      await waitFor(tester, find.byKey(const Key('swipe-archive-button')));
-      expect(find.text(strings.archivePact), findsOneWidget);
-
-      // ── 3. Tap Archive ────────────────────────────────────────────────────
-      await tester.tap(find.byKey(const Key('swipe-archive-button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-
-      // ── 4. Pact is archived in repository ─────────────────────────────────
-      final saved = await h.pactRepo.getPactById(_stoppedPact.id);
-      expect(saved?.archived, isTrue);
-
-      // ── 5. pact_archived event with source: pact_list_swipe ───────────────
-      expect(
-        h.analytics.loggedEvents.any(
-          (e) => e.name == 'pact_archived' && e.toParameters()['source'] == 'pact_list_swipe',
-        ),
-        isTrue,
-      );
     });
 
     testWidgets('sort_order_with_archived_pacts: active→unarch-done→unarch-stopped→arch-done→arch-stopped',
@@ -359,11 +340,23 @@ void main() {
       );
 
       await _openPactsPanel(tester);
+      // Fling the drag handle upward so the panel snaps to maxSize, making all
+      // 3 unarchived pacts + the toggle row visible before we tap.
+      await tester.fling(
+        find.byKey(const Key('pacts-panel-drag-handle')),
+        const Offset(0, -300),
+        800,
+      );
+      await tester.pump(const Duration(milliseconds: 400));
 
       // ── Enable Show archived pacts ─────────────────────────────────────────
+      await waitFor(tester, find.text('Evening Walk'));
       await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
+      // Scroll the toggle row into view in case items overflow the panel height.
+      await tester.ensureVisible(find.byKey(const Key('show-archived-pacts-row')));
+      await tester.pump();
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 400));
 
       await waitFor(tester, find.text('Yoga'));
 

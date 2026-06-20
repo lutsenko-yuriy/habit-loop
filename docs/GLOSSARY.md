@@ -40,6 +40,8 @@ When you find a different word used for the same concept, look it up in **[Known
 | **Auto-fail** | Automatic transition of a `pending` showup to `failed` once its window has passed. Triggers: dashboard load sweep, opening showup detail late, and gap-fill. |
 | **Gap-fill** | When the app is reopened after a long absence, the showups that fell in the gap are generated and immediately auto-failed so history and stats stay accurate. |
 | **Stop (a pact)** | The user ends an active pact early, with explicit confirmation and an optional explanation (the *stop reason*). Records `stoppedAt`. Distinct from *complete*. |
+| **Archive (a pact)** | The user tucks a completed or stopped pact into long-term storage, removing it from the default pact list without deleting it. A display-only flag — no effect on stats, reminders, or sync logic. Only completed and stopped pacts are eligible. |
+| **Unarchive (a pact)** | The user brings an archived pact back into the default list view, making it visible again without requiring the Archived filter. The pact's history and stats are unchanged throughout. |
 | **Showup generation** | Deterministic creation of showups from a pact's schedule. Generated lazily in a rolling **generation window** ahead of today, not all upfront. |
 | **Commitment confirmation** | The gate shown before a pact is created, making the "no exceptions, no pausing" commitment explicit. Variant under EXP-003 (`button` / `checkbox` / `retype`). |
 

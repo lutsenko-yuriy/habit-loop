@@ -87,6 +87,7 @@
   "sectionStats": "Статистика",
   "sectionTimeline": "Хронология",
   "sectionStopReason": "Причина остановки",
+  "sectionArchive": "Архив",
   "stopPactError": "Не удалось остановить пакт. Попробуйте ещё раз.",
   "statsDone": "Выполнено",
   "statsFailed": "Пропущено",
@@ -299,8 +300,8 @@
   "@unarchivePact": {},
   "filterArchived": "Архив",
   "@filterArchived": {},
-  "showArchivedPacts": "Показать архивные пакты ({count})",
-  "@showArchivedPacts": {
+  "archivedPacts": "Архивные пакты ({count})",
+  "@archivedPacts": {
     "placeholders": {
       "count": { "type": "int" }
     }

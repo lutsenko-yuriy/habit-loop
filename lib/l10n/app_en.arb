@@ -87,6 +87,7 @@
   "sectionStats": "Stats",
   "sectionTimeline": "Timeline",
   "sectionStopReason": "Stop reason",
+  "sectionArchive": "Archive",
   "stopPactError": "Failed to stop pact. Please try again.",
   "statsDone": "Done",
   "statsFailed": "Failed",
@@ -300,8 +301,8 @@
   "@unarchivePact": {},
   "filterArchived": "Archived",
   "@filterArchived": {},
-  "showArchivedPacts": "Show archived pacts ({count})",
-  "@showArchivedPacts": {
+  "archivedPacts": "Archived pacts ({count})",
+  "@archivedPacts": {
     "placeholders": {
       "count": { "type": "int" }
     }

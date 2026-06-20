@@ -91,6 +91,12 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
         curve: Curves.easeOut,
       );
 
+  void _expandMax() => _controller.animateTo(
+        _computedMaxSize,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+
   void _collapse() => _controller.animateTo(
         _computedMinSize,
         duration: const Duration(milliseconds: 250),
@@ -98,8 +104,6 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       );
 
   Future<void> _navigateToPact(PactListEntry entry) async {
-    _collapse();
-    await Future<void>.delayed(const Duration(milliseconds: 260));
     if (!mounted) return;
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await Navigator.of(context).push(CupertinoPageRoute<void>(
@@ -136,17 +140,33 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     final state = ref.watch(pactListViewModelProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0) {
+    if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0 && state.archivedCount == 0) {
       return const SizedBox.shrink();
+    }
+
+    String archivedNote(String base, int total, int archived) {
+      if (archived == 0) return base;
+      if (archived == total) return '$base ${l10n.pactsAllArchived}';
+      return '$base ${l10n.pactsArchivedParenthetical(archived)}';
     }
 
     final summaryLines = [
       l10n.pactsActive(state.activeCount),
-      l10n.pactsDone(state.doneCount),
-      l10n.pactsCancelled(state.cancelledCount),
+      archivedNote(
+        l10n.pactsDone(state.doneCount - state.archivedDoneCount),
+        state.doneCount,
+        state.archivedDoneCount,
+      ),
+      archivedNote(
+        l10n.pactsCancelled(state.cancelledCount - state.archivedCancelledCount),
+        state.cancelledCount,
+        state.archivedCancelledCount,
+      ),
     ].join('\n');
 
-    final entries = state.filteredEntries;
+    final unarchivedEntries = state.filteredEntries.where((e) => !e.pact.archived).toList();
+    final archivedEntries = state.filteredEntries.where((e) => e.pact.archived).toList();
+    final allEmpty = unarchivedEntries.isEmpty && archivedEntries.isEmpty && state.archivedCount == 0;
 
     return LayoutBuilder(
       builder: (context, outerConstraints) {
@@ -332,12 +352,34 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                               .read(pactListViewModelProvider.notifier)
                                               .toggleFilter(PactStatus.stopped),
                                         ),
+                                        // Archived chip animates in when first archived pact exists.
+                                        AnimatedSize(
+                                          duration: const Duration(milliseconds: 250),
+                                          curve: Curves.easeInOut,
+                                          child: state.archivedCount > 0
+                                              ? Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const SizedBox(width: 8),
+                                                    FilterChip(
+                                                      key: const Key('archive-filter-chip'),
+                                                      label: Text(l10n.filterArchived),
+                                                      selected: state.showArchived,
+                                                      onSelected: (_) {
+                                                        ref.read(pactListViewModelProvider.notifier).toggleArchived();
+                                                        if (!state.showArchived) _expandMax();
+                                                      },
+                                                    ),
+                                                  ],
+                                                )
+                                              : const SizedBox.shrink(),
+                                        ),
                                       ],
                                     ),
                                   ),
                                 ),
 
-                                // ── Pact list ──
+                                // ── Pact list body ──
                                 if (state.isLoading)
                                   SliverFillRemaining(
                                     child: Padding(
@@ -345,28 +387,88 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                       child: const Center(child: CircularProgressIndicator()),
                                     ),
                                   )
-                                else if (entries.isEmpty)
+                                else if (allEmpty)
                                   SliverFillRemaining(
                                     child: Padding(
                                       padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
                                       child: Center(child: Text(l10n.noPactsYet)),
                                     ),
                                   )
-                                else
-                                  SliverList.separated(
-                                    itemCount: entries.length,
-                                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
-                                    itemBuilder: (context, index) {
-                                      final entry = entries[index];
-                                      return _PactTile(
-                                        entry: entry,
-                                        onTap: () => _navigateToPact(entry),
-                                      );
-                                    },
+                                else ...[
+                                  if (unarchivedEntries.isNotEmpty)
+                                    SliverList.separated(
+                                      itemCount: unarchivedEntries.length,
+                                      separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
+                                      itemBuilder: (_, i) => _PactTile(
+                                        entry: unarchivedEntries[i],
+                                        onTap: () => _navigateToPact(unarchivedEntries[i]),
+                                      ),
+                                    ),
+                                  if (state.archivedCount > 0)
+                                    SliverToBoxAdapter(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (unarchivedEntries.isNotEmpty) const Divider(height: 1, indent: 16),
+                                          InkWell(
+                                            key: const Key('show-archived-pacts-row'),
+                                            onTap: () {
+                                              ref.read(pactListViewModelProvider.notifier).toggleArchived();
+                                              if (!state.showArchived) _expandMax();
+                                            },
+                                            child: Padding(
+                                              padding: const EdgeInsets.fromLTRB(20, 14, 16, 8),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      l10n.archivedPacts(state.archivedCount),
+                                                      style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                                                            color: Theme.of(ctx).colorScheme.primary,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  AnimatedRotation(
+                                                    turns: state.showArchived ? 0.5 : 0.0,
+                                                    duration: const Duration(milliseconds: 250),
+                                                    child: Icon(
+                                                      Icons.keyboard_arrow_down,
+                                                      size: 18,
+                                                      color: Theme.of(ctx).colorScheme.primary,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  SliverToBoxAdapter(
+                                    child: AnimatedSize(
+                                      duration: const Duration(milliseconds: 250),
+                                      curve: Curves.easeInOut,
+                                      alignment: Alignment.topCenter,
+                                      child: archivedEntries.isEmpty
+                                          ? const SizedBox.shrink()
+                                          : Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                for (int i = 0; i < archivedEntries.length; i++) ...[
+                                                  if (i > 0) const Divider(height: 1, indent: 16),
+                                                  _PactTile(
+                                                    entry: archivedEntries[i],
+                                                    onTap: () => _navigateToPact(archivedEntries[i]),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                    ),
                                   ),
-                                SliverToBoxAdapter(
-                                  child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
-                                ),
+                                  SliverToBoxAdapter(
+                                    child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

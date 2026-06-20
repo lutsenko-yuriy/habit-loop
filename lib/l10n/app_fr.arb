@@ -87,6 +87,7 @@
   "sectionStats": "Statistiques",
   "sectionTimeline": "Chronologie",
   "sectionStopReason": "Raison de l'arrêt",
+  "sectionArchive": "Archivage",
   "stopPactError": "Impossible d'arrêter le pacte. Veuillez réessayer.",
   "statsDone": "Réalisés",
   "statsFailed": "Échoués",
@@ -299,8 +300,8 @@
   "@unarchivePact": {},
   "filterArchived": "Archivés",
   "@filterArchived": {},
-  "showArchivedPacts": "Afficher les pactes archivés ({count})",
-  "@showArchivedPacts": {
+  "archivedPacts": "Pactes archivés ({count})",
+  "@archivedPacts": {
     "placeholders": {
       "count": { "type": "int" }
     }

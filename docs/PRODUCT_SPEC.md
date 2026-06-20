@@ -32,6 +32,11 @@ The Habit Loop app allows the user to:
   - The user can still see the details of the pact even when he stopped the pact or the time of the pact is passed by
   - On a finished (completed or stopped) pact the user can write or edit a free-form note; the note is pre-populated with the stop reason if one was given
   - The pact detail screen shows showup duration and reminder offset in the Timeline section
+  - The user can archive or unarchive a finished (completed or stopped) pact via a button on the pact detail screen; no confirmation is required
+    - Archived pacts are hidden from the pact list by default
+    - An "Archived pacts (N)" row and an Archived chip appear in the pact list when at least one pact is archived; both are hidden when none are archived; the chip row is animated (AnimatedSize + FadeTransition)
+    - The Archived chip and the "Archived pacts (N)" row stay in sync — toggling one toggles the other
+    - Sort order in the pact list: active → unarchived completed → unarchived stopped → archived completed → archived stopped
 - See the details of a specific showup
   - The user must see the time of the showup
   - The user must see the habit in this showup
