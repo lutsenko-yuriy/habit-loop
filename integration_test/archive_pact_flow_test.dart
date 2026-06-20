@@ -314,8 +314,6 @@ void main() {
         },
       );
 
-      final strings = l10n(tester);
-
       await _openPactsPanel(tester);
       await waitFor(tester, find.text('Morning Run'));
 
@@ -323,9 +321,8 @@ void main() {
       await tester.drag(find.text('Morning Run'), const Offset(-150, 0));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // ── 2. Archive action button is revealed ──────────────────────────────
+      // ── 2. Archive action button is revealed (icon, no text label) ──────
       await waitFor(tester, find.byKey(const Key('swipe-archive-button')));
-      expect(find.text(strings.archivePact), findsOneWidget);
 
       // ── 3. Tap Archive ────────────────────────────────────────────────────
       await tester.tap(find.byKey(const Key('swipe-archive-button')));
@@ -364,10 +361,11 @@ void main() {
 
       await _openPactsPanel(tester);
 
-      // ── Enable Show archived pacts ─────────────────────────────────────────
+      // ── Enable Show archived pacts (panel auto-expands to show all items) ─
       await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
-      await tester.pump(const Duration(milliseconds: 300));
+      // Allow time for toggleArchived + _expandMax animation (300 ms each).
+      await tester.pump(const Duration(milliseconds: 400));
 
       await waitFor(tester, find.text('Yoga'));
 

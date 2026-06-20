@@ -40,6 +40,7 @@ class PactDetailPageAndroid extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         title: Text(l10n.pactDetailTitle),
         actions: [
           if (_isActive && onEditPact != null)

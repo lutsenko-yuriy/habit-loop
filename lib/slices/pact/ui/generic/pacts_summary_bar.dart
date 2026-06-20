@@ -91,6 +91,12 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
         curve: Curves.easeOut,
       );
 
+  void _expandMax() => _controller.animateTo(
+        _computedMaxSize,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+
   void _collapse() => _controller.animateTo(
         _computedMinSize,
         duration: const Duration(milliseconds: 250),
@@ -116,6 +122,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       );
       unawaited(ref.read(pactListViewModelProvider.notifier).load());
       ref.read(dashboardRefreshSignalProvider.notifier).update((n) => n + 1);
+      _expand();
     }
   }
 
@@ -146,7 +153,9 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       l10n.pactsCancelled(state.cancelledCount),
     ].join('\n');
 
-    final entries = state.filteredEntries;
+    final allFiltered = state.filteredEntries;
+    final unarchivedEntries = allFiltered.where((e) => !e.pact.archived).toList();
+    final archivedEntries = allFiltered.where((e) => e.pact.archived).toList();
 
     return LayoutBuilder(
       builder: (context, outerConstraints) {
@@ -332,40 +341,34 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                               .read(pactListViewModelProvider.notifier)
                                               .toggleFilter(PactStatus.stopped),
                                         ),
-                                        if (state.archivedCount > 0) ...[
-                                          const SizedBox(width: 8),
-                                          FilterChip(
-                                            key: const Key('archive-filter-chip'),
-                                            label: Text(l10n.filterArchived),
-                                            selected: state.showArchived,
-                                            onSelected: (_) =>
-                                                ref.read(pactListViewModelProvider.notifier).toggleArchived(),
-                                          ),
-                                        ],
+                                        // Archived chip animates in when first archived pact exists.
+                                        AnimatedSize(
+                                          duration: const Duration(milliseconds: 250),
+                                          curve: Curves.easeInOut,
+                                          child: state.archivedCount > 0
+                                              ? Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const SizedBox(width: 8),
+                                                    FilterChip(
+                                                      key: const Key('archive-filter-chip'),
+                                                      label: Text(l10n.filterArchived),
+                                                      selected: state.showArchived,
+                                                      onSelected: (_) {
+                                                        ref.read(pactListViewModelProvider.notifier).toggleArchived();
+                                                        if (!state.showArchived) _expandMax();
+                                                      },
+                                                    ),
+                                                  ],
+                                                )
+                                              : const SizedBox.shrink(),
+                                        ),
                                       ],
                                     ),
                                   ),
                                 ),
 
-                                // ── Show-archived row ──
-                                if (state.archivedCount > 0)
-                                  SliverToBoxAdapter(
-                                    child: InkWell(
-                                      key: const Key('show-archived-pacts-row'),
-                                      onTap: () => ref.read(pactListViewModelProvider.notifier).toggleArchived(),
-                                      child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-                                        child: Text(
-                                          l10n.showArchivedPacts(state.archivedCount),
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                color: Theme.of(context).colorScheme.primary,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-
-                                // ── Pact list ──
+                                // ── Unarchived pact list ──
                                 if (state.isLoading)
                                   SliverFillRemaining(
                                     child: Padding(
@@ -373,19 +376,19 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                       child: const Center(child: CircularProgressIndicator()),
                                     ),
                                   )
-                                else if (entries.isEmpty)
+                                else if (unarchivedEntries.isEmpty && state.archivedCount == 0)
                                   SliverFillRemaining(
                                     child: Padding(
                                       padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
                                       child: Center(child: Text(l10n.noPactsYet)),
                                     ),
                                   )
-                                else
+                                else if (unarchivedEntries.isNotEmpty)
                                   SliverList.separated(
-                                    itemCount: entries.length,
+                                    itemCount: unarchivedEntries.length,
                                     separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
                                     itemBuilder: (context, index) {
-                                      final entry = entries[index];
+                                      final entry = unarchivedEntries[index];
                                       if (entry.pact.status == PactStatus.active) {
                                         return _PactTile(
                                           entry: entry,
@@ -401,6 +404,79 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                       );
                                     },
                                   ),
+
+                                // ── Show-archived toggle row (between sections) ──
+                                if (!state.isLoading && state.archivedCount > 0)
+                                  SliverToBoxAdapter(
+                                    child: InkWell(
+                                      key: const Key('show-archived-pacts-row'),
+                                      onTap: () {
+                                        ref.read(pactListViewModelProvider.notifier).toggleArchived();
+                                        if (!state.showArchived) _expandMax();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(20, 8, 16, 8),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                l10n.showArchivedPacts(state.archivedCount),
+                                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                      color: Theme.of(context).colorScheme.primary,
+                                                    ),
+                                              ),
+                                            ),
+                                            AnimatedRotation(
+                                              turns: state.showArchived ? 0.5 : 0.0,
+                                              duration: const Duration(milliseconds: 250),
+                                              child: Icon(
+                                                Icons.keyboard_arrow_down,
+                                                size: 18,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                // ── Archived pact section (animated in/out) ──
+                                if (!state.isLoading && state.archivedCount > 0)
+                                  SliverToBoxAdapter(
+                                    child: AnimatedSize(
+                                      duration: const Duration(milliseconds: 250),
+                                      curve: Curves.easeInOut,
+                                      child: AnimatedSwitcher(
+                                        duration: const Duration(milliseconds: 250),
+                                        child: archivedEntries.isEmpty
+                                            ? const SizedBox.shrink(key: ValueKey(false))
+                                            : Column(
+                                                key: const ValueKey(true),
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: archivedEntries
+                                                    .map(
+                                                      (entry) => Column(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          const Divider(height: 1, indent: 16),
+                                                          _SwipeablePactTile(
+                                                            key: ValueKey(entry.pact.id),
+                                                            entry: entry,
+                                                            onTap: () => _navigateToPact(entry),
+                                                            onArchive: (pactId, archive) => ref
+                                                                .read(pactListViewModelProvider.notifier)
+                                                                .archivePact(pactId, archive),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    )
+                                                    .toList(),
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+
                                 SliverToBoxAdapter(
                                   child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
                                 ),
@@ -439,21 +515,20 @@ class _SwipeablePactTile extends StatefulWidget {
 
 class _SwipeablePactTileState extends State<_SwipeablePactTile> {
   double _offset = 0.0;
-  static const double _actionWidth = 88.0;
-  static const double _threshold = 44.0;
+  static const double _actionWidth = 72.0;
+  static const double _threshold = 36.0;
 
   void _settle(bool reveal) => setState(() => _offset = reveal ? -_actionWidth : 0.0);
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final pact = widget.entry.pact;
     final cs = Theme.of(context).colorScheme;
 
     return ClipRect(
       child: Stack(
         children: [
-          // Archive action button (beneath tile)
+          // Archive action (beneath tile, revealed on swipe)
           Positioned.fill(
             child: Align(
               alignment: Alignment.centerRight,
@@ -462,16 +537,17 @@ class _SwipeablePactTileState extends State<_SwipeablePactTile> {
                 child: ColoredBox(
                   color: cs.primaryContainer,
                   child: Center(
-                    child: TextButton(
+                    child: IconButton(
                       key: const Key('swipe-archive-button'),
                       onPressed: () async {
                         await widget.onArchive(pact.id, !pact.archived);
                         if (mounted) setState(() => _offset = 0.0);
                       },
-                      child: Text(
-                        pact.archived ? l10n.unarchivePact : l10n.archivePact,
-                        style: TextStyle(color: cs.onPrimaryContainer),
+                      icon: Icon(
+                        pact.archived ? Icons.unarchive_outlined : Icons.archive_outlined,
+                        color: cs.onPrimaryContainer,
                       ),
+                      tooltip: null,
                     ),
                   ),
                 ),
