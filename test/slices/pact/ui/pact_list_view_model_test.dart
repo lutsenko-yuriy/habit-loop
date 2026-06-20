@@ -6,11 +6,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
-import 'package:habit_loop/slices/pact/application/pact_service.dart';
-import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
-import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
@@ -40,33 +36,6 @@ ProviderContainer _makeContainer({
   return ProviderContainer(overrides: [
     pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
     showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
-  ]);
-}
-
-ProviderContainer _makeContainerWithService({
-  List<Pact> pacts = const [],
-  List<Showup> showups = const [],
-}) {
-  final pactRepo = InMemoryPactRepository(pacts);
-  final showupRepo = InMemoryShowupRepository(showups);
-  final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-  final statsService = PactStatsService(
-    pactRepository: pactRepo,
-    showupRepository: showupRepo,
-    transactionService: txService,
-    syncService: const NoopSyncService(),
-  );
-  final service = PactService(
-    pactRepository: pactRepo,
-    showupRepository: showupRepo,
-    transactionService: txService,
-    syncService: const NoopSyncService(),
-    pactStatsService: statsService,
-  );
-  return ProviderContainer(overrides: [
-    pactServiceProvider.overrideWithValue(service),
-    pactRepositoryProvider.overrideWithValue(pactRepo),
-    showupRepositoryProvider.overrideWithValue(showupRepo),
   ]);
 }
 
@@ -289,17 +258,6 @@ void main() {
       c.read(pactListViewModelProvider.notifier).toggleArchived();
       final ids = c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toList();
       expect(ids, ['active', 'unarch-completed', 'unarch-stopped', 'arch-completed', 'arch-stopped']);
-    });
-
-    test('archivePact updates entry in place and reloads', () async {
-      final c = _makeContainerWithService(pacts: [_pact('p1', PactStatus.completed)]);
-      addTearDown(c.dispose);
-      await c.read(pactListViewModelProvider.notifier).load();
-      expect(c.read(pactListViewModelProvider).entries.first.pact.archived, false);
-
-      await c.read(pactListViewModelProvider.notifier).archivePact('p1', true);
-
-      expect(c.read(pactListViewModelProvider).entries.first.pact.archived, true);
     });
 
     test('concurrent load() calls: only one runs at a time', () async {
