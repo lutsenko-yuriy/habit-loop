@@ -393,6 +393,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                         );
                                       }
                                       return _SwipeablePactTile(
+                                        key: ValueKey(entry.pact.id),
                                         entry: entry,
                                         onTap: () => _navigateToPact(entry),
                                         onArchive: (pactId, archive) =>
@@ -426,6 +427,7 @@ class _SwipeablePactTile extends StatefulWidget {
   final Future<void> Function(String pactId, bool archive) onArchive;
 
   const _SwipeablePactTile({
+    super.key,
     required this.entry,
     required this.onTap,
     required this.onArchive,
