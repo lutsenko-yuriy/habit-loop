@@ -186,7 +186,11 @@ void main() {
       await waitFor(tester, find.byKey(const Key('archive-pact-button')));
       expect(find.text(strings.unarchivePact), findsOneWidget);
 
-      // ── 3. Tap Unarchive ──────────────────────────────────────────────────
+      // ── 3. Scroll to and tap Unarchive ───────────────────────────────────
+      // The stopped-pact detail has an extra "Stopped on" row which pushes the
+      // archive button below the test viewport; ensureVisible scrolls it into view.
+      await tester.ensureVisible(find.byKey(const Key('archive-pact-button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('archive-pact-button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
