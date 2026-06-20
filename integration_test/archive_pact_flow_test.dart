@@ -181,19 +181,32 @@ void main() {
       // ── 1. Enable Show archived pacts to make the pact visible ────────────
       await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
-      await tester.pump(const Duration(milliseconds: 200));
+      // Allow AnimatedSize (250 ms) + DraggableScrollableSheet _expandMax (300 ms) to finish.
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Scroll the archived tile into view in case it extends below the panel.
+      await waitFor(tester, find.text('Yoga'));
+      await tester.ensureVisible(find.text('Yoga').last);
+      await tester.pump();
 
       await _openPactDetail(tester, 'Yoga');
 
-      // ── 2. Unarchive button is visible ────────────────────────────────────
+      // ── 2. Confirm we reached the pact detail screen ──────────────────────
+      await waitFor(tester, find.text(strings.pactDetailTitle));
+      // Wait for load() to complete — habit name appears at the top of the content.
+      await waitFor(tester, find.text('Yoga'));
+
+      // ── 3. Unarchive button is visible ────────────────────────────────────
+      // The stopped-pact detail has extra content (stopped date row + note section)
+      // that pushes the archive button below the initial viewport. Drag the habit
+      // name upward to scroll the detail ListView until the button is built.
+      await tester.drag(find.text('Yoga').last, const Offset(0, -300));
+      await tester.pump(const Duration(milliseconds: 100));
+
       await waitFor(tester, find.byKey(const Key('archive-pact-button')));
       expect(find.text(strings.unarchivePact), findsOneWidget);
 
-      // ── 3. Scroll to and tap Unarchive ───────────────────────────────────
-      // The stopped-pact detail has an extra "Stopped on" row which pushes the
-      // archive button below the test viewport; ensureVisible scrolls it into view.
-      await tester.ensureVisible(find.byKey(const Key('archive-pact-button')));
-      await tester.pumpAndSettle();
+      // ── 4. Tap Unarchive ─────────────────────────────────────────────────
       await tester.tap(find.byKey(const Key('archive-pact-button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
@@ -301,7 +314,7 @@ void main() {
       expect(find.text('Cycling'), findsOneWidget);
 
       // ── 3. Show-archived row is also toggled on ────────────────────────────
-      expect(find.text(strings.showArchivedPacts(1)), findsOneWidget);
+      expect(find.text(strings.archivedPacts(1)), findsOneWidget);
 
       // ── 4. Tap show row → archived pact disappears; chip deselected ───────
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
