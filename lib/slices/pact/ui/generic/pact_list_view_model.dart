@@ -84,16 +84,46 @@ class PactListViewModel extends Notifier<PactListState> {
 
   Future<void> archivePact(String pactId, bool archived, {String source = 'pact_list_swipe'}) async {
     final entry = state.entries.where((e) => e.pact.id == pactId).firstOrNull;
-    await ref.read(pactServiceProvider).archivePact(pactId, archived);
-    if (entry != null) {
+    if (entry == null) return;
+
+    // Optimistic update — reflect the change in the UI immediately.
+    final optimistic = _withArchived(state, pactId, archived);
+    state = optimistic;
+
+    try {
+      await ref.read(pactServiceProvider).archivePact(pactId, archived);
       final statusStr = entry.pact.status == PactStatus.completed ? 'completed' : 'stopped';
       unawaited(ref.read(analyticsServiceProvider).logEvent(
             archived
                 ? PactArchivedEvent(pactId: pactId, pactStatus: statusStr, source: source)
                 : PactUnarchivedEvent(pactId: pactId, pactStatus: statusStr, source: source),
           ));
+    } catch (_) {
+      // Revert to the pre-optimistic state on failure.
+      state = _withArchived(optimistic, pactId, !archived);
     }
-    await load();
+  }
+
+  /// Returns a copy of [base] with the pact [pactId] marked [archived],
+  /// re-sorted, and with [showArchived] set to true when archiving so the pact
+  /// moves into the visible archived section immediately.
+  PactListState _withArchived(PactListState base, String pactId, bool archived) {
+    final updated = base.entries.map((e) {
+      if (e.pact.id != pactId) return e;
+      return PactListEntry(pact: e.pact.copyWith(archived: archived), nextShowupAt: e.nextShowupAt);
+    }).toList()
+      ..sort((a, b) {
+        final cmp = _sortOrder(a.pact.archived, a.pact.status).compareTo(_sortOrder(b.pact.archived, b.pact.status));
+        if (cmp != 0) return cmp;
+        if (a.pact.status == PactStatus.active) {
+          return (a.nextShowupAt ?? DateTime(9999)).compareTo(b.nextShowupAt ?? DateTime(9999));
+        }
+        return a.pact.endDate.compareTo(b.pact.endDate);
+      });
+    return base.copyWith(
+      entries: updated,
+      showArchived: archived ? true : base.showArchived,
+    );
   }
 
   int _sortOrder(bool isArchived, PactStatus s) => switch ((isArchived, s)) {

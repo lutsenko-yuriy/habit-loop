@@ -284,8 +284,11 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       _items = _buildItemList(state);
       _itemsInitialized = true;
     }
-    // Drive list animations whenever the provider state changes.
-    ref.listen(pactListViewModelProvider, (_, next) => _applyDiff(next));
+    // Drive list animations and panel expansion whenever the provider state changes.
+    ref.listen(pactListViewModelProvider, (prev, next) {
+      _applyDiff(next);
+      if (!(prev?.showArchived ?? false) && next.showArchived) _expandMax();
+    });
 
     final summaryLines = [
       l10n.pactsActive(state.activeCount),
