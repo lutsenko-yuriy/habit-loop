@@ -104,9 +104,9 @@ class PactListViewModel extends Notifier<PactListState> {
     }
   }
 
-  /// Returns a copy of [base] with the pact [pactId] marked [archived],
-  /// re-sorted, and with [showArchived] set to true when archiving so the pact
-  /// moves into the visible archived section immediately.
+  /// Returns a copy of [base] with the pact [pactId] marked [archived] and
+  /// re-sorted. [showArchived] is intentionally left unchanged — the user
+  /// controls section visibility; archiving alone does not expand it.
   PactListState _withArchived(PactListState base, String pactId, bool archived) {
     final updated = base.entries.map((e) {
       if (e.pact.id != pactId) return e;
@@ -120,10 +120,7 @@ class PactListViewModel extends Notifier<PactListState> {
         }
         return a.pact.endDate.compareTo(b.pact.endDate);
       });
-    return base.copyWith(
-      entries: updated,
-      showArchived: archived ? true : base.showArchived,
-    );
+    return base.copyWith(entries: updated);
   }
 
   int _sortOrder(bool isArchived, PactStatus s) => switch ((isArchived, s)) {

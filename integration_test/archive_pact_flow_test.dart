@@ -266,8 +266,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // ── 3. Navigate back to pacts panel ───────────────────────────────────
-      // pumpAndSettle drains background SliverAnimatedList + AnimatedSize
-      // animations before pageBack() tries to hit-test the back button.
+      // pumpAndSettle drains AnimatedSize animation before pageBack() tries to
+      // hit-test the back button.
       await tester.pumpAndSettle(const Duration(milliseconds: 50));
       await tester.pageBack();
       await tester.pump(const Duration(milliseconds: 500));
@@ -309,47 +309,6 @@ void main() {
       expect(find.text('Cycling'), findsNothing);
     });
 
-    testWidgets('swipe_to_archive_pact: swipe-left reveals Archive; tapping archives pact with correct analytics',
-        (tester) async {
-      h = await AppHarness.create(
-        tester,
-        extraOverrides: [
-          todayProvider.overrideWithValue(_testNow),
-        ],
-        beforePump: (h) async {
-          await h.pactRepo.savePact(_stoppedPact);
-        },
-      );
-
-      await _openPactsPanel(tester);
-      await waitFor(tester, find.text('Morning Run'));
-
-      // ── 1. Swipe left on the pact tile ────────────────────────────────────
-      await tester.drag(find.text('Morning Run'), const Offset(-150, 0));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // ── 2. Archive action button is revealed (icon, no text label) ──────
-      await waitFor(tester, find.byKey(const Key('swipe-archive-button')));
-
-      // ── 3. Tap Archive ────────────────────────────────────────────────────
-      // Pump long enough for the DB write + SliverAnimatedList removal (250 ms).
-      await tester.tap(find.byKey(const Key('swipe-archive-button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-
-      // ── 4. Pact is archived in repository ─────────────────────────────────
-      final saved = await h.pactRepo.getPactById(_stoppedPact.id);
-      expect(saved?.archived, isTrue);
-
-      // ── 5. pact_archived event with source: pact_list_swipe ───────────────
-      expect(
-        h.analytics.loggedEvents.any(
-          (e) => e.name == 'pact_archived' && e.toParameters()['source'] == 'pact_list_swipe',
-        ),
-        isTrue,
-      );
-    });
-
     testWidgets('sort_order_with_archived_pacts: active→unarch-done→unarch-stopped→arch-done→arch-stopped',
         (tester) async {
       h = await AppHarness.create(
@@ -380,8 +339,10 @@ void main() {
       // ── Enable Show archived pacts ─────────────────────────────────────────
       await waitFor(tester, find.text('Evening Walk'));
       await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
+      // Scroll the toggle row into view in case items overflow the panel height.
+      await tester.ensureVisible(find.byKey(const Key('show-archived-pacts-row')));
+      await tester.pump();
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
-      // Allow time for toggleArchived + _expandMax animation (300 ms each).
       await tester.pump(const Duration(milliseconds: 400));
 
       await waitFor(tester, find.text('Yoga'));
