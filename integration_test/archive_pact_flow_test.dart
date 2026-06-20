@@ -96,6 +96,9 @@ final _activeShowup = Showup(
 
 Future<void> _openPactsPanel(WidgetTester tester) async {
   await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
+  // Bare pump flushes the tap handler synchronously before the 400 ms animation
+  // clock starts — without this the panel may still be collapsed on entry.
+  await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
 }
 
@@ -259,11 +262,15 @@ void main() {
       await _openPactDetail(tester, 'Evening Walk');
       await waitFor(tester, find.byKey(const Key('archive-pact-button')));
       await tester.tap(find.byKey(const Key('archive-pact-button')));
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       // ── 3. Navigate back to pacts panel ───────────────────────────────────
+      // Extra bare pump ensures pending repaints flush before pageBack() tries
+      // to hit-test the Cupertino back button.
+      await tester.pump();
       await tester.pageBack();
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 500));
 
       // ── 4. Archived chip row now visible (N_A = 1) ────────────────────────
       await waitFor(tester, find.byKey(const Key('archive-filter-chip')));
@@ -325,9 +332,11 @@ void main() {
       await waitFor(tester, find.byKey(const Key('swipe-archive-button')));
 
       // ── 3. Tap Archive ────────────────────────────────────────────────────
+      // The swipe button runs a 250 ms collapse animation before calling
+      // onArchive, so we need to wait at least that long.
       await tester.tap(find.byKey(const Key('swipe-archive-button')));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 350));
 
       // ── 4. Pact is archived in repository ─────────────────────────────────
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
@@ -362,7 +371,14 @@ void main() {
       await _openPactsPanel(tester);
 
       // ── Enable Show archived pacts (panel auto-expands to show all items) ─
+      // Wait for a pact from the unarchived list first to confirm the panel
+      // expanded enough for slivers below the 3-item list to be built.
+      await waitFor(tester, find.text('Evening Walk'));
       await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
+      // With 3 unarchived pacts above it, the row may be below the panel
+      // viewport — scroll it into view before tapping.
+      await tester.ensureVisible(find.byKey(const Key('show-archived-pacts-row')));
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
       // Allow time for toggleArchived + _expandMax animation (300 ms each).
       await tester.pump(const Duration(milliseconds: 400));
