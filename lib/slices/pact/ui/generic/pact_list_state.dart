@@ -35,6 +35,10 @@ class PactListState {
 
   int get archivedCount => entries.where((e) => e.pact.archived).length;
 
+  int get archivedDoneCount => entries.where((e) => e.pact.archived && e.pact.status == PactStatus.completed).length;
+
+  int get archivedCancelledCount => entries.where((e) => e.pact.archived && e.pact.status == PactStatus.stopped).length;
+
   List<PactListEntry> get filteredEntries => entries
       .where((e) => activeFilters.contains(e.pact.status))
       .where((e) => showArchived || !e.pact.archived)

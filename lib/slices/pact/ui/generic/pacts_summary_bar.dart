@@ -45,7 +45,10 @@ class _PactTileItem extends _PactPanelItem {
   final PactListEntry entry;
   const _PactTileItem(this.entry);
   @override
-  String get diffKey => entry.pact.id;
+  // Include the archived flag so the diff treats archive/unarchive as a
+  // remove-at-old-position + insert-at-new-position, producing the visual
+  // "move" animation the user expects.
+  String get diffKey => '${entry.pact.id}:${entry.pact.archived}';
 }
 
 class _ToggleArchivedItem extends _PactPanelItem {
@@ -290,10 +293,24 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       if (!(prev?.showArchived ?? false) && next.showArchived) _expandMax();
     });
 
+    String archivedNote(String base, int total, int archived) {
+      if (archived == 0) return base;
+      if (archived == total) return '$base ${l10n.pactsAllArchived}';
+      return '$base ${l10n.pactsArchivedParenthetical(archived)}';
+    }
+
     final summaryLines = [
       l10n.pactsActive(state.activeCount),
-      l10n.pactsDone(state.doneCount),
-      l10n.pactsCancelled(state.cancelledCount),
+      archivedNote(
+        l10n.pactsDone(state.doneCount - state.archivedDoneCount),
+        state.doneCount,
+        state.archivedDoneCount,
+      ),
+      archivedNote(
+        l10n.pactsCancelled(state.cancelledCount - state.archivedCancelledCount),
+        state.cancelledCount,
+        state.archivedCancelledCount,
+      ),
     ].join('\n');
 
     return LayoutBuilder(
