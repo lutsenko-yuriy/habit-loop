@@ -1,7 +1,10 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 
 final pactListViewModelProvider = NotifierProvider<PactListViewModel, PactListState>(PactListViewModel.new);
@@ -79,8 +82,17 @@ class PactListViewModel extends Notifier<PactListState> {
     state = state.copyWith(showArchived: !state.showArchived);
   }
 
-  Future<void> archivePact(String pactId, bool archived) async {
+  Future<void> archivePact(String pactId, bool archived, {String source = 'pact_list_swipe'}) async {
+    final entry = state.entries.where((e) => e.pact.id == pactId).firstOrNull;
     await ref.read(pactServiceProvider).archivePact(pactId, archived);
+    if (entry != null) {
+      final statusStr = entry.pact.status == PactStatus.completed ? 'completed' : 'stopped';
+      unawaited(ref.read(analyticsServiceProvider).logEvent(
+            archived
+                ? PactArchivedEvent(pactId: pactId, pactStatus: statusStr, source: source)
+                : PactUnarchivedEvent(pactId: pactId, pactStatus: statusStr, source: source),
+          ));
+    }
     await load();
   }
 

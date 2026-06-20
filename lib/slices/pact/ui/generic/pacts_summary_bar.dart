@@ -136,7 +136,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     final state = ref.watch(pactListViewModelProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0) {
+    if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0 && state.archivedCount == 0) {
       return const SizedBox.shrink();
     }
 
@@ -332,10 +332,38 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                               .read(pactListViewModelProvider.notifier)
                                               .toggleFilter(PactStatus.stopped),
                                         ),
+                                        if (state.archivedCount > 0) ...[
+                                          const SizedBox(width: 8),
+                                          FilterChip(
+                                            key: const Key('archive-filter-chip'),
+                                            label: Text(l10n.filterArchived),
+                                            selected: state.showArchived,
+                                            onSelected: (_) =>
+                                                ref.read(pactListViewModelProvider.notifier).toggleArchived(),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
                                 ),
+
+                                // ── Show-archived row ──
+                                if (state.archivedCount > 0)
+                                  SliverToBoxAdapter(
+                                    child: InkWell(
+                                      key: const Key('show-archived-pacts-row'),
+                                      onTap: () => ref.read(pactListViewModelProvider.notifier).toggleArchived(),
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+                                        child: Text(
+                                          l10n.showArchivedPacts(state.archivedCount),
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
 
                                 // ── Pact list ──
                                 if (state.isLoading)
@@ -358,9 +386,17 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                     separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
                                     itemBuilder: (context, index) {
                                       final entry = entries[index];
-                                      return _PactTile(
+                                      if (entry.pact.status == PactStatus.active) {
+                                        return _PactTile(
+                                          entry: entry,
+                                          onTap: () => _navigateToPact(entry),
+                                        );
+                                      }
+                                      return _SwipeablePactTile(
                                         entry: entry,
                                         onTap: () => _navigateToPact(entry),
+                                        onArchive: (pactId, archive) =>
+                                            ref.read(pactListViewModelProvider.notifier).archivePact(pactId, archive),
                                       );
                                     },
                                   ),
@@ -380,6 +416,79 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
           },
         );
       },
+    );
+  }
+}
+
+class _SwipeablePactTile extends StatefulWidget {
+  final PactListEntry entry;
+  final VoidCallback onTap;
+  final Future<void> Function(String pactId, bool archive) onArchive;
+
+  const _SwipeablePactTile({
+    required this.entry,
+    required this.onTap,
+    required this.onArchive,
+  });
+
+  @override
+  State<_SwipeablePactTile> createState() => _SwipeablePactTileState();
+}
+
+class _SwipeablePactTileState extends State<_SwipeablePactTile> {
+  double _offset = 0.0;
+  static const double _actionWidth = 88.0;
+  static const double _threshold = 44.0;
+
+  void _settle(bool reveal) => setState(() => _offset = reveal ? -_actionWidth : 0.0);
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final pact = widget.entry.pact;
+    final cs = Theme.of(context).colorScheme;
+
+    return ClipRect(
+      child: Stack(
+        children: [
+          // Archive action button (beneath tile)
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                width: _actionWidth,
+                child: ColoredBox(
+                  color: cs.primaryContainer,
+                  child: Center(
+                    child: TextButton(
+                      key: const Key('swipe-archive-button'),
+                      onPressed: () async {
+                        await widget.onArchive(pact.id, !pact.archived);
+                        if (mounted) setState(() => _offset = 0.0);
+                      },
+                      child: Text(
+                        pact.archived ? l10n.unarchivePact : l10n.archivePact,
+                        style: TextStyle(color: cs.onPrimaryContainer),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Pact tile (slides left on drag to reveal action)
+          GestureDetector(
+            onHorizontalDragUpdate: (d) {
+              setState(() => _offset = (_offset + d.delta.dx).clamp(-_actionWidth, 0.0));
+            },
+            onHorizontalDragEnd: (d) => _settle(_offset < -_threshold),
+            child: Transform.translate(
+              offset: Offset(_offset, 0),
+              child: _PactTile(entry: widget.entry, onTap: widget.onTap),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
