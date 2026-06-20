@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.0] — 2026-06-21 (HAB-114, PR #160)
+
+### Added — archive pacts
+
+- [user] You can now archive finished or cancelled pacts you no longer want to see. An Archive / Unarchive button on the pact detail screen lets you hide pacts away without deleting them. Archived pacts are listed separately and shown only when you tap the Archived chip or the "Archived pacts (N)" row at the bottom of the list.
+- [non-user] HAB-114: `Pact.archived` bool field; `PactMapper` reads/writes column; migration v8 adds `archived` column. `PactListViewModel.toggleArchived()` + sort order: active → unarchived-completed → unarchived-stopped → archived-completed → archived-stopped. Archive chip row animated via `AnimatedSize` + `FadeTransition`; fires `pact_archived` / `pact_unarchived` analytics events with `source: detail_screen`.
+
+---
+
 ## [0.43.1] — 2026-06-19 (HAB-122, PR #156)
 
 ### Meta — PR comprehensibility improvements
