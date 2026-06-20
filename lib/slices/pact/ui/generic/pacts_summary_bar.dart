@@ -34,6 +34,28 @@ double pactsPickSnapTarget({
   );
 }
 
+// ── Item types for the unified animated pact list ──────────────────────────
+
+sealed class _PactPanelItem {
+  const _PactPanelItem();
+  String get diffKey;
+}
+
+class _PactTileItem extends _PactPanelItem {
+  final PactListEntry entry;
+  const _PactTileItem(this.entry);
+  @override
+  String get diffKey => entry.pact.id;
+}
+
+class _ToggleArchivedItem extends _PactPanelItem {
+  const _ToggleArchivedItem();
+  @override
+  String get diffKey => '__toggle_archived__';
+}
+
+// ── Panel ───────────────────────────────────────────────────────────────────
+
 /// A persistent draggable panel at the bottom of the dashboard.
 ///
 /// The panel header (drag handle + pact counts) is always visible and never
@@ -72,6 +94,11 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
 
   double _dragStartSize = 0.0;
   double _dragStartGlobalY = 0.0;
+
+  // ── SliverAnimatedList state ──
+  final _listKey = GlobalKey<SliverAnimatedListState>();
+  List<_PactPanelItem> _items = [];
+  bool _itemsInitialized = false;
 
   @override
   void initState() {
@@ -138,6 +165,111 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     return ((parentHeight - _calendarHeight) / parentHeight).clamp(_expandedSize, 1.0);
   }
 
+  // ── SliverAnimatedList helpers ──────────────────────────────────────────
+
+  List<_PactPanelItem> _buildItemList(PactListState state) {
+    final unarchived = state.filteredEntries.where((e) => !e.pact.archived).toList();
+    final archived = state.filteredEntries.where((e) => e.pact.archived).toList();
+    return [
+      for (final e in unarchived) _PactTileItem(e),
+      if (state.archivedCount > 0) const _ToggleArchivedItem(),
+      for (final e in archived) _PactTileItem(e),
+    ];
+  }
+
+  /// Diffs [_items] against the desired [state] and calls insertItem/removeItem
+  /// on the [SliverAnimatedListState] for each change — the Flutter equivalent
+  /// of RecyclerView's DiffUtil.
+  void _applyDiff(PactListState state) {
+    final listState = _listKey.currentState;
+    if (listState == null) return;
+    final newItems = _buildItemList(state);
+
+    // Removals (reverse to keep indices stable while mutating _items).
+    for (var i = _items.length - 1; i >= 0; i--) {
+      if (!newItems.any((n) => n.diffKey == _items[i].diffKey)) {
+        final removed = _items.removeAt(i);
+        final capturedIdx = i;
+        final capturedState = state;
+        listState.removeItem(
+          i,
+          (ctx, anim) => SizeTransition(
+            sizeFactor: anim,
+            alignment: Alignment.topCenter,
+            child: _itemContent(ctx, removed, capturedIdx, capturedState),
+          ),
+          duration: const Duration(milliseconds: 250),
+        );
+      }
+    }
+
+    // Insertions (forward order, applied after all removals).
+    for (var i = 0; i < newItems.length; i++) {
+      if (i >= _items.length || _items[i].diffKey != newItems[i].diffKey) {
+        if (!_items.any((o) => o.diffKey == newItems[i].diffKey)) {
+          _items.insert(i, newItems[i]);
+          listState.insertItem(i, duration: const Duration(milliseconds: 250));
+          continue;
+        }
+      }
+      // Refresh cached data for items that stayed (e.g. nextShowupAt update).
+      if (i < _items.length && _items[i].diffKey == newItems[i].diffKey) {
+        _items[i] = newItems[i];
+      }
+    }
+  }
+
+  /// Builds the visible content of one list item; used both by the live
+  /// [SliverAnimatedList.itemBuilder] and the ghost widget passed to
+  /// [SliverAnimatedListState.removeItem].
+  Widget _itemContent(BuildContext ctx, _PactPanelItem item, int index, PactListState state) {
+    final l10n = AppLocalizations.of(ctx)!;
+    return switch (item) {
+      _PactTileItem(:final entry) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (index > 0) const Divider(height: 1, indent: 16),
+            if (entry.pact.status == PactStatus.active)
+              _PactTile(entry: entry, onTap: () => _navigateToPact(entry))
+            else
+              _SwipeablePactTile(
+                key: ValueKey(entry.pact.id),
+                entry: entry,
+                onTap: () => _navigateToPact(entry),
+                onArchive: (id, archive) => ref.read(pactListViewModelProvider.notifier).archivePact(id, archive),
+              ),
+          ],
+        ),
+      _ToggleArchivedItem() => InkWell(
+          key: const Key('show-archived-pacts-row'),
+          onTap: () {
+            ref.read(pactListViewModelProvider.notifier).toggleArchived();
+            if (!state.showArchived) _expandMax();
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.showArchivedPacts(state.archivedCount),
+                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(ctx).colorScheme.primary,
+                        ),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: state.showArchived ? 0.5 : 0.0,
+                  duration: const Duration(milliseconds: 250),
+                  child: Icon(Icons.keyboard_arrow_down, size: 18, color: Theme.of(ctx).colorScheme.primary),
+                ),
+              ],
+            ),
+          ),
+        ),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pactListViewModelProvider);
@@ -147,15 +279,19 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
       return const SizedBox.shrink();
     }
 
+    // Initialize items on first build; subsequent changes drive animations.
+    if (!_itemsInitialized) {
+      _items = _buildItemList(state);
+      _itemsInitialized = true;
+    }
+    // Drive list animations whenever the provider state changes.
+    ref.listen(pactListViewModelProvider, (_, next) => _applyDiff(next));
+
     final summaryLines = [
       l10n.pactsActive(state.activeCount),
       l10n.pactsDone(state.doneCount),
       l10n.pactsCancelled(state.cancelledCount),
     ].join('\n');
-
-    final allFiltered = state.filteredEntries;
-    final unarchivedEntries = allFiltered.where((e) => !e.pact.archived).toList();
-    final archivedEntries = allFiltered.where((e) => e.pact.archived).toList();
 
     return LayoutBuilder(
       builder: (context, outerConstraints) {
@@ -368,13 +504,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                   ),
                                 ),
 
-                                // ── Pact list body ──
-                                // All list content lives in a single SliverToBoxAdapter
-                                // so that every widget (including show-archived-pacts-row
-                                // and the archived section) is always part of the element
-                                // tree regardless of viewport size.  This prevents
-                                // integration-test finders from missing widgets that
-                                // fall beyond the lazy sliver build window.
+                                // ── Pact list body (unified animated list) ──
                                 if (state.isLoading)
                                   SliverFillRemaining(
                                     child: Padding(
@@ -382,108 +512,27 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                       child: const Center(child: CircularProgressIndicator()),
                                     ),
                                   )
-                                else if (unarchivedEntries.isEmpty && state.archivedCount == 0)
+                                else if (_items.isEmpty)
                                   SliverFillRemaining(
                                     child: Padding(
                                       padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
                                       child: Center(child: Text(l10n.noPactsYet)),
                                     ),
                                   )
-                                else
-                                  SliverToBoxAdapter(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // Unarchived pacts
-                                        for (int i = 0; i < unarchivedEntries.length; i++) ...[
-                                          if (i > 0) const Divider(height: 1, indent: 16),
-                                          if (unarchivedEntries[i].pact.status == PactStatus.active)
-                                            _PactTile(
-                                              entry: unarchivedEntries[i],
-                                              onTap: () => _navigateToPact(unarchivedEntries[i]),
-                                            )
-                                          else
-                                            _SwipeablePactTile(
-                                              key: ValueKey(unarchivedEntries[i].pact.id),
-                                              entry: unarchivedEntries[i],
-                                              onTap: () => _navigateToPact(unarchivedEntries[i]),
-                                              onArchive: (pactId, archive) =>
-                                                  ref.read(pactListViewModelProvider.notifier).archivePact(pactId, archive),
-                                            ),
-                                        ],
-
-                                        // ── Show-archived toggle row ──
-                                        if (state.archivedCount > 0)
-                                          InkWell(
-                                            key: const Key('show-archived-pacts-row'),
-                                            onTap: () {
-                                              ref.read(pactListViewModelProvider.notifier).toggleArchived();
-                                              if (!state.showArchived) _expandMax();
-                                            },
-                                            child: Padding(
-                                              padding: const EdgeInsets.fromLTRB(20, 8, 16, 8),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      l10n.showArchivedPacts(state.archivedCount),
-                                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                            color: Theme.of(context).colorScheme.primary,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                  AnimatedRotation(
-                                                    turns: state.showArchived ? 0.5 : 0.0,
-                                                    duration: const Duration(milliseconds: 250),
-                                                    child: Icon(
-                                                      Icons.keyboard_arrow_down,
-                                                      size: 18,
-                                                      color: Theme.of(context).colorScheme.primary,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-
-                                        // ── Archived pact section (animated in/out) ──
-                                        if (state.archivedCount > 0)
-                                          AnimatedSize(
-                                            duration: const Duration(milliseconds: 250),
-                                            curve: Curves.easeInOut,
-                                            child: AnimatedSwitcher(
-                                              duration: const Duration(milliseconds: 250),
-                                              child: archivedEntries.isEmpty
-                                                  ? const SizedBox.shrink(key: ValueKey(false))
-                                                  : Column(
-                                                      key: const ValueKey(true),
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: archivedEntries
-                                                          .map(
-                                                            (entry) => Column(
-                                                              mainAxisSize: MainAxisSize.min,
-                                                              children: [
-                                                                const Divider(height: 1, indent: 16),
-                                                                _SwipeablePactTile(
-                                                                  key: ValueKey(entry.pact.id),
-                                                                  entry: entry,
-                                                                  onTap: () => _navigateToPact(entry),
-                                                                  onArchive: (pactId, archive) => ref
-                                                                      .read(pactListViewModelProvider.notifier)
-                                                                      .archivePact(pactId, archive),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          )
-                                                          .toList(),
-                                                    ),
-                                            ),
-                                          ),
-
-                                        SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
-                                      ],
+                                else ...[
+                                  SliverAnimatedList(
+                                    key: _listKey,
+                                    initialItemCount: _items.length,
+                                    itemBuilder: (ctx, index, animation) => SizeTransition(
+                                      sizeFactor: animation,
+                                      alignment: Alignment.topCenter,
+                                      child: _itemContent(ctx, _items[index], index, state),
                                     ),
                                   ),
+                                  SliverToBoxAdapter(
+                                    child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -517,92 +566,67 @@ class _SwipeablePactTile extends StatefulWidget {
   State<_SwipeablePactTile> createState() => _SwipeablePactTileState();
 }
 
-class _SwipeablePactTileState extends State<_SwipeablePactTile> with SingleTickerProviderStateMixin {
+class _SwipeablePactTileState extends State<_SwipeablePactTile> {
   double _offset = 0.0;
-  late final AnimationController _collapseController;
-  late final Animation<double> _sizeAnim;
 
   static const double _actionWidth = 72.0;
   static const double _threshold = 36.0;
 
-  @override
-  void initState() {
-    super.initState();
-    _collapseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
-    _sizeAnim = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _collapseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _collapseController.dispose();
-    super.dispose();
-  }
-
   void _settle(bool reveal) => setState(() => _offset = reveal ? -_actionWidth : 0.0);
-
-  Future<void> _triggerArchive() async {
-    // Collapse the tile first, then persist the change — avoids a visual jump
-    // when the parent list rebuilds after the state update.
-    await _collapseController.forward();
-    if (mounted) await widget.onArchive(widget.entry.pact.id, !widget.entry.pact.archived);
-  }
 
   @override
   Widget build(BuildContext context) {
     final pact = widget.entry.pact;
     final cs = Theme.of(context).colorScheme;
 
-    return SizeTransition(
-      sizeFactor: _sizeAnim,
-      alignment: Alignment.topCenter,
-      child: ClipRect(
-        child: Stack(
-          children: [
-            // Archive action (beneath tile, revealed on swipe)
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(
-                  width: _actionWidth,
-                  child: ColoredBox(
-                    color: cs.primaryContainer,
-                    child: Center(
-                      child: IconButton(
-                        key: const Key('swipe-archive-button'),
-                        onPressed: _triggerArchive,
-                        icon: Icon(
-                          pact.archived ? Icons.unarchive_outlined : Icons.archive_outlined,
-                          color: cs.onPrimaryContainer,
-                        ),
-                        tooltip: null,
+    return ClipRect(
+      child: Stack(
+        children: [
+          // Archive action (beneath tile, revealed on swipe)
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                width: _actionWidth,
+                child: ColoredBox(
+                  color: cs.primaryContainer,
+                  child: Center(
+                    child: IconButton(
+                      key: const Key('swipe-archive-button'),
+                      onPressed: () {
+                        setState(() => _offset = 0.0);
+                        unawaited(widget.onArchive(widget.entry.pact.id, !widget.entry.pact.archived));
+                      },
+                      icon: Icon(
+                        pact.archived ? Icons.unarchive_outlined : Icons.archive_outlined,
+                        color: cs.onPrimaryContainer,
                       ),
+                      tooltip: null,
                     ),
                   ),
                 ),
               ),
             ),
-            // Pact tile (slides left on drag to reveal action; opaque background
-            // prevents the archive icon from showing through the tile).
-            GestureDetector(
-              onHorizontalDragUpdate: (d) {
-                setState(() => _offset = (_offset + d.delta.dx).clamp(-_actionWidth, 0.0));
-              },
-              onHorizontalDragEnd: (d) => _settle(_offset < -_threshold),
-              child: Transform.translate(
-                offset: Offset(_offset, 0),
-                // Material gives the ListTile a proper ink-splash ancestor
-                // while also providing an opaque surface-color background so
-                // the swipe action icon behind the tile stays hidden.
-                child: Material(
-                  color: cs.surface,
-                  child: _PactTile(entry: widget.entry, onTap: widget.onTap),
-                ),
+          ),
+          // Pact tile (slides left on drag to reveal action; opaque background
+          // prevents the archive icon from showing through the tile).
+          GestureDetector(
+            onHorizontalDragUpdate: (d) {
+              setState(() => _offset = (_offset + d.delta.dx).clamp(-_actionWidth, 0.0));
+            },
+            onHorizontalDragEnd: (d) => _settle(_offset < -_threshold),
+            child: Transform.translate(
+              offset: Offset(_offset, 0),
+              // Material gives the ListTile a proper ink-splash ancestor
+              // while also providing an opaque surface-color background so
+              // the swipe action icon behind the tile stays hidden.
+              child: Material(
+                color: cs.surface,
+                child: _PactTile(entry: widget.entry, onTap: widget.onTap),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
