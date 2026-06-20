@@ -1,5 +1,5 @@
 ---
-name: describe-feature
+name: brief
 effort: FOCUSED
 reasoning: ARCHITECTURAL
 output_style: CONCISE
@@ -35,15 +35,9 @@ Ask the user to describe their feature idea in their own words. One open questio
 
 ### 3. Iterate — one question at a time
 
-**Spirit of the dialog:** the goal is mutual clarity — the user ends the conversation with a shared, unambiguous picture of what they want to build. Asking a hard question or flagging a contradiction is expected and helpful. But every challenge must read as *help*, not judgement. Name the problem, not a verdict. Frame contradictions as open questions, not blockers. If the user's direction is unclear, ask in order to understand — not in order to correct.
+**Spirit of the dialog:** the goal is mutual clarity — the user ends the conversation with a shared, unambiguous picture of what they want to build.
 
-**Examples:**
-
-| Instead of… | Say… |
-|---|---|
-| "That won't work." | "This overlaps with the existing pact-end flow — how should they interact?" |
-| "You can't have both — they contradict each other." | "You mentioned X earlier and now Y — I'm not sure how to reconcile them. Which takes priority?" |
-| "That's not what a pact is in this app." | "When you say 'goal', do you mean the same thing as a pact, or something different?" |
+@skills/shared/dialog-principles.md
 
 **Staying on topic:** the dialog has a clear goal — a scoped ticket. If the conversation drifts (the user starts discussing unrelated ideas, broader strategy, or goes off on a tangent), gently acknowledge what was said and redirect: "That's interesting — let's note it and come back. For now, can we finish pinning down [the feature we started with]?" Do not chase tangents, even interesting ones.
 

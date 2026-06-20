@@ -39,10 +39,12 @@ This project describes what each skill needs from a model using two axes: **Effo
 | `plan` | THOROUGH | ARCHITECTURAL | Full codebase read, cross-file design decisions, long-horizon planning |
 | `audit` | THOROUGH | TACTICAL | Exhaustive runtime, migration, and edge-case analysis |
 | `review` | FOCUSED | ARCHITECTURAL | Targeted architectural review of a PR diff |
+| `brief` | FOCUSED | ARCHITECTURAL | Feature intake dialog: validate a rough idea against spec, create ticket |
 | `analyze` | FOCUSED | ARCHITECTURAL | Cross-cutting analytics reasoning scoped to one feature |
 | `experiment` | FOCUSED | ARCHITECTURAL | Design a product experiment: hypothesis, metrics, variant spec |
 | `implement` | FOCUSED | TACTICAL | Implement a scoped work unit correctly and completely |
 | `ship` | RAPID | TACTICAL | Structured housekeeping: close issues, update docs, bump version, merge |
+| `debrief` | FOCUSED | ARCHITECTURAL | Retrospective dialog scoped to one ticket; cross-skill and workflow reasoning |
 | `summarize` | RAPID | MECHANICAL | Structured PM data fetch and format |
 
 ---

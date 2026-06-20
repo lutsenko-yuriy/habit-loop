@@ -35,10 +35,10 @@ When running inside Claude Code (fallback path), call `mcp__linear__list_issues`
 
 End with: **"What goes into the next release? Pick an existing ticket or describe something new."** — do not proceed until the user answers.
 
-If the user chooses to describe something new (says "something new", "new idea", "new feature", or otherwise indicates they want to start from scratch rather than pick an existing ticket), invoke the `describe-feature` skill:
+If the user chooses to describe something new (says "something new", "new idea", "new feature", or otherwise indicates they want to start from scratch rather than pick an existing ticket), invoke the `brief` skill:
 
 ```
-Invoke the describe-feature skill
+Invoke the brief skill
 ```
 
-Do not jump to `plan` or `implement` for a new idea — always go through `describe-feature` first so the idea is validated and a ticket is created before any planning begins.
+Do not jump to `plan` or `implement` for a new idea — always go through `brief` first so the idea is validated and a ticket is created before any planning begins.
