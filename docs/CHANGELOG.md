@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.5] — 2026-06-21 (HAB-116, PR #167)
+
+### Tests — HAB-116 WU0: pact timeline screen integration scenarios
+
+- [test] `integration_test/pact_timeline_flow_test.dart`: 9 scenario stubs covering timeline navigation, anchor events, grouping algorithm (group item, streak item, noted showup, tail zone), pagination with load-more analytics, tappable single-showup, and kill-switch flag-off
+- [meta] `docs/ANALYTICS_EVENTS.md`: add `PactTimelineAnalyticsScreen`, `pact_timeline_load_more`, and `pact_timeline_event_tapped` entries (approved analytics plan for HAB-116)
+- [meta] `docs/ARCHITECTURE.md`: document `PactTimelineConfig`, `PactTimelineGrouper`, `PactTimelineEvent`, `PactTimelineService`, `PactTimelineCache`, `PactTimelinePage`; note `pact_timeline_enabled` kill-switch
+
+---
+
 ## [0.44.4] — 2026-06-21 (HAB-125, PR #165)
 
 ### Meta — HAB-125 debrief: scenario stubs, feature toggle gate, rework checkpoint
