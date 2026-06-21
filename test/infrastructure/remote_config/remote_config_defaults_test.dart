@@ -3,6 +3,16 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 
 void main() {
   group('RemoteConfigDefaults', () {
+    group('max_active_pacts', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('max_active_pacts'), isTrue);
+      });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['max_active_pacts'], (min: 1, max: 10));
+      });
+    });
+
     group('sync_max_consecutive_failures', () {
       test('key exists in all map', () {
         expect(RemoteConfigDefaults.all.containsKey('sync_max_consecutive_failures'), isTrue);
@@ -17,9 +27,8 @@ void main() {
             equals(RemoteConfigDefaults.all['sync_max_consecutive_failures']));
       });
 
-      test('appears in allowedValues as null (free-value integer field)', () {
-        expect(RemoteConfigDefaults.allowedValues.containsKey('sync_max_consecutive_failures'), isTrue);
-        expect(RemoteConfigDefaults.allowedValues['sync_max_consecutive_failures'], isNull);
+      test('is absent from allowedValues (free-text integer field)', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('sync_max_consecutive_failures'), isFalse);
       });
     });
 
@@ -60,9 +69,8 @@ void main() {
             equals(RemoteConfigDefaults.all['debug_connectivity_stability_percent']));
       });
 
-      test('appears in allowedValues as null (free-value integer field)', () {
-        expect(RemoteConfigDefaults.allowedValues.containsKey('debug_connectivity_stability_percent'), isTrue);
-        expect(RemoteConfigDefaults.allowedValues['debug_connectivity_stability_percent'], isNull);
+      test('is absent from allowedValues (free-text integer field)', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('debug_connectivity_stability_percent'), isFalse);
       });
     });
 
@@ -85,9 +93,8 @@ void main() {
         expect(RemoteConfigDefaults.allowedValues['language_selection_enabled'], containsAll(['true', 'false']));
       });
 
-      test('appears in intRanges as null (boolean, not int-bounded)', () {
-        expect(RemoteConfigDefaults.intRanges.containsKey('language_selection_enabled'), isTrue);
-        expect(RemoteConfigDefaults.intRanges['language_selection_enabled'], isNull);
+      test('is absent from intRanges (boolean, not int-bounded)', () {
+        expect(RemoteConfigDefaults.intRanges.containsKey('language_selection_enabled'), isFalse);
       });
     });
 
@@ -109,9 +116,119 @@ void main() {
         expect(RemoteConfigDefaults.allowedValues['network_sync_enabled'], containsAll(['true', 'false']));
       });
 
-      test('appears in intRanges as null (boolean, not int-bounded)', () {
-        expect(RemoteConfigDefaults.intRanges.containsKey('network_sync_enabled'), isTrue);
-        expect(RemoteConfigDefaults.intRanges['network_sync_enabled'], isNull);
+      test('is absent from intRanges (boolean, not int-bounded)', () {
+        expect(RemoteConfigDefaults.intRanges.containsKey('network_sync_enabled'), isFalse);
+      });
+    });
+
+    group('pact_timeline_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_enabled'), isTrue);
+      });
+
+      test('default value is true', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_enabled'], isTrue);
+      });
+
+      test('constant matches all map value', () {
+        expect(RemoteConfigDefaults.pactTimelineEnabled, equals(RemoteConfigDefaults.all['pact_timeline_enabled']));
+      });
+
+      test('appears in featureToggleKeys', () {
+        expect(RemoteConfigDefaults.featureToggleKeys.contains('pact_timeline_enabled'), isTrue);
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_timeline_enabled'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['pact_timeline_enabled'], containsAll(['true', 'false']));
+      });
+    });
+
+    group('pact_timeline_milestone_grouping_threshold', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_milestone_grouping_threshold'), isTrue);
+      });
+
+      test('default value is 10', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_milestone_grouping_threshold'], 10);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.pactTimelineMilestoneGroupingThreshold,
+          equals(RemoteConfigDefaults.all['pact_timeline_milestone_grouping_threshold']),
+        );
+      });
+
+      test('is absent from allowedValues (free-text integer field)', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_timeline_milestone_grouping_threshold'), isFalse);
+      });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_milestone_grouping_threshold'], (min: 10, max: 50));
+      });
+    });
+
+    group('pact_timeline_no_grouping_tail_size', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_size'), isTrue);
+      });
+
+      test('default value is 10', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size'], 10);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.pactTimelineNoGroupingTailSize,
+          equals(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size']),
+        );
+      });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_no_grouping_tail_size'], (min: 10, max: 20));
+      });
+    });
+
+    group('pact_timeline_first_page_size', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_first_page_size'), isTrue);
+      });
+
+      test('default value is 20', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_first_page_size'], 20);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.pactTimelineFirstPageSize,
+          equals(RemoteConfigDefaults.all['pact_timeline_first_page_size']),
+        );
+      });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_first_page_size'], (min: 20, max: 50));
+      });
+    });
+
+    group('pact_timeline_nth_page_size', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_nth_page_size'), isTrue);
+      });
+
+      test('default value is 10', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_nth_page_size'], 10);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.pactTimelineNthPageSize,
+          equals(RemoteConfigDefaults.all['pact_timeline_nth_page_size']),
+        );
+      });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_nth_page_size'], (min: 10, max: 25));
       });
     });
   });

@@ -4,12 +4,24 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.6] — 2026-06-22 (HAB-116 WU1, PR #168)
+
+### Config — pact timeline RC params, FeatureFlags, PactTimelineConfig, analytics event classes
+
+- [app] `RemoteConfigDefaults`: add `pact_timeline_enabled` (default `true`), `pact_timeline_milestone_grouping_threshold` (default `10`), `pact_timeline_no_grouping_tail_size` (default `10`), `pact_timeline_first_page_size` (default `20`), `pact_timeline_nth_page_size` (default `10`); add bounded `intRanges` for all four params and for `max_active_pacts`; change `allowedValues` and `intRanges` to non-nullable-value maps (absent key = no constraint)
+- [app] `FeatureFlags`: add `pactTimelineEnabled` getter
+- [app] `PactTimelineConfig`: new class in `slices/pact/application/`; reads five RC params directly (no sentinel resolution)
+- [app] `pact_timeline_analytics_events.dart`: add `PactTimelineAnalyticsScreen`, `PactTimelineLoadMoreEvent`, `PactTimelineMilestoneTappedEvent`
+- [app] `docs/FEATURE_TOGGLES.md`: add `pact_timeline_enabled` row
+
+---
+
 ## [0.44.5] — 2026-06-21 (HAB-116, PR #167)
 
 ### Tests — HAB-116 WU0: pact timeline screen integration scenarios
 
 - [test] `integration_test/pact_timeline_flow_test.dart`: 9 scenario stubs covering timeline navigation, anchor events, grouping algorithm (group item, streak item, noted showup, tail zone), pagination with load-more analytics, tappable single-showup, and kill-switch flag-off
-- [meta] `docs/ANALYTICS_EVENTS.md`: add `PactTimelineAnalyticsScreen`, `pact_timeline_load_more`, and `pact_timeline_event_tapped` entries (approved analytics plan for HAB-116)
+- [meta] `docs/ANALYTICS_EVENTS.md`: add `PactTimelineAnalyticsScreen`, `pact_timeline_load_more`, and `pact_timeline_milestone_tapped` entries (approved analytics plan for HAB-116)
 - [meta] `docs/ARCHITECTURE.md`: document `PactTimelineConfig`, `PactTimelineGrouper`, `PactTimelineMilestone`, `PactTimelineCache`, `PactTimelineService`, `PactTimelinePage`; note `pact_timeline_enabled` kill-switch
 
 ---

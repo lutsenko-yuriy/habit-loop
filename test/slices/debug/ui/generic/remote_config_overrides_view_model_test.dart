@@ -87,6 +87,7 @@ void main() {
       expect(
           ranged,
           containsAll([
+            'max_active_pacts',
             'debug_connectivity_stability_percent',
             'sync_max_consecutive_failures',
             'onboarding_auto_advance_seconds',
@@ -96,7 +97,7 @@ void main() {
     test('hasIntRange is false for free-text and enum keys', () {
       final entries = readEntries();
       final noRange = entries.where((e) => !e.hasIntRange).map((e) => e.key).toSet();
-      expect(noRange, containsAll(['max_active_pacts', 'debug_connectivity_state', 'debug_backend']));
+      expect(noRange, containsAll(['debug_connectivity_state', 'debug_backend']));
     });
 
     test('debug_backend has allowedValues ["real", "local"]', () {

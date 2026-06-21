@@ -101,6 +101,35 @@ abstract final class RemoteConfigDefaults {
   /// **Debug/profile only.** This key is never read in release builds.
   static const String debugBackend = 'real';
 
+  /// Feature toggle: enable the pact timeline screen entry point.
+  ///
+  /// When `false`, the "View timeline" button is hidden from pact detail screens.
+  /// Override to `false` in the Firebase Remote Config console to disable the
+  /// feature without a release.
+  static const bool pactTimelineEnabled = true;
+
+  /// Minimum consecutive same-outcome showup run length to produce a milestone.
+  ///
+  /// Runs below this threshold are shown as a mixed group milestone; runs at or
+  /// above are shown as a streak milestone. Value must be ≥ 2. Override via RC
+  /// to tune the grouping sensitivity. Remote Config key: `pact_timeline_milestone_grouping_threshold`.
+  static const int pactTimelineMilestoneGroupingThreshold = 10;
+
+  /// Number of most-recent showups always shown individually on the timeline.
+  ///
+  /// Remote Config key: `pact_timeline_no_grouping_tail_size`.
+  static const int pactTimelineNoGroupingTailSize = 10;
+
+  /// Showups loaded on the first page of the pact timeline.
+  ///
+  /// Remote Config key: `pact_timeline_first_page_size`.
+  static const int pactTimelineFirstPageSize = 20;
+
+  /// Showups loaded on each subsequent page of the pact timeline.
+  ///
+  /// Remote Config key: `pact_timeline_nth_page_size`.
+  static const int pactTimelineNthPageSize = 10;
+
   /// Keys belonging to the feature-toggle category shown in a dedicated section
   /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
   ///
@@ -109,6 +138,7 @@ abstract final class RemoteConfigDefaults {
   static const Set<String> featureToggleKeys = {
     'language_selection_enabled',
     'network_sync_enabled',
+    'pact_timeline_enabled',
   };
 
   /// Feature toggle: show the language-selection UI on the dashboard.
@@ -156,41 +186,43 @@ abstract final class RemoteConfigDefaults {
     'debug_backend': debugBackend,
     'language_selection_enabled': languageSelectionEnabled,
     'network_sync_enabled': networkSyncEnabled,
+    'pact_timeline_enabled': pactTimelineEnabled,
+    'pact_timeline_milestone_grouping_threshold': pactTimelineMilestoneGroupingThreshold,
+    'pact_timeline_no_grouping_tail_size': pactTimelineNoGroupingTailSize,
+    'pact_timeline_first_page_size': pactTimelineFirstPageSize,
+    'pact_timeline_nth_page_size': pactTimelineNthPageSize,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
   ///
   /// The debug override screen uses this to show a picker instead of a free-
-  /// text field for enum-like keys. Keys absent from this map (or mapped to
-  /// `null`) accept any value — the screen shows a plain text field instead.
-  static const Map<String, List<String>?> allowedValues = {
-    'max_active_pacts': null,
+  /// text field for enum-like keys. Keys absent from this map accept any value
+  /// — the screen shows a plain text field instead.
+  static const Map<String, List<String>> allowedValues = {
     'notification_text_variant': ['control', 'deadline', 'time_limit'],
     'post_deadline_notification_behavior': ['dismiss', 'encourage'],
-    'onboarding_auto_advance_seconds': null,
     'exp_003_commitment_confirmation': ['button', 'checkbox', 'retype'],
-    'sync_max_consecutive_failures': null,
     'debug_connectivity_state': ['perfect', 'unstable', 'absent'],
-    'debug_connectivity_stability_percent': null,
     'debug_backend': ['real', 'local'],
     'language_selection_enabled': ['true', 'false'],
     'network_sync_enabled': ['true', 'false'],
+    'pact_timeline_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known
   /// [min, max] range (inclusive on both ends).
   ///
   /// The debug override screen uses this to display a slider instead of a
-  /// free-text input for these keys. Keys absent from this map (or mapped to
-  /// `null`) accept any value — the screen shows a plain text field.
-  ///
-  /// Only keys with both a meaningful lower and upper bound are listed here;
-  /// open-ended numeric keys (e.g. `max_active_pacts`) remain free-text.
-  static const Map<String, ({int min, int max})?> intRanges = {
+  /// free-text input for these keys. Keys absent from this map accept any
+  /// value — the screen shows a plain text field.
+  static const Map<String, ({int min, int max})> intRanges = {
+    'max_active_pacts': (min: 1, max: 10),
     'debug_connectivity_stability_percent': (min: 0, max: 100),
     'sync_max_consecutive_failures': (min: 1, max: 20),
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
-    'language_selection_enabled': null,
-    'network_sync_enabled': null,
+    'pact_timeline_milestone_grouping_threshold': (min: 10, max: 50),
+    'pact_timeline_no_grouping_tail_size': (min: 10, max: 20),
+    'pact_timeline_first_page_size': (min: 20, max: 50),
+    'pact_timeline_nth_page_size': (min: 10, max: 25),
   };
 }

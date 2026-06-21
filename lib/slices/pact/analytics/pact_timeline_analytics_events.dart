@@ -1,0 +1,63 @@
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_screen.dart';
+
+/// Screen view for the pact timeline screen. (HAB-116)
+///
+/// [pactId], [pactStatus], and [totalShowupCount] are sent via a companion
+/// [logEvent] call alongside [logScreenView] — [logScreenView] only forwards
+/// [AnalyticsScreen.name], not custom properties.
+class PactTimelineAnalyticsScreen implements AnalyticsScreen {
+  const PactTimelineAnalyticsScreen({
+    required this.pactId,
+    required this.pactStatus,
+    required this.totalShowupCount,
+  });
+
+  final String pactId;
+
+  /// `active` | `completed` | `stopped`
+  final String pactStatus;
+
+  final int totalShowupCount;
+
+  @override
+  String get name => 'pact_timeline';
+}
+
+/// Fired when the user taps "Load more" to reveal older timeline events. (HAB-116)
+final class PactTimelineLoadMoreEvent extends AnalyticsEvent {
+  PactTimelineLoadMoreEvent({required this.pactId, required this.pageNumber});
+
+  final String pactId;
+
+  /// Page number just loaded (≥ 2; page 1 is loaded automatically on open).
+  final int pageNumber;
+
+  @override
+  String get name => 'pact_timeline_load_more';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'page_number': pageNumber,
+      };
+}
+
+/// Fired when the user taps a tappable milestone on the pact timeline. (HAB-116)
+final class PactTimelineMilestoneTappedEvent extends AnalyticsEvent {
+  PactTimelineMilestoneTappedEvent({required this.pactId, required this.itemType});
+
+  final String pactId;
+
+  /// `noted_showup` | `single_showup`
+  final String itemType;
+
+  @override
+  String get name => 'pact_timeline_milestone_tapped';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'item_type': itemType,
+      };
+}
