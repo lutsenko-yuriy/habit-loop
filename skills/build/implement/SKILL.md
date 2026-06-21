@@ -41,10 +41,16 @@ Call `mcp__linear__save_issue` with `state: "In Progress"`.
 
 ### 3. Create or switch to the feature branch
 
-Branch naming: `feature/HAB-XX-<short-description>` (2–4 words, kebab-case).
+Branch naming: `feature/HAB-XX-WUN-<short-description>` where N is the WU number from the plan (2–4 words, kebab-case).
 
-- If already on the correct branch, continue.
-- Otherwise: `git checkout -b feature/HAB-XX-<short-description>`
+**One WU = one branch = one PR. Never reuse a branch from a previous WU.**
+
+Always create a new branch from the latest `main`:
+
+```bash
+git fetch origin
+git checkout -b feature/HAB-XX-WUN-<short> origin/main
+```
 
 ### 4. TDD cycle
 
