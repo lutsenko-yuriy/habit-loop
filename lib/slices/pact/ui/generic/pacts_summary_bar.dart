@@ -165,7 +165,10 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     ].join('\n');
 
     final unarchivedEntries = state.filteredEntries.where((e) => !e.pact.archived).toList();
-    final archivedEntries = state.filteredEntries.where((e) => e.pact.archived).toList();
+    // Computed from state.entries (not filteredEntries) so the list stays populated
+    // when showArchived is toggled off — required for the exit animation to have content.
+    final archivedEntries =
+        state.entries.where((e) => e.pact.archived && state.activeFilters.contains(e.pact.status)).toList();
     final allEmpty = unarchivedEntries.isEmpty && archivedEntries.isEmpty && state.archivedCount == 0;
 
     return LayoutBuilder(
@@ -445,13 +448,26 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                       ),
                                     ),
                                   SliverToBoxAdapter(
-                                    child: AnimatedSize(
+                                    child: AnimatedSwitcher(
                                       duration: const Duration(milliseconds: 250),
-                                      curve: Curves.easeInOut,
-                                      alignment: Alignment.topCenter,
-                                      child: archivedEntries.isEmpty
-                                          ? const SizedBox.shrink()
-                                          : Column(
+                                      transitionBuilder: (child, animation) => SizeTransition(
+                                        sizeFactor: CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeInOut,
+                                        ),
+                                        alignment: Alignment.topCenter,
+                                        child: child,
+                                      ),
+                                      layoutBuilder: (currentChild, previousChildren) => Stack(
+                                        alignment: Alignment.topCenter,
+                                        children: [
+                                          ...previousChildren,
+                                          if (currentChild != null) currentChild,
+                                        ],
+                                      ),
+                                      child: state.showArchived && archivedEntries.isNotEmpty
+                                          ? Column(
+                                              key: const ValueKey('archived-pacts'),
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 for (int i = 0; i < archivedEntries.length; i++) ...[
@@ -462,7 +478,8 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                                                   ),
                                                 ],
                                               ],
-                                            ),
+                                            )
+                                          : const SizedBox.shrink(),
                                     ),
                                   ),
                                   SliverToBoxAdapter(
