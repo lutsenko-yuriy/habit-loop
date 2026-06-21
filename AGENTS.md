@@ -33,9 +33,10 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
 | skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
 | skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |
+| skills/manage/debrief/SKILL.md | Post-ticket retrospective: structured dialog → workflow improvements + Linear comment |
 | skills/manage/cleanup-firebase/SKILL.md | Delete old Firebase App Distribution builds locally, keeping the N most recent per platform |
 | skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |
-| skills/design/describe-feature/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
+| skills/design/brief/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
 | skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
 | skills/design/experiment/SKILL.md | Experiment design: hypothesis, metrics, feature flag, registry entry |
 | skills/build/implement/SKILL.md | TDD implementation and PR |
@@ -53,12 +54,13 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | Command | Skill | Usage |
 |---|---|---|
 | `/ship` | manage/ship | `/ship PR #N` |
+| `/debrief` | manage/debrief | `/debrief HAB-XX` |
 | `/summarize` | manage/summarize | `/summarize` |
 | `/review-architecture` | verify/review | `/review-architecture PR #N` |
 | `/audit-code` | verify/audit | `/audit-code PR #N` |
 | `/plan` | design/plan | `/plan HAB-XX: <title>` |
 | `/analyze` | design/analyze | `/analyze HAB-XX: <title>` |
-| `/describe-feature` | design/describe-feature | `/describe-feature` |
+| `/brief` | design/brief | `/brief` |
 | `/experiment` | design/experiment | `/experiment <hypothesis>` |
 | `/draft-scenarios` | verify/draft-scenarios | `/draft-scenarios HAB-XX: <title>` |
 | `/implement` | build/implement | `/implement HAB-XX: <title>` |
@@ -105,7 +107,7 @@ At the beginning of every new session, before doing anything else:
 2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `skills/configure/style/`). Default to DETAILED if absent.
 3. Invoke the `summarize` skill: `Invoke the summarize skill to present the current backlog from Linear`.
 4. The skill will summarise what has been done and what is remaining, then ask *"What goes into the next release? Pick an existing ticket or describe something new."*.
-5. Wait for the user's answer before proceeding. If the user wants to describe something new, invoke the `describe-feature` skill before any planning begins.
+5. Wait for the user's answer before proceeding. If the user wants to describe something new, invoke the `brief` skill before any planning begins.
 
 ## Workflow
 
