@@ -7,21 +7,21 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 final class PactTimelineConfig {
   const PactTimelineConfig({
     required this.enabled,
-    required this.eventGroupingThreshold,
+    required this.milestoneGroupingThreshold,
     required this.noGroupingTailSize,
     required this.firstPageSize,
     required this.nthPageSize,
   });
 
   factory PactTimelineConfig.fromRemoteConfig(RemoteConfigService rc) {
-    final threshold = rc.getInt('pact_timeline_event_grouping_threshold');
+    final threshold = rc.getInt('pact_timeline_milestone_grouping_threshold');
     final tailRaw = rc.getInt('pact_timeline_no_grouping_tail_size');
     final firstPageRaw = rc.getInt('pact_timeline_first_page_size');
     final nthPageRaw = rc.getInt('pact_timeline_nth_page_size');
 
     return PactTimelineConfig(
       enabled: rc.getBool('pact_timeline_enabled'),
-      eventGroupingThreshold: threshold,
+      milestoneGroupingThreshold: threshold,
       noGroupingTailSize: tailRaw == 0 ? threshold : tailRaw,
       firstPageSize: firstPageRaw == 0 ? 20 : firstPageRaw,
       nthPageSize: nthPageRaw == 0 ? 10 : nthPageRaw,
@@ -31,8 +31,8 @@ final class PactTimelineConfig {
   /// Whether the pact timeline feature is enabled (`pact_timeline_enabled`).
   final bool enabled;
 
-  /// Minimum run length for streak/group collapsing (`pact_timeline_event_grouping_threshold`).
-  final int eventGroupingThreshold;
+  /// Minimum showup run length to produce a streak/group milestone (`pact_timeline_milestone_grouping_threshold`).
+  final int milestoneGroupingThreshold;
 
   /// Number of most-recent showups always shown individually (`pact_timeline_no_grouping_tail_size`).
   /// Resolved from the threshold when the RC value is 0.
@@ -51,11 +51,11 @@ final class PactTimelineConfig {
       identical(this, other) ||
       other is PactTimelineConfig &&
           enabled == other.enabled &&
-          eventGroupingThreshold == other.eventGroupingThreshold &&
+          milestoneGroupingThreshold == other.milestoneGroupingThreshold &&
           noGroupingTailSize == other.noGroupingTailSize &&
           firstPageSize == other.firstPageSize &&
           nthPageSize == other.nthPageSize;
 
   @override
-  int get hashCode => Object.hash(enabled, eventGroupingThreshold, noGroupingTailSize, firstPageSize, nthPageSize);
+  int get hashCode => Object.hash(enabled, milestoneGroupingThreshold, noGroupingTailSize, firstPageSize, nthPageSize);
 }

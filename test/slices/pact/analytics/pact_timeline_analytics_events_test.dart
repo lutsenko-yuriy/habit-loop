@@ -57,14 +57,14 @@ void main() {
     });
   });
 
-  group('PactTimelineEventTappedEvent', () {
+  group('PactTimelineMilestoneTappedEvent', () {
     test('has correct name', () {
-      final event = PactTimelineEventTappedEvent(pactId: 'p1', itemType: 'noted_showup');
-      expect(event.name, 'pact_timeline_event_tapped');
+      final event = PactTimelineMilestoneTappedEvent(pactId: 'p1', itemType: 'noted_showup');
+      expect(event.name, 'pact_timeline_milestone_tapped');
     });
 
     test('toParameters includes pact_id and item_type', () {
-      final event = PactTimelineEventTappedEvent(pactId: 'abc', itemType: 'single_showup');
+      final event = PactTimelineMilestoneTappedEvent(pactId: 'abc', itemType: 'single_showup');
       final params = event.toParameters();
       expect(params['pact_id'], 'abc');
       expect(params['item_type'], 'single_showup');
@@ -72,13 +72,13 @@ void main() {
 
     test('valid item_type values', () {
       for (final type in ['noted_showup', 'single_showup']) {
-        final event = PactTimelineEventTappedEvent(pactId: 'p1', itemType: type);
+        final event = PactTimelineMilestoneTappedEvent(pactId: 'p1', itemType: type);
         expect(event.toParameters()['item_type'], type);
       }
     });
 
     test('toParameters contains exactly two keys', () {
-      final event = PactTimelineEventTappedEvent(pactId: 'p1', itemType: 'noted_showup');
+      final event = PactTimelineMilestoneTappedEvent(pactId: 'p1', itemType: 'noted_showup');
       expect(event.toParameters().length, 2);
     });
   });

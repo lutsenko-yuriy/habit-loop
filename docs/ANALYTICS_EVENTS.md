@@ -309,7 +309,7 @@ Fired when the user scrolls up and triggers "Load more" to reveal older events o
 
 ---
 
-### `pact_timeline_event_tapped`
+### `pact_timeline_milestone_tapped`
 
 Fired when the user taps a tappable timeline item (noted showup or lone single-showup) to open the showup detail screen. (HAB-116)
 

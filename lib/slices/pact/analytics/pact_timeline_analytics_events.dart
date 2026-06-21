@@ -44,8 +44,8 @@ final class PactTimelineLoadMoreEvent extends AnalyticsEvent {
 }
 
 /// Fired when the user taps a tappable milestone on the pact timeline. (HAB-116)
-final class PactTimelineEventTappedEvent extends AnalyticsEvent {
-  PactTimelineEventTappedEvent({required this.pactId, required this.itemType});
+final class PactTimelineMilestoneTappedEvent extends AnalyticsEvent {
+  PactTimelineMilestoneTappedEvent({required this.pactId, required this.itemType});
 
   final String pactId;
 
@@ -53,7 +53,7 @@ final class PactTimelineEventTappedEvent extends AnalyticsEvent {
   final String itemType;
 
   @override
-  String get name => 'pact_timeline_event_tapped';
+  String get name => 'pact_timeline_milestone_tapped';
 
   @override
   Map<String, Object?> toParameters() => {

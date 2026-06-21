@@ -108,12 +108,12 @@ abstract final class RemoteConfigDefaults {
   /// feature without a release.
   static const bool pactTimelineEnabled = true;
 
-  /// Minimum consecutive same-outcome showup run length for timeline collapsing.
+  /// Minimum consecutive same-outcome showup run length to produce a milestone.
   ///
-  /// Runs below this threshold are shown as a mixed group item; runs at or above
-  /// are shown as a streak item. Value must be ≥ 2. Override via RC to tune the
-  /// grouping sensitivity. Remote Config key: `pact_timeline_event_grouping_threshold`.
-  static const int pactTimelineEventGroupingThreshold = 10;
+  /// Runs below this threshold are shown as a mixed group milestone; runs at or
+  /// above are shown as a streak milestone. Value must be ≥ 2. Override via RC
+  /// to tune the grouping sensitivity. Remote Config key: `pact_timeline_milestone_grouping_threshold`.
+  static const int pactTimelineMilestoneGroupingThreshold = 10;
 
   /// Number of most-recent showups always shown individually on the timeline.
   ///
@@ -190,7 +190,7 @@ abstract final class RemoteConfigDefaults {
     'language_selection_enabled': languageSelectionEnabled,
     'network_sync_enabled': networkSyncEnabled,
     'pact_timeline_enabled': pactTimelineEnabled,
-    'pact_timeline_event_grouping_threshold': pactTimelineEventGroupingThreshold,
+    'pact_timeline_milestone_grouping_threshold': pactTimelineMilestoneGroupingThreshold,
     'pact_timeline_no_grouping_tail_size': pactTimelineNoGroupingTailSize,
     'pact_timeline_first_page_size': pactTimelineFirstPageSize,
     'pact_timeline_nth_page_size': pactTimelineNthPageSize,
@@ -214,7 +214,7 @@ abstract final class RemoteConfigDefaults {
     'language_selection_enabled': ['true', 'false'],
     'network_sync_enabled': ['true', 'false'],
     'pact_timeline_enabled': ['true', 'false'],
-    'pact_timeline_event_grouping_threshold': null,
+    'pact_timeline_milestone_grouping_threshold': null,
     'pact_timeline_no_grouping_tail_size': null,
     'pact_timeline_first_page_size': null,
     'pact_timeline_nth_page_size': null,
@@ -236,7 +236,7 @@ abstract final class RemoteConfigDefaults {
     'language_selection_enabled': null,
     'network_sync_enabled': null,
     'pact_timeline_enabled': null,
-    'pact_timeline_event_grouping_threshold': null,
+    'pact_timeline_milestone_grouping_threshold': null,
     'pact_timeline_no_grouping_tail_size': null,
     'pact_timeline_first_page_size': null,
     'pact_timeline_nth_page_size': null,

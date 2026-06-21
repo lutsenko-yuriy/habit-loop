@@ -18,31 +18,31 @@ void main() {
       });
     });
 
-    group('eventGroupingThreshold', () {
+    group('milestoneGroupingThreshold', () {
       test('defaults to 10', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.eventGroupingThreshold, 10);
+        expect(config.milestoneGroupingThreshold, 10);
       });
 
       test('reads custom value from RC', () {
-        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_event_grouping_threshold': 5});
-        expect(PactTimelineConfig.fromRemoteConfig(rc).eventGroupingThreshold, 5);
+        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_milestone_grouping_threshold': 5});
+        expect(PactTimelineConfig.fromRemoteConfig(rc).milestoneGroupingThreshold, 5);
       });
 
       test('default matches RemoteConfigDefaults constant', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.eventGroupingThreshold, RemoteConfigDefaults.pactTimelineEventGroupingThreshold);
+        expect(config.milestoneGroupingThreshold, RemoteConfigDefaults.pactTimelineMilestoneGroupingThreshold);
       });
     });
 
     group('noGroupingTailSize', () {
-      test('resolves to eventGroupingThreshold when RC value is 0', () {
+      test('resolves to milestoneGroupingThreshold when RC value is 0', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.noGroupingTailSize, config.eventGroupingThreshold);
+        expect(config.noGroupingTailSize, config.milestoneGroupingThreshold);
       });
 
-      test('resolves to eventGroupingThreshold when threshold is overridden', () {
-        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_event_grouping_threshold': 15});
+      test('resolves to milestoneGroupingThreshold when threshold is overridden', () {
+        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_milestone_grouping_threshold': 15});
         final config = PactTimelineConfig.fromRemoteConfig(rc);
         expect(config.noGroupingTailSize, 15);
       });
@@ -103,7 +103,7 @@ void main() {
       final a = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
       final b = PactTimelineConfig.fromRemoteConfig(
         FakeRemoteConfigService(overrides: {
-          'pact_timeline_event_grouping_threshold': 5,
+          'pact_timeline_milestone_grouping_threshold': 5,
           'pact_timeline_no_grouping_tail_size': 5,
         }),
       );
@@ -115,13 +115,13 @@ void main() {
     test('fields are set correctly', () {
       const config = PactTimelineConfig(
         enabled: true,
-        eventGroupingThreshold: 8,
+        milestoneGroupingThreshold: 8,
         noGroupingTailSize: 4,
         firstPageSize: 15,
         nthPageSize: 7,
       );
       expect(config.enabled, isTrue);
-      expect(config.eventGroupingThreshold, 8);
+      expect(config.milestoneGroupingThreshold, 8);
       expect(config.noGroupingTailSize, 4);
       expect(config.firstPageSize, 15);
       expect(config.nthPageSize, 7);

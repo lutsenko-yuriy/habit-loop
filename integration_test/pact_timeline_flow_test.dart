@@ -56,7 +56,7 @@ void main() {
         // TODO: 3. Assert the noted showup appears as an individual event (its note text is visible).
         // TODO: 4. Tap the noted showup event item.
         // TODO: 5. Assert showup detail screen opens.
-        // TODO: 6. Assert h.analytics contains a pact_timeline_event_tapped event with item_type=noted_showup.
+        // TODO: 6. Assert h.analytics contains a pact_timeline_milestone_tapped event with item_type=noted_showup.
       },
     );
 
@@ -132,7 +132,7 @@ void main() {
         // TODO: 3. Assert the single-showup event item is visible.
         // TODO: 4. Tap the single-showup event item.
         // TODO: 5. Assert showup detail screen opens.
-        // TODO: 6. Assert h.analytics contains a pact_timeline_event_tapped event with item_type=single_showup.
+        // TODO: 6. Assert h.analytics contains a pact_timeline_milestone_tapped event with item_type=single_showup.
       },
     );
   });
