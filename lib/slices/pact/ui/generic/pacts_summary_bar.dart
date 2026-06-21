@@ -167,9 +167,8 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     final unarchivedEntries = state.filteredEntries.where((e) => !e.pact.archived).toList();
     // Computed from state.entries (not filteredEntries) so the list stays populated
     // when showArchived is toggled off — required for the exit animation to have content.
-    final archivedEntries = state.entries
-        .where((e) => e.pact.archived && state.activeFilters.contains(e.pact.status))
-        .toList();
+    final archivedEntries =
+        state.entries.where((e) => e.pact.archived && state.activeFilters.contains(e.pact.status)).toList();
     final allEmpty = unarchivedEntries.isEmpty && archivedEntries.isEmpty && state.archivedCount == 0;
 
     return LayoutBuilder(
