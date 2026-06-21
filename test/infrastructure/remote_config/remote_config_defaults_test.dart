@@ -114,5 +114,101 @@ void main() {
         expect(RemoteConfigDefaults.intRanges['network_sync_enabled'], isNull);
       });
     });
+
+    group('pact_timeline_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_enabled'), isTrue);
+      });
+
+      test('default value is true', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_enabled'], isTrue);
+      });
+
+      test('constant matches all map value', () {
+        expect(RemoteConfigDefaults.pactTimelineEnabled, equals(RemoteConfigDefaults.all['pact_timeline_enabled']));
+      });
+
+      test('appears in featureToggleKeys', () {
+        expect(RemoteConfigDefaults.featureToggleKeys.contains('pact_timeline_enabled'), isTrue);
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_timeline_enabled'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['pact_timeline_enabled'], containsAll(['true', 'false']));
+      });
+    });
+
+    group('pact_timeline_event_grouping_threshold', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_event_grouping_threshold'), isTrue);
+      });
+
+      test('default value is 10', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_event_grouping_threshold'], 10);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.pactTimelineEventGroupingThreshold,
+          equals(RemoteConfigDefaults.all['pact_timeline_event_grouping_threshold']),
+        );
+      });
+
+      test('appears in allowedValues as null (free-value integer field)', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_timeline_event_grouping_threshold'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['pact_timeline_event_grouping_threshold'], isNull);
+      });
+    });
+
+    group('pact_timeline_no_grouping_tail_size', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_size'), isTrue);
+      });
+
+      test('default sentinel value is 0', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size'], 0);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.pactTimelineNoGroupingTailSize,
+          equals(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size']),
+        );
+      });
+    });
+
+    group('pact_timeline_first_page_size', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_first_page_size'), isTrue);
+      });
+
+      test('default sentinel value is 0', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_first_page_size'], 0);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.pactTimelineFirstPageSize,
+          equals(RemoteConfigDefaults.all['pact_timeline_first_page_size']),
+        );
+      });
+    });
+
+    group('pact_timeline_nth_page_size', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_nth_page_size'), isTrue);
+      });
+
+      test('default sentinel value is 0', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_nth_page_size'], 0);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.pactTimelineNthPageSize,
+          equals(RemoteConfigDefaults.all['pact_timeline_nth_page_size']),
+        );
+      });
+    });
   });
 }

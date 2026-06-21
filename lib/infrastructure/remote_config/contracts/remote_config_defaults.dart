@@ -101,6 +101,38 @@ abstract final class RemoteConfigDefaults {
   /// **Debug/profile only.** This key is never read in release builds.
   static const String debugBackend = 'real';
 
+  /// Feature toggle: enable the pact timeline screen entry point.
+  ///
+  /// When `false`, the "View timeline" button is hidden from pact detail screens.
+  /// Override to `false` in the Firebase Remote Config console to disable the
+  /// feature without a release.
+  static const bool pactTimelineEnabled = true;
+
+  /// Minimum consecutive same-outcome showup run length for timeline collapsing.
+  ///
+  /// Runs below this threshold are shown as a mixed group item; runs at or above
+  /// are shown as a streak item. Value must be ≥ 2. Override via RC to tune the
+  /// grouping sensitivity. Remote Config key: `pact_timeline_event_grouping_threshold`.
+  static const int pactTimelineEventGroupingThreshold = 10;
+
+  /// Number of most-recent showups always shown individually on the timeline.
+  ///
+  /// Sentinel `0` means [PactTimelineConfig] resolves this to the grouping
+  /// threshold at runtime. Remote Config key: `pact_timeline_no_grouping_tail_size`.
+  static const int pactTimelineNoGroupingTailSize = 0;
+
+  /// Showups loaded on the first page of the pact timeline.
+  ///
+  /// Sentinel `0` means [PactTimelineConfig] resolves this to 20 at runtime.
+  /// Remote Config key: `pact_timeline_first_page_size`.
+  static const int pactTimelineFirstPageSize = 0;
+
+  /// Showups loaded on each subsequent page of the pact timeline.
+  ///
+  /// Sentinel `0` means [PactTimelineConfig] resolves this to 10 at runtime.
+  /// Remote Config key: `pact_timeline_nth_page_size`.
+  static const int pactTimelineNthPageSize = 0;
+
   /// Keys belonging to the feature-toggle category shown in a dedicated section
   /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
   ///
@@ -109,6 +141,7 @@ abstract final class RemoteConfigDefaults {
   static const Set<String> featureToggleKeys = {
     'language_selection_enabled',
     'network_sync_enabled',
+    'pact_timeline_enabled',
   };
 
   /// Feature toggle: show the language-selection UI on the dashboard.
@@ -156,6 +189,11 @@ abstract final class RemoteConfigDefaults {
     'debug_backend': debugBackend,
     'language_selection_enabled': languageSelectionEnabled,
     'network_sync_enabled': networkSyncEnabled,
+    'pact_timeline_enabled': pactTimelineEnabled,
+    'pact_timeline_event_grouping_threshold': pactTimelineEventGroupingThreshold,
+    'pact_timeline_no_grouping_tail_size': pactTimelineNoGroupingTailSize,
+    'pact_timeline_first_page_size': pactTimelineFirstPageSize,
+    'pact_timeline_nth_page_size': pactTimelineNthPageSize,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -175,6 +213,11 @@ abstract final class RemoteConfigDefaults {
     'debug_backend': ['real', 'local'],
     'language_selection_enabled': ['true', 'false'],
     'network_sync_enabled': ['true', 'false'],
+    'pact_timeline_enabled': ['true', 'false'],
+    'pact_timeline_event_grouping_threshold': null,
+    'pact_timeline_no_grouping_tail_size': null,
+    'pact_timeline_first_page_size': null,
+    'pact_timeline_nth_page_size': null,
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known
@@ -192,5 +235,10 @@ abstract final class RemoteConfigDefaults {
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
     'language_selection_enabled': null,
     'network_sync_enabled': null,
+    'pact_timeline_enabled': null,
+    'pact_timeline_event_grouping_threshold': null,
+    'pact_timeline_no_grouping_tail_size': null,
+    'pact_timeline_first_page_size': null,
+    'pact_timeline_nth_page_size': null,
   };
 }

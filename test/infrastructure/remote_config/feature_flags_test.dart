@@ -31,11 +31,24 @@ void main() {
         expect(flags.networkSyncEnabled, isFalse);
       });
 
+      test('pactTimelineEnabled defaults to true', () {
+        final rc = FakeRemoteConfigService();
+        final flags = FeatureFlags.fromRemoteConfig(rc);
+        expect(flags.pactTimelineEnabled, isTrue);
+      });
+
+      test('pactTimelineEnabled reads false from RC override', () {
+        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_enabled': false});
+        final flags = FeatureFlags.fromRemoteConfig(rc);
+        expect(flags.pactTimelineEnabled, isFalse);
+      });
+
       test('default values match RemoteConfigDefaults constants', () {
         final rc = FakeRemoteConfigService();
         final flags = FeatureFlags.fromRemoteConfig(rc);
         expect(flags.languageSelectionEnabled, RemoteConfigDefaults.languageSelectionEnabled);
         expect(flags.networkSyncEnabled, RemoteConfigDefaults.networkSyncEnabled);
+        expect(flags.pactTimelineEnabled, RemoteConfigDefaults.pactTimelineEnabled);
       });
     });
 
@@ -54,9 +67,15 @@ void main() {
         expect(a.hashCode, b.hashCode);
       });
 
-      test('instances differ when flags differ', () {
+      test('instances differ when language_selection_enabled differs', () {
         final rcAll = FakeRemoteConfigService();
         final rcOff = FakeRemoteConfigService(overrides: {'language_selection_enabled': false});
+        expect(FeatureFlags.fromRemoteConfig(rcAll), isNot(equals(FeatureFlags.fromRemoteConfig(rcOff))));
+      });
+
+      test('instances differ when pact_timeline_enabled differs', () {
+        final rcAll = FakeRemoteConfigService();
+        final rcOff = FakeRemoteConfigService(overrides: {'pact_timeline_enabled': false});
         expect(FeatureFlags.fromRemoteConfig(rcAll), isNot(equals(FeatureFlags.fromRemoteConfig(rcOff))));
       });
     });
