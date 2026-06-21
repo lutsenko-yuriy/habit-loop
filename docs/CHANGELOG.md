@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.44.6] — 2026-06-21 (HAB-116 WU1, PR #TBD)
+## [0.44.6] — 2026-06-22 (HAB-116 WU1, PR #168)
 
 ### Config — pact timeline RC params, FeatureFlags, PactTimelineConfig, analytics event classes
 
