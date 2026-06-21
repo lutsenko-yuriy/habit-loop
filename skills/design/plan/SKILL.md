@@ -36,6 +36,8 @@ The vertical-slice structure to keep in mind:
 
 Use this format exactly. Omit a section entirely if it has no content.
 
+**Feature toggle:** If the feature introduces new user-facing behaviour, include a Firebase Remote Config kill-switch flag (default `true`) in the plan so the feature can be disabled remotely without a release. Add the flag name and a `docs/FEATURE_TOGGLES.md` update to the relevant WU.
+
 **Work unit rules (apply before writing the WU table):**
 - WU0 is always the first unit: integration scenarios from `draft-scenarios`, committed as a `[test]`-tagged PR before any production code lands.
 - Each subsequent WU must include an estimated LoC count. Target ≤ 300 LoC and ≤ 10 files. If a WU would exceed this, split it into two or more units.

@@ -47,6 +47,8 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
 
 **If the ticket lacks a clear UX spec** (no explicit description of UI behaviour, interaction, or screen layout), or predates the `/brief` skill: run `/brief` first to sharpen the spec before any planning begins.
 
+**For features introducing new user-facing behaviour**: consider adding a Firebase Remote Config kill-switch flag (default `true`) so the feature can be disabled remotely without a release if a critical regression is discovered after shipping. If warranted, document the flag in `docs/FEATURE_TOGGLES.md` before writing any code.
+
 **For every ticket with user-facing flows**: invoke the `draft-scenarios` skill to write scenarios (integration tests) from the spec before any production code:
 
 ```

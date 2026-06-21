@@ -47,11 +47,11 @@ This level of detail lets the user verify the test logic before anything is writ
 
 ### 5. Write the scenarios
 
-Write the approved scenario files. The scenarios must be **red** at this point — no production code exists yet, and that is the intended state. If a scenario passes without implementation, it is testing nothing; revise it.
+Write the approved scenario files as **stubs**: each test function contains only `// TODO:` comments describing each step exactly as reviewed in step 4 — no driver calls, no assertions. The stubs must compile against `AppHarness` but verify nothing. The `implement` skill will replace the comments with actual driver code as part of making each scenario green.
 
 ### 6. Report back
 
-List the files written and confirm that `implement` can proceed with a clear red-green target.
+List the files written and confirm that `implement` can proceed with the commented stubs as its target.
 
 ---
 
@@ -59,6 +59,6 @@ List the files written and confirm that `implement` can proceed with a clear red
 
 - Do not write production code.
 - All scenario files must be written under `integration_test/`.
-- Scenarios must be red when written.
+- Scenario stubs must compile but contain no assertions; `implement` fills in the driver code and makes them green.
 - Use `AppHarness` from `integration_test/harness.dart` for all scenario setup.
 - Do not duplicate scenarios that already cover the same behaviour.
