@@ -298,6 +298,28 @@ No PII risk — note content is never included; only its length.
 
 ---
 
+### `pact_timeline_load_more`
+
+Fired when the user scrolls up and triggers "Load more" to reveal older events on the Pact Timeline screen. Measures engagement depth — how far back users explore. (HAB-116)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact whose timeline is being viewed |
+| `page_number` | `int` | Which page was loaded; `2` = the first "Load more" tap |
+
+---
+
+### `pact_timeline_event_tapped`
+
+Fired when the user taps a tappable timeline item (noted showup or lone single-showup) to open the showup detail screen. (HAB-116)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the parent pact |
+| `item_type` | `string` | Type of item tapped: `noted_showup` \| `single_showup` |
+
+---
+
 ### `pact_archived`
 
 Fired when the user archives a pact. (HAB-114)
@@ -348,3 +370,4 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 | `PactEditAnalyticsScreen` | `pact_edit` | `slices/pact/analytics/pact_analytics_events.dart` | Edit pact wizard opens (pencil icon tapped on pact detail screen) — HAB-79 |
 | `PactDetailAnalyticsScreen` | `pact_detail` | `slices/pact/analytics/pact_analytics_events.dart` | Pact detail screen opens |
 | `ShowupDetailAnalyticsScreen` | `showup_detail` | `slices/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |
+| `PactTimelineAnalyticsScreen` | `pact_timeline` | `slices/pact/analytics/pact_timeline_analytics_events.dart` | Pact Timeline screen opens; properties: `pact_id: string`, `pact_status: string` (`active \| completed \| stopped`), `total_showup_count: int` — HAB-116 |
