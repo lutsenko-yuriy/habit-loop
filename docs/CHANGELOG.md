@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.2] — 2026-06-21 (PR #163)
+
+### Meta — HAB-114 debrief: multi-WU workflow improvements
+
+- [meta] `docs/WORKFLOW.md`: extracted multi-WU rules into dedicated `### 4.1 Multi-WU tickets` subsection (WU0 PR, one-WU-one-branch, WU cycle)
+- [meta] `skills/design/plan/resources/plan-template.md`: added `Branch` column to WU table so branch names are pre-named in the plan comment
+- [meta] `skills/build/implement/SKILL.md`: step 3 now explicitly enforces one-WU-one-branch and always creates fresh from `origin/main`
+- [meta] `skills/manage/debrief/SKILL.md`: added step 5.1 — approved changes are committed and PRed on `feature/HAB-XX-debrief` before posting the Linear comment
+
+---
+
 ## [0.44.1] — 2026-06-21 (PR #161)
 
 ### Meta — debrief skill, brief rename, shared dialog principles
