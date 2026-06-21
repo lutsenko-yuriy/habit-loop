@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.6] — 2026-06-21 (HAB-116 WU1, PR #TBD)
+
+### Config — pact timeline RC params, FeatureFlags, PactTimelineConfig, analytics event classes
+
+- [app] `RemoteConfigDefaults`: add `pact_timeline_enabled` (default `true`), `pact_timeline_event_grouping_threshold` (default `10`), `pact_timeline_no_grouping_tail_size` (sentinel `0`), `pact_timeline_first_page_size` (sentinel `0`), `pact_timeline_nth_page_size` (sentinel `0`)
+- [app] `FeatureFlags`: add `pactTimelineEnabled` getter
+- [app] `PactTimelineConfig`: new class in `slices/pact/application/`; resolves sentinel-`0` RC params at construction time
+- [app] `pact_timeline_analytics_events.dart`: add `PactTimelineAnalyticsScreen`, `PactTimelineLoadMoreEvent`, `PactTimelineEventTappedEvent`
+- [app] `docs/FEATURE_TOGGLES.md`: add `pact_timeline_enabled` row
+
+---
+
 ## [0.44.5] — 2026-06-21 (HAB-116, PR #167)
 
 ### Tests — HAB-116 WU0: pact timeline screen integration scenarios
