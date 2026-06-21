@@ -56,6 +56,16 @@ git checkout -b feature/HAB-XX-WUN-<short> origin/main
 
 @skills/build/implement/resources/tdd-cycle.md
 
+### 4.1 Rework cycle checkpoint
+
+A **rework cycle** is counted when the current WU approach is scrapped and restarted with a significantly different implementation — e.g. changing the widget tree structure, rewriting display logic, or switching the data model. Minor adjustments (padding, button colour, widget reordering) do not count.
+
+At rework cycles 4, 7, 10, … (every 3rd cycle starting at 4), pause and ask:
+
+> "It's taking more effort than expected. Do you want to continue? We can still simplify or drop this part."
+
+Present three options: **Continue**, **Simplify** (scale back scope), **Drop** (remove this part entirely). If the user chooses Simplify or Drop, invoke the `plan` skill to update the plan before proceeding.
+
 ### 5. Schema / data migrations
 
 @skills/build/implement/resources/migration-guide.md

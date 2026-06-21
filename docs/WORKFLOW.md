@@ -45,6 +45,8 @@ Invoke the plan skill for HAB-XX: <issue title>
 
 The skill will produce a structured plan (dependencies, models, UI changes, test strategy, ordered phases, work units) and wait for the user to approve or adjust it.
 
+**If the ticket lacks a clear UX spec** (no explicit description of UI behaviour, interaction, or screen layout), or predates the `/brief` skill: run `/brief` first to sharpen the spec before any planning begins.
+
 **For every ticket with user-facing flows**: invoke the `draft-scenarios` skill to write scenarios (integration tests) from the spec before any production code:
 
 ```
@@ -86,7 +88,7 @@ Each WU gets its own branch (`feature/HAB-XX-WUN-<short>`, where N is the WU num
 
 For each WU in sequence:
 1. Create a fresh branch from the latest `origin/main` using the branch name from the plan table.
-2. Follow steps 5–17 (TDD cycles, validate, format, PR, review loop, ship).
+2. Follow steps 5–17 (TDD cycles, validate, format, PR, review loop, ship). The full review loop (step 15) — `review-architecture`, `audit-code`, Codecov, and user sign-off — is mandatory for every WU PR without exception.
 3. After `ship` merges, fetch `origin/main` and start the next WU from the freshly updated tip.
 
 ---
