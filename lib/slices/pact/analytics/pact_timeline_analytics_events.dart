@@ -4,7 +4,8 @@ import 'package:habit_loop/infrastructure/analytics/contracts/analytics_screen.d
 /// Screen view for the pact timeline screen. (HAB-116)
 ///
 /// [pactId], [pactStatus], and [totalShowupCount] are sent via a companion
-/// [logEvent] call alongside [logScreenView] — the call site is in WU5/WU6.
+/// [logEvent] call alongside [logScreenView] — [logScreenView] only forwards
+/// [AnalyticsScreen.name], not custom properties.
 class PactTimelineAnalyticsScreen implements AnalyticsScreen {
   const PactTimelineAnalyticsScreen({
     required this.pactId,
