@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.3] — 2026-06-21 (PR #164)
+
+### Fixed
+
+- [user] Archived pacts now animate out smoothly when collapsed — previously items disappeared instantly before the size animation ran
+
+---
+
 ## [0.44.2] — 2026-06-21 (PR #163)
 
 ### Meta — HAB-114 debrief: multi-WU workflow improvements
