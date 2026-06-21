@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.1] — 2026-06-21 (PR #161)
+
+### Meta — debrief skill, brief rename, shared dialog principles
+
+- [meta] New `/debrief HAB-XX` skill — post-ticket retrospective: structured dialog, proposes workflow/skill/docs improvements, posts summary as a Linear comment
+- [meta] Renamed `/describe-feature` → `/brief`; symmetric pair: `/brief` before a ticket, `/debrief` after
+- [meta] Extracted `skills/shared/dialog-principles.md` — non-judgmental framing rules shared by both `brief` and `debrief`
+- [meta] `/ship` now proposes `/debrief` after reporting the merge
+
+---
+
 ## [0.44.0] — 2026-06-21 (HAB-114, PR #160)
 
 ### Added — archive pacts
