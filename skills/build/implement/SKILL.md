@@ -54,7 +54,19 @@ git checkout -b feature/HAB-XX-WUN-<short> origin/main
 
 ### 4. TDD cycle
 
+**If this WU lists scenarios to make green:** before writing any production code, first replace the `// TODO:` comment stubs in those scenario files with actual `AppHarness` driver calls. This makes the scenarios compile and run red. Then proceed with the TDD cycle below to make them pass.
+
 @skills/build/implement/resources/tdd-cycle.md
+
+### 4.1 Rework cycle checkpoint
+
+A **rework cycle** is counted when the current WU approach is scrapped and restarted with a significantly different implementation — e.g. changing the widget tree structure, rewriting display logic, or switching the data model. Minor adjustments (padding, button colour, widget reordering) do not count.
+
+At rework cycles 4, 7, 10, … (every 3rd cycle starting at 4), pause and ask:
+
+> "It's taking more effort than expected. Do you want to continue? We can still simplify or drop this part."
+
+Present three options: **Continue**, **Simplify** (scale back scope), **Drop** (remove this part entirely). If the user chooses Simplify or Drop, invoke the `plan` skill to update the plan before proceeding.
 
 ### 5. Schema / data migrations
 

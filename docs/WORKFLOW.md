@@ -45,13 +45,17 @@ Invoke the plan skill for HAB-XX: <issue title>
 
 The skill will produce a structured plan (dependencies, models, UI changes, test strategy, ordered phases, work units) and wait for the user to approve or adjust it.
 
+**If the ticket lacks a clear UX spec** (no explicit description of UI behaviour, interaction, or screen layout), or predates the `/brief` skill: run `/brief` first to sharpen the spec before any planning begins.
+
+**For features introducing new user-facing behaviour**: consider adding a Firebase Remote Config kill-switch flag (default `true`) so the feature can be disabled remotely without a release if a critical regression is discovered after shipping. If warranted, document the flag in `docs/FEATURE_TOGGLES.md` before writing any code.
+
 **For every ticket with user-facing flows**: invoke the `draft-scenarios` skill to write scenarios (integration tests) from the spec before any production code:
 
 ```
 Invoke the draft-scenarios skill for HAB-XX: <issue title>
 ```
 
-The skill reads the ticket and any plan comment, drafts scenarios covering the happy path and critical failure cases using `AppHarness`, waits for approval, and writes the approved scenario files. Scenarios are intentionally red — `implement` uses them as its red-green target. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
+The skill reads the ticket and any plan comment, drafts scenario stubs with `// TODO:` comments covering the happy path and critical failure cases using `AppHarness`, waits for approval, and writes the approved stubs. `implement` fills in driver code per WU and makes them green. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
 
 1. For features with user-facing screens/interactions, invoke `analyze` first and wait for approval.
 2. For large changes, invoke `plan` and wait for plan approval.
@@ -68,7 +72,7 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
    Invoke the draft-scenarios skill for HAB-XX: <issue title>
    ```
 
-   The skill reads the ticket (and any `plan` comment), drafts scenario files in `integration_test/` using `AppHarness`, waits for approval, and writes the approved scenarios. Scenarios are intentionally red at this point — no production code exists yet. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
+   The skill reads the ticket (and any `plan` comment), drafts scenario stubs with `// TODO:` comments in `integration_test/` using `AppHarness`, waits for approval, and writes the approved stubs. `implement` fills in driver code per WU and makes them green. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
 
 ### 4.1 Multi-WU tickets
 
@@ -86,7 +90,7 @@ Each WU gets its own branch (`feature/HAB-XX-WUN-<short>`, where N is the WU num
 
 For each WU in sequence:
 1. Create a fresh branch from the latest `origin/main` using the branch name from the plan table.
-2. Follow steps 5–17 (TDD cycles, validate, format, PR, review loop, ship).
+2. Follow steps 5–17 (TDD cycles, validate, format, PR, review loop, ship). The full review loop (step 15) — `review-architecture`, `audit-code`, Codecov, and user sign-off — is mandatory for every WU PR without exception.
 3. After `ship` merges, fetch `origin/main` and start the next WU from the freshly updated tip.
 
 ---

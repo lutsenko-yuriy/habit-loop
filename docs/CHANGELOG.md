@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.4] — 2026-06-21 (HAB-125, PR #165)
+
+### Meta — HAB-125 debrief: scenario stubs, feature toggle gate, rework checkpoint
+
+- [meta] `skills/verify/draft-scenarios/SKILL.md`: step 5 now writes `// TODO:` comment stubs instead of full test code; `implement` fills in driver calls per WU
+- [meta] `skills/build/implement/SKILL.md`: step 4 note to replace stubs before writing production code; added rework cycle checkpoint — at cycles 4, 7, 10, … ask Continue / Simplify / Drop and invoke `plan` if scope is reduced
+- [meta] `docs/WORKFLOW.md`: brief-first rule for tickets lacking a UX spec; RC kill-switch consideration for new user-facing features; mandatory full review loop in multi-WU WU cycle
+- [meta] `skills/design/plan/SKILL.md`: plan must include RC kill-switch flag for new user-facing features
+
+---
+
 ## [0.44.3] — 2026-06-21 (PR #164)
 
 ### Fixed
