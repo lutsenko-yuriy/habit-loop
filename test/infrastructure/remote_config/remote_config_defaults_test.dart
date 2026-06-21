@@ -27,9 +27,8 @@ void main() {
             equals(RemoteConfigDefaults.all['sync_max_consecutive_failures']));
       });
 
-      test('appears in allowedValues as null (free-value integer field)', () {
-        expect(RemoteConfigDefaults.allowedValues.containsKey('sync_max_consecutive_failures'), isTrue);
-        expect(RemoteConfigDefaults.allowedValues['sync_max_consecutive_failures'], isNull);
+      test('is absent from allowedValues (free-text integer field)', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('sync_max_consecutive_failures'), isFalse);
       });
     });
 
@@ -70,9 +69,8 @@ void main() {
             equals(RemoteConfigDefaults.all['debug_connectivity_stability_percent']));
       });
 
-      test('appears in allowedValues as null (free-value integer field)', () {
-        expect(RemoteConfigDefaults.allowedValues.containsKey('debug_connectivity_stability_percent'), isTrue);
-        expect(RemoteConfigDefaults.allowedValues['debug_connectivity_stability_percent'], isNull);
+      test('is absent from allowedValues (free-text integer field)', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('debug_connectivity_stability_percent'), isFalse);
       });
     });
 
@@ -95,9 +93,8 @@ void main() {
         expect(RemoteConfigDefaults.allowedValues['language_selection_enabled'], containsAll(['true', 'false']));
       });
 
-      test('appears in intRanges as null (boolean, not int-bounded)', () {
-        expect(RemoteConfigDefaults.intRanges.containsKey('language_selection_enabled'), isTrue);
-        expect(RemoteConfigDefaults.intRanges['language_selection_enabled'], isNull);
+      test('is absent from intRanges (boolean, not int-bounded)', () {
+        expect(RemoteConfigDefaults.intRanges.containsKey('language_selection_enabled'), isFalse);
       });
     });
 
@@ -119,9 +116,8 @@ void main() {
         expect(RemoteConfigDefaults.allowedValues['network_sync_enabled'], containsAll(['true', 'false']));
       });
 
-      test('appears in intRanges as null (boolean, not int-bounded)', () {
-        expect(RemoteConfigDefaults.intRanges.containsKey('network_sync_enabled'), isTrue);
-        expect(RemoteConfigDefaults.intRanges['network_sync_enabled'], isNull);
+      test('is absent from intRanges (boolean, not int-bounded)', () {
+        expect(RemoteConfigDefaults.intRanges.containsKey('network_sync_enabled'), isFalse);
       });
     });
 
@@ -164,9 +160,8 @@ void main() {
         );
       });
 
-      test('appears in allowedValues as null (free-value integer field)', () {
-        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_timeline_milestone_grouping_threshold'), isTrue);
-        expect(RemoteConfigDefaults.allowedValues['pact_timeline_milestone_grouping_threshold'], isNull);
+      test('is absent from allowedValues (free-text integer field)', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_timeline_milestone_grouping_threshold'), isFalse);
       });
 
       test('appears in intRanges with correct bounds', () {

@@ -196,42 +196,30 @@ abstract final class RemoteConfigDefaults {
   /// Allowed string values for keys that accept only a fixed set of values.
   ///
   /// The debug override screen uses this to show a picker instead of a free-
-  /// text field for enum-like keys. Keys absent from this map (or mapped to
-  /// `null`) accept any value — the screen shows a plain text field instead.
-  static const Map<String, List<String>?> allowedValues = {
-    'max_active_pacts': null,
+  /// text field for enum-like keys. Keys absent from this map accept any value
+  /// — the screen shows a plain text field instead.
+  static const Map<String, List<String>> allowedValues = {
     'notification_text_variant': ['control', 'deadline', 'time_limit'],
     'post_deadline_notification_behavior': ['dismiss', 'encourage'],
-    'onboarding_auto_advance_seconds': null,
     'exp_003_commitment_confirmation': ['button', 'checkbox', 'retype'],
-    'sync_max_consecutive_failures': null,
     'debug_connectivity_state': ['perfect', 'unstable', 'absent'],
-    'debug_connectivity_stability_percent': null,
     'debug_backend': ['real', 'local'],
     'language_selection_enabled': ['true', 'false'],
     'network_sync_enabled': ['true', 'false'],
     'pact_timeline_enabled': ['true', 'false'],
-    'pact_timeline_milestone_grouping_threshold': null,
-    'pact_timeline_no_grouping_tail_size': null,
-    'pact_timeline_first_page_size': null,
-    'pact_timeline_nth_page_size': null,
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known
   /// [min, max] range (inclusive on both ends).
   ///
   /// The debug override screen uses this to display a slider instead of a
-  /// free-text input for these keys. Boolean keys are listed with `null` so
-  /// the screen renders them as a toggle rather than a slider or free-text field.
-  /// Keys absent from this map accept any value — the screen shows a plain text field.
-  static const Map<String, ({int min, int max})?> intRanges = {
+  /// free-text input for these keys. Keys absent from this map accept any
+  /// value — the screen shows a plain text field.
+  static const Map<String, ({int min, int max})> intRanges = {
     'max_active_pacts': (min: 1, max: 10),
     'debug_connectivity_stability_percent': (min: 0, max: 100),
     'sync_max_consecutive_failures': (min: 1, max: 20),
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
-    'language_selection_enabled': null,
-    'network_sync_enabled': null,
-    'pact_timeline_enabled': null,
     'pact_timeline_milestone_grouping_threshold': (min: 10, max: 50),
     'pact_timeline_no_grouping_tail_size': (min: 10, max: 20),
     'pact_timeline_first_page_size': (min: 20, max: 50),

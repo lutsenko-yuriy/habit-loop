@@ -92,15 +92,16 @@ void main() {
     expect(resetButton.onPressed, isNotNull);
   });
 
-  testWidgets('iOS — free-text key opens edit dialog with text field', (tester) async {
+  testWidgets('iOS — int-range key without allowed values opens slider dialog', (tester) async {
     await pumpWithTallView(tester);
     await tester.pump();
 
-    // max_active_pacts has no allowed values → text field.
+    // max_active_pacts has intRanges but no allowedValues → slider, not text field or picker.
     await tester.tap(find.byKey(const Key('rc-entry-max_active_pacts')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('override-value-field')), findsOneWidget);
+    expect(find.byKey(const Key('override-value-slider')), findsOneWidget);
+    expect(find.byKey(const Key('override-value-field')), findsNothing);
     expect(find.byKey(const Key('override-value-picker')), findsNothing);
     expect(find.byKey(const Key('save-action')), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
@@ -137,7 +138,7 @@ void main() {
     expect(find.byKey(const Key('use-default-action')), findsNothing);
   });
 
-  testWidgets('iOS — saving a free-text value updates the badge to OVERRIDE', (tester) async {
+  testWidgets('iOS — saving a slider value from the dialog updates the badge to OVERRIDE', (tester) async {
     final store = FakeRemoteConfigOverrideStore();
     await pumpWithTallView(tester, store: store);
     await tester.pump();
@@ -145,11 +146,11 @@ void main() {
     await tester.tap(find.byKey(const Key('rc-entry-max_active_pacts')));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byKey(const Key('override-value-field')), '99');
+    expect(find.byKey(const Key('override-value-slider')), findsOneWidget);
     await tester.tap(find.byKey(const Key('save-action')));
     await tester.pumpAndSettle();
 
-    expect(store.getOverride('max_active_pacts'), '99');
+    expect(store.getOverride('max_active_pacts'), isNotNull);
     expect(find.byKey(const Key('override-badge')), findsOneWidget);
   });
 
