@@ -61,6 +61,25 @@ If no actionable improvements emerged, say so explicitly and proceed to step 5.
 
 Write only the approved changes to their respective files. Skip any the user declined.
 
+### 5.1 Commit and open a PR (if changes were applied)
+
+If at least one improvement was approved in step 4:
+
+1. Create a branch from the latest `origin/main`:
+   ```bash
+   git fetch origin
+   git checkout -b feature/HAB-XX-debrief origin/main
+   ```
+2. Stage and commit the changed files:
+   ```bash
+   git add <files>
+   git commit -m "meta: debrief HAB-XX — <short summary of changes>"
+   ```
+3. Push and open a PR titled `meta: debrief HAB-XX — <short summary>`.
+4. Include the PR URL in the Linear comment (step 6) and in the report (step 7).
+
+If no changes were approved, skip this step.
+
 ### 6. Post retrospective summary to Linear
 
 Call `mcp__linear__save_comment` on the ticket with:
