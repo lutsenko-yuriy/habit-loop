@@ -70,9 +70,27 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
 
    The skill reads the ticket (and any `plan` comment), drafts scenario files in `integration_test/` using `AppHarness`, waits for approval, and writes the approved scenarios. Scenarios are intentionally red at this point — no production code exists yet. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
 
-   **For multi-WU plans:** after the scenarios are approved and written, commit them to a dedicated branch (`feature/HAB-XX-WU0-scenarios`), push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly (no `ship` needed — no version bump, no CHANGELOG entry beyond the `[test]` line). Each subsequent WU's plan entry lists which scenarios it makes green.
+### 4.1 Multi-WU tickets
 
-   **One WU = one branch = one PR.** For multi-WU tickets, each WU gets its own branch (`feature/HAB-XX-WUN-<short>`, where N is the WU number) created fresh from `origin/main`. Never implement multiple WUs on a single branch. The branch name for each WU is pre-named in the plan's WU table.
+When the approved plan contains more than one production work unit (WU1+), follow these rules in addition to the standard workflow.
+
+**WU0 — scenarios only**
+
+After scenarios are approved and written, commit them to `feature/HAB-XX-WU0-scenarios`, push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly — no `ship`, no version bump. Each subsequent WU's plan entry lists which scenarios it makes green.
+
+**One WU = one branch = one PR**
+
+Each WU gets its own branch (`feature/HAB-XX-WUN-<short>`, where N is the WU number from the plan's WU table) created fresh from `origin/main`. Never reuse a branch from a previous WU. Branch names are pre-named in the plan comment's WU table so the full mapping is visible from day one.
+
+**WU cycle (WU1 onwards)**
+
+For each WU in sequence:
+1. Create a fresh branch from the latest `origin/main` using the branch name from the plan table.
+2. Follow steps 5–17 (TDD cycles, validate, format, PR, review loop, ship).
+3. After `ship` merges, fetch `origin/main` and start the next WU from the freshly updated tip.
+
+---
+
 5. For features with user-visible screens or interactions: draft widget tests before writing production code:
    - Create new widget tests covering each new screen and key user flow (swiping, tapping, navigation, locale changes, auto-advance, etc.).
    - Update any existing widget tests that the new screens or UI changes will affect.
