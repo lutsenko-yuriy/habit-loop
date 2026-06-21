@@ -3,6 +3,16 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 
 void main() {
   group('RemoteConfigDefaults', () {
+    group('max_active_pacts', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('max_active_pacts'), isTrue);
+      });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['max_active_pacts'], (min: 1, max: 10));
+      });
+    });
+
     group('sync_max_consecutive_failures', () {
       test('key exists in all map', () {
         expect(RemoteConfigDefaults.all.containsKey('sync_max_consecutive_failures'), isTrue);
@@ -158,6 +168,10 @@ void main() {
         expect(RemoteConfigDefaults.allowedValues.containsKey('pact_timeline_milestone_grouping_threshold'), isTrue);
         expect(RemoteConfigDefaults.allowedValues['pact_timeline_milestone_grouping_threshold'], isNull);
       });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_milestone_grouping_threshold'], (min: 10, max: 50));
+      });
     });
 
     group('pact_timeline_no_grouping_tail_size', () {
@@ -165,8 +179,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_size'), isTrue);
       });
 
-      test('default sentinel value is 0', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size'], 0);
+      test('default value is 10', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size'], 10);
       });
 
       test('constant matches all map value', () {
@@ -175,6 +189,10 @@ void main() {
           equals(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size']),
         );
       });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_no_grouping_tail_size'], (min: 10, max: 20));
+      });
     });
 
     group('pact_timeline_first_page_size', () {
@@ -182,8 +200,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_first_page_size'), isTrue);
       });
 
-      test('default sentinel value is 0', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_first_page_size'], 0);
+      test('default value is 20', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_first_page_size'], 20);
       });
 
       test('constant matches all map value', () {
@@ -192,6 +210,10 @@ void main() {
           equals(RemoteConfigDefaults.all['pact_timeline_first_page_size']),
         );
       });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_first_page_size'], (min: 20, max: 50));
+      });
     });
 
     group('pact_timeline_nth_page_size', () {
@@ -199,8 +221,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_nth_page_size'), isTrue);
       });
 
-      test('default sentinel value is 0', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_nth_page_size'], 0);
+      test('default value is 10', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_nth_page_size'], 10);
       });
 
       test('constant matches all map value', () {
@@ -208,6 +230,10 @@ void main() {
           RemoteConfigDefaults.pactTimelineNthPageSize,
           equals(RemoteConfigDefaults.all['pact_timeline_nth_page_size']),
         );
+      });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_nth_page_size'], (min: 10, max: 25));
       });
     });
   });

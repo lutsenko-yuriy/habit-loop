@@ -36,25 +36,19 @@ void main() {
     });
 
     group('noGroupingTailSize', () {
-      test('resolves to milestoneGroupingThreshold when RC value is 0', () {
+      test('defaults to 10', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.noGroupingTailSize, config.milestoneGroupingThreshold);
+        expect(config.noGroupingTailSize, 10);
       });
 
-      test('resolves to milestoneGroupingThreshold when threshold is overridden', () {
-        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_milestone_grouping_threshold': 15});
-        final config = PactTimelineConfig.fromRemoteConfig(rc);
-        expect(config.noGroupingTailSize, 15);
-      });
-
-      test('reads explicit tail size from RC', () {
-        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_no_grouping_tail_size': 7});
-        expect(PactTimelineConfig.fromRemoteConfig(rc).noGroupingTailSize, 7);
+      test('reads custom value from RC', () {
+        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_no_grouping_tail_size': 15});
+        expect(PactTimelineConfig.fromRemoteConfig(rc).noGroupingTailSize, 15);
       });
     });
 
     group('firstPageSize', () {
-      test('resolves to 20 when RC value is 0', () {
+      test('defaults to 20', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
         expect(config.firstPageSize, 20);
       });
@@ -66,7 +60,7 @@ void main() {
     });
 
     group('nthPageSize', () {
-      test('resolves to 10 when RC value is 0', () {
+      test('defaults to 10', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
         expect(config.nthPageSize, 10);
       });
