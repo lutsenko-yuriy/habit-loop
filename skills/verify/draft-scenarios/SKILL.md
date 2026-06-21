@@ -4,7 +4,7 @@ effort: FOCUSED
 reasoning: TACTICAL
 context: linear
 output_style: CONCISE
-description: Draft scenarios (integration tests) from a ticket description before implementation. Runs after `plan` (if used) and before `implement`. Scenarios are written against the spec — not reverse-engineered from code — so they start red and give `implement` a clear target.
+description: Draft scenarios (integration tests) from a ticket description before implementation. Runs after `plan` (if used) and before `implement`. Scenarios are written against the spec — not reverse-engineered from code — so they compile as stubs and give `implement` a concrete target to fill in and make green.
 ---
 
 The project management tool is **Linear**. The issue identifier prefix is **HAB**.

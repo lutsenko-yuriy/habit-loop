@@ -55,7 +55,7 @@ The skill will produce a structured plan (dependencies, models, UI changes, test
 Invoke the draft-scenarios skill for HAB-XX: <issue title>
 ```
 
-The skill reads the ticket and any plan comment, drafts scenarios covering the happy path and critical failure cases using `AppHarness`, waits for approval, and writes the approved scenario files. Scenarios are intentionally red — `implement` uses them as its red-green target. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
+The skill reads the ticket and any plan comment, drafts scenario stubs with `// TODO:` comments covering the happy path and critical failure cases using `AppHarness`, waits for approval, and writes the approved stubs. `implement` fills in driver code per WU and makes them green. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
 
 1. For features with user-facing screens/interactions, invoke `analyze` first and wait for approval.
 2. For large changes, invoke `plan` and wait for plan approval.
@@ -72,7 +72,7 @@ The skill reads the ticket and any plan comment, drafts scenarios covering the h
    Invoke the draft-scenarios skill for HAB-XX: <issue title>
    ```
 
-   The skill reads the ticket (and any `plan` comment), drafts scenario files in `integration_test/` using `AppHarness`, waits for approval, and writes the approved scenarios. Scenarios are intentionally red at this point — no production code exists yet. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
+   The skill reads the ticket (and any `plan` comment), drafts scenario stubs with `// TODO:` comments in `integration_test/` using `AppHarness`, waits for approval, and writes the approved stubs. `implement` fills in driver code per WU and makes them green. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
 
 ### 4.1 Multi-WU tickets
 
