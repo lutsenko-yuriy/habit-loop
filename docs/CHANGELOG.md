@@ -8,9 +8,10 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Application — PactTimelineService assembler
 
-- [app] `PactTimelinePage`: new value object in `slices/pact/application/` holding `anchorStart` (`PactCreatedMilestone`), `anchorEnd` (`CurrentStateMilestone` or `PactConcludedMilestone`), paginated `milestones`, `hasMoreOlder`, and `loadedPageCount`
-- [app] `PactTimelineService`: new service in `slices/pact/application/`; `loadPage(pactId, pageNumber, config)` loads showups, groups them via `PactTimelineGrouper`, inserts anchor milestones, and returns a windowed `PactTimelinePage`; page-size sentinel `0` follows the derivation rules (first = 2×nth / nth = first/2); `noGroupingTailSize` sentinel `0` defaults to `groupingThreshold`
-- [app] `pactTimelineServiceProvider`: new Riverpod provider in `app_providers.dart`
+- [app] `PactTimelinePage`: new value object in `slices/pact/application/` holding `anchorStart` (`PactCreatedMilestone`), `anchorEnd` (`CurrentStateMilestone` or `PactConcludedMilestone`), and `milestones` (all grouped showup milestones, oldest-first)
+- [app] `PactTimelineService`: new service in `slices/pact/application/`; `loadAll(pactId)` loads all showups, sorts them, groups via injected `PactTimelineGrouper`, and assembles a complete `PactTimelinePage`; no caching (WU4); display windowing is a VM concern (WU5)
+- [app] `PactTimelineConfig`: removed `firstPageSize` / `nthPageSize` — pagination is not a service-layer concern; removed the corresponding RC defaults
+- [app] `pactTimelineServiceProvider`: new Riverpod provider in `app_providers.dart`; constructs `PactTimelineGrouper` from RC config (sentinel `noGroupingTailSize=0` → defaults to `groupingThreshold`) and injects it
 
 ---
 
