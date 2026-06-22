@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
@@ -44,17 +45,23 @@ Showup _showup(String id, DateTime at, {ShowupStatus status = ShowupStatus.done}
       status: status,
     );
 
-PactTimelineConfig _config({int first = 20, int nth = 10, int threshold = 10, int tail = 0}) => PactTimelineConfig(
+PactTimelineConfig _config({int first = 20, int nth = 10}) => PactTimelineConfig(
       enabled: true,
-      milestoneGroupingThreshold: threshold,
-      noGroupingTailSize: tail,
+      milestoneGroupingThreshold: 10,
+      noGroupingTailSize: 0,
       firstPageSize: first,
       nthPageSize: nth,
     );
 
-PactTimelineService _service({List<Pact>? pacts, List<Showup>? showups}) => PactTimelineService(
+PactTimelineService _service({
+  List<Pact>? pacts,
+  List<Showup>? showups,
+  PactTimelineGrouper? grouper,
+}) =>
+    PactTimelineService(
       pactRepository: InMemoryPactRepository(pacts),
       showupRepository: InMemoryShowupRepository(showups),
+      grouper: grouper ?? const PactTimelineGrouper(groupingThreshold: 10),
     );
 
 void main() {
@@ -140,7 +147,7 @@ void main() {
       final page = await svc.loadPage(
         pactId: 'p1',
         pageNumber: 1,
-        config: _config(first: 20, nth: 10, tail: 0),
+        config: _config(first: 20, nth: 10),
         now: _now,
       );
       expect(page.hasMoreOlder, isFalse);
@@ -165,7 +172,7 @@ void main() {
       final page = await svc.loadPage(
         pactId: 'p1',
         pageNumber: 1,
-        config: _config(first: 20, nth: 10, tail: 0),
+        config: _config(first: 20, nth: 10),
         now: _now,
       );
       expect(page.hasMoreOlder, isTrue);
@@ -191,7 +198,7 @@ void main() {
       final page2 = await svc.loadPage(
         pactId: 'p1',
         pageNumber: 2,
-        config: _config(first: 20, nth: 5, tail: 0),
+        config: _config(first: 20, nth: 5),
         now: _now,
       );
       // page 1 shows last 20, page 2 shows last 25 = all (20+5=25)
@@ -225,7 +232,7 @@ void main() {
       final page = await svc.loadPage(
         pactId: 'p1',
         pageNumber: 1,
-        config: _config(first: 0, nth: 5, tail: 0),
+        config: _config(first: 0, nth: 5),
         now: _now,
       );
       expect(page.milestones, hasLength(10)); // derived first = 2×5
@@ -249,7 +256,7 @@ void main() {
       final page2 = await svc.loadPage(
         pactId: 'p1',
         pageNumber: 2,
-        config: _config(first: 20, nth: 0, tail: 0),
+        config: _config(first: 20, nth: 0),
         now: _now,
       );
       // derived nth = 10; totalVisible = 20 + 10 = 30 > 25 → shows all 25
@@ -273,7 +280,7 @@ void main() {
       final page = await svc.loadPage(
         pactId: 'p1',
         pageNumber: 1,
-        config: _config(first: 0, nth: 0, tail: 0),
+        config: _config(first: 0, nth: 0),
         now: _now,
       );
       expect(page.milestones, hasLength(20)); // default first=20
@@ -281,22 +288,23 @@ void main() {
     });
   });
 
-  group('PactTimelineService — noGroupingTailSize derivation', () {
-    test('noGroupingTailSize=0 defaults to groupingThreshold', () async {
-      // 12 done showups, threshold=10, tailSize sentinel=0 → defaults to 10
-      // Tail=10 → 10 individual items; non-tail=2 → 1 group → total 11 milestones
+  group('PactTimelineService — injected grouper', () {
+    test('service uses the grouper provided at construction; tail=3 → 3 individual + 1 group', () async {
+      // 12 done showups; grouper with threshold=10, tailSize=3
+      // Non-tail=9 → 1 group (below threshold); tail=3 → 3 SingleShowupMilestone; total 4
       final showups = List.generate(12, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
-      final svc = _service(pacts: [_pact()], showups: showups);
+      final svc = _service(
+        pacts: [_pact()],
+        showups: showups,
+        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailSize: 3),
+      );
       final page = await svc.loadPage(
         pactId: 'p1',
         pageNumber: 1,
-        config: _config(first: 20, nth: 10, threshold: 10, tail: 0),
+        config: _config(first: 20, nth: 10),
         now: _now,
       );
-      // Non-tail: 2 done → group (below threshold=10) = 1 milestone
-      // Tail: 10 done → 10 SingleShowupMilestone
-      // Total: 11
-      expect(page.milestones, hasLength(11));
+      expect(page.milestones, hasLength(4)); // 1 group + 3 individual
     });
   });
 
@@ -314,7 +322,7 @@ void main() {
         ),
       );
       final svc = _service(pacts: [_pact()], showups: showups);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(tail: 0), now: _now);
+      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
       final sortAts = page.milestones.map((m) => m.sortAt).toList();
       expect(sortAts, equals([...sortAts]..sort()));
     });

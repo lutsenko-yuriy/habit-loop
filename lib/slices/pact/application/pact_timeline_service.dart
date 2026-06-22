@@ -17,11 +17,14 @@ class PactTimelineService {
   const PactTimelineService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
+    required PactTimelineGrouper grouper,
   })  : _pactRepository = pactRepository,
-        _showupRepository = showupRepository;
+        _showupRepository = showupRepository,
+        _grouper = grouper;
 
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
+  final PactTimelineGrouper _grouper;
 
   Future<PactTimelinePage> loadPage({
     required String pactId,
@@ -38,12 +41,7 @@ class PactTimelineService {
     final anchorStart = _buildAnchorStart(pact);
     final anchorEnd = _buildAnchorEnd(pact, showups, now ?? DateTime.now());
 
-    final tailSize = config.noGroupingTailSize > 0 ? config.noGroupingTailSize : null;
-    final grouper = PactTimelineGrouper(
-      groupingThreshold: config.milestoneGroupingThreshold,
-      noGroupingTailSize: tailSize,
-    );
-    final allGrouped = grouper.group(showups);
+    final allGrouped = _grouper.group(showups);
 
     final (firstSize, nthSize) = _resolvePageSizes(config);
     final totalVisible = pageNumber == 1 ? firstSize : firstSize + (pageNumber - 1) * nthSize;

@@ -43,6 +43,8 @@ import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.
 import 'package:habit_loop/slices/pact/application/pact_list_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
@@ -225,9 +227,15 @@ final pactListQueryServiceProvider = Provider<PactListQueryService>((ref) {
 });
 
 final pactTimelineServiceProvider = Provider<PactTimelineService>((ref) {
+  final config = PactTimelineConfig.fromRemoteConfig(ref.watch(remoteConfigServiceProvider));
+  final tailSize = config.noGroupingTailSize > 0 ? config.noGroupingTailSize : null;
   return PactTimelineService(
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
+    grouper: PactTimelineGrouper(
+      groupingThreshold: config.milestoneGroupingThreshold,
+      noGroupingTailSize: tailSize,
+    ),
   );
 });
 
