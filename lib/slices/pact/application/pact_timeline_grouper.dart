@@ -5,21 +5,19 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart'
 class PactTimelineGrouper {
   const PactTimelineGrouper({
     required this.groupingThreshold,
-    this.noGroupingTailSize,
-  });
+    int? noGroupingTailSize,
+  }) : noGroupingTailSize = noGroupingTailSize ?? groupingThreshold;
 
   /// Minimum single-outcome run length to emit a streak item rather than a group item.
   final int groupingThreshold;
 
-  /// Number of most-recent showups always shown individually.
-  /// Defaults to [groupingThreshold] when null.
-  final int? noGroupingTailSize;
+  /// Number of most-recent showups always shown individually. Defaults to [groupingThreshold].
+  final int noGroupingTailSize;
 
   /// Groups [showups] (oldest-first, may include pending) into timeline milestones.
   List<PactTimelineMilestone> group(List<Showup> showups) {
     final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList();
-    final effectiveTailSize = noGroupingTailSize ?? groupingThreshold;
-    final tailStart = (resolved.length - effectiveTailSize).clamp(0, resolved.length);
+    final tailStart = (resolved.length - noGroupingTailSize).clamp(0, resolved.length);
 
     final nonTail = resolved.sublist(0, tailStart);
     final tail = resolved.sublist(tailStart);
