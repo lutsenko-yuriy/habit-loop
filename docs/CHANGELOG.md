@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.7] — 2026-06-22 (HAB-116 WU2, PR #169)
+
+### Domain — PactTimelineMilestone sealed union + PactTimelineGrouper
+
+- [app] `PactTimelineMilestone`: new sealed class in `slices/pact/application/` with seven variants — `PactCreatedMilestone`, `ShowupStreakMilestone`, `SingleShowupMilestone`, `ShowupGroupMilestone`, `NotedShowupMilestone`, `CurrentStateMilestone`, `PactConcludedMilestone`; each carries a `sortAt` key for oldest-first ordering
+- [app] `PactTimelineGrouper`: pure, dependency-free class in `slices/pact/application/`; constructor params `groupingThreshold` and `noGroupingTailSize` (defaults to `groupingThreshold` via initializer list); `group(showups)` produces showup-derived milestones — streak items (≥ threshold), group items (mixed/short, < threshold), individual `SingleShowupMilestone` per tail-zone showup, `NotedShowupMilestone` for any noted showup; pending showups are filtered before processing
+
+---
+
 ## [0.44.6] — 2026-06-22 (HAB-116 WU1, PR #168)
 
 ### Config — pact timeline RC params, FeatureFlags, PactTimelineConfig, analytics event classes
