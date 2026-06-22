@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.44.8] — 2026-06-22 (HAB-116 WU3, PR #TBD)
+## [0.44.8] — 2026-06-22 (HAB-116 WU3, PR #170)
 
 ### Application — PactTimelineService assembler
 
