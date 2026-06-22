@@ -4,6 +4,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
@@ -11,7 +12,7 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_page.dart';
 
 /// Assembles a [PactTimelinePage] from the pact record and its showups.
 ///
-/// Pure application-layer service; no caching (added in WU4 via [pactTimelineCacheProvider]).
+/// Pure application-layer service; no caching.
 class PactTimelineService {
   const PactTimelineService({
     required PactRepository pactRepository,
@@ -92,6 +93,6 @@ class PactTimelineService {
     if (hasFirst && hasNth) return (config.firstPageSize, config.nthPageSize);
     if (hasFirst) return (config.firstPageSize, config.firstPageSize ~/ 2);
     if (hasNth) return (config.nthPageSize * 2, config.nthPageSize);
-    return (20, 10);
+    return (RemoteConfigDefaults.pactTimelineFirstPageSize, RemoteConfigDefaults.pactTimelineNthPageSize);
   }
 }

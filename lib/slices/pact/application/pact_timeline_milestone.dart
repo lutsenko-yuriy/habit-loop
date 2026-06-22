@@ -88,6 +88,8 @@ final class CurrentStateMilestone extends PactTimelineMilestone {
     this.nextScheduledAt,
   });
 
+  /// Earliest pending showup date; may be in the past when the user has overdue pending showups.
+  /// The UI is responsible for distinguishing "upcoming" vs "overdue" when rendering this.
   final DateTime? nextScheduledAt;
   final int showupsRemaining;
   final DateTime plannedEndDate;
