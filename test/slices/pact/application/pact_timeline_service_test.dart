@@ -4,7 +4,6 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_service.dart';
@@ -45,14 +44,6 @@ Showup _showup(String id, DateTime at, {ShowupStatus status = ShowupStatus.done}
       status: status,
     );
 
-PactTimelineConfig _config({int first = 20, int nth = 10}) => PactTimelineConfig(
-      enabled: true,
-      milestoneGroupingThreshold: 10,
-      noGroupingTailSize: 0,
-      firstPageSize: first,
-      nthPageSize: nth,
-    );
-
 PactTimelineService _service({
   List<Pact>? pacts,
   List<Showup>? showups,
@@ -68,7 +59,7 @@ void main() {
   group('PactTimelineService — anchor start', () {
     test('anchorStart uses pact.createdAt when set', () async {
       final svc = _service(pacts: [_pact(createdAt: _created)]);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
       expect(page.anchorStart.sortAt, _created);
       expect(page.anchorStart.habitName, 'Meditate');
       expect(page.anchorStart.schedule, _schedule);
@@ -77,7 +68,7 @@ void main() {
 
     test('anchorStart falls back to startDate when createdAt is null', () async {
       final svc = _service(pacts: [_pact()]);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
       expect(page.anchorStart.sortAt, _start);
     });
   });
@@ -86,18 +77,18 @@ void main() {
     test('anchorEnd is CurrentStateMilestone for active pact', () async {
       final pending = _showup('s1', DateTime(2024, 2, 15, 8), status: ShowupStatus.pending);
       final svc = _service(pacts: [_pact()], showups: [pending]);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
       final anchor = page.anchorEnd as CurrentStateMilestone;
       expect(anchor.sortAt, _now);
       expect(anchor.plannedEndDate, _end);
     });
 
-    test('nextScheduledAt is the first pending showup date', () async {
+    test('nextScheduledAt is the earliest pending showup date', () async {
       final done = _showup('s1', DateTime(2024, 2, 10, 8));
       final pending = _showup('s2', DateTime(2024, 2, 15, 8), status: ShowupStatus.pending);
       final pending2 = _showup('s3', DateTime(2024, 2, 16, 8), status: ShowupStatus.pending);
       final svc = _service(pacts: [_pact()], showups: [done, pending, pending2]);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
       final anchor = page.anchorEnd as CurrentStateMilestone;
       expect(anchor.nextScheduledAt, DateTime(2024, 2, 15, 8));
       expect(anchor.showupsRemaining, 2);
@@ -106,7 +97,7 @@ void main() {
     test('nextScheduledAt is null when no pending showups', () async {
       final done = _showup('s1', DateTime(2024, 2, 10, 8));
       final svc = _service(pacts: [_pact()], showups: [done]);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
       final anchor = page.anchorEnd as CurrentStateMilestone;
       expect(anchor.nextScheduledAt, isNull);
       expect(anchor.showupsRemaining, 0);
@@ -121,7 +112,7 @@ void main() {
         stopReason: 'Not for me',
       );
       final svc = _service(pacts: [stopped]);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
       final anchor = page.anchorEnd as PactConcludedMilestone;
       expect(anchor.concludedAt, DateTime(2024, 2, 10));
       expect(anchor.finalStatus, PactStatus.stopped);
@@ -131,7 +122,7 @@ void main() {
     test('anchorEnd for completed pact uses endDate as concludedAt', () async {
       final completed = _pact(status: PactStatus.completed);
       final svc = _service(pacts: [completed]);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
       final anchor = page.anchorEnd as PactConcludedMilestone;
       expect(anchor.concludedAt, _end);
       expect(anchor.finalStatus, PactStatus.completed);
@@ -139,24 +130,8 @@ void main() {
     });
   });
 
-  group('PactTimelineService — pagination', () {
-    test('page 1 with few milestones: hasMoreOlder=false, all milestones returned', () async {
-      // tail=0 sentinel → defaults to threshold=10; all 3 showups go into tail zone → 3 individual items
-      final showups = List.generate(3, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
-      final svc = _service(pacts: [_pact()], showups: showups);
-      final page = await svc.loadPage(
-        pactId: 'p1',
-        pageNumber: 1,
-        config: _config(first: 20, nth: 10),
-        now: _now,
-      );
-      expect(page.hasMoreOlder, isFalse);
-      expect(page.loadedPageCount, 1);
-      expect(page.milestones, hasLength(3)); // 3 in tail zone → 3 SingleShowupMilestone
-    });
-
-    test('page 1 with more milestones than firstPageSize: hasMoreOlder=true, shows last firstPageSize', () async {
-      // Each noted showup is a separate milestone → 25 milestones total
+  group('PactTimelineService — milestones', () {
+    test('all showup milestones are returned (no windowing)', () async {
       final showups = List.generate(
         25,
         (i) => Showup(
@@ -165,151 +140,15 @@ void main() {
           scheduledAt: DateTime(2024, 1, i + 1, 8),
           duration: const Duration(minutes: 30),
           status: ShowupStatus.done,
-          note: 'note $i',
+          note: 'n$i',
         ),
       );
       final svc = _service(pacts: [_pact()], showups: showups);
-      final page = await svc.loadPage(
-        pactId: 'p1',
-        pageNumber: 1,
-        config: _config(first: 20, nth: 10),
-        now: _now,
-      );
-      expect(page.hasMoreOlder, isTrue);
-      expect(page.milestones, hasLength(20));
-      // The most recent 20 milestones should be the last 20 by sortAt
-      final firstVisible = page.milestones.first.sortAt;
-      expect(firstVisible, DateTime(2024, 1, 6, 8)); // day 6 is the 6th = index 5 (0-based)
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
+      expect(page.milestones, hasLength(25));
     });
 
-    test('page 2 reveals older milestones', () async {
-      final showups = List.generate(
-        25,
-        (i) => Showup(
-          id: 's$i',
-          pactId: 'p1',
-          scheduledAt: DateTime(2024, 1, i + 1, 8),
-          duration: const Duration(minutes: 30),
-          status: ShowupStatus.done,
-          note: 'note $i',
-        ),
-      );
-      final svc = _service(pacts: [_pact()], showups: showups);
-      final page2 = await svc.loadPage(
-        pactId: 'p1',
-        pageNumber: 2,
-        config: _config(first: 20, nth: 5),
-        now: _now,
-      );
-      // page 1 shows last 20, page 2 shows last 25 = all (20+5=25)
-      expect(page2.hasMoreOlder, isFalse);
-      expect(page2.milestones, hasLength(25));
-      expect(page2.loadedPageCount, 2);
-    });
-
-    test('loadedPageCount reflects the pageNumber argument', () async {
-      final svc = _service(pacts: [_pact()], showups: []);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 3, config: _config(), now: _now);
-      expect(page.loadedPageCount, 3);
-    });
-  });
-
-  group('PactTimelineService — page size derivation', () {
-    test('when only nthPageSize is set (first=0): firstPageSize = 2 × nth', () async {
-      // 15 noted milestones; first=0, nth=5 → derived first=10 → hasMoreOlder=true
-      final showups = List.generate(
-        15,
-        (i) => Showup(
-          id: 's$i',
-          pactId: 'p1',
-          scheduledAt: DateTime(2024, 1, i + 1, 8),
-          duration: const Duration(minutes: 30),
-          status: ShowupStatus.done,
-          note: 'n',
-        ),
-      );
-      final svc = _service(pacts: [_pact()], showups: showups);
-      final page = await svc.loadPage(
-        pactId: 'p1',
-        pageNumber: 1,
-        config: _config(first: 0, nth: 5),
-        now: _now,
-      );
-      expect(page.milestones, hasLength(10)); // derived first = 2×5
-      expect(page.hasMoreOlder, isTrue);
-    });
-
-    test('when only firstPageSize is set (nth=0): nthPageSize = first / 2', () async {
-      // 25 noted milestones; first=20, nth=0 → derived nth=10; page2 shows 20+10=30 but only 25 → all
-      final showups = List.generate(
-        25,
-        (i) => Showup(
-          id: 's$i',
-          pactId: 'p1',
-          scheduledAt: DateTime(2024, 1, i + 1, 8),
-          duration: const Duration(minutes: 30),
-          status: ShowupStatus.done,
-          note: 'n',
-        ),
-      );
-      final svc = _service(pacts: [_pact()], showups: showups);
-      final page2 = await svc.loadPage(
-        pactId: 'p1',
-        pageNumber: 2,
-        config: _config(first: 20, nth: 0),
-        now: _now,
-      );
-      // derived nth = 10; totalVisible = 20 + 10 = 30 > 25 → shows all 25
-      expect(page2.milestones, hasLength(25));
-      expect(page2.hasMoreOlder, isFalse);
-    });
-
-    test('when both are 0: defaults to first=20, nth=10', () async {
-      final showups = List.generate(
-        25,
-        (i) => Showup(
-          id: 's$i',
-          pactId: 'p1',
-          scheduledAt: DateTime(2024, 1, i + 1, 8),
-          duration: const Duration(minutes: 30),
-          status: ShowupStatus.done,
-          note: 'n',
-        ),
-      );
-      final svc = _service(pacts: [_pact()], showups: showups);
-      final page = await svc.loadPage(
-        pactId: 'p1',
-        pageNumber: 1,
-        config: _config(first: 0, nth: 0),
-        now: _now,
-      );
-      expect(page.milestones, hasLength(20)); // default first=20
-      expect(page.hasMoreOlder, isTrue);
-    });
-  });
-
-  group('PactTimelineService — injected grouper', () {
-    test('service uses the grouper provided at construction; tail=3 → 3 individual + 1 group', () async {
-      // 12 done showups; grouper with threshold=10, tailSize=3
-      // Non-tail=9 → 1 group (below threshold); tail=3 → 3 SingleShowupMilestone; total 4
-      final showups = List.generate(12, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
-      final svc = _service(
-        pacts: [_pact()],
-        showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailSize: 3),
-      );
-      final page = await svc.loadPage(
-        pactId: 'p1',
-        pageNumber: 1,
-        config: _config(first: 20, nth: 10),
-        now: _now,
-      );
-      expect(page.milestones, hasLength(4)); // 1 group + 3 individual
-    });
-  });
-
-  group('PactTimelineService — milestones order', () {
-    test('milestones are oldest-first within the visible window', () async {
+    test('milestones are oldest-first', () async {
       final showups = List.generate(
         5,
         (i) => Showup(
@@ -322,9 +161,23 @@ void main() {
         ),
       );
       final svc = _service(pacts: [_pact()], showups: showups);
-      final page = await svc.loadPage(pactId: 'p1', pageNumber: 1, config: _config(), now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
       final sortAts = page.milestones.map((m) => m.sortAt).toList();
       expect(sortAts, equals([...sortAts]..sort()));
+    });
+  });
+
+  group('PactTimelineService — injected grouper', () {
+    test('service delegates to the injected grouper', () async {
+      // threshold=10, tail=3 → 9 non-tail → 1 group + 3 individual = 4
+      final showups = List.generate(12, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
+      final svc = _service(
+        pacts: [_pact()],
+        showups: showups,
+        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailSize: 3),
+      );
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
+      expect(page.milestones, hasLength(4));
     });
   });
 }

@@ -4,8 +4,6 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
-import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_page.dart';
@@ -26,10 +24,8 @@ class PactTimelineService {
   final ShowupRepository _showupRepository;
   final PactTimelineGrouper _grouper;
 
-  Future<PactTimelinePage> loadPage({
+  Future<PactTimelinePage> loadAll({
     required String pactId,
-    required int pageNumber,
-    required PactTimelineConfig config,
     DateTime? now,
   }) async {
     final pact = await _pactRepository.getPactById(pactId);
@@ -38,24 +34,10 @@ class PactTimelineService {
     final rawShowups = await _showupRepository.getShowupsForPact(pactId);
     final showups = [...rawShowups]..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
-    final anchorStart = _buildAnchorStart(pact);
-    final anchorEnd = _buildAnchorEnd(pact, showups, now ?? DateTime.now());
-
-    final allGrouped = _grouper.group(showups);
-
-    final (firstSize, nthSize) = _resolvePageSizes(config);
-    final totalVisible = pageNumber == 1 ? firstSize : firstSize + (pageNumber - 1) * nthSize;
-
-    final hasMoreOlder = allGrouped.length > totalVisible;
-    final startIndex = hasMoreOlder ? allGrouped.length - totalVisible : 0;
-    final visible = allGrouped.sublist(startIndex);
-
     return PactTimelinePage(
-      anchorStart: anchorStart,
-      anchorEnd: anchorEnd,
-      milestones: visible,
-      hasMoreOlder: hasMoreOlder,
-      loadedPageCount: pageNumber,
+      anchorStart: _buildAnchorStart(pact),
+      anchorEnd: _buildAnchorEnd(pact, showups, now ?? DateTime.now()),
+      milestones: _grouper.group(showups),
     );
   }
 
@@ -83,14 +65,5 @@ class PactTimelineService {
       finalStatus: pact.status,
       note: pact.stopReason,
     );
-  }
-
-  (int firstSize, int nthSize) _resolvePageSizes(PactTimelineConfig config) {
-    final hasFirst = config.firstPageSize > 0;
-    final hasNth = config.nthPageSize > 0;
-    if (hasFirst && hasNth) return (config.firstPageSize, config.nthPageSize);
-    if (hasFirst) return (config.firstPageSize, config.firstPageSize ~/ 2);
-    if (hasNth) return (config.nthPageSize * 2, config.nthPageSize);
-    return (RemoteConfigDefaults.pactTimelineFirstPageSize, RemoteConfigDefaults.pactTimelineNthPageSize);
   }
 }

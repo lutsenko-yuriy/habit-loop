@@ -189,47 +189,5 @@ void main() {
         expect(RemoteConfigDefaults.intRanges['pact_timeline_no_grouping_tail_size'], (min: 10, max: 20));
       });
     });
-
-    group('pact_timeline_first_page_size', () {
-      test('key exists in all map', () {
-        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_first_page_size'), isTrue);
-      });
-
-      test('default value is 20', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_first_page_size'], 20);
-      });
-
-      test('constant matches all map value', () {
-        expect(
-          RemoteConfigDefaults.pactTimelineFirstPageSize,
-          equals(RemoteConfigDefaults.all['pact_timeline_first_page_size']),
-        );
-      });
-
-      test('appears in intRanges with correct bounds', () {
-        expect(RemoteConfigDefaults.intRanges['pact_timeline_first_page_size'], (min: 20, max: 50));
-      });
-    });
-
-    group('pact_timeline_nth_page_size', () {
-      test('key exists in all map', () {
-        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_nth_page_size'), isTrue);
-      });
-
-      test('default value is 10', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_nth_page_size'], 10);
-      });
-
-      test('constant matches all map value', () {
-        expect(
-          RemoteConfigDefaults.pactTimelineNthPageSize,
-          equals(RemoteConfigDefaults.all['pact_timeline_nth_page_size']),
-        );
-      });
-
-      test('appears in intRanges with correct bounds', () {
-        expect(RemoteConfigDefaults.intRanges['pact_timeline_nth_page_size'], (min: 10, max: 25));
-      });
-    });
   });
 }
