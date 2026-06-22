@@ -43,6 +43,7 @@ import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.
 import 'package:habit_loop/slices/pact/application/pact_list_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_service.dart';
@@ -183,6 +184,8 @@ final pactServiceProvider = Provider<PactService>((ref) {
   );
 });
 
+final pactTimelineCacheProvider = Provider<PactTimelineCache>((ref) => PactTimelineCache());
+
 final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
   return PactStatsService(
     pactRepository: ref.watch(pactRepositoryProvider),
@@ -236,6 +239,7 @@ final pactTimelineServiceProvider = Provider<PactTimelineService>((ref) {
       groupingThreshold: config.milestoneGroupingThreshold,
       noGroupingTailSize: tailSize,
     ),
+    cache: ref.watch(pactTimelineCacheProvider),
   );
 });
 

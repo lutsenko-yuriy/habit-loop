@@ -4,6 +4,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_service.dart';
@@ -48,11 +49,13 @@ PactTimelineService _service({
   List<Pact>? pacts,
   List<Showup>? showups,
   PactTimelineGrouper? grouper,
+  PactTimelineCache? cache,
 }) =>
     PactTimelineService(
       pactRepository: InMemoryPactRepository(pacts),
       showupRepository: InMemoryShowupRepository(showups),
       grouper: grouper ?? const PactTimelineGrouper(groupingThreshold: 10),
+      cache: cache ?? PactTimelineCache(),
     );
 
 void main() {
@@ -178,6 +181,34 @@ void main() {
       );
       final page = await svc.loadAll(pactId: 'p1', now: _now);
       expect(page.milestones, hasLength(4));
+    });
+  });
+
+  group('PactTimelineService — showup cache', () {
+    test('populates cache after DB load', () async {
+      final cache = PactTimelineCache();
+      final svc = _service(
+        pacts: [_pact()],
+        showups: [_showup('s1', DateTime(2024, 1, 5, 8))],
+        cache: cache,
+      );
+      await svc.loadAll(pactId: 'p1', now: _now);
+      expect(cache.get('p1'), isNotNull);
+      expect(cache.get('p1'), hasLength(1));
+    });
+
+    test('uses cached showups instead of DB on second call', () async {
+      final cache = PactTimelineCache();
+      // Pre-populate cache with 1 showup.
+      cache.populate('p1', [_showup('s1', DateTime(2024, 1, 5, 8))]);
+      // DB has 2 different showups — service must ignore them.
+      final svc = _service(
+        pacts: [_pact()],
+        showups: [_showup('s2', DateTime(2024, 1, 6, 8)), _showup('s3', DateTime(2024, 1, 7, 8))],
+        cache: cache,
+      );
+      final page = await svc.loadAll(pactId: 'p1', now: _now);
+      expect(page.milestones, hasLength(1));
     });
   });
 }
