@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.9] — 2026-06-22 (HAB-116 WU4, PR #TBD)
+
+### Application — PactTimelineCache
+
+- [app] `PactTimelineCache`: new session-scoped in-memory showup cache in `slices/pact/application/`; `Map<String, List<Showup>>` keyed by `pactId`; `get`, `populate`, `evict` API
+- [app] `pactTimelineCacheProvider`: new standalone Riverpod provider in `app_providers.dart`; shared between `pactTimelineServiceProvider` and `pactStatsServiceProvider`
+- [app] `PactTimelineService`: now injects `PactTimelineCache`; `loadAll` checks the cache before hitting the DB and populates it on miss
+- [app] `PactStatsService`: now injects `PactTimelineCache`; `persistShowupStatus` and `stopPact` evict the timeline cache alongside the stats cache so neither can serve stale data
+
+---
+
 ## [0.44.8] — 2026-06-22 (HAB-116 WU3, PR #170)
 
 ### Application — PactTimelineService assembler
