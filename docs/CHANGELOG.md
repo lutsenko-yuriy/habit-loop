@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.8] — 2026-06-22 (HAB-116 WU3, PR #170)
+
+### Application — PactTimelineService assembler
+
+- [app] `PactTimelinePage`: new value object in `slices/pact/application/` holding `anchorStart` (`PactCreatedMilestone`), `anchorEnd` (`CurrentStateMilestone` or `PactConcludedMilestone`), and `milestones` (all grouped showup milestones, oldest-first)
+- [app] `PactTimelineService`: new service in `slices/pact/application/`; `loadAll(pactId)` loads all showups, sorts them, groups via injected `PactTimelineGrouper`, and assembles a complete `PactTimelinePage`; no caching (WU4); display windowing is a VM concern (WU5)
+- [app] `PactTimelineConfig`: removed `firstPageSize` / `nthPageSize` — pagination is not a service-layer concern; removed the corresponding RC defaults
+- [app] `pactTimelineServiceProvider`: new Riverpod provider in `app_providers.dart`; constructs `PactTimelineGrouper` from RC config (sentinel `noGroupingTailSize=0` → defaults to `groupingThreshold`) and injects it
+
+---
+
 ## [0.44.7] — 2026-06-22 (HAB-116 WU2, PR #169)
 
 ### Domain — PactTimelineMilestone sealed union + PactTimelineGrouper

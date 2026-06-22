@@ -46,30 +46,6 @@ void main() {
         expect(PactTimelineConfig.fromRemoteConfig(rc).noGroupingTailSize, 15);
       });
     });
-
-    group('firstPageSize', () {
-      test('defaults to 20', () {
-        final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.firstPageSize, 20);
-      });
-
-      test('reads custom value from RC', () {
-        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_first_page_size': 30});
-        expect(PactTimelineConfig.fromRemoteConfig(rc).firstPageSize, 30);
-      });
-    });
-
-    group('nthPageSize', () {
-      test('defaults to 10', () {
-        final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.nthPageSize, 10);
-      });
-
-      test('reads custom value from RC', () {
-        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_nth_page_size': 15});
-        expect(PactTimelineConfig.fromRemoteConfig(rc).nthPageSize, 15);
-      });
-    });
   });
 
   group('PactTimelineConfig equality', () {
@@ -111,14 +87,10 @@ void main() {
         enabled: true,
         milestoneGroupingThreshold: 8,
         noGroupingTailSize: 4,
-        firstPageSize: 15,
-        nthPageSize: 7,
       );
       expect(config.enabled, isTrue);
       expect(config.milestoneGroupingThreshold, 8);
       expect(config.noGroupingTailSize, 4);
-      expect(config.firstPageSize, 15);
-      expect(config.nthPageSize, 7);
     });
   });
 }

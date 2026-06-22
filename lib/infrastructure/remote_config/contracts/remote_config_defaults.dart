@@ -120,16 +120,6 @@ abstract final class RemoteConfigDefaults {
   /// Remote Config key: `pact_timeline_no_grouping_tail_size`.
   static const int pactTimelineNoGroupingTailSize = 10;
 
-  /// Showups loaded on the first page of the pact timeline.
-  ///
-  /// Remote Config key: `pact_timeline_first_page_size`.
-  static const int pactTimelineFirstPageSize = 20;
-
-  /// Showups loaded on each subsequent page of the pact timeline.
-  ///
-  /// Remote Config key: `pact_timeline_nth_page_size`.
-  static const int pactTimelineNthPageSize = 10;
-
   /// Keys belonging to the feature-toggle category shown in a dedicated section
   /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
   ///
@@ -189,8 +179,6 @@ abstract final class RemoteConfigDefaults {
     'pact_timeline_enabled': pactTimelineEnabled,
     'pact_timeline_milestone_grouping_threshold': pactTimelineMilestoneGroupingThreshold,
     'pact_timeline_no_grouping_tail_size': pactTimelineNoGroupingTailSize,
-    'pact_timeline_first_page_size': pactTimelineFirstPageSize,
-    'pact_timeline_nth_page_size': pactTimelineNthPageSize,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -222,7 +210,5 @@ abstract final class RemoteConfigDefaults {
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
     'pact_timeline_milestone_grouping_threshold': (min: 10, max: 50),
     'pact_timeline_no_grouping_tail_size': (min: 10, max: 20),
-    'pact_timeline_first_page_size': (min: 20, max: 50),
-    'pact_timeline_nth_page_size': (min: 10, max: 25),
   };
 }
