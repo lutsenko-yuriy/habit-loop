@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.8] — 2026-06-22 (HAB-116 WU3, PR #TBD)
+
+### Application — PactTimelineService assembler
+
+- [app] `PactTimelinePage`: new value object in `slices/pact/application/` holding `anchorStart` (`PactCreatedMilestone`), `anchorEnd` (`CurrentStateMilestone` or `PactConcludedMilestone`), paginated `milestones`, `hasMoreOlder`, and `loadedPageCount`
+- [app] `PactTimelineService`: new service in `slices/pact/application/`; `loadPage(pactId, pageNumber, config)` loads showups, groups them via `PactTimelineGrouper`, inserts anchor milestones, and returns a windowed `PactTimelinePage`; page-size sentinel `0` follows the derivation rules (first = 2×nth / nth = first/2); `noGroupingTailSize` sentinel `0` defaults to `groupingThreshold`
+- [app] `pactTimelineServiceProvider`: new Riverpod provider in `app_providers.dart`
+
+---
+
 ## [0.44.7] — 2026-06-22 (HAB-116 WU2, PR #169)
 
 ### Domain — PactTimelineMilestone sealed union + PactTimelineGrouper
