@@ -192,7 +192,6 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
     syncService: ref.watch(syncServiceProvider),
-    timelineCache: ref.watch(pactTimelineCacheProvider),
   );
 });
 

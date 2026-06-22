@@ -74,13 +74,4 @@ void main() {
     });
   });
 
-  group('PactTimelineCache — PactStatsService eviction contract', () {
-    test('evict removes the entry that populate wrote', () {
-      final cache = PactTimelineCache();
-      cache.populate('p1', [_showup('s1', 'p1')]);
-      // Simulates what PactStatsService.persistShowupStatus does.
-      cache.evict('p1');
-      expect(cache.get('p1'), isNull);
-    });
-  });
 }
