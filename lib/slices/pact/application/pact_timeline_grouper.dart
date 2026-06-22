@@ -151,13 +151,11 @@ class PactTimelineGrouper {
             note: showup.note!,
           );
         }
-        return ShowupStreakMilestone(
+        return SingleShowupMilestone(
           sortAt: showup.scheduledAt,
+          showupId: showup.id,
           outcome: showup.status,
-          count: 1,
-          firstAt: showup.scheduledAt,
-          lastAt: showup.scheduledAt,
-          singleShowupId: showup.id,
+          scheduledAt: showup.scheduledAt,
         );
       }).toList();
 }

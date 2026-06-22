@@ -61,13 +61,13 @@ void main() {
     });
 
     group('tail zone defaults', () {
-      test('single done showup (tail zone by default) becomes a count=1 streak with singleShowupId', () {
+      test('single done showup (tail zone by default) becomes a SingleShowupMilestone', () {
         final result = _grouper.group([_done('s1', 1)], groupingThreshold: _threshold);
         expect(result, hasLength(1));
-        final m = result.single as ShowupStreakMilestone;
-        expect(m.count, 1);
+        final m = result.single as SingleShowupMilestone;
+        expect(m.showupId, 's1');
         expect(m.outcome, ShowupStatus.done);
-        expect(m.singleShowupId, 's1');
+        expect(m.scheduledAt, DateTime(2024, 1, 1));
       });
 
       test('noGroupingTailSize defaults to groupingThreshold when null', () {
@@ -125,7 +125,6 @@ void main() {
         final m = result.single as ShowupStreakMilestone;
         expect(m.count, 12);
         expect(m.outcome, ShowupStatus.done);
-        expect(m.singleShowupId, isNull);
       });
 
       test('run exactly == threshold becomes a streak', () {
@@ -148,15 +147,15 @@ void main() {
     });
 
     group('tail zone', () {
-      test('tail showups produce individual count=1 streaks with singleShowupId', () {
-        // 3 done in tail zone → 3 individual streaks, not a group
+      test('tail showups produce SingleShowupMilestone per showup', () {
+        // 3 done in tail zone → 3 individual SingleShowupMilestone, not a group
         final showups = List.generate(3, (i) => _done('s$i', i + 1));
         final result = _grouper.group(showups, groupingThreshold: _threshold, noGroupingTailSize: 3);
         expect(result, hasLength(3));
         for (var i = 0; i < result.length; i++) {
-          final m = result[i] as ShowupStreakMilestone;
-          expect(m.count, 1);
-          expect(m.singleShowupId, 's$i');
+          final m = result[i] as SingleShowupMilestone;
+          expect(m.showupId, 's$i');
+          expect(m.outcome, ShowupStatus.done);
         }
       });
 
@@ -168,22 +167,19 @@ void main() {
         // Non-tail: 1 streak (count=10)
         final head = result.first as ShowupStreakMilestone;
         expect(head.count, 10);
-        expect(head.singleShowupId, isNull);
 
-        // Tail: 10 individual count=1 streaks
+        // Tail: 10 individual SingleShowupMilestone
         expect(result, hasLength(11));
         for (final m in result.skip(1)) {
-          final streak = m as ShowupStreakMilestone;
-          expect(streak.count, 1);
-          expect(streak.singleShowupId, isNotNull);
+          expect(m, isA<SingleShowupMilestone>());
         }
       });
 
-      test('noted showup in tail zone is a NotedShowupMilestone, not a streak', () {
+      test('noted showup in tail zone is a NotedShowupMilestone, not a SingleShowupMilestone', () {
         final showups = [_done('s1', 1), _noted('s2', 2, note: 'reflection')];
         final result = _grouper.group(showups, groupingThreshold: _threshold, noGroupingTailSize: 2);
         expect(result, hasLength(2));
-        expect(result[0], isA<ShowupStreakMilestone>());
+        expect(result[0], isA<SingleShowupMilestone>());
         expect(result[1], isA<NotedShowupMilestone>());
         expect((result[1] as NotedShowupMilestone).note, 'reflection');
       });
@@ -233,7 +229,6 @@ void main() {
         expect((result[0] as ShowupGroupMilestone).total, 7);
         final streak = result[1] as ShowupStreakMilestone;
         expect(streak.count, 10);
-        expect(streak.singleShowupId, isNull);
       });
 
       test('streak that starts a new group after flush is collected as group if short', () {

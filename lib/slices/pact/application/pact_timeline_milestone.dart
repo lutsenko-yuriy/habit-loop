@@ -27,16 +27,25 @@ final class ShowupStreakMilestone extends PactTimelineMilestone {
     required this.count,
     required this.firstAt,
     required this.lastAt,
-    this.singleShowupId,
   });
 
   final ShowupStatus outcome;
   final int count;
   final DateTime firstAt;
   final DateTime lastAt;
+}
 
-  /// Non-null only when this streak resolves to exactly one showup, making it tappable.
-  final String? singleShowupId;
+final class SingleShowupMilestone extends PactTimelineMilestone {
+  const SingleShowupMilestone({
+    required super.sortAt,
+    required this.showupId,
+    required this.outcome,
+    required this.scheduledAt,
+  });
+
+  final String showupId;
+  final ShowupStatus outcome;
+  final DateTime scheduledAt;
 }
 
 final class ShowupGroupMilestone extends PactTimelineMilestone {
