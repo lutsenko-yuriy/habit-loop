@@ -4,25 +4,31 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_page.dart';
 
 /// Assembles a [PactTimelinePage] from the pact record and its showups.
 ///
-/// Pure application-layer service; no caching.
+/// Showups are loaded once per pactId and held in [PactTimelineCache]. The
+/// cache is evicted by [PactStatsService] whenever a showup status changes or
+/// a pact is stopped, so the next [loadAll] re-fetches from the DB.
 class PactTimelineService {
-  const PactTimelineService({
+  PactTimelineService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTimelineGrouper grouper,
+    required PactTimelineCache cache,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
-        _grouper = grouper;
+        _grouper = grouper,
+        _cache = cache;
 
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
   final PactTimelineGrouper _grouper;
+  final PactTimelineCache _cache;
 
   Future<PactTimelinePage> loadAll({
     required String pactId,
@@ -31,8 +37,12 @@ class PactTimelineService {
     final pact = await _pactRepository.getPactById(pactId);
     if (pact == null) throw ArgumentError('Pact $pactId not found');
 
-    final rawShowups = await _showupRepository.getShowupsForPact(pactId);
-    final showups = [...rawShowups]..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    var showups = _cache.get(pactId);
+    if (showups == null) {
+      final raw = await _showupRepository.getShowupsForPact(pactId);
+      showups = [...raw]..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+      _cache.populate(pactId, showups);
+    }
 
     return PactTimelinePage(
       anchorStart: _buildAnchorStart(pact),

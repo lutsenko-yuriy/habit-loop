@@ -7,6 +7,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_cache.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -49,12 +50,14 @@ class _CountingShowupRepository extends InMemoryShowupRepository {
 PactStatsService _makeService({
   required InMemoryPactRepository pactRepo,
   required InMemoryShowupRepository showupRepo,
+  PactTimelineCache? timelineCache,
 }) {
   return PactStatsService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
     transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
     syncService: const NoopSyncService(),
+    timelineCache: timelineCache,
   );
 }
 
@@ -412,6 +415,67 @@ void main() {
     // -------------------------------------------------------------------------
     // Cache correctness
     // -------------------------------------------------------------------------
+
+    // -------------------------------------------------------------------------
+    // Timeline cache eviction
+    // -------------------------------------------------------------------------
+
+    group('timeline cache eviction', () {
+      test('persistShowupStatus evicts timeline cache entry', () async {
+        final pact = _makePact('p1');
+        final showup = _makeShowup('s1', 'p1');
+        final timelineCache = PactTimelineCache();
+
+        final pactRepo = InMemoryPactRepository([pact]);
+        final showupRepo = _CountingShowupRepository([showup]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo, timelineCache: timelineCache);
+
+        // Manually warm the timeline cache.
+        timelineCache.populate('p1', [showup]);
+        expect(timelineCache.get('p1'), isNotNull);
+
+        await service.persistShowupStatus(showup: showup, status: ShowupStatus.done);
+
+        // Timeline cache must be evicted alongside the stats cache.
+        expect(timelineCache.get('p1'), isNull);
+      });
+
+      test('stopPact evicts timeline cache entry', () async {
+        final pact = _makePact('p1');
+        final showup = _makeShowup('s1', 'p1');
+        final timelineCache = PactTimelineCache();
+
+        final pactRepo = InMemoryPactRepository([pact]);
+        final showupRepo = _CountingShowupRepository([showup]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo, timelineCache: timelineCache);
+
+        timelineCache.populate('p1', [showup]);
+
+        await service.stopPact(pact: pact, pactId: pact.id, now: DateTime(2026, 4, 10));
+
+        expect(timelineCache.get('p1'), isNull);
+      });
+
+      test('timeline cache entries for other pacts survive a targeted eviction', () async {
+        final pact1 = _makePact('p1');
+        final pact2 = _makePact('p2');
+        final showup1 = _makeShowup('s1', 'p1');
+        final showup2 = _makeShowup('s2', 'p2');
+        final timelineCache = PactTimelineCache();
+
+        final pactRepo = InMemoryPactRepository([pact1, pact2]);
+        final showupRepo = _CountingShowupRepository([showup1, showup2]);
+        final service = _makeService(pactRepo: pactRepo, showupRepo: showupRepo, timelineCache: timelineCache);
+
+        timelineCache.populate('p1', [showup1]);
+        timelineCache.populate('p2', [showup2]);
+
+        await service.persistShowupStatus(showup: showup1, status: ShowupStatus.done);
+
+        expect(timelineCache.get('p1'), isNull);
+        expect(timelineCache.get('p2'), isNotNull);
+      });
+    });
 
     group('cache correctness', () {
       test('cached stats match freshly computed stats after mutation', () async {
