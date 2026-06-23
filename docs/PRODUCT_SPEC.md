@@ -37,6 +37,9 @@ The Habit Loop app allows the user to:
     - An "Archived pacts (N)" row and an Archived chip appear in the pact list when at least one pact is archived; both are hidden when none are archived; the chip row is animated (AnimatedSize + FadeTransition)
     - The Archived chip and the "Archived pacts (N)" row stay in sync — toggling one toggles the other
     - Sort order in the pact list: active → unarchived completed → unarchived stopped → archived completed → archived stopped
+  - The user can view the pact's timeline by tapping "View Timeline" on the pact detail screen (feature flag: `pact_timeline_enabled`)
+    - The timeline shows all milestones in chronological order: pact-created anchor, showup streaks, showup groups, noted showups, single tail-zone showups, and a current-state anchor (active) or pact-concluded anchor (stopped/completed)
+    - Noted showups and single tail-zone showups are tappable and navigate to the showup detail screen
 - See the details of a specific showup
   - The user must see the time of the showup
   - The user must see the habit in this showup
