@@ -7,6 +7,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
+import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 // ── Public page widget ─────────────────────────────────────────────────────────
 
@@ -111,13 +112,19 @@ class _TimelineListState extends State<_TimelineList> {
       itemBuilder: (ctx, i) {
         final entry = displayItems[i];
         if (entry == null) {
-          return _SectionHeader(label: l10n.timelineRecentSection);
+          return _SectionHeader(
+            label: l10n.timelineRecentSection,
+            topDotColor: _dotColor(rawItems[sectionHeaderRawIdx! - 1], ctx),
+            bottomDotColor: _dotColor(rawItems[sectionHeaderRawIdx], ctx),
+          );
         }
         final (rawIdx, m) = entry;
         return _SpineItem(
           milestone: m,
           isFirst: rawIdx == 0,
           isLast: rawIdx == rawItems.length - 1,
+          topDotColor: rawIdx > 0 ? _dotColor(rawItems[rawIdx - 1], ctx) : null,
+          bottomDotColor: rawIdx < rawItems.length - 1 ? _dotColor(rawItems[rawIdx + 1], ctx) : null,
           onTapped: widget.onMilestoneTapped,
         );
       },
@@ -131,12 +138,16 @@ class _SpineItem extends StatelessWidget {
   final PactTimelineMilestone milestone;
   final bool isFirst;
   final bool isLast;
+  final Color? topDotColor;
+  final Color? bottomDotColor;
   final void Function(PactTimelineMilestone)? onTapped;
 
   const _SpineItem({
     required this.milestone,
     required this.isFirst,
     required this.isLast,
+    this.topDotColor,
+    this.bottomDotColor,
     this.onTapped,
   });
 
@@ -144,7 +155,6 @@ class _SpineItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final dotColor = _dotColor(milestone, context);
-    final lineColor = CupertinoColors.separator.resolveFrom(context);
     final isAnchor =
         milestone is PactCreatedMilestone || milestone is CurrentStateMilestone || milestone is PactConcludedMilestone;
     final isTappable = milestone is NotedShowupMilestone || milestone is SingleShowupMilestone;
@@ -164,7 +174,8 @@ class _SpineItem extends StatelessWidget {
             child: CustomPaint(
               painter: _SpinePainter(
                 dotColor: dotColor,
-                lineColor: lineColor,
+                topDotColor: topDotColor,
+                bottomDotColor: bottomDotColor,
                 isFirst: isFirst,
                 isLast: isLast,
                 dotRadius: isAnchor ? 6.0 : 4.0,
@@ -199,17 +210,18 @@ const _kSpineX = 22.0;
 
 class _SpinePainter extends CustomPainter {
   final Color dotColor;
-  final Color lineColor;
+  final Color? topDotColor;
+  final Color? bottomDotColor;
   final bool isFirst;
   final bool isLast;
   final double dotRadius;
 
-  // Vertical offset of the dot center from the top of the item.
   static const _dotTopOffset = 16.0;
 
   const _SpinePainter({
     required this.dotColor,
-    required this.lineColor,
+    required this.topDotColor,
+    required this.bottomDotColor,
     required this.isFirst,
     required this.isLast,
     required this.dotRadius,
@@ -217,18 +229,44 @@ class _SpinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-
     final dotCenterY = _dotTopOffset + dotRadius;
+    const strokeWidth = 1.5;
 
-    if (!isFirst) {
-      canvas.drawLine(const Offset(_kSpineX, 0), Offset(_kSpineX, dotCenterY - dotRadius - 1), linePaint);
+    if (!isFirst && topDotColor != null) {
+      const top = 0.0;
+      final bottom = dotCenterY - dotRadius - 1;
+      if (bottom > top) {
+        canvas.drawLine(
+          const Offset(_kSpineX, top),
+          Offset(_kSpineX, bottom),
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [topDotColor!, dotColor],
+            ).createShader(Rect.fromLTRB(0, top, 1, bottom))
+            ..strokeWidth = strokeWidth
+            ..strokeCap = StrokeCap.round,
+        );
+      }
     }
-    if (!isLast) {
-      canvas.drawLine(Offset(_kSpineX, dotCenterY + dotRadius + 1), Offset(_kSpineX, size.height), linePaint);
+    if (!isLast && bottomDotColor != null) {
+      final top = dotCenterY + dotRadius + 1;
+      final bottom = size.height;
+      if (bottom > top) {
+        canvas.drawLine(
+          Offset(_kSpineX, top),
+          Offset(_kSpineX, bottom),
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [dotColor, bottomDotColor!],
+            ).createShader(Rect.fromLTRB(0, top, 1, bottom))
+            ..strokeWidth = strokeWidth
+            ..strokeCap = StrokeCap.round,
+        );
+      }
     }
     canvas.drawCircle(Offset(_kSpineX, dotCenterY), dotRadius, Paint()..color = dotColor);
   }
@@ -236,7 +274,8 @@ class _SpinePainter extends CustomPainter {
   @override
   bool shouldRepaint(_SpinePainter old) =>
       old.dotColor != dotColor ||
-      old.lineColor != lineColor ||
+      old.topDotColor != topDotColor ||
+      old.bottomDotColor != bottomDotColor ||
       old.isFirst != isFirst ||
       old.isLast != isLast ||
       old.dotRadius != dotRadius;
@@ -244,14 +283,20 @@ class _SpinePainter extends CustomPainter {
 
 // ── Section header (tail-zone divider) ────────────────────────────────────────
 
-// Draws a continuous spine line through its height with the label to the right.
+// Draws a continuous gradient spine line through its height with the label to the right.
 class _SectionHeader extends StatelessWidget {
   final String label;
-  const _SectionHeader({required this.label});
+  final Color topDotColor;
+  final Color bottomDotColor;
+
+  const _SectionHeader({
+    required this.label,
+    required this.topDotColor,
+    required this.bottomDotColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final lineColor = CupertinoColors.separator.resolveFrom(context);
     return SizedBox(
       height: 36,
       child: Row(
@@ -260,7 +305,9 @@ class _SectionHeader extends StatelessWidget {
           SizedBox(
             width: 44,
             height: 36,
-            child: CustomPaint(painter: _SectionHeaderLinePainter(lineColor: lineColor)),
+            child: CustomPaint(
+              painter: _SectionHeaderLinePainter(topDotColor: topDotColor, bottomDotColor: bottomDotColor),
+            ),
           ),
           Text(
             label,
@@ -278,8 +325,9 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _SectionHeaderLinePainter extends CustomPainter {
-  final Color lineColor;
-  const _SectionHeaderLinePainter({required this.lineColor});
+  final Color topDotColor;
+  final Color bottomDotColor;
+  const _SectionHeaderLinePainter({required this.topDotColor, required this.bottomDotColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -287,21 +335,26 @@ class _SectionHeaderLinePainter extends CustomPainter {
       const Offset(_kSpineX, 0),
       Offset(_kSpineX, size.height),
       Paint()
-        ..color = lineColor
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [topDotColor, bottomDotColor],
+        ).createShader(Rect.fromLTRB(0, 0, 1, size.height))
         ..strokeWidth = 1.5
         ..strokeCap = StrokeCap.round,
     );
   }
 
   @override
-  bool shouldRepaint(_SectionHeaderLinePainter old) => old.lineColor != lineColor;
+  bool shouldRepaint(_SectionHeaderLinePainter old) =>
+      old.topDotColor != topDotColor || old.bottomDotColor != bottomDotColor;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 Color _dotColor(PactTimelineMilestone m, BuildContext context) {
   if (m is PactCreatedMilestone || m is CurrentStateMilestone) {
-    return CupertinoColors.activeBlue.resolveFrom(context);
+    return HabitLoopColors.primary;
   }
   if (m is PactConcludedMilestone) {
     return m.finalStatus == PactStatus.completed
