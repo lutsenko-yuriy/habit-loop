@@ -8,8 +8,6 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_formatters.dart';
 
-AppLocalizations? _l10n;
-
 Widget _wrap(Widget child) => MaterialApp(
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -144,8 +142,7 @@ void main() {
 
   group('milestoneDateRange', () {
     testWidgets('ShowupStreakMilestone single day shows one date', (tester) async {
-      final l10n = await _getL10n(tester);
-      _l10n = l10n;
+      await _getL10n(tester);
       final ctx = tester.element(find.byType(Scaffold));
       final m = ShowupStreakMilestone(
         sortAt: DateTime(2024, 1, 5),

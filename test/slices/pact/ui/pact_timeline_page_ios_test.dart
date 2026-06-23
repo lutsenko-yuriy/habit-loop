@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show MaterialApp, Theme;
+import 'package:flutter/material.dart' show MaterialApp;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';

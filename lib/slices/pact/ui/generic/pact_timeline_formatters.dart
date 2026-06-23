@@ -8,16 +8,14 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart'
 /// Returns the headline text for a timeline milestone.
 String milestoneTitle(AppLocalizations l10n, PactTimelineMilestone milestone) => switch (milestone) {
       PactCreatedMilestone _ => l10n.timelinePactCreated,
-      ShowupStreakMilestone m => m.outcome == ShowupStatus.done
-          ? l10n.timelineDoneInARow(m.count)
-          : l10n.timelineMissedInARow(m.count),
+      ShowupStreakMilestone m =>
+        m.outcome == ShowupStatus.done ? l10n.timelineDoneInARow(m.count) : l10n.timelineMissedInARow(m.count),
       SingleShowupMilestone m => m.outcome == ShowupStatus.done ? l10n.showupDone : l10n.showupFailed,
       ShowupGroupMilestone m => l10n.timelineGroup(m.total, m.doneCount, m.failedCount),
       NotedShowupMilestone m => m.outcome == ShowupStatus.done ? l10n.showupDone : l10n.showupFailed,
       CurrentStateMilestone _ => l10n.timelineCurrentState,
-      PactConcludedMilestone m => m.finalStatus == PactStatus.completed
-          ? l10n.timelinePactConcludedCompleted
-          : l10n.timelinePactConcludedStopped,
+      PactConcludedMilestone m =>
+        m.finalStatus == PactStatus.completed ? l10n.timelinePactConcludedCompleted : l10n.timelinePactConcludedStopped,
     };
 
 /// Returns a locale-aware date range string for milestones that span a range.

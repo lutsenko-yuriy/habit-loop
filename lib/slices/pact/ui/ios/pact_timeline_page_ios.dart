@@ -139,8 +139,7 @@ class _PactCreatedContent extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.timelinePactCreated,
-              style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
+          Text(l10n.timelinePactCreated, style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
           const SizedBox(height: 2),
           Text(m.habitName, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 2),
@@ -162,11 +161,9 @@ class _CurrentStateContent extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.timelineCurrentState,
-              style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
+          Text(l10n.timelineCurrentState, style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
           const SizedBox(height: 2),
-          Text(l10n.timelineShowupsRemaining(m.showupsRemaining),
-              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(l10n.timelineShowupsRemaining(m.showupsRemaining), style: const TextStyle(fontWeight: FontWeight.w600)),
           if (m.nextScheduledAt != null) ...[
             const SizedBox(height: 2),
             Text(
@@ -186,9 +183,8 @@ class _PactConcludedContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = m.finalStatus == PactStatus.completed
-        ? l10n.timelinePactConcludedCompleted
-        : l10n.timelinePactConcludedStopped;
+    final title =
+        m.finalStatus == PactStatus.completed ? l10n.timelinePactConcludedCompleted : l10n.timelinePactConcludedStopped;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
