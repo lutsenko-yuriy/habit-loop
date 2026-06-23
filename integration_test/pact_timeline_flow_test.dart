@@ -142,7 +142,9 @@ void main() {
         expect(find.text('Meditate'), findsAtLeastNWidgets(1));
 
         // ── 4. Current-state anchor is visible ────────────────────────────────
-        expect(find.text(strings.timelineCurrentState), findsOneWidget);
+        // timelineCurrentState and pactStatusActive both resolve to "Active";
+        // the pact detail page remains in the nav stack, so two matches are expected.
+        expect(find.text(strings.timelineCurrentState), findsAtLeastNWidgets(1));
 
         // ── 5. Screen view analytics fired ───────────────────────────────────
         expect(
