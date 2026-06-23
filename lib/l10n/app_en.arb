@@ -324,6 +324,8 @@
   "@timelinePactCreated": {},
   "timelineCurrentState": "Active",
   "@timelineCurrentState": {},
+  "timelineRecentSection": "The most recent showups",
+  "@timelineRecentSection": {},
   "timelinePactConcludedCompleted": "Pact completed",
   "@timelinePactConcludedCompleted": {},
   "timelinePactConcludedStopped": "Pact stopped",

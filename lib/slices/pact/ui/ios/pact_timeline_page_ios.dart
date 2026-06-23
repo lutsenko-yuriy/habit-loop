@@ -81,24 +81,48 @@ class _TimelineListState extends State<_TimelineList> {
 
   @override
   Widget build(BuildContext context) {
-    final items = <PactTimelineMilestone>[
+    final l10n = AppLocalizations.of(context)!;
+    final milestones = widget.state.milestones;
+    final rawItems = <PactTimelineMilestone>[
       if (widget.state.anchorStart != null) widget.state.anchorStart!,
-      ...widget.state.milestones,
+      ...milestones,
       if (widget.state.anchorEnd != null) widget.state.anchorEnd!,
     ];
 
-    if (items.isEmpty) return const SizedBox.shrink();
+    if (rawItems.isEmpty) return const SizedBox.shrink();
+
+    // Insert a section-header sentinel before the first SingleShowupMilestone
+    // that has at least one non-single item before it (marks tail-zone boundary).
+    final firstSingleIdxInMilestones = milestones.indexWhere((m) => m is SingleShowupMilestone);
+    final anchorOffset = widget.state.anchorStart != null ? 1 : 0;
+    final sectionHeaderRawIdx = firstSingleIdxInMilestones > 0 ? anchorOffset + firstSingleIdxInMilestones : null;
+
+    // Build display list: rawItems interleaved with an optional header object.
+    const headerSentinel = Object();
+    final displayItems = <Object>[];
+    for (int i = 0; i < rawItems.length; i++) {
+      if (i == sectionHeaderRawIdx) displayItems.add(headerSentinel);
+      displayItems.add(rawItems[i]);
+    }
 
     return ListView.builder(
       controller: _controller,
       padding: const EdgeInsets.only(top: 8, bottom: 24),
-      itemCount: items.length,
-      itemBuilder: (ctx, i) => _SpineItem(
-        milestone: items[i],
-        isFirst: i == 0,
-        isLast: i == items.length - 1,
-        onTapped: widget.onMilestoneTapped,
-      ),
+      itemCount: displayItems.length,
+      itemBuilder: (ctx, i) {
+        final item = displayItems[i];
+        if (identical(item, headerSentinel)) {
+          return _SectionHeader(label: l10n.timelineRecentSection);
+        }
+        final m = item as PactTimelineMilestone;
+        final rawIdx = rawItems.indexOf(m);
+        return _SpineItem(
+          milestone: m,
+          isFirst: rawIdx == 0,
+          isLast: rawIdx == rawItems.length - 1,
+          onTapped: widget.onMilestoneTapped,
+        );
+      },
     );
   }
 }
@@ -172,6 +196,9 @@ class _SpineItem extends StatelessWidget {
 
 // ── Spine painter ──────────────────────────────────────────────────────────────
 
+// Shared horizontal center for the spine column — used by painter and section header.
+const _kSpineX = 22.0;
+
 class _SpinePainter extends CustomPainter {
   final Color dotColor;
   final Color lineColor;
@@ -179,8 +206,6 @@ class _SpinePainter extends CustomPainter {
   final bool isLast;
   final double dotRadius;
 
-  // Horizontal center of the spine within the 44px spine column.
-  static const _spineX = 22.0;
   // Vertical offset of the dot center from the top of the item.
   static const _dotTopOffset = 16.0;
 
@@ -202,12 +227,12 @@ class _SpinePainter extends CustomPainter {
     final dotCenterY = _dotTopOffset + dotRadius;
 
     if (!isFirst) {
-      canvas.drawLine(const Offset(_spineX, 0), Offset(_spineX, dotCenterY - dotRadius - 1), linePaint);
+      canvas.drawLine(const Offset(_kSpineX, 0), Offset(_kSpineX, dotCenterY - dotRadius - 1), linePaint);
     }
     if (!isLast) {
-      canvas.drawLine(Offset(_spineX, dotCenterY + dotRadius + 1), Offset(_spineX, size.height), linePaint);
+      canvas.drawLine(Offset(_kSpineX, dotCenterY + dotRadius + 1), Offset(_kSpineX, size.height), linePaint);
     }
-    canvas.drawCircle(Offset(_spineX, dotCenterY), dotRadius, Paint()..color = dotColor);
+    canvas.drawCircle(Offset(_kSpineX, dotCenterY), dotRadius, Paint()..color = dotColor);
   }
 
   @override
@@ -217,6 +242,61 @@ class _SpinePainter extends CustomPainter {
       old.isFirst != isFirst ||
       old.isLast != isLast ||
       old.dotRadius != dotRadius;
+}
+
+// ── Section header (tail-zone divider) ────────────────────────────────────────
+
+// Draws a continuous spine line through its height with the label to the right.
+class _SectionHeader extends StatelessWidget {
+  final String label;
+  const _SectionHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final lineColor = CupertinoColors.separator.resolveFrom(context);
+    return SizedBox(
+      height: 36,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 44,
+            height: 36,
+            child: CustomPaint(painter: _SectionHeaderLinePainter(lineColor: lineColor)),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.4,
+              color: CupertinoColors.systemGrey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeaderLinePainter extends CustomPainter {
+  final Color lineColor;
+  const _SectionHeaderLinePainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawLine(
+      const Offset(_kSpineX, 0),
+      Offset(_kSpineX, size.height),
+      Paint()
+        ..color = lineColor
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SectionHeaderLinePainter old) => old.lineColor != lineColor;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -243,6 +323,10 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
       ? CupertinoColors.systemGreen.resolveFrom(context)
       : CupertinoColors.systemRed.resolveFrom(context);
 }
+
+Color _outcomeColor(ShowupStatus outcome, BuildContext context) => outcome == ShowupStatus.done
+    ? CupertinoColors.systemGreen.resolveFrom(context)
+    : CupertinoColors.systemRed.resolveFrom(context);
 
 double _verticalPadding(PactTimelineMilestone m) => switch (m) {
       PactCreatedMilestone _ || CurrentStateMilestone _ || PactConcludedMilestone _ => 14.0,
@@ -369,7 +453,10 @@ class _StreakContent extends StatelessWidget {
           ),
           const SizedBox(height: 2),
         ],
-        Text(milestoneTitle(l10n, m), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        Text(
+          milestoneTitle(l10n, m),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
+        ),
       ],
     );
   }
@@ -415,7 +502,10 @@ class _NotedShowupContent extends StatelessWidget {
             style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
           ),
           const SizedBox(height: 2),
-          Text(milestoneTitle(l10n, m), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(
+            milestoneTitle(l10n, m),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
+          ),
           const SizedBox(height: 4),
           Text(m.note, style: const TextStyle(fontSize: 13)),
         ],
@@ -437,7 +527,10 @@ class _SingleShowupContent extends StatelessWidget {
             style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
           ),
           const SizedBox(height: 2),
-          Text(milestoneTitle(l10n, m), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(
+            milestoneTitle(l10n, m),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
+          ),
         ],
       );
 }

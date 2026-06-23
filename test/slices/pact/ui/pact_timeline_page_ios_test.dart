@@ -157,6 +157,48 @@ void main() {
     });
   });
 
+  group('PactTimelinePageIos — section header', () {
+    testWidgets('section header appears between grouped and tail milestones', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_streak, _single])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
+      expect(find.text(l10n.timelineRecentSection), findsOneWidget);
+    });
+
+    testWidgets('no section header when only tail milestones present', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_single])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
+      expect(find.text(l10n.timelineRecentSection), findsNothing);
+    });
+  });
+
+  group('PactTimelinePageIos — status color', () {
+    testWidgets('done single showup status text is colored green', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_single])));
+      await tester.pump();
+      final ctx = tester.element(find.byType(PactTimelinePageIos));
+      final l10n = AppLocalizations.of(ctx)!;
+      final text = tester.widget<Text>(find.text(l10n.showupDone));
+      expect(text.style?.color, CupertinoColors.systemGreen.resolveFrom(ctx));
+    });
+
+    testWidgets('failed single showup status text is colored red', (tester) async {
+      final failedSingle = SingleShowupMilestone(
+        sortAt: DateTime(2024, 1, 25),
+        showupId: 'failed-1',
+        outcome: ShowupStatus.failed,
+        scheduledAt: DateTime(2024, 1, 25, 8),
+      );
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [failedSingle])));
+      await tester.pump();
+      final ctx = tester.element(find.byType(PactTimelinePageIos));
+      final l10n = AppLocalizations.of(ctx)!;
+      final text = tester.widget<Text>(find.text(l10n.showupFailed));
+      expect(text.style?.color, CupertinoColors.systemRed.resolveFrom(ctx));
+    });
+  });
+
   group('PactTimelinePageIos — date ordering', () {
     testWidgets('date shown above status for single showup milestone', (tester) async {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_single])));

@@ -323,6 +323,8 @@
   "@timelinePactCreated": {},
   "timelineCurrentState": "Actif",
   "@timelineCurrentState": {},
+  "timelineRecentSection": "Les présentations les plus récentes",
+  "@timelineRecentSection": {},
   "timelinePactConcludedCompleted": "Pacte terminé",
   "@timelinePactConcludedCompleted": {},
   "timelinePactConcludedStopped": "Pacte arrêté",
