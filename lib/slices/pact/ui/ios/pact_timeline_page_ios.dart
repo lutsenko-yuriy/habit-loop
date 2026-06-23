@@ -34,7 +34,10 @@ class PactTimelinePageIos extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.surface,
         middle: Text(l10n.pactTimelineTitle),
       ),
+      // bottom: false — the scroll view adds MediaQuery bottom inset to its own
+      // padding so content scrolls under the home indicator naturally.
       child: SafeArea(
+        bottom: false,
         child: Material(
           type: MaterialType.transparency,
           child: state.isLoading
@@ -106,8 +109,9 @@ class _TimelineList extends StatelessWidget {
           ),
     ];
 
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      padding: EdgeInsets.only(top: 8, bottom: 24 + bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
