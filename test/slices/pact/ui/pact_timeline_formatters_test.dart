@@ -154,5 +154,35 @@ void main() {
       final range = milestoneDateRange(ctx, m);
       expect(range, isNotEmpty);
     });
+
+    testWidgets('ShowupStreakMilestone multi-day shows date range with separator', (tester) async {
+      await _getL10n(tester);
+      final ctx = tester.element(find.byType(Scaffold));
+      final m = ShowupStreakMilestone(
+        sortAt: DateTime(2024, 1, 10),
+        outcome: ShowupStatus.done,
+        count: 5,
+        firstAt: DateTime(2024, 1, 1),
+        lastAt: DateTime(2024, 1, 10),
+      );
+      final range = milestoneDateRange(ctx, m);
+      expect(range, isNotNull);
+      expect(range, contains('–'));
+    });
+
+    testWidgets('ShowupGroupMilestone returns date range', (tester) async {
+      await _getL10n(tester);
+      final ctx = tester.element(find.byType(Scaffold));
+      final m = ShowupGroupMilestone(
+        sortAt: DateTime(2024, 1, 5),
+        total: 4,
+        doneCount: 2,
+        failedCount: 2,
+        firstAt: DateTime(2024, 1, 1),
+        lastAt: DateTime(2024, 1, 5),
+      );
+      final range = milestoneDateRange(ctx, m);
+      expect(range, isNotEmpty);
+    });
   });
 }

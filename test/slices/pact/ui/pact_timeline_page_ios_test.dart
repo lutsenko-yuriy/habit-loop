@@ -54,6 +54,15 @@ final _single = SingleShowupMilestone(
   scheduledAt: DateTime(2024, 1, 25, 8),
 );
 
+final _group = ShowupGroupMilestone(
+  sortAt: DateTime(2024, 1, 15),
+  total: 5,
+  doneCount: 3,
+  failedCount: 2,
+  firstAt: DateTime(2024, 1, 11),
+  lastAt: DateTime(2024, 1, 15),
+);
+
 Widget _buildApp(PactTimelineState state, {void Function(PactTimelineMilestone)? onMilestoneTapped}) {
   return MaterialApp(
     theme: HabitLoopTheme.materialTheme,
@@ -137,6 +146,13 @@ void main() {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_noted])));
       await tester.pump();
       expect(find.text('Best session ever'), findsWidgets);
+    });
+
+    testWidgets('shows group milestone label with counts', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_group])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
+      expect(find.text(l10n.timelineGroup(5, 3, 2)), findsWidgets);
     });
   });
 
