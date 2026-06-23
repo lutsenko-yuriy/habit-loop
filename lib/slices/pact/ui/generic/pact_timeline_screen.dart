@@ -62,6 +62,11 @@ class _PactTimelineScreenState extends ConsumerState<PactTimelineScreen> {
         MaterialPageRoute<void>(builder: (_) => ShowupDetailScreen(showupId: showupId)),
       );
     }
+
+    // Reload so any status change made in showup detail is reflected immediately.
+    if (mounted) {
+      unawaited(ref.read(pactTimelineViewModelProvider(widget.pactId).notifier).load());
+    }
   }
 
   @override

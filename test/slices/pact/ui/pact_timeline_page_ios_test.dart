@@ -10,6 +10,7 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_timeline_page_ios.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:intl/intl.dart';
 
 final _anchorStart = PactCreatedMilestone(
   sortAt: DateTime(2024, 1, 1),
@@ -153,6 +154,45 @@ void main() {
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
       expect(find.text(l10n.timelineGroup(5, 3, 2)), findsWidgets);
+    });
+  });
+
+  group('PactTimelinePageIos — date ordering', () {
+    testWidgets('date shown above status for single showup milestone', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_single])));
+      await tester.pump();
+      final ctx = tester.element(find.byType(PactTimelinePageIos));
+      final l10n = AppLocalizations.of(ctx)!;
+      final dateStr = DateFormat.yMd(Localizations.localeOf(ctx).toString()).format(_single.scheduledAt);
+      expect(tester.getRect(find.text(dateStr)).top, lessThan(tester.getRect(find.text(l10n.showupDone)).top));
+    });
+
+    testWidgets('date shown above status for noted showup milestone', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_noted])));
+      await tester.pump();
+      final ctx = tester.element(find.byType(PactTimelinePageIos));
+      final l10n = AppLocalizations.of(ctx)!;
+      final dateStr = DateFormat.yMd(Localizations.localeOf(ctx).toString()).format(_noted.scheduledAt);
+      expect(tester.getRect(find.text(dateStr)).top, lessThan(tester.getRect(find.text(l10n.showupDone)).top));
+    });
+
+    testWidgets('date range shown above title for streak milestone', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_streak])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
+      final rangeRect = tester.getRect(find.textContaining('–'));
+      final titleRect = tester.getRect(find.text(l10n.timelineDoneInARow(_streak.count)));
+      expect(rangeRect.top, lessThan(titleRect.top));
+    });
+
+    testWidgets('date range shown above title for group milestone', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_group])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
+      final rangeRect = tester.getRect(find.textContaining('–'));
+      final titleRect =
+          tester.getRect(find.text(l10n.timelineGroup(_group.total, _group.doneCount, _group.failedCount)));
+      expect(rangeRect.top, lessThan(titleRect.top));
     });
   });
 
