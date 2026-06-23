@@ -50,45 +50,20 @@ class PactTimelinePageIos extends StatelessWidget {
 
 // ── Timeline list ──────────────────────────────────────────────────────────────
 
-class _TimelineList extends StatefulWidget {
+class _TimelineList extends StatelessWidget {
   final PactTimelineState state;
   final void Function(PactTimelineMilestone)? onMilestoneTapped;
 
   const _TimelineList({required this.state, this.onMilestoneTapped});
 
   @override
-  State<_TimelineList> createState() => _TimelineListState();
-}
-
-class _TimelineListState extends State<_TimelineList> {
-  final _controller = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    // Jump to the bottom anchor after the first frame. Using SingleChildScrollView
-    // (eager layout) ensures maxScrollExtent is exact at this point.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_controller.hasClients) {
-        _controller.jumpTo(_controller.position.maxScrollExtent);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final milestones = widget.state.milestones;
+    final milestones = state.milestones;
     final rawItems = <PactTimelineMilestone>[
-      if (widget.state.anchorStart != null) widget.state.anchorStart!,
+      if (state.anchorStart != null) state.anchorStart!,
       ...milestones,
-      if (widget.state.anchorEnd != null) widget.state.anchorEnd!,
+      if (state.anchorEnd != null) state.anchorEnd!,
     ];
 
     if (rawItems.isEmpty) return const SizedBox.shrink();
@@ -96,7 +71,7 @@ class _TimelineListState extends State<_TimelineList> {
     // Section-header sentinel: appears before the first SingleShowupMilestone
     // when there is at least one non-single item above it.
     final firstSingleIdxInMilestones = milestones.indexWhere((m) => m is SingleShowupMilestone);
-    final anchorOffset = widget.state.anchorStart != null ? 1 : 0;
+    final anchorOffset = state.anchorStart != null ? 1 : 0;
     final sectionHeaderRawIdx = firstSingleIdxInMilestones > 0 ? anchorOffset + firstSingleIdxInMilestones : null;
 
     // Build display list in chronological order (oldest at top, newest at bottom).
@@ -125,14 +100,13 @@ class _TimelineListState extends State<_TimelineList> {
                 isFirst: rawIdx == 0,
                 isLast: rawIdx == rawItems.length - 1,
                 topDotColor: rawIdx > 0 ? _dotColor(rawItems[rawIdx - 1], ctx) : null,
-                onTapped: widget.onMilestoneTapped,
+                onTapped: onMilestoneTapped,
               );
             },
           ),
     ];
 
     return SingleChildScrollView(
-      controller: _controller,
       padding: const EdgeInsets.only(top: 8, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
