@@ -197,6 +197,21 @@ void main() {
       final text = tester.widget<Text>(find.text(l10n.showupFailed));
       expect(text.style?.color, CupertinoColors.systemRed.resolveFrom(ctx));
     });
+
+    testWidgets('pending single showup status text is colored grey', (tester) async {
+      final pendingSingle = SingleShowupMilestone(
+        sortAt: DateTime(2024, 2, 1),
+        showupId: 'pending-1',
+        outcome: ShowupStatus.pending,
+        scheduledAt: DateTime(2024, 2, 1, 8),
+      );
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [pendingSingle])));
+      await tester.pump();
+      final ctx = tester.element(find.byType(PactTimelinePageIos));
+      final l10n = AppLocalizations.of(ctx)!;
+      final text = tester.widget<Text>(find.text(l10n.showupPending));
+      expect(text.style?.color, CupertinoColors.systemGrey.resolveFrom(ctx));
+    });
   });
 
   group('PactTimelinePageIos — date ordering', () {

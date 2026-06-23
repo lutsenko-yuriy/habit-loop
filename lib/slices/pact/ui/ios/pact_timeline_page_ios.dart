@@ -97,12 +97,11 @@ class _TimelineListState extends State<_TimelineList> {
     final anchorOffset = widget.state.anchorStart != null ? 1 : 0;
     final sectionHeaderRawIdx = firstSingleIdxInMilestones > 0 ? anchorOffset + firstSingleIdxInMilestones : null;
 
-    // Build display list: rawItems interleaved with an optional header object.
-    const headerSentinel = Object();
-    final displayItems = <Object>[];
+    // Build display list: null = section-header slot; non-null = (rawIndex, milestone).
+    final displayItems = <(int, PactTimelineMilestone)?>[];
     for (int i = 0; i < rawItems.length; i++) {
-      if (i == sectionHeaderRawIdx) displayItems.add(headerSentinel);
-      displayItems.add(rawItems[i]);
+      if (i == sectionHeaderRawIdx) displayItems.add(null);
+      displayItems.add((i, rawItems[i]));
     }
 
     return ListView.builder(
@@ -110,12 +109,11 @@ class _TimelineListState extends State<_TimelineList> {
       padding: const EdgeInsets.only(top: 8, bottom: 24),
       itemCount: displayItems.length,
       itemBuilder: (ctx, i) {
-        final item = displayItems[i];
-        if (identical(item, headerSentinel)) {
+        final entry = displayItems[i];
+        if (entry == null) {
           return _SectionHeader(label: l10n.timelineRecentSection);
         }
-        final m = item as PactTimelineMilestone;
-        final rawIdx = rawItems.indexOf(m);
+        final (rawIdx, m) = entry;
         return _SpineItem(
           milestone: m,
           isFirst: rawIdx == 0,
@@ -319,14 +317,14 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
     SingleShowupMilestone s => s.outcome,
     _ => ShowupStatus.pending,
   };
-  return outcome == ShowupStatus.done
-      ? CupertinoColors.systemGreen.resolveFrom(context)
-      : CupertinoColors.systemRed.resolveFrom(context);
+  return _outcomeColor(outcome, context);
 }
 
-Color _outcomeColor(ShowupStatus outcome, BuildContext context) => outcome == ShowupStatus.done
-    ? CupertinoColors.systemGreen.resolveFrom(context)
-    : CupertinoColors.systemRed.resolveFrom(context);
+Color _outcomeColor(ShowupStatus outcome, BuildContext context) => switch (outcome) {
+      ShowupStatus.done => CupertinoColors.systemGreen.resolveFrom(context),
+      ShowupStatus.failed => CupertinoColors.systemRed.resolveFrom(context),
+      ShowupStatus.pending => CupertinoColors.systemGrey.resolveFrom(context),
+    };
 
 double _verticalPadding(PactTimelineMilestone m) => switch (m) {
       PactCreatedMilestone _ || CurrentStateMilestone _ || PactConcludedMilestone _ => 14.0,
