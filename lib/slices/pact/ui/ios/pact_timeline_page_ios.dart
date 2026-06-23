@@ -50,20 +50,45 @@ class PactTimelinePageIos extends StatelessWidget {
 
 // ── Timeline list ──────────────────────────────────────────────────────────────
 
-class _TimelineList extends StatelessWidget {
+class _TimelineList extends StatefulWidget {
   final PactTimelineState state;
   final void Function(PactTimelineMilestone)? onMilestoneTapped;
 
   const _TimelineList({required this.state, this.onMilestoneTapped});
 
   @override
+  State<_TimelineList> createState() => _TimelineListState();
+}
+
+class _TimelineListState extends State<_TimelineList> {
+  final _controller = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Jump to the bottom anchor after the first frame. Using SingleChildScrollView
+    // (eager layout) ensures maxScrollExtent is exact at this point.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_controller.hasClients) {
+        _controller.jumpTo(_controller.position.maxScrollExtent);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final milestones = state.milestones;
+    final milestones = widget.state.milestones;
     final rawItems = <PactTimelineMilestone>[
-      if (state.anchorStart != null) state.anchorStart!,
+      if (widget.state.anchorStart != null) widget.state.anchorStart!,
       ...milestones,
-      if (state.anchorEnd != null) state.anchorEnd!,
+      if (widget.state.anchorEnd != null) widget.state.anchorEnd!,
     ];
 
     if (rawItems.isEmpty) return const SizedBox.shrink();
@@ -71,39 +96,48 @@ class _TimelineList extends StatelessWidget {
     // Section-header sentinel: appears before the first SingleShowupMilestone
     // when there is at least one non-single item above it.
     final firstSingleIdxInMilestones = milestones.indexWhere((m) => m is SingleShowupMilestone);
-    final anchorOffset = state.anchorStart != null ? 1 : 0;
+    final anchorOffset = widget.state.anchorStart != null ? 1 : 0;
     final sectionHeaderRawIdx = firstSingleIdxInMilestones > 0 ? anchorOffset + firstSingleIdxInMilestones : null;
 
-    // Build display list in REVERSE chronological order so that ListView(reverse:true)
-    // can render newest items at the bottom without any programmatic scroll.
+    // Build display list in chronological order (oldest at top, newest at bottom).
     // null = section-header slot; non-null = (rawIndex, milestone).
     final displayItems = <(int, PactTimelineMilestone)?>[];
-    for (int i = rawItems.length - 1; i >= 0; i--) {
-      displayItems.add((i, rawItems[i]));
+    for (int i = 0; i < rawItems.length; i++) {
       if (i == sectionHeaderRawIdx) displayItems.add(null);
+      displayItems.add((i, rawItems[i]));
     }
 
-    return ListView.builder(
-      reverse: true,
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
-      itemCount: displayItems.length,
-      itemBuilder: (ctx, i) {
-        final entry = displayItems[i];
-        if (entry == null) {
-          return _SectionHeader(
+    // SingleChildScrollView + Column builds all items eagerly so maxScrollExtent
+    // is exact and jumpTo(maxScrollExtent) in initState lands correctly.
+    final children = [
+      for (final entry in displayItems)
+        if (entry == null)
+          _SectionHeader(
             label: l10n.timelineRecentSection,
-            topDotColor: _dotColor(rawItems[sectionHeaderRawIdx! - 1], ctx),
-          );
-        }
-        final (rawIdx, m) = entry;
-        return _SpineItem(
-          milestone: m,
-          isFirst: rawIdx == 0,
-          isLast: rawIdx == rawItems.length - 1,
-          topDotColor: rawIdx > 0 ? _dotColor(rawItems[rawIdx - 1], ctx) : null,
-          onTapped: onMilestoneTapped,
-        );
-      },
+            topDotColor: _dotColor(rawItems[sectionHeaderRawIdx! - 1], context),
+          )
+        else
+          Builder(
+            builder: (ctx) {
+              final (rawIdx, m) = entry;
+              return _SpineItem(
+                milestone: m,
+                isFirst: rawIdx == 0,
+                isLast: rawIdx == rawItems.length - 1,
+                topDotColor: rawIdx > 0 ? _dotColor(rawItems[rawIdx - 1], ctx) : null,
+                onTapped: widget.onMilestoneTapped,
+              );
+            },
+          ),
+    ];
+
+    return SingleChildScrollView(
+      controller: _controller,
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
     );
   }
 }
