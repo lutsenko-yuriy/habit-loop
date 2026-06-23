@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_timeline_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
@@ -33,6 +34,22 @@ class PactTimelineViewModel extends FamilyNotifier<PactTimelineState, String> {
         anchorEnd: page.anchorEnd,
         milestones: page.milestones,
         isLoading: false,
+      );
+
+      final pactStatus = switch (page.anchorEnd) {
+        CurrentStateMilestone _ => 'active',
+        PactConcludedMilestone m when m.finalStatus == PactStatus.completed => 'completed',
+        PactConcludedMilestone _ => 'stopped',
+        _ => 'unknown',
+      };
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(
+              PactTimelineOpenedEvent(
+                pactId: arg,
+                pactStatus: pactStatus,
+                milestoneCount: page.milestones.length,
+              ),
+            ),
       );
     } catch (e, st) {
       unawaited(

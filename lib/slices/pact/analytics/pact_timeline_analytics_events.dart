@@ -24,6 +24,31 @@ class PactTimelineAnalyticsScreen implements AnalyticsScreen {
   String get name => 'pact_timeline';
 }
 
+/// Companion event fired after the timeline finishes loading. (HAB-116)
+///
+/// Carries the properties that [PactTimelineAnalyticsScreen] declares but
+/// cannot pass through [logScreenView] (which forwards only the screen name).
+final class PactTimelineOpenedEvent extends AnalyticsEvent {
+  PactTimelineOpenedEvent({required this.pactId, required this.pactStatus, required this.milestoneCount});
+
+  final String pactId;
+
+  /// `active` | `completed` | `stopped`
+  final String pactStatus;
+
+  final int milestoneCount;
+
+  @override
+  String get name => 'pact_timeline_opened';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'pact_status': pactStatus,
+        'milestone_count': milestoneCount,
+      };
+}
+
 /// Fired when the user taps "Load more" to reveal older timeline events. (HAB-116)
 final class PactTimelineLoadMoreEvent extends AnalyticsEvent {
   PactTimelineLoadMoreEvent({required this.pactId, required this.pageNumber});

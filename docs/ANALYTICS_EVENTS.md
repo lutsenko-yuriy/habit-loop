@@ -298,6 +298,18 @@ No PII risk — note content is never included; only its length.
 
 ---
 
+### `pact_timeline_opened`
+
+Companion event fired after the Pact Timeline screen finishes loading, carrying properties that `logScreenView` cannot forward. (HAB-116)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact whose timeline was opened |
+| `pact_status` | `string` | `active` \| `completed` \| `stopped` |
+| `milestone_count` | `int` | Number of milestone items in the loaded page (excludes the two anchors) |
+
+---
+
 ### `pact_timeline_load_more`
 
 Fired when the user scrolls up and triggers "Load more" to reveal older events on the Pact Timeline screen. Measures engagement depth — how far back users explore. (HAB-116)
