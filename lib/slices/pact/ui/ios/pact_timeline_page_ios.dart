@@ -50,63 +50,41 @@ class PactTimelinePageIos extends StatelessWidget {
 
 // ── Timeline list ──────────────────────────────────────────────────────────────
 
-class _TimelineList extends StatefulWidget {
+class _TimelineList extends StatelessWidget {
   final PactTimelineState state;
   final void Function(PactTimelineMilestone)? onMilestoneTapped;
 
   const _TimelineList({required this.state, this.onMilestoneTapped});
 
   @override
-  State<_TimelineList> createState() => _TimelineListState();
-}
-
-class _TimelineListState extends State<_TimelineList> {
-  final _controller = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    // Scroll to anchor (bottom of list) after first layout.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_controller.hasClients && _controller.position.maxScrollExtent > 0) {
-        _controller.jumpTo(_controller.position.maxScrollExtent);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final milestones = widget.state.milestones;
+    final milestones = state.milestones;
     final rawItems = <PactTimelineMilestone>[
-      if (widget.state.anchorStart != null) widget.state.anchorStart!,
+      if (state.anchorStart != null) state.anchorStart!,
       ...milestones,
-      if (widget.state.anchorEnd != null) widget.state.anchorEnd!,
+      if (state.anchorEnd != null) state.anchorEnd!,
     ];
 
     if (rawItems.isEmpty) return const SizedBox.shrink();
 
-    // Insert a section-header sentinel before the first SingleShowupMilestone
-    // that has at least one non-single item before it (marks tail-zone boundary).
+    // Section-header sentinel: appears before the first SingleShowupMilestone
+    // when there is at least one non-single item above it.
     final firstSingleIdxInMilestones = milestones.indexWhere((m) => m is SingleShowupMilestone);
-    final anchorOffset = widget.state.anchorStart != null ? 1 : 0;
+    final anchorOffset = state.anchorStart != null ? 1 : 0;
     final sectionHeaderRawIdx = firstSingleIdxInMilestones > 0 ? anchorOffset + firstSingleIdxInMilestones : null;
 
-    // Build display list: null = section-header slot; non-null = (rawIndex, milestone).
+    // Build display list in REVERSE chronological order so that ListView(reverse:true)
+    // can render newest items at the bottom without any programmatic scroll.
+    // null = section-header slot; non-null = (rawIndex, milestone).
     final displayItems = <(int, PactTimelineMilestone)?>[];
-    for (int i = 0; i < rawItems.length; i++) {
-      if (i == sectionHeaderRawIdx) displayItems.add(null);
+    for (int i = rawItems.length - 1; i >= 0; i--) {
       displayItems.add((i, rawItems[i]));
+      if (i == sectionHeaderRawIdx) displayItems.add(null);
     }
 
     return ListView.builder(
-      controller: _controller,
+      reverse: true,
       padding: const EdgeInsets.only(top: 8, bottom: 24),
       itemCount: displayItems.length,
       itemBuilder: (ctx, i) {
@@ -115,7 +93,6 @@ class _TimelineListState extends State<_TimelineList> {
           return _SectionHeader(
             label: l10n.timelineRecentSection,
             topDotColor: _dotColor(rawItems[sectionHeaderRawIdx! - 1], ctx),
-            bottomDotColor: _dotColor(rawItems[sectionHeaderRawIdx], ctx),
           );
         }
         final (rawIdx, m) = entry;
@@ -124,8 +101,7 @@ class _TimelineListState extends State<_TimelineList> {
           isFirst: rawIdx == 0,
           isLast: rawIdx == rawItems.length - 1,
           topDotColor: rawIdx > 0 ? _dotColor(rawItems[rawIdx - 1], ctx) : null,
-          bottomDotColor: rawIdx < rawItems.length - 1 ? _dotColor(rawItems[rawIdx + 1], ctx) : null,
-          onTapped: widget.onMilestoneTapped,
+          onTapped: onMilestoneTapped,
         );
       },
     );
@@ -139,7 +115,6 @@ class _SpineItem extends StatelessWidget {
   final bool isFirst;
   final bool isLast;
   final Color? topDotColor;
-  final Color? bottomDotColor;
   final void Function(PactTimelineMilestone)? onTapped;
 
   const _SpineItem({
@@ -147,7 +122,6 @@ class _SpineItem extends StatelessWidget {
     required this.isFirst,
     required this.isLast,
     this.topDotColor,
-    this.bottomDotColor,
     this.onTapped,
   });
 
@@ -175,7 +149,6 @@ class _SpineItem extends StatelessWidget {
               painter: _SpinePainter(
                 dotColor: dotColor,
                 topDotColor: topDotColor,
-                bottomDotColor: bottomDotColor,
                 isFirst: isFirst,
                 isLast: isLast,
                 dotRadius: isAnchor ? 6.0 : 4.0,
@@ -211,7 +184,6 @@ const _kSpineX = 22.0;
 class _SpinePainter extends CustomPainter {
   final Color dotColor;
   final Color? topDotColor;
-  final Color? bottomDotColor;
   final bool isFirst;
   final bool isLast;
   final double dotRadius;
@@ -221,7 +193,6 @@ class _SpinePainter extends CustomPainter {
   const _SpinePainter({
     required this.dotColor,
     required this.topDotColor,
-    required this.bottomDotColor,
     required this.isFirst,
     required this.isLast,
     required this.dotRadius,
@@ -250,23 +221,15 @@ class _SpinePainter extends CustomPainter {
         );
       }
     }
-    if (!isLast && bottomDotColor != null) {
-      final top = dotCenterY + dotRadius + 1;
-      final bottom = size.height;
-      if (bottom > top) {
-        canvas.drawLine(
-          Offset(_kSpineX, top),
-          Offset(_kSpineX, bottom),
-          Paint()
-            ..shader = LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [dotColor, bottomDotColor!],
-            ).createShader(Rect.fromLTRB(0, top, 1, bottom))
-            ..strokeWidth = strokeWidth
-            ..strokeCap = StrokeCap.round,
-        );
-      }
+    if (!isLast) {
+      canvas.drawLine(
+        Offset(_kSpineX, dotCenterY + dotRadius + 1),
+        Offset(_kSpineX, size.height),
+        Paint()
+          ..color = dotColor
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round,
+      );
     }
     canvas.drawCircle(Offset(_kSpineX, dotCenterY), dotRadius, Paint()..color = dotColor);
   }
@@ -275,7 +238,6 @@ class _SpinePainter extends CustomPainter {
   bool shouldRepaint(_SpinePainter old) =>
       old.dotColor != dotColor ||
       old.topDotColor != topDotColor ||
-      old.bottomDotColor != bottomDotColor ||
       old.isFirst != isFirst ||
       old.isLast != isLast ||
       old.dotRadius != dotRadius;
@@ -287,13 +249,8 @@ class _SpinePainter extends CustomPainter {
 class _SectionHeader extends StatelessWidget {
   final String label;
   final Color topDotColor;
-  final Color bottomDotColor;
 
-  const _SectionHeader({
-    required this.label,
-    required this.topDotColor,
-    required this.bottomDotColor,
-  });
+  const _SectionHeader({required this.label, required this.topDotColor});
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +263,7 @@ class _SectionHeader extends StatelessWidget {
             width: 44,
             height: 36,
             child: CustomPaint(
-              painter: _SectionHeaderLinePainter(topDotColor: topDotColor, bottomDotColor: bottomDotColor),
+              painter: _SectionHeaderLinePainter(color: topDotColor),
             ),
           ),
           Text(
@@ -325,9 +282,8 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _SectionHeaderLinePainter extends CustomPainter {
-  final Color topDotColor;
-  final Color bottomDotColor;
-  const _SectionHeaderLinePainter({required this.topDotColor, required this.bottomDotColor});
+  final Color color;
+  const _SectionHeaderLinePainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -335,19 +291,14 @@ class _SectionHeaderLinePainter extends CustomPainter {
       const Offset(_kSpineX, 0),
       Offset(_kSpineX, size.height),
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [topDotColor, bottomDotColor],
-        ).createShader(Rect.fromLTRB(0, 0, 1, size.height))
+        ..color = color
         ..strokeWidth = 1.5
         ..strokeCap = StrokeCap.round,
     );
   }
 
   @override
-  bool shouldRepaint(_SectionHeaderLinePainter old) =>
-      old.topDotColor != topDotColor || old.bottomDotColor != bottomDotColor;
+  bool shouldRepaint(_SectionHeaderLinePainter old) => old.color != color;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
