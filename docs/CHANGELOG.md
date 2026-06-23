@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.10] — 2026-06-23 (HAB-116 WU5, PR #172)
+
+### Application — PactTimelineViewModel
+
+- [app] `PactTimelineState`: new state class; holds `anchorStart`, `anchorEnd`, `milestones` (full grouped list), `isLoading`, `loadError`
+- [app] `PactTimelineViewModel`: new `FamilyNotifier` with `load()` (evicts cache, fetches and exposes the full milestone list — no display windowing; grouper compaction is sufficient) and `onMilestoneTapped()` (fires `PactTimelineMilestoneTappedEvent`)
+- [app] `pactTimelineViewModelProvider`: new `NotifierProviderFamily<PactTimelineViewModel, PactTimelineState, String>` keyed by `pactId`
+- [app] `pactTimelineNowProvider`: new overridable `Provider<DateTime>` for deterministic `CurrentStateMilestone.sortAt` in tests
+
+---
+
 ## [0.44.9] — 2026-06-22 (HAB-116 WU4, PR #171)
 
 ### Application — PactTimelineCache
