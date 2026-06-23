@@ -8,8 +8,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Application — PactTimelineViewModel
 
-- [app] `PactTimelineState`: new state class for the pact timeline screen; holds `anchorStart`, `anchorEnd`, `visibleMilestones`, `totalMilestoneCount`, `hasMoreOlder`, `loadedPageCount`, `isLoading`, `isLoadingMore`, `loadError`
-- [app] `PactTimelineViewModel`: new `FamilyNotifier` with `load()` (evicts cache, fetches full page, applies display window of 20 most-recent milestones) and `loadMoreOlder()` (cache hit, expands window by 10, fires `PactTimelineLoadMoreEvent`)
+- [app] `PactTimelineState`: new state class; holds `anchorStart`, `anchorEnd`, `milestones` (full grouped list), `isLoading`, `loadError`
+- [app] `PactTimelineViewModel`: new `FamilyNotifier` with `load()` (evicts cache, fetches and exposes the full milestone list — no display windowing; grouper compaction is sufficient) and `onMilestoneTapped()` (fires `PactTimelineMilestoneTappedEvent`)
 - [app] `pactTimelineViewModelProvider`: new `NotifierProviderFamily<PactTimelineViewModel, PactTimelineState, String>` keyed by `pactId`
 - [app] `pactTimelineNowProvider`: new overridable `Provider<DateTime>` for deterministic `CurrentStateMilestone.sortAt` in tests
 
