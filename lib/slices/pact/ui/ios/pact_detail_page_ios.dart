@@ -23,6 +23,14 @@ class PactDetailPageIos extends StatelessWidget {
   /// `null` (or hidden) when the pact is not active or not yet loaded.
   final VoidCallback? onEditPact;
 
+  /// Whether the pact timeline feature is enabled via Remote Config.
+  final bool pactTimelineEnabled;
+
+  /// Called when the user taps the "View Timeline" button.
+  ///
+  /// `null` hides the button regardless of [pactTimelineEnabled].
+  final VoidCallback? onOpenTimeline;
+
   const PactDetailPageIos({
     super.key,
     required this.state,
@@ -30,6 +38,8 @@ class PactDetailPageIos extends StatelessWidget {
     required this.onSaveNote,
     required this.onArchivePact,
     this.onEditPact,
+    this.pactTimelineEnabled = false,
+    this.onOpenTimeline,
   });
 
   @override
@@ -65,6 +75,8 @@ class PactDetailPageIos extends StatelessWidget {
                       onStopPact: onStopPact,
                       onSaveNote: onSaveNote,
                       onArchivePact: onArchivePact,
+                      pactTimelineEnabled: pactTimelineEnabled,
+                      onOpenTimeline: onOpenTimeline,
                     ),
         ),
       ),
@@ -78,6 +90,8 @@ class _PactDetailContent extends StatelessWidget {
   final Future<void> Function(String? reason) onStopPact;
   final Future<void> Function(String note) onSaveNote;
   final Future<void> Function(bool archive) onArchivePact;
+  final bool pactTimelineEnabled;
+  final VoidCallback? onOpenTimeline;
 
   const _PactDetailContent({
     required this.state,
@@ -85,6 +99,8 @@ class _PactDetailContent extends StatelessWidget {
     required this.onStopPact,
     required this.onSaveNote,
     required this.onArchivePact,
+    this.pactTimelineEnabled = false,
+    this.onOpenTimeline,
   });
 
   @override
@@ -183,6 +199,17 @@ class _PactDetailContent extends StatelessWidget {
           valueColor: CupertinoColors.systemGrey,
           backgroundColor: fill,
         ),
+
+        // View Timeline entry point (flag-gated)
+        if (pactTimelineEnabled && onOpenTimeline != null) ...[
+          const SizedBox(height: 8),
+          CupertinoButton(
+            key: const Key('pact-detail-timeline-button'),
+            padding: EdgeInsets.zero,
+            onPressed: onOpenTimeline,
+            child: Text(l10n.pactDetailViewTimeline),
+          ),
+        ],
 
         // Editable note section for inactive pacts
         if (pact.status != PactStatus.active) ...[

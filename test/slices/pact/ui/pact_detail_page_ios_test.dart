@@ -38,7 +38,11 @@ final _stats = PactStats(
   endDate: DateTime(2026, 9, 1),
 );
 
-Widget _buildApp(PactDetailState state) {
+Widget _buildApp(
+  PactDetailState state, {
+  bool pactTimelineEnabled = false,
+  VoidCallback? onOpenTimeline,
+}) {
   return MaterialApp(
     theme: HabitLoopTheme.materialTheme,
     localizationsDelegates: const [
@@ -53,6 +57,8 @@ Widget _buildApp(PactDetailState state) {
       onStopPact: (_) async {},
       onSaveNote: (_) async {},
       onArchivePact: (_) async {},
+      pactTimelineEnabled: pactTimelineEnabled,
+      onOpenTimeline: onOpenTimeline,
     ),
   );
 }
@@ -88,6 +94,42 @@ void main() {
 
       expect(find.byKey(const Key('pact-note-field')), findsNothing);
       expect(find.byKey(const Key('pact-note-save-button')), findsNothing);
+    });
+  });
+
+  group('PactDetailPageIos — View Timeline button', () {
+    testWidgets('shows timeline button when enabled and callback provided', (tester) async {
+      bool tapped = false;
+      final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(
+        state,
+        pactTimelineEnabled: true,
+        onOpenTimeline: () => tapped = true,
+      ));
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-timeline-button')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('hides timeline button when pactTimelineEnabled is false', (tester) async {
+      final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(
+        state,
+        pactTimelineEnabled: false,
+        onOpenTimeline: () {},
+      ));
+      await tester.pump();
+      expect(find.byKey(const Key('pact-detail-timeline-button')), findsNothing);
+    });
+
+    testWidgets('hides timeline button when onOpenTimeline is null', (tester) async {
+      final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(state, pactTimelineEnabled: true));
+      await tester.pump();
+      expect(find.byKey(const Key('pact-detail-timeline-button')), findsNothing);
     });
   });
 

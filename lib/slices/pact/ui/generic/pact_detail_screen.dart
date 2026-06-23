@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_screen.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_screen.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_detail_page_ios.dart';
 
 class PactDetailScreen extends ConsumerStatefulWidget {
@@ -40,6 +41,19 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     );
   }
 
+  Future<void> _onOpenTimeline() async {
+    if (!mounted) return;
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      await Navigator.of(context).push(
+        CupertinoPageRoute<void>(builder: (_) => PactTimelineScreen(pactId: widget.pactId)),
+      );
+    } else {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => PactTimelineScreen(pactId: widget.pactId)),
+      );
+    }
+  }
+
   Future<void> _onEditPact() async {
     final result = await Navigator.of(context).push<bool>(
       defaultTargetPlatform == TargetPlatform.iOS
@@ -59,6 +73,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pactDetailViewModelProvider(widget.pactId));
+    final flags = ref.watch(featureFlagsProvider);
 
     Future<void> onStopPact(String? reason) async {
       // Invalidate so stopPact() samples the real current time even if the
@@ -82,6 +97,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         onSaveNote: onSaveNote,
         onArchivePact: onArchivePact,
         onEditPact: _onEditPact,
+        pactTimelineEnabled: flags.pactTimelineEnabled,
+        onOpenTimeline: _onOpenTimeline,
       );
     }
     return PactDetailPageAndroid(
