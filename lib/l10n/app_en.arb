@@ -314,5 +314,42 @@
     }
   },
   "pactsAllArchived": "(all archived)",
-  "@pactsAllArchived": {}
+  "@pactsAllArchived": {},
+
+  "pactTimelineTitle": "Timeline",
+  "@pactTimelineTitle": {},
+  "pactDetailViewTimeline": "View Timeline",
+  "@pactDetailViewTimeline": {},
+  "timelinePactCreated": "Pact started",
+  "@timelinePactCreated": {},
+  "timelineCurrentState": "Active",
+  "@timelineCurrentState": {},
+  "timelinePactConcludedCompleted": "Pact completed",
+  "@timelinePactConcludedCompleted": {},
+  "timelinePactConcludedStopped": "Pact stopped",
+  "@timelinePactConcludedStopped": {},
+  "timelineDoneInARow": "{count, plural, one{1 showup done in a row} other{{count} showups done in a row}}",
+  "@timelineDoneInARow": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineMissedInARow": "{count, plural, one{1 showup missed in a row} other{{count} showups missed in a row}}",
+  "@timelineMissedInARow": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineGroup": "{total} showups — {done} done, {failed} missed",
+  "@timelineGroup": {
+    "placeholders": {
+      "total": { "type": "int" },
+      "done": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "timelineShowupsRemaining": "{count, plural, one{1 showup remaining} other{{count} showups remaining}}",
+  "@timelineShowupsRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineUpNext": "Up next: {date}",
+  "@timelineUpNext": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }

@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.11] — 2026-06-23 (HAB-116 WU6, PR #173)
+
+### Application — Pact timeline iOS UI
+
+- [user] Pact detail screen now shows a "View Timeline" button (gated on `pact_timeline_enabled` Remote Config flag); tapping opens the new pact timeline screen
+- [user] iOS pact timeline screen: displays all pact milestones in chronological order — pact-created anchor, showup streaks, showup groups, noted showups, single tail-zone showups, and a current-state or pact-concluded anchor
+- [user] Noted showups and single tail-zone showups are tappable and open the existing showup detail screen
+- [app] `PactTimelineScreen`: new `ConsumerStatefulWidget` orchestrator; fires `pact_timeline` screen-view analytics in `initState`; delegates to `PactTimelinePageIos` on iOS
+- [app] `PactTimelinePageIos` + `pact_timeline_formatters.dart`: iOS page widget and pure label/date-range builders for each milestone type
+- [app] `PactTimelineOpenedEvent`: new companion analytics event (`pact_timeline_opened`) fired from `PactTimelineViewModel.load()` after successful load; carries `pact_id`, `pact_status`, `milestone_count`
+
+---
+
 ## [0.44.10] — 2026-06-23 (HAB-116 WU5, PR #172)
 
 ### Application — PactTimelineViewModel
