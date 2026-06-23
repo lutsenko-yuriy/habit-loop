@@ -6,12 +6,6 @@ import 'package:habit_loop/slices/pact/analytics/pact_timeline_analytics_events.
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 
-// Number of milestones shown on the initial load (most recent N).
-const int _kFirstPageSize = 20;
-
-// Number of older milestones prepended per "load more" tap.
-const int _kNthPageSize = 10;
-
 // Overridable in tests to make CurrentStateMilestone.sortAt deterministic.
 final pactTimelineNowProvider = Provider<DateTime>((ref) => DateTime.now());
 
@@ -34,16 +28,10 @@ class PactTimelineViewModel extends FamilyNotifier<PactTimelineState, String> {
       final now = ref.read(pactTimelineNowProvider);
       final page = await ref.read(pactTimelineServiceProvider).loadAll(pactId: arg, now: now);
 
-      final all = page.milestones;
-      final visible = _window(all, _kFirstPageSize);
-
       state = state.copyWith(
         anchorStart: page.anchorStart,
         anchorEnd: page.anchorEnd,
-        visibleMilestones: visible,
-        totalMilestoneCount: all.length,
-        hasMoreOlder: all.length > _kFirstPageSize,
-        loadedPageCount: 1,
+        milestones: page.milestones,
         isLoading: false,
       );
     } catch (e, st) {
@@ -54,54 +42,13 @@ class PactTimelineViewModel extends FamilyNotifier<PactTimelineState, String> {
     }
   }
 
-  Future<void> loadMoreOlder() async {
-    if (!state.hasMoreOlder || state.isLoadingMore) return;
-    state = state.copyWith(isLoadingMore: true);
-    try {
-      final now = ref.read(pactTimelineNowProvider);
-      // Cache hit — no DB round-trip.
-      final page = await ref.read(pactTimelineServiceProvider).loadAll(pactId: arg, now: now);
-
-      final all = page.milestones;
-      final targetCount = state.visibleMilestones.length + _kNthPageSize;
-      final visible = _window(all, targetCount);
-      final newPageCount = state.loadedPageCount + 1;
-
-      unawaited(
-        ref.read(analyticsServiceProvider).logEvent(
-              PactTimelineLoadMoreEvent(pactId: arg, pageNumber: newPageCount),
-            ),
-      );
-
-      state = state.copyWith(
-        visibleMilestones: visible,
-        hasMoreOlder: visible.length < all.length,
-        loadedPageCount: newPageCount,
-        isLoadingMore: false,
-      );
-    } catch (e, st) {
-      unawaited(
-        ref.read(logServiceProvider).error('pact_timeline_load_more_failed: id=$arg', exception: e, stackTrace: st),
-      );
-      state = state.copyWith(isLoadingMore: false);
-    }
-  }
-
   void onMilestoneTapped(PactTimelineMilestone milestone) {
+    assert(milestone is NotedShowupMilestone || milestone is SingleShowupMilestone);
     final itemType = milestone is NotedShowupMilestone ? 'noted_showup' : 'single_showup';
     unawaited(
       ref.read(analyticsServiceProvider).logEvent(
             PactTimelineMilestoneTappedEvent(pactId: arg, itemType: itemType),
           ),
     );
-  }
-
-  /// Returns the milestones from the end of [all], oldest-first.
-  ///
-  /// [count] is clamped to [all.length], so the returned list is never longer
-  /// than the full list and never contains duplicates of the anchor nodes.
-  List<PactTimelineMilestone> _window(List<PactTimelineMilestone> all, int count) {
-    if (all.length <= count) return List.of(all);
-    return List.of(all.sublist(all.length - count));
   }
 }

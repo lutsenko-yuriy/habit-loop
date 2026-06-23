@@ -74,54 +74,29 @@ void main() {
       expect(state.isLoading, true);
       expect(state.anchorStart, isNull);
       expect(state.anchorEnd, isNull);
-      expect(state.visibleMilestones, isEmpty);
+      expect(state.milestones, isEmpty);
     });
   });
 
   group('PactTimelineViewModel — load', () {
-    test('populates anchors and clears isLoading', () async {
-      final (:container, analytics: _, cache: _) = _makeContainer(
-        pacts: [_pact()],
-        showups: [_showup('s1', DateTime(2024, 1, 5, 8))],
-      );
+    test('populates anchors and all milestones', () async {
+      final showups = [_showup('s1', DateTime(2024, 1, 5, 8))];
+      final (:container, analytics: _, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
       addTearDown(container.dispose);
       await container.read(pactTimelineViewModelProvider(_pactId).notifier).load();
       final state = container.read(pactTimelineViewModelProvider(_pactId));
       expect(state.isLoading, false);
       expect(state.anchorStart, isA<PactCreatedMilestone>());
       expect(state.anchorEnd, isA<CurrentStateMilestone>());
+      expect(state.milestones, hasLength(1));
     });
 
-    test('shows all milestones when count ≤ first-page size', () async {
+    test('milestones are oldest-first', () async {
       final showups = List.generate(5, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
       final (:container, analytics: _, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
       addTearDown(container.dispose);
       await container.read(pactTimelineViewModelProvider(_pactId).notifier).load();
-      final state = container.read(pactTimelineViewModelProvider(_pactId));
-      expect(state.visibleMilestones, hasLength(5));
-      expect(state.hasMoreOlder, false);
-    });
-
-    test('windows to most recent 20 when count > first-page size', () async {
-      // Noted showups each produce 1 NotedShowupMilestone → 25 milestones total.
-      final showups = List.generate(25, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8), note: 'n'));
-      final (:container, analytics: _, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
-      addTearDown(container.dispose);
-      await container.read(pactTimelineViewModelProvider(_pactId).notifier).load();
-      final state = container.read(pactTimelineViewModelProvider(_pactId));
-      expect(state.visibleMilestones, hasLength(20));
-      expect(state.totalMilestoneCount, 25);
-      expect(state.hasMoreOlder, true);
-      expect(state.loadedPageCount, 1);
-    });
-
-    test('visible milestones are oldest-first', () async {
-      final showups = List.generate(5, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
-      final (:container, analytics: _, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
-      addTearDown(container.dispose);
-      await container.read(pactTimelineViewModelProvider(_pactId).notifier).load();
-      final state = container.read(pactTimelineViewModelProvider(_pactId));
-      final sortAts = state.visibleMilestones.map((m) => m.sortAt).toList();
+      final sortAts = container.read(pactTimelineViewModelProvider(_pactId)).milestones.map((m) => m.sortAt).toList();
       expect(sortAts, equals([...sortAts]..sort()));
     });
 
@@ -138,9 +113,8 @@ void main() {
         _showup('stale3', DateTime(2024, 1, 3, 8)),
       ]);
       await container.read(pactTimelineViewModelProvider(_pactId).notifier).load();
-      final state = container.read(pactTimelineViewModelProvider(_pactId));
       // Stale 3-item cache was evicted; DB has 1 showup → 1 milestone.
-      expect(state.visibleMilestones, hasLength(1));
+      expect(container.read(pactTimelineViewModelProvider(_pactId)).milestones, hasLength(1));
     });
 
     test('sets loadError when pact is not found', () async {
@@ -158,66 +132,7 @@ void main() {
       );
       addTearDown(container.dispose);
       await container.read(pactTimelineViewModelProvider(_pactId).notifier).load();
-      final state = container.read(pactTimelineViewModelProvider(_pactId));
-      expect(state.anchorEnd, isA<PactConcludedMilestone>());
-    });
-  });
-
-  group('PactTimelineViewModel — loadMoreOlder', () {
-    test('no-op when hasMoreOlder is false', () async {
-      final showups = List.generate(5, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
-      final (:container, analytics: _, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
-      addTearDown(container.dispose);
-      final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);
-      await notifier.load();
-      expect(container.read(pactTimelineViewModelProvider(_pactId)).hasMoreOlder, false);
-      await notifier.loadMoreOlder();
-      expect(container.read(pactTimelineViewModelProvider(_pactId)).loadedPageCount, 1);
-    });
-
-    test('expands visible milestones by nthPageSize', () async {
-      final showups = List.generate(25, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8), note: 'n'));
-      final (:container, analytics: _, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
-      addTearDown(container.dispose);
-      final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);
-      await notifier.load();
-      expect(container.read(pactTimelineViewModelProvider(_pactId)).visibleMilestones, hasLength(20));
-      await notifier.loadMoreOlder();
-      // 25 total, 20 → 25 (only 5 older remain, nthPageSize=10 clamped by list length).
-      expect(container.read(pactTimelineViewModelProvider(_pactId)).visibleMilestones, hasLength(25));
-    });
-
-    test('fires PactTimelineLoadMoreEvent with incremented pageNumber', () async {
-      final showups = List.generate(35, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8), note: 'n'));
-      final (:container, :analytics, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
-      addTearDown(container.dispose);
-      final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);
-      await notifier.load();
-      await notifier.loadMoreOlder();
-      final event = analytics.loggedEvents.whereType<PactTimelineLoadMoreEvent>().single;
-      expect(event.pactId, _pactId);
-      expect(event.pageNumber, 2);
-    });
-
-    test('sets hasMoreOlder=false when all milestones become visible', () async {
-      final showups = List.generate(25, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8), note: 'n'));
-      final (:container, analytics: _, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
-      addTearDown(container.dispose);
-      final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);
-      await notifier.load();
-      await notifier.loadMoreOlder();
-      expect(container.read(pactTimelineViewModelProvider(_pactId)).hasMoreOlder, false);
-    });
-
-    test('increments loadedPageCount on each call', () async {
-      final showups = List.generate(45, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8), note: 'n'));
-      final (:container, analytics: _, cache: _) = _makeContainer(pacts: [_pact()], showups: showups);
-      addTearDown(container.dispose);
-      final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);
-      await notifier.load();
-      await notifier.loadMoreOlder();
-      await notifier.loadMoreOlder();
-      expect(container.read(pactTimelineViewModelProvider(_pactId)).loadedPageCount, 3);
+      expect(container.read(pactTimelineViewModelProvider(_pactId)).anchorEnd, isA<PactConcludedMilestone>());
     });
   });
 
@@ -228,11 +143,8 @@ void main() {
       addTearDown(container.dispose);
       final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);
       await notifier.load();
-      final noted = container
-          .read(pactTimelineViewModelProvider(_pactId))
-          .visibleMilestones
-          .whereType<NotedShowupMilestone>()
-          .first;
+      final noted =
+          container.read(pactTimelineViewModelProvider(_pactId)).milestones.whereType<NotedShowupMilestone>().first;
       notifier.onMilestoneTapped(noted);
       final event = analytics.loggedEvents.whereType<PactTimelineMilestoneTappedEvent>().single;
       expect(event.pactId, _pactId);
@@ -250,11 +162,8 @@ void main() {
       addTearDown(container.dispose);
       final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);
       await notifier.load();
-      final single = container
-          .read(pactTimelineViewModelProvider(_pactId))
-          .visibleMilestones
-          .whereType<SingleShowupMilestone>()
-          .first;
+      final single =
+          container.read(pactTimelineViewModelProvider(_pactId)).milestones.whereType<SingleShowupMilestone>().first;
       notifier.onMilestoneTapped(single);
       final event = analytics.loggedEvents.whereType<PactTimelineMilestoneTappedEvent>().single;
       expect(event.pactId, _pactId);
