@@ -313,5 +313,42 @@
     }
   },
   "pactsAllArchived": "(tous archivés)",
-  "@pactsAllArchived": {}
+  "@pactsAllArchived": {},
+
+  "pactTimelineTitle": "Chronologie",
+  "@pactTimelineTitle": {},
+  "pactDetailViewTimeline": "Voir la chronologie",
+  "@pactDetailViewTimeline": {},
+  "timelinePactCreated": "Pacte commencé",
+  "@timelinePactCreated": {},
+  "timelineCurrentState": "Actif",
+  "@timelineCurrentState": {},
+  "timelinePactConcludedCompleted": "Pacte terminé",
+  "@timelinePactConcludedCompleted": {},
+  "timelinePactConcludedStopped": "Pacte arrêté",
+  "@timelinePactConcludedStopped": {},
+  "timelineDoneInARow": "{count, plural, one{1 séance faite d'affilée} other{{count} séances faites d'affilée}}",
+  "@timelineDoneInARow": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineMissedInARow": "{count, plural, one{1 séance manquée d'affilée} other{{count} séances manquées d'affilée}}",
+  "@timelineMissedInARow": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineGroup": "{total} séances — {done} faites, {failed} manquées",
+  "@timelineGroup": {
+    "placeholders": {
+      "total": { "type": "int" },
+      "done": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "timelineShowupsRemaining": "{count, plural, one{1 séance restante} other{{count} séances restantes}}",
+  "@timelineShowupsRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineUpNext": "Prochain : {date}",
+  "@timelineUpNext": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }

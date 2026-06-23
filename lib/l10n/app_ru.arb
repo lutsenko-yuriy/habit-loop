@@ -313,5 +313,42 @@
     }
   },
   "pactsAllArchived": "(все в архиве)",
-  "@pactsAllArchived": {}
+  "@pactsAllArchived": {},
+
+  "pactTimelineTitle": "Хронология",
+  "@pactTimelineTitle": {},
+  "pactDetailViewTimeline": "Хронология пакта",
+  "@pactDetailViewTimeline": {},
+  "timelinePactCreated": "Пакт начат",
+  "@timelinePactCreated": {},
+  "timelineCurrentState": "Активен",
+  "@timelineCurrentState": {},
+  "timelinePactConcludedCompleted": "Пакт завершён",
+  "@timelinePactConcludedCompleted": {},
+  "timelinePactConcludedStopped": "Пакт остановлен",
+  "@timelinePactConcludedStopped": {},
+  "timelineDoneInARow": "{count, plural, one{1 явка подряд — выполнено} few{{count} явки подряд — выполнено} other{{count} явок подряд — выполнено}}",
+  "@timelineDoneInARow": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineMissedInARow": "{count, plural, one{1 явка подряд — пропущено} few{{count} явки подряд — пропущено} other{{count} явок подряд — пропущено}}",
+  "@timelineMissedInARow": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineGroup": "{total} явок — {done} выполнено, {failed} пропущено",
+  "@timelineGroup": {
+    "placeholders": {
+      "total": { "type": "int" },
+      "done": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "timelineShowupsRemaining": "{count, plural, one{осталась 1 явка} few{осталось {count} явки} other{осталось {count} явок}}",
+  "@timelineShowupsRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineUpNext": "Следующая: {date}",
+  "@timelineUpNext": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }

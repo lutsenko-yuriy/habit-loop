@@ -313,5 +313,42 @@
     }
   },
   "pactsAllArchived": "(alle archiviert)",
-  "@pactsAllArchived": {}
+  "@pactsAllArchived": {},
+
+  "pactTimelineTitle": "Verlauf",
+  "@pactTimelineTitle": {},
+  "pactDetailViewTimeline": "Verlauf anzeigen",
+  "@pactDetailViewTimeline": {},
+  "timelinePactCreated": "Pakt gestartet",
+  "@timelinePactCreated": {},
+  "timelineCurrentState": "Aktiv",
+  "@timelineCurrentState": {},
+  "timelinePactConcludedCompleted": "Pakt abgeschlossen",
+  "@timelinePactConcludedCompleted": {},
+  "timelinePactConcludedStopped": "Pakt gestoppt",
+  "@timelinePactConcludedStopped": {},
+  "timelineDoneInARow": "{count, plural, one{1 Einheit nacheinander erledigt} other{{count} Einheiten nacheinander erledigt}}",
+  "@timelineDoneInARow": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineMissedInARow": "{count, plural, one{1 Einheit nacheinander verpasst} other{{count} Einheiten nacheinander verpasst}}",
+  "@timelineMissedInARow": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineGroup": "{total} Einheiten — {done} erledigt, {failed} verpasst",
+  "@timelineGroup": {
+    "placeholders": {
+      "total": { "type": "int" },
+      "done": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "timelineShowupsRemaining": "{count, plural, one{1 Einheit verbleibend} other{{count} Einheiten verbleibend}}",
+  "@timelineShowupsRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timelineUpNext": "Nächste: {date}",
+  "@timelineUpNext": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }
