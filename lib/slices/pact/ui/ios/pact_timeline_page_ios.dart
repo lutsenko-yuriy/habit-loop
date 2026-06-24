@@ -120,7 +120,13 @@ class _TimelineList extends StatelessWidget {
   }
 }
 
-// ── Spine item (vertical line + dot + full-bleed content) ─────────────────────
+// ── Spine item (date | vertical spine | label — golden-ratio columns) ──────────
+//
+// The spine divides the row at the golden ratio: the date column takes ~38.2% of
+// the non-spine width and the label column takes ~61.8%, mirroring the proportion
+// a/(a+b) = b/(a+b+a) from the Golden Section. This puts the user's visual
+// attention on the dot — the natural focal point — while keeping the date
+// readable on the left and the label prominent on the right.
 
 class _SpineItem extends StatelessWidget {
   final PactTimelineMilestone milestone;
@@ -155,6 +161,18 @@ class _SpineItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Date column — golden ratio short side (~38.2% of non-spine width).
+          Flexible(
+            flex: 382,
+            child: Padding(
+              padding: EdgeInsets.only(top: vertPad, bottom: vertPad, left: 16, right: 6),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _MilestoneDateContent(milestone: milestone),
+              ),
+            ),
+          ),
+          // Spine (dot + connecting line).
           SizedBox(
             width: 44,
             child: CustomPaint(
@@ -167,10 +185,12 @@ class _SpineItem extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
+          // Label column — golden ratio long side (~61.8% of non-spine width).
+          Flexible(
+            flex: 618,
             child: Padding(
               padding: EdgeInsets.only(top: vertPad, bottom: vertPad, right: 16),
-              child: _MilestoneContent(milestone: milestone, l10n: l10n),
+              child: _MilestoneLabelContent(milestone: milestone, l10n: l10n),
             ),
           ),
         ],
@@ -257,7 +277,7 @@ class _SpinePainter extends CustomPainter {
 
 // ── Section header (tail-zone divider) ────────────────────────────────────────
 
-// Draws a continuous gradient spine line through its height with the label to the right.
+// Draws a continuous gradient spine line through its height; label in the right column.
 class _SectionHeader extends StatelessWidget {
   final String label;
   final Color topDotColor;
@@ -271,6 +291,7 @@ class _SectionHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          const Flexible(flex: 382, child: SizedBox()),
           SizedBox(
             width: 44,
             height: 36,
@@ -278,13 +299,16 @@ class _SectionHeader extends StatelessWidget {
               painter: _SectionHeaderLinePainter(color: topDotColor),
             ),
           ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.4,
-              color: CupertinoColors.systemGrey,
+          Flexible(
+            flex: 618,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+                color: CupertinoColors.systemGrey,
+              ),
             ),
           ),
         ],
@@ -349,33 +373,69 @@ double _verticalPadding(PactTimelineMilestone m) => switch (m) {
       _ => 12.0,
     };
 
-// ── Milestone content widgets ──────────────────────────────────────────────────
+// ── Date content (left of spine) ───────────────────────────────────────────────
 
-class _MilestoneContent extends StatelessWidget {
+// Compact (no-year) date for the left column; date range for streak/group milestones.
+class _MilestoneDateContent extends StatelessWidget {
+  final PactTimelineMilestone milestone;
+
+  const _MilestoneDateContent({required this.milestone});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = _text(context);
+    if (text == null || text.isEmpty) return const SizedBox.shrink();
+    return Text(
+      text,
+      textAlign: TextAlign.right,
+      style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
+    );
+  }
+
+  String? _text(BuildContext context) => switch (milestone) {
+        PactCreatedMilestone m => formatLocaleDate(context, m.sortAt),
+        CurrentStateMilestone m => m.nextScheduledAt != null ? formatLocaleDate(context, m.nextScheduledAt!) : null,
+        PactConcludedMilestone m => formatLocaleDate(context, m.concludedAt),
+        ShowupStreakMilestone m => _dateRange(context, m.firstAt, m.lastAt),
+        ShowupGroupMilestone m => _dateRange(context, m.firstAt, m.lastAt),
+        NotedShowupMilestone m => formatLocaleDate(context, m.scheduledAt),
+        SingleShowupMilestone m => formatLocaleDate(context, m.scheduledAt),
+      };
+
+  String _dateRange(BuildContext context, DateTime first, DateTime last) {
+    final a = formatLocaleDate(context, first);
+    final b = formatLocaleDate(context, last);
+    return first == last ? a : '$a – $b';
+  }
+}
+
+// ── Label content (right of spine) ─────────────────────────────────────────────
+
+class _MilestoneLabelContent extends StatelessWidget {
   final PactTimelineMilestone milestone;
   final AppLocalizations l10n;
 
-  const _MilestoneContent({required this.milestone, required this.l10n});
+  const _MilestoneLabelContent({required this.milestone, required this.l10n});
 
   @override
   Widget build(BuildContext context) => switch (milestone) {
-        PactCreatedMilestone m => _PactCreatedContent(m: m, l10n: l10n),
-        CurrentStateMilestone m => _CurrentStateContent(m: m, l10n: l10n),
-        PactConcludedMilestone m => _PactConcludedContent(m: m, l10n: l10n),
-        ShowupStreakMilestone m => _StreakContent(m: m, l10n: l10n),
-        ShowupGroupMilestone m => _GroupContent(m: m, l10n: l10n),
-        NotedShowupMilestone m => _NotedShowupContent(m: m, l10n: l10n),
-        SingleShowupMilestone m => _SingleShowupContent(m: m, l10n: l10n),
+        PactCreatedMilestone m => _PactCreatedLabel(m: m, l10n: l10n),
+        CurrentStateMilestone m => _CurrentStateLabel(m: m, l10n: l10n),
+        PactConcludedMilestone m => _PactConcludedLabel(m: m, l10n: l10n),
+        ShowupStreakMilestone m => _StreakLabel(m: m, l10n: l10n),
+        ShowupGroupMilestone m => _GroupLabel(m: m, l10n: l10n),
+        NotedShowupMilestone m => _NotedShowupLabel(m: m, l10n: l10n),
+        SingleShowupMilestone m => _SingleShowupLabel(m: m, l10n: l10n),
       };
 }
 
-// Anchors — label-first layout (unchanged from WU6).
+// ── Anchor label widgets ───────────────────────────────────────────────────────
 
-class _PactCreatedContent extends StatelessWidget {
+class _PactCreatedLabel extends StatelessWidget {
   final PactCreatedMilestone m;
   final AppLocalizations l10n;
 
-  const _PactCreatedContent({required this.m, required this.l10n});
+  const _PactCreatedLabel({required this.m, required this.l10n});
 
   @override
   Widget build(BuildContext context) => Column(
@@ -393,11 +453,11 @@ class _PactCreatedContent extends StatelessWidget {
       );
 }
 
-class _CurrentStateContent extends StatelessWidget {
+class _CurrentStateLabel extends StatelessWidget {
   final CurrentStateMilestone m;
   final AppLocalizations l10n;
 
-  const _CurrentStateContent({required this.m, required this.l10n});
+  const _CurrentStateLabel({required this.m, required this.l10n});
 
   @override
   Widget build(BuildContext context) => Column(
@@ -406,22 +466,15 @@ class _CurrentStateContent extends StatelessWidget {
           Text(l10n.timelineCurrentState, style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
           const SizedBox(height: 2),
           Text(l10n.timelineShowupsRemaining(m.showupsRemaining), style: const TextStyle(fontWeight: FontWeight.w600)),
-          if (m.nextScheduledAt != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              l10n.timelineUpNext(formatLocaleDate(context, m.nextScheduledAt!)),
-              style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
-            ),
-          ],
         ],
       );
 }
 
-class _PactConcludedContent extends StatelessWidget {
+class _PactConcludedLabel extends StatelessWidget {
   final PactConcludedMilestone m;
   final AppLocalizations l10n;
 
-  const _PactConcludedContent({required this.m, required this.l10n});
+  const _PactConcludedLabel({required this.m, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -432,11 +485,6 @@ class _PactConcludedContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 2),
-        Text(
-          formatLocaleDate(context, m.concludedAt),
-          style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
-        ),
         if (m.note != null && m.note!.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(m.note!, style: const TextStyle(fontSize: 13)),
@@ -446,76 +494,42 @@ class _PactConcludedContent extends StatelessWidget {
   }
 }
 
-// Showup milestones — date-above-status layout (WU6.1).
+// ── Showup milestone label widgets ─────────────────────────────────────────────
 
-class _StreakContent extends StatelessWidget {
+class _StreakLabel extends StatelessWidget {
   final ShowupStreakMilestone m;
   final AppLocalizations l10n;
 
-  const _StreakContent({required this.m, required this.l10n});
+  const _StreakLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) {
-    final dateRange = milestoneDateRange(context, m);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (dateRange != null) ...[
-          Text(
-            dateRange,
-            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
-          ),
-          const SizedBox(height: 2),
-        ],
-        Text(
-          milestoneTitle(l10n, m),
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Text(
+        milestoneTitle(l10n, m),
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
+      );
 }
 
-class _GroupContent extends StatelessWidget {
+class _GroupLabel extends StatelessWidget {
   final ShowupGroupMilestone m;
   final AppLocalizations l10n;
 
-  const _GroupContent({required this.m, required this.l10n});
+  const _GroupLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) {
-    final dateRange = milestoneDateRange(context, m);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (dateRange != null) ...[
-          Text(
-            dateRange,
-            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
-          ),
-          const SizedBox(height: 2),
-        ],
-        Text(milestoneTitle(l10n, m), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-      ],
-    );
-  }
+  Widget build(BuildContext context) =>
+      Text(milestoneTitle(l10n, m), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600));
 }
 
-class _NotedShowupContent extends StatelessWidget {
+class _NotedShowupLabel extends StatelessWidget {
   final NotedShowupMilestone m;
   final AppLocalizations l10n;
 
-  const _NotedShowupContent({required this.m, required this.l10n});
+  const _NotedShowupLabel({required this.m, required this.l10n});
 
   @override
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            formatLocaleDate(context, m.scheduledAt),
-            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
-          ),
-          const SizedBox(height: 2),
           Text(
             milestoneTitle(l10n, m),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
@@ -526,25 +540,15 @@ class _NotedShowupContent extends StatelessWidget {
       );
 }
 
-class _SingleShowupContent extends StatelessWidget {
+class _SingleShowupLabel extends StatelessWidget {
   final SingleShowupMilestone m;
   final AppLocalizations l10n;
 
-  const _SingleShowupContent({required this.m, required this.l10n});
+  const _SingleShowupLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            formatLocaleDate(context, m.scheduledAt),
-            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            milestoneTitle(l10n, m),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
-          ),
-        ],
+  Widget build(BuildContext context) => Text(
+        milestoneTitle(l10n, m),
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
       );
 }

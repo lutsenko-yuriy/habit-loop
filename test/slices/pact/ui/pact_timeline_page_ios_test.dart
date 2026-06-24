@@ -214,42 +214,59 @@ void main() {
     });
   });
 
-  group('PactTimelinePageIos — date ordering', () {
-    testWidgets('date shown above status for single showup milestone', (tester) async {
+  group('PactTimelinePageIos — date positioning', () {
+    // In the golden-ratio spine layout the date is in the LEFT column and the
+    // outcome label is in the RIGHT column.  We verify horizontal ordering.
+
+    testWidgets('date is left of status label for single showup milestone', (tester) async {
+      tester.binding.platformDispatcher.localeTestValue = const Locale('en', 'US');
+      addTearDown(() => tester.binding.platformDispatcher.clearLocaleTestValue());
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_single])));
       await tester.pump();
       final ctx = tester.element(find.byType(PactTimelinePageIos));
       final l10n = AppLocalizations.of(ctx)!;
-      final dateStr = DateFormat.yMd(Localizations.localeOf(ctx).toString()).format(_single.scheduledAt);
-      expect(tester.getRect(find.text(dateStr)).top, lessThan(tester.getRect(find.text(l10n.showupDone)).top));
+      final dateStr = DateFormat.yMd('en_US').format(_single.scheduledAt);
+      expect(
+        tester.getRect(find.text(dateStr)).center.dx,
+        lessThan(tester.getRect(find.text(l10n.showupDone)).center.dx),
+      );
     });
 
-    testWidgets('date shown above status for noted showup milestone', (tester) async {
+    testWidgets('date is left of status label for noted showup milestone', (tester) async {
+      tester.binding.platformDispatcher.localeTestValue = const Locale('en', 'US');
+      addTearDown(() => tester.binding.platformDispatcher.clearLocaleTestValue());
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_noted])));
       await tester.pump();
       final ctx = tester.element(find.byType(PactTimelinePageIos));
       final l10n = AppLocalizations.of(ctx)!;
-      final dateStr = DateFormat.yMd(Localizations.localeOf(ctx).toString()).format(_noted.scheduledAt);
-      expect(tester.getRect(find.text(dateStr)).top, lessThan(tester.getRect(find.text(l10n.showupDone)).top));
+      final dateStr = DateFormat.yMd('en_US').format(_noted.scheduledAt);
+      expect(
+        tester.getRect(find.text(dateStr)).center.dx,
+        lessThan(tester.getRect(find.text(l10n.showupDone)).center.dx),
+      );
     });
 
-    testWidgets('date range shown above title for streak milestone', (tester) async {
+    testWidgets('date range is left of title for streak milestone', (tester) async {
+      tester.binding.platformDispatcher.localeTestValue = const Locale('en', 'US');
+      addTearDown(() => tester.binding.platformDispatcher.clearLocaleTestValue());
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_streak])));
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
       final rangeRect = tester.getRect(find.textContaining('–'));
       final titleRect = tester.getRect(find.text(l10n.timelineDoneInARow(_streak.count)));
-      expect(rangeRect.top, lessThan(titleRect.top));
+      expect(rangeRect.center.dx, lessThan(titleRect.center.dx));
     });
 
-    testWidgets('date range shown above title for group milestone', (tester) async {
+    testWidgets('date range is left of title for group milestone', (tester) async {
+      tester.binding.platformDispatcher.localeTestValue = const Locale('en', 'US');
+      addTearDown(() => tester.binding.platformDispatcher.clearLocaleTestValue());
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_group])));
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
       final rangeRect = tester.getRect(find.textContaining('–'));
       final titleRect =
           tester.getRect(find.text(l10n.timelineGroup(_group.total, _group.doneCount, _group.failedCount)));
-      expect(rangeRect.top, lessThan(titleRect.top));
+      expect(rangeRect.center.dx, lessThan(titleRect.center.dx));
     });
   });
 
