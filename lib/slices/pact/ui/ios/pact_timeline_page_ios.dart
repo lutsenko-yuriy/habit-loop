@@ -6,6 +6,7 @@ import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_formatters.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_spine.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
@@ -159,7 +160,7 @@ class _SpineItem extends StatelessWidget {
       SingleShowupMilestone m => m.showupId,
       _ => null,
     };
-    final vertPad = _verticalPadding(milestone);
+    final vertPad = timelineVerticalPadding(milestone);
     final extraBottomPad = isBeforeSectionHeader ? 12.0 : 0.0;
     // Cap-height midpoint of the first text line differs by label font size:
     // anchor labels are 13pt (half-line ≈ 7dp); all others use 16pt (≈ 9dp).
@@ -184,7 +185,7 @@ class _SpineItem extends StatelessWidget {
           SizedBox(
             width: 44,
             child: CustomPaint(
-              painter: _SpinePainter(
+              painter: TimelineSpinePainter(
                 dotColor: dotColor,
                 topDotColor: topDotColor,
                 isFirst: isFirst,
@@ -215,76 +216,6 @@ class _SpineItem extends StatelessWidget {
       child: row,
     );
   }
-}
-
-// ── Spine painter ──────────────────────────────────────────────────────────────
-
-// Shared horizontal center for the spine column — used by painter and section header.
-const _kSpineX = 22.0;
-
-class _SpinePainter extends CustomPainter {
-  final Color dotColor;
-  final Color? topDotColor;
-  final bool isFirst;
-  final bool isLast;
-  final double dotRadius;
-  // Pre-computed Y of the dot centre (from the top of the canvas).
-  // Passed in by _SpineItem so it can be tuned per milestone type without
-  // the painter needing to know about font sizes or padding conventions.
-  final double dotCenterY;
-
-  const _SpinePainter({
-    required this.dotColor,
-    required this.topDotColor,
-    required this.isFirst,
-    required this.isLast,
-    required this.dotRadius,
-    required this.dotCenterY,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const strokeWidth = 1.5;
-
-    if (!isFirst && topDotColor != null) {
-      const top = 0.0;
-      final bottom = dotCenterY - dotRadius - 1;
-      if (bottom > top) {
-        canvas.drawLine(
-          const Offset(_kSpineX, top),
-          Offset(_kSpineX, bottom),
-          Paint()
-            ..shader = LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [topDotColor!, dotColor],
-            ).createShader(Rect.fromLTRB(0, top, 1, bottom))
-            ..strokeWidth = strokeWidth
-            ..strokeCap = StrokeCap.round,
-        );
-      }
-    }
-    if (!isLast) {
-      canvas.drawLine(
-        Offset(_kSpineX, dotCenterY + dotRadius + 1),
-        Offset(_kSpineX, size.height),
-        Paint()
-          ..color = dotColor
-          ..strokeWidth = strokeWidth
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-    canvas.drawCircle(Offset(_kSpineX, dotCenterY), dotRadius, Paint()..color = dotColor);
-  }
-
-  @override
-  bool shouldRepaint(_SpinePainter old) =>
-      old.dotColor != dotColor ||
-      old.topDotColor != topDotColor ||
-      old.isFirst != isFirst ||
-      old.isLast != isLast ||
-      old.dotRadius != dotRadius ||
-      old.dotCenterY != dotCenterY;
 }
 
 // ── Section header (tail-zone divider) ────────────────────────────────────────
@@ -349,13 +280,6 @@ Color _outcomeColor(ShowupStatus outcome, BuildContext context) => switch (outco
       ShowupStatus.done => CupertinoColors.systemGreen.resolveFrom(context),
       ShowupStatus.failed => CupertinoColors.systemRed.resolveFrom(context),
       ShowupStatus.pending => CupertinoColors.systemGrey.resolveFrom(context),
-    };
-
-double _verticalPadding(PactTimelineMilestone m) => switch (m) {
-      PactCreatedMilestone _ || CurrentStateMilestone _ || PactConcludedMilestone _ => 14.0,
-      ShowupGroupMilestone _ => 20.0,
-      SingleShowupMilestone _ => 7.0,
-      _ => 12.0,
     };
 
 // ── Date content (left of spine) ───────────────────────────────────────────────
