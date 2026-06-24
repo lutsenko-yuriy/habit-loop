@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.44.13] — 2026-06-24 (HAB-116 WU6.2, PR #TBD)
+## [0.44.13] — 2026-06-24 (HAB-116 WU6.2, PR #175)
 
 ### Changed — Pact timeline fixes (iOS)
 
