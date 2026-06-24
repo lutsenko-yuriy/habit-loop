@@ -187,6 +187,7 @@ class _SpineItem extends StatelessWidget {
                 isFirst: isFirst,
                 isLast: isLast,
                 dotRadius: isAnchor ? 6.0 : 4.0,
+                topPad: vertPad,
               ),
             ),
           ),
@@ -224,8 +225,9 @@ class _SpinePainter extends CustomPainter {
   final bool isFirst;
   final bool isLast;
   final double dotRadius;
-
-  static const _dotTopOffset = 16.0;
+  // Top padding of the content columns — dot is placed at the same offset so
+  // its centre aligns with the first line of text in both date and label columns.
+  final double topPad;
 
   const _SpinePainter({
     required this.dotColor,
@@ -233,11 +235,12 @@ class _SpinePainter extends CustomPainter {
     required this.isFirst,
     required this.isLast,
     required this.dotRadius,
+    required this.topPad,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final dotCenterY = _dotTopOffset + dotRadius;
+    final dotCenterY = topPad + dotRadius;
     const strokeWidth = 1.5;
 
     if (!isFirst && topDotColor != null) {
@@ -277,7 +280,8 @@ class _SpinePainter extends CustomPainter {
       old.topDotColor != topDotColor ||
       old.isFirst != isFirst ||
       old.isLast != isLast ||
-      old.dotRadius != dotRadius;
+      old.dotRadius != dotRadius ||
+      old.topPad != topPad;
 }
 
 // ── Section header (tail-zone divider) ────────────────────────────────────────
