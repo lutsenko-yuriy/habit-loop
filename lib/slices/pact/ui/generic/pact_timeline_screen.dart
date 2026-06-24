@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_timeline_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
+import 'package:habit_loop/slices/pact/ui/android/pact_timeline_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_timeline_page_ios.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
@@ -79,7 +80,9 @@ class _PactTimelineScreenState extends ConsumerState<PactTimelineScreen> {
         onMilestoneTapped: _onMilestoneTapped,
       );
     }
-    // Android page implemented in WU7.
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return PactTimelinePageAndroid(
+      state: state,
+      onMilestoneTapped: _onMilestoneTapped,
+    );
   }
 }
