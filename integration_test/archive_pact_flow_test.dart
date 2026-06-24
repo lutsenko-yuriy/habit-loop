@@ -137,6 +137,13 @@ void main() {
       await _openPactsPanel(tester);
       await _openPactDetail(tester, 'Evening Walk');
 
+      // Wait for the detail content to load (habit name appears in _PactDetailContent).
+      await waitFor(tester, find.text('Evening Walk'));
+      // The "View Timeline" button (enabled by default) adds height, pushing the
+      // archive section below the initial viewport. Scroll down to build it.
+      await tester.drag(find.text('Evening Walk').last, const Offset(0, -300));
+      await tester.pump(const Duration(milliseconds: 100));
+
       // ── 1. Archive button is visible ──────────────────────────────────────
       await waitFor(tester, find.byKey(const Key('archive-pact-button')));
       expect(find.text(strings.archivePact), findsOneWidget);
@@ -273,6 +280,9 @@ void main() {
 
       // ── 2. Archive via detail screen ──────────────────────────────────────
       await _openPactDetail(tester, 'Evening Walk');
+      await waitFor(tester, find.text('Evening Walk'));
+      await tester.drag(find.text('Evening Walk').last, const Offset(0, -300));
+      await tester.pump(const Duration(milliseconds: 100));
       await waitFor(tester, find.byKey(const Key('archive-pact-button')));
       await tester.tap(find.byKey(const Key('archive-pact-button')));
       await tester.pump();
