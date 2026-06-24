@@ -90,10 +90,7 @@ class _TimelineList extends StatelessWidget {
     final children = [
       for (final entry in displayItems)
         if (entry == null)
-          _SectionHeader(
-            label: l10n.timelineRecentSection,
-            topDotColor: _dotColor(rawItems[sectionHeaderRawIdx! - 1], context),
-          )
+          _SectionHeader(label: l10n.timelineRecentSection)
         else
           Builder(
             builder: (ctx) {
@@ -167,7 +164,7 @@ class _SpineItem extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.only(top: vertPad, bottom: vertPad, left: 16, right: 6),
               child: Align(
-                alignment: Alignment.centerRight,
+                alignment: Alignment.topRight,
                 child: _MilestoneDateContent(milestone: milestone),
               ),
             ),
@@ -277,26 +274,26 @@ class _SpinePainter extends CustomPainter {
 
 // ── Section header (tail-zone divider) ────────────────────────────────────────
 
-// Draws a continuous gradient spine line through its height; label in the right column.
+// Subtle section divider: neutral grey spine line + small dot + label in the right column.
 class _SectionHeader extends StatelessWidget {
   final String label;
-  final Color topDotColor;
 
-  const _SectionHeader({required this.label, required this.topDotColor});
+  const _SectionHeader({required this.label});
 
   @override
   Widget build(BuildContext context) {
+    final grey = CupertinoColors.systemGrey.resolveFrom(context).withValues(alpha: 0.5);
     return SizedBox(
       height: 36,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Flexible(flex: 382, child: SizedBox()),
+          const Spacer(flex: 382),
           SizedBox(
             width: 44,
             height: 36,
             child: CustomPaint(
-              painter: _SectionHeaderLinePainter(color: topDotColor),
+              painter: _SectionHeaderLinePainter(color: grey),
             ),
           ),
           Flexible(
@@ -305,7 +302,6 @@ class _SectionHeader extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
                 letterSpacing: 0.4,
                 color: CupertinoColors.systemGrey,
               ),
@@ -323,14 +319,12 @@ class _SectionHeaderLinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawLine(
-      const Offset(_kSpineX, 0),
-      Offset(_kSpineX, size.height),
-      Paint()
-        ..color = color
-        ..strokeWidth = 1.5
-        ..strokeCap = StrokeCap.round,
-    );
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(_kSpineX, 0), Offset(_kSpineX, size.height), paint);
+    canvas.drawCircle(Offset(_kSpineX, size.height / 2), 3.0, Paint()..color = color);
   }
 
   @override
@@ -375,7 +369,6 @@ double _verticalPadding(PactTimelineMilestone m) => switch (m) {
 
 // ── Date content (left of spine) ───────────────────────────────────────────────
 
-// Compact (no-year) date for the left column; date range for streak/group milestones.
 class _MilestoneDateContent extends StatelessWidget {
   final PactTimelineMilestone milestone;
 
@@ -393,18 +386,18 @@ class _MilestoneDateContent extends StatelessWidget {
   }
 
   String? _text(BuildContext context) => switch (milestone) {
-        PactCreatedMilestone m => formatLocaleDate(context, m.sortAt),
-        CurrentStateMilestone m => m.nextScheduledAt != null ? formatLocaleDate(context, m.nextScheduledAt!) : null,
-        PactConcludedMilestone m => formatLocaleDate(context, m.concludedAt),
+        PactCreatedMilestone m => formatLocaleDate(m.sortAt),
+        CurrentStateMilestone m => m.nextScheduledAt != null ? formatLocaleDate(m.nextScheduledAt!) : null,
+        PactConcludedMilestone m => formatLocaleDate(m.concludedAt),
         ShowupStreakMilestone m => _dateRange(context, m.firstAt, m.lastAt),
         ShowupGroupMilestone m => _dateRange(context, m.firstAt, m.lastAt),
-        NotedShowupMilestone m => formatLocaleDate(context, m.scheduledAt),
-        SingleShowupMilestone m => formatLocaleDate(context, m.scheduledAt),
+        NotedShowupMilestone m => formatLocaleDate(m.scheduledAt),
+        SingleShowupMilestone m => formatLocaleDate(m.scheduledAt),
       };
 
   String _dateRange(BuildContext context, DateTime first, DateTime last) {
-    final a = formatLocaleDate(context, first);
-    final b = formatLocaleDate(context, last);
+    final a = formatLocaleDate(first);
+    final b = formatLocaleDate(last);
     return first == last ? a : '$a – $b';
   }
 }
@@ -446,7 +439,7 @@ class _PactCreatedLabel extends StatelessWidget {
           Text(m.habitName, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 2),
           Text(
-            l10n.pactPlannedUntil(formatLocaleDate(context, m.plannedEndDate)),
+            l10n.pactPlannedUntil(formatLocaleDate(m.plannedEndDate)),
             style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
           ),
         ],

@@ -64,10 +64,11 @@ class PactTimelineService {
       final pending = showups.where((s) => s.status == ShowupStatus.pending);
       final done = showups.where((s) => s.status == ShowupStatus.done).length;
       final failed = showups.where((s) => s.status == ShowupStatus.failed).length;
+      final total = ShowupGenerator.countTotal(pact);
       return CurrentStateMilestone(
         sortAt: now,
         nextScheduledAt: pending.firstOrNull?.scheduledAt,
-        showupsRemaining: ShowupGenerator.countTotal(pact) - done - failed,
+        showupsRemaining: (total - done - failed).clamp(0, total),
         plannedEndDate: pact.endDate,
       );
     }

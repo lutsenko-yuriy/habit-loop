@@ -517,13 +517,13 @@ class _PactTile extends StatelessWidget {
     final String subtitle;
     if (pact.status == PactStatus.active) {
       final next = entry.nextShowupAt;
-      subtitle = next != null ? l10n.pactNextShowup(formatLocaleDate(context, next)) : '';
+      subtitle = next != null ? l10n.pactNextShowup(formatLocaleDate(next)) : '';
     } else if (pact.status == PactStatus.completed) {
-      subtitle = l10n.pactEndedOn(formatLocaleDate(context, pact.endDate));
+      subtitle = l10n.pactEndedOn(formatLocaleDate(pact.endDate));
     } else {
-      final cancelledStr = l10n.pactCancelledOn(formatLocaleDate(context, pact.stoppedAt ?? pact.endDate));
+      final cancelledStr = l10n.pactCancelledOn(formatLocaleDate(pact.stoppedAt ?? pact.endDate));
       subtitle = pact.stoppedAt != null
-          ? '$cancelledStr\n${l10n.pactPlannedUntil(formatLocaleDate(context, pact.endDate))}'
+          ? '$cancelledStr\n${l10n.pactPlannedUntil(formatLocaleDate(pact.endDate))}'
           : cancelledStr;
     }
 

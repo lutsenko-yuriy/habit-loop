@@ -161,7 +161,7 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: 8),
         DateRowTile(
           label: l10n.pactStartDate,
-          value: formatLocaleDate(context, pact.startDate),
+          value: formatLocaleDate(pact.startDate),
           valueColor: CupertinoColors.systemGrey,
           backgroundColor: fill,
         ),
@@ -169,7 +169,7 @@ class _PactDetailContent extends StatelessWidget {
         if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
           DateRowTile(
             label: l10n.pactStoppedDate,
-            value: formatLocaleDate(context, pact.stoppedAt!),
+            value: formatLocaleDate(pact.stoppedAt!),
             valueColor: CupertinoColors.systemGrey,
             backgroundColor: fill,
           ),
@@ -177,7 +177,7 @@ class _PactDetailContent extends StatelessWidget {
         ],
         DateRowTile(
           label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
-          value: formatLocaleDate(context, pact.endDate),
+          value: formatLocaleDate(pact.endDate),
           valueColor: CupertinoColors.systemGrey,
           backgroundColor: fill,
         ),

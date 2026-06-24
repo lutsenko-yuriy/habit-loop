@@ -39,14 +39,14 @@ Future<(BuildContext, AppLocalizations)> _pumpLocalised(
 void main() {
   group('formatShowupDate', () {
     testWidgets('formats a date using the current locale (en)', (tester) async {
-      final (ctx, _) = await _pumpLocalised(tester);
-      final text = formatShowupDate(ctx, DateTime(2026, 3, 30, 7, 30));
+      await _pumpLocalised(tester);
+      final text = formatShowupDate(DateTime(2026, 3, 30, 7, 30));
       expect(text, '3/30/2026');
     });
 
     testWidgets('formats a date using the current locale (fr)', (tester) async {
-      final (ctx, _) = await _pumpLocalised(tester, locale: const Locale('fr'));
-      final text = formatShowupDate(ctx, DateTime(2026, 3, 30, 7, 30));
+      await _pumpLocalised(tester, locale: const Locale('fr'));
+      final text = formatShowupDate(DateTime(2026, 3, 30, 7, 30));
       expect(text, '30/03/2026');
     });
   });

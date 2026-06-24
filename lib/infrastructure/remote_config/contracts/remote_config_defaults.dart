@@ -118,7 +118,7 @@ abstract final class RemoteConfigDefaults {
   /// Number of most-recent showups always shown individually on the timeline.
   ///
   /// Remote Config key: `pact_timeline_no_grouping_tail_size`.
-  static const int pactTimelineNoGroupingTailSize = 10;
+  static const int pactTimelineNoGroupingTailSize = 7;
 
   /// Keys belonging to the feature-toggle category shown in a dedicated section
   /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
@@ -209,6 +209,6 @@ abstract final class RemoteConfigDefaults {
     'sync_max_consecutive_failures': (min: 1, max: 20),
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
     'pact_timeline_milestone_grouping_threshold': (min: 1, max: 50),
-    'pact_timeline_no_grouping_tail_size': (min: 10, max: 20),
+    'pact_timeline_no_grouping_tail_size': (min: 7, max: 21),
   };
 }

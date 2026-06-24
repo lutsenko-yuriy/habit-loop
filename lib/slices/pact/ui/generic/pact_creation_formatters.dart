@@ -4,7 +4,7 @@ import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 // Single definition so all call sites share the same yMd format.
-String formatPactDate(BuildContext context, DateTime date) => formatLocaleDate(context, date);
+String formatPactDate(DateTime date) => formatLocaleDate(date);
 
 // Human-readable schedule summary for the commitment step. Empty string when null.
 String scheduleDescription(

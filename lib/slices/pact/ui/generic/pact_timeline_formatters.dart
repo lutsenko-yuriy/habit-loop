@@ -40,7 +40,7 @@ String? milestoneDateRange(BuildContext context, PactTimelineMilestone milestone
     return null;
   }
 
-  final firstStr = formatLocaleDate(context, first);
-  final lastStr = formatLocaleDate(context, last);
+  final firstStr = formatLocaleDate(first);
+  final lastStr = formatLocaleDate(last);
   return first == last ? firstStr : '$firstStr – $lastStr';
 }

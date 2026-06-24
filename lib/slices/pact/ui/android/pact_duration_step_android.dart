@@ -31,7 +31,7 @@ class PactDurationStepAndroid extends StatelessWidget {
         const SizedBox(height: 24),
         DateRowTile(
           label: l10n.startDateLabel,
-          value: formatLocaleDate(context, state.startDate),
+          value: formatLocaleDate(state.startDate),
           valueColor: primaryColor,
           backgroundColor: tileColor,
           cornerRadius: 12,
@@ -50,7 +50,7 @@ class PactDurationStepAndroid extends StatelessWidget {
         const SizedBox(height: 12),
         DateRowTile(
           label: l10n.endDateLabel,
-          value: formatLocaleDate(context, state.endDate),
+          value: formatLocaleDate(state.endDate),
           valueColor: primaryColor,
           backgroundColor: tileColor,
           cornerRadius: 12,
