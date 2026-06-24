@@ -94,7 +94,8 @@ void main() {
       final page = await svc.loadAll(pactId: 'p1', now: _now);
       final anchor = page.anchorEnd as CurrentStateMilestone;
       expect(anchor.nextScheduledAt, DateTime(2024, 2, 15, 8));
-      expect(anchor.showupsRemaining, 2);
+      // 91 total daily slots (Jan–Mar 2024) minus 1 done = 90 remaining.
+      expect(anchor.showupsRemaining, 90);
     });
 
     test('nextScheduledAt is null when no pending showups', () async {
@@ -103,7 +104,8 @@ void main() {
       final page = await svc.loadAll(pactId: 'p1', now: _now);
       final anchor = page.anchorEnd as CurrentStateMilestone;
       expect(anchor.nextScheduledAt, isNull);
-      expect(anchor.showupsRemaining, 0);
+      // 91 total daily slots (Jan–Mar 2024) minus 1 done = 90 remaining.
+      expect(anchor.showupsRemaining, 90);
     });
   });
 

@@ -108,17 +108,17 @@ abstract final class RemoteConfigDefaults {
   /// feature without a release.
   static const bool pactTimelineEnabled = true;
 
-  /// Minimum consecutive same-outcome showup run length to produce a milestone.
+  /// Minimum consecutive same-outcome showup run length to produce a streak milestone.
   ///
-  /// Runs below this threshold are shown as a mixed group milestone; runs at or
-  /// above are shown as a streak milestone. Value must be ≥ 2. Override via RC
+  /// Runs below this threshold are collapsed into a mixed group milestone; runs at or
+  /// above are shown as a streak milestone. Value must be ≥ 1. Override via RC
   /// to tune the grouping sensitivity. Remote Config key: `pact_timeline_milestone_grouping_threshold`.
-  static const int pactTimelineMilestoneGroupingThreshold = 10;
+  static const int pactTimelineMilestoneGroupingThreshold = 1;
 
   /// Number of most-recent showups always shown individually on the timeline.
   ///
   /// Remote Config key: `pact_timeline_no_grouping_tail_size`.
-  static const int pactTimelineNoGroupingTailSize = 10;
+  static const int pactTimelineNoGroupingTailSize = 7;
 
   /// Keys belonging to the feature-toggle category shown in a dedicated section
   /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
@@ -208,7 +208,7 @@ abstract final class RemoteConfigDefaults {
     'debug_connectivity_stability_percent': (min: 0, max: 100),
     'sync_max_consecutive_failures': (min: 1, max: 20),
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
-    'pact_timeline_milestone_grouping_threshold': (min: 10, max: 50),
-    'pact_timeline_no_grouping_tail_size': (min: 10, max: 20),
+    'pact_timeline_milestone_grouping_threshold': (min: 1, max: 50),
+    'pact_timeline_no_grouping_tail_size': (min: 7, max: 21),
   };
 }

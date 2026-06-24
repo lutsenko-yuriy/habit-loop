@@ -78,7 +78,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     if (showup == null) return const SizedBox.shrink();
 
     final l10n = widget.l10n;
-    final scheduledDate = formatShowupDate(context, showup.scheduledAt);
+    final scheduledDate = formatShowupDate(showup.scheduledAt);
     final scheduledTime = formatShowupTime(context, showup.scheduledAt);
     final durationMins = showup.duration.inMinutes;
     final isPending = showup.status == ShowupStatus.pending;

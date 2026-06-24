@@ -19,9 +19,9 @@ void main() {
     });
 
     group('milestoneGroupingThreshold', () {
-      test('defaults to 10', () {
+      test('defaults to 1', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.milestoneGroupingThreshold, 10);
+        expect(config.milestoneGroupingThreshold, 1);
       });
 
       test('reads custom value from RC', () {
@@ -36,9 +36,9 @@ void main() {
     });
 
     group('noGroupingTailSize', () {
-      test('defaults to 10', () {
+      test('defaults to 7', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.noGroupingTailSize, 10);
+        expect(config.noGroupingTailSize, 7);
       });
 
       test('reads custom value from RC', () {

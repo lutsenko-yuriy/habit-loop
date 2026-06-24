@@ -40,7 +40,9 @@ The Habit Loop app allows the user to:
   - The user can view the pact's timeline by tapping "View Timeline" on the pact detail screen (feature flag: `pact_timeline_enabled`)
     - The timeline shows all milestones in chronological order: pact-created anchor, showup streaks, showup groups, noted showups, single tail-zone showups, and a current-state anchor (active) or pact-concluded anchor (stopped/completed)
     - Noted showups and single tail-zone showups are tappable and navigate to the showup detail screen
-    - Milestone dots are color-coded by outcome (green = done, red = failed, grey = mixed/pending, teal = anchor); each milestone shows its date or date range above the outcome label
+    - Milestone dots are color-coded by outcome (green = done, red = failed, grey = mixed/pending, teal = anchor); each milestone row places the date or date range in the left column and the outcome label in the right column, divided by the vertical spine
+    - Milestone dates use the device's regional date format (e.g. dd/MM/yyyy on European devices, M/d/yyyy on US-region devices)
+    - The timeline screen title shows the pact's habit name followed by "– Timeline" (e.g. "Meditate – Timeline")
     - A section header ("The most recent showups") separates individually-shown tail-zone showups from grouped milestones above
     - The timeline reloads automatically after returning from the showup detail screen, reflecting any status change immediately
 - See the details of a specific showup

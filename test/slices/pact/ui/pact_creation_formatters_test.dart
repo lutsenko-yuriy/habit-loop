@@ -11,6 +11,9 @@ Future<(BuildContext, AppLocalizations)> _pumpLocalised(
   WidgetTester tester, {
   Locale locale = const Locale('en'),
 }) async {
+  tester.binding.platformDispatcher.localeTestValue = locale;
+  addTearDown(() => tester.binding.platformDispatcher.clearLocaleTestValue());
+
   late BuildContext capturedContext;
   await tester.pumpWidget(
     MaterialApp(
@@ -36,14 +39,14 @@ Future<(BuildContext, AppLocalizations)> _pumpLocalised(
 void main() {
   group('formatPactDate', () {
     testWidgets('formats a date using the current locale (en)', (tester) async {
-      final (ctx, _) = await _pumpLocalised(tester);
-      final text = formatPactDate(ctx, DateTime(2026, 3, 30));
+      await _pumpLocalised(tester);
+      final text = formatPactDate(DateTime(2026, 3, 30));
       expect(text, '3/30/2026');
     });
 
     testWidgets('formats a date using the current locale (fr)', (tester) async {
-      final (ctx, _) = await _pumpLocalised(tester, locale: const Locale('fr'));
-      final text = formatPactDate(ctx, DateTime(2026, 3, 30));
+      await _pumpLocalised(tester, locale: const Locale('fr'));
+      final text = formatPactDate(DateTime(2026, 3, 30));
       expect(text, '30/03/2026');
     });
   });

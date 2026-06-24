@@ -2,6 +2,7 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_cache.dart';
@@ -61,10 +62,13 @@ class PactTimelineService {
   PactTimelineMilestone _buildAnchorEnd(Pact pact, List<Showup> showups, DateTime now) {
     if (pact.status == PactStatus.active) {
       final pending = showups.where((s) => s.status == ShowupStatus.pending);
+      final done = showups.where((s) => s.status == ShowupStatus.done).length;
+      final failed = showups.where((s) => s.status == ShowupStatus.failed).length;
+      final total = ShowupGenerator.countTotal(pact);
       return CurrentStateMilestone(
         sortAt: now,
         nextScheduledAt: pending.firstOrNull?.scheduledAt,
-        showupsRemaining: pending.length,
+        showupsRemaining: (total - done - failed).clamp(0, total),
         plannedEndDate: pact.endDate,
       );
     }

@@ -149,8 +149,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_milestone_grouping_threshold'), isTrue);
       });
 
-      test('default value is 10', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_milestone_grouping_threshold'], 10);
+      test('default value is 1', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_milestone_grouping_threshold'], 1);
       });
 
       test('constant matches all map value', () {
@@ -165,7 +165,7 @@ void main() {
       });
 
       test('appears in intRanges with correct bounds', () {
-        expect(RemoteConfigDefaults.intRanges['pact_timeline_milestone_grouping_threshold'], (min: 10, max: 50));
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_milestone_grouping_threshold'], (min: 1, max: 50));
       });
     });
 
@@ -174,8 +174,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_size'), isTrue);
       });
 
-      test('default value is 10', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size'], 10);
+      test('default value is 7', () {
+        expect(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size'], 7);
       });
 
       test('constant matches all map value', () {
@@ -186,7 +186,7 @@ void main() {
       });
 
       test('appears in intRanges with correct bounds', () {
-        expect(RemoteConfigDefaults.intRanges['pact_timeline_no_grouping_tail_size'], (min: 10, max: 20));
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_no_grouping_tail_size'], (min: 7, max: 21));
       });
     });
   });

@@ -56,7 +56,7 @@ class SummaryStepAndroid extends StatelessWidget {
                     TappableSummaryRow(
                       tapKey: 'summary-row-tap-${PactWizardStep.duration.analyticsName}',
                       label: l10n.summaryDuration,
-                      value: '${formatPactDate(context, state.startDate)} → ${formatPactDate(context, state.endDate)}',
+                      value: '${formatPactDate(state.startDate)} → ${formatPactDate(state.endDate)}',
                       labelColor: style.labelColor,
                       onTap: () => onJumpToStep(PactWizardStep.duration.value),
                       divider: const Divider(height: 1),

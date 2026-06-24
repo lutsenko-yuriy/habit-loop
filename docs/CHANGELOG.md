@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.13] — 2026-06-24 (HAB-116 WU6.2, PR #175)
+
+### Changed — Pact timeline fixes (iOS)
+
+- [user] Timeline dates now match the regional date format of the device (e.g. European devices show day-first ordering)
+- [user] Each timeline row now shows the date on the left and the milestone label on the right, making them easier to tell apart at a glance — applies to all milestone types
+- [app] `CurrentStateMilestone.showupsRemaining` now reflects the total schedule remaining (`ShowupGenerator.countTotal − done − failed`) rather than the count of already-generated pending showups
+- [app] `pact_timeline_milestone_grouping_threshold` default reduced from 10 to 1; RC int-range min reduced from 10 to 1; `pact_timeline_enabled`, `pact_timeline_milestone_grouping_threshold`, and `pact_timeline_no_grouping_tail_size` added to Firebase Remote Config
+- [app] All milestone date strings are now italic, including anchor milestones (Pact Created, Current State, Pact Concluded)
+
+---
+
 ## [0.44.12] — 2026-06-24 (HAB-116 WU6.1, PR #174)
 
 ### Changed — Pact timeline visual redesign (iOS)
