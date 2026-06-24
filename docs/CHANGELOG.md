@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.14] — 2026-06-25 (HAB-116 WU7, PR #176)
+
+### Added — Pact timeline screen (Android)
+
+- [user] Pact timeline screen is now available on Android — tap "View Timeline" on the pact detail screen to see the full history of a pact
+- [user] Timeline shows all milestone types: pact creation, showup streaks, groups, individually-noted showups, tail-zone single showups, and the current state or conclusion
+- [user] Tapping a noted showup or a single tail-zone showup opens the showup detail screen
+- [app] `PactTimelinePageAndroid` — Material spine layout with golden-ratio columns, section-header divider, and locale-aware dates; mirrors the iOS design
+- [app] `PactDetailPageAndroid` now accepts `pactTimelineEnabled` + `onOpenTimeline`; entry-point button gated behind `pact_timeline_enabled` Remote Config flag
+
+---
+
 ## [0.44.13] — 2026-06-24 (HAB-116 WU6.2, PR #175)
 
 ### Changed — Pact timeline fixes (iOS)

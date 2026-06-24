@@ -1,5 +1,4 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Material, MaterialType, Theme;
+import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
@@ -12,14 +11,14 @@ import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 // ── Public page widget ─────────────────────────────────────────────────────────
 
-class PactTimelinePageIos extends StatelessWidget {
+class PactTimelinePageAndroid extends StatelessWidget {
   final PactTimelineState state;
 
   /// Called when the user taps a tappable milestone ([NotedShowupMilestone] or
   /// [SingleShowupMilestone]). The screen uses this to fire analytics and navigate.
   final void Function(PactTimelineMilestone milestone)? onMilestoneTapped;
 
-  const PactTimelinePageIos({
+  const PactTimelinePageAndroid({
     super.key,
     required this.state,
     this.onMilestoneTapped,
@@ -29,29 +28,20 @@ class PactTimelinePageIos extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return CupertinoPageScaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        middle: Text(
+    return Scaffold(
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
+        title: Text(
           state.anchorStart != null
               ? '${state.anchorStart!.habitName} – ${l10n.pactTimelineTitle}'
               : l10n.pactTimelineTitle,
         ),
       ),
-      // bottom: false — the scroll view adds MediaQuery bottom inset to its own
-      // padding so content scrolls under the home indicator naturally.
-      child: SafeArea(
-        bottom: false,
-        child: Material(
-          type: MaterialType.transparency,
-          child: state.isLoading
-              ? const Center(child: CupertinoActivityIndicator())
-              : state.loadError != null
-                  ? Center(child: Text(state.loadError.toString()))
-                  : _TimelineList(state: state, onMilestoneTapped: onMilestoneTapped),
-        ),
-      ),
+      body: state.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : state.loadError != null
+              ? Center(child: Text(state.loadError.toString()))
+              : _TimelineList(state: state, onMilestoneTapped: onMilestoneTapped),
     );
   }
 }
@@ -82,16 +72,12 @@ class _TimelineList extends StatelessWidget {
     final anchorOffset = state.anchorStart != null ? 1 : 0;
     final sectionHeaderRawIdx = firstSingleIdxInMilestones > 0 ? anchorOffset + firstSingleIdxInMilestones : null;
 
-    // Build display list in chronological order (oldest at top, newest at bottom).
-    // null = section-header slot; non-null = (rawIndex, milestone).
     final displayItems = <(int, PactTimelineMilestone)?>[];
     for (int i = 0; i < rawItems.length; i++) {
       if (i == sectionHeaderRawIdx) displayItems.add(null);
       displayItems.add((i, rawItems[i]));
     }
 
-    // SingleChildScrollView + Column builds all items eagerly so maxScrollExtent
-    // is exact and jumpTo(maxScrollExtent) in initState lands correctly.
     final children = [
       for (final entry in displayItems)
         if (entry == null)
@@ -112,9 +98,8 @@ class _TimelineList extends StatelessWidget {
           ),
     ];
 
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return SingleChildScrollView(
-      padding: EdgeInsets.only(top: 8, bottom: 24 + bottomInset),
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
@@ -124,12 +109,6 @@ class _TimelineList extends StatelessWidget {
 }
 
 // ── Spine item (date | vertical spine | label — golden-ratio columns) ──────────
-//
-// The spine divides the row at the golden ratio: the date column takes ~38.2% of
-// the non-spine width and the label column takes ~61.8%, mirroring the proportion
-// a/(a+b) = b/(a+b+a) from the Golden Section. This puts the user's visual
-// attention on the dot — the natural focal point — while keeping the date
-// readable on the left and the label prominent on the right.
 
 class _SpineItem extends StatelessWidget {
   final PactTimelineMilestone milestone;
@@ -150,7 +129,6 @@ class _SpineItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final dotColor = _dotColor(milestone, context);
     final isAnchor =
         milestone is PactCreatedMilestone || milestone is CurrentStateMilestone || milestone is PactConcludedMilestone;
@@ -200,7 +178,7 @@ class _SpineItem extends StatelessWidget {
             flex: 618,
             child: Padding(
               padding: EdgeInsets.only(top: vertPad, bottom: vertPad + extraBottomPad, right: 16),
-              child: _MilestoneLabelContent(milestone: milestone, l10n: l10n),
+              child: _MilestoneLabelContent(milestone: milestone),
             ),
           ),
         ],
@@ -209,9 +187,8 @@ class _SpineItem extends StatelessWidget {
 
     if (!isTappable || onTapped == null) return row;
 
-    return GestureDetector(
+    return InkWell(
       key: showupId != null ? Key('timeline-milestone-$showupId') : null,
-      behavior: HitTestBehavior.opaque,
       onTap: () => onTapped!(milestone),
       child: row,
     );
@@ -220,8 +197,6 @@ class _SpineItem extends StatelessWidget {
 
 // ── Section header (tail-zone divider) ────────────────────────────────────────
 
-// Full-width horizontal band separating the grouped section from the tail section.
-// The spine is intentionally interrupted here to create a clear visual break.
 class _SectionHeader extends StatelessWidget {
   final String label;
 
@@ -229,25 +204,26 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sep = CupertinoColors.separator.resolveFrom(context);
+    final outline = Theme.of(context).colorScheme.outlineVariant;
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(height: 0.5, color: sep),
+        Container(height: 0.5, color: outline),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 7),
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               letterSpacing: 0.4,
-              color: CupertinoColors.systemGrey,
+              color: onSurfaceVariant,
             ),
           ),
         ),
-        Container(height: 0.5, color: sep),
+        Container(height: 0.5, color: outline),
       ],
     );
   }
@@ -260,12 +236,10 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
     return HabitLoopColors.primary;
   }
   if (m is PactConcludedMilestone) {
-    return m.finalStatus == PactStatus.completed
-        ? CupertinoColors.systemGreen.resolveFrom(context)
-        : CupertinoColors.systemRed.resolveFrom(context);
+    return m.finalStatus == PactStatus.completed ? HabitLoopColors.success : HabitLoopColors.danger;
   }
   if (m is ShowupGroupMilestone) {
-    return CupertinoColors.systemGrey.resolveFrom(context);
+    return Theme.of(context).colorScheme.onSurfaceVariant;
   }
   final outcome = switch (m) {
     ShowupStreakMilestone s => s.outcome,
@@ -277,9 +251,9 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
 }
 
 Color _outcomeColor(ShowupStatus outcome, BuildContext context) => switch (outcome) {
-      ShowupStatus.done => CupertinoColors.systemGreen.resolveFrom(context),
-      ShowupStatus.failed => CupertinoColors.systemRed.resolveFrom(context),
-      ShowupStatus.pending => CupertinoColors.systemGrey.resolveFrom(context),
+      ShowupStatus.done => HabitLoopColors.success,
+      ShowupStatus.failed => HabitLoopColors.danger,
+      ShowupStatus.pending => Theme.of(context).colorScheme.onSurfaceVariant,
     };
 
 // ── Date content (left of spine) ───────────────────────────────────────────────
@@ -296,7 +270,11 @@ class _MilestoneDateContent extends StatelessWidget {
     return Text(
       text,
       textAlign: TextAlign.right,
-      style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
+      style: TextStyle(
+        fontSize: 12,
+        fontStyle: FontStyle.italic,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     );
   }
 
@@ -321,20 +299,22 @@ class _MilestoneDateContent extends StatelessWidget {
 
 class _MilestoneLabelContent extends StatelessWidget {
   final PactTimelineMilestone milestone;
-  final AppLocalizations l10n;
 
-  const _MilestoneLabelContent({required this.milestone, required this.l10n});
+  const _MilestoneLabelContent({required this.milestone});
 
   @override
-  Widget build(BuildContext context) => switch (milestone) {
-        PactCreatedMilestone m => _PactCreatedLabel(m: m, l10n: l10n),
-        CurrentStateMilestone m => _CurrentStateLabel(m: m, l10n: l10n),
-        PactConcludedMilestone m => _PactConcludedLabel(m: m, l10n: l10n),
-        ShowupStreakMilestone m => _StreakLabel(m: m, l10n: l10n),
-        ShowupGroupMilestone m => _GroupLabel(m: m, l10n: l10n),
-        NotedShowupMilestone m => _NotedShowupLabel(m: m, l10n: l10n),
-        SingleShowupMilestone m => _SingleShowupLabel(m: m, l10n: l10n),
-      };
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return switch (milestone) {
+      PactCreatedMilestone m => _PactCreatedLabel(m: m, l10n: l10n),
+      CurrentStateMilestone m => _CurrentStateLabel(m: m, l10n: l10n),
+      PactConcludedMilestone m => _PactConcludedLabel(m: m, l10n: l10n),
+      ShowupStreakMilestone m => _StreakLabel(m: m, l10n: l10n),
+      ShowupGroupMilestone m => _GroupLabel(m: m, l10n: l10n),
+      NotedShowupMilestone m => _NotedShowupLabel(m: m, l10n: l10n),
+      SingleShowupMilestone m => _SingleShowupLabel(m: m, l10n: l10n),
+    };
+  }
 }
 
 // ── Anchor label widgets ───────────────────────────────────────────────────────
@@ -346,19 +326,22 @@ class _PactCreatedLabel extends StatelessWidget {
   const _PactCreatedLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.timelinePactCreated, style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
-          const SizedBox(height: 2),
-          Text(m.habitName, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 2),
-          Text(
-            l10n.pactPlannedUntil(formatLocaleDate(m.plannedEndDate)),
-            style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
-          ),
-        ],
-      );
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.timelinePactCreated, style: TextStyle(fontSize: 13, color: muted)),
+        const SizedBox(height: 2),
+        Text(m.habitName, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 2),
+        Text(
+          l10n.pactPlannedUntil(formatLocaleDate(m.plannedEndDate)),
+          style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: muted),
+        ),
+      ],
+    );
+  }
 }
 
 class _CurrentStateLabel extends StatelessWidget {
@@ -368,14 +351,17 @@ class _CurrentStateLabel extends StatelessWidget {
   const _CurrentStateLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.timelineCurrentState, style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
-          const SizedBox(height: 2),
-          Text(l10n.timelineShowupsRemaining(m.showupsRemaining), style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      );
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.timelineCurrentState, style: TextStyle(fontSize: 13, color: muted)),
+        const SizedBox(height: 2),
+        Text(l10n.timelineShowupsRemaining(m.showupsRemaining), style: const TextStyle(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
 }
 
 class _PactConcludedLabel extends StatelessWidget {

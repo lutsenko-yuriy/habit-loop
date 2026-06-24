@@ -107,6 +107,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       onSaveNote: onSaveNote,
       onArchivePact: onArchivePact,
       onEditPact: _onEditPact,
+      pactTimelineEnabled: flags.pactTimelineEnabled,
+      onOpenTimeline: _onOpenTimeline,
     );
   }
 }
