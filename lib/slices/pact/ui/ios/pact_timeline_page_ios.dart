@@ -225,9 +225,14 @@ class _SpinePainter extends CustomPainter {
   final bool isFirst;
   final bool isLast;
   final double dotRadius;
-  // Top padding of the content columns — dot is placed at the same offset so
-  // its centre aligns with the first line of text in both date and label columns.
+  // Top padding of the content columns — dot Y is derived from this so its
+  // centre tracks the first line of the 12pt date text across all milestone types.
   final double topPad;
+
+  // Half the default line height for 12pt text (fontSize × 1.2 / 2 ≈ 7).
+  // Adding this to topPad places the dot centre at the cap-height midpoint of
+  // the date column's first text line, giving the tightest visual alignment.
+  static const _kHalfLineHeight = 7.0;
 
   const _SpinePainter({
     required this.dotColor,
@@ -240,7 +245,7 @@ class _SpinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final dotCenterY = topPad + dotRadius;
+    final dotCenterY = topPad + _kHalfLineHeight;
     const strokeWidth = 1.5;
 
     if (!isFirst && topDotColor != null) {
