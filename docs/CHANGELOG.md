@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.44.14] — 2026-06-25 (HAB-116 WU7, PR #TBD)
+## [0.44.14] — 2026-06-25 (HAB-116 WU7, PR #176)
 
 ### Added — Pact timeline screen (Android)
 
