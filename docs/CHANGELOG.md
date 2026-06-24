@@ -6,10 +6,10 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ## [0.44.13] — 2026-06-24 (HAB-116 WU6.2, PR #TBD)
 
-### Changed — Pact timeline fixes and golden-ratio layout (iOS)
+### Changed — Pact timeline fixes (iOS)
 
-- [user] Dates in the timeline are now locale-aware using the device's regional setting, so European devices show dd/MM/yyyy instead of US-style MM/dd/yyyy
-- [user] The spine now divides each timeline row at the golden ratio: the date sits in the narrower left column (right-aligned, italic) and the milestone title in the wider right column — all milestone types including anchors follow this layout
+- [user] Timeline dates now match the regional date format of the device (e.g. European devices show day-first ordering)
+- [user] Each timeline row now shows the date on the left and the milestone label on the right, making them easier to tell apart at a glance — applies to all milestone types
 - [app] `CurrentStateMilestone.showupsRemaining` now reflects the total schedule remaining (`ShowupGenerator.countTotal − done − failed`) rather than the count of already-generated pending showups
 - [app] `pact_timeline_milestone_grouping_threshold` default reduced from 10 to 1; RC int-range min reduced from 10 to 1; `pact_timeline_enabled`, `pact_timeline_milestone_grouping_threshold`, and `pact_timeline_no_grouping_tail_size` added to Firebase Remote Config
 - [app] All milestone date strings are now italic, including anchor milestones (Pact Created, Current State, Pact Concluded)
