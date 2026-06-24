@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
-// Locale-aware yMd short date. Single definition so all call sites stay consistent.
+// Uses the platform's regional locale for date ordering (dd/MM vs MM/dd) rather than
+// the app's display locale, which often lacks a country code (e.g. "en" vs "en_GB").
 String formatLocaleDate(BuildContext context, DateTime date) =>
-    DateFormat.yMd(Localizations.localeOf(context).toString()).format(date);
+    DateFormat.yMd(WidgetsBinding.instance.platformDispatcher.locale.toString()).format(date);

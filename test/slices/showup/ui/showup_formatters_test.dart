@@ -11,6 +11,9 @@ Future<(BuildContext, AppLocalizations)> _pumpLocalised(
   WidgetTester tester, {
   Locale locale = const Locale('en'),
 }) async {
+  tester.binding.platformDispatcher.localeTestValue = locale;
+  addTearDown(() => tester.binding.platformDispatcher.clearLocaleTestValue());
+
   late BuildContext capturedContext;
   await tester.pumpWidget(
     MaterialApp(

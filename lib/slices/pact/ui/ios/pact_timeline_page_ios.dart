@@ -387,7 +387,7 @@ class _PactCreatedContent extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             l10n.pactPlannedUntil(formatLocaleDate(context, m.plannedEndDate)),
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey),
+            style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
           ),
         ],
       );
@@ -410,7 +410,7 @@ class _CurrentStateContent extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               l10n.timelineUpNext(formatLocaleDate(context, m.nextScheduledAt!)),
-              style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey),
+              style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
             ),
           ],
         ],
@@ -435,7 +435,7 @@ class _PactConcludedContent extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           formatLocaleDate(context, m.concludedAt),
-          style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey),
+          style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
         ),
         if (m.note != null && m.note!.isNotEmpty) ...[
           const SizedBox(height: 4),
