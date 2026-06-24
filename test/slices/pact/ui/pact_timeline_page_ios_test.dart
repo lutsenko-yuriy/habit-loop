@@ -109,11 +109,11 @@ void main() {
   });
 
   group('PactTimelinePageIos — anchors and milestones', () {
-    testWidgets('shows nav bar with timeline title', (tester) async {
+    testWidgets('shows nav bar with pact name and timeline title', (tester) async {
       await tester.pumpWidget(_buildApp(_loaded()));
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
-      expect(find.text(l10n.pactTimelineTitle), findsWidgets);
+      expect(find.text('${_anchorStart.habitName} – ${l10n.pactTimelineTitle}'), findsWidgets);
     });
 
     testWidgets('shows pact habit name from anchor-start', (tester) async {
@@ -252,7 +252,9 @@ void main() {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_streak])));
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
-      final rangeRect = tester.getRect(find.textContaining('–'));
+      final rangeStr =
+          '${DateFormat.yMd('en_US').format(_streak.firstAt)} – ${DateFormat.yMd('en_US').format(_streak.lastAt)}';
+      final rangeRect = tester.getRect(find.text(rangeStr));
       final titleRect = tester.getRect(find.text(l10n.timelineDoneInARow(_streak.count)));
       expect(rangeRect.center.dx, lessThan(titleRect.center.dx));
     });
@@ -263,7 +265,9 @@ void main() {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_group])));
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
-      final rangeRect = tester.getRect(find.textContaining('–'));
+      final rangeStr =
+          '${DateFormat.yMd('en_US').format(_group.firstAt)} – ${DateFormat.yMd('en_US').format(_group.lastAt)}';
+      final rangeRect = tester.getRect(find.text(rangeStr));
       final titleRect =
           tester.getRect(find.text(l10n.timelineGroup(_group.total, _group.doneCount, _group.failedCount)));
       expect(rangeRect.center.dx, lessThan(titleRect.center.dx));

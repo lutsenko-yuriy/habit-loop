@@ -32,7 +32,11 @@ class PactTimelinePageIos extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        middle: Text(l10n.pactTimelineTitle),
+        middle: Text(
+          state.anchorStart != null
+              ? '${state.anchorStart!.habitName} – ${l10n.pactTimelineTitle}'
+              : l10n.pactTimelineTitle,
+        ),
       ),
       // bottom: false — the scroll view adds MediaQuery bottom inset to its own
       // padding so content scrolls under the home indicator naturally.
@@ -99,6 +103,7 @@ class _TimelineList extends StatelessWidget {
                 milestone: m,
                 isFirst: rawIdx == 0,
                 isLast: rawIdx == rawItems.length - 1,
+                isBeforeSectionHeader: sectionHeaderRawIdx != null && rawIdx == sectionHeaderRawIdx - 1,
                 topDotColor: rawIdx > 0 ? _dotColor(rawItems[rawIdx - 1], ctx) : null,
                 onTapped: onMilestoneTapped,
               );
@@ -129,6 +134,7 @@ class _SpineItem extends StatelessWidget {
   final PactTimelineMilestone milestone;
   final bool isFirst;
   final bool isLast;
+  final bool isBeforeSectionHeader;
   final Color? topDotColor;
   final void Function(PactTimelineMilestone)? onTapped;
 
@@ -136,6 +142,7 @@ class _SpineItem extends StatelessWidget {
     required this.milestone,
     required this.isFirst,
     required this.isLast,
+    this.isBeforeSectionHeader = false,
     this.topDotColor,
     this.onTapped,
   });
@@ -153,6 +160,7 @@ class _SpineItem extends StatelessWidget {
       _ => null,
     };
     final vertPad = _verticalPadding(milestone);
+    final extraBottomPad = isBeforeSectionHeader ? 12.0 : 0.0;
 
     final row = IntrinsicHeight(
       child: Row(
@@ -162,7 +170,7 @@ class _SpineItem extends StatelessWidget {
           Flexible(
             flex: 382,
             child: Padding(
-              padding: EdgeInsets.only(top: vertPad, bottom: vertPad, left: 16, right: 6),
+              padding: EdgeInsets.only(top: vertPad, bottom: vertPad + extraBottomPad, left: 16, right: 6),
               child: Align(
                 alignment: Alignment.topRight,
                 child: _MilestoneDateContent(milestone: milestone),
@@ -186,7 +194,7 @@ class _SpineItem extends StatelessWidget {
           Flexible(
             flex: 618,
             child: Padding(
-              padding: EdgeInsets.only(top: vertPad, bottom: vertPad, right: 16),
+              padding: EdgeInsets.only(top: vertPad, bottom: vertPad + extraBottomPad, right: 16),
               child: _MilestoneLabelContent(milestone: milestone, l10n: l10n),
             ),
           ),
