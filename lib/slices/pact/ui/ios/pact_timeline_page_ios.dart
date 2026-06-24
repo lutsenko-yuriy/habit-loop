@@ -161,6 +161,9 @@ class _SpineItem extends StatelessWidget {
     };
     final vertPad = _verticalPadding(milestone);
     final extraBottomPad = isBeforeSectionHeader ? 12.0 : 0.0;
+    // Cap-height midpoint of the first text line differs by label font size:
+    // anchor labels are 13pt (half-line ≈ 7dp); all others use 16pt (≈ 9dp).
+    final dotCenterY = vertPad + (isAnchor ? 7.0 : 9.0);
 
     final row = IntrinsicHeight(
       child: Row(
@@ -187,7 +190,7 @@ class _SpineItem extends StatelessWidget {
                 isFirst: isFirst,
                 isLast: isLast,
                 dotRadius: isAnchor ? 6.0 : 4.0,
-                topPad: vertPad,
+                dotCenterY: dotCenterY,
               ),
             ),
           ),
@@ -225,14 +228,10 @@ class _SpinePainter extends CustomPainter {
   final bool isFirst;
   final bool isLast;
   final double dotRadius;
-  // Top padding of the content columns — dot Y is derived from this so its
-  // centre tracks the first line of the 12pt date text across all milestone types.
-  final double topPad;
-
-  // Half the default line height for 12pt text (fontSize × 1.2 / 2 ≈ 7).
-  // Adding this to topPad places the dot centre at the cap-height midpoint of
-  // the date column's first text line, giving the tightest visual alignment.
-  static const _kHalfLineHeight = 7.0;
+  // Pre-computed Y of the dot centre (from the top of the canvas).
+  // Passed in by _SpineItem so it can be tuned per milestone type without
+  // the painter needing to know about font sizes or padding conventions.
+  final double dotCenterY;
 
   const _SpinePainter({
     required this.dotColor,
@@ -240,12 +239,11 @@ class _SpinePainter extends CustomPainter {
     required this.isFirst,
     required this.isLast,
     required this.dotRadius,
-    required this.topPad,
+    required this.dotCenterY,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final dotCenterY = topPad + _kHalfLineHeight;
     const strokeWidth = 1.5;
 
     if (!isFirst && topDotColor != null) {
@@ -286,7 +284,7 @@ class _SpinePainter extends CustomPainter {
       old.isFirst != isFirst ||
       old.isLast != isLast ||
       old.dotRadius != dotRadius ||
-      old.topPad != topPad;
+      old.dotCenterY != dotCenterY;
 }
 
 // ── Section header (tail-zone divider) ────────────────────────────────────────
