@@ -135,6 +135,10 @@ void main() {
       expect(_saveButtonEnabled(tester), isTrue);
 
       // ── 5. Tap Save ────────────────────────────────────────────────────────
+      // The stopped-date row + View Timeline button push the save button near the
+      // viewport edge; ensureVisible scrolls it fully into view before tapping.
+      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
+      await tester.pump();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
@@ -171,6 +175,8 @@ void main() {
       await tester.enterText(find.byKey(const Key('pact-note-field')), '');
       await tester.pump();
 
+      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
+      await tester.pump();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));

@@ -323,6 +323,8 @@
   "@timelinePactCreated": {},
   "timelineCurrentState": "Aktiv",
   "@timelineCurrentState": {},
+  "timelineRecentSection": "Die neuesten Showups",
+  "@timelineRecentSection": {},
   "timelinePactConcludedCompleted": "Pakt abgeschlossen",
   "@timelinePactConcludedCompleted": {},
   "timelinePactConcludedStopped": "Pakt gestoppt",

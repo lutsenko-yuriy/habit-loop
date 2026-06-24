@@ -10,7 +10,11 @@ String milestoneTitle(AppLocalizations l10n, PactTimelineMilestone milestone) =>
       PactCreatedMilestone _ => l10n.timelinePactCreated,
       ShowupStreakMilestone m =>
         m.outcome == ShowupStatus.done ? l10n.timelineDoneInARow(m.count) : l10n.timelineMissedInARow(m.count),
-      SingleShowupMilestone m => m.outcome == ShowupStatus.done ? l10n.showupDone : l10n.showupFailed,
+      SingleShowupMilestone m => switch (m.outcome) {
+          ShowupStatus.done => l10n.showupDone,
+          ShowupStatus.failed => l10n.showupFailed,
+          ShowupStatus.pending => l10n.showupPending,
+        },
       ShowupGroupMilestone m => l10n.timelineGroup(m.total, m.doneCount, m.failedCount),
       NotedShowupMilestone m => m.outcome == ShowupStatus.done ? l10n.showupDone : l10n.showupFailed,
       CurrentStateMilestone _ => l10n.timelineCurrentState,
