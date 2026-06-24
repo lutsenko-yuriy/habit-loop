@@ -274,7 +274,8 @@ class _SpinePainter extends CustomPainter {
 
 // ── Section header (tail-zone divider) ────────────────────────────────────────
 
-// Subtle section divider: neutral grey spine line + small dot + label in the right column.
+// Full-width horizontal band separating the grouped section from the tail section.
+// The spine is intentionally interrupted here to create a clear visual break.
 class _SectionHeader extends StatelessWidget {
   final String label;
 
@@ -282,53 +283,28 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grey = CupertinoColors.systemGrey.resolveFrom(context).withValues(alpha: 0.5);
-    return SizedBox(
-      height: 36,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Spacer(flex: 382),
-          SizedBox(
-            width: 44,
-            height: 36,
-            child: CustomPaint(
-              painter: _SectionHeaderLinePainter(color: grey),
+    final sep = CupertinoColors.separator.resolveFrom(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(height: 0.5, color: sep),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              letterSpacing: 0.4,
+              color: CupertinoColors.systemGrey,
             ),
           ),
-          Flexible(
-            flex: 618,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                letterSpacing: 0.4,
-                color: CupertinoColors.systemGrey,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+        Container(height: 0.5, color: sep),
+      ],
     );
   }
-}
-
-class _SectionHeaderLinePainter extends CustomPainter {
-  final Color color;
-  const _SectionHeaderLinePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(const Offset(_kSpineX, 0), Offset(_kSpineX, size.height), paint);
-    canvas.drawCircle(Offset(_kSpineX, size.height / 2), 3.0, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(_SectionHeaderLinePainter old) => old.color != color;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -389,13 +365,13 @@ class _MilestoneDateContent extends StatelessWidget {
         PactCreatedMilestone m => formatLocaleDate(m.sortAt),
         CurrentStateMilestone m => m.nextScheduledAt != null ? formatLocaleDate(m.nextScheduledAt!) : null,
         PactConcludedMilestone m => formatLocaleDate(m.concludedAt),
-        ShowupStreakMilestone m => _dateRange(context, m.firstAt, m.lastAt),
-        ShowupGroupMilestone m => _dateRange(context, m.firstAt, m.lastAt),
+        ShowupStreakMilestone m => _dateRange(m.firstAt, m.lastAt),
+        ShowupGroupMilestone m => _dateRange(m.firstAt, m.lastAt),
         NotedShowupMilestone m => formatLocaleDate(m.scheduledAt),
         SingleShowupMilestone m => formatLocaleDate(m.scheduledAt),
       };
 
-  String _dateRange(BuildContext context, DateTime first, DateTime last) {
+  String _dateRange(DateTime first, DateTime last) {
     final a = formatLocaleDate(first);
     final b = formatLocaleDate(last);
     return first == last ? a : '$a – $b';
