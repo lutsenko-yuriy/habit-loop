@@ -4,6 +4,19 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.44.12] — 2026-06-24 (HAB-116 WU6.1, PR #174)
+
+### Changed — Pact timeline visual redesign (iOS)
+
+- [user] Timeline milestones now display on a continuous vertical spine with a gradient line connecting colored dots — green for done, red for failed, grey for mixed/pending, teal for anchor milestones
+- [user] Each milestone shows its date or date range above the status label, making the chronological structure easier to scan
+- [user] A "The most recent showups" section header separates the individually-shown tail-zone showups from grouped milestones above
+- [user] Returning from a showup detail screen now immediately refreshes the timeline, reflecting any status change without re-opening
+- [app] `PactTimelinePageIos` rebuilt with `IntrinsicHeight` + `Row(crossAxisAlignment: stretch)` spine layout and a `CustomPainter` gradient spine line
+- [test] Fixed four pre-existing integration test failures in `archive_pact_flow_test.dart` and `pact_note_flow_test.dart` caused by the View Timeline button (added in WU6) pushing archive/save buttons below the ListView viewport
+
+---
+
 ## [0.44.11] — 2026-06-23 (HAB-116 WU6, PR #173)
 
 ### Application — Pact timeline iOS UI
