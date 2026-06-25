@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.2] — 2026-06-25 (PR #179)
+
+### Changed — CI
+
+- [ci] Switch Firebase App Distribution auth from service account JSON (GOOGLE_APPLICATION_CREDENTIALS) to FIREBASE_TOKEN — the previous approach broke on June 25
+
+---
+
 ## [0.45.1] — 2026-06-25 (HAB-116 debrief)
 
 ### Changed — Workflow and skill improvements
