@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.3] — 2026-06-25 (PR #180)
+
+### Changed — CI
+
+- [ci] Revert Firebase App Distribution auth back to service account JSON (GOOGLE_APPLICATION_CREDENTIALS); add JSON validation step to catch malformed secret values early; FIREBASE_TOKEN approach deprecated by firebase-tools
+
+---
+
 ## [0.45.2] — 2026-06-25 (PR #179)
 
 ### Changed — CI

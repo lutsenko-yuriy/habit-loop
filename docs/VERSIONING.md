@@ -80,6 +80,7 @@ Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]
 | `IOS_PROVISIONING_PROFILE` | `build-ios` | `cat <profile>.mobileprovision \| base64` (ad-hoc profile from Apple Developer portal) |
 | `IOS_TEAM_ID` | `build-ios` | 10-character Apple Developer Team ID (e.g. `ABCD1234EF`) |
 | `FIREBASE_ANDROID_APP_ID` | `distribute-android` | Firebase Console → Android app → App ID (e.g. `1:123456789012:android:abc123`) |
+| `FIREBASE_SERVICE_ACCOUNT_ANDROID` | `distribute-android` | Raw JSON of a GCP service account key with the Firebase App Distribution Admin role — paste the `.json` file content directly, no base64 |
 | `FIREBASE_IOS_APP_ID` | `distribute-ios` | Firebase Console → iOS app → App ID (e.g. `1:123456789012:ios:abc123`) |
-| `FIREBASE_TOKEN` | `distribute-android`, `distribute-ios` | Run `firebase login:ci` locally — copy the printed token |
+| `FIREBASE_SERVICE_ACCOUNT_IOS` | `distribute-ios` | Same as above — may reuse the Android service account JSON |
 | `CODECOV_TOKEN` | `test` | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability |
