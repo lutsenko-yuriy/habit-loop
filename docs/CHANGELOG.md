@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.44.15] — 2026-06-25 (HAB-129, PR #177)
+## [0.45.0] — 2026-06-25 (HAB-129, PR #177)
 
 ### Fixed — Timeline QA fixes
 
