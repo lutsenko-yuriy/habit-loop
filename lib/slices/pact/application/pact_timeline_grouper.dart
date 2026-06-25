@@ -41,6 +41,7 @@ class PactTimelineGrouper {
     var streakCount = 0;
     DateTime? streakFirstAt;
     DateTime? streakLastAt;
+    String? streakLastShowupId;
 
     void flushStreak() {
       if (streakCount == 0) return;
@@ -59,13 +60,22 @@ class PactTimelineGrouper {
         groupFirstAt = null;
         groupLastAt = null;
         if (streakCount >= threshold) {
-          result.add(ShowupStreakMilestone(
-            sortAt: streakFirstAt!,
-            outcome: streakOutcome!,
-            count: streakCount,
-            firstAt: streakFirstAt!,
-            lastAt: streakLastAt!,
-          ));
+          if (streakCount == 1) {
+            result.add(SingleShowupMilestone(
+              sortAt: streakFirstAt!,
+              showupId: streakLastShowupId!,
+              outcome: streakOutcome!,
+              scheduledAt: streakFirstAt!,
+            ));
+          } else {
+            result.add(ShowupStreakMilestone(
+              sortAt: streakFirstAt!,
+              outcome: streakOutcome!,
+              count: streakCount,
+              firstAt: streakFirstAt!,
+              lastAt: streakLastAt!,
+            ));
+          }
         } else {
           if (streakOutcome == ShowupStatus.done) {
             groupDone = streakCount;
@@ -76,13 +86,22 @@ class PactTimelineGrouper {
           groupLastAt = streakLastAt;
         }
       } else if (groupTotal == 0 && streakCount >= threshold) {
-        result.add(ShowupStreakMilestone(
-          sortAt: streakFirstAt!,
-          outcome: streakOutcome!,
-          count: streakCount,
-          firstAt: streakFirstAt!,
-          lastAt: streakLastAt!,
-        ));
+        if (streakCount == 1) {
+          result.add(SingleShowupMilestone(
+            sortAt: streakFirstAt!,
+            showupId: streakLastShowupId!,
+            outcome: streakOutcome!,
+            scheduledAt: streakFirstAt!,
+          ));
+        } else {
+          result.add(ShowupStreakMilestone(
+            sortAt: streakFirstAt!,
+            outcome: streakOutcome!,
+            count: streakCount,
+            firstAt: streakFirstAt!,
+            lastAt: streakLastAt!,
+          ));
+        }
       } else {
         if (streakOutcome == ShowupStatus.done) {
           groupDone += streakCount;
@@ -96,6 +115,7 @@ class PactTimelineGrouper {
       streakOutcome = null;
       streakFirstAt = null;
       streakLastAt = null;
+      streakLastShowupId = null;
     }
 
     void flushGroup() {
@@ -134,6 +154,7 @@ class PactTimelineGrouper {
         streakCount++;
         streakFirstAt ??= showup.scheduledAt;
         streakLastAt = showup.scheduledAt;
+        streakLastShowupId = showup.id;
       }
     }
 

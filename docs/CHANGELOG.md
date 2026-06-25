@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.0] — 2026-06-25 (HAB-129, PR #177)
+
+### Fixed — Timeline QA fixes
+
+- [user] Isolated showups in the history section are now tappable and editable — previously a single showup rendered as a non-interactive streak label
+- [app] Date formatter now respects the OS Region setting when the app language has no country code (e.g. plain "English") — dates now show in the correct regional order (dd/MM/yyyy for European regions)
+
+---
+
 ## [0.44.14] — 2026-06-25 (HAB-116 WU7, PR #176)
 
 ### Added — Pact timeline screen (Android)

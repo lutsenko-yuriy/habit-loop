@@ -40,13 +40,13 @@ void main() {
       expect(formatLocaleDate(DateTime(2026, 3, 30)), '30/03/2026');
     });
 
-    testWidgets('formats a date in fr locale as d/MM/yyyy', (tester) async {
-      await _pumpLocalised(tester, locale: const Locale('fr'));
+    testWidgets('formats a date in fr_FR locale as d/MM/yyyy', (tester) async {
+      await _pumpLocalised(tester, locale: const Locale('fr', 'FR'));
       expect(formatLocaleDate(DateTime(2026, 3, 30)), '30/03/2026');
     });
 
-    testWidgets('formats a date in de locale as d.M.yyyy', (tester) async {
-      await _pumpLocalised(tester, locale: const Locale('de'));
+    testWidgets('formats a date in de_DE locale as d.M.yyyy', (tester) async {
+      await _pumpLocalised(tester, locale: const Locale('de', 'DE'));
       final result = formatLocaleDate(DateTime(2026, 3, 30));
       // German DateFormat.yMd produces "30.3.2026" (single-digit month, no leading zero)
       expect(result, '30.3.2026');
