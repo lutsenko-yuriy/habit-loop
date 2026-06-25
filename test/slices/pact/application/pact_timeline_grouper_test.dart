@@ -115,6 +115,29 @@ void main() {
       });
     });
 
+    group('single-item streak (threshold=1)', () {
+      test('isolated done showup in non-tail with threshold=1 becomes a SingleShowupMilestone', () {
+        final showups = [_done('s1', 1), _fail('s2', 2), _done('s3', 3)];
+        final result = _g(threshold: 1, tailSize: 0).group(showups);
+        expect(result, hasLength(3));
+        expect(result[0], isA<SingleShowupMilestone>());
+        expect((result[0] as SingleShowupMilestone).showupId, 's1');
+        expect((result[0] as SingleShowupMilestone).outcome, ShowupStatus.done);
+        expect(result[1], isA<SingleShowupMilestone>());
+        expect((result[1] as SingleShowupMilestone).showupId, 's2');
+        expect(result[2], isA<SingleShowupMilestone>());
+        expect((result[2] as SingleShowupMilestone).showupId, 's3');
+      });
+
+      test('run of 2+ at threshold=1 is still a ShowupStreakMilestone', () {
+        final showups = List.generate(3, (i) => _done('s$i', i + 1));
+        final result = _g(threshold: 1, tailSize: 0).group(showups);
+        expect(result, hasLength(1));
+        expect(result.single, isA<ShowupStreakMilestone>());
+        expect((result.single as ShowupStreakMilestone).count, 3);
+      });
+    });
+
     group('single-outcome run at or above threshold (non-tail)', () {
       test('run >= threshold becomes a ShowupStreakMilestone, not a group', () {
         final showups = List.generate(12, (i) => _done('s$i', i + 1));
