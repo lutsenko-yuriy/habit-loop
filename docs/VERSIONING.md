@@ -33,6 +33,8 @@ Distribution and version tagging only run on the `main` branch. Feature branches
 
 **Selective distribution:** `resolve-version` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only or `[ci]`-only entry), the `distribute-android` and `distribute-ios` jobs are skipped. The build still compiles, the build number is still bumped, and a `version-*-none` git tag is created — keeping build numbers monotonic.
 
+**`[wip]` entries skip the build entirely** (unlike `[meta]`/`[ci]` which still compile and create a `version-*-none` tag). No binary is produced, no tag is created. CI pipeline changes to enforce the build skip are tracked separately; for now the tag documents the intent and lint enforces its use. Because no `version-*` tag is created for `[wip]` entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
+
 **CHANGELOG tag taxonomy** (enforced by `scripts/changelog/lint.py`):
 
 | Tag | Meaning | Triggers distribution? | Release notes? |
@@ -43,6 +45,7 @@ Distribution and version tagging only run on the `main` branch. Feature branches
 | `[meta]` | Skills / agent / workflow change | No | No |
 | `[ci]` | CI/CD process change | No | No |
 | `[user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
+| `[wip]` | Intermediate WU merge in a multi-WU ticket — tests run, builds and distribution entirely skipped, no `version-*` tag created | No | No |
 | `[non-user]` | Supplementary bullet descriptor (not a classification) | — | No |
 
 Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]`, `[app]`, `[test]`, `[meta]`, `[ci]`, or `[user-none]`). The tag list may be extended; each new tag must declare its distribution and release-note behaviour.

@@ -55,12 +55,13 @@ def _parse_semver(version: str) -> tuple[int, int, int]:
 KNOWN_TAGS: frozenset[str] = frozenset({
     'user', 'user-none', 'non-user',  # legacy / backward-compat
     'app', 'test', 'meta', 'ci',      # new taxonomy
+    'wip',                            # intermediate WU merge — skips build and distribution
 })
 
 # Tags that classify an entry. Every entry must have at least one bullet
 # whose tag is in this set. [non-user] is supplementary only.
 CLASSIFICATION_TAGS: frozenset[str] = frozenset({
-    'user', 'user-none', 'app', 'test', 'meta', 'ci',
+    'user', 'user-none', 'app', 'test', 'meta', 'ci', 'wip',
 })
 
 
