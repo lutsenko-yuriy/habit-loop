@@ -44,8 +44,8 @@ void main() {
       expect(text, '3/30/2026');
     });
 
-    testWidgets('formats a date using the current locale (fr)', (tester) async {
-      await _pumpLocalised(tester, locale: const Locale('fr'));
+    testWidgets('formats a date using the current locale (fr_FR)', (tester) async {
+      await _pumpLocalised(tester, locale: const Locale('fr', 'FR'));
       final text = formatPactDate(DateTime(2026, 3, 30));
       expect(text, '30/03/2026');
     });
