@@ -39,8 +39,6 @@ The skill will identify trackable moments, propose events and screen views, flag
 
 **For large changes** (spanning multiple files, introducing new domain entities, new dependencies, or architectural shifts): invoke the `plan` skill to produce the implementation plan **before writing any code**:
 
-**Algorithm + pagination compatibility:** when the plan introduces a service that transforms the full dataset (grouping, ranking, aggregation), verify at plan time that a paged API is compatible. If the algorithm requires a full pass, design the service as `loadAll()` and push windowing to the ViewModel layer.
-
 ```
 Invoke the plan skill for HAB-XX: <issue title>
 ```
