@@ -286,23 +286,21 @@ jobs:
 
       - name: Upload to Firebase App Distribution
         run: |
-          if [[ -z "$FIREBASE_ANDROID_APP_ID" || -z "$FIREBASE_SERVICE_ACCOUNT_ANDROID" ]]; then
-            echo "Missing FIREBASE_ANDROID_APP_ID or FIREBASE_SERVICE_ACCOUNT_ANDROID secret." >&2
+          if [[ -z "$FIREBASE_ANDROID_APP_ID" || -z "$FIREBASE_TOKEN" ]]; then
+            echo "Missing FIREBASE_ANDROID_APP_ID or FIREBASE_TOKEN secret." >&2
             exit 1
           fi
 
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_ANDROID" > "$RUNNER_TEMP/firebase-service-account.json"
-          printf '%s' "$RELEASE_NOTES"                    > "$RUNNER_TEMP/release-notes.txt"
+          printf '%s' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.txt"
 
           firebase appdistribution:distribute app-release.apk \
             --app "$FIREBASE_ANDROID_APP_ID" \
             --release-notes-file "$RUNNER_TEMP/release-notes.txt" \
             --groups "internal-testers"
         env:
-          FIREBASE_ANDROID_APP_ID:          ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          FIREBASE_SERVICE_ACCOUNT_ANDROID: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
-          GOOGLE_APPLICATION_CREDENTIALS:   ${{ runner.temp }}/firebase-service-account.json
-          RELEASE_NOTES:                    ${{ needs.resolve-version.outputs.release_notes }}
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_TOKEN:          ${{ secrets.FIREBASE_TOKEN }}
+          RELEASE_NOTES:           ${{ needs.resolve-version.outputs.release_notes }}
 
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
@@ -471,12 +469,10 @@ jobs:
 
       - name: Upload to Firebase App Distribution
         run: |
-          if [[ -z "$FIREBASE_IOS_APP_ID" || -z "$FIREBASE_SERVICE_ACCOUNT_IOS" ]]; then
-            echo "Missing FIREBASE_IOS_APP_ID or FIREBASE_SERVICE_ACCOUNT_IOS secret." >&2
+          if [[ -z "$FIREBASE_IOS_APP_ID" || -z "$FIREBASE_TOKEN" ]]; then
+            echo "Missing FIREBASE_IOS_APP_ID or FIREBASE_TOKEN secret." >&2
             exit 1
           fi
-
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_IOS" > "$RUNNER_TEMP/firebase-service-account.json"
 
           IPA_PATH=$(find . -maxdepth 1 -name "*.ipa" | head -1)
           if [[ -z "$IPA_PATH" ]]; then
@@ -491,10 +487,9 @@ jobs:
             --release-notes-file "$RUNNER_TEMP/release-notes.txt" \
             --groups "internal-testers"
         env:
-          FIREBASE_IOS_APP_ID:            ${{ secrets.FIREBASE_IOS_APP_ID }}
-          FIREBASE_SERVICE_ACCOUNT_IOS:   ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
-          RELEASE_NOTES:                  ${{ needs.resolve-version.outputs.release_notes }}
+          FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          FIREBASE_TOKEN:      ${{ secrets.FIREBASE_TOKEN }}
+          RELEASE_NOTES:       ${{ needs.resolve-version.outputs.release_notes }}
 
   # ── Tag the release and bump pubspec build number ─────────────────────────
   version-tag:
