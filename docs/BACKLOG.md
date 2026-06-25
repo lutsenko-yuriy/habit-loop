@@ -11,6 +11,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 - **HAB-113**: Bottom sheet stuck at semi-expanded on fast upward drag (PR #149)
 - **HAB-115**: Editable notes on pact detail for inactive pacts (PR #155)
 - **HAB-116**: Pact timeline screen (PRs #168–176)
+- **HAB-129**: Timeline QA fixes — single-showup tappability + date region (PR #177)
 
 ## Unscheduled
 
