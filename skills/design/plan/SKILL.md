@@ -41,7 +41,7 @@ Use this format exactly. Omit a section entirely if it has no content.
 **Work unit rules (apply before writing the WU table):**
 - WU0 is always the first unit: integration scenarios from `draft-scenarios`, committed as a `[test]`-tagged PR before any production code lands.
 - Each subsequent WU must include an estimated LoC count. Target ≤ 300 LoC and ≤ 10 files. If a WU would exceed this, split it into two or more units.
-- Each WU must list which scenarios it makes green.
+- Each WU must list which scenarios it makes green. If a scenario requires UI that lands in a later WU, label it "filled in WU*N*" (not "made green WU*N*") so it is clear the scenario exists but cannot be driven until the UI is present.
 
 @skills/design/plan/resources/plan-template.md
 

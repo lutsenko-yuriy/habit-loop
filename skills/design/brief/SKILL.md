@@ -52,6 +52,14 @@ The dialog is **product-level only**: no architecture, no implementation details
 
 If at any point the user signals abandonment ("I guess we don't need it", "let's postpone", "forget it", or similar), jump to step 6.
 
+### 3.5 Visual alignment (for features with user-facing screens)
+
+Once the behaviour is clear, ask the user for a visual reference or metaphor:
+
+> "What does this screen look like in your head — is there an app or real-world analogy that captures the feel you're after?"
+
+Based on the answer, produce a simple ASCII mockup and present it for approval before proceeding to step 4. If the user has no strong reference, propose one based on platform conventions. Do not proceed to step 4 until the layout direction is agreed.
+
 ### 4. Create the ticket
 
 Once the idea is clear, create a Linear issue with `mcp__linear__save_issue`:

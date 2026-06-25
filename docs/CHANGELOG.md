@@ -4,6 +4,18 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.1] — 2026-06-25 (HAB-116 debrief)
+
+### Changed — Workflow and skill improvements
+
+- [meta] brief skill: add visual alignment step (ASCII mockup) for UI-heavy features before ticket creation
+- [meta] plan skill: clarify scenario-timing language — "filled in WUN" for scenarios blocked on later-WU UI
+- [meta] workflow: add algorithm + pagination compatibility check to plan phase; add [wip] CHANGELOG tag guidance for intermediate WU merges
+- [ci] changelog lint: register [wip] as a valid classification tag (skips build and distribution; preserves release-notes aggregation)
+- [meta] versioning: document [wip] tag behaviour and its interaction with release-notes accumulation
+
+---
+
 ## [0.45.0] — 2026-06-25 (HAB-129, PR #177)
 
 ### Fixed — Timeline QA fixes

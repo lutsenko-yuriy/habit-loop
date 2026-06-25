@@ -86,6 +86,10 @@ After scenarios are approved and written, commit them to `feature/HAB-XX-WU0-sce
 
 Each WU gets its own branch (`feature/HAB-XX-WUN-<short>`, where N is the WU number from the plan's WU table) created fresh from `origin/main`. Never reuse a branch from a previous WU. Branch names are pre-named in the plan comment's WU table so the full mapping is visible from day one.
 
+**CHANGELOG tags for intermediate WUs**
+
+Use `[wip]` as the classification tag for all intermediate WU CHANGELOG entries — every WU except the final one that makes the feature user-visible. `[wip]` suppresses builds and distribution so testers do not receive partial builds mid-ticket. The final WU uses `[user]` (and/or `[app]`) — this is when CI builds and distributes, and "What's New" aggregates all `[user]` content back to the last published tag.
+
 **WU cycle (WU1 onwards)**
 
 For each WU in sequence:
