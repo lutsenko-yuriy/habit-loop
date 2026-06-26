@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.9] — 2026-06-27
+
+### Changed — CI
+
+- [ci] Build and distribution are now skipped entirely when the newest CHANGELOG entry contains no `[user]` or `[app]` bullets; `version-*-none` tag eliminated
+
+---
+
 ## [0.45.8] — 2026-06-27 (PR #185 merged)
 
 ### Changed — Pact Timeline
