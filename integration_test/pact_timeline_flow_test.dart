@@ -278,7 +278,8 @@ void main() {
     testWidgets(
       'short_mixed_run_shown_as_group_item: run below threshold collapses into a group item with done/failed/total counts',
       (tester) async {
-        // threshold=10, tail=0 (all showups are non-tail): 3 done + 2 failed = 5 total < 10 → group.
+        // threshold=10, tail=0 (all showups are non-tail): 3 done + 4 failed = 7 total < 10 → group.
+        // Seeding June 8–14 (7 days) with no gaps so the gap-filler adds nothing.
         h = await AppHarness.create(
           tester,
           extraOverrides: [
@@ -292,7 +293,7 @@ void main() {
             for (var i = 0; i < 3; i++) {
               await h.showupRepo.saveShowup(_showup('gm-d$i', DateTime(2099, 6, 8 + i, 8)));
             }
-            for (var i = 0; i < 2; i++) {
+            for (var i = 0; i < 4; i++) {
               await h.showupRepo.saveShowup(_showup('gm-f$i', DateTime(2099, 6, 11 + i, 8), status: ShowupStatus.failed));
             }
           },
@@ -307,14 +308,14 @@ void main() {
         await waitFor(tester, find.text(strings.pactTimelineTitle));
 
         // ── 1. Group item shows total, done, and failed counts ─────────────────
-        await waitFor(tester, find.text(strings.timelineGroup(5, 3, 2)));
-        expect(find.text(strings.timelineGroup(5, 3, 2)), findsOneWidget);
+        await waitFor(tester, find.text(strings.timelineGroup(7, 3, 4)));
+        expect(find.text(strings.timelineGroup(7, 3, 4)), findsOneWidget);
 
         // ── 2. No individual tile keys exist for those showups ─────────────────
         for (var i = 0; i < 3; i++) {
           expect(find.byKey(Key('timeline-milestone-gm-d$i')), findsNothing);
         }
-        for (var i = 0; i < 2; i++) {
+        for (var i = 0; i < 4; i++) {
           expect(find.byKey(Key('timeline-milestone-gm-f$i')), findsNothing);
         }
       },
@@ -323,7 +324,8 @@ void main() {
     testWidgets(
       'long_same_outcome_run_shown_as_streak_item: run >= threshold shown as streak, not a group',
       (tester) async {
-        // threshold=10, tail=0: 10 consecutive done showups >= threshold → streak.
+        // threshold=10, tail=0: 12 consecutive done showups (Jun 3–14, no gaps) >= threshold → streak.
+        // Seeding through June 14 so gap-filler adds nothing before _testNow.
         h = await AppHarness.create(
           tester,
           extraOverrides: [
@@ -334,7 +336,7 @@ void main() {
           ],
           beforePump: (h) async {
             await h.pactRepo.savePact(_groupingPact);
-            for (var i = 0; i < 10; i++) {
+            for (var i = 0; i < 12; i++) {
               await h.showupRepo.saveShowup(_showup('gs-streak-$i', DateTime(2099, 6, 3 + i, 8)));
             }
           },
@@ -348,12 +350,9 @@ void main() {
 
         await waitFor(tester, find.text(strings.pactTimelineTitle));
 
-        // ── 1. Streak item is shown ────────────────────────────────────────────
-        await waitFor(tester, find.text(strings.timelineDoneInARow(10)));
-        expect(find.text(strings.timelineDoneInARow(10)), findsOneWidget);
-
-        // ── 2. No group item is shown ──────────────────────────────────────────
-        expect(find.textContaining('—'), findsNothing);
+        // ── 1. Streak item is shown with all 12 showups ────────────────────────
+        await waitFor(tester, find.text(strings.timelineDoneInARow(12)));
+        expect(find.text(strings.timelineDoneInARow(12)), findsOneWidget);
       },
     );
 
