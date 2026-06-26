@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.7] — 2026-06-26 (PR #184)
+
+### Changed — Workflow
+
+- [meta] Split docs/WORKFLOW.md into FEATURE_WORKFLOW.md (feature development) and TROUBLESHOOT_WORKFLOW.md (bugs, CI failures, infrastructure issues); each file cross-references the other
+- [meta] TROUBLESHOOT_WORKFLOW captures lessons from HAB-132: open a ticket before the second fix attempt; include OSS health checks in trade-off analysis
+
+---
+
 ## [0.45.6] — 2026-06-26 (PR #183)
 
 ### Changed — CI

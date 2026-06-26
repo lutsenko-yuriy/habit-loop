@@ -1,4 +1,7 @@
-# Workflow
+# Feature Workflow
+
+Use this workflow for new features, enhancements, and planned changes.
+For bugs, CI failures, regressions, or infrastructure breakage, use `docs/TROUBLESHOOT_WORKFLOW.md` instead.
 
 Follow TDD: write or update tests **before** implementing the feature or fix. Red → Green → Refactor.
 
