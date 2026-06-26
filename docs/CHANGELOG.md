@@ -8,7 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Pact Timeline
 
-- [user] Timeline tail zone now shows all showups from the last N days (default 7, configurable 7–21 via Remote Config) instead of a fixed count of the most-recent showups
+- [user] Recent showups are now shown individually for the past 7 days, so you always see each day clearly no matter how consistent your streak has been
 - [app] Section header updated from "The most recent showups" to "Showups from the last N days" in all four locales
 
 ---
