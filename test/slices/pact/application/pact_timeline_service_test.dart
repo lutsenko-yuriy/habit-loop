@@ -184,6 +184,8 @@ void main() {
       );
       final page = await svc.loadAll(pactId: 'p1', now: DateTime(2024, 1, 13));
       expect(page.milestones, hasLength(4));
+      // tailStartIndex must equal the non-tail milestone count (1 group), not 0 or 4.
+      expect(page.tailStartIndex, 1);
     });
   });
 

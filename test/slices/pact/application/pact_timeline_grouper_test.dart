@@ -29,17 +29,21 @@ const _threshold = 10;
 PactTimelineGrouper _g({int threshold = _threshold, int tailPeriodInDays = 0}) =>
     PactTimelineGrouper(groupingThreshold: threshold, noGroupingTailPeriodInDays: tailPeriodInDays);
 
+// Convenience: most tests only care about the milestone list, not tailStartIndex.
+List<PactTimelineMilestone> _group(PactTimelineGrouper g, List<Showup> showups, {DateTime? now}) =>
+    g.group(showups, now: now).milestones;
+
 void main() {
   group('PactTimelineGrouper', () {
     group('empty input', () {
       test('returns empty list for no showups', () {
-        expect(_g().group([]), isEmpty);
+        expect(_group(_g(), []), isEmpty);
       });
     });
 
     group('noted showup', () {
       test('noted showup becomes a NotedShowupMilestone', () {
-        final result = _g().group([_noted('s1', 1, note: 'focus')]);
+        final result = _group(_g(), [_noted('s1', 1, note: 'focus')]);
         expect(result, hasLength(1));
         final m = result.single as NotedShowupMilestone;
         expect(m.showupId, 's1');
@@ -57,7 +61,7 @@ void main() {
           _done('s4', 4),
           _done('s5', 5),
         ];
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(3));
         expect(result[0], isA<ShowupGroupMilestone>());
         expect(result[1], isA<NotedShowupMilestone>());
@@ -68,7 +72,7 @@ void main() {
     group('tail zone — days-based', () {
       test('showup within tail period produces a SingleShowupMilestone', () {
         // Jan 10 is within 7 days of Jan 14 → tail zone
-        final result = _g(tailPeriodInDays: 7).group([_done('s1', 10)], now: _now);
+        final result = _group(_g(tailPeriodInDays: 7), [_done('s1', 10)], now: _now);
         expect(result, hasLength(1));
         final m = result.single as SingleShowupMilestone;
         expect(m.showupId, 's1');
@@ -78,7 +82,7 @@ void main() {
 
       test('showup on the cutoff boundary is in the tail zone', () {
         // cutoff = midnight(Jan 14) - 7 days = Jan 7 00:00; Jan 7 08:00 >= Jan 7 00:00 → tail
-        final result = _g(tailPeriodInDays: 7).group([_done('s1', 7)], now: _now);
+        final result = _group(_g(tailPeriodInDays: 7), [_done('s1', 7)], now: _now);
         expect(result, hasLength(1));
         expect(result.single, isA<SingleShowupMilestone>());
       });
@@ -88,14 +92,14 @@ void main() {
         final showup = _done('s1', 7); // Jan 7 at 00:00
         final nowLate = DateTime(2024, 1, 14, 23, 59);
         final nowEarly = DateTime(2024, 1, 14, 0, 1);
-        final resultLate = _g(tailPeriodInDays: 7).group([showup], now: nowLate);
-        final resultEarly = _g(tailPeriodInDays: 7).group([showup], now: nowEarly);
+        final resultLate = _group(_g(tailPeriodInDays: 7), [showup], now: nowLate);
+        final resultEarly = _group(_g(tailPeriodInDays: 7), [showup], now: nowEarly);
         expect(resultLate.single.runtimeType, resultEarly.single.runtimeType);
       });
 
       test('showup one day before the cutoff is not in the tail zone', () {
         // cutoff = Jan 7 00:00; Jan 6 < Jan 7 → non-tail → group (1 < threshold)
-        final result = _g(tailPeriodInDays: 7).group([_done('s1', 6)], now: _now);
+        final result = _group(_g(tailPeriodInDays: 7), [_done('s1', 6)], now: _now);
         expect(result, hasLength(1));
         expect(result.single, isA<ShowupGroupMilestone>());
       });
@@ -103,7 +107,7 @@ void main() {
       test('tail showups produce one SingleShowupMilestone each', () {
         // Jan 11, 12, 13 all within 3 days of Jan 14
         final showups = [_done('s1', 11), _done('s2', 12), _done('s3', 13)];
-        final result = _g(tailPeriodInDays: 3).group(showups, now: _now);
+        final result = _group(_g(tailPeriodInDays: 3), showups, now: _now);
         expect(result, hasLength(3));
         for (final m in result) {
           expect(m, isA<SingleShowupMilestone>());
@@ -118,7 +122,7 @@ void main() {
           ...List.generate(10, (i) => _done('s$i', i + 1)),
           ...List.generate(3, (i) => _done('t$i', 11 + i)),
         ];
-        final result = _g(tailPeriodInDays: 3).group(showups, now: _now);
+        final result = _group(_g(tailPeriodInDays: 3), showups, now: _now);
         expect(result, hasLength(4));
         expect(result.first, isA<ShowupStreakMilestone>());
         expect((result.first as ShowupStreakMilestone).count, 10);
@@ -129,7 +133,7 @@ void main() {
 
       test('noted showup in tail zone is a NotedShowupMilestone, not a SingleShowupMilestone', () {
         final showups = [_done('s1', 10), _noted('s2', 12, note: 'reflection')];
-        final result = _g(tailPeriodInDays: 7).group(showups, now: _now);
+        final result = _group(_g(tailPeriodInDays: 7), showups, now: _now);
         expect(result, hasLength(2));
         expect(result[0], isA<SingleShowupMilestone>());
         expect(result[1], isA<NotedShowupMilestone>());
@@ -137,8 +141,58 @@ void main() {
       });
 
       test('tail showup sortAt equals its scheduledAt', () {
-        final result = _g(tailPeriodInDays: 7).group([_done('s1', 10)], now: _now);
+        final result = _group(_g(tailPeriodInDays: 7), [_done('s1', 10)], now: _now);
         expect(result.single.sortAt, DateTime(2024, 1, 10));
+      });
+    });
+
+    group('tailStartIndex', () {
+      test('all non-tail → tailStartIndex equals milestones.length', () {
+        // With tailPeriodInDays=0, cutoff is now (2026+) → all Jan-2024 showups are non-tail.
+        final showups = List.generate(10, (i) => _done('s$i', i + 1));
+        final (:milestones, :tailStartIndex) = _g().group(showups);
+        expect(tailStartIndex, milestones.length);
+      });
+
+      test('all tail → tailStartIndex is 0', () {
+        final showups = [_done('s1', 11), _done('s2', 12), _done('s3', 13)];
+        final (:milestones, :tailStartIndex) = _g(tailPeriodInDays: 3).group(showups, now: _now);
+        expect(tailStartIndex, 0);
+        expect(milestones, hasLength(3));
+      });
+
+      test('mixed: tailStartIndex points to first tail milestone', () {
+        // Non-tail: Jan 1-10 → 1 streak; Tail: Jan 11-13 → 3 singles
+        final showups = [
+          ...List.generate(10, (i) => _done('s$i', i + 1)),
+          ...List.generate(3, (i) => _done('t$i', 11 + i)),
+        ];
+        final (:milestones, :tailStartIndex) = _g(tailPeriodInDays: 3).group(showups, now: _now);
+        expect(tailStartIndex, 1); // 1 non-tail milestone (the streak)
+        expect(milestones[tailStartIndex], isA<SingleShowupMilestone>());
+      });
+
+      test('tailStartIndex is correct even when non-tail has SingleShowupMilestone (threshold=1)', () {
+        // threshold=1, tailPeriodInDays=3, cutoff=Jan 11:
+        // Non-tail: Jan 1-10 alternating done/fail → each is a length-1 run → 10 SingleShowupMilestones
+        // Tail:     Jan 11-13 done → 3 SingleShowupMilestones
+        // All 13 milestones are SingleShowupMilestone; tailStartIndex must be 10, not 0.
+        final showups = [
+          ...List.generate(10, (i) => i.isEven ? _done('s$i', i + 1) : _fail('s$i', i + 1)),
+          ...List.generate(3, (i) => _done('t$i', 11 + i)),
+        ];
+        final (:milestones, :tailStartIndex) = _g(threshold: 1, tailPeriodInDays: 3).group(showups, now: _now);
+        // Non-tail: 10 isolated singles → 10 SingleShowupMilestones
+        expect(tailStartIndex, 10);
+        expect(milestones, hasLength(13));
+        expect(milestones[tailStartIndex], isA<SingleShowupMilestone>());
+        expect((milestones[tailStartIndex] as SingleShowupMilestone).scheduledAt, DateTime(2024, 1, 11));
+      });
+
+      test('empty showups → tailStartIndex is 0', () {
+        final (:milestones, :tailStartIndex) = _g().group([]);
+        expect(tailStartIndex, 0);
+        expect(milestones, isEmpty);
       });
     });
 
@@ -151,7 +205,7 @@ void main() {
           _fail('s4', 4),
           _fail('s5', 5),
         ];
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(1));
         final m = result.single as ShowupGroupMilestone;
         expect(m.total, 5);
@@ -161,7 +215,7 @@ void main() {
 
       test('group milestone firstAt and sortAt equal the first showup date', () {
         final showups = [_done('s1', 5), _fail('s2', 6)];
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         final m = result.single as ShowupGroupMilestone;
         expect(m.firstAt, DateTime(2024, 1, 5));
         expect(m.lastAt, DateTime(2024, 1, 6));
@@ -170,7 +224,7 @@ void main() {
 
       test('same-outcome run below threshold is a group, not a streak', () {
         final showups = List.generate(5, (i) => _done('s$i', i + 1));
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(1));
         expect(result.single, isA<ShowupGroupMilestone>());
         final m = result.single as ShowupGroupMilestone;
@@ -183,7 +237,7 @@ void main() {
     group('single-item streak (threshold=1)', () {
       test('isolated done showup in non-tail with threshold=1 becomes a SingleShowupMilestone', () {
         final showups = [_done('s1', 1), _fail('s2', 2), _done('s3', 3)];
-        final result = _g(threshold: 1).group(showups);
+        final result = _group(_g(threshold: 1), showups);
         expect(result, hasLength(3));
         expect(result[0], isA<SingleShowupMilestone>());
         expect((result[0] as SingleShowupMilestone).showupId, 's1');
@@ -196,7 +250,7 @@ void main() {
 
       test('run of 2+ at threshold=1 is still a ShowupStreakMilestone', () {
         final showups = List.generate(3, (i) => _done('s$i', i + 1));
-        final result = _g(threshold: 1).group(showups);
+        final result = _group(_g(threshold: 1), showups);
         expect(result, hasLength(1));
         expect(result.single, isA<ShowupStreakMilestone>());
         expect((result.single as ShowupStreakMilestone).count, 3);
@@ -206,7 +260,7 @@ void main() {
     group('single-outcome run at or above threshold (non-tail)', () {
       test('run >= threshold becomes a ShowupStreakMilestone, not a group', () {
         final showups = List.generate(12, (i) => _done('s$i', i + 1));
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(1));
         final m = result.single as ShowupStreakMilestone;
         expect(m.count, 12);
@@ -215,7 +269,7 @@ void main() {
 
       test('run exactly == threshold becomes a streak', () {
         final showups = List.generate(10, (i) => _fail('s$i', i + 1));
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(1));
         expect(result.single, isA<ShowupStreakMilestone>());
         expect((result.single as ShowupStreakMilestone).count, 10);
@@ -224,7 +278,7 @@ void main() {
 
       test('streak milestone has correct firstAt, lastAt, and sortAt', () {
         final showups = List.generate(10, (i) => _done('s$i', i + 1));
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         final m = result.single as ShowupStreakMilestone;
         expect(m.firstAt, DateTime(2024, 1, 1));
         expect(m.lastAt, DateTime(2024, 1, 10));
@@ -248,7 +302,7 @@ void main() {
           _fail('s11', 11),
           _fail('s12', 12),
         ];
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(2));
         final g1 = result[0] as ShowupGroupMilestone;
         expect(g1.total, 7);
@@ -269,7 +323,7 @@ void main() {
           _fail('s7', 7),
           ...List.generate(10, (i) => _done('s${8 + i}', 8 + i)),
         ];
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(2));
         expect(result[0], isA<ShowupGroupMilestone>());
         expect((result[0] as ShowupGroupMilestone).total, 7);
@@ -291,7 +345,7 @@ void main() {
           _fail('s11', 11),
           _fail('s12', 12),
         ];
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(2));
         expect((result[0] as ShowupGroupMilestone).total, 7);
         final g2 = result[1] as ShowupGroupMilestone;
@@ -308,7 +362,7 @@ void main() {
           _sh('s2', ShowupStatus.pending, 2),
           _done('s3', 3),
         ];
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         expect(result, hasLength(1));
         final m = result.single as ShowupGroupMilestone;
         expect(m.total, 2);
@@ -319,7 +373,7 @@ void main() {
     group('sort order', () {
       test('milestones are ordered oldest-first by sortAt', () {
         final showups = [_noted('s1', 1), _done('s2', 2), _done('s3', 3), _noted('s4', 4)];
-        final result = _g().group(showups);
+        final result = _group(_g(), showups);
         final sortAts = result.map((m) => m.sortAt).toList();
         final sorted = [...sortAts]..sort();
         expect(sortAts, sorted);

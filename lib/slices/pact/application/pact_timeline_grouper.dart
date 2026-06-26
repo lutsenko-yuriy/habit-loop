@@ -17,8 +17,17 @@ class PactTimelineGrouper {
 
   /// Groups [showups] (oldest-first, may include pending) into timeline milestones.
   ///
+  /// Returns a record with the flat milestone list and [tailStartIndex] — the index
+  /// of the first tail-zone milestone (i.e. the number of non-tail milestones). The
+  /// section header must be placed at [tailStartIndex], not by searching for the first
+  /// [SingleShowupMilestone], because [SingleShowupMilestone] can also appear in the
+  /// non-tail zone when [groupingThreshold] == 1.
+  ///
   /// [now] anchors the tail-zone cutoff. Defaults to [DateTime.now].
-  List<PactTimelineMilestone> group(List<Showup> showups, {DateTime? now}) {
+  ({List<PactTimelineMilestone> milestones, int tailStartIndex}) group(
+    List<Showup> showups, {
+    DateTime? now,
+  }) {
     final effectiveNow = now ?? DateTime.now();
     // Normalize to midnight so the cutoff is calendar-date-based, not time-of-day-sensitive.
     final today = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day);
@@ -28,10 +37,12 @@ class PactTimelineGrouper {
     final nonTail = resolved.where((s) => s.scheduledAt.isBefore(cutoff)).toList();
     final tail = resolved.where((s) => !s.scheduledAt.isBefore(cutoff)).toList();
 
-    return [
-      ..._processNonTail(nonTail),
-      ..._processTail(tail),
-    ];
+    final nonTailMilestones = _processNonTail(nonTail);
+    final tailMilestones = _processTail(tail);
+    return (
+      milestones: [...nonTailMilestones, ...tailMilestones],
+      tailStartIndex: nonTailMilestones.length,
+    );
   }
 
   List<PactTimelineMilestone> _processNonTail(List<Showup> showups) {

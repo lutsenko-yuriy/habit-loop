@@ -34,6 +34,7 @@ class PactTimelineViewModel extends FamilyNotifier<PactTimelineState, String> {
         anchorEnd: page.anchorEnd,
         milestones: page.milestones,
         tailPeriodInDays: page.tailPeriodInDays,
+        tailStartIndex: page.tailStartIndex,
         isLoading: false,
       );
 

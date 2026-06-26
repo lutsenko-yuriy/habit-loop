@@ -46,11 +46,13 @@ class PactTimelineService {
     }
 
     final effectiveNow = now ?? DateTime.now();
+    final grouped = _grouper.group(showups, now: effectiveNow);
     return PactTimelinePage(
       anchorStart: _buildAnchorStart(pact),
       anchorEnd: _buildAnchorEnd(pact, showups, effectiveNow),
-      milestones: _grouper.group(showups, now: effectiveNow),
+      milestones: grouped.milestones,
       tailPeriodInDays: _grouper.noGroupingTailPeriodInDays,
+      tailStartIndex: grouped.tailStartIndex,
     );
   }
 

@@ -76,11 +76,12 @@ class _TimelineList extends StatelessWidget {
 
     if (rawItems.isEmpty) return const SizedBox.shrink();
 
-    // Section-header sentinel: appears before the first SingleShowupMilestone
-    // when there is at least one non-single item above it.
-    final firstSingleIdxInMilestones = milestones.indexWhere((m) => m is SingleShowupMilestone);
+    // Section-header sentinel: placed at the exact tail-zone boundary from the grouper.
+    // Do NOT infer from SingleShowupMilestone — that type also appears in the non-tail
+    // zone when groupingThreshold == 1, which would produce a wrong position.
     final anchorOffset = state.anchorStart != null ? 1 : 0;
-    final sectionHeaderRawIdx = firstSingleIdxInMilestones > 0 ? anchorOffset + firstSingleIdxInMilestones : null;
+    final tailIdx = state.tailStartIndex;
+    final sectionHeaderRawIdx = tailIdx > 0 && tailIdx < milestones.length ? anchorOffset + tailIdx : null;
 
     // Build display list in chronological order (oldest at top, newest at bottom).
     // null = section-header slot; non-null = (rawIndex, milestone).
