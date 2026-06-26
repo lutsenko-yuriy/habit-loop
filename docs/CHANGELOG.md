@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.45.8] — 2026-06-26 (HAB-133)
+## [0.45.8] — 2026-06-27 (PR #185 merged)
 
 ### Changed — Pact Timeline
 
