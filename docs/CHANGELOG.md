@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.8] — 2026-06-26 (HAB-133)
+
+### Changed — Pact Timeline
+
+- [user] Timeline tail zone now shows all showups from the last N days (default 7, configurable 7–21 via Remote Config) instead of a fixed count of the most-recent showups
+- [app] Section header updated from "The most recent showups" to "Showups from the last N days" in all four locales
+
+---
+
 ## [0.45.7] — 2026-06-26 (PR #184)
 
 ### Changed — Workflow
