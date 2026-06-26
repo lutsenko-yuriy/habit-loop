@@ -488,7 +488,6 @@ jobs:
         env:
           FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
           RELEASE_NOTES:       ${{ needs.resolve-version.outputs.release_notes }}
-          RELEASE_NOTES:                  ${{ needs.resolve-version.outputs.release_notes }}
 
   # ── Tag the release and bump pubspec build number ─────────────────────────
   version-tag:
