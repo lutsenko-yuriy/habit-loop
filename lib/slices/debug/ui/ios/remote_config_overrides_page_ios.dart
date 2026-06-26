@@ -53,8 +53,8 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
             showBackendRestartBanner: showBackendRestartBanner,
             seedState: seedState,
             hasFakeBackend: seedNotifier.hasFakeBackend,
-            onSeedLocal: seedNotifier.seedLocalPacts,
-            onSeedRemote: seedNotifier.seedRemotePacts,
+            onSeedLocal: () => _showSeedPercentDialog(context, seedNotifier.seedLocalPacts),
+            onSeedRemote: () => _showSeedPercentDialog(context, seedNotifier.seedRemotePacts),
             onEntryTap: (entry) => _showEditDialog(
               context: context,
               entry: entry,
@@ -385,6 +385,76 @@ class _EditDialogIosState extends State<_EditDialogIos> {
             if (value != null) await widget.onSave(value);
           },
           child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+
+Future<void> _showSeedPercentDialog(
+  BuildContext context,
+  Future<void> Function({int successPercent}) onSeed,
+) async {
+  await showCupertinoDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    builder: (_) => _SeedPercentDialogIos(onSeed: onSeed),
+  );
+}
+
+class _SeedPercentDialogIos extends StatefulWidget {
+  const _SeedPercentDialogIos({required this.onSeed});
+
+  final Future<void> Function({int successPercent}) onSeed;
+
+  @override
+  State<_SeedPercentDialogIos> createState() => _SeedPercentDialogIosState();
+}
+
+class _SeedPercentDialogIosState extends State<_SeedPercentDialogIos> {
+  double _percent = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoAlertDialog(
+      title: const Text('Success rate'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Text(
+            '${_percent.round()}% done',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          CupertinoSlider(
+            value: _percent,
+            min: 0,
+            max: 100,
+            divisions: 100,
+            onChanged: (v) => setState(() => _percent = v),
+          ),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('0%', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel)),
+              Text('100%', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel)),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        CupertinoDialogAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await widget.onSeed(successPercent: _percent.round());
+          },
+          child: const Text('Seed'),
         ),
       ],
     );

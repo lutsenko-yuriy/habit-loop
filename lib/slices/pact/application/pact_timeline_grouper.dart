@@ -17,13 +17,10 @@ class PactTimelineGrouper {
 
   /// Groups [showups] (oldest-first, may include pending) into timeline milestones.
   ///
-  /// Returns a record with the flat milestone list and [tailStartIndex] — the index
-  /// of the first tail-zone milestone (i.e. the number of non-tail milestones). The
-  /// section header must be placed at [tailStartIndex], not by searching for the first
-  /// [SingleShowupMilestone], because [SingleShowupMilestone] can also appear in the
+  /// [now] anchors the tail-zone cutoff; defaults to [DateTime.now()].
+  /// [tailStartIndex] in the result is the authoritative tail boundary — do not infer
+  /// it from milestone types, since [SingleShowupMilestone] also appears in the
   /// non-tail zone when [groupingThreshold] == 1.
-  ///
-  /// [now] anchors the tail-zone cutoff. Defaults to [DateTime.now].
   ({List<PactTimelineMilestone> milestones, int tailStartIndex}) group(
     List<Showup> showups, {
     DateTime? now,
