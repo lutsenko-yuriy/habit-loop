@@ -294,13 +294,69 @@ jobs:
           name: android-release
 
       - name: Upload to Firebase App Distribution
-        uses: wzieba/Firebase-Distribution-Github-Action@v1.7.1
-        with:
-          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
-          groups: internal-testers
-          file: app-release.apk
-          releaseNotes: ${{ needs.resolve-version.outputs.release_notes }}
+        env:
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          SERVICE_ACCOUNT_JSON:    ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
+          RELEASE_NOTES:           ${{ needs.resolve-version.outputs.release_notes }}
+        run: |
+          set -euo pipefail
+
+          # Write service account to a temp file; clean up on exit regardless of outcome.
+          SA_FILE=$(mktemp)
+          trap 'rm -f "$SA_FILE"' EXIT
+          printf '%s' "$SERVICE_ACCOUNT_JSON" > "$SA_FILE"
+
+          gcloud auth activate-service-account --key-file="$SA_FILE" --quiet
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          echo "✓ Authenticated"
+
+          PROJECT_NUMBER=$(echo "$FIREBASE_ANDROID_APP_ID" | cut -d: -f2)
+          BASE="https://firebaseappdistribution.googleapis.com"
+
+          # Upload APK — returns a long-running operation.
+          echo "Uploading app-release.apk..."
+          UPLOAD=$(curl -sf -X POST \
+            "${BASE}/upload/v1/projects/${PROJECT_NUMBER}/apps/${FIREBASE_ANDROID_APP_ID}/releases:upload" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "X-Goog-Upload-File-Name: app-release.apk" \
+            -H "X-Goog-Upload-Protocol: raw" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @app-release.apk)
+          echo "Upload response: $UPLOAD"
+
+          OP_NAME=$(echo "$UPLOAD" | python3 -c "import json,sys; print(json.load(sys.stdin)['name'])")
+          echo "Operation: $OP_NAME"
+
+          # Poll until the operation completes (up to 90 s).
+          RELEASE_NAME=""
+          for i in $(seq 1 30); do
+            POLL=$(curl -sf "${BASE}/v1/${OP_NAME}" -H "Authorization: Bearer ${ACCESS_TOKEN}")
+            if echo "$POLL" | python3 -c "import json,sys; sys.exit(0 if json.load(sys.stdin).get('done') else 1)" 2>/dev/null; then
+              RELEASE_NAME=$(echo "$POLL" | python3 -c "import json,sys; print(json.load(sys.stdin)['response']['release']['name'])")
+              echo "✓ Processed: $RELEASE_NAME"
+              break
+            fi
+            echo "  Still processing... ($i/30)"
+            sleep 3
+          done
+          [[ -n "$RELEASE_NAME" ]] || { echo "Timed out waiting for upload to process" >&2; exit 1; }
+
+          # Attach release notes.
+          NOTES_JSON=$(python3 -c "import json,os; print(json.dumps(os.environ['RELEASE_NOTES']))")
+          curl -sf -X PATCH \
+            "${BASE}/v1/${RELEASE_NAME}?updateMask=releaseNotes.text" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"releaseNotes\":{\"text\":${NOTES_JSON}}}" > /dev/null
+          echo "✓ Release notes updated"
+
+          # Distribute to the internal-testers group.
+          curl -sf -X POST \
+            "${BASE}/v1/${RELEASE_NAME}:distribute" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"groupAliases":["internal-testers"]}' > /dev/null
+          echo "✓ Distributed to internal-testers"
 
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
