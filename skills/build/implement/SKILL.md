@@ -126,6 +126,8 @@ git commit -m "style: apply dart format (HAB-XX)"
 
 If no files changed, skip this step. Never mix formatting changes with functional changes in the same commit — keeping them separate makes the PR diff reviewable and ensures CI's `dart format -l 120 --set-exit-if-changed` check always passes.
 
+**After every post-review fix commit**, re-run the same command over `lib/ test/ integration_test/` and add another `style:` commit if anything changed — do not skip this even for small, "obviously clean" fixes.
+
 ### 10. Push
 
 All commits from TDD micro-cycles and the formatting commit already exist locally. Push them:
