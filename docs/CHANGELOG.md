@@ -4,6 +4,16 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.6] — 2026-06-26 (PR #183)
+
+### Changed — CI
+
+- [ci] Replace firebase-tools `appdistribution:distribute` with direct Firebase App Distribution REST API calls (gcloud auth + curl) — eliminates the firebase-tools auth problem entirely; root cause was an explicit `@13` pin that predated v14's ADC fix
+- [ci] Switch download-artifact to v8.0.1 (Node 24 native)
+- [ci] Enable `workflow_dispatch` builds from feature branches for Android-only test runs without merging to main
+
+---
+
 ## [0.45.5] — 2026-06-26 (PR #182)
 
 ### Changed — CI
