@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.4] — 2026-06-26 (PR #181)
+
+### Changed — CI
+
+- [ci] Activate service account via gcloud before firebase distribute — workaround for firebase-tools not picking up GOOGLE_APPLICATION_CREDENTIALS on GitHub Actions runners
+
+---
+
 ## [0.45.3] — 2026-06-25 (PR #180)
 
 ### Changed — CI

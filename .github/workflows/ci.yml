@@ -294,6 +294,11 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT_ANDROID" > "$RUNNER_TEMP/firebase-service-account.json"
           python3 -c "import json,sys; json.load(open('$RUNNER_TEMP/firebase-service-account.json'))" \
             || { echo "FIREBASE_SERVICE_ACCOUNT_ANDROID is not valid JSON — check the secret value." >&2; exit 1; }
+
+          gcloud auth activate-service-account \
+            --key-file="$RUNNER_TEMP/firebase-service-account.json"
+          gcloud config set project habit-loop-f17e8
+
           printf '%s' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.txt"
 
           firebase appdistribution:distribute app-release.apk \
@@ -481,6 +486,10 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT_IOS" > "$RUNNER_TEMP/firebase-service-account.json"
           python3 -c "import json,sys; json.load(open('$RUNNER_TEMP/firebase-service-account.json'))" \
             || { echo "FIREBASE_SERVICE_ACCOUNT_IOS is not valid JSON — check the secret value." >&2; exit 1; }
+
+          gcloud auth activate-service-account \
+            --key-file="$RUNNER_TEMP/firebase-service-account.json"
+          gcloud config set project habit-loop-f17e8
 
           IPA_PATH=$(find . -maxdepth 1 -name "*.ipa" | head -1)
           if [[ -z "$IPA_PATH" ]]; then
