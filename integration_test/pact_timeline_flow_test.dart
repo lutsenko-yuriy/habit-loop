@@ -294,7 +294,8 @@ void main() {
               await h.showupRepo.saveShowup(_showup('gm-d$i', DateTime(2099, 6, 8 + i, 8)));
             }
             for (var i = 0; i < 4; i++) {
-              await h.showupRepo.saveShowup(_showup('gm-f$i', DateTime(2099, 6, 11 + i, 8), status: ShowupStatus.failed));
+              await h.showupRepo
+                  .saveShowup(_showup('gm-f$i', DateTime(2099, 6, 11 + i, 8), status: ShowupStatus.failed));
             }
           },
         );
