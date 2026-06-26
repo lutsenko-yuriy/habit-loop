@@ -284,21 +284,13 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@13
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
+
       - name: Upload to Firebase App Distribution
         run: |
-          if [[ -z "$FIREBASE_ANDROID_APP_ID" || -z "$FIREBASE_SERVICE_ACCOUNT_ANDROID" ]]; then
-            echo "Missing FIREBASE_ANDROID_APP_ID or FIREBASE_SERVICE_ACCOUNT_ANDROID secret." >&2
-            exit 1
-          fi
-
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_ANDROID" > "$RUNNER_TEMP/firebase-service-account.json"
-          python3 -c "import json,sys; json.load(open('$RUNNER_TEMP/firebase-service-account.json'))" \
-            || { echo "FIREBASE_SERVICE_ACCOUNT_ANDROID is not valid JSON — check the secret value." >&2; exit 1; }
-
-          gcloud auth activate-service-account \
-            --key-file="$RUNNER_TEMP/firebase-service-account.json"
-          gcloud config set project habit-loop-f17e8
-
           printf '%s' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.txt"
 
           firebase appdistribution:distribute app-release.apk \
@@ -306,10 +298,8 @@ jobs:
             --release-notes-file "$RUNNER_TEMP/release-notes.txt" \
             --groups "internal-testers"
         env:
-          FIREBASE_ANDROID_APP_ID:          ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          FIREBASE_SERVICE_ACCOUNT_ANDROID: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
-          GOOGLE_APPLICATION_CREDENTIALS:   ${{ runner.temp }}/firebase-service-account.json
-          RELEASE_NOTES:                    ${{ needs.resolve-version.outputs.release_notes }}
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          RELEASE_NOTES:           ${{ needs.resolve-version.outputs.release_notes }}
 
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
@@ -476,21 +466,13 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@13
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
+
       - name: Upload to Firebase App Distribution
         run: |
-          if [[ -z "$FIREBASE_IOS_APP_ID" || -z "$FIREBASE_SERVICE_ACCOUNT_IOS" ]]; then
-            echo "Missing FIREBASE_IOS_APP_ID or FIREBASE_SERVICE_ACCOUNT_IOS secret." >&2
-            exit 1
-          fi
-
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_IOS" > "$RUNNER_TEMP/firebase-service-account.json"
-          python3 -c "import json,sys; json.load(open('$RUNNER_TEMP/firebase-service-account.json'))" \
-            || { echo "FIREBASE_SERVICE_ACCOUNT_IOS is not valid JSON — check the secret value." >&2; exit 1; }
-
-          gcloud auth activate-service-account \
-            --key-file="$RUNNER_TEMP/firebase-service-account.json"
-          gcloud config set project habit-loop-f17e8
-
           IPA_PATH=$(find . -maxdepth 1 -name "*.ipa" | head -1)
           if [[ -z "$IPA_PATH" ]]; then
             echo "No IPA file found in downloaded artifact." >&2
@@ -504,10 +486,8 @@ jobs:
             --release-notes-file "$RUNNER_TEMP/release-notes.txt" \
             --groups "internal-testers"
         env:
-          FIREBASE_IOS_APP_ID:            ${{ secrets.FIREBASE_IOS_APP_ID }}
-          FIREBASE_SERVICE_ACCOUNT_IOS:   ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
-          RELEASE_NOTES:                  ${{ needs.resolve-version.outputs.release_notes }}
+          FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          RELEASE_NOTES:       ${{ needs.resolve-version.outputs.release_notes }}
 
   # ── Tag the release and bump pubspec build number ─────────────────────────
   version-tag:

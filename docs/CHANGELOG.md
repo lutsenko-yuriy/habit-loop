@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.5] — 2026-06-26 (PR #182)
+
+### Changed — CI
+
+- [ci] Use google-github-actions/auth@v2 to set up Application Default Credentials — replaces manual GOOGLE_APPLICATION_CREDENTIALS wiring which firebase-tools 13.x does not pick up reliably
+
+---
+
 ## [0.45.4] — 2026-06-26 (PR #181)
 
 ### Changed — CI
