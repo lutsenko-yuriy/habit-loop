@@ -50,6 +50,7 @@ class PactTimelineService {
       anchorStart: _buildAnchorStart(pact),
       anchorEnd: _buildAnchorEnd(pact, showups, effectiveNow),
       milestones: _grouper.group(showups, now: effectiveNow),
+      tailPeriodInDays: _grouper.noGroupingTailPeriodInDays,
     );
   }
 

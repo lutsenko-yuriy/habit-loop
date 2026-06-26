@@ -9,6 +9,7 @@ final class PactTimelinePage {
     required this.anchorStart,
     required this.anchorEnd,
     required this.milestones,
+    required this.tailPeriodInDays,
   });
 
   final PactCreatedMilestone anchorStart;
@@ -17,4 +18,7 @@ final class PactTimelinePage {
   final PactTimelineMilestone anchorEnd;
 
   final List<PactTimelineMilestone> milestones;
+
+  /// Value of `pact_timeline_no_grouping_tail_period_in_days` used when building this page.
+  final int tailPeriodInDays;
 }
