@@ -133,10 +133,10 @@ jobs:
           flutter test integration_test/ -d "$SIMULATOR_UDID" \
             || flutter test integration_test/ -d "$SIMULATOR_UDID"
 
-  # ── Resolve build number (push to main only) ─────────────────────────────
+  # ── Resolve build number (push to main, or manual workflow_dispatch) ────────
   resolve-version:
     needs: test
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
       version_name: ${{ steps.resolve.outputs.version_name }}
@@ -153,19 +153,26 @@ jobs:
           VERSION_LINE=$(grep '^version:' pubspec.yaml)
           VERSION_FULL=${VERSION_LINE#version: }
           VERSION_NAME=${VERSION_FULL%+*}
-          PUBSPEC_BUILD=${VERSION_FULL#*+}
 
-          # Highest build number recorded in any version-* git tag
-          TAG_BUILD=$(git tag --list 'version-*' \
-            | grep -oP '(?<=version-[0-9]+\.[0-9]+\.[0-9]+-)\d+' \
-            | sort -n | tail -1)
-          TAG_BUILD=${TAG_BUILD:-0}
+          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
+            # Feature-branch test build — use 0 to avoid consuming a real build number.
+            echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+            echo "build_number=0"             >> "$GITHUB_OUTPUT"
+          else
+            PUBSPEC_BUILD=${VERSION_FULL#*+}
 
-          BUILD_NUMBER=$(( PUBSPEC_BUILD > TAG_BUILD ? PUBSPEC_BUILD : TAG_BUILD ))
-          BUILD_NUMBER=$(( BUILD_NUMBER + 1 ))
+            # Highest build number recorded in any version-* git tag
+            TAG_BUILD=$(git tag --list 'version-*' \
+              | grep -oP '(?<=version-[0-9]+\.[0-9]+\.[0-9]+-)\d+' \
+              | sort -n | tail -1)
+            TAG_BUILD=${TAG_BUILD:-0}
 
-          echo "version_name=$VERSION_NAME"  >> "$GITHUB_OUTPUT"
-          echo "build_number=$BUILD_NUMBER"  >> "$GITHUB_OUTPUT"
+            BUILD_NUMBER=$(( PUBSPEC_BUILD > TAG_BUILD ? PUBSPEC_BUILD : TAG_BUILD ))
+            BUILD_NUMBER=$(( BUILD_NUMBER + 1 ))
+
+            echo "version_name=$VERSION_NAME"  >> "$GITHUB_OUTPUT"
+            echo "build_number=$BUILD_NUMBER"  >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -204,10 +211,15 @@ jobs:
       - id: should_distribute
         name: Check if distribution is needed
         run: |
-          LAST_VERSION=${{ steps.last-published.outputs.last_version }}
-          RESULT=$(python3 scripts/changelog/distribute.py docs/CHANGELOG.md "$LAST_VERSION")
-          echo "should_distribute=$RESULT" >> "$GITHUB_OUTPUT"
-          echo "Distribution needed: $RESULT"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_distribute=true" >> "$GITHUB_OUTPUT"
+            echo "Distribution needed: true (workflow_dispatch override)"
+          else
+            LAST_VERSION=${{ steps.last-published.outputs.last_version }}
+            RESULT=$(python3 scripts/changelog/distribute.py docs/CHANGELOG.md "$LAST_VERSION")
+            echo "should_distribute=$RESULT" >> "$GITHUB_OUTPUT"
+            echo "Distribution needed: $RESULT"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -277,33 +289,25 @@ jobs:
     if: needs.build-android.outputs.success == 'true' && needs.resolve-version.outputs.should_distribute == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: android-release
 
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools@13
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
-
       - name: Upload to Firebase App Distribution
-        run: |
-          printf '%s' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.txt"
-
-          firebase appdistribution:distribute app-release.apk \
-            --app "$FIREBASE_ANDROID_APP_ID" \
-            --release-notes-file "$RUNNER_TEMP/release-notes.txt" \
-            --groups "internal-testers"
         env:
-          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          RELEASE_NOTES:           ${{ needs.resolve-version.outputs.release_notes }}
+          APP_ID:               ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          ARTIFACT_PATH:        app-release.apk
+          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
+          RELEASE_NOTES:        ${{ needs.resolve-version.outputs.release_notes }}
+          GROUP_ALIAS:          internal-testers
+        run: bash scripts/firebase/distribute.sh
 
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
     needs: resolve-version
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-latest
     outputs:
       success: ${{ steps.build.outputs.success }}
@@ -459,41 +463,30 @@ jobs:
     if: needs.build-ios.outputs.success == 'true' && needs.resolve-version.outputs.should_distribute == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: ios-release
 
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools@13
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
-
       - name: Upload to Firebase App Distribution
-        run: |
-          IPA_PATH=$(find . -maxdepth 1 -name "*.ipa" | head -1)
-          if [[ -z "$IPA_PATH" ]]; then
-            echo "No IPA file found in downloaded artifact." >&2
-            exit 1
-          fi
-
-          printf '%s' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.txt"
-
-          firebase appdistribution:distribute "$IPA_PATH" \
-            --app "$FIREBASE_IOS_APP_ID" \
-            --release-notes-file "$RUNNER_TEMP/release-notes.txt" \
-            --groups "internal-testers"
         env:
-          FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
-          RELEASE_NOTES:       ${{ needs.resolve-version.outputs.release_notes }}
+          APP_ID:               ${{ secrets.FIREBASE_IOS_APP_ID }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
+          RELEASE_NOTES:        ${{ needs.resolve-version.outputs.release_notes }}
+          GROUP_ALIAS:          internal-testers
+        run: |
+          ARTIFACT_PATH=$(find . -maxdepth 1 -name "*.ipa" | head -1)
+          [[ -n "$ARTIFACT_PATH" ]] || { echo "No IPA found in artifact" >&2; exit 1; }
+          export ARTIFACT_PATH
+          bash scripts/firebase/distribute.sh
 
   # ── Tag the release and bump pubspec build number ─────────────────────────
   version-tag:
     needs: [resolve-version, build-android, build-ios, distribute-android, distribute-ios]
     if: |
       always() &&
+      github.ref == 'refs/heads/main' &&
       needs.resolve-version.result == 'success' &&
       (needs.build-android.outputs.success == 'true' || needs.build-ios.outputs.success == 'true')
     runs-on: ubuntu-latest
