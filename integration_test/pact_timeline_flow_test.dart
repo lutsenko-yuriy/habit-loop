@@ -269,16 +269,31 @@ void main() {
     );
 
     testWidgets(
-      'tail_zone_showups_always_shown_individually: last N showups not grouped regardless of grouping rules',
+      'tail_zone_shows_showups_from_last_n_days_individually: showups within the last N days shown individually; older showups grouped',
       (tester) async {
         h = await AppHarness.create(tester);
-        // TODO: 1. Override first-page size via extraOverrides to fit all showups on one page.
-        // TODO: 2. Seed a pact with 20 consecutive done showups (10 older, 10 as tail zone by default).
-        // TODO: 3. Open timeline.
-        // TODO: 4. Assert the last 10 showups (tail) appear as individual or single-showup events
-        //         (not collapsed into a single group/streak covering all 10).
-        // TODO: 5. Assert the older 10 showups are shown as a single streak item
-        //         (>= threshold, single outcome, outside tail).
+        // TODO: 1. Override pact_timeline_no_grouping_tail_period_in_days to 7 and freeze
+        //         pactTimelineNowProvider to a fixed date via extraOverrides.
+        // TODO: 2. Seed an active pact with 10 consecutive done showups: 7 with scheduledAt
+        //         within the last 7 days, and 3 older ones (8–10 days ago), no notes.
+        // TODO: 3. Open the timeline.
+        // TODO: 4. Assert the 7 recent showups appear as individual milestone tiles
+        //         (each has a unique timeline-milestone-<id> key).
+        // TODO: 5. Assert the 3 older showups are collapsed into a single group/streak item
+        //         (not individual tiles).
+      },
+    );
+
+    testWidgets(
+      'tail_zone_section_header_shows_configured_days: header reads "Showups from the last N days" using RC value',
+      (tester) async {
+        h = await AppHarness.create(tester);
+        // TODO: 1. Override pact_timeline_no_grouping_tail_period_in_days to 14 and freeze
+        //         pactTimelineNowProvider to a fixed date via extraOverrides.
+        // TODO: 2. Seed an active pact with at least one done showup within the last 14 days.
+        // TODO: 3. Open the timeline.
+        // TODO: 4. Assert the tail zone section header text matches
+        //         strings.timelineRecentSection(14) (i.e. contains "14").
       },
     );
   });
