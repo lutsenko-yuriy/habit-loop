@@ -20,6 +20,39 @@ import 'harness.dart';
 
 final _testNow = DateTime(2099, 6, 15, 7, 55);
 
+// Pact used by grouping / tail-zone scenarios. Starts June 1 so that showups
+// seeded as far back as May 30 are within a plausible pact window.
+const _groupingPactId = 'timeline-grouping-test';
+final _groupingPact = Pact(
+  id: _groupingPactId,
+  habitName: 'Exercise',
+  startDate: DateTime(2099, 6, 1),
+  endDate: DateTime(2099, 12, 31),
+  showupDuration: const Duration(minutes: 30),
+  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+  status: PactStatus.active,
+  createdAt: DateTime(2099, 6, 1),
+);
+
+Showup _showup(String id, DateTime scheduledAt, {ShowupStatus status = ShowupStatus.done}) => Showup(
+      id: id,
+      pactId: _groupingPactId,
+      scheduledAt: scheduledAt,
+      duration: const Duration(minutes: 30),
+      status: status,
+    );
+
+/// RC overrides used for grouping / tail-zone tests: disables the tail zone
+/// and raises the grouping threshold so the algorithm can collapse runs.
+FakeRemoteConfigService _rcGrouping({
+  int tailPeriodInDays = 0,
+  int groupingThreshold = 10,
+}) =>
+    FakeRemoteConfigService(overrides: {
+      'pact_timeline_no_grouping_tail_period_in_days': tailPeriodInDays,
+      'pact_timeline_milestone_grouping_threshold': groupingThreshold,
+    });
+
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const _activePactId = 'timeline-test-active';
@@ -245,40 +278,164 @@ void main() {
     testWidgets(
       'short_mixed_run_shown_as_group_item: run below threshold collapses into a group item with done/failed/total counts',
       (tester) async {
-        h = await AppHarness.create(tester);
-        // TODO: 1. Override the tail-zone size RC param to 0 (so no showups are in the tail) and the
-        //         grouping threshold to its default (10) via extraOverrides on RemoteConfigService.
-        // TODO: 2. Seed a pact with a mixed run of done + failed showups totalling < 10, no notes.
-        // TODO: 3. Open timeline.
-        // TODO: 4. Assert a group item is visible showing total, done, and failed counts
-        //         (e.g. "5 showups — 3 done, 2 missed").
-        // TODO: 5. Assert no individual showup rows exist for that run.
+        // threshold=10, tail=0 (all showups are non-tail): 3 done + 4 failed = 7 total < 10 → group.
+        // Seeding June 8–14 (7 days) with no gaps so the gap-filler adds nothing.
+        h = await AppHarness.create(
+          tester,
+          extraOverrides: [
+            remoteConfigServiceProvider.overrideWithValue(_rcGrouping()),
+            todayProvider.overrideWithValue(_testNow),
+            pactDetailNowProvider.overrideWithValue(_testNow),
+            pactTimelineNowProvider.overrideWithValue(_testNow),
+          ],
+          beforePump: (h) async {
+            await h.pactRepo.savePact(_groupingPact);
+            for (var i = 0; i < 3; i++) {
+              await h.showupRepo.saveShowup(_showup('gm-d$i', DateTime(2099, 6, 8 + i, 8)));
+            }
+            for (var i = 0; i < 4; i++) {
+              await h.showupRepo.saveShowup(_showup('gm-f$i', DateTime(2099, 6, 11 + i, 8), status: ShowupStatus.failed));
+            }
+          },
+        );
+
+        final strings = l10n(tester);
+
+        await _openPactsPanel(tester);
+        await _openPactDetail(tester, 'Exercise');
+        await _openTimeline(tester);
+
+        await waitFor(tester, find.text(strings.pactTimelineTitle));
+
+        // ── 1. Group item shows total, done, and failed counts ─────────────────
+        await waitFor(tester, find.text(strings.timelineGroup(7, 3, 4)));
+        expect(find.text(strings.timelineGroup(7, 3, 4)), findsOneWidget);
+
+        // ── 2. No individual tile keys exist for those showups ─────────────────
+        for (var i = 0; i < 3; i++) {
+          expect(find.byKey(Key('timeline-milestone-gm-d$i')), findsNothing);
+        }
+        for (var i = 0; i < 4; i++) {
+          expect(find.byKey(Key('timeline-milestone-gm-f$i')), findsNothing);
+        }
       },
     );
 
     testWidgets(
       'long_same_outcome_run_shown_as_streak_item: run >= threshold shown as streak, not a group',
       (tester) async {
-        h = await AppHarness.create(tester);
-        // TODO: 1. Override tail-zone size to 0 via extraOverrides.
-        // TODO: 2. Seed a pact with >= 10 consecutive done showups (>= default threshold), no notes.
-        // TODO: 3. Open timeline.
-        // TODO: 4. Assert a streak item is visible (e.g. "10 showups done in a row").
-        // TODO: 5. Assert no group item is shown for that run.
+        // threshold=10, tail=0: 12 consecutive done showups (Jun 3–14, no gaps) >= threshold → streak.
+        // Seeding through June 14 so gap-filler adds nothing before _testNow.
+        h = await AppHarness.create(
+          tester,
+          extraOverrides: [
+            remoteConfigServiceProvider.overrideWithValue(_rcGrouping()),
+            todayProvider.overrideWithValue(_testNow),
+            pactDetailNowProvider.overrideWithValue(_testNow),
+            pactTimelineNowProvider.overrideWithValue(_testNow),
+          ],
+          beforePump: (h) async {
+            await h.pactRepo.savePact(_groupingPact);
+            for (var i = 0; i < 12; i++) {
+              await h.showupRepo.saveShowup(_showup('gs-streak-$i', DateTime(2099, 6, 3 + i, 8)));
+            }
+          },
+        );
+
+        final strings = l10n(tester);
+
+        await _openPactsPanel(tester);
+        await _openPactDetail(tester, 'Exercise');
+        await _openTimeline(tester);
+
+        await waitFor(tester, find.text(strings.pactTimelineTitle));
+
+        // ── 1. Streak item is shown with all 12 showups ────────────────────────
+        await waitFor(tester, find.text(strings.timelineDoneInARow(12)));
+        expect(find.text(strings.timelineDoneInARow(12)), findsOneWidget);
       },
     );
 
     testWidgets(
-      'tail_zone_showups_always_shown_individually: last N showups not grouped regardless of grouping rules',
+      'tail_zone_shows_showups_from_last_n_days_individually: showups within the last N days shown individually; older showups grouped',
       (tester) async {
-        h = await AppHarness.create(tester);
-        // TODO: 1. Override first-page size via extraOverrides to fit all showups on one page.
-        // TODO: 2. Seed a pact with 20 consecutive done showups (10 older, 10 as tail zone by default).
-        // TODO: 3. Open timeline.
-        // TODO: 4. Assert the last 10 showups (tail) appear as individual or single-showup events
-        //         (not collapsed into a single group/streak covering all 10).
-        // TODO: 5. Assert the older 10 showups are shown as a single streak item
-        //         (>= threshold, single outcome, outside tail).
+        // tail=7, now=Jun 15, cutoff=Jun 8 midnight (default threshold=1).
+        // Non-tail: Jun 5–7 (3 done, same outcome → streak = 1 milestone).
+        // Tail:     Jun 8–14 (7 done → 7 individual SingleShowupMilestone tiles).
+        h = await AppHarness.create(
+          tester,
+          extraOverrides: [
+            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(tailPeriodInDays: 7, groupingThreshold: 1)),
+            todayProvider.overrideWithValue(_testNow),
+            pactDetailNowProvider.overrideWithValue(_testNow),
+            pactTimelineNowProvider.overrideWithValue(_testNow),
+          ],
+          beforePump: (h) async {
+            await h.pactRepo.savePact(_groupingPact);
+            for (var i = 0; i < 3; i++) {
+              await h.showupRepo.saveShowup(_showup('gs-old-$i', DateTime(2099, 6, 5 + i, 8)));
+            }
+            for (var i = 0; i < 7; i++) {
+              await h.showupRepo.saveShowup(_showup('gs-tail-$i', DateTime(2099, 6, 8 + i, 8)));
+            }
+          },
+        );
+
+        final strings = l10n(tester);
+
+        await _openPactsPanel(tester);
+        await _openPactDetail(tester, 'Exercise');
+        await _openTimeline(tester);
+
+        await waitFor(tester, find.text(strings.pactTimelineTitle));
+
+        // ── 1. Each of the 7 tail showups has its own tappable tile ───────────
+        for (var i = 0; i < 7; i++) {
+          await waitFor(tester, find.byKey(Key('timeline-milestone-gs-tail-$i')));
+          expect(find.byKey(Key('timeline-milestone-gs-tail-$i')), findsOneWidget);
+        }
+
+        // ── 2. The 3 older showups are collapsed into one streak item ──────────
+        await waitFor(tester, find.text(strings.timelineDoneInARow(3)));
+        expect(find.text(strings.timelineDoneInARow(3)), findsOneWidget);
+        for (var i = 0; i < 3; i++) {
+          expect(find.byKey(Key('timeline-milestone-gs-old-$i')), findsNothing);
+        }
+      },
+    );
+
+    testWidgets(
+      'tail_zone_section_header_shows_configured_days: header reads "Showups from the last N days" using RC value',
+      (tester) async {
+        // tail=14, now=Jun 15, cutoff=Jun 1 (default threshold=1).
+        // Non-tail: May 30 (1 done → SingleShowupMilestone, tailStartIndex=1).
+        // Tail:     Jun 10 (1 done → SingleShowupMilestone) → header visible.
+        h = await AppHarness.create(
+          tester,
+          extraOverrides: [
+            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(tailPeriodInDays: 14, groupingThreshold: 1)),
+            todayProvider.overrideWithValue(_testNow),
+            pactDetailNowProvider.overrideWithValue(_testNow),
+            pactTimelineNowProvider.overrideWithValue(_testNow),
+          ],
+          beforePump: (h) async {
+            await h.pactRepo.savePact(_groupingPact);
+            await h.showupRepo.saveShowup(_showup('gs-hdr-old', DateTime(2099, 5, 30, 8)));
+            await h.showupRepo.saveShowup(_showup('gs-hdr-tail', DateTime(2099, 6, 10, 8)));
+          },
+        );
+
+        final strings = l10n(tester);
+
+        await _openPactsPanel(tester);
+        await _openPactDetail(tester, 'Exercise');
+        await _openTimeline(tester);
+
+        await waitFor(tester, find.text(strings.pactTimelineTitle));
+
+        // ── Section header shows the configured number of days ─────────────────
+        await waitFor(tester, find.text(strings.timelineRecentSection(14)));
+        expect(find.text(strings.timelineRecentSection(14)), findsOneWidget);
       },
     );
   });

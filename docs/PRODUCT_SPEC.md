@@ -43,7 +43,7 @@ The Habit Loop app allows the user to:
     - Milestone dots are color-coded by outcome (green = done, red = failed, grey = mixed/pending, teal = anchor); each milestone row places the date or date range in the left column and the outcome label in the right column, divided by the vertical spine
     - Milestone dates use the device's regional date format (e.g. dd/MM/yyyy on European devices, M/d/yyyy on US-region devices)
     - The timeline screen title shows the pact's habit name followed by "– Timeline" (e.g. "Meditate – Timeline")
-    - A section header ("The most recent showups") separates individually-shown tail-zone showups from grouped milestones above
+    - A section header ("Showups from the last N days") separates individually-shown tail-zone showups from grouped milestones above; N defaults to 7 and is configurable via Remote Config (range 7–21)
     - The timeline reloads automatically after returning from the showup detail screen, reflecting any status change immediately
 - See the details of a specific showup
   - The user must see the time of the showup

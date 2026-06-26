@@ -12,6 +12,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 - **HAB-115**: Editable notes on pact detail for inactive pacts (PR #155)
 - **HAB-116**: Pact timeline screen (PRs #168–176)
 - **HAB-129**: Timeline QA fixes — single-showup tappability + date region (PR #177)
+- **HAB-133**: Timeline tail: switch from count-based to days-based tail zone (PR #185)
 
 ## Unscheduled
 

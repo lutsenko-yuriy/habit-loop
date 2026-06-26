@@ -324,8 +324,12 @@
   "@timelinePactCreated": {},
   "timelineCurrentState": "Active",
   "@timelineCurrentState": {},
-  "timelineRecentSection": "The most recent showups",
-  "@timelineRecentSection": {},
+  "timelineRecentSection": "Showups from the last {days} days",
+  "@timelineRecentSection": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
   "timelinePactConcludedCompleted": "Pact completed",
   "@timelinePactConcludedCompleted": {},
   "timelinePactConcludedStopped": "Pact stopped",

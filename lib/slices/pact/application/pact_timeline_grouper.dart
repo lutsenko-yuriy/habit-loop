@@ -5,27 +5,41 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart'
 class PactTimelineGrouper {
   const PactTimelineGrouper({
     required this.groupingThreshold,
-    int? noGroupingTailSize,
-  }) : noGroupingTailSize = noGroupingTailSize ?? groupingThreshold;
+    this.noGroupingTailPeriodInDays = 7,
+  });
 
   /// Minimum single-outcome run length to emit a streak item rather than a group item.
   final int groupingThreshold;
 
-  /// Number of most-recent showups always shown individually. Defaults to [groupingThreshold].
-  final int noGroupingTailSize;
+  /// Showups whose scheduledAt falls within this many days before [now] are
+  /// always shown individually (tail zone). Defaults to 7.
+  final int noGroupingTailPeriodInDays;
 
   /// Groups [showups] (oldest-first, may include pending) into timeline milestones.
-  List<PactTimelineMilestone> group(List<Showup> showups) {
+  ///
+  /// [now] anchors the tail-zone cutoff; defaults to [DateTime.now()].
+  /// [tailStartIndex] in the result is the authoritative tail boundary — do not infer
+  /// it from milestone types, since [SingleShowupMilestone] also appears in the
+  /// non-tail zone when [groupingThreshold] == 1.
+  ({List<PactTimelineMilestone> milestones, int tailStartIndex}) group(
+    List<Showup> showups, {
+    DateTime? now,
+  }) {
+    final effectiveNow = now ?? DateTime.now();
+    // Normalize to midnight so the cutoff is calendar-date-based, not time-of-day-sensitive.
+    final today = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day);
+    final cutoff = today.subtract(Duration(days: noGroupingTailPeriodInDays));
+
     final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList();
-    final tailStart = (resolved.length - noGroupingTailSize).clamp(0, resolved.length);
+    final nonTail = resolved.where((s) => s.scheduledAt.isBefore(cutoff)).toList();
+    final tail = resolved.where((s) => !s.scheduledAt.isBefore(cutoff)).toList();
 
-    final nonTail = resolved.sublist(0, tailStart);
-    final tail = resolved.sublist(tailStart);
-
-    return [
-      ..._processNonTail(nonTail),
-      ..._processTail(tail),
-    ];
+    final nonTailMilestones = _processNonTail(nonTail);
+    final tailMilestones = _processTail(tail);
+    return (
+      milestones: [...nonTailMilestones, ...tailMilestones],
+      tailStartIndex: nonTailMilestones.length,
+    );
   }
 
   List<PactTimelineMilestone> _processNonTail(List<Showup> showups) {

@@ -231,13 +231,12 @@ final pactListQueryServiceProvider = Provider<PactListQueryService>((ref) {
 
 final pactTimelineServiceProvider = Provider<PactTimelineService>((ref) {
   final config = PactTimelineConfig.fromRemoteConfig(ref.watch(remoteConfigServiceProvider));
-  final tailSize = config.noGroupingTailSize > 0 ? config.noGroupingTailSize : null;
   return PactTimelineService(
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
     grouper: PactTimelineGrouper(
       groupingThreshold: config.milestoneGroupingThreshold,
-      noGroupingTailSize: tailSize,
+      noGroupingTailPeriodInDays: config.noGroupingTailPeriodInDays,
     ),
     cache: ref.watch(pactTimelineCacheProvider),
   );

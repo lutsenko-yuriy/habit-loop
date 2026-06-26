@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.8] — 2026-06-27 (PR #185 merged)
+
+### Changed — Pact Timeline
+
+- [user] Recent showups are now shown individually for the past 7 days, so you always see each day clearly no matter how consistent your streak has been
+- [app] Section header updated from "The most recent showups" to "Showups from the last N days" in all four locales
+
+---
+
 ## [0.45.7] — 2026-06-26 (PR #184)
 
 ### Changed — Workflow

@@ -1,3 +1,5 @@
+import 'dart:math' show Random;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -47,7 +49,7 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
 
   bool get hasFakeBackend => ref.read(fakeFirestoreClientProvider) is FakeFirestoreClient;
 
-  Future<void> seedLocalPacts() async {
+  Future<void> seedLocalPacts({int successPercent = 0}) async {
     if (state.isBusy) return;
     state = const DebugSeedDataState(
       status: DebugSeedState.busy,
@@ -66,19 +68,20 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
       }
 
       final now = DateTime.now();
+      final rng = Random();
       for (var i = 0; i < n; i++) {
         final pact = _buildTestPact(
           id: 'debug-seed-local-$i',
           name: _kHabitNames[i % _kHabitNames.length],
           now: now,
         );
-        final showups = _generateShowups(pact, now: now);
+        final showups = _generateShowups(pact, now: now, successPercent: successPercent, rng: rng);
         await pactService.createPact(pact, showups);
       }
 
       state = DebugSeedDataState(
         status: DebugSeedState.done,
-        message: 'Local pacts regenerated ($n pacts).',
+        message: 'Local pacts regenerated ($n pacts, $successPercent% done).',
       );
 
       ref.invalidate(hasActivePactsProvider);
@@ -91,7 +94,7 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
   }
 
   // Only callable when hasFakeBackend is true.
-  Future<void> seedRemotePacts() async {
+  Future<void> seedRemotePacts({int successPercent = 0}) async {
     if (state.isBusy) return;
     final fake = ref.read(fakeFirestoreClientProvider);
     if (fake is! FakeFirestoreClient) return;
@@ -111,6 +114,7 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
       fake.clear();
 
       final now = DateTime.now();
+      final rng = Random();
       final pactDocs = <String, Map<String, dynamic>>{};
       final showupDocs = <String, Map<String, dynamic>>{};
 
@@ -120,7 +124,7 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
           name: _kHabitNames[i % _kHabitNames.length],
           now: now,
         );
-        final showups = _generateShowups(pact, now: now);
+        final showups = _generateShowups(pact, now: now, successPercent: successPercent, rng: rng);
         pactDocs[pact.id] = SyncMapper.pactToDocument(pact, updatedAt: now);
         for (final s in showups) {
           showupDocs[s.id] = SyncMapper.showupToDocument(s, updatedAt: now);
@@ -137,7 +141,7 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
 
       state = DebugSeedDataState(
         status: DebugSeedState.done,
-        message: 'Remote pacts seeded ($n pacts).',
+        message: 'Remote pacts seeded ($n pacts, $successPercent% done).',
       );
 
       ref.invalidate(hasActivePactsProvider);
@@ -175,7 +179,12 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
     );
   }
 
-  List<Showup> _generateShowups(Pact pact, {required DateTime now}) {
+  List<Showup> _generateShowups(
+    Pact pact, {
+    required DateTime now,
+    required int successPercent,
+    required Random rng,
+  }) {
     return ShowupGenerator.generateWindow(
       pact,
       from: pact.startDate,
@@ -183,12 +192,13 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
     ).map((s) {
       final isPast = s.scheduledAt.add(pact.showupDuration).isBefore(now);
       if (isPast && s.status == ShowupStatus.pending) {
+        final isDone = rng.nextInt(100) < successPercent;
         return Showup(
           id: s.id,
           pactId: s.pactId,
           scheduledAt: s.scheduledAt,
           duration: s.duration,
-          status: ShowupStatus.failed,
+          status: isDone ? ShowupStatus.done : ShowupStatus.failed,
           note: s.note,
         );
       }

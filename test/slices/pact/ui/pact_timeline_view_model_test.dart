@@ -152,12 +152,12 @@ void main() {
     });
 
     test('fires single_showup event for SingleShowupMilestone', () async {
-      // threshold=10, tail=3 → last 3 showups become SingleShowupMilestones.
+      // tailPeriodInDays=45 puts all Jan 1-12 showups in the tail (within 45 days of Feb 15).
       final showups = List.generate(12, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
       final (:container, :analytics, cache: _) = _makeContainer(
         pacts: [_pact()],
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailSize: 3),
+        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailPeriodInDays: 45),
       );
       addTearDown(container.dispose);
       final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);

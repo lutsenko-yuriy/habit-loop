@@ -35,15 +35,15 @@ void main() {
       });
     });
 
-    group('noGroupingTailSize', () {
+    group('noGroupingTailPeriodInDays', () {
       test('defaults to 7', () {
         final config = PactTimelineConfig.fromRemoteConfig(FakeRemoteConfigService());
-        expect(config.noGroupingTailSize, 7);
+        expect(config.noGroupingTailPeriodInDays, 7);
       });
 
       test('reads custom value from RC', () {
-        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_no_grouping_tail_size': 15});
-        expect(PactTimelineConfig.fromRemoteConfig(rc).noGroupingTailSize, 15);
+        final rc = FakeRemoteConfigService(overrides: {'pact_timeline_no_grouping_tail_period_in_days': 15});
+        expect(PactTimelineConfig.fromRemoteConfig(rc).noGroupingTailPeriodInDays, 15);
       });
     });
   });
@@ -74,7 +74,7 @@ void main() {
       final b = PactTimelineConfig.fromRemoteConfig(
         FakeRemoteConfigService(overrides: {
           'pact_timeline_milestone_grouping_threshold': 5,
-          'pact_timeline_no_grouping_tail_size': 5,
+          'pact_timeline_no_grouping_tail_period_in_days': 5,
         }),
       );
       expect(a, isNot(equals(b)));
@@ -86,11 +86,11 @@ void main() {
       const config = PactTimelineConfig(
         enabled: true,
         milestoneGroupingThreshold: 8,
-        noGroupingTailSize: 4,
+        noGroupingTailPeriodInDays: 4,
       );
       expect(config.enabled, isTrue);
       expect(config.milestoneGroupingThreshold, 8);
-      expect(config.noGroupingTailSize, 4);
+      expect(config.noGroupingTailPeriodInDays, 4);
     });
   });
 }
