@@ -115,10 +115,10 @@ abstract final class RemoteConfigDefaults {
   /// to tune the grouping sensitivity. Remote Config key: `pact_timeline_milestone_grouping_threshold`.
   static const int pactTimelineMilestoneGroupingThreshold = 1;
 
-  /// Number of most-recent showups always shown individually on the timeline.
+  /// Number of days before now within which showups are always shown individually on the timeline.
   ///
-  /// Remote Config key: `pact_timeline_no_grouping_tail_size`.
-  static const int pactTimelineNoGroupingTailSize = 7;
+  /// Remote Config key: `pact_timeline_no_grouping_tail_period_in_days`. Valid range: 7–21.
+  static const int pactTimelineNoGroupingTailPeriodInDays = 7;
 
   /// Keys belonging to the feature-toggle category shown in a dedicated section
   /// of the debug RC overrides screen. All other keys fall under "A/B Tests".
@@ -178,7 +178,7 @@ abstract final class RemoteConfigDefaults {
     'network_sync_enabled': networkSyncEnabled,
     'pact_timeline_enabled': pactTimelineEnabled,
     'pact_timeline_milestone_grouping_threshold': pactTimelineMilestoneGroupingThreshold,
-    'pact_timeline_no_grouping_tail_size': pactTimelineNoGroupingTailSize,
+    'pact_timeline_no_grouping_tail_period_in_days': pactTimelineNoGroupingTailPeriodInDays,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -209,6 +209,6 @@ abstract final class RemoteConfigDefaults {
     'sync_max_consecutive_failures': (min: 1, max: 20),
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
     'pact_timeline_milestone_grouping_threshold': (min: 1, max: 50),
-    'pact_timeline_no_grouping_tail_size': (min: 7, max: 21),
+    'pact_timeline_no_grouping_tail_period_in_days': (min: 7, max: 21),
   };
 }

@@ -174,14 +174,15 @@ void main() {
 
   group('PactTimelineService — injected grouper', () {
     test('service delegates to the injected grouper', () async {
-      // threshold=10, tail=3 → 9 non-tail → 1 group + 3 individual = 4
+      // threshold=10, tailPeriodInDays=3, now=Jan 13 → cutoff=Jan 10
+      // Non-tail: Jan 1-9 (9 done, 9 < threshold → 1 group) + tail: Jan 10-12 (3 individual) = 4
       final showups = List.generate(12, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
       final svc = _service(
         pacts: [_pact()],
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailSize: 3),
+        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailPeriodInDays: 3),
       );
-      final page = await svc.loadAll(pactId: 'p1', now: _now);
+      final page = await svc.loadAll(pactId: 'p1', now: DateTime(2024, 1, 13));
       expect(page.milestones, hasLength(4));
     });
   });

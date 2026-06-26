@@ -169,24 +169,24 @@ void main() {
       });
     });
 
-    group('pact_timeline_no_grouping_tail_size', () {
+    group('pact_timeline_no_grouping_tail_period_in_days', () {
       test('key exists in all map', () {
-        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_size'), isTrue);
+        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_period_in_days'), isTrue);
       });
 
       test('default value is 7', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size'], 7);
+        expect(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_period_in_days'], 7);
       });
 
       test('constant matches all map value', () {
         expect(
-          RemoteConfigDefaults.pactTimelineNoGroupingTailSize,
-          equals(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_size']),
+          RemoteConfigDefaults.pactTimelineNoGroupingTailPeriodInDays,
+          equals(RemoteConfigDefaults.all['pact_timeline_no_grouping_tail_period_in_days']),
         );
       });
 
       test('appears in intRanges with correct bounds', () {
-        expect(RemoteConfigDefaults.intRanges['pact_timeline_no_grouping_tail_size'], (min: 7, max: 21));
+        expect(RemoteConfigDefaults.intRanges['pact_timeline_no_grouping_tail_period_in_days'], (min: 7, max: 21));
       });
     });
   });

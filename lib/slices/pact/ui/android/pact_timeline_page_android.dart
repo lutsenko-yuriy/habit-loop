@@ -81,7 +81,7 @@ class _TimelineList extends StatelessWidget {
     final children = [
       for (final entry in displayItems)
         if (entry == null)
-          _SectionHeader(label: l10n.timelineRecentSection)
+          _SectionHeader(label: l10n.timelineRecentSection(state.tailPeriodInDays))
         else
           Builder(
             builder: (ctx) {

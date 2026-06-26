@@ -161,14 +161,14 @@ void main() {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_streak, _single])));
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageAndroid)))!;
-      expect(find.text(l10n.timelineRecentSection), findsOneWidget);
+      expect(find.text(l10n.timelineRecentSection(7)), findsOneWidget);
     });
 
     testWidgets('no section header when only tail milestones present', (tester) async {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_single])));
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageAndroid)))!;
-      expect(find.text(l10n.timelineRecentSection), findsNothing);
+      expect(find.text(l10n.timelineRecentSection(7)), findsNothing);
     });
   });
 

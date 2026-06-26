@@ -45,10 +45,11 @@ class PactTimelineService {
       _cache.populate(pactId, showups);
     }
 
+    final effectiveNow = now ?? DateTime.now();
     return PactTimelinePage(
       anchorStart: _buildAnchorStart(pact),
-      anchorEnd: _buildAnchorEnd(pact, showups, now ?? DateTime.now()),
-      milestones: _grouper.group(showups),
+      anchorEnd: _buildAnchorEnd(pact, showups, effectiveNow),
+      milestones: _grouper.group(showups, now: effectiveNow),
     );
   }
 

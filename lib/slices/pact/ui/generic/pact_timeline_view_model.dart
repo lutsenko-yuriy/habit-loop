@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_timeline_analytics_events.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 
@@ -27,12 +28,14 @@ class PactTimelineViewModel extends FamilyNotifier<PactTimelineState, String> {
       ref.read(pactTimelineCacheProvider).evict(arg);
 
       final now = ref.read(pactTimelineNowProvider);
+      final config = PactTimelineConfig.fromRemoteConfig(ref.read(remoteConfigServiceProvider));
       final page = await ref.read(pactTimelineServiceProvider).loadAll(pactId: arg, now: now);
 
       state = state.copyWith(
         anchorStart: page.anchorStart,
         anchorEnd: page.anchorEnd,
         milestones: page.milestones,
+        tailPeriodInDays: config.noGroupingTailPeriodInDays,
         isLoading: false,
       );
 

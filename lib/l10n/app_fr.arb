@@ -323,8 +323,12 @@
   "@timelinePactCreated": {},
   "timelineCurrentState": "Actif",
   "@timelineCurrentState": {},
-  "timelineRecentSection": "Les présentations les plus récentes",
-  "@timelineRecentSection": {},
+  "timelineRecentSection": "Présentations des {days} derniers jours",
+  "@timelineRecentSection": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
   "timelinePactConcludedCompleted": "Pacte terminé",
   "@timelinePactConcludedCompleted": {},
   "timelinePactConcludedStopped": "Pacte arrêté",

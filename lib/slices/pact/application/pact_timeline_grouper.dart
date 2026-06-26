@@ -5,22 +5,26 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart'
 class PactTimelineGrouper {
   const PactTimelineGrouper({
     required this.groupingThreshold,
-    int? noGroupingTailSize,
-  }) : noGroupingTailSize = noGroupingTailSize ?? groupingThreshold;
+    this.noGroupingTailPeriodInDays = 7,
+  });
 
   /// Minimum single-outcome run length to emit a streak item rather than a group item.
   final int groupingThreshold;
 
-  /// Number of most-recent showups always shown individually. Defaults to [groupingThreshold].
-  final int noGroupingTailSize;
+  /// Showups whose scheduledAt falls within this many days before [now] are
+  /// always shown individually (tail zone). Defaults to 7.
+  final int noGroupingTailPeriodInDays;
 
   /// Groups [showups] (oldest-first, may include pending) into timeline milestones.
-  List<PactTimelineMilestone> group(List<Showup> showups) {
-    final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList();
-    final tailStart = (resolved.length - noGroupingTailSize).clamp(0, resolved.length);
+  ///
+  /// [now] anchors the tail-zone cutoff. Defaults to [DateTime.now].
+  List<PactTimelineMilestone> group(List<Showup> showups, {DateTime? now}) {
+    final effectiveNow = now ?? DateTime.now();
+    final cutoff = effectiveNow.subtract(Duration(days: noGroupingTailPeriodInDays));
 
-    final nonTail = resolved.sublist(0, tailStart);
-    final tail = resolved.sublist(tailStart);
+    final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList();
+    final nonTail = resolved.where((s) => s.scheduledAt.isBefore(cutoff)).toList();
+    final tail = resolved.where((s) => !s.scheduledAt.isBefore(cutoff)).toList();
 
     return [
       ..._processNonTail(nonTail),

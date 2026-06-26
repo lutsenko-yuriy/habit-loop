@@ -323,8 +323,12 @@
   "@timelinePactCreated": {},
   "timelineCurrentState": "Активен",
   "@timelineCurrentState": {},
-  "timelineRecentSection": "Последние явки",
-  "@timelineRecentSection": {},
+  "timelineRecentSection": "Явки за последние {days} дней",
+  "@timelineRecentSection": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
   "timelinePactConcludedCompleted": "Пакт завершён",
   "@timelinePactConcludedCompleted": {},
   "timelinePactConcludedStopped": "Пакт остановлен",
