@@ -77,14 +77,24 @@ void main() {
       });
 
       test('showup on the cutoff boundary is in the tail zone', () {
-        // cutoff = Jan 14 - 7 days = Jan 7; Jan 7 >= Jan 7 → tail
+        // cutoff = midnight(Jan 14) - 7 days = Jan 7 00:00; Jan 7 08:00 >= Jan 7 00:00 → tail
         final result = _g(tailPeriodInDays: 7).group([_done('s1', 7)], now: _now);
         expect(result, hasLength(1));
         expect(result.single, isA<SingleShowupMilestone>());
       });
 
+      test('cutoff is calendar-date-based regardless of time of day', () {
+        // now at 23:59 vs 00:01 must produce the same tail for Jan 7 (boundary day)
+        final showup = _done('s1', 7); // Jan 7 at 00:00
+        final nowLate = DateTime(2024, 1, 14, 23, 59);
+        final nowEarly = DateTime(2024, 1, 14, 0, 1);
+        final resultLate = _g(tailPeriodInDays: 7).group([showup], now: nowLate);
+        final resultEarly = _g(tailPeriodInDays: 7).group([showup], now: nowEarly);
+        expect(resultLate.single.runtimeType, resultEarly.single.runtimeType);
+      });
+
       test('showup one day before the cutoff is not in the tail zone', () {
-        // cutoff = Jan 7; Jan 6 < Jan 7 → non-tail → group (1 < threshold)
+        // cutoff = Jan 7 00:00; Jan 6 < Jan 7 → non-tail → group (1 < threshold)
         final result = _g(tailPeriodInDays: 7).group([_done('s1', 6)], now: _now);
         expect(result, hasLength(1));
         expect(result.single, isA<ShowupGroupMilestone>());

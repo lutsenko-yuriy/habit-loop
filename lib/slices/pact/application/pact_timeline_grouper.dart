@@ -20,7 +20,9 @@ class PactTimelineGrouper {
   /// [now] anchors the tail-zone cutoff. Defaults to [DateTime.now].
   List<PactTimelineMilestone> group(List<Showup> showups, {DateTime? now}) {
     final effectiveNow = now ?? DateTime.now();
-    final cutoff = effectiveNow.subtract(Duration(days: noGroupingTailPeriodInDays));
+    // Normalize to midnight so the cutoff is calendar-date-based, not time-of-day-sensitive.
+    final today = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day);
+    final cutoff = today.subtract(Duration(days: noGroupingTailPeriodInDays));
 
     final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList();
     final nonTail = resolved.where((s) => s.scheduledAt.isBefore(cutoff)).toList();
