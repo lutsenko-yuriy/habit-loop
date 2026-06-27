@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.13] — 2026-06-27 (PR #193 merged)
+
+### Added — Meta
+
+- [wip] HAB-130 WU1: knowledge vault (`docs/knowledge/`), `/note` skill, and slash command stub
+
+---
+
 ## [0.45.12] — 2026-06-27 (PR #191 merged)
 
 ### Changed — CI
