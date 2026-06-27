@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.11] — 2026-06-27
+
+### Changed — CI
+
+- [wip] HAB-134 WU1: dispatch_plan.py decision helper + unit tests (build/distribute flag computation for configurable workflow_dispatch runs)
+
+---
+
 ## [0.45.10] — 2026-06-27 (PR #189 merged)
 
 ### Changed — Skills
