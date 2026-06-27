@@ -59,25 +59,6 @@ If no actionable improvements emerged, say so explicitly and proceed to step 5.
 
 Write only the approved changes to their respective files. Skip any the user declined.
 
-### 5.1 Commit and open a PR (if changes were applied)
-
-If at least one improvement was approved in step 4:
-
-1. Create a branch from the latest `origin/main`:
-   ```bash
-   git fetch origin
-   git checkout -b feature/HAB-XX-debrief origin/main
-   ```
-2. Stage and commit the changed files:
-   ```bash
-   git add <files>
-   git commit -m "meta: debrief HAB-XX — <short summary of changes>"
-   ```
-3. Push and open a PR titled `meta: debrief HAB-XX — <short summary>`.
-4. Include the PR URL in the report (step 7).
-
-If no changes were approved, skip this step.
-
 ### 6. Write to the knowledge base
 
 Append a dated block to the `## Debrief summary` section of `docs/knowledge/notes/HAB-XX.md`.
@@ -109,7 +90,20 @@ Append a dated block to the `## Debrief summary` section of `docs/knowledge/note
 
 Use today's date. Mirror the content from the dialog — do not ask the user for anything at this step.
 
-### 7. Report back
+### 7. Commit and open a PR
+
+Create a branch from the latest `origin/main`, stage all changed files (approved workflow/skill files from step 5 + knowledge base entry from step 6), commit, push, and open a PR:
+
+```bash
+git fetch origin
+git checkout -b feature/HAB-XX-debrief origin/main
+git add <files>
+git commit -m "meta: debrief HAB-XX — <short summary>"
+```
+
+PR title: `meta: debrief HAB-XX — <short summary>`. Include the PR URL in the report (step 8).
+
+### 8. Report back
 
 Confirm: knowledge base updated at `docs/knowledge/notes/HAB-XX.md`, list any workflow/skill files changed (or "no file changes").
 
