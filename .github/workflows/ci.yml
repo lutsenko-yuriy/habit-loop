@@ -294,6 +294,7 @@ jobs:
           GOOGLE_SERVICES_JSON:  ${{ secrets.GOOGLE_SERVICES_JSON }}
 
       - name: Set up Android signing
+        if: github.event.inputs.environment != 'staging'
         run: |
           echo "$KEY_STORE_BASE64" | base64 --decode > android/upload-keystore.jks
           printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=../upload-keystore.jks\n' \
@@ -319,17 +320,24 @@ jobs:
 
       - id: build
         run: |
-          flutter build appbundle --release \
-            --build-number=${{ needs.resolve-version.outputs.build_number }}
-          flutter build apk --release \
-            --build-number=${{ needs.resolve-version.outputs.build_number }}
+          if [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+            flutter build apk --debug \
+              --build-number=${{ needs.resolve-version.outputs.build_number }}
+            echo "apk_name=app-debug.apk" >> "$GITHUB_OUTPUT"
+          else
+            flutter build appbundle --release \
+              --build-number=${{ needs.resolve-version.outputs.build_number }}
+            flutter build apk --release \
+              --build-number=${{ needs.resolve-version.outputs.build_number }}
+            echo "apk_name=app-release.apk" >> "$GITHUB_OUTPUT"
+          fi
           echo "success=true" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
         if: steps.build.outputs.success == 'true'
         with:
           name: android-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/${{ steps.build.outputs.apk_name }}
           retention-days: 7
 
   # ── Distribute Android to Firebase App Distribution ───────────────────────
@@ -372,12 +380,14 @@ jobs:
           GOOGLE_SERVICE_INFO_PLIST:   ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
 
       - name: Import signing certificate
+        if: github.event.inputs.environment != 'staging'
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.IOS_CERTIFICATE_P12 }}
           p12-password:    ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
 
       - name: Install provisioning profile
+        if: github.event.inputs.environment != 'staging'
         run: |
           PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p "$PROFILES_DIR"
@@ -421,6 +431,7 @@ jobs:
         run: pod repo update
 
       - name: Generate ExportOptions.plist
+        if: github.event.inputs.environment != 'staging'
         run: |
           cat > /tmp/ExportOptions.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -444,6 +455,13 @@ jobs:
 
       - id: build
         run: |
+          if [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+            flutter build ios --debug --no-codesign \
+              --build-number=${{ needs.resolve-version.outputs.build_number }}
+            echo "success=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # 1. Compile Dart + Flutter without code signing.
           # flutter build ios generates .flutter-plugins-dependencies (with the
           # correct CI pub-cache paths) before running pod install internally,
@@ -500,7 +518,7 @@ jobs:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
 
       - uses: actions/upload-artifact@v4
-        if: steps.build.outputs.success == 'true'
+        if: steps.build.outputs.success == 'true' && github.event.inputs.environment != 'staging'
         with:
           name: ios-release
           path: build/ios/ipa/*.ipa
