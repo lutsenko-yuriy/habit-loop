@@ -85,3 +85,11 @@ These aliases appear in code, UI copy, analytics, or older docs. Prefer the **ca
 | notification | **reminder** | `flutter_local_notifications`, `NotificationService` | *Reminder* is the user-facing concept; *notification* is the platform delivery mechanism. Both are correct in their layer. |
 | todo list | **showup list** | `docs/PRODUCT_SPEC.md` ("todo list of showups") | The dashboard's per-day list of showups. |
 | showups expected | **total showups** | `showups_expected` analytics property | Same value as `PactStats.totalShowups`. |
+
+---
+
+## Per-language canonical terms
+
+| Concept | Russian | French | German |
+|---|---|---|---|
+| **showup** | явка | séance | Showup |

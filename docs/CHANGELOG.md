@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.0] — 2026-06-27
+
+### Changed — Localisation
+
+- [user] HAB-128: improved translation consistency in French, German, and Russian
+- [app] HAB-128: showup → séance (FR), явка (RU), Showup (DE); Zeitleiste → Verlauf (DE); Fait → Réalisé (FR); beenden → stoppen (DE)
+
+---
+
 ## [0.45.15] — 2026-06-27 (PR #195 merged)
 
 ### Changed — Meta

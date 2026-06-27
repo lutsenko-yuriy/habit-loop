@@ -85,7 +85,7 @@
 
   "pactDetailTitle": "Pakt-Details",
   "sectionStats": "Statistiken",
-  "sectionTimeline": "Zeitleiste",
+  "sectionTimeline": "Verlauf",
   "sectionStopReason": "Stoppgrund",
   "sectionArchive": "Archiv",
   "stopPactError": "Pakt konnte nicht gestoppt werden. Bitte erneut versuchen.",
@@ -94,7 +94,7 @@
   "statsRemaining": "Ausstehend",
   "statsCancelled": "Gestoppt",
   "statsStreak": "Serie",
-  "statsShowups": "{count, plural, one{{count} Auftritt} other{{count} Auftritte}}",
+  "statsShowups": "{count, plural, one{{count} Showup} other{{count} Showups}}",
   "@statsShowups": {
     "placeholders": {
       "count": { "type": "int" }
@@ -112,11 +112,11 @@
   "pactStatusActive": "Aktiv",
   "pactStatusStopped": "Gestoppt",
   "pactStatusCompleted": "Abgeschlossen",
-  "stopPact": "Pakt beenden",
-  "stopPactTitle": "Diesen Pakt beenden?",
+  "stopPact": "Pakt stoppen",
+  "stopPactTitle": "Diesen Pakt stoppen?",
   "stopPactBody": "Diese Aktion kann nicht rückgängig gemacht werden. Du kannst den Pakt-Verlauf danach noch einsehen.",
   "stopPactReasonHint": "Grund (optional)",
-  "stopPactConfirm": "Beenden",
+  "stopPactConfirm": "Stoppen",
   "pactsActive": "{count, plural, =0{Keine aktiven Pakte} one{1 Pakt aktiv} other{{count} Pakte aktiv}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }
@@ -333,15 +333,15 @@
   "@timelinePactConcludedCompleted": {},
   "timelinePactConcludedStopped": "Pakt gestoppt",
   "@timelinePactConcludedStopped": {},
-  "timelineDoneInARow": "{count, plural, one{1 Einheit nacheinander erledigt} other{{count} Einheiten nacheinander erledigt}}",
+  "timelineDoneInARow": "{count, plural, one{1 Showup nacheinander erledigt} other{{count} Showups nacheinander erledigt}}",
   "@timelineDoneInARow": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timelineMissedInARow": "{count, plural, one{1 Einheit nacheinander verpasst} other{{count} Einheiten nacheinander verpasst}}",
+  "timelineMissedInARow": "{count, plural, one{1 Showup nacheinander verpasst} other{{count} Showups nacheinander verpasst}}",
   "@timelineMissedInARow": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timelineGroup": "{total} Einheiten — {done} erledigt, {failed} verpasst",
+  "timelineGroup": "{total} Showups — {done} erledigt, {failed} verpasst",
   "@timelineGroup": {
     "placeholders": {
       "total": { "type": "int" },
@@ -349,7 +349,7 @@
       "failed": { "type": "int" }
     }
   },
-  "timelineShowupsRemaining": "{count, plural, one{1 Einheit verbleibend} other{{count} Einheiten verbleibend}}",
+  "timelineShowupsRemaining": "{count, plural, one{1 Showup verbleibend} other{{count} Showups verbleibend}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
   },

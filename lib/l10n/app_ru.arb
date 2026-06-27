@@ -2,11 +2,11 @@
   "@@locale": "ru",
   "appTitle": "Habit Loop",
   "dashboardTitle": "Главная",
-  "todayShowups": "Сегодняшние визиты",
+  "todayShowups": "Сегодняшние явки",
   "noPactsYet": "Нет пактов",
   "noPactsDescription": "Создайте первый пакт, чтобы начать формировать привычку.",
   "createPact": "Создать пакт",
-  "noShowupsForDay": "Нет визитов в этот день",
+  "noShowupsForDay": "Нет явок в этот день",
   "showupDone": "Выполнено",
   "showupFailed": "Пропущено",
   "showupPending": "Ожидается",
@@ -19,8 +19,8 @@
   "pactDurationStep": "Длительность пакта",
   "startDateLabel": "Дата начала",
   "endDateLabel": "Дата окончания",
-  "showupDurationStep": "Длительность визита",
-  "showupDurationLabel": "Как долго длится каждый визит?",
+  "showupDurationStep": "Длительность явки",
+  "showupDurationLabel": "Как долго длится каждая явка?",
   "showupDurationMinutes": "{minutes} мин",
   "@showupDurationMinutes": {
     "placeholders": {
@@ -49,7 +49,7 @@
   "occurrenceFourth": "4-й",
   "dayOfMonthLabel": "День месяца",
   "reminderStep": "Напоминание",
-  "reminderLabel": "Напомнить перед визитом",
+  "reminderLabel": "Напомнить перед явкой",
   "reminderNone": "Без напоминания",
   "reminderAtStart": "В момент начала",
   "reminderMinutesBefore": "За {minutes} мин",
@@ -60,11 +60,11 @@
   },
   "summaryHabit": "Привычка",
   "summaryDuration": "Длительность пакта",
-  "summaryShowupDuration": "Длительность визита",
+  "summaryShowupDuration": "Длительность явки",
   "summarySchedule": "Расписание",
   "summaryReminder": "Напоминание",
   "commitmentStep": "Обязательство",
-  "commitmentWarning": "Пропущенный визит считается провалом. Исключений и пауз нет. Создавая этот пакт, вы обязуетесь появляться каждый раз.",
+  "commitmentWarning": "Пропущенная явка считается провалом. Исключений и пауз нет. Создавая этот пакт, вы обязуетесь появляться каждый раз.",
   "commitmentAccept": "Понимаю и обязуюсь",
   "commitmentCheckboxLabel": "Я прочитал(а) и принимаю правила обязательства",
   "commitmentRetypePrompt": "Введите название привычки для подтверждения",
@@ -94,7 +94,7 @@
   "statsRemaining": "Осталось",
   "statsCancelled": "Остановлено",
   "statsStreak": "Серия",
-  "statsShowups": "{count, plural, one{{count} визит} few{{count} визита} many{{count} визитов} other{{count} визита}}",
+  "statsShowups": "{count, plural, one{{count} явка} few{{count} явки} many{{count} явок} other{{count} явки}}",
   "@statsShowups": {
     "placeholders": {
       "count": { "type": "int" }
@@ -147,24 +147,24 @@
     "placeholders": { "date": { "type": "String" } }
   },
 
-  "showupDetailTitle": "Детали визита",
+  "showupDetailTitle": "Детали явки",
   "showupDetailHabit": "Привычка",
   "showupDetailScheduledAt": "Запланировано на",
   "showupDetailDuration": "Длительность",
   "showupDetailStatus": "Статус",
   "markDone": "Отметить выполненным",
   "markFailed": "Отметить пропущенным",
-  "showupAutoFailed": "Этот визит автоматически отмечен как пропущенный, так как был открыт после запланированного времени.",
+  "showupAutoFailed": "Эта явка автоматически отмечена как пропущенная, так как была открыта после запланированного времени.",
   "showupNoteLabel": "Заметка",
   "showupNoteSave": "Сохранить заметку",
   "showupNoteError": "Не удалось сохранить заметку. Попробуйте ещё раз.",
   "pactNoteLabel": "Заметка",
   "pactNoteSave": "Сохранить заметку",
   "pactNoteError": "Не удалось сохранить заметку. Попробуйте ещё раз.",
-  "showupMarkError": "Не удалось обновить статус визита. Попробуйте ещё раз.",
+  "showupMarkError": "Не удалось обновить статус явки. Попробуйте ещё раз.",
   "showupHabitDeleted": "(привычка удалена)",
   "showupViewPactDetails": "Подробности пакта",
-  "showupNotFound": "Этот визит больше недоступен.",
+  "showupNotFound": "Эта явка больше недоступна.",
 
   "languagePickerTitle": "Язык",
   "languageEnglish": "Английский",
@@ -173,14 +173,14 @@
   "languageRussian": "Русский",
   "languageSystem": "Использовать язык системы",
 
-  "notificationReminderTitle": "{habitName}, время для визита!",
+  "notificationReminderTitle": "{habitName}, время для явки!",
   "@notificationReminderTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
     }
   },
-  "notificationReminderBody": "Нажмите, чтобы отметить визит.",
-  "notificationDeadlineTitle": "{habitName}: отметьте визит выполненным",
+  "notificationReminderBody": "Нажмите, чтобы отметить явку.",
+  "notificationDeadlineTitle": "{habitName}: отметьте явку выполненной",
   "@notificationDeadlineTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
@@ -192,19 +192,19 @@
       "time": { "type": "String" }
     }
   },
-  "notificationTimeLimitTitle": "{habitName}: время визита!",
+  "notificationTimeLimitTitle": "{habitName}: время явки!",
   "@notificationTimeLimitTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
     }
   },
-  "notificationTimeLimitBody": "У вас {duration}, чтобы отметить визит.",
+  "notificationTimeLimitBody": "У вас {duration}, чтобы отметить явку.",
   "@notificationTimeLimitBody": {
     "placeholders": {
       "duration": { "type": "String" }
     }
   },
-  "notificationMissedTitle": "Вы пропустили этот визит",
+  "notificationMissedTitle": "Вы пропустили эту явку",
   "notificationMissedBody": "Ничего страшного — появитесь в следующий раз.",
   "notificationMarkDone": "Отметить как выполнено",
   "notificationDurationMinutes": "{count} мин",
