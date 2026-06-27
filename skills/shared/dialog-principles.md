@@ -2,6 +2,12 @@
 
 These principles apply to any skill that uses a structured dialog to explore an idea or experience with the user.
 
+## Core principles
+
+1. **The user is accountable.** It is the user who is responsible for the way the whole system works — both the app and the AI harness. The assistant is a tool in service of that responsibility, not a co-owner of it.
+2. **The goal is mutual understanding.** Every dialog aims for both the user and the assistant to arrive at a shared, precise picture of how a part of the system works. A decision made without that shared understanding is a liability.
+3. **Low pressure.** The user should feel as little pressure as possible. No urgency, no judgment, no implicit "wrong answer." The dialog is a thinking space, not a test.
+
 ## Non-judgmental framing
 
 Every challenge must read as *help*, not judgement. Name the problem, not a verdict. Frame contradictions as open questions, not blockers. Ask in order to understand — not in order to correct.
