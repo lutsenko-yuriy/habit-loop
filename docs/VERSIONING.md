@@ -10,7 +10,7 @@ The app follows [Semantic Versioning](https://semver.org/) with the Flutter vers
 Version name changes are manual and require reasoning presented to the user before bumping.
 
 **Build number (`+N`):**
-- Auto-incremented by CI only on the `main` branch, after each pipeline run where at least one platform build succeeds.
+- Auto-incremented by CI only on the `main` branch, after each pipeline run where at least one platform is successfully distributed.
 - Synchronized across Android and iOS — both platforms always use the same build number.
 - The CI commit message includes `[skip ci]` to prevent infinite loops.
 - Feature branch builds do not bump the version, create tags, or distribute to Firebase.
@@ -23,12 +23,23 @@ Version name changes are manual and require reasoning presented to the user befo
 
 **CI/CD pipeline structure:**
 ```
-check-skip (+ build gate) → test → resolve-version → build-android → distribute-android ─┐
-                                                    → build-ios     → distribute-ios     ──┤
-                                                                                           └→ version-tag (if ≥1 build succeeded)
+check-skip (+ build gate + dispatch plan) → test → resolve-version → build-android → distribute-android ─┐
+                                                                    → build-ios     → distribute-ios     ──┤
+                                                                                                           └→ version-tag (if ≥1 platform distributed)
 ```
 
-`check-skip` runs `scripts/changelog/distribute.py` to determine `should_build`. Builds, distribution, and version tagging only run on the `main` branch when `should_build=true`. Feature branches run tests only and never build or tag.
+`check-skip` runs `scripts/changelog/distribute.py` to determine `should_build`, and `scripts/ci/dispatch_plan.py` to resolve per-job flags (`build_android`, `build_ios`, `distribute_android`, `distribute_ios`, `group_alias`). Builds, distribution, and version tagging only run on the `main` branch when `should_build=true`. Feature branches run tests only and never build or tag.
+
+**Manual dispatch (`workflow_dispatch`) inputs:**
+
+| Input | Type | Default | Effect |
+|---|---|---|---|
+| `android` | boolean | `true` | Build the Android binary |
+| `ios` | boolean | `true` | Build the iOS binary |
+| `environment` | choice (`production`/`staging`) | `production` | `staging` suppresses distribution and sets `GROUP_ALIAS=staging-testers` |
+| `deploy` | boolean | `true` | Push to Firebase App Distribution (production only — ignored when staging) |
+
+`scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, and `distribute-ios`. For non-dispatch events the script is a passthrough — both platforms build and distribute as normal.
 
 **Selective build:** `check-skip` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only, `[ci]`-only, `[test]`-only, `[wip]`-only, or `[user-none]`-only entry), the entire build is skipped — no binary is produced, no build number is incremented, and no `version-*` tag is created. Because no `version-*` tag is created for build-skipped entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
 

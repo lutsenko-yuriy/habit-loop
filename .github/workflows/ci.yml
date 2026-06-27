@@ -1,11 +1,29 @@
-name: CI/CD
+name: build-and-deploy-apps
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:  # allows manual CI runs from the Actions tab
+  workflow_dispatch:
+    inputs:
+      android:
+        description: 'Android'
+        type: boolean
+        default: true
+      ios:
+        description: 'iOS'
+        type: boolean
+        default: true
+      environment:
+        description: 'Environment'
+        type: choice
+        options: [production, staging]
+        default: production
+      deploy:
+        description: 'Deploy (production only)'
+        type: boolean
+        default: true
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -18,6 +36,11 @@ jobs:
     outputs:
       should_skip: ${{ steps.ci-skip.outputs.should_skip }}
       should_build: ${{ steps.build-gate.outputs.should_build }}
+      build_android: ${{ steps.dispatch-plan.outputs.build_android }}
+      build_ios: ${{ steps.dispatch-plan.outputs.build_ios }}
+      distribute_android: ${{ steps.dispatch-plan.outputs.distribute_android }}
+      distribute_ios: ${{ steps.dispatch-plan.outputs.distribute_ios }}
+      group_alias: ${{ steps.dispatch-plan.outputs.group_alias }}
     steps:
       - id: ci-skip
         env:
@@ -55,6 +78,17 @@ jobs:
             echo "should_build=$RESULT" >> "$GITHUB_OUTPUT"
             echo "Build gate: $RESULT"
           fi
+
+      - id: dispatch-plan
+        if: steps.ci-skip.outputs.should_skip != 'true'
+        run: |
+          python3 scripts/ci/dispatch_plan.py \
+            --event "${{ github.event_name }}" \
+            --android "${{ github.event.inputs.android || 'true' }}" \
+            --ios "${{ github.event.inputs.ios || 'true' }}" \
+            --deploy "${{ github.event.inputs.deploy || 'true' }}" \
+            --environment "${{ github.event.inputs.environment || 'production' }}" \
+            >> "$GITHUB_OUTPUT"
 
   # ── Lint + unit tests (runs on push and PRs) ─────────────────────────────
   test:
@@ -181,8 +215,8 @@ jobs:
           VERSION_FULL=${VERSION_LINE#version: }
           VERSION_NAME=${VERSION_FULL%+*}
 
-          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
-            # Feature-branch test build — use 0 to avoid consuming a real build number.
+          if [[ "${{ github.ref }}" != "refs/heads/main" || "${{ github.event.inputs.environment }}" == "staging" ]]; then
+            # Feature-branch or staging build — use 0 to avoid consuming a real build number.
             echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
             echo "build_number=0"             >> "$GITHUB_OUTPUT"
           else
@@ -243,7 +277,8 @@ jobs:
 
   # ── Build signed Android AAB ──────────────────────────────────────────────
   build-android:
-    needs: resolve-version
+    needs: [check-skip, resolve-version]
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && needs.check-skip.outputs.build_android == 'true'
     runs-on: ubuntu-latest
     outputs:
       success: ${{ steps.build.outputs.success }}
@@ -259,6 +294,7 @@ jobs:
           GOOGLE_SERVICES_JSON:  ${{ secrets.GOOGLE_SERVICES_JSON }}
 
       - name: Set up Android signing
+        if: github.event.inputs.environment != 'staging'
         run: |
           echo "$KEY_STORE_BASE64" | base64 --decode > android/upload-keystore.jks
           printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=../upload-keystore.jks\n' \
@@ -284,23 +320,30 @@ jobs:
 
       - id: build
         run: |
-          flutter build appbundle --release \
-            --build-number=${{ needs.resolve-version.outputs.build_number }}
-          flutter build apk --release \
-            --build-number=${{ needs.resolve-version.outputs.build_number }}
+          if [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+            flutter build apk --debug \
+              --build-number=${{ needs.resolve-version.outputs.build_number }}
+            echo "apk_name=app-debug.apk" >> "$GITHUB_OUTPUT"
+          else
+            flutter build appbundle --release \
+              --build-number=${{ needs.resolve-version.outputs.build_number }}
+            flutter build apk --release \
+              --build-number=${{ needs.resolve-version.outputs.build_number }}
+            echo "apk_name=app-release.apk" >> "$GITHUB_OUTPUT"
+          fi
           echo "success=true" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
         if: steps.build.outputs.success == 'true'
         with:
           name: android-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/${{ steps.build.outputs.apk_name }}
           retention-days: 7
 
   # ── Distribute Android to Firebase App Distribution ───────────────────────
   distribute-android:
-    needs: [resolve-version, build-android]
-    if: needs.build-android.outputs.success == 'true'
+    needs: [check-skip, resolve-version, build-android]
+    if: needs.build-android.outputs.success == 'true' && needs.check-skip.outputs.distribute_android == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -315,13 +358,13 @@ jobs:
           ARTIFACT_PATH:        app-release.apk
           SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANDROID }}
           RELEASE_NOTES:        ${{ needs.resolve-version.outputs.release_notes }}
-          GROUP_ALIAS:          internal-testers
+          GROUP_ALIAS:          ${{ needs.check-skip.outputs.group_alias }}
         run: bash scripts/firebase/distribute.sh
 
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
-    needs: resolve-version
-    if: github.ref == 'refs/heads/main'
+    needs: [check-skip, resolve-version]
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && needs.check-skip.outputs.build_ios == 'true'
     runs-on: macos-latest
     outputs:
       success: ${{ steps.build.outputs.success }}
@@ -337,12 +380,14 @@ jobs:
           GOOGLE_SERVICE_INFO_PLIST:   ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
 
       - name: Import signing certificate
+        if: github.event.inputs.environment != 'staging'
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.IOS_CERTIFICATE_P12 }}
           p12-password:    ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
 
       - name: Install provisioning profile
+        if: github.event.inputs.environment != 'staging'
         run: |
           PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p "$PROFILES_DIR"
@@ -386,6 +431,7 @@ jobs:
         run: pod repo update
 
       - name: Generate ExportOptions.plist
+        if: github.event.inputs.environment != 'staging'
         run: |
           cat > /tmp/ExportOptions.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -409,6 +455,13 @@ jobs:
 
       - id: build
         run: |
+          if [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+            flutter build ios --debug --no-codesign \
+              --build-number=${{ needs.resolve-version.outputs.build_number }}
+            echo "success=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # 1. Compile Dart + Flutter without code signing.
           # flutter build ios generates .flutter-plugins-dependencies (with the
           # correct CI pub-cache paths) before running pod install internally,
@@ -465,7 +518,7 @@ jobs:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
 
       - uses: actions/upload-artifact@v4
-        if: steps.build.outputs.success == 'true'
+        if: steps.build.outputs.success == 'true' && github.event.inputs.environment != 'staging'
         with:
           name: ios-release
           path: build/ios/ipa/*.ipa
@@ -473,8 +526,8 @@ jobs:
 
   # ── Distribute iOS to Firebase App Distribution ───────────────────────────
   distribute-ios:
-    needs: [resolve-version, build-ios]
-    if: needs.build-ios.outputs.success == 'true'
+    needs: [check-skip, resolve-version, build-ios]
+    if: needs.build-ios.outputs.success == 'true' && needs.check-skip.outputs.distribute_ios == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -488,7 +541,7 @@ jobs:
           APP_ID:               ${{ secrets.FIREBASE_IOS_APP_ID }}
           SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
           RELEASE_NOTES:        ${{ needs.resolve-version.outputs.release_notes }}
-          GROUP_ALIAS:          internal-testers
+          GROUP_ALIAS:          ${{ needs.check-skip.outputs.group_alias }}
         run: |
           ARTIFACT_PATH=$(find . -maxdepth 1 -name "*.ipa" | head -1)
           [[ -n "$ARTIFACT_PATH" ]] || { echo "No IPA found in artifact" >&2; exit 1; }
@@ -502,7 +555,7 @@ jobs:
       always() &&
       github.ref == 'refs/heads/main' &&
       needs.resolve-version.result == 'success' &&
-      (needs.build-android.outputs.success == 'true' || needs.build-ios.outputs.success == 'true')
+      (needs.distribute-android.result == 'success' || needs.distribute-ios.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: write
