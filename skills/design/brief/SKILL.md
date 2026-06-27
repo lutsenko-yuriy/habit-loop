@@ -3,7 +3,7 @@ name: brief
 effort: FOCUSED
 reasoning: ARCHITECTURAL
 output_style: CONCISE
-description: Guide the user through articulating a rough feature idea and turn it into a properly scoped Linear ticket. Reads the product spec and glossary, engages in an iterative clarifying dialog (one question at a time), then creates the ticket and updates the glossary. Invoked from the summarize flow when the user wants to describe something new rather than pick up an existing ticket.
+description: Guide the user through articulating a rough feature idea and turn it into a properly scoped ticket. Reads the product spec and glossary, engages in an iterative clarifying dialog (one question at a time), then creates the ticket and updates the glossary. Invoked from the summarize flow when the user wants to describe something new rather than pick up an existing ticket.
 ---
 
 @skills/shared/project-config.md
@@ -58,7 +58,7 @@ Based on the answer, produce a simple ASCII mockup and present it for approval b
 
 ### 4. Create the ticket
 
-Once the idea is clear, create a Linear issue with `mcp__linear__save_issue` using the **Team ID** and **Project ID** from the project config:
+Once the idea is clear, create an issue in the PM tool with `mcp__linear__save_issue` using the **Team ID** and **Project ID** from the project config:
 
 - `team`: team ID from project config
 - `project`: project ID from project config

@@ -45,7 +45,7 @@ Use this format exactly. Omit a section entirely if it has no content.
 
 @skills/design/plan/resources/plan-template.md
 
-### 4. Post the plan as a Linear comment
+### 4. Post the plan as a PM comment
 
 Call `mcp__linear__save_comment` on the primary issue with the full plan text so `implement` can reference it.
 

@@ -4,7 +4,7 @@ effort: RAPID
 reasoning: TACTICAL
 tools: linear,github,files
 output_style: CONCISE
-description: Post-merge housekeeping after a PR is approved. Moves the linked Linear issues to "In QA", adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, proposes PRODUCT_SPEC.md and GLOSSARY.md updates for approval, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
+description: Post-merge housekeeping after a PR is approved. Moves the linked issues to "In QA", adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, proposes PRODUCT_SPEC.md and GLOSSARY.md updates for approval, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
 ---
 
 @skills/shared/project-config.md
@@ -21,7 +21,7 @@ Run all steps in order. Each step must succeed before moving to the next.
 
 **Precondition — multi-WU check:** Fetch the issue description (`mcp__linear__get_issue`). If it contains a **Work Units** section with any items still marked ⏳ (not started) or 🔄 (in progress), skip the state determination below and instead:
 1. Call `mcp__linear__save_issue` with `state: "In Progress"`.
-2. Add a Linear comment: "WU[N] shipped (PR #…). Remaining: [list pending WU bullets]."
+2. Add a PM comment: "WU[N] shipped (PR #…). Remaining: [list pending WU bullets]."
 3. Proceed to step 2 (CHANGELOG).
 
 Only continue to the state determination when all WUs are ✅.
@@ -101,6 +101,6 @@ Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 
 ### 7. Report back
 
-Confirm: issue(s) moved to In QA (or Done), changelog updated, version bumped, docs updated (list which files changed), PR merged. Include the new version number and the PR URL. Remind the user to move the ticket to Done in Linear once QA has passed.
+Confirm: issue(s) moved to In QA (or Done), changelog updated, version bumped, docs updated (list which files changed), PR merged. Include the new version number and the PR URL. Remind the user to move the ticket to Done in the PM tool once QA has passed.
 
 After reporting, propose: *"Want to run `/debrief HAB-XX` to capture what you learned from this ticket?"* (optional — do not block on it)

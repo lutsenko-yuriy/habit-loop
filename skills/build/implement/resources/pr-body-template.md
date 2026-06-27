@@ -5,7 +5,7 @@ gh pr create \
 ## Summary
 - <bullet points>
 
-## Linear
+## Issue
 Closes HAB-XX
 
 ## Test plan
