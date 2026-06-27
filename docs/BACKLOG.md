@@ -24,4 +24,3 @@ _(none)_
 
 - **HAB-106**: Skill execution observability — token/time/cost tracking in skill_router
 - **HAB-109**: Apply MIT licence to the repository (WU4) — low priority; deferred until trigger condition met (see `docs/LICENSING.md`)
-- **HAB-128**: L10n audit — audit translations across FR, DE, RU and update per-language glossary terms for consistency
