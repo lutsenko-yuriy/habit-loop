@@ -90,6 +90,8 @@ These aliases appear in code, UI copy, analytics, or older docs. Prefer the **ca
 
 ## Per-language canonical terms
 
+Canonical translation for each domain concept across all supported locales. Consult this table before writing or reviewing any l10n string.
+
 | Concept | Russian | French | German |
 |---|---|---|---|
 | **showup** | явка | séance | Showup |
