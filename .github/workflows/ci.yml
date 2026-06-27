@@ -21,7 +21,7 @@ on:
         options: [production, staging]
         default: production
       deploy:
-        description: 'Deploy (production only — ignored when staging)'
+        description: 'Push to Firebase App Distribution? (production only — ignored when staging)'
         type: boolean
         default: true
 
