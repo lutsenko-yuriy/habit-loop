@@ -8,15 +8,15 @@ on:
   workflow_dispatch:
     inputs:
       android:
-        description: 'Build Android binary?'
+        description: 'Android'
         type: boolean
         default: true
       ios:
-        description: 'Build iOS binary?'
+        description: 'iOS'
         type: boolean
         default: true
       environment:
-        description: 'Target environment (production / staging)'
+        description: 'Environment'
         type: choice
         options: [production, staging]
         default: production
