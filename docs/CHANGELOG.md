@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.5] — 2026-06-27 (PR #201 merged)
+
+### Changed — Meta
+
+- [meta] HAB-120: port brief, draft-scenarios, debrief, note skills + shared harness to yuriys-agentic-boyz; track .claude/hooks/ in git; fix block-main-writes.sh for cross-repo commits
+
 ## [0.46.4] — 2026-06-27 (PR #200 merged)
 
 ### Changed — Meta

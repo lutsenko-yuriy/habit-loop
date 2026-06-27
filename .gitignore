@@ -2,6 +2,7 @@
 .claude/*
 !.claude/agents/
 !.claude/commands/
+!.claude/hooks/
 CLAUDE.local.md
 
 # Miscellaneous
