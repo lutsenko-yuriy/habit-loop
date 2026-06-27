@@ -12,13 +12,14 @@ env:
 
 jobs:
 
-  # ── Skip if this is a CI version-bump commit ──────────────────────────────
+  # ── Skip if this is a CI version-bump commit; also determine build gate ───
   check-skip:
     runs-on: ubuntu-latest
     outputs:
-      should_skip: ${{ steps.check.outputs.should_skip }}
+      should_skip: ${{ steps.ci-skip.outputs.should_skip }}
+      should_build: ${{ steps.build-gate.outputs.should_build }}
     steps:
-      - id: check
+      - id: ci-skip
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
@@ -26,6 +27,33 @@ jobs:
             echo "should_skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "should_skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.ci-skip.outputs.should_skip != 'true'
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        if: steps.ci-skip.outputs.should_skip != 'true'
+        with:
+          python-version: '3.12'
+
+      - id: build-gate
+        if: steps.ci-skip.outputs.should_skip != 'true'
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "Build gate: true (workflow_dispatch override)"
+          else
+            LAST_VERSION=$(git tag --list 'version-*' \
+              | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
+              | sort -V | tail -1)
+            LAST_VERSION=${LAST_VERSION:-0.0.0}
+            echo "Last published version: $LAST_VERSION"
+            RESULT=$(python3 scripts/changelog/distribute.py docs/CHANGELOG.md "$LAST_VERSION")
+            echo "should_build=$RESULT" >> "$GITHUB_OUTPUT"
+            echo "Build gate: $RESULT"
           fi
 
   # ── Lint + unit tests (runs on push and PRs) ─────────────────────────────
@@ -135,14 +163,13 @@ jobs:
 
   # ── Resolve build number (push to main, or manual workflow_dispatch) ────────
   resolve-version:
-    needs: test
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    needs: [check-skip, test]
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && needs.check-skip.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     outputs:
       version_name: ${{ steps.resolve.outputs.version_name }}
       build_number: ${{ steps.resolve.outputs.build_number }}
       release_notes: ${{ steps.release_notes.outputs.release_notes }}
-      should_distribute: ${{ steps.should_distribute.outputs.should_distribute }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -207,19 +234,6 @@ jobs:
           echo "release_notes<<$DELIM" >> "$GITHUB_OUTPUT"
           cat release-notes.txt       >> "$GITHUB_OUTPUT"
           echo "$DELIM"               >> "$GITHUB_OUTPUT"
-
-      - id: should_distribute
-        name: Check if distribution is needed
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "should_distribute=true" >> "$GITHUB_OUTPUT"
-            echo "Distribution needed: true (workflow_dispatch override)"
-          else
-            LAST_VERSION=${{ steps.last-published.outputs.last_version }}
-            RESULT=$(python3 scripts/changelog/distribute.py docs/CHANGELOG.md "$LAST_VERSION")
-            echo "should_distribute=$RESULT" >> "$GITHUB_OUTPUT"
-            echo "Distribution needed: $RESULT"
-          fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -286,7 +300,7 @@ jobs:
   # ── Distribute Android to Firebase App Distribution ───────────────────────
   distribute-android:
     needs: [resolve-version, build-android]
-    if: needs.build-android.outputs.success == 'true' && needs.resolve-version.outputs.should_distribute == 'true'
+    if: needs.build-android.outputs.success == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -460,7 +474,7 @@ jobs:
   # ── Distribute iOS to Firebase App Distribution ───────────────────────────
   distribute-ios:
     needs: [resolve-version, build-ios]
-    if: needs.build-ios.outputs.success == 'true' && needs.resolve-version.outputs.should_distribute == 'true'
+    if: needs.build-ios.outputs.success == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -509,11 +523,8 @@ jobs:
             SUFFIX="android"
           elif [[ "$IOS_OK" == "success" ]]; then
             SUFFIX="ios"
-          elif [[ "${{ needs.resolve-version.outputs.should_distribute }}" == "false" ]]; then
-            # Distribution intentionally skipped: no [user] or [app] change.
-            SUFFIX="none"
           else
-            echo "version-tag: distribution was expected but no platform succeeded: android=$ANDROID_OK ios=$IOS_OK" >&2
+            echo "version-tag: no platform succeeded: android=$ANDROID_OK ios=$IOS_OK" >&2
             exit 1
           fi
 

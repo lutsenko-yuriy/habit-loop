@@ -26,4 +26,3 @@ _(none)_
 - **HAB-109**: Apply MIT licence to the repository (WU4) — low priority; deferred until trigger condition met (see `docs/LICENSING.md`)
 - **HAB-128**: L10n audit — audit translations across FR, DE, RU and update per-language glossary terms for consistency
 - **HAB-130**: Project knowledge base — evaluate Obsidian/NotebookLM; implement `/note` skill and wire `/debrief` to write summary entries
-- **HAB-131**: CI: enforce `[wip]` tag — skip build and distribution on intermediate WU merges

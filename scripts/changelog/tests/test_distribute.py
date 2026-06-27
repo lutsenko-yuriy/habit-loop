@@ -106,6 +106,26 @@ class TestShouldDistribute(unittest.TestCase):
         finally:
             os.unlink(path)
 
+    def test_wip_only_skips_build(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [wip] Intermediate WU merge.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
+    def test_test_only_skips_build(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [test] Added integration scenarios.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
     def test_meta_and_ci_together_skips_distribution(self):
         path = _tmp("""\
             ## [1.0.0] — 2026-01-01

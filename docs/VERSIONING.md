@@ -20,24 +20,21 @@ Version name changes are manual and require reasoning presented to the user befo
 - `both` — both Android and iOS builds distributed
 - `android` — only Android distributed
 - `ios` — only iOS distributed
-- `none` — builds succeeded but distribution was intentionally skipped (no `[user]` or `[app]` change in this CHANGELOG entry)
 
 **CI/CD pipeline structure:**
 ```
-check-skip → test → resolve-version → build-android → distribute-android ─┐
-                                     → build-ios     → distribute-ios     ──┤
-                                                                            └→ version-tag (if ≥1 build succeeded)
+check-skip (+ build gate) → test → resolve-version → build-android → distribute-android ─┐
+                                                    → build-ios     → distribute-ios     ──┤
+                                                                                           └→ version-tag (if ≥1 build succeeded)
 ```
 
-Distribution and version tagging only run on the `main` branch. Feature branches can still build (useful for testing) but won't distribute or tag.
+`check-skip` runs `scripts/changelog/distribute.py` to determine `should_build`. Builds, distribution, and version tagging only run on the `main` branch when `should_build=true`. Feature branches run tests only and never build or tag.
 
-**Selective distribution:** `resolve-version` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only or `[ci]`-only entry), the `distribute-android` and `distribute-ios` jobs are skipped. The build still compiles, the build number is still bumped, and a `version-*-none` git tag is created — keeping build numbers monotonic.
-
-**`[wip]` entries skip the build entirely** (unlike `[meta]`/`[ci]` which still compile and create a `version-*-none` tag). No binary is produced, no tag is created. CI pipeline changes to enforce the build skip are tracked separately; for now the tag documents the intent and lint enforces its use. Because no `version-*` tag is created for `[wip]` entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
+**Selective build:** `check-skip` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only, `[ci]`-only, `[test]`-only, `[wip]`-only, or `[user-none]`-only entry), the entire build is skipped — no binary is produced, no build number is incremented, and no `version-*` tag is created. Because no `version-*` tag is created for build-skipped entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
 
 **CHANGELOG tag taxonomy** (enforced by `scripts/changelog/lint.py`):
 
-| Tag | Meaning | Triggers distribution? | Release notes? |
+| Tag | Meaning | Triggers build? | Release notes? |
 |---|---|---|---|
 | `[user]` | User-visible app change | Yes | Yes |
 | `[app]` | App code change, not user-visible | Yes | No |
@@ -45,7 +42,7 @@ Distribution and version tagging only run on the `main` branch. Feature branches
 | `[meta]` | Skills / agent / workflow change | No | No |
 | `[ci]` | CI/CD process change | No | No |
 | `[user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
-| `[wip]` | Intermediate WU merge in a multi-WU ticket — tests run, builds and distribution entirely skipped, no `version-*` tag created | No | No |
+| `[wip]` | Intermediate WU merge in a multi-WU ticket — tests run, build entirely skipped, no `version-*` tag created | No | No |
 | `[non-user]` | Supplementary bullet descriptor (not a classification) | — | No |
 
 Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]`, `[app]`, `[test]`, `[meta]`, `[ci]`, or `[user-none]`). The tag list may be extended; each new tag must declare its distribution and release-note behaviour.

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""distribute.py — Decide whether new CHANGELOG entries warrant a Firebase distribution.
+"""distribute.py — Decide whether new CHANGELOG entries warrant a CI build (and Firebase distribution).
+
+Used by the CI `check-skip` job to determine `should_build`: if this returns 'false', the entire
+build is skipped (no binary produced, no version-* tag created). Used identically for both the
+build-skip gate and the distribution gate — a build always distributes when it runs.
 
 Usage:
     python3 scripts/changelog/distribute.py <changelog_path> [last_published_version]
@@ -9,8 +13,8 @@ Usage:
                             this version are examined.  Defaults to "0.0.0".
 
 Output (stdout):
-    'true'  — at least one new entry contains a [user] or [app] bullet.
-    'false' — all new entries contain only [test]/[meta]/[ci]/[user-none]/[non-user] bullets.
+    'true'  — at least one new entry contains a [user] or [app] bullet → build and distribute.
+    'false' — all new entries contain only [test]/[meta]/[ci]/[wip]/[user-none]/[non-user] bullets → skip build.
 
 Exit code: always 0 — never fails the CI pipeline.
 """
