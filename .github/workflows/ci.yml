@@ -356,7 +356,7 @@ jobs:
   # ── Build signed iOS IPA ──────────────────────────────────────────────────
   build-ios:
     needs: [check-skip, resolve-version]
-    if: github.ref == 'refs/heads/main' && needs.check-skip.outputs.build_ios == 'true'
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && needs.check-skip.outputs.build_ios == 'true'
     runs-on: macos-latest
     outputs:
       success: ${{ steps.build.outputs.success }}
