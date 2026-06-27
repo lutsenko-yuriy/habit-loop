@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.2] — 2026-06-27
+
+### Changed — Meta
+
+- [meta] HAB-116 debrief: knowledge base entry from Linear comments
+
+---
+
 ## [0.46.1] — 2026-06-27
 
 ### Changed — Meta
