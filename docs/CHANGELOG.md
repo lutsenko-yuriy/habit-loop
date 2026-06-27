@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.45.9] — 2026-06-27
+## [0.45.9] — 2026-06-27 (PR #188 merged)
 
 ### Changed — CI
 
