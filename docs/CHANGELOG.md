@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.4] — 2026-06-27 (PR #200 merged)
+
+### Changed — Meta
+
+- [meta] HAB-137 debrief: boundary question for generalise tickets in brief skill; scope confirmation prompt in implement skill
+
+---
+
 ## [0.46.3] — 2026-06-27 (PR #199 merged)
 
 ### Changed — Meta
