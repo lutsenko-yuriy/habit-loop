@@ -23,10 +23,8 @@ Read this file to resolve all project-specific constants referenced in skill ins
 |---|---|
 | Tool | Linear |
 | Issue prefix | `HAB` |
-| Team ID | `2de84a9b-453b-4991-8e09-f88715fa926e` |
-| Project ID | `c3afdc26-d306-4f72-bdb3-de9b01060d0f` |
 
-@skills/shared/pm-tool-mapping.md
+@skills/shared/pm-tool-linear-mapping.md
 
 ## Documentation paths
 

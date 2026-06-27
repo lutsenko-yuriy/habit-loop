@@ -1,6 +1,15 @@
-# PM Tool Mapping
+# PM Tool: Linear
 
-Generic operations → concrete MCP tool calls for the PM tool configured in `project-config.md` (currently Linear).
+Workspace IDs and operation → MCP tool mapping for Linear (the PM tool configured in `project-config.md`).
+
+## Workspace IDs
+
+| Setting | Value |
+|---|---|
+| Team ID | `2de84a9b-453b-4991-8e09-f88715fa926e` |
+| Project ID | `c3afdc26-d306-4f72-bdb3-de9b01060d0f` |
+
+## Operation mapping
 
 | Operation | MCP tool | Key parameters |
 |---|---|---|
