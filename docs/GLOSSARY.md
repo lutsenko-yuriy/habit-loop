@@ -95,3 +95,14 @@ Canonical translation for each domain concept across all supported locales. Cons
 | Concept | Russian | French | German |
 |---|---|---|---|
 | **showup** | явка | séance | Showup |
+| **pact** | пакт | pacte | Pakt |
+| **habit** | привычка | habitude | Gewohnheit |
+| **streak** | Серия | Série | Serie |
+| **done** (showup status) | Выполнено | Réalisé | Erledigt |
+| **failed** (showup status) | Пропущено | Échoué | Verpasst |
+| **stopped** (pact status) | Остановлен | Arrêté | Gestoppt |
+| **completed** (pact status) | Завершён | Terminé | Abgeschlossen |
+| **timeline** | Хронология | Chronologie | Verlauf |
+| **schedule** | Расписание | Horaire | Zeitplan |
+| **reminder** | Напоминание | Rappel | Erinnerung |
+| **archive** | Архив | Archivage | Archiv |
