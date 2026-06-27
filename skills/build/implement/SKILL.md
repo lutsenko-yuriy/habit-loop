@@ -27,6 +27,8 @@ Retrieve the issue details and find the implementation plan comment left by the 
 
 Fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**).
 
+**Show the full issue description to the user** and ask: *"Does this match what you want to build? Any scope clarifications before I start?"* Wait for confirmation.
+
 **If no approved plan comment exists — stop.** Report back:
 
 > "No approved plan found on HAB-XX. Invoke the `plan` skill to produce and approve a plan before implementation can begin."
