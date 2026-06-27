@@ -1,6 +1,13 @@
 # PM Tool: Linear
 
-Workspace IDs and operation → MCP tool mapping for Linear (the PM tool configured in `project-config.md`).
+All Linear-specific details live here. When porting to a different PM tool, replace this file — skill logic stays unchanged.
+
+## Identity
+
+| Setting | Value |
+|---|---|
+| Tool | Linear |
+| Issue prefix | `HAB` |
 
 ## Workspace IDs
 

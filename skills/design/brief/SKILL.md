@@ -58,7 +58,7 @@ Based on the answer, produce a simple ASCII mockup and present it for approval b
 
 ### 4. Create the ticket
 
-Once the idea is clear, create an issue in the PM tool with `mcp__linear__save_issue` using the **Team ID** and **Project ID** from the project config:
+Once the idea is clear, create an issue in the PM tool (PM mapping: **Create issue**) using the **Team ID** and **Project ID** from the PM tool mapping:
 
 - `team`: team ID from project config
 - `project`: project ID from project config

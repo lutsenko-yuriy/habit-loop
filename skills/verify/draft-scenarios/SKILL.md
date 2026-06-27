@@ -19,7 +19,7 @@ This skill produces scenario files, not production code.
 
 ### 1. Fetch the ticket
 
-Call `mcp__linear__get_issue` on the issue. Then call `mcp__linear__list_comments` to find any plan comment left by the `plan` skill. Read the description, acceptance criteria, and plan (if present) to understand the expected behaviour.
+Fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**) to find any plan comment left by the `plan` skill. Read the description, acceptance criteria, and plan (if present) to understand the expected behaviour.
 
 ### 2. Read the test harness
 

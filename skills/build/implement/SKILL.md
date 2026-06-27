@@ -25,7 +25,7 @@ description: Implement a work unit from an approved plan. Given a PM issue ID, f
 
 Retrieve the issue details and find the implementation plan comment left by the `plan` skill:
 
-Call `mcp__linear__get_issue`, then `mcp__linear__list_comments` on the issue.
+Fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**).
 
 **If no approved plan comment exists — stop.** Report back:
 
@@ -33,7 +33,7 @@ Call `mcp__linear__get_issue`, then `mcp__linear__list_comments` on the issue.
 
 ### 2. Move issue to In Progress
 
-Call `mcp__linear__save_issue` with `state: "In Progress"`.
+Move the issue to "In Progress" (PM mapping: **Move issue to state**).
 
 ### 3. Create or switch to the feature branch
 
@@ -148,11 +148,11 @@ If the total exceeds **400 LoC**, print a warning and ask the user to confirm be
 
 ### 13. Move issue to In Review
 
-Call `mcp__linear__save_issue` with `state: "In Review"`.
+Move the issue to "In Review" (PM mapping: **Move issue to state**).
 
 ### 14. Post the PR link to the issue
 
-Call `mcp__linear__save_comment` on the issue with the PR URL:
+Post a comment on the issue with the PR URL (PM mapping: **Post comment on issue**):
 
 ```
 PR opened: <PR URL>

@@ -9,7 +9,7 @@ description: Post-merge housekeeping after a PR is approved. Moves the linked is
 
 @skills/shared/project-config.md
 
-Use the **Team ID** and **Project ID** from the project config when calling `mcp__linear__save_issue` or related tools.
+Use the **Team ID** and **Project ID** from the PM tool mapping for all PM operations.
 
 ---
 
@@ -19,9 +19,9 @@ Run all steps in order. Each step must succeed before moving to the next.
 
 ### 1. Move the linked issue(s) to the correct post-merge state
 
-**Precondition — multi-WU check:** Fetch the issue description (`mcp__linear__get_issue`). If it contains a **Work Units** section with any items still marked ⏳ (not started) or 🔄 (in progress), skip the state determination below and instead:
-1. Call `mcp__linear__save_issue` with `state: "In Progress"`.
-2. Add a PM comment: "WU[N] shipped (PR #…). Remaining: [list pending WU bullets]."
+**Precondition — multi-WU check:** Fetch the issue description (PM mapping: **Fetch issue**). If it contains a **Work Units** section with any items still marked ⏳ (not started) or 🔄 (in progress), skip the state determination below and instead:
+1. Move the issue to "In Progress" (PM mapping: **Move issue to state**).
+2. Add a PM comment: "WU[N] shipped (PR #…). Remaining: [list pending WU bullets]." (**Post comment on issue**)
 3. Proceed to step 2 (CHANGELOG).
 
 Only continue to the state determination when all WUs are ✅.
@@ -32,7 +32,7 @@ Determine the target state by inspecting the PR file list (`gh pr view <number> 
 
 When in doubt, use **In QA**.
 
-Call `mcp__linear__save_issue` with the chosen `state` for each issue linked to the PR. If moving to In QA, do **not** move to Done — the ticket stays there until human testers sign off; the user moves it to Done manually.
+Move each linked issue to the chosen state (PM mapping: **Move issue to state**). If moving to In QA, do **not** move to Done — the ticket stays there until human testers sign off; the user moves it to Done manually.
 
 ### 2. Add a CHANGELOG entry
 

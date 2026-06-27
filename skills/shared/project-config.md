@@ -19,11 +19,6 @@ Read this file to resolve all project-specific constants referenced in skill ins
 
 ## Project management
 
-| Setting | Value |
-|---|---|
-| Tool | Linear |
-| Issue prefix | `HAB` |
-
 @skills/shared/pm-tool-linear-mapping.md
 
 ## Documentation paths

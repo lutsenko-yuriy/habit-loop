@@ -16,7 +16,7 @@ This skill produces an analytics plan, not code.
 
 ### 1. Fetch the issue
 
-Call `mcp__linear__get_issue` to retrieve the full details of the issue (title, description, acceptance criteria, mockups or flow descriptions).
+Fetch the issue (PM mapping: **Fetch issue**) to retrieve its full details (title, description, acceptance criteria, mockups or flow descriptions).
 
 ### 2. Read the existing analytics catalogue
 

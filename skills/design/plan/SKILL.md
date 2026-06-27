@@ -16,7 +16,7 @@ This skill produces plans, not code.
 
 ### 1. Fetch the issue(s)
 
-Call `mcp__linear__get_issue` for each relevant issue ID. If a milestone was named, call `mcp__linear__get_milestone` then `mcp__linear__list_issues` filtered to that milestone.
+Fetch each relevant issue (PM mapping: **Fetch issue**). If a milestone was named, fetch the milestone (**Fetch milestone**) then list its issues (**List issues in milestone**).
 
 ### 2. Read the codebase
 
@@ -47,7 +47,7 @@ Use this format exactly. Omit a section entirely if it has no content.
 
 ### 4. Post the plan as a PM comment
 
-Call `mcp__linear__save_comment` on the primary issue with the full plan text so `implement` can reference it.
+Post a comment on the primary issue with the full plan text so `implement` can reference it (PM mapping: **Post comment on issue**).
 
 ### 5. Present and wait
 
