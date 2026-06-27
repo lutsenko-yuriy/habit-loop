@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.15] — 2026-06-27 (PR #195 merged)
+
+### Changed — Meta
+
+- [meta] HAB-130 debrief: knowledge base entry + `/debrief` always creates branch+PR
+
+---
+
 ## [0.45.14] — 2026-06-27
 
 ### Changed — Meta
