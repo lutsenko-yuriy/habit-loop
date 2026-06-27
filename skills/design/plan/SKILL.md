@@ -6,7 +6,7 @@ output_style: DETAILED
 description: Produce a structured implementation plan for a PM issue or milestone before any code is written. Fetches the issue, reads the codebase, breaks the work into implementation units, posts the plan as a PM comment, and waits for user approval. For large changes spanning multiple files, new domain entities, new dependencies, or architectural shifts.
 ---
 
-The project management tool is **Linear**. The issue identifier prefix is **HAB**.
+@skills/shared/project-config.md
 
 This skill produces plans, not code.
 
@@ -16,11 +16,11 @@ This skill produces plans, not code.
 
 ### 1. Fetch the issue(s)
 
-Call `mcp__linear__get_issue` for each relevant issue ID. If a milestone was named, call `mcp__linear__get_milestone` then `mcp__linear__list_issues` filtered to that milestone.
+Fetch each relevant issue (PM mapping: **Fetch issue**). If a milestone was named, fetch the milestone (**Fetch milestone**) then list its issues (**List issues in milestone**).
 
 ### 2. Read the codebase
 
-Read `docs/ARCHITECTURE.md`, `docs/PRODUCT_SPEC.md`, and the source files most relevant to the work. Use search tools to locate existing models, repositories, view models, and UI files. Name real files and classes — do not invent hypothetical ones.
+Read the architecture and product spec files (paths from project config) and the source files most relevant to the work. Use search tools to locate existing models, repositories, view models, and UI files. Name real files and classes — do not invent hypothetical ones.
 
 The vertical-slice structure to keep in mind:
 - `lib/domain/` — shared pure domain models and repository interfaces
@@ -45,9 +45,9 @@ Use this format exactly. Omit a section entirely if it has no content.
 
 @skills/design/plan/resources/plan-template.md
 
-### 4. Post the plan as a Linear comment
+### 4. Post the plan as a PM comment
 
-Call `mcp__linear__save_comment` on the primary issue with the full plan text so `implement` can reference it.
+Post a comment on the primary issue with the full plan text so `implement` can reference it (PM mapping: **Post comment on issue**).
 
 ### 5. Present and wait
 
@@ -55,7 +55,7 @@ Show the plan to the user and wait for approval or adjustments. Do not proceed u
 
 ### 6. Update ARCHITECTURE.md (after approval)
 
-If the plan introduces new layers, directories, classes, or dependencies not already in `docs/ARCHITECTURE.md`, update that file now. Keep the existing structure — add to it, do not rewrite it.
+If the plan introduces new layers, directories, classes, or dependencies not already in the architecture doc (path from project config), update that file now. Keep the existing structure — add to it, do not rewrite it.
 
 ---
 

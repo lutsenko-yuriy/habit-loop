@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.3] — 2026-06-27 (PR #199 merged)
+
+### Changed — Meta
+
+- [meta] HAB-137: generalise skill harness — extract project config and PM tool mapping into shared files
+
+---
+
 ## [0.46.2] — 2026-06-27
 
 ### Changed — Meta

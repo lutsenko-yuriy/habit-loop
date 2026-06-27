@@ -3,14 +3,10 @@ name: brief
 effort: FOCUSED
 reasoning: ARCHITECTURAL
 output_style: CONCISE
-description: Guide the user through articulating a rough feature idea and turn it into a properly scoped Linear ticket. Reads the product spec and glossary, engages in an iterative clarifying dialog (one question at a time), then creates the ticket and updates the glossary. Invoked from the summarize flow when the user wants to describe something new rather than pick up an existing ticket.
+description: Guide the user through articulating a rough feature idea and turn it into a properly scoped ticket. Reads the product spec and glossary, engages in an iterative clarifying dialog (one question at a time), then creates the ticket and updates the glossary. Invoked from the summarize flow when the user wants to describe something new rather than pick up an existing ticket.
 ---
 
-The project management tool is **Linear**. The issue identifier prefix is **HAB**.
-
-Linear workspace IDs:
-- Team ID: `2de84a9b-453b-4991-8e09-f88715fa926e`
-- Project ID: `c3afdc26-d306-4f72-bdb3-de9b01060d0f`
+@skills/shared/project-config.md
 
 This skill produces a ticket, not code.
 
@@ -20,10 +16,10 @@ This skill produces a ticket, not code.
 
 ### 1. Read product context
 
-Read the following files in full before asking the user anything:
+Read the following files in full before asking the user anything (paths from the project config):
 
-- `docs/PRODUCT_SPEC.md` — what the app currently does
-- `docs/GLOSSARY.md` — canonical domain terms and known aliases
+- **Product spec** — what the app currently does
+- **Glossary** — canonical domain terms and known aliases
 
 This context is the reference against which the user's idea will be validated.
 
@@ -62,10 +58,10 @@ Based on the answer, produce a simple ASCII mockup and present it for approval b
 
 ### 4. Create the ticket
 
-Once the idea is clear, create a Linear issue with `mcp__linear__save_issue`:
+Once the idea is clear, create an issue in the PM tool (PM mapping: **Create issue**) using the **Team ID** and **Project ID** from the PM tool mapping:
 
-- `team`: `2de84a9b-453b-4991-8e09-f88715fa926e`
-- `project`: `c3afdc26-d306-4f72-bdb3-de9b01060d0f`
+- `team`: team ID from project config
+- `project`: project ID from project config
 - `title`: concise noun-phrase title
 - `labels`: `["Feature"]`
 - `priority`: 3 (Medium) unless the user indicated otherwise
@@ -95,9 +91,9 @@ Fill every section. "Out of scope" must always be present — even if short — 
 
 ### 5. Update the glossary (if new terms were introduced)
 
-If the dialog produced any new domain terms not already in `docs/GLOSSARY.md`, add them now.
+If the dialog produced any new domain terms not already in the glossary (path from project config), add them now.
 
-Open `docs/GLOSSARY.md`, locate the correct alphabetical position, and insert entries following the existing format. Do not remove or reorder existing entries.
+Open the glossary file, locate the correct alphabetical position, and insert entries following the existing format. Do not remove or reorder existing entries.
 
 ### 6. Report back
 
@@ -119,5 +115,5 @@ If the user abandoned in step 3:
 - Never ask more than one question per turn.
 - Never discuss implementation, architecture, or data models.
 - Never create a ticket until the idea is unambiguous and coherent.
-- Never update `docs/PRODUCT_SPEC.md` — that is deferred to HAB-119.
-- Never update `docs/BACKLOG.md` or `docs/CHANGELOG.md` — those are owned by the `ship` skill.
+- Never update the product spec (path from project config) — that is deferred to the post-implementation doc update.
+- Never update the backlog or changelog (paths from project config) — those are owned by the `ship` skill.

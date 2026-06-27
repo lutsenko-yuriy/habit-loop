@@ -7,11 +7,11 @@ output_style: CONCISE
 description: Draft scenarios (integration tests) from a ticket description before implementation. Runs after `plan` (if used) and before `implement`. Scenarios are written against the spec — not reverse-engineered from code — so they compile as stubs and give `implement` a concrete target to fill in and make green.
 ---
 
-The project management tool is **Linear**. The issue identifier prefix is **HAB**.
+@skills/shared/project-config.md
 
 This skill produces scenario files, not production code.
 
-**Terminology:** a *scenario* is an end-to-end integration test written in `integration_test/` using `AppHarness`. The terms "scenario" and "integration test" are synonymous in this project.
+**Terminology:** a *scenario* is an end-to-end integration test written in the integration test directory (from the project config) using the test harness described there. The terms "scenario" and "integration test" are synonymous in this project.
 
 ---
 
@@ -19,15 +19,15 @@ This skill produces scenario files, not production code.
 
 ### 1. Fetch the ticket
 
-Call `mcp__linear__get_issue` on the issue. Then call `mcp__linear__list_comments` to find any plan comment left by the `plan` skill. Read the description, acceptance criteria, and plan (if present) to understand the expected behaviour.
+Fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**) to find any plan comment left by the `plan` skill. Read the description, acceptance criteria, and plan (if present) to understand the expected behaviour.
 
 ### 2. Read the test harness
 
-Read `integration_test/harness.dart` and any existing scenarios in `integration_test/` for the affected slice or feature area. Note naming conventions, helper patterns, and what is already covered so you do not duplicate.
+Read the harness file and any existing scenarios in the integration test directory (paths from the project config) for the affected slice or feature area. Note naming conventions, helper patterns, and what is already covered so you do not duplicate.
 
 ### 3. Draft scenarios
 
-Produce draft scenario files in `integration_test/` using `AppHarness`. Cover:
+Produce draft scenario files in the integration test directory (from the project config) using the test harness described there. Cover:
 
 - **Happy path** — the primary flow described in the ticket
 - **Unhappy paths** — the most critical failure scenarios: missing data, invalid state, navigation back-stack correctness, cancelled operations, etc.
@@ -47,7 +47,7 @@ This level of detail lets the user verify the test logic before anything is writ
 
 ### 5. Write the scenarios
 
-Write the approved scenario files as **stubs**: each test function contains only `// TODO:` comments describing each step exactly as reviewed in step 4 — no driver calls, no assertions. The stubs must compile against `AppHarness` but verify nothing. The `implement` skill will replace the comments with actual driver code as part of making each scenario green.
+Write the approved scenario files as **stubs**: each test function contains only `// TODO:` comments describing each step exactly as reviewed in step 4 — no driver calls, no assertions. The stubs must compile against the project harness but verify nothing. The `implement` skill will replace the comments with actual driver code as part of making each scenario green.
 
 ### 6. Report back
 
@@ -58,7 +58,7 @@ List the files written and confirm that `implement` can proceed with the comment
 ## Constraints
 
 - Do not write production code.
-- All scenario files must be written under `integration_test/`.
+- All scenario files must be written under the integration test directory (from the project config).
 - Scenario stubs must compile but contain no assertions; `implement` fills in the driver code and makes them green.
-- Use `AppHarness` from `integration_test/harness.dart` for all scenario setup.
+- Use the test harness (path and usage from the project config) for all scenario setup.
 - Do not duplicate scenarios that already cover the same behaviour.

@@ -7,7 +7,7 @@ output_style: CONCISE
 description: Runtime and migration review of a PR. Checks for launch-time failures, migration issues, platform-specific risks, state consistency problems, and business logic edge cases. Leaves inline comments prefixed with [audit] and produces a structured summary. Invoke after `implement` opens a PR, in parallel with `review`.
 ---
 
-The Git host is **GitHub**. The tech stack is **Flutter (Dart), Riverpod, sqflite, Firebase**.
+@skills/shared/project-config.md
 
 ---
 

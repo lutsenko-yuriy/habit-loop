@@ -7,7 +7,7 @@ output_style: CONCISE
 description: Post-ticket retrospective. Reads git history, conducts a one-question-at-a-time dialog, proposes targeted improvements to workflow/skill/docs files, applies approved changes, and writes a summary to the project knowledge base.
 ---
 
-The issue identifier prefix is **HAB**.
+@skills/shared/project-config.md
 
 This skill produces workflow improvements and a retrospective record, not code.
 

@@ -6,7 +6,7 @@ output_style: DETAILED
 description: Analytics planning for a feature before implementation begins. Identifies the user-facing actions and screens introduced by a task, proposes which events and screen views to track, flags PII concerns, and updates docs/ANALYTICS_EVENTS.md after approval. Invoke for any feature or change with user-visible screens or interactions, before `plan` or `implement`.
 ---
 
-The project management tool is **Linear**. The issue identifier prefix is **HAB**.
+@skills/shared/project-config.md
 
 This skill produces an analytics plan, not code.
 
@@ -16,11 +16,11 @@ This skill produces an analytics plan, not code.
 
 ### 1. Fetch the issue
 
-Call `mcp__linear__get_issue` to retrieve the full details of the issue (title, description, acceptance criteria, mockups or flow descriptions).
+Fetch the issue (PM mapping: **Fetch issue**) to retrieve its full details (title, description, acceptance criteria, mockups or flow descriptions).
 
 ### 2. Read the existing analytics catalogue
 
-Read `docs/ANALYTICS_EVENTS.md` in full to understand what is already tracked and avoid proposing duplicates.
+Read the analytics events file (path from project config) in full to understand what is already tracked and avoid proposing duplicates.
 
 ### 3. Read the product context
 
@@ -65,7 +65,7 @@ Do not proceed until the user explicitly approves or provides corrections.
 
 ### 8. Update the analytics catalogue
 
-Open `docs/ANALYTICS_EVENTS.md` and append the approved entries to the appropriate sections (Events, Screen Views). Include the issue reference so the origin is traceable.
+Open the analytics events file (path from project config) and append the approved entries to the appropriate sections (Events, Screen Views). Include the issue reference so the origin is traceable.
 
 Do not modify existing entries — only append.
 

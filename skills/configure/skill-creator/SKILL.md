@@ -29,7 +29,7 @@ Determine mode from the argument:
 Ask in one message:
 1. "What should this skill do? (1–3 sentences)"
 2. "When is it invoked? (before implementation, post-merge, on demand, at session start, …)"
-3. "Does it need session tools — file read/write, Linear, GitHub, or Bash?"
+3. "Does it need session tools — file read/write, PM tool, GitHub, or Bash?"
 
 ### 2. Infer metadata
 
@@ -37,7 +37,7 @@ Ask in one message:
 |---|---|
 | `effort` | THOROUGH if codebase-wide; FOCUSED for scoped generation or review; RAPID for fast lookups |
 | `reasoning` | ARCHITECTURAL for system-design or planning; TACTICAL for implementation; MECHANICAL for formatting |
-| `needs_session_tools` | `true` if Linear/GitHub MCP, file tools, or Bash are needed |
+| `needs_session_tools` | `true` if PM tool / GitHub MCP, file tools, or Bash are needed |
 | Category | `configure`, `design`, `build`, `manage`, `run`, or `verify` |
 | Name | Short kebab-case verb or noun matching the primary action |
 
