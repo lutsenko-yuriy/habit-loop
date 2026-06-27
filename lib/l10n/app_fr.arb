@@ -2,12 +2,12 @@
   "@@locale": "fr",
   "appTitle": "Habit Loop",
   "dashboardTitle": "Tableau de bord",
-  "todayShowups": "Rendez-vous du jour",
+  "todayShowups": "Séances du jour",
   "noPactsYet": "Aucun pacte",
   "noPactsDescription": "Créez votre premier pacte pour commencer à construire une habitude.",
   "createPact": "Créer un pacte",
-  "noShowupsForDay": "Aucun rendez-vous ce jour",
-  "showupDone": "Fait",
+  "noShowupsForDay": "Aucune séance ce jour",
+  "showupDone": "Réalisé",
   "showupFailed": "Échoué",
   "showupPending": "En attente",
   "showupPlanned": "Planifié",
@@ -19,8 +19,8 @@
   "pactDurationStep": "Durée du pacte",
   "startDateLabel": "Date de début",
   "endDateLabel": "Date de fin",
-  "showupDurationStep": "Durée du rendez-vous",
-  "showupDurationLabel": "Combien de temps dure chaque rendez-vous ?",
+  "showupDurationStep": "Durée de la séance",
+  "showupDurationLabel": "Combien de temps dure chaque séance ?",
   "showupDurationMinutes": "{minutes} min",
   "@showupDurationMinutes": {
     "placeholders": {
@@ -49,7 +49,7 @@
   "occurrenceFourth": "4e",
   "dayOfMonthLabel": "Jour du mois",
   "reminderStep": "Rappel",
-  "reminderLabel": "Me rappeler avant le rendez-vous",
+  "reminderLabel": "Me rappeler avant la séance",
   "reminderNone": "Pas de rappel",
   "reminderAtStart": "Au début",
   "reminderMinutesBefore": "{minutes} min avant",
@@ -60,11 +60,11 @@
   },
   "summaryHabit": "Habitude",
   "summaryDuration": "Durée du pacte",
-  "summaryShowupDuration": "Durée du rendez-vous",
+  "summaryShowupDuration": "Durée de la séance",
   "summarySchedule": "Horaire",
   "summaryReminder": "Rappel",
   "commitmentStep": "Engagement",
-  "commitmentWarning": "Manquer un rendez-vous compte comme un échec. Il n'y a aucune exception et aucune pause possible. En créant ce pacte, vous vous engagez à vous présenter à chaque fois.",
+  "commitmentWarning": "Manquer une séance compte comme un échec. Il n'y a aucune exception et aucune pause possible. En créant ce pacte, vous vous engagez à vous présenter à chaque fois.",
   "commitmentAccept": "Je comprends et m'engage",
   "commitmentCheckboxLabel": "J'ai lu et j'accepte les règles d'engagement",
   "commitmentRetypePrompt": "Saisissez votre nom d'habitude pour confirmer",
@@ -94,7 +94,7 @@
   "statsRemaining": "Restants",
   "statsCancelled": "Arrêtés",
   "statsStreak": "Série",
-  "statsShowups": "{count, plural, one{{count} visite} other{{count} visites}}",
+  "statsShowups": "{count, plural, one{{count} séance} other{{count} séances}}",
   "@statsShowups": {
     "placeholders": {
       "count": { "type": "int" }
@@ -147,14 +147,14 @@
     "placeholders": { "date": { "type": "String" } }
   },
 
-  "showupDetailTitle": "Détails du rendez-vous",
+  "showupDetailTitle": "Détails de la séance",
   "showupDetailHabit": "Habitude",
   "showupDetailScheduledAt": "Prévu à",
   "showupDetailDuration": "Durée",
   "showupDetailStatus": "Statut",
   "markDone": "Marquer comme réalisé",
   "markFailed": "Marquer comme échoué",
-  "showupAutoFailed": "Ce rendez-vous a été automatiquement marqué comme échoué car il a été ouvert après l'heure prévue.",
+  "showupAutoFailed": "Cette séance a été automatiquement marquée comme échouée car elle a été ouverte après l'heure prévue.",
   "showupNoteLabel": "Note",
   "showupNoteSave": "Enregistrer la note",
   "showupNoteError": "Impossible d'enregistrer la note. Veuillez réessayer.",
@@ -164,7 +164,7 @@
   "showupMarkError": "Impossible de mettre à jour le statut. Veuillez réessayer.",
   "showupHabitDeleted": "(habitude supprimée)",
   "showupViewPactDetails": "Voir les détails du pacte",
-  "showupNotFound": "Ce rendez-vous n'est plus disponible.",
+  "showupNotFound": "Cette séance n'est plus disponible.",
 
   "languagePickerTitle": "Langue",
   "languageEnglish": "Anglais",
@@ -173,14 +173,14 @@
   "languageRussian": "Russe",
   "languageSystem": "Utiliser la langue du système",
 
-  "notificationReminderTitle": "{habitName}, c'est l'heure de ton rendez-vous !",
+  "notificationReminderTitle": "{habitName}, c'est l'heure de ta séance !",
   "@notificationReminderTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
     }
   },
-  "notificationReminderBody": "Appuie pour marquer ton rendez-vous.",
-  "notificationDeadlineTitle": "{habitName} : marque ton rendez-vous comme fait",
+  "notificationReminderBody": "Appuie pour marquer ta séance.",
+  "notificationDeadlineTitle": "{habitName} : marque ta séance comme réalisée",
   "@notificationDeadlineTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
@@ -192,7 +192,7 @@
       "time": { "type": "String" }
     }
   },
-  "notificationTimeLimitTitle": "{habitName} : c'est l'heure du rendez-vous !",
+  "notificationTimeLimitTitle": "{habitName} : c'est l'heure de la séance !",
   "@notificationTimeLimitTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
@@ -205,8 +205,8 @@
     }
   },
   "notificationMissedTitle": "Tu as manqué celui-ci",
-  "notificationMissedBody": "Pas de panique — sois au rendez-vous la prochaine fois.",
-  "notificationMarkDone": "Marquer comme fait",
+  "notificationMissedBody": "Pas de panique — sois là pour la prochaine séance.",
+  "notificationMarkDone": "Marquer comme réalisé",
   "notificationDurationMinutes": "{count} min",
   "@notificationDurationMinutes": {
     "placeholders": {
@@ -267,7 +267,7 @@
   "@onboardingSlide2Body": {},
   "onboardingSlide3Title": "Vois ce qui fonctionne",
   "@onboardingSlide3Title": {},
-  "onboardingSlide3Body": "Suis tes showups, repère des tendances et décide : continue, ajuste ou essaie autre chose.",
+  "onboardingSlide3Body": "Suis tes séances, repère des tendances et décide : continue, ajuste ou essaie autre chose.",
   "@onboardingSlide3Body": {},
 
   "pactStoppedDate": "Arrêté",
@@ -323,7 +323,7 @@
   "@timelinePactCreated": {},
   "timelineCurrentState": "Actif",
   "@timelineCurrentState": {},
-  "timelineRecentSection": "Présentations des {days} derniers jours",
+  "timelineRecentSection": "Séances des {days} derniers jours",
   "@timelineRecentSection": {
     "placeholders": {
       "days": { "type": "int" }

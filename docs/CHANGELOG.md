@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.0] — 2026-06-27
+
+### Changed — Localisation
+
+- [user] HAB-128: unified translation term for "showup" across FR (séance), RU (явка), DE (Showup); fixed "timeline" inconsistency in DE (Verlauf); fixed "done" inconsistency in FR (réalisé); fixed "stopped" inconsistency in DE (stoppen/gestoppt)
+
+---
+
 ## [0.45.15] — 2026-06-27 (PR #195 merged)
 
 ### Changed — Meta
