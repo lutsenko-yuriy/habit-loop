@@ -8,7 +8,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Changed — Localisation
 
-- [user] HAB-128: unified translation term for "showup" across FR (séance), RU (явка), DE (Showup); fixed "timeline" inconsistency in DE (Verlauf); fixed "done" inconsistency in FR (réalisé); fixed "stopped" inconsistency in DE (stoppen/gestoppt)
+- [user] HAB-128: improved translation consistency in French, German, and Russian
+- [app] HAB-128: showup → séance (FR), явка (RU), Showup (DE); Zeitleiste → Verlauf (DE); Fait → Réalisé (FR); beenden → stoppen (DE)
 
 ---
 
