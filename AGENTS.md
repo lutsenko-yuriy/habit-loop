@@ -28,13 +28,15 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
 | docs/FEATURE_WORKFLOW.md | Step-by-step feature development workflow — TDD cycle, branching, PR, ship, and ticket state rules |
 | docs/TROUBLESHOOT_WORKFLOW.md | Reactive workflow for bugs, CI failures, and infrastructure issues — investigate, ticket, fix, ship |
+| docs/knowledge/README.md | Project knowledge base — vault layout, per-ticket file format, how `/note` and `/debrief` write entries |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 | skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
 | skills/configure/skill-creator/SKILL.md | Create a new skill from scratch (guided wizard), or refactor an existing skill into lean SKILL.md + resource files |
 | skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
 | skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
 | skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |
-| skills/manage/debrief/SKILL.md | Post-ticket retrospective: structured dialog → workflow improvements + Linear comment |
+| skills/manage/debrief/SKILL.md | Post-ticket retrospective: structured dialog → workflow improvements + Linear comment + knowledge base entry |
+| skills/manage/note/SKILL.md | Capture a quick observation mid-session into `docs/knowledge/notes/HAB-XX.md` |
 | skills/manage/cleanup-firebase/SKILL.md | Delete old Firebase App Distribution builds locally, keeping the N most recent per platform |
 | skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |
 | skills/design/brief/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
@@ -72,6 +74,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/android` | run/android | `/android` |
 | `/run-scenarios` | run/run-scenarios | `/run-scenarios` or `/run-scenarios HAB-XX` |
 | `/cleanup-firebase` | manage/cleanup-firebase | `/cleanup-firebase [N] [--dry-run]` |
+| `/note` | manage/note | `/note [HAB-XX:] <free-form text>` |
 
 ## Architecture
 
