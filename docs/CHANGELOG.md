@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.45.14] — 2026-06-27
+
+### Changed — Meta
+
+- [meta] HAB-130 WU2: `/debrief` writes retrospective to `docs/knowledge/notes/HAB-XX.md`; fix stale `docs/WORKFLOW.md` reference
+
+---
+
 ## [0.45.13] — 2026-06-27 (PR #193 merged)
 
 ### Added — Meta

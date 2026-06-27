@@ -20,7 +20,7 @@ This skill produces workflow improvements and a retrospective record, not code.
 - `mcp__linear__get_issue` for the ticket ID from the argument
 - `mcp__linear__list_comments` on the same ticket
 - `git log --oneline -20` to see the recent commit history
-- Read `docs/WORKFLOW.md`
+- Read `docs/FEATURE_WORKFLOW.md` and `docs/TROUBLESHOOT_WORKFLOW.md`
 
 ### 2. Open the dialog
 
@@ -107,6 +107,39 @@ Call `mcp__linear__save_comment` on the ticket with:
 ~~~
 
 Fill each section from the dialog. Omit a section only if nothing was said about that dimension — do not leave empty bullet lists.
+
+### 6.5 Write to the knowledge base
+
+Append a dated block to the `## Debrief summary` section of `docs/knowledge/notes/HAB-XX.md`.
+
+**If the file does not exist:** create it with this structure first (fetch the ticket title from Linear; use the ticket ID as a placeholder if unavailable):
+
+```markdown
+# HAB-XX: <ticket title>
+
+## Notes
+
+## Debrief summary
+```
+
+**Append** to the end of the `## Debrief summary` section:
+
+```markdown
+### YYYY-MM-DD
+
+**What went well**
+- …
+
+**What was hard or surprising**
+- …
+
+**What to change**
+- …
+```
+
+Use today's date. Mirror the content from step 6 — do not ask the user for anything at this step.
+
+If Linear is unavailable and the file does not exist, use the ticket ID as the title placeholder and proceed anyway.
 
 ### 7. Report back
 
