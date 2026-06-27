@@ -8,18 +8,14 @@ output_style: CONCISE
 description: Implement a work unit from an approved plan. Given a PM issue ID, fetches the plan comment, follows strict TDD (red → green → refactor), creates the feature branch, runs tests and linting, commits with a style-only commit first, pushes, and opens a PR. Does not merge — that is the `ship` skill's job.
 ---
 
-The project management tool is **Linear**. The Git host is **GitHub**. The issue identifier prefix is **HAB**.
-
-Linear workspace IDs (use these when calling `mcp__linear__save_issue` or related tools):
-- Team ID: `2de84a9b-453b-4991-8e09-f88715fa926e`
-- Project ID: `c3afdc26-d306-4f72-bdb3-de9b01060d0f`
+@skills/shared/project-config.md
 
 ---
 
 ## Setup (do this first, every time)
 
 1. Read `CLAUDE.local.md` for local binary paths and environment settings. Use the Flutter binary path from there for every Flutter command — `flutter` is not on the default shell PATH.
-2. Read `CLAUDE.md` and `docs/ARCHITECTURE.md` to orient yourself before touching any code.
+2. Read `CLAUDE.md` and the architecture doc (path from project config) to orient yourself before touching any code.
 
 ---
 
@@ -101,12 +97,12 @@ If any user-visible strings were added:
 
 If your changes affect architecture or user-visible functionality, **do not update those docs yourself** — ask the orchestrator and wait for confirmation before proceeding:
 
-- **`docs/ARCHITECTURE.md`** affected → ask orchestrator to invoke the `plan` skill to update it.
-- **`docs/PRODUCT_SPEC.md`** affected → ask the orchestrator to update it directly (it is a markdown file in the repo, not owned by any specific skill) and wait for confirmation.
+- **Architecture doc** (path from project config) affected → ask orchestrator to invoke the `plan` skill to update it.
+- **Product spec** (path from project config) affected → ask the orchestrator to update it directly (it is a markdown file in the repo, not owned by any specific skill) and wait for confirmation.
 
 Both can be requested simultaneously. Only proceed after the orchestrator confirms those updates are committed.
 
-Never update `docs/BACKLOG.md` or `docs/CHANGELOG.md` — those are owned by the `ship` skill.
+Never update the backlog or changelog (paths from project config) — those are owned by the `ship` skill.
 
 **PII constraint:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
 

@@ -6,7 +6,7 @@ output_style: CONCISE
 description: Architectural review of a PR. Checks for layer violations, dependency direction, module boundary breaches, naming/placement issues, and interface drift. Leaves inline comments prefixed with [review] and produces a structured summary. Invoke after `implement` opens a PR, before human review, in parallel with `audit`.
 ---
 
-The Git host is **GitHub**. The issue identifier prefix is **HAB**.
+@skills/shared/project-config.md
 
 This skill produces reviews, not code.
 

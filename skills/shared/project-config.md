@@ -2,6 +2,21 @@
 
 Read this file to resolve all project-specific constants referenced in skill instructions. When porting this skill set to a new project, update only this file — skill logic stays unchanged.
 
+## Source control
+
+| Setting | Value |
+|---|---|
+| Git host | GitHub |
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Flutter (Dart) |
+| State management | Riverpod |
+| Local persistence | sqflite |
+| Remote config / distribution | Firebase |
+
 ## Project management
 
 | Setting | Value |
