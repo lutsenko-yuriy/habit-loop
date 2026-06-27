@@ -6,7 +6,9 @@ output_style: CONCISE
 description: Capture a quick observation or decision into the project knowledge base mid-session. Infers the active ticket from session context (confirms before writing), appends a timestamped bullet to docs/knowledge/notes/HAB-XX.md, and creates the file if it does not yet exist.
 ---
 
-The knowledge base lives at `docs/knowledge/notes/`. Each ticket has its own file: `HAB-XX.md`.
+@skills/shared/project-config.md
+
+The knowledge base path and per-ticket file naming are in the project config above.
 
 This skill writes one entry, then stops. It does not open a dialog.
 

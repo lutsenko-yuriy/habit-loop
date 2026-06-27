@@ -7,7 +7,7 @@ output_style: CONCISE
 description: Present the current backlog at session start. Fetches open issues from Linear, shows the active milestone and completion percentage, groups work by label, and asks "What goes into the next release?" Invoke at the start of every session before any work begins.
 ---
 
-The project management tool is **Linear**. The issue identifier prefix is **HAB** (e.g. `HAB-12`).
+@skills/shared/project-config.md
 
 ---
 
@@ -17,7 +17,7 @@ The project management tool is **Linear**. The issue identifier prefix is **HAB*
 
 When routed via `skill_router.py` (`context: linear`), the backlog data is injected above this text between `=== PRE-FETCHED BACKLOG ===` sentinels. Copy that block verbatim — do not reformat, do not call any tools.
 
-When running inside Claude Code (fallback path), call `mcp__linear__list_issues` and `mcp__linear__list_milestones` (project ID `c3afdc26-d306-4f72-bdb3-de9b01060d0f`) and produce the summary below:
+When running inside Claude Code (fallback path), call `mcp__linear__list_issues` and `mcp__linear__list_milestones` (use the **Project ID** from the project config) and produce the summary below:
 
 ```
 ## Backlog — Habit Loop

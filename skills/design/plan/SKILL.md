@@ -6,7 +6,7 @@ output_style: DETAILED
 description: Produce a structured implementation plan for a PM issue or milestone before any code is written. Fetches the issue, reads the codebase, breaks the work into implementation units, posts the plan as a PM comment, and waits for user approval. For large changes spanning multiple files, new domain entities, new dependencies, or architectural shifts.
 ---
 
-The project management tool is **Linear**. The issue identifier prefix is **HAB**.
+@skills/shared/project-config.md
 
 This skill produces plans, not code.
 
@@ -20,7 +20,7 @@ Call `mcp__linear__get_issue` for each relevant issue ID. If a milestone was nam
 
 ### 2. Read the codebase
 
-Read `docs/ARCHITECTURE.md`, `docs/PRODUCT_SPEC.md`, and the source files most relevant to the work. Use search tools to locate existing models, repositories, view models, and UI files. Name real files and classes — do not invent hypothetical ones.
+Read the architecture and product spec files (paths from project config) and the source files most relevant to the work. Use search tools to locate existing models, repositories, view models, and UI files. Name real files and classes — do not invent hypothetical ones.
 
 The vertical-slice structure to keep in mind:
 - `lib/domain/` — shared pure domain models and repository interfaces
@@ -55,7 +55,7 @@ Show the plan to the user and wait for approval or adjustments. Do not proceed u
 
 ### 6. Update ARCHITECTURE.md (after approval)
 
-If the plan introduces new layers, directories, classes, or dependencies not already in `docs/ARCHITECTURE.md`, update that file now. Keep the existing structure — add to it, do not rewrite it.
+If the plan introduces new layers, directories, classes, or dependencies not already in the architecture doc (path from project config), update that file now. Keep the existing structure — add to it, do not rewrite it.
 
 ---
 
