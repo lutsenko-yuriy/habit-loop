@@ -278,7 +278,7 @@ jobs:
   # ── Build signed Android AAB ──────────────────────────────────────────────
   build-android:
     needs: [check-skip, resolve-version]
-    if: needs.check-skip.outputs.build_android == 'true'
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && needs.check-skip.outputs.build_android == 'true'
     runs-on: ubuntu-latest
     outputs:
       success: ${{ steps.build.outputs.success }}
