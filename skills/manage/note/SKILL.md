@@ -1,7 +1,7 @@
 ---
 name: note
-effort: INSTANT
-reasoning: NONE
+effort: RAPID
+reasoning: MECHANICAL
 output_style: CONCISE
 description: Capture a quick observation or decision into the project knowledge base mid-session. Infers the active ticket from session context (confirms before writing), appends a timestamped bullet to docs/knowledge/notes/HAB-XX.md, and creates the file if it does not yet exist.
 ---
@@ -49,7 +49,7 @@ Resolve the target file: `docs/knowledge/notes/HAB-XX.md` (using the ticket ID f
 
 Fetch the ticket title from Linear (`mcp__linear__get_issue`) to fill `<ticket title>`. If Linear is unavailable, use the ticket ID as the title placeholder.
 
-**Append** a timestamped bullet immediately after the `## Notes` header (before any existing bullets if this is not the first note, or as the first line if it is):
+**Append** a timestamped bullet at the end of the `## Notes` section (after all existing bullets, or as the first line if there are none yet):
 
 ```
 - YYYY-MM-DD: <note text>
