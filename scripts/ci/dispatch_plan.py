@@ -27,7 +27,6 @@ Exit code: always 0 — never fails the CI pipeline.
 from __future__ import annotations
 
 import argparse
-import sys
 
 
 def dispatch_plan(
