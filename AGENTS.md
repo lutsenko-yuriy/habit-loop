@@ -35,7 +35,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
 | skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
 | skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |
-| skills/manage/debrief/SKILL.md | Post-ticket retrospective: structured dialog → workflow improvements + Linear comment + knowledge base entry |
+| skills/manage/debrief/SKILL.md | Post-ticket retrospective: structured dialog → workflow improvements + knowledge base entry |
 | skills/manage/note/SKILL.md | Capture a quick observation mid-session into `docs/knowledge/notes/HAB-XX.md` |
 | skills/manage/cleanup-firebase/SKILL.md | Delete old Firebase App Distribution builds locally, keeping the N most recent per platform |
 | skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |

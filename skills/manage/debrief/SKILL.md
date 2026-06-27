@@ -4,10 +4,10 @@ effort: FOCUSED
 reasoning: ARCHITECTURAL
 needs_session_tools: true
 output_style: CONCISE
-description: Post-ticket retrospective. Reads the Linear ticket and git history, conducts a one-question-at-a-time dialog, proposes targeted improvements to workflow/skill/docs files, applies approved changes, and posts a summary (including proposed improvements) as a Linear comment on the ticket.
+description: Post-ticket retrospective. Reads git history, conducts a one-question-at-a-time dialog, proposes targeted improvements to workflow/skill/docs files, applies approved changes, and writes a summary to the project knowledge base.
 ---
 
-The project management tool is **Linear**. The issue identifier prefix is **HAB**.
+The issue identifier prefix is **HAB**.
 
 This skill produces workflow improvements and a retrospective record, not code.
 
@@ -17,10 +17,8 @@ This skill produces workflow improvements and a retrospective record, not code.
 
 ### 1. Load context
 
-- `mcp__linear__get_issue` for the ticket ID from the argument
-- `mcp__linear__list_comments` on the same ticket
 - `git log --oneline -20` to see the recent commit history
-- Read `docs/WORKFLOW.md`
+- Read `docs/FEATURE_WORKFLOW.md` and `docs/TROUBLESHOOT_WORKFLOW.md`
 
 ### 2. Open the dialog
 
@@ -49,7 +47,7 @@ If the user says "that's it", "nothing else", or similar, proceed to step 4 even
 
 Identify actionable improvements from the dialog. For each:
 
-- Name the artifact (`docs/WORKFLOW.md`, `skills/build/implement/SKILL.md`, etc.)
+- Name the artifact (`docs/FEATURE_WORKFLOW.md`, `skills/build/implement/SKILL.md`, etc.)
 - Show the exact change (diff-style: what line/block is replaced and with what)
 - One-sentence rationale tied to what the user said
 
@@ -76,16 +74,28 @@ If at least one improvement was approved in step 4:
    git commit -m "meta: debrief HAB-XX — <short summary of changes>"
    ```
 3. Push and open a PR titled `meta: debrief HAB-XX — <short summary>`.
-4. Include the PR URL in the Linear comment (step 6) and in the report (step 7).
+4. Include the PR URL in the report (step 7).
 
 If no changes were approved, skip this step.
 
-### 6. Post retrospective summary to Linear
+### 6. Write to the knowledge base
 
-Call `mcp__linear__save_comment` on the ticket with:
+Append a dated block to the `## Debrief summary` section of `docs/knowledge/notes/HAB-XX.md`.
 
-~~~markdown
-## Retrospective
+**If the file does not exist:** create it with this structure first (use the ticket ID as the title placeholder):
+
+```markdown
+# HAB-XX: <ticket title>
+
+## Notes
+
+## Debrief summary
+```
+
+**Append** to the end of the `## Debrief summary` section:
+
+```markdown
+### YYYY-MM-DD
 
 **What went well**
 - …
@@ -95,28 +105,18 @@ Call `mcp__linear__save_comment` on the ticket with:
 
 **What to change**
 - …
+```
 
-**Proposed improvements**
-- `<file>`: <description of change> — ✅ applied / ❌ declined
-- … (omit section entirely if no improvements were proposed)
-
-**Files updated**
-- … (or "none")
-
-*Debriefed: YYYY-MM-DD*
-~~~
-
-Fill each section from the dialog. Omit a section only if nothing was said about that dimension — do not leave empty bullet lists.
+Use today's date. Mirror the content from the dialog — do not ask the user for anything at this step.
 
 ### 7. Report back
 
-Confirm: retrospective comment posted on HAB-XX, list any files changed (or "no file changes").
+Confirm: knowledge base updated at `docs/knowledge/notes/HAB-XX.md`, list any workflow/skill files changed (or "no file changes").
 
 ---
 
 ## Constraints
 
 - Never modify app code (`lib/`, `test/`, `integration_test/`).
-- Never create or modify Linear tickets — only add a comment to the existing ticket.
 - Never ask more than one question per turn.
 - Do not write file changes before the user approves them in step 4.
