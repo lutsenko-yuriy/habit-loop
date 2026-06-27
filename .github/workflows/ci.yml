@@ -215,8 +215,8 @@ jobs:
           VERSION_FULL=${VERSION_LINE#version: }
           VERSION_NAME=${VERSION_FULL%+*}
 
-          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
-            # Feature-branch test build — use 0 to avoid consuming a real build number.
+          if [[ "${{ github.ref }}" != "refs/heads/main" || "${{ github.event.inputs.environment }}" == "staging" ]]; then
+            # Feature-branch or staging build — use 0 to avoid consuming a real build number.
             echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
             echo "build_number=0"             >> "$GITHUB_OUTPUT"
           else
