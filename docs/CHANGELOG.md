@@ -4,7 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.45.11] — 2026-06-27
+## [0.45.12] — 2026-06-27
+
+### Changed — CI
+
+- [ci] HAB-134: configurable workflow_dispatch inputs (android/ios/environment/deploy); dispatch_plan.py wired into check-skip; build and distribute jobs gated on per-platform flags; group_alias driven by environment input
+
+---
+
+## [0.45.11] — 2026-06-27 (PR #190 merged)
 
 ### Changed — CI
 
