@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.1] — 2026-06-27
+
+### Changed — Meta
+
+- [meta] HAB-128 debrief: per-language canonical terms table filled in GLOSSARY.md; What's New style guardrails with examples added to ship skill
+
+---
+
 ## [0.46.0] — 2026-06-27
 
 ### Changed — Localisation

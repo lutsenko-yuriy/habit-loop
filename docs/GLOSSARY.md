@@ -90,6 +90,19 @@ These aliases appear in code, UI copy, analytics, or older docs. Prefer the **ca
 
 ## Per-language canonical terms
 
+Canonical translation for each domain concept across all supported locales. Consult this table before writing or reviewing any l10n string.
+
 | Concept | Russian | French | German |
 |---|---|---|---|
 | **showup** | явка | séance | Showup |
+| **pact** | пакт | pacte | Pakt |
+| **habit** | привычка | habitude | Gewohnheit |
+| **streak** | Серия | Série | Serie |
+| **done** (showup status) | Выполнено | Réalisé | Erledigt |
+| **failed** (showup status) | Пропущено | Échoué | Verpasst |
+| **stopped** (pact status) | Остановлен | Arrêté | Gestoppt |
+| **completed** (pact status) | Завершён | Terminé | Abgeschlossen |
+| **timeline** | Хронология | Chronologie | Verlauf |
+| **schedule** | Расписание | Horaire | Zeitplan |
+| **reminder** | Напоминание | Rappel | Erinnerung |
+| **archive** | Архив | Archivage | Archiv |
