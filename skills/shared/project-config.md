@@ -19,7 +19,7 @@ Read this file to resolve all project-specific constants referenced in skill ins
 
 ## Project management
 
-@skills/shared/pm-tool-linear-mapping.md
+@skills/shared/pm-tool-mapping.md
 
 ## Documentation paths
 
