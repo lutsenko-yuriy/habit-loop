@@ -47,7 +47,7 @@ Resolve the target file: `docs/knowledge/notes/HAB-XX.md` (using the ticket ID f
 ## Debrief summary
 ```
 
-Fetch the ticket title from Linear (`mcp__linear__get_issue`) to fill `<ticket title>`. If Linear is unavailable, use the ticket ID as the title placeholder.
+Use the ticket ID as the title placeholder.
 
 **Append** a timestamped bullet at the end of the `## Notes` section (after all existing bullets, or as the first line if there are none yet):
 
