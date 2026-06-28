@@ -7,7 +7,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_timeline_analytics_events.dart';
-import 'package:habit_loop/slices/pact/application/pact_timeline_cache.dart';
+import 'package:habit_loop/slices/pact/application/pact_showup_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_service.dart';
@@ -39,13 +39,13 @@ Showup _showup(String id, DateTime at, {ShowupStatus status = ShowupStatus.done,
       note: note,
     );
 
-({ProviderContainer container, FakeAnalyticsService analytics, PactTimelineCache cache}) _makeContainer({
+({ProviderContainer container, FakeAnalyticsService analytics, PactShowupCache cache}) _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
   PactTimelineGrouper grouper = const PactTimelineGrouper(groupingThreshold: 10),
 }) {
   final analytics = FakeAnalyticsService();
-  final cache = PactTimelineCache();
+  final cache = PactShowupCache();
   final pactRepo = InMemoryPactRepository(pacts);
   final showupRepo = InMemoryShowupRepository(showups);
   final service = PactTimelineService(
@@ -57,7 +57,7 @@ Showup _showup(String id, DateTime at, {ShowupStatus status = ShowupStatus.done,
   final container = ProviderContainer(
     overrides: [
       pactTimelineServiceProvider.overrideWithValue(service),
-      pactTimelineCacheProvider.overrideWithValue(cache),
+      pactShowupCacheProvider.overrideWithValue(cache),
       analyticsServiceProvider.overrideWithValue(analytics),
       pactTimelineNowProvider.overrideWithValue(_now),
     ],

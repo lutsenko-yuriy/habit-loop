@@ -1,10 +1,11 @@
 import 'package:habit_loop/domain/showup/showup.dart';
 
-/// Session-scoped in-memory showup cache for the pact timeline.
+/// Session-scoped in-memory showup cache shared by [PactTimelineService] and
+/// [PactStatsService].
 ///
 /// Keyed by pactId. Evicted whenever a showup status changes or a pact stops,
-/// so the next [PactTimelineService.loadAll] re-fetches from the DB.
-class PactTimelineCache {
+/// so the next consumer call re-fetches from the DB.
+class PactShowupCache {
   final Map<String, List<Showup>> _cache = {};
 
   List<Showup>? get(String pactId) => _cache[pactId];

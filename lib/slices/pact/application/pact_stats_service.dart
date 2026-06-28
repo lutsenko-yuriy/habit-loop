@@ -9,6 +9,7 @@ import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_showup_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 /// Owns pact stats calculation and the in-memory stats cache.
@@ -18,11 +19,16 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 /// - Write-through: [persistShowupStatus] evicts stale entry, then repopulates.
 /// - Evict-only: [stopPact] and [onPactCompleted] evict without re-populating.
 /// - [stopPact] wraps pact update + showup delete atomically.
+///
+/// Showups are loaded from [PactShowupCache], which is shared with
+/// [PactTimelineService]. This guarantees a single DB fetch per pact per
+/// session and atomic cache invalidation across both services.
 class PactStatsService {
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
   final PactTransactionService _transactionService;
   final SyncService _syncService;
+  final PactShowupCache _showupCache;
 
   /// Runtime-only stats cache; never persisted.
   final Map<String, PactStats> _statsCache = {};
@@ -32,12 +38,20 @@ class PactStatsService {
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
     required SyncService syncService,
+    PactShowupCache? showupCache,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _transactionService = transactionService,
-        _syncService = syncService;
+        _syncService = syncService,
+        _showupCache = showupCache ?? PactShowupCache();
 
-  Future<List<Showup>> loadShowupsForPact(String pactId) => _showupRepository.getShowupsForPact(pactId);
+  Future<List<Showup>> loadShowupsForPact(String pactId) async {
+    final cached = _showupCache.get(pactId);
+    if (cached != null) return cached;
+    final showups = await _showupRepository.getShowupsForPact(pactId);
+    _showupCache.populate(pactId, showups);
+    return showups;
+  }
 
   PactStats buildStats({
     required Pact pact,
@@ -65,9 +79,10 @@ class PactStatsService {
     final cached = _statsCache[pact.id];
     if (cached != null) return cached;
 
-    // Cache miss: load from DB. Stopped/completed pacts with deleted showups fall back
-    // to the frozen Pact.stats snapshot when the query returns empty.
-    final loadedShowups = await _showupRepository.getShowupsForPact(pact.id);
+    // Cache miss: load showups via shared cache (populates it on first hit so
+    // the timeline service benefits too). Stopped/completed pacts with deleted
+    // showups fall back to the frozen Pact.stats snapshot when the query returns empty.
+    final loadedShowups = await loadShowupsForPact(pact.id);
     if (loadedShowups.isEmpty && pact.stats != null) {
       return pact.stats!;
     }
@@ -119,6 +134,7 @@ class PactStatsService {
     unawaited(_syncService.uploadShowup(updatedShowup));
     // Evict before repopulation — racing reads fall back to DB, not stale data.
     _statsCache.remove(updatedShowup.pactId);
+    _showupCache.evict(updatedShowup.pactId);
     await _syncStatsBestEffort(updatedShowup.pactId);
     return updatedShowup;
   }
@@ -155,6 +171,7 @@ class PactStatsService {
     // Evict-only: showups are deleted by the transaction, so there is nothing
     // valid to cache.  The next read will use the frozen pact.stats snapshot.
     _statsCache.remove(pactId);
+    _showupCache.evict(pactId);
 
     return updated;
   }
@@ -162,6 +179,7 @@ class PactStatsService {
   // Cache eviction only — repository write is done by the caller (PactService.updatePact).
   void onPactCompleted(String pactId) {
     _statsCache.remove(pactId);
+    _showupCache.evict(pactId);
   }
 
   Future<void> _rollbackCreatedPact(String pactId) async {

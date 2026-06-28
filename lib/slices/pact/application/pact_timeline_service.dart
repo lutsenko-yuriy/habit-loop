@@ -5,14 +5,14 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/slices/pact/application/pact_timeline_cache.dart';
+import 'package:habit_loop/slices/pact/application/pact_showup_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_page.dart';
 
 /// Assembles a [PactTimelinePage] from the pact record and its showups.
 ///
-/// Showups are loaded once per pactId and held in [PactTimelineCache]. The
+/// Showups are loaded once per pactId and held in [PactShowupCache]. The
 /// cache is evicted by [PactStatsService] whenever a showup status changes or
 /// a pact is stopped, so the next [loadAll] re-fetches from the DB.
 class PactTimelineService {
@@ -20,7 +20,7 @@ class PactTimelineService {
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTimelineGrouper grouper,
-    required PactTimelineCache cache,
+    required PactShowupCache cache,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _grouper = grouper,
@@ -29,7 +29,7 @@ class PactTimelineService {
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
   final PactTimelineGrouper _grouper;
-  final PactTimelineCache _cache;
+  final PactShowupCache _cache;
 
   Future<PactTimelinePage> loadAll({
     required String pactId,

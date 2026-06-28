@@ -42,8 +42,8 @@ import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_list_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_showup_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
-import 'package:habit_loop/slices/pact/application/pact_timeline_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_service.dart';
@@ -184,7 +184,7 @@ final pactServiceProvider = Provider<PactService>((ref) {
   );
 });
 
-final pactTimelineCacheProvider = Provider<PactTimelineCache>((ref) => PactTimelineCache());
+final pactShowupCacheProvider = Provider<PactShowupCache>((ref) => PactShowupCache());
 
 final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
   return PactStatsService(
@@ -192,6 +192,7 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
     syncService: ref.watch(syncServiceProvider),
+    showupCache: ref.watch(pactShowupCacheProvider),
   );
 });
 
@@ -238,7 +239,7 @@ final pactTimelineServiceProvider = Provider<PactTimelineService>((ref) {
       groupingThreshold: config.milestoneGroupingThreshold,
       noGroupingTailPeriodInDays: config.noGroupingTailPeriodInDays,
     ),
-    cache: ref.watch(pactTimelineCacheProvider),
+    cache: ref.watch(pactShowupCacheProvider),
   );
 });
 

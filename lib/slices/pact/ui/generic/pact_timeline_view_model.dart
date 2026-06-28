@@ -24,7 +24,7 @@ class PactTimelineViewModel extends FamilyNotifier<PactTimelineState, String> {
       unawaited(ref.read(crashlyticsServiceProvider).log('screen: pact_timeline(id=$arg)'));
 
       // Evict stale cache so re-entry always fetches fresh showup data from DB.
-      ref.read(pactTimelineCacheProvider).evict(arg);
+      ref.read(pactShowupCacheProvider).evict(arg);
 
       final now = ref.read(pactTimelineNowProvider);
       final page = await ref.read(pactTimelineServiceProvider).loadAll(pactId: arg, now: now);
