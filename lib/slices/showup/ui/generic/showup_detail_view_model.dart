@@ -79,11 +79,10 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       );
 
       final rc = ref.read(remoteConfigServiceProvider);
-      final redemptionEnabled = rc.getBool('showup_redemption_enabled');
       final tailDays = rc.getInt('pact_timeline_no_grouping_tail_period_in_days');
       final canRedeem = showup.status == ShowupStatus.failed &&
           showup.redeemable &&
-          redemptionEnabled &&
+          ref.read(featureFlagsProvider).showupRedemptionEnabled &&
           TailZone.contains(scheduledAt: showup.scheduledAt, now: now, days: tailDays);
 
       if (canRedeem && (showup.note?.isEmpty ?? true)) {
@@ -170,10 +169,10 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
     }
   }
 
-  // No-op when canRedeem is false or note is empty (note gate uses persisted note).
+  // No-op when canRedeem is false, isSaving, or note is empty (note gate uses persisted note).
   Future<void> redeemShowup() async {
     final showup = state.showup;
-    if (showup == null || !state.canRedeem) return;
+    if (showup == null || !state.canRedeem || state.isSaving) return;
 
     final note = showup.note;
     if (note == null || note.isEmpty) {
