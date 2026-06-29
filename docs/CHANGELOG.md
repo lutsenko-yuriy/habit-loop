@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.7] — 2026-06-29 (PR #205 merged)
+
+### Added — Test
+
+- [test] HAB-139 WU0: integration scenario stubs for showup redemption flow
+
 ## [0.46.6] — 2026-06-29 (PR #204 merged)
 
 ### Changed — Meta
