@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.6] — 2026-06-29 (PR #204 merged)
+
+### Changed — Meta
+
+- [meta] HAB-126 debrief: plan skill asks about architectural intent before reading codebase; gates on unworkable intent with explicit proceed/abandon choice
+
 ## [0.46.5] — 2026-06-27 (PR #201 merged)
 
 ### Changed — Meta

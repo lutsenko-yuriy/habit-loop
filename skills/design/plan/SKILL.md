@@ -18,9 +18,23 @@ This skill produces plans, not code.
 
 Fetch each relevant issue (PM mapping: **Fetch issue**). If a milestone was named, fetch the milestone (**Fetch milestone**) then list its issues (**List issues in milestone**).
 
+### 1.5 Ask about architectural intent
+
+Before reading the codebase, ask:
+
+> "Do you have an architectural approach or constraints in mind that should shape this plan?"
+
+Wait for the answer before proceeding.
+
 ### 2. Read the codebase
 
 Read the architecture and product spec files (paths from project config) and the source files most relevant to the work. Use search tools to locate existing models, repositories, view models, and UI files. Name real files and classes — do not invent hypothetical ones.
+
+If the user shared an architectural intent in step 1.5, evaluate it against the codebase now. If it may be unworkable (adds complexity, contradicts the architecture, or would make things worse), surface that explicitly before producing any plan and ask:
+
+> "Based on the codebase, [brief reason it may not work]. Do you want to (a) proceed with a different approach, (b) proceed with this approach anyway, or (c) abandon the ticket?"
+
+Do not produce a plan until the user gives a clear answer.
 
 The vertical-slice structure to keep in mind:
 - `lib/domain/` — shared pure domain models and repository interfaces
