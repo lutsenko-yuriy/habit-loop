@@ -7,8 +7,6 @@ import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
 
-final _testNow = DateTime(2099, 6, 15, 12, 0);
-
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
