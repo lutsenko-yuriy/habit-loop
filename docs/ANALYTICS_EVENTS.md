@@ -366,6 +366,30 @@ Fired when the user taps the Archived filter chip or the "Show archived pacts" r
 
 ---
 
+### `showup_redeemed`
+
+Fired when a failed tail-zone showup is successfully marked as done via the redemption path. Only auto-failed showups are eligible — manually-failed showups never show the redemption action. Distinct from `showup_marked_done` (which covers normal marking within the active window). (HAB-139)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the parent pact |
+| `note_length` | `int` | Character count of the showup note at time of redemption |
+| `days_since_scheduled` | `int` | How many days ago the showup was scheduled; helps evaluate whether the tail zone window is appropriately sized |
+
+No PII risk — note content is never included; only its character length.
+
+---
+
+### `showup_redemption_blocked`
+
+Fired when the user taps the redemption action on an auto-failed tail-zone showup but is blocked because the showup note is empty. Measures how often the note-as-friction mechanism activates. (HAB-139)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the parent pact |
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.
