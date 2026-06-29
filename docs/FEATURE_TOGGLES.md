@@ -7,3 +7,4 @@ Boolean Firebase Remote Config flags that enable/disable features without a rele
 | `language_selection_enabled` | `true` | Language-picker button hidden from dashboard and onboarding carousel; locale preference unchanged, replays on re-enable |
 | `network_sync_enabled` | `true` | All `FirestoreSyncService` methods no-op; sync status button and Sign in with Google hidden; local writes persisted as dirty and uploaded on re-enable |
 | `pact_timeline_enabled` | `true` | "View timeline" button hidden from pact detail screens; timeline route unreachable; no data is cleared |
+| `showup_redemption_enabled` | `true` | Redemption button hidden on showup detail screen; auto-failed tail-zone showups cannot be redeemed; `redeemable` flag on showup records is unaffected |
