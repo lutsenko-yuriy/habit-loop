@@ -107,6 +107,15 @@ void main() {
       final withNote = showup.copyWith(note: 'felt good');
       expect(SyncMapper.showupToDocument(withNote)['note'], 'felt good');
     });
+
+    test('encodes redeemable=true as true', () {
+      expect(SyncMapper.showupToDocument(showup)['redeemable'], isTrue);
+    });
+
+    test('encodes redeemable=false as false', () {
+      final notRedeemable = showup.copyWith(redeemable: false);
+      expect(SyncMapper.showupToDocument(notRedeemable)['redeemable'], isFalse);
+    });
   });
 
   group('SyncMapper.pactFromDocument', () {
@@ -203,6 +212,22 @@ void main() {
       final withNote = showup.copyWith(note: 'felt great');
       final doc = SyncMapper.showupToDocument(withNote);
       expect(SyncMapper.showupFromDocument(doc).note, 'felt great');
+    });
+
+    test('decodes redeemable=true', () {
+      final doc = SyncMapper.showupToDocument(showup);
+      expect(SyncMapper.showupFromDocument(doc).redeemable, isTrue);
+    });
+
+    test('decodes redeemable=false', () {
+      final notRedeemable = showup.copyWith(redeemable: false);
+      final doc = SyncMapper.showupToDocument(notRedeemable);
+      expect(SyncMapper.showupFromDocument(doc).redeemable, isFalse);
+    });
+
+    test('defaults redeemable to true when absent in legacy document', () {
+      final doc = SyncMapper.showupToDocument(showup)..remove('redeemable');
+      expect(SyncMapper.showupFromDocument(doc).redeemable, isTrue);
     });
   });
 
