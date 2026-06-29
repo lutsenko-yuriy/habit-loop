@@ -123,7 +123,8 @@ void main() {
       final columnNames = result.map((row) => row['name'] as String).toSet();
       expect(
         columnNames,
-        containsAll(['id', 'pact_id', 'scheduled_at', 'duration', 'status', 'note', 'redeemable', 'dirty', 'synced_at']),
+        containsAll(
+            ['id', 'pact_id', 'scheduled_at', 'duration', 'status', 'note', 'redeemable', 'dirty', 'synced_at']),
       );
     });
 
