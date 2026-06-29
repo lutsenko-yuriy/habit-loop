@@ -36,5 +36,6 @@ final class FeatureFlags {
           showupRedemptionEnabled == other.showupRedemptionEnabled;
 
   @override
-  int get hashCode => Object.hash(languageSelectionEnabled, networkSyncEnabled, pactTimelineEnabled, showupRedemptionEnabled);
+  int get hashCode =>
+      Object.hash(languageSelectionEnabled, networkSyncEnabled, pactTimelineEnabled, showupRedemptionEnabled);
 }

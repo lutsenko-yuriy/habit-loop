@@ -30,10 +30,12 @@ class PactTimelineGrouper {
 
     final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList();
     final nonTail = resolved
-        .where((s) => !TailZone.contains(scheduledAt: s.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays))
+        .where(
+            (s) => !TailZone.contains(scheduledAt: s.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays))
         .toList();
     final tail = resolved
-        .where((s) => TailZone.contains(scheduledAt: s.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays))
+        .where(
+            (s) => TailZone.contains(scheduledAt: s.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays))
         .toList();
 
     final nonTailMilestones = _processNonTail(nonTail);
