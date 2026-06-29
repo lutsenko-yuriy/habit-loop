@@ -15,6 +15,7 @@ abstract final class ShowupMapper {
       'duration': showup.duration.inMicroseconds,
       'status': _encodeStatus(showup.status),
       'note': showup.note,
+      'redeemable': showup.redeemable ? 1 : 0,
       // Every insert/update starts dirty=1 — queued for the first sync flush.
       'dirty': 1,
       'synced_at': null,
@@ -39,6 +40,8 @@ abstract final class ShowupMapper {
       duration: Duration(microseconds: (row['duration'] as num).toInt()),
       status: _decodeStatus(row['status'] as String),
       note: row['note'] as String?,
+      // absent means pre-v4 row — treat as redeemable (all historical failures eligible).
+      redeemable: (row['redeemable'] as int?) != 0,
       // dirty and synced_at live only in the sync layer — not on the domain model.
     );
   }

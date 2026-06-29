@@ -63,6 +63,23 @@ void main() {
         expect(ShowupMapper.toRow(baseShowup())['synced_at'], isNull);
       });
 
+      test('maps redeemable=true as 1', () {
+        final showup = baseShowup();
+        expect(ShowupMapper.toRow(showup)['redeemable'], equals(1));
+      });
+
+      test('maps redeemable=false as 0', () {
+        final showup = Showup(
+          id: 'showup-1',
+          pactId: 'pact-1',
+          scheduledAt: scheduledAt,
+          duration: duration,
+          status: ShowupStatus.failed,
+          redeemable: false,
+        );
+        expect(ShowupMapper.toRow(showup)['redeemable'], equals(0));
+      });
+
       test('maps duration as microseconds', () {
         const dur = Duration(hours: 1, minutes: 30);
         final showup = Showup(
@@ -124,6 +141,21 @@ void main() {
         expect(() => ShowupMapper.fromRow(row), throwsArgumentError);
       });
 
+      test('reconstructs redeemable=true from 1', () {
+        final row = baseRow()..['redeemable'] = 1;
+        expect(ShowupMapper.fromRow(row).redeemable, isTrue);
+      });
+
+      test('reconstructs redeemable=false from 0', () {
+        final row = baseRow()..['redeemable'] = 0;
+        expect(ShowupMapper.fromRow(row).redeemable, isFalse);
+      });
+
+      test('reconstructs redeemable=true when column absent (pre-v4 rows)', () {
+        final row = baseRow(); // no redeemable key
+        expect(ShowupMapper.fromRow(row).redeemable, isTrue);
+      });
+
       test('dirty and synced_at columns in row are ignored — not on domain model', () {
         // Verify fromRow succeeds with both dirty=0 and synced_at set,
         // since the sync layer may later read back rows in a synced state.
@@ -178,6 +210,20 @@ void main() {
       test('failed showup without note round-trips correctly', () {
         final original = baseShowup(status: ShowupStatus.failed);
         final restored = ShowupMapper.fromRow(ShowupMapper.toRow(original));
+        expect(restored, equals(original));
+      });
+
+      test('redeemable=false round-trips correctly', () {
+        final original = Showup(
+          id: 'showup-1',
+          pactId: 'pact-1',
+          scheduledAt: scheduledAt,
+          duration: duration,
+          status: ShowupStatus.failed,
+          redeemable: false,
+        );
+        final restored = ShowupMapper.fromRow(ShowupMapper.toRow(original));
+        expect(restored.redeemable, isFalse);
         expect(restored, equals(original));
       });
     });
