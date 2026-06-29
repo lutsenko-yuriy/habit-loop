@@ -104,6 +104,69 @@ void main() {
     });
   });
 
+  group('redeemable', () {
+    test('defaults to true', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      expect(showup.redeemable, isTrue);
+    });
+
+    test('can be set to false', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.failed,
+        redeemable: false,
+      );
+      expect(showup.redeemable, isFalse);
+    });
+
+    test('copyWith preserves redeemable when not specified', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.failed,
+        redeemable: false,
+      );
+      final updated = showup.copyWith(status: ShowupStatus.done);
+      expect(updated.redeemable, isFalse);
+    });
+
+    test('copyWith can override redeemable', () {
+      final showup = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final updated = showup.copyWith(redeemable: false);
+      expect(updated.redeemable, isFalse);
+    });
+
+    test('two showups differing only in redeemable are not equal', () {
+      final a = Showup(
+        id: '1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 7, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.failed,
+      );
+      final b = a.copyWith(redeemable: false);
+      expect(a, isNot(equals(b)));
+      expect(a.hashCode, isNot(equals(b.hashCode)));
+    });
+  });
+
   group('ShowupStatus', () {
     test('has three values', () {
       expect(ShowupStatus.values, hasLength(3));
