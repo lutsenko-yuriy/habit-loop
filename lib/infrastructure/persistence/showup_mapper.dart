@@ -41,7 +41,7 @@ abstract final class ShowupMapper {
       status: _decodeStatus(row['status'] as String),
       note: row['note'] as String?,
       // absent means pre-v4 row — treat as redeemable (all historical failures eligible).
-      redeemable: (row['redeemable'] as int?) != 0,
+      redeemable: (row['redeemable'] as int? ?? 1) != 0,
       // dirty and synced_at live only in the sync layer — not on the domain model.
     );
   }
