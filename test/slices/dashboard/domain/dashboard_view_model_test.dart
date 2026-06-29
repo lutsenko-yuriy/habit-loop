@@ -67,11 +67,12 @@ class _PartiallyFailingStatsService extends PactStatsService {
   Future<Showup> persistShowupStatus({
     required Showup showup,
     required ShowupStatus status,
+    bool? redeemable,
   }) {
     if (errorOnShowupIds.contains(showup.id)) {
       throw StateError('simulated DB error for showup ${showup.id}');
     }
-    return super.persistShowupStatus(showup: showup, status: status);
+    return super.persistShowupStatus(showup: showup, status: status, redeemable: redeemable);
   }
 }
 

@@ -121,6 +121,8 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final updatedShowup = await ref.read(pactStatsServiceProvider).persistShowupStatus(
             showup: state.showup!,
             status: newStatus,
+            // Manual fail makes the showup non-redeemable — user chose to fail.
+            redeemable: newStatus == ShowupStatus.failed ? false : null,
           );
       final resolvedUiState = switch (newStatus) {
         ShowupStatus.done => ShowupUiState.done,

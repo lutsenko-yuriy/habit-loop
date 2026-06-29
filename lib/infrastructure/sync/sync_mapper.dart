@@ -48,6 +48,7 @@ abstract final class SyncMapper {
       'duration': showup.duration.inMicroseconds,
       'status': _encodeShowupStatus(showup.status),
       'note': showup.note,
+      'redeemable': showup.redeemable,
       'updated_at': (updatedAt ?? DateTime.now()).millisecondsSinceEpoch,
     };
   }
@@ -108,6 +109,8 @@ abstract final class SyncMapper {
       duration: Duration(microseconds: (doc['duration'] as num).toInt()),
       status: _decodeShowupStatus(doc['status'] as String),
       note: doc['note'] as String?,
+      // absent means a legacy document predating v4 — treat as redeemable.
+      redeemable: (doc['redeemable'] as bool?) ?? true,
     );
   }
 

@@ -113,8 +113,9 @@ class PactStatsService {
   Future<Showup> persistShowupStatus({
     required Showup showup,
     required ShowupStatus status,
+    bool? redeemable,
   }) async {
-    final updatedShowup = showup.copyWith(status: status);
+    final updatedShowup = showup.copyWith(status: status, redeemable: redeemable);
     await _showupRepository.updateShowup(updatedShowup);
     unawaited(_syncService.uploadShowup(updatedShowup));
     // Evict before repopulation — racing reads fall back to DB, not stale data.

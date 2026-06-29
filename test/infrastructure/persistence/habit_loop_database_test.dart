@@ -123,7 +123,8 @@ void main() {
       final columnNames = result.map((row) => row['name'] as String).toSet();
       expect(
         columnNames,
-        containsAll(['id', 'pact_id', 'scheduled_at', 'duration', 'status', 'note', 'dirty', 'synced_at']),
+        containsAll(
+            ['id', 'pact_id', 'scheduled_at', 'duration', 'status', 'note', 'redeemable', 'dirty', 'synced_at']),
       );
     });
 
@@ -287,6 +288,80 @@ void main() {
       final result = await db.rawQuery('PRAGMA table_info(pacts)');
       final columnNames = result.map((row) => row['name'] as String).toSet();
       expect(columnNames, contains('archived'));
+    });
+  });
+
+  group('HabitLoopDatabase — migration v3 → v4', () {
+    late Database db;
+
+    setUp(() async {
+      db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      // Build a v3 schema manually (showups without redeemable column).
+      await db.execute('''
+        CREATE TABLE pacts (
+          id                   TEXT    NOT NULL PRIMARY KEY,
+          habit_name           TEXT    NOT NULL,
+          start_date           INTEGER NOT NULL,
+          scheduled_end_date   INTEGER NOT NULL,
+          actual_end_date      INTEGER NOT NULL,
+          showup_duration      INTEGER NOT NULL,
+          schedule             TEXT    NOT NULL,
+          status               TEXT    NOT NULL,
+          reminder_offset      INTEGER,
+          stop_reason          TEXT,
+          total_showups        INTEGER,
+          created_at           INTEGER,
+          dirty                INTEGER NOT NULL DEFAULT 1,
+          synced_at            INTEGER,
+          archived             INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE showups (
+          id           TEXT    NOT NULL PRIMARY KEY,
+          pact_id      TEXT    NOT NULL,
+          scheduled_at INTEGER NOT NULL,
+          duration     INTEGER NOT NULL,
+          status       TEXT    NOT NULL,
+          note         TEXT,
+          dirty        INTEGER NOT NULL DEFAULT 1,
+          synced_at    INTEGER,
+          FOREIGN KEY (pact_id) REFERENCES pacts(id)
+        )
+      ''');
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        ['pact-1', 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active'],
+      );
+      await db.rawInsert(
+        'INSERT INTO showups (id, pact_id, scheduled_at, duration, status) VALUES (?, ?, ?, ?, ?)',
+        ['showup-1', 'pact-1', 0, 600000000, 'failed'],
+      );
+    });
+
+    tearDown(() async => db.close());
+
+    test('upgrade adds redeemable column to showups with default 1', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 3, 4);
+      final rows = await db.rawQuery('SELECT redeemable FROM showups WHERE id = ?', ['showup-1']);
+      expect(rows.first['redeemable'], equals(1));
+    });
+
+    test('showups table has redeemable column after v3→v4', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 3, 4);
+      final result = await db.rawQuery('PRAGMA table_info(showups)');
+      final columnNames = result.map((row) => row['name'] as String).toSet();
+      expect(columnNames, contains('redeemable'));
+    });
+
+    test('existing failed rows become redeemable=1 (eligible) after migration', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 3, 4);
+      final rows = await db.rawQuery(
+        'SELECT redeemable FROM showups WHERE id = ? AND status = ?',
+        ['showup-1', 'failed'],
+      );
+      expect(rows.first['redeemable'], equals(1));
     });
   });
 }

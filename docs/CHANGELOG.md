@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.46.8] — 2026-06-30 (PR #206 merged)
+
+### Added — WIP
+
+- [wip] HAB-139 WU1: add `redeemable` provenance field to Showup; SQLite v3→v4 migration; Firestore sync; manual-fail wires redeemable=false
+
 ## [0.46.7] — 2026-06-29 (PR #205 merged)
 
 ### Added — Test
