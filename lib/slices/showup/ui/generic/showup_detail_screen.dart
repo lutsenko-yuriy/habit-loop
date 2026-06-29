@@ -60,6 +60,10 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).saveNote(note);
     }
 
+    Future<void> onRedeemShowup() async {
+      await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).redeemShowup();
+    }
+
     // onOpenPact is only provided when the parent pact exists (habitName != null).
     // When the pact has been deleted, the habit name label is non-tappable.
     Future<void> onOpenPact() async {
@@ -92,6 +96,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
         onMarkDone: onMarkDone,
         onMarkFailed: onMarkFailed,
         onSaveNote: onSaveNote,
+        onRedeemShowup: onRedeemShowup,
         onOpenPact: openPactCallback,
       );
     }
@@ -100,6 +105,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       onMarkDone: onMarkDone,
       onMarkFailed: onMarkFailed,
       onSaveNote: onSaveNote,
+      onRedeemShowup: onRedeemShowup,
       onOpenPact: openPactCallback,
     );
   }

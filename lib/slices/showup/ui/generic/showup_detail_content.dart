@@ -14,6 +14,9 @@ typedef ShowupDetailSlots = ({
   Widget Function(BuildContext context, TextEditingController controller) buildNoteField,
   Widget Function(BuildContext context, VoidCallback? onPressed) buildSaveButton,
   Widget Function(BuildContext context) buildErrorContainer,
+  // onPressed is null when the note is empty (button visible but disabled).
+  Widget Function(BuildContext context, VoidCallback? onRedeem) buildRedemptionButton,
+  Widget Function(BuildContext context) buildRedemptionHint,
 });
 
 /// Shared showup detail body — owns [TextEditingController] lifecycle and
@@ -22,6 +25,7 @@ class ShowupDetailContent extends StatefulWidget {
   final ShowupDetailState state;
   final AppLocalizations l10n;
   final Future<void> Function(String note) onSaveNote;
+  final Future<void> Function() onRedeemShowup;
   final VoidCallback? onOpenPact;
   final ShowupStatusColors statusColors;
   final Color labelColor;
@@ -34,6 +38,7 @@ class ShowupDetailContent extends StatefulWidget {
     required this.state,
     required this.l10n,
     required this.onSaveNote,
+    required this.onRedeemShowup,
     required this.statusColors,
     required this.labelColor,
     required this.tileColor,
@@ -138,6 +143,20 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
         ],
         if (isPending) ...[
           widget.slots.buildActionButtons(context, state),
+          const SizedBox(height: 16),
+        ],
+        if (state.canRedeem) ...[
+          () {
+            final hasNote = (showup.note?.isNotEmpty ?? false);
+            return widget.slots.buildRedemptionButton(
+              context,
+              hasNote ? () => widget.onRedeemShowup() : null,
+            );
+          }(),
+          if ((showup.note?.isEmpty ?? true)) ...[
+            const SizedBox(height: 8),
+            widget.slots.buildRedemptionHint(context),
+          ],
           const SizedBox(height: 16),
         ],
         if (state.markError != null) ...[
