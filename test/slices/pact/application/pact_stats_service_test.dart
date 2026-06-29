@@ -194,6 +194,47 @@ void main() {
       final persistedShowup = await showupRepo.getShowupById(_pendingShowup.id);
       expect(persistedShowup?.status, ShowupStatus.failed);
     });
+
+    test('persists redeemable=false when caller sets it explicitly', () async {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
+      );
+
+      final updatedShowup = await service.persistShowupStatus(
+        showup: _pendingShowup,
+        status: ShowupStatus.failed,
+        redeemable: false,
+      );
+
+      expect(updatedShowup.redeemable, isFalse);
+
+      final persisted = await showupRepo.getShowupById(_pendingShowup.id);
+      expect(persisted?.redeemable, isFalse);
+    });
+
+    test('preserves existing redeemable when param is omitted', () async {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
+      );
+
+      // _pendingShowup has redeemable=true (default); omitting param must not change it.
+      final updatedShowup = await service.persistShowupStatus(
+        showup: _pendingShowup,
+        status: ShowupStatus.done,
+      );
+
+      expect(updatedShowup.redeemable, isTrue);
+    });
   });
 }
 
