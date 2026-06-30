@@ -122,6 +122,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                   ),
                                 ),
                             buildRedemptionButton: (ctx, onRedeem) => CupertinoButton.filled(
+                                  key: const Key('showup-redeem-button'),
                                   onPressed: onRedeem,
                                   child: Text(l10n.showupRedeemAction),
                                 ),
