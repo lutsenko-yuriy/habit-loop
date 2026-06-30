@@ -54,6 +54,8 @@ git checkout -b feature/HAB-XX-WUN-<short> origin/main
 
 **If this WU lists scenarios to make green:** before writing any production code, first replace the `// TODO:` comment stubs in those scenario files with actual `AppHarness` driver calls. This makes the scenarios compile and run red. Then proceed with the TDD cycle below to make them pass.
 
+**Every `// TODO:` step within each scenario must be implemented — do not silently drop tail steps.** If a step genuinely cannot be implemented (e.g. requires disproportionate harness infrastructure), replace `// TODO:` with `// SKIP: <one-sentence reason>` and note it in the PR description.
+
 @skills/build/implement/resources/tdd-cycle.md
 
 ### 4.1 Rework cycle checkpoint

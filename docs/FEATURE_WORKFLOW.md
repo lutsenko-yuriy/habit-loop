@@ -114,6 +114,7 @@ For each WU in sequence:
    ```
    git commit -m "feat: <what this logical unit does>"
    ```
+   During refactor, look for simple algorithmic improvements that don't hurt readability — e.g. a single-pass loop instead of two iterations over the same collection, or avoiding redundant allocations. Apply them inline; do not defer to a follow-up ticket.
    Repeat steps 6–8 for each logical unit within the WU. Each PR accumulates one commit per cycle — reviewable commit-by-commit on GitHub.
 9. Run `flutter test` and `flutter analyze` — fix **all** test failures and analyzer warnings/errors before proceeding. A clean analyzer output (`No issues found`) is required before committing; do not leave warnings unresolved on the assumption they are pre-existing.
 10. After all TDD micro-cycles are complete, apply formatting in a dedicated commit before opening the PR: run `dart format -l 120 lib/ test/ integration_test/` and, if any files changed, stage and commit them separately with a `style:` prefix (e.g. `style: apply dart format`). This keeps style changes reviewable in isolation from logic changes.
@@ -138,6 +139,7 @@ For each WU in sequence:
     `[non-user]` may be used as a supplementary tag on individual bullets within an entry that already has a classification tag. It does **not** satisfy the classification requirement on its own.
 
     Only `[user]` lines appear in Firebase App Distribution release notes. All other tags are stripped.
+    `[user]` bullets are read directly by end users as "What's New" text — write in plain language with no ticket numbers, WU prefixes, class names, RC key names, or internal terms. See `skills/manage/ship/resources/changelog-tags.md` for examples and anti-patterns.
     The tag list may be extended over time; any new tag must declare its distribution and release-note behaviour.
 
     **Never commit a CHANGELOG entry with no classification tag — CI will fail.**
