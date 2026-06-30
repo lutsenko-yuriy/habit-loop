@@ -124,7 +124,7 @@ void main() {
     await tester.pumpWidget(_buildApp(state));
     await tester.pump();
 
-    expect(find.text('Add a note above to redeem this showup.'), findsOneWidget);
+    expect(find.text('Add a note to redeem this showup.'), findsOneWidget);
   });
 
   testWidgets('iOS: hint text absent when canRedeem=true and note is non-empty', (tester) async {
@@ -138,7 +138,7 @@ void main() {
     await tester.pumpWidget(_buildApp(state));
     await tester.pump();
 
-    expect(find.text('Add a note above to redeem this showup.'), findsNothing);
+    expect(find.text('Add a note to redeem this showup.'), findsNothing);
   });
 
   testWidgets('iOS: redeem button absent when canRedeem=false', (tester) async {

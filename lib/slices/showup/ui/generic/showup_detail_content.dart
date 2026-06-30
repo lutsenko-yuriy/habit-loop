@@ -145,20 +145,6 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
           widget.slots.buildActionButtons(context, state),
           const SizedBox(height: 16),
         ],
-        if (state.canRedeem) ...[
-          () {
-            final hasNote = (showup.note?.isNotEmpty ?? false);
-            return widget.slots.buildRedemptionButton(
-              context,
-              hasNote && !state.isSaving ? () => widget.onRedeemShowup() : null,
-            );
-          }(),
-          if ((showup.note?.isEmpty ?? true)) ...[
-            const SizedBox(height: 8),
-            widget.slots.buildRedemptionHint(context),
-          ],
-          const SizedBox(height: 16),
-        ],
         if (state.markError != null) ...[
           Text(
             l10n.showupMarkError,
@@ -192,6 +178,44 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             textAlign: TextAlign.center,
           ),
         ],
+        // Redemption section — below the note so the hint text is no longer
+        // directionally misleading. AnimatedSwitcher fades between the enabled,
+        // disabled, and gone states.
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: state.canRedeem
+              ? Padding(
+                  key: const ValueKey('redeem-section'),
+                  padding: const EdgeInsets.only(top: 16),
+                  child: () {
+                    final hasNote = showup.note?.isNotEmpty ?? false;
+                    final enabled = hasNote && !state.isSaving;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Keyed on enabled so AnimatedSwitcher cross-fades when
+                        // the button transitions between disabled and active states.
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: SizedBox(
+                            key: ValueKey(enabled),
+                            width: double.infinity,
+                            child: widget.slots.buildRedemptionButton(
+                              context,
+                              enabled ? () => widget.onRedeemShowup() : null,
+                            ),
+                          ),
+                        ),
+                        if (!hasNote) ...[
+                          const SizedBox(height: 8),
+                          widget.slots.buildRedemptionHint(context),
+                        ],
+                      ],
+                    );
+                  }(),
+                )
+              : const SizedBox.shrink(key: ValueKey('redeem-gone')),
+        ),
       ],
     );
   }

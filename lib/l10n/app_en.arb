@@ -166,7 +166,7 @@
   "showupViewPactDetails": "View pact details",
   "showupNotFound": "This showup is no longer available.",
   "showupRedeemAction": "Mark as Done (redeem)",
-  "showupRedeemAddNoteHint": "Add a note above to redeem this showup.",
+  "showupRedeemAddNoteHint": "Add a note to redeem this showup.",
 
   "languagePickerTitle": "Language",
   "languageEnglish": "English",

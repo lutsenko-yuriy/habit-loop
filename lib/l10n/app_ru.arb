@@ -166,7 +166,7 @@
   "showupViewPactDetails": "Подробности пакта",
   "showupNotFound": "Эта явка больше недоступна.",
   "showupRedeemAction": "Отметить как выполнено (восстановить)",
-  "showupRedeemAddNoteHint": "Добавьте заметку выше, чтобы восстановить эту явку.",
+  "showupRedeemAddNoteHint": "Добавьте заметку, чтобы восстановить эту явку.",
 
   "languagePickerTitle": "Язык",
   "languageEnglish": "Английский",
