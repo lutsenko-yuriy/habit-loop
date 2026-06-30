@@ -7,6 +7,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-139**: Redeem tail-zone failed showups by adding a note (PR #207)
 - **HAB-111**: Dashboard bottom sheet UX improvements (PR #147)
 - **HAB-113**: Bottom sheet stuck at semi-expanded on fast upward drag (PR #149)
 - **HAB-115**: Editable notes on pact detail for inactive pacts (PR #155)
