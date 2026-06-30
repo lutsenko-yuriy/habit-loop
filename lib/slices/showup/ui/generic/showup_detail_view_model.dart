@@ -188,7 +188,8 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
             showup: showup,
             status: ShowupStatus.done,
           );
-      state = state.copyWith(showup: updatedShowup, uiState: ShowupUiState.done, isSaving: false, canRedeem: false);
+      state = state.copyWith(
+          showup: updatedShowup, uiState: ShowupUiState.done, isSaving: false, canRedeem: false, wasAutoFailed: false);
 
       final now = ref.read(showupDetailNowProvider);
       final today = DateTime(now.year, now.month, now.day);

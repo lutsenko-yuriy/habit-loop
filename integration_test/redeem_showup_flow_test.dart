@@ -26,11 +26,11 @@ bool _redeemEnabled(WidgetTester tester) {
 
 // Dashboard and timeline anchored on June 15 2099.
 // Default 7-day tail → cutoff = June 8.
-// showup on June 13 is 2 days old → in-tail.
+// showup on June 14 is 1 day old → in-tail.
 final _timelineNow = DateTime(2099, 6, 15, 7, 55);
 
 // For the out-of-tail scenario: detail screen sees now = July 15 2099.
-// Tail cutoff becomes July 8 → June 13 showup (32 days ago) is out of tail.
+// Tail cutoff becomes July 8 → June 14 showup (31 days ago) is out of tail.
 final _detailNowOutOfTail = DateTime(2099, 7, 15, 7, 55);
 
 const _pactId = 'redeem-test-pact';
@@ -45,9 +45,11 @@ final _pact = Pact(
   createdAt: DateTime(2099, 6, 1),
 );
 
-// 2 days before _timelineNow — within the 7-day tail zone on June 15.
+// 1 day before _timelineNow — within the 7-day tail zone on June 15.
+// June 14 is the latest seeded date, so the dashboard's gap-fill generates
+// June 15+ only and auto-fails nothing — keeping Failed=0 after redemption.
 const _showupId = 'redeem-showup-in-tail';
-final _showupAt = DateTime(2099, 6, 13, 8, 0);
+final _showupAt = DateTime(2099, 6, 14, 8, 0);
 
 Future<void> _openPactsPanel(WidgetTester tester) async {
   await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
@@ -143,6 +145,14 @@ void main() {
         );
         final redeemed = h.analytics.loggedEvents.firstWhere((e) => e.name == 'showup_redeemed');
         expect(redeemed.toParameters()['pact_id'], _pactId);
+
+        // ── 6. Verify done/failed counts persisted ────────────────────────────
+        // redeemShowup() calls persistShowupStatus → _syncStatsBestEffort →
+        // persistStats → writes updated pact.stats to the repository.
+        // Reading the repository directly avoids fragile UI widget-tree traversal.
+        final pactAfter = await h.pactRepo.getPactById(_pactId);
+        expect(pactAfter?.stats?.showupsDone, 1);
+        expect(pactAfter?.stats?.showupsFailed, 0);
       },
     );
 

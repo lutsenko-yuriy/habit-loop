@@ -150,7 +150,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             final hasNote = (showup.note?.isNotEmpty ?? false);
             return widget.slots.buildRedemptionButton(
               context,
-              hasNote ? () => widget.onRedeemShowup() : null,
+              hasNote && !state.isSaving ? () => widget.onRedeemShowup() : null,
             );
           }(),
           if ((showup.note?.isEmpty ?? true)) ...[

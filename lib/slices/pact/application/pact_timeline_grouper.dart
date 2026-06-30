@@ -28,15 +28,16 @@ class PactTimelineGrouper {
   }) {
     final effectiveNow = now ?? DateTime.now();
 
-    final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList();
-    final nonTail = resolved
-        .where(
-            (s) => !TailZone.contains(scheduledAt: s.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays))
-        .toList();
-    final tail = resolved
-        .where(
-            (s) => TailZone.contains(scheduledAt: s.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays))
-        .toList();
+    final nonTail = <Showup>[];
+    final tail = <Showup>[];
+    for (final s in showups) {
+      if (s.status == ShowupStatus.pending) continue;
+      if (TailZone.contains(scheduledAt: s.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays)) {
+        tail.add(s);
+      } else {
+        nonTail.add(s);
+      }
+    }
 
     final nonTailMilestones = _processNonTail(nonTail);
     final tailMilestones = _processTail(tail);

@@ -8,7 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added
 
-- [user] HAB-139 WU2: redeem an auto-failed showup by adding a note and tapping "Mark as Done (redeem)" — available within the last 7 days, disabled until a note is saved
+- [user] Redeem an auto-failed showup by adding a note and tapping "Mark as Done (redeem)" — available within the last 7 days, disabled until a note is saved
 
 ## [0.46.8] — 2026-06-30 (PR #206 merged)
 
