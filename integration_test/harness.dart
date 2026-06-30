@@ -40,6 +40,7 @@ class AppHarness {
     required this.notifications,
     required this.syncService,
     required this.localeService,
+    required this.navigatorKey,
     this.firestoreClient,
   });
 
@@ -50,6 +51,10 @@ class AppHarness {
   final FakeNotificationService notifications;
   final FakeSyncService syncService;
   final FakeLocalePreferenceService localeService;
+
+  /// Navigator key wired into [HabitLoopApp]. Use this in tests to drive
+  /// navigation programmatically (e.g. to simulate a notification tap).
+  final GlobalKey<NavigatorState> navigatorKey;
 
   /// Non-null when the harness was created with a custom [FirestoreClient].
   ///
@@ -128,6 +133,8 @@ class AppHarness {
       localePreferenceService: localeService,
     );
 
+    final navigatorKey = GlobalKey<NavigatorState>();
+
     final harness = AppHarness._(
       pactRepo: pactRepo,
       showupRepo: showupRepo,
@@ -136,12 +143,11 @@ class AppHarness {
       notifications: notifications,
       syncService: syncService,
       localeService: localeService,
+      navigatorKey: navigatorKey,
       firestoreClient: firestoreClient,
     );
 
     if (beforePump != null) await beforePump(harness);
-
-    final navigatorKey = GlobalKey<NavigatorState>();
 
     await tester.pumpWidget(
       ProviderScope(
