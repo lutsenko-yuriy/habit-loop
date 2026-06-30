@@ -58,6 +58,7 @@ import 'package:habit_loop/infrastructure/remote_config/data/overridable_remote_
 import 'package:habit_loop/infrastructure/remote_config/data/shared_preferences_remote_config_override_store.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
@@ -294,10 +295,11 @@ Future<void> main() async {
         if (!coldStart) {
           // Warm start — navigator ready, push now.
           _notificationNavigationHandled = true;
-          NotificationNavigator.navigateToShowup(
+          unawaited(NotificationNavigator.navigateToShowup(
             navigatorKey: _navigatorKey,
             showupId: parsed.showupId,
-          );
+            onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+          ));
         } else {
           // Cold start — the navigator is not yet mounted when this callback
           // fires. On debug/JIT builds the first post-frame callback can fire
@@ -318,10 +320,11 @@ Future<void> main() async {
             }
             if (kDebugMode) debugPrint('[Notif] cold-start deferred push — showupId=$deferredShowupId');
             _notificationNavigationHandled = true;
-            NotificationNavigator.navigateToShowup(
+            unawaited(NotificationNavigator.navigateToShowup(
               navigatorKey: _navigatorKey,
               showupId: deferredShowupId,
-            );
+              onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+            ));
           }
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -473,10 +476,11 @@ Future<void> main() async {
         final parsed = NotificationRouter.parsePayload(launchInfo.payload);
         if (parsed != null) {
           _notificationNavigationHandled = true;
-          NotificationNavigator.navigateToShowup(
+          unawaited(NotificationNavigator.navigateToShowup(
             navigatorKey: _navigatorKey,
             showupId: parsed.showupId,
-          );
+            onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+          ));
           unawaited(
             analyticsService?.logEvent(
               AppOpenedFromNotificationEvent(

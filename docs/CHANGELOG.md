@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.47.1] — 2026-06-30 (PR #209 merged)
+
+### Fixed
+
+- [user] Opening a showup from a notification and marking it done or failed now correctly updates the dashboard when you navigate back
+
 ## [0.47.0] — 2026-06-30 (PR #207 merged)
 
 ### Added
