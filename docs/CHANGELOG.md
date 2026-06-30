@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.46.9] — 2026-06-30
+## [0.47.0] — 2026-06-30
 
 ### Added
 
