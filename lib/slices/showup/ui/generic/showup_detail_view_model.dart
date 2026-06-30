@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/showup/tail_zone.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
@@ -77,6 +78,19 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         reminderOffset: pact?.reminderOffset,
       );
 
+      final rc = ref.read(remoteConfigServiceProvider);
+      final tailDays = rc.getInt('pact_timeline_no_grouping_tail_period_in_days');
+      final canRedeem = showup.status == ShowupStatus.failed &&
+          showup.redeemable &&
+          ref.read(featureFlagsProvider).showupRedemptionEnabled &&
+          TailZone.contains(scheduledAt: showup.scheduledAt, now: now, days: tailDays);
+
+      if (canRedeem && (showup.note?.isEmpty ?? true)) {
+        unawaited(
+          ref.read(analyticsServiceProvider).logEvent(ShowupRedemptionBlockedEvent(pactId: showup.pactId)),
+        );
+      }
+
       state = state.copyWith(
         showup: showup,
         habitName: habitName,
@@ -85,6 +99,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         uiState: uiState,
         isLoading: false,
         wasAutoFailed: wasAutoFailed,
+        canRedeem: canRedeem,
       );
     } catch (e, st) {
       unawaited(
@@ -150,6 +165,48 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       unawaited(
         ref.read(logServiceProvider).error('showup_${actionName}_failed: id=$arg', exception: e, stackTrace: st),
       );
+      state = state.copyWith(isSaving: false, markError: e);
+    }
+  }
+
+  // No-op when canRedeem is false, isSaving, or note is empty (note gate uses persisted note).
+  Future<void> redeemShowup() async {
+    final showup = state.showup;
+    if (showup == null || !state.canRedeem || state.isSaving) return;
+
+    final note = showup.note;
+    if (note == null || note.isEmpty) {
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(ShowupRedemptionBlockedEvent(pactId: showup.pactId)),
+      );
+      return;
+    }
+
+    state = state.copyWith(isSaving: true, clearMarkError: true);
+    try {
+      final updatedShowup = await ref.read(pactStatsServiceProvider).persistShowupStatus(
+            showup: showup,
+            status: ShowupStatus.done,
+          );
+      state = state.copyWith(
+          showup: updatedShowup, uiState: ShowupUiState.done, isSaving: false, canRedeem: false, wasAutoFailed: false);
+
+      final now = ref.read(showupDetailNowProvider);
+      final today = DateTime(now.year, now.month, now.day);
+      final scheduled = DateTime(showup.scheduledAt.year, showup.scheduledAt.month, showup.scheduledAt.day);
+      final daysSince = today.difference(scheduled).inDays;
+
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(
+              ShowupRedeemedEvent(
+                pactId: showup.pactId,
+                noteLength: note.length,
+                daysSinceScheduled: daysSince,
+              ),
+            ),
+      );
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('showup_redeem_failed: id=$arg', exception: e, stackTrace: st));
       state = state.copyWith(isSaving: false, markError: e);
     }
   }

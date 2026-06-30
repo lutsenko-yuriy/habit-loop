@@ -16,6 +16,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dar
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 // A fixed reference "now" to make auto-fail tests deterministic.
 // We use a time clearly in the past so pending showups with past scheduledAt
@@ -486,6 +487,8 @@ void main() {
     });
   });
 
+  _redemptionNoteToggleTest();
+
   group('ShowupDetailViewModel analytics', () {
     late FakeAnalyticsService fakeAnalytics;
 
@@ -521,10 +524,9 @@ void main() {
 
       await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
 
-      expect(fakeAnalytics.loggedEvents, hasLength(1));
-      final event = fakeAnalytics.loggedEvents.first;
-      expect(event, isA<ShowupAutoFailedEvent>());
-      expect((event as ShowupAutoFailedEvent).pactId, showup.pactId);
+      final autoFailEvents = fakeAnalytics.loggedEvents.whereType<ShowupAutoFailedEvent>().toList();
+      expect(autoFailEvents, hasLength(1));
+      expect(autoFailEvents.first.pactId, showup.pactId);
     });
 
     test('load() does NOT fire ShowupAutoFailedEvent when showup is not auto-failed', () async {
@@ -595,6 +597,8 @@ void main() {
     });
   });
 
+  _redemptionTests();
+
   group('ShowupDetailViewModel notification cancellation', () {
     ProviderContainer makeNotificationContainer({
       required Showup showup,
@@ -656,4 +660,292 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
 
   @override
   Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
+}
+
+// ---------------------------------------------------------------------------
+// Redemption tests
+// ---------------------------------------------------------------------------
+
+// Anchored "now": 2099-06-15 12:00 — far future so no other test's showups interfere.
+// Default tail period = 7 days → cutoff = 2099-06-08.
+// In-tail failed showup: scheduledAt = 2099-06-10 (5 days ago, within 7-day window).
+final _redemptionNow = DateTime(2099, 6, 15, 12, 0);
+
+Showup _redeemableFailedShowup({String? note}) => Showup(
+      id: 'sr1',
+      pactId: 'p1',
+      scheduledAt: DateTime(2099, 6, 10, 8, 0), // 5 days before _redemptionNow — in tail zone
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.failed,
+      redeemable: true, // auto-failed
+      note: note,
+    );
+
+Showup _manuallyFailedShowup() => Showup(
+      id: 'sr2',
+      pactId: 'p1',
+      scheduledAt: DateTime(2099, 6, 10, 8, 0),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.failed,
+      redeemable: false, // manually failed — not eligible
+    );
+
+Showup _outOfTailFailedShowup() => Showup(
+      id: 'sr3',
+      pactId: 'p1',
+      scheduledAt: DateTime(2099, 5, 1, 8, 0), // far outside 7-day window
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.failed,
+      redeemable: true,
+    );
+
+ProviderContainer _makeRedemptionContainer({
+  required Showup showup,
+  FakeAnalyticsService? analytics,
+  bool redemptionEnabled = true,
+  int tailDays = 7,
+}) {
+  final rc = FakeRemoteConfigService(overrides: {
+    'showup_redemption_enabled': redemptionEnabled,
+    'pact_timeline_no_grouping_tail_period_in_days': tailDays,
+  });
+  final showupRepo = InMemoryShowupRepository([showup]);
+  final pactRepo = InMemoryPactRepository([_pact]);
+  final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+  return ProviderContainer(
+    overrides: [
+      remoteConfigServiceProvider.overrideWithValue(rc),
+      pactRepositoryProvider.overrideWithValue(pactRepo),
+      showupRepositoryProvider.overrideWithValue(showupRepo),
+      pactTransactionServiceProvider.overrideWithValue(txService),
+      syncServiceProvider.overrideWithValue(const NoopSyncService()),
+      showupDetailNowProvider.overrideWithValue(_redemptionNow),
+      if (analytics != null) analyticsServiceProvider.overrideWithValue(analytics),
+    ],
+  );
+}
+
+void _redemptionTests() {
+  group('ShowupDetailViewModel — canRedeem', () {
+    test('canRedeem is true for auto-failed in-tail showup when flag is on', () async {
+      final showup = _redeemableFailedShowup();
+      final container = _makeRedemptionContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isTrue);
+    });
+
+    test('canRedeem is false for manually-failed showup (redeemable=false)', () async {
+      final showup = _manuallyFailedShowup();
+      final container = _makeRedemptionContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isFalse);
+    });
+
+    test('canRedeem is false for showup outside the tail zone', () async {
+      final showup = _outOfTailFailedShowup();
+      final container = _makeRedemptionContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isFalse);
+    });
+
+    test('canRedeem is false when RC kill-switch is off', () async {
+      final showup = _redeemableFailedShowup();
+      final container = _makeRedemptionContainer(showup: showup, redemptionEnabled: false);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isFalse);
+    });
+
+    test('canRedeem is false for a done showup', () async {
+      final showup = _doneShowup();
+      final container = _makeRedemptionContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isFalse);
+    });
+
+    test('canRedeem is false for a pending showup', () async {
+      final showup = _pendingFutureShowup();
+      final container = _makeRedemptionContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isFalse);
+    });
+  });
+
+  group('ShowupDetailViewModel — redeemShowup', () {
+    test('redeemShowup marks showup done when note is non-empty', () async {
+      final showup = _redeemableFailedShowup(note: 'I did show up, sync was off');
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final rc = FakeRemoteConfigService(overrides: {
+        'showup_redemption_enabled': true,
+        'pact_timeline_no_grouping_tail_period_in_days': 7,
+      });
+      final container = ProviderContainer(overrides: [
+        remoteConfigServiceProvider.overrideWithValue(rc),
+        pactRepositoryProvider.overrideWithValue(pactRepo),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
+        showupDetailNowProvider.overrideWithValue(_redemptionNow),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).redeemShowup();
+
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+      expect(state.showup?.status, ShowupStatus.done);
+      expect(state.canRedeem, isFalse);
+
+      final persisted = await showupRepo.getShowupById(showup.id);
+      expect(persisted?.status, ShowupStatus.done);
+    });
+
+    test('redeemShowup does not change status when note is empty', () async {
+      final showup = _redeemableFailedShowup(); // no note
+      final container = _makeRedemptionContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).redeemShowup();
+
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+      expect(state.showup?.status, ShowupStatus.failed);
+      expect(state.canRedeem, isTrue);
+    });
+
+    test('redeemShowup is a no-op when canRedeem is false', () async {
+      final showup = _manuallyFailedShowup();
+      final container = _makeRedemptionContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).redeemShowup();
+
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+      expect(state.showup?.status, ShowupStatus.failed);
+    });
+  });
+
+  group('ShowupDetailViewModel — redemption analytics', () {
+    test('load() fires ShowupRedemptionBlockedEvent when canRedeem and note is empty', () async {
+      final analytics = FakeAnalyticsService();
+      final showup = _redeemableFailedShowup(); // no note
+      final container = _makeRedemptionContainer(showup: showup, analytics: analytics);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(analytics.loggedEvents.whereType<ShowupRedemptionBlockedEvent>(), hasLength(1));
+    });
+
+    test('load() does NOT fire ShowupRedemptionBlockedEvent when note is non-empty', () async {
+      final analytics = FakeAnalyticsService();
+      final showup = _redeemableFailedShowup(note: 'was there');
+      final container = _makeRedemptionContainer(showup: showup, analytics: analytics);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(analytics.loggedEvents.whereType<ShowupRedemptionBlockedEvent>(), isEmpty);
+    });
+
+    test('redeemShowup fires ShowupRedeemedEvent on success', () async {
+      final analytics = FakeAnalyticsService();
+      final showup = _redeemableFailedShowup(note: 'sync was off');
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final rc = FakeRemoteConfigService(overrides: {
+        'showup_redemption_enabled': true,
+        'pact_timeline_no_grouping_tail_period_in_days': 7,
+      });
+      final container = ProviderContainer(overrides: [
+        remoteConfigServiceProvider.overrideWithValue(rc),
+        pactRepositoryProvider.overrideWithValue(pactRepo),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
+        showupDetailNowProvider.overrideWithValue(_redemptionNow),
+        analyticsServiceProvider.overrideWithValue(analytics),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      analytics.reset();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).redeemShowup();
+      await Future<void>.delayed(Duration.zero);
+
+      final events = analytics.loggedEvents.whereType<ShowupRedeemedEvent>().toList();
+      expect(events, hasLength(1));
+      expect(events.first.pactId, showup.pactId);
+      expect(events.first.noteLength, 'sync was off'.length);
+    });
+
+    test('redeemShowup fires ShowupRedemptionBlockedEvent when note is empty', () async {
+      final analytics = FakeAnalyticsService();
+      final showup = _redeemableFailedShowup(); // no note
+      final container = _makeRedemptionContainer(showup: showup, analytics: analytics);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      analytics.reset();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).redeemShowup();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(analytics.loggedEvents.whereType<ShowupRedemptionBlockedEvent>(), hasLength(1));
+    });
+  });
+}
+
+void _redemptionNoteToggleTest() {
+  group('ShowupDetailViewModel — redemption button toggled by note save/clear', () {
+    // Covers the round-trip: auto-failed showup with no note (button disabled) →
+    // save a note (button enables) → clear the note (button disables again).
+    test('saving a note enables the redeem button; clearing it disables it again', () async {
+      final showup = _redeemableFailedShowup(); // no note
+      final container = _makeRedemptionContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(showupDetailViewModelProvider(showup.id).notifier);
+
+      await notifier.load();
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isTrue);
+      expect(container.read(showupDetailViewModelProvider(showup.id)).showup?.note, isNull);
+
+      // Save a note → persisted note is non-empty → button should be active.
+      await notifier.saveNote('I was there, phone was offline');
+      expect(container.read(showupDetailViewModelProvider(showup.id)).showup?.note, 'I was there, phone was offline');
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isTrue);
+      // canRedeem stays true; the note presence is what gates onPressed in the UI.
+
+      // Clear the note → persisted note is null → button disabled again.
+      await notifier.saveNote('');
+      expect(container.read(showupDetailViewModelProvider(showup.id)).showup?.note, isNull);
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canRedeem, isTrue);
+      // canRedeem is still true (the section stays visible); the UI disables
+      // onPressed because note is empty. We verify the note is null so the
+      // content layer's `hasNote` check evaluates to false.
+    });
+  });
 }

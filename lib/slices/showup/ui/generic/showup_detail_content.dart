@@ -14,6 +14,9 @@ typedef ShowupDetailSlots = ({
   Widget Function(BuildContext context, TextEditingController controller) buildNoteField,
   Widget Function(BuildContext context, VoidCallback? onPressed) buildSaveButton,
   Widget Function(BuildContext context) buildErrorContainer,
+  // onPressed is null when the note is empty (button visible but disabled).
+  Widget Function(BuildContext context, VoidCallback? onRedeem) buildRedemptionButton,
+  Widget Function(BuildContext context) buildRedemptionHint,
 });
 
 /// Shared showup detail body — owns [TextEditingController] lifecycle and
@@ -22,6 +25,7 @@ class ShowupDetailContent extends StatefulWidget {
   final ShowupDetailState state;
   final AppLocalizations l10n;
   final Future<void> Function(String note) onSaveNote;
+  final Future<void> Function() onRedeemShowup;
   final VoidCallback? onOpenPact;
   final ShowupStatusColors statusColors;
   final Color labelColor;
@@ -34,6 +38,7 @@ class ShowupDetailContent extends StatefulWidget {
     required this.state,
     required this.l10n,
     required this.onSaveNote,
+    required this.onRedeemShowup,
     required this.statusColors,
     required this.labelColor,
     required this.tileColor,
@@ -173,6 +178,44 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             textAlign: TextAlign.center,
           ),
         ],
+        // Redemption section — below the note so the hint text is no longer
+        // directionally misleading. AnimatedSwitcher fades between the enabled,
+        // disabled, and gone states.
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: state.canRedeem
+              ? Padding(
+                  key: const ValueKey('redeem-section'),
+                  padding: const EdgeInsets.only(top: 16),
+                  child: () {
+                    final hasNote = showup.note?.isNotEmpty ?? false;
+                    final enabled = hasNote && !state.isSaving;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Keyed on enabled so AnimatedSwitcher cross-fades when
+                        // the button transitions between disabled and active states.
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: SizedBox(
+                            key: ValueKey(enabled),
+                            width: double.infinity,
+                            child: widget.slots.buildRedemptionButton(
+                              context,
+                              enabled ? () => widget.onRedeemShowup() : null,
+                            ),
+                          ),
+                        ),
+                        if (!hasNote) ...[
+                          const SizedBox(height: 8),
+                          widget.slots.buildRedemptionHint(context),
+                        ],
+                      ],
+                    );
+                  }(),
+                )
+              : const SizedBox.shrink(key: ValueKey('redeem-gone')),
+        ),
       ],
     );
   }

@@ -16,6 +16,8 @@ class ShowupDetailState {
   final bool wasAutoFailed;
   // Distinct from generic load failure — stale notification payload or deleted showup.
   final bool isShowupNotFound;
+  // True when the showup is auto-failed, in the tail zone, and the RC flag is on.
+  final bool canRedeem;
 
   const ShowupDetailState({
     this.showup,
@@ -29,6 +31,7 @@ class ShowupDetailState {
     this.noteError,
     this.wasAutoFailed = false,
     this.isShowupNotFound = false,
+    this.canRedeem = false,
   });
 
   ShowupDetailState copyWith({
@@ -47,6 +50,7 @@ class ShowupDetailState {
     bool clearNoteError = false,
     bool? wasAutoFailed,
     bool? isShowupNotFound,
+    bool? canRedeem,
   }) {
     return ShowupDetailState(
       showup: showup ?? this.showup,
@@ -60,6 +64,7 @@ class ShowupDetailState {
       noteError: clearNoteError ? null : (noteError ?? this.noteError),
       wasAutoFailed: wasAutoFailed ?? this.wasAutoFailed,
       isShowupNotFound: isShowupNotFound ?? this.isShowupNotFound,
+      canRedeem: canRedeem ?? this.canRedeem,
     );
   }
 }

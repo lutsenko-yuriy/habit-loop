@@ -1,5 +1,6 @@
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/showup/tail_zone.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 
 class PactTimelineGrouper {
@@ -26,13 +27,17 @@ class PactTimelineGrouper {
     DateTime? now,
   }) {
     final effectiveNow = now ?? DateTime.now();
-    // Normalize to midnight so the cutoff is calendar-date-based, not time-of-day-sensitive.
-    final today = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day);
-    final cutoff = today.subtract(Duration(days: noGroupingTailPeriodInDays));
 
-    final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList();
-    final nonTail = resolved.where((s) => s.scheduledAt.isBefore(cutoff)).toList();
-    final tail = resolved.where((s) => !s.scheduledAt.isBefore(cutoff)).toList();
+    final nonTail = <Showup>[];
+    final tail = <Showup>[];
+    for (final s in showups) {
+      if (s.status == ShowupStatus.pending) continue;
+      if (TailZone.contains(scheduledAt: s.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays)) {
+        tail.add(s);
+      } else {
+        nonTail.add(s);
+      }
+    }
 
     final nonTailMilestones = _processNonTail(nonTail);
     final tailMilestones = _processTail(tail);

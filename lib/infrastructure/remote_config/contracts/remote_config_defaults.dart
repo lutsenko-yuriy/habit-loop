@@ -129,7 +129,15 @@ abstract final class RemoteConfigDefaults {
     'language_selection_enabled',
     'network_sync_enabled',
     'pact_timeline_enabled',
+    'showup_redemption_enabled',
   };
+
+  /// Feature toggle: enable the showup redemption action on the showup detail screen.
+  ///
+  /// When `false`, the redemption action is hidden and auto-failed tail-zone showups
+  /// cannot be redeemed. Override to `false` in the Firebase Remote Config console
+  /// to disable the feature without a release.
+  static const bool showupRedemptionEnabled = true;
 
   /// Feature toggle: show the language-selection UI on the dashboard.
   ///
@@ -177,6 +185,7 @@ abstract final class RemoteConfigDefaults {
     'language_selection_enabled': languageSelectionEnabled,
     'network_sync_enabled': networkSyncEnabled,
     'pact_timeline_enabled': pactTimelineEnabled,
+    'showup_redemption_enabled': showupRedemptionEnabled,
     'pact_timeline_milestone_grouping_threshold': pactTimelineMilestoneGroupingThreshold,
     'pact_timeline_no_grouping_tail_period_in_days': pactTimelineNoGroupingTailPeriodInDays,
   };
@@ -195,6 +204,7 @@ abstract final class RemoteConfigDefaults {
     'language_selection_enabled': ['true', 'false'],
     'network_sync_enabled': ['true', 'false'],
     'pact_timeline_enabled': ['true', 'false'],
+    'showup_redemption_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

@@ -169,6 +169,30 @@ void main() {
       });
     });
 
+    group('showup_redemption_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('showup_redemption_enabled'), isTrue);
+      });
+
+      test('default value is true', () {
+        expect(RemoteConfigDefaults.all['showup_redemption_enabled'], isTrue);
+      });
+
+      test('constant matches all map value', () {
+        expect(RemoteConfigDefaults.showupRedemptionEnabled,
+            equals(RemoteConfigDefaults.all['showup_redemption_enabled']));
+      });
+
+      test('appears in featureToggleKeys', () {
+        expect(RemoteConfigDefaults.featureToggleKeys.contains('showup_redemption_enabled'), isTrue);
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('showup_redemption_enabled'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['showup_redemption_enabled'], containsAll(['true', 'false']));
+      });
+    });
+
     group('pact_timeline_no_grouping_tail_period_in_days', () {
       test('key exists in all map', () {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_period_in_days'), isTrue);

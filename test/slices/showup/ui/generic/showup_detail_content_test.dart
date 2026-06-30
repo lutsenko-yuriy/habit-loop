@@ -50,6 +50,8 @@ ShowupDetailSlots _slots({
   String noteFieldKey = 'note-field',
   String saveKey = 'save-button',
   String errorKey = 'error-container',
+  String redeemKey = 'redeem-button',
+  String redeemHintKey = 'redeem-hint',
   VoidCallback? onSavePressed,
 }) =>
     (
@@ -60,6 +62,12 @@ ShowupDetailSlots _slots({
         return TextButton(key: Key(saveKey), onPressed: onPressed, child: const Text('Save'));
       },
       buildErrorContainer: (ctx) => SizedBox(key: Key(errorKey)),
+      buildRedemptionButton: (ctx, onRedeem) => TextButton(
+            key: Key(redeemKey),
+            onPressed: onRedeem,
+            child: const Text('Redeem'),
+          ),
+      buildRedemptionHint: (ctx) => SizedBox(key: Key(redeemHintKey)),
     );
 
 // Wrap helper
@@ -84,6 +92,7 @@ Widget _wrap(
           state: state,
           l10n: AppLocalizations.of(context)!,
           onSaveNote: onSaveNote ?? (_) async {},
+          onRedeemShowup: () async {},
           onOpenPact: onOpenPact,
           statusColors: ShowupStatusColors.material(Theme.of(context).colorScheme),
           labelColor: Colors.grey,

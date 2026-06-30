@@ -11,6 +11,7 @@ class ShowupDetailPageIos extends StatelessWidget {
   final Future<void> Function() onMarkDone;
   final Future<void> Function() onMarkFailed;
   final Future<void> Function(String note) onSaveNote;
+  final Future<void> Function() onRedeemShowup;
 
   /// Called when the user taps the habit name to open the parent pact detail.
   /// Null when the pact has been deleted (habitName is also null in that case).
@@ -22,6 +23,7 @@ class ShowupDetailPageIos extends StatelessWidget {
     required this.onMarkDone,
     required this.onMarkFailed,
     required this.onSaveNote,
+    required this.onRedeemShowup,
     this.onOpenPact,
   });
 
@@ -64,6 +66,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                           state: state,
                           l10n: l10n,
                           onSaveNote: onSaveNote,
+                          onRedeemShowup: onRedeemShowup,
                           onOpenPact: onOpenPact,
                           statusColors: colors,
                           labelColor: labelColor,
@@ -117,6 +120,19 @@ class ShowupDetailPageIos extends StatelessWidget {
                                       fontSize: 14,
                                     ),
                                   ),
+                                ),
+                            buildRedemptionButton: (ctx, onRedeem) => CupertinoButton.filled(
+                                  key: const Key('showup-redeem-button'),
+                                  onPressed: onRedeem,
+                                  child: Text(l10n.showupRedeemAction),
+                                ),
+                            buildRedemptionHint: (ctx) => Text(
+                                  l10n.showupRedeemAddNoteHint,
+                                  style: const TextStyle(
+                                    color: CupertinoColors.systemGrey,
+                                    fontSize: 13,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                           ),
                         ),
