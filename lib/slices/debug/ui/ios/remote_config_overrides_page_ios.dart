@@ -76,7 +76,11 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                           child: CupertinoButton(
                             key: const Key('test-notification-button'),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+                            onPressed: () => scheduleTestNotification(
+                              ref.read(notificationServiceProvider),
+                              ref.read(pactRepositoryProvider),
+                              ref.read(showupRepositoryProvider),
+                            ),
                             child: const Row(
                               children: [
                                 Icon(CupertinoIcons.bell),

@@ -10,17 +10,9 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'
-    show
-        AndroidInitializationSettings,
-        DarwinInitializationSettings,
-        FlutterLocalNotificationsPlugin,
-        InitializationSettings,
-        NotificationResponse;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' show NotificationResponse;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/firebase_options.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/analytics/data/firebase_analytics_service.dart';
@@ -41,7 +33,6 @@ import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/locale/data/shared_preferences_locale_service.dart';
 import 'package:habit_loop/infrastructure/logging/data/talker_log_service.dart';
-import 'package:habit_loop/infrastructure/notifications/contracts/notification_constants.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/flutter_local_notification_service.dart';
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
@@ -73,120 +64,19 @@ import 'package:talker_flutter/talker_flutter.dart';
 // routes without a BuildContext (they fire outside the widget tree).
 final _navigatorKey = GlobalKey<NavigatorState>();
 
-// Mirrors ProviderScope overrides — lets the foreground "Mark done" callback
-// read Riverpod providers outside the widget tree.
-ProviderContainer? _container;
+// Increments dashboardRefreshSignalProvider inside the ProviderScope that owns
+// DashboardViewModel.
+void _signalDashboardRefresh() {
+  final ctx = _navigatorKey.currentContext;
+  if (ctx == null) return;
+  ProviderScope.containerOf(ctx).read(dashboardRefreshSignalProvider.notifier).state++;
+}
 
 // On iOS, flutter_local_notifications calls onDidReceiveNotificationResponse
 // during initialize() (before runApp). Both the deferred callback and the
 // getAppLaunchDetails() path in main() would push a route for the same tap —
 // this flag ensures only one of the two paths navigates. Reset after first frame.
 bool _notificationNavigationHandled = false;
-
-// Android background isolate handler for notification actions (e.g. "Mark done"
-// from the tray while the app is killed). Must be top-level + vm:entry-point.
-// No Riverpod/DI available — dependencies are constructed directly.
-@pragma('vm:entry-point')
-void _notificationBackgroundHandler(NotificationResponse response) {
-  // Only handle the "mark_done" action — ignore taps on the notification body
-  // (those are handled by the warm-start onDidReceiveNotificationResponse).
-  if (response.actionId != NotificationConstants.markDoneActionId) return;
-
-  final parsed = NotificationRouter.parsePayload(response.payload);
-  if (parsed == null) return;
-
-  // Mark the showup done without Riverpod. We construct the SQLite repository
-  // directly using the production HabitLoopDatabase singleton.
-  //
-  // TODO(HAB-13-WU5): Update PactStats after marking done. Constructing
-  // PactStatsService in a background isolate requires both the pact repository
-  // and the showup repository, which adds complexity and risk of SQLite
-  // contention. For now, stats are refreshed on next foreground launch when
-  // PactDetailViewModel.load() is called.
-  unawaited(_markShowupDoneFromBackground(parsed.showupId, parsed.pactId));
-}
-
-Future<void> _markShowupDoneFromBackground(String showupId, String pactId) async {
-  try {
-    // Android background isolate shares the same app process, so the
-    // singleton's file path is correct.
-    final db = await HabitLoopDatabase.instance.database;
-    final showupRepo = SqliteShowupRepository(db);
-
-    final Showup? showup = await showupRepo.getShowupById(showupId);
-    if (showup == null) return; // Already deleted or never persisted.
-    if (showup.status != ShowupStatus.pending) return; // Already resolved.
-
-    final updated = Showup(
-      id: showup.id,
-      pactId: showup.pactId,
-      scheduledAt: showup.scheduledAt,
-      duration: showup.duration,
-      status: ShowupStatus.done,
-      note: showup.note,
-    );
-    await showupRepo.updateShowup(updated);
-
-    try {
-      final plugin = FlutterLocalNotificationsPlugin();
-      // Minimal re-init for cancellation only (no callbacks needed).
-      await plugin.initialize(
-        const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-          iOS: DarwinInitializationSettings(),
-        ),
-      );
-      await plugin.cancel(NotificationConstants.reminderNotificationId(showupId));
-      await plugin.cancel(NotificationConstants.deadlineNotificationId(showupId));
-    } catch (_) {
-      // Cancellation failures must not crash the background handler.
-    }
-
-    if (kReleaseMode) {
-      try {
-        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-      } catch (_) {
-        // Already initialised or init failed — proceed anyway.
-      }
-      try {
-        final analytics = FirebaseAnalyticsService(
-          FirebaseAnalyticsClientAdapter(FirebaseAnalytics.instance),
-        );
-        await analytics.logEvent(ShowupMarkedDoneFromNotificationEvent(pactId: pactId));
-      } catch (_) {
-        // Analytics failures must not crash the background handler.
-      }
-    }
-  } catch (_) {
-    // Background handlers must not throw.
-  }
-}
-
-// Foreground variant: uses Riverpod so PactStatsService cache is invalidated correctly.
-// Falls back to background path if _container is not yet ready.
-Future<void> _markShowupDoneFromForeground(String showupId, String pactId) async {
-  final container = _container;
-  if (container == null) {
-    await _markShowupDoneFromBackground(showupId, pactId);
-    return;
-  }
-  try {
-    final showupRepo = container.read(showupRepositoryProvider);
-    final pactStatsService = container.read(pactStatsServiceProvider);
-    final notificationService = container.read(notificationServiceProvider);
-    final analyticsService = container.read(analyticsServiceProvider);
-
-    final Showup? showup = await showupRepo.getShowupById(showupId);
-    if (showup == null) return; // Already deleted or never persisted.
-    if (showup.status != ShowupStatus.pending) return; // Idempotency guard.
-
-    await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.done);
-    await notificationService.cancelShowupReminder(showupId);
-    unawaited(analyticsService.logEvent(ShowupMarkedDoneFromNotificationEvent(pactId: pactId)));
-  } catch (_) {
-    // Failures must not crash — UI staleness is preferable to a visible crash.
-  }
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -267,9 +157,6 @@ Future<void> main() async {
   {
     final realService = FlutterLocalNotificationService(earlycrashlytics);
     try {
-      // Both handlers must be set before initialize() so the plugin wires them
-      // during setup. Background handler: Android only, background isolate.
-      realService.setBackgroundNotificationHandler(_notificationBackgroundHandler);
       realService.setNotificationResponseCallback((NotificationResponse response) {
         if (kDebugMode) {
           debugPrint('[Notif] response received — actionId=${response.actionId} payload=${response.payload}');
@@ -277,13 +164,6 @@ Future<void> main() async {
         final parsed = NotificationRouter.parsePayload(response.payload);
         if (parsed == null) {
           if (kDebugMode) debugPrint('[Notif] payload parse failed — skipping navigation');
-          return;
-        }
-
-        if (response.actionId == NotificationConstants.markDoneActionId) {
-          // Do NOT navigate — the user acted without opening the app.
-          if (kDebugMode) debugPrint('[Notif] mark-done action — showupId=${parsed.showupId}');
-          unawaited(_markShowupDoneFromForeground(parsed.showupId, parsed.pactId));
           return;
         }
 
@@ -298,7 +178,7 @@ Future<void> main() async {
           unawaited(NotificationNavigator.navigateToShowup(
             navigatorKey: _navigatorKey,
             showupId: parsed.showupId,
-            onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+            onReturn: _signalDashboardRefresh,
           ));
         } else {
           // Cold start — the navigator is not yet mounted when this callback
@@ -323,7 +203,7 @@ Future<void> main() async {
             unawaited(NotificationNavigator.navigateToShowup(
               navigatorKey: _navigatorKey,
               showupId: deferredShowupId,
-              onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+              onReturn: _signalDashboardRefresh,
             ));
           }
 
@@ -399,7 +279,6 @@ Future<void> main() async {
     // Shared instance so seed-data UI operations immediately affect the live sync service.
     final FakeFirestoreClient? sharedFakeFirestore = (!kReleaseMode && useLocalBackend) ? FakeFirestoreClient() : null;
 
-    // Same overrides list for both ProviderScope and _container.
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
@@ -431,10 +310,6 @@ Future<void> main() async {
       debugBackendAtStartup: !kReleaseMode ? debugBackend : null,
     );
 
-    // Mirrors ProviderScope — lets the foreground "Mark done" callback read
-    // Riverpod providers without going through the widget tree.
-    _container = ProviderContainer(overrides: overrides);
-
     runApp(
       ProviderScope(
         overrides: overrides,
@@ -451,8 +326,13 @@ Future<void> main() async {
         final prefs = await SharedPreferences.getInstance();
         await clearStaleKeychainIfFirstLaunch(authService: authService, prefs: prefs);
         await authService.initialize();
-        final syncService = _container?.read(syncServiceProvider);
-        if (syncService != null) unawaited(syncService.pullRemoteChanges());
+        // ignore: use_build_context_synchronously — _navigatorKey is the root
+        // navigator, which is never disposed during the app lifetime.
+        final syncCtx = _navigatorKey.currentContext;
+        if (syncCtx != null) {
+          // ignore: use_build_context_synchronously
+          unawaited(ProviderScope.containerOf(syncCtx).read(syncServiceProvider).pullRemoteChanges());
+        }
       }
     }());
 
@@ -479,7 +359,7 @@ Future<void> main() async {
           unawaited(NotificationNavigator.navigateToShowup(
             navigatorKey: _navigatorKey,
             showupId: parsed.showupId,
-            onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+            onReturn: _signalDashboardRefresh,
           ));
           unawaited(
             analyticsService?.logEvent(

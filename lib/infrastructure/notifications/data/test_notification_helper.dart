@@ -1,61 +1,84 @@
 import 'package:flutter/foundation.dart' show debugPrint, kReleaseMode;
 import 'package:habit_loop/domain/pact/pact.dart';
-import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 
-/// Schedules a local notification to fire in 15 seconds with a fake payload.
+/// Schedules a local notification in 15 seconds using the nearest real pending
+/// showup from the active pacts.
 ///
 /// Background the app after calling this, wait 15 s, then tap the notification
-/// — the console should show `[Notif]` log lines and the showup detail screen
-/// should open (showing "showup not found" because the ID is fake, but that
-/// confirms the full navigation stack is wired correctly).
+/// — the app should navigate to the real showup detail screen, verifying that
+/// notifications are enabled, arrive, are tappable, and deep-link navigation
+/// is wired correctly.
 ///
-/// Uses [NotificationService.scheduleShowupReminder] with a fake [Pact] whose
-/// `reminderOffset` is [Duration.zero] and a fake [Showup] whose `scheduledAt`
-/// is 15 s from now, so the notification fires immediately at `scheduledAt`
-/// without any offset subtraction. This goes through the same code path as
-/// production scheduling and avoids importing plugin internals directly.
+/// If no upcoming pending showup exists, logs a warning and returns early.
 ///
 /// Only referenced from debug/profile-mode UI — not compiled into release
 /// builds via tree-shaking once the call sites are guarded by [kDebugMode] /
 /// [kProfileMode].
-Future<void> scheduleTestNotification(NotificationService notificationService) async {
-  // Self-protection: call sites are guarded by kDebugMode/kProfileMode, but
-  // belt-and-suspenders ensures this never fires in production.
+Future<void> scheduleTestNotification(
+  NotificationService notificationService,
+  PactRepository pactRepository,
+  ShowupRepository showupRepository,
+) async {
   assert(!kReleaseMode, 'scheduleTestNotification must not be called in release builds');
   if (kReleaseMode) return;
 
   final now = DateTime.now();
-  // reminderOffset = Duration.zero means fireAt = scheduledAt (no subtraction).
+
+  // Find the nearest upcoming pending showup across all active pacts.
+  final activePacts = await pactRepository.getActivePacts();
+  Showup? nearest;
+  Pact? nearestPact;
+
+  for (final pact in activePacts) {
+    final showups = await showupRepository.getShowupsForPact(pact.id);
+    for (final showup in showups) {
+      if (showup.status != ShowupStatus.pending) continue;
+      if (!showup.scheduledAt.isAfter(now)) continue;
+      if (nearest == null || showup.scheduledAt.isBefore(nearest.scheduledAt)) {
+        nearest = showup;
+        nearestPact = pact;
+      }
+    }
+  }
+
+  if (nearest == null || nearestPact == null) {
+    debugPrint('[TestNotif] no upcoming pending showup — create an active pact with future showups first');
+    return;
+  }
+
   final fireAt = now.add(const Duration(seconds: 15));
 
-  final fakeShowup = Showup(
-    id: 'test-showup-id',
-    pactId: 'test-pact-id',
+  // Keep the real showup id so navigation deep-links to the actual showup.
+  // Override scheduledAt to fireAt and use reminderOffset=Duration.zero so the
+  // notification fires in exactly 15 s (fireAt = scheduledAt - Duration.zero).
+  final testShowup = Showup(
+    id: nearest.id,
+    pactId: nearest.pactId,
     scheduledAt: fireAt,
-    duration: const Duration(minutes: 30),
-    status: ShowupStatus.pending,
+    duration: nearest.duration,
+    status: nearest.status,
+    note: nearest.note,
+    redeemable: nearest.redeemable,
   );
+  final testPact = nearestPact.copyWith(reminderOffset: Duration.zero);
 
-  final fakePact = Pact(
-    id: 'test-pact-id',
-    habitName: 'Test Habit',
-    startDate: now,
-    endDate: now.add(const Duration(days: 180)),
-    showupDuration: const Duration(minutes: 30),
-    schedule: DailySchedule(timeOfDay: Duration(hours: now.hour, minutes: now.minute)),
-    status: PactStatus.active,
-    reminderOffset: Duration.zero,
-  );
-
+  // Cancel any existing reminder for this showup before overriding with the
+  // 15-second test fire so we don't leave a stale duplicate.
+  await notificationService.cancelShowupReminder(nearest.id);
   await notificationService.scheduleShowupReminder(
-    showup: fakeShowup,
-    pact: fakePact,
-    titleText: '🔔 Test notification',
-    bodyText: 'Tap me — navigation should open showup detail',
+    showup: testShowup,
+    pact: testPact,
+    titleText: '🔔 Test — ${nearestPact.habitName}',
+    bodyText: 'Tap me — should open the real showup detail',
   );
-  debugPrint('[TestNotif] scheduled for $fireAt — background the app and tap the banner in 15 s');
+
+  debugPrint(
+    '[TestNotif] scheduled for $fireAt using real showup ${nearest.id} '
+    '(${nearestPact.habitName}) — background the app and tap the banner in 15 s',
+  );
 }

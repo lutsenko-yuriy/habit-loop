@@ -54,7 +54,6 @@ The Habit Loop app allows the user to:
   - If a showup was auto-failed (not manually failed) and falls within the tail zone (last N days, controlled by `pact_timeline_no_grouping_tail_period_in_days`), the user can redeem it by writing a note and tapping "Mark as Done (redeem)". The redemption button is always visible when eligible but disabled until a note is saved. Manual fails are not redeemable. The feature is controlled by the `showup_redemption_enabled` kill-switch.
 - Be reminded about an upcoming showup
   - A notification with a reminder will appear to the user if he defined a reminder
-  - If the platform (iOS, Android) supports actionable notifications, the user can mark a showup as done directly from the notification without opening the app. *(Stretch goal — implement if the platform supports it.)*
   - The user can see the showup by clicking on the notification
 
 ## Remote feature toggles

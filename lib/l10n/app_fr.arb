@@ -208,7 +208,6 @@
   },
   "notificationMissedTitle": "Tu as manqué celui-ci",
   "notificationMissedBody": "Pas de panique — sois là pour la prochaine séance.",
-  "notificationMarkDone": "Marquer comme réalisé",
   "notificationDurationMinutes": "{count} min",
   "@notificationDurationMinutes": {
     "placeholders": {

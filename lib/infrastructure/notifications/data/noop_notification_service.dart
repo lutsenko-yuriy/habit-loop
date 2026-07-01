@@ -21,7 +21,6 @@ final class NoopNotificationService implements NotificationService {
     required Pact pact,
     required String titleText,
     required String bodyText,
-    bool includeMarkDoneAction = true,
   }) async {}
 
   @override
