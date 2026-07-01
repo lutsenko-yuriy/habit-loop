@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.2] — 2026-07-01 (PR #213 merged)
+
+### Fixed
+
+- [user] Dashboard now reliably shows the updated showup status after you mark a showup done or failed by tapping a notification — the previous release fixed this partially but the fix didn't take effect in all cases
+- [app] HAB-141: fixed root cause (dashboard signal was written to a detached ProviderContainer instead of the widget tree's ProviderScope); removed "Mark done" notification quick action and associated foreground/background handlers; removed _container singleton
+
 ## [0.48.1] — 2026-07-01 (PR #212 merged)
 
 ### Meta
