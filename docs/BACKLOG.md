@@ -21,7 +21,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ### Issues
 
-_(none)_
+- **HAB-143**: Dead code automation — detect orphaned handlers, analytics events, l10n keys, and test files after feature removal
 
 ### Remaining work
 
