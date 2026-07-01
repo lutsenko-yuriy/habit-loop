@@ -39,22 +39,18 @@ If the argument is empty after stripping the tag (or no argument was given at al
 
 Resolve the target file: `docs/knowledge/notes/HAB-XX.md` (using the ticket ID from step 1).
 
-**If the file does not exist:** create it with this structure:
+**If the file does not exist:** create it from `docs/knowledge/notes/TEMPLATE.md` — substitute the ticket ID and title, then clear the placeholder content in `## Notes` and `## Debrief summary`.
+
+**If the file already has a `## Debrief summary` with content** (i.e. the ticket was previously finalised): do not edit it. Create `docs/knowledge/notes/HAB-XX-adjust-N.md` instead, where N is the next available suffix (1, 2, …). Use the same template structure.
+
+**Append** a dated heading and named observation at the end of the `## Notes` section:
 
 ```markdown
-# HAB-XX: <ticket title>
+### YYYY-MM-DD
 
-## Notes
+**<derived title from note text>**
 
-## Debrief summary
-```
-
-Use the ticket ID as the title placeholder.
-
-**Append** a timestamped bullet at the end of the `## Notes` section (after all existing bullets, or as the first line if there are none yet):
-
-```
-- YYYY-MM-DD: <note text>
+<note text>
 ```
 
 Use today's date in `YYYY-MM-DD` format.

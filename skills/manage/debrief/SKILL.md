@@ -19,6 +19,7 @@ This skill produces workflow improvements and a retrospective record, not code.
 
 - `git log --oneline -20` to see the recent commit history
 - Read `docs/FEATURE_WORKFLOW.md` and `docs/TROUBLESHOOT_WORKFLOW.md`
+- Read `docs/knowledge/notes/HAB-XX.md` and any `HAB-XX-adjust-N.md` files if they exist — use the contents to inform the dialog and avoid re-covering ground already captured mid-session
 
 ### 2. Open the dialog
 
@@ -63,15 +64,11 @@ Write only the approved changes to their respective files. Skip any the user dec
 
 Append a dated block to the `## Debrief summary` section of `docs/knowledge/notes/HAB-XX.md`.
 
-**If the file does not exist:** create it with this structure first (use the ticket ID as the title placeholder):
+**If the file does not exist:** create it from `docs/knowledge/notes/TEMPLATE.md` — substitute the ticket ID and title, then clear the placeholder content.
 
-```markdown
-# HAB-XX: <ticket title>
+**If the file exists but has no `## Debrief summary` content yet:** append directly.
 
-## Notes
-
-## Debrief summary
-```
+**If the file already has a finalised debrief** (ticket was previously debriefed): create `HAB-XX-adjust-N.md` with the same template structure and write the new debrief block there.
 
 **Append** to the end of the `## Debrief summary` section:
 
