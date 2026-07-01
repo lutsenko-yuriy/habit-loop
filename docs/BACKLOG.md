@@ -8,7 +8,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ## In QA
 
 - **HAB-142**: Polish: scroll clips into top bar and bottom gap on detail screens (PR #211)
-- **HAB-141**: Dashboard stale showup status after notification tap (PRs #209, #213)
 - **HAB-139**: Redeem tail-zone failed showups by adding a note (PR #207)
 - **HAB-111**: Dashboard bottom sheet UX improvements (PR #147)
 - **HAB-113**: Bottom sheet stuck at semi-expanded on fast upward drag (PR #149)

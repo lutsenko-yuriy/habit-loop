@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.3] — 2026-07-02 (PR #214 merged)
+
+### Meta
+
+- [meta] HAB-141 debrief: notes template + adjust-N convention for reopened tickets; debrief skill reads existing notes; HAB-143 created for dead code automation
+
 ## [0.48.2] — 2026-07-01 (PR #213 merged)
 
 ### Fixed
