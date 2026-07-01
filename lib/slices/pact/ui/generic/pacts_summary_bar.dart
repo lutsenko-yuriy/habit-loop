@@ -1,6 +1,6 @@
 import 'dart:async' show unawaited;
 
-import 'package:flutter/cupertino.dart' show CupertinoColors, CupertinoPageRoute;
+import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -282,7 +282,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                           ),
                         ),
 
-                        Container(height: dividerH, color: CupertinoColors.separator.resolveFrom(context)),
+                        Container(height: dividerH, color: Theme.of(context).dividerColor),
 
                         // ── Scrollable pact list ──
                         // NotificationListener blocks ScrollNotification from reaching
