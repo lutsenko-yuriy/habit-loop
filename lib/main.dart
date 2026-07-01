@@ -73,13 +73,8 @@ import 'package:talker_flutter/talker_flutter.dart';
 // routes without a BuildContext (they fire outside the widget tree).
 final _navigatorKey = GlobalKey<NavigatorState>();
 
-// Mirrors ProviderScope overrides — lets the foreground "Mark done" callback
-// read Riverpod providers outside the widget tree.
-ProviderContainer? _container;
-
 // Increments dashboardRefreshSignalProvider inside the ProviderScope that owns
-// DashboardViewModel. Must NOT use _container — that is a separate container
-// instance and writes to it are invisible to the widget tree's providers.
+// DashboardViewModel.
 void _signalDashboardRefresh() {
   final ctx = _navigatorKey.currentContext;
   if (ctx == null) return;
@@ -172,13 +167,14 @@ Future<void> _markShowupDoneFromBackground(String showupId, String pactId) async
 }
 
 // Foreground variant: uses Riverpod so PactStatsService cache is invalidated correctly.
-// Falls back to background path if _container is not yet ready.
+// Falls back to background path if the navigator context is not yet ready.
 Future<void> _markShowupDoneFromForeground(String showupId, String pactId) async {
-  final container = _container;
-  if (container == null) {
+  final ctx = _navigatorKey.currentContext;
+  if (ctx == null) {
     await _markShowupDoneFromBackground(showupId, pactId);
     return;
   }
+  final container = ProviderScope.containerOf(ctx);
   try {
     final showupRepo = container.read(showupRepositoryProvider);
     final pactStatsService = container.read(pactStatsServiceProvider);
@@ -408,7 +404,6 @@ Future<void> main() async {
     // Shared instance so seed-data UI operations immediately affect the live sync service.
     final FakeFirestoreClient? sharedFakeFirestore = (!kReleaseMode && useLocalBackend) ? FakeFirestoreClient() : null;
 
-    // Same overrides list for both ProviderScope and _container.
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
@@ -440,10 +435,6 @@ Future<void> main() async {
       debugBackendAtStartup: !kReleaseMode ? debugBackend : null,
     );
 
-    // Mirrors ProviderScope — lets the foreground "Mark done" callback read
-    // Riverpod providers without going through the widget tree.
-    _container = ProviderContainer(overrides: overrides);
-
     runApp(
       ProviderScope(
         overrides: overrides,
@@ -460,8 +451,13 @@ Future<void> main() async {
         final prefs = await SharedPreferences.getInstance();
         await clearStaleKeychainIfFirstLaunch(authService: authService, prefs: prefs);
         await authService.initialize();
-        final syncService = _container?.read(syncServiceProvider);
-        if (syncService != null) unawaited(syncService.pullRemoteChanges());
+        // ignore: use_build_context_synchronously — _navigatorKey is the root
+        // navigator, which is never disposed during the app lifetime.
+        final syncCtx = _navigatorKey.currentContext;
+        if (syncCtx != null) {
+          // ignore: use_build_context_synchronously
+          unawaited(ProviderScope.containerOf(syncCtx).read(syncServiceProvider).pullRemoteChanges());
+        }
       }
     }());
 
