@@ -63,21 +63,29 @@ class PactDetailPageIos extends StatelessWidget {
             : null,
       ),
       child: SafeArea(
+        bottom: false,
         child: Material(
           type: MaterialType.transparency,
-          child: state.isLoading
-              ? const Center(child: CupertinoActivityIndicator())
-              : state.loadError != null
-                  ? Center(child: Text(state.loadError.toString()))
-                  : _PactDetailContent(
-                      state: state,
-                      l10n: l10n,
-                      onStopPact: onStopPact,
-                      onSaveNote: onSaveNote,
-                      onArchivePact: onArchivePact,
-                      pactTimelineEnabled: pactTimelineEnabled,
-                      onOpenTimeline: onOpenTimeline,
-                    ),
+          child: Column(
+            children: [
+              Container(height: 0.5, color: CupertinoColors.separator),
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : state.loadError != null
+                        ? Center(child: Text(state.loadError.toString()))
+                        : _PactDetailContent(
+                            state: state,
+                            l10n: l10n,
+                            onStopPact: onStopPact,
+                            onSaveNote: onSaveNote,
+                            onArchivePact: onArchivePact,
+                            pactTimelineEnabled: pactTimelineEnabled,
+                            onOpenTimeline: onOpenTimeline,
+                          ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -116,8 +124,9 @@ class _PactDetailContent extends StatelessWidget {
     final statusColor = PactStatusColors.cupertino(context).forStatus(pact.status);
     final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
       children: [
         // Habit name + status badge
         Row(

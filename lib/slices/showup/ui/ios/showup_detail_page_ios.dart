@@ -34,6 +34,7 @@ class ShowupDetailPageIos extends StatelessWidget {
     final labelColor = CupertinoColors.systemGrey.resolveFrom(context);
     final tileColor = CupertinoColors.tertiarySystemFill.resolveFrom(context);
     final linkColor = CupertinoColors.activeBlue.resolveFrom(context);
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -42,100 +43,109 @@ class ShowupDetailPageIos extends StatelessWidget {
         middle: Text(l10n.showupDetailTitle),
       ),
       child: SafeArea(
+        bottom: false,
         child: Material(
           type: MaterialType.transparency,
-          child: state.isLoading
-              ? const Center(child: CupertinoActivityIndicator())
-              : state.isShowupNotFound
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(l10n.showupNotFound, textAlign: TextAlign.center),
-                          const SizedBox(height: 16),
-                          CupertinoButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text(l10n.back),
-                          ),
-                        ],
-                      ),
-                    )
-                  : state.loadError != null
-                      ? Center(child: Text(state.loadError.toString()))
-                      : ShowupDetailContent(
-                          state: state,
-                          l10n: l10n,
-                          onSaveNote: onSaveNote,
-                          onRedeemShowup: onRedeemShowup,
-                          onOpenPact: onOpenPact,
-                          statusColors: colors,
-                          labelColor: labelColor,
-                          tileColor: tileColor,
-                          linkColor: linkColor,
-                          slots: (
-                            buildActionButtons: (ctx, s) => Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    CupertinoButton.filled(
-                                      onPressed: s.isSaving ? null : onMarkDone,
-                                      child: s.isSaving
-                                          ? const CupertinoActivityIndicator(color: Colors.white)
-                                          : Text(l10n.markDone),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    CupertinoButton(
-                                      onPressed: s.isSaving ? null : onMarkFailed,
-                                      child: Text(
-                                        l10n.markFailed,
-                                        style: const TextStyle(color: CupertinoColors.destructiveRed),
+          child: Column(
+            children: [
+              Container(height: 0.5, color: CupertinoColors.separator),
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : state.isShowupNotFound
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(l10n.showupNotFound, textAlign: TextAlign.center),
+                                const SizedBox(height: 16),
+                                CupertinoButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: Text(l10n.back),
+                                ),
+                              ],
+                            ),
+                          )
+                        : state.loadError != null
+                            ? Center(child: Text(state.loadError.toString()))
+                            : ShowupDetailContent(
+                                state: state,
+                                l10n: l10n,
+                                onSaveNote: onSaveNote,
+                                onRedeemShowup: onRedeemShowup,
+                                onOpenPact: onOpenPact,
+                                statusColors: colors,
+                                labelColor: labelColor,
+                                tileColor: tileColor,
+                                linkColor: linkColor,
+                                bottomPadding: bottomPadding,
+                                slots: (
+                                  buildActionButtons: (ctx, s) => Column(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          CupertinoButton.filled(
+                                            onPressed: s.isSaving ? null : onMarkDone,
+                                            child: s.isSaving
+                                                ? const CupertinoActivityIndicator(color: Colors.white)
+                                                : Text(l10n.markDone),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          CupertinoButton(
+                                            onPressed: s.isSaving ? null : onMarkFailed,
+                                            child: Text(
+                                              l10n.markFailed,
+                                              style: const TextStyle(color: CupertinoColors.destructiveRed),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                  buildNoteField: (ctx, ctrl) => CupertinoTextField(
+                                        controller: ctrl,
+                                        placeholder: l10n.showupNoteLabel,
+                                        maxLines: 4,
+                                        minLines: 2,
+                                        padding: const EdgeInsets.all(12),
+                                      ),
+                                  buildSaveButton: (ctx, onPressed) => CupertinoButton(
+                                        onPressed: onPressed,
+                                        child: Text(l10n.showupNoteSave),
+                                      ),
+                                  buildErrorContainer: (ctx) => Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: CupertinoColors.systemRed.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: CupertinoColors.systemRed.withValues(alpha: 0.4),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          l10n.showupAutoFailed,
+                                          style: const TextStyle(
+                                            color: CupertinoColors.systemRed,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                  buildRedemptionButton: (ctx, onRedeem) => CupertinoButton.filled(
+                                        key: const Key('showup-redeem-button'),
+                                        onPressed: onRedeem,
+                                        child: Text(l10n.showupRedeemAction),
+                                      ),
+                                  buildRedemptionHint: (ctx) => Text(
+                                        l10n.showupRedeemAddNoteHint,
+                                        style: const TextStyle(
+                                          color: CupertinoColors.systemGrey,
+                                          fontSize: 13,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                 ),
-                            buildNoteField: (ctx, ctrl) => CupertinoTextField(
-                                  controller: ctrl,
-                                  placeholder: l10n.showupNoteLabel,
-                                  maxLines: 4,
-                                  minLines: 2,
-                                  padding: const EdgeInsets.all(12),
-                                ),
-                            buildSaveButton: (ctx, onPressed) => CupertinoButton(
-                                  onPressed: onPressed,
-                                  child: Text(l10n.showupNoteSave),
-                                ),
-                            buildErrorContainer: (ctx) => Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemRed.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: CupertinoColors.systemRed.withValues(alpha: 0.4),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    l10n.showupAutoFailed,
-                                    style: const TextStyle(
-                                      color: CupertinoColors.systemRed,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                            buildRedemptionButton: (ctx, onRedeem) => CupertinoButton.filled(
-                                  key: const Key('showup-redeem-button'),
-                                  onPressed: onRedeem,
-                                  child: Text(l10n.showupRedeemAction),
-                                ),
-                            buildRedemptionHint: (ctx) => Text(
-                                  l10n.showupRedeemAddNoteHint,
-                                  style: const TextStyle(
-                                    color: CupertinoColors.systemGrey,
-                                    fontSize: 13,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                          ),
-                        ),
+                              ),
+              ),
+            ],
+          ),
         ),
       ),
     );
