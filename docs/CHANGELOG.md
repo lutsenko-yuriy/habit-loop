@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.1] — 2026-07-01 (PR #212 merged)
+
+### Meta
+
+- [meta] HAB-142 debrief: no workflow changes — audit correctly caught color system issues during review; overall process held up well
+
 ## [0.48.0] — 2026-07-01 (PR #211 merged)
 
 ### Fixed
