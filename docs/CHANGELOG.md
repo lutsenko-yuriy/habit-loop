@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.48.0] — 2026-07-01
+## [0.48.0] — 2026-07-01 (PR #211 merged)
 
 ### Fixed
 
