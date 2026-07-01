@@ -65,7 +65,11 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                       key: const Key('test-notification-button'),
                       leading: const Icon(Icons.notifications_outlined),
                       title: const Text('Fire test notification'),
-                      onTap: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+                      onTap: () => scheduleTestNotification(
+                        ref.read(notificationServiceProvider),
+                        ref.read(pactRepositoryProvider),
+                        ref.read(showupRepositoryProvider),
+                      ),
                     ),
                 buildEntryTile: (ctx, entry, onTap) => ListTile(
                       key: Key('rc-entry-${entry.key}'),

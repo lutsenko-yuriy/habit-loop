@@ -77,6 +77,15 @@ final _navigatorKey = GlobalKey<NavigatorState>();
 // read Riverpod providers outside the widget tree.
 ProviderContainer? _container;
 
+// Increments dashboardRefreshSignalProvider inside the ProviderScope that owns
+// DashboardViewModel. Must NOT use _container — that is a separate container
+// instance and writes to it are invisible to the widget tree's providers.
+void _signalDashboardRefresh() {
+  final ctx = _navigatorKey.currentContext;
+  if (ctx == null) return;
+  ProviderScope.containerOf(ctx).read(dashboardRefreshSignalProvider.notifier).state++;
+}
+
 // On iOS, flutter_local_notifications calls onDidReceiveNotificationResponse
 // during initialize() (before runApp). Both the deferred callback and the
 // getAppLaunchDetails() path in main() would push a route for the same tap —
@@ -298,7 +307,7 @@ Future<void> main() async {
           unawaited(NotificationNavigator.navigateToShowup(
             navigatorKey: _navigatorKey,
             showupId: parsed.showupId,
-            onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+            onReturn: _signalDashboardRefresh,
           ));
         } else {
           // Cold start — the navigator is not yet mounted when this callback
@@ -323,7 +332,7 @@ Future<void> main() async {
             unawaited(NotificationNavigator.navigateToShowup(
               navigatorKey: _navigatorKey,
               showupId: deferredShowupId,
-              onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+              onReturn: _signalDashboardRefresh,
             ));
           }
 
@@ -479,7 +488,7 @@ Future<void> main() async {
           unawaited(NotificationNavigator.navigateToShowup(
             navigatorKey: _navigatorKey,
             showupId: parsed.showupId,
-            onReturn: () => _container?.read(dashboardRefreshSignalProvider.notifier).state++,
+            onReturn: _signalDashboardRefresh,
           ));
           unawaited(
             analyticsService?.logEvent(
