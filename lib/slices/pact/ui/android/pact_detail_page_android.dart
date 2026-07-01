@@ -61,19 +61,26 @@ class PactDetailPageAndroid extends StatelessWidget {
             ),
         ],
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.loadError != null
-              ? Center(child: Text(state.loadError.toString()))
-              : _PactDetailContent(
-                  state: state,
-                  l10n: l10n,
-                  onStopPact: onStopPact,
-                  onSaveNote: onSaveNote,
-                  onArchivePact: onArchivePact,
-                  pactTimelineEnabled: pactTimelineEnabled,
-                  onOpenTimeline: onOpenTimeline,
-                ),
+      body: Column(
+        children: [
+          Container(height: 0.5, color: Theme.of(context).dividerColor),
+          Expanded(
+            child: state.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : state.loadError != null
+                    ? Center(child: Text(state.loadError.toString()))
+                    : _PactDetailContent(
+                        state: state,
+                        l10n: l10n,
+                        onStopPact: onStopPact,
+                        onSaveNote: onSaveNote,
+                        onArchivePact: onArchivePact,
+                        pactTimelineEnabled: pactTimelineEnabled,
+                        onOpenTimeline: onOpenTimeline,
+                      ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -112,8 +119,9 @@ class _PactDetailContent extends StatelessWidget {
     final tileColor = theme.colorScheme.surfaceContainerHighest;
     final valueColor = theme.colorScheme.onSurfaceVariant;
 
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
       children: [
         // Habit name + status badge
         Row(

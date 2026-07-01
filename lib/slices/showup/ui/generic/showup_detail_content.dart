@@ -33,6 +33,11 @@ class ShowupDetailContent extends StatefulWidget {
   final Color linkColor;
   final ShowupDetailSlots slots;
 
+  /// Extra padding added to the bottom of the scroll view — pass
+  /// [MediaQuery.paddingOf(context).bottom] on iOS when [SafeArea.bottom] is
+  /// false so the last item clears the home indicator.
+  final double bottomPadding;
+
   const ShowupDetailContent({
     super.key,
     required this.state,
@@ -45,6 +50,7 @@ class ShowupDetailContent extends StatefulWidget {
     required this.linkColor,
     required this.slots,
     this.onOpenPact,
+    this.bottomPadding = 0,
   });
 
   @override
@@ -92,7 +98,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     final statusText = showupUiStateText(l10n, uiState);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + widget.bottomPadding),
       children: [
         Row(
           children: [

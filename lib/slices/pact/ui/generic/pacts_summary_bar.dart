@@ -64,8 +64,8 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
   // prevent Column overflow in the collapsed/test viewport.
   static const double _maxHeaderHeight = 96.0; // handle(14) + 3-line text(60) + padding(22)
 
-  // Computed each build from LayoutBuilder so the divider lands exactly at the
-  // bottom edge of the collapsed sheet: minSize = (_maxHeaderHeight + 1) / bodyH.
+  // Computed each build from LayoutBuilder so the separator lands exactly at the
+  // bottom edge of the collapsed sheet: minSize = (_maxHeaderHeight + 0.5) / bodyH.
   double _computedMinSize = 0.127; // reasonable fallback (≈ 97dp / 760dp body)
 
   double _computedMaxSize = 0.55; // reasonable fallback (= _expandedSize)
@@ -174,9 +174,9 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     return LayoutBuilder(
       builder: (context, outerConstraints) {
         final parentHeight = outerConstraints.maxHeight;
-        // minSize positions the divider at the bottom of the collapsed sheet.
+        // minSize positions the separator at the bottom of the collapsed sheet.
         final minSize =
-            parentHeight > 0 ? ((_maxHeaderHeight + 1.0) / parentHeight).clamp(0.05, _expandedSize) : _computedMinSize;
+            parentHeight > 0 ? ((_maxHeaderHeight + 0.5) / parentHeight).clamp(0.05, _expandedSize) : _computedMinSize;
         // Plain field updates (no setState) — safe inside LayoutBuilder.builder.
         _computedMinSize = minSize;
         final maxSize = _computeMaxSize(parentHeight);
@@ -210,24 +210,15 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                 // state or in widget tests with a small surface).
                 child: LayoutBuilder(
                   builder: (_, innerConstraints) {
-                    const dividerH = 1.0;
+                    const dividerH = 0.5;
                     final headerH = (innerConstraints.maxHeight - dividerH).clamp(0.0, _maxHeaderHeight);
 
                     return Column(
                       children: [
                         // ── Sticky: drag handle + pact counts ──
-                        // DecoratedBox gives the header a slight drop-shadow over
-                        // the list area, visually elevating it above the list.
                         DecoratedBox(
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
                           ),
                           child: SizedBox(
                             height: headerH,
@@ -291,7 +282,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                           ),
                         ),
 
-                        const Divider(height: dividerH),
+                        Container(height: dividerH, color: Theme.of(context).dividerColor),
 
                         // ── Scrollable pact list ──
                         // NotificationListener blocks ScrollNotification from reaching

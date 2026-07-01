@@ -29,8 +29,10 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
       return pendingValue != startupBackend;
     });
 
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         title: const Text('Remote Config'),
         actions: [
           if (hasAnyOverride)
@@ -41,92 +43,99 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
             ),
         ],
       ),
-      body: RemoteConfigOverridesScrollView(
-        entries: entries,
-        showBackendRestartBanner: showBackendRestartBanner,
-        seedState: seedState,
-        hasFakeBackend: seedNotifier.hasFakeBackend,
-        onSeedLocal: () => _showSeedPercentDialog(context, seedNotifier.seedLocalPacts),
-        onSeedRemote: () => _showSeedPercentDialog(context, seedNotifier.seedRemotePacts),
-        onEntryTap: (entry) => _showEditDialog(
-          context: context,
-          entry: entry,
-          onSave: (v) => notifier.setOverride(entry.key, v),
-          onClear: () => notifier.clearOverride(entry.key),
-        ),
-        slots: (
-          buildTopSection: (ctx) => ListTile(
-                key: const Key('test-notification-button'),
-                leading: const Icon(Icons.notifications_outlined),
-                title: const Text('Fire test notification'),
-                onTap: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+      body: Column(
+        children: [
+          Container(height: 0.5, color: Theme.of(context).dividerColor),
+          Expanded(
+            child: RemoteConfigOverridesScrollView(
+              entries: entries,
+              showBackendRestartBanner: showBackendRestartBanner,
+              seedState: seedState,
+              hasFakeBackend: seedNotifier.hasFakeBackend,
+              onSeedLocal: () => _showSeedPercentDialog(context, seedNotifier.seedLocalPacts),
+              onSeedRemote: () => _showSeedPercentDialog(context, seedNotifier.seedRemotePacts),
+              onEntryTap: (entry) => _showEditDialog(
+                context: context,
+                entry: entry,
+                onSave: (v) => notifier.setOverride(entry.key, v),
+                onClear: () => notifier.clearOverride(entry.key),
               ),
-          buildEntryTile: (ctx, entry, onTap) => ListTile(
-                key: Key('rc-entry-${entry.key}'),
-                title: Text(
-                  entry.key,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                ),
-                subtitle: Text('Value: ${entry.effectiveValue}'),
-                trailing: OverrideBadge(isOverridden: entry.isOverridden),
-                onTap: onTap,
-              ),
-          buildEntrySeparator: (ctx) => const Divider(height: 1),
-          buildSectionDivider: (ctx) => const SizedBox(height: 8),
-          buildSectionHeader: (ctx, title) => Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 6, top: 4),
-                child: Text(
-                  title,
-                  style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-                        letterSpacing: 0.5,
+              slots: (
+                buildTopSection: (ctx) => ListTile(
+                      key: const Key('test-notification-button'),
+                      leading: const Icon(Icons.notifications_outlined),
+                      title: const Text('Fire test notification'),
+                      onTap: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+                    ),
+                buildEntryTile: (ctx, entry, onTap) => ListTile(
+                      key: Key('rc-entry-${entry.key}'),
+                      title: Text(
+                        entry.key,
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                      ),
+                      subtitle: Text('Value: ${entry.effectiveValue}'),
+                      trailing: OverrideBadge(isOverridden: entry.isOverridden),
+                      onTap: onTap,
+                    ),
+                buildEntrySeparator: (ctx) => const Divider(height: 1),
+                buildSectionDivider: (ctx) => const SizedBox(height: 8),
+                buildSectionHeader: (ctx, title) => Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 6, top: 4),
+                      child: Text(
+                        title,
+                        style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                              letterSpacing: 0.5,
+                            ),
+                      ),
+                    ),
+                buildRestartBanner: (ctx) => const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: RestartRequiredBanner(
+                        key: Key('debug-backend-restart-banner'),
+                        color: Colors.amber,
+                      ),
+                    ),
+                seedSlots: (
+                  buildHeader: (ctx) => Text(
+                        'SEED DATA',
+                        style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                              letterSpacing: 0.5,
+                            ),
+                      ),
+                  buildButton: (ctx, key, label, isBusy, onPressed) => ListTile(
+                        key: key,
+                        title: Text(label),
+                        onTap: isBusy ? null : onPressed,
+                        enabled: !isBusy,
+                      ),
+                  buildButtonContainer: (ctx, buttons) => Card(
+                        margin: EdgeInsets.zero,
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttons),
+                      ),
+                  buildStatusText: (ctx, key, message, status) => Text(
+                        message,
+                        key: key,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: switch (status) {
+                            DebugSeedState.error => Theme.of(ctx).colorScheme.error,
+                            DebugSeedState.done => Colors.green,
+                            _ => Theme.of(ctx).colorScheme.onSurfaceVariant,
+                          },
+                        ),
                       ),
                 ),
+                wrapSeedSection: (ctx, child) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: child,
+                    ),
+                listPadding: EdgeInsets.only(top: 8, bottom: 8 + bottomInset),
               ),
-          buildRestartBanner: (ctx) => const Padding(
-                padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: RestartRequiredBanner(
-                  key: Key('debug-backend-restart-banner'),
-                  color: Colors.amber,
-                ),
-              ),
-          seedSlots: (
-            buildHeader: (ctx) => Text(
-                  'SEED DATA',
-                  style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-                        letterSpacing: 0.5,
-                      ),
-                ),
-            buildButton: (ctx, key, label, isBusy, onPressed) => ListTile(
-                  key: key,
-                  title: Text(label),
-                  onTap: isBusy ? null : onPressed,
-                  enabled: !isBusy,
-                ),
-            buildButtonContainer: (ctx, buttons) => Card(
-                  margin: EdgeInsets.zero,
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttons),
-                ),
-            buildStatusText: (ctx, key, message, status) => Text(
-                  message,
-                  key: key,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: switch (status) {
-                      DebugSeedState.error => Theme.of(ctx).colorScheme.error,
-                      DebugSeedState.done => Colors.green,
-                      _ => Theme.of(ctx).colorScheme.onSurfaceVariant,
-                    },
-                  ),
-                ),
+            ),
           ),
-          wrapSeedSection: (ctx, child) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: child,
-              ),
-          listPadding: const EdgeInsets.symmetric(vertical: 8),
-        ),
+        ],
       ),
     );
   }

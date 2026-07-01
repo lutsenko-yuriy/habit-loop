@@ -45,11 +45,18 @@ class PactTimelinePageIos extends StatelessWidget {
         bottom: false,
         child: Material(
           type: MaterialType.transparency,
-          child: state.isLoading
-              ? const Center(child: CupertinoActivityIndicator())
-              : state.loadError != null
-                  ? Center(child: Text(state.loadError.toString()))
-                  : _TimelineList(state: state, onMilestoneTapped: onMilestoneTapped),
+          child: Column(
+            children: [
+              Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : state.loadError != null
+                        ? Center(child: Text(state.loadError.toString()))
+                        : _TimelineList(state: state, onMilestoneTapped: onMilestoneTapped),
+              ),
+            ],
+          ),
         ),
       ),
     );

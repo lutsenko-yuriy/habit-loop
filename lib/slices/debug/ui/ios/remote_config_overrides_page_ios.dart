@@ -30,6 +30,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
       return pendingValue != startupBackend;
     });
 
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
@@ -46,113 +47,121 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
         ),
       ),
       child: SafeArea(
+        bottom: false,
         child: Material(
           type: MaterialType.transparency,
-          child: RemoteConfigOverridesScrollView(
-            entries: entries,
-            showBackendRestartBanner: showBackendRestartBanner,
-            seedState: seedState,
-            hasFakeBackend: seedNotifier.hasFakeBackend,
-            onSeedLocal: () => _showSeedPercentDialog(context, seedNotifier.seedLocalPacts),
-            onSeedRemote: () => _showSeedPercentDialog(context, seedNotifier.seedRemotePacts),
-            onEntryTap: (entry) => _showEditDialog(
-              context: context,
-              entry: entry,
-              onSave: (v) => notifier.setOverride(entry.key, v),
-              onClear: () => notifier.clearOverride(entry.key),
-            ),
-            slots: (
-              buildTopSection: (ctx) => DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: CupertinoButton(
-                      key: const Key('test-notification-button'),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
-                      child: const Row(
-                        children: [
-                          Icon(CupertinoIcons.bell),
-                          SizedBox(width: 10),
-                          Text('Fire test notification'),
-                        ],
-                      ),
-                    ),
-                  ),
-              buildEntryTile: (ctx, entry, onTap) => _RcEntryRow(
-                    key: Key('rc-entry-${entry.key}'),
+          child: Column(
+            children: [
+              Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
+              Expanded(
+                child: RemoteConfigOverridesScrollView(
+                  entries: entries,
+                  showBackendRestartBanner: showBackendRestartBanner,
+                  seedState: seedState,
+                  hasFakeBackend: seedNotifier.hasFakeBackend,
+                  onSeedLocal: () => _showSeedPercentDialog(context, seedNotifier.seedLocalPacts),
+                  onSeedRemote: () => _showSeedPercentDialog(context, seedNotifier.seedRemotePacts),
+                  onEntryTap: (entry) => _showEditDialog(
+                    context: context,
                     entry: entry,
-                    onTap: onTap,
+                    onSave: (v) => notifier.setOverride(entry.key, v),
+                    onClear: () => notifier.clearOverride(entry.key),
                   ),
-              buildEntrySeparator: (ctx) => const SizedBox(height: 8),
-              buildSectionDivider: (ctx) => const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [SizedBox(height: 8), Divider(), SizedBox(height: 8)],
-                  ),
-              buildSectionHeader: (ctx, title) => Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 6),
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: CupertinoColors.systemGrey,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-              buildRestartBanner: (ctx) => RestartRequiredBanner(
-                    key: const Key('debug-backend-restart-banner'),
-                    color: CupertinoColors.systemYellow.resolveFrom(ctx),
-                    icon: CupertinoIcons.exclamationmark_triangle_fill,
-                  ),
-              seedSlots: (
-                buildHeader: (ctx) => const Padding(
-                      padding: EdgeInsets.only(left: 4, bottom: 8),
-                      child: Text(
-                        'SEED DATA',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: CupertinoColors.systemGrey,
-                          letterSpacing: 0.5,
+                  slots: (
+                    buildTopSection: (ctx) => DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: CupertinoButton(
+                            key: const Key('test-notification-button'),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            onPressed: () => scheduleTestNotification(ref.read(notificationServiceProvider)),
+                            child: const Row(
+                              children: [
+                                Icon(CupertinoIcons.bell),
+                                SizedBox(width: 10),
+                                Text('Fire test notification'),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                buildButton: (ctx, key, label, isBusy, onPressed) => CupertinoButton(
-                      key: key,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      onPressed: isBusy ? null : onPressed,
-                      child: Align(alignment: Alignment.centerLeft, child: Text(label)),
-                    ),
-                buildButtonContainer: (ctx, buttons) => Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttons),
-                    ),
-                buildStatusText: (ctx, key, message, status) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        message,
-                        key: key,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: switch (status) {
-                            DebugSeedState.error => CupertinoColors.systemRed.resolveFrom(ctx),
-                            DebugSeedState.done => CupertinoColors.systemGreen.resolveFrom(ctx),
-                            _ => CupertinoColors.systemGrey.resolveFrom(ctx),
-                          },
+                    buildEntryTile: (ctx, entry, onTap) => _RcEntryRow(
+                          key: Key('rc-entry-${entry.key}'),
+                          entry: entry,
+                          onTap: onTap,
                         ),
-                      ),
+                    buildEntrySeparator: (ctx) => const SizedBox(height: 8),
+                    buildSectionDivider: (ctx) => const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [SizedBox(height: 8), Divider(), SizedBox(height: 8)],
+                        ),
+                    buildSectionHeader: (ctx, title) => Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 6),
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: CupertinoColors.systemGrey,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                    buildRestartBanner: (ctx) => RestartRequiredBanner(
+                          key: const Key('debug-backend-restart-banner'),
+                          color: CupertinoColors.systemYellow.resolveFrom(ctx),
+                          icon: CupertinoIcons.exclamationmark_triangle_fill,
+                        ),
+                    seedSlots: (
+                      buildHeader: (ctx) => const Padding(
+                            padding: EdgeInsets.only(left: 4, bottom: 8),
+                            child: Text(
+                              'SEED DATA',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: CupertinoColors.systemGrey,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                      buildButton: (ctx, key, label, isBusy, onPressed) => CupertinoButton(
+                            key: key,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            onPressed: isBusy ? null : onPressed,
+                            child: Align(alignment: Alignment.centerLeft, child: Text(label)),
+                          ),
+                      buildButtonContainer: (ctx, buttons) => Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttons),
+                          ),
+                      buildStatusText: (ctx, key, message, status) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              message,
+                              key: key,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: switch (status) {
+                                  DebugSeedState.error => CupertinoColors.systemRed.resolveFrom(ctx),
+                                  DebugSeedState.done => CupertinoColors.systemGreen.resolveFrom(ctx),
+                                  _ => CupertinoColors.systemGrey.resolveFrom(ctx),
+                                },
+                              ),
+                            ),
+                          ),
                     ),
+                    wrapSeedSection: (ctx, child) => child,
+                    listPadding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomPadding),
+                  ),
+                ),
               ),
-              wrapSeedSection: (ctx, child) => child,
-              listPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            ),
+            ],
           ),
         ),
       ),

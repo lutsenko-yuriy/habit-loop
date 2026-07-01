@@ -37,11 +37,18 @@ class PactTimelinePageAndroid extends StatelessWidget {
               : l10n.pactTimelineTitle,
         ),
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.loadError != null
-              ? Center(child: Text(state.loadError.toString()))
-              : _TimelineList(state: state, onMilestoneTapped: onMilestoneTapped),
+      body: Column(
+        children: [
+          Container(height: 0.5, color: Theme.of(context).dividerColor),
+          Expanded(
+            child: state.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : state.loadError != null
+                    ? Center(child: Text(state.loadError.toString()))
+                    : _TimelineList(state: state, onMilestoneTapped: onMilestoneTapped),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -99,8 +106,9 @@ class _TimelineList extends StatelessWidget {
           ),
     ];
 
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      padding: EdgeInsets.only(top: 8, bottom: 24 + bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,

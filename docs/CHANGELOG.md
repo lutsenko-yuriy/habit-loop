@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.0] — 2026-07-01 (PR #211 merged)
+
+### Fixed
+
+- [user] Scrolling content on the showup detail, pact detail, and pact timeline screens now moves cleanly under the navigation bar instead of clipping into it
+- [user] The gap at the bottom of the showup and pact detail screens on iPhone is gone — content now scrolls all the way to the home indicator edge
+
 ## [0.47.1] — 2026-06-30 (PR #209 merged)
 
 ### Fixed
