@@ -68,7 +68,7 @@ class PactDetailPageIos extends StatelessWidget {
           type: MaterialType.transparency,
           child: Column(
             children: [
-              Container(height: 0.5, color: CupertinoColors.separator),
+              Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
               Expanded(
                 child: state.isLoading
                     ? const Center(child: CupertinoActivityIndicator())
