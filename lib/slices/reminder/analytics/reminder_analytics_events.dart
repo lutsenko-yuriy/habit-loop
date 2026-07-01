@@ -60,26 +60,6 @@ final class NotificationOpenedEvent extends AnalyticsEvent {
       };
 }
 
-/// Fired when the user marks a showup done from a notification action button
-/// without opening the app (stretch goal — actionable notifications only).
-///
-/// Additive to `showup_marked_done`: both fire when the user acts from the
-/// notification tray.
-final class ShowupMarkedDoneFromNotificationEvent extends AnalyticsEvent {
-  ShowupMarkedDoneFromNotificationEvent({required this.pactId});
-
-  /// Parent pact ID.
-  final String pactId;
-
-  @override
-  String get name => 'showup_marked_done_from_notification';
-
-  @override
-  Map<String, Object?> toParameters() => {
-        'pact_id': pactId,
-      };
-}
-
 /// Fired when the app is opened (cold-started or resumed from background)
 /// because the user tapped a reminder notification.
 ///

@@ -49,21 +49,6 @@ void main() {
     });
   });
 
-  group('ShowupMarkedDoneFromNotificationEvent', () {
-    test('has correct event name', () {
-      final event = ShowupMarkedDoneFromNotificationEvent(pactId: 'pact-1');
-
-      expect(event.name, equals('showup_marked_done_from_notification'));
-    });
-
-    test('toParameters includes pact_id', () {
-      final event = ShowupMarkedDoneFromNotificationEvent(pactId: 'pact-abc');
-
-      final params = event.toParameters();
-      expect(params['pact_id'], equals('pact-abc'));
-    });
-  });
-
   group('AppOpenedFromNotificationEvent', () {
     test('has correct event name', () {
       final event = AppOpenedFromNotificationEvent(

@@ -208,7 +208,6 @@
   },
   "notificationMissedTitle": "Вы пропустили эту явку",
   "notificationMissedBody": "Ничего страшного — появитесь в следующий раз.",
-  "notificationMarkDone": "Отметить как выполнено",
   "notificationDurationMinutes": "{count} мин",
   "@notificationDurationMinutes": {
     "placeholders": {

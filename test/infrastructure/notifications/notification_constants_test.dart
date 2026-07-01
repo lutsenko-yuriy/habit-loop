@@ -3,10 +3,6 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_c
 
 void main() {
   group('NotificationConstants', () {
-    test('markDoneActionId is the expected string', () {
-      expect(NotificationConstants.markDoneActionId, 'mark_done');
-    });
-
     group('reminderNotificationId', () {
       test('returns a non-negative value within the 32-bit signed int range', () {
         for (final id in _sampleIds) {

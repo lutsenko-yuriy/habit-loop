@@ -1,11 +1,8 @@
-/// Shared notification action IDs and ID formulas.
+/// Shared notification ID formulas used by scheduling and cancellation.
 ///
-/// Single source of truth used by [FlutterLocalNotificationService] and the
-/// `main.dart` background handler — cancellation must use the same IDs as
-/// scheduling, so any formula change must be reflected everywhere.
+/// Single source of truth — cancellation must use the same IDs as scheduling,
+/// so any formula change must be reflected everywhere.
 abstract final class NotificationConstants {
-  static const String markDoneActionId = 'mark_done';
-
   /// Range `[0x0, 0x3FFFFFFF]` — disjoint from [deadlineNotificationId].
   ///
   /// Uses FNV-1a 32-bit, not `String.hashCode`. Dart randomises the hashCode

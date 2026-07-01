@@ -17,20 +17,6 @@ const _kChannelId = 'showup_reminders';
 /// Android notification channel display name.
 const _kChannelName = 'Showup reminders';
 
-const _kMarkDoneActionId = NotificationConstants.markDoneActionId;
-
-const _kShowupReminderCategoryId = 'showup_reminder';
-
-/// Label for the "Mark done" action button.
-///
-/// **iOS limitation:** notification category action labels are registered once
-/// at [initialize] time and cannot change per-notification. Using the English
-/// label as a hardcoded constant is the standard practice for local
-/// notifications on iOS. On Android the label is set at scheduling time and
-/// could in principle use a locale-aware string, but we also use the English
-/// constant here for simplicity and parity with iOS.
-const _kMarkDoneActionLabel = 'Mark done';
-
 /// Production [NotificationService] backed by [FlutterLocalNotificationsPlugin].
 ///
 /// Notification ID scheme (FNV-1a 32-bit, disjoint ranges):
@@ -57,19 +43,12 @@ final class FlutterLocalNotificationService implements NotificationService {
   // Pact ID → notification IDs. Rebuilt from OS-pending list after a restart.
   final Map<String, Set<int>> _pactNotificationIds = {};
 
-  // Both callbacks must be set before initialize() — the plugin wires them
-  // during setup and provides no way to replace them afterwards.
+  // Must be called before initialize() — the plugin wires it during setup and
+  // provides no way to replace it afterwards.
   void Function(NotificationResponse)? _onDidReceiveNotificationResponse;
-  void Function(NotificationResponse)? _onDidReceiveBackgroundNotificationResponse;
 
-  // Must be called before initialize().
   void setNotificationResponseCallback(void Function(NotificationResponse) callback) {
     _onDidReceiveNotificationResponse = callback;
-  }
-
-  // Must be called before initialize(). Callback must be top-level + vm:entry-point (Android).
-  void setBackgroundNotificationHandler(void Function(NotificationResponse) callback) {
-    _onDidReceiveBackgroundNotificationResponse = callback;
   }
 
   @override
@@ -80,26 +59,12 @@ final class FlutterLocalNotificationService implements NotificationService {
       tz.setLocalLocation(tz.getLocation(localTz.identifier));
 
       const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-      // iOS category labels are fixed at registration time — English constant is
-      // intentional (known iOS platform limitation, cannot be localised per-notification).
-      // DarwinNotificationAction.plain() is non-const, so iosSettings cannot be const.
-      final iosSettings = DarwinInitializationSettings(
+      const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
         requestSoundPermission: false,
-        notificationCategories: [
-          DarwinNotificationCategory(
-            _kShowupReminderCategoryId,
-            actions: [
-              DarwinNotificationAction.plain(
-                _kMarkDoneActionId,
-                _kMarkDoneActionLabel,
-              ),
-            ],
-          ),
-        ],
       );
-      final initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
+      const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
 
       _onDidReceiveNotificationResponse ??= (NotificationResponse response) {
         debugPrint('[Notifications] response received: ${response.payload}');
@@ -109,7 +74,6 @@ final class FlutterLocalNotificationService implements NotificationService {
       await _plugin.initialize(
         initSettings,
         onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
-        onDidReceiveBackgroundNotificationResponse: _onDidReceiveBackgroundNotificationResponse,
       );
       debugPrint('[Notif] _plugin.initialize() returned — callback wired');
 
@@ -155,7 +119,6 @@ final class FlutterLocalNotificationService implements NotificationService {
     required Pact pact,
     required String titleText,
     required String bodyText,
-    bool includeMarkDoneAction = true,
   }) async {
     if (pact.reminderOffset == null) return;
     try {
@@ -165,37 +128,20 @@ final class FlutterLocalNotificationService implements NotificationService {
 
       final payload = jsonEncode({'showupId': showup.id, 'pactId': pact.id});
 
-      final androidDetails = includeMarkDoneAction
-          ? const AndroidNotificationDetails(
-              _kChannelId,
-              _kChannelName,
-              importance: Importance.high,
-              priority: Priority.high,
-              actions: [
-                AndroidNotificationAction(
-                  _kMarkDoneActionId,
-                  _kMarkDoneActionLabel,
-                  showsUserInterface: false,
-                ),
-              ],
-            )
-          : const AndroidNotificationDetails(
-              _kChannelId,
-              _kChannelName,
-              importance: Importance.high,
-              priority: Priority.high,
-            );
-
-      final iosDetails = includeMarkDoneAction
-          ? const DarwinNotificationDetails(categoryIdentifier: _kShowupReminderCategoryId)
-          : const DarwinNotificationDetails();
+      const androidDetails = AndroidNotificationDetails(
+        _kChannelId,
+        _kChannelName,
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+      const iosDetails = DarwinNotificationDetails();
 
       await _plugin.zonedSchedule(
         notifId,
         titleText,
         bodyText,
         tzFireAt,
-        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        const NotificationDetails(android: androidDetails, iOS: iosDetails),
         androidScheduleMode:
             _canScheduleExact ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle,
         payload: payload,
