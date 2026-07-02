@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""check.py — Advisory dead-code detector for Habit Loop.
+
+Runs all detectors in priority order and prints a report. Always exits 0
+(never blocks CI or commits). Intended to be invoked via the /dead-code-check
+skill or manually before shipping.
+
+Usage:
+    python3 scripts/dead_code/check.py [--root <path>]
+
+    --root  Project root directory (default: auto-detected from script location)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _dart_files(root: Path, dirs: list[str], exclude_patterns: list[str] | None = None) -> list[Path]:
+    """Collect all .dart files under the given subdirs, skipping exclusions."""
+    result = []
+    for d in dirs:
+        target = root / d
+        if not target.exists():
+            continue
+        for f in sorted(target.rglob('*.dart')):
+            rel = f.relative_to(root).as_posix()
+            if exclude_patterns and any(re.search(p, rel) for p in exclude_patterns):
+                continue
+            result.append(f)
+    return result
+
+
+def _read_texts(files: list[Path]) -> str:
+    """Concatenate all file contents into a single string for fast searching."""
+    parts = []
+    for f in files:
+        try:
+            parts.append(f.read_text(encoding='utf-8'))
+        except (OSError, UnicodeDecodeError):
+            pass
+    return '\n'.join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Detector 1: Orphaned l10n keys
+# ---------------------------------------------------------------------------
+# Strategy: read app_en.arb as the canonical key list, skip @-prefixed metadata
+# entries, then for each key search for `.keyName` (word-boundary) in all Dart
+# files except the generated localizations files that define every key by
+# construction.
+
+_L10N_EXCLUDE = [
+    r'^lib/l10n/app_localizations',  # abstract class + per-locale implementations
+    r'^lib/l10n/generated/',
+]
+
+
+def detect_orphaned_l10n_keys(root: Path) -> list[str]:
+    """Return l10n keys from app_en.arb with no dot-reference in non-generated Dart files."""
+    arb_path = root / 'lib' / 'l10n' / 'app_en.arb'
+    if not arb_path.exists():
+        return []
+
+    with arb_path.open(encoding='utf-8') as fh:
+        arb = json.load(fh)
+
+    keys = [k for k in arb if not k.startswith('@')]
+    if not keys:
+        return []
+
+    dart_files = _dart_files(root, ['lib', 'test', 'integration_test'], _L10N_EXCLUDE)
+    combined = _read_texts(dart_files)
+
+    orphans = []
+    for key in keys:
+        # Match `.keyName` followed by a non-word character (or end of string)
+        # to avoid matching `.keyNameSuffix` as a reference to `keyName`.
+        pattern = r'\.' + re.escape(key) + r'(?!\w)'
+        if not re.search(pattern, combined):
+            orphans.append(key)
+
+    return orphans
+
+
+# ---------------------------------------------------------------------------
+# Report helpers
+# ---------------------------------------------------------------------------
+
+def _print_section(title: str, items: list[str], item_prefix: str = '  - ') -> None:
+    if not items:
+        print(f'[OK]   {title}: no orphans found.')
+    else:
+        print(f'[WARN] {title}: {len(items)} orphan(s) found')
+        for item in sorted(items):
+            print(f'{item_prefix}{item}')
+
+
+# ---------------------------------------------------------------------------
+# Main runner
+# ---------------------------------------------------------------------------
+
+def run(root: Path) -> None:
+    print('Dead-code check — advisory report')
+    print('=' * 50)
+    print()
+
+    _print_section('L10n keys', detect_orphaned_l10n_keys(root))
+    print()
+
+    print('Done. This report is advisory — review findings before acting.')
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description='Advisory dead-code detector for Habit Loop')
+    parser.add_argument('--root', default=None, help='Project root directory')
+    args = parser.parse_args()
+
+    if args.root:
+        root = Path(args.root).resolve()
+    else:
+        root = Path(__file__).resolve().parent.parent.parent
+
+    if not (root / 'pubspec.yaml').exists():
+        print(f'Error: {root} does not look like a Flutter project root (no pubspec.yaml)',
+              file=sys.stderr)
+        sys.exit(1)
+
+    run(root)
+
+
+if __name__ == '__main__':
+    main()
