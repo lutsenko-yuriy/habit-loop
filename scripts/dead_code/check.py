@@ -92,6 +92,47 @@ def detect_orphaned_l10n_keys(root: Path) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Detector 2: Orphaned analytics event classes
+# ---------------------------------------------------------------------------
+# Strategy: enumerate all classes extending AnalyticsEvent under
+# lib/slices/*/analytics/*.dart. For each class, search lib/**/*.dart excluding
+# the definition file. References in test/ and integration_test/ don't count —
+# the class must be instantiated in production lib/ code to be considered live.
+
+_ANALYTICS_GLOB = 'lib/slices/*/analytics/*.dart'
+_ANALYTICS_CLASS_RE = re.compile(r'\bfinal\s+class\s+(\w+)\s+extends\s+AnalyticsEvent\b')
+
+
+def detect_orphaned_analytics_events(root: Path) -> list[str]:
+    """Return analytics event class names with no reference in lib/ outside their definition file."""
+    analytics_files = sorted(root.glob(_ANALYTICS_GLOB))
+    if not analytics_files:
+        return []
+
+    lib_dart_files = _dart_files(root, ['lib'])
+
+    orphans = []
+    for def_file in analytics_files:
+        source = def_file.read_text(encoding='utf-8')
+        for class_name in _ANALYTICS_CLASS_RE.findall(source):
+            pattern = re.compile(r'\b' + re.escape(class_name) + r'\b')
+            found = False
+            for lib_file in lib_dart_files:
+                if lib_file == def_file:
+                    continue
+                try:
+                    if pattern.search(lib_file.read_text(encoding='utf-8')):
+                        found = True
+                        break
+                except (OSError, UnicodeDecodeError):
+                    pass
+            if not found:
+                orphans.append(class_name)
+
+    return orphans
+
+
+# ---------------------------------------------------------------------------
 # Report helpers
 # ---------------------------------------------------------------------------
 
@@ -114,6 +155,8 @@ def run(root: Path) -> None:
     print()
 
     _print_section('L10n keys', detect_orphaned_l10n_keys(root))
+    print()
+    _print_section('Analytics events', detect_orphaned_analytics_events(root))
     print()
 
     print('Done. This report is advisory — review findings before acting.')
