@@ -307,6 +307,26 @@ Each slice vertical may contain an `analytics/` subdirectory (e.g. `slices/pact/
 
 **Feature Flags:** `FeatureFlags` (`contracts/feature_flags.dart`) is a pure value object built from a `RemoteConfigService` snapshot via `FeatureFlags.fromRemoteConfig(rc)`; it exposes typed boolean getters (one per kill-switch flag) and overrides equality/hashCode so `Provider` consumers can compare snapshots cheaply. Active flags include `pact_timeline_enabled` (HAB-116) — when `false`, the "View timeline" entry point on pact detail is hidden. `featureFlagsProvider` in `app_providers.dart` self-composes from `remoteConfigServiceProvider`. Call sites read it via `ref.watch(featureFlagsProvider)` and gate UI or logic: when a flag is `false` the corresponding entry point is hidden (language picker) or bypassed (Firestore sync). All flags are registered in `RemoteConfigDefaults.all` with `allowedValues: ['true', 'false']` so the debug RC overrides screen renders a picker for them automatically. The catalogue of active flags and their effects is in @docs/FEATURE_TOGGLES.md.
 
+## Scripts (`scripts/`)
+
+Python utilities for CI, release management, and code-quality tooling. All scripts use the Python stdlib only unless noted.
+
+| Module | Entry point | Purpose |
+|---|---|---|
+| `scripts/changelog/` | `lint.py`, `distribute.py`, `release_notes.py` | CHANGELOG linting, build-skip gate, and "What's New" generation |
+| `scripts/ci/` | `dispatch_plan.py` | Translates `workflow_dispatch` inputs into per-job CI flags |
+| `scripts/firebase/` | `cleanup_builds.py` | Deletes old Firebase App Distribution releases, keeping the N most recent |
+| `scripts/dead_code/` | `check.py` | Advisory dead-code detector — runs all four detectors in order and prints a report; always exits 0 (never blocks CI or commits). Invoked via the `/dead-code-check` skill or manually. |
+
+`scripts/dead_code/check.py` detectors (in execution order):
+
+1. **l10n keys** — keys in `lib/l10n/app_en.arb` with no dot-reference (`.keyName`) in any non-generated `.dart` file
+2. **Analytics event classes** — `extends AnalyticsEvent` classes with no reference in any `lib/` file (test-only references excluded)
+3. **Test/scenario files** — files under `test/` or `integration_test/` whose production imports resolve to non-existent `lib/` paths, or that have zero production imports at all (two severity labels)
+4. **Handlers** — `*_handler.dart` files with no importers; `@pragma('vm:entry-point')` top-level functions not referenced in `flutter_local_notification_service.dart`
+
+Tests live in `scripts/dead_code/tests/test_check.py` (stdlib `unittest`, `tempfile` fake project trees — mirrors `scripts/changelog/tests/test_lint.py`).
+
 ## Dependencies
 
 - [Riverpod](https://riverpod.dev/) — state management and dependency injection
