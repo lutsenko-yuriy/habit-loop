@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.4] — 2026-07-02
+
+### Internal
+
+- [wip] HAB-143 WU1: script skeleton + l10n orphan detector (`scripts/dead_code/check.py`); updates `docs/ARCHITECTURE.md`
+
 ## [0.48.3] — 2026-07-02 (PR #214 merged)
 
 ### Meta
