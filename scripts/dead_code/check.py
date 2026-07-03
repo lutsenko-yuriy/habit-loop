@@ -173,6 +173,62 @@ def detect_orphaned_test_files(root: Path) -> tuple[list[str], list[str]]:
 
 
 # ---------------------------------------------------------------------------
+# Detector 4: Orphaned handlers
+# ---------------------------------------------------------------------------
+# Two sub-checks:
+#
+# 1. Handler files: all *_handler.dart files under lib/ whose
+#    package:habit_loop/ import path appears in no other .dart file.
+#
+# 2. vm:entry-point pragmas: top-level @pragma('vm:entry-point') functions
+#    anywhere in lib/ that are not referenced by name in
+#    flutter_local_notification_service.dart (the file that registers them).
+
+_HANDLER_GLOB = 'lib/**/*_handler.dart'
+_ENTRY_POINT_RE = re.compile(
+    r"@pragma\('vm:entry-point'\)\s+(?:\w[\w<>?]*\s+)+([a-z]\w*)\s*\("
+)
+_NOTIFICATION_SERVICE_PATH = (
+    'lib/infrastructure/notifications/data/flutter_local_notification_service.dart'
+)
+
+
+def detect_orphaned_handlers(root: Path) -> tuple[list[str], list[str]]:
+    """Return (orphaned_handler_files, orphaned_entry_point_names)."""
+    orphaned_files: list[str] = []
+    orphaned_entry_points: list[str] = []
+
+    # Sub-check 1: handler files with no importers
+    handler_files = sorted(root.glob(_HANDLER_GLOB))
+    if handler_files:
+        handler_set = set(handler_files)
+        other_dart = [f for f in _dart_files(root, ['lib', 'test', 'integration_test']) if f not in handler_set]
+        combined = _read_texts(other_dart)
+        for handler in handler_files:
+            rel = handler.relative_to(root / 'lib').as_posix()
+            if f'package:habit_loop/{rel}' not in combined:
+                orphaned_files.append(handler.relative_to(root).as_posix())
+
+    # Sub-check 2: vm:entry-point functions not wired in notification service
+    ns_path = root / _NOTIFICATION_SERVICE_PATH
+    try:
+        ns_text = ns_path.read_text(encoding='utf-8') if ns_path.exists() else ''
+    except (OSError, UnicodeDecodeError):
+        ns_text = ''
+
+    for lib_file in _dart_files(root, ['lib']):
+        try:
+            source = lib_file.read_text(encoding='utf-8')
+        except (OSError, UnicodeDecodeError):
+            continue
+        for fn_name in _ENTRY_POINT_RE.findall(source):
+            if not re.search(r'\b' + re.escape(fn_name) + r'\b', ns_text):
+                orphaned_entry_points.append(fn_name)
+
+    return orphaned_files, orphaned_entry_points
+
+
+# ---------------------------------------------------------------------------
 # Report helpers
 # ---------------------------------------------------------------------------
 
@@ -183,6 +239,22 @@ def _print_section(title: str, items: list[str], item_prefix: str = '  - ') -> N
         print(f'[WARN] {title}: {len(items)} orphan(s) found')
         for item in sorted(items):
             print(f'{item_prefix}{item}')
+
+
+def _print_handler_section(files: list[str], entry_points: list[str]) -> None:
+    title = 'Orphaned handlers'
+    if not files and not entry_points:
+        print(f'[OK]   {title}: no orphans found.')
+        return
+    print(f'[WARN] {title}: {len(files) + len(entry_points)} item(s) flagged')
+    if files:
+        print('  Handler files with no importers:')
+        for f in sorted(files):
+            print(f'    - {f}')
+    if entry_points:
+        print('  @pragma(vm:entry-point) functions not wired in notification service:')
+        for fn in sorted(entry_points):
+            print(f'    - {fn}')
 
 
 def _print_test_section(high: list[str], info: list[str]) -> None:
@@ -215,6 +287,8 @@ def run(root: Path) -> None:
     _print_section('Analytics events', detect_orphaned_analytics_events(root))
     print()
     _print_test_section(*detect_orphaned_test_files(root))
+    print()
+    _print_handler_section(*detect_orphaned_handlers(root))
     print()
 
     print('Done. This report is advisory — review findings before acting.')
