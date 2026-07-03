@@ -133,6 +133,46 @@ def detect_orphaned_analytics_events(root: Path) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Detector 3: Orphaned test files
+# ---------------------------------------------------------------------------
+# Strategy: scan test/ and integration_test/ for .dart files. Extract
+# `package:habit_loop/` imports and resolve them to lib/ paths on disk.
+#
+# High-confidence: ALL package:habit_loop imports point to non-existent files
+# → the file exclusively tested a removed feature.
+#
+# Informational: ZERO package:habit_loop imports → no production linkage
+# detectable; flag for manual inspection.
+
+_PACKAGE_IMPORT_RE = re.compile(r"import\s+'package:habit_loop/([^']+)'")
+
+
+def detect_orphaned_test_files(root: Path) -> tuple[list[str], list[str]]:
+    """Return (high_confidence, informational) lists of relative test file paths."""
+    test_files = _dart_files(root, ['test', 'integration_test'])
+    high: list[str] = []
+    info: list[str] = []
+
+    for test_file in test_files:
+        try:
+            source = test_file.read_text(encoding='utf-8')
+        except (OSError, UnicodeDecodeError):
+            continue
+
+        imports = _PACKAGE_IMPORT_RE.findall(source)
+        rel = test_file.relative_to(root).as_posix()
+
+        if not imports:
+            info.append(rel)
+            continue
+
+        if all(not (root / 'lib' / imp).exists() for imp in imports):
+            high.append(rel)
+
+    return high, info
+
+
+# ---------------------------------------------------------------------------
 # Report helpers
 # ---------------------------------------------------------------------------
 
@@ -143,6 +183,22 @@ def _print_section(title: str, items: list[str], item_prefix: str = '  - ') -> N
         print(f'[WARN] {title}: {len(items)} orphan(s) found')
         for item in sorted(items):
             print(f'{item_prefix}{item}')
+
+
+def _print_test_section(high: list[str], info: list[str]) -> None:
+    title = 'Orphaned test files'
+    if not high and not info:
+        print(f'[OK]   {title}: no orphans found.')
+        return
+    print(f'[WARN] {title}: {len(high) + len(info)} file(s) flagged')
+    if high:
+        print('  High-confidence (all package:habit_loop imports missing):')
+        for f in sorted(high):
+            print(f'    - {f}')
+    if info:
+        print('  Informational (no package:habit_loop imports):')
+        for f in sorted(info):
+            print(f'    - {f}')
 
 
 # ---------------------------------------------------------------------------
@@ -157,6 +213,8 @@ def run(root: Path) -> None:
     _print_section('L10n keys', detect_orphaned_l10n_keys(root))
     print()
     _print_section('Analytics events', detect_orphaned_analytics_events(root))
+    print()
+    _print_test_section(*detect_orphaned_test_files(root))
     print()
 
     print('Done. This report is advisory — review findings before acting.')
