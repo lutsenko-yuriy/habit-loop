@@ -51,7 +51,12 @@ class OnboardingSlideWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset(slide.assetPath, width: 200, height: 160),
+          Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 160),
+              child: SvgPicture.asset(slide.assetPath, width: 200, fit: BoxFit.contain),
+            ),
+          ),
           const Flexible(child: SizedBox(height: 32)),
           Text(
             slide.title(l10n),
