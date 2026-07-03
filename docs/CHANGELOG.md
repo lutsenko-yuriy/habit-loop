@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.48.7] — 2026-07-03
+## [0.48.7] — 2026-07-03 (PR #218 merged)
 
 ### Internal
 - [wip] HAB-143 WU3: test file orphan detector (`scripts/dead_code/check.py`)
