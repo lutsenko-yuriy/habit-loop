@@ -30,8 +30,8 @@
 ### Work units
 WU0 always contains integration scenarios only (no production code). Subsequent WUs should target ≤ 300 LoC changed and ≤ 10 files; split further if a WU would exceed these. Each WU lists which scenarios it makes green.
 
-| # | Unit | Branch | Issues | Scenarios made green | Est. LoC | Files touched (approx) |
-|---|------|--------|--------|----------------------|----------|------------------------|
-| 0 | Integration scenarios (`draft-scenarios` output) | `feature/HAB-XX-WU0-scenarios` | HAB-XX | — (stubs; filled in per WU) | ~50 | `integration_test/...` |
-| 1 | <unit name> | `feature/HAB-XX-WU1-<short>` | HAB-XX | S1, S2 | ~150 | <files> |
+| # | Unit | Branch | Issues | Scenarios made green | Analytics events fired | Est. LoC | Files touched (approx) |
+|---|------|--------|--------|----------------------|-----------------------|----------|------------------------|
+| 0 | Integration scenarios (`draft-scenarios` output) | `feature/HAB-XX-WU0-scenarios` | HAB-XX | — (stubs; filled in per WU) | — | ~50 | `integration_test/...` |
+| 1 | <unit name> | `feature/HAB-XX-WU1-<short>` | HAB-XX | S1, S2 | `EventName` | ~150 | <files> |
 ```
