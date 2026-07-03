@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.48.8] — 2026-07-03
+## [0.48.8] — 2026-07-03 (PR #219 merged)
 
 ### Internal
 - [meta] HAB-143 WU4: handler orphan detector, `/dead-code-check` skill, debrief integration
