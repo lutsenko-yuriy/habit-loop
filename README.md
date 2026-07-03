@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/lutsenko-yuriy/habit-loop/actions/workflows/ci.yml/badge.svg)](https://github.com/lutsenko-yuriy/habit-loop/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/lutsenko-yuriy/habit-loop/graph/badge.svg)](https://codecov.io/gh/lutsenko-yuriy/habit-loop)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-lightgrey)](https://flutter.dev)
 [![Flutter](https://img.shields.io/badge/Flutter-stable-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Version](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Flutsenko-yuriy%2Fhabit-loop%2Fmain%2Fpubspec.yaml&query=%24.version&label=version&color=blue)](https://github.com/lutsenko-yuriy/habit-loop/blob/main/docs/CHANGELOG.md)
@@ -145,3 +146,9 @@ test → resolve-version → build-android → distribute-android ─┐
 Feature branch builds run the test job only (no distribution, no tagging).
 
 Required secrets are documented in [`docs/VERSIONING.md`](docs/VERSIONING.md).
+
+---
+
+## Licence
+
+MIT — see [LICENSE](LICENSE)

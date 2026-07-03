@@ -150,25 +150,8 @@ All `pub.dev` packages declared in `pubspec.yaml` (direct) and selected high-ris
 
 ---
 
-## WU4 — Applying the licence (deferred — low priority)
+## WU4 — Applying the licence
 
-When the time comes to apply MIT:
+**Applied: MIT — 2026-07-04**
 
-1. Create a `LICENSE` file at the repo root with the standard MIT text. The copyright line should read:
-   ```
-   Copyright (c) <year> <your full name>
-   ```
-2. Add a licence badge and one-line section to `README.md`:
-   ```markdown
-   ## Licence
-   MIT — see [LICENSE](LICENSE)
-   ```
-3. No per-file headers are required — MIT does not mandate them.
-4. No `NOTICE` file is required (that is an Apache 2.0 requirement).
-5. Update this section with the chosen licence and the date applied.
-
-**Trigger conditions** (any one is sufficient to act):
-- First external contributor or pull request from outside the team.
-- Public launch or App Store submission.
-- The AI-generated code copyright landscape clarifies in a way that changes the calculus.
-- Simply a good moment with no other priorities.
+`LICENSE` file added at repo root (Copyright (c) 2026 Yuriy Lutsenko). `README.md` updated with MIT badge and `## Licence` section. No per-file headers required. No `NOTICE` file required (Apache 2.0 requirement only).
