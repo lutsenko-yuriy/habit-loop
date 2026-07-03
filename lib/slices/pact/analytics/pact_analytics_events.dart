@@ -267,20 +267,6 @@ final class PactUnarchivedEvent extends AnalyticsEvent {
       };
 }
 
-/// Fired when the user taps the Archived filter chip or the "Show archived pacts" row. (HAB-114)
-final class ArchiveFilterToggledEvent extends AnalyticsEvent {
-  ArchiveFilterToggledEvent({required this.newState});
-
-  /// `true` if archived pacts are now visible; `false` if hidden.
-  final bool newState;
-
-  @override
-  String get name => 'archive_filter_toggled';
-
-  @override
-  Map<String, Object?> toParameters() => {'new_state': newState};
-}
-
 /// Screen identifier for the pact creation wizard.
 class PactCreationAnalyticsScreen implements AnalyticsScreen {
   const PactCreationAnalyticsScreen();

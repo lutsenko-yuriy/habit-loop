@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.9] — 2026-07-04
+
+### Internal
+- [app] Remove 8 orphaned l10n keys, 3 unused analytics event classes, and their corresponding tests; update ANALYTICS_EVENTS.md
+
+---
+
 ## [0.48.8] — 2026-07-03 (PR #219 merged)
 
 ### Internal

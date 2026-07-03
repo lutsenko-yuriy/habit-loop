@@ -1,8 +1,6 @@
 {
   "@@locale": "fr",
-  "appTitle": "Habit Loop",
   "dashboardTitle": "Tableau de bord",
-  "todayShowups": "Séances du jour",
   "noPactsYet": "Aucun pacte",
   "noPactsDescription": "Créez votre premier pacte pour commencer à construire une habitude.",
   "createPact": "Créer un pacte",
@@ -35,7 +33,6 @@
   "scheduleMonthlyByDate": "Mensuel par date",
   "timeOfDayLabel": "Heure",
   "addEntry": "Ajouter un autre",
-  "removeEntry": "Supprimer",
   "weekdayMon": "Lun",
   "weekdayTue": "Mar",
   "weekdayWed": "Mer",
@@ -71,7 +68,6 @@
   "wizardSummaryTitle": "Résumé",
   "wizardSwipeHint": "Glissez entre les étapes",
   "createPactConfirm": "Créer le pacte",
-  "next": "Suivant",
   "back": "Retour",
   "cancel": "Annuler",
   "tooManyPactsTitle": "Trop de pactes actifs",
@@ -86,7 +82,6 @@
   "pactDetailTitle": "Détails du pacte",
   "sectionStats": "Statistiques",
   "sectionTimeline": "Chronologie",
-  "sectionStopReason": "Raison de l'arrêt",
   "sectionArchive": "Archivage",
   "stopPactError": "Impossible d'arrêter le pacte. Veuillez réessayer.",
   "statsDone": "Réalisés",
@@ -148,10 +143,8 @@
   },
 
   "showupDetailTitle": "Détails de la séance",
-  "showupDetailHabit": "Habitude",
   "showupDetailScheduledAt": "Prévu à",
   "showupDetailDuration": "Durée",
-  "showupDetailStatus": "Statut",
   "markDone": "Marquer comme réalisé",
   "markFailed": "Marquer comme échoué",
   "showupAutoFailed": "Cette séance a été automatiquement marquée comme échouée car elle a été ouverte après l'heure prévue.",
@@ -353,9 +346,5 @@
   "timelineShowupsRemaining": "{count, plural, one{1 séance restante} other{{count} séances restantes}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
-  },
-  "timelineUpNext": "Prochain : {date}",
-  "@timelineUpNext": {
-    "placeholders": { "date": { "type": "String" } }
   }
 }

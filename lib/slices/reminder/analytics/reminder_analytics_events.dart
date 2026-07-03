@@ -33,40 +33,11 @@ final class NotificationsScheduledEvent extends AnalyticsEvent {
       };
 }
 
-/// Fired when the user taps a reminder notification and the app opens to the
-/// showup detail screen.
-final class NotificationOpenedEvent extends AnalyticsEvent {
-  NotificationOpenedEvent({
-    required this.pactId,
-    required this.minutesBeforeShowup,
-  });
-
-  /// Parent pact ID.
-  final String pactId;
-
-  /// Minutes before the scheduled showup time when the notification was tapped.
-  ///
-  /// Negative values mean the notification was tapped after the showup window
-  /// started.
-  final int minutesBeforeShowup;
-
-  @override
-  String get name => 'notification_opened';
-
-  @override
-  Map<String, Object?> toParameters() => {
-        'pact_id': pactId,
-        'minutes_before_showup': minutesBeforeShowup,
-      };
-}
-
 /// Fired when the app is opened (cold-started or resumed from background)
 /// because the user tapped a reminder notification.
 ///
-/// This is the deep-link routing event and fires from the navigation layer
-/// using data already present in the notification payload — no DB round-trip
-/// is needed. It is distinct from `notification_opened` (which will include
-/// `minutes_before_showup` but requires a showup DB lookup).
+/// Fires from the navigation layer using data already present in the
+/// notification payload — no DB round-trip is needed.
 final class AppOpenedFromNotificationEvent extends AnalyticsEvent {
   AppOpenedFromNotificationEvent({
     required this.pactId,

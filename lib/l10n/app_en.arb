@@ -1,8 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Habit Loop",
   "dashboardTitle": "Dashboard",
-  "todayShowups": "Today's Showups",
   "noPactsYet": "No pacts yet",
   "noPactsDescription": "Create your first pact to start building a habit.",
   "createPact": "Create a Pact",
@@ -35,7 +33,6 @@
   "scheduleMonthlyByDate": "Monthly by date",
   "timeOfDayLabel": "Time",
   "addEntry": "Add another",
-  "removeEntry": "Remove",
   "weekdayMon": "Mon",
   "weekdayTue": "Tue",
   "weekdayWed": "Wed",
@@ -71,7 +68,6 @@
   "wizardSummaryTitle": "Summary",
   "wizardSwipeHint": "Swipe to move between steps",
   "createPactConfirm": "Create Pact",
-  "next": "Next",
   "back": "Back",
   "cancel": "Cancel",
   "tooManyPactsTitle": "Too many active pacts",
@@ -86,7 +82,6 @@
   "pactDetailTitle": "Pact Details",
   "sectionStats": "Stats",
   "sectionTimeline": "Timeline",
-  "sectionStopReason": "Stop reason",
   "sectionArchive": "Archive",
   "stopPactError": "Failed to stop pact. Please try again.",
   "statsDone": "Done",
@@ -148,10 +143,8 @@
   },
 
   "showupDetailTitle": "Showup Details",
-  "showupDetailHabit": "Habit",
   "showupDetailScheduledAt": "Scheduled at",
   "showupDetailDuration": "Duration",
-  "showupDetailStatus": "Status",
   "markDone": "Mark as Done",
   "markFailed": "Mark as Failed",
   "showupAutoFailed": "This showup was automatically marked as failed because it was opened after its scheduled time had passed.",
@@ -354,9 +347,5 @@
   "timelineShowupsRemaining": "{count, plural, one{1 showup remaining} other{{count} showups remaining}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
-  },
-  "timelineUpNext": "Up next: {date}",
-  "@timelineUpNext": {
-    "placeholders": { "date": { "type": "String" } }
   }
 }
