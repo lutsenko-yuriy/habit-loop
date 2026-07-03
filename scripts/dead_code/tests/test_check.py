@@ -6,7 +6,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from dead_code.check import detect_orphaned_analytics_events, detect_orphaned_l10n_keys
+from dead_code.check import (
+    detect_orphaned_analytics_events,
+    detect_orphaned_l10n_keys,
+    detect_orphaned_test_files,
+)
 
 
 def _make_project(arb_keys: dict, dart_files: dict[str, str]) -> Path:
@@ -228,6 +232,97 @@ class TestDetectOrphanedAnalyticsEvents(unittest.TestCase):
         )
         # base_event.dart is not under slices/*/analytics/ so no classes should be enumerated
         self.assertEqual(detect_orphaned_analytics_events(root), [])
+
+
+class TestDetectOrphanedTestFiles(unittest.TestCase):
+
+    def setUp(self):
+        self._roots: list[Path] = []
+
+    def tearDown(self):
+        for root in self._roots:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def _project(self, test_files: dict[str, str], lib_files: dict[str, str] | None = None) -> Path:
+        root = Path(tempfile.mkdtemp())
+        self._roots.append(root)
+        (root / 'pubspec.yaml').write_text('name: habit_loop\n')
+        for rel_path, content in test_files.items():
+            f = root / rel_path
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(content)
+        for rel_path, content in (lib_files or {}).items():
+            f = root / rel_path
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(content)
+        return root
+
+    def test_existing_import_not_reported(self):
+        root = self._project(
+            {'test/pact_test.dart': "import 'package:habit_loop/slices/pact/domain/pact.dart';"},
+            {'lib/slices/pact/domain/pact.dart': 'class Pact {}'},
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertEqual(high, [])
+        self.assertEqual(info, [])
+
+    def test_all_imports_missing_is_high_confidence(self):
+        root = self._project(
+            {'test/removed_test.dart': "import 'package:habit_loop/slices/removed/feature.dart';"},
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('test/removed_test.dart', high)
+        self.assertEqual(info, [])
+
+    def test_no_package_imports_is_informational(self):
+        root = self._project(
+            {'test/util_test.dart': "import 'dart:math';\nimport 'package:test/test.dart';"},
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertEqual(high, [])
+        self.assertIn('test/util_test.dart', info)
+
+    def test_mixed_imports_one_existing_not_high_confidence(self):
+        """At least one existing import means the file is not high-confidence."""
+        root = self._project(
+            {
+                'test/partial_test.dart': (
+                    "import 'package:habit_loop/slices/pact/domain/pact.dart';\n"
+                    "import 'package:habit_loop/slices/removed/gone.dart';\n"
+                ),
+            },
+            {'lib/slices/pact/domain/pact.dart': 'class Pact {}'},
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertNotIn('test/partial_test.dart', high)
+        self.assertNotIn('test/partial_test.dart', info)
+
+    def test_integration_test_dir_included(self):
+        root = self._project(
+            {'integration_test/removed_scenario.dart': "import 'package:habit_loop/removed.dart';"},
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('integration_test/removed_scenario.dart', high)
+
+    def test_no_test_dirs_returns_empty(self):
+        root = self._project({})
+        high, info = detect_orphaned_test_files(root)
+        self.assertEqual(high, [])
+        self.assertEqual(info, [])
+
+    def test_multiple_missing_imports_all_flagged(self):
+        root = self._project(
+            {
+                'test/orphan_a.dart': "import 'package:habit_loop/gone_a.dart';",
+                'test/orphan_b.dart': "import 'package:habit_loop/gone_b.dart';",
+                'test/live.dart': "import 'package:habit_loop/live.dart';",
+            },
+            {'lib/live.dart': 'class Live {}'},
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('test/orphan_a.dart', high)
+        self.assertIn('test/orphan_b.dart', high)
+        self.assertNotIn('test/live.dart', high)
 
 
 if __name__ == '__main__':
