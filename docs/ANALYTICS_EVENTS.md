@@ -72,7 +72,7 @@ Fired when the user confirms stopping an active pact.
 
 ### `app_opened_from_notification`
 
-Fired when the app is opened (cold-started or resumed from background) because the user tapped a reminder notification. This is the deep-link routing event and fires from the navigation layer using data already present in the notification payload — no DB round-trip is needed. It is distinct from the planned `notification_opened` event (which will include `minutes_before_showup` but requires a showup DB lookup and is tracked separately).
+Fired when the app is opened (cold-started or resumed from background) because the user tapped a reminder notification. Fires from the navigation layer using data already present in the notification payload — no DB round-trip is needed.
 
 Event class: `AppOpenedFromNotificationEvent` in `lib/slices/reminder/analytics/reminder_analytics_events.dart`
 
@@ -310,17 +310,6 @@ Companion event fired after the Pact Timeline screen finishes loading, carrying 
 
 ---
 
-### `pact_timeline_load_more`
-
-Fired when the user scrolls up and triggers "Load more" to reveal older events on the Pact Timeline screen. Measures engagement depth — how far back users explore. (HAB-116)
-
-| Property | Type | Description |
-|---|---|---|
-| `pact_id` | `string` | ID of the pact whose timeline is being viewed |
-| `page_number` | `int` | Which page was loaded; `2` = the first "Load more" tap |
-
----
-
 ### `pact_timeline_milestone_tapped`
 
 Fired when the user taps a tappable timeline item (noted showup or lone single-showup) to open the showup detail screen. (HAB-116)
@@ -353,16 +342,6 @@ Fired when the user unarchives a pact. (HAB-114)
 | `pact_id` | `string` | ID of the unarchived pact |
 | `pact_status` | `string` | `completed` \| `stopped` |
 | `source` | `string` | `detail_screen` \| `pact_list_swipe` |
-
----
-
-### `archive_filter_toggled`
-
-Fired when the user taps the Archived filter chip or the "Show archived pacts" row. Only reachable when N_A ≥ 1 (both controls are hidden otherwise). (HAB-114)
-
-| Property | Type | Description |
-|---|---|---|
-| `new_state` | `bool` | `true` if archived pacts are now visible; `false` if hidden |
 
 ---
 

@@ -33,30 +33,6 @@ void main() {
     });
   });
 
-  group('PactTimelineLoadMoreEvent', () {
-    test('has correct name', () {
-      final event = PactTimelineLoadMoreEvent(pactId: 'p1', pageNumber: 2);
-      expect(event.name, 'pact_timeline_load_more');
-    });
-
-    test('toParameters includes pact_id and page_number', () {
-      final event = PactTimelineLoadMoreEvent(pactId: 'abc', pageNumber: 3);
-      final params = event.toParameters();
-      expect(params['pact_id'], 'abc');
-      expect(params['page_number'], 3);
-    });
-
-    test('toParameters contains exactly two keys', () {
-      final event = PactTimelineLoadMoreEvent(pactId: 'p1', pageNumber: 2);
-      expect(event.toParameters().length, 2);
-    });
-
-    test('toParameters does not contain null values', () {
-      final event = PactTimelineLoadMoreEvent(pactId: 'p1', pageNumber: 2);
-      expect(event.toParameters().values.whereType<Null>(), isEmpty);
-    });
-  });
-
   group('PactTimelineMilestoneTappedEvent', () {
     test('has correct name', () {
       final event = PactTimelineMilestoneTappedEvent(pactId: 'p1', itemType: 'noted_showup');

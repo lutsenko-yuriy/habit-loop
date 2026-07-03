@@ -49,25 +49,6 @@ final class PactTimelineOpenedEvent extends AnalyticsEvent {
       };
 }
 
-/// Fired when the user taps "Load more" to reveal older timeline events. (HAB-116)
-final class PactTimelineLoadMoreEvent extends AnalyticsEvent {
-  PactTimelineLoadMoreEvent({required this.pactId, required this.pageNumber});
-
-  final String pactId;
-
-  /// Page number just loaded (≥ 2; page 1 is loaded automatically on open).
-  final int pageNumber;
-
-  @override
-  String get name => 'pact_timeline_load_more';
-
-  @override
-  Map<String, Object?> toParameters() => {
-        'pact_id': pactId,
-        'page_number': pageNumber,
-      };
-}
-
 /// Fired when the user taps a tappable milestone on the pact timeline. (HAB-116)
 final class PactTimelineMilestoneTappedEvent extends AnalyticsEvent {
   PactTimelineMilestoneTappedEvent({required this.pactId, required this.itemType});

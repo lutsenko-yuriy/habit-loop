@@ -27,28 +27,6 @@ void main() {
     });
   });
 
-  group('NotificationOpenedEvent', () {
-    test('has correct event name', () {
-      final event = NotificationOpenedEvent(
-        pactId: 'pact-1',
-        minutesBeforeShowup: 5,
-      );
-
-      expect(event.name, equals('notification_opened'));
-    });
-
-    test('toParameters includes all expected keys', () {
-      final event = NotificationOpenedEvent(
-        pactId: 'pact-1',
-        minutesBeforeShowup: -3, // negative means after showup started
-      );
-
-      final params = event.toParameters();
-      expect(params['pact_id'], equals('pact-1'));
-      expect(params['minutes_before_showup'], equals(-3));
-    });
-  });
-
   group('AppOpenedFromNotificationEvent', () {
     test('has correct event name', () {
       final event = AppOpenedFromNotificationEvent(

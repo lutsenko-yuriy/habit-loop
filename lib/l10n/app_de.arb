@@ -1,8 +1,6 @@
 {
   "@@locale": "de",
-  "appTitle": "Habit Loop",
   "dashboardTitle": "Übersicht",
-  "todayShowups": "Heutige Showups",
   "noPactsYet": "Noch keine Pakte",
   "noPactsDescription": "Erstelle deinen ersten Pakt, um eine Gewohnheit aufzubauen.",
   "createPact": "Pakt erstellen",
@@ -35,7 +33,6 @@
   "scheduleMonthlyByDate": "Monatlich nach Datum",
   "timeOfDayLabel": "Uhrzeit",
   "addEntry": "Weiteren hinzufügen",
-  "removeEntry": "Entfernen",
   "weekdayMon": "Mo",
   "weekdayTue": "Di",
   "weekdayWed": "Mi",
@@ -71,7 +68,6 @@
   "wizardSummaryTitle": "Zusammenfassung",
   "wizardSwipeHint": "Zwischen Schritten wischen",
   "createPactConfirm": "Pakt erstellen",
-  "next": "Weiter",
   "back": "Zurück",
   "cancel": "Abbrechen",
   "tooManyPactsTitle": "Zu viele aktive Pakte",
@@ -86,7 +82,6 @@
   "pactDetailTitle": "Pakt-Details",
   "sectionStats": "Statistiken",
   "sectionTimeline": "Verlauf",
-  "sectionStopReason": "Stoppgrund",
   "sectionArchive": "Archiv",
   "stopPactError": "Pakt konnte nicht gestoppt werden. Bitte erneut versuchen.",
   "statsDone": "Erledigt",
@@ -148,10 +143,8 @@
   },
 
   "showupDetailTitle": "Showup-Details",
-  "showupDetailHabit": "Gewohnheit",
   "showupDetailScheduledAt": "Geplant um",
   "showupDetailDuration": "Dauer",
-  "showupDetailStatus": "Status",
   "markDone": "Als erledigt markieren",
   "markFailed": "Als verpasst markieren",
   "showupAutoFailed": "Dieses Showup wurde automatisch als verpasst markiert, da es nach der geplanten Zeit geöffnet wurde.",
@@ -353,9 +346,5 @@
   "timelineShowupsRemaining": "{count, plural, one{1 Showup verbleibend} other{{count} Showups verbleibend}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
-  },
-  "timelineUpNext": "Nächste: {date}",
-  "@timelineUpNext": {
-    "placeholders": { "date": { "type": "String" } }
   }
 }

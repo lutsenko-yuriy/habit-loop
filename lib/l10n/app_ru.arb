@@ -1,8 +1,6 @@
 {
   "@@locale": "ru",
-  "appTitle": "Habit Loop",
   "dashboardTitle": "Главная",
-  "todayShowups": "Сегодняшние явки",
   "noPactsYet": "Нет пактов",
   "noPactsDescription": "Создайте первый пакт, чтобы начать формировать привычку.",
   "createPact": "Создать пакт",
@@ -35,7 +33,6 @@
   "scheduleMonthlyByDate": "Ежемесячно по числу",
   "timeOfDayLabel": "Время",
   "addEntry": "Добавить ещё",
-  "removeEntry": "Удалить",
   "weekdayMon": "Пн",
   "weekdayTue": "Вт",
   "weekdayWed": "Ср",
@@ -71,7 +68,6 @@
   "wizardSummaryTitle": "Итог",
   "wizardSwipeHint": "Листайте между шагами",
   "createPactConfirm": "Создать пакт",
-  "next": "Далее",
   "back": "Назад",
   "cancel": "Отмена",
   "tooManyPactsTitle": "Слишком много активных пактов",
@@ -86,7 +82,6 @@
   "pactDetailTitle": "Детали пакта",
   "sectionStats": "Статистика",
   "sectionTimeline": "Хронология",
-  "sectionStopReason": "Причина остановки",
   "sectionArchive": "Архив",
   "stopPactError": "Не удалось остановить пакт. Попробуйте ещё раз.",
   "statsDone": "Выполнено",
@@ -148,10 +143,8 @@
   },
 
   "showupDetailTitle": "Детали явки",
-  "showupDetailHabit": "Привычка",
   "showupDetailScheduledAt": "Запланировано на",
   "showupDetailDuration": "Длительность",
-  "showupDetailStatus": "Статус",
   "markDone": "Отметить выполненным",
   "markFailed": "Отметить пропущенным",
   "showupAutoFailed": "Эта явка автоматически отмечена как пропущенная, так как была открыта после запланированного времени.",
@@ -353,9 +346,5 @@
   "timelineShowupsRemaining": "{count, plural, one{осталась 1 явка} few{осталось {count} явки} other{осталось {count} явок}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
-  },
-  "timelineUpNext": "Следующая: {date}",
-  "@timelineUpNext": {
-    "placeholders": { "date": { "type": "String" } }
   }
 }
