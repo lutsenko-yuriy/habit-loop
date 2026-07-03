@@ -38,6 +38,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/manage/debrief/SKILL.md | Post-ticket retrospective: structured dialog → workflow improvements + knowledge base entry |
 | skills/manage/note/SKILL.md | Capture a quick observation mid-session into `docs/knowledge/notes/HAB-XX.md` |
 | skills/manage/cleanup-firebase/SKILL.md | Delete old Firebase App Distribution builds locally, keeping the N most recent per platform |
+| skills/manage/dead-code-check/SKILL.md | Advisory dead-code detector — surfaces orphaned l10n keys, analytics events, test files, and handler files |
 | skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |
 | skills/design/brief/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
 | skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
@@ -74,6 +75,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/android` | run/android | `/android` |
 | `/run-scenarios` | run/run-scenarios | `/run-scenarios` or `/run-scenarios HAB-XX` |
 | `/cleanup-firebase` | manage/cleanup-firebase | `/cleanup-firebase [N] [--dry-run]` |
+| `/dead-code-check` | manage/dead-code-check | `/dead-code-check` |
 | `/note` | manage/note | `/note [HAB-XX:] <free-form text>` |
 
 ## Architecture

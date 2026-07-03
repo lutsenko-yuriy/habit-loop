@@ -19,10 +19,6 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## Unscheduled
 
-### Issues
-
-- **HAB-143**: Dead code automation — detect orphaned handlers, analytics events, l10n keys, and test files after feature removal
-
 ### Remaining work
 
 - **HAB-106**: Skill execution observability — token/time/cost tracking in skill_router

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from dead_code.check import (
     detect_orphaned_analytics_events,
+    detect_orphaned_handlers,
     detect_orphaned_l10n_keys,
     detect_orphaned_test_files,
 )
@@ -323,6 +324,107 @@ class TestDetectOrphanedTestFiles(unittest.TestCase):
         self.assertIn('test/orphan_a.dart', high)
         self.assertIn('test/orphan_b.dart', high)
         self.assertNotIn('test/live.dart', high)
+
+
+_NS_PATH = 'lib/infrastructure/notifications/data/flutter_local_notification_service.dart'
+
+
+class TestDetectOrphanedHandlers(unittest.TestCase):
+
+    def setUp(self):
+        self._roots: list[Path] = []
+
+    def tearDown(self):
+        for root in self._roots:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def _project(self, lib_files: dict[str, str]) -> Path:
+        root = Path(tempfile.mkdtemp())
+        self._roots.append(root)
+        (root / 'pubspec.yaml').write_text('name: habit_loop\n')
+        for rel_path, content in lib_files.items():
+            f = root / rel_path
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(content)
+        return root
+
+    # --- Handler file sub-check ---
+
+    def test_imported_handler_not_reported(self):
+        root = self._project({
+            'lib/slices/dashboard/ui/generic/sync_status_handler.dart': 'class SyncStatusHandler {}',
+            'lib/slices/dashboard/ui/ios/dashboard_page.dart': (
+                "import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';"
+            ),
+        })
+        files, _ = detect_orphaned_handlers(root)
+        self.assertEqual(files, [])
+
+    def test_unimported_handler_reported(self):
+        root = self._project({
+            'lib/slices/dashboard/ui/generic/orphan_handler.dart': 'class OrphanHandler {}',
+        })
+        files, _ = detect_orphaned_handlers(root)
+        self.assertIn('lib/slices/dashboard/ui/generic/orphan_handler.dart', files)
+
+    def test_import_in_test_file_counts(self):
+        root = self._project({
+            'lib/slices/dashboard/ui/generic/some_handler.dart': 'class SomeHandler {}',
+        })
+        test_dir = root / 'test'
+        test_dir.mkdir()
+        (test_dir / 'some_handler_test.dart').write_text(
+            "import 'package:habit_loop/slices/dashboard/ui/generic/some_handler.dart';"
+        )
+        files, _ = detect_orphaned_handlers(root)
+        self.assertEqual(files, [])
+
+    def test_no_handler_files_returns_empty(self):
+        root = self._project({'lib/main.dart': 'void main() {}'})
+        files, entry_points = detect_orphaned_handlers(root)
+        self.assertEqual(files, [])
+        self.assertEqual(entry_points, [])
+
+    # --- vm:entry-point sub-check ---
+
+    def test_entry_point_wired_in_service_not_reported(self):
+        root = self._project({
+            'lib/background_handler.dart': (
+                "@pragma('vm:entry-point')\nvoid onBackground() {}"
+            ),
+            _NS_PATH: 'onBackground',
+        })
+        _, entry_points = detect_orphaned_handlers(root)
+        self.assertEqual(entry_points, [])
+
+    def test_entry_point_not_wired_reported(self):
+        root = self._project({
+            'lib/background_handler.dart': (
+                "@pragma('vm:entry-point')\nvoid onBackground() {}"
+            ),
+            _NS_PATH: '// notification service — no reference here',
+        })
+        _, entry_points = detect_orphaned_handlers(root)
+        self.assertIn('onBackground', entry_points)
+
+    def test_entry_point_no_notification_service_reported(self):
+        root = self._project({
+            'lib/background_handler.dart': (
+                "@pragma('vm:entry-point')\nvoid onBackground() {}"
+            ),
+        })
+        _, entry_points = detect_orphaned_handlers(root)
+        self.assertIn('onBackground', entry_points)
+
+    def test_future_return_type_entry_point(self):
+        root = self._project({
+            'lib/background_handler.dart': (
+                "@pragma('vm:entry-point')\nFuture<void> onBackground() async {}"
+            ),
+            _NS_PATH: '// no reference',
+        })
+        _, entry_points = detect_orphaned_handlers(root)
+        self.assertIn('onBackground', entry_points)
 
 
 if __name__ == '__main__':
