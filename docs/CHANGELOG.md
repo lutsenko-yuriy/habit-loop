@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.48.6] — 2026-07-03
+## [0.48.6] — 2026-07-03 (PR #216 merged)
 
 ### Internal
 - [wip] HAB-143 WU2: analytics event orphan detector (`scripts/dead_code/check.py`)
