@@ -2,7 +2,7 @@
 
 **Licence: MIT**
 Applied: 2026-07-04
-Copyright (c) 2026 Yuriy Lutsenko
+Copyright (c) 2026 Iurii Lutsenko
 
 See [`LICENSE`](../LICENSE) at the repo root.
 
