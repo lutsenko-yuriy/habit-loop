@@ -7,6 +7,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-145**: Onboarding carousel slide overflows on tight viewports (PR #217)
 - **HAB-142**: Polish: scroll clips into top bar and bottom gap on detail screens (PR #211)
 - **HAB-139**: Redeem tail-zone failed showups by adding a note (PR #207)
 - **HAB-111**: Dashboard bottom sheet UX improvements (PR #147)

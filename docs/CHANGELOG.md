@@ -4,7 +4,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.48.5] — 2026-07-03
+## [0.48.5] — 2026-07-03 (PR #217 merged)
 
 ### Fixed
 - [app] HAB-145: onboarding carousel slide overflows on tight viewports (iPhone 17 Pro simulator); SVG image now shrinks below 160 pt when available height is limited
