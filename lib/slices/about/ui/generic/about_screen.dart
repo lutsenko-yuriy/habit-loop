@@ -31,20 +31,27 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   Widget build(BuildContext context) {
     void onLicencesTapped() {
       if (!context.mounted) return;
+      final theme = Theme.of(context);
+      final themedLicensePage = Theme(
+        data: theme.copyWith(
+          scaffoldBackgroundColor: theme.colorScheme.surface,
+          appBarTheme: theme.appBarTheme.copyWith(
+            backgroundColor: theme.colorScheme.surface,
+            foregroundColor: theme.colorScheme.onSurface,
+          ),
+        ),
+        child: const LicensePage(applicationName: 'Habit Loop'),
+      );
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         unawaited(
           Navigator.of(context).push(
-            CupertinoPageRoute<void>(
-              builder: (_) => const LicensePage(),
-            ),
+            CupertinoPageRoute<void>(builder: (_) => themedLicensePage),
           ),
         );
       } else {
         unawaited(
           Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const LicensePage(),
-            ),
+            MaterialPageRoute<void>(builder: (_) => themedLicensePage),
           ),
         );
       }

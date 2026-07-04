@@ -28,20 +28,21 @@ class AboutPageIos extends ConsumerWidget {
           child: ListView(
             children: [
               AboutInfoHeader(versionText: aboutVersionText(info)),
-              CupertinoListSection.insetGrouped(
-                children: [
-                  CupertinoListTile.notched(
-                    title: Text(l10n.aboutSendFeedback),
-                    trailing: const Icon(CupertinoIcons.forward),
-                    onTap: null,
-                  ),
-                  CupertinoListTile.notched(
-                    title: Text(l10n.aboutLicences),
-                    trailing: const Icon(CupertinoIcons.forward),
-                    onTap: onLicencesTapped,
-                  ),
-                ],
+              Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
+              CupertinoListTile(
+                backgroundColor: CupertinoColors.transparent,
+                title: Text(l10n.aboutSendFeedback),
+                trailing: const Icon(CupertinoIcons.forward),
+                onTap: null,
               ),
+              Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
+              CupertinoListTile(
+                backgroundColor: CupertinoColors.transparent,
+                title: Text(l10n.aboutLicences),
+                trailing: const Icon(CupertinoIcons.forward),
+                onTap: onLicencesTapped,
+              ),
+              Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
             ],
           ),
         ),

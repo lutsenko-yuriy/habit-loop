@@ -50,3 +50,4 @@ flutter:
 
   assets:
     - assets/onboarding/
+    - assets/app_icon/

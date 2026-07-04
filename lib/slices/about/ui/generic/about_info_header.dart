@@ -12,6 +12,15 @@ class AboutInfoHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
       child: Column(
         children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(
+              'assets/app_icon/habit_loop_icon.png',
+              width: 72,
+              height: 72,
+            ),
+          ),
+          const SizedBox(height: 12),
           const Text(
             'Habit Loop',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
