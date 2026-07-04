@@ -5,9 +5,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/about/ui/generic/about_info_header.dart';
 
 class AboutPageAndroid extends ConsumerWidget {
-  final VoidCallback onLicencesTapped;
-
-  const AboutPageAndroid({super.key, required this.onLicencesTapped});
+  const AboutPageAndroid({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,11 +23,6 @@ class AboutPageAndroid extends ConsumerWidget {
             title: Text(l10n.aboutSendFeedback),
             trailing: const Icon(Icons.chevron_right),
             onTap: null,
-          ),
-          ListTile(
-            title: Text(l10n.aboutLicences),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: onLicencesTapped,
           ),
         ],
       ),

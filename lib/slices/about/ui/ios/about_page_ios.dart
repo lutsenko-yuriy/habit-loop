@@ -6,9 +6,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/about/ui/generic/about_info_header.dart';
 
 class AboutPageIos extends ConsumerWidget {
-  final VoidCallback onLicencesTapped;
-
-  const AboutPageIos({super.key, required this.onLicencesTapped});
+  const AboutPageIos({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,13 +32,6 @@ class AboutPageIos extends ConsumerWidget {
                 title: Text(l10n.aboutSendFeedback),
                 trailing: const Icon(CupertinoIcons.forward),
                 onTap: null,
-              ),
-              Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
-              CupertinoListTile(
-                backgroundColor: CupertinoColors.transparent,
-                title: Text(l10n.aboutLicences),
-                trailing: const Icon(CupertinoIcons.forward),
-                onTap: onLicencesTapped,
               ),
               Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
             ],

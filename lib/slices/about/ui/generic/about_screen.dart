@@ -1,14 +1,12 @@
 import 'dart:async' show unawaited;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/about/analytics/about_analytics_events.dart';
 import 'package:habit_loop/slices/about/ui/android/about_page_android.dart';
 import 'package:habit_loop/slices/about/ui/ios/about_page_ios.dart';
-import 'package:habit_loop/slices/about/ui/ios/cupertino_licenses_page.dart';
 
 class AboutScreen extends ConsumerStatefulWidget {
   const AboutScreen({super.key});
@@ -30,42 +28,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    void onLicencesTapped() {
-      if (!context.mounted) return;
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        unawaited(
-          Navigator.of(context).push(
-            CupertinoPageRoute<void>(builder: (_) => const CupertinoLicensesPage()),
-          ),
-        );
-      } else {
-        final theme = Theme.of(context);
-        unawaited(
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => Theme(
-                data: theme.copyWith(
-                  scaffoldBackgroundColor: theme.colorScheme.surface,
-                  appBarTheme: theme.appBarTheme.copyWith(
-                    backgroundColor: theme.colorScheme.surface,
-                    foregroundColor: theme.colorScheme.onSurface,
-                    surfaceTintColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    scrolledUnderElevation: 0,
-                  ),
-                ),
-                child: const LicensePage(applicationName: 'Habit Loop'),
-              ),
-            ),
-          ),
-        );
-      }
-    }
-
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return AboutPageIos(onLicencesTapped: onLicencesTapped);
+      return const AboutPageIos();
     }
-    return AboutPageAndroid(onLicencesTapped: onLicencesTapped);
+    return const AboutPageAndroid();
   }
 }
