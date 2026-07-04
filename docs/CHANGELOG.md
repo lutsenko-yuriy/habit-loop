@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.11] — 2026-07-04
+
+### Internal
+- [meta] HAB-148: document that ticket state must always be queried from Linear, never from agent memory
+
+---
+
 ## [0.48.10] — 2026-07-04 (PR #222 merged)
 
 ### Internal
