@@ -26,8 +26,10 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/LICENSING.md | Licence decision record — dependency audit, WU1–WU3 research, WU4 pending |
 | docs/MODEL_TIERS.md | Effort Tier and Reasoning Depth vocabulary; active model → tier mapping |
 | docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
+| docs/CONSTRAINTS.md | Standing project constraints — reference when evaluating trade-offs in research tickets |
 | docs/FEATURE_WORKFLOW.md | Step-by-step feature development workflow — TDD cycle, branching, PR, ship, and ticket state rules |
 | docs/TROUBLESHOOT_WORKFLOW.md | Reactive workflow for bugs, CI failures, and infrastructure issues — investigate, ticket, fix, ship |
+| docs/RESEARCH_WORKFLOW.md | Step-by-step workflow for research-only tickets — alternatives survey, constraint evaluation, debrief |
 | docs/knowledge/README.md | Project knowledge base — vault layout, per-ticket file format, how `/note` and `/debrief` write entries |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 | skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
