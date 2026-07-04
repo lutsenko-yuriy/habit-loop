@@ -38,6 +38,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           appBarTheme: theme.appBarTheme.copyWith(
             backgroundColor: theme.colorScheme.surface,
             foregroundColor: theme.colorScheme.onSurface,
+            surfaceTintColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
           ),
         ),
         child: const LicensePage(applicationName: 'Habit Loop'),
