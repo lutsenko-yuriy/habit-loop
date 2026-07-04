@@ -369,6 +369,14 @@ Fired when the user taps the redemption action on an auto-failed tail-zone showu
 
 ---
 
+### `feedback_tapped`
+
+Fired when the user taps the "Send feedback" row on the About screen. Measures whether the feedback channel is actually used. (HAB-149)
+
+No properties — screen view provides sufficient context.
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.
@@ -386,3 +394,4 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 | `PactDetailAnalyticsScreen` | `pact_detail` | `slices/pact/analytics/pact_analytics_events.dart` | Pact detail screen opens |
 | `ShowupDetailAnalyticsScreen` | `showup_detail` | `slices/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |
 | `PactTimelineAnalyticsScreen` | `pact_timeline` | `slices/pact/analytics/pact_timeline_analytics_events.dart` | Pact Timeline screen opens; properties: `pact_id: string`, `pact_status: string` (`active \| completed \| stopped`), `total_showup_count: int` — HAB-116 |
+| `AboutAnalyticsScreen` | `about` | `slices/about/analytics/about_analytics_events.dart` | About screen opens — HAB-149 |
