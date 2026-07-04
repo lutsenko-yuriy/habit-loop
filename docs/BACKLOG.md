@@ -22,4 +22,3 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ### Remaining work
 
 - **HAB-106**: Skill execution observability — token/time/cost tracking in skill_router
-- **HAB-109**: Apply MIT licence to the repository (WU4) — low priority; deferred until trigger condition met (see `docs/LICENSING.md`)
