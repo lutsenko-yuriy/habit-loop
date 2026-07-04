@@ -130,7 +130,15 @@ abstract final class RemoteConfigDefaults {
     'network_sync_enabled',
     'pact_timeline_enabled',
     'showup_redemption_enabled',
+    'about_screen_enabled',
   };
+
+  /// Feature toggle: show the About screen entry point on the dashboard.
+  ///
+  /// When `false`, the About icon button is hidden from the dashboard nav bar
+  /// and the About screen is unreachable. Override to `false` in the Firebase
+  /// Remote Config console to disable the feature without a release.
+  static const bool aboutScreenEnabled = true;
 
   /// Feature toggle: enable the showup redemption action on the showup detail screen.
   ///
@@ -186,6 +194,7 @@ abstract final class RemoteConfigDefaults {
     'network_sync_enabled': networkSyncEnabled,
     'pact_timeline_enabled': pactTimelineEnabled,
     'showup_redemption_enabled': showupRedemptionEnabled,
+    'about_screen_enabled': aboutScreenEnabled,
     'pact_timeline_milestone_grouping_threshold': pactTimelineMilestoneGroupingThreshold,
     'pact_timeline_no_grouping_tail_period_in_days': pactTimelineNoGroupingTailPeriodInDays,
   };
@@ -205,6 +214,7 @@ abstract final class RemoteConfigDefaults {
     'network_sync_enabled': ['true', 'false'],
     'pact_timeline_enabled': ['true', 'false'],
     'showup_redemption_enabled': ['true', 'false'],
+    'about_screen_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

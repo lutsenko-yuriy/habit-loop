@@ -25,6 +25,7 @@ class DashboardPageAndroid extends ConsumerWidget {
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
   final Future<void> Function(String) onShowupTapped;
+  final AsyncCallback onAbout;
 
   const DashboardPageAndroid({
     super.key,
@@ -34,12 +35,12 @@ class DashboardPageAndroid extends ConsumerWidget {
     required this.onDaySelected,
     required this.onCreatePact,
     required this.onShowupTapped,
+    required this.onAbout,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final version = ref.watch(appVersionProvider).valueOrNull ?? '';
     final syncState = ref.watch(syncStatusViewModelProvider);
 
     Future<void> onLanguagePickerTapped() => openLanguagePicker(
@@ -74,26 +75,17 @@ class DashboardPageAndroid extends ConsumerWidget {
       onSyncStatusPressed: onSyncStatusTapped,
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
+      onAboutPressed: onAbout,
       languageSelectionEnabled: featureFlags.languageSelectionEnabled,
       networkSyncEnabled: featureFlags.networkSyncEnabled,
+      aboutScreenEnabled: featureFlags.aboutScreenEnabled,
     );
 
     final appBarActions = actions.where((a) => a.type != DashboardActionType.createPact).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.dashboardTitle),
-            if (version.isNotEmpty)
-              Text(
-                version,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-          ],
-        ),
+        title: Text(l10n.dashboardTitle),
         actions: appBarActions.map((a) => _buildAppBarButton(context, a, syncState)).toList(),
       ),
       floatingActionButton: FloatingActionButton(
@@ -153,6 +145,11 @@ Widget _buildAppBarButton(BuildContext context, DashboardActionDescriptor action
         onPressed: action.onPressed,
       ),
     DashboardActionType.createPact => const SizedBox.shrink(),
+    DashboardActionType.about => IconButton(
+        key: action.key,
+        icon: const Icon(Icons.info_outline),
+        onPressed: action.onPressed,
+      ),
   };
 }
 

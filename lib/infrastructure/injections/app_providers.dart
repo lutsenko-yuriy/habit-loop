@@ -93,6 +93,11 @@ final appVersionProvider = FutureProvider<String>((ref) async {
   }
 });
 
+/// Returns raw [PackageInfo] for screens that need version and build number separately.
+final packageInfoProvider = FutureProvider<PackageInfo>((ref) async {
+  return PackageInfo.fromPlatform();
+});
+
 // ---------------------------------------------------------------------------
 // Locale providers
 // ---------------------------------------------------------------------------

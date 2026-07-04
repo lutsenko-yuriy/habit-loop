@@ -6,6 +6,7 @@ final class FeatureFlags {
     required this.networkSyncEnabled,
     required this.pactTimelineEnabled,
     required this.showupRedemptionEnabled,
+    required this.aboutScreenEnabled,
   });
 
   factory FeatureFlags.fromRemoteConfig(RemoteConfigService rc) {
@@ -14,6 +15,7 @@ final class FeatureFlags {
       networkSyncEnabled: rc.getBool('network_sync_enabled'),
       pactTimelineEnabled: rc.getBool('pact_timeline_enabled'),
       showupRedemptionEnabled: rc.getBool('showup_redemption_enabled'),
+      aboutScreenEnabled: rc.getBool('about_screen_enabled'),
     );
   }
 
@@ -26,6 +28,9 @@ final class FeatureFlags {
   /// Whether the showup redemption action is enabled on the showup detail screen.
   final bool showupRedemptionEnabled;
 
+  /// Whether the About screen entry point is visible on the dashboard.
+  final bool aboutScreenEnabled;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -33,9 +38,15 @@ final class FeatureFlags {
           languageSelectionEnabled == other.languageSelectionEnabled &&
           networkSyncEnabled == other.networkSyncEnabled &&
           pactTimelineEnabled == other.pactTimelineEnabled &&
-          showupRedemptionEnabled == other.showupRedemptionEnabled;
+          showupRedemptionEnabled == other.showupRedemptionEnabled &&
+          aboutScreenEnabled == other.aboutScreenEnabled;
 
   @override
-  int get hashCode =>
-      Object.hash(languageSelectionEnabled, networkSyncEnabled, pactTimelineEnabled, showupRedemptionEnabled);
+  int get hashCode => Object.hash(
+        languageSelectionEnabled,
+        networkSyncEnabled,
+        pactTimelineEnabled,
+        showupRedemptionEnabled,
+        aboutScreenEnabled,
+      );
 }

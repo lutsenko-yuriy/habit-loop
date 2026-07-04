@@ -80,6 +80,7 @@ Widget _buildIosApp({
           onDaySelected: (_) {},
           onCreatePact: () async {},
           onShowupTapped: (_) async {},
+          onAbout: () async {},
         ),
       ),
     ),
@@ -111,6 +112,7 @@ Widget _buildAndroidApp({
         onDaySelected: (_) {},
         onCreatePact: () async {},
         onShowupTapped: (_) async {},
+        onAbout: () async {},
       ),
     ),
   );

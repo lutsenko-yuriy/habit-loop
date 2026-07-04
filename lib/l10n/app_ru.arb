@@ -346,5 +346,9 @@
   "timelineShowupsRemaining": "{count, plural, one{осталась 1 явка} few{осталось {count} явки} other{осталось {count} явок}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
-  }
+  },
+
+  "aboutTitle": "О приложении",
+  "aboutSendFeedback": "Отправить отзыв",
+  "aboutLicences": "Лицензии"
 }

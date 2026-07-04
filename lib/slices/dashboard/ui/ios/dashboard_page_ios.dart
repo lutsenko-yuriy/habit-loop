@@ -27,6 +27,7 @@ class DashboardPageIos extends ConsumerWidget {
   final ValueChanged<int> onDaySelected;
   final AsyncCallback onCreatePact;
   final Future<void> Function(String) onShowupTapped;
+  final AsyncCallback onAbout;
 
   const DashboardPageIos({
     super.key,
@@ -36,12 +37,12 @@ class DashboardPageIos extends ConsumerWidget {
     required this.onDaySelected,
     required this.onCreatePact,
     required this.onShowupTapped,
+    required this.onAbout,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final version = ref.watch(appVersionProvider).valueOrNull ?? '';
     final syncState = ref.watch(syncStatusViewModelProvider);
 
     Future<void> onLanguagePickerTapped() => openLanguagePicker(
@@ -76,8 +77,10 @@ class DashboardPageIos extends ConsumerWidget {
       onSyncStatusPressed: onSyncStatusTapped,
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
+      onAboutPressed: onAbout,
       languageSelectionEnabled: featureFlags.languageSelectionEnabled,
       networkSyncEnabled: featureFlags.networkSyncEnabled,
+      aboutScreenEnabled: featureFlags.aboutScreenEnabled,
     );
 
     final langAction = actions.firstWhereOrNull((a) => a.type == DashboardActionType.languagePicker);
@@ -95,17 +98,7 @@ class DashboardPageIos extends ConsumerWidget {
                 onPressed: langAction.onPressed,
                 child: const Icon(CupertinoIcons.globe),
               ),
-        middle: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.dashboardTitle),
-            if (version.isNotEmpty)
-              Text(
-                version,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
-              ),
-          ],
-        ),
+        middle: Text(l10n.dashboardTitle),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: trailingActions.map((a) => _buildNavBarButton(context, a, syncState)).toList(),
@@ -173,6 +166,12 @@ Widget _buildNavBarButton(BuildContext context, DashboardActionDescriptor action
         child: const Icon(CupertinoIcons.add),
       ),
     DashboardActionType.languagePicker => const SizedBox.shrink(),
+    DashboardActionType.about => CupertinoButton(
+        key: action.key,
+        padding: EdgeInsets.zero,
+        onPressed: action.onPressed,
+        child: const Icon(CupertinoIcons.info_circle),
+      ),
   };
 }
 

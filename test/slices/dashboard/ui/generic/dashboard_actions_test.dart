@@ -10,16 +10,20 @@ void main() {
       void Function()? onSync,
       void Function()? onLang,
       void Function()? onCreate,
+      void Function()? onAbout,
       bool languageSelectionEnabled = true,
       bool networkSyncEnabled = true,
+      bool aboutScreenEnabled = true,
     }) =>
         buildDashboardActions(
           onRcOverridesPressed: onRc ?? () {},
           onSyncStatusPressed: onSync ?? () {},
           onLanguagePickerPressed: onLang ?? () {},
           onCreatePactPressed: onCreate ?? () {},
+          onAboutPressed: onAbout ?? () {},
           languageSelectionEnabled: languageSelectionEnabled,
           networkSyncEnabled: networkSyncEnabled,
+          aboutScreenEnabled: aboutScreenEnabled,
         );
 
     test('always includes createPact', () {
@@ -73,19 +77,37 @@ void main() {
       expect(create.key, const Key('create-pact-button'));
     });
 
+    test('includes about when aboutScreenEnabled is true', () {
+      final actions = makeActions(aboutScreenEnabled: true);
+      expect(actions.any((a) => a.type == DashboardActionType.about), isTrue);
+    });
+
+    test('omits about when aboutScreenEnabled is false', () {
+      final actions = makeActions(aboutScreenEnabled: false);
+      expect(actions.any((a) => a.type == DashboardActionType.about), isFalse);
+    });
+
+    test('about descriptor has Key(about-button)', () {
+      final about = makeActions().firstWhere((a) => a.type == DashboardActionType.about);
+      expect(about.key, const Key('about-button'));
+    });
+
     test('onPressed callbacks are wired to provided functions', () {
-      bool rcCalled = false, syncCalled = false, langCalled = false;
+      bool rcCalled = false, syncCalled = false, langCalled = false, aboutCalled = false;
       final actions = makeActions(
         onRc: () => rcCalled = true,
         onSync: () => syncCalled = true,
         onLang: () => langCalled = true,
+        onAbout: () => aboutCalled = true,
       );
       actions.firstWhere((a) => a.type == DashboardActionType.rcOverrides).onPressed();
       actions.firstWhere((a) => a.type == DashboardActionType.syncStatus).onPressed();
       actions.firstWhere((a) => a.type == DashboardActionType.languagePicker).onPressed();
+      actions.firstWhere((a) => a.type == DashboardActionType.about).onPressed();
       expect(rcCalled, isTrue);
       expect(syncCalled, isTrue);
       expect(langCalled, isTrue);
+      expect(aboutCalled, isTrue);
     });
   });
 }

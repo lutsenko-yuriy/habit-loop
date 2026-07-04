@@ -347,5 +347,9 @@
   "timelineShowupsRemaining": "{count, plural, one{1 showup remaining} other{{count} showups remaining}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
-  }
+  },
+
+  "aboutTitle": "About",
+  "aboutSendFeedback": "Send feedback",
+  "aboutLicences": "Licences"
 }
