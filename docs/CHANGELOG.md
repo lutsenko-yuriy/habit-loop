@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.10] — 2026-07-04 (PR #222 merged)
+
+### Internal
+- [meta] HAB-109: apply MIT licence — LICENSE file, README badge and section, licensing research moved to knowledge notes
+
+---
+
 ## [0.48.9] — 2026-07-04
 
 ### Internal
