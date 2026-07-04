@@ -94,8 +94,13 @@ final appVersionProvider = FutureProvider<String>((ref) async {
 });
 
 /// Returns raw [PackageInfo] for screens that need version and build number separately.
-final packageInfoProvider = FutureProvider<PackageInfo>((ref) async {
-  return PackageInfo.fromPlatform();
+/// Returns null on failure (e.g. platform channel unavailable in test environments).
+final packageInfoProvider = FutureProvider<PackageInfo?>((ref) async {
+  try {
+    return await PackageInfo.fromPlatform();
+  } catch (_) {
+    return null;
+  }
 });
 
 // ---------------------------------------------------------------------------
