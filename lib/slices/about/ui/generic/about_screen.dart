@@ -32,8 +32,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     void onLicencesTapped() {
       if (!context.mounted) return;
       final theme = Theme.of(context);
+      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
       final themedLicensePage = Theme(
         data: theme.copyWith(
+          textTheme: isIOS ? theme.textTheme.apply(fontFamily: '.SF Pro Text') : theme.textTheme,
           scaffoldBackgroundColor: theme.colorScheme.surface,
           appBarTheme: theme.appBarTheme.copyWith(
             backgroundColor: theme.colorScheme.surface,
