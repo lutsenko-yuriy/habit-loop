@@ -34,3 +34,9 @@ On first use for a ticket, the file is created from `docs/knowledge/notes/TEMPLA
 - All notes for a ticket: `grep -r "HAB-XX" docs/knowledge/notes/`
 - Recent decisions: open `docs/knowledge/notes/HAB-XX.md` directly
 - Claude reads the relevant file at the start of `/debrief` and can be asked to read any file on demand
+
+## Agent memory constraints
+
+Ticket state (Backlog, In Progress, In Review, In QA, Done) is **never stored in agent memory** — memory entries go stale within hours and cause incorrect answers about what is currently in flight. **Always query Linear directly** for current ticket state.
+
+General rule: only store in memory what Linear, git, and the codebase cannot answer. State that a tool can look up authoritatively should never be duplicated in memory.
