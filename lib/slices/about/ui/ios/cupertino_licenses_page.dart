@@ -30,13 +30,8 @@ class _CupertinoLicensesPageState extends State<CupertinoLicensesPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final surface = Theme.of(context).colorScheme.surface;
-    final mq = MediaQuery.of(context);
     return CupertinoPageScaffold(
       backgroundColor: surface,
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: surface,
-        middle: Text(l10n.aboutLicences),
-      ),
       child: FutureBuilder<_LicenseData>(
         future: _future,
         builder: (context, snapshot) {
@@ -44,36 +39,43 @@ class _CupertinoLicensesPageState extends State<CupertinoLicensesPage> {
             return const Center(child: CupertinoActivityIndicator());
           }
           final data = snapshot.data!;
-          return ListView.separated(
-            padding: EdgeInsets.only(
-              top: mq.padding.top,
-              bottom: mq.padding.bottom,
-            ),
-            itemCount: data.packages.length,
-            separatorBuilder: (_, __) => Container(
-              height: 0.5,
-              color: CupertinoColors.separator.resolveFrom(context),
-            ),
-            itemBuilder: (context, index) {
-              final package = data.packages[index];
-              final count = data.entriesByPackage[package]!.length;
-              return CupertinoListTile(
-                backgroundColor: CupertinoColors.transparent,
-                title: Text(package),
-                additionalInfo: Text('$count'),
-                trailing: const Icon(CupertinoIcons.forward),
-                onTap: () => unawaited(
-                  Navigator.of(context).push(
-                    CupertinoPageRoute<void>(
-                      builder: (_) => _LicenseDetailPage(
-                        package: package,
-                        entries: data.entriesByPackage[package]!,
-                      ),
-                    ),
+          return CustomScrollView(
+            slivers: [
+              CupertinoSliverNavigationBar(
+                largeTitle: Text(l10n.aboutLicences),
+                backgroundColor: surface,
+              ),
+              SliverSafeArea(
+                top: false,
+                sliver: SliverList.separated(
+                  itemCount: data.packages.length,
+                  separatorBuilder: (_, __) => Container(
+                    height: 0.5,
+                    color: CupertinoColors.separator.resolveFrom(context),
                   ),
+                  itemBuilder: (context, index) {
+                    final package = data.packages[index];
+                    final count = data.entriesByPackage[package]!.length;
+                    return CupertinoListTile(
+                      backgroundColor: CupertinoColors.transparent,
+                      title: Text(package),
+                      additionalInfo: Text('$count'),
+                      trailing: const Icon(CupertinoIcons.forward),
+                      onTap: () => unawaited(
+                        Navigator.of(context).push(
+                          CupertinoPageRoute<void>(
+                            builder: (_) => _LicenseDetailPage(
+                              package: package,
+                              entries: data.entriesByPackage[package]!,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),
@@ -92,37 +94,40 @@ class _LicenseDetailPage extends StatelessWidget {
     final paragraphs = [for (final e in entries) ...e.paragraphs];
     final surface = Theme.of(context).colorScheme.surface;
     final onSurface = Theme.of(context).colorScheme.onSurface;
-    final mq = MediaQuery.of(context);
     return CupertinoPageScaffold(
       backgroundColor: surface,
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: surface,
-        middle: Text(package),
-      ),
-      child: ListView.builder(
-        padding: EdgeInsets.only(
-          top: mq.padding.top + 16,
-          left: 16,
-          right: 16,
-          bottom: mq.padding.bottom + 16,
-        ),
-        itemCount: paragraphs.length,
-        itemBuilder: (context, index) {
-          final p = paragraphs[index];
-          return Padding(
-            padding: EdgeInsets.only(left: p.indent * 16.0, bottom: 8),
-            child: Text(
-              p.text,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.5,
-                color: onSurface,
-                fontWeight: FontWeight.normal,
-                decoration: TextDecoration.none,
+      child: CustomScrollView(
+        slivers: [
+          CupertinoSliverNavigationBar(
+            largeTitle: Text(package),
+            backgroundColor: surface,
+          ),
+          SliverSafeArea(
+            top: false,
+            sliver: SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverList.builder(
+                itemCount: paragraphs.length,
+                itemBuilder: (context, index) {
+                  final p = paragraphs[index];
+                  return Padding(
+                    padding: EdgeInsets.only(left: p.indent * 16.0, bottom: 8),
+                    child: Text(
+                      p.text,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                        color: onSurface,
+                        fontWeight: FontWeight.normal,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
