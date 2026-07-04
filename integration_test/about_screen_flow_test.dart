@@ -3,10 +3,8 @@
 // Run on host:   flutter test integration_test/about_screen_flow_test.dart
 // Run on device: flutter test integration_test/about_screen_flow_test.dart -d <device>
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 void main() {
@@ -14,8 +12,7 @@ void main() {
   setUpAll(AppHarness.initForHost);
 
   group('About screen', () {
-    late AppHarness h;
-    tearDown(() => h.dispose());
+    // TODO: declare `late AppHarness h;` and `tearDown(() => h.dispose());` when filling in stubs.
 
     testWidgets('about_button_opens_about_screen', (tester) async {
       // TODO: Create harness with no pacts (standard dashboard state).
