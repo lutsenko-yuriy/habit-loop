@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show LicenseEntry, LicenseRegistry;
+import 'package:flutter/material.dart' show Theme;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 class CupertinoLicensesPage extends StatefulWidget {
@@ -28,8 +29,13 @@ class _CupertinoLicensesPageState extends State<CupertinoLicensesPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final surface = Theme.of(context).colorScheme.surface;
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(middle: Text(l10n.aboutLicences)),
+      backgroundColor: surface,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: surface,
+        middle: Text(l10n.aboutLicences),
+      ),
       child: FutureBuilder<_LicenseData>(
         future: _future,
         builder: (context, snapshot) {
@@ -82,8 +88,14 @@ class _LicenseDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final paragraphs = [for (final e in entries) ...e.paragraphs];
+    final surface = Theme.of(context).colorScheme.surface;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(middle: Text(package)),
+      backgroundColor: surface,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: surface,
+        middle: Text(package),
+      ),
       child: SafeArea(
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -92,7 +104,10 @@ class _LicenseDetailPage extends StatelessWidget {
             final p = paragraphs[index];
             return Padding(
               padding: EdgeInsets.only(left: p.indent * 16.0, bottom: 8),
-              child: Text(p.text, style: const TextStyle(fontSize: 13, height: 1.5)),
+              child: Text(
+                p.text,
+                style: TextStyle(fontSize: 13, height: 1.5, color: onSurface),
+              ),
             );
           },
         ),
