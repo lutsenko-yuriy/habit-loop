@@ -83,16 +83,6 @@ final debugBackendAtStartupProvider = Provider<String>(
 // App info providers
 // ---------------------------------------------------------------------------
 
-/// Returns `"vX.Y.Z (N)"` or `""` on failure.
-final appVersionProvider = FutureProvider<String>((ref) async {
-  try {
-    final info = await PackageInfo.fromPlatform();
-    return 'v${info.version} (${info.buildNumber})';
-  } catch (_) {
-    return '';
-  }
-});
-
 /// Returns raw [PackageInfo] for screens that need version and build number separately.
 /// Returns null on failure (e.g. platform channel unavailable in test environments).
 final packageInfoProvider = FutureProvider<PackageInfo?>((ref) async {
@@ -101,6 +91,13 @@ final packageInfoProvider = FutureProvider<PackageInfo?>((ref) async {
   } catch (_) {
     return null;
   }
+});
+
+/// Returns `"vX.Y.Z (N)"` or `""` on failure. Derived from [packageInfoProvider].
+final appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await ref.watch(packageInfoProvider.future);
+  if (info == null) return '';
+  return 'v${info.version} (${info.buildNumber})';
 });
 
 // ---------------------------------------------------------------------------
