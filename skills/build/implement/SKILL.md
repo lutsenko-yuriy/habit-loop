@@ -54,7 +54,9 @@ git checkout -b feature/HAB-XX-WUN-<short> origin/main
 
 **If this WU lists scenarios to make green:** before writing any production code, first replace the `// TODO:` comment stubs in those scenario files with actual `AppHarness` driver calls. This makes the scenarios compile and run red. Then proceed with the TDD cycle below to make them pass.
 
-**Every `// TODO:` step within each scenario must be implemented — do not silently drop tail steps.** If a step genuinely cannot be implemented (e.g. requires disproportionate harness infrastructure), replace `// TODO:` with `// SKIP: <one-sentence reason>` and note it in the PR description.
+**Every `// TODO:` step within each scenario must be implemented — do not silently drop tail steps.** If a step genuinely cannot be implemented (e.g. requires disproportionate harness infrastructure), replace `// TODO:` with `// SKIP: <one-sentence reason>` and note it in the PR description. If a scenario's feature is dropped or deferred entirely during implementation, delete the whole `testWidgets` block before committing — do not leave empty stubs in main.
+
+**Ambiguous UI spec during implementation:** if a sub-feature's design is described only by analogy ("like the rest of the app", "native style", etc.) with no concrete reference, stop before implementing it — ask for a visual reference or ASCII mockup, the same way `/brief` step 3.5 would. Iterating on vague specs is expensive.
 
 @skills/build/implement/resources/tdd-cycle.md
 

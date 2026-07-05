@@ -19,7 +19,7 @@ This skill produces workflow improvements and a retrospective record, not code.
 
 - `git log --oneline -20` to see the recent commit history
 - Read `docs/FEATURE_WORKFLOW.md` and `docs/TROUBLESHOOT_WORKFLOW.md`
-- Read `docs/knowledge/notes/HAB-XX.md` and any `HAB-XX-adjust-N.md` files if they exist — use the contents to inform the dialog and avoid re-covering ground already captured mid-session
+- Read `docs/knowledge/notes/HAB-XX.md` and any `HAB-XX-adjust-N.md` files if they exist. If the notes file has content under `## Notes`, present a brief summary of the captured items to the user before asking the opening question — this gives a memory refresh and avoids re-covering documented ground.
 - If the ticket removed or significantly refactored existing functionality, run `/dead-code-check` now and include any `[WARN]` findings in the debrief dialog as a concrete "what to clean up" item.
 
 ### 2. Open the dialog
