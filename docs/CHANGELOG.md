@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.49.4] — 2026-07-05
+
+### Fixed
+
+- [ci] Pin build-ios and test-ios-integration to macos-15 to avoid flaky Xcode SDK version on macos-latest (isiOSAppOnVision not available in older SDKs)
+- [app] Commit missing Podfile.lock entries for device_info_plus and url_launcher_ios pods (added by HAB-149/150)
+
 ## [0.49.3] — 2026-07-05 (PR #233 merged)
 
 ### Added
