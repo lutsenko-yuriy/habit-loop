@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/about/application/feedback_service.dart';
 import 'package:habit_loop/slices/about/ui/generic/about_info_header.dart';
 
 class AboutPageAndroid extends ConsumerWidget {
@@ -22,7 +23,7 @@ class AboutPageAndroid extends ConsumerWidget {
           ListTile(
             title: Text(l10n.aboutSendFeedback),
             trailing: const Icon(Icons.chevron_right),
-            onTap: null,
+            onTap: () => openFeedback(ref),
           ),
         ],
       ),

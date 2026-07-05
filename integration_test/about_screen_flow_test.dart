@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/about/analytics/about_analytics_events.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -56,21 +57,18 @@ void main() {
     });
 
     testWidgets('feedback_tapped_fires_analytics_event', (tester) async {
-      // TODO: Create harness.
-      // TODO: Navigate to the About screen (tap About icon button on dashboard).
-      // TODO: Pump frames.
-      // TODO: Tap the "Send feedback" row (l10n(tester).aboutSendFeedback).
-      // TODO: Pump frames.
-      // TODO: Assert h.analytics.loggedEvents contains one event with name 'feedback_tapped'.
-    });
+      h = await AppHarness.create(tester);
 
-    testWidgets('licences_row_opens_licence_page', (tester) async {
-      // TODO: Create harness.
-      // TODO: Navigate to the About screen (tap About icon button on dashboard).
-      // TODO: Pump frames.
-      // TODO: Tap the "Licences" row (l10n(tester).aboutLicences).
-      // TODO: Pump frames.
-      // TODO: Assert a widget with text "Licenses" (Flutter's LicensePage title) is visible.
+      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+      await _openAboutScreen(tester);
+
+      await tester.tap(find.text(l10n(tester).aboutSendFeedback));
+      await tester.pumpAndSettle();
+
+      expect(
+        h.analytics.loggedEvents.whereType<FeedbackTappedEvent>(),
+        isNotEmpty,
+      );
     });
 
     testWidgets('about_button_hidden_when_flag_disabled', (tester) async {

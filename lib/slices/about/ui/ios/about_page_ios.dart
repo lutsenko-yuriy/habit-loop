@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/about/application/feedback_service.dart';
 import 'package:habit_loop/slices/about/ui/generic/about_info_header.dart';
 
 class AboutPageIos extends ConsumerWidget {
@@ -31,7 +32,7 @@ class AboutPageIos extends ConsumerWidget {
                 backgroundColor: CupertinoColors.transparent,
                 title: Text(l10n.aboutSendFeedback),
                 trailing: const Icon(CupertinoIcons.forward),
-                onTap: null,
+                onTap: () => openFeedback(ref),
               ),
               Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
             ],
