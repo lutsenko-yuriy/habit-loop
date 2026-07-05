@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.49.2] — 2026-07-05 (PR #232 merged)
+
+### Added — WIP
+
+- [wip] HAB-150 WU2: iOS kebab menu — CupertinoActionSheet presenter, ⋯ nav-bar button, single-item shortcut, analytics wiring; about + language picker accessible via kebab; widget tests updated
+
+---
+
 ## [0.49.1] — 2026-07-05 (PR #231 merged)
 
 ### Added — WIP

@@ -31,7 +31,7 @@ Widget _buildTestApp({
   return ProviderScope(
     overrides: [
       pactListViewModelProvider.overrideWith(_LoadedPactListViewModel.new),
-      if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
+      analyticsServiceProvider.overrideWithValue(analyticsService ?? FakeAnalyticsService()),
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
       if (remoteConfig != null) remoteConfigServiceProvider.overrideWithValue(remoteConfig),
       if (localeOverride != null) localeOverrideProvider.overrideWith((ref) => localeOverride),
@@ -67,11 +67,6 @@ Widget _buildTestApp({
 
 void main() {
   testWidgets('iOS dashboard nav bar has explicit surface backgroundColor to prevent white-on-drag', (tester) async {
-    // When the pacts panel is dragged upward, the CupertinoNavigationBar's
-    // default translucent background blurs the panel content (white list tiles)
-    // and the bar appears white.  Setting backgroundColor explicitly to
-    // colorScheme.surface makes the bar opaque and keeps it mint regardless of
-    // what scrolls behind it.
     await tester.pumpWidget(_buildTestApp());
 
     final navBar = tester.widget<CupertinoNavigationBar>(find.byType(CupertinoNavigationBar));
@@ -98,11 +93,13 @@ void main() {
     expect(find.byKey(const Key('dashboard-ios-home-gesture-reserve')), findsNothing);
   });
 
-  testWidgets('iOS dashboard shows globe icon button in navigation bar', (tester) async {
+  testWidgets('iOS dashboard shows kebab menu button when multiple actions are enabled', (tester) async {
+    // Default config: About + Language + Debug (debug build) → 3 candidates → kebab shown.
     await tester.pumpWidget(_buildTestApp());
 
-    expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
-    expect(find.byIcon(CupertinoIcons.globe), findsOneWidget);
+    expect(find.byKey(const Key('kebab-menu-button')), findsOneWidget);
+    // Language is inside the kebab, not a standalone nav-bar button.
+    expect(find.byKey(const Key('language-picker-button')), findsNothing);
   });
 
   testWidgets('iOS dashboard hides sync button when network_sync_enabled is false', (tester) async {
@@ -113,13 +110,14 @@ void main() {
     expect(find.byKey(const Key('sync-status-button')), findsNothing);
   });
 
-  testWidgets('iOS dashboard hides globe button when language_selection_enabled is false', (tester) async {
+  testWidgets('iOS dashboard hides language item from kebab when language_selection_enabled is false', (tester) async {
     await tester.pumpWidget(_buildTestApp(
       remoteConfig: FakeRemoteConfigService(overrides: {'language_selection_enabled': false}),
     ));
 
+    // 2 candidates remain (Debug + About) → kebab still shown, language key absent.
+    expect(find.byKey(const Key('kebab-menu-button')), findsOneWidget);
     expect(find.byKey(const Key('language-picker-button')), findsNothing);
-    expect(find.byIcon(CupertinoIcons.globe), findsNothing);
   });
 
   testWidgets('iOS dashboard shows onboarding carousel when hasPacts is false', (tester) async {
@@ -128,52 +126,83 @@ void main() {
       remoteConfig: FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
     ));
 
-    // Carousel replaces the regular scaffold — no nav bar or language-picker-button.
-    expect(find.byKey(const Key('language-picker-button')), findsNothing);
+    // Carousel replaces the regular scaffold — no kebab button.
+    expect(find.byKey(const Key('kebab-menu-button')), findsNothing);
     expect(find.text('Create a Pact'), findsOneWidget);
   });
 
-  testWidgets('tapping globe icon shows CupertinoActionSheet with language options', (tester) async {
-    // Use a specific locale override so system option does not have checkmark,
-    // allowing plain text matching for all options.
+  testWidgets('iOS dashboard single-item shortcut shows standalone button with no kebab', (tester) async {
+    // Disable About + Language → only Debug (always in debug build) is a candidate → shortcut.
+    await tester.pumpWidget(_buildTestApp(
+      remoteConfig: FakeRemoteConfigService(overrides: {
+        'about_screen_enabled': false,
+        'language_selection_enabled': false,
+      }),
+    ));
+
+    expect(find.byKey(const Key('kebab-menu-button')), findsNothing);
+    expect(find.byKey(const Key('remote-config-debug-button')), findsOneWidget);
+  });
+
+  testWidgets('tapping kebab button opens CupertinoActionSheet with all enabled items', (tester) async {
     await tester.pumpWidget(_buildTestApp(localeOverride: const Locale('en')));
 
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CupertinoActionSheet), findsOneWidget);
+    expect(find.text('About'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Debug'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+  });
+
+  testWidgets('tapping kebab button fires KebabMenuOpenedEvent analytics', (tester) async {
+    final analytics = FakeAnalyticsService();
+    await tester.pumpWidget(_buildTestApp(analyticsService: analytics));
+
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
+
+    expect(analytics.loggedEvents.any((e) => e.name == 'kebab_menu_opened'), isTrue);
+  });
+
+  testWidgets('tapping Language in kebab shows CupertinoActionSheet with language options', (tester) async {
+    await tester.pumpWidget(_buildTestApp(localeOverride: const Locale('en')));
+
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
-    // Action sheet title
-    expect(find.text('Language'), findsOneWidget);
-
-    // Four language options (English has checkmark since it's selected)
     expect(find.text('✓ English'), findsOneWidget);
     expect(find.text('French'), findsOneWidget);
     expect(find.text('German'), findsOneWidget);
     expect(find.text('Russian'), findsOneWidget);
     expect(find.text('Use system language'), findsOneWidget);
-
-    // Cancel button
     expect(find.text('Cancel'), findsOneWidget);
   });
 
   testWidgets('action sheet shows checkmark on currently selected language', (tester) async {
     await tester.pumpWidget(_buildTestApp(localeOverride: const Locale('fr')));
 
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
-    // The French option should have a leading checkmark
     expect(find.text('✓ French'), findsOneWidget);
-    // English should not have a checkmark
     expect(find.text('✓ English'), findsNothing);
   });
 
   testWidgets('action sheet shows checkmark on system option when localeOverride is null', (tester) async {
     await tester.pumpWidget(_buildTestApp());
 
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
-    // When localeOverrideProvider is null, system option should have checkmark
     expect(find.text('✓ Use system language'), findsOneWidget);
   });
 
@@ -181,48 +210,39 @@ void main() {
     final analyticsService = FakeAnalyticsService();
     final localeService = FakeLocalePreferenceService();
 
-    // Start with English override so French has no checkmark and can be tapped by plain text
-    await tester.pumpWidget(
-      _buildTestApp(
-        analyticsService: analyticsService,
-        localeService: localeService,
-        localeOverride: const Locale('en'),
-      ),
-    );
+    await tester.pumpWidget(_buildTestApp(
+      analyticsService: analyticsService,
+      localeService: localeService,
+      localeOverride: const Locale('en'),
+    ));
 
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
-
     await tester.tap(find.text('French'));
     await tester.pumpAndSettle();
 
-    // Analytics: language_change_requested should have been fired when the picker opened
     expect(analyticsService.loggedEvents.any((e) => e.name == 'language_change_requested'), isTrue);
-    // Analytics: language_changed should have been fired after selection
     expect(analyticsService.loggedEvents.any((e) => e.name == 'language_changed'), isTrue);
 
     final changedEvent = analyticsService.loggedEvents.firstWhere((e) => e.name == 'language_changed');
     expect(changedEvent.toParameters()['to_language'], 'fr');
-
-    // Locale service should have saved the new locale
     expect(localeService.savedLocale, const Locale('fr'));
   });
 
   testWidgets('selecting system language clears locale override', (tester) async {
     final localeService = FakeLocalePreferenceService();
 
-    // Start with French override
-    await tester.pumpWidget(
-      _buildTestApp(localeService: localeService, localeOverride: const Locale('fr')),
-    );
+    await tester.pumpWidget(_buildTestApp(localeService: localeService, localeOverride: const Locale('fr')));
 
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
-
     await tester.tap(find.text('Use system language'));
     await tester.pumpAndSettle();
 
-    // Locale service should have been cleared
     expect(localeService.clearLocaleCallCount, greaterThan(0));
   });
 
@@ -230,37 +250,32 @@ void main() {
     final analyticsService = FakeAnalyticsService();
     final localeService = FakeLocalePreferenceService();
 
-    // English is already selected
-    await tester.pumpWidget(
-      _buildTestApp(
-        analyticsService: analyticsService,
-        localeService: localeService,
-        localeOverride: const Locale('en'),
-      ),
-    );
+    await tester.pumpWidget(_buildTestApp(
+      analyticsService: analyticsService,
+      localeService: localeService,
+      localeOverride: const Locale('en'),
+    ));
 
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
-
-    // Tap the already-selected English option (shows with checkmark)
     await tester.tap(find.text('✓ English'));
     await tester.pumpAndSettle();
 
-    // language_changed must NOT have been fired
     expect(analyticsService.loggedEvents.any((e) => e.name == 'language_changed'), isFalse);
-    // locale service must not have been written
     expect(localeService.savedLocale, isNull);
   });
 
   testWidgets('selecting system language when already on system is a no-op', (tester) async {
     final localeService = FakeLocalePreferenceService();
 
-    // localeOverride is null — already on system
     await tester.pumpWidget(_buildTestApp(localeService: localeService));
 
+    await tester.tap(find.byKey(const Key('kebab-menu-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
-
     await tester.tap(find.text('✓ Use system language'));
     await tester.pumpAndSettle();
 

@@ -1,4 +1,5 @@
-import 'package:collection/collection.dart';
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Icon, Material, MaterialType, ScaffoldMessenger, Theme;
@@ -7,6 +8,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_actions.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_body.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
@@ -83,25 +85,23 @@ class DashboardPageIos extends ConsumerWidget {
       aboutScreenEnabled: featureFlags.aboutScreenEnabled,
     );
 
-    final langAction = actions.firstWhereOrNull((a) => a.type == DashboardActionType.languagePicker);
-    final trailingActions = actions.where((a) => a.type != DashboardActionType.languagePicker).toList();
+    final kebabItems = kebabMenuItems(actions);
+    final standalone = standaloneNavBarItems(actions);
+    final createPactAction = standalone.last;
+    final otherStandalone = standalone.sublist(0, standalone.length - 1);
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        leading: langAction == null
-            ? null
-            : CupertinoButton(
-                key: langAction.key,
-                padding: EdgeInsets.zero,
-                onPressed: langAction.onPressed,
-                child: const Icon(CupertinoIcons.globe),
-              ),
         middle: Text(l10n.dashboardTitle),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
-          children: trailingActions.map((a) => _buildNavBarButton(context, a, syncState)).toList(),
+          children: [
+            ...otherStandalone.map((a) => _buildNavBarButton(context, a, syncState)),
+            if (kebabItems.isNotEmpty) _buildKebabButton(context, ref, kebabItems, l10n),
+            _buildNavBarButton(context, createPactAction, syncState),
+          ],
         ),
       ),
       child: SafeArea(
@@ -142,6 +142,51 @@ class DashboardPageIos extends ConsumerWidget {
   }
 }
 
+Widget _buildKebabButton(
+  BuildContext context,
+  WidgetRef ref,
+  List<DashboardActionDescriptor> items,
+  AppLocalizations l10n,
+) {
+  return CupertinoButton(
+    key: const Key('kebab-menu-button'),
+    padding: EdgeInsets.zero,
+    onPressed: () async {
+      unawaited(ref.read(analyticsServiceProvider).logEvent(const KebabMenuOpenedEvent()));
+      if (!context.mounted) return;
+      await showCupertinoModalPopup<void>(
+        context: context,
+        builder: (ctx) => CupertinoActionSheet(
+          actions: items
+              .map(
+                (item) => CupertinoActionSheetAction(
+                  key: item.key,
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    item.onPressed();
+                  },
+                  child: Text(_kebabItemLabel(item.type, l10n)),
+                ),
+              )
+              .toList(),
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(CupertinoLocalizations.of(ctx).cancelButtonLabel),
+          ),
+        ),
+      );
+    },
+    child: const Icon(CupertinoIcons.ellipsis),
+  );
+}
+
+String _kebabItemLabel(DashboardActionType type, AppLocalizations l10n) => switch (type) {
+      DashboardActionType.about => l10n.aboutTitle,
+      DashboardActionType.languagePicker => l10n.languagePickerTitle,
+      DashboardActionType.rcOverrides => l10n.dashboardDebugMenuItem,
+      _ => '',
+    };
+
 Widget _buildNavBarButton(BuildContext context, DashboardActionDescriptor action, dynamic syncState) {
   return switch (action.type) {
     DashboardActionType.rcOverrides => CupertinoButton(
@@ -165,7 +210,12 @@ Widget _buildNavBarButton(BuildContext context, DashboardActionDescriptor action
         onPressed: action.onPressed,
         child: const Icon(CupertinoIcons.add),
       ),
-    DashboardActionType.languagePicker => const SizedBox.shrink(),
+    DashboardActionType.languagePicker => CupertinoButton(
+        key: action.key,
+        padding: EdgeInsets.zero,
+        onPressed: action.onPressed,
+        child: const Icon(CupertinoIcons.globe),
+      ),
     DashboardActionType.about => CupertinoButton(
         key: action.key,
         padding: EdgeInsets.zero,
