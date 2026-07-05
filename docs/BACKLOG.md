@@ -7,9 +7,9 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In Progress
 
-- **HAB-150**: Collapse dashboard nav bar secondary actions into a kebab menu (WU3 remaining)
-
 ## In QA
+
+- **HAB-150**: Collapse dashboard nav bar secondary actions into a kebab menu (PR #233)
 
 - **HAB-145**: Onboarding carousel slide overflows on tight viewports (PR #217)
 - **HAB-142**: Polish: scroll clips into top bar and bottom gap on detail screens (PR #211)
