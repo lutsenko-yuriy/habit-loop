@@ -349,5 +349,7 @@
   },
 
   "aboutTitle": "О приложении",
-  "aboutSendFeedback": "Отправить отзыв"
+  "aboutSendFeedback": "Отправить отзыв",
+
+  "dashboardDebugMenuItem": "Отладка"
 }

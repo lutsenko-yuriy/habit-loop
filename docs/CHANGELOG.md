@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.49.1] — 2026-07-05 (PR #231 merged)
+
+### Added — WIP
+
+- [wip] HAB-150 WU1: kebabMenuItems/standaloneNavBarItems partition helpers, KebabMenuOpenedEvent, dashboardDebugMenuItem l10n (en/fr/de/ru); unit tests
+
+---
+
 ## [0.49.0] — 2026-07-05 (PR #228 merged)
 
 ### Added

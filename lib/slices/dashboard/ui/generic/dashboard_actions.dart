@@ -59,6 +59,50 @@ List<DashboardActionDescriptor> buildDashboardActions({
       ),
     ];
 
+const _kebabCandidateTypes = {
+  DashboardActionType.rcOverrides,
+  DashboardActionType.languagePicker,
+  DashboardActionType.about,
+};
+
+/// Items that belong inside the kebab menu (⋯).
+///
+/// Returns an empty list when the single-item shortcut applies (≤1 candidate),
+/// meaning the lone item renders as a standalone nav-bar button instead.
+List<DashboardActionDescriptor> kebabMenuItems(List<DashboardActionDescriptor> actions) {
+  final candidates = actions.where((a) => _kebabCandidateTypes.contains(a.type)).toList();
+  return candidates.length > 1 ? candidates : const [];
+}
+
+/// Items that render as standalone nav-bar buttons.
+///
+/// Always includes [DashboardActionType.syncStatus] and
+/// [DashboardActionType.createPact]. When the single-item shortcut applies
+/// (≤1 kebab candidate), the lone candidate is also promoted to standalone.
+///
+/// **Note:** [DashboardActionType.createPact] is always last in the returned
+/// list. UI callers must NOT use list position to decide rendering order for
+/// the create-pact button — it must always be rendered as the rightmost item
+/// regardless of its index here.
+List<DashboardActionDescriptor> standaloneNavBarItems(List<DashboardActionDescriptor> actions) {
+  final candidates = <DashboardActionDescriptor>[];
+  DashboardActionDescriptor? createPact;
+  final others = <DashboardActionDescriptor>[];
+
+  for (final a in actions) {
+    if (a.type == DashboardActionType.createPact) {
+      createPact = a;
+    } else if (_kebabCandidateTypes.contains(a.type)) {
+      candidates.add(a);
+    } else {
+      others.add(a);
+    }
+  }
+
+  final promoted = candidates.length <= 1 ? candidates : const <DashboardActionDescriptor>[];
+  return [...others, ...promoted, if (createPact != null) createPact];
+}
+
 void onDashboardRcOverridesClosed(BuildContext context, WidgetRef ref) {
   if (!context.mounted) return;
   ref.invalidate(hasActivePactsProvider);

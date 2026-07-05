@@ -349,5 +349,7 @@
   },
 
   "aboutTitle": "Über",
-  "aboutSendFeedback": "Feedback senden"
+  "aboutSendFeedback": "Feedback senden",
+
+  "dashboardDebugMenuItem": "Debug"
 }
