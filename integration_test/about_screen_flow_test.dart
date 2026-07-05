@@ -13,7 +13,9 @@ import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 Future<void> _openAboutScreen(WidgetTester tester) async {
-  await waitFor(tester, find.byKey(const Key('about-button')));
+  await waitFor(tester, find.byKey(const Key('kebab-menu-button')));
+  await tester.tap(find.byKey(const Key('kebab-menu-button')));
+  await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('about-button')));
   await tester.pumpAndSettle();
 }

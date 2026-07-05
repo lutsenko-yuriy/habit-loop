@@ -369,6 +369,14 @@ Fired when the user taps the redemption action on an auto-failed tail-zone showu
 
 ---
 
+### `kebab_menu_opened`
+
+Fired when the user taps the ⋯ button in the dashboard nav bar and the action sheet (iOS) or popup menu (Android) appears. Does not fire when the single-item shortcut is active — the menu is never shown in that case. (HAB-150)
+
+No properties — `DashboardAnalyticsScreen` provides sufficient context.
+
+---
+
 ### `feedback_tapped`
 
 Fired when the user taps the "Send feedback" row on the About screen. Measures whether the feedback channel is actually used. (HAB-149)
