@@ -92,9 +92,10 @@ Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) asyn
   await tester.tap(find.text(habitName).last);
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump(const Duration(milliseconds: 100));
-  // Wait for the view model to finish loading — the CircularProgressIndicator
-  // is replaced by a ListView once load() completes.
-  await waitFor(tester, find.byType(ListView));
+  // Wait for the note field to appear — it is only rendered after the view
+  // model finishes loading and the pact status is inactive. The dashboard body
+  // also uses a ListView, so waiting for ListView would resolve too early.
+  await waitFor(tester, find.byKey(const Key('pact-note-field')));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -123,7 +124,16 @@ void main() {
 
       // ── 1. Notes field is visible and pre-populated ───────────────────────
       // The note section is below the fold on small screens — scroll to reveal.
-      await tester.scrollUntilVisible(find.byKey(const Key('pact-note-field')), 200.0);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-note-field')),
+        200.0,
+        // The dashboard body also has a Scrollable; supply the ancestor
+        // Scrollable of the note field itself to avoid an ambiguous match.
+        scrollable: find.ancestor(
+          of: find.byKey(const Key('pact-note-field')),
+          matching: find.byType(Scrollable),
+        ),
+      );
       expect(find.text('Got injured'), findsOneWidget);
 
       // ── 2. Save button is disabled (no changes yet) ────────────────────────
@@ -172,7 +182,16 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Morning Run');
-      await tester.scrollUntilVisible(find.byKey(const Key('pact-note-field')), 200.0);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-note-field')),
+        200.0,
+        // The dashboard body also has a Scrollable; supply the ancestor
+        // Scrollable of the note field itself to avoid an ambiguous match.
+        scrollable: find.ancestor(
+          of: find.byKey(const Key('pact-note-field')),
+          matching: find.byType(Scrollable),
+        ),
+      );
 
       await tester.tap(find.byKey(const Key('pact-note-field')));
       await tester.pumpAndSettle();
@@ -207,7 +226,16 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Evening Walk');
-      await tester.scrollUntilVisible(find.byKey(const Key('pact-note-field')), 200.0);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-note-field')),
+        200.0,
+        // The dashboard body also has a Scrollable; supply the ancestor
+        // Scrollable of the note field itself to avoid an ambiguous match.
+        scrollable: find.ancestor(
+          of: find.byKey(const Key('pact-note-field')),
+          matching: find.byType(Scrollable),
+        ),
+      );
 
       // ── 1. Field starts empty ─────────────────────────────────────────────
       expect(_noteFieldText(tester), isEmpty);

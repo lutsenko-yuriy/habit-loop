@@ -414,6 +414,23 @@ jobs:
           arch: x86_64
           script: bash -c "set -o pipefail; flutter test integration_test/ --machine --no-pub --timeout=120s | tee test-results.json"
 
+      - name: Strip non-JSON lines from test results
+        if: always()
+        run: |
+          python3 - <<'PYEOF'
+          import json, pathlib
+
+          def is_json(line):
+              try:
+                  return isinstance(json.loads(line), (dict, list))
+              except json.JSONDecodeError:
+                  return False
+
+          raw = pathlib.Path('test-results.json').read_text().splitlines()
+          clean = [line for line in raw if line.strip() and is_json(line)]
+          pathlib.Path('test-results.json').write_text('\n'.join(clean) + '\n')
+          PYEOF
+
       - name: Publish test results
         uses: dorny/test-reporter@v1
         if: always()
