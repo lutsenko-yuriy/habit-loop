@@ -350,5 +350,7 @@
   },
 
   "aboutTitle": "About",
-  "aboutSendFeedback": "Send feedback"
+  "aboutSendFeedback": "Send feedback",
+
+  "dashboardDebugMenuItem": "Debug"
 }

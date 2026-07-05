@@ -59,6 +59,32 @@ List<DashboardActionDescriptor> buildDashboardActions({
       ),
     ];
 
+const _kebabCandidateTypes = {
+  DashboardActionType.rcOverrides,
+  DashboardActionType.languagePicker,
+  DashboardActionType.about,
+};
+
+/// Items that belong inside the kebab menu (⋯).
+///
+/// Returns an empty list when the single-item shortcut applies (≤1 candidate),
+/// meaning the lone item renders as a standalone nav-bar button instead.
+List<DashboardActionDescriptor> kebabMenuItems(List<DashboardActionDescriptor> actions) {
+  final candidates = actions.where((a) => _kebabCandidateTypes.contains(a.type)).toList();
+  return candidates.length > 1 ? candidates : const [];
+}
+
+/// Items that render as standalone nav-bar buttons.
+///
+/// Always includes [DashboardActionType.syncStatus] and
+/// [DashboardActionType.createPact]. When the single-item shortcut applies
+/// (≤1 kebab candidate), the lone candidate is also promoted to standalone.
+List<DashboardActionDescriptor> standaloneNavBarItems(List<DashboardActionDescriptor> actions) {
+  final candidates = actions.where((a) => _kebabCandidateTypes.contains(a.type)).toList();
+  final nonCandidates = actions.where((a) => !_kebabCandidateTypes.contains(a.type)).toList();
+  return candidates.length <= 1 ? [...nonCandidates, ...candidates] : nonCandidates;
+}
+
 void onDashboardRcOverridesClosed(BuildContext context, WidgetRef ref) {
   if (!context.mounted) return;
   ref.invalidate(hasActivePactsProvider);

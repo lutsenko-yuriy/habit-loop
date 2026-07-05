@@ -3,29 +3,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_actions.dart';
 
+// ignore_for_file: avoid_redundant_argument_values
+
+List<DashboardActionDescriptor> makeActions({
+  void Function()? onRc,
+  void Function()? onSync,
+  void Function()? onLang,
+  void Function()? onCreate,
+  void Function()? onAbout,
+  bool languageSelectionEnabled = true,
+  bool networkSyncEnabled = true,
+  bool aboutScreenEnabled = true,
+}) =>
+    buildDashboardActions(
+      onRcOverridesPressed: onRc ?? () {},
+      onSyncStatusPressed: onSync ?? () {},
+      onLanguagePickerPressed: onLang ?? () {},
+      onCreatePactPressed: onCreate ?? () {},
+      onAboutPressed: onAbout ?? () {},
+      languageSelectionEnabled: languageSelectionEnabled,
+      networkSyncEnabled: networkSyncEnabled,
+      aboutScreenEnabled: aboutScreenEnabled,
+    );
+
 void main() {
   group('buildDashboardActions', () {
-    List<DashboardActionDescriptor> makeActions({
-      void Function()? onRc,
-      void Function()? onSync,
-      void Function()? onLang,
-      void Function()? onCreate,
-      void Function()? onAbout,
-      bool languageSelectionEnabled = true,
-      bool networkSyncEnabled = true,
-      bool aboutScreenEnabled = true,
-    }) =>
-        buildDashboardActions(
-          onRcOverridesPressed: onRc ?? () {},
-          onSyncStatusPressed: onSync ?? () {},
-          onLanguagePickerPressed: onLang ?? () {},
-          onCreatePactPressed: onCreate ?? () {},
-          onAboutPressed: onAbout ?? () {},
-          languageSelectionEnabled: languageSelectionEnabled,
-          networkSyncEnabled: networkSyncEnabled,
-          aboutScreenEnabled: aboutScreenEnabled,
-        );
-
     test('always includes createPact', () {
       final actions = makeActions();
       expect(actions.any((a) => a.type == DashboardActionType.createPact), isTrue);
@@ -108,6 +110,75 @@ void main() {
       expect(syncCalled, isTrue);
       expect(langCalled, isTrue);
       expect(aboutCalled, isTrue);
+    });
+  });
+
+  group('kebabMenuItems', () {
+    test('returns empty when no kebab candidates present', () {
+      // syncStatus + createPact only — no rc/language/about
+      final actions = makeActions(
+        languageSelectionEnabled: false,
+        aboutScreenEnabled: false,
+        networkSyncEnabled: true,
+      ).where((a) => a.type != DashboardActionType.rcOverrides).toList();
+      // kDebugMode is true in tests so rcOverrides is always present;
+      // remove it manually to simulate a non-debug scenario.
+      final noRc = actions.where((a) => a.type != DashboardActionType.rcOverrides).toList();
+      expect(kebabMenuItems(noRc), isEmpty);
+    });
+
+    test('returns empty when exactly one candidate (single-item shortcut)', () {
+      final actions = makeActions(languageSelectionEnabled: false, aboutScreenEnabled: false);
+      // Only rcOverrides is a kebab candidate (debug build).
+      expect(kebabMenuItems(actions), isEmpty);
+    });
+
+    test('returns candidates when two or more are present', () {
+      final actions = makeActions(languageSelectionEnabled: true, aboutScreenEnabled: true);
+      final items = kebabMenuItems(actions);
+      expect(items.length, greaterThanOrEqualTo(2));
+      expect(items.any((a) => a.type == DashboardActionType.languagePicker), isTrue);
+      expect(items.any((a) => a.type == DashboardActionType.about), isTrue);
+    });
+
+    test('does not include syncStatus or createPact', () {
+      final actions = makeActions();
+      final items = kebabMenuItems(actions);
+      expect(items.any((a) => a.type == DashboardActionType.syncStatus), isFalse);
+      expect(items.any((a) => a.type == DashboardActionType.createPact), isFalse);
+    });
+  });
+
+  group('standaloneNavBarItems', () {
+    test('always includes syncStatus', () {
+      final actions = makeActions(networkSyncEnabled: true);
+      expect(
+        standaloneNavBarItems(actions).any((a) => a.type == DashboardActionType.syncStatus),
+        isTrue,
+      );
+    });
+
+    test('always includes createPact', () {
+      final actions = makeActions();
+      expect(
+        standaloneNavBarItems(actions).any((a) => a.type == DashboardActionType.createPact),
+        isTrue,
+      );
+    });
+
+    test('promotes lone candidate to standalone under single-item shortcut', () {
+      // Only rcOverrides is a kebab candidate in a debug build when language + about are off.
+      final actions = makeActions(languageSelectionEnabled: false, aboutScreenEnabled: false);
+      final standalone = standaloneNavBarItems(actions);
+      expect(standalone.any((a) => a.type == DashboardActionType.rcOverrides), isTrue);
+    });
+
+    test('excludes kebab candidates from standalone when two or more candidates exist', () {
+      final actions = makeActions(languageSelectionEnabled: true, aboutScreenEnabled: true);
+      final standalone = standaloneNavBarItems(actions);
+      expect(standalone.any((a) => a.type == DashboardActionType.languagePicker), isFalse);
+      expect(standalone.any((a) => a.type == DashboardActionType.about), isFalse);
+      expect(standalone.any((a) => a.type == DashboardActionType.rcOverrides), isFalse);
     });
   });
 }
