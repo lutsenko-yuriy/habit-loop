@@ -38,6 +38,7 @@ class AboutPageIos extends ConsumerWidget {
                     packageInfo: await ref.read(packageInfoProvider.future),
                     analytics: ref.read(analyticsServiceProvider),
                     crashlytics: ref.read(crashlyticsServiceProvider),
+                    launch: ref.read(launchUrlProvider),
                   );
                 },
               ),
