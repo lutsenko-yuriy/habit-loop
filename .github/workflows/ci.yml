@@ -412,9 +412,7 @@ jobs:
         with:
           api-level: 29
           arch: x86_64
-          script: |
-            set -o pipefail
-            flutter test integration_test/ --machine | tee test-results.json
+          script: bash -c "set -o pipefail; flutter test integration_test/ --machine | tee test-results.json"
 
       - name: Publish test results
         uses: dorny/test-reporter@v1
