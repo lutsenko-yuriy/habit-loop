@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.49.5] — 2026-07-05
+
+### Fixed
+
+- [ci] Podfile post_install patch: replace iOS 26 SDK direct call to [NSProcessInfo isiOSAppOnVision] with KVC valueForKey: fallback — fixes build-ios on Xcode 16.x runners where the selector is absent from iOS 18 SDK headers
+
 ## [0.49.4] — 2026-07-05
 
 ### Fixed

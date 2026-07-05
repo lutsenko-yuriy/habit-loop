@@ -40,4 +40,27 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
   end
+
+  # device_info_plus 13.x calls [NSProcessInfo isiOSAppOnVision] inside
+  # @available(iOS 26.1, *) but the selector is not declared in Xcode 16.x
+  # iOS 18 SDK headers (it changed in iOS 26 SDK). KVC (valueForKey:) is
+  # equivalent, SDK-agnostic, and safe at runtime.
+  plugin_m = File.join(
+    __dir__,
+    '.symlinks', 'plugins', 'device_info_plus',
+    'ios', 'device_info_plus', 'Sources', 'device_info_plus',
+    'FPPDeviceInfoPlusPlugin.m'
+  )
+  if File.exist?(plugin_m)
+    content = File.read(plugin_m)
+    if content.include?('@available(iOS 26.1')
+      patched = content
+        .gsub('if (@available(iOS 26.1, *)) {',
+              'if ([info respondsToSelector:@selector(isiOSAppOnVision)]) {')
+        .gsub('[NSNumber numberWithBool:[info isiOSAppOnVision]]',
+              '(NSNumber *)[info valueForKey:@"isiOSAppOnVision"]')
+      File.write(plugin_m, patched) unless patched == content
+      puts 'Patched device_info_plus: replaced iOS 26 SDK call with KVC fallback'
+    end
+  end
 end
