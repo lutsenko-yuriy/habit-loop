@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/lutsenko-yuriy/habit-loop/actions/workflows/ci.yml/badge.svg)](https://github.com/lutsenko-yuriy/habit-loop/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/lutsenko-yuriy/habit-loop/graph/badge.svg)](https://codecov.io/gh/lutsenko-yuriy/habit-loop)
-[![Scenarios](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/lutsenko-yuriy/REPLACE_WITH_GIST_ID/raw/scenarios.json)](https://github.com/lutsenko-yuriy/habit-loop/actions/workflows/ci.yml)
+[![Scenarios](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/lutsenko-yuriy/ca542be92a8f3e51c0097ef336579207/raw/scenarios.json)](https://github.com/lutsenko-yuriy/habit-loop/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-lightgrey)](https://flutter.dev)
 [![Flutter](https://img.shields.io/badge/Flutter-stable-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
