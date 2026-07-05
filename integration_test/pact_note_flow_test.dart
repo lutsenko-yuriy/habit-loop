@@ -92,6 +92,9 @@ Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) asyn
   await tester.tap(find.text(habitName).last);
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump(const Duration(milliseconds: 100));
+  // Wait for the view model to finish loading — the CircularProgressIndicator
+  // is replaced by a ListView once load() completes.
+  await waitFor(tester, find.byType(ListView));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -119,7 +122,8 @@ void main() {
       await _openInactivePactDetail(tester, 'Morning Run');
 
       // ── 1. Notes field is visible and pre-populated ───────────────────────
-      await waitFor(tester, find.byKey(const Key('pact-note-field')));
+      // The note section is below the fold on small screens — scroll to reveal.
+      await tester.scrollUntilVisible(find.byKey(const Key('pact-note-field')), 200.0);
       expect(find.text('Got injured'), findsOneWidget);
 
       // ── 2. Save button is disabled (no changes yet) ────────────────────────
@@ -168,7 +172,7 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Morning Run');
-      await waitFor(tester, find.byKey(const Key('pact-note-field')));
+      await tester.scrollUntilVisible(find.byKey(const Key('pact-note-field')), 200.0);
 
       await tester.tap(find.byKey(const Key('pact-note-field')));
       await tester.pumpAndSettle();
@@ -203,7 +207,7 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Evening Walk');
-      await waitFor(tester, find.byKey(const Key('pact-note-field')));
+      await tester.scrollUntilVisible(find.byKey(const Key('pact-note-field')), 200.0);
 
       // ── 1. Field starts empty ─────────────────────────────────────────────
       expect(_noteFieldText(tester), isEmpty);
@@ -249,7 +253,9 @@ void main() {
       await waitFor(tester, find.text(strings.markDone));
 
       await tester.tap(find.text(strings.showupViewPactDetails));
-      await waitFor(tester, find.text(strings.stopPact));
+      // Wait for pact detail to load, then scroll to reveal the Stop Pact button.
+      await waitFor(tester, find.byType(ListView));
+      await tester.scrollUntilVisible(find.text(strings.stopPact), 200.0);
 
       expect(find.byKey(const Key('pact-note-field')), findsNothing);
       expect(find.byKey(const Key('pact-note-save-button')), findsNothing);

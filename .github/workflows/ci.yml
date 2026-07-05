@@ -438,6 +438,8 @@ jobs:
                       event = json.loads(line)
                   except json.JSONDecodeError:
                       continue
+                  if not isinstance(event, dict):
+                      continue
                   if event.get('type') == 'testDone' and not event.get('hidden', False):
                       total += 1
                       if event.get('result') == 'success':
@@ -481,6 +483,8 @@ jobs:
                   try:
                       event = json.loads(line)
                   except json.JSONDecodeError:
+                      continue
+                  if not isinstance(event, dict):
                       continue
                   if event.get('type') == 'testDone' and not event.get('hidden', False):
                       total += 1
