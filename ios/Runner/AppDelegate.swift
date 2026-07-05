@@ -4,6 +4,8 @@ import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  private var deviceInfoChannel: FlutterMethodChannel?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -20,5 +22,28 @@ import UserNotifications
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let controller = window?.rootViewController as? FlutterViewController {
+      deviceInfoChannel = FlutterMethodChannel(
+        name: "com.habitloop.device_info",
+        binaryMessenger: controller.binaryMessenger
+      )
+      deviceInfoChannel?.setMethodCallHandler { [weak self] call, result in
+        self?.handleDeviceInfo(call, result: result)
+      }
+    }
+  }
+
+  private func handleDeviceInfo(_ call: FlutterMethodCall, result: FlutterResult) {
+    guard call.method == "getDeviceInfo" else {
+      result(FlutterMethodNotImplemented)
+      return
+    }
+    var sysInfo = utsname()
+    uname(&sysInfo)
+    let machine = withUnsafePointer(to: &sysInfo.machine) {
+      $0.withMemoryRebound(to: CChar.self, capacity: 1) { String(cString: $0) }
+    }
+    let v = ProcessInfo.processInfo.operatingSystemVersion
+    result(["model": machine, "osVersion": "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"])
   }
 }

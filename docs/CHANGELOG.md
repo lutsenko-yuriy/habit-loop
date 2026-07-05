@@ -6,9 +6,9 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ## [0.49.5] — 2026-07-05
 
-### Fixed
+### Changed
 
-- [ci] Podfile post_install patch: replace iOS 26 SDK direct call to [NSProcessInfo isiOSAppOnVision] with KVC valueForKey: fallback — fixes build-ios on Xcode 16.x runners where the selector is absent from iOS 18 SDK headers
+- [app] [non-user] Removed device_info_plus dependency; replaced with a minimal platform channel (com.habitloop.device_info) in AppDelegate.swift and MainActivity.kt — returns utsname.machine + systemVersion on iOS, Build.MODEL + VERSION.RELEASE on Android; fixes build-ios failure caused by device_info_plus 13.x requiring iOS 26 SDK headers absent on Xcode 16.x
 
 ## [0.49.4] — 2026-07-05
 

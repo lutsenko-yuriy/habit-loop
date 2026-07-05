@@ -5,7 +5,7 @@ library;
 import 'dart:io' show Platform;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
@@ -94,17 +94,20 @@ final packageInfoProvider = FutureProvider<PackageInfo?>((ref) async {
   }
 });
 
+const _deviceInfoChannel = MethodChannel('com.habitloop.device_info');
+
 /// Returns `({model, osVersion})` for the current device.
 /// Falls back to empty strings on failure or non-mobile platforms.
 final deviceInfoProvider = FutureProvider<({String model, String osVersion})>((ref) async {
   try {
-    final plugin = DeviceInfoPlugin();
-    if (Platform.isIOS) {
-      final info = await plugin.iosInfo;
-      return (model: info.utsname.machine, osVersion: info.systemVersion);
-    } else if (Platform.isAndroid) {
-      final info = await plugin.androidInfo;
-      return (model: info.model, osVersion: info.version.release);
+    if (Platform.isIOS || Platform.isAndroid) {
+      final result = await _deviceInfoChannel.invokeMethod<Map<Object?, Object?>>('getDeviceInfo');
+      if (result != null) {
+        return (
+          model: result['model'] as String? ?? '',
+          osVersion: result['osVersion'] as String? ?? '',
+        );
+      }
     }
   } catch (_) {}
   return (model: '', osVersion: '');
