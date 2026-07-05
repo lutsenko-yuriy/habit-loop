@@ -24,6 +24,10 @@ on:
         description: 'Deploy (production only)'
         type: boolean
         default: true
+      run_scenarios:
+        description: 'Run integration scenarios (Android emulator)'
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -333,12 +337,180 @@ jobs:
           fi
           echo "success=true" >> "$GITHUB_OUTPUT"
 
+      - name: Save Gradle build cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+
       - uses: actions/upload-artifact@v4
         if: steps.build.outputs.success == 'true'
         with:
           name: android-release
           path: build/app/outputs/flutter-apk/${{ steps.build.outputs.apk_name }}
           retention-days: 7
+
+  # ── Run integration scenarios on Android emulator ────────────────────────
+  run-scenarios:
+    needs: [check-skip, build-android]
+    if: |
+      always() &&
+      needs.check-skip.outputs.should_skip != 'true' &&
+      (
+        (github.ref == 'refs/heads/main' && needs.build-android.result == 'success') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.run_scenarios == 'true')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore Firebase config files
+        run: |
+          echo "$FIREBASE_OPTIONS_DART" | base64 --decode > lib/firebase_options.dart
+          echo "$GOOGLE_SERVICES_JSON"  | base64 --decode > android/app/google-services.json
+        env:
+          FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
+          GOOGLE_SERVICES_JSON:  ${{ secrets.GOOGLE_SERVICES_JSON }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+      - run: flutter gen-l10n
+
+      - name: Restore Gradle build cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build debug APK (warm up Gradle)
+        run: flutter build apk --debug
+
+      - name: Run integration scenarios
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          script: |
+            set -o pipefail
+            flutter test integration_test/ --machine | tee test-results.json
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: run-scenarios
+          path: test-results.json
+          reporter: dart-json
+          fail-on-error: false
+
+      - name: Write job summary
+        if: always()
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys
+          passed = failed = total = 0
+          try:
+              for line in open('test-results.json'):
+                  line = line.strip()
+                  if not line:
+                      continue
+                  try:
+                      event = json.loads(line)
+                  except json.JSONDecodeError:
+                      continue
+                  if event.get('type') == 'testDone' and not event.get('hidden', False):
+                      total += 1
+                      if event.get('result') == 'success':
+                          passed += 1
+                      else:
+                          failed += 1
+          except FileNotFoundError:
+              pass
+
+          status = '✅ passed' if failed == 0 and total > 0 else ('❌ failed' if total > 0 else '⚠️ no results')
+          summary = f"""## Integration scenarios — {status}
+
+          | Result | Count |
+          |--------|-------|
+          | ✅ Passed | {passed} |
+          | ❌ Failed | {failed} |
+          | Total | {total} |
+          """
+          summary_path = os.environ.get('GITHUB_STEP_SUMMARY', '/dev/null')
+          with open(summary_path, 'a') as f:
+              f.write(summary)
+          PYEOF
+
+      - name: Update badge gist
+        if: always()
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ vars.SCENARIOS_GIST_ID }}
+        run: |
+          [ -z "$GIST_TOKEN" ] && echo "GIST_TOKEN not set, skipping badge update" && exit 0
+          [ -z "$GIST_ID" ] && echo "SCENARIOS_GIST_ID not set, skipping badge update" && exit 0
+          python3 - <<'PYEOF'
+          import json, os, urllib.request
+
+          passed = total = 0
+          try:
+              for line in open('test-results.json'):
+                  line = line.strip()
+                  if not line:
+                      continue
+                  try:
+                      event = json.loads(line)
+                  except json.JSONDecodeError:
+                      continue
+                  if event.get('type') == 'testDone' and not event.get('hidden', False):
+                      total += 1
+                      if event.get('result') == 'success':
+                          passed += 1
+          except FileNotFoundError:
+              pass
+
+          color = 'brightgreen' if passed == total and total > 0 else 'red'
+          badge = {'schemaVersion': 1, 'label': 'scenarios', 'message': f'{passed}/{total} passed', 'color': color}
+          payload = json.dumps({'files': {'scenarios.json': {'content': json.dumps(badge)}}})
+
+          req = urllib.request.Request(
+              f'https://api.github.com/gists/{os.environ["GIST_ID"]}',
+              data=payload.encode(),
+              method='PATCH',
+              headers={
+                  'Authorization': f'token {os.environ["GIST_TOKEN"]}',
+                  'Accept': 'application/vnd.github.v3+json',
+                  'Content-Type': 'application/json',
+              }
+          )
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  print(f'Badge updated: {badge["message"]}')
+          except Exception as e:
+              print(f'Failed to update badge: {e}', file=__import__('sys').stderr)
+          PYEOF
 
   # ── Distribute Android to Firebase App Distribution ───────────────────────
   distribute-android:
