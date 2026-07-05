@@ -171,7 +171,7 @@ Widget _buildKebabButton(
               .toList(),
           cancelButton: CupertinoActionSheetAction(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(CupertinoLocalizations.of(context).cancelButtonLabel),
+            child: Text(CupertinoLocalizations.of(ctx).cancelButtonLabel),
           ),
         ),
       );
