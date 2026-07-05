@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/about/ui/generic/about_screen.dart';
 import 'package:habit_loop/slices/dashboard/analytics/dashboard_screens.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/dashboard_page_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
@@ -173,6 +174,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       }
     }
 
+    Future<void> navigateToAbout() async {
+      if (!context.mounted) return;
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await Navigator.of(context).push(
+          CupertinoPageRoute<void>(
+            builder: (_) => const AboutScreen(),
+          ),
+        );
+      } else {
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const AboutScreen(),
+          ),
+        );
+      }
+      if (context.mounted) {
+        unawaited(
+          ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
+        );
+      }
+    }
+
     Future<void> onShowupTapped(String showupId) async {
       if (!context.mounted) return;
       if (defaultTargetPlatform == TargetPlatform.iOS) {
@@ -227,6 +250,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
         onDaySelected: onDaySelected,
         onCreatePact: onCreatePact,
         onShowupTapped: onShowupTapped,
+        onAbout: navigateToAbout,
       );
     }
     return DashboardPageAndroid(
@@ -236,6 +260,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       onDaySelected: onDaySelected,
       onCreatePact: onCreatePact,
       onShowupTapped: onShowupTapped,
+      onAbout: navigateToAbout,
     );
   }
 }

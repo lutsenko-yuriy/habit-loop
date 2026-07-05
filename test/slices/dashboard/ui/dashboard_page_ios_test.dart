@@ -58,6 +58,7 @@ Widget _buildTestApp({
           onDaySelected: (_) {},
           onCreatePact: () async {},
           onShowupTapped: (_) async {},
+          onAbout: () async {},
         ),
       ),
     ),

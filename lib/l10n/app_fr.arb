@@ -346,5 +346,8 @@
   "timelineShowupsRemaining": "{count, plural, one{1 séance restante} other{{count} séances restantes}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
-  }
+  },
+
+  "aboutTitle": "À propos",
+  "aboutSendFeedback": "Envoyer des commentaires"
 }

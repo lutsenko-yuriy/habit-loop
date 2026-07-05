@@ -7,7 +7,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
-enum DashboardActionType { rcOverrides, syncStatus, languagePicker, createPact }
+enum DashboardActionType { rcOverrides, syncStatus, languagePicker, createPact, about }
 
 class DashboardActionDescriptor {
   final DashboardActionType type;
@@ -22,8 +22,10 @@ List<DashboardActionDescriptor> buildDashboardActions({
   required VoidCallback onSyncStatusPressed,
   required VoidCallback onLanguagePickerPressed,
   required VoidCallback onCreatePactPressed,
+  required VoidCallback onAboutPressed,
   required bool languageSelectionEnabled,
   required bool networkSyncEnabled,
+  required bool aboutScreenEnabled,
 }) =>
     [
       if (kDebugMode || kProfileMode)
@@ -43,6 +45,12 @@ List<DashboardActionDescriptor> buildDashboardActions({
           type: DashboardActionType.languagePicker,
           key: const Key('language-picker-button'),
           onPressed: onLanguagePickerPressed,
+        ),
+      if (aboutScreenEnabled)
+        DashboardActionDescriptor(
+          type: DashboardActionType.about,
+          key: const Key('about-button'),
+          onPressed: onAboutPressed,
         ),
       DashboardActionDescriptor(
         type: DashboardActionType.createPact,

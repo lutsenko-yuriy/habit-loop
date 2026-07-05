@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.48.12] — 2026-07-05 (PR #227 merged)
+
+### Added — WIP
+
+- [wip] HAB-149 WU1: About screen scaffold (app icon, version, build number, copyright notice) + dashboard entry point icon button; RC kill-switch `about_screen_enabled`; scenarios SC-01, SC-02, SC-05 green
+
+---
+
 ## [0.48.11] — 2026-07-04 (PR #225 merged)
 
 ### Internal
