@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/language_picker_dialog_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/onboarding_carousel_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_actions.dart';
@@ -81,12 +84,17 @@ class DashboardPageAndroid extends ConsumerWidget {
       aboutScreenEnabled: featureFlags.aboutScreenEnabled,
     );
 
-    final appBarActions = actions.where((a) => a.type != DashboardActionType.createPact).toList();
+    final kebabItems = kebabMenuItems(actions);
+    final standalone = standaloneNavBarItems(actions);
+    final otherStandalone = standalone.where((a) => a.type != DashboardActionType.createPact).toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.dashboardTitle),
-        actions: appBarActions.map((a) => _buildAppBarButton(context, a, syncState)).toList(),
+        actions: [
+          ...otherStandalone.map((a) => _buildAppBarButton(context, a, syncState)),
+          if (kebabItems.isNotEmpty) _buildKebabButton(context, ref, kebabItems, l10n),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         key: const Key('create-pact-button'),
@@ -123,6 +131,38 @@ class DashboardPageAndroid extends ConsumerWidget {
     );
   }
 }
+
+Widget _buildKebabButton(
+  BuildContext context,
+  WidgetRef ref,
+  List<DashboardActionDescriptor> items,
+  AppLocalizations l10n,
+) {
+  return PopupMenuButton<DashboardActionType>(
+    key: const Key('kebab-menu-button'),
+    icon: const Icon(Icons.more_vert),
+    onOpened: () {
+      unawaited(ref.read(analyticsServiceProvider).logEvent(const KebabMenuOpenedEvent()));
+    },
+    onSelected: (type) {
+      items.firstWhere((i) => i.type == type).onPressed();
+    },
+    itemBuilder: (_) => items
+        .map((item) => PopupMenuItem<DashboardActionType>(
+              key: item.key,
+              value: item.type,
+              child: Text(_kebabItemLabel(item.type, l10n)),
+            ))
+        .toList(),
+  );
+}
+
+String _kebabItemLabel(DashboardActionType type, AppLocalizations l10n) => switch (type) {
+      DashboardActionType.about => l10n.aboutTitle,
+      DashboardActionType.languagePicker => l10n.languagePickerTitle,
+      DashboardActionType.rcOverrides => l10n.dashboardDebugMenuItem,
+      _ => '',
+    };
 
 Widget _buildAppBarButton(BuildContext context, DashboardActionDescriptor action, dynamic syncState) {
   return switch (action.type) {
