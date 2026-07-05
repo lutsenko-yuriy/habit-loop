@@ -7,7 +7,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In Progress
 
-- **HAB-150**: Collapse dashboard nav bar secondary actions into a kebab menu (WU2, WU3 remaining)
+- **HAB-150**: Collapse dashboard nav bar secondary actions into a kebab menu (WU3 remaining)
 
 ## In QA
 
