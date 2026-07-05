@@ -85,12 +85,22 @@ List<DashboardActionDescriptor> kebabMenuItems(List<DashboardActionDescriptor> a
 /// the create-pact button — it must always be rendered as the rightmost item
 /// regardless of its index here.
 List<DashboardActionDescriptor> standaloneNavBarItems(List<DashboardActionDescriptor> actions) {
-  final candidates = actions.where((a) => _kebabCandidateTypes.contains(a.type)).toList();
-  final createPact = actions.where((a) => a.type == DashboardActionType.createPact).toList();
-  final others =
-      actions.where((a) => !_kebabCandidateTypes.contains(a.type) && a.type != DashboardActionType.createPact).toList();
+  final candidates = <DashboardActionDescriptor>[];
+  DashboardActionDescriptor? createPact;
+  final others = <DashboardActionDescriptor>[];
+
+  for (final a in actions) {
+    if (a.type == DashboardActionType.createPact) {
+      createPact = a;
+    } else if (_kebabCandidateTypes.contains(a.type)) {
+      candidates.add(a);
+    } else {
+      others.add(a);
+    }
+  }
+
   final promoted = candidates.length <= 1 ? candidates : const <DashboardActionDescriptor>[];
-  return [...others, ...promoted, ...createPact];
+  return [...others, ...promoted, if (createPact != null) createPact];
 }
 
 void onDashboardRcOverridesClosed(BuildContext context, WidgetRef ref) {
