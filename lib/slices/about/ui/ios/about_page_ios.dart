@@ -32,7 +32,14 @@ class AboutPageIos extends ConsumerWidget {
                 backgroundColor: CupertinoColors.transparent,
                 title: Text(l10n.aboutSendFeedback),
                 trailing: const Icon(CupertinoIcons.forward),
-                onTap: () => openFeedback(ref),
+                onTap: () async {
+                  await openFeedback(
+                    deviceInfo: await ref.read(deviceInfoProvider.future),
+                    packageInfo: await ref.read(packageInfoProvider.future),
+                    analytics: ref.read(analyticsServiceProvider),
+                    crashlytics: ref.read(crashlyticsServiceProvider),
+                  );
+                },
               ),
               Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
             ],

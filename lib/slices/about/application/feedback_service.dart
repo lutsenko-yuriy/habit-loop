@@ -1,20 +1,27 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
+import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/slices/about/analytics/about_analytics_events.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const _feedbackBaseUrl = 'https://forms.gle/EttqwfhCvCzRrWuSA';
 
-Future<void> openFeedback(WidgetRef ref) async {
-  final deviceInfo = await ref.read(deviceInfoProvider.future);
-  final packageInfo = await ref.read(packageInfoProvider.future);
-
+Future<void> openFeedback({
+  required ({String model, String osVersion}) deviceInfo,
+  required PackageInfo? packageInfo,
+  required AnalyticsService analytics,
+  required CrashlyticsService crashlytics,
+}) async {
   final uri = Uri.parse(_feedbackBaseUrl).replace(queryParameters: {
     if (deviceInfo.model.isNotEmpty) 'model': deviceInfo.model,
     if (deviceInfo.osVersion.isNotEmpty) 'os': deviceInfo.osVersion,
     if (packageInfo != null && packageInfo.buildNumber.isNotEmpty) 'build': packageInfo.buildNumber,
   });
 
-  await ref.read(analyticsServiceProvider).logEvent(const FeedbackTappedEvent());
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
+  await analytics.logEvent(const FeedbackTappedEvent());
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (e, st) {
+    await crashlytics.recordError(e, st, information: ['openFeedback']);
+  }
 }

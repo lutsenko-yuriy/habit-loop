@@ -23,7 +23,14 @@ class AboutPageAndroid extends ConsumerWidget {
           ListTile(
             title: Text(l10n.aboutSendFeedback),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => openFeedback(ref),
+            onTap: () async {
+              await openFeedback(
+                deviceInfo: await ref.read(deviceInfoProvider.future),
+                packageInfo: await ref.read(packageInfoProvider.future),
+                analytics: ref.read(analyticsServiceProvider),
+                crashlytics: ref.read(crashlyticsServiceProvider),
+              );
+            },
           ),
         ],
       ),
