@@ -149,7 +149,7 @@ jobs:
   test-ios-integration:
     needs: check-skip
     if: false
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -365,7 +365,7 @@ jobs:
   build-ios:
     needs: [check-skip, resolve-version]
     if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && needs.check-skip.outputs.build_ios == 'true'
-    runs-on: macos-latest
+    runs-on: macos-15
     outputs:
       success: ${{ steps.build.outputs.success }}
     steps:
