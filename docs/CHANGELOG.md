@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.49.0] — 2026-07-05 (PR #228 merged)
+
+### Added
+
+- [user] Tap the info icon on the dashboard to open the About screen — see the app version and send us feedback directly from the app
+- [app] HAB-149: feedback_service opens Google Form URL with device model, OS version, and build number pre-filled; device_info_plus + url_launcher added; SC-03 green
+
+---
+
 ## [0.48.12] — 2026-07-05 (PR #227 merged)
 
 ### Added — WIP

@@ -55,6 +55,11 @@ The Habit Loop app allows the user to:
 - Be reminded about an upcoming showup
   - A notification with a reminder will appear to the user if he defined a reminder
   - The user can see the showup by clicking on the notification
+- Access app information and send feedback
+  - An info icon in the top-right corner of the dashboard opens the About screen (feature flag: `about_screen_enabled`)
+  - The About screen shows the app icon, app name, version number, build number, and a copyright notice
+  - Tapping "Send feedback" opens the team's feedback form in the browser with device model, OS version, and build number pre-filled
+  - The version string previously shown under the dashboard title has been removed; version info is now on the About screen
 
 ## Remote feature toggles
 
