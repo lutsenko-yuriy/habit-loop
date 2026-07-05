@@ -14,8 +14,7 @@ import 'harness.dart';
 Future<void> _openAboutScreen(WidgetTester tester) async {
   await waitFor(tester, find.byKey(const Key('about-button')));
   await tester.tap(find.byKey(const Key('about-button')));
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
+  await tester.pumpAndSettle();
 }
 
 void main() {
