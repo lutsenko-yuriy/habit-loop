@@ -180,5 +180,17 @@ void main() {
       expect(standalone.any((a) => a.type == DashboardActionType.about), isFalse);
       expect(standalone.any((a) => a.type == DashboardActionType.rcOverrides), isFalse);
     });
+
+    test('createPact is always the last item', () {
+      final actions = makeActions(languageSelectionEnabled: true, aboutScreenEnabled: true);
+      final standalone = standaloneNavBarItems(actions);
+      expect(standalone.last.type, DashboardActionType.createPact);
+    });
+
+    test('createPact is last even under single-item shortcut', () {
+      final actions = makeActions(languageSelectionEnabled: false, aboutScreenEnabled: false);
+      final standalone = standaloneNavBarItems(actions);
+      expect(standalone.last.type, DashboardActionType.createPact);
+    });
   });
 }
