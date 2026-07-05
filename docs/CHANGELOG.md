@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.49.3] — 2026-07-05 (PR #233 merged)
+
+### Added
+
+- [user] Secondary dashboard actions (Language, About) are now grouped under a ⋯ menu button on both iOS and Android, keeping the navigation bar uncluttered
+- [app] HAB-150 WU3: Android PopupMenuButton kebab, single-item shortcut; integration scenario driver code added; dashboard_screen_test updated
+
 ## [0.49.2] — 2026-07-05 (PR #232 merged)
 
 ### Added — WIP

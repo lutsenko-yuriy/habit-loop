@@ -615,12 +615,12 @@ void main() {
       'shows dashboard on first frame when onboarding already passed (returning-user path)',
       (tester) async {
         // onboardingPassed=true → showCarousel=false immediately, regardless of
-        // whether hasActivePactsProvider has resolved. Language picker is in the
-        // dashboard nav bar / AppBar — its presence confirms the correct screen
-        // was selected on the very first frame, without any intermediate state.
+        // whether hasActivePactsProvider has resolved. The kebab menu button is
+        // in the dashboard AppBar — its presence confirms the correct screen was
+        // selected on the very first frame, without any intermediate state.
         await tester.pumpWidget(buildWithOnboarding(onboardingPassed: true));
 
-        expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
+        expect(find.byKey(const Key('kebab-menu-button')), findsOneWidget);
         expect(find.text('Create a Pact'), findsNothing);
       },
     );

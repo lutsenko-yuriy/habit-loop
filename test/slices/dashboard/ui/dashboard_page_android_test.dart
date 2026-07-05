@@ -9,6 +9,7 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/dashboard_page_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
@@ -30,7 +31,7 @@ Widget _buildTestApp({
   return ProviderScope(
     overrides: [
       pactListViewModelProvider.overrideWith(_LoadedPactListViewModel.new),
-      if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
+      analyticsServiceProvider.overrideWithValue(analyticsService ?? FakeAnalyticsService()),
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
       if (remoteConfig != null) remoteConfigServiceProvider.overrideWithValue(remoteConfig),
       if (localeOverride != null) localeOverrideProvider.overrideWith((ref) => localeOverride),
@@ -57,12 +58,18 @@ Widget _buildTestApp({
   );
 }
 
+Future<void> _openKebab(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('kebab-menu-button')));
+  await tester.pumpAndSettle();
+}
+
 void main() {
-  testWidgets('Android dashboard shows language globe icon in app bar', (tester) async {
+  testWidgets('Android dashboard shows kebab menu button when multiple actions are enabled', (tester) async {
     await tester.pumpWidget(_buildTestApp());
 
-    expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
-    expect(find.byIcon(Icons.language), findsOneWidget);
+    expect(find.byKey(const Key('kebab-menu-button')), findsOneWidget);
+    // language picker is inside the kebab, not directly in the app bar
+    expect(find.byIcon(Icons.language), findsNothing);
   });
 
   testWidgets('Android dashboard hides sync button when network_sync_enabled is false', (tester) async {
@@ -73,13 +80,15 @@ void main() {
     expect(find.byKey(const Key('sync-status-button')), findsNothing);
   });
 
-  testWidgets('Android dashboard hides language button when language_selection_enabled is false', (tester) async {
+  testWidgets('Android dashboard hides language item from kebab when language_selection_enabled is false',
+      (tester) async {
     await tester.pumpWidget(_buildTestApp(
       remoteConfig: FakeRemoteConfigService(overrides: {'language_selection_enabled': false}),
     ));
 
+    await _openKebab(tester);
+
     expect(find.byKey(const Key('language-picker-button')), findsNothing);
-    expect(find.byIcon(Icons.language), findsNothing);
   });
 
   testWidgets('Android dashboard shows onboarding carousel when hasPacts is false', (tester) async {
@@ -88,14 +97,50 @@ void main() {
       remoteConfig: FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
     ));
 
-    // Carousel replaces the regular scaffold — no app bar or language-picker-button.
-    expect(find.byKey(const Key('language-picker-button')), findsNothing);
+    // Carousel replaces the regular scaffold — no app bar or kebab button.
+    expect(find.byKey(const Key('kebab-menu-button')), findsNothing);
     expect(find.text('Create a Pact'), findsOneWidget);
   });
 
-  testWidgets('tapping globe icon shows SimpleDialog with language options', (tester) async {
+  testWidgets('Android dashboard single-item shortcut shows standalone button with no kebab', (tester) async {
+    await tester.pumpWidget(_buildTestApp(
+      remoteConfig: FakeRemoteConfigService(overrides: {
+        'language_selection_enabled': false,
+        'about_screen_enabled': false,
+      }),
+    ));
+
+    // Only rcOverrides is a kebab candidate in debug → promoted to standalone.
+    expect(find.byKey(const Key('kebab-menu-button')), findsNothing);
+    expect(find.byKey(const Key('remote-config-debug-button')), findsOneWidget);
+  });
+
+  testWidgets('tapping kebab button opens PopupMenu with all enabled items', (tester) async {
     await tester.pumpWidget(_buildTestApp());
 
+    await _openKebab(tester);
+
+    expect(find.byKey(const Key('about-button')), findsOneWidget);
+    expect(find.byKey(const Key('language-picker-button')), findsOneWidget);
+    expect(find.byKey(const Key('remote-config-debug-button')), findsOneWidget);
+  });
+
+  testWidgets('tapping kebab button fires KebabMenuOpenedEvent analytics', (tester) async {
+    final analyticsService = FakeAnalyticsService();
+    await tester.pumpWidget(_buildTestApp(analyticsService: analyticsService));
+
+    await _openKebab(tester);
+
+    expect(
+      analyticsService.loggedEvents.whereType<KebabMenuOpenedEvent>(),
+      isNotEmpty,
+    );
+  });
+
+  testWidgets('tapping language item in kebab shows SimpleDialog with language options', (tester) async {
+    await tester.pumpWidget(_buildTestApp());
+
+    await _openKebab(tester);
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
@@ -113,6 +158,7 @@ void main() {
   testWidgets('dialog shows check icon on currently selected language', (tester) async {
     await tester.pumpWidget(_buildTestApp(localeOverride: const Locale('de')));
 
+    await _openKebab(tester);
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
@@ -126,6 +172,7 @@ void main() {
   testWidgets('dialog shows check icon on system option when localeOverride is null', (tester) async {
     await tester.pumpWidget(_buildTestApp());
 
+    await _openKebab(tester);
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
@@ -144,6 +191,7 @@ void main() {
       _buildTestApp(analyticsService: analyticsService, localeService: localeService),
     );
 
+    await _openKebab(tester);
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
@@ -170,6 +218,7 @@ void main() {
       _buildTestApp(localeService: localeService, localeOverride: const Locale('de')),
     );
 
+    await _openKebab(tester);
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
@@ -193,6 +242,7 @@ void main() {
       ),
     );
 
+    await _openKebab(tester);
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
@@ -212,6 +262,7 @@ void main() {
     // localeOverride is null — already on system
     await tester.pumpWidget(_buildTestApp(localeService: localeService));
 
+    await _openKebab(tester);
     await tester.tap(find.byKey(const Key('language-picker-button')));
     await tester.pumpAndSettle();
 
