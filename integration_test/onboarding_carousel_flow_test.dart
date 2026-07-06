@@ -40,17 +40,16 @@ void main() {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
-      // 50 ms duration → ~8000 px/s simulation-time velocity, well above the
-      // PageScrollPhysics snap threshold even on slow swiftshader CI emulators
-      // where real-time velocity is diluted. 300 ms caused the snap to reverse.
+      // 300 px stays within one page width on any ≥320 dp device
+      // ((300/320)+0.5=1.44 → rounds to 1). A wider drag (e.g. 400 px)
+      // overshoots to page 2 on ≤400 dp screens ((400/390)+0.5=1.53 → 2),
+      // causing pumpAndSettle to settle there instead of slide 1.
+      // 50 ms keeps velocity ~6000 px/s, well above the snap threshold.
       await tester.timedDrag(
         find.text(strings.onboardingSlide0Title),
-        const Offset(-400, 0),
+        const Offset(-300, 0),
         const Duration(milliseconds: 50),
       );
-      // waitFor handles a slow page transition start on real devices;
-      // pumpAndSettle after it ensures the animation fully completes
-      // before asserting the previous slide is no longer visible.
       await waitFor(tester, find.text(strings.onboardingSlide1Title));
       await tester.pumpAndSettle();
 
