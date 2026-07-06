@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.49.6] — 2026-07-06
+
+### Fixed
+
+- [user] Fixed Russian timeline and pact-count labels showing "1" instead of the real number (e.g. a 21-showup streak) — the Russian "one" plural form incorrectly hardcoded the digit 1 instead of substituting the count, which is wrong for any number ending in 1 other than 11 (21, 31, 41…)
+
 ## [0.49.5] — 2026-07-05
 
 ### Changed

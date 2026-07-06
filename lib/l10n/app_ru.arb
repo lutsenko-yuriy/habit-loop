@@ -71,7 +71,7 @@
   "back": "Назад",
   "cancel": "Отмена",
   "tooManyPactsTitle": "Слишком много активных пактов",
-  "tooManyPactsBody": "{max, plural, one{Можно иметь только 1 активный пакт одновременно. Создать ещё один?} few{Можно иметь только {max} активных пакта одновременно. Создать ещё?} many{Можно иметь только {max} активных пактов одновременно. Создать ещё?} other{Можно иметь только {max} активных пакта одновременно. Создать ещё?}}",
+  "tooManyPactsBody": "{max, plural, one{Можно иметь только {max} активный пакт одновременно. Создать ещё один?} few{Можно иметь только {max} активных пакта одновременно. Создать ещё?} many{Можно иметь только {max} активных пактов одновременно. Создать ещё?} other{Можно иметь только {max} активных пакта одновременно. Создать ещё?}}",
   "@tooManyPactsBody": {
     "placeholders": {
       "max": { "type": "int" }
@@ -98,7 +98,7 @@
   "pactStartDate": "Начало",
   "pactEndDate": "Конец",
   "pactEndedDate": "Завершено",
-  "daysRemaining": "{count, plural, one{Остался 1 день} few{Осталось {count} дня} many{Осталось {count} дней} other{Осталось {count} дня}}",
+  "daysRemaining": "{count, plural, one{Остался {count} день} few{Осталось {count} дня} many{Осталось {count} дней} other{Осталось {count} дня}}",
   "@daysRemaining": {
     "placeholders": {
       "count": { "type": "int" }
@@ -112,15 +112,15 @@
   "stopPactBody": "Это действие необратимо. Вы сможете просмотреть историю пакта позже.",
   "stopPactReasonHint": "Причина (необязательно)",
   "stopPactConfirm": "Остановить",
-  "pactsActive": "{count, plural, =0{Нет активных пактов} one{1 активный пакт} few{{count} активных пакта} many{{count} активных пактов} other{{count} активных пакта}}",
+  "pactsActive": "{count, plural, =0{Нет активных пактов} one{{count} активный пакт} few{{count} активных пакта} many{{count} активных пактов} other{{count} активных пакта}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "pactsDone": "{count, plural, =0{Нет завершённых пактов} one{1 завершённый пакт} few{{count} завершённых пакта} many{{count} завершённых пактов} other{{count} завершённых пакта}}",
+  "pactsDone": "{count, plural, =0{Нет завершённых пактов} one{{count} завершённый пакт} few{{count} завершённых пакта} many{{count} завершённых пактов} other{{count} завершённых пакта}}",
   "@pactsDone": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "pactsCancelled": "{count, plural, =0{Нет остановленных пактов} one{1 остановленный пакт} few{{count} остановленных пакта} many{{count} остановленных пактов} other{{count} остановленных пакта}}",
+  "pactsCancelled": "{count, plural, =0{Нет остановленных пактов} one{{count} остановленный пакт} few{{count} остановленных пакта} many{{count} остановленных пактов} other{{count} остановленных пакта}}",
   "@pactsCancelled": {
     "placeholders": { "count": { "type": "int" } }
   },
@@ -327,11 +327,11 @@
   "@timelinePactConcludedCompleted": {},
   "timelinePactConcludedStopped": "Пакт остановлен",
   "@timelinePactConcludedStopped": {},
-  "timelineDoneInARow": "{count, plural, one{1 явка подряд — выполнено} few{{count} явки подряд — выполнено} other{{count} явок подряд — выполнено}}",
+  "timelineDoneInARow": "{count, plural, one{{count} явка подряд — выполнено} few{{count} явки подряд — выполнено} other{{count} явок подряд — выполнено}}",
   "@timelineDoneInARow": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timelineMissedInARow": "{count, plural, one{1 явка подряд — пропущено} few{{count} явки подряд — пропущено} other{{count} явок подряд — пропущено}}",
+  "timelineMissedInARow": "{count, plural, one{{count} явка подряд — пропущено} few{{count} явки подряд — пропущено} other{{count} явок подряд — пропущено}}",
   "@timelineMissedInARow": {
     "placeholders": { "count": { "type": "int" } }
   },
@@ -343,7 +343,7 @@
       "failed": { "type": "int" }
     }
   },
-  "timelineShowupsRemaining": "{count, plural, one{осталась 1 явка} few{осталось {count} явки} other{осталось {count} явок}}",
+  "timelineShowupsRemaining": "{count, plural, one{осталась {count} явка} few{осталось {count} явки} other{осталось {count} явок}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }
   },
