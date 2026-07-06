@@ -95,7 +95,7 @@ Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) asyn
   // sectionStats is near the top of _PactDetailContent and only rendered after
   // the VM finishes loading — reliable on any screen size. The note field is
   // below the fold; each test uses scrollUntilVisible to bring it into view.
-  await waitFor(tester, find.text(l10n(tester).sectionStats));
+  await waitFor(tester, find.text(l10n(tester).sectionStats.toUpperCase()));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -285,12 +285,12 @@ void main() {
       // the VM finishes loading — reliable on any screen size. Stop Pact lives at
       // the bottom of the ListView; use sectionStats to scope the Scrollable so
       // scrollUntilVisible works even when stopPact is not yet built.
-      await waitFor(tester, find.text(strings.sectionStats));
+      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
       await tester.scrollUntilVisible(
         find.text(strings.stopPact),
         200.0,
         scrollable: find.ancestor(
-          of: find.text(strings.sectionStats),
+          of: find.text(strings.sectionStats.toUpperCase()),
           matching: find.byType(Scrollable),
         ),
       );

@@ -158,13 +158,13 @@ void main() {
         // ── 3. Pact detail screen loaded ─────────────────────────────────
         // sectionStats is near the top of _PactDetailContent and only rendered
         // after the VM finishes loading — reliable on any screen size.
-        await waitFor(tester, find.text(strings.sectionStats));
+        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
         // Stop Pact lives at the bottom of the ListView; scroll to build + reveal it.
         await tester.scrollUntilVisible(
           find.text(strings.stopPact),
           200.0,
           scrollable: find.ancestor(
-            of: find.text(strings.sectionStats),
+            of: find.text(strings.sectionStats.toUpperCase()),
             matching: find.byType(Scrollable),
           ),
         );
@@ -274,13 +274,13 @@ void main() {
         await tester.tap(find.text(strings.showupViewPactDetails));
         // sectionStats is near the top of _PactDetailContent and only rendered
         // after the VM finishes loading — reliable on any screen size.
-        await waitFor(tester, find.text(strings.sectionStats));
+        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
         // Stop Pact lives at the bottom of the ListView; scroll to build + reveal it.
         await tester.scrollUntilVisible(
           find.text(strings.stopPact),
           200.0,
           scrollable: find.ancestor(
-            of: find.text(strings.sectionStats),
+            of: find.text(strings.sectionStats.toUpperCase()),
             matching: find.byType(Scrollable),
           ),
         );

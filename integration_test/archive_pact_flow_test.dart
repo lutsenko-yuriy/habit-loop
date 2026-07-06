@@ -252,7 +252,7 @@ void main() {
       await tester.tap(find.text(strings.showupViewPactDetails));
       // sectionStats is near the top of _PactDetailContent and only rendered
       // after the VM finishes loading — reliable on any screen size.
-      await waitFor(tester, find.text(strings.sectionStats));
+      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
 
       expect(find.byKey(const Key('archive-pact-button')), findsNothing);
     });
