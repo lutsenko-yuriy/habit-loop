@@ -33,6 +33,7 @@ import '../test/infrastructure/sync/fake_sync_service.dart';
 /// ```
 class AppHarness {
   AppHarness._({
+    required WidgetTester tester,
     required this.pactRepo,
     required this.showupRepo,
     required this.auth,
@@ -42,8 +43,9 @@ class AppHarness {
     required this.localeService,
     required this.navigatorKey,
     this.firestoreClient,
-  });
+  }) : _tester = tester;
 
+  final WidgetTester _tester;
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
   final FakeAuthService auth;
@@ -136,6 +138,7 @@ class AppHarness {
     final navigatorKey = GlobalKey<NavigatorState>();
 
     final harness = AppHarness._(
+      tester: tester,
       pactRepo: pactRepo,
       showupRepo: showupRepo,
       auth: auth,
@@ -199,7 +202,16 @@ class AppHarness {
     return harness;
   }
 
-  void dispose() {
+  /// Unmounts the app widget tree, then closes services.
+  ///
+  /// Pumping an empty [SizedBox] BEFORE closing services disposes the
+  /// [ProviderScope] and all Riverpod providers, so any residual timer
+  /// callbacks or stream events from the previous test fire against an
+  /// empty tree instead of corrupting [IntegrationTestWidgetsFlutterBinding]'s
+  /// internal state and cascading failures into subsequent tests.
+  Future<void> dispose() async {
+    await _tester.pumpWidget(const SizedBox());
+    await _tester.pump(const Duration(milliseconds: 50));
     auth.dispose();
   }
 }

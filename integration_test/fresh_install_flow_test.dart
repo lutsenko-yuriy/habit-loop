@@ -28,8 +28,8 @@ void main() {
 
   group('Fresh install Keychain fix flow', () {
     late AppHarness h;
-    tearDown(() {
-      h.dispose();
+    tearDown(() async {
+      await h.dispose();
       SharedPreferences.resetStatic();
     });
 
