@@ -103,6 +103,8 @@ void main() {
       expect(l10n.pactsActive(22), contains('активных пакта'));
       // many again at 25
       expect(l10n.pactsActive(25), contains('активных пактов'));
+      // one again at 21: must substitute 21, not hardcode "1"
+      expect(l10n.pactsActive(21), contains('21 активный пакт'));
     });
 
     testWidgets('daysRemaining uses correct Russian plural forms', (tester) async {
@@ -120,6 +122,31 @@ void main() {
       expect(l10n.daysRemaining(22), contains('дня'));
       // many again at 25
       expect(l10n.daysRemaining(25), contains('дней'));
+      // one again at 21: must substitute 21, not hardcode "1"
+      expect(l10n.daysRemaining(21), contains('Остался 21 день'));
+    });
+
+    testWidgets('timelineDoneInARow substitutes count in the Russian "one" category', (tester) async {
+      final l10n = await _pumpLocalised(tester, const Locale('ru'));
+
+      expect(l10n.timelineDoneInARow(1), contains('1 явка подряд'));
+      // Regression: a 21-showup streak must render "21", not the literal "1".
+      expect(l10n.timelineDoneInARow(21), contains('21 явка подряд'));
+      expect(l10n.timelineDoneInARow(29), contains('29 явок подряд'));
+    });
+
+    testWidgets('timelineMissedInARow substitutes count in the Russian "one" category', (tester) async {
+      final l10n = await _pumpLocalised(tester, const Locale('ru'));
+
+      expect(l10n.timelineMissedInARow(1), contains('1 явка подряд'));
+      expect(l10n.timelineMissedInARow(21), contains('21 явка подряд'));
+    });
+
+    testWidgets('timelineShowupsRemaining substitutes count in the Russian "one" category', (tester) async {
+      final l10n = await _pumpLocalised(tester, const Locale('ru'));
+
+      expect(l10n.timelineShowupsRemaining(1), contains('осталась 1 явка'));
+      expect(l10n.timelineShowupsRemaining(21), contains('осталась 21 явка'));
     });
   });
 }

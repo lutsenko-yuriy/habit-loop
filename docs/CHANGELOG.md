@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.49.6] — 2026-07-06
+
+### Fixed
+
+- [user] Fixes in Russian translation of text with plurals
+
 ## [0.49.5] — 2026-07-05
 
 ### Changed
