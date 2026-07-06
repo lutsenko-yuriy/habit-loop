@@ -40,12 +40,13 @@ void main() {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
-      // timedDrag gives the gesture a release velocity, which PageScrollPhysics
-      // uses to determine whether to advance the page.
+      // 50 ms duration → ~8000 px/s simulation-time velocity, well above the
+      // PageScrollPhysics snap threshold even on slow swiftshader CI emulators
+      // where real-time velocity is diluted. 300 ms caused the snap to reverse.
       await tester.timedDrag(
         find.text(strings.onboardingSlide0Title),
         const Offset(-400, 0),
-        const Duration(milliseconds: 300),
+        const Duration(milliseconds: 50),
       );
       // waitFor handles a slow page transition start on real devices;
       // pumpAndSettle after it ensures the animation fully completes
@@ -65,7 +66,7 @@ void main() {
       await tester.timedDrag(
         find.text(strings.onboardingSlide0Title),
         const Offset(-400, 0),
-        const Duration(milliseconds: 300),
+        const Duration(milliseconds: 50),
       );
       await waitFor(tester, find.text(strings.onboardingSlide1Title));
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
@@ -74,7 +75,7 @@ void main() {
       await tester.timedDrag(
         find.text(strings.onboardingSlide1Title),
         const Offset(400, 0),
-        const Duration(milliseconds: 300),
+        const Duration(milliseconds: 50),
       );
       await waitFor(tester, find.text(strings.onboardingSlide0Title));
 
