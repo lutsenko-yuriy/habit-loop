@@ -33,7 +33,6 @@ import '../test/infrastructure/sync/fake_sync_service.dart';
 /// ```
 class AppHarness {
   AppHarness._({
-    required WidgetTester tester,
     required this.pactRepo,
     required this.showupRepo,
     required this.auth,
@@ -43,9 +42,8 @@ class AppHarness {
     required this.localeService,
     required this.navigatorKey,
     this.firestoreClient,
-  }) : _tester = tester;
+  });
 
-  final WidgetTester _tester;
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
   final FakeAuthService auth;
@@ -138,7 +136,6 @@ class AppHarness {
     final navigatorKey = GlobalKey<NavigatorState>();
 
     final harness = AppHarness._(
-      tester: tester,
       pactRepo: pactRepo,
       showupRepo: showupRepo,
       auth: auth,
@@ -151,6 +148,15 @@ class AppHarness {
     );
 
     if (beforePump != null) await beforePump(harness);
+
+    // Register widget-tree teardown via addTearDown so it runs while
+    // LiveTestWidgetsFlutterBinding.inTest is still true. Regular tearDown
+    // callbacks run after the binding clears inTest, at which point pump()
+    // throws an assertion. addTearDown runs before that boundary.
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 50));
+    });
 
     await tester.pumpWidget(
       ProviderScope(
@@ -202,16 +208,11 @@ class AppHarness {
     return harness;
   }
 
-  /// Unmounts the app widget tree, then closes services.
-  ///
-  /// Pumping an empty [SizedBox] BEFORE closing services disposes the
-  /// [ProviderScope] and all Riverpod providers, so any residual timer
-  /// callbacks or stream events from the previous test fire against an
-  /// empty tree instead of corrupting [IntegrationTestWidgetsFlutterBinding]'s
-  /// internal state and cascading failures into subsequent tests.
-  Future<void> dispose() async {
-    await _tester.pumpWidget(const SizedBox());
-    await _tester.pump(const Duration(milliseconds: 50));
+  /// Closes services. Widget-tree cleanup is handled by the [addTearDown]
+  /// registered in [create] — it runs while [LiveTestWidgetsFlutterBinding]
+  /// still has [inTest] set, which allows [pump] to be called. This method
+  /// only closes services, so it is safe to call from a regular [tearDown].
+  void dispose() {
     auth.dispose();
   }
 }
