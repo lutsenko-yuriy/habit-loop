@@ -121,16 +121,19 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Morning Run');
+      final strings = l10n(tester);
 
       // ── 1. Notes field is visible and pre-populated ───────────────────────
       // The note section is below the fold on small screens — scroll to reveal.
+      // Use sectionStats (already in the tree after _openInactivePactDetail) as
+      // the scrollable anchor instead of pact-note-field, which is not yet
+      // built by the lazy ListView when scrollUntilVisible first evaluates the
+      // finder (causing Iterable.single: No element on narrow CI screens).
       await tester.scrollUntilVisible(
         find.byKey(const Key('pact-note-field')),
         200.0,
-        // The dashboard body also has a Scrollable; supply the ancestor
-        // Scrollable of the note field itself to avoid an ambiguous match.
         scrollable: find.ancestor(
-          of: find.byKey(const Key('pact-note-field')),
+          of: find.text(strings.sectionStats.toUpperCase()),
           matching: find.byType(Scrollable),
         ),
       );
@@ -182,13 +185,12 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Morning Run');
+      final strings = l10n(tester);
       await tester.scrollUntilVisible(
         find.byKey(const Key('pact-note-field')),
         200.0,
-        // The dashboard body also has a Scrollable; supply the ancestor
-        // Scrollable of the note field itself to avoid an ambiguous match.
         scrollable: find.ancestor(
-          of: find.byKey(const Key('pact-note-field')),
+          of: find.text(strings.sectionStats.toUpperCase()),
           matching: find.byType(Scrollable),
         ),
       );
@@ -226,13 +228,12 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Evening Walk');
+      final strings = l10n(tester);
       await tester.scrollUntilVisible(
         find.byKey(const Key('pact-note-field')),
         200.0,
-        // The dashboard body also has a Scrollable; supply the ancestor
-        // Scrollable of the note field itself to avoid an ambiguous match.
         scrollable: find.ancestor(
-          of: find.byKey(const Key('pact-note-field')),
+          of: find.text(strings.sectionStats.toUpperCase()),
           matching: find.byType(Scrollable),
         ),
       );

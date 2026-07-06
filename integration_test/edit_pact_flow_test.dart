@@ -76,10 +76,12 @@ final _showup = Showup(
 /// [PageView]'s gesture recognizer under [flingFrom]).
 Future<void> _swipeEditWizardForward(WidgetTester tester) async {
   final pageViewFinder = find.byType(PageView);
-  // A 400 px drag in 50 ms → effective velocity ≈ 8000 px/s, well above
-  // the PageView snap threshold. Starting at the center of the PageView
-  // avoids any edge-widget hit-test ambiguity.
-  await tester.timedDrag(pageViewFinder, const Offset(-400, 0), const Duration(milliseconds: 50));
+  // 300 px in 50 ms → velocity ≈ 6000 px/s (above the snap threshold).
+  // 300 px keeps the drag within one page width on any ≥300 dp device:
+  // (300/320)+0.5=1.44 → rounds to 1, so one page advance per swipe.
+  // A 400 px drag overshoots to page 2 on ≤400 dp screens (CI AVD is 320 dp):
+  // (400/320)+0.5=1.75 → rounds to 2, skipping the reminder step entirely.
+  await tester.timedDrag(pageViewFinder, const Offset(-300, 0), const Duration(milliseconds: 50));
   await tester.pumpAndSettle();
 }
 
