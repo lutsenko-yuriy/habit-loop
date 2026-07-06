@@ -321,8 +321,10 @@ void main() {
       expect(find.text('Cycling'), findsNothing);
 
       // ── 2. Tap chip → archived pact appears ───────────────────────────────
-      // Use onSelected directly — chip center is off-screen on the 320 dp CI AVD.
-      tester.widget<FilterChip>(find.byKey(const Key('archive-filter-chip'))).onSelected?.call(true);
+      // ensureVisible scrolls the horizontal chip row to bring the chip into
+      // view on narrow screens (e.g. 320 dp CI AVD) before tapping.
+      await tester.ensureVisible(find.byKey(const Key('archive-filter-chip')));
+      await tester.tap(find.byKey(const Key('archive-filter-chip')));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Cycling'), findsOneWidget);
 
