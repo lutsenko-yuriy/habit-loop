@@ -281,9 +281,19 @@ void main() {
       await waitFor(tester, find.text(strings.markDone));
 
       await tester.tap(find.text(strings.showupViewPactDetails));
-      // Wait for pact detail to load, then scroll to reveal the Stop Pact button.
-      await waitFor(tester, find.byType(ListView));
-      await tester.scrollUntilVisible(find.text(strings.stopPact), 200.0);
+      // Wait for pact detail to load — stopPact is only rendered after the view model
+      // resolves, so it's a reliable signal even when it's initially below the fold.
+      await waitFor(tester, find.text(strings.stopPact));
+      await tester.scrollUntilVisible(
+        find.text(strings.stopPact),
+        200.0,
+        // The dashboard body also has a Scrollable; supply the ancestor
+        // Scrollable of the stop-pact button itself to avoid an ambiguous match.
+        scrollable: find.ancestor(
+          of: find.text(strings.stopPact),
+          matching: find.byType(Scrollable),
+        ),
+      );
 
       expect(find.byKey(const Key('pact-note-field')), findsNothing);
       expect(find.byKey(const Key('pact-note-save-button')), findsNothing);
