@@ -13,20 +13,28 @@ import 'harness.dart';
 
 /// Swipes the pact-creation [PageView] to the next page.
 ///
-/// Starts the fling from near the **top** of the PageView (the static title
-/// area) so that interactive widgets lower on the page — in particular the
-/// [Slider] on the showup-duration step — cannot intercept the horizontal
-/// gesture and win the gesture arena before the PageView does.
+/// Starts near the **top-right** of the PageView (the static title area) so
+/// that interactive widgets lower on the page — in particular the [Slider] on
+/// the showup-duration step — cannot intercept the gesture.
 ///
-/// Tries the iOS key first, falls back to the Android key, so the same test
-/// runs on both platforms without modification.
+/// Uses 300 px / 50 ms (timedDragFrom) instead of flingFrom(-400, 1000):
+/// - 300 px keeps the pointer on-screen for any ≥310 dp device
+///   (start x = right-10 = ~380; end x = ~80, within the viewport).
+///   flingFrom(-400) from x=380 went to x=-20, which was off-screen.
+/// - (300/W)+0.5 rounds to 1 for any W≥300 dp, so no page overshoot.
+///
+/// Tries the iOS key first, falls back to the Android key.
 Future<void> _swipeWizardForward(WidgetTester tester) async {
   const iosKey = Key('pact-creation-pageview-ios');
   const androidKey = Key('pact-creation-pageview-android');
   final key = find.byKey(iosKey).evaluate().isNotEmpty ? iosKey : androidKey;
   final rect = tester.getRect(find.byKey(key));
   // Y = top + 40: safely inside the title text area on every wizard page.
-  await tester.flingFrom(Offset(rect.right - 10, rect.top + 40), const Offset(-400, 0), 1000);
+  await tester.timedDragFrom(
+    Offset(rect.right - 10, rect.top + 40),
+    const Offset(-300, 0),
+    const Duration(milliseconds: 50),
+  );
   await tester.pumpAndSettle();
 }
 
