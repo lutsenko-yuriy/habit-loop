@@ -122,6 +122,10 @@ Future<void> _openPactDetail(WidgetTester tester, String habitName) async {
 }
 
 Future<void> _openTimeline(WidgetTester tester) async {
+  // Wait for the pact detail to finish loading before scrolling — the button
+  // only appears once the view model has resolved, which can take >450 ms on
+  // a real device; calling ensureVisible before that causes a deadlock.
+  await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
   await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
   await tester.pump();
   await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
@@ -161,6 +165,7 @@ void main() {
         await _openPactDetail(tester, 'Meditate');
 
         // ── 1. "View Timeline" button is present and tappable ─────────────────
+        await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
         await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
         expect(find.byKey(const Key('pact-detail-timeline-button')), findsOneWidget);
 
