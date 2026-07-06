@@ -196,8 +196,8 @@ jobs:
       - name: Run iOS integration tests
         # Two-attempt retry covers transient simulator startup flakiness.
         run: |
-          flutter test integration_test/ -d "$SIMULATOR_UDID" \
-            || flutter test integration_test/ -d "$SIMULATOR_UDID"
+          flutter test integration_test/test_runner.dart -d "$SIMULATOR_UDID" \
+            || flutter test integration_test/test_runner.dart -d "$SIMULATOR_UDID"
 
   # ── Resolve build number (push to main, or manual workflow_dispatch) ────────
   resolve-version:
@@ -412,7 +412,7 @@ jobs:
         with:
           api-level: 29
           arch: x86_64
-          script: bash -c "set -o pipefail; flutter test integration_test/ --machine --no-pub --timeout=120s | tee test-results.json"
+          script: bash -c "set -o pipefail; flutter test integration_test/test_runner.dart --machine --no-pub --timeout=120s | tee test-results.json"
 
       - name: Strip non-JSON lines from test results
         if: always()
