@@ -92,10 +92,10 @@ Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) asyn
   await tester.tap(find.text(habitName).last);
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump(const Duration(milliseconds: 100));
-  // Wait for the note field to appear — it is only rendered after the view
-  // model finishes loading and the pact status is inactive. The dashboard body
-  // also uses a ListView, so waiting for ListView would resolve too early.
-  await waitFor(tester, find.byKey(const Key('pact-note-field')));
+  // sectionStats is near the top of _PactDetailContent and only rendered after
+  // the VM finishes loading — reliable on any screen size. The note field is
+  // below the fold; each test uses scrollUntilVisible to bring it into view.
+  await waitFor(tester, find.text(l10n(tester).sectionStats));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -281,16 +281,16 @@ void main() {
       await waitFor(tester, find.text(strings.markDone));
 
       await tester.tap(find.text(strings.showupViewPactDetails));
-      // Wait for pact detail to load — stopPact is only rendered after the view model
-      // resolves, so it's a reliable signal even when it's initially below the fold.
-      await waitFor(tester, find.text(strings.stopPact));
+      // sectionStats is near the top of _PactDetailContent and only rendered after
+      // the VM finishes loading — reliable on any screen size. Stop Pact lives at
+      // the bottom of the ListView; use sectionStats to scope the Scrollable so
+      // scrollUntilVisible works even when stopPact is not yet built.
+      await waitFor(tester, find.text(strings.sectionStats));
       await tester.scrollUntilVisible(
         find.text(strings.stopPact),
         200.0,
-        // The dashboard body also has a Scrollable; supply the ancestor
-        // Scrollable of the stop-pact button itself to avoid an ambiguous match.
         scrollable: find.ancestor(
-          of: find.text(strings.stopPact),
+          of: find.text(strings.sectionStats),
           matching: find.byType(Scrollable),
         ),
       );

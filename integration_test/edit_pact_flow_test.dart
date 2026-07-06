@@ -156,19 +156,29 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
 
         // ── 3. Pact detail screen loaded ─────────────────────────────────
-        await waitFor(tester, find.text(strings.stopPact));
+        // sectionStats is near the top of _PactDetailContent and only rendered
+        // after the VM finishes loading — reliable on any screen size.
+        await waitFor(tester, find.text(strings.sectionStats));
+        // Stop Pact lives at the bottom of the ListView; scroll to build + reveal it.
+        await tester.scrollUntilVisible(
+          find.text(strings.stopPact),
+          200.0,
+          scrollable: find.ancestor(
+            of: find.text(strings.sectionStats),
+            matching: find.byType(Scrollable),
+          ),
+        );
         expect(find.text(strings.stopPact), findsOneWidget);
 
         // ── 4. Tap the edit button ───────────────────────────────────────
-        // On iOS the edit button lives in CupertinoNavigationBar.trailing,
-        // which in the macOS integration test environment renders outside the
-        // 402px viewport bounds (~x=512). tester.tap() silently misses it, so
-        // we call onPressed directly on iOS. On Android the button is a plain
-        // IconButton inside AppBar, which renders within bounds — tap() works.
+        // Call onPressed directly on both platforms: the AppBar action may
+        // render partially off-screen on narrow test devices (centre x > screen
+        // width), causing tester.tap() to miss. iOS CupertinoNavigationBar has
+        // the same issue on macOS test environments.
         if (defaultTargetPlatform == TargetPlatform.iOS) {
           tester.widget<CupertinoButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
         } else {
-          await tester.tap(find.byKey(const Key('pact-detail-edit-button')));
+          tester.widget<IconButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
         }
         // Do NOT pumpAndSettle here: PactEditScreen shows a spinner while
         // load() is in flight (CupertinoActivityIndicator on iOS never
@@ -262,16 +272,26 @@ void main() {
 
         // ── 3. Tap "View pact details" → PactDetailScreen ────────────────
         await tester.tap(find.text(strings.showupViewPactDetails));
-        await waitFor(tester, find.text(strings.stopPact));
+        // sectionStats is near the top of _PactDetailContent and only rendered
+        // after the VM finishes loading — reliable on any screen size.
+        await waitFor(tester, find.text(strings.sectionStats));
+        // Stop Pact lives at the bottom of the ListView; scroll to build + reveal it.
+        await tester.scrollUntilVisible(
+          find.text(strings.stopPact),
+          200.0,
+          scrollable: find.ancestor(
+            of: find.text(strings.sectionStats),
+            matching: find.byType(Scrollable),
+          ),
+        );
         expect(find.text(strings.stopPact), findsOneWidget);
 
         // ── 4. Tap the edit button ───────────────────────────────────────
-        // Same platform split as flow 1: call onPressed directly on iOS
-        // (off-screen nav bar), regular tap on Android (in-bounds AppBar).
+        // Call onPressed directly on both platforms: same pattern as flow 1.
         if (defaultTargetPlatform == TargetPlatform.iOS) {
           tester.widget<CupertinoButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
         } else {
-          await tester.tap(find.byKey(const Key('pact-detail-edit-button')));
+          tester.widget<IconButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
         }
         // Do NOT pumpAndSettle: spinner in PactEditScreen never settles.
         await tester.pump();
