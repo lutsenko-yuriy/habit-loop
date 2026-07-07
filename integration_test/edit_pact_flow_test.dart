@@ -197,19 +197,21 @@ void main() {
         await tester.pumpAndSettle();
 
         // ── 6. Type the new habit name ───────────────────────────────────
-        // Tap the field to establish the text-input connection, then
-        // pumpAndSettle() until no frames remain pending. On a cold-JIT
-        // Android emulator the platform-channel handshake for TextInput.setClient
-        // can take longer than a fixed pump(100ms) — pumpAndSettle() is
-        // frame-count-based so it works regardless of JIT warmth.
-        await tester.tap(find.byKey(const Key('pact-creation-habit-name-field')));
-        await tester.pumpAndSettle();
+        // enterText() calls showKeyboard() internally which focuses the field.
+        // No pre-tap needed: create_pact_flow_test passes without it, and the
+        // extra pumpAndSettle() was causing the TextInput connection to be reset
+        // on cold-JIT Android CI before enterText could fire onChanged.
         await tester.enterText(
           find.byKey(const Key('pact-creation-habit-name-field')),
           'Morning Run',
         );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
+
+        // DIAGNOSTIC: verify enterText fired setHabitName via the VM state.
+        // 'Morning Run' in the AppBar title = state.habitName was updated.
+        // If this expect fails → enterText did not fire onChanged on this device.
+        expect(find.text('Morning Run'), findsWidgets, reason: 'enterText should update AppBar title via setHabitName');
 
         // ── 7. Swipe to reminder page, then to summary page ──────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
@@ -223,6 +225,14 @@ void main() {
         // and time out before PactDetailScreen finishes reloading.
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
+
+        // DIAGNOSTIC: check the in-memory repo and analytics flag right after
+        // the pumps. Both are logged so CI output reveals where save failed.
+        final pactAfterSave = await h.pactRepo.getPactById(_pactId);
+        debugPrint('[test:flow1] repo.habitName after save: "${pactAfterSave?.habitName}"');
+        debugPrint(
+            '[test:flow1] pact_edit_saved in analytics: ${h.analytics.loggedEvents.any((e) => e.name == 'pact_edit_saved')}');
+
         await waitFor(tester, find.text('Morning Run'));
 
         // ── 9. Pact detail shows the new name; old name is gone ──────────
@@ -305,16 +315,16 @@ void main() {
         await tester.pumpAndSettle();
 
         // ── 6. Type the new habit name ───────────────────────────────────
-        // Same as flow 1: tap first, then pumpAndSettle() before enterText so
-        // the text-input connection is ready regardless of JIT warmth.
-        await tester.tap(find.byKey(const Key('pact-creation-habit-name-field')));
-        await tester.pumpAndSettle();
+        // Same as flow 1: no pre-tap; enterText handles focus internally.
         await tester.enterText(
           find.byKey(const Key('pact-creation-habit-name-field')),
           'Yoga',
         );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
+
+        // DIAGNOSTIC: same as flow 1.
+        expect(find.text('Yoga'), findsWidgets, reason: 'enterText should update AppBar title via setHabitName');
 
         // ── 7. Swipe to summary ──────────────────────────────────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
@@ -324,6 +334,13 @@ void main() {
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
+
+        // DIAGNOSTIC: same as flow 1.
+        final pactAfterSave = await h.pactRepo.getPactById(_pactId);
+        debugPrint('[test:flow2] repo.habitName after save: "${pactAfterSave?.habitName}"');
+        debugPrint(
+            '[test:flow2] pact_edit_saved in analytics: ${h.analytics.loggedEvents.any((e) => e.name == 'pact_edit_saved')}');
+
         await waitFor(tester, find.text('Yoga'));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
 
