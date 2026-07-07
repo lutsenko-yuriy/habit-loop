@@ -222,14 +222,17 @@ void main() {
 
         // ── 8. Tap "Save Changes" ────────────────────────────────────────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
-        // Do NOT use pumpAndSettle — PactDetailScreen's _onEditPact() calls
-        // load() which shows a CircularProgressIndicator; pumpAndSettle() hangs
-        // on that animation indefinitely (same issue as initial navigation above).
-        // Pump past the save() + 300 ms Material pop animation, then wait for
-        // PactDetailScreen to finish reloading (same pattern as initial navigation above).
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(); // start _onSubmit() async chain
+        // Wait for the wizard to fully close: on a real device each pump()
+        // renders one frame, so a fixed pump(300ms) is not enough to drive the
+        // entire pop animation. Poll until the save button disappears instead —
+        // that guarantees the pop animation finished and _onEditPact() resumed.
+        // Do NOT use pumpAndSettle here: _onEditPact()'s load() shows a
+        // CircularProgressIndicator which pumpAndSettle() would hang on.
+        while (find.byKey(const Key('pact-edit-save-button')).evaluate().isNotEmpty) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        // Pop done and load() running — wait for PactDetailScreen content.
         await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
 
         // ── 9. Pact detail shows the new name; old name is gone ──────────
@@ -329,10 +332,11 @@ void main() {
 
         // ── 8. Tap "Save Changes" — wizard pops back to pact detail ──────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
-        // Same as flow 1: no pumpAndSettle — load() shows CircularProgressIndicator.
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(); // start _onSubmit() async chain
+        // Same as flow 1: poll until save button gone, then wait for content.
+        while (find.byKey(const Key('pact-edit-save-button')).evaluate().isNotEmpty) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
         await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
 
