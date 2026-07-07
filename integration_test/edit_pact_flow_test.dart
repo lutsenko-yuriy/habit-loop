@@ -233,6 +233,16 @@ void main() {
         debugPrint(
             '[test:flow1] pact_edit_saved in analytics: ${h.analytics.loggedEvents.any((e) => e.name == 'pact_edit_saved')}');
 
+        // DIAGNOSTIC: print all visible Text widgets to confirm what screen is shown.
+        final textsAfterSettle = tester.allWidgets
+            .whereType<Text>()
+            .map((t) => t.data ?? '')
+            .where((s) => s.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+        debugPrint('[test:flow1] visible texts after pumpAndSettle: $textsAfterSettle');
+
         await waitFor(tester, find.text('Morning Run'));
 
         // ── 9. Pact detail shows the new name; old name is gone ──────────
@@ -342,6 +352,16 @@ void main() {
         debugPrint('[test:flow2] repo.habitName after save: "${pactAfterSave?.habitName}"');
         debugPrint(
             '[test:flow2] pact_edit_saved in analytics: ${h.analytics.loggedEvents.any((e) => e.name == 'pact_edit_saved')}');
+
+        // DIAGNOSTIC: print all visible Text widgets to confirm what screen is shown.
+        final textsAfterSettle = tester.allWidgets
+            .whereType<Text>()
+            .map((t) => t.data ?? '')
+            .where((s) => s.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+        debugPrint('[test:flow2] visible texts after pumpAndSettle: $textsAfterSettle');
 
         await waitFor(tester, find.text('Yoga'));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
