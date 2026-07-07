@@ -15,6 +15,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -232,6 +233,26 @@ void main() {
         while (find.byKey(const Key('pact-edit-save-button')).evaluate().isNotEmpty) {
           await tester.pump(const Duration(milliseconds: 100));
         }
+        // DIAGNOSTIC: dump provider state immediately after save button disappears.
+        {
+          final container = ProviderScope.containerOf(tester.element(find.byType(Navigator).first));
+          final ds = container.read(pactDetailViewModelProvider(_pactId));
+          debugPrint('[DIAG:flow1:detail] isLoading=${ds.isLoading} pact=${ds.pact?.habitName} loadError=${ds.loadError} stats=${ds.stats != null}');
+          final es = container.read(pactEditViewModelProvider(_pactId));
+          debugPrint('[DIAG:flow1:edit] isLoading=${es.isLoading} wizardState=${es.wizardState != null} saveError=${es.saveError} isSaving=${es.isSaving}');
+          debugPrint('[DIAG:flow1] hasSaveButton=${find.byKey(const Key("pact-edit-save-button")).evaluate().isNotEmpty}');
+          debugPrint('[DIAG:flow1] hasSpinner=${find.byType(CircularProgressIndicator).evaluate().isNotEmpty}');
+          debugPrint('[DIAG:flow1] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
+          debugPrint('[DIAG:flow1] hasMorningRun=${find.text("Morning Run").evaluate().isNotEmpty}');
+          // Sample state every second for up to 10 s to catch transitions.
+          for (int i = 1; i <= 10; i++) {
+            final ds2 = container.read(pactDetailViewModelProvider(_pactId));
+            if (!ds2.isLoading && ds2.loadError == null && ds2.pact != null && ds2.stats != null) break;
+            await tester.pump(const Duration(seconds: 1));
+            final ds3 = container.read(pactDetailViewModelProvider(_pactId));
+            debugPrint('[DIAG:flow1:t=${i}s] isLoading=${ds3.isLoading} pact=${ds3.pact?.habitName} loadError=${ds3.loadError} stats=${ds3.stats != null}');
+          }
+        }
         // Pop done and load() running — wait for PactDetailScreen content.
         await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
 
@@ -336,6 +357,25 @@ void main() {
         // Same as flow 1: poll until save button gone, then wait for content.
         while (find.byKey(const Key('pact-edit-save-button')).evaluate().isNotEmpty) {
           await tester.pump(const Duration(milliseconds: 100));
+        }
+        // DIAGNOSTIC: same as flow 1.
+        {
+          final container = ProviderScope.containerOf(tester.element(find.byType(Navigator).first));
+          final ds = container.read(pactDetailViewModelProvider(_pactId));
+          debugPrint('[DIAG:flow2:detail] isLoading=${ds.isLoading} pact=${ds.pact?.habitName} loadError=${ds.loadError} stats=${ds.stats != null}');
+          final es = container.read(pactEditViewModelProvider(_pactId));
+          debugPrint('[DIAG:flow2:edit] isLoading=${es.isLoading} wizardState=${es.wizardState != null} saveError=${es.saveError} isSaving=${es.isSaving}');
+          debugPrint('[DIAG:flow2] hasSaveButton=${find.byKey(const Key("pact-edit-save-button")).evaluate().isNotEmpty}');
+          debugPrint('[DIAG:flow2] hasSpinner=${find.byType(CircularProgressIndicator).evaluate().isNotEmpty}');
+          debugPrint('[DIAG:flow2] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
+          debugPrint('[DIAG:flow2] hasYoga=${find.text("Yoga").evaluate().isNotEmpty}');
+          for (int i = 1; i <= 10; i++) {
+            final ds2 = container.read(pactDetailViewModelProvider(_pactId));
+            if (!ds2.isLoading && ds2.loadError == null && ds2.pact != null && ds2.stats != null) break;
+            await tester.pump(const Duration(seconds: 1));
+            final ds3 = container.read(pactDetailViewModelProvider(_pactId));
+            debugPrint('[DIAG:flow2:t=${i}s] isLoading=${ds3.isLoading} pact=${ds3.pact?.habitName} loadError=${ds3.loadError} stats=${ds3.stats != null}');
+          }
         }
         await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
