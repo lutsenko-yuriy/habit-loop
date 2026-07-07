@@ -222,24 +222,15 @@ void main() {
 
         // ── 8. Tap "Save Changes" ────────────────────────────────────────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
-        // pumpAndSettle drives the 300 ms Material pop animation to completion
-        // so that _onEditPact()'s unawaited load() fires and PactDetailScreen
-        // rebuilds before the assertions below begin.
-        await tester.pumpAndSettle();
-
-        // DIAGNOSTIC: check the in-memory repo and analytics flag after settle.
-        final pactAfterSave = await h.pactRepo.getPactById(_pactId);
-        debugPrint('[test:flow1] repo.habitName after save: "${pactAfterSave?.habitName}"');
-        debugPrint(
-            '[test:flow1] pact_edit_saved in analytics: ${h.analytics.loggedEvents.any((e) => e.name == 'pact_edit_saved')}');
-
-        // DIAGNOSTIC: targeted checks to identify screen state after settle.
-        debugPrint('[test:flow1] hasMorningRun: ${find.text("Morning Run").evaluate().isNotEmpty}');
-        debugPrint('[test:flow1] hasMeditate: ${find.text("Meditate").evaluate().isNotEmpty}');
-        debugPrint('[test:flow1] hasSectionStats: ${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
-        debugPrint('[test:flow1] hasSpinner: ${find.byType(CircularProgressIndicator).evaluate().isNotEmpty}');
-
-        await waitFor(tester, find.text('Morning Run'));
+        // Do NOT use pumpAndSettle — PactDetailScreen's _onEditPact() calls
+        // load() which shows a CircularProgressIndicator; pumpAndSettle() hangs
+        // on that animation indefinitely (same issue as initial navigation above).
+        // Pump past the save() + 300 ms Material pop animation, then wait for
+        // PactDetailScreen to finish reloading (same pattern as initial navigation above).
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
 
         // ── 9. Pact detail shows the new name; old name is gone ──────────
         expect(find.text('Morning Run'), findsAtLeastNWidgets(1));
@@ -338,24 +329,11 @@ void main() {
 
         // ── 8. Tap "Save Changes" — wizard pops back to pact detail ──────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
-        // pumpAndSettle drives the 300 ms Material pop animation to completion
-        // so that _onEditPact()'s unawaited load() fires and PactDetailScreen
-        // rebuilds before the assertions below begin.
-        await tester.pumpAndSettle();
-
-        // DIAGNOSTIC: same as flow 1.
-        final pactAfterSave = await h.pactRepo.getPactById(_pactId);
-        debugPrint('[test:flow2] repo.habitName after save: "${pactAfterSave?.habitName}"');
-        debugPrint(
-            '[test:flow2] pact_edit_saved in analytics: ${h.analytics.loggedEvents.any((e) => e.name == 'pact_edit_saved')}');
-
-        // DIAGNOSTIC: targeted checks to identify screen state after settle.
-        debugPrint('[test:flow2] hasYoga: ${find.text("Yoga").evaluate().isNotEmpty}');
-        debugPrint('[test:flow2] hasMeditate: ${find.text("Meditate").evaluate().isNotEmpty}');
-        debugPrint('[test:flow2] hasSectionStats: ${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
-        debugPrint('[test:flow2] hasSpinner: ${find.byType(CircularProgressIndicator).evaluate().isNotEmpty}');
-
-        await waitFor(tester, find.text('Yoga'));
+        // Same as flow 1: no pumpAndSettle — load() shows CircularProgressIndicator.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
 
         // ── 9. Navigate back → ShowupDetailScreen ────────────────────────
