@@ -222,15 +222,12 @@ void main() {
 
         // ── 8. Tap "Save Changes" ────────────────────────────────────────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
-        // Two explicit pumps let the Dart microtask queue drain (save starts,
-        // route pop fires) before waitFor begins its polling loop.  Without
-        // them the first waitFor check can race against the isSaving transition
-        // and time out before PactDetailScreen finishes reloading.
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        // pumpAndSettle drives the 300 ms Material pop animation to completion
+        // so that _onEditPact()'s unawaited load() fires and PactDetailScreen
+        // rebuilds before the assertions below begin.
+        await tester.pumpAndSettle();
 
-        // DIAGNOSTIC: check the in-memory repo and analytics flag right after
-        // the pumps. Both are logged so CI output reveals where save failed.
+        // DIAGNOSTIC: check the in-memory repo and analytics flag after settle.
         final pactAfterSave = await h.pactRepo.getPactById(_pactId);
         debugPrint('[test:flow1] repo.habitName after save: "${pactAfterSave?.habitName}"');
         debugPrint(
@@ -335,21 +332,16 @@ void main() {
 
         // ── 8. Tap "Save Changes" — wizard pops back to pact detail ──────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        // pumpAndSettle drives the 300 ms Material pop animation to completion
+        // so that _onEditPact()'s unawaited load() fires and PactDetailScreen
+        // rebuilds before the assertions below begin.
+        await tester.pumpAndSettle();
 
         // DIAGNOSTIC: same as flow 1.
         final pactAfterSave = await h.pactRepo.getPactById(_pactId);
         debugPrint('[test:flow2] repo.habitName after save: "${pactAfterSave?.habitName}"');
         debugPrint(
             '[test:flow2] pact_edit_saved in analytics: ${h.analytics.loggedEvents.any((e) => e.name == 'pact_edit_saved')}');
-
-        // Drive several additional frames to let the pop animation complete and
-        // allow _onEditPact()'s reload to rebuild PactDetailScreen. On slow
-        // CI devices the animation may not complete within the two pumps above.
-        for (var i = 0; i < 5; i++) {
-          await tester.pump(const Duration(milliseconds: 100));
-        }
 
         await waitFor(tester, find.text('Yoga'));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
