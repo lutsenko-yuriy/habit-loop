@@ -244,14 +244,17 @@ void main() {
           debugPrint('[DIAG:flow1] hasSpinner=${find.byType(CircularProgressIndicator).evaluate().isNotEmpty}');
           debugPrint('[DIAG:flow1] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
           debugPrint('[DIAG:flow1] hasMorningRun=${find.text("Morning Run").evaluate().isNotEmpty}');
-          // Sample state every second for up to 10 s to catch transitions.
-          for (int i = 1; i <= 10; i++) {
-            final ds2 = container.read(pactDetailViewModelProvider(_pactId));
-            if (!ds2.isLoading && ds2.loadError == null && ds2.pact != null && ds2.stats != null) break;
-            await tester.pump(const Duration(seconds: 1));
-            final ds3 = container.read(pactDetailViewModelProvider(_pactId));
-            debugPrint('[DIAG:flow1:t=${i}s] isLoading=${ds3.isLoading} pact=${ds3.pact?.habitName} loadError=${ds3.loadError} stats=${ds3.stats != null}');
-          }
+          debugPrint('[DIAG:flow1] hasMeditate=${find.text("Meditate").evaluate().isNotEmpty}');
+          // Dump all Text widgets in the element tree.
+          final allTexts1 = find.byType(Text).evaluate().map((e) {
+            final w = e.widget as Text;
+            return w.data ?? w.textSpan?.toPlainText() ?? '<null>';
+          }).where((s) => s.isNotEmpty).toList();
+          debugPrint('[DIAG:flow1] allTexts=$allTexts1');
+          // Pump once and re-check.
+          await tester.pump();
+          debugPrint('[DIAG:flow1:pump1] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
+          debugPrint('[DIAG:flow1:pump1] allTexts=${find.byType(Text).evaluate().map((e) { final w = e.widget as Text; return w.data ?? ''; }).where((s) => s.isNotEmpty).toList()}');
         }
         // Pop done and load() running — wait for PactDetailScreen content.
         await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
@@ -369,13 +372,15 @@ void main() {
           debugPrint('[DIAG:flow2] hasSpinner=${find.byType(CircularProgressIndicator).evaluate().isNotEmpty}');
           debugPrint('[DIAG:flow2] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
           debugPrint('[DIAG:flow2] hasYoga=${find.text("Yoga").evaluate().isNotEmpty}');
-          for (int i = 1; i <= 10; i++) {
-            final ds2 = container.read(pactDetailViewModelProvider(_pactId));
-            if (!ds2.isLoading && ds2.loadError == null && ds2.pact != null && ds2.stats != null) break;
-            await tester.pump(const Duration(seconds: 1));
-            final ds3 = container.read(pactDetailViewModelProvider(_pactId));
-            debugPrint('[DIAG:flow2:t=${i}s] isLoading=${ds3.isLoading} pact=${ds3.pact?.habitName} loadError=${ds3.loadError} stats=${ds3.stats != null}');
-          }
+          debugPrint('[DIAG:flow2] hasMeditate=${find.text("Meditate").evaluate().isNotEmpty}');
+          final allTexts2 = find.byType(Text).evaluate().map((e) {
+            final w = e.widget as Text;
+            return w.data ?? w.textSpan?.toPlainText() ?? '<null>';
+          }).where((s) => s.isNotEmpty).toList();
+          debugPrint('[DIAG:flow2] allTexts=$allTexts2');
+          await tester.pump();
+          debugPrint('[DIAG:flow2:pump1] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
+          debugPrint('[DIAG:flow2:pump1] allTexts=${find.byType(Text).evaluate().map((e) { final w = e.widget as Text; return w.data ?? ''; }).where((s) => s.isNotEmpty).toList()}');
         }
         await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
