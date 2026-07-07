@@ -247,6 +247,10 @@ void main() {
       await tester.enterText(find.byKey(const Key('pact-note-field')), 'Felt great throughout!');
       await tester.pump();
 
+      // Scroll the save button into view before tapping — the software keyboard
+      // opened by the text field pushes the button off-screen on small CI AVDs.
+      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));

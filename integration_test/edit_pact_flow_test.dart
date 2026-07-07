@@ -197,10 +197,13 @@ void main() {
         await tester.pumpAndSettle();
 
         // ── 6. Type the new habit name ───────────────────────────────────
-        // enterText() calls showKeyboard() internally which focuses the field.
-        // No pre-tap needed: create_pact_flow_test passes without it, and the
-        // extra pumpAndSettle() was causing the TextInput connection to be reset
-        // on cold-JIT Android CI before enterText could fire onChanged.
+        // Pre-tap focuses the field and establishes the platform TextInput
+        // connection. pumpAndSettle() is intentionally NOT used after this tap
+        // — it drove the keyboard-open animation long enough to reset the
+        // connection on cold-JIT Android CI before enterText could fire
+        // onChanged. A minimal pump is enough for focus to settle.
+        await tester.tap(find.byKey(const Key('pact-creation-habit-name-field')));
+        await tester.pump(const Duration(milliseconds: 50));
         await tester.enterText(
           find.byKey(const Key('pact-creation-habit-name-field')),
           'Morning Run',
@@ -340,6 +343,13 @@ void main() {
         debugPrint('[test:flow2] repo.habitName after save: "${pactAfterSave?.habitName}"');
         debugPrint(
             '[test:flow2] pact_edit_saved in analytics: ${h.analytics.loggedEvents.any((e) => e.name == 'pact_edit_saved')}');
+
+        // Drive several additional frames to let the pop animation complete and
+        // allow _onEditPact()'s reload to rebuild PactDetailScreen. On slow
+        // CI devices the animation may not complete within the two pumps above.
+        for (var i = 0; i < 5; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
 
         await waitFor(tester, find.text('Yoga'));
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
