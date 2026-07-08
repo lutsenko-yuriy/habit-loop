@@ -211,10 +211,9 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        // DIAGNOSTIC: verify enterText fired setHabitName via the VM state.
-        // 'Morning Run' in the AppBar title = state.habitName was updated.
-        // If this expect fails → enterText did not fire onChanged on this device.
-        expect(find.text('Morning Run'), findsWidgets, reason: 'enterText should update AppBar title via setHabitName');
+        // The AppBar title mirrors state.habitName live — visible now confirms
+        // enterText fired onChanged before we swipe away from the name page.
+        expect(find.text('Morning Run'), findsWidgets, reason: 'enterText did not fire onChanged');
 
         // ── 7. Swipe to reminder page, then to summary page ──────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
@@ -326,7 +325,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // ── 6. Type the new habit name ───────────────────────────────────
-        // Same as flow 1: no pre-tap; enterText handles focus internally.
+        // No pre-tap here: the field is fresh after pumpAndSettle and enterText
+        // focuses it internally. Flow 1 pre-taps to work around a cold-JIT
+        // keyboard timing issue that does not appear on this navigation path.
         await tester.enterText(
           find.byKey(const Key('pact-creation-habit-name-field')),
           'Yoga',
@@ -334,8 +335,8 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        // DIAGNOSTIC: same as flow 1.
-        expect(find.text('Yoga'), findsWidgets, reason: 'enterText should update AppBar title via setHabitName');
+        // Same check as flow 1: AppBar title reflects the new name.
+        expect(find.text('Yoga'), findsWidgets, reason: 'enterText did not fire onChanged');
 
         // ── 7. Swipe to summary ──────────────────────────────────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
