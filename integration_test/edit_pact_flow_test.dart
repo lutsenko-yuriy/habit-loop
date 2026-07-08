@@ -15,7 +15,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -233,44 +232,19 @@ void main() {
         while (find.byKey(const Key('pact-edit-save-button')).evaluate().isNotEmpty) {
           await tester.pump(const Duration(milliseconds: 100));
         }
-        // DIAGNOSTIC: dump provider state immediately after save button disappears.
-        {
-          final container = ProviderScope.containerOf(tester.element(find.byType(Navigator).first));
-          final ds = container.read(pactDetailViewModelProvider(_pactId));
-          debugPrint(
-              '[DIAG:flow1:detail] isLoading=${ds.isLoading} pact=${ds.pact?.habitName} loadError=${ds.loadError} stats=${ds.stats != null}');
-          final es = container.read(pactEditViewModelProvider(_pactId));
-          debugPrint(
-              '[DIAG:flow1:edit] isLoading=${es.isLoading} wizardState=${es.wizardState != null} saveError=${es.saveError} isSaving=${es.isSaving}');
-          debugPrint(
-              '[DIAG:flow1] hasSaveButton=${find.byKey(const Key("pact-edit-save-button")).evaluate().isNotEmpty}');
-          debugPrint('[DIAG:flow1] hasSpinner=${find.byType(CircularProgressIndicator).evaluate().isNotEmpty}');
-          debugPrint(
-              '[DIAG:flow1] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
-          debugPrint('[DIAG:flow1] hasMorningRun=${find.text("Morning Run").evaluate().isNotEmpty}');
-          debugPrint('[DIAG:flow1] hasMeditate=${find.text("Meditate").evaluate().isNotEmpty}');
-          // Dump all Text widgets in the element tree.
-          final allTexts1 = find
-              .byType(Text)
-              .evaluate()
-              .map((e) {
-                final w = e.widget as Text;
-                return w.data ?? w.textSpan?.toPlainText() ?? '<null>';
-              })
-              .where((s) => s.isNotEmpty)
-              .toList();
-          debugPrint('[DIAG:flow1] allTexts=$allTexts1');
-          // Pump once and re-check.
-          await tester.pump();
-          debugPrint(
-              '[DIAG:flow1:pump1] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
-          debugPrint('[DIAG:flow1:pump1] allTexts=${find.byType(Text).evaluate().map((e) {
-                final w = e.widget as Text;
-                return w.data ?? '';
-              }).where((s) => s.isNotEmpty).toList()}');
-        }
-        // Pop done and load() running — wait for PactDetailScreen content.
-        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
+        // Pop complete. load() ran concurrently with the pop animation and has
+        // already updated pactDetailViewModelProvider (pact='Morning Run'). The
+        // ListView preserved its scroll position from step 3 (scrolled down to
+        // Stop Pact), so the habit name and STATS header are above the viewport
+        // and not in the element tree. Scroll back up to reveal them.
+        await tester.scrollUntilVisible(
+          find.text('Morning Run'),
+          -200.0,
+          scrollable: find.ancestor(
+            of: find.text(strings.stopPact),
+            matching: find.byType(Scrollable),
+          ),
+        );
 
         // ── 9. Pact detail shows the new name; old name is gone ──────────
         expect(find.text('Morning Run'), findsAtLeastNWidgets(1));
@@ -374,41 +348,16 @@ void main() {
         while (find.byKey(const Key('pact-edit-save-button')).evaluate().isNotEmpty) {
           await tester.pump(const Duration(milliseconds: 100));
         }
-        // DIAGNOSTIC: same as flow 1.
-        {
-          final container = ProviderScope.containerOf(tester.element(find.byType(Navigator).first));
-          final ds = container.read(pactDetailViewModelProvider(_pactId));
-          debugPrint(
-              '[DIAG:flow2:detail] isLoading=${ds.isLoading} pact=${ds.pact?.habitName} loadError=${ds.loadError} stats=${ds.stats != null}');
-          final es = container.read(pactEditViewModelProvider(_pactId));
-          debugPrint(
-              '[DIAG:flow2:edit] isLoading=${es.isLoading} wizardState=${es.wizardState != null} saveError=${es.saveError} isSaving=${es.isSaving}');
-          debugPrint(
-              '[DIAG:flow2] hasSaveButton=${find.byKey(const Key("pact-edit-save-button")).evaluate().isNotEmpty}');
-          debugPrint('[DIAG:flow2] hasSpinner=${find.byType(CircularProgressIndicator).evaluate().isNotEmpty}');
-          debugPrint(
-              '[DIAG:flow2] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
-          debugPrint('[DIAG:flow2] hasYoga=${find.text("Yoga").evaluate().isNotEmpty}');
-          debugPrint('[DIAG:flow2] hasMeditate=${find.text("Meditate").evaluate().isNotEmpty}');
-          final allTexts2 = find
-              .byType(Text)
-              .evaluate()
-              .map((e) {
-                final w = e.widget as Text;
-                return w.data ?? w.textSpan?.toPlainText() ?? '<null>';
-              })
-              .where((s) => s.isNotEmpty)
-              .toList();
-          debugPrint('[DIAG:flow2] allTexts=$allTexts2');
-          await tester.pump();
-          debugPrint(
-              '[DIAG:flow2:pump1] hasSectionStats=${find.text(strings.sectionStats.toUpperCase()).evaluate().isNotEmpty}');
-          debugPrint('[DIAG:flow2:pump1] allTexts=${find.byType(Text).evaluate().map((e) {
-                final w = e.widget as Text;
-                return w.data ?? '';
-              }).where((s) => s.isNotEmpty).toList()}');
-        }
-        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
+        // Same as flow 1: ListView preserved scroll position (scrolled to Stop
+        // Pact from step 3). Scroll back up to reveal the updated habit name.
+        await tester.scrollUntilVisible(
+          find.text('Yoga'),
+          -200.0,
+          scrollable: find.ancestor(
+            of: find.text(strings.stopPact),
+            matching: find.byType(Scrollable),
+          ),
+        );
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
 
         // ── 9. Navigate back → ShowupDetailScreen ────────────────────────
