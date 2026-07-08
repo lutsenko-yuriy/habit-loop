@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.0] — 2026-07-08 (PR #236 merged)
+
+### Added
+
+- [ci] HAB-151: run-scenarios CI job — runs full integration test suite on Android emulator (API 29) after every build-android on main; dorny/test-reporter publishes per-test pass/fail check; shields.io Gist badge; workflow_dispatch run_scenarios input for on-demand runs on any branch
+- [ci] Gradle build cache shared between build-android and run-scenarios jobs to reduce emulator session build time
+- [meta] Remove mandatory local run-scenarios from ship workflow — CI now runs scenarios automatically post-merge
+- [app] [non-user] Extracted feedback URL launch into an injectable `launchUrlProvider` so integration tests can stub it and avoid opening a real browser during CI runs
+
 ## [0.49.6] — 2026-07-06
 
 ### Fixed

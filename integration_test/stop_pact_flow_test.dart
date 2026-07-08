@@ -2,6 +2,7 @@
 //
 // Run on host:   flutter test integration_test/stop_pact_flow_test.dart
 // Run on device: flutter test integration_test/stop_pact_flow_test.dart -d <device>
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -72,7 +73,18 @@ void main() {
 
       // ── 3. Navigate to pact detail ────────────────────────────────────
       await tester.tap(find.text(strings.showupViewPactDetails));
-      await waitFor(tester, find.text(strings.stopPact));
+      // sectionStats is near the top of _PactDetailContent and only rendered
+      // after the VM finishes loading — reliable on any screen size.
+      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
+      // Stop Pact is at the bottom of the ListView; scroll to build + reveal it.
+      await tester.scrollUntilVisible(
+        find.text(strings.stopPact),
+        200.0,
+        scrollable: find.ancestor(
+          of: find.text(strings.sectionStats.toUpperCase()),
+          matching: find.byType(Scrollable),
+        ),
+      );
 
       // ── 4. Tap Stop Pact → dialog appears ────────────────────────────
       await tester.tap(find.text(strings.stopPact));

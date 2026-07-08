@@ -55,6 +55,7 @@ import 'package:habit_loop/slices/showup/application/showup_generation_service.d
 import 'package:habit_loop/slices/showup/application/showup_service.dart';
 import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ---------------------------------------------------------------------------
 // Auth and device identity providers
@@ -112,6 +113,12 @@ final deviceInfoProvider = FutureProvider<({String model, String osVersion})>((r
   } catch (_) {}
   return (model: '', osVersion: '');
 });
+
+/// Launches a [Uri] in the external browser. Override in tests with a no-op to
+/// prevent the system browser from opening and stealing the test session.
+final launchUrlProvider = Provider<Future<void> Function(Uri)>(
+  (ref) => (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
+);
 
 /// Returns `"vX.Y.Z (N)"` or `""` on failure. Derived from [packageInfoProvider].
 final appVersionProvider = FutureProvider<String>((ref) async {

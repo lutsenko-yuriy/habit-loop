@@ -24,6 +24,10 @@ on:
         description: 'Deploy (production only)'
         type: boolean
         default: true
+      run_scenarios:
+        description: 'Run integration scenarios (Android emulator)'
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -146,55 +150,6 @@ jobs:
   # Disabled — integration tests are run locally before merging (see AGENTS.md
   # workflow step 16). Re-enable with `if: needs.check-skip.outputs.should_skip != 'true'`
   # if CI coverage is desired in the future.
-  test-ios-integration:
-    needs: check-skip
-    if: false
-    runs-on: macos-15
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Restore Firebase config files
-        run: |
-          echo "$FIREBASE_OPTIONS_DART"     | base64 --decode > lib/firebase_options.dart
-          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
-        env:
-          FIREBASE_OPTIONS_DART:       ${{ secrets.FIREBASE_OPTIONS_DART }}
-          GOOGLE_SERVICE_INFO_PLIST:   ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-
-      # Keep CocoaPods as the plugin installer — same reason as build-ios.
-      - run: flutter config --no-enable-swift-package-manager
-      - run: flutter pub get
-      - run: flutter gen-l10n
-
-      - name: Boot iOS Simulator
-        run: |
-          # Pick the first available iPhone simulator and boot it.
-          UDID=$(xcrun simctl list devices available -j \
-            | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          for runtime, devices in data['devices'].items():
-              if 'iOS' in runtime:
-                  for d in devices:
-                      if 'iPhone' in d['name'] and d['isAvailable']:
-                          print(d['udid'])
-                          sys.exit(0)
-          sys.exit(1)
-          ")
-          xcrun simctl boot "$UDID"
-          echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
-
-      - name: Run iOS integration tests
-        # Two-attempt retry covers transient simulator startup flakiness.
-        run: |
-          flutter test integration_test/ -d "$SIMULATOR_UDID" \
-            || flutter test integration_test/ -d "$SIMULATOR_UDID"
-
   # ── Resolve build number (push to main, or manual workflow_dispatch) ────────
   resolve-version:
     needs: [check-skip, test]
@@ -333,12 +288,109 @@ jobs:
           fi
           echo "success=true" >> "$GITHUB_OUTPUT"
 
+      - name: Save Gradle build cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+
       - uses: actions/upload-artifact@v4
         if: steps.build.outputs.success == 'true'
         with:
           name: android-release
           path: build/app/outputs/flutter-apk/${{ steps.build.outputs.apk_name }}
           retention-days: 7
+
+  # ── Run integration scenarios on Android emulator ────────────────────────
+  run-scenarios:
+    needs: [check-skip, build-android]
+    if: |
+      always() &&
+      needs.check-skip.outputs.should_skip != 'true' &&
+      (
+        (github.ref == 'refs/heads/main' && needs.build-android.result == 'success') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.run_scenarios == 'true')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore Firebase config files
+        run: |
+          echo "$FIREBASE_OPTIONS_DART" | base64 --decode > lib/firebase_options.dart
+          echo "$GOOGLE_SERVICES_JSON"  | base64 --decode > android/app/google-services.json
+        env:
+          FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
+          GOOGLE_SERVICES_JSON:  ${{ secrets.GOOGLE_SERVICES_JSON }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+      - run: flutter gen-l10n
+
+      - name: Restore Gradle build cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build debug APK (warm up Gradle)
+        run: flutter build apk --debug
+
+      - name: Run integration scenarios
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          script: bash -c "set -o pipefail; flutter test integration_test/test_runner.dart --machine --no-pub --timeout=300s | tee test-results.json"
+
+      - name: Strip non-JSON lines from test results
+        if: always()
+        run: python3 scripts/ci/strip_test_json.py
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: run-scenarios
+          path: test-results.json
+          reporter: dart-json
+          fail-on-error: false
+
+      - name: Write job summary
+        if: always()
+        run: python3 scripts/ci/scenarios_summary.py
+
+      - name: Update badge gist
+        if: always()
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ vars.SCENARIOS_GIST_ID }}
+        run: |
+          [ -z "$GIST_TOKEN" ] && echo "GIST_TOKEN not set, skipping badge update" && exit 0
+          [ -z "$GIST_ID" ] && echo "SCENARIOS_GIST_ID not set, skipping badge update" && exit 0
+          python3 scripts/ci/update_scenarios_badge.py
 
   # ── Distribute Android to Firebase App Distribution ───────────────────────
   distribute-android:

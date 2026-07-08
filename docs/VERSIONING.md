@@ -92,3 +92,10 @@ Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]
 | `FIREBASE_IOS_APP_ID` | `distribute-ios` | Firebase Console → iOS app → App ID (e.g. `1:123456789012:ios:abc123`) |
 | `FIREBASE_SERVICE_ACCOUNT_IOS` | `distribute-ios` | Same as above — may reuse the Android service account JSON |
 | `CODECOV_TOKEN` | `test` | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability |
+| `GIST_TOKEN` | `run-scenarios` | GitHub PAT with `gist` scope — used to update the scenarios badge gist; optional (badge update is skipped if absent) |
+
+**Required GitHub Actions Variables** (repository-level, not secrets):
+
+| Variable | Used by | How to obtain |
+|---|---|---|
+| `SCENARIOS_GIST_ID` | `run-scenarios` | Create a public Gist at [gist.github.com](https://gist.github.com) with a file named `scenarios.json`; use the Gist ID from the URL. Update the badge URL in `README.md` to match. |

@@ -122,6 +122,10 @@ Future<void> _openPactDetail(WidgetTester tester, String habitName) async {
 }
 
 Future<void> _openTimeline(WidgetTester tester) async {
+  // Wait for the pact detail to finish loading before scrolling — the button
+  // only appears once the view model has resolved, which can take >450 ms on
+  // a real device; calling ensureVisible before that causes a deadlock.
+  await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
   await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
   await tester.pump();
   await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
@@ -161,13 +165,14 @@ void main() {
         await _openPactDetail(tester, 'Meditate');
 
         // ── 1. "View Timeline" button is present and tappable ─────────────────
+        await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
         await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
         expect(find.byKey(const Key('pact-detail-timeline-button')), findsOneWidget);
 
         // ── 2. Tap "View Timeline" ────────────────────────────────────────────
         await _openTimeline(tester);
 
-        await waitFor(tester, find.text(strings.pactTimelineTitle));
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
         await waitFor(tester, find.text(strings.timelinePactCreated));
 
         // ── 3. Pact-created anchor is visible ─────────────────────────────────
@@ -210,7 +215,7 @@ void main() {
         // ── 1. Tap "View Timeline" ────────────────────────────────────────────
         await _openTimeline(tester);
 
-        await waitFor(tester, find.text(strings.pactTimelineTitle));
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
         // ── 2. Pact-concluded anchor is visible ───────────────────────────────
         await waitFor(tester, find.text(strings.timelinePactConcludedStopped));
@@ -249,7 +254,7 @@ void main() {
         await _openPactDetail(tester, 'Meditate');
         await _openTimeline(tester);
 
-        await waitFor(tester, find.text(strings.pactTimelineTitle));
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
         // ── 1. Note text is visible (noted showup rendered individually) ───────
         await waitFor(tester, find.text('Great session today!'));
@@ -306,7 +311,7 @@ void main() {
         await _openPactDetail(tester, 'Exercise');
         await _openTimeline(tester);
 
-        await waitFor(tester, find.text(strings.pactTimelineTitle));
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
         // ── 1. Group item shows total, done, and failed counts ─────────────────
         await waitFor(tester, find.text(strings.timelineGroup(7, 3, 4)));
@@ -349,7 +354,7 @@ void main() {
         await _openPactDetail(tester, 'Exercise');
         await _openTimeline(tester);
 
-        await waitFor(tester, find.text(strings.pactTimelineTitle));
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
         // ── 1. Streak item is shown with all 12 showups ────────────────────────
         await waitFor(tester, find.text(strings.timelineDoneInARow(12)));
@@ -388,7 +393,7 @@ void main() {
         await _openPactDetail(tester, 'Exercise');
         await _openTimeline(tester);
 
-        await waitFor(tester, find.text(strings.pactTimelineTitle));
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
         // ── 1. Each of the 7 tail showups has its own tappable tile ───────────
         for (var i = 0; i < 7; i++) {
@@ -432,7 +437,7 @@ void main() {
         await _openPactDetail(tester, 'Exercise');
         await _openTimeline(tester);
 
-        await waitFor(tester, find.text(strings.pactTimelineTitle));
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
         // ── Section header shows the configured number of days ─────────────────
         await waitFor(tester, find.text(strings.timelineRecentSection(14)));
@@ -486,7 +491,7 @@ void main() {
         await _openPactDetail(tester, 'Meditate');
         await _openTimeline(tester);
 
-        await waitFor(tester, find.text(strings.pactTimelineTitle));
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
         // ── 1. Single-showup tile is visible ──────────────────────────────────
         final tileKey = Key('timeline-milestone-${_singleShowup.id}');

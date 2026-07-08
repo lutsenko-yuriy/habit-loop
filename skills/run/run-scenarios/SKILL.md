@@ -35,13 +35,15 @@ find integration_test/ -iname "*hab*<N>*"
 
 If files are found, run only those. If none match, fall back to the full suite and note the fallback.
 
-**Without an argument:** run the full suite — `integration_test/`.
+**Without an argument:** run the full suite via the combined runner to avoid per-file reinstall overhead — `integration_test/test_runner.dart`.
 
 ### 3. Run
 
 ```bash
 <flutter> test <target> -d <device-id> --reporter expanded
 ```
+
+When `<target>` is a single specific file (HAB-XX match), run it directly. When it is the full suite, use `integration_test/test_runner.dart` as the target.
 
 ### 4. Report
 

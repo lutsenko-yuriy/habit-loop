@@ -2,6 +2,7 @@
 //
 // Run on host:   flutter test integration_test/showup_to_pact_navigation_flow_test.dart
 // Run on device: flutter test integration_test/showup_to_pact_navigation_flow_test.dart -d <device>
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -87,9 +88,18 @@ void main() {
         await tester.tap(find.text(strings.showupViewPactDetails));
 
         // ── 5. Pact detail screen is shown ───────────────────────────────
-        // Wait for the 'Stop Pact' button which is unique to pact detail.
-        // This also implicitly waits for the page VM to load.
-        await waitFor(tester, find.text(strings.stopPact));
+        // sectionStats is near the top of _PactDetailContent and only rendered
+        // after the VM finishes loading — reliable on any screen size.
+        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
+        // Stop Pact lives at the bottom of the ListView; scroll to build + reveal it.
+        await tester.scrollUntilVisible(
+          find.text(strings.stopPact),
+          200.0,
+          scrollable: find.ancestor(
+            of: find.text(strings.sectionStats.toUpperCase()),
+            matching: find.byType(Scrollable),
+          ),
+        );
         expect(find.text(strings.stopPact), findsOneWidget);
         // Note: markDone is still in the widget tree (showup detail is kept
         // alive below pact detail in the navigator stack) — don't assert it's
@@ -98,7 +108,7 @@ void main() {
         // Let the page-transition slide-in animation fully complete before
         // navigating back; otherwise the back button may not yet be in the
         // tree. pumpAndSettle() is safe here — the pact detail VM has already
-        // loaded (confirmed by waitFor(stopPact) above), so no spinner is running.
+        // loaded (confirmed by waitFor(sectionStats) above), so no spinner is running.
         await tester.pumpAndSettle();
 
         // ── 6. Navigate back → return to showup detail ───────────────────

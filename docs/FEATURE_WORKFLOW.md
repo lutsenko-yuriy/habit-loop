@@ -158,15 +158,11 @@ For each WU in sequence:
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
     6. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.).
 16. Remind the user to clear the context after each commit to keep the conversation lean.
-17. When the user approves the PR, run the full integration test suite via the `run-scenarios` skill before invoking `ship`:
-    ```
-    Invoke the run-scenarios skill
-    ```
-    Or: `/run-scenarios`
-    All scenarios must be green. Do not invoke `ship` if any scenario is failing. Once they pass, invoke the `ship` skill:
+17. When the user approves the PR, invoke the `ship` skill:
     ```
     Invoke the ship skill for PR #<number>
     ```
     The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
+    Integration scenarios run automatically on CI after merge (see HAB-151). Use `/run-scenarios` manually if you want to verify locally before merging.
 18. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
 19. A new ticket may be picked up while the previous one is In QA.

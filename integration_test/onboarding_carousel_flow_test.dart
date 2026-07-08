@@ -40,16 +40,16 @@ void main() {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
-      // timedDrag gives the gesture a release velocity, which PageScrollPhysics
-      // uses to determine whether to advance the page.
+      // 300 px stays within one page width on any ≥320 dp device
+      // ((300/320)+0.5=1.44 → rounds to 1). A wider drag (e.g. 400 px)
+      // overshoots to page 2 on ≤400 dp screens ((400/390)+0.5=1.53 → 2),
+      // causing pumpAndSettle to settle there instead of slide 1.
+      // 50 ms keeps velocity ~6000 px/s, well above the snap threshold.
       await tester.timedDrag(
         find.text(strings.onboardingSlide0Title),
-        const Offset(-400, 0),
-        const Duration(milliseconds: 300),
+        const Offset(-300, 0),
+        const Duration(milliseconds: 50),
       );
-      // waitFor handles a slow page transition start on real devices;
-      // pumpAndSettle after it ensures the animation fully completes
-      // before asserting the previous slide is no longer visible.
       await waitFor(tester, find.text(strings.onboardingSlide1Title));
       await tester.pumpAndSettle();
 
@@ -61,11 +61,14 @@ void main() {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
       final strings = l10n(tester);
 
-      // Advance to slide 1.
+      // Advance to slide 1 using the same 300 px drag as the "swiping left"
+      // test: on a ≤320 dp device (CI AVD) a 400 px drag overshoots to page 2
+      // ((400/320)+0.5=1.75 → round=2), putting slide 1 off-screen so the
+      // subsequent timedDrag(slide1Title, ...) fails with StateError.
       await tester.timedDrag(
         find.text(strings.onboardingSlide0Title),
-        const Offset(-400, 0),
-        const Duration(milliseconds: 300),
+        const Offset(-300, 0),
+        const Duration(milliseconds: 50),
       );
       await waitFor(tester, find.text(strings.onboardingSlide1Title));
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
@@ -74,7 +77,7 @@ void main() {
       await tester.timedDrag(
         find.text(strings.onboardingSlide1Title),
         const Offset(400, 0),
-        const Duration(milliseconds: 300),
+        const Duration(milliseconds: 50),
       );
       await waitFor(tester, find.text(strings.onboardingSlide0Title));
 

@@ -250,7 +250,9 @@ void main() {
       await waitFor(tester, find.text(strings.markDone));
 
       await tester.tap(find.text(strings.showupViewPactDetails));
-      await waitFor(tester, find.text(strings.stopPact));
+      // sectionStats is near the top of _PactDetailContent and only rendered
+      // after the VM finishes loading — reliable on any screen size.
+      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
 
       expect(find.byKey(const Key('archive-pact-button')), findsNothing);
     });
@@ -319,6 +321,9 @@ void main() {
       expect(find.text('Cycling'), findsNothing);
 
       // ── 2. Tap chip → archived pact appears ───────────────────────────────
+      // ensureVisible scrolls the horizontal chip row to bring the chip into
+      // view on narrow screens (e.g. 320 dp CI AVD) before tapping.
+      await tester.ensureVisible(find.byKey(const Key('archive-filter-chip')));
       await tester.tap(find.byKey(const Key('archive-filter-chip')));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Cycling'), findsOneWidget);

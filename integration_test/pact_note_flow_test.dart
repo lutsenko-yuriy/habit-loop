@@ -92,6 +92,10 @@ Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) asyn
   await tester.tap(find.text(habitName).last);
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump(const Duration(milliseconds: 100));
+  // sectionStats is near the top of _PactDetailContent and only rendered after
+  // the VM finishes loading — reliable on any screen size. The note field is
+  // below the fold; each test uses scrollUntilVisible to bring it into view.
+  await waitFor(tester, find.text(l10n(tester).sectionStats.toUpperCase()));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -117,9 +121,22 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Morning Run');
+      final strings = l10n(tester);
 
       // ── 1. Notes field is visible and pre-populated ───────────────────────
-      await waitFor(tester, find.byKey(const Key('pact-note-field')));
+      // The note section is below the fold on small screens — scroll to reveal.
+      // Use sectionStats (already in the tree after _openInactivePactDetail) as
+      // the scrollable anchor instead of pact-note-field, which is not yet
+      // built by the lazy ListView when scrollUntilVisible first evaluates the
+      // finder (causing Iterable.single: No element on narrow CI screens).
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-note-field')),
+        200.0,
+        scrollable: find.ancestor(
+          of: find.text(strings.sectionStats.toUpperCase()),
+          matching: find.byType(Scrollable),
+        ),
+      );
       expect(find.text('Got injured'), findsOneWidget);
 
       // ── 2. Save button is disabled (no changes yet) ────────────────────────
@@ -168,7 +185,15 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Morning Run');
-      await waitFor(tester, find.byKey(const Key('pact-note-field')));
+      final strings = l10n(tester);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-note-field')),
+        200.0,
+        scrollable: find.ancestor(
+          of: find.text(strings.sectionStats.toUpperCase()),
+          matching: find.byType(Scrollable),
+        ),
+      );
 
       await tester.tap(find.byKey(const Key('pact-note-field')));
       await tester.pumpAndSettle();
@@ -203,7 +228,15 @@ void main() {
       );
 
       await _openInactivePactDetail(tester, 'Evening Walk');
-      await waitFor(tester, find.byKey(const Key('pact-note-field')));
+      final strings = l10n(tester);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-note-field')),
+        200.0,
+        scrollable: find.ancestor(
+          of: find.text(strings.sectionStats.toUpperCase()),
+          matching: find.byType(Scrollable),
+        ),
+      );
 
       // ── 1. Field starts empty ─────────────────────────────────────────────
       expect(_noteFieldText(tester), isEmpty);
@@ -214,6 +247,10 @@ void main() {
       await tester.enterText(find.byKey(const Key('pact-note-field')), 'Felt great throughout!');
       await tester.pump();
 
+      // Scroll the save button into view before tapping — the software keyboard
+      // opened by the text field pushes the button off-screen on small CI AVDs.
+      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
@@ -249,7 +286,19 @@ void main() {
       await waitFor(tester, find.text(strings.markDone));
 
       await tester.tap(find.text(strings.showupViewPactDetails));
-      await waitFor(tester, find.text(strings.stopPact));
+      // sectionStats is near the top of _PactDetailContent and only rendered after
+      // the VM finishes loading — reliable on any screen size. Stop Pact lives at
+      // the bottom of the ListView; use sectionStats to scope the Scrollable so
+      // scrollUntilVisible works even when stopPact is not yet built.
+      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
+      await tester.scrollUntilVisible(
+        find.text(strings.stopPact),
+        200.0,
+        scrollable: find.ancestor(
+          of: find.text(strings.sectionStats.toUpperCase()),
+          matching: find.byType(Scrollable),
+        ),
+      );
 
       expect(find.byKey(const Key('pact-note-field')), findsNothing);
       expect(find.byKey(const Key('pact-note-save-button')), findsNothing);

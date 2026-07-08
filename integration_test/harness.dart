@@ -149,6 +149,15 @@ class AppHarness {
 
     if (beforePump != null) await beforePump(harness);
 
+    // Register widget-tree teardown via addTearDown so it runs while
+    // LiveTestWidgetsFlutterBinding.inTest is still true. Regular tearDown
+    // callbacks run after the binding clears inTest, at which point pump()
+    // throws an assertion. addTearDown runs before that boundary.
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 50));
+    });
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -199,6 +208,10 @@ class AppHarness {
     return harness;
   }
 
+  /// Closes services. Widget-tree cleanup is handled by the [addTearDown]
+  /// registered in [create] — it runs while [LiveTestWidgetsFlutterBinding]
+  /// still has [inTest] set, which allows [pump] to be called. This method
+  /// only closes services, so it is safe to call from a regular [tearDown].
   void dispose() {
     auth.dispose();
   }
@@ -221,7 +234,7 @@ AppLocalizations l10n(WidgetTester tester) {
 Future<void> waitFor(
   WidgetTester tester,
   Finder finder, {
-  Duration timeout = const Duration(seconds: 10),
+  Duration timeout = const Duration(seconds: 30),
 }) async {
   final deadline = tester.binding.clock.now().add(timeout);
   while (!finder.evaluate().isNotEmpty) {

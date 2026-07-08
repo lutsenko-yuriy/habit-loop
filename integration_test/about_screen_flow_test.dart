@@ -59,7 +59,14 @@ void main() {
     });
 
     testWidgets('feedback_tapped_fires_analytics_event', (tester) async {
-      h = await AppHarness.create(tester);
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          // Prevent the real browser from opening during the integration test —
+          // it steals the foreground and severs the debug connection.
+          launchUrlProvider.overrideWithValue((_) async {}),
+        ],
+      );
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
       await _openAboutScreen(tester);
