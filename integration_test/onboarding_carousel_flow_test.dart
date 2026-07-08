@@ -71,6 +71,7 @@ void main() {
         const Duration(milliseconds: 50),
       );
       await waitFor(tester, find.text(strings.onboardingSlide1Title));
+      await tester.pumpAndSettle();
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
 
       // Swipe back to slide 0.
