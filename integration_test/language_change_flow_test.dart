@@ -15,7 +15,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('selecting Russian re-renders carousel in Russian', (tester) async {
+    testWidgets(
+        'selecting_russian_rerenders_carousel: selecting Russian from the language picker re-renders the onboarding carousel in Russian and persists the locale',
+        (tester) async {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 

@@ -19,7 +19,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('carousel is shown on first launch when there are no pacts', (tester) async {
+    testWidgets(
+        'carousel_shown_on_first_launch_with_no_pacts: onboarding carousel is shown on first launch when there are no pacts',
+        (tester) async {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 
@@ -29,7 +31,7 @@ void main() {
       expect(find.byKey(const Key('language-picker-button')), findsNothing);
     });
 
-    testWidgets('swiping left advances to slide 1', (tester) async {
+    testWidgets('swipe_left_advances_to_slide_1: swiping left advances the carousel to slide 1', (tester) async {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 
@@ -50,7 +52,8 @@ void main() {
       expect(find.text(strings.onboardingSlide0Title), findsNothing);
     });
 
-    testWidgets('swiping right returns to slide 0', (tester) async {
+    testWidgets('swipe_right_returns_to_slide_0: swiping right after advancing returns the carousel to slide 0',
+        (tester) async {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 
@@ -78,7 +81,9 @@ void main() {
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
     });
 
-    testWidgets('tapping "Language" opens language picker and saving a locale persists it', (tester) async {
+    testWidgets(
+        'tap_language_opens_picker_and_persists_locale: tapping "Language" opens the language picker and saving a locale persists it',
+        (tester) async {
       h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 

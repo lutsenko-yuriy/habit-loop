@@ -27,7 +27,7 @@ void main() {
     });
 
     testWidgets(
-      'fresh install with stale Keychain auth: signs out and shows not-linked state',
+      'stale_keychain_auth_signs_out: fresh install with stale Keychain auth signs out and shows not-linked state',
       (tester) async {
         // No launched key → first launch after reinstall on iOS.
         SharedPreferences.setMockInitialValues({});
@@ -55,7 +55,7 @@ void main() {
     );
 
     testWidgets(
-      'returning user with device ID is not affected: stays logged in',
+      'returning_user_with_device_id_stays_logged_in: returning user with a device ID is not affected by the stale-Keychain fix and stays logged in',
       (tester) async {
         // Launched key present → returning user, not a fresh install.
         SharedPreferences.setMockInitialValues({firstLaunchHandledKey: true});

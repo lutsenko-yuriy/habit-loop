@@ -46,7 +46,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('full wizard creates a pact and showup appears on dashboard', (tester) async {
+    testWidgets(
+        'full_wizard_creates_pact: completing all wizard steps creates a pact, shows today\'s showup, and fires pact_created',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         initiallyAnonymous: true,

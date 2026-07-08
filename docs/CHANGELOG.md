@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.5] — 2026-07-09
+
+### Changed — WIP
+
+- [wip] HAB-153 WU4: harmonized `testWidgets` scenario names across 14 integration test files to the `snake_case_name: english description` convention already used in `archive_pact_flow_test.dart`/`pact_timeline_flow_test.dart`/`redeem_showup_flow_test.dart`; naming only, no logic or assertion changes; full suite (2052 unit/widget + 59 integration) green on both iOS Simulator and Android emulator
+
 ## [0.50.4] — 2026-07-09
 
 ### Changed — WIP

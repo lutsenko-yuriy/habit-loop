@@ -41,7 +41,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets(
-      'tapping habit name on showup detail opens pact detail, back returns to showup detail',
+      'tap_habit_name_navigates_to_pact_and_back: tapping habit name on showup detail opens pact detail, back returns to showup detail',
       (tester) async {
         h = await AppHarness.create(
           tester,
@@ -134,7 +134,7 @@ void main() {
     );
 
     testWidgets(
-      'habit name is not tappable when pact is deleted — no navigation occurs',
+      'habit_name_not_tappable_when_pact_deleted: habit name is not tappable when pact is deleted — no navigation occurs',
       (tester) async {
         // Seed only the showup — no corresponding pact in the repository.
         // habitName will resolve to null in ShowupDetailViewModel.load().

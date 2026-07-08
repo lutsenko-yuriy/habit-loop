@@ -40,7 +40,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('stopping a pact from pact detail marks it stopped and cancels notifications', (tester) async {
+    testWidgets(
+        'stop_from_pact_detail_marks_stopped_and_cancels_notifications: stopping a pact from pact detail marks it stopped and cancels notifications',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [

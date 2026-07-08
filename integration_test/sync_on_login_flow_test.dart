@@ -158,7 +158,8 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('sign-in pulls remote data and shows it on the dashboard', (tester) async {
+    testWidgets('sign_in_pulls_remote_data_onto_dashboard: sign-in pulls remote data and shows it on the dashboard',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         initiallyAnonymous: true,
@@ -191,7 +192,9 @@ void main() {
       expect(find.text('Morning Run'), findsOneWidget);
     });
 
-    testWidgets('forceSyncAll reads dirty local records from the wired sync repos after sign-in', (tester) async {
+    testWidgets(
+        'force_sync_all_reads_dirty_records_after_sign_in: forceSyncAll reads dirty local records from the wired sync repos after sign-in',
+        (tester) async {
       // Regression guard for HAB-73: main.dart was not passing pactSyncRepository
       // and showupSyncRepository to AppContainer.overrides(), so getDirtyPacts()
       // always returned [] from the noop defaults and local records were never
@@ -246,7 +249,8 @@ void main() {
       expect(capturer.flushedShowupIds, contains(_localShowupId));
     });
 
-    testWidgets('sign-in merges remote data with pre-existing local pacts', (tester) async {
+    testWidgets('sign_in_merges_remote_with_local_pacts: sign-in merges remote data with pre-existing local pacts',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         initiallyAnonymous: true,

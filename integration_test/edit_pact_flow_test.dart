@@ -109,7 +109,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets(
-      'renaming pact from pact detail updates the displayed habit name',
+      'rename_from_pact_detail_updates_displayed_name: renaming pact from pact detail updates the displayed habit name',
       (tester) async {
         h = await AppHarness.create(
           tester,
@@ -251,7 +251,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets(
-      'renaming pact updates the habit name shown on ShowupDetailScreen',
+      'rename_via_showup_detail_updates_shown_name: renaming pact via showup detail → pact detail → edit updates the habit name shown on ShowupDetailScreen',
       (tester) async {
         h = await AppHarness.create(
           tester,

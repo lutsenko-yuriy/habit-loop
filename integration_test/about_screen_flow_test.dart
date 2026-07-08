@@ -28,7 +28,8 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('about_button_opens_about_screen', (tester) async {
+    testWidgets('about_button_opens_about_screen: tapping the About item in the kebab menu opens the About screen',
+        (tester) async {
       h = await AppHarness.create(tester);
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
@@ -37,7 +38,8 @@ void main() {
       expect(find.text(l10n(tester).aboutTitle), findsOneWidget);
     });
 
-    testWidgets('about_screen_shows_app_info', (tester) async {
+    testWidgets('about_screen_shows_app_info: About screen displays app name, version, build number, and copyright',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -58,7 +60,9 @@ void main() {
       expect(find.text('© 2026 Iurii Lutsenko'), findsOneWidget);
     });
 
-    testWidgets('feedback_tapped_fires_analytics_event', (tester) async {
+    testWidgets(
+        'feedback_tapped_fires_analytics_event: tapping Send Feedback on the About screen fires FeedbackTappedEvent',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -80,7 +84,9 @@ void main() {
       );
     });
 
-    testWidgets('about_button_hidden_when_flag_disabled', (tester) async {
+    testWidgets(
+        'about_button_hidden_when_flag_disabled: about_screen_enabled=false hides the About button in the kebab menu',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [

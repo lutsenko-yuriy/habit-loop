@@ -46,7 +46,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('pullRemoteChanges merges FakeFirestoreClient data onto dashboard after sign-in', (tester) async {
+    testWidgets(
+        'pull_remote_changes_merges_onto_dashboard: pullRemoteChanges merges FakeFirestoreClient data onto dashboard after sign-in',
+        (tester) async {
       final updatedAt = DateTime(2099, 7, 1);
       final fakeFirestore = FakeFirestoreClient()
         ..seed(FakeFirestoreSeedData(
@@ -85,7 +87,9 @@ void main() {
       expect(find.text('Remote Meditation'), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('FaultInjectingFirestoreClient in absent mode: remote data does not appear', (tester) async {
+    testWidgets(
+        'fault_injecting_client_absent_mode_hides_remote_data: FaultInjectingFirestoreClient in absent mode: remote data does not appear',
+        (tester) async {
       final fakeFirestore = FakeFirestoreClient()
         ..seed(FakeFirestoreSeedData(
           pacts: {

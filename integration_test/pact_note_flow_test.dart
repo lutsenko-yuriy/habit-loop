@@ -95,7 +95,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('existing stop reason is pre-populated; editing and saving persists the new note', (tester) async {
+    testWidgets(
+        'existing_stop_reason_prepopulated_and_editable: existing stop reason is pre-populated; editing and saving persists the new note',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -159,7 +161,8 @@ void main() {
       expect(h.analytics.loggedEvents.any((e) => e.name == 'pact_note_saved'), isTrue);
     });
 
-    testWidgets('clearing the note saves an empty value', (tester) async {
+    testWidgets('clearing_note_saves_empty_value: clearing the note field and saving persists an empty value',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -202,7 +205,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('empty note field is shown; writing and saving persists the note', (tester) async {
+    testWidgets(
+        'empty_note_field_writable_and_persists: empty note field is shown; writing and saving persists the note',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -251,7 +256,8 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('notes section is not visible on an active pact detail', (tester) async {
+    testWidgets('notes_section_hidden_on_active_pact: notes section is not visible on an active pact detail',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
