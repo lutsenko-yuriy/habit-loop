@@ -10,17 +10,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
-
-/// Disables the onboarding auto-advance timer (RC value < _minAutoAdvanceSeconds=5).
-final _noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
-);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +36,7 @@ void main() {
           tester,
           // Simulate a stale Google-linked user from the iOS Keychain.
           initiallyAnonymous: false,
-          extraOverrides: [_noAutoAdvance],
+          extraOverrides: [noAutoAdvance],
           beforePump: (h) async {
             // Mirror what main.dart does: clear stale auth before initialize().
             final prefs = await SharedPreferences.getInstance();

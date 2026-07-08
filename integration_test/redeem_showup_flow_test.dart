@@ -51,27 +51,6 @@ final _pact = Pact(
 const _showupId = 'redeem-showup-in-tail';
 final _showupAt = DateTime(2099, 6, 14, 8, 0);
 
-Future<void> _openPactsPanel(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 400));
-}
-
-Future<void> _openPactDetail(WidgetTester tester, String habitName) async {
-  await waitFor(tester, find.text(habitName));
-  await tester.tap(find.text(habitName).last);
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
-
-Future<void> _openTimeline(WidgetTester tester) async {
-  await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
-  await tester.pump();
-  await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
-
 Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId) async {
   final tileKey = Key('timeline-milestone-$showupId');
   await waitFor(tester, find.byKey(tileKey));
@@ -118,9 +97,9 @@ void main() {
         final strings = l10n(tester);
 
         // ── 1. Navigate to showup detail via timeline ─────────────────────────
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Morning Run');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Morning Run');
+        await openTimeline(tester);
         await _openShowupDetailFromTimeline(tester, _showupId);
 
         await waitFor(tester, find.text(strings.showupDetailTitle));
@@ -186,9 +165,9 @@ void main() {
         final strings = l10n(tester);
 
         // ── 1. Navigate to showup detail via timeline ─────────────────────────
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Morning Run');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Morning Run');
+        await openTimeline(tester);
         await _openShowupDetailFromTimeline(tester, _showupId);
 
         await waitFor(tester, find.text(strings.showupDetailTitle));
@@ -241,9 +220,9 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Morning Run');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Morning Run');
+        await openTimeline(tester);
         await _openShowupDetailFromTimeline(tester, _showupId);
 
         await waitFor(tester, find.text(strings.showupDetailTitle));
@@ -290,9 +269,9 @@ void main() {
         final strings = l10n(tester);
 
         // Navigate via timeline (June 15 "now" → June 13 is in-tail → individual tile).
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Morning Run');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Morning Run');
+        await openTimeline(tester);
         await _openShowupDetailFromTimeline(tester, _showupId);
 
         await waitFor(tester, find.text(strings.showupDetailTitle));

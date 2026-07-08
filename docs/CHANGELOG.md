@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.3] — 2026-07-08 (PR #242 merged)
+
+### Changed — WIP
+
+- [wip] HAB-153 WU2: extracted duplicated navigation helpers (openPactsPanel, openPactDetail, openTimeline) and a duplicated onboarding auto-advance override into shared harness.dart helpers, replacing 4 previously duplicated definitions across 8 integration test files; net -62 lines, no coverage or assertion changes; full suite green on both iOS Simulator and Android emulator
+
 ## [0.50.2] — 2026-07-08 (PR #241 merged)
 
 ### Fixed — WIP

@@ -14,6 +14,7 @@ import '../test/infrastructure/analytics/fake_analytics_service.dart';
 import '../test/infrastructure/auth/fake_auth_service.dart';
 import '../test/infrastructure/locale/fake_locale_preference_service.dart';
 import '../test/infrastructure/notifications/fake_notification_service.dart';
+import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import '../test/infrastructure/sync/fake_sync_service.dart';
 
 /// Full-stack test harness that boots [HabitLoopApp] with:
@@ -243,4 +244,39 @@ Future<void> waitFor(
     }
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+/// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).
+final noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
+  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+);
+
+/// Opens the collapsible pacts panel from the dashboard.
+Future<void> openPactsPanel(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
+  // Bare pump flushes the tap handler synchronously before the 400 ms animation
+  // clock starts — without this the panel may still be collapsed on entry.
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
+/// Opens the detail screen for the pact named [habitName] from the pacts panel.
+Future<void> openPactDetail(WidgetTester tester, String habitName) async {
+  await waitFor(tester, find.text(habitName));
+  await tester.tap(find.text(habitName).last);
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
+/// Opens the timeline screen from an already-open pact detail screen.
+Future<void> openTimeline(WidgetTester tester) async {
+  // Wait for the pact detail to finish loading before scrolling — the button
+  // only appears once the view model has resolved, which can take >450 ms on
+  // a real device; calling ensureVisible before that causes a deadlock.
+  await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
+  await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
+  await tester.pump();
+  await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pump(const Duration(milliseconds: 100));
 }
