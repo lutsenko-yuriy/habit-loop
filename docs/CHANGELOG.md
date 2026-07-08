@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.1] — 2026-07-08
+
+### Fixed
+
+- [app] Regenerated `ios/Podfile.lock` to drop stale `device_info_plus` entries left over after the plugin was replaced with a platform channel
+
 ## [0.50.0] — 2026-07-08 (PR #236 merged)
 
 ### Added
