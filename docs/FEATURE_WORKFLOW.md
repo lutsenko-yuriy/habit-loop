@@ -60,6 +60,8 @@ Invoke the draft-scenarios skill for HAB-XX: <issue title>
 
 The skill reads the ticket and any plan comment, drafts scenario stubs with `// TODO:` comments covering the happy path and critical failure cases using `AppHarness`, waits for approval, and writes the approved stubs. `implement` fills in driver code per WU and makes them green. Pure infrastructure or CI-only changes with no user-facing flows may skip this step.
 
+**For tickets that bring up a new CI/infrastructure target** (a new platform's test job, a new emulator, first real-device timing): expect the scope to balloon once real failures start surfacing — this class of issue can only be caught by running against the real target, not in planning. If it does balloon, split the ticket: merge the CI wiring/job setup on its own once it's mechanically correct, and track scenario/flakiness stabilization as a separate follow-up ticket rather than blocking the original PR on every fix.
+
 1. For features with user-facing screens/interactions, invoke `analyze` first and wait for approval.
 2. For large changes, invoke `plan` and wait for plan approval.
 3. Create a new feature branch from the latest `main` and switch to it before writing any code. Always include the Linear ticket number after `feature/`:
