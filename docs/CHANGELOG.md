@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.2] — 2026-07-08 (PR #241 merged)
+
+### Fixed — WIP
+
+- [wip] HAB-153 WU0: fixed iOS-only onboarding carousel scenario flake — missing `pumpAndSettle()` before the return-swipe assertion in `onboarding_carousel_flow_test.dart`; full suite now green on both iOS Simulator and Android emulator
+
 ## [0.50.1] — 2026-07-08
 
 ### Fixed
