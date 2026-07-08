@@ -7,11 +7,6 @@
 //
 // Run with: flutter test integration_test/fake_firestore_sync_flow_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/domain/pact/pact.dart';
-import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/domain/pact/showup_schedule.dart';
-import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fault_injecting_firestore_client.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
@@ -27,25 +22,20 @@ final _testNow = DateTime(2099, 7, 1, 7, 55);
 
 /// Remote pact seeded into the FakeFirestoreClient under 'test-user'.
 const _pactId = 'remote-pact-1';
-final _remotePact = Pact(
+final _remotePact = buildPact(
   id: _pactId,
   habitName: 'Remote Meditation',
   startDate: DateTime(2099, 7, 1),
-  endDate: DateTime(2099, 12, 31),
   showupDuration: const Duration(minutes: 15),
-  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-  status: PactStatus.active,
-  createdAt: DateTime(2099, 7, 1),
 );
 
 /// Showup for the remote pact.
 const _showupId = 'remote-showup-1';
-final _remoteShowup = Showup(
+final _remoteShowup = buildShowup(
   id: _showupId,
   pactId: _pactId,
   scheduledAt: DateTime(2099, 7, 1, 8, 0),
   duration: const Duration(minutes: 15),
-  status: ShowupStatus.pending,
 );
 
 void main() {

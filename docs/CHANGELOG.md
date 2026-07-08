@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.4] — 2026-07-09
+
+### Changed — WIP
+
+- [wip] HAB-153 WU3: added `buildPact`/`buildShowup` fixture builders to `harness.dart` (with a `createdAt` defaulting to `startDate`, matching every existing fixture) and migrated all 22 `Pact(...)`/17 `Showup(...)` literals across 11 integration test files to use them; net -67 lines, no coverage or assertion changes; full suite green on both iOS Simulator and Android emulator
+
 ## [0.50.3] — 2026-07-08 (PR #242 merged)
 
 ### Changed — WIP

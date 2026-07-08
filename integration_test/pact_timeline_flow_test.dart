@@ -4,7 +4,6 @@
 // Run on device: flutter test integration_test/pact_timeline_flow_test.dart -d <device>
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -23,18 +22,14 @@ final _testNow = DateTime(2099, 6, 15, 7, 55);
 // Pact used by grouping / tail-zone scenarios. Starts June 1 so that showups
 // seeded as far back as May 30 are within a plausible pact window.
 const _groupingPactId = 'timeline-grouping-test';
-final _groupingPact = Pact(
+final _groupingPact = buildPact(
   id: _groupingPactId,
   habitName: 'Exercise',
   startDate: DateTime(2099, 6, 1),
-  endDate: DateTime(2099, 12, 31),
   showupDuration: const Duration(minutes: 30),
-  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-  status: PactStatus.active,
-  createdAt: DateTime(2099, 6, 1),
 );
 
-Showup _showup(String id, DateTime scheduledAt, {ShowupStatus status = ShowupStatus.done}) => Showup(
+Showup _showup(String id, DateTime scheduledAt, {ShowupStatus status = ShowupStatus.done}) => buildShowup(
       id: id,
       pactId: _groupingPactId,
       scheduledAt: scheduledAt,
@@ -58,51 +53,40 @@ FakeRemoteConfigService _rcGrouping({
 const _activePactId = 'timeline-test-active';
 const _stoppedPactId = 'timeline-test-stopped';
 
-final _activePact = Pact(
+final _activePact = buildPact(
   id: _activePactId,
   habitName: 'Meditate',
   startDate: DateTime(2099, 6, 13),
-  endDate: DateTime(2099, 12, 31),
-  showupDuration: const Duration(minutes: 10),
-  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-  status: PactStatus.active,
-  createdAt: DateTime(2099, 6, 13),
 );
 
-final _stoppedPact = Pact(
+final _stoppedPact = buildPact(
   id: _stoppedPactId,
   habitName: 'Evening Walk',
   startDate: DateTime(2099, 1, 1),
-  endDate: DateTime(2099, 12, 31),
   showupDuration: const Duration(minutes: 20),
   schedule: const DailySchedule(timeOfDay: Duration(hours: 18)),
   status: PactStatus.stopped,
   stoppedAt: DateTime(2099, 3, 1),
-  createdAt: DateTime(2099, 1, 1),
 );
 
-final _todayShowup = Showup(
+final _todayShowup = buildShowup(
   id: '${_activePactId}_pending',
   pactId: _activePactId,
   scheduledAt: DateTime(2099, 6, 15, 8, 0),
-  duration: const Duration(minutes: 10),
-  status: ShowupStatus.pending,
 );
 
-final _notedShowup = Showup(
+final _notedShowup = buildShowup(
   id: '${_activePactId}_noted',
   pactId: _activePactId,
   scheduledAt: DateTime(2099, 6, 13, 8, 0),
-  duration: const Duration(minutes: 10),
   status: ShowupStatus.done,
   note: 'Great session today!',
 );
 
-final _singleShowup = Showup(
+final _singleShowup = buildShowup(
   id: '${_activePactId}_single',
   pactId: _activePactId,
   scheduledAt: DateTime(2099, 6, 14, 8, 0),
-  duration: const Duration(minutes: 10),
   status: ShowupStatus.done,
 );
 

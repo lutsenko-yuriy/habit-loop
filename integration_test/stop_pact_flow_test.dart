@@ -4,11 +4,7 @@
 // Run on device: flutter test integration_test/stop_pact_flow_test.dart -d <device>
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/domain/pact/showup_schedule.dart';
-import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
@@ -22,23 +18,18 @@ final _testToday = DateTime(2099, 6, 15);
 const _pactId = 'stop-pact-flow-test-1';
 const _showupId = '${_pactId}_20990615T080000_0';
 
-final _pact = Pact(
+final _pact = buildPact(
   id: _pactId,
   habitName: 'Evening Walk',
   startDate: _testToday,
-  endDate: DateTime(2099, 12, 31),
   showupDuration: const Duration(minutes: 30),
-  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-  status: PactStatus.active,
-  createdAt: _testToday,
 );
 
-final _showup = Showup(
+final _showup = buildShowup(
   id: _showupId,
   pactId: _pactId,
   scheduledAt: DateTime(2099, 6, 15, 8, 0),
   duration: const Duration(minutes: 30),
-  status: ShowupStatus.pending,
 );
 
 void main() {

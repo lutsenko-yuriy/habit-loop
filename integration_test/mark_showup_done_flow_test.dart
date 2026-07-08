@@ -3,11 +3,6 @@
 // Run with: flutter test integration_test/mark_showup_done_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/mark_showup_done_flow_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/domain/pact/pact.dart';
-import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/domain/pact/showup_schedule.dart';
-import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
@@ -30,25 +25,18 @@ void main() {
     testWidgets('tapping Mark as Done updates status and fires analytics', (tester) async {
       // ── Seed: one pact + one pending showup starting today ───────────────
       const pactId = 'test-pact-1';
-      final pact = Pact(
+      final pact = buildPact(
         id: pactId,
         habitName: 'Daily Yoga',
         startDate: _testToday,
-        endDate: DateTime(2099, 12, 31),
-        showupDuration: const Duration(minutes: 10),
-        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-        status: PactStatus.active,
-        createdAt: _testToday,
       );
       // Deterministic ID matching ShowupGenerator's output:
       // {pactId}_{yyyyMMdd}T{HHmmss}_{seq}
       const showupId = '${pactId}_20990615T080000_0';
-      final showup = Showup(
+      final showup = buildShowup(
         id: showupId,
         pactId: pactId,
         scheduledAt: DateTime(2099, 6, 15, 8, 0),
-        duration: const Duration(minutes: 10),
-        status: ShowupStatus.pending,
       );
 
       h = await AppHarness.create(

@@ -5,11 +5,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
-import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
@@ -22,20 +19,18 @@ final _testToday = DateTime(2099, 6, 15);
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-final _stoppedPact = Pact(
+final _stoppedPact = buildPact(
   id: 'pact-note-test-stopped',
   habitName: 'Morning Run',
   startDate: DateTime(2099, 1, 1),
   endDate: DateTime(2099, 3, 31),
   showupDuration: const Duration(minutes: 30),
-  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
   status: PactStatus.stopped,
   stopReason: 'Got injured',
-  createdAt: DateTime(2099, 1, 1),
   stoppedAt: DateTime(2099, 3, 1),
 );
 
-final _completedPact = Pact(
+final _completedPact = buildPact(
   id: 'pact-note-test-completed',
   habitName: 'Evening Walk',
   startDate: DateTime(2099, 1, 1),
@@ -43,29 +38,21 @@ final _completedPact = Pact(
   showupDuration: const Duration(minutes: 20),
   schedule: const DailySchedule(timeOfDay: Duration(hours: 18)),
   status: PactStatus.completed,
-  createdAt: DateTime(2099, 1, 1),
 );
 
 const _activePactId = 'pact-note-test-active';
 const _activeShowupId = '${_activePactId}_20990615T080000_0';
 
-final _activePact = Pact(
+final _activePact = buildPact(
   id: _activePactId,
   habitName: 'Meditate',
   startDate: _testToday,
-  endDate: DateTime(2099, 12, 31),
-  showupDuration: const Duration(minutes: 10),
-  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-  status: PactStatus.active,
-  createdAt: _testToday,
 );
 
-final _activeShowup = Showup(
+final _activeShowup = buildShowup(
   id: _activeShowupId,
   pactId: _activePactId,
   scheduledAt: DateTime(2099, 6, 15, 8, 0),
-  duration: const Duration(minutes: 10),
-  status: ShowupStatus.pending,
 );
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
