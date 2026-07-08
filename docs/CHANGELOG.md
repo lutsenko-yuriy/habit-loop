@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.6] — 2026-07-09 (PR #246 merged)
+
+### Changed — Meta
+
+- [meta] HAB-153 debrief: WU scope summaries written to the ticket's knowledge note at plan-approval time; ship skill skips the PRODUCT_SPEC/GLOSSARY diff-fetch step for `[wip]`-tagged entries; background test-run monitors emit on both success and failure/error; HAB-156 opened to investigate 3 test files flagged as orphaned by `/dead-code-check`
+
 ## [0.50.5] — 2026-07-09
 
 ### Changed — WIP

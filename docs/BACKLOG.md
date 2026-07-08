@@ -29,3 +29,4 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 - **HAB-106**: Skill execution observability — token/time/cost tracking in skill_router
 - **HAB-155**: Investigate flaky iOS scenario: create_pact_flow_test.dart full_wizard_creates_pact
+- **HAB-156**: Investigate orphaned integration test files flagged by dead-code-check
