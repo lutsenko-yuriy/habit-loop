@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.7] — 2026-07-09
+
+### Fixed
+
+- [test] HAB-155: fixed intermittent iOS flake in `create_pact_flow_test.dart`'s `full_wizard_creates_pact` — the first wizard swipe could read a PageView rect still mid-resize from the keyboard-show animation triggered by the preceding `enterText`; a bounded 300ms pump lets it settle first
+
 ## [0.50.6] — 2026-07-09 (PR #246 merged)
 
 ### Changed — Meta

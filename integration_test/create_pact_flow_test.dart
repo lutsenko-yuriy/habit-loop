@@ -80,7 +80,12 @@ void main() {
         find.byWidgetPredicate((w) => w is TextField || w is CupertinoTextField),
         'Meditate',
       );
+      // A plain pump() (not pumpAndSettle()) — the cursor blink animation
+      // never settles. The extra 300ms pump lets the keyboard-show animation
+      // catch up so the first _swipeWizardForward's getRect() below reads a
+      // stable PageView rect instead of one still mid-resize.
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       // ── 4. Page 0 → 1: swipe to pact duration (defaults are valid) ────────
       await _swipeWizardForward(tester);
