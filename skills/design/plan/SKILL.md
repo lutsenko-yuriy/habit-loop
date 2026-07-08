@@ -67,6 +67,14 @@ Post a comment on the primary issue with the full plan text so `implement` can r
 
 Show the plan to the user and wait for approval or adjustments. Do not proceed until the user explicitly approves.
 
+### 5.5 Write a WU scope summary (multi-WU plans only)
+
+If the plan has more than one work unit, write a short per-WU summary to the ticket's
+knowledge note (`docs/knowledge/notes/HAB-XX.md`, create from the template if it doesn't
+exist) immediately after approval — one or two lines per WU: what it touches, why. Refer
+back to this file when resuming a later WU, especially after context compaction, instead
+of re-deriving scope from chat history.
+
 ### 6. Update ARCHITECTURE.md (after approval)
 
 If the plan introduces new layers, directories, classes, or dependencies not already in the architecture doc (path from project config), update that file now. Keep the existing structure — add to it, do not rewrite it.
