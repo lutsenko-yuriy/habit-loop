@@ -7,9 +7,9 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In Progress
 
-- **HAB-153**: Audit and clean up integration test scenarios (WU5 optional)
-
 ## In QA
+
+- **HAB-153**: Audit and clean up integration test scenarios (PRs #241–244)
 
 - **HAB-150**: Collapse dashboard nav bar secondary actions into a kebab menu (PR #233)
 
@@ -28,3 +28,4 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 ### Remaining work
 
 - **HAB-106**: Skill execution observability — token/time/cost tracking in skill_router
+- **HAB-155**: Investigate flaky iOS scenario: create_pact_flow_test.dart full_wizard_creates_pact
