@@ -47,7 +47,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets(
-      'dashboard reflects done status after marking showup done via notification tap',
+      'notification_mark_done_updates_dashboard: dashboard reflects done status after marking showup done via notification tap',
       (tester) async {
         h = await AppHarness.create(
           tester,
@@ -103,7 +103,7 @@ void main() {
     );
 
     testWidgets(
-      'dashboard reflects failed status after marking showup failed via notification tap',
+      'notification_mark_failed_updates_dashboard: dashboard reflects failed status after marking showup failed via notification tap',
       (tester) async {
         h = await AppHarness.create(
           tester,

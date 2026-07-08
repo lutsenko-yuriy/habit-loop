@@ -22,7 +22,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('tapping Mark as Done updates status and fires analytics', (tester) async {
+    testWidgets(
+        'mark_as_done_updates_status_and_fires_analytics: tapping Mark as Done updates status and fires analytics',
+        (tester) async {
       // ── Seed: one pact + one pending showup starting today ───────────────
       const pactId = 'test-pact-1';
       final pact = buildPact(

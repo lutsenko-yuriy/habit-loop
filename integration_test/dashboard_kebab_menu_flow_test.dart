@@ -19,7 +19,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('kebab_menu_tapped_shows_all_items_and_fires_analytics', (tester) async {
+    testWidgets(
+        'kebab_menu_tapped_shows_all_items_and_fires_analytics: tapping the kebab menu shows About, Language, and Debug items and fires KebabMenuOpenedEvent',
+        (tester) async {
       h = await AppHarness.create(tester);
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
@@ -32,7 +34,9 @@ void main() {
       expect(h.analytics.loggedEvents.whereType<KebabMenuOpenedEvent>(), isNotEmpty);
     });
 
-    testWidgets('kebab_menu_about_item_opens_about_screen', (tester) async {
+    testWidgets(
+        'kebab_menu_about_item_opens_about_screen: tapping the About item in the kebab menu opens the About screen',
+        (tester) async {
       h = await AppHarness.create(tester);
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
@@ -44,7 +48,9 @@ void main() {
       expect(find.text(l10n(tester).aboutTitle), findsOneWidget);
     });
 
-    testWidgets('kebab_menu_language_item_opens_language_picker', (tester) async {
+    testWidgets(
+        'kebab_menu_language_item_opens_language_picker: tapping the Language item in the kebab menu opens the language picker with all four locales',
+        (tester) async {
       h = await AppHarness.create(tester);
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
@@ -59,7 +65,9 @@ void main() {
       expect(find.text(l10n(tester).languageRussian), findsOneWidget);
     });
 
-    testWidgets('single_item_shortcut_skips_kebab_and_shows_standalone_button', (tester) async {
+    testWidgets(
+        'single_item_shortcut_skips_kebab_and_shows_standalone_button: with only the debug item enabled, the kebab menu is skipped in favor of a standalone debug button',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
