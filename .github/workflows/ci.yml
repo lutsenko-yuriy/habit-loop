@@ -367,20 +367,7 @@ jobs:
 
       - name: Strip non-JSON lines from test results
         if: always()
-        run: |
-          python3 - <<'PYEOF'
-          import json, pathlib
-
-          def is_json(line):
-              try:
-                  return isinstance(json.loads(line), (dict, list))
-              except json.JSONDecodeError:
-                  return False
-
-          raw = pathlib.Path('test-results.json').read_text().splitlines()
-          clean = [line for line in raw if line.strip() and is_json(line)]
-          pathlib.Path('test-results.json').write_text('\n'.join(clean) + '\n')
-          PYEOF
+        run: python3 scripts/ci/strip_test_json.py
 
       - name: Publish test results
         uses: dorny/test-reporter@v1
@@ -393,43 +380,7 @@ jobs:
 
       - name: Write job summary
         if: always()
-        run: |
-          python3 - <<'PYEOF'
-          import json, os, sys
-          passed = failed = total = 0
-          try:
-              for line in open('test-results.json'):
-                  line = line.strip()
-                  if not line:
-                      continue
-                  try:
-                      event = json.loads(line)
-                  except json.JSONDecodeError:
-                      continue
-                  if not isinstance(event, dict):
-                      continue
-                  if event.get('type') == 'testDone' and not event.get('hidden', False):
-                      total += 1
-                      if event.get('result') == 'success':
-                          passed += 1
-                      else:
-                          failed += 1
-          except FileNotFoundError:
-              pass
-
-          status = '✅ passed' if failed == 0 and total > 0 else ('❌ failed' if total > 0 else '⚠️ no results')
-          summary = f"""## Integration scenarios — {status}
-
-          | Result | Count |
-          |--------|-------|
-          | ✅ Passed | {passed} |
-          | ❌ Failed | {failed} |
-          | Total | {total} |
-          """
-          summary_path = os.environ.get('GITHUB_STEP_SUMMARY', '/dev/null')
-          with open(summary_path, 'a') as f:
-              f.write(summary)
-          PYEOF
+        run: python3 scripts/ci/scenarios_summary.py
 
       - name: Update badge gist
         if: always()
@@ -439,48 +390,7 @@ jobs:
         run: |
           [ -z "$GIST_TOKEN" ] && echo "GIST_TOKEN not set, skipping badge update" && exit 0
           [ -z "$GIST_ID" ] && echo "SCENARIOS_GIST_ID not set, skipping badge update" && exit 0
-          python3 - <<'PYEOF'
-          import json, os, urllib.request
-
-          passed = total = 0
-          try:
-              for line in open('test-results.json'):
-                  line = line.strip()
-                  if not line:
-                      continue
-                  try:
-                      event = json.loads(line)
-                  except json.JSONDecodeError:
-                      continue
-                  if not isinstance(event, dict):
-                      continue
-                  if event.get('type') == 'testDone' and not event.get('hidden', False):
-                      total += 1
-                      if event.get('result') == 'success':
-                          passed += 1
-          except FileNotFoundError:
-              pass
-
-          color = 'brightgreen' if passed == total and total > 0 else 'red'
-          badge = {'schemaVersion': 1, 'label': 'scenarios', 'message': f'{passed}/{total} passed', 'color': color}
-          payload = json.dumps({'files': {'scenarios.json': {'content': json.dumps(badge)}}})
-
-          req = urllib.request.Request(
-              f'https://api.github.com/gists/{os.environ["GIST_ID"]}',
-              data=payload.encode(),
-              method='PATCH',
-              headers={
-                  'Authorization': f'token {os.environ["GIST_TOKEN"]}',
-                  'Accept': 'application/vnd.github.v3+json',
-                  'Content-Type': 'application/json',
-              }
-          )
-          try:
-              with urllib.request.urlopen(req) as resp:
-                  print(f'Badge updated: {badge["message"]}')
-          except Exception as e:
-              print(f'Failed to update badge: {e}', file=__import__('sys').stderr)
-          PYEOF
+          python3 scripts/ci/update_scenarios_badge.py
 
   # ── Distribute Android to Firebase App Distribution ───────────────────────
   distribute-android:
