@@ -7,6 +7,8 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In Progress
 
+- **HAB-153**: Audit and clean up integration test scenarios (WU1, WU2, WU3 remaining; WU4 optional)
+
 ## In QA
 
 - **HAB-150**: Collapse dashboard nav bar secondary actions into a kebab menu (PR #233)
