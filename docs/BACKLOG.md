@@ -7,7 +7,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In Progress
 
-- **HAB-153**: Audit and clean up integration test scenarios (WU3, WU4 remaining; WU5 optional)
+- **HAB-153**: Audit and clean up integration test scenarios (WU4 remaining; WU5 optional)
 
 ## In QA
 

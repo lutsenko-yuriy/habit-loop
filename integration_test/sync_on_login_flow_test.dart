@@ -7,11 +7,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
-import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
@@ -32,46 +30,37 @@ final _testNow = DateTime(2099, 7, 1, 7, 55);
 // Pact + showup that the seeding sync service injects into the repos when
 // pullRemoteChanges() is called (simulating a Firestore fetch after sign-in).
 const _pactId = 'remote-pact-1';
-final _remotePact = Pact(
+final _remotePact = buildPact(
   id: _pactId,
   habitName: 'Morning Run',
   startDate: DateTime(2099, 7, 1),
-  endDate: DateTime(2099, 12, 31),
   showupDuration: const Duration(minutes: 30),
-  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-  status: PactStatus.active,
-  createdAt: DateTime(2099, 7, 1),
 );
 const _showupId = '${_pactId}_20990701T080000_0';
-final _remoteShowup = Showup(
+final _remoteShowup = buildShowup(
   id: _showupId,
   pactId: _pactId,
   scheduledAt: DateTime(2099, 7, 1, 8, 0),
   duration: const Duration(minutes: 30),
-  status: ShowupStatus.pending,
 );
 
 // Local pact that exists in the repo BEFORE sign-in (created anonymously).
 // Scheduled at 19:00 so it does not conflict with the 08:00 remote showup
 // and is not auto-failed by the 07:55 fixed clock.
 const _localPactId = 'local-pact-1';
-final _localPact = Pact(
+final _localPact = buildPact(
   id: _localPactId,
   habitName: 'Evening Walk',
   startDate: DateTime(2099, 7, 1),
-  endDate: DateTime(2099, 12, 31),
   showupDuration: const Duration(minutes: 20),
   schedule: const DailySchedule(timeOfDay: Duration(hours: 19)),
-  status: PactStatus.active,
-  createdAt: DateTime(2099, 7, 1),
 );
 const _localShowupId = '${_localPactId}_20990701T190000_0';
-final _localShowup = Showup(
+final _localShowup = buildShowup(
   id: _localShowupId,
   pactId: _localPactId,
   scheduledAt: DateTime(2099, 7, 1, 19, 0),
   duration: const Duration(minutes: 20),
-  status: ShowupStatus.pending,
 );
 
 /// Sync service that seeds in-memory repos when [pullRemoteChanges] is called,

@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_stats.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -280,3 +286,59 @@ Future<void> openTimeline(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump(const Duration(milliseconds: 100));
 }
+
+/// Builds a [Pact] fixture with defaults suited to integration tests.
+///
+/// `createdAt` defaults to `startDate` — every fixture across the suite
+/// creates the pact on its own start date, so this removes a field that
+/// was otherwise repeated at every call site.
+Pact buildPact({
+  required String id,
+  String habitName = 'Test Habit',
+  required DateTime startDate,
+  DateTime? endDate,
+  Duration showupDuration = const Duration(minutes: 10),
+  ShowupSchedule schedule = const DailySchedule(timeOfDay: Duration(hours: 8)),
+  PactStatus status = PactStatus.active,
+  DateTime? createdAt,
+  Duration? reminderOffset,
+  String? stopReason,
+  PactStats? stats,
+  DateTime? stoppedAt,
+  bool archived = false,
+}) =>
+    Pact(
+      id: id,
+      habitName: habitName,
+      startDate: startDate,
+      endDate: endDate ?? DateTime(2099, 12, 31),
+      showupDuration: showupDuration,
+      schedule: schedule,
+      status: status,
+      createdAt: createdAt ?? startDate,
+      reminderOffset: reminderOffset,
+      stopReason: stopReason,
+      stats: stats,
+      stoppedAt: stoppedAt,
+      archived: archived,
+    );
+
+/// Builds a [Showup] fixture with defaults suited to integration tests.
+Showup buildShowup({
+  required String id,
+  required String pactId,
+  required DateTime scheduledAt,
+  Duration duration = const Duration(minutes: 10),
+  ShowupStatus status = ShowupStatus.pending,
+  String? note,
+  bool redeemable = true,
+}) =>
+    Showup(
+      id: id,
+      pactId: pactId,
+      scheduledAt: scheduledAt,
+      duration: duration,
+      status: status,
+      note: note,
+      redeemable: redeemable,
+    );

@@ -5,10 +5,6 @@
 import 'package:flutter/cupertino.dart' show CupertinoButton;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/domain/pact/pact.dart';
-import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/domain/pact/showup_schedule.dart';
-import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
@@ -34,15 +30,10 @@ final _timelineNow = DateTime(2099, 6, 15, 7, 55);
 final _detailNowOutOfTail = DateTime(2099, 7, 15, 7, 55);
 
 const _pactId = 'redeem-test-pact';
-final _pact = Pact(
+final _pact = buildPact(
   id: _pactId,
   habitName: 'Morning Run',
   startDate: DateTime(2099, 6, 1),
-  endDate: DateTime(2099, 12, 31),
-  showupDuration: const Duration(minutes: 10),
-  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
-  status: PactStatus.active,
-  createdAt: DateTime(2099, 6, 1),
 );
 
 // 1 day before _timelineNow — within the 7-day tail zone on June 15.
@@ -70,13 +61,11 @@ void main() {
     testWidgets(
       'redeem_auto_failed_showup_with_note_succeeds: redemption marks showup done, updates stats, and fires showup_redeemed',
       (tester) async {
-        final showup = Showup(
+        final showup = buildShowup(
           id: _showupId,
           pactId: _pactId,
           scheduledAt: _showupAt,
-          duration: const Duration(minutes: 10),
           status: ShowupStatus.failed,
-          redeemable: true,
           note: 'I was there, app was offline',
         );
 
@@ -138,13 +127,11 @@ void main() {
     testWidgets(
       'redemption_button_disabled_when_note_is_empty: button visible but disabled with explanatory label; fires showup_redemption_blocked on screen load',
       (tester) async {
-        final showup = Showup(
+        final showup = buildShowup(
           id: _showupId,
           pactId: _pactId,
           scheduledAt: _showupAt,
-          duration: const Duration(minutes: 10),
           status: ShowupStatus.failed,
-          redeemable: true,
           // no note
         );
 
@@ -195,11 +182,10 @@ void main() {
     testWidgets(
       'no_redemption_action_for_manually_failed_showup: redeemable=false hides the redemption button entirely',
       (tester) async {
-        final showup = Showup(
+        final showup = buildShowup(
           id: _showupId,
           pactId: _pactId,
           scheduledAt: _showupAt,
-          duration: const Duration(minutes: 10),
           status: ShowupStatus.failed,
           redeemable: false, // manually failed
         );
@@ -242,13 +228,11 @@ void main() {
         // the same showup is 32 days old and outside the 7-day tail.
         // This lets us navigate via the timeline while verifying the VM correctly
         // gates canRedeem on the detail-screen's "now", not the timeline's "now".
-        final showup = Showup(
+        final showup = buildShowup(
           id: _showupId,
           pactId: _pactId,
           scheduledAt: _showupAt,
-          duration: const Duration(minutes: 10),
           status: ShowupStatus.failed,
-          redeemable: true,
         );
 
         h = await AppHarness.create(
