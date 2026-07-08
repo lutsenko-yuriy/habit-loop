@@ -106,33 +106,6 @@ final _singleShowup = Showup(
   status: ShowupStatus.done,
 );
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-Future<void> _openPactsPanel(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 400));
-}
-
-Future<void> _openPactDetail(WidgetTester tester, String habitName) async {
-  await waitFor(tester, find.text(habitName));
-  await tester.tap(find.text(habitName).last);
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
-
-Future<void> _openTimeline(WidgetTester tester) async {
-  // Wait for the pact detail to finish loading before scrolling — the button
-  // only appears once the view model has resolved, which can take >450 ms on
-  // a real device; calling ensureVisible before that causes a deadlock.
-  await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
-  await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
-  await tester.pump();
-  await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
-
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
@@ -161,8 +134,8 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Meditate');
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Meditate');
 
         // ── 1. "View Timeline" button is present and tappable ─────────────────
         await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
@@ -170,7 +143,7 @@ void main() {
         expect(find.byKey(const Key('pact-detail-timeline-button')), findsOneWidget);
 
         // ── 2. Tap "View Timeline" ────────────────────────────────────────────
-        await _openTimeline(tester);
+        await openTimeline(tester);
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
         await waitFor(tester, find.text(strings.timelinePactCreated));
@@ -209,11 +182,11 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Evening Walk');
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Evening Walk');
 
         // ── 1. Tap "View Timeline" ────────────────────────────────────────────
-        await _openTimeline(tester);
+        await openTimeline(tester);
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
@@ -250,9 +223,9 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Meditate');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Meditate');
+        await openTimeline(tester);
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
@@ -307,9 +280,9 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Exercise');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Exercise');
+        await openTimeline(tester);
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
@@ -350,9 +323,9 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Exercise');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Exercise');
+        await openTimeline(tester);
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
@@ -389,9 +362,9 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Exercise');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Exercise');
+        await openTimeline(tester);
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
@@ -433,9 +406,9 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Exercise');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Exercise');
+        await openTimeline(tester);
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
@@ -487,9 +460,9 @@ void main() {
 
         final strings = l10n(tester);
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Meditate');
-        await _openTimeline(tester);
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Meditate');
+        await openTimeline(tester);
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
@@ -538,8 +511,8 @@ void main() {
           },
         );
 
-        await _openPactsPanel(tester);
-        await _openPactDetail(tester, 'Meditate');
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Meditate');
 
         // Scroll through the pact detail to ensure the button area is reached.
         await tester.drag(find.byType(ListView).last, const Offset(0, -300));

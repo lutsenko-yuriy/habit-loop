@@ -14,7 +14,6 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fault_injecting_firestore_client.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
@@ -49,11 +48,6 @@ final _remoteShowup = Showup(
   status: ShowupStatus.pending,
 );
 
-/// Disable onboarding auto-advance so the carousel doesn't flicker mid-test.
-final _noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
-);
-
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
@@ -81,7 +75,7 @@ void main() {
         extraOverrides: [
           todayProvider.overrideWithValue(_testNow),
           showupDetailNowProvider.overrideWithValue(_testNow),
-          _noAutoAdvance,
+          noAutoAdvance,
         ],
       );
       final strings = l10n(tester);
@@ -126,7 +120,7 @@ void main() {
         extraOverrides: [
           todayProvider.overrideWithValue(_testNow),
           showupDetailNowProvider.overrideWithValue(_testNow),
-          _noAutoAdvance,
+          noAutoAdvance,
         ],
       );
       final strings = l10n(tester);

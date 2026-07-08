@@ -92,23 +92,6 @@ final _activeShowup = Showup(
   status: ShowupStatus.pending,
 );
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-Future<void> _openPactsPanel(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
-  // Bare pump flushes the tap handler synchronously before the 400 ms animation
-  // clock starts — without this the panel may still be collapsed on entry.
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 400));
-}
-
-Future<void> _openPactDetail(WidgetTester tester, String habitName) async {
-  await waitFor(tester, find.text(habitName));
-  await tester.tap(find.text(habitName).last);
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
-
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
@@ -134,8 +117,8 @@ void main() {
 
       final strings = l10n(tester);
 
-      await _openPactsPanel(tester);
-      await _openPactDetail(tester, 'Evening Walk');
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Evening Walk');
 
       // Wait for the detail content to load (habit name appears in _PactDetailContent).
       await waitFor(tester, find.text('Evening Walk'));
@@ -183,7 +166,7 @@ void main() {
 
       final strings = l10n(tester);
 
-      await _openPactsPanel(tester);
+      await openPactsPanel(tester);
 
       // ── 1. Enable Show archived pacts to make the pact visible ────────────
       await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
@@ -196,7 +179,7 @@ void main() {
       await tester.ensureVisible(find.text('Yoga').last);
       await tester.pump();
 
-      await _openPactDetail(tester, 'Yoga');
+      await openPactDetail(tester, 'Yoga');
 
       // ── 2. Confirm we reached the pact detail screen ──────────────────────
       await waitFor(tester, find.text(strings.pactDetailTitle));
@@ -275,13 +258,13 @@ void main() {
         },
       );
 
-      await _openPactsPanel(tester);
+      await openPactsPanel(tester);
 
       // ── 1. No Archived chip when N_A = 0 ──────────────────────────────────
       expect(find.byKey(const Key('archive-filter-chip')), findsNothing);
 
       // ── 2. Archive via detail screen ──────────────────────────────────────
-      await _openPactDetail(tester, 'Evening Walk');
+      await openPactDetail(tester, 'Evening Walk');
       await waitFor(tester, find.text('Evening Walk'));
       await tester.drag(find.text('Evening Walk').last, const Offset(0, -300));
       await tester.pump(const Duration(milliseconds: 100));
@@ -314,7 +297,7 @@ void main() {
 
       final strings = l10n(tester);
 
-      await _openPactsPanel(tester);
+      await openPactsPanel(tester);
 
       // ── 1. Archived chip visible; archived pact not shown ─────────────────
       await waitFor(tester, find.byKey(const Key('archive-filter-chip')));
@@ -354,7 +337,7 @@ void main() {
         },
       );
 
-      await _openPactsPanel(tester);
+      await openPactsPanel(tester);
       // Fling the drag handle upward so the panel snaps to maxSize, making all
       // 3 unarchived pacts + the toggle row visible before we tap.
       await tester.fling(

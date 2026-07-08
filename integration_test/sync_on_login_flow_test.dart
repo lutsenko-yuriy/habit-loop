@@ -21,14 +21,8 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import '../test/infrastructure/sync/fake_sync_service.dart';
 import 'harness.dart';
-
-/// Disables the onboarding auto-advance timer (RC value < _minAutoAdvanceSeconds=5).
-final _noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
-);
 
 // Fixed clock: 5 minutes before the 08:00 remote showup window so the
 // auto-fail check (now > scheduledAt + duration) never triggers, and also
@@ -181,7 +175,7 @@ void main() {
         initiallyAnonymous: true,
         syncServiceFactory: (pactRepo, showupRepo) => _SeedingSyncService(pactRepo, showupRepo),
         extraOverrides: [
-          _noAutoAdvance,
+          noAutoAdvance,
           // Pin the clock so the seeded showup is not auto-failed.
           todayProvider.overrideWithValue(_testNow),
           showupDetailNowProvider.overrideWithValue(_testNow),

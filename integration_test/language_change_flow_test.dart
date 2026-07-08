@@ -3,16 +3,9 @@
 // Run with: flutter test integration_test/language_change_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/language_change_flow_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
-
-/// Disables the auto-advance timer so pumpAndSettle() can settle cleanly.
-final _noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
-);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +16,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets('selecting Russian re-renders carousel in Russian', (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 
       // ── 1. Carousel is shown in English (first launch, no pacts) ──────────

@@ -7,16 +7,9 @@ import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
-
-/// Override that disables auto-advance (RC value < _minAutoAdvanceSeconds=5).
-final _noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
-);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +20,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets('carousel is shown on first launch when there are no pacts', (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
@@ -37,7 +30,7 @@ void main() {
     });
 
     testWidgets('swiping left advances to slide 1', (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 
       // 300 px stays within one page width on any ≥320 dp device
@@ -58,7 +51,7 @@ void main() {
     });
 
     testWidgets('swiping right returns to slide 0', (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 
       // Advance to slide 1 using the same 300 px drag as the "swiping left"
@@ -86,7 +79,7 @@ void main() {
     });
 
     testWidgets('tapping "Language" opens language picker and saving a locale persists it', (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [_noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
       final strings = l10n(tester);
 
       // The carousel has a single "Language" button (dialog not yet open).
