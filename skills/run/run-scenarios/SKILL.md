@@ -45,6 +45,10 @@ If files are found, run only those. If none match, fall back to the full suite a
 
 When `<target>` is a single specific file (HAB-XX match), run it directly. When it is the full suite, use `integration_test/test_runner.dart` as the target.
 
+If running this in the background, set up the monitor to emit on both success and
+failure/error markers — not just a single "All tests passed" line — so a stalled or
+crashed run is visible without the user having to ask.
+
 ### 4. Report
 
 **All pass:**
