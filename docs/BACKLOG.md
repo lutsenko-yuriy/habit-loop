@@ -9,6 +9,8 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-157**: Bug: local notifications stay in English after switching app language (PR #248)
+
 - **HAB-153**: Audit and clean up integration test scenarios (PRs #241–244)
 
 - **HAB-150**: Collapse dashboard nav bar secondary actions into a kebab menu (PR #233)

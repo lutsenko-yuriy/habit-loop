@@ -12,8 +12,10 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/dashboard_page_android.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/locale/fake_locale_preference_service.dart';
@@ -32,6 +34,9 @@ Widget _buildTestApp({
     overrides: [
       pactListViewModelProvider.overrideWith(_LoadedPactListViewModel.new),
       analyticsServiceProvider.overrideWithValue(analyticsService ?? FakeAnalyticsService()),
+      // HAB-157: language switch triggers a reminder reschedule pass that reads these.
+      pactRepositoryProvider.overrideWithValue(InMemoryPactRepository()),
+      showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
       if (remoteConfig != null) remoteConfigServiceProvider.overrideWithValue(remoteConfig),
       if (localeOverride != null) localeOverrideProvider.overrideWith((ref) => localeOverride),

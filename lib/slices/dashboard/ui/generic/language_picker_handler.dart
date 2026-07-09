@@ -51,7 +51,7 @@ Future<void> openLanguagePicker({
 
   if (!context.mounted) return;
 
-  await applyLanguageSelection(
+  final changed = await applyLanguageSelection(
     selectedLocale: selectedLocale,
     currentOverride: currentOverride,
     systemLocaleCode: systemLocaleCode,
@@ -59,10 +59,32 @@ Future<void> openLanguagePicker({
     localeService: localeService,
     updateLocaleOverride: (locale) => ref.read(localeOverrideProvider.notifier).state = locale,
   );
+
+  // Pending notifications were scheduled with the old locale's text and the
+  // OS payload can't be edited in place — re-schedule them (HAB-157).
+  if (changed) await _rescheduleAllPendingReminders(ref);
+}
+
+Future<void> _rescheduleAllPendingReminders(WidgetRef ref) async {
+  final queryService = ref.read(dashboardQueryServiceProvider);
+  final schedulingService = ref.read(reminderSchedulingServiceProvider);
+
+  final activePacts = await queryService.getActivePacts();
+  for (final pact in activePacts) {
+    if (pact.reminderOffset == null) continue;
+
+    final showups = await queryService.getShowupsForPact(pact.id);
+    final showupIds = showups.map((s) => s.id).toList();
+
+    await schedulingService.cancelAllRemindersForPact(pact.id, showupIds: showupIds);
+    unawaited(schedulingService.scheduleRemindersForShowups(pact: pact, showups: showups));
+  }
 }
 
 // Persists + fires analytics. No-op when same language or both null (already on system).
-Future<void> applyLanguageSelection({
+// Returns whether a change was actually applied — callers use this to decide
+// whether pending notifications need re-scheduling (HAB-157).
+Future<bool> applyLanguageSelection({
   required Locale? selectedLocale,
   required Locale? currentOverride,
   required String systemLocaleCode,
@@ -71,22 +93,24 @@ Future<void> applyLanguageSelection({
   required void Function(Locale?) updateLocaleOverride,
 }) async {
   if (selectedLocale == null) {
-    if (currentOverride == null) return; // already on system — no-op
+    if (currentOverride == null) return false; // already on system — no-op
 
     await localeService.clearLocale();
     updateLocaleOverride(null);
-  } else {
-    if (selectedLocale.languageCode == currentOverride?.languageCode) return; // same language — no-op
-
-    final fromCode = currentOverride?.languageCode ?? systemLocaleCode;
-
-    await localeService.saveLocale(selectedLocale);
-    updateLocaleOverride(selectedLocale);
-
-    unawaited(
-      analyticsService.logEvent(
-        LanguageChangedEvent(fromLanguage: fromCode, toLanguage: selectedLocale.languageCode),
-      ),
-    );
+    return true;
   }
+
+  if (selectedLocale.languageCode == currentOverride?.languageCode) return false; // same language — no-op
+
+  final fromCode = currentOverride?.languageCode ?? systemLocaleCode;
+
+  await localeService.saveLocale(selectedLocale);
+  updateLocaleOverride(selectedLocale);
+
+  unawaited(
+    analyticsService.logEvent(
+      LanguageChangedEvent(fromLanguage: fromCode, toLanguage: selectedLocale.languageCode),
+    ),
+  );
+  return true;
 }

@@ -23,23 +23,28 @@ final class ReminderSchedulingService {
   static const int _iosMaxPendingNotifications = 64;
   // 2 per showup on iOS (reminder + deadline); cap = 64 / 2 = 32 showups.
   static const int _notificationsPerShowupIos = 2;
+  // [systemLocale] is the device/OS locale, used only when no explicit in-app
+  // override has been saved (HAB-157) — previously hardcoded to English.
   const ReminderSchedulingService({
     required NotificationService notificationService,
     required RemoteConfigService remoteConfig,
     required AnalyticsService analytics,
     required LocalePreferenceService localePreference,
     bool isIOS = false,
+    Locale systemLocale = const Locale('en'),
   })  : _notificationService = notificationService,
         _remoteConfig = remoteConfig,
         _analytics = analytics,
         _localePreference = localePreference,
-        _isIOS = isIOS;
+        _isIOS = isIOS,
+        _systemLocale = systemLocale;
 
   final NotificationService _notificationService;
   final RemoteConfigService _remoteConfig;
   final AnalyticsService _analytics;
   final LocalePreferenceService _localePreference;
   final bool _isIOS;
+  final Locale _systemLocale;
 
   // Qualifies showups by: pending status + scheduledAt after now + non-null reminderOffset.
   // EXP-002: deadline notification scheduled on iOS always; on Android only when behavior == 'encourage'.
@@ -51,7 +56,7 @@ final class ReminderSchedulingService {
   }) async {
     if (pact.reminderOffset == null) return;
 
-    final savedLocale = await _localePreference.getSavedLocale() ?? const Locale('en');
+    final savedLocale = await _localePreference.getSavedLocale() ?? _systemLocale;
     final AppLocalizations l10n = _resolveL10n(savedLocale);
 
     final effectiveNow = now ?? DateTime.now();

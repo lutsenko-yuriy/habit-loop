@@ -11,6 +11,8 @@ import 'package:habit_loop/slices/dashboard/ui/android/onboarding_carousel_andro
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/locale/fake_locale_preference_service.dart';
@@ -58,6 +60,9 @@ Widget _buildCarouselApp({
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
       if (localeOverride != null) localeOverrideProvider.overrideWith((ref) => localeOverride),
       onboardingSignInLoadingProvider.overrideWith((ref) => isSigningIn),
+      // HAB-157: language switch triggers a reminder reschedule pass that reads these.
+      pactRepositoryProvider.overrideWithValue(InMemoryPactRepository()),
+      showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
     ],
     child: MaterialApp(
       localizationsDelegates: const [

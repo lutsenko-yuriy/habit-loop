@@ -3,6 +3,7 @@
 library;
 
 import 'dart:io' show Platform;
+import 'dart:ui' as ui;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
@@ -276,6 +277,11 @@ final pactTimelineServiceProvider = Provider<PactTimelineService>((ref) {
   );
 });
 
+// Overridable in tests — production reads the live OS locale (HAB-157).
+// dart:ui's PlatformDispatcher (not WidgetsBinding) so this resolves even
+// in plain ProviderContainer unit tests with no widgets binding set up.
+final deviceLocaleProvider = Provider<Locale>((ref) => ui.PlatformDispatcher.instance.locale);
+
 final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((ref) {
   return ReminderSchedulingService(
     notificationService: ref.watch(notificationServiceProvider),
@@ -283,6 +289,7 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
     analytics: ref.watch(analyticsServiceProvider),
     localePreference: ref.watch(localePreferenceServiceProvider),
     isIOS: Platform.isIOS,
+    systemLocale: ref.watch(deviceLocaleProvider),
   );
 });
 

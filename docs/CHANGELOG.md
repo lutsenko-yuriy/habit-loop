@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.8] — 2026-07-09 (PR #248 merged)
+
+### Fixed
+
+- [user] Reminder notifications now match your phone's language, even if you never picked a language inside the app — and switching languages in the app now updates any reminders that were already scheduled
+- HAB-157: root cause was `ReminderSchedulingService` hardcoding English as the fallback locale instead of reading the device locale; also added a reschedule pass on in-app language switch so pending notifications aren't left with stale-locale text
+
 ## [0.50.7] — 2026-07-09
 
 ### Fixed
