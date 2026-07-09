@@ -22,6 +22,7 @@ import 'onboarding_carousel_flow_test.dart' as onboarding;
 import 'pact_note_flow_test.dart' as pact_note;
 import 'pact_timeline_flow_test.dart' as pact_timeline;
 import 'redeem_showup_flow_test.dart' as redeem_showup;
+import 'reminder_locale_flow_test.dart' as reminder_locale;
 import 'remote_config_overrides_flow_test.dart' as remote_config_overrides;
 import 'showup_to_pact_navigation_flow_test.dart' as showup_to_pact;
 import 'stop_pact_flow_test.dart' as stop_pact;
@@ -44,6 +45,7 @@ void main() {
   pact_note.main();
   pact_timeline.main();
   redeem_showup.main();
+  reminder_locale.main();
   remote_config_overrides.main();
   showup_to_pact.main();
   stop_pact.main();

@@ -98,19 +98,19 @@ Future<bool> applyLanguageSelection({
     await localeService.clearLocale();
     updateLocaleOverride(null);
     return true;
-  } else {
-    if (selectedLocale.languageCode == currentOverride?.languageCode) return false; // same language — no-op
-
-    final fromCode = currentOverride?.languageCode ?? systemLocaleCode;
-
-    await localeService.saveLocale(selectedLocale);
-    updateLocaleOverride(selectedLocale);
-
-    unawaited(
-      analyticsService.logEvent(
-        LanguageChangedEvent(fromLanguage: fromCode, toLanguage: selectedLocale.languageCode),
-      ),
-    );
-    return true;
   }
+
+  if (selectedLocale.languageCode == currentOverride?.languageCode) return false; // same language — no-op
+
+  final fromCode = currentOverride?.languageCode ?? systemLocaleCode;
+
+  await localeService.saveLocale(selectedLocale);
+  updateLocaleOverride(selectedLocale);
+
+  unawaited(
+    analyticsService.logEvent(
+      LanguageChangedEvent(fromLanguage: fromCode, toLanguage: selectedLocale.languageCode),
+    ),
+  );
+  return true;
 }
