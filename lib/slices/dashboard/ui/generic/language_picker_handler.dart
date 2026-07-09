@@ -66,15 +66,14 @@ Future<void> openLanguagePicker({
 }
 
 Future<void> _rescheduleAllPendingReminders(WidgetRef ref) async {
-  final pactRepository = ref.read(pactRepositoryProvider);
-  final showupRepository = ref.read(showupRepositoryProvider);
+  final queryService = ref.read(dashboardQueryServiceProvider);
   final schedulingService = ref.read(reminderSchedulingServiceProvider);
 
-  final activePacts = await pactRepository.getActivePacts();
+  final activePacts = await queryService.getActivePacts();
   for (final pact in activePacts) {
     if (pact.reminderOffset == null) continue;
 
-    final showups = await showupRepository.getShowupsForPact(pact.id);
+    final showups = await queryService.getShowupsForPact(pact.id);
     final showupIds = showups.map((s) => s.id).toList();
 
     await schedulingService.cancelAllRemindersForPact(pact.id, showupIds: showupIds);

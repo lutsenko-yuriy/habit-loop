@@ -21,4 +21,6 @@ class DashboardQueryService {
 
   Future<List<Showup>> getShowupsForDateRange(DateTime start, DateTime end) =>
       _showupRepository.getShowupsForDateRange(start, end);
+
+  Future<List<Showup>> getShowupsForPact(String pactId) => _showupRepository.getShowupsForPact(pactId);
 }

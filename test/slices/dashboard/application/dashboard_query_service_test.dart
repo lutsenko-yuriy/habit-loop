@@ -84,4 +84,17 @@ void main() {
       expect(result, [inside]);
     });
   });
+
+  group('DashboardQueryService.getShowupsForPact', () {
+    test('returns only showups for the given pact', () async {
+      final own = _showup('s1', 'p1', DateTime(2026, 4, 5, 8));
+      final other = _showup('s2', 'p2', DateTime(2026, 4, 5, 8));
+      final service = _makeService(showups: [own, other]);
+      expect(await service.getShowupsForPact('p1'), [own]);
+    });
+
+    test('returns empty when pact has no showups', () async {
+      expect(await _makeService().getShowupsForPact('p1'), isEmpty);
+    });
+  });
 }
