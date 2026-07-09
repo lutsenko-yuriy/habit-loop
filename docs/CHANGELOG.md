@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.9] — 2026-07-09 (PR #249 merged)
+
+### Changed — Meta
+
+- [meta] HAB-157 debrief: draft-scenarios now registers new scenario files in `integration_test/test_runner.dart` at file-creation time; added a "Control flow" section to `docs/CODE_STYLE.md` preferring guard clauses/early returns over nested if-else
+
 ## [0.50.8] — 2026-07-09 (PR #248 merged)
 
 ### Fixed
