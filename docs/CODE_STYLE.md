@@ -43,3 +43,16 @@ Never add:
 - WHAT descriptions that the identifier already states
 
 When a comment is unavoidable, keep it to **one concise line**. Multi-line comments are reserved for truly complex invariants (layout workarounds, algorithmic constraints) and must still be as short as possible.
+
+## Control flow
+
+Prefer flat control flow over nested conditionals — guard clauses first, then unindented code for the common case.
+
+| Instead of | Prefer |
+|---|---|
+| `if (valid) { ...everything... }` | `if (!valid) return; ...everything...` |
+| `if (a) { if (b) { ... } }` (single logical gate) | `if (a && b) { ... }` |
+| Nesting past ~3 levels (`for` → `if` → `try`) | Extract the inner block into a well-named function |
+| Wrapping a loop body in `if (shouldProcess(item)) { ... }` | `if (!shouldProcess(item)) continue;` at the top of the loop |
+
+Nesting depth is a readability cost on its own, independent of line count.

@@ -49,6 +49,8 @@ This level of detail lets the user verify the test logic before anything is writ
 
 Write the approved scenario files as **stubs**: each test function contains only `// TODO:` comments describing each step exactly as reviewed in step 4 — no driver calls, no assertions. The stubs must compile against the project harness but verify nothing. The `implement` skill will replace the comments with actual driver code as part of making each scenario green.
 
+If a new scenario file (not an existing file being extended) was written, also register it in `integration_test/test_runner.dart`: add an aliased import and a `<alias>.main();` call inside `main()`, both placed alphabetically. Without this, the file compiles and runs standalone but is silently skipped by the combined suite (`flutter test integration_test/test_runner.dart`, and CI's `run-scenarios` job).
+
 ### 6. Report back
 
 List the files written and confirm that `implement` can proceed with the commented stubs as its target.
