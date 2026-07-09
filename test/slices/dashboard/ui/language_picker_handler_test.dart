@@ -2,12 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/locale/fake_locale_preference_service.dart';
+import '../../../infrastructure/notifications/fake_notification_service.dart';
 
 void main() {
   group('applyLanguageSelection', () {
@@ -22,7 +30,7 @@ void main() {
     test('saves locale and fires analytics when a different language is selected', () async {
       Locale? capturedLocale;
 
-      await applyLanguageSelection(
+      final changed = await applyLanguageSelection(
         selectedLocale: const Locale('fr'),
         currentOverride: const Locale('en'),
         systemLocaleCode: 'en',
@@ -31,6 +39,7 @@ void main() {
         updateLocaleOverride: (locale) => capturedLocale = locale,
       );
 
+      expect(changed, isTrue);
       expect(localeService.savedLocale, const Locale('fr'));
       expect(capturedLocale, const Locale('fr'));
       expect(analytics.loggedEvents.any((e) => e.name == 'language_changed'), isTrue);
@@ -42,7 +51,7 @@ void main() {
     test('no-ops when re-selecting the current language override', () async {
       bool updateCalled = false;
 
-      await applyLanguageSelection(
+      final changed = await applyLanguageSelection(
         selectedLocale: const Locale('fr'),
         currentOverride: const Locale('fr'),
         systemLocaleCode: 'en',
@@ -52,6 +61,7 @@ void main() {
       );
 
       // Nothing should have happened
+      expect(changed, isFalse);
       expect(localeService.savedLocale, isNull);
       expect(updateCalled, isFalse);
       expect(analytics.loggedEvents.any((e) => e.name == 'language_changed'), isFalse);
@@ -60,7 +70,7 @@ void main() {
     test('clears locale when system language is selected and override was set', () async {
       Locale? providerValue = const Locale('de'); // simulate initial state
 
-      await applyLanguageSelection(
+      final changed = await applyLanguageSelection(
         selectedLocale: null, // null = system
         currentOverride: const Locale('de'),
         systemLocaleCode: 'en',
@@ -69,6 +79,7 @@ void main() {
         updateLocaleOverride: (locale) => providerValue = locale,
       );
 
+      expect(changed, isTrue);
       expect(localeService.clearLocaleCallCount, 1);
       expect(providerValue, isNull);
     });
@@ -76,7 +87,7 @@ void main() {
     test('no-ops when system language is selected and override is already null', () async {
       bool updateCalled = false;
 
-      await applyLanguageSelection(
+      final changed = await applyLanguageSelection(
         selectedLocale: null, // null = system
         currentOverride: null, // already on system
         systemLocaleCode: 'en',
@@ -85,6 +96,7 @@ void main() {
         updateLocaleOverride: (_) => updateCalled = true,
       );
 
+      expect(changed, isFalse);
       expect(localeService.clearLocaleCallCount, 0);
       expect(updateCalled, isFalse);
     });
@@ -118,6 +130,7 @@ void main() {
           analyticsService: analytics,
           localeService: localeService,
           localeOverride: const Locale('en'),
+          extraOverrides: _emptyRepoOverrides(),
           child: _PickerTrigger(
             showPicker: ({required context, required options, required currentOverride}) async {
               capturedOptions = options;
@@ -172,6 +185,7 @@ void main() {
           analyticsService: analytics,
           localeService: localeService,
           localeOverride: const Locale('en'),
+          extraOverrides: _emptyRepoOverrides(),
           child: _PickerTrigger(
             showPicker: ({required context, required options, required currentOverride}) async {
               return const Locale('fr'); // user picked French
@@ -196,6 +210,7 @@ void main() {
         _buildTestApp(
           localeService: localeService,
           localeOverride: const Locale('de'),
+          extraOverrides: _emptyRepoOverrides(),
           child: _PickerTrigger(
             showPicker: ({required context, required options, required currentOverride}) async {
               return null; // user picked system (picker returns null for system)
@@ -241,6 +256,91 @@ void main() {
       expect(localeService.clearLocaleCallCount, 0);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // HAB-157: pending reminders must be re-scheduled when the language actually changes.
+  // ---------------------------------------------------------------------------
+  group('openLanguagePicker reschedules pending reminders', () {
+    late FakeNotificationService notifications;
+    late InMemoryPactRepository pactRepo;
+    late InMemoryShowupRepository showupRepo;
+
+    setUp(() async {
+      notifications = FakeNotificationService();
+      pactRepo = InMemoryPactRepository();
+      showupRepo = InMemoryShowupRepository();
+
+      final pact = Pact(
+        id: 'pact-1',
+        habitName: 'Meditate',
+        startDate: DateTime.now().subtract(const Duration(days: 1)),
+        endDate: DateTime.now().add(const Duration(days: 90)),
+        showupDuration: const Duration(minutes: 20),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+        status: PactStatus.active,
+        reminderOffset: const Duration(minutes: 10),
+        createdAt: DateTime.now(),
+      );
+      final showup = Showup(
+        id: 'su-1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime.now().add(const Duration(days: 1)),
+        duration: const Duration(minutes: 20),
+        status: ShowupStatus.pending,
+      );
+      await pactRepo.savePact(pact);
+      await showupRepo.saveShowups([showup]);
+    });
+
+    testWidgets('cancels and re-schedules pending reminders when a different language is selected', (tester) async {
+      await tester.pumpWidget(
+        _buildTestApp(
+          localeOverride: const Locale('en'),
+          extraOverrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            notificationServiceProvider.overrideWithValue(notifications),
+          ],
+          child: _PickerTrigger(
+            showPicker: ({required context, required options, required currentOverride}) async {
+              return const Locale('ru');
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Picker'));
+      await tester.pumpAndSettle();
+
+      expect(notifications.cancelledPactIds, contains('pact-1'));
+      expect(notifications.scheduledReminders, hasLength(1));
+      expect(notifications.scheduledReminders.first.showup.id, equals('su-1'));
+    });
+
+    testWidgets('does not cancel or re-schedule when re-selecting the same language', (tester) async {
+      await tester.pumpWidget(
+        _buildTestApp(
+          localeOverride: const Locale('en'),
+          extraOverrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            notificationServiceProvider.overrideWithValue(notifications),
+          ],
+          child: _PickerTrigger(
+            showPicker: ({required context, required options, required currentOverride}) async {
+              return const Locale('en'); // same as currentOverride — no-op
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Picker'));
+      await tester.pumpAndSettle();
+
+      expect(notifications.cancelledPactIds, isEmpty);
+      expect(notifications.scheduledReminders, isEmpty);
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -268,17 +368,27 @@ class _PickerTrigger extends ConsumerWidget {
   }
 }
 
+// Reschedule-on-change (HAB-157) reads pactRepositoryProvider/showupRepositoryProvider,
+// which throw by default unless overridden — tests that trigger a real locale
+// change need empty repos so the reschedule pass is a harmless no-op.
+List<Override> _emptyRepoOverrides() => [
+      pactRepositoryProvider.overrideWithValue(InMemoryPactRepository()),
+      showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
+    ];
+
 Widget _buildTestApp({
   required Widget child,
   FakeAnalyticsService? analyticsService,
   FakeLocalePreferenceService? localeService,
   Locale? localeOverride,
+  List<Override> extraOverrides = const [],
 }) {
   return ProviderScope(
     overrides: [
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
       if (localeOverride != null) localeOverrideProvider.overrideWith((ref) => localeOverride),
+      ...extraOverrides,
     ],
     child: MaterialApp(
       localizationsDelegates: const [
