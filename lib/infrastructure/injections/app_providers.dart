@@ -276,6 +276,9 @@ final pactTimelineServiceProvider = Provider<PactTimelineService>((ref) {
   );
 });
 
+// Overridable in tests — production reads the live OS locale (HAB-157).
+final deviceLocaleProvider = Provider<Locale>((ref) => WidgetsBinding.instance.platformDispatcher.locale);
+
 final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((ref) {
   return ReminderSchedulingService(
     notificationService: ref.watch(notificationServiceProvider),
@@ -283,6 +286,7 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
     analytics: ref.watch(analyticsServiceProvider),
     localePreference: ref.watch(localePreferenceServiceProvider),
     isIOS: Platform.isIOS,
+    systemLocale: ref.watch(deviceLocaleProvider),
   );
 });
 

@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 
@@ -269,8 +270,9 @@ void main() {
         expect(notificationService.scheduledReminders, hasLength(1));
       });
 
-      test('falls back to English when no locale saved', () async {
-        // localePreference returns null by default (no saveLocale call).
+      test('falls back to English when no locale saved and no system locale injected', () async {
+        // localePreference returns null by default (no saveLocale call);
+        // service default systemLocale is English.
         final pact = _makePact(reminderOffset: const Duration(minutes: 10));
         final now = DateTime(2026, 5, 7, 10, 0);
         final showups = [
@@ -283,6 +285,54 @@ void main() {
           reason: 'scheduleRemindersForShowups must complete without error when no locale is saved',
         );
         expect(notificationService.scheduledReminders, hasLength(1));
+      });
+
+      test('falls back to the injected system locale when no in-app locale is saved', () async {
+        // No in-app override saved — this is the HAB-157 repro: user changed
+        // the OS/system language but never opened the in-app language picker.
+        service = ReminderSchedulingService(
+          notificationService: notificationService,
+          remoteConfig: remoteConfig,
+          analytics: analyticsService,
+          localePreference: localePreference,
+          systemLocale: const Locale('ru'),
+        );
+
+        final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+        final now = DateTime(2026, 5, 7, 10, 0);
+        final showups = [
+          _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
+        ];
+
+        await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+        final reminder = notificationService.scheduledReminders.first;
+        final ruL10n = lookupAppLocalizations(const Locale('ru'));
+        expect(reminder.titleText, equals(ruL10n.notificationReminderTitle('Meditate')));
+      });
+
+      test('an explicit in-app saved locale takes precedence over the injected system locale', () async {
+        // Saved locale is French; system locale is Russian — saved wins.
+        await localePreference.saveLocale(const Locale('fr'));
+        service = ReminderSchedulingService(
+          notificationService: notificationService,
+          remoteConfig: remoteConfig,
+          analytics: analyticsService,
+          localePreference: localePreference,
+          systemLocale: const Locale('ru'),
+        );
+
+        final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+        final now = DateTime(2026, 5, 7, 10, 0);
+        final showups = [
+          _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
+        ];
+
+        await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+        final reminder = notificationService.scheduledReminders.first;
+        final frL10n = lookupAppLocalizations(const Locale('fr'));
+        expect(reminder.titleText, equals(frL10n.notificationReminderTitle('Meditate')));
       });
 
       test('falls back to English when saved locale is unsupported', () async {
