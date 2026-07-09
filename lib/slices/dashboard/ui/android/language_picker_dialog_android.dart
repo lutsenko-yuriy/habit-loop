@@ -24,7 +24,9 @@ Future<Locale?> showMaterialLanguagePicker(
           child: Row(
             children: [
               SizedBox(width: 28, child: isSelected ? const Icon(Icons.check, size: 18) : null),
-              Text(opt.label),
+              // Longer translated labels (e.g. Russian languageSystem) can exceed the
+              // dialog's width on narrow screens — Expanded lets them wrap instead.
+              Expanded(child: Text(opt.label)),
             ],
           ),
         );
