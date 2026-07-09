@@ -9,6 +9,8 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-158**: Bug: language picker option text overflows on narrow Android screens (PR #250)
+
 - **HAB-157**: Bug: local notifications stay in English after switching app language (PR #248)
 
 - **HAB-153**: Audit and clean up integration test scenarios (PRs #241–244)

@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.10] — 2026-07-10 (PR #250 merged)
+
+### Fixed
+
+- [user] Fixed text overflowing off the edge of the language picker on some Android phones when switching to Russian
+- HAB-158: `SimpleDialogOption`'s label `Text` had no `Expanded`/`Flexible` wrapper in `language_picker_dialog_android.dart`, so longer translated labels didn't wrap on narrow screens; caught by a new integration scenario from HAB-157 that was the first to reopen the picker while already in Russian
+
 ## [0.50.9] — 2026-07-09 (PR #249 merged)
 
 ### Changed — Meta
