@@ -41,4 +41,4 @@ Present this alongside the trade-off table, not only when asked.
 
 ## 5. Ship
 
-Once a fix works, follow `docs/FEATURE_WORKFLOW.md` steps 12–17 (CHANGELOG, version bump, PR, review, merge via `/ship`).
+Once a fix works, follow `docs/FEATURE_WORKFLOW.md` steps 7–12 (CHANGELOG, version bump, PR, review, merge via `/ship`).

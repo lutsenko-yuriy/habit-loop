@@ -6,7 +6,7 @@ Follow the [Flutter style guide](https://github.com/flutter/flutter/blob/master/
 
 ## Formatting
 
-Line length: **120 characters**. Enforced by CI (`dart format -l 120 --set-exit-if-changed`).
+Line length: **120 characters** (wider than Flutter's 80-char default — fewer wrap-driven diffs on modern wide displays). Enforced by CI (`dart format -l 120 --set-exit-if-changed`).
 
 Run before committing:
 
@@ -14,7 +14,7 @@ Run before committing:
 dart format -l 120 lib/ test/ integration_test/
 ```
 
-Always commit formatting changes in a separate `style:` commit before functional changes.
+Always commit formatting changes in a separate `style:` commit before functional changes — keeps logic diffs uncluttered by mechanical reformatting.
 
 ## Linting
 

@@ -3,7 +3,7 @@
 The app is available in English, French, German, and Russian.
 
 The Habit Loop app allows the user to:
-- See an overview on a dashboard what the user should do today, what he has already done today how it goes with his pacts in general
+- See an overview on a dashboard of what the user should do today, what they have already done today, and how their pacts are going in general
   - The user must see a todo list of showups that are already done/should be done today
   - The user must see a calendar view centered on today, showing 3 days before and 3 days after. Past and today's slots show completed/failed showups; future slots show upcoming scheduled showups. Each day shows colored dots per showup (green=done, red=failed, grey=upcoming). Today is highlighted with a circle; the selected day has accent color. Tapping a day shows that day's showups in the list below.
   - The user can create a new pact on a separate screen
@@ -12,24 +12,24 @@ The Habit Loop app allows the user to:
   - Before creating a pact, the user must confirm that they understand the commitment: missing a showup counts as a failure, no exceptions. There is no pausing a pact.
   - The user must define a habit the user wants to develop
   - The user must define the time span when the pact is active (by default it is defined 6 months)
-  - The user can define when the pact starts if he does not want to start it today (by default it is today)
+  - The user can define when the pact starts if they don't want to start it today (by default it is today)
   - The user must define a length of a single showup (e.g., 10 minutes of meditating, but not longer than 2 hours)
-  - The user must define when he wants to show up:
-    - He can say that he wants to show up every day at some defined time (time is not defined by default for any of these subcases)
-    - He can say that he wants to show up on some specific weekdays (e.g., Saturday at 4pm, Tuesday at 7pm, etc.)
-    - He can say that he wants to show up on some specific days of a months (e.g., every 2nd tuesday of a month or every 25th day of the month, etc.)
-  - The user can define when he wants to be reminded to show up (by default no reminder, but can be reminded up to 60 minutes before the showup or when the showup starts immediately)
-- Track if the user shows up to a pact he defined on a separate screen
-  - The user can see detail of his pact
-    - How many showups he made it to
-    - How many showups he failed to make it to
+  - The user must define when they want to show up:
+    - They can say that they want to show up every day at some defined time (time is not defined by default for any of these subcases)
+    - They can say that they want to show up on some specific weekdays (e.g., Saturday at 4pm, Tuesday at 7pm, etc.)
+    - They can say that they want to show up on some specific days of a month (e.g., every 2nd Tuesday of a month or every 25th day of the month, etc.)
+  - The user can define when they want to be reminded to show up (by default no reminder, but can be reminded up to 60 minutes before the showup or when the showup starts immediately)
+- Track if the user shows up to a pact they defined, on a separate screen
+  - The user can see detail of their pact
+    - How many showups they made it to
+    - How many showups they failed to make it to
     - How many showups left
     - Time details: when the pact started, when the pact ends (with remainder)
-    - How long the current streak of showups he made it to is
+    - How long their current streak of showups made is
   - The user can edit an active pact to update its habit name and reminder offset via a 2-step wizard (habit name → reminder); all other pact fields (schedule, dates, showup duration) are immutable after creation
-  - The user can stop the pact but he has to confirm it clearly
-    - The user can give an explanation why he decided to stop the pact
-  - The user can still see the details of the pact even when he stopped the pact or the time of the pact is passed by
+  - The user can stop the pact but has to confirm it clearly
+    - The user can give an explanation why they decided to stop the pact
+  - The user can still see the details of the pact even after stopping it or after the pact's time has passed
   - On a finished (completed or stopped) pact the user can write or edit a free-form note; the note is pre-populated with the stop reason if one was given
   - The pact detail screen shows showup duration and reminder offset in the Timeline section
   - The user can archive or unarchive a finished (completed or stopped) pact via a button on the pact detail screen; no confirmation is required
@@ -48,12 +48,12 @@ The Habit Loop app allows the user to:
 - See the details of a specific showup
   - The user must see the time of the showup
   - The user must see the habit in this showup
-  - The user can mark the showup if he made to it or he did not
-  - If the details of the showup were open after the showup time (as defined during the pact's creation) the showup is marked as failed
-  - The user can leave a note to the showup regardless the time
+  - The user can mark the showup as made or not made
+  - If the details of the showup were opened after the showup time (as defined during the pact's creation), the showup is marked as failed
+  - The user can leave a note on the showup regardless of the time
   - If a showup was auto-failed (not manually failed) and falls within the tail zone (last N days, controlled by `pact_timeline_no_grouping_tail_period_in_days`), the user can redeem it by writing a note and tapping "Mark as Done (redeem)". The redemption button is always visible when eligible but disabled until a note is saved. Manual fails are not redeemable. The feature is controlled by the `showup_redemption_enabled` kill-switch.
 - Be reminded about an upcoming showup
-  - A notification with a reminder will appear to the user if he defined a reminder
+  - A notification with a reminder will appear to the user if they defined a reminder
   - The user can see the showup by clicking on the notification
 - Access app information and send feedback
   - Secondary dashboard actions (About, Language) are grouped behind a ⋯ menu button in the nav bar; tapping it shows all enabled items. If exactly one item is enabled, it appears as a standalone icon instead of the ⋯ button (single-item shortcut). About is controlled by the `about_screen_enabled` feature flag.

@@ -30,6 +30,7 @@ Read this file to resolve all project-specific constants referenced in skill ins
 | Backlog | `docs/BACKLOG.md` |
 | Changelog | `docs/CHANGELOG.md` |
 | Architecture | `docs/ARCHITECTURE.md` |
+| Directory structure | `docs/DIRECTORY_STRUCTURE.md` |
 | Analytics events | `docs/ANALYTICS_EVENTS.md` |
 | Feature toggles | `docs/FEATURE_TOGGLES.md` |
 | Feature workflow | `docs/FEATURE_WORKFLOW.md` |
