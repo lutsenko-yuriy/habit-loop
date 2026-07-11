@@ -4,6 +4,8 @@ Use this workflow for research-only tickets (no production code, no PR beyond th
 
 > **Note:** The Linear organisation and documentation structure for research outputs will be defined when HAB-146 ships. Update this file at that point.
 
+@skills/shared/decision-principles.md
+
 ## Steps
 
 1. **Survey existing alternatives first.** Before forming opinions, document what comparable apps or tools already do. This grounds proposals in real precedent and surfaces patterns that are otherwise easy to miss.

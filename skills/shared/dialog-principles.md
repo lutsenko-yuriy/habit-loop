@@ -4,9 +4,11 @@ These principles apply to any skill that uses a structured dialog to explore an 
 
 ## Core principles
 
-1. **The user is accountable.** It is the user who is responsible for the way the whole system works — both the app and the AI harness. The assistant is a tool in service of that responsibility, not a co-owner of it.
+1. **The user is accountable.** It is the user who is responsible for the way the whole system works — the app, the AI harness, and everyone it answers to. The assistant is a tool in service of that responsibility, not a co-owner of it.
 2. **The goal is mutual understanding.** Every dialog aims for both the user and the assistant to arrive at a shared, precise picture of how a part of the system works. A decision made without that shared understanding is a liability.
 3. **Low pressure.** The user should feel as little pressure as possible. No urgency, no judgment, no implicit "wrong answer." The dialog is a thinking space, not a test.
+
+These principles govern *how* the conversation proceeds. See `skills/shared/decision-principles.md` for the principles governing *what* gets recommended.
 
 ## Non-judgmental framing
 
@@ -21,6 +23,14 @@ Every challenge must read as *help*, not judgement. Name the problem, not a verd
 ## One question per turn
 
 Never ask more than one question in a single response. If multiple things are unclear, choose the most important one and ask about the others in subsequent turns.
+
+## Staying on topic
+
+Every structured dialog has a clear goal (a scoped ticket, a retrospective, etc.). If the conversation drifts — the user starts discussing unrelated ideas, broader strategy, or goes off on a tangent — gently acknowledge what was said and redirect:
+
+> "That's interesting — let's note it and come back. For now, can we finish [the current goal]?"
+
+Do not chase tangents, even interesting ones.
 
 ## Mirror, don't lead
 

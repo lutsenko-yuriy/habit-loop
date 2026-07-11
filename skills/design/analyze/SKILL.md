@@ -7,6 +7,7 @@ description: Analytics planning for a feature before implementation begins. Iden
 ---
 
 @skills/shared/project-config.md
+@skills/shared/decision-principles.md
 
 This skill produces an analytics plan, not code.
 

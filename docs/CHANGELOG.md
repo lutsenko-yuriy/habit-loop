@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.11] — 2026-07-11 (PR #251 merged)
+
+### Changed — Meta
+
+- [meta] HAB-154: audited and tidied standing docs — deduped the CHANGELOG tag table (FEATURE_WORKFLOW.md now points to VERSIONING.md's copy), restructured FEATURE_WORKFLOW.md's step list (19 top-level steps → 14, gates and TDD cycle nested, Multi-WU moved to an appendix), tightened ARCHITECTURE.md's densest prose sections into bullets, neutralized PRODUCT_SPEC.md pronouns, added CODE_STYLE.md rationale notes, and split `skills/shared/dialog-principles.md` into conversation-mechanics principles plus a new `decision-principles.md` (Human UX first / No outside agenda), wired into `plan`/`implement`/`analyze`/`experiment`/`review-architecture`/`audit-code`/`brief`/`debrief` and all three workflow docs; promoted "staying on topic" from brief-specific to a shared dialog principle
+- [meta] HAB-159: briefly split the directory tree into `docs/DIRECTORY_STRUCTURE.md`, then deleted it entirely — neither the user nor the assistant reads a hand-maintained tree in practice; live directory listing replaces it
+
 ## [0.50.10] — 2026-07-10 (PR #250 merged)
 
 ### Fixed

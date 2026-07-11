@@ -8,6 +8,7 @@ description: Post-ticket retrospective. Reads git history, conducts a one-questi
 ---
 
 @skills/shared/project-config.md
+@skills/shared/decision-principles.md
 
 This skill produces workflow improvements and a retrospective record, not code.
 

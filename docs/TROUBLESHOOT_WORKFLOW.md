@@ -3,6 +3,8 @@
 Use this workflow for reactive work: CI failures, regressions, infrastructure breakage, build system issues.
 For new features, enhancements, and planned changes, use `docs/FEATURE_WORKFLOW.md` instead.
 
+@skills/shared/decision-principles.md
+
 ## 1. Identify and reproduce
 
 - Confirm the problem is real by checking CI logs or reproducing locally.
@@ -41,4 +43,4 @@ Present this alongside the trade-off table, not only when asked.
 
 ## 5. Ship
 
-Once a fix works, follow `docs/FEATURE_WORKFLOW.md` steps 12–17 (CHANGELOG, version bump, PR, review, merge via `/ship`).
+Once a fix works, follow `docs/FEATURE_WORKFLOW.md` steps 7–12 (CHANGELOG, version bump, PR, review, merge via `/ship`).

@@ -7,6 +7,7 @@ description: Architectural review of a PR. Checks for layer violations, dependen
 ---
 
 @skills/shared/project-config.md
+@skills/shared/decision-principles.md
 
 This skill produces reviews, not code.
 
