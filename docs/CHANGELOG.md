@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.12] — 2026-07-11 (PR #252 merged)
+
+### Changed — Meta
+
+- [meta] Recalibrated model tier mapping: THOROUGH+TACTICAL moves from a local model to `claude-opus-4-6` (`audit` needs exhaustive correctness beyond what a quantised local model reliably delivers), RAPID+TACTICAL moves from a local model to `claude-haiku-4-5` (`ship` mutates repo/version state, reliability over a free local run), and FOCUSED+TACTICAL moves to a stronger local coder model freed up by the first change. Generalized the calibrate skill's stub-routing rule to cover spawning to any named Claude alias, not just spawning up to `opus`.
+
 ## [0.50.11] — 2026-07-11 (PR #251 merged)
 
 ### Changed — Meta
