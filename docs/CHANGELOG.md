@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.14] — 2026-07-11 (PRs #254, #255 merged)
+
+### Changed — Meta
+
+- [meta] `summarize` now classifies each backlog ticket as product or process from its content and surfaces an "N product · M process" count, so process debt is visible at the point the release decision gets made rather than piling up silently (PR #254). Debrief follow-up written to `docs/knowledge/notes/HAB-154-adjust-1.md`: honest self-audit of session token/tool waste, and HAB-161 filed to give `skill_router`'s script stub an explicit cheap fallback alias instead of an uncontrolled one (PR #255).
+
 ## [0.50.13] — 2026-07-11 (PR #253 merged)
 
 ### Changed — Meta
