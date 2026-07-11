@@ -7,6 +7,7 @@ description: Produce a structured implementation plan for a PM issue or mileston
 ---
 
 @skills/shared/project-config.md
+@skills/shared/decision-principles.md
 
 This skill produces plans, not code.
 

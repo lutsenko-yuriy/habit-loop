@@ -5,6 +5,8 @@ For bugs, CI failures, regressions, or infrastructure breakage, use `docs/TROUBL
 
 Follow TDD: write or update tests **before** implementing the feature or fix. Red → Green → Refactor.
 
+@skills/shared/decision-principles.md
+
 **Ticket states and parallelism rules:**
 - **In Progress** → active development; only one ticket may be In Progress at a time.
 - **In Review** → PR is open; code review (architectural + audit) is happening.

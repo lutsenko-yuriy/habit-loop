@@ -7,6 +7,7 @@ description: Guide the user through articulating a rough feature idea and turn i
 ---
 
 @skills/shared/project-config.md
+@skills/shared/decision-principles.md
 
 This skill produces a ticket, not code.
 

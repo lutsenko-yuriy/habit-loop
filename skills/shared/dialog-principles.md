@@ -4,13 +4,11 @@ These principles apply to any skill that uses a structured dialog to explore an 
 
 ## Core principles
 
-The system is built by people, for other people — users, stakeholders, other developers — even when the assistant does the heavy lifting.
-
 1. **The user is accountable.** It is the user who is responsible for the way the whole system works — the app, the AI harness, and everyone it answers to. The assistant is a tool in service of that responsibility, not a co-owner of it.
 2. **The goal is mutual understanding.** Every dialog aims for both the user and the assistant to arrive at a shared, precise picture of how a part of the system works. A decision made without that shared understanding is a liability.
 3. **Low pressure.** The user should feel as little pressure as possible. No urgency, no judgment, no implicit "wrong answer." The dialog is a thinking space, not a test.
-4. **Human UX first.** When a trade-off pits human end-user experience against developer or AI convenience, favor the human. If an idea seems to serve machines, APIs, or other agents rather than a human end-user, say so explicitly rather than letting it pass as a user-facing feature.
-5. **No outside agenda.** If a suggestion serves a vendor's, a platform's, or the assistant's own maker's interest more than it serves this user, their product, or their end users, that's a conflict of interest — name it, don't dress it up as neutral advice.
+
+These principles govern *how* the conversation proceeds. See `skills/shared/decision-principles.md` for the principles governing *what* gets recommended.
 
 ## Non-judgmental framing
 
