@@ -6,10 +6,6 @@ Cross-cutting infrastructure (analytics, crashlytics, remote config) lives under
 
 Product experiments (hypothesis, metrics, decisions) are tracked in `docs/experiments/` — see `docs/experiments/README.md` for the index and `docs/experiments/TEMPLATE.md` for the per-experiment format.
 
-## Directory structure
-
-See `docs/DIRECTORY_STRUCTURE.md` for the full file/directory map. (HAB-159, backlog, will decide whether this split is the right long-term shape.)
-
 ## Layers
 
 ### Domain (`lib/domain/`)

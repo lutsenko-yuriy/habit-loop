@@ -16,7 +16,6 @@ Full product specifications: docs/PRODUCT_SPEC.md
 |---|---|
 | docs/PRODUCT_SPEC.md | What the app does — feature requirements |
 | docs/ARCHITECTURE.md | How the code is organised — layers, behaviour, dependencies |
-| docs/DIRECTORY_STRUCTURE.md | Full file/directory map — quick-glance companion to ARCHITECTURE.md |
 | docs/GLOSSARY.md | Ubiquitous language — canonical domain terms and known aliases |
 | docs/BACKLOG.md | Known issues and remaining work not yet released |
 | docs/CHANGELOG.md | Released version history |
