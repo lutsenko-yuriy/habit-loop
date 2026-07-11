@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.13] — 2026-07-11 (PR #253 merged)
+
+### Changed — Meta
+
+- [meta] HAB-154 debrief: `ship` skill now checks for an uncommitted `docs/knowledge/notes/HAB-XX*.md` before committing (fixes a note that got orphaned this ticket); `dialog-principles.md`'s "Mirror, don't lead" now defaults to offering 2 short alternatives instead of one finished draft when originating language unprompted. HAB-160 opened to consider renaming "principles" to "guidelines" throughout.
+
 ## [0.50.12] — 2026-07-11 (PR #252 merged)
 
 ### Changed — Meta
