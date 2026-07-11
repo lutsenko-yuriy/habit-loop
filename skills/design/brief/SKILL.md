@@ -36,8 +36,6 @@ Ask the user to describe their feature idea in their own words. One open questio
 
 @skills/shared/dialog-principles.md
 
-**Staying on topic:** the dialog has a clear goal — a scoped ticket. If the conversation drifts (the user starts discussing unrelated ideas, broader strategy, or goes off on a tangent), gently acknowledge what was said and redirect: "That's interesting — let's note it and come back. For now, can we finish pinning down [the feature we started with]?" Do not chase tangents, even interesting ones.
-
 **Abstraction / porting trigger:** if the idea involves abstracting, extracting, or porting (key words: "generalise", "extract", "port", "make portable"), ask as one of the clarifying questions:
 
 > "Where is the boundary? What must move to the shared layer, and what can stay project-specific?"
