@@ -1,12 +1,12 @@
 **Routing rule — only spawn when the target model differs from the current session model:**
 
-- **Spawn up** (`opus`) — target is more capable than the session model; use the Agent routing stub.
+- **Spawn to a specific alias** (`opus`, `sonnet`, `haiku`, or any other named Claude alias different from the session model) — use the Agent routing stub. This applies whether the target is more capable than the session model (e.g. spawning up to `opus`) or less capable (e.g. spawning down to `haiku` for a RAPID-tier skill) — the mechanism is the same either way: it is the only stub format that can target a named model other than the session's own.
 - **Run locally** (same alias as session) — spawning adds cold-start overhead with no benefit; use the passthrough format.
 - **Route to local model** (`lm-studio`) — use the script stub.
 
 ---
 
-**Agent routing stub** (spawning up to a more capable model):
+**Agent routing stub** (routing to a specific named Claude alias, whether more or less capable than the session model):
 ```markdown
 Route this invocation to a subagent. **Do not execute the skill yourself.**
 

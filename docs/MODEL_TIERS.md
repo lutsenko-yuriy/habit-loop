@@ -68,15 +68,15 @@ The `calibrate` skill reads this list and proposes the mapping below. Re-run `ca
 
 ## Active mapping
 
-_Last updated: 2026-05-28._
+_Last updated: 2026-07-11._
 
 | Effort | Reasoning | Model | Claude Code alias |
 |---|---|---|---|
 | THOROUGH | ARCHITECTURAL | claude-opus-4-6 | `opus` |
-| THOROUGH | TACTICAL | qwen/qwen3-coder-30b (MLX, 5-bit) | `lm-studio` |
+| THOROUGH | TACTICAL | claude-opus-4-6 | `opus` |
 | FOCUSED | ARCHITECTURAL | claude-sonnet-4-6 | `sonnet` |
-| FOCUSED | TACTICAL | mistralai/devstral-small-2-2512 (MLX, 4-bit) | `lm-studio` |
-| RAPID | TACTICAL | qwen/qwen3-8b (MLX, 4-bit) | `lm-studio` |
+| FOCUSED | TACTICAL | qwen/qwen3-coder-30b (MLX, 5-bit) | `lm-studio` |
+| RAPID | TACTICAL | claude-haiku-4-5 | `haiku` |
 | RAPID | MECHANICAL | qwen/qwen3-8b (MLX, 4-bit) | `lm-studio` |
 
 ---
