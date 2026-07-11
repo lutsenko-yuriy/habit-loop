@@ -81,12 +81,14 @@ If no changes are needed for a file, skip it. If the user declines all changes, 
 
 ### 6. Commit, push, and merge
 
-Stage the files changed above and commit onto the feature branch. Include the product spec and glossary (paths from the project config) only if they were modified in step 5:
+Stage the files changed above and commit onto the feature branch. Include the product spec and glossary (paths from the project config) only if they were modified in step 5. Also check for an uncommitted knowledge note for this ticket (`git status --short docs/knowledge/notes/HAB-XX*.md`) — `/note` may have written one earlier in the session that never got staged; include it in this commit if found.
 
 ```bash
 git add <changelog> <backlog> <version-file>   # paths from project config
 # add only if modified:
 git add <product-spec> <glossary>              # paths from project config
+# add if present and uncommitted:
+git add docs/knowledge/notes/HAB-XX*.md        # catches /note output missed earlier in the session
 git commit -m "chore: release HAB-XX, bump version to X.Y.Z"
 git push
 ```
