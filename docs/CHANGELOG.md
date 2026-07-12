@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.19] — 2026-07-12 (PR #260 merged)
+
+### Changed — Meta
+
+- [meta] HAB-161 debrief: no workflow changes — mechanical fallback-alias fix went smoothly; real payoff (fewer uncapped-cost fallback runs) will show up empirically over time rather than at ship time.
+
 ## [0.50.18] — 2026-07-12 (PR #259 merged)
 
 ### Changed — Meta
