@@ -69,22 +69,20 @@ case "$event" in
     ;;
 esac
 
+if [ "${HL_ALERT_DRY_RUN:-0}" = "1" ]; then
+  [ "$HL_ALERT_NOTIFY" = "on" ] && echo "NOTIFY: $title - $body"
+  [ "$HL_ALERT_SPEAK" = "on" ] && echo "SPEAK: $body"
+  exit 0
+fi
+
 if [ "$HL_ALERT_NOTIFY" = "on" ]; then
-  if [ "${HL_ALERT_DRY_RUN:-0}" = "1" ]; then
-    echo "NOTIFY: $title - $body"
-  else
-    osascript -e 'on run argv
-      display notification (item 2 of argv) with title (item 1 of argv)
-    end run' "$title" "$body" >/dev/null 2>&1
-  fi
+  osascript -e 'on run argv
+    display notification (item 2 of argv) with title (item 1 of argv)
+  end run' "$title" "$body" >/dev/null 2>&1
 fi
 
 if [ "$HL_ALERT_SPEAK" = "on" ]; then
-  if [ "${HL_ALERT_DRY_RUN:-0}" = "1" ]; then
-    echo "SPEAK: $body"
-  else
-    say "$body" >/dev/null 2>&1
-  fi
+  say "$body" >/dev/null 2>&1
 fi
 
 exit 0
