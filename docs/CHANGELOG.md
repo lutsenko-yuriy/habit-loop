@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.17] — 2026-07-12 (PR #258 merged)
+
+### Changed — Meta
+
+- [meta] HAB-160: Renamed `skills/shared/dialog-principles.md`/`decision-principles.md` to `dialog-guidelines.md`/`decision-guidelines.md` (and all ~13 cross-references) to be more honest that these are strong defaults with legitimate exceptions, not hard rules — "principle" implied something closer to inviolable. Added an RFC 2119 SHOULD-level framing statement to both files clarifying how strictly to follow them.
+
 ## [0.50.16] — 2026-07-12 (PR #257 merged)
 
 ### Changed — Meta
