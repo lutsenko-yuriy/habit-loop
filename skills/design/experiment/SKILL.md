@@ -6,7 +6,7 @@ output_style: DETAILED
 description: Design a product experiment. Given a hypothesis or feature idea, produces a full experiment spec (hypothesis, audience, feature flag, metrics, stop rule), creates the experiment file under docs/experiments/, and updates the registry index. Invoke as "Invoke the experiment skill for EXP-NNN: <hypothesis>" or "/experiment <idea>". Waits for approval before writing files.
 ---
 
-@skills/shared/decision-principles.md
+@skills/shared/decision-guidelines.md
 
 ## Steps
 

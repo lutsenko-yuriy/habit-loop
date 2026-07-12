@@ -8,7 +8,7 @@ description: Post-ticket retrospective. Reads git history, conducts a one-questi
 ---
 
 @skills/shared/project-config.md
-@skills/shared/decision-principles.md
+@skills/shared/decision-guidelines.md
 
 This skill produces workflow improvements and a retrospective record, not code.
 
@@ -33,7 +33,7 @@ Ask one open question:
 
 **Spirit of the dialog:** the goal is honest reflection — the user leaves with a clear-eyed picture of what worked and what to change next time.
 
-@skills/shared/dialog-principles.md
+@skills/shared/dialog-guidelines.md
 
 Cover these four dimensions (follow the conversation's natural order — do not force a rigid sequence):
 

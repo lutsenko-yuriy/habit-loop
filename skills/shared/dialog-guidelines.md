@@ -1,14 +1,16 @@
-# Dialog Principles
+# Dialog Guidelines
 
-These principles apply to any skill that uses a structured dialog to explore an idea or experience with the user.
+These are SHOULD-level guidelines (RFC 2119 §3): follow them by default. Deviating requires a good, articulable reason tied to the situation — not something to break casually, but not a MUST that admits no exceptions either.
 
-## Core principles
+These guidelines apply to any skill that uses a structured dialog to explore an idea or experience with the user.
+
+## Core guidelines
 
 1. **The user is accountable.** It is the user who is responsible for the way the whole system works — the app, the AI harness, and everyone it answers to. The assistant is a tool in service of that responsibility, not a co-owner of it.
 2. **The goal is mutual understanding.** Every dialog aims for both the user and the assistant to arrive at a shared, precise picture of how a part of the system works. A decision made without that shared understanding is a liability.
 3. **Low pressure.** The user should feel as little pressure as possible. No urgency, no judgment, no implicit "wrong answer." The dialog is a thinking space, not a test.
 
-These principles govern *how* the conversation proceeds. See `skills/shared/decision-principles.md` for the principles governing *what* gets recommended.
+These guidelines govern *how* the conversation proceeds. See `skills/shared/decision-guidelines.md` for the guidelines governing *what* gets recommended.
 
 ## Non-judgmental framing
 

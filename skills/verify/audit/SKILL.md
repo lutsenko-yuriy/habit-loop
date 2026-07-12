@@ -8,7 +8,7 @@ description: Runtime and migration review of a PR. Checks for launch-time failur
 ---
 
 @skills/shared/project-config.md
-@skills/shared/decision-principles.md
+@skills/shared/decision-guidelines.md
 
 ---
 
