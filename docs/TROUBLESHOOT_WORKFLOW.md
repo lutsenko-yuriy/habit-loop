@@ -3,7 +3,7 @@
 Use this workflow for reactive work: CI failures, regressions, infrastructure breakage, build system issues.
 For new features, enhancements, and planned changes, use `docs/FEATURE_WORKFLOW.md` instead.
 
-@skills/shared/decision-principles.md
+@skills/shared/decision-guidelines.md
 
 ## 1. Identify and reproduce
 

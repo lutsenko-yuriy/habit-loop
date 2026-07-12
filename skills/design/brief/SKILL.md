@@ -7,7 +7,7 @@ description: Guide the user through articulating a rough feature idea and turn i
 ---
 
 @skills/shared/project-config.md
-@skills/shared/decision-principles.md
+@skills/shared/decision-guidelines.md
 
 This skill produces a ticket, not code.
 
@@ -34,7 +34,7 @@ Ask the user to describe their feature idea in their own words. One open questio
 
 **Spirit of the dialog:** the goal is mutual clarity — the user ends the conversation with a shared, unambiguous picture of what they want to build.
 
-@skills/shared/dialog-principles.md
+@skills/shared/dialog-guidelines.md
 
 **Abstraction / porting trigger:** if the idea involves abstracting, extracting, or porting (key words: "generalise", "extract", "port", "make portable"), ask as one of the clarifying questions:
 

@@ -4,7 +4,7 @@ Use this workflow for research-only tickets (no production code, no PR beyond th
 
 > **Note:** The Linear organisation and documentation structure for research outputs will be defined when HAB-146 ships. Update this file at that point.
 
-@skills/shared/decision-principles.md
+@skills/shared/decision-guidelines.md
 
 ## Steps
 

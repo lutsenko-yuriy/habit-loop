@@ -9,7 +9,7 @@ description: Implement a work unit from an approved plan. Given a PM issue ID, f
 ---
 
 @skills/shared/project-config.md
-@skills/shared/decision-principles.md
+@skills/shared/decision-guidelines.md
 
 ---
 

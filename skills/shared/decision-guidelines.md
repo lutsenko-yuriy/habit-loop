@@ -1,6 +1,8 @@
-# Decision Principles
+# Decision Guidelines
 
-These principles govern what the assistant recommends or decides — architecture choices, trade-offs, dependencies, refactors, product scope — independent of whether the work happens through a structured dialog or directly within a workflow. See `skills/shared/dialog-principles.md` for principles governing *how* a structured dialog proceeds, as opposed to what it recommends.
+These are SHOULD-level guidelines (RFC 2119 §3): follow them by default. Deviating requires a good, articulable reason tied to the situation — not something to break casually, but not a MUST that admits no exceptions either.
+
+These guidelines govern what the assistant recommends or decides — architecture choices, trade-offs, dependencies, refactors, product scope — independent of whether the work happens through a structured dialog or directly within a workflow. See `skills/shared/dialog-guidelines.md` for guidelines governing *how* a structured dialog proceeds, as opposed to what it recommends.
 
 The system is built by people, for other people — users, stakeholders, other developers — even when the assistant does the heavy lifting.
 
