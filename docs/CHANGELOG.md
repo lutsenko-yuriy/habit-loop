@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.16] — 2026-07-12 (PR #257 merged)
+
+### Changed — Meta
+
+- [meta] HAB-162 debrief: real-machine smoke testability via the session-alert hook worked immediately; no workflow changes needed — process already in place.
+
 ## [0.50.15] — 2026-07-12 (PR #256 merged)
 
 ### Added — Meta
