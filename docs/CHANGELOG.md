@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.15] — 2026-07-12 (PR #256 merged)
+
+### Added — Meta
+
+- [meta] HAB-162: Added a Claude Code session-alert hook — fires a macOS notification and/or spoken alert when a session needs input or finishes; both channels independently toggleable, on by default, and automatically suppressed while a terminal app is already frontmost.
+
 ## [0.50.14] — 2026-07-11 (PRs #254, #255 merged)
 
 ### Changed — Meta
