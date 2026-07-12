@@ -33,10 +33,17 @@ $ARGUMENTS
 
 **Script stub** (`lm-studio` alias, or `needs_session_tools: true`):
 
+The fallback path must **never** run at the session's own uncontrolled model — it always spawns an Agent at a named, cheap fallback alias, exactly like the Agent routing stub above. This keeps the fallback's cost ceiling bounded to the skill's own tier instead of whatever model the orchestrating session happens to be.
+
+**Fallback alias rule:** derive it from the skill's own Effort Tier alone (not the full Effort+Reasoning pair — several `lm-studio`-routed pairs, e.g. FOCUSED+TACTICAL, have no Claude row in the Active mapping table to look up):
+- **THOROUGH**-tier skills should not use the script stub at all (see `> Note:` below).
+- **FOCUSED**-tier skills → `sonnet` (the established alias for FOCUSED work elsewhere, e.g. `brief`/`analyze`/`experiment`) — a quality hedge for tiers doing real code or judgment work, not just mechanical transforms.
+- **RAPID**-tier skills → `haiku` (the cheapest named alias) — these are already meant to be fast/cheap, so the fallback should match that intent exactly.
+
 _With arguments:_
 ```markdown
 Run via Bash: `python3 scripts/skill_router skills/<path>/SKILL.md --args '$ARGUMENTS'`
-If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/<path>/SKILL.md` and executing it yourself.
+If the script exits non-zero (LM Studio unavailable or model not loaded), fall back by spawning an Agent — do not execute the skill directly in this session — with `model`: `"<fallback-alias>"` and `prompt`: the full content of `skills/<path>/SKILL.md` (read via the Read tool), followed by the arguments below.
 
 $ARGUMENTS
 ```
@@ -44,9 +51,9 @@ $ARGUMENTS
 _Without arguments:_
 ```markdown
 Run via Bash: `python3 scripts/skill_router skills/<path>/SKILL.md`
-If the script exits non-zero (LM Studio unavailable or model not loaded), fall back to reading `skills/<path>/SKILL.md` and executing it yourself.
+If the script exits non-zero (LM Studio unavailable or model not loaded), fall back by spawning an Agent — do not execute the skill directly in this session — with `model`: `"<fallback-alias>"` and `prompt`: the full content of `skills/<path>/SKILL.md` (read via the Read tool).
 ```
 
-> **Note:** Skills with `needs_session_tools: true` exit with code 2 immediately (no LM Studio call), forcing fallback to Claude Code. When assigning `lm-studio` to a tier, check if all skills at that tier have `needs_session_tools: true` — if so, a Claude alias would be more honest.
+> **Note:** Skills with `needs_session_tools: true` exit with code 2 immediately (no LM Studio call), forcing the fallback on every invocation. When assigning `lm-studio` to a tier, check if all skills at that tier have `needs_session_tools: true` — if so, a Claude alias would be more honest as the *primary* route, since the script stub is only ever exercising the fallback path in practice.
 
-Only update stubs whose alias changed. If a stub is in the old passthrough format but its tier is now assigned a different Claude alias, rewrite it entirely to the Agent routing stub format — do not just insert an alias line.
+Only update stubs whose alias or fallback alias changed. If a stub is in the old passthrough format but its tier is now assigned a different Claude alias, rewrite it entirely to the Agent routing stub format — do not just insert an alias line.

@@ -100,7 +100,7 @@ Do not modify any other section of `docs/MODEL_TIERS.md`.
 
 ### 5a. Update command stubs
 
-After writing `docs/MODEL_TIERS.md`, update every `.claude/commands/*.md` stub that has changed alias. The stub format is:
+After writing `docs/MODEL_TIERS.md`, update every `.claude/commands/*.md` stub that has changed alias. For script stubs (`lm-studio`-aliased tiers, or any skill with `needs_session_tools: true`), also (re-)derive the fallback alias from the skill's Effort Tier — do not leave a script stub without one. The stub format, including the fallback-alias rule, is:
 
 @skills/configure/calibrate/resources/stub-formats.md
 
