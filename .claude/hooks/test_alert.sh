@@ -2,7 +2,10 @@
 # Test harness for alert.sh — pipes representative hook JSON payloads through
 # the script in dry-run mode (HL_ALERT_DRY_RUN=1) and asserts on stdout instead
 # of firing real notifications/speech. Uses ALERT_ENV_OVERRIDE to point at a
-# scratch toggle file instead of the real per-machine .claude/alert.env.
+# scratch toggle file instead of the real per-machine .claude/alert.env, and
+# FRONTMOST_APP_OVERRIDE to fake the frontmost-app check instead of asking the
+# real Terminal/System Events (which would make results depend on whatever
+# happens to be focused when the suite runs).
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,6 +13,10 @@ ALERT="$HERE/alert.sh"
 TMP_ENV=$(mktemp)
 pass=0
 fail=0
+
+# Default to a non-terminal frontmost app so existing cases stay deterministic;
+# the frontmost-suppression tests below override this per-case.
+export FRONTMOST_APP_OVERRIDE=SomeOtherApp
 
 check() {
   local desc="$1" expected="$2" unexpected="$3" output="$4"
@@ -74,6 +81,31 @@ else
   echo "FAIL: unhandled event exits 0 silently (rc=$rc)"
   fail=$((fail + 1))
 fi
+
+# 7. Terminal-class app frontmost -> suppressed by default (both channels silent).
+printf '' > "$TMP_ENV"
+out=$(echo '{"hook_event_name":"Notification","message":"test msg","cwd":"/tmp/x"}' \
+  | HL_ALERT_DRY_RUN=1 ALERT_ENV_OVERRIDE="$TMP_ENV" FRONTMOST_APP_OVERRIDE=Terminal bash "$ALERT")
+if [ -z "$out" ]; then
+  echo "PASS: terminal frontmost -> suppressed by default"
+  pass=$((pass + 1))
+else
+  echo "FAIL: terminal frontmost -> suppressed by default"
+  echo "$out"
+  fail=$((fail + 1))
+fi
+
+# 8. Non-terminal app frontmost -> alerts fire normally.
+out=$(echo '{"hook_event_name":"Notification","message":"test msg","cwd":"/tmp/x"}' \
+  | HL_ALERT_DRY_RUN=1 ALERT_ENV_OVERRIDE="$TMP_ENV" FRONTMOST_APP_OVERRIDE=Safari bash "$ALERT")
+check "non-terminal frontmost -> NOTIFY still fires" "NOTIFY:" "" "$out"
+check "non-terminal frontmost -> SPEAK still fires" "SPEAK:" "" "$out"
+
+# 9. Terminal frontmost but suppression toggled off -> alerts fire anyway.
+printf 'HL_ALERT_SUPPRESS_FOCUSED=off\n' > "$TMP_ENV"
+out=$(echo '{"hook_event_name":"Notification","message":"test msg","cwd":"/tmp/x"}' \
+  | HL_ALERT_DRY_RUN=1 ALERT_ENV_OVERRIDE="$TMP_ENV" FRONTMOST_APP_OVERRIDE=Terminal bash "$ALERT")
+check "suppress-focused=off fires even with terminal frontmost" "NOTIFY:" "" "$out"
 
 rm -f "$TMP_ENV"
 

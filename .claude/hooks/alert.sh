@@ -10,12 +10,20 @@
 # tracked) so flipping a toggle takes effect on the very next alert without
 # restarting the Claude Code session.
 #
+# Both channels are also suppressed by default when a terminal-class app is
+# frontmost (HL_ALERT_SUPPRESS_FOCUSED) — if a terminal is already focused,
+# assume it's this session and skip the alert. This is a coarse "any
+# terminal" check, not a verification that it's specifically this session's
+# window — acceptable per HAB-162 for single-session use.
+#
 # HL_ALERT_DRY_RUN=1 prints "NOTIFY: ..." / "SPEAK: ..." lines instead of
 # firing real notifications/speech, for testing (see test_alert.sh).
 # ALERT_ENV_OVERRIDE lets tests point at a scratch toggle file.
+# FRONTMOST_APP_OVERRIDE lets tests fake the frontmost-app check.
 
 PROJECT=/Users/yurich/claude_projects/habit_loop
 ALERT_ENV="${ALERT_ENV_OVERRIDE:-$PROJECT/.claude/alert.env}"
+TERMINAL_APPS="Terminal iTerm2 iTerm Ghostty Alacritty kitty WezTerm Hyper Warp"
 
 # Must consume stdin (hook input JSON).
 input=$(cat)
@@ -41,7 +49,18 @@ esac
 # Defaults; overridden by the per-machine toggle file if present.
 HL_ALERT_NOTIFY=on
 HL_ALERT_SPEAK=on
+HL_ALERT_SUPPRESS_FOCUSED=on
 [ -f "$ALERT_ENV" ] && source "$ALERT_ENV"
+
+if [ "$HL_ALERT_SUPPRESS_FOCUSED" = "on" ]; then
+  frontmost="${FRONTMOST_APP_OVERRIDE-}"
+  if [ -z "${FRONTMOST_APP_OVERRIDE+set}" ]; then
+    frontmost=$(osascript -e 'tell application "System Events" to name of first application process whose frontmost is true' 2>/dev/null || true)
+  fi
+  for app in $TERMINAL_APPS; do
+    [ "$frontmost" = "$app" ] && exit 0
+  done
+fi
 
 if [ "$HL_ALERT_NOTIFY" = "on" ]; then
   if [ "${HL_ALERT_DRY_RUN:-0}" = "1" ]; then
