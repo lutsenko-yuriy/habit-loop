@@ -35,7 +35,7 @@ $ARGUMENTS
 
 The fallback path must **never** run at the session's own uncontrolled model — it always spawns an Agent at a named, cheap fallback alias, exactly like the Agent routing stub above. This keeps the fallback's cost ceiling bounded to the skill's own tier instead of whatever model the orchestrating session happens to be.
 
-**Fallback alias rule:** derive it from the skill's own Effort Tier, using the Active mapping in `docs/MODEL_TIERS.md`:
+**Fallback alias rule:** derive it from the skill's own Effort Tier alone (not the full Effort+Reasoning pair — several `lm-studio`-routed pairs, e.g. FOCUSED+TACTICAL, have no Claude row in the Active mapping table to look up):
 - **FOCUSED**-tier skills → `sonnet` (the established alias for FOCUSED work elsewhere, e.g. `brief`/`analyze`/`experiment`) — a quality hedge for tiers doing real code or judgment work, not just mechanical transforms.
 - **RAPID**-tier skills → `haiku` (the cheapest named alias) — these are already meant to be fast/cheap, so the fallback should match that intent exactly.
 - **THOROUGH**-tier skills should not use the script stub at all (see `> Note:` below).
