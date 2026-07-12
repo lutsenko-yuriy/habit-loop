@@ -28,7 +28,33 @@ TERMINAL_APPS="Terminal iTerm2 iTerm Ghostty Alacritty kitty WezTerm Hyper Warp"
 # Must consume stdin (hook input JSON).
 input=$(cat)
 
+# Gate 1: bail out early for any event this script doesn't act on, before
+# paying for the frontmost-app check below.
 event=$(printf '%s' "$input" | jq -r '.hook_event_name // ""' 2>/dev/null || true)
+case "$event" in
+  Notification | Stop) ;;
+  *) exit 0 ;;
+esac
+
+# Defaults; overridden by the per-machine toggle file if present.
+HL_ALERT_NOTIFY=on
+HL_ALERT_SPEAK=on
+HL_ALERT_SUPPRESS_FOCUSED=on
+[ -f "$ALERT_ENV" ] && source "$ALERT_ENV"
+
+# Gate 2: skip both channels if a terminal is already frontmost — no need to
+# build the alert body if we're not going to fire it.
+if [ "$HL_ALERT_SUPPRESS_FOCUSED" = "on" ]; then
+  frontmost="${FRONTMOST_APP_OVERRIDE-}"
+  if [ -z "${FRONTMOST_APP_OVERRIDE+set}" ]; then
+    frontmost=$(osascript -e 'tell application "System Events" to name of first application process whose frontmost is true' 2>/dev/null || true)
+  fi
+  for app in $TERMINAL_APPS; do
+    [ "$frontmost" = "$app" ] && exit 0
+  done
+fi
+
+# Past both gates — build what the alert will say.
 cwd=$(printf '%s' "$input" | jq -r '.cwd // ""' 2>/dev/null || true)
 repo=$(basename "${cwd:-$PWD}")
 title="Claude Code — $repo"
@@ -41,26 +67,7 @@ case "$event" in
   Stop)
     body="Session in $repo stopped and is waiting"
     ;;
-  *)
-    exit 0
-    ;;
 esac
-
-# Defaults; overridden by the per-machine toggle file if present.
-HL_ALERT_NOTIFY=on
-HL_ALERT_SPEAK=on
-HL_ALERT_SUPPRESS_FOCUSED=on
-[ -f "$ALERT_ENV" ] && source "$ALERT_ENV"
-
-if [ "$HL_ALERT_SUPPRESS_FOCUSED" = "on" ]; then
-  frontmost="${FRONTMOST_APP_OVERRIDE-}"
-  if [ -z "${FRONTMOST_APP_OVERRIDE+set}" ]; then
-    frontmost=$(osascript -e 'tell application "System Events" to name of first application process whose frontmost is true' 2>/dev/null || true)
-  fi
-  for app in $TERMINAL_APPS; do
-    [ "$frontmost" = "$app" ] && exit 0
-  done
-fi
 
 if [ "$HL_ALERT_NOTIFY" = "on" ]; then
   if [ "${HL_ALERT_DRY_RUN:-0}" = "1" ]; then
