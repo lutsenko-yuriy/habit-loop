@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.18] — 2026-07-12 (PR #259 merged)
+
+### Changed — Meta
+
+- [meta] HAB-161: Command stubs that route to a local LM Studio model now fall back to a named, cheap Claude alias (`sonnet` for FOCUSED-tier skills, `haiku` for RAPID-tier skills) instead of silently running at whatever model the current session happens to be — closes an uncapped-cost gap that affected all 11 script-stub commands, including 6 that always hit the fallback path today without ever attempting LM Studio.
+
 ## [0.50.17] — 2026-07-12 (PR #258 merged)
 
 ### Changed — Meta
