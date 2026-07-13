@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.20] — 2026-07-13 (PR #261 merged)
+
+### Fixed
+
+- [user] Reworded "too many active pacts" dialog in all locales to read as a recommendation instead of a hard limit (the dialog already allowed confirming past the limit).
+
 ## [0.50.19] — 2026-07-12 (PR #260 merged)
 
 ### Changed — Meta
