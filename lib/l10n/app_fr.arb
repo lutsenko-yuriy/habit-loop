@@ -71,7 +71,7 @@
   "back": "Retour",
   "cancel": "Annuler",
   "tooManyPactsTitle": "Trop de pactes actifs",
-  "tooManyPactsBody": "{max, plural, one{Vous ne pouvez avoir qu'1 pacte actif à la fois. Voulez-vous vraiment en créer un autre ?} other{Vous ne pouvez avoir que {max} pactes actifs à la fois. Voulez-vous vraiment en créer davantage ?}}",
+  "tooManyPactsBody": "{max, plural, one{Nous vous recommandons de ne pas dépasser 1 pacte actif à la fois. Voulez-vous vraiment en créer un autre ?} other{Nous vous recommandons de ne pas dépasser {max} pactes actifs à la fois. Voulez-vous vraiment en créer davantage ?}}",
   "@tooManyPactsBody": {
     "placeholders": {
       "max": { "type": "int" }

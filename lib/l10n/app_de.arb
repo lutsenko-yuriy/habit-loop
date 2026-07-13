@@ -71,7 +71,7 @@
   "back": "Zurück",
   "cancel": "Abbrechen",
   "tooManyPactsTitle": "Zu viele aktive Pakte",
-  "tooManyPactsBody": "{max, plural, one{Du kannst nur 1 aktiven Pakt gleichzeitig haben. Möchtest du wirklich einen weiteren erstellen?} other{Du kannst nur {max} aktive Pakte gleichzeitig haben. Möchtest du wirklich mehr erstellen?}}",
+  "tooManyPactsBody": "{max, plural, one{Wir empfehlen, nicht mehr als 1 aktiven Pakt gleichzeitig zu haben. Möchtest du wirklich einen weiteren erstellen?} other{Wir empfehlen, nicht mehr als {max} aktive Pakte gleichzeitig zu haben. Möchtest du wirklich mehr erstellen?}}",
   "@tooManyPactsBody": {
     "placeholders": {
       "max": { "type": "int" }
