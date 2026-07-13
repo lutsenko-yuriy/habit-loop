@@ -10,3 +10,4 @@ Standing constraints to reference when evaluating trade-offs — especially in r
 ## Stage
 
 - **Pre-public launch.** User base is small; optimise for simplicity and reversibility over scalability. Defer infrastructure that only pays off at scale.
+- **No store-review gate yet.** Builds ship to testers multiple times a day via Firebase App Distribution, with no app-store review delay. Anything justified primarily by "faster than a store release" should be re-evaluated once the app moves to real store distribution.
