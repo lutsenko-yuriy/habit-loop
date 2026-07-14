@@ -25,6 +25,7 @@ Version name changes are manual and require reasoning presented to the user befo
 ```
 check-skip (+ build gate + dispatch plan) → test → resolve-version → build-android → distribute-android ─┐
                                                                     → build-ios     → distribute-ios     ──┤
+                                                                                    → distribute-testflight (isolated — never blocks the line below)
                                                                                                            └→ version-tag (if ≥1 platform distributed)
 ```
 
@@ -41,7 +42,7 @@ check-skip (+ build gate + dispatch plan) → test → resolve-version → build
 
 `scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, and `distribute-ios`. For non-dispatch events the script is a passthrough — both platforms build and distribute as normal.
 
-**TestFlight distribution (in progress, HAB-167):** `scripts/appstore/testflight_upload.sh` uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key, mirroring `scripts/firebase/distribute.sh`. `dispatch_plan.py` already computes a `distribute_testflight` flag (same `ios and deploy and is_production` gating as `distribute_ios`), but neither the script nor the flag is wired into `ci.yml` yet — the dual IPA export (ad-hoc for Firebase, app-store for TestFlight) and the isolated `distribute-testflight` job land in a follow-up WU.
+**TestFlight distribution (HAB-167):** `scripts/appstore/testflight_upload.sh` uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key, mirroring `scripts/firebase/distribute.sh`. `build-ios` archives once and exports twice from the same `.xcarchive` — `method=ad-hoc` (unchanged, for Firebase App Distribution) and `method=app-store` (new, for TestFlight) — since the two channels require differently-signed IPAs and `xcodebuild -exportArchive` re-signs at export time. The app-store export reuses the existing `IOS_CERTIFICATE_P12` Apple Distribution certificate with a separate app-store provisioning profile (`IOS_APPSTORE_PROVISIONING_PROFILE`). The app-store IPA is uploaded as the `ios-appstore` artifact and consumed by an isolated `distribute-testflight` job (`runs-on: macos-15`, gated on `distribute_testflight`). This job is deliberately **not** in `version-tag`'s `needs:` — a TestFlight upload failure must never block Firebase distribution or release tagging.
 
 **Selective build:** `check-skip` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only, `[ci]`-only, `[test]`-only, `[wip]`-only, or `[user-none]`-only entry), the entire build is skipped — no binary is produced, no build number is incremented, and no `version-*` tag is created. Because no `version-*` tag is created for build-skipped entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
 
@@ -88,11 +89,15 @@ Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]
 | `IOS_CERTIFICATE_P12` | `build-ios` | `cat Distribution.p12 \| base64` (export from Keychain) |
 | `IOS_CERTIFICATE_PASSWORD` | `build-ios` | Password set when exporting the .p12 |
 | `IOS_PROVISIONING_PROFILE` | `build-ios` | `cat <profile>.mobileprovision \| base64` (ad-hoc profile from Apple Developer portal) |
+| `IOS_APPSTORE_PROVISIONING_PROFILE` | `build-ios` | `cat <appstore>.mobileprovision \| base64` (App Store distribution profile for `com.habitloop.habitLoop`; reuses the same Apple Distribution certificate as `IOS_CERTIFICATE_P12`) |
 | `IOS_TEAM_ID` | `build-ios` | 10-character Apple Developer Team ID (e.g. `ABCD1234EF`) |
 | `FIREBASE_ANDROID_APP_ID` | `distribute-android` | Firebase Console → Android app → App ID (e.g. `1:123456789012:android:abc123`) |
 | `FIREBASE_SERVICE_ACCOUNT_ANDROID` | `distribute-android` | Raw JSON of a GCP service account key with the Firebase App Distribution Admin role — paste the `.json` file content directly, no base64 |
 | `FIREBASE_IOS_APP_ID` | `distribute-ios` | Firebase Console → iOS app → App ID (e.g. `1:123456789012:ios:abc123`) |
 | `FIREBASE_SERVICE_ACCOUNT_IOS` | `distribute-ios` | Same as above — may reuse the Android service account JSON |
+| `APP_STORE_CONNECT_API_KEY_P8` | `distribute-testflight` | Raw contents of `AuthKey_<KEYID>.p8` — paste directly, no base64 (App Store Connect → Users and Access → Integrations → API keys; role ≥ App Manager) |
+| `APP_STORE_CONNECT_KEY_ID` | `distribute-testflight` | Key ID shown next to the API key in App Store Connect |
+| `APP_STORE_CONNECT_ISSUER_ID` | `distribute-testflight` | Issuer ID shown on the API Keys page in App Store Connect |
 | `CODECOV_TOKEN` | `test` | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability |
 | `GIST_TOKEN` | `run-scenarios` | GitHub PAT with `gist` scope — used to update the scenarios badge gist; optional (badge update is skipped if absent) |
 
