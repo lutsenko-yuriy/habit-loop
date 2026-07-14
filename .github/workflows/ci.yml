@@ -20,8 +20,12 @@ on:
         type: choice
         options: [production, staging]
         default: production
-      deploy:
-        description: 'Deploy (production only)'
+      distribute_firebase:
+        description: 'Distribute to Firebase App Distribution (production only)'
+        type: boolean
+        default: true
+      distribute_testflight:
+        description: 'Distribute to TestFlight (production only)'
         type: boolean
         default: true
       run_scenarios:
@@ -91,8 +95,9 @@ jobs:
             --event "${{ github.event_name }}" \
             --android "${{ github.event.inputs.android || 'true' }}" \
             --ios "${{ github.event.inputs.ios || 'true' }}" \
-            --deploy "${{ github.event.inputs.deploy || 'true' }}" \
             --environment "${{ github.event.inputs.environment || 'production' }}" \
+            --distribute-firebase "${{ github.event.inputs.distribute_firebase || 'true' }}" \
+            --distribute-testflight "${{ github.event.inputs.distribute_testflight || 'true' }}" \
             >> "$GITHUB_OUTPUT"
 
   # ── Lint + unit tests (runs on push and PRs) ─────────────────────────────
@@ -659,7 +664,7 @@ jobs:
   # ── Distribute iOS to Firebase App Distribution ───────────────────────────
   distribute-ios:
     needs: [check-skip, resolve-version, build-ios]
-    if: needs.build-ios.outputs.success == 'true' && needs.check-skip.outputs.distribute_ios == 'true' && false # TEMP: disabled for TestFlight-only validation (HAB-167) — revert before merge
+    if: needs.build-ios.outputs.success == 'true' && needs.check-skip.outputs.distribute_ios == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

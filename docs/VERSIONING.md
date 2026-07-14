@@ -37,10 +37,11 @@ check-skip (+ build gate + dispatch plan) → test → resolve-version → build
 |---|---|---|---|
 | `android` | boolean | `true` | Build the Android binary |
 | `ios` | boolean | `true` | Build the iOS binary |
-| `environment` | choice (`production`/`staging`) | `production` | `staging` suppresses distribution and sets `GROUP_ALIAS=staging-testers` |
-| `deploy` | boolean | `true` | Push to Firebase App Distribution (production only — ignored when staging) |
+| `environment` | choice (`production`/`staging`) | `production` | `staging` suppresses distribution and sets `GROUP_ALIAS=staging-testers`, regardless of the two toggles below |
+| `distribute_firebase` | boolean | `true` | Push to Firebase App Distribution (production only) — set `false` to validate a TestFlight-only run without notifying Firebase testers |
+| `distribute_testflight` | boolean | `true` | Push to TestFlight (production only) — set `false` to validate a Firebase-only run without uploading to App Store Connect |
 
-`scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, and `distribute-ios`. For non-dispatch events the script is a passthrough — both platforms build and distribute as normal.
+`scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, `distribute-ios`, and `distribute-testflight`. `distribute_firebase` gates both `distribute_android` and `distribute_ios`; `distribute_testflight` gates only `distribute_testflight` — so either distribution channel can be exercised independently on a manual dispatch. For non-dispatch events the script is a passthrough — both platforms build and both channels distribute as normal.
 
 **TestFlight distribution (HAB-167):** `scripts/appstore/testflight_upload.sh` uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key, mirroring `scripts/firebase/distribute.sh`. `build-ios` archives once and exports twice from the same `.xcarchive` — `method=ad-hoc` (unchanged, for Firebase App Distribution) and `method=app-store` (new, for TestFlight) — since the two channels require differently-signed IPAs and `xcodebuild -exportArchive` re-signs at export time. The app-store export reuses the existing `IOS_CERTIFICATE_P12` Apple Distribution certificate with a separate app-store provisioning profile (`IOS_APPSTORE_PROVISIONING_PROFILE`). The app-store IPA is uploaded as the `ios-appstore` artifact and consumed by an isolated `distribute-testflight` job (`runs-on: macos-15`, gated on `distribute_testflight`). This job is deliberately **not** in `version-tag`'s `needs:` — a TestFlight upload failure must never block Firebase distribution or release tagging.
 

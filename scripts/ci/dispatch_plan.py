@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """dispatch_plan.py — Compute build/distribute task flags for the CI pipeline.
 
-For workflow_dispatch events, reads the android/ios/environment/deploy inputs
+For workflow_dispatch events, reads the android/ios/environment/distribute-* inputs
 and emits key=value lines for each task flag. For all other events (push,
 pull_request), forces fully-automatic behaviour so existing pipeline behaviour
 is completely unchanged.
@@ -11,8 +11,9 @@ Usage:
         --event <event_name> \
         --android <true|false> \
         --ios <true|false> \
-        --deploy <true|false> \
-        --environment <production|staging>
+        --environment <production|staging> \
+        --distribute-firebase <true|false> \
+        --distribute-testflight <true|false>
 
 Output (stdout, one key=value per line):
     build_android=true|false
@@ -34,8 +35,9 @@ def dispatch_plan(
     event: str,
     android: bool,
     ios: bool,
-    deploy: bool,
     environment: str,
+    distribute_firebase: bool = True,
+    distribute_testflight: bool = True,
 ) -> dict:
     """Return build/distribute flags for the given CI event and inputs."""
     if event != 'workflow_dispatch':
@@ -52,9 +54,9 @@ def dispatch_plan(
     return {
         'build_android': android,
         'build_ios': ios,
-        'distribute_android': android and deploy and is_production,
-        'distribute_ios': ios and deploy and is_production,
-        'distribute_testflight': ios and deploy and is_production,
+        'distribute_android': android and is_production and distribute_firebase,
+        'distribute_ios': ios and is_production and distribute_firebase,
+        'distribute_testflight': ios and is_production and distribute_testflight,
         'group_alias': 'internal-testers' if is_production else 'staging-testers',
     }
 
@@ -68,16 +70,18 @@ def main() -> None:
     parser.add_argument('--event', required=True, help='GitHub event name (e.g. workflow_dispatch, push)')
     parser.add_argument('--android', default='true', help='Build Android binary? (true/false)')
     parser.add_argument('--ios', default='true', help='Build iOS binary? (true/false)')
-    parser.add_argument('--deploy', default='true', help='Deploy to Firebase? (true/false)')
     parser.add_argument('--environment', default='production', help='Target environment (production/staging)')
+    parser.add_argument('--distribute-firebase', default='true', help='Distribute to Firebase App Distribution? (true/false)')
+    parser.add_argument('--distribute-testflight', default='true', help='Distribute to TestFlight? (true/false)')
     args = parser.parse_args()
 
     plan = dispatch_plan(
         event=args.event,
         android=_to_bool(args.android),
         ios=_to_bool(args.ios),
-        deploy=_to_bool(args.deploy),
         environment=args.environment,
+        distribute_firebase=_to_bool(args.distribute_firebase),
+        distribute_testflight=_to_bool(args.distribute_testflight),
     )
 
     for key, value in plan.items():
