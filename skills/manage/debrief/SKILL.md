@@ -89,17 +89,26 @@ Append a dated block to the `## Debrief summary` section of `docs/knowledge/note
 
 Use today's date. Mirror the content from the dialog — do not ask the user for anything at this step.
 
-### 7. Commit and open a PR
+### 7. Commit — reuse the open PR if one exists
 
-Create a branch from the latest `origin/main`, stage all changed files (approved workflow/skill files from step 5 + knowledge base entry from step 6), commit, push, and open a PR:
+Check whether the ticket's feature branch has an open PR (`gh pr list --head <branch> --state open`).
 
+**A. Open PR exists** (standard case — debrief runs before `ship`, per `docs/FEATURE_WORKFLOW.md` step 12): stay on the branch, commit, and push. No new branch or PR.
+```bash
+git add <files>
+git commit -m "meta: debrief HAB-XX — <short summary>"
+git push
+```
+Report it in step 8 as added to the existing PR.
+
+**B. No open PR** (ops-only ticket with no code PR, or a standalone debrief run after merge): create a branch from `origin/main`, commit, push, and open a PR as before.
 ```bash
 git fetch origin
 git checkout -b feature/HAB-XX-debrief origin/main
 git add <files>
 git commit -m "meta: debrief HAB-XX — <short summary>"
+git push -u origin feature/HAB-XX-debrief
 ```
-
 PR title: `meta: debrief HAB-XX — <short summary>`. Include the PR URL in the report (step 8).
 
 ### 8. Report back
