@@ -38,8 +38,8 @@ check-skip (+ build gate + dispatch plan) → test → resolve-version → build
 | `android` | boolean | `true` | Build the Android binary |
 | `ios` | boolean | `true` | Build the iOS binary |
 | `environment` | choice (`production`/`staging`) | `production` | `staging` suppresses distribution and sets `GROUP_ALIAS=staging-testers`, regardless of the two toggles below |
-| `distribute_firebase` | boolean | `true` | Push to Firebase App Distribution (production only) — set `false` to validate a TestFlight-only run without notifying Firebase testers |
-| `distribute_testflight` | boolean | `true` | Push to TestFlight (production only) — set `false` to validate a Firebase-only run without uploading to App Store Connect |
+| `distribute_firebase` | boolean | `true` | Push to Firebase App Distribution — **Android + iOS** (production only) — set `false` to validate a TestFlight-only run without notifying Firebase testers |
+| `distribute_testflight` | boolean | `true` | Push to TestFlight — **iOS only** (production only) — set `false` to validate a Firebase-only run without uploading to App Store Connect |
 
 `scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, `distribute-ios`, and `distribute-testflight`. `distribute_firebase` gates both `distribute_android` and `distribute_ios`; `distribute_testflight` gates only `distribute_testflight` — so either distribution channel can be exercised independently on a manual dispatch. For non-dispatch events the script is a passthrough — both platforms build and both channels distribute as normal.
 

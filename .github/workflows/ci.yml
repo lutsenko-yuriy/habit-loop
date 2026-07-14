@@ -21,11 +21,11 @@ on:
         options: [production, staging]
         default: production
       distribute_firebase:
-        description: 'Distribute to Firebase App Distribution (production only)'
+        description: 'Distribute to Firebase App Distribution — Android + iOS (production only)'
         type: boolean
         default: true
       distribute_testflight:
-        description: 'Distribute to TestFlight (production only)'
+        description: 'Distribute to TestFlight — iOS only (production only)'
         type: boolean
         default: true
       run_scenarios:

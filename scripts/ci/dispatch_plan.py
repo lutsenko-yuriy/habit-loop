@@ -71,8 +71,8 @@ def main() -> None:
     parser.add_argument('--android', default='true', help='Build Android binary? (true/false)')
     parser.add_argument('--ios', default='true', help='Build iOS binary? (true/false)')
     parser.add_argument('--environment', default='production', help='Target environment (production/staging)')
-    parser.add_argument('--distribute-firebase', default='true', help='Distribute to Firebase App Distribution? (true/false)')
-    parser.add_argument('--distribute-testflight', default='true', help='Distribute to TestFlight? (true/false)')
+    parser.add_argument('--distribute-firebase', default='true', help='Distribute to Firebase App Distribution — Android + iOS? (true/false)')
+    parser.add_argument('--distribute-testflight', default='true', help='Distribute to TestFlight — iOS only? (true/false)')
     args = parser.parse_args()
 
     plan = dispatch_plan(
