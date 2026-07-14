@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.22] — 2026-07-14 (PR #265 merged)
+
+### Changed — Meta
+
+- [meta] HAB-168: ship step 1 now checks if an issue is already In QA or Done before recomputing the target state from the PR's file list, preventing debrief-only PRs from clobbering accurate tester-confirmation states set by other means.
+
 ## [0.50.21] — 2026-07-14 (PR #264 merged)
 
 ### Changed — Meta
