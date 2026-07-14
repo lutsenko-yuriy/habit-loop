@@ -14,6 +14,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_ios'])
         self.assertTrue(result['distribute_android'])
         self.assertTrue(result['distribute_ios'])
+        self.assertTrue(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'internal-testers')
 
     def test_pull_request_event_forces_full_automatic_behaviour(self):
@@ -22,6 +23,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_ios'])
         self.assertTrue(result['distribute_android'])
         self.assertTrue(result['distribute_ios'])
+        self.assertTrue(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'internal-testers')
 
     # --- workflow_dispatch: both platforms, production ---
@@ -32,6 +34,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_ios'])
         self.assertTrue(result['distribute_android'])
         self.assertTrue(result['distribute_ios'])
+        self.assertTrue(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'internal-testers')
 
     # --- workflow_dispatch: single platform ---
@@ -42,6 +45,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertFalse(result['build_ios'])
         self.assertTrue(result['distribute_android'])
         self.assertFalse(result['distribute_ios'])
+        self.assertFalse(result['distribute_testflight'])
 
     def test_dispatch_ios_only(self):
         result = dispatch_plan(event='workflow_dispatch', android=False, ios=True, deploy=True, environment='production')
@@ -49,6 +53,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_ios'])
         self.assertFalse(result['distribute_android'])
         self.assertTrue(result['distribute_ios'])
+        self.assertTrue(result['distribute_testflight'])
 
     # --- workflow_dispatch: build-only (deploy=false) ---
 
@@ -58,6 +63,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_ios'])
         self.assertFalse(result['distribute_android'])
         self.assertFalse(result['distribute_ios'])
+        self.assertFalse(result['distribute_testflight'])
 
     def test_dispatch_android_only_no_deploy(self):
         result = dispatch_plan(event='workflow_dispatch', android=True, ios=False, deploy=False, environment='production')
@@ -65,6 +71,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertFalse(result['build_ios'])
         self.assertFalse(result['distribute_android'])
         self.assertFalse(result['distribute_ios'])
+        self.assertFalse(result['distribute_testflight'])
 
     # --- workflow_dispatch: staging overrides deploy ---
 
@@ -75,6 +82,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_ios'])
         self.assertFalse(result['distribute_android'])
         self.assertFalse(result['distribute_ios'])
+        self.assertFalse(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'staging-testers')
 
     def test_dispatch_staging_android_only(self):
@@ -83,7 +91,16 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertFalse(result['build_ios'])
         self.assertFalse(result['distribute_android'])
         self.assertFalse(result['distribute_ios'])
+        self.assertFalse(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'staging-testers')
+
+    # --- workflow_dispatch: distribute_testflight mirrors distribute_ios ---
+
+    def test_dispatch_testflight_ios_only_not_deployed(self):
+        """distribute_testflight follows the same ios+deploy+production gating as distribute_ios."""
+        result = dispatch_plan(event='workflow_dispatch', android=False, ios=True, deploy=False, environment='production')
+        self.assertFalse(result['distribute_ios'])
+        self.assertFalse(result['distribute_testflight'])
 
     # --- group_alias ---
 
