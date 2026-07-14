@@ -104,5 +104,3 @@ Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 ### 7. Report back
 
 Confirm: issue(s) moved to In QA (or Done), changelog updated, version bumped, docs updated (list which files changed), PR merged. Include the new version number and the PR URL. Remind the user to move the ticket to Done in the PM tool once QA has passed.
-
-After reporting, propose: *"Want to run `/debrief HAB-XX` to capture what you learned from this ticket?"* (optional — do not block on it)

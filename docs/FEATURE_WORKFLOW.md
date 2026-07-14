@@ -110,14 +110,19 @@ When in doubt, use **In QA**.
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
     6. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.).
 11. Remind the user to clear the context after each commit to keep the conversation lean.
-12. When the user approves the PR, invoke the `ship` skill:
+12. When the user approves the PR, invoke `debrief` on the current feature branch to capture the retrospective before merging:
+    ```
+    Invoke the debrief skill for HAB-XX
+    ```
+    Since a PR is already open for this branch, debrief commits its knowledge-base entry (and any approved workflow/skill changes) directly onto it instead of opening a separate PR.
+13. Then invoke the `ship` skill:
     ```
     Invoke the ship skill for PR #<number>
     ```
     The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
     Integration scenarios run automatically on CI after merge (see HAB-151). Use `/run-scenarios` manually if you want to verify locally before merging.
-13. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
-14. A new ticket may be picked up while the previous one is In QA.
+14. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
+15. A new ticket may be picked up while the previous one is In QA.
 
 ---
 
