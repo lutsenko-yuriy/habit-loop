@@ -19,12 +19,14 @@ Run all steps in order. Each step must succeed before moving to the next.
 
 ### 1. Move the linked issue(s) to the correct post-merge state
 
+**Precondition — already-in-QA check:** Fetch the issue's current state (PM mapping: **Fetch issue**). If it is already **In QA** or **Done**, leave it as-is — skip the state determination below entirely — and proceed to step 2. This guards against a PR that isn't the ticket's primary implementation work (e.g. a debrief-only PR for a ticket whose real QA status was already set by other means, such as manual real-device testing) silently overwriting a state that's still accurate.
+
 **Precondition — multi-WU check:** Fetch the issue description (PM mapping: **Fetch issue**). If it contains a **Work Units** section with any items still marked ⏳ (not started) or 🔄 (in progress), skip the state determination below and instead:
 1. Move the issue to "In Progress" (PM mapping: **Move issue to state**).
 2. Add a PM comment: "WU[N] shipped (PR #…). Remaining: [list pending WU bullets]." (**Post comment on issue**)
 3. Proceed to step 2 (CHANGELOG).
 
-Only continue to the state determination when all WUs are ✅.
+Only continue to the state determination when all WUs are ✅ and the issue is not already In QA/Done per the check above.
 
 ---
 
