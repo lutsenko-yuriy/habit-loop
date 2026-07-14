@@ -10,7 +10,9 @@
 #   ARTIFACT_PATH            — Path to the app-store-signed IPA file
 #   APP_STORE_CONNECT_KEY_ID — App Store Connect API key ID
 #   APP_STORE_CONNECT_ISSUER_ID — App Store Connect API issuer ID
-#   APP_STORE_CONNECT_API_KEY_P8 — Contents of the AuthKey_<KEYID>.p8 file
+#   APP_STORE_CONNECT_API_KEY_P8 — Base64-encoded contents of the AuthKey_<KEYID>.p8 file
+#                                  (matches the repo convention for file-content secrets,
+#                                  e.g. `cat AuthKey_XXXX.p8 | base64`)
 
 set -euo pipefail
 
@@ -19,7 +21,7 @@ KEYS_DIR="${HOME}/.appstoreconnect/private_keys"
 mkdir -p "$KEYS_DIR"
 KEY_FILE="${KEYS_DIR}/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
 trap 'rm -f "$KEY_FILE"' EXIT
-printf '%s' "$APP_STORE_CONNECT_API_KEY_P8" > "$KEY_FILE"
+echo "$APP_STORE_CONNECT_API_KEY_P8" | base64 --decode > "$KEY_FILE"
 chmod 600 "$KEY_FILE"
 echo "✓ API key staged"
 
