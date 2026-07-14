@@ -659,7 +659,7 @@ jobs:
   # ── Distribute iOS to Firebase App Distribution ───────────────────────────
   distribute-ios:
     needs: [check-skip, resolve-version, build-ios]
-    if: needs.build-ios.outputs.success == 'true' && needs.check-skip.outputs.distribute_ios == 'true'
+    if: needs.build-ios.outputs.success == 'true' && needs.check-skip.outputs.distribute_ios == 'true' && false # TEMP: disabled for TestFlight-only validation (HAB-167) — revert before merge
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
