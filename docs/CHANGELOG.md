@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.21] — 2026-07-14 (PR #264 merged)
+
+### Changed — Meta
+
+- [meta] HAB-166 debrief: onboarding first iOS tester to FAD went well; UDID/profile-refresh process documented for future tester additions. Structural limitations (per-tester profile overhead) tracked separately in HAB-167 (TestFlight).
+
 ## [0.50.20] — 2026-07-13 (PR #261 merged)
 
 ### Fixed
