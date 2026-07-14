@@ -421,6 +421,7 @@ jobs:
     runs-on: macos-15
     outputs:
       success: ${{ steps.build.outputs.success }}
+      appstore_success: ${{ steps.export-appstore.outputs.success }}
     steps:
       - uses: actions/checkout@v4
 
@@ -460,6 +461,13 @@ jobs:
         # Second profile for the TestFlight export (HAB-167). Reuses the same
         # Apple Distribution certificate imported above — only the profile
         # differs (app-store vs ad-hoc distribution method).
+        #
+        # continue-on-error: this profile is only needed for the isolated
+        # TestFlight export below — a missing/invalid app-store profile must
+        # never fail the whole build-ios job, since that would also take down
+        # the ad-hoc export that Firebase App Distribution depends on.
+        id: appstore-profile
+        continue-on-error: true
         if: github.event.inputs.environment != 'staging'
         run: |
           PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
@@ -526,8 +534,9 @@ jobs:
 
       - name: Generate ExportOptions (app-store).plist
         # Second export options for TestFlight (HAB-167) — same archive,
-        # re-signed at export time with the app-store profile/method.
-        if: github.event.inputs.environment != 'staging'
+        # re-signed at export time with the app-store profile/method. Skipped
+        # if the app-store profile itself failed to install above.
+        if: github.event.inputs.environment != 'staging' && steps.appstore-profile.outcome == 'success'
         run: |
           cat > /tmp/ExportOptions-appstore.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -610,14 +619,6 @@ jobs:
             -exportPath build/ios/ipa \
             -exportOptionsPlist /tmp/ExportOptions.plist
 
-          # 5. Export the same archive again with the app-store method (for
-          #    TestFlight — HAB-167). xcodebuild re-signs at export time, so
-          #    one archive yields two differently-signed IPAs.
-          xcodebuild -exportArchive \
-            -archivePath /tmp/Runner.xcarchive \
-            -exportPath build/ios/ipa-appstore \
-            -exportOptionsPlist /tmp/ExportOptions-appstore.plist
-
           echo "success=true" >> "$GITHUB_OUTPUT"
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -629,8 +630,27 @@ jobs:
           path: build/ios/ipa/*.ipa
           retention-days: 7
 
+      - name: Export app-store IPA (TestFlight)
+        # Deliberately isolated from the ad-hoc export above (HAB-167) —
+        # exports the same archive again with the app-store method, since
+        # xcodebuild re-signs at export time and TestFlight requires an
+        # app-store-signed IPA distinct from the ad-hoc one Firebase needs.
+        # continue-on-error: a broken app-store profile/export must never
+        # fail build-ios, or it would also take down the ad-hoc/Firebase
+        # path above (both live in the same job).
+        id: export-appstore
+        continue-on-error: true
+        if: steps.build.outputs.success == 'true' && github.event.inputs.environment != 'staging' && steps.appstore-profile.outcome == 'success'
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath /tmp/Runner.xcarchive \
+            -exportPath build/ios/ipa-appstore \
+            -exportOptionsPlist /tmp/ExportOptions-appstore.plist
+
+          echo "success=true" >> "$GITHUB_OUTPUT"
+
       - uses: actions/upload-artifact@v4
-        if: steps.build.outputs.success == 'true' && github.event.inputs.environment != 'staging'
+        if: steps.export-appstore.outputs.success == 'true'
         with:
           name: ios-appstore
           path: build/ios/ipa-appstore/*.ipa
@@ -665,7 +685,7 @@ jobs:
   # upload failure must never block Firebase distribution or release tagging.
   distribute-testflight:
     needs: [check-skip, build-ios]
-    if: needs.build-ios.outputs.success == 'true' && needs.check-skip.outputs.distribute_testflight == 'true'
+    if: needs.build-ios.outputs.appstore_success == 'true' && needs.check-skip.outputs.distribute_testflight == 'true'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
