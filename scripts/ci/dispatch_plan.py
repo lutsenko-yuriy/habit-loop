@@ -19,6 +19,7 @@ Output (stdout, one key=value per line):
     build_ios=true|false
     distribute_android=true|false
     distribute_ios=true|false
+    distribute_testflight=true|false
     group_alias=internal-testers|staging-testers
 
 Exit code: always 0 — never fails the CI pipeline.
@@ -43,6 +44,7 @@ def dispatch_plan(
             'build_ios': True,
             'distribute_android': True,
             'distribute_ios': True,
+            'distribute_testflight': True,
             'group_alias': 'internal-testers',
         }
 
@@ -52,6 +54,7 @@ def dispatch_plan(
         'build_ios': ios,
         'distribute_android': android and deploy and is_production,
         'distribute_ios': ios and deploy and is_production,
+        'distribute_testflight': ios and deploy and is_production,
         'group_alias': 'internal-testers' if is_production else 'staging-testers',
     }
 

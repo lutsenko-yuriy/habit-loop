@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.23] — 2026-07-14 (PR #266 merged)
+
+### Changed — Meta
+
+- [wip] HAB-167 WU1: TestFlight upload tooling and dispatch plan scaffolding. Dual IPA export and isolated distribute-testflight job in CI land in WU2.
+
 ## [0.50.22] — 2026-07-14 (PR #265 merged)
 
 ### Changed — Meta

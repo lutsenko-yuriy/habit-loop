@@ -73,6 +73,8 @@
 	</array>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This app does not use advertising identifiers.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

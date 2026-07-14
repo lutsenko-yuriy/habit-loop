@@ -137,6 +137,7 @@ Python utilities for CI, release management, and code-quality tooling. All scrip
 | `scripts/changelog/` | `lint.py`, `distribute.py`, `release_notes.py` | CHANGELOG linting, build-skip gate, and "What's New" generation |
 | `scripts/ci/` | `dispatch_plan.py` | Translates `workflow_dispatch` inputs into per-job CI flags |
 | `scripts/firebase/` | `cleanup_builds.py` | Deletes old Firebase App Distribution releases, keeping the N most recent |
+| `scripts/appstore/` | `testflight_upload.sh` | Uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key — runs alongside, not instead of, Firebase App Distribution (HAB-167) |
 | `scripts/dead_code/` | `check.py` | Advisory dead-code detector — runs all four detectors in order and prints a report; always exits 0 (never blocks CI or commits). Invoked via the `/dead-code-check` skill or manually. |
 
 `scripts/dead_code/check.py` detectors (in execution order):
