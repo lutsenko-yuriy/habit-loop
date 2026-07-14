@@ -28,7 +28,7 @@ check-skip (+ build gate + dispatch plan) → test → resolve-version → build
                                                                                                            └→ version-tag (if ≥1 platform distributed)
 ```
 
-`check-skip` runs `scripts/changelog/distribute.py` to determine `should_build`, and `scripts/ci/dispatch_plan.py` to resolve per-job flags (`build_android`, `build_ios`, `distribute_android`, `distribute_ios`, `group_alias`). Builds, distribution, and version tagging only run on the `main` branch when `should_build=true`. Feature branches run tests only and never build or tag.
+`check-skip` runs `scripts/changelog/distribute.py` to determine `should_build`, and `scripts/ci/dispatch_plan.py` to resolve per-job flags (`build_android`, `build_ios`, `distribute_android`, `distribute_ios`, `distribute_testflight`, `group_alias`). Builds, distribution, and version tagging only run on the `main` branch when `should_build=true`. Feature branches run tests only and never build or tag.
 
 **Manual dispatch (`workflow_dispatch`) inputs:**
 
@@ -40,6 +40,8 @@ check-skip (+ build gate + dispatch plan) → test → resolve-version → build
 | `deploy` | boolean | `true` | Push to Firebase App Distribution (production only — ignored when staging) |
 
 `scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, and `distribute-ios`. For non-dispatch events the script is a passthrough — both platforms build and distribute as normal.
+
+**TestFlight distribution (in progress, HAB-167):** `scripts/appstore/testflight_upload.sh` uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key, mirroring `scripts/firebase/distribute.sh`. `dispatch_plan.py` already computes a `distribute_testflight` flag (same `ios and deploy and is_production` gating as `distribute_ios`), but neither the script nor the flag is wired into `ci.yml` yet — the dual IPA export (ad-hoc for Firebase, app-store for TestFlight) and the isolated `distribute-testflight` job land in a follow-up WU.
 
 **Selective build:** `check-skip` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only, `[ci]`-only, `[test]`-only, `[wip]`-only, or `[user-none]`-only entry), the entire build is skipped — no binary is produced, no build number is incremented, and no `version-*` tag is created. Because no `version-*` tag is created for build-skipped entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
 
