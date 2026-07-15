@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.25] — 2026-07-15 (PR #267 merged)
+
+### Changed — CI
+
+- [ci] HAB-167 WU2: Wire TestFlight distribution into CI/CD pipeline. Dual IPA export (`ad-hoc` for Firebase, `app-store` for TestFlight), isolated `distribute-testflight` job, and App Store Connect API key integration. Manual `workflow_dispatch` runs with `ios=true` and `distribute_testflight=true` can now upload signed IPAs directly to TestFlight for internal testing.
+
 ## [0.50.24] — 2026-07-15 (unreleased)
 
 ### Changed — CI
