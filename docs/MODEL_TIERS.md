@@ -29,6 +29,7 @@ This project describes what each skill needs from a model using two axes: **Effo
 | Skill | Effort | Reasoning | Why |
 |---|---|---|---|
 | `calibrate` | THOROUGH | ARCHITECTURAL | Reasoning about model strengths requires the most capable model available |
+| `checkup` | THOROUGH | ARCHITECTURAL | Non-mechanical quality heuristics span the whole codebase and require cross-cutting judgement |
 | `skill-creator` | FOCUSED | ARCHITECTURAL | Designing skill structure requires understanding the whole skill system and tier routing |
 | `style` | RAPID | MECHANICAL | Load and apply a communication style definition |
 

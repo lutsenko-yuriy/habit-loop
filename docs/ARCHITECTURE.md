@@ -4,7 +4,7 @@ Vertical-slice architecture where each slice is a feature from @docs/PRODUCT_SPE
 
 Cross-cutting infrastructure (analytics, crashlytics, remote config) lives under `lib/infrastructure/`. Pure domain models and repository interfaces shared across features live under `lib/domain/`.
 
-Product experiments (hypothesis, metrics, decisions) are tracked in `docs/experiments/` — see `docs/experiments/README.md` for the index and `docs/experiments/TEMPLATE.md` for the per-experiment format.
+Product experiments (hypothesis, metrics, decisions) are tracked in `docs/experiments/` — see `docs/experiments/README.md` for the index and `docs/experiments/TEMPLATE.md` for the per-experiment format. Periodic non-mechanical code-quality checkups are tracked in `docs/knowledge/checkups/` — a `README.md` ledger with a per-tier cadence/due table plus open findings, and one dated `CHK-YYYY-MM-DD-<tier>.md` write-up per run, with due status read by `scripts/checkup/due.py`.
 
 ## Layers
 
@@ -139,6 +139,7 @@ Python utilities for CI, release management, and code-quality tooling. All scrip
 | `scripts/firebase/` | `cleanup_builds.py` | Deletes old Firebase App Distribution releases, keeping the N most recent |
 | `scripts/appstore/` | `testflight_upload.sh` | Uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key — runs alongside, not instead of, Firebase App Distribution (HAB-167) |
 | `scripts/dead_code/` | `check.py` | Advisory dead-code detector — runs all four detectors in order and prints a report; always exits 0 (never blocks CI or commits). Invoked via the `/dead-code-check` skill or manually. |
+| `scripts/checkup/` | `due.py` | Reads the cadence/due table in `docs/knowledge/checkups/README.md` and reports which tier(s) (light/heavy) are due for review this period. Consumed by the `/checkup` skill and at session start. |
 
 `scripts/dead_code/check.py` detectors (in execution order):
 

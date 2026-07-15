@@ -11,8 +11,12 @@ docs/knowledge/
 ├── README.md          # this file
 ├── notes/
 │   └── HAB-XX.md      # one file per ticket; created on first /note or /debrief use
-└── decisions/
-    └── ADR-NNN-<short-name>.md   # one file per standing decision; see decisions/README.md
+├── decisions/
+│   └── ADR-NNN-<short-name>.md   # one file per standing decision; see decisions/README.md
+└── checkups/
+    ├── README.md          # ledger: per-tier cadence/due table + open/resolved findings tables
+    ├── TEMPLATE.md         # per-run write-up skeleton
+    └── CHK-YYYY-MM-DD-<tier>.md   # one dated write-up per checkup run; written by /checkup
 ```
 
 ## Per-ticket file format

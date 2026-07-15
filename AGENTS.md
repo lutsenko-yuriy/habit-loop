@@ -42,6 +42,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/manage/note/SKILL.md | Capture a quick observation mid-session into `docs/knowledge/notes/HAB-XX.md` |
 | skills/manage/cleanup-firebase/SKILL.md | Delete old Firebase App Distribution builds locally, keeping the N most recent per platform |
 | skills/manage/dead-code-check/SKILL.md | Advisory dead-code detector — surfaces orphaned l10n keys, analytics events, test files, and handler files |
+| skills/manage/checkup/SKILL.md | Two-tier periodic code-quality checkup (light monthly / heavy quarterly) — walks the 8 non-mechanical dimensions, fixes inline or writes findings to docs/knowledge/checkups/ with deadlines |
 | skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |
 | skills/design/brief/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
 | skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
@@ -79,6 +80,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/run-scenarios` | run/run-scenarios | `/run-scenarios` or `/run-scenarios HAB-XX` |
 | `/cleanup-firebase` | manage/cleanup-firebase | `/cleanup-firebase [N] [--dry-run]` |
 | `/dead-code-check` | manage/dead-code-check | `/dead-code-check` |
+| `/checkup` | manage/checkup | `/checkup [light|heavy|status]` |
 | `/note` | manage/note | `/note [HAB-XX:] <free-form text>` |
 
 ## Architecture
@@ -115,8 +117,9 @@ At the beginning of every new session, before doing anything else:
 1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
 2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `skills/configure/style/`). Default to DETAILED if absent.
 3. Invoke the `summarize` skill: `Invoke the summarize skill to present the current backlog from Linear`.
-4. The skill will summarise what has been done and what is remaining, then ask *"What goes into the next release? Pick an existing ticket or describe something new."*.
-5. Wait for the user's answer before proceeding. If the user wants to describe something new, invoke the `brief` skill before any planning begins.
+4. Run `scripts/checkup/due.py --format=session`. If it reports a tier as due, recommend running `/checkup` before picking up a new ticket, alongside the backlog summary.
+5. The skill will summarise what has been done and what is remaining, then ask *"What goes into the next release? Pick an existing ticket or describe something new."*.
+6. Wait for the user's answer before proceeding. If the user wants to describe something new, invoke the `brief` skill before any planning begins.
 
 ## Workflow
 
