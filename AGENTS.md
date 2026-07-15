@@ -23,7 +23,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/FEATURE_TOGGLES.md | Firebase Remote Config kill-switch flags — catalogue of toggles and their effects |
 | docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
 | docs/CODE_STYLE.md | Code style rules — formatting, linting, comment hygiene |
-| docs/LICENSING.md | Licence decision record — dependency audit, WU1–WU3 research, WU4 pending |
+| docs/LICENSING.md | Current licence (MIT) — cites ADR-0001 for the decision record |
 | docs/MODEL_TIERS.md | Effort Tier and Reasoning Depth vocabulary; active model → tier mapping |
 | docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
 | docs/knowledge/decisions/README.md | ADR registry index — one `.md` file per standing decision, discoverable independent of the ticket that produced it |

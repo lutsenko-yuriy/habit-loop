@@ -8,11 +8,15 @@ Write one when a ticket's research or implementation concludes in a decision tha
 
 ## Starting an ADR
 
-1. Pick the next sequential `ADR-NNN` ID from the index table below.
-2. Copy `docs/knowledge/decisions/TEMPLATE.md` to `docs/knowledge/decisions/ADR-NNN-<short-name>.md`, where `<short-name>` is a kebab-case slug (mirrors branch naming, e.g. `feature/HAB-XX-<short-description>`).
+1. Pick the next sequential `ADR-NNNN` ID from the index table below (4-digit, zero-padded, e.g. `ADR-0001` — the ticket count alone is already in the hundreds, so 3 digits won't last).
+2. Copy `docs/knowledge/decisions/TEMPLATE.md` to `docs/knowledge/decisions/ADR-NNNN-<short-name>.md`, where `<short-name>` is a kebab-case slug (mirrors branch naming, e.g. `feature/HAB-XX-<short-description>`).
 3. Replace the template's H1 with a one-sentence description of the decision, commit-message style (e.g. "add per-channel distribute toggles to manual dispatch") — not just a noun-phrase title.
 4. Fill in Context, Decision, Alternatives considered, Related ticket, and Date.
 5. Add a row to the Index table, using the same one-sentence description in the Description column.
+
+## ID format
+
+`ADR-NNNN` — 4-digit, zero-padded, sequential. Deliberately wider than `docs/experiments/`'s 3-digit `EXP-NNN`: this project is already past ticket #170 four months in, and ADRs should never need a format change to keep up.
 
 ## Statuses
 
@@ -27,3 +31,5 @@ Write one when a ticket's research or implementation concludes in a decision tha
 
 | ID | Description | Status | Date | Related ticket |
 |---|---|---|---|---|
+| ADR-0001 | adopt the MIT licence for the repository | `accepted` | 2026-07-04 | HAB-109 |
+| ADR-0002 | review showup-redemption requests manually until load becomes unbearable | `accepted` | 2026-07-04 | HAB-140 |
