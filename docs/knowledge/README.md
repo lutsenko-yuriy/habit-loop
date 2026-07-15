@@ -34,6 +34,7 @@ See `docs/knowledge/notes/TEMPLATE.md` for the canonical structure. In brief:
 |---|---|
 | `/note [HAB-XX:] <text>` | Appends a dated observation to `## Notes` |
 | `/debrief HAB-XX` | Appends a dated block to `## Debrief summary` |
+| `/checkup [light\|heavy\|status]` | Writes a dated `checkups/CHK-YYYY-MM-DD-<tier>.md` and updates `checkups/README.md` |
 
 On first use for a ticket, the file is created from `docs/knowledge/notes/TEMPLATE.md`.
 

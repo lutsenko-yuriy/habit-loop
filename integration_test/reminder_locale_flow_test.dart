@@ -31,8 +31,6 @@ void main() {
   setUpAll(AppHarness.initForHost);
 
   group('Reminder locale flow', () {
-    // TODO: restore late AppHarness h; tearDown(() => h.dispose());
-
     testWidgets(
         'schedules_reminder_in_device_locale_without_in_app_override: reminder notifications use the device/system locale when no in-app language override has ever been saved',
         (tester) async {

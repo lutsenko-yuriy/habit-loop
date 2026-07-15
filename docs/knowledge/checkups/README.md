@@ -8,7 +8,7 @@ Each tier is tracked as "not yet done this period" — a period label, not an ex
 
 | Tier | Cadence | Last run | Period covered | Next due |
 |---|---|---|---|---|
-| Light | 1st of every calendar month | never | — | now |
+| Light | 1st of every calendar month | 2026-07-16 | 2026-07 | — |
 | Heavy | 14th of Jan/Apr/Jul/Oct | never | — | now |
 
 ## Open findings
@@ -17,7 +17,7 @@ Findings needing human decision or larger effort, each carrying an explicit dead
 
 | ID | Opened | Tier | Dimension | Debt quadrant | Summary | Deadline | Write-up |
 |---|---|---|---|---|---|---|---|
-| _none yet_ | | | | | | | |
+| CHK-2026-07-16-light-1 | 2026-07-16 | Light | Doc-reality drift / Scenario quality | Prudent-inadvertent | Dangling "Load more" pagination test stub (`pact_timeline_flow_test.dart`) — pagination was dropped from `PactTimelineService` mid-HAB-116, docs now corrected, but the stub and the product question (implement for real, or delete) remain open | 2026-08-15 | [CHK-2026-07-16-light](CHK-2026-07-16-light.md) |
 
 ## Resolved findings
 

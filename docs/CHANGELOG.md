@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.27] — 2026-07-16 (unreleased)
+
+### Added — Dev tooling
+
+- [meta] HAB-171 WU2: Add the `/checkup` skill — a two-tier periodic code-quality checkup covering 8 non-mechanical dimensions (unused functionality, scenario quality, glossary drift, doc-reality drift, feature-flag lifecycle, readability, cross-screen UX consistency, accessibility). Auto-detects due tiers via WU1's `due.py`, fixes findings inline (Boy Scout Rule) or defers them to the `docs/knowledge/checkups/` ledger with a Fowler-quadrant classification and deadline — no individual Linear ticket per finding. Ran the first light-tier checkup as part of validating this WU; findings and fixes are in `docs/knowledge/checkups/CHK-2026-07-16-light.md`.
+
 ## [0.50.26] — 2026-07-15 (PR #271 merged)
 
 ### Added — Dev tooling

@@ -70,6 +70,20 @@ Fired when the user confirms stopping an active pact.
 
 ---
 
+### `notifications_scheduled`
+
+Fired each time the reminder scheduling job completes — on pact creation and on any re-schedule pass such as a dashboard refresh.
+
+Event class: `NotificationsScheduledEvent` in `lib/slices/reminder/analytics/reminder_analytics_events.dart`
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact whose notifications were scheduled |
+| `notifications_count` | `int` | Number of notifications registered with the OS; may be less than the total showup count due to OS limits (iOS caps pending notifications at 64) |
+| `reminder_offset_minutes` | `int` | Reminder offset in minutes — mirrors the `reminder_offset_minutes` property of `pact_created` |
+
+---
+
 ### `app_opened_from_notification`
 
 Fired when the app is opened (cold-started or resumed from background) because the user tapped a reminder notification. Fires from the navigation layer using data already present in the notification payload — no DB round-trip is needed.
