@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.24] — 2026-07-15 (unreleased)
+
+### Changed — CI
+
+- [ci] Temporarily disable automatic iOS Firebase App Distribution on push/PR CI runs. iOS still builds; a manual `workflow_dispatch` run with `ios=true` and `distribute_firebase=true` can still distribute. Revert once TestFlight distribution (HAB-167) is ready.
+
 ## [0.50.23] — 2026-07-14 (PR #266 merged)
 
 ### Changed — Meta

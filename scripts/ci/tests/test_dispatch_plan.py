@@ -8,13 +8,16 @@ class TestDispatchPlan(unittest.TestCase):
     # --- non-dispatch passthrough ---
 
     def test_push_event_forces_full_automatic_behaviour(self):
-        """Any non-workflow_dispatch event always builds and distributes both platforms/channels."""
+        """Non-workflow_dispatch events always build both platforms and distribute Android.
+
+        iOS Firebase distribution is temporarily disabled for automatic runs (HAB-167).
+        """
         result = dispatch_plan(event='push', android=False, ios=False, environment='staging')
         self.assertTrue(result['build_android'])
         self.assertTrue(result['build_ios'])
         self.assertTrue(result['distribute_android'])
-        self.assertTrue(result['distribute_ios'])
-        self.assertTrue(result['distribute_testflight'])
+        self.assertFalse(result['distribute_ios'])
+        self.assertFalse(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'internal-testers')
 
     def test_pull_request_event_forces_full_automatic_behaviour(self):
@@ -22,8 +25,8 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_android'])
         self.assertTrue(result['build_ios'])
         self.assertTrue(result['distribute_android'])
-        self.assertTrue(result['distribute_ios'])
-        self.assertTrue(result['distribute_testflight'])
+        self.assertFalse(result['distribute_ios'])
+        self.assertFalse(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'internal-testers')
 
     # --- workflow_dispatch: both platforms, production ---

@@ -45,8 +45,11 @@ def dispatch_plan(
             'build_android': True,
             'build_ios': True,
             'distribute_android': True,
-            'distribute_ios': True,
-            'distribute_testflight': True,
+            # TODO(HAB-167): iOS Firebase distribution temporarily disabled for
+            # automatic runs pending TestFlight rollout. Manual workflow_dispatch
+            # (ios=true, distribute_firebase=true) still works. Restore to True once resolved.
+            'distribute_ios': False,
+            'distribute_testflight': False,
             'group_alias': 'internal-testers',
         }
 
