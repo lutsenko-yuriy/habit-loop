@@ -9,7 +9,7 @@ Write one when a ticket's research or implementation concludes in a decision tha
 ## Starting an ADR
 
 1. Pick the next sequential `ADR-NNN` ID from the index table below.
-2. Copy `docs/decisions/TEMPLATE.md` to `docs/decisions/ADR-NNN-<short-name>.md`, where `<short-name>` is a kebab-case slug (mirrors branch naming, e.g. `feature/HAB-XX-<short-description>`).
+2. Copy `docs/knowledge/decisions/TEMPLATE.md` to `docs/knowledge/decisions/ADR-NNN-<short-name>.md`, where `<short-name>` is a kebab-case slug (mirrors branch naming, e.g. `feature/HAB-XX-<short-description>`).
 3. Replace the template's H1 with a one-sentence description of the decision, commit-message style (e.g. "add per-channel distribute toggles to manual dispatch") — not just a noun-phrase title.
 4. Fill in Context, Decision, Alternatives considered, Related ticket, and Date.
 5. Add a row to the Index table, using the same one-sentence description in the Description column.
