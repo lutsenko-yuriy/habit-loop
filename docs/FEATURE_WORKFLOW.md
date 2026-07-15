@@ -109,7 +109,7 @@ When in doubt, use **In QA**.
     4. If the cumulative changes since the last review pass are non-trivial (new files, logic changes, interface changes), re-invoke both review skills and return to step 10.1.
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
     6. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.).
-11. Remind the user to clear the context after each commit to keep the conversation lean.
+11. Remind the user to compact context after each commit to keep the conversation lean.
 12. When the user approves the PR, invoke `debrief` on the current feature branch to capture the retrospective before merging:
     ```
     Invoke the debrief skill for HAB-XX
@@ -121,7 +121,7 @@ When in doubt, use **In QA**.
     ```
     The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
     Integration scenarios run automatically on CI after merge (see HAB-151). Use `/run-scenarios` manually if you want to verify locally before merging.
-14. Clear the context after the PR is merged. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
+14. Clear the context now that the ticket is fully shipped, before starting a new ticket. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
 15. A new ticket may be picked up while the previous one is In QA.
 
 ---
@@ -147,4 +147,5 @@ Use `[wip]` as the classification tag for all intermediate WU CHANGELOG entries 
 For each WU in sequence:
 1. Create a fresh branch from the latest `origin/main` using the branch name from the plan table.
 2. Follow steps 2–12 (widget tests, TDD cycles, validate, format, PR, review loop, ship). The full review loop (step 10) — `review-architecture`, `audit-code`, Codecov, and user sign-off — is mandatory for every WU PR without exception.
-3. After `ship` merges, fetch `origin/main` and start the next WU from the freshly updated tip.
+3. **Hard checkpoint:** after `ship` merges, explicitly tell the user to compact context now, before continuing — state it as its own message and wait for it to happen.
+4. Fetch `origin/main` and start the next WU from the freshly updated tip.

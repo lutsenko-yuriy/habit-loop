@@ -44,6 +44,8 @@ When you find a different word used for the same concept, look it up in **[Known
 | **Unarchive (a pact)** | The user brings an archived pact back into the default list view, making it visible again without requiring the Archived filter. The pact's history and stats are unchanged throughout. |
 | **Showup generation** | Deterministic creation of showups from a pact's schedule. Generated lazily in a rolling **generation window** ahead of today, not all upfront. |
 | **Commitment confirmation** | The gate shown before a pact is created, making the "no exceptions, no pausing" commitment explicit. Variant under EXP-003 (`button` / `checkbox` / `retype`). |
+| **Redeem (a showup)** | Marking an auto-failed (not manually failed) showup as done, by writing a required note. Only available within the tail zone (last N days, `pact_timeline_no_grouping_tail_period_in_days`). Gated by `showup_redemption_enabled`. |
+| **Milestone** | One grouped unit shown on the pact timeline: a streak run, a mixed group, a single or noted showup, or an anchor (pact created / current state / concluded). Distinct from an analytics event or a generic UI list item (`PactTimelineMilestone`, `slices/pact/application/`). |
 
 ---
 
@@ -67,6 +69,7 @@ When you find a different word used for the same concept, look it up in **[Known
 | **Calendar strip** | The 7-day band (today ±3) with coloured dots per showup (green = done, red = failed, grey/amber = upcoming). |
 | **Pacts panel** | The draggable sheet listing all pacts with Active / Done / Stopped filter chips. |
 | **Onboarding carousel** | The four-slide intro shown only to users with zero pacts. |
+| **Pact timeline** | The full-history milestone view of a pact's showups, reached via "View timeline" on pact detail. Loaded and grouped in one pass — no pagination. Gated by `pact_timeline_enabled`. |
 
 ---
 
