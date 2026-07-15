@@ -1,6 +1,8 @@
 # Project Knowledge Base
 
-A local Markdown vault for decisions, learnings, and retrospectives — committed to the repo so Claude and the user share the same history across sessions.
+A local Markdown vault for ticket-scoped research, learnings, and retrospectives — committed to the repo so Claude and the user share the same history across sessions.
+
+**Standing decisions** that should be discoverable without knowing which ticket produced them (e.g. "we chose MIT licence") live separately in `docs/decisions/` (ADRs), not here — see `docs/decisions/README.md`. This vault stays scoped to per-ticket notes; an ADR links back to the relevant `HAB-XX.md` file for full rationale.
 
 ## Structure
 

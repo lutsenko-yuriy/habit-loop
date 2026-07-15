@@ -35,6 +35,7 @@ Read this file to resolve all project-specific constants referenced in skill ins
 | Feature workflow | `docs/FEATURE_WORKFLOW.md` |
 | Troubleshoot workflow | `docs/TROUBLESHOOT_WORKFLOW.md` |
 | Knowledge base | `docs/knowledge/notes/` (one `HAB-XX.md` file per ticket) |
+| Decisions (ADRs) | `docs/decisions/` (one `ADR-NNN-<short-name>.md` file per standing decision) |
 
 ## Testing
 
