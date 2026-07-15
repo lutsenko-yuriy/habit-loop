@@ -100,11 +100,13 @@ Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]
 | `FIREBASE_SERVICE_ACCOUNT_ANDROID` | `distribute-android` | Raw JSON of a GCP service account key with the Firebase App Distribution Admin role — paste the `.json` file content directly, no base64 |
 | `FIREBASE_IOS_APP_ID` | `distribute-ios` | Firebase Console → iOS app → App ID (e.g. `1:123456789012:ios:abc123`) |
 | `FIREBASE_SERVICE_ACCOUNT_IOS` | `distribute-ios` | Same as above — may reuse the Android service account JSON |
-| `APP_STORE_CONNECT_API_KEY_P8` | `distribute-testflight` | Raw contents of `AuthKey_<KEYID>.p8` — paste directly, no base64 (App Store Connect → Users and Access → Integrations → API keys; role ≥ App Manager) |
+| `APP_STORE_CONNECT_API_KEY_P8` | `distribute-testflight` | `cat AuthKey_<KEYID>.p8 \| base64` (App Store Connect → Users and Access → Integrations → API keys; role ≥ App Manager) — must be base64-encoded, matching the convention used by `IOS_CERTIFICATE_P12`/`IOS_APPSTORE_PROVISIONING_PROFILE`; `testflight_upload.sh` decodes it with `base64 --decode` |
 | `APP_STORE_CONNECT_KEY_ID` | `distribute-testflight` | Key ID shown next to the API key in App Store Connect |
 | `APP_STORE_CONNECT_ISSUER_ID` | `distribute-testflight` | Issuer ID shown on the API Keys page in App Store Connect |
 | `CODECOV_TOKEN` | `test` | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability |
 | `GIST_TOKEN` | `run-scenarios` | GitHub PAT with `gist` scope — used to update the scenarios badge gist; optional (badge update is skipped if absent) |
+
+**When adding a new secret that requires a specific encoding (e.g. base64):** before asking the user to add it to GitHub and run a live validation, verify the encode instruction in the table above and the decode step in the consuming script are symmetric. A mismatch here only surfaces as a runtime failure during a live `workflow_dispatch` run — never in code review or unit tests (this is exactly what happened in HAB-167).
 
 **Required GitHub Actions Variables** (repository-level, not secrets):
 
