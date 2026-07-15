@@ -1,4 +1,4 @@
-# ADR-NNN — <one-sentence description of the decision, commit-message style>
+# ADR-NNNN — <one-sentence description of the decision, commit-message style>
 
 ## Status
 `proposed`
