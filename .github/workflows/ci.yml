@@ -423,7 +423,7 @@ jobs:
   build-ios:
     needs: [check-skip, resolve-version]
     if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && needs.check-skip.outputs.build_ios == 'true'
-    runs-on: macos-15
+    runs-on: macos-26
     outputs:
       success: ${{ steps.build.outputs.success }}
       appstore_success: ${{ steps.export-appstore.outputs.success }}
