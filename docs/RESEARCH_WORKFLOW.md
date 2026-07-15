@@ -2,8 +2,6 @@
 
 Use this workflow for research-only tickets (no production code, no PR beyond the debrief commit). For features use `docs/FEATURE_WORKFLOW.md`; for bugs/CI use `docs/TROUBLESHOOT_WORKFLOW.md`.
 
-> **Note:** The Linear organisation and documentation structure for research outputs will be defined when HAB-146 ships. Update this file at that point.
-
 @skills/shared/decision-guidelines.md
 
 ## Steps
@@ -18,4 +16,6 @@ Use this workflow for research-only tickets (no production code, no PR beyond th
 
 4. **Capture findings mid-session** with `/note HAB-XX: <observation>` as conclusions emerge — do not batch everything to the end.
 
-5. **Debrief and close** with `/debrief HAB-XX` when all research questions are answered.
+5. **If the research concludes in a standing decision** — one that should be discoverable without knowing which ticket produced it — write an `ADR-NNN` in `docs/knowledge/decisions/` (see `docs/knowledge/decisions/README.md`) before debriefing. Day-to-day findings stay in the ticket's own notes file; the ADR is only for the decision itself.
+
+6. **Debrief and close** with `/debrief HAB-XX` when all research questions are answered.
