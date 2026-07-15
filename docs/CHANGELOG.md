@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.26] — 2026-07-15 (PR #271 merged)
+
+### Added — Dev tooling
+
+- [wip] HAB-171 WU1: Add the checkup tracking-doc format (`docs/knowledge/checkups/`) and a due-date detector (`scripts/checkup/due.py`) for the upcoming periodic code-quality checkup skill. No skill wiring yet — WU2 adds the `/checkup` skill itself.
+
 ## [0.50.25] — 2026-07-15 (PR #267 merged)
 
 ### Changed — CI
