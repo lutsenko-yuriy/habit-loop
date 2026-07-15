@@ -3,8 +3,9 @@
 
 Reads the cadence table in docs/knowledge/checkups/README.md and reports
 which tier(s) — light, heavy — are due for review this period, per ADR-0003.
-Always exits 0 (advisory; never blocks CI or commits). Invoked by the
-/checkup skill and at session start.
+The report itself is advisory (never blocks CI or commits) and always exits
+0; only setup errors (missing pubspec.yaml, bad --format) exit non-zero.
+Invoked by the /checkup skill and at session start.
 
 Usage:
     python3 scripts/checkup/due.py [--root <path>] [--format table|session]
@@ -25,6 +26,7 @@ from pathlib import Path
 LEDGER_REL_PATH = Path('docs/knowledge/checkups/README.md')
 
 _CADENCE_SECTION_RE = re.compile(r'^## Cadence & due status\s*$', re.MULTILINE)
+_NEXT_SECTION_RE = re.compile(r'^## ', re.MULTILINE)
 _CADENCE_ROW_RE = re.compile(
     r'^\|\s*(Light|Heavy)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|\s*$',
     re.MULTILINE,
@@ -69,7 +71,12 @@ def current_heavy_period(today: date) -> str:
 def parse_ledger(text: str) -> dict[str, str]:
     """Return {'Light': period_covered, 'Heavy': period_covered} from the cadence table."""
     section_match = _CADENCE_SECTION_RE.search(text)
-    search_text = text[section_match.end():] if section_match else text
+    section_start = section_match.end() if section_match else 0
+
+    next_section_match = _NEXT_SECTION_RE.search(text, section_start)
+    section_end = next_section_match.start() if next_section_match else len(text)
+
+    search_text = text[section_start:section_end]
 
     periods: dict[str, str] = {}
     for match in _CADENCE_ROW_RE.finditer(search_text):

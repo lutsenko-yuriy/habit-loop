@@ -84,6 +84,18 @@ class TestParseLedger(unittest.TestCase):
         self.assertEqual(periods['Light'], '2026-07')
         self.assertEqual(periods['Heavy'], '2026-Q3')
 
+    def test_scan_stops_at_next_heading_even_with_matching_row_shape(self):
+        # A later section with a 5-column row whose first cell happens to be
+        # "Light"/"Heavy" must not override the real cadence-table values.
+        text = _ledger(light_period='2026-07', heavy_period='2026-Q3') + (
+            '\n## Some later section\n\n'
+            '| Light | a | b | 9999-99 | z |\n'
+            '| Heavy | a | b | 9999-99 | z |\n'
+        )
+        periods = parse_ledger(text)
+        self.assertEqual(periods['Light'], '2026-07')
+        self.assertEqual(periods['Heavy'], '2026-Q3')
+
 
 class TestDueStatus(unittest.TestCase):
 
