@@ -11,7 +11,7 @@ Write one when a ticket's research or implementation concludes in a decision tha
 1. Pick the next sequential `ADR-NNNN` ID from the index table below (4-digit, zero-padded, e.g. `ADR-0001` — the ticket count alone is already in the hundreds, so 3 digits won't last).
 2. Copy `docs/knowledge/decisions/TEMPLATE.md` to `docs/knowledge/decisions/ADR-NNNN-<short-name>.md`, where `<short-name>` is a kebab-case slug (mirrors branch naming, e.g. `feature/HAB-XX-<short-description>`).
 3. Replace the template's H1 with a one-sentence description of the decision, commit-message style (e.g. "add per-channel distribute toggles to manual dispatch") — not just a noun-phrase title.
-4. Fill in Context, Decision, Alternatives considered, Related ticket, and Date.
+4. Fill in Context, Decision, Alternatives considered, Related ticket, and Date. When a decision bullet rests on an external source, cite it inline next to that bullet — not batched into the Context paragraph. Each claim should be verifiable where it's made, without cross-referencing elsewhere in the doc.
 5. Add a row to the Index table, using the same one-sentence description in the Description column.
 
 ## ID format
@@ -33,3 +33,4 @@ Write one when a ticket's research or implementation concludes in a decision tha
 |---|---|---|---|---|
 | ADR-0001 | adopt the MIT licence for the repository | `accepted` | 2026-07-04 | HAB-109 |
 | ADR-0002 | review showup-redemption requests manually until load becomes unbearable | `accepted` | 2026-07-04 | HAB-140 |
+| ADR-0003 | run a two-tier (light/heavy) periodic checkup for non-mechanical code quality dimensions | `accepted` | 2026-07-15 | HAB-144 |
