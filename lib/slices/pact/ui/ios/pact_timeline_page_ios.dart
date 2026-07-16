@@ -19,24 +19,28 @@ class PactTimelinePageIos extends StatelessWidget {
   /// [SingleShowupMilestone]). The screen uses this to fire analytics and navigate.
   final void Function(PactTimelineMilestone milestone)? onMilestoneTapped;
 
+  /// Pact name known before [state.anchorStart] loads (e.g. carried over from the
+  /// Pact Details screen), so the title doesn't flash a bare "Timeline" first.
+  final String? initialHabitName;
+
   const PactTimelinePageIos({
     super.key,
     required this.state,
     this.onMilestoneTapped,
+    this.initialHabitName,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final habitName = state.anchorStart?.habitName ?? initialHabitName;
 
     return CupertinoPageScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         middle: Text(
-          state.anchorStart != null
-              ? '${state.anchorStart!.habitName} – ${l10n.pactTimelineTitle}'
-              : l10n.pactTimelineTitle,
+          habitName != null ? '$habitName – ${l10n.pactTimelineTitle}' : l10n.pactTimelineTitle,
         ),
       ),
       // bottom: false — the scroll view adds MediaQuery bottom inset to its own

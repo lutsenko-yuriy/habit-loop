@@ -21,8 +21,11 @@ Read the following files in full before asking the user anything (paths from the
 
 - **Product spec** — what the app currently does
 - **Glossary** — canonical domain terms and known aliases
+- **`PLAN.local.md`** (project root, gitignored), if it exists — a personal scratch plan that may already list this idea
 
 This context is the reference against which the user's idea will be validated.
+
+Also search Linear for existing tickets covering similar ground (title/keyword search via **List issues**). If a plausible duplicate turns up — in `PLAN.local.md` or Linear — surface it to the user before opening the dialog and ask whether to continue with a new ticket or work from the existing one instead.
 
 ### 2. Open the dialog
 

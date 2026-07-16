@@ -43,13 +43,18 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
 
   Future<void> _onOpenTimeline() async {
     if (!mounted) return;
+    final habitName = ref.read(pactDetailViewModelProvider(widget.pactId)).pact?.habitName;
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await Navigator.of(context).push(
-        CupertinoPageRoute<void>(builder: (_) => PactTimelineScreen(pactId: widget.pactId)),
+        CupertinoPageRoute<void>(
+          builder: (_) => PactTimelineScreen(pactId: widget.pactId, initialHabitName: habitName),
+        ),
       );
     } else {
       await Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => PactTimelineScreen(pactId: widget.pactId)),
+        MaterialPageRoute<void>(
+          builder: (_) => PactTimelineScreen(pactId: widget.pactId, initialHabitName: habitName),
+        ),
       );
     }
   }
