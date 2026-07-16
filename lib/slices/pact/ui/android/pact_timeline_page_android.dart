@@ -18,23 +18,27 @@ class PactTimelinePageAndroid extends StatelessWidget {
   /// [SingleShowupMilestone]). The screen uses this to fire analytics and navigate.
   final void Function(PactTimelineMilestone milestone)? onMilestoneTapped;
 
+  /// Pact name known before [state.anchorStart] loads (e.g. carried over from the
+  /// Pact Details screen), so the title doesn't flash a bare "Timeline" first.
+  final String? initialHabitName;
+
   const PactTimelinePageAndroid({
     super.key,
     required this.state,
     this.onMilestoneTapped,
+    this.initialHabitName,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final habitName = state.anchorStart?.habitName ?? initialHabitName;
 
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
         title: Text(
-          state.anchorStart != null
-              ? '${state.anchorStart!.habitName} – ${l10n.pactTimelineTitle}'
-              : l10n.pactTimelineTitle,
+          habitName != null ? '$habitName – ${l10n.pactTimelineTitle}' : l10n.pactTimelineTitle,
         ),
       ),
       body: Column(

@@ -15,7 +15,12 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
 class PactTimelineScreen extends ConsumerStatefulWidget {
   final String pactId;
 
-  const PactTimelineScreen({super.key, required this.pactId});
+  /// Pact name known before the timeline loads (e.g. from the Pact Details
+  /// screen the user navigated from), so the AppBar title is correct on the
+  /// very first frame instead of flashing a bare "Timeline".
+  final String? initialHabitName;
+
+  const PactTimelineScreen({super.key, required this.pactId, this.initialHabitName});
 
   @override
   ConsumerState<PactTimelineScreen> createState() => _PactTimelineScreenState();
@@ -78,11 +83,13 @@ class _PactTimelineScreenState extends ConsumerState<PactTimelineScreen> {
       return PactTimelinePageIos(
         state: state,
         onMilestoneTapped: _onMilestoneTapped,
+        initialHabitName: widget.initialHabitName,
       );
     }
     return PactTimelinePageAndroid(
       state: state,
       onMilestoneTapped: _onMilestoneTapped,
+      initialHabitName: widget.initialHabitName,
     );
   }
 }
