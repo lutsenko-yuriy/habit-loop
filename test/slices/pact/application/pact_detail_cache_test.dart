@@ -255,7 +255,9 @@ void main() {
       expect(showupRepo.getShowupsForPactCallCount, 0);
     });
 
-    test('reuses the previously cached showup list when only pact is passed (no extra DB fetch)', () async {
+    test(
+        'reuses the previously cached showup list when only pact is passed AND reuseCachedShowups is explicitly '
+        'true (no extra DB fetch) — the correct call shape for a pact-metadata-only edit (e.g. a note)', () async {
       final pact = _pact();
       final pactRepo = _CountingPactRepository([pact]);
       final showupRepo = _CountingShowupRepository([_showup('s1', DateTime(2024, 1, 5), status: ShowupStatus.done)]);
@@ -269,12 +271,50 @@ void main() {
       final callsAfterLoad = showupRepo.getShowupsForPactCallCount;
 
       final editedPact = pact.copyWith(habitName: 'Meditate daily');
-      final refreshed = await cache.refresh('p1', pact: editedPact, now: DateTime(2024, 2, 1));
+      final refreshed = await cache.refresh(
+        'p1',
+        pact: editedPact,
+        reuseCachedShowups: true,
+        now: DateTime(2024, 2, 1),
+      );
 
-      // No extra showup fetch — the cached list (1 done showup) was reused.
+      // No extra showup fetch — the cached list (1 done showup) was reused,
+      // because the caller explicitly opted in via reuseCachedShowups.
       expect(showupRepo.getShowupsForPactCallCount, callsAfterLoad);
       expect(refreshed.stats.showupsDone, 1);
       expect(refreshed.pact.habitName, 'Meditate daily');
+    });
+
+    test(
+        'does NOT silently reuse stale cached showups on a bare refresh — always re-fetches from DB unless '
+        'reuseCachedShowups is explicitly true (regression test for the HAB-126 desync failure class)', () async {
+      final pact = _pact();
+      final pactRepo = _CountingPactRepository([pact]);
+      final staleShowup = _showup('s1', DateTime(2024, 1, 5), status: ShowupStatus.done);
+      final showupRepo = _CountingShowupRepository([staleShowup]);
+      final cache = PactDetailCache(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+      );
+
+      // Populate the cache while the showup is still 'done'.
+      await cache.load('p1', now: DateTime(2024, 2, 1));
+      final callsAfterLoad = showupRepo.getShowupsForPactCallCount;
+
+      // The showup's status flips via a path that doesn't go through the
+      // cache (e.g. persistShowupStatus persisting the new status directly).
+      await showupRepo.updateShowup(staleShowup.copyWith(status: ShowupStatus.failed));
+
+      // A bare refresh — the caller has neither the pact nor the fresh
+      // showups in hand, and does NOT opt into reusing the cache.
+      final refreshed = await cache.refresh('p1', now: DateTime(2024, 2, 1));
+
+      // Must have hit the DB again rather than silently serving the stale
+      // cached showup list from before the status flip.
+      expect(showupRepo.getShowupsForPactCallCount, greaterThan(callsAfterLoad));
+      expect(refreshed.stats.showupsDone, 0);
+      expect(refreshed.stats.showupsFailed, 1);
     });
 
     test('fetches from DB when neither pact nor showups are passed and nothing is cached yet', () async {

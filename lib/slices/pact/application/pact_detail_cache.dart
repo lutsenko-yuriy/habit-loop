@@ -61,18 +61,29 @@ class PactDetailCache {
   PactDetailBundle? peek(String pactId) => _bundles[pactId];
 
   /// The one write-through entry point. Skips the corresponding DB fetch for
-  /// whichever of [pact]/[showups] the caller already has in hand — reusing
-  /// the previously cached showup list when only [pact] changed (e.g. a note
-  /// edit) so that refresh costs zero extra DB round-trips. Recomputes and
-  /// overwrites the cache entry unconditionally.
+  /// whichever of [pact]/[showups] the caller already has in hand.
+  ///
+  /// [reuseCachedShowups] must be set explicitly to reuse the previously
+  /// cached showup list instead of re-fetching — safe only when the caller
+  /// knows the pact's showups did not change (e.g. a note or habit-name
+  /// edit). Defaults to `false`: without an explicit [showups] list, a bare
+  /// `refresh(pactId)` always re-fetches from the DB, so a caller that
+  /// forgets to pass the fresh showups after a status change can never
+  /// silently serve a stale, pre-change cached list — this was a latent
+  /// version of the exact stale-cache bug this class exists to prevent
+  /// (HAB-126).
+  ///
+  /// Recomputes and overwrites the cache entry unconditionally.
   Future<PactDetailBundle> refresh(
     String pactId, {
     Pact? pact,
     List<Showup>? showups,
+    bool reuseCachedShowups = false,
     DateTime? now,
   }) async {
     final effectivePact = pact ?? await _fetchPact(pactId);
-    final effectiveShowups = showups ?? _showups[pactId] ?? await _showupRepository.getShowupsForPact(pactId);
+    final effectiveShowups =
+        showups ?? (reuseCachedShowups ? _showups[pactId] : null) ?? await _showupRepository.getShowupsForPact(pactId);
     return _populate(pactId, pact: effectivePact, showups: effectiveShowups, now: now);
   }
 
