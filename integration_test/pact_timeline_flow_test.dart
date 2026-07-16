@@ -507,4 +507,56 @@ void main() {
       },
     );
   });
+
+  group('Pact timeline — write-through from other screens', () {
+    late AppHarness h;
+    tearDown(() => h.dispose());
+
+    testWidgets(
+      'status_write_through_visible_in_timeline_same_session: mark-done via Showup Detail is reflected in '
+      'Timeline without an app restart (HAB-174)',
+      (tester) async {
+        h = await AppHarness.create(tester);
+        // TODO: 1. Seed an active pact with one pending showup scheduled for today.
+        // TODO: 2. Open the pacts panel and open Pact Detail for the pact — this is the
+        //          first Pact Details open this session, populating the shared cache.
+        // TODO: 3. Navigate back (tester.pageBack()) to the Dashboard.
+        // TODO: 4. Tap the showup tile to open Showup Detail, then tap "Mark as Done" —
+        //          the showup's status becomes done.
+        // TODO: 5. Tap "View pact details" (showup-pact-link) to return to Pact Detail
+        //          for the same pact, within the same session.
+        // TODO: 6. From Pact Detail, tap "View Timeline" (pact-detail-timeline-button).
+        // TODO: 7. Verify the timeline now shows the showup as an individual done
+        //          milestone (timeline-milestone-<id> key visible) — the status change
+        //          made via Showup Detail is reflected instantly, sourced from the warm
+        //          cache populated in step 2 rather than a fresh DB read triggered by
+        //          this Timeline open.
+      },
+    );
+
+    testWidgets(
+      'showup_note_write_through_visible_in_timeline_same_session: adding a note via Showup Detail is '
+      'reflected in Timeline without an app restart (HAB-174)',
+      (tester) async {
+        h = await AppHarness.create(tester);
+        // TODO: 1. Seed an active pact with one done, tail-zone showup that has no
+        //          note yet (reuse the shape of _singleShowup below).
+        // TODO: 2. Open Pact Detail for the pact — first open this session,
+        //          populating the shared cache.
+        // TODO: 3. Tap "View Timeline" (pact-detail-timeline-button) to open Timeline.
+        // TODO: 4. Tap the showup's milestone tile (timeline-milestone-<id>) to open
+        //          Showup Detail.
+        // TODO: 5. Enter text into the showup note field and tap the save button —
+        //          the note is persisted. NOTE FOR IMPLEMENTER: the note TextField
+        //          and its save button in showup_detail_page_android.dart /
+        //          showup_detail_page_ios.dart currently have no Keys — add
+        //          `showup-note-field` / `showup-note-save-button` Keys there as part
+        //          of implementing this driver (small, behavior-preserving addition).
+        // TODO: 6. Navigate back to the Timeline screen (same session, no restart).
+        // TODO: 7. Verify the showup's milestone tile now displays the new note text —
+        //          confirming the note write-through into the shared cache without a
+        //          fresh DB read triggered by returning to Timeline.
+      },
+    );
+  });
 }
