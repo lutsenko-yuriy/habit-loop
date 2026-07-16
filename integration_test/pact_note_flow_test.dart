@@ -199,6 +199,35 @@ void main() {
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
       expect(saved?.stopReason ?? '', isEmpty);
     });
+
+    testWidgets(
+        'note_write_through_visible_in_timeline_same_session: editing the pact note is reflected in Timeline '
+        'without an app restart (HAB-174)', (tester) async {
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          todayProvider.overrideWithValue(_testNow),
+          pactDetailNowProvider.overrideWithValue(_testNow),
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_stoppedPact);
+        },
+      );
+      // TODO: 1. Seed a stopped pact with an existing note ("Got injured") — reuse
+      //          the existing _stoppedPact fixture (done above via beforePump).
+      // TODO: 2. Open Pact Detail via _openInactivePactDetail(tester, 'Morning Run') —
+      //          first Pact Details open this session, populating the shared cache
+      //          with the original note.
+      // TODO: 3. Edit pact-note-field to a new value ("Injured knee — resting now")
+      //          and tap pact-note-save-button — the note is persisted and the cache
+      //          is refreshed (write-through).
+      // TODO: 4. From the same still-open Pact Detail screen, tap "View Timeline"
+      //          (pact-detail-timeline-button).
+      // TODO: 5. Verify the Timeline's pact-concluded anchor shows the updated note
+      //          text ("Injured knee — resting now") and the original text
+      //          ("Got injured") is no longer present — confirming the edited note
+      //          is reflected without an app restart.
+    });
   });
 
   group('Pact note — completed pact with no prior note', () {
