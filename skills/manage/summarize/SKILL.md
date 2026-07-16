@@ -13,6 +13,18 @@ description: Present the current backlog at session start. Fetches open issues f
 
 ## Steps
 
+### 0. Survey `PLAN.local.md`, if present
+
+Check for a `PLAN.local.md` file at the project root (gitignored — a personal, session-to-session scratch plan, not tracked in git). If it does not exist or is empty, skip to step 1.
+
+If it exists and has content:
+1. Read it and extract the listed tickets.
+2. For each ticket, check its current Linear state (PM mapping: **Fetch issue**). Filter out any already `Done`, `Canceled`, or otherwise resolved.
+3. Present the surviving plan to the user (ticket IDs, titles, and any inline notes from the file) before the backlog summary below.
+4. Ask: "Want to follow this plan, modify it, start a new plan alongside it, or set it aside and go with the regular backlog?" Wait for the answer before proceeding to step 1.
+
+This catches stale-but-still-relevant intentions from a prior session before backlog review, and avoids re-drafting a ticket that's already listed here. See the HAB-173 debrief (2026-07-16): a `/brief` run created a duplicate of HAB-174 because nothing surfaced `PLAN.local.md`'s existing entry for the same idea.
+
 ### 1. Output the pre-fetched backlog
 
 When routed via `skill_router.py` (`context: linear`), the backlog data is injected above this text between `=== PRE-FETCHED BACKLOG ===` sentinels. Copy that block verbatim — do not reformat, do not call any tools. **Known limitation:** the pre-fetched path does not classify product vs. process (step 1a below) — it only groups issues by the existing Bug/Tech Debt/Feature/Improvement Linear labels.
