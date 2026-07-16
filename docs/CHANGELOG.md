@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.28] — 2026-07-16 (unreleased)
+
+### Fixed
+
+- [user] The pact timeline screen now shows the pact's name in the title right away instead of briefly showing just "Timeline" while it loads.
+
 ## [0.50.27] — 2026-07-16 (unreleased)
 
 ### Added — Dev tooling
