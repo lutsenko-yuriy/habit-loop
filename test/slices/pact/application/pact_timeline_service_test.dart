@@ -54,7 +54,7 @@ PactTimelineService _service({
     PactTimelineService(
       pactRepository: InMemoryPactRepository(pacts),
       showupRepository: InMemoryShowupRepository(showups),
-      grouper: grouper ?? const PactTimelineGrouper(groupingThreshold: 10),
+      grouper: grouper ?? const PactTimelineGrouper(),
       cache: cache ?? PactTimelineCache(),
     );
 
@@ -174,17 +174,17 @@ void main() {
 
   group('PactTimelineService — injected grouper', () {
     test('service delegates to the injected grouper', () async {
-      // threshold=10, tailPeriodInDays=3, now=Jan 13 → cutoff=Jan 10
-      // Non-tail: Jan 1-9 (9 done, 9 < threshold → 1 group) + tail: Jan 10-12 (3 individual) = 4
+      // tailPeriodInDays=3, now=Jan 13 → cutoff=Jan 10
+      // Non-tail: Jan 1-9 (9 done → 1 streak) + tail: Jan 10-12 (3 individual) = 4
       final showups = List.generate(12, (i) => _showup('s$i', DateTime(2024, 1, i + 1, 8)));
       final svc = _service(
         pacts: [_pact()],
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailPeriodInDays: 3),
+        grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 3),
       );
       final page = await svc.loadAll(pactId: 'p1', now: DateTime(2024, 1, 13));
       expect(page.milestones, hasLength(4));
-      // tailStartIndex must equal the non-tail milestone count (1 group), not 0 or 4.
+      // tailStartIndex must equal the non-tail milestone count (1 streak), not 0 or 4.
       expect(page.tailStartIndex, 1);
     });
   });

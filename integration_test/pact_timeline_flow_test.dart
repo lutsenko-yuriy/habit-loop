@@ -37,15 +37,13 @@ Showup _showup(String id, DateTime scheduledAt, {ShowupStatus status = ShowupSta
       status: status,
     );
 
-/// RC overrides used for grouping / tail-zone tests: disables the tail zone
-/// and raises the grouping threshold so the algorithm can collapse runs.
+/// RC overrides used for tail-zone tests: disables the tail zone by default
+/// so streak/single milestones can be asserted deterministically.
 FakeRemoteConfigService _rcGrouping({
   int tailPeriodInDays = 0,
-  int groupingThreshold = 10,
 }) =>
     FakeRemoteConfigService(overrides: {
       'pact_timeline_no_grouping_tail_period_in_days': tailPeriodInDays,
-      'pact_timeline_milestone_grouping_threshold': groupingThreshold,
     });
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -248,7 +246,7 @@ void main() {
         h = await AppHarness.create(
           tester,
           extraOverrides: [
-            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(groupingThreshold: 1)),
+            remoteConfigServiceProvider.overrideWithValue(_rcGrouping()),
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -334,7 +332,7 @@ void main() {
         h = await AppHarness.create(
           tester,
           extraOverrides: [
-            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(tailPeriodInDays: 7, groupingThreshold: 1)),
+            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(tailPeriodInDays: 7)),
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -382,7 +380,7 @@ void main() {
         h = await AppHarness.create(
           tester,
           extraOverrides: [
-            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(tailPeriodInDays: 14, groupingThreshold: 1)),
+            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(tailPeriodInDays: 14)),
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             pactTimelineNowProvider.overrideWithValue(_testNow),

@@ -42,7 +42,7 @@ Showup _showup(String id, DateTime at, {ShowupStatus status = ShowupStatus.done,
 ({ProviderContainer container, FakeAnalyticsService analytics, PactTimelineCache cache}) _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
-  PactTimelineGrouper grouper = const PactTimelineGrouper(groupingThreshold: 10),
+  PactTimelineGrouper grouper = const PactTimelineGrouper(),
 }) {
   final analytics = FakeAnalyticsService();
   final cache = PactTimelineCache();
@@ -157,7 +157,7 @@ void main() {
       final (:container, :analytics, cache: _) = _makeContainer(
         pacts: [_pact()],
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailPeriodInDays: 45),
+        grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 45),
       );
       addTearDown(container.dispose);
       final notifier = container.read(pactTimelineViewModelProvider(_pactId).notifier);

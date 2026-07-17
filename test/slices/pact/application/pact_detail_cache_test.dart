@@ -92,7 +92,7 @@ PactDetailCache _cache({
     PactDetailCache(
       pactRepository: _CountingPactRepository(pacts ?? []),
       showupRepository: _CountingShowupRepository(showups ?? []),
-      grouper: grouper ?? const PactTimelineGrouper(groupingThreshold: 10),
+      grouper: grouper ?? const PactTimelineGrouper(),
     );
 
 /// Canonical, structurally-comparable representation of a milestone — used
@@ -122,6 +122,8 @@ Object _describe(PactTimelineMilestone m) => switch (m) {
           outcome,
           scheduledAt,
         ),
+      // ShowupGroupMilestone is never emitted by the grouper anymore (HAB-177 WU1);
+      // the arm stays only because the sealed type isn't deleted until WU2.
       ShowupGroupMilestone(
         :final sortAt,
         :final total,
@@ -165,7 +167,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       final bundle = await cache.load('p1', now: DateTime(2024, 2, 1));
@@ -189,7 +191,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       final first = await cache.load('p1', now: DateTime(2024, 2, 1));
@@ -224,7 +226,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       await cache.load('p1', now: DateTime(2024, 2, 1));
@@ -246,7 +248,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       await cache.refresh('p1', pact: pact, showups: [_showup('s1', DateTime(2024, 1, 5))], now: DateTime(2024, 2, 1));
@@ -264,7 +266,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       await cache.load('p1', now: DateTime(2024, 2, 1));
@@ -295,7 +297,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       // Populate the cache while the showup is still 'done'.
@@ -324,7 +326,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       final refreshed = await cache.refresh('p1', now: DateTime(2024, 2, 1));
@@ -342,7 +344,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       await cache.load('p1', now: DateTime(2024, 2, 1));
@@ -359,7 +361,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10),
+        grouper: const PactTimelineGrouper(),
       );
 
       await cache.load('p1', now: DateTime(2024, 2, 1));
@@ -451,7 +453,7 @@ void main() {
       ];
       await expectGoldenMatch(
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 10, noGroupingTailPeriodInDays: 3),
+        grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 3),
         now: DateTime(2024, 1, 13),
       );
     });
@@ -463,7 +465,7 @@ void main() {
       ];
       await expectGoldenMatch(
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 5, noGroupingTailPeriodInDays: 7),
+        grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 7),
         now: DateTime(2024, 1, 25),
       );
     });
@@ -480,7 +482,7 @@ void main() {
       ];
       await expectGoldenMatch(
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 3, noGroupingTailPeriodInDays: 5),
+        grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 5),
         now: DateTime(2024, 2, 15),
         status: PactStatus.completed,
       );
@@ -496,7 +498,7 @@ void main() {
       ];
       await expectGoldenMatch(
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 4, noGroupingTailPeriodInDays: 7),
+        grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 7),
         now: now,
       );
     });
@@ -510,7 +512,7 @@ void main() {
       ];
       await expectGoldenMatch(
         showups: showups,
-        grouper: const PactTimelineGrouper(groupingThreshold: 2, noGroupingTailPeriodInDays: 10),
+        grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 10),
         now: DateTime(2024, 1, 25),
         status: PactStatus.stopped,
       );
