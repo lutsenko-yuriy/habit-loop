@@ -336,14 +336,6 @@
   "@timelineMissedInARow": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timelineGroup": "{total} showups — {done} done, {failed} missed",
-  "@timelineGroup": {
-    "placeholders": {
-      "total": { "type": "int" },
-      "done": { "type": "int" },
-      "failed": { "type": "int" }
-    }
-  },
   "timelineShowupsRemaining": "{count, plural, one{1 showup remaining} other{{count} showups remaining}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }

@@ -122,17 +122,6 @@ Object _describe(PactTimelineMilestone m) => switch (m) {
           outcome,
           scheduledAt,
         ),
-      // ShowupGroupMilestone is never emitted by the grouper anymore (HAB-177 WU1);
-      // the arm stays only because the sealed type isn't deleted until WU2.
-      ShowupGroupMilestone(
-        :final sortAt,
-        :final total,
-        :final doneCount,
-        :final failedCount,
-        :final firstAt,
-        :final lastAt
-      ) =>
-        ('group', sortAt, total, doneCount, failedCount, firstAt, lastAt),
       NotedShowupMilestone(:final sortAt, :final showupId, :final scheduledAt, :final outcome, :final note) => (
           'noted',
           sortAt,

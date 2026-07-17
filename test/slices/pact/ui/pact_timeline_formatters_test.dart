@@ -84,19 +84,6 @@ void main() {
       expect(milestoneTitle(l10n, m), l10n.showupFailed);
     });
 
-    testWidgets('ShowupGroupMilestone returns group label', (tester) async {
-      final l10n = await _getL10n(tester);
-      final m = ShowupGroupMilestone(
-        sortAt: DateTime(2024, 1, 5),
-        total: 5,
-        doneCount: 3,
-        failedCount: 2,
-        firstAt: DateTime(2024, 1, 1),
-        lastAt: DateTime(2024, 1, 5),
-      );
-      expect(milestoneTitle(l10n, m), l10n.timelineGroup(5, 3, 2));
-    });
-
     testWidgets('NotedShowupMilestone done returns done label', (tester) async {
       final l10n = await _getL10n(tester);
       final m = NotedShowupMilestone(
@@ -168,21 +155,6 @@ void main() {
       final range = milestoneDateRange(ctx, m);
       expect(range, isNotNull);
       expect(range, contains('–'));
-    });
-
-    testWidgets('ShowupGroupMilestone returns date range', (tester) async {
-      await _getL10n(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      final m = ShowupGroupMilestone(
-        sortAt: DateTime(2024, 1, 5),
-        total: 4,
-        doneCount: 2,
-        failedCount: 2,
-        firstAt: DateTime(2024, 1, 1),
-        lastAt: DateTime(2024, 1, 5),
-      );
-      final range = milestoneDateRange(ctx, m);
-      expect(range, isNotEmpty);
     });
   });
 }

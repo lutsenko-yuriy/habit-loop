@@ -73,7 +73,6 @@ class TimelineSpinePainter extends CustomPainter {
 
 double timelineVerticalPadding(PactTimelineMilestone m) => switch (m) {
       PactCreatedMilestone _ || CurrentStateMilestone _ || PactConcludedMilestone _ => 14.0,
-      ShowupGroupMilestone _ => 20.0,
       SingleShowupMilestone _ => 7.0,
       _ => 12.0,
     };
