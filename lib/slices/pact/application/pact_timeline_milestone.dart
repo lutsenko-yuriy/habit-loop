@@ -48,23 +48,6 @@ final class SingleShowupMilestone extends PactTimelineMilestone {
   final DateTime scheduledAt;
 }
 
-final class ShowupGroupMilestone extends PactTimelineMilestone {
-  const ShowupGroupMilestone({
-    required super.sortAt,
-    required this.total,
-    required this.doneCount,
-    required this.failedCount,
-    required this.firstAt,
-    required this.lastAt,
-  });
-
-  final int total;
-  final int doneCount;
-  final int failedCount;
-  final DateTime firstAt;
-  final DateTime lastAt;
-}
-
 final class NotedShowupMilestone extends PactTimelineMilestone {
   const NotedShowupMilestone({
     required super.sortAt,

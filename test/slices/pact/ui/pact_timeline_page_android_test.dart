@@ -54,15 +54,6 @@ final _single = SingleShowupMilestone(
   scheduledAt: DateTime(2024, 1, 25, 8),
 );
 
-final _group = ShowupGroupMilestone(
-  sortAt: DateTime(2024, 1, 15),
-  total: 5,
-  doneCount: 3,
-  failedCount: 2,
-  firstAt: DateTime(2024, 1, 11),
-  lastAt: DateTime(2024, 1, 15),
-);
-
 Widget _buildApp(
   PactTimelineState state, {
   void Function(PactTimelineMilestone)? onMilestoneTapped,
@@ -171,13 +162,6 @@ void main() {
       await tester.pump();
       expect(find.text('Best session ever'), findsWidgets);
     });
-
-    testWidgets('shows group milestone label with counts', (tester) async {
-      await tester.pumpWidget(_buildApp(_loaded(milestones: [_group])));
-      await tester.pump();
-      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageAndroid)))!;
-      expect(find.text(l10n.timelineGroup(5, 3, 2)), findsWidgets);
-    });
   });
 
   group('PactTimelinePageAndroid — section header', () {
@@ -243,20 +227,6 @@ void main() {
         final rangeStr = '${fmt.format(_streak.firstAt)} – ${fmt.format(_streak.lastAt)}';
         final rangeRect = tester.getRect(find.text(rangeStr));
         final titleRect = tester.getRect(find.text(l10n.timelineDoneInARow(_streak.count)));
-        expect(rangeRect.center.dx, lessThan(titleRect.center.dx));
-      });
-
-      testWidgets('date range is left of title for group milestone ($tag)', (tester) async {
-        tester.binding.platformDispatcher.localeTestValue = locale;
-        addTearDown(() => tester.binding.platformDispatcher.clearLocaleTestValue());
-        await tester.pumpWidget(_buildApp(_loaded(milestones: [_group])));
-        await tester.pump();
-        final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageAndroid)))!;
-        final fmt = DateFormat.yMd(locale.toString());
-        final rangeStr = '${fmt.format(_group.firstAt)} – ${fmt.format(_group.lastAt)}';
-        final rangeRect = tester.getRect(find.text(rangeStr));
-        final titleRect =
-            tester.getRect(find.text(l10n.timelineGroup(_group.total, _group.doneCount, _group.failedCount)));
         expect(rangeRect.center.dx, lessThan(titleRect.center.dx));
       });
     }

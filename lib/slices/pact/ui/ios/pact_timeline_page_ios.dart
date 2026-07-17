@@ -276,9 +276,6 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
         ? CupertinoColors.systemGreen.resolveFrom(context)
         : CupertinoColors.systemRed.resolveFrom(context);
   }
-  if (m is ShowupGroupMilestone) {
-    return CupertinoColors.systemGrey.resolveFrom(context);
-  }
   final outcome = switch (m) {
     ShowupStreakMilestone s => s.outcome,
     NotedShowupMilestone n => n.outcome,
@@ -317,7 +314,6 @@ class _MilestoneDateContent extends StatelessWidget {
         CurrentStateMilestone m => m.nextScheduledAt != null ? formatLocaleDate(m.nextScheduledAt!) : null,
         PactConcludedMilestone m => formatLocaleDate(m.concludedAt),
         ShowupStreakMilestone m => _dateRange(m.firstAt, m.lastAt),
-        ShowupGroupMilestone m => _dateRange(m.firstAt, m.lastAt),
         NotedShowupMilestone m => formatLocaleDate(m.scheduledAt),
         SingleShowupMilestone m => formatLocaleDate(m.scheduledAt),
       };
@@ -343,7 +339,6 @@ class _MilestoneLabelContent extends StatelessWidget {
         CurrentStateMilestone m => _CurrentStateLabel(m: m, l10n: l10n),
         PactConcludedMilestone m => _PactConcludedLabel(m: m, l10n: l10n),
         ShowupStreakMilestone m => _StreakLabel(m: m, l10n: l10n),
-        ShowupGroupMilestone m => _GroupLabel(m: m, l10n: l10n),
         NotedShowupMilestone m => _NotedShowupLabel(m: m, l10n: l10n),
         SingleShowupMilestone m => _SingleShowupLabel(m: m, l10n: l10n),
       };
@@ -427,17 +422,6 @@ class _StreakLabel extends StatelessWidget {
         milestoneTitle(l10n, m),
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
       );
-}
-
-class _GroupLabel extends StatelessWidget {
-  final ShowupGroupMilestone m;
-  final AppLocalizations l10n;
-
-  const _GroupLabel({required this.m, required this.l10n});
-
-  @override
-  Widget build(BuildContext context) =>
-      Text(milestoneTitle(l10n, m), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600));
 }
 
 class _NotedShowupLabel extends StatelessWidget {

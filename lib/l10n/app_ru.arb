@@ -335,14 +335,6 @@
   "@timelineMissedInARow": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timelineGroup": "{total} явок — {done} выполнено, {failed} пропущено",
-  "@timelineGroup": {
-    "placeholders": {
-      "total": { "type": "int" },
-      "done": { "type": "int" },
-      "failed": { "type": "int" }
-    }
-  },
   "timelineShowupsRemaining": "{count, plural, one{осталась {count} явка} few{осталось {count} явки} other{осталось {count} явок}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }

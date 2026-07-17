@@ -335,14 +335,6 @@
   "@timelineMissedInARow": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timelineGroup": "{total} séances — {done} faites, {failed} manquées",
-  "@timelineGroup": {
-    "placeholders": {
-      "total": { "type": "int" },
-      "done": { "type": "int" },
-      "failed": { "type": "int" }
-    }
-  },
   "timelineShowupsRemaining": "{count, plural, one{1 séance restante} other{{count} séances restantes}}",
   "@timelineShowupsRemaining": {
     "placeholders": { "count": { "type": "int" } }

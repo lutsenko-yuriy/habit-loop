@@ -15,7 +15,6 @@ String milestoneTitle(AppLocalizations l10n, PactTimelineMilestone milestone) =>
           ShowupStatus.failed => l10n.showupFailed,
           ShowupStatus.pending => l10n.showupPending,
         },
-      ShowupGroupMilestone m => l10n.timelineGroup(m.total, m.doneCount, m.failedCount),
       NotedShowupMilestone m => m.outcome == ShowupStatus.done ? l10n.showupDone : l10n.showupFailed,
       CurrentStateMilestone _ => l10n.timelineCurrentState,
       PactConcludedMilestone m =>
@@ -24,16 +23,13 @@ String milestoneTitle(AppLocalizations l10n, PactTimelineMilestone milestone) =>
 
 /// Returns a locale-aware date range string for milestones that span a range.
 ///
-/// For [ShowupStreakMilestone] and [ShowupGroupMilestone]: "Jan 1 – Jan 10, 2024".
+/// For [ShowupStreakMilestone]: "Jan 1 – Jan 10, 2024".
 /// Returns `null` for milestones where a date range does not apply.
 String? milestoneDateRange(BuildContext context, PactTimelineMilestone milestone) {
   DateTime? first;
   DateTime? last;
 
   if (milestone is ShowupStreakMilestone) {
-    first = milestone.firstAt;
-    last = milestone.lastAt;
-  } else if (milestone is ShowupGroupMilestone) {
     first = milestone.firstAt;
     last = milestone.lastAt;
   } else {
