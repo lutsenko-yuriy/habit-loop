@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.31] — 2026-07-18 (PR #278 merged)
+
+### Changed
+
+- [app] HAB-177 WU2 (final): Delete the `ShowupGroupMilestone` sealed milestone type, its UI rendering (`_GroupLabel` widgets on both iOS and Android), and the `timelineGroup` localization string across all 4 locales. WU1 had already stopped constructing this milestone kind in every real build; this WU removes the now-fully-dead type. No user-visible change — closes out HAB-177.
+
 ## [0.50.30] — 2026-07-18 (PR #277 merged)
 
 ### Changed
