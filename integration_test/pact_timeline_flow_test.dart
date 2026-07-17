@@ -238,14 +238,17 @@ void main() {
     );
 
     testWidgets(
-      'short_mixed_run_shown_as_group_item: run below threshold collapses into a group item with done/failed/total counts',
+      'short_mixed_run_shown_as_separate_streaks: run below the old group threshold renders as separate '
+      'streak milestones at the real default threshold (1)',
       (tester) async {
-        // threshold=10, tail=0 (all showups are non-tail): 3 done + 4 failed = 7 total < 10 → group.
+        // threshold=1 (real default), tail=0 (all showups are non-tail): 3 done then 4 failed
+        // never collapse into a group at threshold 1 — each same-outcome run flushes to its
+        // own streak milestone as soon as the outcome changes.
         // Seeding June 8–14 (7 days) with no gaps so the gap-filler adds nothing.
         h = await AppHarness.create(
           tester,
           extraOverrides: [
-            remoteConfigServiceProvider.overrideWithValue(_rcGrouping()),
+            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(groupingThreshold: 1)),
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -270,11 +273,14 @@ void main() {
 
         await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
 
-        // ── 1. Group item shows total, done, and failed counts ─────────────────
-        await waitFor(tester, find.text(strings.timelineGroup(7, 3, 4)));
-        expect(find.text(strings.timelineGroup(7, 3, 4)), findsOneWidget);
+        // ── 1. The 3 done showups appear as one streak milestone ───────────────
+        await waitFor(tester, find.text(strings.timelineDoneInARow(3)));
+        expect(find.text(strings.timelineDoneInARow(3)), findsOneWidget);
 
-        // ── 2. No individual tile keys exist for those showups ─────────────────
+        // ── 2. The 4 failed showups appear as a separate streak milestone ──────
+        expect(find.text(strings.timelineMissedInARow(4)), findsOneWidget);
+
+        // ── 3. No individual tile keys exist for those showups (streaks, not singles) ──
         for (var i = 0; i < 3; i++) {
           expect(find.byKey(Key('timeline-milestone-gm-d$i')), findsNothing);
         }
