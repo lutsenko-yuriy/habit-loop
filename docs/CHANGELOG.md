@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.29] — 2026-07-17 (unreleased)
+
+### Added
+
+- [wip] HAB-174 WU1: Add `PactDetailBundle` + `PactDetailCache` — a new shared cache for a pact's stats, timeline, and metadata, replacing two separate per-service caches. Not yet wired into the app; no observable behaviour change.
+
 ## [0.50.28] — 2026-07-16 (PR #273 merged)
 
 ### Fixed
