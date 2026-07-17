@@ -9,6 +9,8 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-174**: Populate a shared pact-detail cache (stats + timeline) when Pact Details is first opened — WU1 of 4 shipped (PR #275); WU2/WU3 remain
+
 - **HAB-158**: Bug: language picker option text overflows on narrow Android screens (PR #250)
 
 - **HAB-157**: Bug: local notifications stay in English after switching app language (PR #248)
