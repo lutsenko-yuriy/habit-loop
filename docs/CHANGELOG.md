@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.30] — 2026-07-18 (PR #277 merged)
+
+### Changed
+
+- [wip] HAB-177 WU1: Rewrite `PactTimelineGrouper.group()` as a single forward pass fusing tail-zone bucketing with non-tail streak construction, removing the dead `groupingThreshold` grouping machinery (the Remote Config default has been 1 in every real build, so this is a no-op for users). Removes the `pact_timeline_milestone_grouping_threshold` Remote Config parameter. `ShowupGroupMilestone` stays defined for now — it is removed in WU2 along with its UI and localization strings.
+
 ## [0.50.29] — 2026-07-17 (unreleased)
 
 ### Added
