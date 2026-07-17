@@ -270,7 +270,6 @@ final pactTimelineServiceProvider = Provider<PactTimelineService>((ref) {
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
     grouper: PactTimelineGrouper(
-      groupingThreshold: config.milestoneGroupingThreshold,
       noGroupingTailPeriodInDays: config.noGroupingTailPeriodInDays,
     ),
     cache: ref.watch(pactTimelineCacheProvider),

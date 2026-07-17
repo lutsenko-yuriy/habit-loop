@@ -88,8 +88,8 @@ class _TimelineList extends StatelessWidget {
     if (rawItems.isEmpty) return const SizedBox.shrink();
 
     // Section-header sentinel: placed at the exact tail-zone boundary from the grouper.
-    // Do NOT infer from SingleShowupMilestone — that type also appears in the non-tail
-    // zone when groupingThreshold == 1, which would produce a wrong position.
+    // Do NOT infer from SingleShowupMilestone — that type also appears outside the
+    // tail zone (a same-outcome run of length 1), which would produce a wrong position.
     final anchorOffset = state.anchorStart != null ? 1 : 0;
     final tailIdx = state.tailStartIndex;
     final sectionHeaderRawIdx = tailIdx > 0 && tailIdx < milestones.length ? anchorOffset + tailIdx : null;

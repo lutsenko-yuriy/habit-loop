@@ -144,31 +144,6 @@ void main() {
       });
     });
 
-    group('pact_timeline_milestone_grouping_threshold', () {
-      test('key exists in all map', () {
-        expect(RemoteConfigDefaults.all.containsKey('pact_timeline_milestone_grouping_threshold'), isTrue);
-      });
-
-      test('default value is 1', () {
-        expect(RemoteConfigDefaults.all['pact_timeline_milestone_grouping_threshold'], 1);
-      });
-
-      test('constant matches all map value', () {
-        expect(
-          RemoteConfigDefaults.pactTimelineMilestoneGroupingThreshold,
-          equals(RemoteConfigDefaults.all['pact_timeline_milestone_grouping_threshold']),
-        );
-      });
-
-      test('is absent from allowedValues (free-text integer field)', () {
-        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_timeline_milestone_grouping_threshold'), isFalse);
-      });
-
-      test('appears in intRanges with correct bounds', () {
-        expect(RemoteConfigDefaults.intRanges['pact_timeline_milestone_grouping_threshold'], (min: 1, max: 50));
-      });
-    });
-
     group('showup_redemption_enabled', () {
       test('key exists in all map', () {
         expect(RemoteConfigDefaults.all.containsKey('showup_redemption_enabled'), isTrue);
