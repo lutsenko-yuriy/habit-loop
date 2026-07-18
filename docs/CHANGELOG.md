@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.36] — 2026-07-18 (PR #284 merged)
+
+### Changed
+
+- [ci] HAB-180: Removed Firebase iOS distribution entirely; TestFlight is now the sole automatic iOS distribution channel on every qualifying `main` merge (previously hardcoded off per HAB-167). `version-tag` now gates on either `distribute-android` or `distribute-testflight` succeeding, restoring the `both`/`android`/`ios` git-tag suffix logic (was frozen to `android` only since HAB-180's initial scope).
+
 ## [0.50.35] — 2026-07-18 (PR #283 merged)
 
 ### Added
