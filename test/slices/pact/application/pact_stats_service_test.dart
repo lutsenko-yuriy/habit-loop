@@ -6,7 +6,9 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -25,6 +27,12 @@ class _CountingShowupRepository extends InMemoryShowupRepository {
     return super.getShowupsForPact(pactId);
   }
 }
+
+PactDetailCache _makeCache(InMemoryPactRepository pactRepo, InMemoryShowupRepository showupRepo) => PactDetailCache(
+      pactRepository: pactRepo,
+      showupRepository: showupRepo,
+      grouper: const PactTimelineGrouper(),
+    );
 
 final _pact = Pact(
   id: 'p1',
@@ -56,6 +64,7 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       // First call with empty showups — no cached entry yet → should hit DB.
@@ -73,6 +82,7 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       // Warm the cache via the first call.
@@ -94,6 +104,7 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       // First call loads 1 pending showup from DB.
@@ -113,6 +124,7 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       // Passing showups directly always computes fresh — no DB needed.
@@ -122,7 +134,7 @@ void main() {
           reason: 'Caller-provided showups must bypass the cache and DB entirely');
     });
 
-    test('onPactCompleted evicts the cache entry', () async {
+    test('stopPact evicts the cache entry so the next currentStats reloads from DB', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = _CountingShowupRepository([_pendingShowup]);
       final service = PactStatsService(
@@ -130,19 +142,19 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       // Warm the cache.
       await service.currentStats(pact: _pact, showups: []);
       final callsAfterWarm = showupRepo.getShowupsForPactCallCount;
 
-      // Evict via onPactCompleted.
-      service.onPactCompleted(_pact.id);
+      await service.stopPact(pact: _pact, pactId: _pact.id, now: DateTime(2026, 5, 1));
 
       // Next call must go back to DB (cache miss after eviction).
       await service.currentStats(pact: _pact, showups: []);
       expect(showupRepo.getShowupsForPactCallCount, greaterThan(callsAfterWarm),
-          reason: 'After eviction, the next currentStats call must reload from DB');
+          reason: 'After stopPact evicts the cache, the next currentStats call must reload from DB');
     });
   });
 
@@ -155,6 +167,7 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       final updatedShowup = await service.persistShowupStatus(
@@ -182,6 +195,7 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       final updatedShowup = await service.persistShowupStatus(
@@ -203,6 +217,7 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       final updatedShowup = await service.persistShowupStatus(
@@ -225,6 +240,7 @@ void main() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       // _pendingShowup has redeemable=true (default); omitting param must not change it.
@@ -260,6 +276,7 @@ void _syncHookTests() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: fake,
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       await service.persistStats(pact: _pact, showups: [_pendingShowup]);
@@ -277,6 +294,7 @@ void _syncHookTests() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: fake,
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       await service.persistShowupStatus(showup: _pendingShowup, status: ShowupStatus.done);
@@ -294,6 +312,7 @@ void _syncHookTests() {
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: fake,
+        cache: _makeCache(pactRepo, showupRepo),
       );
 
       await service.stopPact(pact: _pact, pactId: _pact.id, now: DateTime(2026, 5, 1));

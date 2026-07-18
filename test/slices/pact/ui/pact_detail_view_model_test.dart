@@ -10,8 +10,10 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
@@ -57,6 +59,12 @@ final _showups = [
       status: ShowupStatus.pending),
 ];
 
+PactDetailCache _makeCache(InMemoryPactRepository pactRepo, InMemoryShowupRepository showupRepo) => PactDetailCache(
+      pactRepository: pactRepo,
+      showupRepository: showupRepo,
+      grouper: const PactTimelineGrouper(),
+    );
+
 ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
@@ -65,23 +73,26 @@ ProviderContainer _makeContainer({
   final pactRepo = InMemoryPactRepository(pacts);
   final showupRepo = InMemoryShowupRepository(showups);
   final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+  final cache = _makeCache(pactRepo, showupRepo);
   final statsService = PactStatsService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
     transactionService: txService,
     syncService: const NoopSyncService(),
+    cache: cache,
   );
   final service = PactService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
     transactionService: txService,
     syncService: const NoopSyncService(),
-    pactStatsService: statsService,
+    cache: cache,
   );
   return ProviderContainer(
     overrides: [
       pactServiceProvider.overrideWithValue(service),
       pactStatsServiceProvider.overrideWithValue(statsService),
+      pactDetailCacheProvider.overrideWithValue(cache),
       // Required so stopPact can load showup IDs for deterministic notification
       // cancellation (HAB-100) without hitting the default UnimplementedError.
       showupRepositoryProvider.overrideWithValue(showupRepo),
@@ -142,22 +153,25 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
@@ -175,22 +189,25 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
@@ -227,22 +244,25 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final throwingShowupRepo = _ThrowingOnDeleteShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, throwingShowupRepo);
+      final cache = _makeCache(pactRepo, throwingShowupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(throwingShowupRepo),
       ]);
       addTearDown(container.dispose);
@@ -264,22 +284,25 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
@@ -295,22 +318,25 @@ void main() {
       final reloadedPactRepo = InMemoryPactRepository([await pactRepo.getPactById('p1') ?? _pact]);
       final reloadedShowupRepo = InMemoryShowupRepository();
       final reloadedTxService = InMemoryPactTransactionService(reloadedPactRepo, reloadedShowupRepo);
+      final reloadedCache = _makeCache(reloadedPactRepo, reloadedShowupRepo);
       final reloadedStatsService = PactStatsService(
         pactRepository: reloadedPactRepo,
         showupRepository: reloadedShowupRepo,
         transactionService: reloadedTxService,
         syncService: const NoopSyncService(),
+        cache: reloadedCache,
       );
       final reloadedService = PactService(
         pactRepository: reloadedPactRepo,
         showupRepository: reloadedShowupRepo,
         transactionService: reloadedTxService,
         syncService: const NoopSyncService(),
-        pactStatsService: reloadedStatsService,
+        cache: reloadedCache,
       );
       final reloadedContainer = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(reloadedService),
         pactStatsServiceProvider.overrideWithValue(reloadedStatsService),
+        pactDetailCacheProvider.overrideWithValue(reloadedCache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(reloadedContainer.dispose);
@@ -361,28 +387,28 @@ void main() {
       final pactRepo = InMemoryPactRepository([expiredPact]);
       final showupRepo = InMemoryShowupRepository(showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
-
-      // Warm the cache first so we can verify it is evicted on auto-complete.
-      await statsService.currentStats(pact: expiredPact, showups: showups);
 
       await container.read(pactDetailViewModelProvider('expired').notifier).load();
 
@@ -391,15 +417,10 @@ void main() {
       final persisted = await pactRepo.getPactById('expired');
       expect(persisted?.status, PactStatus.completed);
 
-      // After auto-completion, onPactCompleted was called which evicted the cache.
-      // Calling currentStats with empty showups now goes to DB (cache miss), so
-      // the returned stats must reflect the completed pact (not stale active-pact data).
-      final completedPact = persisted!;
-      final statsAfterComplete = await statsService.currentStats(pact: completedPact, showups: []);
-      // The pact's showups are still in the repo (completion does not delete them),
-      // so stats must be re-computed from DB and be non-null.
-      expect(statsAfterComplete, isNotNull,
-          reason: 'currentStats must re-load from DB after cache eviction by onPactCompleted');
+      // Auto-completion's updatePact call writes through to the shared cache
+      // immediately (HAB-174 WU2) — no eviction/reload round-trip needed.
+      expect(cache.peek('expired')?.pact.status, PactStatus.completed,
+          reason: 'auto-complete must write through to the shared cache immediately');
     });
 
     test('load auto-completes a pact when pactDetailNowProvider is past the end date', () async {
@@ -418,24 +439,27 @@ void main() {
       final pactRepo = InMemoryPactRepository([futurePact]);
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       // Inject a "now" that is one day past the end date.
       final pastEndDate = DateTime(2054, 6, 2, 12, 0);
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactDetailNowProvider.overrideWithValue(pastEndDate),
       ]);
@@ -474,22 +498,25 @@ void main() {
       final pactRepo = InMemoryPactRepository([allResolvedPact]);
       final showupRepo = InMemoryShowupRepository(showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final container = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
       ]);
       addTearDown(container.dispose);
@@ -596,23 +623,26 @@ void main() {
       final throwingPactRepo = _ThrowingOnUpdatePactRepository([_pact]);
       final throwingShowupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(throwingPactRepo, throwingShowupRepo);
+      final throwingCache = _makeCache(throwingPactRepo, throwingShowupRepo);
       final throwingStatsService = PactStatsService(
         pactRepository: throwingPactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: throwingCache,
       );
       final throwingService = PactService(
         pactRepository: throwingPactRepo,
         showupRepository: throwingShowupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: throwingStatsService,
+        cache: throwingCache,
       );
       final failContainer = ProviderContainer(
         overrides: [
           pactServiceProvider.overrideWithValue(throwingService),
           pactStatsServiceProvider.overrideWithValue(throwingStatsService),
+          pactDetailCacheProvider.overrideWithValue(throwingCache),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
         ],
       );
@@ -635,22 +665,25 @@ void main() {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final c = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         notificationServiceProvider.overrideWithValue(fakeNotifications),
       ]);
       addTearDown(c.dispose);
@@ -744,22 +777,25 @@ void _saveNoteTests() {
       final pactRepo = InMemoryPactRepository([pact]);
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final c = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         analyticsServiceProvider.overrideWithValue(fakeAnalytics),
       ]);
@@ -823,23 +859,26 @@ void _saveNoteTests() {
       final throwingPactRepo = _ThrowingOnUpdatePactRepository([_stoppedPact]);
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(throwingPactRepo, showupRepo);
+      final cache = _makeCache(throwingPactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: throwingPactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: throwingPactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       fakeAnalytics = FakeAnalyticsService();
       final c = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         analyticsServiceProvider.overrideWithValue(fakeAnalytics),
       ]);
@@ -861,37 +900,42 @@ void _saveNoteTests() {
       // First call uses throwing repo to set noteError.
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(throwingRepo, showupRepo);
+      final cache = _makeCache(throwingRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: throwingRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final throwingService = PactService(
         pactRepository: throwingRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
+      final workingCache = _makeCache(workingRepo, showupRepo);
       final workingStatsService = PactStatsService(
         pactRepository: workingRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(workingRepo, showupRepo),
         syncService: const NoopSyncService(),
+        cache: workingCache,
       );
       final workingService = PactService(
         pactRepository: workingRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(workingRepo, showupRepo),
         syncService: const NoopSyncService(),
-        pactStatsService: workingStatsService,
+        cache: workingCache,
       );
 
       fakeAnalytics = FakeAnalyticsService();
       final c = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(throwingService),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         analyticsServiceProvider.overrideWithValue(fakeAnalytics),
       ]);
@@ -905,6 +949,7 @@ void _saveNoteTests() {
       c.updateOverrides([
         pactServiceProvider.overrideWithValue(workingService),
         pactStatsServiceProvider.overrideWithValue(workingStatsService),
+        pactDetailCacheProvider.overrideWithValue(workingCache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         analyticsServiceProvider.overrideWithValue(fakeAnalytics),
       ]);
@@ -927,22 +972,25 @@ void _archivePactTests() {
       final pactRepo = InMemoryPactRepository([pact]);
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = _makeCache(pactRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final c = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         analyticsServiceProvider.overrideWithValue(fakeAnalytics),
       ]);
@@ -1001,22 +1049,25 @@ void _archivePactTests() {
       final throwingRepo = _ThrowingOnArchivePactRepository([_completedPact]);
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(throwingRepo, showupRepo);
+      final cache = _makeCache(throwingRepo, showupRepo);
       final statsService = PactStatsService(
         pactRepository: throwingRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
       final service = PactService(
         pactRepository: throwingRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
       final c = ProviderContainer(overrides: [
         pactServiceProvider.overrideWithValue(service),
         pactStatsServiceProvider.overrideWithValue(statsService),
+        pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         analyticsServiceProvider.overrideWithValue(fakeAnalytics),
       ]);

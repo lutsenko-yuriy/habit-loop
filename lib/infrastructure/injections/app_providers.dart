@@ -42,6 +42,7 @@ import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_list_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
@@ -209,12 +210,26 @@ final pactTransactionServiceProvider = Provider<PactTransactionService>((ref) {
   throw UnimplementedError('pactTransactionServiceProvider must be overridden in main.dart');
 });
 
+/// Session-scoped, single population/write-through cache for a pact's stats +
+/// timeline (HAB-174) — shared leaf dependency of [pactServiceProvider] and
+/// [pactStatsServiceProvider].
+final pactDetailCacheProvider = Provider<PactDetailCache>((ref) {
+  final config = PactTimelineConfig.fromRemoteConfig(ref.watch(remoteConfigServiceProvider));
+  return PactDetailCache(
+    pactRepository: ref.watch(pactRepositoryProvider),
+    showupRepository: ref.watch(showupRepositoryProvider),
+    grouper: PactTimelineGrouper(
+      noGroupingTailPeriodInDays: config.noGroupingTailPeriodInDays,
+    ),
+  );
+});
+
 final pactServiceProvider = Provider<PactService>((ref) {
   return PactService(
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
-    pactStatsService: ref.watch(pactStatsServiceProvider),
+    cache: ref.watch(pactDetailCacheProvider),
     syncService: ref.watch(syncServiceProvider),
   );
 });
@@ -227,6 +242,7 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
     syncService: ref.watch(syncServiceProvider),
+    cache: ref.watch(pactDetailCacheProvider),
   );
 });
 

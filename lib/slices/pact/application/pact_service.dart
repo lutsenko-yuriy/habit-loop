@@ -2,36 +2,36 @@ import 'dart:async';
 
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
-import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_builder.dart';
-import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 
 /// Façade for view models — composes [PactRepository], [ShowupRepository], [PactTransactionService].
 ///
-/// Invariant: [pactStatsServiceProvider] must NOT watch [pactServiceProvider] — circular dependency.
+/// [PactDetailCache] sits at the same leaf level [PactStatsService] depends on
+/// (repositories + grouper only) — no circularity (HAB-174 WU2).
 class PactService {
   PactService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required PactTransactionService transactionService,
-    required PactStatsService pactStatsService,
+    required PactDetailCache cache,
     required SyncService syncService,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _transactionService = transactionService,
-        _pactStatsService = pactStatsService,
+        _cache = cache,
         _syncService = syncService;
 
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
   final PactTransactionService _transactionService;
 
-  final PactStatsService _pactStatsService;
+  final PactDetailCache _cache;
 
   final SyncService _syncService;
 
@@ -83,12 +83,14 @@ class PactService {
   // Delegating writes
   // ---------------------------------------------------------------------------
 
-  // On completed status, evicts the stale cache entry in PactStatsService.
+  // Write-through to the shared cache for every status, not just completed —
+  // a plain note/habitName/reminder edit must also be reflected immediately
+  // (HAB-174 WU0 finding: the completed-only branch this replaced left note
+  // edits silently stale). reuseCachedShowups is safe here: updatePact never
+  // changes a pact's showups, only pact-level fields.
   Future<void> updatePact(Pact pact) async {
     await _pactRepository.updatePact(pact);
-    if (pact.status == PactStatus.completed) {
-      _pactStatsService.onPactCompleted(pact.id);
-    }
+    await _cache.refresh(pact.id, pact: pact, reuseCachedShowups: true);
     unawaited(_syncService.uploadPact(pact));
   }
 
