@@ -47,6 +47,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | skills/design/brief/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
 | skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
 | skills/design/experiment/SKILL.md | Experiment design: hypothesis, metrics, feature flag, registry entry |
+| skills/design/research/SKILL.md | Literature research: thesis/antithesis/synthesis for a claim, or a scoping map for a bare topic — cited evidence, single synthesis pass |
 | skills/build/implement/SKILL.md | TDD implementation and PR |
 | skills/run/android/SKILL.md | Start the app on Android (physical device → running emulator → launch AVD) |
 | skills/run/ios/SKILL.md | Start the app on iOS (physical device → booted Simulator → boot Simulator) |
@@ -70,6 +71,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/analyze` | design/analyze | `/analyze HAB-XX: <title>` |
 | `/brief` | design/brief | `/brief` |
 | `/experiment` | design/experiment | `/experiment <hypothesis>` |
+| `/research` | design/research | `/research <claim or topic>` |
 | `/draft-scenarios` | verify/draft-scenarios | `/draft-scenarios HAB-XX: <title>` |
 | `/implement` | build/implement | `/implement HAB-XX: <title>` |
 | `/calibrate` | configure/calibrate | `/calibrate` |
