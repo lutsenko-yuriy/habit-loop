@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_timeline_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_page.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 
 // Overridable in tests to make CurrentStateMilestone.sortAt deterministic.
@@ -16,27 +17,27 @@ final pactTimelineViewModelProvider = NotifierProviderFamily<PactTimelineViewMod
 
 class PactTimelineViewModel extends FamilyNotifier<PactTimelineState, String> {
   @override
-  PactTimelineState build(String pactId) => const PactTimelineState();
+  PactTimelineState build(String pactId) {
+    // Seeds from the shared cache's warm bundle if one is already present —
+    // the only real navigation path (Pact Details → Timeline) always warms it
+    // first, so this makes the AppBar title correct on the very first frame
+    // without a forwarded initialHabitName argument (HAB-173 workaround,
+    // removed HAB-174 WU3).
+    final page = ref.read(pactDetailCacheProvider).peek(pactId)?.timelinePage;
+    if (page == null) return const PactTimelineState();
+    return _stateFromPage(const PactTimelineState(), page);
+  }
 
   Future<void> load() async {
     state = state.copyWith(isLoading: true, clearLoadError: true);
     try {
       unawaited(ref.read(crashlyticsServiceProvider).log('screen: pact_timeline(id=$arg)'));
 
-      // Evict stale cache so re-entry always fetches fresh showup data from DB.
-      ref.read(pactTimelineCacheProvider).evict(arg);
-
       final now = ref.read(pactTimelineNowProvider);
-      final page = await ref.read(pactTimelineServiceProvider).loadAll(pactId: arg, now: now);
+      final bundle = await ref.read(pactDetailCacheProvider).load(arg, now: now);
+      final page = bundle.timelinePage;
 
-      state = state.copyWith(
-        anchorStart: page.anchorStart,
-        anchorEnd: page.anchorEnd,
-        milestones: page.milestones,
-        tailPeriodInDays: page.tailPeriodInDays,
-        tailStartIndex: page.tailStartIndex,
-        isLoading: false,
-      );
+      state = _stateFromPage(state, page).copyWith(isLoading: false);
 
       final pactStatus = switch (page.anchorEnd) {
         CurrentStateMilestone _ => 'active',
@@ -71,3 +72,11 @@ class PactTimelineViewModel extends FamilyNotifier<PactTimelineState, String> {
     );
   }
 }
+
+PactTimelineState _stateFromPage(PactTimelineState state, PactTimelinePage page) => state.copyWith(
+      anchorStart: page.anchorStart,
+      anchorEnd: page.anchorEnd,
+      milestones: page.milestones,
+      tailPeriodInDays: page.tailPeriodInDays,
+      tailStartIndex: page.tailStartIndex,
+    );

@@ -21,8 +21,8 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_page.dart';
 /// computed from; every mutation path must go through [refresh]/[evict] here
 /// rather than maintaining a second, bypassable cache.
 ///
-/// `PactStatsService`, `PactService`, and `PactDetailViewModel` are wired onto
-/// this cache as of HAB-174 WU2; `PactTimelineViewModel` follows in WU3.
+/// `PactStatsService`, `PactService`, `PactDetailViewModel` (HAB-174 WU2), and
+/// `PactTimelineViewModel` (HAB-174 WU3) are all wired onto this cache.
 class PactDetailCache {
   PactDetailCache({
     required PactRepository pactRepository,
@@ -46,7 +46,7 @@ class PactDetailCache {
   /// Cache hit: returns immediately, no DB call, no recompute.
   /// Cache miss: fetches [Pact] + showups once, computes the bundle, stores,
   /// and returns it. Throws [ArgumentError] if the pact doesn't exist (same
-  /// contract `PactTimelineService.loadAll` has today).
+  /// contract the now-deleted `PactTimelineService.loadAll` had).
   Future<PactDetailBundle> load(String pactId, {DateTime? now}) async {
     final cached = _bundles[pactId];
     if (cached != null) return cached;
@@ -162,9 +162,8 @@ class PactDetailCache {
     return PactDetailBundle(pact: pact, stats: stats, timelinePage: timelinePage);
   }
 
-  // Mirrors PactTimelineService._buildAnchorStart — duplicated here rather
-  // than shared because PactTimelineService is deleted in WU3 once
-  // PactTimelineViewModel is wired onto this cache instead.
+  // Formerly duplicated from PactTimelineService._buildAnchorStart, which was
+  // deleted in WU3 once PactTimelineViewModel was wired onto this cache instead.
   PactCreatedMilestone _buildAnchorStart(Pact pact) => PactCreatedMilestone(
         sortAt: pact.createdAt ?? pact.startDate,
         habitName: pact.habitName,
@@ -172,7 +171,7 @@ class PactDetailCache {
         plannedEndDate: pact.endDate,
       );
 
-  // Mirrors PactTimelineService._buildAnchorEnd — see _buildAnchorStart.
+  // Formerly duplicated from PactTimelineService._buildAnchorEnd — see _buildAnchorStart.
   PactTimelineMilestone _buildAnchorEnd({
     required Pact pact,
     required List<Showup> showups,

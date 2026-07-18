@@ -100,6 +100,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         ],
                                       ),
                                   buildNoteField: (ctx, ctrl) => CupertinoTextField(
+                                        key: const Key('showup-note-field'),
                                         controller: ctrl,
                                         placeholder: l10n.showupNoteLabel,
                                         maxLines: 4,
@@ -107,6 +108,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         padding: const EdgeInsets.all(12),
                                       ),
                                   buildSaveButton: (ctx, onPressed) => CupertinoButton(
+                                        key: const Key('showup-note-save-button'),
                                         onPressed: onPressed,
                                         child: Text(l10n.showupNoteSave),
                                       ),

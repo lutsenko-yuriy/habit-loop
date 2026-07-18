@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.34] — 2026-07-18 (PR #281 merged)
+
+### Changed
+
+- [user] HAB-174 WU3 (final): Wire `PactTimelineViewModel` onto `PactDetailCache`; retire parallel `PactTimelineCache`/`PactTimelineService`. Timeline now reads from the shared cache (cache-hit on subsequent opens in same session). Implements write-through scenarios: status updates, showup notes, and pact notes now reflect immediately in Timeline without reload. Fixed a bug where background writes (dashboard's gap-fill auto-fail sweep) used implicit `DateTime.now()` instead of caller's clock, affecting tail-zone bucketing when app clock is overridden. Net LoC: -426 (cache/service deletion).
+
 ## [0.50.33] — 2026-07-18 (PR #280 merged)
 
 ### Changed

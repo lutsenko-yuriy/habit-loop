@@ -62,6 +62,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
           showup = await pactStatsService.persistShowupStatus(
             showup: showup,
             status: ShowupStatus.failed,
+            now: now,
           );
           wasAutoFailed = true;
 
@@ -138,6 +139,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
             status: newStatus,
             // Manual fail makes the showup non-redeemable — user chose to fail.
             redeemable: newStatus == ShowupStatus.failed ? false : null,
+            now: ref.read(showupDetailNowProvider),
           );
       final resolvedUiState = switch (newStatus) {
         ShowupStatus.done => ShowupUiState.done,
@@ -187,6 +189,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final updatedShowup = await ref.read(pactStatsServiceProvider).persistShowupStatus(
             showup: showup,
             status: ShowupStatus.done,
+            now: ref.read(showupDetailNowProvider),
           );
       state = state.copyWith(
           showup: updatedShowup, uiState: ShowupUiState.done, isSaving: false, canRedeem: false, wasAutoFailed: false);
@@ -220,6 +223,15 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final updatedShowup = note.isEmpty ? showup.copyWith(clearNote: true) : showup.copyWith(note: note);
       await ref.read(showupServiceProvider).updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
+      // Write-through: a note edit doesn't change stats, so refresh only the
+      // cache directly — going through PactStatsService.persistStats would
+      // redundantly rewrite Pact.stats and re-upload the pact to Firestore for
+      // an edit that never changes stats. The cache's cached timelinePage must
+      // still reflect the new note so Timeline shows it without an app
+      // restart (HAB-174).
+      final cache = ref.read(pactDetailCacheProvider);
+      cache.evict(updatedShowup.pactId);
+      await cache.load(updatedShowup.pactId, now: ref.read(showupDetailNowProvider));
     } catch (e) {
       state = state.copyWith(isSaving: false, noteError: e);
     }

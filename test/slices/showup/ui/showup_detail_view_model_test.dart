@@ -8,6 +8,9 @@ import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
@@ -17,6 +20,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dar
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
+import '../../../infrastructure/sync/fake_sync_service.dart';
 
 // A fixed reference "now" to make auto-fail tests deterministic.
 // We use a time clearly in the past so pending showups with past scheduledAt
@@ -422,6 +426,48 @@ void main() {
 
       final state = container.read(showupDetailViewModelProvider(showup.id));
       expect(state.showup?.note, 'Missed it');
+    });
+
+    test(
+        'saveNote() write-through refreshes PactDetailCache so Timeline reflects the new note, '
+        'without rewriting Pact.stats or re-uploading the pact', () async {
+      final showup = _doneShowup();
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final syncService = FakeSyncService();
+      final cache = PactDetailCache(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+      final container = ProviderContainer(overrides: [
+        pactRepositoryProvider.overrideWithValue(pactRepo),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(syncService),
+        pactDetailCacheProvider.overrideWithValue(cache),
+      ]);
+      addTearDown(container.dispose);
+
+      // Warm the cache the way Pact Details does before Showup Detail opens.
+      await cache.load(_pact.id);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).saveNote('Great session');
+
+      final cachedMilestones = cache.peek(_pact.id)!.timelinePage.milestones;
+      expect(
+        cachedMilestones.whereType<NotedShowupMilestone>().any((m) => m.note == 'Great session'),
+        isTrue,
+        reason: 'saveNote must write through to the shared PactDetailCache — otherwise a note edit made '
+            'via Showup Detail never appears on an already-warm Timeline (HAB-174 regression)',
+      );
+      // A note edit never changes stats — the cache refresh must not route
+      // through PactStatsService.persistStats, which would redundantly
+      // rewrite the pact row and re-upload it to Firestore on every note save.
+      expect(syncService.uploadedPactIds, isEmpty,
+          reason: 'saveNote must refresh the cache directly, not via a pact stats resync');
     });
 
     test('load() sets habitName to null when pact is not found (UI shows localised fallback)', () async {

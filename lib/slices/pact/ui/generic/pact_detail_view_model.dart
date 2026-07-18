@@ -61,7 +61,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
           );
           // updatePact write-throughs to PactDetailCache, reusing the showups
           // this load() call already fetched — no extra DB round-trip.
-          await pactService.updatePact(pact);
+          await pactService.updatePact(pact, now: now);
           stats = pact.stats!;
         }
       }
@@ -158,7 +158,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     state = state.copyWith(isSavingNote: true, clearNoteError: true);
     try {
       final updated = note.isEmpty ? pact.copyWith(clearStopReason: true) : pact.copyWith(stopReason: note);
-      await ref.read(pactServiceProvider).updatePact(updated);
+      await ref.read(pactServiceProvider).updatePact(updated, now: ref.read(pactDetailNowProvider));
       state = state.copyWith(pact: updated, isSavingNote: false);
 
       unawaited(
