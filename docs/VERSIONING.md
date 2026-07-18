@@ -70,7 +70,7 @@ Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]
 - It parses `docs/CHANGELOG.md`, extracts all entries with a version number *higher* than the last published version (determined from `version-*` git tags), and strips developer-only references (HAB-XX issue numbers, PR #XX, WU work-unit markers).
 - Only `[user]` bullets are included; all other tags are silently excluded.
 - Output is capped at 4 000 characters for compatibility with both Firebase App Distribution and App Store "What's New" fields.
-- The generated notes are passed to both `distribute-android` and `distribute-ios` via a job output and written to `--release-notes-file` so Firebase testers see human-readable text instead of a build number/SHA string.
+- The generated notes are passed to `distribute-android` via a job output and written to `--release-notes-file` so Firebase testers see human-readable text instead of a build number/SHA string. `distribute-testflight` does not consume this output — `testflight_upload.sh` uploads the binary only via `xcrun altool`, which has no release-notes parameter; TestFlight testers currently see no "What's New" text unless entered manually in App Store Connect (tracked in HAB-182 — populating it automatically requires the separate App Store Connect REST API, not `altool`, plus polling for the build to finish Apple's async processing before it can be addressed).
 - A copy of the notes file is uploaded as a `release-notes` GitHub Actions artifact (retained for 90 days) for manual use in App Store / Play Store submissions.
 
 **On-demand build cleanup:**
@@ -81,29 +81,29 @@ Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]
 
 **Required GitHub Actions Secrets:**
 
-| Secret | Used by | How to obtain |
-|---|---|---|
-| `FIREBASE_OPTIONS_DART` | `test`, `build-android`, `build-ios` | `cat lib/firebase_options.dart \| base64` |
-| `GOOGLE_SERVICES_JSON` | `build-android` | `cat android/app/google-services.json \| base64` |
-| `GOOGLE_SERVICE_INFO_PLIST` | `build-ios` | `cat ios/Runner/GoogleService-Info.plist \| base64` |
-| `KEY_STORE_BASE64` | `build-android` | `cat android/upload-keystore.jks \| base64` |
-| `KEY_STORE_PASSWORD` | `build-android` | Keystore password |
-| `KEY_PASSWORD` | `build-android` | Key password |
-| `KEY_ALIAS` | `build-android` | Key alias |
-| `IOS_CERTIFICATE_P12` | `build-ios` | `cat Distribution.p12 \| base64` (export from Keychain) |
-| `IOS_CERTIFICATE_PASSWORD` | `build-ios` | Password set when exporting the .p12 |
-| `IOS_PROVISIONING_PROFILE` | `build-ios` | `cat <profile>.mobileprovision \| base64` (ad-hoc profile from Apple Developer portal) |
-| `IOS_APPSTORE_PROVISIONING_PROFILE` | `build-ios` | `cat <appstore>.mobileprovision \| base64` (App Store distribution profile for `com.habitloop.habitLoop`; reuses the same Apple Distribution certificate as `IOS_CERTIFICATE_P12`) |
-| `IOS_TEAM_ID` | `build-ios` | 10-character Apple Developer Team ID (e.g. `ABCD1234EF`) |
-| `FIREBASE_ANDROID_APP_ID` | `distribute-android` | Firebase Console → Android app → App ID (e.g. `1:123456789012:android:abc123`) |
-| `FIREBASE_SERVICE_ACCOUNT_ANDROID` | `distribute-android` | Raw JSON of a GCP service account key with the Firebase App Distribution Admin role — paste the `.json` file content directly, no base64 |
-| `FIREBASE_IOS_APP_ID` | `distribute-ios` | Firebase Console → iOS app → App ID (e.g. `1:123456789012:ios:abc123`) |
-| `FIREBASE_SERVICE_ACCOUNT_IOS` | `distribute-ios` | Same as above — may reuse the Android service account JSON |
-| `APP_STORE_CONNECT_API_KEY_P8` | `distribute-testflight` | `cat AuthKey_<KEYID>.p8 \| base64` (App Store Connect → Users and Access → Integrations → API keys; role ≥ App Manager) — must be base64-encoded, matching the convention used by `IOS_CERTIFICATE_P12`/`IOS_APPSTORE_PROVISIONING_PROFILE`; `testflight_upload.sh` decodes it with `base64 --decode` |
-| `APP_STORE_CONNECT_KEY_ID` | `distribute-testflight` | Key ID shown next to the API key in App Store Connect |
-| `APP_STORE_CONNECT_ISSUER_ID` | `distribute-testflight` | Issuer ID shown on the API Keys page in App Store Connect |
-| `CODECOV_TOKEN` | `test` | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability |
-| `GIST_TOKEN` | `run-scenarios` | GitHub PAT with `gist` scope — used to update the scenarios badge gist; optional (badge update is skipped if absent) |
+| Secret | Used by | How to obtain | Status |
+|---|---|---|---|
+| `FIREBASE_OPTIONS_DART` | `test`, `build-android`, `build-ios` | `cat lib/firebase_options.dart \| base64` | |
+| `GOOGLE_SERVICES_JSON` | `build-android` | `cat android/app/google-services.json \| base64` | |
+| `GOOGLE_SERVICE_INFO_PLIST` | `build-ios` | `cat ios/Runner/GoogleService-Info.plist \| base64` | |
+| `KEY_STORE_BASE64` | `build-android` | `cat android/upload-keystore.jks \| base64` | |
+| `KEY_STORE_PASSWORD` | `build-android` | Keystore password | |
+| `KEY_PASSWORD` | `build-android` | Key password | |
+| `KEY_ALIAS` | `build-android` | Key alias | |
+| `IOS_CERTIFICATE_P12` | `build-ios` | `cat Distribution.p12 \| base64` (export from Keychain) | |
+| `IOS_CERTIFICATE_PASSWORD` | `build-ios` | Password set when exporting the .p12 | |
+| `IOS_PROVISIONING_PROFILE` | — | `cat <profile>.mobileprovision \| base64` (ad-hoc profile from Apple Developer portal) | DEPRECATED — fed the ad-hoc export path removed in HAB-180; no consumer remains |
+| `IOS_APPSTORE_PROVISIONING_PROFILE` | `build-ios` | `cat <appstore>.mobileprovision \| base64` (App Store distribution profile for `com.habitloop.habitLoop`; reuses the same Apple Distribution certificate as `IOS_CERTIFICATE_P12`) | |
+| `IOS_TEAM_ID` | `build-ios` | 10-character Apple Developer Team ID (e.g. `ABCD1234EF`) | |
+| `FIREBASE_ANDROID_APP_ID` | `distribute-android` | Firebase Console → Android app → App ID (e.g. `1:123456789012:android:abc123`) | |
+| `FIREBASE_SERVICE_ACCOUNT_ANDROID` | `distribute-android` | Raw JSON of a GCP service account key with the Firebase App Distribution Admin role — paste the `.json` file content directly, no base64 | |
+| `FIREBASE_IOS_APP_ID` | `/cleanup-firebase` (local only) | Firebase Console → iOS app → App ID (e.g. `1:123456789012:ios:abc123`) | Still required — no longer used by CI (`distribute-ios` was removed in HAB-180), but still needed locally to clean up pre-HAB-180 iOS builds already in Firebase App Distribution |
+| `FIREBASE_SERVICE_ACCOUNT_IOS` | — | Same as above — may reuse the Android service account JSON | DEPRECATED — was only used by `distribute-ios`, removed in HAB-180; not used by `/cleanup-firebase` (which authenticates via `gcloud auth print-access-token` instead) |
+| `APP_STORE_CONNECT_API_KEY_P8` | `distribute-testflight` | `cat AuthKey_<KEYID>.p8 \| base64` (App Store Connect → Users and Access → Integrations → API keys; role ≥ App Manager) — must be base64-encoded, matching the convention used by `IOS_CERTIFICATE_P12`/`IOS_APPSTORE_PROVISIONING_PROFILE`; `testflight_upload.sh` decodes it with `base64 --decode` | |
+| `APP_STORE_CONNECT_KEY_ID` | `distribute-testflight` | Key ID shown next to the API key in App Store Connect | |
+| `APP_STORE_CONNECT_ISSUER_ID` | `distribute-testflight` | Issuer ID shown on the API Keys page in App Store Connect | |
+| `CODECOV_TOKEN` | `test` | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability | |
+| `GIST_TOKEN` | `run-scenarios` | GitHub PAT with `gist` scope — used to update the scenarios badge gist; optional (badge update is skipped if absent) | |
 
 **When adding a new secret that requires a specific encoding (e.g. base64):** before asking the user to add it to GitHub and run a live validation, verify the encode instruction in the table above and the decode step in the consuming script are symmetric. A mismatch here only surfaces as a runtime failure during a live `workflow_dispatch` run — never in code review or unit tests (this is exactly what happened in HAB-167).
 
