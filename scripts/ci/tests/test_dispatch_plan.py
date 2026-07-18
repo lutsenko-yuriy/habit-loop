@@ -8,16 +8,14 @@ class TestDispatchPlan(unittest.TestCase):
     # --- non-dispatch passthrough ---
 
     def test_push_event_forces_full_automatic_behaviour(self):
-        """Non-workflow_dispatch events always build both platforms and distribute Android.
-
-        iOS Firebase distribution is temporarily disabled for automatic runs (HAB-167).
+        """Non-workflow_dispatch events always build both platforms, distribute Android to
+        Firebase, and distribute iOS to TestFlight (HAB-180 — Firebase iOS distribution removed).
         """
         result = dispatch_plan(event='push', android=False, ios=False, environment='staging')
         self.assertTrue(result['build_android'])
         self.assertTrue(result['build_ios'])
         self.assertTrue(result['distribute_android'])
-        self.assertFalse(result['distribute_ios'])
-        self.assertFalse(result['distribute_testflight'])
+        self.assertTrue(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'internal-testers')
 
     def test_pull_request_event_forces_full_automatic_behaviour(self):
@@ -25,8 +23,7 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_android'])
         self.assertTrue(result['build_ios'])
         self.assertTrue(result['distribute_android'])
-        self.assertFalse(result['distribute_ios'])
-        self.assertFalse(result['distribute_testflight'])
+        self.assertTrue(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'internal-testers')
 
     # --- workflow_dispatch: both platforms, production ---
@@ -36,7 +33,6 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_android'])
         self.assertTrue(result['build_ios'])
         self.assertTrue(result['distribute_android'])
-        self.assertTrue(result['distribute_ios'])
         self.assertTrue(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'internal-testers')
 
@@ -47,7 +43,6 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_android'])
         self.assertFalse(result['build_ios'])
         self.assertTrue(result['distribute_android'])
-        self.assertFalse(result['distribute_ios'])
         self.assertFalse(result['distribute_testflight'])
 
     def test_dispatch_ios_only(self):
@@ -55,7 +50,6 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertFalse(result['build_android'])
         self.assertTrue(result['build_ios'])
         self.assertFalse(result['distribute_android'])
-        self.assertTrue(result['distribute_ios'])
         self.assertTrue(result['distribute_testflight'])
 
     # --- workflow_dispatch: staging suppresses distribution ---
@@ -66,7 +60,6 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_android'])
         self.assertTrue(result['build_ios'])
         self.assertFalse(result['distribute_android'])
-        self.assertFalse(result['distribute_ios'])
         self.assertFalse(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'staging-testers')
 
@@ -75,37 +68,33 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_android'])
         self.assertFalse(result['build_ios'])
         self.assertFalse(result['distribute_android'])
-        self.assertFalse(result['distribute_ios'])
         self.assertFalse(result['distribute_testflight'])
         self.assertEqual(result['group_alias'], 'staging-testers')
 
     # --- workflow_dispatch: per-channel distribution toggles ---
 
     def test_dispatch_testflight_only(self):
-        """distribute_firebase=False suppresses Firebase (both platforms) but not TestFlight."""
+        """distribute_firebase=False suppresses Firebase (Android) but not TestFlight."""
         result = dispatch_plan(
             event='workflow_dispatch', android=True, ios=True, environment='production',
             distribute_firebase=False, distribute_testflight=True,
         )
         self.assertFalse(result['distribute_android'])
-        self.assertFalse(result['distribute_ios'])
         self.assertTrue(result['distribute_testflight'])
 
     def test_dispatch_firebase_only(self):
-        """distribute_testflight=False suppresses TestFlight but not Firebase."""
+        """distribute_testflight=False suppresses TestFlight but not Firebase (Android)."""
         result = dispatch_plan(
             event='workflow_dispatch', android=True, ios=True, environment='production',
             distribute_firebase=True, distribute_testflight=False,
         )
         self.assertTrue(result['distribute_android'])
-        self.assertTrue(result['distribute_ios'])
         self.assertFalse(result['distribute_testflight'])
 
     def test_dispatch_channel_toggles_default_true(self):
         """Omitting the toggles distributes to both channels."""
         result = dispatch_plan(event='workflow_dispatch', android=True, ios=True, environment='production')
         self.assertTrue(result['distribute_android'])
-        self.assertTrue(result['distribute_ios'])
         self.assertTrue(result['distribute_testflight'])
 
     def test_dispatch_both_channels_off(self):
@@ -117,7 +106,6 @@ class TestDispatchPlan(unittest.TestCase):
         self.assertTrue(result['build_android'])
         self.assertTrue(result['build_ios'])
         self.assertFalse(result['distribute_android'])
-        self.assertFalse(result['distribute_ios'])
         self.assertFalse(result['distribute_testflight'])
 
     # --- group_alias ---

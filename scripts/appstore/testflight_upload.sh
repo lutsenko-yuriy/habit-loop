@@ -2,9 +2,8 @@
 # Uploads a signed IPA to TestFlight (internal testing) via the App Store
 # Connect API, using xcrun altool.
 #
-# Runs alongside, not instead of, Firebase App Distribution (HAB-167) --
-# TestFlight requires an app-store-signed IPA, distinct from the ad-hoc IPA
-# uploaded to Firebase.
+# Sole automatic iOS distribution channel since HAB-180 removed Firebase iOS
+# App Distribution.
 #
 # Required env vars:
 #   ARTIFACT_PATH            — Path to the app-store-signed IPA file

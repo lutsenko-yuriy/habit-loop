@@ -21,7 +21,7 @@ on:
         options: [production, staging]
         default: production
       distribute_firebase:
-        description: 'Distribute to Firebase App Distribution — Android + iOS (production only)'
+        description: 'Distribute to Firebase App Distribution — Android only (production only)'
         type: boolean
         default: true
       distribute_testflight:
@@ -47,7 +47,6 @@ jobs:
       build_android: ${{ steps.dispatch-plan.outputs.build_android }}
       build_ios: ${{ steps.dispatch-plan.outputs.build_ios }}
       distribute_android: ${{ steps.dispatch-plan.outputs.distribute_android }}
-      distribute_ios: ${{ steps.dispatch-plan.outputs.distribute_ios }}
       distribute_testflight: ${{ steps.dispatch-plan.outputs.distribute_testflight }}
       group_alias: ${{ steps.dispatch-plan.outputs.group_alias }}
     steps:
@@ -426,7 +425,6 @@ jobs:
     runs-on: macos-26
     outputs:
       success: ${{ steps.build.outputs.success }}
-      appstore_success: ${{ steps.export-appstore.outputs.success }}
     steps:
       - uses: actions/checkout@v4
 
@@ -445,34 +443,11 @@ jobs:
           p12-file-base64: ${{ secrets.IOS_CERTIFICATE_P12 }}
           p12-password:    ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
 
-      - name: Install provisioning profile
-        if: github.event.inputs.environment != 'staging'
-        run: |
-          PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
-          mkdir -p "$PROFILES_DIR"
-          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode \
-            > "$PROFILES_DIR/ci.mobileprovision"
-
-          # Extract UUID so ExportOptions.plist can reference the profile by UUID
-          # (display name may differ from the filename we chose).
-          security cms -D -i "$PROFILES_DIR/ci.mobileprovision" \
-            > /tmp/profile.plist
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' /tmp/profile.plist)
-          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
-        env:
-          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
-
       - name: Install app-store provisioning profile
-        # Second profile for the TestFlight export (HAB-167). Reuses the same
-        # Apple Distribution certificate imported above — only the profile
-        # differs (app-store vs ad-hoc distribution method).
-        #
-        # continue-on-error: this profile is only needed for the isolated
-        # TestFlight export below — a missing/invalid app-store profile must
-        # never fail the whole build-ios job, since that would also take down
-        # the ad-hoc export that Firebase App Distribution depends on.
+        # Sole signing profile since HAB-180 removed Firebase iOS distribution
+        # (and the ad-hoc export it required) — every iOS build now signs and
+        # exports app-store-only, for TestFlight.
         id: appstore-profile
-        continue-on-error: true
         if: github.event.inputs.environment != 'staging'
         run: |
           PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
@@ -515,35 +490,11 @@ jobs:
         run: pod repo update
 
       - name: Generate ExportOptions.plist
+        # app-store method only since HAB-180 — the sole export path, used
+        # for TestFlight.
         if: github.event.inputs.environment != 'staging'
         run: |
           cat > /tmp/ExportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>ad-hoc</string>
-              <key>teamID</key>
-              <string>${IOS_TEAM_ID}</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>com.habitloop.habitLoop</key>
-                  <string>${PROFILE_UUID}</string>
-              </dict>
-          </dict>
-          </plist>
-          EOF
-        env:
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
-
-      - name: Generate ExportOptions (app-store).plist
-        # Second export options for TestFlight (HAB-167) — same archive,
-        # re-signed at export time with the app-store profile/method. Skipped
-        # if the app-store profile itself failed to install above.
-        if: github.event.inputs.environment != 'staging' && steps.appstore-profile.outcome == 'success'
-        run: |
-          cat > /tmp/ExportOptions-appstore.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -596,8 +547,8 @@ jobs:
           CODE_SIGN_STYLE = Manual
           CODE_SIGN_IDENTITY = Apple Distribution
           CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
-          PROVISIONING_PROFILE_SPECIFIER = ${PROFILE_UUID}
-          PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*] = ${PROFILE_UUID}
+          PROVISIONING_PROFILE_SPECIFIER = ${PROFILE_UUID_APPSTORE}
+          PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*] = ${PROFILE_UUID_APPSTORE}
           DEVELOPMENT_TEAM = ${IOS_TEAM_ID}
           XCCFG
 
@@ -617,11 +568,12 @@ jobs:
             -sdk iphoneos \
             -archivePath /tmp/Runner.xcarchive
 
-          # 4. Export IPA using ExportOptions.plist (ad-hoc, for Firebase App
-          #    Distribution).
+          # 4. Export IPA using ExportOptions.plist (app-store method, for
+          #    TestFlight — the sole export since HAB-180 removed Firebase iOS
+          #    distribution and its ad-hoc export).
           xcodebuild -exportArchive \
             -archivePath /tmp/Runner.xcarchive \
-            -exportPath build/ios/ipa \
+            -exportPath build/ios/ipa-appstore \
             -exportOptionsPlist /tmp/ExportOptions.plist
 
           echo "success=true" >> "$GITHUB_OUTPUT"
@@ -631,66 +583,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: steps.build.outputs.success == 'true' && github.event.inputs.environment != 'staging'
         with:
-          name: ios-release
-          path: build/ios/ipa/*.ipa
-          retention-days: 7
-
-      - name: Export app-store IPA (TestFlight)
-        # Deliberately isolated from the ad-hoc export above (HAB-167) —
-        # exports the same archive again with the app-store method, since
-        # xcodebuild re-signs at export time and TestFlight requires an
-        # app-store-signed IPA distinct from the ad-hoc one Firebase needs.
-        # continue-on-error: a broken app-store profile/export must never
-        # fail build-ios, or it would also take down the ad-hoc/Firebase
-        # path above (both live in the same job).
-        id: export-appstore
-        continue-on-error: true
-        if: steps.build.outputs.success == 'true' && github.event.inputs.environment != 'staging' && steps.appstore-profile.outcome == 'success'
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath /tmp/Runner.xcarchive \
-            -exportPath build/ios/ipa-appstore \
-            -exportOptionsPlist /tmp/ExportOptions-appstore.plist
-
-          echo "success=true" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/upload-artifact@v4
-        if: steps.export-appstore.outputs.success == 'true'
-        with:
           name: ios-appstore
           path: build/ios/ipa-appstore/*.ipa
           retention-days: 7
 
-  # ── Distribute iOS to Firebase App Distribution ───────────────────────────
-  distribute-ios:
-    needs: [check-skip, resolve-version, build-ios]
-    if: needs.build-ios.outputs.success == 'true' && needs.check-skip.outputs.distribute_ios == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
-        with:
-          name: ios-release
-
-      - name: Upload to Firebase App Distribution
-        env:
-          APP_ID:               ${{ secrets.FIREBASE_IOS_APP_ID }}
-          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IOS }}
-          RELEASE_NOTES:        ${{ needs.resolve-version.outputs.release_notes }}
-          GROUP_ALIAS:          ${{ needs.check-skip.outputs.group_alias }}
-        run: |
-          ARTIFACT_PATH=$(find . -maxdepth 1 -name "*.ipa" | head -1)
-          [[ -n "$ARTIFACT_PATH" ]] || { echo "No IPA found in artifact" >&2; exit 1; }
-          export ARTIFACT_PATH
-          bash scripts/firebase/distribute.sh
-
   # ── Distribute iOS to TestFlight (internal testing) ────────────────────────
-  # Isolated from version-tag's `needs:` on purpose (HAB-167) — a TestFlight
-  # upload failure must never block Firebase distribution or release tagging.
   distribute-testflight:
     needs: [check-skip, build-ios]
-    if: needs.build-ios.outputs.appstore_success == 'true' && needs.check-skip.outputs.distribute_testflight == 'true'
+    if: needs.build-ios.outputs.success == 'true' && needs.check-skip.outputs.distribute_testflight == 'true'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -711,13 +611,16 @@ jobs:
           bash scripts/appstore/testflight_upload.sh
 
   # ── Tag the release and bump pubspec build number ─────────────────────────
+  # Gates on *either* distribute-android or distribute-testflight succeeding
+  # (not both) — a failure on one platform's distribution must never block
+  # tagging the release on the other's account.
   version-tag:
-    needs: [resolve-version, build-android, build-ios, distribute-android, distribute-ios]
+    needs: [resolve-version, build-android, build-ios, distribute-android, distribute-testflight]
     if: |
       always() &&
       github.ref == 'refs/heads/main' &&
       needs.resolve-version.result == 'success' &&
-      (needs.distribute-android.result == 'success' || needs.distribute-ios.result == 'success')
+      (needs.distribute-android.result == 'success' || needs.distribute-testflight.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -730,7 +633,7 @@ jobs:
           VERSION=${{ needs.resolve-version.outputs.version_name }}
 
           ANDROID_OK="${{ needs.distribute-android.result }}"
-          IOS_OK="${{ needs.distribute-ios.result }}"
+          IOS_OK="${{ needs.distribute-testflight.result }}"
 
           if [[ "$ANDROID_OK" == "success" && "$IOS_OK" == "success" ]]; then
             SUFFIX="both"
@@ -748,7 +651,8 @@ jobs:
 
           # Pull first so our sed change applies on top of the current main,
           # avoiding a rebase conflict when another build-number bump landed
-          # while this job was waiting for distribute-android/-ios to finish.
+          # while this job was waiting for distribute-android/-testflight to
+          # finish.
           git pull --rebase origin main
 
           sed -i "s/^version: .*/version: ${VERSION}+${BUILD}/" pubspec.yaml
