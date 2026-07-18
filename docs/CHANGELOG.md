@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.35] — 2026-07-18 (PR #283 merged)
+
+### Added
+
+- [meta] Add `/research` skill (Claude Code) — a dialectical research tool for surveying existing alternatives and producing cited, synthesized positions from thesis/antithesis branches (ADR-0004, HAB-178). Registers in `AGENTS.md` skill/slash-command table and integrates into `RESEARCH_WORKFLOW.md` step 2.
+
 ## [0.50.34] — 2026-07-18 (PR #281 merged)
 
 ### Changed
