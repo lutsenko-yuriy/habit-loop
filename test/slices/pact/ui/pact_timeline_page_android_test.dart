@@ -57,7 +57,6 @@ final _single = SingleShowupMilestone(
 Widget _buildApp(
   PactTimelineState state, {
   void Function(PactTimelineMilestone)? onMilestoneTapped,
-  String? initialHabitName,
 }) {
   return MaterialApp(
     theme: HabitLoopTheme.materialTheme,
@@ -71,7 +70,6 @@ Widget _buildApp(
     home: PactTimelinePageAndroid(
       state: state,
       onMilestoneTapped: onMilestoneTapped,
-      initialHabitName: initialHabitName,
     ),
   );
 }
@@ -117,23 +115,6 @@ void main() {
       await tester.pumpWidget(_buildApp(_loaded()));
       await tester.pump();
       expect(find.text('Meditate'), findsWidgets);
-    });
-
-    testWidgets('shows initialHabitName in title before anchorStart loads', (tester) async {
-      await tester.pumpWidget(
-        _buildApp(const PactTimelineState(isLoading: true), initialHabitName: 'Meditate'),
-      );
-      await tester.pump();
-      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageAndroid)))!;
-      expect(find.text('Meditate – ${l10n.pactTimelineTitle}'), findsOneWidget);
-    });
-
-    testWidgets('prefers anchorStart habit name over initialHabitName once loaded', (tester) async {
-      await tester.pumpWidget(_buildApp(_loaded(), initialHabitName: 'Stale Name'));
-      await tester.pump();
-      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageAndroid)))!;
-      expect(find.text('${_anchorStart.habitName} – ${l10n.pactTimelineTitle}'), findsWidgets);
-      expect(find.text('Stale Name – ${l10n.pactTimelineTitle}'), findsNothing);
     });
 
     testWidgets('shows current-state anchor label for active pact', (tester) async {
