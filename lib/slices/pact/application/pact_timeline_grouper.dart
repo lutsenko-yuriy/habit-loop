@@ -19,12 +19,38 @@ class PactTimelineGrouper {
   /// it from milestone types, since [SingleShowupMilestone] also appears outside the
   /// tail zone (a same-outcome run of length 1).
   ///
+  /// Thin wrapper over [groupWithStats] — kept as a separate method (rather than
+  /// widening this return shape) because `(:milestones, :tailStartIndex)` record
+  /// destructuring is used at several existing call sites and would break on a
+  /// shape change (HAB-174 WU1.1).
+  ({List<PactTimelineMilestone> milestones, int tailStartIndex}) group(
+    List<Showup> showups, {
+    DateTime? now,
+  }) {
+    final result = groupWithStats(showups, now: now);
+    return (milestones: result.milestones, tailStartIndex: result.tailStartIndex);
+  }
+
+  /// Same grouping as [group], fused into one forward pass with the resolved-showup
+  /// tallies ([PactStats] needs): [showupsDone], [showupsFailed], and [currentStreak]
+  /// (the trailing run of consecutive `done` showups). This is what makes single-pass
+  /// bundle computation possible in `PactDetailCache` — a forward "increment on done,
+  /// reset on non-done" running counter's final value equals the reverse-scan trailing
+  /// streak that [PactStats.compute] computes, for the same ascending-sorted,
+  /// non-pending-excluded list (HAB-174 WU1.1).
+  ///
   /// Single forward pass over [showups]: relies on the caller-supplied sort by
   /// [Showup.scheduledAt] (ascending) so the tail zone forms a contiguous suffix.
   /// Non-tail showups accumulate into same-outcome streaks that flush to a
   /// [ShowupStreakMilestone] (run ≥ 2) or [SingleShowupMilestone] (run of 1) on
   /// outcome change; tail showups are always emitted individually.
-  ({List<PactTimelineMilestone> milestones, int tailStartIndex}) group(
+  ({
+    List<PactTimelineMilestone> milestones,
+    int tailStartIndex,
+    int showupsDone,
+    int showupsFailed,
+    int currentStreak,
+  }) groupWithStats(
     List<Showup> showups, {
     DateTime? now,
   }) {
@@ -38,6 +64,10 @@ class PactTimelineGrouper {
     DateTime? streakFirstAt;
     DateTime? streakLastAt;
     String? streakLastShowupId;
+
+    var showupsDone = 0;
+    var showupsFailed = 0;
+    var trailingStreak = 0;
 
     void flushStreak() {
       if (streakCount == 0) return;
@@ -66,6 +96,14 @@ class PactTimelineGrouper {
 
     for (final showup in showups) {
       if (showup.status == ShowupStatus.pending) continue;
+
+      if (showup.status == ShowupStatus.done) {
+        showupsDone++;
+        trailingStreak++;
+      } else {
+        showupsFailed++;
+        trailingStreak = 0;
+      }
 
       final inTail =
           TailZone.contains(scheduledAt: showup.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays);
@@ -116,6 +154,9 @@ class PactTimelineGrouper {
     return (
       milestones: result,
       tailStartIndex: tailStartIndex == -1 ? result.length : tailStartIndex,
+      showupsDone: showupsDone,
+      showupsFailed: showupsFailed,
+      currentStreak: trailingStreak,
     );
   }
 }

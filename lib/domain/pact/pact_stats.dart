@@ -73,11 +73,7 @@ class PactStats {
   }) {
     final done = showups.where((s) => s.status == ShowupStatus.done).length;
     final failed = showups.where((s) => s.status == ShowupStatus.failed).length;
-
-    final effectiveTotal = totalShowups ?? showups.length;
-    final remaining = totalShowups != null
-        ? (totalShowups - done - failed).clamp(0, totalShowups)
-        : showups.where((s) => s.status == ShowupStatus.pending).length;
+    final pending = showups.where((s) => s.status == ShowupStatus.pending).length;
 
     // Pending showups are excluded — they haven't been resolved yet.
     final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList()
@@ -92,12 +88,43 @@ class PactStats {
       }
     }
 
-    return PactStats(
+    return PactStats.fromCounts(
+      startDate: startDate,
+      endDate: endDate,
       showupsDone: done,
       showupsFailed: failed,
+      currentStreak: streak,
+      pendingCount: pending,
+      totalShowups: totalShowups ?? showups.length,
+    );
+  }
+
+  /// Assembles [PactStats] from pre-tallied counts, e.g. from
+  /// [PactTimelineGrouper.groupWithStats]'s single forward pass — the shared
+  /// assembly point so [compute] (the trusted oracle) and any single-pass
+  /// caller can never drift on the remaining/clamp math (HAB-174 WU1.1).
+  ///
+  /// [totalShowups] overrides [pendingCount]-derived remaining, same override
+  /// semantics as [compute]: remaining = totalShowups - done - failed, clamped.
+  factory PactStats.fromCounts({
+    required DateTime startDate,
+    required DateTime endDate,
+    required int showupsDone,
+    required int showupsFailed,
+    required int currentStreak,
+    required int pendingCount,
+    int? totalShowups,
+  }) {
+    final effectiveTotal = totalShowups ?? (showupsDone + showupsFailed + pendingCount);
+    final remaining =
+        totalShowups != null ? (totalShowups - showupsDone - showupsFailed).clamp(0, totalShowups) : pendingCount;
+
+    return PactStats(
+      showupsDone: showupsDone,
+      showupsFailed: showupsFailed,
       showupsRemaining: remaining,
       totalShowups: effectiveTotal,
-      currentStreak: streak,
+      currentStreak: currentStreak,
       startDate: startDate,
       endDate: endDate,
     );

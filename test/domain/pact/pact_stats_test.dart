@@ -184,6 +184,48 @@ void main() {
         expect(stats.totalShowups, 30);
       });
 
+      test('fromCounts assembles the same result as compute for equivalent inputs', () {
+        // 1 done, 1 failed, 1 pending, total=30 → remaining = 30 - 1 - 1 = 28.
+        final showups = [
+          _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
+          _showup('2', ShowupStatus.failed, DateTime(2026, 4, 2, 7)),
+          _showup('3', ShowupStatus.pending, DateTime(2026, 4, 3, 7)),
+        ];
+        final pact = _pact();
+
+        final viaCompute = PactStats.compute(
+          startDate: pact.startDate,
+          endDate: pact.endDate,
+          showups: showups,
+          totalShowups: 30,
+        );
+        final viaFromCounts = PactStats.fromCounts(
+          startDate: pact.startDate,
+          endDate: pact.endDate,
+          showupsDone: 1,
+          showupsFailed: 1,
+          currentStreak: 0,
+          pendingCount: 1,
+          totalShowups: 30,
+        );
+
+        expect(viaFromCounts, viaCompute);
+      });
+
+      test('fromCounts without totalShowups override derives remaining from pendingCount', () {
+        final stats = PactStats.fromCounts(
+          startDate: DateTime(2026, 4, 1),
+          endDate: DateTime(2026, 4, 30),
+          showupsDone: 2,
+          showupsFailed: 1,
+          currentStreak: 0,
+          pendingCount: 4,
+        );
+
+        expect(stats.totalShowups, 7);
+        expect(stats.showupsRemaining, 4);
+      });
+
       test('showupsRemaining is derived from totalShowups minus done and failed', () {
         // 1 done, 1 failed, total=30 → remaining = 30 - 1 - 1 = 28
         final showups = [
