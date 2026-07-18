@@ -71,13 +71,24 @@ class PactStats {
     required List<Showup> showups,
     int? totalShowups,
   }) {
-    final done = showups.where((s) => s.status == ShowupStatus.done).length;
-    final failed = showups.where((s) => s.status == ShowupStatus.failed).length;
-    final pending = showups.where((s) => s.status == ShowupStatus.pending).length;
-
-    // Pending showups are excluded — they haven't been resolved yet.
-    final resolved = showups.where((s) => s.status != ShowupStatus.pending).toList()
-      ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    var done = 0;
+    var failed = 0;
+    var pending = 0;
+    // Pending showups are excluded from resolved — they haven't been resolved yet.
+    final resolved = <Showup>[];
+    for (final showup in showups) {
+      switch (showup.status) {
+        case ShowupStatus.done:
+          done++;
+          resolved.add(showup);
+        case ShowupStatus.failed:
+          failed++;
+          resolved.add(showup);
+        case ShowupStatus.pending:
+          pending++;
+      }
+    }
+    resolved.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
     var streak = 0;
     for (var i = resolved.length - 1; i >= 0; i--) {
