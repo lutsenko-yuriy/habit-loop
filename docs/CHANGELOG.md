@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.33] — 2026-07-18 (PR #280 merged)
+
+### Changed
+
+- [wip] HAB-174 WU2: Wire `PactStatsService`, `PactService`, and `PactDetailViewModel` onto `PactDetailCache`; delete the now-superseded `_statsCache` map and its coverage test. Stats and pact metadata now read from the shared cache on the Pact Details load path (was bypassing cache before; now cache-hit on second Pact Details open within the same session). No user-visible change.
+
 ## [0.50.32] — 2026-07-18 (PR #279 merged)
 
 ### Changed
