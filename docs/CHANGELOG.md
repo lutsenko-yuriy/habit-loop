@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.37] — 2026-07-19 (PR #285 merged)
+
+### Added
+
+- [ci] HAB-182: Added an isolated `set-testflight-notes` CI job that auto-populates TestFlight's "What's New" text via the App Store Connect REST API (JWT auth, polling for build-processing completion, PATCH/POST `betaBuildLocalizations`) — reuses the release notes `resolve-version` already generates for Firebase. Soft-fails and is excluded from `version-tag`'s `needs:`, so a notes-update failure never blocks release tagging.
+
 ## [0.50.36] — 2026-07-18 (PR #284 merged)
 
 ### Changed
