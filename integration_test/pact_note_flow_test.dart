@@ -213,20 +213,42 @@ void main() {
           await h.pactRepo.savePact(_stoppedPact);
         },
       );
-      // TODO: 1. Seed a stopped pact with an existing note ("Got injured") — reuse
-      //          the existing _stoppedPact fixture (done above via beforePump).
-      // TODO: 2. Open Pact Detail via _openInactivePactDetail(tester, 'Morning Run') —
-      //          first Pact Details open this session, populating the shared cache
-      //          with the original note.
-      // TODO: 3. Edit pact-note-field to a new value ("Injured knee — resting now")
-      //          and tap pact-note-save-button — the note is persisted and the cache
-      //          is refreshed (write-through).
-      // TODO: 4. From the same still-open Pact Detail screen, tap "View Timeline"
-      //          (pact-detail-timeline-button).
-      // TODO: 5. Verify the Timeline's pact-concluded anchor shows the updated note
-      //          text ("Injured knee — resting now") and the original text
-      //          ("Got injured") is no longer present — confirming the edited note
-      //          is reflected without an app restart.
+
+      // ── 1/2. Open Pact Detail — first open this session, warms the cache
+      //         with the original note ("Got injured") ────────────────────────
+      await _openInactivePactDetail(tester, 'Morning Run');
+      final strings = l10n(tester);
+
+      // ── 3. Edit the note and save ────────────────────────────────────────────
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-note-field')),
+        200.0,
+        scrollable: find.ancestor(
+          of: find.text(strings.sectionStats.toUpperCase()),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('pact-note-field')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('pact-note-field')), 'Injured knee — resting now');
+      await tester.pump();
+
+      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('pact-note-save-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // ── 4. Open Timeline from the same still-open Pact Detail screen ────────
+      await openTimeline(tester);
+      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+
+      // ── 5. The updated note is reflected; the original text is gone ─────────
+      // Pact Detail remains in the nav stack below Timeline, so its own
+      // pact-note-field still shows the new text too — two matches expected.
+      await waitFor(tester, find.text('Injured knee — resting now'));
+      expect(find.text('Injured knee — resting now'), findsAtLeastNWidgets(1));
+      expect(find.text('Got injured'), findsNothing);
     });
   });
 

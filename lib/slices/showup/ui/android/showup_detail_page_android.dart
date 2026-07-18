@@ -99,6 +99,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                     ],
                                   ),
                               buildNoteField: (ctx, ctrl) => TextField(
+                                    key: const Key('showup-note-field'),
                                     controller: ctrl,
                                     maxLines: 4,
                                     decoration: InputDecoration(
@@ -107,6 +108,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                     ),
                                   ),
                               buildSaveButton: (ctx, onPressed) => FilledButton.tonal(
+                                    key: const Key('showup-note-save-button'),
                                     onPressed: onPressed,
                                     child: Text(l10n.showupNoteSave),
                                   ),

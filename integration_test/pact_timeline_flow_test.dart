@@ -12,6 +12,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
@@ -520,21 +521,60 @@ void main() {
       'status_write_through_visible_in_timeline_same_session: mark-done via Showup Detail is reflected in '
       'Timeline without an app restart (HAB-174)',
       (tester) async {
-        h = await AppHarness.create(tester);
-        // TODO: 1. Seed an active pact with one pending showup scheduled for today.
-        // TODO: 2. Open the pacts panel and open Pact Detail for the pact — this is the
-        //          first Pact Details open this session, populating the shared cache.
-        // TODO: 3. Navigate back (tester.pageBack()) to the Dashboard.
-        // TODO: 4. Tap the showup tile to open Showup Detail, then tap "Mark as Done" —
-        //          the showup's status becomes done.
-        // TODO: 5. Tap "View pact details" (showup-pact-link) to return to Pact Detail
-        //          for the same pact, within the same session.
-        // TODO: 6. From Pact Detail, tap "View Timeline" (pact-detail-timeline-button).
-        // TODO: 7. Verify the timeline now shows the showup as an individual done
-        //          milestone (timeline-milestone-<id> key visible) — the status change
-        //          made via Showup Detail is reflected instantly, sourced from the warm
-        //          cache populated in step 2 rather than a fresh DB read triggered by
-        //          this Timeline open.
+        h = await AppHarness.create(
+          tester,
+          extraOverrides: [
+            todayProvider.overrideWithValue(_testNow),
+            pactDetailNowProvider.overrideWithValue(_testNow),
+            pactTimelineNowProvider.overrideWithValue(_testNow),
+            showupDetailNowProvider.overrideWithValue(_testNow),
+          ],
+          beforePump: (h) async {
+            await h.pactRepo.savePact(_activePact);
+            await h.showupRepo.saveShowup(_todayShowup);
+          },
+        );
+
+        final strings = l10n(tester);
+
+        // ── 1/2. Open Pact Detail — first open this session, warms the cache ──
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Meditate');
+
+        // ── 3. Navigate back to the Dashboard ─────────────────────────────────
+        // pumpAndSettle drains the push transition first — otherwise pageBack()
+        // can miss the back button (still mid-animation, off its final hit area).
+        await tester.pumpAndSettle();
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+
+        // ── 4. Open Showup Detail from the dashboard tile, mark as done ────────
+        // The pacts panel is still expanded from step 2, so 'Meditate' also
+        // matches the panel's pact row — .first is the dashboard showup tile,
+        // which paints before the panel row (see openPactDetail's `.last` above).
+        await waitFor(tester, find.text('Meditate').first);
+        await tester.tap(find.text('Meditate').first);
+        await waitFor(tester, find.text(strings.markDone));
+        await tester.tap(find.text(strings.markDone));
+        await tester.pumpAndSettle();
+
+        // ── 5. Return to Pact Detail for the same pact, same session ────────────
+        // Via the pacts panel (proven reliable above) rather than the showup's
+        // "View pact details" link — pushing a 3rd nested Cupertino route from
+        // there hit-tests unreliably on the simulator; the scenario only cares
+        // that Pact Detail is reopened within the same session, not by which path.
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        await openPactDetail(tester, 'Meditate');
+
+        // ── 6. Open Timeline from Pact Detail ────────────────────────────────────
+        await openTimeline(tester);
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+
+        // ── 7. Timeline shows the showup as a done individual milestone ─────────
+        final tileKey = Key('timeline-milestone-${_todayShowup.id}');
+        await waitFor(tester, find.byKey(tileKey));
+        expect(find.byKey(tileKey), findsOneWidget);
       },
     );
 
@@ -542,24 +582,58 @@ void main() {
       'showup_note_write_through_visible_in_timeline_same_session: adding a note via Showup Detail is '
       'reflected in Timeline without an app restart (HAB-174)',
       (tester) async {
-        h = await AppHarness.create(tester);
-        // TODO: 1. Seed an active pact with one done, tail-zone showup that has no
-        //          note yet (reuse the shape of _singleShowup below).
-        // TODO: 2. Open Pact Detail for the pact — first open this session,
-        //          populating the shared cache.
-        // TODO: 3. Tap "View Timeline" (pact-detail-timeline-button) to open Timeline.
-        // TODO: 4. Tap the showup's milestone tile (timeline-milestone-<id>) to open
-        //          Showup Detail.
-        // TODO: 5. Enter text into the showup note field and tap the save button —
-        //          the note is persisted. NOTE FOR IMPLEMENTER: the note TextField
-        //          and its save button in showup_detail_page_android.dart /
-        //          showup_detail_page_ios.dart currently have no Keys — add
-        //          `showup-note-field` / `showup-note-save-button` Keys there as part
-        //          of implementing this driver (small, behavior-preserving addition).
-        // TODO: 6. Navigate back to the Timeline screen (same session, no restart).
-        // TODO: 7. Verify the showup's milestone tile now displays the new note text —
-        //          confirming the note write-through into the shared cache without a
-        //          fresh DB read triggered by returning to Timeline.
+        h = await AppHarness.create(
+          tester,
+          extraOverrides: [
+            todayProvider.overrideWithValue(_testNow),
+            pactDetailNowProvider.overrideWithValue(_testNow),
+            pactTimelineNowProvider.overrideWithValue(_testNow),
+            showupDetailNowProvider.overrideWithValue(_testNow),
+          ],
+          beforePump: (h) async {
+            await h.pactRepo.savePact(_activePact);
+            await h.showupRepo.saveShowup(_singleShowup);
+          },
+        );
+
+        final strings = l10n(tester);
+
+        // ── 1/2. Open Pact Detail — first open this session, warms the cache ──
+        await openPactsPanel(tester);
+        await openPactDetail(tester, 'Meditate');
+
+        // ── 3. Open Timeline ─────────────────────────────────────────────────────
+        await openTimeline(tester);
+        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+
+        // ── 4. Tap the showup's milestone tile to open Showup Detail ────────────
+        final tileKey = Key('timeline-milestone-${_singleShowup.id}');
+        await waitFor(tester, find.byKey(tileKey));
+        await tester.tap(find.byKey(tileKey));
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.pump(const Duration(milliseconds: 100));
+        await waitFor(tester, find.text(strings.showupDetailTitle));
+
+        // ── 5. Add a note and save ───────────────────────────────────────────────
+        const newNote = 'Felt fantastic today!';
+        await tester.tap(find.byKey(const Key('showup-note-field')));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('showup-note-field')), newNote);
+        await tester.pump();
+        await tester.ensureVisible(find.byKey(const Key('showup-note-save-button')));
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('showup-note-save-button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // ── 6. Navigate back to Timeline (same session, no restart) ─────────────
+        await tester.pageBack();
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // ── 7. The milestone tile now shows the new note text ────────────────────
+        await waitFor(tester, find.text(newNote));
+        expect(find.text(newNote), findsOneWidget);
       },
     );
   });
