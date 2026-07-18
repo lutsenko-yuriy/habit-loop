@@ -8,6 +8,9 @@ import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
@@ -422,6 +425,40 @@ void main() {
 
       final state = container.read(showupDetailViewModelProvider(showup.id));
       expect(state.showup?.note, 'Missed it');
+    });
+
+    test('saveNote() write-through refreshes PactDetailCache so Timeline reflects the new note', () async {
+      final showup = _doneShowup();
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = PactDetailCache(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+      final container = ProviderContainer(overrides: [
+        pactRepositoryProvider.overrideWithValue(pactRepo),
+        showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactTransactionServiceProvider.overrideWithValue(txService),
+        syncServiceProvider.overrideWithValue(const NoopSyncService()),
+        pactDetailCacheProvider.overrideWithValue(cache),
+      ]);
+      addTearDown(container.dispose);
+
+      // Warm the cache the way Pact Details does before Showup Detail opens.
+      await cache.load(_pact.id);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).saveNote('Great session');
+
+      final cachedMilestones = cache.peek(_pact.id)!.timelinePage.milestones;
+      expect(
+        cachedMilestones.whereType<NotedShowupMilestone>().any((m) => m.note == 'Great session'),
+        isTrue,
+        reason: 'saveNote must write through to the shared PactDetailCache — otherwise a note edit made '
+            'via Showup Detail never appears on an already-warm Timeline (HAB-174 regression)',
+      );
     });
 
     test('load() sets habitName to null when pact is not found (UI shows localised fallback)', () async {

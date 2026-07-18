@@ -628,8 +628,7 @@ void main() {
 
         // ── 6. Navigate back to Timeline (same session, no restart) ─────────────
         await tester.pageBack();
-        await tester.pump(const Duration(milliseconds: 350));
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
 
         // ── 7. The milestone tile now shows the new note text ────────────────────
         await waitFor(tester, find.text(newNote));

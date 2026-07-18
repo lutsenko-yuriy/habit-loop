@@ -116,10 +116,17 @@ class PactStatsService {
     final updatedShowup = showup.copyWith(status: status, redeemable: redeemable);
     await _showupRepository.updateShowup(updatedShowup);
     unawaited(_syncService.uploadShowup(updatedShowup));
-    // Evict before repopulation — racing reads fall back to DB, not stale data.
-    _cache.evict(updatedShowup.pactId);
-    await _syncStatsBestEffort(updatedShowup.pactId, now: now);
+    await refreshCacheForPact(updatedShowup.pactId, now: now);
     return updatedShowup;
+  }
+
+  // Shared write-through step for any showup mutation that bypasses
+  // persistShowupStatus (e.g. a note-only edit via ShowupService.updateShowup)
+  // but still needs the cached PactStats/PactTimelinePage to reflect it.
+  // Evicts before repopulation — a racing read falls back to DB, not stale data.
+  Future<void> refreshCacheForPact(String pactId, {DateTime? now}) async {
+    _cache.evict(pactId);
+    await _syncStatsBestEffort(pactId, now: now);
   }
 
   // Atomic: pact update + showup deletion via transactionService.
