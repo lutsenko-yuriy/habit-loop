@@ -42,7 +42,7 @@ import jwt
 
 API_BASE = "https://api.appstoreconnect.apple.com/v1"
 BUNDLE_ID = "com.habitloop.habitLoop"
-AUDIENCE = "appstore-connect-v1"
+AUDIENCE = "appstoreconnect-v1"
 DEFAULT_LOCALE = "en-US"
 DEFAULT_POLL_TIMEOUT_SECONDS = 1800
 DEFAULT_POLL_INTERVAL_SECONDS = 30

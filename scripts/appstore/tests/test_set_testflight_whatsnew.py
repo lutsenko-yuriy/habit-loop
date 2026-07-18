@@ -34,15 +34,15 @@ class TestBuildJwt(unittest.TestCase):
         self.assertEqual(header["alg"], "ES256")
         self.assertEqual(header["kid"], "KEY123")
 
-        decoded = jwt.decode(token, self.public_key, algorithms=["ES256"], audience="appstore-connect-v1")
+        decoded = jwt.decode(token, self.public_key, algorithms=["ES256"], audience="appstoreconnect-v1")
         self.assertEqual(decoded["iss"], "issuer-123")
-        self.assertEqual(decoded["aud"], "appstore-connect-v1")
+        self.assertEqual(decoded["aud"], "appstoreconnect-v1")
         self.assertIn("iat", decoded)
         self.assertIn("exp", decoded)
 
     def test_expiry_is_within_apples_20_minute_limit(self):
         token = sut.build_jwt("issuer-123", "KEY123", self.private_pem)
-        decoded = jwt.decode(token, self.public_key, algorithms=["ES256"], audience="appstore-connect-v1")
+        decoded = jwt.decode(token, self.public_key, algorithms=["ES256"], audience="appstoreconnect-v1")
         lifetime = decoded["exp"] - decoded["iat"]
         self.assertGreater(lifetime, 0)
         self.assertLessEqual(lifetime, 20 * 60)
