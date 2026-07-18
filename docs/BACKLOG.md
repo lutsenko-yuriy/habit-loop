@@ -7,7 +7,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In Progress
 
-- **HAB-174**: Populate a shared pact-detail cache (stats + timeline) when Pact Details is first opened — WU1.1, WU2 of 4 shipped; WU3 remains
+(none)
 
 ## In QA
 
