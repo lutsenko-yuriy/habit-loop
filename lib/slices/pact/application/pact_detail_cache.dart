@@ -113,28 +113,24 @@ class PactDetailCache {
     return bundle;
   }
 
-  // Bundle computation — two-loop fallback (documented, no sign-off needed).
+  // Bundle computation — single-pass (HAB-174 WU1.1).
   //
-  // The plan's primary approach called for a single forward pass that fuses
-  // PactStats.compute's done/failed/streak accumulation with
-  // PactTimelineGrouper.group's tail/non-tail bucketing, then feeding the
-  // pre-bucketed lists into the grouper's existing (private) _processNonTail/
-  // _processTail passes. That fusion is not reachable from this file without
-  // widening PactTimelineGrouper's API: `_processNonTail`/`_processTail` are
-  // library-private to pact_timeline_grouper.dart, and that file is outside
-  // this WU's approved scope (pact_detail_bundle.dart, pact_detail_cache.dart,
-  // pact_detail_cache_test.dart only). Rather than touching the grouper file
-  // to expose them, this takes the plan's explicit documented fallback:
-  // call the two existing, unmodified pure functions back-to-back on the same
-  // sorted showup list. This still satisfies the ticket's actual requirement
-  // (one DB fetch, one cache, one write-through path) — it just costs two
-  // O(n) passes over an in-memory list instead of one.
+  // WU1 shipped a documented two-loop fallback (PactStats.compute + group()
+  // called back-to-back) because the fusion needed PactTimelineGrouper's
+  // then-private _processNonTail/_processTail internals, out of that WU's
+  // file scope. HAB-177 simplified the grouper into a single forward loop,
+  // which made a real single-pass fusion reachable via a public API
+  // (groupWithStats) rather than reaching into grouper internals — see
+  // PactTimelineGrouper.groupWithStats and PactStats.fromCounts.
   PactDetailBundle _computeBundle({
     required Pact pact,
     required List<Showup> showups,
     required DateTime now,
   }) {
     final sorted = [...showups]..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+
+    final grouped = _grouper.groupWithStats(sorted, now: now);
+    final pendingCount = sorted.length - grouped.showupsDone - grouped.showupsFailed;
 
     // Frozen-snapshot fallback: a cache miss with an empty showup list (a
     // stopped/completed pact whose showups were deleted by
@@ -145,14 +141,16 @@ class PactDetailCache {
     // PactConcludedMilestone regardless of showup count.
     final stats = sorted.isEmpty && pact.stats != null
         ? pact.stats!
-        : PactStats.compute(
+        : PactStats.fromCounts(
             startDate: pact.startDate,
             endDate: pact.endDate,
-            showups: sorted,
+            showupsDone: grouped.showupsDone,
+            showupsFailed: grouped.showupsFailed,
+            currentStreak: grouped.currentStreak,
+            pendingCount: pendingCount,
             totalShowups: ShowupGenerator.countTotal(pact),
           );
 
-    final grouped = _grouper.group(sorted, now: now);
     final timelinePage = PactTimelinePage(
       anchorStart: _buildAnchorStart(pact),
       anchorEnd: _buildAnchorEnd(pact: pact, showups: sorted, now: now),

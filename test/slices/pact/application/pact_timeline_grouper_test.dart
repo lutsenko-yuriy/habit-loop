@@ -271,5 +271,86 @@ void main() {
         expect(sortAts, sorted);
       });
     });
+
+    group('groupWithStats', () {
+      test('group() and groupWithStats() produce identical milestones and tailStartIndex', () {
+        final showups = [
+          ...List.generate(10, (i) => _done('s$i', i + 1)),
+          ...List.generate(3, (i) => _fail('t$i', 11 + i)),
+        ];
+        final g = _g(tailPeriodInDays: 3);
+        final viaGroup = g.group(showups, now: _now);
+        final viaStats = g.groupWithStats(showups, now: _now);
+
+        expect(viaStats.milestones.map((m) => m.runtimeType).toList(), viaGroup.milestones.map((m) => m.runtimeType));
+        expect(viaStats.milestones.map((m) => m.sortAt).toList(), viaGroup.milestones.map((m) => m.sortAt));
+        expect(viaStats.tailStartIndex, viaGroup.tailStartIndex);
+      });
+
+      test('counts done and failed across tail and non-tail zones', () {
+        // Non-tail (Jan 1-10): 6 done, 4 failed. Tail (Jan 11-13): 2 done, 1 failed.
+        final showups = [
+          ...List.generate(6, (i) => _done('d$i', i + 1)),
+          ...List.generate(4, (i) => _fail('f$i', 7 + i)),
+          _done('t0', 11),
+          _done('t1', 12),
+          _fail('t2', 13),
+        ];
+        final result = _g(tailPeriodInDays: 3).groupWithStats(showups, now: _now);
+        expect(result.showupsDone, 8);
+        expect(result.showupsFailed, 5);
+      });
+
+      test('pending showups are excluded from done/failed counts', () {
+        final showups = [
+          _done('s1', 1),
+          _sh('s2', ShowupStatus.pending, 2),
+          _fail('s3', 3),
+        ];
+        final result = _g().groupWithStats(showups);
+        expect(result.showupsDone, 1);
+        expect(result.showupsFailed, 1);
+      });
+
+      test('currentStreak counts the trailing run of done showups', () {
+        // Apr-style pattern translated to Jan days: done, done, failed, done, done → streak 2
+        final showups = [
+          _done('s1', 1),
+          _done('s2', 2),
+          _fail('s3', 3),
+          _done('s4', 4),
+          _done('s5', 5),
+        ];
+        final result = _g().groupWithStats(showups);
+        expect(result.currentStreak, 2);
+      });
+
+      test('currentStreak is zero when the last resolved showup failed', () {
+        final showups = [_done('s1', 1), _fail('s2', 2)];
+        final result = _g().groupWithStats(showups);
+        expect(result.currentStreak, 0);
+      });
+
+      test('currentStreak ignores trailing pending showups', () {
+        final showups = [_done('s1', 1), _done('s2', 2), _sh('s3', ShowupStatus.pending, 3)];
+        final result = _g().groupWithStats(showups);
+        expect(result.currentStreak, 2);
+      });
+
+      test('empty input has zero counts and zero streak', () {
+        final result = _g().groupWithStats([]);
+        expect(result.showupsDone, 0);
+        expect(result.showupsFailed, 0);
+        expect(result.currentStreak, 0);
+        expect(result.milestones, isEmpty);
+      });
+
+      test('currentStreak spans a run crossing the tail-zone boundary', () {
+        // All done, cutoff mid-run — trailing streak is unaffected by tail bucketing.
+        final showups = List.generate(10, (i) => _done('s$i', i + 1));
+        final result = _g(tailPeriodInDays: 3).groupWithStats(showups, now: _now);
+        expect(result.currentStreak, 10);
+      });
+    });
   });
 }

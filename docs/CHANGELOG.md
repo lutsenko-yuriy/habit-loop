@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.32] — 2026-07-18 (PR #279 merged)
+
+### Changed
+
+- [wip] HAB-174 WU1.1: Fuse `PactTimelineGrouper.groupWithStats()` with `PactStats.fromCounts()` into a single forward pass over resolved showups (was two separate O(n) passes in WU1's documented fallback). Also fused `PactStats.compute()`'s own done/failed/pending counting into one pass. No consumer wired yet — no observable behaviour change.
+
 ## [0.50.31] — 2026-07-18 (PR #278 merged)
 
 ### Changed
