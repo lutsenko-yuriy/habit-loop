@@ -428,7 +428,8 @@ void main() {
       expect(state.showup?.note, 'Missed it');
     });
 
-    test('saveNote() write-through refreshes PactDetailCache so Timeline reflects the new note, '
+    test(
+        'saveNote() write-through refreshes PactDetailCache so Timeline reflects the new note, '
         'without rewriting Pact.stats or re-uploading the pact', () async {
       final showup = _doneShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
