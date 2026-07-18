@@ -610,6 +610,37 @@ jobs:
           export ARTIFACT_PATH
           bash scripts/appstore/testflight_upload.sh
 
+  # ── Set TestFlight "What's New" via the App Store Connect REST API ────────
+  # Isolated from distribute-testflight: waits (up to 30 min) for Apple to
+  # finish processing the build, then PATCHes betaBuildLocalizations. Soft-
+  # fails (continue-on-error, and the script itself exits 0) so a slow/failed
+  # notes update never blocks version-tag — the binary is already uploaded by
+  # this point.
+  set-testflight-notes:
+    needs: [check-skip, resolve-version, distribute-testflight]
+    if: needs.distribute-testflight.result == 'success' && needs.check-skip.outputs.distribute_testflight == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install pyjwt cryptography
+
+      - name: Set TestFlight What's New
+        env:
+          APP_STORE_CONNECT_KEY_ID:     ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID:  ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+          BUILD_NUMBER:                 ${{ needs.resolve-version.outputs.build_number }}
+          VERSION_NAME:                 ${{ needs.resolve-version.outputs.version_name }}
+          RELEASE_NOTES:                ${{ needs.resolve-version.outputs.release_notes }}
+        run: python3 scripts/appstore/set_testflight_whatsnew.py
+
   # ── Tag the release and bump pubspec build number ─────────────────────────
   # Gates on *either* distribute-android or distribute-testflight succeeding
   # (not both) — a failure on one platform's distribution must never block
