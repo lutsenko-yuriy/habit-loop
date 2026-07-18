@@ -43,6 +43,7 @@ This project describes what each skill needs from a model using two axes: **Effo
 | `brief` | FOCUSED | ARCHITECTURAL | Feature intake dialog: validate a rough idea against spec, create ticket |
 | `analyze` | FOCUSED | ARCHITECTURAL | Cross-cutting analytics reasoning scoped to one feature |
 | `experiment` | FOCUSED | ARCHITECTURAL | Design a product experiment: hypothesis, metrics, variant spec |
+| `research` | FOCUSED | ARCHITECTURAL | Cited literature research (thesis/antithesis/synthesis or scoping map); owns approval gates and spawns its own search subagents — `needs_session_tools: true`, like `debrief` |
 | `implement` | FOCUSED | TACTICAL | Implement a scoped work unit correctly and completely |
 | `ship` | RAPID | TACTICAL | Structured housekeeping: close issues, update docs, bump version, merge |
 | `debrief` | FOCUSED | ARCHITECTURAL | Retrospective dialog scoped to one ticket; cross-skill and workflow reasoning |
