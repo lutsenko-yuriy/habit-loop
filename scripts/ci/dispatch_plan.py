@@ -19,7 +19,6 @@ Output (stdout, one key=value per line):
     build_android=true|false
     build_ios=true|false
     distribute_android=true|false
-    distribute_ios=true|false
     distribute_testflight=true|false
     group_alias=internal-testers|staging-testers
 
@@ -45,11 +44,7 @@ def dispatch_plan(
             'build_android': True,
             'build_ios': True,
             'distribute_android': True,
-            # TODO(HAB-167): iOS Firebase distribution temporarily disabled for
-            # automatic runs pending TestFlight rollout. Manual workflow_dispatch
-            # (ios=true, distribute_firebase=true) still works. Restore to True once resolved.
-            'distribute_ios': False,
-            'distribute_testflight': False,
+            'distribute_testflight': True,
             'group_alias': 'internal-testers',
         }
 
@@ -58,7 +53,6 @@ def dispatch_plan(
         'build_android': android,
         'build_ios': ios,
         'distribute_android': android and is_production and distribute_firebase,
-        'distribute_ios': ios and is_production and distribute_firebase,
         'distribute_testflight': ios and is_production and distribute_testflight,
         'group_alias': 'internal-testers' if is_production else 'staging-testers',
     }
@@ -74,7 +68,7 @@ def main() -> None:
     parser.add_argument('--android', default='true', help='Build Android binary? (true/false)')
     parser.add_argument('--ios', default='true', help='Build iOS binary? (true/false)')
     parser.add_argument('--environment', default='production', help='Target environment (production/staging)')
-    parser.add_argument('--distribute-firebase', default='true', help='Distribute to Firebase App Distribution — Android + iOS? (true/false)')
+    parser.add_argument('--distribute-firebase', default='true', help='Distribute to Firebase App Distribution — Android only? (true/false)')
     parser.add_argument('--distribute-testflight', default='true', help='Distribute to TestFlight — iOS only? (true/false)')
     args = parser.parse_args()
 

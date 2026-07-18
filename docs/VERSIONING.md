@@ -17,19 +17,20 @@ Version name changes are manual and require reasoning presented to the user befo
 - A `resolve-version` job runs before builds to prevent build number conflicts: it compares the `pubspec.yaml` build number against the highest existing `version-*` git tag and uses whichever is greater. Both platform builds receive this resolved number via `--build-number`.
 
 **Git tags:** Created automatically by CI in the format `version-{X.Y.Z}-{buildNumber}-{suffix}` where suffix is:
-- `both` — both Android and iOS builds distributed
+- `both` — both Android (Firebase) and iOS (TestFlight) distributed
 - `android` — only Android distributed
-- `ios` — only iOS distributed
+- `ios` — only iOS (TestFlight) distributed
+
+`version-tag` gates on *either* `distribute-android` or `distribute-testflight` succeeding — a failure on one platform's distribution must never block tagging the release on the other's account (see HAB-180).
 
 **CI/CD pipeline structure:**
 ```
 check-skip (+ build gate + dispatch plan) → test → resolve-version → build-android → distribute-android ─┐
-                                                                    → build-ios     → distribute-ios     ──┤
-                                                                                    → distribute-testflight (isolated — never blocks the line below)
-                                                                                                           └→ version-tag (if ≥1 platform distributed)
+                                                                    → build-ios     → distribute-testflight ┤
+                                                                                                             └→ version-tag (if ≥1 platform distributed)
 ```
 
-`check-skip` runs `scripts/changelog/distribute.py` to determine `should_build`, and `scripts/ci/dispatch_plan.py` to resolve per-job flags (`build_android`, `build_ios`, `distribute_android`, `distribute_ios`, `distribute_testflight`, `group_alias`). Builds, distribution, and version tagging only run on the `main` branch when `should_build=true`. Feature branches run tests only and never build or tag.
+`check-skip` runs `scripts/changelog/distribute.py` to determine `should_build`, and `scripts/ci/dispatch_plan.py` to resolve per-job flags (`build_android`, `build_ios`, `distribute_android`, `distribute_testflight`, `group_alias`). Builds, distribution, and version tagging only run on the `main` branch when `should_build=true`. Feature branches run tests only and never build or tag.
 
 **Manual dispatch (`workflow_dispatch`) inputs:**
 
@@ -38,16 +39,14 @@ check-skip (+ build gate + dispatch plan) → test → resolve-version → build
 | `android` | boolean | `true` | Build the Android binary |
 | `ios` | boolean | `true` | Build the iOS binary |
 | `environment` | choice (`production`/`staging`) | `production` | `staging` suppresses distribution and sets `GROUP_ALIAS=staging-testers`, regardless of the two toggles below |
-| `distribute_firebase` | boolean | `true` | Push to Firebase App Distribution — **Android + iOS** (production only) — set `false` to validate a TestFlight-only run without notifying Firebase testers |
+| `distribute_firebase` | boolean | `true` | Push to Firebase App Distribution — **Android only** (production only) — set `false` to validate a TestFlight-only run without notifying Firebase testers |
 | `distribute_testflight` | boolean | `true` | Push to TestFlight — **iOS only** (production only) — set `false` to validate a Firebase-only run without uploading to App Store Connect |
 
-`scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, `distribute-ios`, and `distribute-testflight`. `distribute_firebase` gates both `distribute_android` and `distribute_ios`; `distribute_testflight` gates only `distribute_testflight` — so either distribution channel can be exercised independently on a manual dispatch.
+`scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, and `distribute-testflight`. `distribute_firebase` gates `distribute_android`; `distribute_testflight` gates `distribute_testflight` — so either distribution channel can be exercised independently on a manual dispatch.
 
-**iOS Firebase distribution temporarily disabled (HAB-167):** automatic runs (push/PR to `main`) no longer distribute the iOS build to Firebase App Distribution — `distribute_ios` and `distribute_testflight` are hardcoded to `false` for non-`workflow_dispatch` events in `dispatch_plan.py`. Android still distributes as normal, and iOS still builds on every run. A manual `workflow_dispatch` run with `ios=true` and `distribute_firebase=true` (production) can still distribute iOS to Firebase on demand. Remove this override once TestFlight distribution is fully validated and ready to take over.
+**TestFlight distribution (HAB-167; sole iOS channel since HAB-180):** `scripts/appstore/testflight_upload.sh` uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key, mirroring `scripts/firebase/distribute.sh`. `build-ios` archives once and exports once — `method=app-store` — signed with the `IOS_APPSTORE_PROVISIONING_PROFILE` against the existing `IOS_CERTIFICATE_P12` Apple Distribution certificate. The app-store IPA is uploaded as the `ios-appstore` artifact and consumed by an isolated `distribute-testflight` job (`runs-on: macos-15`, gated on `distribute_testflight`, and automatic on every qualifying `main` merge — not just manual dispatch). It feeds `version-tag`'s OR-gate (see above) — its result determines the `ios`/`both` tag suffix, but a TestFlight failure alone never blocks tagging as long as `distribute-android` succeeded. Firebase App Distribution for iOS (and its ad-hoc export/signing path) was removed entirely in HAB-180; Android's Firebase distribution is unaffected.
 
-**TestFlight distribution (HAB-167):** `scripts/appstore/testflight_upload.sh` uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key, mirroring `scripts/firebase/distribute.sh`. `build-ios` archives once and exports twice from the same `.xcarchive` — `method=ad-hoc` (unchanged, for Firebase App Distribution) and `method=app-store` (new, for TestFlight) — since the two channels require differently-signed IPAs and `xcodebuild -exportArchive` re-signs at export time. The app-store export reuses the existing `IOS_CERTIFICATE_P12` Apple Distribution certificate with a separate app-store provisioning profile (`IOS_APPSTORE_PROVISIONING_PROFILE`). The app-store IPA is uploaded as the `ios-appstore` artifact and consumed by an isolated `distribute-testflight` job (`runs-on: macos-15`, gated on `distribute_testflight`). This job is deliberately **not** in `version-tag`'s `needs:` — a TestFlight upload failure must never block Firebase distribution or release tagging.
-
-**`build-ios` runs on `macos-26`** (not `macos-15`): Apple requires all App Store Connect uploads to be built with the iOS 26 SDK (Xcode 26+), which is only available on the `macos-26` runner image. This applies to the whole job, including the unchanged ad-hoc/Firebase export path, since both exports come from one archive step. `distribute-testflight` stays on `macos-15` — it only uploads the already-built IPA and has no SDK dependency.
+**`build-ios` runs on `macos-26`** (not `macos-15`): Apple requires all App Store Connect uploads to be built with the iOS 26 SDK (Xcode 26+), which is only available on the `macos-26` runner image. `distribute-testflight` stays on `macos-15` — it only uploads the already-built IPA and has no SDK dependency.
 
 **Selective build:** `check-skip` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only, `[ci]`-only, `[test]`-only, `[wip]`-only, or `[user-none]`-only entry), the entire build is skipped — no binary is produced, no build number is incremented, and no `version-*` tag is created. Because no `version-*` tag is created for build-skipped entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
 
