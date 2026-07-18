@@ -223,13 +223,15 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final updatedShowup = note.isEmpty ? showup.copyWith(clearNote: true) : showup.copyWith(note: note);
       await ref.read(showupServiceProvider).updateShowup(updatedShowup);
       state = state.copyWith(showup: updatedShowup, isSaving: false);
-      // Write-through: a note edit doesn't change stats, but the shared
-      // PactDetailCache's cached timelinePage must reflect the new note so
-      // Timeline shows it without an app restart (HAB-174).
-      await ref.read(pactStatsServiceProvider).refreshCacheForPact(
-            updatedShowup.pactId,
-            now: ref.read(showupDetailNowProvider),
-          );
+      // Write-through: a note edit doesn't change stats, so refresh only the
+      // cache directly — going through PactStatsService.persistStats would
+      // redundantly rewrite Pact.stats and re-upload the pact to Firestore for
+      // an edit that never changes stats. The cache's cached timelinePage must
+      // still reflect the new note so Timeline shows it without an app
+      // restart (HAB-174).
+      final cache = ref.read(pactDetailCacheProvider);
+      cache.evict(updatedShowup.pactId);
+      await cache.load(updatedShowup.pactId, now: ref.read(showupDetailNowProvider));
     } catch (e) {
       state = state.copyWith(isSaving: false, noteError: e);
     }

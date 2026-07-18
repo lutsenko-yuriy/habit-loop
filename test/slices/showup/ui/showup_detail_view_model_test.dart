@@ -20,6 +20,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dar
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
+import '../../../infrastructure/sync/fake_sync_service.dart';
 
 // A fixed reference "now" to make auto-fail tests deterministic.
 // We use a time clearly in the past so pending showups with past scheduledAt
@@ -427,11 +428,13 @@ void main() {
       expect(state.showup?.note, 'Missed it');
     });
 
-    test('saveNote() write-through refreshes PactDetailCache so Timeline reflects the new note', () async {
+    test('saveNote() write-through refreshes PactDetailCache so Timeline reflects the new note, '
+        'without rewriting Pact.stats or re-uploading the pact', () async {
       final showup = _doneShowup();
       final showupRepo = InMemoryShowupRepository([showup]);
       final pactRepo = InMemoryPactRepository([_pact]);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final syncService = FakeSyncService();
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
@@ -441,7 +444,7 @@ void main() {
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
-        syncServiceProvider.overrideWithValue(const NoopSyncService()),
+        syncServiceProvider.overrideWithValue(syncService),
         pactDetailCacheProvider.overrideWithValue(cache),
       ]);
       addTearDown(container.dispose);
@@ -459,6 +462,11 @@ void main() {
         reason: 'saveNote must write through to the shared PactDetailCache — otherwise a note edit made '
             'via Showup Detail never appears on an already-warm Timeline (HAB-174 regression)',
       );
+      // A note edit never changes stats — the cache refresh must not route
+      // through PactStatsService.persistStats, which would redundantly
+      // rewrite the pact row and re-upload it to Firestore on every note save.
+      expect(syncService.uploadedPactIds, isEmpty,
+          reason: 'saveNote must refresh the cache directly, not via a pact stats resync');
     });
 
     test('load() sets habitName to null when pact is not found (UI shows localised fallback)', () async {
