@@ -71,11 +71,12 @@ class _PartiallyFailingStatsService extends PactStatsService {
     required Showup showup,
     required ShowupStatus status,
     bool? redeemable,
+    DateTime? now,
   }) {
     if (errorOnShowupIds.contains(showup.id)) {
       throw StateError('simulated DB error for showup ${showup.id}');
     }
-    return super.persistShowupStatus(showup: showup, status: status, redeemable: redeemable);
+    return super.persistShowupStatus(showup: showup, status: status, redeemable: redeemable, now: now);
   }
 }
 

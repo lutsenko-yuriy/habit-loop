@@ -62,6 +62,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
           showup = await pactStatsService.persistShowupStatus(
             showup: showup,
             status: ShowupStatus.failed,
+            now: now,
           );
           wasAutoFailed = true;
 
@@ -138,6 +139,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
             status: newStatus,
             // Manual fail makes the showup non-redeemable — user chose to fail.
             redeemable: newStatus == ShowupStatus.failed ? false : null,
+            now: ref.read(showupDetailNowProvider),
           );
       final resolvedUiState = switch (newStatus) {
         ShowupStatus.done => ShowupUiState.done,
@@ -187,6 +189,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final updatedShowup = await ref.read(pactStatsServiceProvider).persistShowupStatus(
             showup: showup,
             status: ShowupStatus.done,
+            now: ref.read(showupDetailNowProvider),
           );
       state = state.copyWith(
           showup: updatedShowup, uiState: ShowupUiState.done, isSaving: false, canRedeem: false, wasAutoFailed: false);

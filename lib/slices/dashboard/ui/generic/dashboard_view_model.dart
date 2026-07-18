@@ -95,7 +95,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
       // TODO(perf): batch persistShowupStatus calls per pact to reduce syncStats round-trips.
       for (final showup in gapShowups) {
         try {
-          await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed);
+          await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed, now: today);
         } catch (error, stackTrace) {
           unawaited(crashlytics.log('gap_fill_sweep: error failing showup ${showup.id}: $error'));
           unawaited(ref.read(crashlyticsServiceProvider).recordError(error, stackTrace));
@@ -173,7 +173,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
       if (!today.isAfter(windowEnd)) continue;
 
       try {
-        await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed);
+        await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed, now: today);
       } catch (error, stackTrace) {
         unawaited(
           crashlytics.log(

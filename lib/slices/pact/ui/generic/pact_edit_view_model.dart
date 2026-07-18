@@ -170,7 +170,7 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
       );
 
       final pactService = ref.read(pactServiceProvider);
-      await pactService.updatePact(updatedPact);
+      await pactService.updatePact(updatedPact, now: ref.read(pactEditTodayProvider));
 
       // Load showups once — deterministic cancellation (HAB-100) + rescheduling if offset set.
       final showups = await pactService.getShowupsForPact(arg);

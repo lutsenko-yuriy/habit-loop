@@ -71,12 +71,17 @@ class PactStatsService {
   Future<Pact> persistStats({
     required Pact pact,
     required List<Showup> showups,
+    DateTime? now,
   }) async {
     final stats = buildStats(pact: pact, showups: showups);
     final updatedPact = pact.copyWith(stats: stats);
     await _pactRepository.updatePact(updatedPact);
     // Populate the cache without a redundant DB re-fetch — pact and showups are in hand.
-    await _cache.refresh(pact.id, pact: updatedPact, showups: showups);
+    // now is forwarded from the caller's own clock (e.g. todayProvider/showupDetailNowProvider)
+    // rather than left to PactDetailCache's real-wall-clock fallback, which would otherwise
+    // mis-bucket the cached timeline's tail zone whenever a test (or a paused/backgrounded
+    // session) has the app clock diverge from the real one.
+    await _cache.refresh(pact.id, pact: updatedPact, showups: showups, now: now);
     unawaited(_syncService.uploadPact(updatedPact));
     return updatedPact;
   }
@@ -93,12 +98,12 @@ class PactStatsService {
     }
   }
 
-  Future<Pact?> syncStats(String pactId) async {
+  Future<Pact?> syncStats(String pactId, {DateTime? now}) async {
     final pact = await _pactRepository.getPactById(pactId);
     if (pact == null) return null;
 
     final showups = await _showupRepository.getShowupsForPact(pactId);
-    return persistStats(pact: pact, showups: showups);
+    return persistStats(pact: pact, showups: showups, now: now);
   }
 
   // Showup status is the source of truth; stats sync failure does not roll back the status update.
@@ -106,13 +111,14 @@ class PactStatsService {
     required Showup showup,
     required ShowupStatus status,
     bool? redeemable,
+    DateTime? now,
   }) async {
     final updatedShowup = showup.copyWith(status: status, redeemable: redeemable);
     await _showupRepository.updateShowup(updatedShowup);
     unawaited(_syncService.uploadShowup(updatedShowup));
     // Evict before repopulation — racing reads fall back to DB, not stale data.
     _cache.evict(updatedShowup.pactId);
-    await _syncStatsBestEffort(updatedShowup.pactId);
+    await _syncStatsBestEffort(updatedShowup.pactId, now: now);
     return updatedShowup;
   }
 
@@ -175,9 +181,9 @@ class PactStatsService {
     }
   }
 
-  Future<void> _syncStatsBestEffort(String pactId) async {
+  Future<void> _syncStatsBestEffort(String pactId, {DateTime? now}) async {
     try {
-      await syncStats(pactId);
+      await syncStats(pactId, now: now);
     } catch (_) {
       // The showup status is the source of truth for the user action. If the
       // derived pact stats snapshot fails to persist, keep the primary update

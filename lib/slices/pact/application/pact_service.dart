@@ -88,9 +88,12 @@ class PactService {
   // (HAB-174 WU0 finding: the completed-only branch this replaced left note
   // edits silently stale). reuseCachedShowups is safe here: updatePact never
   // changes a pact's showups, only pact-level fields.
-  Future<void> updatePact(Pact pact) async {
+  Future<void> updatePact(Pact pact, {DateTime? now}) async {
     await _pactRepository.updatePact(pact);
-    await _cache.refresh(pact.id, pact: pact, reuseCachedShowups: true);
+    // now is forwarded from the caller's own clock rather than left to
+    // PactDetailCache's real-wall-clock fallback — see persistStats's comment
+    // in pact_stats_service.dart for why this matters for the cached timeline.
+    await _cache.refresh(pact.id, pact: pact, reuseCachedShowups: true, now: now);
     unawaited(_syncService.uploadPact(pact));
   }
 
