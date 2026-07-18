@@ -8,7 +8,9 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
@@ -58,6 +60,7 @@ class _PartiallyFailingStatsService extends PactStatsService {
     required super.showupRepository,
     required super.transactionService,
     super.syncService = const NoopSyncService(),
+    required super.cache,
     required this.errorOnShowupIds,
   });
 
@@ -570,11 +573,17 @@ void main() {
       final pactRepo = InMemoryPactRepository([pact]);
       final showupRepo = _CountingShowupRepository([doneShowup]);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = PactDetailCache(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        grouper: const PactTimelineGrouper(),
+      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
 
       final container = ProviderContainer(
@@ -620,11 +629,17 @@ void main() {
       final pactRepo = InMemoryPactRepository([stoppedPact, activePact]);
       final showupRepo = _CountingShowupRepository([doneShowup]);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final cache = PactDetailCache(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        grouper: const PactTimelineGrouper(),
+      );
       final statsService = PactStatsService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: cache,
       );
 
       final container = ProviderContainer(
@@ -1130,6 +1145,11 @@ void main() {
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
+        cache: PactDetailCache(
+          pactRepository: pactRepo,
+          showupRepository: showupRepo,
+          grouper: const PactTimelineGrouper(),
+        ),
         errorOnShowupIds: {'s-fail'},
       );
 

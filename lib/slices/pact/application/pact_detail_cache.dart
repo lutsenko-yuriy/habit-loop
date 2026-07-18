@@ -21,8 +21,8 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_page.dart';
 /// computed from; every mutation path must go through [refresh]/[evict] here
 /// rather than maintaining a second, bypassable cache.
 ///
-/// No consumers are wired onto this cache yet (HAB-174 WU1) — `PactStatsService`,
-/// `PactDetailViewModel`, and `PactTimelineViewModel` are wired in WU2/WU3.
+/// `PactStatsService`, `PactService`, and `PactDetailViewModel` are wired onto
+/// this cache as of HAB-174 WU2; `PactTimelineViewModel` follows in WU3.
 class PactDetailCache {
   PactDetailCache({
     required PactRepository pactRepository,

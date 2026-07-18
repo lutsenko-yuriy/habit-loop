@@ -1,16 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/save_showups_result.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
-import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
@@ -53,6 +56,12 @@ final _showups = [
   ),
 ];
 
+PactDetailCache _makeCache(PactRepository pactRepo, ShowupRepository showupRepo) => PactDetailCache(
+      pactRepository: pactRepo,
+      showupRepository: showupRepo,
+      grouper: const PactTimelineGrouper(),
+    );
+
 // ---------------------------------------------------------------------------
 // In-memory path tests (delegation and fallback)
 // ---------------------------------------------------------------------------
@@ -73,18 +82,12 @@ void main() {
       pactRepo = InMemoryPactRepository();
       showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final statsService = PactStatsService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-        syncService: const NoopSyncService(),
-      );
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: _makeCache(pactRepo, showupRepo),
       );
     });
 
@@ -104,18 +107,12 @@ void main() {
     test('createPact rolls back pact when saveShowups fails', () async {
       final failingShowupRepo = _ThrowingShowupRepository();
       final failTxService = InMemoryPactTransactionService(pactRepo, failingShowupRepo);
-      final failStatsService = PactStatsService(
-        pactRepository: pactRepo,
-        showupRepository: failingShowupRepo,
-        transactionService: failTxService,
-        syncService: const NoopSyncService(),
-      );
       final failService = PactService(
         pactRepository: pactRepo,
         showupRepository: failingShowupRepo,
         transactionService: failTxService,
         syncService: const NoopSyncService(),
-        pactStatsService: failStatsService,
+        cache: _makeCache(pactRepo, failingShowupRepo),
       );
 
       await expectLater(
@@ -183,88 +180,69 @@ void main() {
       expect(result, isEmpty);
     });
 
-    // updatePact + PactStatsService integration --------------------------------
+    // updatePact + PactDetailCache write-through --------------------------------
 
-    test('updatePact calls onPactCompleted when pact status is completed', () async {
+    test('updatePact refreshes the cache entry when pact status becomes completed', () async {
       await pactRepo.savePact(_pact);
       final completedPact = _pact.copyWith(status: PactStatus.completed);
-      final statsService = PactStatsService(
+      final cache = _makeCache(pactRepo, showupRepo);
+      final serviceWithCache = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
-      );
-      final serviceWithStats = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
-        syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
 
-      // Warm the cache first so we can verify eviction.
-      final showupForCache = Showup(
-        id: 's1',
-        pactId: 'p1',
-        scheduledAt: DateTime(2026, 3, 1, 8),
-        duration: const Duration(minutes: 10),
-        status: ShowupStatus.pending,
-      );
-      await showupRepo.saveShowup(showupForCache);
-      await statsService.currentStats(pact: _pact, showups: []);
+      await cache.load('p1');
+      await serviceWithCache.updatePact(completedPact);
 
-      // After updatePact with a completed pact, cache entry must be evicted.
-      await serviceWithStats.updatePact(completedPact);
-
-      // Verify the pact was persisted.
+      expect(cache.peek('p1')?.pact.status, PactStatus.completed);
       final persisted = await pactRepo.getPactById('p1');
       expect(persisted?.status, PactStatus.completed);
     });
 
-    test('updatePact does NOT call onPactCompleted when pact status is active', () async {
+    // Regression test for the HAB-174 WU0 finding: the pre-WU2 design only
+    // refreshed the cache on the completed branch, so a plain note/habitName
+    // edit on an active pact never wrote through — this must not regress.
+    test('updatePact refreshes the cache entry for an active pact update too', () async {
       await pactRepo.savePact(_pact);
       final updatedPact = _pact.copyWith(habitName: 'Jog');
-      final statsService = _TrackingPactStatsService(
+      final cache = _makeCache(pactRepo, showupRepo);
+      final serviceWithCache = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
         syncService: const NoopSyncService(),
-      );
-      final serviceWithStats = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
-        syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
 
-      await serviceWithStats.updatePact(updatedPact);
+      await cache.load('p1');
+      await serviceWithCache.updatePact(updatedPact);
 
-      expect(statsService.onPactCompletedCallCount, 0,
-          reason: 'onPactCompleted must not be called for an active pact update');
+      expect(cache.peek('p1')?.pact.habitName, 'Jog',
+          reason: 'updatePact must write through to the cache for every status, not just completed');
     });
 
-    test('updatePact does NOT call onPactCompleted when pact status is stopped', () async {
-      final stoppedPact = _pact.copyWith(status: PactStatus.stopped);
-      await pactRepo.savePact(stoppedPact);
-      final statsService = _TrackingPactStatsService(
+    test('updatePact reuses the cached showup list instead of re-fetching from DB', () async {
+      await pactRepo.savePact(_pact);
+      final countingShowupRepo = _CountingShowupRepository([]);
+      final cache = _makeCache(pactRepo, countingShowupRepo);
+      final serviceWithCache = PactService(
         pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        showupRepository: countingShowupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, countingShowupRepo),
         syncService: const NoopSyncService(),
-      );
-      final serviceWithStats = PactService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
-        syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: cache,
       );
 
-      await serviceWithStats.updatePact(stoppedPact);
+      await cache.load('p1');
+      final callsAfterLoad = countingShowupRepo.getShowupsForPactCallCount;
 
-      expect(statsService.onPactCompletedCallCount, 0,
-          reason: 'onPactCompleted must not be called for a stopped pact update');
+      await serviceWithCache.updatePact(_pact.copyWith(habitName: 'Jog'));
+
+      expect(countingShowupRepo.getShowupsForPactCallCount, callsAfterLoad,
+          reason: 'updatePact never changes showups, so refreshing the cache must reuse the already-cached list');
     });
   });
 
@@ -291,18 +269,12 @@ void main() {
       pactRepo = SqlitePactRepository(db);
       showupRepo = SqliteShowupRepository(db);
       txService = SqlitePactTransactionService(db);
-      final statsService = PactStatsService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-        syncService: const NoopSyncService(),
-      );
       service = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
         syncService: const NoopSyncService(),
-        pactStatsService: statsService,
+        cache: _makeCache(pactRepo, showupRepo),
       );
     });
 
@@ -374,17 +346,11 @@ void main() {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final statsService = PactStatsService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-        syncService: const NoopSyncService(),
-      );
       final svc = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
-        pactStatsService: statsService,
+        cache: _makeCache(pactRepo, showupRepo),
         syncService: fake,
       );
 
@@ -401,17 +367,11 @@ void main() {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final statsService = PactStatsService(
-        pactRepository: pactRepo,
-        showupRepository: showupRepo,
-        transactionService: txService,
-        syncService: const NoopSyncService(),
-      );
       final svc = PactService(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
         transactionService: txService,
-        pactStatsService: statsService,
+        cache: _makeCache(pactRepo, showupRepo),
         syncService: fake,
       );
 
@@ -441,20 +401,15 @@ class _ThrowingShowupRepository extends InMemoryShowupRepository {
   }
 }
 
-/// A [PactStatsService] subclass that records calls to [onPactCompleted].
-class _TrackingPactStatsService extends PactStatsService {
-  _TrackingPactStatsService({
-    required super.pactRepository,
-    required super.showupRepository,
-    required super.transactionService,
-    super.syncService = const NoopSyncService(),
-  });
+/// Wraps [InMemoryShowupRepository] and counts calls to [getShowupsForPact].
+class _CountingShowupRepository extends InMemoryShowupRepository {
+  _CountingShowupRepository([super.initialShowups]);
 
-  int onPactCompletedCallCount = 0;
+  int getShowupsForPactCallCount = 0;
 
   @override
-  void onPactCompleted(String pactId) {
-    onPactCompletedCallCount++;
-    super.onPactCompleted(pactId);
+  Future<List<Showup>> getShowupsForPact(String pactId) async {
+    getShowupsForPactCallCount++;
+    return super.getShowupsForPact(pactId);
   }
 }

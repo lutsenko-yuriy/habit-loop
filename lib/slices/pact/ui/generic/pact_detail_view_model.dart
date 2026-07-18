@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_bundle.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 
 // Overridable in tests to make daysActive computation in stopPact deterministic.
@@ -28,10 +29,12 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       unawaited(ref.read(logServiceProvider).info('pact_detail: load(id=$arg)'));
 
       final pactService = ref.read(pactServiceProvider);
-      final pactStatsService = ref.read(pactStatsServiceProvider);
+      final now = ref.read(pactDetailNowProvider);
 
-      var pact = await pactService.getPact(arg);
-      if (pact == null) {
+      final PactDetailBundle bundle;
+      try {
+        bundle = await ref.read(pactDetailCacheProvider).load(arg, now: now);
+      } on ArgumentError {
         state = state.copyWith(
           isLoading: false,
           loadError: StateError('Pact not found: $arg'),
@@ -39,14 +42,13 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         return;
       }
 
-      final showups = await pactStatsService.loadShowupsForPact(arg);
-      var stats = await pactStatsService.currentStats(pact: pact, showups: showups);
+      var pact = bundle.pact;
+      var stats = bundle.stats;
 
       // Uses showupsRemaining (from countTotal) not pending count — lazy generation
       // would fire prematurely after only the first window is resolved.
       if (pact.status == PactStatus.active) {
-        final today = ref.read(pactDetailNowProvider);
-        final todayDate = DateTime(today.year, today.month, today.day);
+        final todayDate = DateTime(now.year, now.month, now.day);
         final endDateOnly = DateTime(pact.endDate.year, pact.endDate.month, pact.endDate.day);
         final daysLeft = endDateOnly.difference(todayDate).inDays;
         if (daysLeft <= 0 || stats.showupsRemaining == 0) {
@@ -57,7 +59,8 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
               endDate: pact.endDate,
             ),
           );
-          // updatePact notifies PactStatsService.onPactCompleted to evict cache atomically.
+          // updatePact write-throughs to PactDetailCache, reusing the showups
+          // this load() call already fetched — no extra DB round-trip.
           await pactService.updatePact(pact);
           stats = pact.stats!;
         }

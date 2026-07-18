@@ -10,8 +10,10 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
@@ -32,18 +34,24 @@ ProviderContainer _makeContainer({
   List<Override> extras = const [],
 }) {
   final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+  final cache = PactDetailCache(
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+    grouper: const PactTimelineGrouper(),
+  );
   final statsService = PactStatsService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
     transactionService: txService,
     syncService: const NoopSyncService(),
+    cache: cache,
   );
   final service = PactService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
     transactionService: txService,
     syncService: const NoopSyncService(),
-    pactStatsService: statsService,
+    cache: cache,
   );
   return ProviderContainer(
     overrides: [
