@@ -46,6 +46,9 @@ AUDIENCE = "appstore-connect-v1"
 DEFAULT_LOCALE = "en-US"
 DEFAULT_POLL_TIMEOUT_SECONDS = 1800
 DEFAULT_POLL_INTERVAL_SECONDS = 30
+# Apple returns these in addition to PROCESSING/VALID — a build that reaches
+# one of them will never become VALID, so polling further is pointless.
+TERMINAL_FAILURE_STATES = frozenset({"INVALID", "FAILED", "EXPIRED"})
 
 
 def build_jwt(issuer_id, key_id, private_key_pem, now=None):
@@ -88,7 +91,7 @@ def resolve_app_id(token, bundle_id=BUNDLE_ID):
 
 
 def poll_build(
-    token,
+    token_provider,
     app_id,
     build_number,
     version_name,
@@ -99,8 +102,14 @@ def poll_build(
 ):
     """Poll until the build matching build_number/version_name is VALID, or time out.
 
-    Returns the build resource dict, or None on timeout (soft-fail — the caller
-    just skips the What's New update; the binary itself already uploaded fine).
+    `token_provider` is a zero-arg callable minting a fresh JWT on every call —
+    the App Store Connect JWT lives 15 minutes (`build_jwt`) but this poll can
+    run up to `timeout_seconds` (default 30 min), so a token captured once at
+    the start would expire mid-poll and turn every later request into a 401.
+
+    Returns the build resource dict, or None on timeout/terminal failure
+    (soft-fail — the caller just skips the What's New update; the binary
+    itself already uploaded fine).
     """
     url = (
         f"{API_BASE}/builds"
@@ -116,16 +125,25 @@ def poll_build(
     # and Google's OAuth2/Edits-API flow differ enough that extracting a
     # shared shape now means guessing ahead of a second real implementation.
     while True:
-        result = _request("GET", url, token)
-        data = result.get("data", [])
-        if data:
-            build = data[0]
-            state = build.get("attributes", {}).get("processingState")
-            print(f"Build {build_number} processingState={state}")
-            if state == "VALID":
-                return build
+        try:
+            result = _request("GET", url, token_provider())
+        except (urllib.error.URLError, urllib.error.HTTPError) as exc:
+            # Transient — a single flaky request must not abandon a poll
+            # that's designed to patiently ride out a slow/flaky window.
+            print(f"WARNING: request failed ({exc}), retrying next interval")
         else:
-            print(f"No build found yet for version={version_name} build={build_number}")
+            data = result.get("data", [])
+            if data:
+                build = data[0]
+                state = build.get("attributes", {}).get("processingState")
+                print(f"Build {build_number} processingState={state}")
+                if state == "VALID":
+                    return build
+                if state in TERMINAL_FAILURE_STATES:
+                    print(f"WARNING: build reached terminal state {state} — will never become VALID")
+                    return None
+            else:
+                print(f"No build found yet for version={version_name} build={build_number}")
 
         if clock() >= deadline:
             print(f"WARNING: timed out after {timeout_seconds}s waiting for build to become VALID")
@@ -181,10 +199,10 @@ def main():
 
     try:
         private_key_pem = base64.b64decode(p8_b64)
-        token = build_jwt(issuer_id, key_id, private_key_pem)
-        app_id = resolve_app_id(token)
+        token_provider = lambda: build_jwt(issuer_id, key_id, private_key_pem)  # noqa: E731
+        app_id = resolve_app_id(token_provider())
         build = poll_build(
-            token,
+            token_provider,
             app_id,
             build_number,
             version_name,
@@ -194,7 +212,10 @@ def main():
         if build is None:
             print("Skipping TestFlight What's New update — build did not reach VALID in time.")
             return 0
-        upsert_beta_build_localization(token, build["id"], release_notes)
+        if not release_notes.strip():
+            print("Release notes are empty — skipping TestFlight What's New update.")
+            return 0
+        upsert_beta_build_localization(token_provider(), build["id"], release_notes)
         print(f"TestFlight What's New updated for build {build_number}.")
         return 0
     except Exception as exc:  # noqa: BLE001 - soft-fail by design; any API/processing error must not fail the pipeline
