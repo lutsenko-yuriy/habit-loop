@@ -118,16 +118,26 @@ void main() {
       // blocks pumpAndSettle indefinitely. Let waitFor() below drive the pumps
       // until the new pact name appears on the dashboard.
 
-      // ── 10. Dashboard shows pact name and today's showup ─────────────────
+      // ── 10. Wait for submit() to actually finish ──────────────────────────
+      // The Summary step (still on screen at this point) already renders the
+      // habit name as a summary row value, so a plain waitFor(find.text(
+      // 'Meditate')) matches it immediately — before submit() completes and
+      // pops the wizard — rather than proving the dashboard shows the new
+      // pact. Wait for the pact_created event (fired at the very end of
+      // submit(), after the cache write-through added in HAB-174 WU2) so the
+      // wizard is guaranteed to have popped before we assert on the dashboard.
+      final deadline = tester.binding.clock.now().add(const Duration(seconds: 30));
+      while (!h.analytics.loggedEvents.any((e) => e.name == 'pact_created')) {
+        if (tester.binding.clock.now().isAfter(deadline)) {
+          throw TestFailure('pact_created event was not fired within the timeout');
+        }
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // ── 11. Dashboard shows pact name and today's showup ─────────────────
       await waitFor(tester, find.text('Meditate'));
       // At least one showup tile is present for the current day.
       expect(find.text('Meditate'), findsWidgets);
-
-      // ── 11. pact_created analytics event was fired ───────────────────────
-      expect(
-        h.analytics.loggedEvents.any((e) => e.name == 'pact_created'),
-        isTrue,
-      );
     });
   });
 }
