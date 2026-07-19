@@ -15,21 +15,23 @@ on:
         default: staging
 
 jobs:
+  # Not the resolve-version composite here: this file always resolves
+  # build_number to 0 (it never represents a real main release push), so the
+  # composite's git-tag arithmetic and release-notes generation would run
+  # for outputs nothing here consumes. Just read the version name.
   resolve-version:
     runs-on: ubuntu-latest
     outputs:
       version_name: ${{ steps.resolve.outputs.version_name }}
-      build_number: ${{ steps.resolve.outputs.build_number }}
+      build_number: '0'
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0   # need full tag history + all version-* tags
 
       - id: resolve
-        uses: ./.github/actions/resolve-version
-        with:
-          environment: ${{ inputs.environment }}
-          is-main-branch: 'false'  # build.yml never represents a real main release push
+        run: |
+          VERSION_LINE=$(grep '^version:' pubspec.yaml)
+          VERSION_FULL=${VERSION_LINE#version: }
+          echo "version_name=${VERSION_FULL%+*}" >> "$GITHUB_OUTPUT"
 
   build-android:
     needs: resolve-version
