@@ -1,6 +1,18 @@
 name: generate-release-notes
 description: Look up the last published version from git tags and generate human-readable release notes for every CHANGELOG entry newer than it.
 
+inputs:
+  exclude-version:
+    description: >-
+      Optional X.Y.Z to exclude from the git-tag lookup. Needed when
+      annotating an already-tagged build after the fact (its own tag is
+      already the highest 'version-*' tag at that point, which would
+      otherwise make "last published" resolve to itself and produce empty
+      notes) — pass that build's own version here so the lookup falls back
+      to the version published before it.
+    required: false
+    default: ''
+
 outputs:
   release_notes:
     description: Generated release notes text
@@ -17,9 +29,12 @@ runs:
       name: Resolve last published version
       shell: bash
       run: |
-        LAST_VERSION=$(git tag --list 'version-*' \
-          | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
-          | sort -V | tail -1)
+        EXCLUDE_VERSION="${{ inputs.exclude-version }}"
+        TAGS=$(git tag --list 'version-*' | grep -oP '(?<=version-)\d+\.\d+\.\d+' | sort -V -u)
+        if [[ -n "$EXCLUDE_VERSION" ]]; then
+          TAGS=$(echo "$TAGS" | grep -vx "$EXCLUDE_VERSION" || true)
+        fi
+        LAST_VERSION=$(echo "$TAGS" | tail -1)
         LAST_VERSION=${LAST_VERSION:-0.0.0}
         echo "last_version=$LAST_VERSION" >> "$GITHUB_OUTPUT"
         echo "Last published version: $LAST_VERSION"

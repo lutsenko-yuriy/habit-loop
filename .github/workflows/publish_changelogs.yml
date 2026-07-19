@@ -33,6 +33,12 @@ jobs:
 
       - id: notes
         uses: ./.github/actions/generate-release-notes
+        with:
+          # This build's own version is already tagged by the time notes
+          # need backfilling (that's exactly the recovery scenario this
+          # workflow exists for) — exclude it so "last published" resolves
+          # to the version before it, not to itself.
+          exclude-version: ${{ inputs.version_name }}
 
       - run: pip install pyjwt cryptography
 
