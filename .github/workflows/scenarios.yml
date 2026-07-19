@@ -1,0 +1,18 @@
+name: scenarios-only
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  run-scenarios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/run-scenarios
+        with:
+          firebase-options-dart: ${{ secrets.FIREBASE_OPTIONS_DART }}
+          google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          gist-token: ${{ secrets.GIST_TOKEN }}
+          gist-id: ${{ vars.SCENARIOS_GIST_ID }}

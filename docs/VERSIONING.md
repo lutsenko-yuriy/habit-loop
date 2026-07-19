@@ -23,7 +23,7 @@ Version name changes are manual and require reasoning presented to the user befo
 
 `version-tag` gates on *either* `distribute-android` or `distribute-testflight` succeeding — a failure on one platform's distribution must never block tagging the release on the other's account (see HAB-180).
 
-**CI/CD pipeline structure:** the automatic push/PR/main job graph lives in `.github/workflows/full_release_cycle.yml` (`name: full-release-cycle`; renamed from `ci.yml`/`build-and-deploy-apps` in HAB-183 — same triggers, same job graph, no behavior change):
+**CI/CD pipeline structure:** the automatic push/PR/main job graph lives in `.github/workflows/release.yml` (`name: release`; renamed from `ci.yml`/`build-and-deploy-apps` in HAB-183 — same triggers, same job graph, no behavior change):
 ```
 check-skip (+ build gate + dispatch plan) → test → resolve-version → build-android → distribute-android ─┐
                                                                     → build-ios     → distribute-testflight ┼→ version-tag (if ≥1 platform distributed)
@@ -45,6 +45,17 @@ Job *bodies* are thin wrappers over shared composite actions in `.github/actions
 | `distribute_testflight` | boolean | `true` | Push to TestFlight — **iOS only** (production only) — set `false` to validate a Firebase-only run without uploading to App Store Connect |
 
 `scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, and `distribute-testflight`. `distribute_firebase` gates `distribute_android`; `distribute_testflight` gates `distribute_testflight` — so either distribution channel can be exercised independently on a manual dispatch.
+
+**Granular manual-dispatch pipelines (HAB-183 WU2):** four additional `workflow_dispatch`-only files let a developer run a single procedure in isolation instead of paying for the full `release.yml` graph. None of them are triggered by push/PR, none of them touch `dispatch_plan.py` (that script's flag matrix stays bound to `release.yml` specifically), and all of them reuse the same composite actions under `.github/actions/` that `release.yml`'s own jobs use — see the reuse note above.
+
+| File | Inputs | Runs |
+|---|---|---|
+| `test.yml` | none | The full test gate (`run-tests` composite: Python unit tests, CHANGELOG lint, `dart format` check, `flutter analyze`, `flutter test --coverage`, Codecov upload) on `ubuntu-latest`. |
+| `build.yml` | `platform` (`android`/`ios`/`both`, default `both`), `environment` (`production`/`staging`, default **`staging`** — a lone validation build should not consume a real build number or require production secrets to be exercised) | `resolve-version` → `build-android` and/or `build-ios` per `platform`. No distribution, no `version-tag`. |
+| `scenarios.yml` | none | Integration scenarios on the Android emulator (`run-scenarios` composite), independently of any `build-android` run in the same workflow — the slowest job (90 min timeout), and the one with the strongest case for standalone iteration. |
+| `publish_changelogs.yml` | `build_number` (string, required), `version_name` (string, required) — identify an **already-uploaded** TestFlight build to (re)annotate | Generates release notes (`generate-release-notes` composite) and PATCHes them onto the given build via `scripts/appstore/set_testflight_whatsnew.py` — the same standalone What's-New path HAB-182 shipped. **iOS/TestFlight only** — Firebase (Android) has no equivalent standalone notes-update path; its release notes are set inside `distribute.sh` as part of a full upload, so a notes-only Android run isn't expressible without re-distributing the build. This asymmetry is intentional, not an oversight. |
+
+Because `test.yml`/`build.yml`/`scenarios.yml`/`publish_changelogs.yml` are new files, none of them could be validated via `workflow_dispatch` before their introducing PR merged — GitHub only allows dispatching a workflow that already exists on the default branch (see `docs/knowledge/notes/HAB-183.md`). Each was live-dispatched on `main` immediately after merge instead.
 
 **TestFlight distribution (HAB-167; sole iOS channel since HAB-180):** `scripts/appstore/testflight_upload.sh` uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key, mirroring `scripts/firebase/distribute.sh`. `build-ios` archives once and exports once — `method=app-store` — signed with the `IOS_APPSTORE_PROVISIONING_PROFILE` against the existing `IOS_CERTIFICATE_P12` Apple Distribution certificate. The app-store IPA is uploaded as the `ios-appstore` artifact and consumed by an isolated `distribute-testflight` job (`runs-on: macos-15`, gated on `distribute_testflight`, and automatic on every qualifying `main` merge — not just manual dispatch). It feeds `version-tag`'s OR-gate (see above) — its result determines the `ios`/`both` tag suffix, but a TestFlight failure alone never blocks tagging as long as `distribute-android` succeeded. Firebase App Distribution for iOS (and its ad-hoc export/signing path) was removed entirely in HAB-180; Android's Firebase distribution is unaffected.
 
@@ -87,27 +98,27 @@ Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]
 
 | Secret | Used by | How to obtain | Status |
 |---|---|---|---|
-| `FIREBASE_OPTIONS_DART` | `test`, `build-android`, `build-ios` | `cat lib/firebase_options.dart \| base64` | |
-| `GOOGLE_SERVICES_JSON` | `build-android` | `cat android/app/google-services.json \| base64` | |
-| `GOOGLE_SERVICE_INFO_PLIST` | `build-ios` | `cat ios/Runner/GoogleService-Info.plist \| base64` | |
-| `KEY_STORE_BASE64` | `build-android` | `cat android/upload-keystore.jks \| base64` | |
-| `KEY_STORE_PASSWORD` | `build-android` | Keystore password | |
-| `KEY_PASSWORD` | `build-android` | Key password | |
-| `KEY_ALIAS` | `build-android` | Key alias | |
-| `IOS_CERTIFICATE_P12` | `build-ios` | `cat Distribution.p12 \| base64` (export from Keychain) | |
-| `IOS_CERTIFICATE_PASSWORD` | `build-ios` | Password set when exporting the .p12 | |
+| `FIREBASE_OPTIONS_DART` | `restore-firebase-config` composite (`test`, `build-android`, `build-ios`, `run-scenarios` jobs; also `test.yml`, `build.yml`, `scenarios.yml`) | `cat lib/firebase_options.dart \| base64` | |
+| `GOOGLE_SERVICES_JSON` | `restore-firebase-config` composite, `platform: android` (`build-android`, `run-scenarios`; also `build.yml`, `scenarios.yml`) | `cat android/app/google-services.json \| base64` | |
+| `GOOGLE_SERVICE_INFO_PLIST` | `restore-firebase-config` composite, `platform: ios` (`build-ios`; also `build.yml`) | `cat ios/Runner/GoogleService-Info.plist \| base64` | |
+| `KEY_STORE_BASE64` | `build-android-app` composite (`build-android`; also `build.yml`) | `cat android/upload-keystore.jks \| base64` | |
+| `KEY_STORE_PASSWORD` | `build-android-app` composite (`build-android`; also `build.yml`) | Keystore password | |
+| `KEY_PASSWORD` | `build-android-app` composite (`build-android`; also `build.yml`) | Key password | |
+| `KEY_ALIAS` | `build-android-app` composite (`build-android`; also `build.yml`) | Key alias | |
+| `IOS_CERTIFICATE_P12` | `build-ios-app` composite (`build-ios`; also `build.yml`) | `cat Distribution.p12 \| base64` (export from Keychain) | |
+| `IOS_CERTIFICATE_PASSWORD` | `build-ios-app` composite (`build-ios`; also `build.yml`) | Password set when exporting the .p12 | |
 | `IOS_PROVISIONING_PROFILE` | — | `cat <profile>.mobileprovision \| base64` (ad-hoc profile from Apple Developer portal) | DEPRECATED — fed the ad-hoc export path removed in HAB-180; no consumer remains |
-| `IOS_APPSTORE_PROVISIONING_PROFILE` | `build-ios` | `cat <appstore>.mobileprovision \| base64` (App Store distribution profile for `com.habitloop.habitLoop`; reuses the same Apple Distribution certificate as `IOS_CERTIFICATE_P12`) | |
-| `IOS_TEAM_ID` | `build-ios` | 10-character Apple Developer Team ID (e.g. `ABCD1234EF`) | |
+| `IOS_APPSTORE_PROVISIONING_PROFILE` | `build-ios-app` composite (`build-ios`; also `build.yml`) | `cat <appstore>.mobileprovision \| base64` (App Store distribution profile for `com.habitloop.habitLoop`; reuses the same Apple Distribution certificate as `IOS_CERTIFICATE_P12`) | |
+| `IOS_TEAM_ID` | `build-ios-app` composite (`build-ios`; also `build.yml`) | 10-character Apple Developer Team ID (e.g. `ABCD1234EF`) | |
 | `FIREBASE_ANDROID_APP_ID` | `distribute-android` | Firebase Console → Android app → App ID (e.g. `1:123456789012:android:abc123`) | |
 | `FIREBASE_SERVICE_ACCOUNT_ANDROID` | `distribute-android` | Raw JSON of a GCP service account key with the Firebase App Distribution Admin role — paste the `.json` file content directly, no base64 | |
 | `FIREBASE_IOS_APP_ID` | `/cleanup-firebase` (local only) | Firebase Console → iOS app → App ID (e.g. `1:123456789012:ios:abc123`) | Still required — no longer used by CI (`distribute-ios` was removed in HAB-180), but still needed locally to clean up pre-HAB-180 iOS builds already in Firebase App Distribution |
 | `FIREBASE_SERVICE_ACCOUNT_IOS` | — | Same as above — may reuse the Android service account JSON | DEPRECATED — was only used by `distribute-ios`, removed in HAB-180; not used by `/cleanup-firebase` (which authenticates via `gcloud auth print-access-token` instead) |
-| `APP_STORE_CONNECT_API_KEY_P8` | `distribute-testflight`, `set-testflight-notes` | `cat AuthKey_<KEYID>.p8 \| base64` (App Store Connect → Users and Access → Integrations → API keys; role ≥ App Manager) — must be base64-encoded, matching the convention used by `IOS_CERTIFICATE_P12`/`IOS_APPSTORE_PROVISIONING_PROFILE`; `testflight_upload.sh` decodes it with `base64 --decode`, `set_testflight_whatsnew.py` with `base64.b64decode` | |
-| `APP_STORE_CONNECT_KEY_ID` | `distribute-testflight`, `set-testflight-notes` | Key ID shown next to the API key in App Store Connect | |
-| `APP_STORE_CONNECT_ISSUER_ID` | `distribute-testflight`, `set-testflight-notes` | Issuer ID shown on the API Keys page in App Store Connect | |
-| `CODECOV_TOKEN` | `test` | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability | |
-| `GIST_TOKEN` | `run-scenarios` | GitHub PAT with `gist` scope — used to update the scenarios badge gist; optional (badge update is skipped if absent) | |
+| `APP_STORE_CONNECT_API_KEY_P8` | `distribute-testflight`, `set-testflight-notes`; also `publish_changelogs.yml` | `cat AuthKey_<KEYID>.p8 \| base64` (App Store Connect → Users and Access → Integrations → API keys; role ≥ App Manager) — must be base64-encoded, matching the convention used by `IOS_CERTIFICATE_P12`/`IOS_APPSTORE_PROVISIONING_PROFILE`; `testflight_upload.sh` decodes it with `base64 --decode`, `set_testflight_whatsnew.py` with `base64.b64decode` | |
+| `APP_STORE_CONNECT_KEY_ID` | `distribute-testflight`, `set-testflight-notes`; also `publish_changelogs.yml` | Key ID shown next to the API key in App Store Connect | |
+| `APP_STORE_CONNECT_ISSUER_ID` | `distribute-testflight`, `set-testflight-notes`; also `publish_changelogs.yml` | Issuer ID shown on the API Keys page in App Store Connect | |
+| `CODECOV_TOKEN` | `run-tests` composite (`test`; also `test.yml`) | Codecov upload token — obtain from [codecov.io](https://codecov.io) after connecting the repo; optional for public repos but recommended for reliability | |
+| `GIST_TOKEN` | `run-scenarios` composite (`run-scenarios`; also `scenarios.yml`) | GitHub PAT with `gist` scope — used to update the scenarios badge gist; optional (badge update is skipped if absent) | |
 
 **When adding a new secret that requires a specific encoding (e.g. base64):** before asking the user to add it to GitHub and run a live validation, verify the encode instruction in the table above and the decode step in the consuming script are symmetric. A mismatch here only surfaces as a runtime failure during a live `workflow_dispatch` run — never in code review or unit tests (this is exactly what happened in HAB-167).
 

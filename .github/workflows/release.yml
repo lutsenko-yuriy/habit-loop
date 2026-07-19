@@ -1,4 +1,4 @@
-name: full-release-cycle
+name: release
 
 on:
   push:
