@@ -1,0 +1,51 @@
+name: generate-release-notes
+description: Look up the last published version from git tags and generate human-readable release notes for every CHANGELOG entry newer than it.
+
+outputs:
+  release_notes:
+    description: Generated release notes text
+    value: ${{ steps.release_notes.outputs.release_notes }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - id: last-published
+      name: Resolve last published version
+      shell: bash
+      run: |
+        LAST_VERSION=$(git tag --list 'version-*' \
+          | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
+          | sort -V | tail -1)
+        LAST_VERSION=${LAST_VERSION:-0.0.0}
+        echo "last_version=$LAST_VERSION" >> "$GITHUB_OUTPUT"
+        echo "Last published version: $LAST_VERSION"
+
+    - id: release_notes
+      name: Generate release notes
+      shell: bash
+      run: |
+        LAST_VERSION=${{ steps.last-published.outputs.last_version }}
+
+        # Generate human-readable notes and write to a file for the artifact.
+        python3 scripts/changelog/release_notes.py docs/CHANGELOG.md "$LAST_VERSION" \
+          > release-notes.txt
+
+        echo "=== Release notes preview ==="
+        cat release-notes.txt
+
+        # Emit as a multiline output using a random delimiter to avoid any
+        # chance that note content matches the delimiter line.
+        DELIM=$(head -c 12 /dev/urandom | base64 | tr -d '=+/')
+        echo "release_notes<<$DELIM" >> "$GITHUB_OUTPUT"
+        cat release-notes.txt       >> "$GITHUB_OUTPUT"
+        echo "$DELIM"               >> "$GITHUB_OUTPUT"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: release-notes
+        path: release-notes.txt
+        retention-days: 90
