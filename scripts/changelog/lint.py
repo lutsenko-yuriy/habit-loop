@@ -112,15 +112,23 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
 
     errors: list[str] = []
 
-    # WU2 (HAB-185): scan every ## [Unreleased] batch — sealed or open — for
-    # unknown bracket tags. No classification-tag requirement here: Unreleased
-    # is a rolling aggregate of bullets, not a single releasable entry, so the
-    # "every entry needs ≥1 classification tag" rule below does not apply to
-    # it. Not filtered by last_version — a sealed batch is permanent CHANGELOG
-    # content, not transient PR state.
-    for unreleased_match in _UNRELEASED_HEADER.finditer(content):
-        body_start = unreleased_match.end()
-        body_end = body_end_for(unreleased_match.start(), all_headings, len(content))
+    # WU2 (HAB-185): scan the OPEN ## [Unreleased] batch only — the one that
+    # is literally the file's first heading (per WU1's invariant, at most one
+    # batch is ever open, and it always sits before the first heading). Sealed
+    # batches elsewhere in the file are permanent, immutable CHANGELOG history
+    # and are deliberately NOT re-checked here, for the same reason the
+    # numbered-entry check below stops at last_version: this tool guards new
+    # commits, not history. Re-scanning sealed batches would also mean a tag
+    # later removed from KNOWN_TAGS could retroactively break CI on every
+    # future unrelated PR. No classification-tag requirement either way —
+    # Unreleased is a rolling aggregate of bullets, not a single releasable
+    # entry, so the "every entry needs ≥1 classification tag" rule below does
+    # not apply to it.
+    unreleased_matches = list(_UNRELEASED_HEADER.finditer(content))
+    if unreleased_matches and all_headings and unreleased_matches[0].start() == all_headings[0]:
+        open_match = unreleased_matches[0]
+        body_start = open_match.end()
+        body_end = body_end_for(open_match.start(), all_headings, len(content))
         body = content[body_start:body_end]
 
         for tag in _bullet_tags(body):

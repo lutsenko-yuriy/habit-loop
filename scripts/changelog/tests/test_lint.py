@@ -256,9 +256,12 @@ class TestUnreleasedTagHygiene(unittest.TestCase):
         finally:
             os.unlink(path)
 
-    def test_unknown_tag_in_sealed_unreleased_batch_also_fails(self):
-        """Sealed batches (sandwiched between two releases) are still checked —
-        they're permanent CHANGELOG content, not just transient state."""
+    def test_unknown_tag_in_sealed_unreleased_batch_is_not_flagged(self):
+        """Sealed batches (sandwiched between two releases) are permanent,
+        immutable CHANGELOG history and are deliberately NOT re-scanned — same
+        reasoning as the numbered-entry check's last_version cutoff. Also
+        avoids a tag later removed from KNOWN_TAGS retroactively breaking CI
+        on every future unrelated PR."""
         path = _tmp("""\
             ## [1.1.0] — 2026-02-01
             - [user] Newer release.
@@ -267,17 +270,13 @@ class TestUnreleasedTagHygiene(unittest.TestCase):
 
             blurb.
 
-            - [typo] sealed batch, still worth catching.
+            - [typo] sealed batch — must NOT be flagged, it's history now.
 
             ## [1.0.0] — 2026-01-01
             - [user] Older release.
         """)
         try:
-            errors = lint(path, '1.0.0')
-            self.assertTrue(
-                any('typo' in e for e in errors),
-                f'Expected an error mentioning unknown tag [typo]; got: {errors}',
-            )
+            self.assertEqual(lint(path, '1.0.0'), [])
         finally:
             os.unlink(path)
 
@@ -299,7 +298,10 @@ class TestUnreleasedTagHygiene(unittest.TestCase):
         finally:
             os.unlink(path)
 
-    def test_multiple_unreleased_batches_all_checked_independently(self):
+    def test_only_the_open_batch_at_position_0_is_checked(self):
+        """Only the Unreleased batch that is literally the file's first
+        heading is scanned. A sealed one further down is ignored even in the
+        same file — [bad-open] is caught, [bad-sealed] is not."""
         path = _tmp("""\
             ## [Unreleased]
 
@@ -314,7 +316,7 @@ class TestUnreleasedTagHygiene(unittest.TestCase):
 
             blurb.
 
-            - [bad-sealed] wrong tag in a sealed batch.
+            - [bad-sealed] wrong tag in a sealed batch — must NOT be flagged.
 
             ## [1.0.0] — 2026-01-01
             - [user] Older release.
@@ -322,6 +324,28 @@ class TestUnreleasedTagHygiene(unittest.TestCase):
         try:
             errors = lint(path, '1.0.0')
             self.assertTrue(any('bad-open' in e for e in errors), errors)
-            self.assertTrue(any('bad-sealed' in e for e in errors), errors)
+            self.assertFalse(any('bad-sealed' in e for e in errors), errors)
+        finally:
+            os.unlink(path)
+
+    def test_no_open_batch_when_first_heading_is_numbered(self):
+        """If the file's first heading is a numbered release (no batch is
+        currently open), a sealed Unreleased batch further down is not
+        scanned — there is nothing 'new' to check."""
+        path = _tmp("""\
+            ## [1.1.0] — 2026-02-01
+            - [user] Newer release.
+
+            ## [Unreleased]
+
+            blurb.
+
+            - [bad-sealed] wrong tag — no open batch exists, must NOT be flagged.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Older release.
+        """)
+        try:
+            self.assertEqual(lint(path, '1.0.0'), [])
         finally:
             os.unlink(path)
