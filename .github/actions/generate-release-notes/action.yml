@@ -4,12 +4,13 @@ description: Look up the last published version from git tags and generate human
 inputs:
   exclude-version:
     description: >-
-      Optional X.Y.Z to exclude from the git-tag lookup. Needed when
-      annotating an already-tagged build after the fact (its own tag is
-      already the highest 'version-*' tag at that point, which would
-      otherwise make "last published" resolve to itself and produce empty
-      notes) — pass that build's own version here so the lookup falls back
-      to the version published before it.
+      Optional X.Y.Z to treat as "this build's own version" rather than a
+      candidate for "last published". Needed when annotating an
+      already-tagged build after the fact: "last published" must resolve to
+      the version immediately *before* this one, not merely the highest tag
+      that isn't an exact match — otherwise, if any newer tags already exist
+      (a later build shipped before this backfill ran), the lookup would
+      wrongly land on one of those and generate notes for the wrong range.
     required: false
     default: ''
 
@@ -32,9 +33,15 @@ runs:
         EXCLUDE_VERSION="${{ inputs.exclude-version }}"
         TAGS=$(git tag --list 'version-*' | grep -oP '(?<=version-)\d+\.\d+\.\d+' | sort -V -u)
         if [[ -n "$EXCLUDE_VERSION" ]]; then
-          TAGS=$(echo "$TAGS" | grep -vx "$EXCLUDE_VERSION" || true)
+          # Find the tag immediately *before* EXCLUDE_VERSION in sorted order
+          # — not just "the highest tag that isn't this one" — so a backfill
+          # for an older build isn't thrown off by newer tags that already
+          # exist (see HAB-183 knowledge note for the case that caught this).
+          LAST_VERSION=$(printf '%s\n' "$TAGS" "$EXCLUDE_VERSION" | sort -V -u \
+            | awk -v t="$EXCLUDE_VERSION" '$0==t{print prev} {prev=$0}')
+        else
+          LAST_VERSION=$(echo "$TAGS" | tail -1)
         fi
-        LAST_VERSION=$(echo "$TAGS" | tail -1)
         LAST_VERSION=${LAST_VERSION:-0.0.0}
         echo "last_version=$LAST_VERSION" >> "$GITHUB_OUTPUT"
         echo "Last published version: $LAST_VERSION"
