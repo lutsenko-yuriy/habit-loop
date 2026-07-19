@@ -46,11 +46,9 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    // HAB-179: failing on the Android-emulator run-scenarios job since
-    // HAB-174 WU3 — re-enable once fixed.
     testWidgets(
         'full_wizard_creates_pact: completing all wizard steps creates a pact, shows today\'s showup, and fires pact_created',
-        skip: true, (tester) async {
+        (tester) async {
       h = await AppHarness.create(
         tester,
         initiallyAnonymous: true,
@@ -137,7 +135,7 @@ void main() {
       }
 
       // ── 11. Dashboard shows pact name and today's showup ─────────────────
-      await waitFor(tester, find.text('Meditate'));
+      await waitFor(tester, find.text('Meditate'), timeout: const Duration(seconds: 60));
       // At least one showup tile is present for the current day.
       expect(find.text('Meditate'), findsWidgets);
     });

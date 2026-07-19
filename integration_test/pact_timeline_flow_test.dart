@@ -578,12 +578,9 @@ void main() {
       },
     );
 
-    // HAB-179: failing on the Android-emulator run-scenarios job since
-    // HAB-174 WU3 — re-enable once fixed.
     testWidgets(
       'showup_note_write_through_visible_in_timeline_same_session: adding a note via Showup Detail is '
       'reflected in Timeline without an app restart (HAB-174)',
-      skip: true,
       (tester) async {
         h = await AppHarness.create(
           tester,
@@ -623,6 +620,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.byKey(const Key('showup-note-field')), newNote);
         await tester.pump();
+        await waitFor(tester, find.byKey(const Key('showup-note-save-button')));
         await tester.ensureVisible(find.byKey(const Key('showup-note-save-button')));
         await tester.pump();
         await tester.tap(find.byKey(const Key('showup-note-save-button')));
