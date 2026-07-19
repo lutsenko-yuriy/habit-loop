@@ -28,6 +28,8 @@ Run all steps in order. Each step must succeed before moving to the next.
 
 Only continue to the state determination when all WUs are ✅ and the issue is not already In QA/Done per the check above.
 
+**Precondition — debrief check:** Check whether `docs/knowledge/notes/HAB-XX.md` exists with at least one dated entry under `## Debrief summary`. If it doesn't, stop before continuing — debrief has not run yet for this ticket. Tell the user, and ask whether to invoke `/debrief HAB-XX` now before shipping, or to proceed without it. Do not ship silently past a missing debrief.
+
 ---
 
 Determine the target state by inspecting the PR file list (`gh pr view <number> --json files`), using the **In QA path patterns** from the project config.

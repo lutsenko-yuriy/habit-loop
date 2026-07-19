@@ -150,6 +150,12 @@ Required secrets are documented in [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
 ---
 
+## Known issues
+
+Android-emulator integration scenarios show inconsistent, spreading failures across successive CI dispatches — tracked in [#297](https://github.com/lutsenko-yuriy/habit-loop/issues/297).
+
+---
+
 ## Licence
 
 MIT — see [LICENSE](LICENSE)
