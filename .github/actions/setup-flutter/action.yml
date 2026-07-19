@@ -1,0 +1,28 @@
+name: setup-flutter
+description: Set up the Flutter SDK and fetch generated project code (pub packages + l10n).
+
+inputs:
+  enable-swift-package-manager:
+    description: >-
+      Whether to leave Flutter's Swift Package Manager integration enabled.
+      build-ios passes 'false' to keep all plugins (including
+      firebase_crashlytics) installed via CocoaPods instead.
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+
+    - if: inputs.enable-swift-package-manager == 'false'
+      shell: bash
+      run: flutter config --no-enable-swift-package-manager
+
+    - shell: bash
+      run: flutter pub get
+
+    - shell: bash
+      run: flutter gen-l10n

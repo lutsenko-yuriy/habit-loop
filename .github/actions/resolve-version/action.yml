@@ -1,0 +1,94 @@
+name: resolve-version
+description: Resolve the version name/build number for this run and generate release notes.
+
+inputs:
+  is-main-release:
+    description: >-
+      'true' for a real main-branch release build (consumes a real build
+      number); 'false' for a feature-branch or staging build (build_number
+      resolves to 0 so no real build number is consumed).
+    required: false
+    default: 'false'
+
+outputs:
+  version_name:
+    description: Version name (X.Y.Z) from pubspec.yaml
+    value: ${{ steps.resolve.outputs.version_name }}
+  build_number:
+    description: Resolved build number (0 for feature-branch/staging builds)
+    value: ${{ steps.resolve.outputs.build_number }}
+  release_notes:
+    description: Generated release notes text
+    value: ${{ steps.release_notes.outputs.release_notes }}
+
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      shell: bash
+      run: |
+        VERSION_LINE=$(grep '^version:' pubspec.yaml)
+        VERSION_FULL=${VERSION_LINE#version: }
+        VERSION_NAME=${VERSION_FULL%+*}
+
+        if [[ "${{ inputs.is-main-release }}" != "true" ]]; then
+          # Feature-branch or staging build — use 0 to avoid consuming a real build number.
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "build_number=0"             >> "$GITHUB_OUTPUT"
+        else
+          PUBSPEC_BUILD=${VERSION_FULL#*+}
+
+          # Highest build number recorded in any version-* git tag
+          TAG_BUILD=$(git tag --list 'version-*' \
+            | grep -oP '(?<=version-[0-9]+\.[0-9]+\.[0-9]+-)\d+' \
+            | sort -n | tail -1)
+          TAG_BUILD=${TAG_BUILD:-0}
+
+          BUILD_NUMBER=$(( PUBSPEC_BUILD > TAG_BUILD ? PUBSPEC_BUILD : TAG_BUILD ))
+          BUILD_NUMBER=$(( BUILD_NUMBER + 1 ))
+
+          echo "version_name=$VERSION_NAME"  >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER"  >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - id: last-published
+      name: Resolve last published version
+      shell: bash
+      run: |
+        LAST_VERSION=$(git tag --list 'version-*' \
+          | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
+          | sort -V | tail -1)
+        LAST_VERSION=${LAST_VERSION:-0.0.0}
+        echo "last_version=$LAST_VERSION" >> "$GITHUB_OUTPUT"
+        echo "Last published version: $LAST_VERSION"
+
+    - id: release_notes
+      name: Generate release notes
+      shell: bash
+      run: |
+        LAST_VERSION=${{ steps.last-published.outputs.last_version }}
+
+        # Generate human-readable notes and write to a file for the artifact.
+        python3 scripts/changelog/release_notes.py docs/CHANGELOG.md "$LAST_VERSION" \
+          > release-notes.txt
+
+        echo "=== Release notes preview ==="
+        cat release-notes.txt
+
+        # Emit as a multiline output using a random delimiter to avoid any
+        # chance that note content matches the delimiter line.
+        DELIM=$(head -c 12 /dev/urandom | base64 | tr -d '=+/')
+        echo "release_notes<<$DELIM" >> "$GITHUB_OUTPUT"
+        cat release-notes.txt       >> "$GITHUB_OUTPUT"
+        echo "$DELIM"               >> "$GITHUB_OUTPUT"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: release-notes
+        path: release-notes.txt
+        retention-days: 90

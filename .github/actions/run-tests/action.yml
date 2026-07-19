@@ -1,0 +1,58 @@
+name: run-tests
+description: Run the Python script test suite, CHANGELOG lint, formatting/analyze checks, and the Flutter test suite with coverage.
+
+inputs:
+  firebase-options-dart:
+    description: Base64-encoded contents of lib/firebase_options.dart
+    required: true
+  codecov-token:
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Python script tests
+      shell: bash
+      run: python3 -m unittest discover -s scripts -p 'test_*.py' -t scripts
+
+    - name: Lint CHANGELOG markers
+      shell: bash
+      run: |
+        # Determine the last published version from git tags so only new
+        # entries are checked.  Falls back to 0.0.0 on a fresh repo (no tags).
+        LAST_VERSION=$(git tag --list 'version-*' \
+          | grep -oP '(?<=version-)\d+\.\d+\.\d+' \
+          | sort -V | tail -1)
+        LAST_VERSION=${LAST_VERSION:-0.0.0}
+        echo "Checking CHANGELOG entries newer than $LAST_VERSION"
+        python3 scripts/changelog/lint.py docs/CHANGELOG.md "$LAST_VERSION"
+
+    - uses: ./.github/actions/restore-firebase-config
+      with:
+        platform: none
+        firebase-options-dart: ${{ inputs.firebase-options-dart }}
+
+    - uses: ./.github/actions/setup-flutter
+
+    - name: Check formatting
+      shell: bash
+      run: |
+        find lib/ test/ integration_test/ -name "*.dart" \
+          -not -name "firebase_options.dart" \
+          -not -path "*/l10n/generated/*" \
+          | sort | xargs dart format -l 120 --set-exit-if-changed
+
+    - shell: bash
+      run: flutter analyze
+
+    - shell: bash
+      run: flutter test --coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4.6.0
+      with:
+        files: coverage/lcov.info
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ inputs.codecov-token }}

@@ -1,0 +1,173 @@
+name: build-ios-app
+description: Build the signed (or debug) iOS app archive/IPA for App Store / TestFlight.
+
+inputs:
+  environment:
+    description: "'production' (signed app-store archive+export) or 'staging' (unsigned debug build)"
+    required: false
+    default: 'production'
+  build-number:
+    description: Build number to stamp onto the build
+    required: true
+  ios-certificate-p12:
+    required: false
+    default: ''
+  ios-certificate-password:
+    required: false
+    default: ''
+  ios-appstore-provisioning-profile:
+    required: false
+    default: ''
+  ios-team-id:
+    required: false
+    default: ''
+
+outputs:
+  success:
+    description: "'true' if the build produced an artifact"
+    value: ${{ steps.build.outputs.success }}
+
+runs:
+  using: composite
+  steps:
+    - name: Import signing certificate
+      if: inputs.environment != 'staging'
+      uses: apple-actions/import-codesign-certs@v3
+      with:
+        p12-file-base64: ${{ inputs.ios-certificate-p12 }}
+        p12-password: ${{ inputs.ios-certificate-password }}
+
+    - name: Install app-store provisioning profile
+      # Sole signing profile since HAB-180 removed Firebase iOS distribution
+      # (and the ad-hoc export it required) — every iOS build now signs and
+      # exports app-store-only, for TestFlight.
+      id: appstore-profile
+      if: inputs.environment != 'staging'
+      shell: bash
+      env:
+        IOS_APPSTORE_PROVISIONING_PROFILE: ${{ inputs.ios-appstore-provisioning-profile }}
+      run: |
+        PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
+        mkdir -p "$PROFILES_DIR"
+        echo "$IOS_APPSTORE_PROVISIONING_PROFILE" | base64 --decode \
+          > "$PROFILES_DIR/ci-appstore.mobileprovision"
+
+        security cms -D -i "$PROFILES_DIR/ci-appstore.mobileprovision" \
+          > /tmp/profile-appstore.plist
+        PROFILE_UUID_APPSTORE=$(/usr/libexec/PlistBuddy -c 'Print UUID' /tmp/profile-appstore.plist)
+        echo "PROFILE_UUID_APPSTORE=$PROFILE_UUID_APPSTORE" >> "$GITHUB_ENV"
+
+    # Opt out of Flutter's Swift Package Manager integration so that all
+    # plugins — including firebase_crashlytics — are installed via CocoaPods.
+    # Without this, newer Flutter stable builds use SPM for plugins that
+    # support it, which means ios/Pods/FirebaseCrashlytics/ is never created
+    # and the "Crashlytics dSYM Upload" Xcode build phase fails with
+    # "Pods/FirebaseCrashlytics/run: No such file or directory".
+    # (Handled by the caller passing enable-swift-package-manager: false to
+    # setup-flutter — not repeated here.)
+
+    # No CocoaPods caching — correctness over speed. flutter build ios
+    # generates .flutter-plugins-dependencies (with correct CI pub-cache
+    # paths) before running pod install, so all Firebase plugins are always
+    # installed fresh. Caching ios/Pods or ~/Library/Caches/CocoaPods caused
+    # stale state in earlier attempts.
+
+    # Refresh the CocoaPods specs index so pod install can resolve the
+    # current flutter_timezone pod version. The macOS runner's specs cache
+    # may be stale when a plugin bumps its podspec after the image was baked.
+    - name: Update CocoaPods specs
+      shell: bash
+      run: pod repo update
+
+    - name: Generate ExportOptions.plist
+      # app-store method only since HAB-180 — the sole export path, used
+      # for TestFlight.
+      if: inputs.environment != 'staging'
+      shell: bash
+      env:
+        IOS_TEAM_ID: ${{ inputs.ios-team-id }}
+      run: |
+        cat > /tmp/ExportOptions.plist <<EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${IOS_TEAM_ID}</string>
+            <key>provisioningProfiles</key>
+            <dict>
+                <key>com.habitloop.habitLoop</key>
+                <string>${PROFILE_UUID_APPSTORE}</string>
+            </dict>
+        </dict>
+        </plist>
+        EOF
+
+    - id: build
+      shell: bash
+      env:
+        IOS_TEAM_ID: ${{ inputs.ios-team-id }}
+      run: |
+        if [[ "${{ inputs.environment }}" == "staging" ]]; then
+          flutter build ios --debug --no-codesign \
+            --build-number=${{ inputs.build-number }}
+          echo "success=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # 1. Compile Dart + Flutter without code signing.
+        # flutter build ios generates .flutter-plugins-dependencies (with the
+        # correct CI pub-cache paths) before running pod install internally,
+        # so all Firebase plugins are installed and Pods/FirebaseCrashlytics/run
+        # is present when Xcode's build phase scripts execute.
+        #
+        # We append signing settings to ios/Flutter/Release.xcconfig rather
+        # than touching project.pbxproj (which gets regenerated mid-build).
+        # The xcconfig is referenced via baseConfigurationReference only by
+        # the Runner target's Release config, so settings are target-scoped
+        # and never leak to CocoaPods static-library targets.
+        flutter build ios --release --no-codesign \
+          --build-number=${{ inputs.build-number }}
+
+        # 2. Append manual signing settings to Release.xcconfig.
+        # Use both unconditional and [sdk=iphoneos*] conditional forms since
+        # the project-level Release config sets CODE_SIGN_IDENTITY[sdk=iphoneos*]
+        # = "iPhone Developer", which we need to override at the target level.
+        cat >> ios/Flutter/Release.xcconfig <<XCCFG
+
+        // Manual code signing for CI — appended by GitHub Actions.
+        CODE_SIGN_STYLE = Manual
+        CODE_SIGN_IDENTITY = Apple Distribution
+        CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
+        PROVISIONING_PROFILE_SPECIFIER = ${PROFILE_UUID_APPSTORE}
+        PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*] = ${PROFILE_UUID_APPSTORE}
+        DEVELOPMENT_TEAM = ${IOS_TEAM_ID}
+        XCCFG
+
+        echo '=== ios/Flutter/Release.xcconfig contents ==='
+        cat ios/Flutter/Release.xcconfig
+        echo '=== Provisioning profiles available to xcodebuild ==='
+        ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo 'no profiles dir'
+        echo '=== Codesign identities in keychain ==='
+        security find-identity -v -p codesigning || true
+
+        # 3. Archive — no signing flags at the command line. xcconfig from
+        # baseConfigurationReference applies, target-scoped to Runner Release.
+        xcodebuild archive \
+          -workspace ios/Runner.xcworkspace \
+          -scheme Runner \
+          -configuration Release \
+          -sdk iphoneos \
+          -archivePath /tmp/Runner.xcarchive
+
+        # 4. Export IPA using ExportOptions.plist (app-store method, for
+        #    TestFlight — the sole export since HAB-180 removed Firebase iOS
+        #    distribution and its ad-hoc export).
+        xcodebuild -exportArchive \
+          -archivePath /tmp/Runner.xcarchive \
+          -exportPath build/ios/ipa-appstore \
+          -exportOptionsPlist /tmp/ExportOptions.plist
+
+        echo "success=true" >> "$GITHUB_OUTPUT"

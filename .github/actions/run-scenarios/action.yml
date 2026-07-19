@@ -1,0 +1,92 @@
+name: run-scenarios
+description: Run integration test scenarios on an Android emulator and publish results.
+
+inputs:
+  firebase-options-dart:
+    description: Base64-encoded contents of lib/firebase_options.dart
+    required: true
+  google-services-json:
+    description: Base64-encoded contents of android/app/google-services.json
+    required: true
+  gist-token:
+    description: GitHub PAT with gist scope, used to update the scenarios badge gist (optional)
+    required: false
+    default: ''
+  gist-id:
+    description: Gist ID for the scenarios badge (optional)
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/restore-firebase-config
+      with:
+        platform: android
+        firebase-options-dart: ${{ inputs.firebase-options-dart }}
+        google-services-json: ${{ inputs.google-services-json }}
+
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+
+    - uses: ./.github/actions/setup-flutter
+
+    - name: Restore Gradle build cache
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: |
+          gradle-${{ runner.os }}-
+
+    - name: Enable KVM
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Build debug APK (warm up Gradle)
+      shell: bash
+      run: flutter build apk --debug
+
+    - name: Run integration scenarios
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 29
+        arch: x86_64
+        script: bash -c "set -o pipefail; flutter test integration_test/test_runner.dart --machine --no-pub --timeout=300s | tee test-results.json"
+
+    - name: Strip non-JSON lines from test results
+      if: always()
+      shell: bash
+      run: python3 scripts/ci/strip_test_json.py
+
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: run-scenarios
+        path: test-results.json
+        reporter: dart-json
+        fail-on-error: false
+
+    - name: Write job summary
+      if: always()
+      shell: bash
+      run: python3 scripts/ci/scenarios_summary.py
+
+    - name: Update badge gist
+      if: always()
+      shell: bash
+      env:
+        GIST_TOKEN: ${{ inputs.gist-token }}
+        GIST_ID: ${{ inputs.gist-id }}
+      run: |
+        [ -z "$GIST_TOKEN" ] && echo "GIST_TOKEN not set, skipping badge update" && exit 0
+        [ -z "$GIST_ID" ] && echo "SCENARIOS_GIST_ID not set, skipping badge update" && exit 0
+        python3 scripts/ci/update_scenarios_badge.py
