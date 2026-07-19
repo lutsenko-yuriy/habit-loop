@@ -88,7 +88,7 @@ When in doubt, use **In QA**.
    - `@docs/PRODUCT_SPEC.md` — functionality added, removed, or changed
    - `@docs/ARCHITECTURE.md` — code structure or dependencies changed
    - `@docs/VERSIONING.md` — CI/CD or versioning process impacted
-7. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR, update `pubspec.yaml` accordingly. Do not touch the build number — CI manages it.
+7. **Keep `pubspec.yaml` version in sync with `docs/CHANGELOG.md`.** Before committing, check that the version name (`X.Y.Z`) in `pubspec.yaml` matches the latest numbered `[X.Y.Z]` entry in `CHANGELOG.md`. If a new changelog entry was added in this PR **and it carries a `[user]`/`[app]` tag**, update `pubspec.yaml` accordingly. If the entry is classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]`, it belongs under `## [Unreleased]` instead — leave `pubspec.yaml` untouched (see `docs/VERSIONING.md`, HAB-185). Do not touch the build number — CI manages it.
 
    **Release note tagging (enforced by CI — `scripts/changelog/lint.py` runs on every PR):** every new `## [X.Y.Z]` CHANGELOG entry must carry at least one classification tag. See the tag taxonomy table in `docs/VERSIONING.md` for the full list and their build/release-note behaviour.
 

@@ -186,3 +186,28 @@ class TestLintUnknownTags(unittest.TestCase):
             )
         finally:
             os.unlink(path)
+
+    # --- HAB-185: sealed ## [Unreleased] sections between numbered releases ---
+
+    def test_sealed_unreleased_tag_does_not_satisfy_newer_entrys_classification(self):
+        """A classification-tagged bullet in a sealed Unreleased batch (sandwiched
+        between two numbered releases) must not mask the OLDER release above it
+        being missing its own classification tag."""
+        path = _tmp("""\
+            ## [1.1.0] — 2026-02-01
+            - No classification tag at all on this bullet.
+
+            ## [Unreleased]
+            - [ci] sealed batch bullet — must not lend its tag to 1.1.0's check.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Old user change.
+        """)
+        try:
+            errors = lint(path, '1.0.0')
+            self.assertTrue(
+                any('1.1.0' in e and 'missing classification' in e for e in errors),
+                f'Expected a missing-classification error for 1.1.0; got: {errors}',
+            )
+        finally:
+            os.unlink(path)

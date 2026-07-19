@@ -2,12 +2,20 @@
 
 The app follows [Semantic Versioning](https://semver.org/) with the Flutter version format `X.Y.Z+buildNumber` in `pubspec.yaml`.
 
+**`pubspec.yaml`'s version represents the app's build version, not the repo's commit history (HAB-185).** It only advances for CHANGELOG entries that actually change the app — i.e. entries carrying at least one `[user]` and/or `[app]` tag. Entries classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]` never touch `pubspec.yaml` — see "The `[Unreleased]` section" below.
+
 **Version name (`X.Y.Z`):**
 - **Major (X)** — breaking changes (incompatible file format, dropped platform support)
 - **Minor (Y)** — new features (new counter operations, new platform support, new UI capabilities)
 - **Patch (Z)** — bug fixes and small improvements
 
 Version name changes are manual and require reasoning presented to the user before bumping.
+
+**The `[Unreleased]` section (HAB-185):** CHANGELOG entries with no `[user]`/`[app]` tag land under a `## [Unreleased]` heading as plain bullets instead of getting their own numbered `## [X.Y.Z]` heading — `ship` never bumps `pubspec.yaml` for these. `## [Unreleased]` batches are **bounded, not one permanent bucket**: at most one is ever "open" (accumulating new bullets) at a time, and the open batch always sits immediately before `docs/CHANGELOG.md`'s current first `## [...]` heading. The moment an app-changing entry ships, its new numbered heading inserts right before that spot — above the open batch — which becomes permanently **sealed** in place, sandwiched between that new release and whatever preceded it. A fresh `## [Unreleased]` then opens at the new top the next time it's needed. Sealed batches are never edited or folded into a later release once closed — this keeps the file scannable (never more than one batch's worth of internal-only entries between any two releases) without any retroactive "which release does this belong to" calculation.
+
+Because `## [Unreleased]` can appear multiple times in the file (one sealed per gap between releases, plus at most one open at the top), `scripts/changelog/{distribute,release_notes,lint}.py` compute each numbered entry's body boundary using the next `## [...]` heading of *any* kind (via the shared `scripts/changelog/heading_boundaries.py` helper) — not just the next numbered one. Otherwise a sealed batch's bullets would silently merge into the *newer* release's body.
+
+Do not confuse this with the unrelated, legacy `(unreleased)` marker that appears inside some older entries' date parenthetical (e.g. `## [0.50.29] — 2026-07-17 (unreleased)`) — that predates HAB-185, marks a `[wip]` entry that still received a version number under the old scheme, and is left as-is.
 
 **Build number (`+N`):**
 - Auto-incremented by CI only on the `main` branch, after each pipeline run where at least one platform is successfully distributed.
