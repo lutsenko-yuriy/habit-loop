@@ -23,7 +23,7 @@ Version name changes are manual and require reasoning presented to the user befo
 
 `version-tag` gates on *either* `distribute-android` or `distribute-testflight` succeeding — a failure on one platform's distribution must never block tagging the release on the other's account (see HAB-180).
 
-**CI/CD pipeline structure:** the automatic push/PR/main job graph lives in `.github/workflows/full_release_cycle.yml` (`name: full-release-cycle`; renamed from `ci.yml`/`build-and-deploy-apps` in HAB-183 — same triggers, same job graph, no behavior change):
+**CI/CD pipeline structure:** the automatic push/PR/main job graph lives in `.github/workflows/release.yml` (`name: release`; renamed from `ci.yml`/`build-and-deploy-apps` in HAB-183 — same triggers, same job graph, no behavior change):
 ```
 check-skip (+ build gate + dispatch plan) → test → resolve-version → build-android → distribute-android ─┐
                                                                     → build-ios     → distribute-testflight ┼→ version-tag (if ≥1 platform distributed)
@@ -46,7 +46,7 @@ Job *bodies* are thin wrappers over shared composite actions in `.github/actions
 
 `scripts/ci/dispatch_plan.py` translates these inputs into per-job flags consumed by `build-android`, `build-ios`, `distribute-android`, and `distribute-testflight`. `distribute_firebase` gates `distribute_android`; `distribute_testflight` gates `distribute_testflight` — so either distribution channel can be exercised independently on a manual dispatch.
 
-**Granular manual-dispatch pipelines (HAB-183 WU2):** four additional `workflow_dispatch`-only files let a developer run a single procedure in isolation instead of paying for the full `full_release_cycle.yml` graph. None of them are triggered by push/PR, none of them touch `dispatch_plan.py` (that script's flag matrix stays bound to `full_release_cycle.yml` specifically), and all of them reuse the same composite actions under `.github/actions/` that `full_release_cycle.yml`'s own jobs use — see the reuse note above.
+**Granular manual-dispatch pipelines (HAB-183 WU2):** four additional `workflow_dispatch`-only files let a developer run a single procedure in isolation instead of paying for the full `release.yml` graph. None of them are triggered by push/PR, none of them touch `dispatch_plan.py` (that script's flag matrix stays bound to `release.yml` specifically), and all of them reuse the same composite actions under `.github/actions/` that `release.yml`'s own jobs use — see the reuse note above.
 
 | File | Inputs | Runs |
 |---|---|---|
