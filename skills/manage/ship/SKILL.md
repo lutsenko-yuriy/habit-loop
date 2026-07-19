@@ -42,9 +42,11 @@ Move each linked issue to the chosen state (PM mapping: **Move issue to state**)
 
 @skills/manage/ship/resources/changelog-tags.md
 
+`## [Unreleased]` sections are **bounded batches**, not one permanent bucket: at most one is ever "open" (accumulating new entries) at a time, and it always sits at the absolute top of the file. Once an app-changing entry ships, its new numbered heading is inserted above the open batch, which becomes permanently "sealed" in place — sandwiched between that new release and whatever came before. A fresh `## [Unreleased]` then opens at the new top the next time a non-app-changing entry needs one. This keeps the file scannable: you never scroll through more than one batch's worth of internal-only entries to find the latest release.
+
 Determine this entry's classification tags first (per the table above), then route it:
 
-**If the entry contains at least one `[user]` and/or `[app]` tag** (an app-changing entry — this is what triggers step 4's version bump below): insert a fresh numbered heading directly above the file's current topmost numbered `## [X.Y.Z]` heading — i.e. **after all of `## [Unreleased]`'s existing content, however many bullets it currently holds** (never inside or above `## [Unreleased]` — that section must always stay at position 0 in the file):
+**If the entry contains at least one `[user]` and/or `[app]` tag** (an app-changing entry — this is what triggers step 4's version bump below): insert a fresh numbered heading at the **absolute top of the file** (position 0, before anything else — including an open `## [Unreleased]` batch, which this seals in place below the new heading):
 
 ```markdown
 ## [X.Y.Z] — YYYY-MM-DD (PR #N merged)
@@ -57,13 +59,20 @@ Determine this entry's classification tags first (per the table above), then rou
 
 Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor for new features, major for breaking changes.
 
-**Otherwise** (entry classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]` — nothing here changed the app): append the bullets to the **top of the bullet list inside the existing `## [Unreleased]` section** (right after its explanatory blurb paragraph) — do **not** create a new numbered heading:
+**Otherwise** (entry classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]` — nothing here changed the app): look at what currently sits at the absolute top of the file (position 0):
+
+- **If it's already `## [Unreleased]`** (a batch is already open): append the bullet to the top of its existing bullet list, right after its explanatory blurb paragraph — do not create a new heading.
+- **If it's a numbered `## [X.Y.Z]` heading instead** (no batch is currently open — the last thing shipped was a release): insert a **brand-new** `## [Unreleased]` section at the absolute top of the file, above that numbered heading, with this bullet as its first entry:
 
 ```markdown
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
 - [ci] (PR #N) HAB-XX: <technical detail for developers>
 ```
 
-Entries added to `## [Unreleased]` stay there permanently — never move them into a later numbered release once one ships.
+Once a `## [Unreleased]` batch is sealed by a later release (see the app-changing branch above), its bullets stay exactly where they are permanently — never move them, and never append further bullets to a sealed batch. Only the single batch currently at position 0 (if any) is ever appended to.
 
 ### 3. Regenerate BACKLOG.md
 

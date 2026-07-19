@@ -35,6 +35,11 @@ import re
 import sys
 from typing import Optional
 
+try:
+    from changelog.heading_boundaries import body_end_for, heading_starts
+except ImportError:
+    from heading_boundaries import body_end_for, heading_starts
+
 
 # ---------------------------------------------------------------------------
 # Semver helpers
@@ -89,10 +94,11 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
 
     last_semver = _parse_semver(last_version) if last_version else (0, 0, 0)
     matches = list(_VERSION_HEADER.finditer(content))
+    all_headings = heading_starts(content)
 
     errors: list[str] = []
 
-    for idx, match in enumerate(matches):
+    for match in matches:
         version_str = match.group(1)
         try:
             semver = _parse_semver(version_str)
@@ -103,7 +109,10 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
             break  # entries are newest-first; stop at or below the last published
 
         body_start = match.end()
-        body_end = matches[idx + 1].start() if idx + 1 < len(matches) else len(content)
+        # Bounded by the next heading of ANY kind (numeric or Unreleased) so a
+        # sealed ## [Unreleased] batch never lends its tags to this entry's
+        # has_classification check (HAB-185).
+        body_end = body_end_for(match.start(), all_headings, len(content))
         body = content[body_start:body_end]
 
         has_classification = False

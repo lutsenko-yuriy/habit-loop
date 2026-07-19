@@ -175,3 +175,27 @@ class TestShouldDistribute(unittest.TestCase):
             self.assertFalse(should_distribute(path, '0.9.0'))
         finally:
             os.unlink(path)
+
+    # --- HAB-185: sealed ## [Unreleased] sections between numbered releases ---
+
+    def test_sealed_unreleased_bullet_does_not_leak_into_newer_entry(self):
+        """A [user] bullet in a sealed Unreleased batch (sandwiched between two
+        numbered releases) must not make the OLDER, meta-only release above it
+        look distributable."""
+        path = _tmp("""\
+            ## [Unreleased]
+            - [ci] currently open batch, ignored regardless.
+
+            ## [1.1.0] — 2026-02-01
+            - [meta] Skill A only — should NOT trigger distribution on its own.
+
+            ## [Unreleased]
+            - [user] sealed batch bullet — must not leak into 1.1.0's body.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Old user change.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '1.0.0'))
+        finally:
+            os.unlink(path)

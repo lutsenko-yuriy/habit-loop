@@ -25,6 +25,11 @@ import re
 import sys
 from typing import Optional
 
+try:
+    from changelog.heading_boundaries import body_end_for, heading_starts
+except ImportError:
+    from heading_boundaries import body_end_for, heading_starts
+
 _VERSION_HEADER = re.compile(r'^## \[(\d+\.\d+\.\d+)\]', re.MULTILINE)
 _DISTRIBUTE_TAG = re.compile(r'^\[(user|app)\]')
 
@@ -43,8 +48,9 @@ def should_distribute(path: str, last_version: Optional[str]) -> bool:
 
     last_semver = _parse_semver(last_version) if last_version else (0, 0, 0)
     matches = list(_VERSION_HEADER.finditer(content))
+    all_headings = heading_starts(content)
 
-    for idx, match in enumerate(matches):
+    for match in matches:
         version_str = match.group(1)
         try:
             semver = _parse_semver(version_str)
@@ -55,7 +61,9 @@ def should_distribute(path: str, last_version: Optional[str]) -> bool:
             break  # entries are newest-first; stop at or below last published
 
         body_start = match.end()
-        body_end = matches[idx + 1].start() if idx + 1 < len(matches) else len(content)
+        # Bounded by the next heading of ANY kind (numeric or Unreleased) so a
+        # sealed ## [Unreleased] batch is never absorbed into this entry's body.
+        body_end = body_end_for(match.start(), all_headings, len(content))
         body = content[body_start:body_end]
 
         for line in body.splitlines():

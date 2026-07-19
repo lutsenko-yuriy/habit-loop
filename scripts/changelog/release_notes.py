@@ -45,6 +45,11 @@ import re
 import sys
 from typing import Optional
 
+try:
+    from changelog.heading_boundaries import body_end_for, heading_starts
+except ImportError:
+    from heading_boundaries import body_end_for, heading_starts
+
 
 # ---------------------------------------------------------------------------
 # Semver helpers
@@ -129,9 +134,10 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
     if not matches:
         return []
 
+    all_headings = heading_starts(content)
     bullets: list[str] = []
 
-    for idx, match in enumerate(matches):
+    for match in matches:
         version_str = match.group(1)
         try:
             semver = _parse_semver(version_str)
@@ -143,9 +149,11 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
             # a version that's at or before the last published one.
             break
 
-        # Body spans from end of this header to start of the next (or EOF).
+        # Body spans from end of this header to the start of the next heading
+        # of ANY kind (or EOF) — so a sealed ## [Unreleased] batch is never
+        # absorbed into this entry's body (HAB-185).
         body_start = match.end()
-        body_end = matches[idx + 1].start() if idx + 1 < len(matches) else len(content)
+        body_end = body_end_for(match.start(), all_headings, len(content))
         body = content[body_start:body_end]
 
         user_bullets: list[str] = []
