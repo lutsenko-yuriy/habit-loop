@@ -11,6 +11,8 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-183**: Manual-dispatch-only CI pipelines for granular build/test/notes procedures (PR #287)
+
 - **HAB-158**: Bug: language picker option text overflows on narrow Android screens (PR #250)
 
 - **HAB-157**: Bug: local notifications stay in English after switching app language (PR #248)
