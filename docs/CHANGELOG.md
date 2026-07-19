@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.38] — 2026-07-19 (PR #286 merged)
+
+### Changed
+
+- [wip] HAB-183 WU1: Extract 7 reusable GitHub Actions composite actions (setup-flutter, restore-firebase-config, resolve-version, build-android-app, build-ios-app, run-tests, run-scenarios) and refactor `ci.yml` → `full_release_cycle.yml` to wire every job onto them. All `needs:`, `if:` gates, and outputs are preserved byte-for-byte — this is pure step-relocation. Sets up WU2 (granular `workflow_dispatch`-only files reusing the same composites). Net LoC: -335 (360 insertions / 695 deletions).
+
 ## [0.50.37] — 2026-07-19 (PR #285 merged)
 
 ### Added

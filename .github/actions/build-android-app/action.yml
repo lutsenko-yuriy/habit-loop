@@ -1,0 +1,78 @@
+name: build-android-app
+description: Build the signed (or debug) Android app bundle/APK.
+
+inputs:
+  environment:
+    description: "'production' (signed release build) or 'staging' (unsigned debug build)"
+    required: false
+    default: 'production'
+  build-number:
+    description: Build number to stamp onto the build
+    required: true
+  key-store-base64:
+    description: Base64-encoded upload keystore (required when environment == 'production')
+    required: false
+    default: ''
+  key-store-password:
+    required: false
+    default: ''
+  key-password:
+    required: false
+    default: ''
+  key-alias:
+    required: false
+    default: ''
+
+outputs:
+  success:
+    description: "'true' if the build produced an artifact"
+    value: ${{ steps.build.outputs.success }}
+  apk_name:
+    description: Filename of the built APK (for the flutter-apk output directory)
+    value: ${{ steps.build.outputs.apk_name }}
+
+runs:
+  using: composite
+  steps:
+    - if: inputs.environment != 'staging'
+      shell: bash
+      env:
+        KEY_STORE_BASE64: ${{ inputs.key-store-base64 }}
+        KEY_STORE_PASSWORD: ${{ inputs.key-store-password }}
+        KEY_PASSWORD: ${{ inputs.key-password }}
+        KEY_ALIAS: ${{ inputs.key-alias }}
+      run: |
+        echo "$KEY_STORE_BASE64" | base64 --decode > android/upload-keystore.jks
+        printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=../upload-keystore.jks\n' \
+          "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" \
+          > android/key.properties
+
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+
+    - id: build
+      shell: bash
+      run: |
+        if [[ "${{ inputs.environment }}" == "staging" ]]; then
+          flutter build apk --debug \
+            --build-number=${{ inputs.build-number }}
+          echo "apk_name=app-debug.apk" >> "$GITHUB_OUTPUT"
+        else
+          flutter build appbundle --release \
+            --build-number=${{ inputs.build-number }}
+          flutter build apk --release \
+            --build-number=${{ inputs.build-number }}
+          echo "apk_name=app-release.apk" >> "$GITHUB_OUTPUT"
+        fi
+        echo "success=true" >> "$GITHUB_OUTPUT"
+
+    - name: Save Gradle build cache
+      uses: actions/cache/save@v4
+      if: always()
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}

@@ -1,0 +1,39 @@
+name: restore-firebase-config
+description: Decode and restore Firebase config files from base64-encoded secrets.
+
+inputs:
+  platform:
+    description: "Which platform-specific Firebase config to restore in addition to the shared Dart options: 'none', 'android', or 'ios'."
+    required: false
+    default: 'none'
+  firebase-options-dart:
+    description: Base64-encoded contents of lib/firebase_options.dart
+    required: true
+  google-services-json:
+    description: Base64-encoded contents of android/app/google-services.json (required when platform == 'android')
+    required: false
+    default: ''
+  google-service-info-plist:
+    description: Base64-encoded contents of ios/Runner/GoogleService-Info.plist (required when platform == 'ios')
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        FIREBASE_OPTIONS_DART: ${{ inputs.firebase-options-dart }}
+      run: echo "$FIREBASE_OPTIONS_DART" | base64 --decode > lib/firebase_options.dart
+
+    - if: inputs.platform == 'android'
+      shell: bash
+      env:
+        GOOGLE_SERVICES_JSON: ${{ inputs.google-services-json }}
+      run: echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
+
+    - if: inputs.platform == 'ios'
+      shell: bash
+      env:
+        GOOGLE_SERVICE_INFO_PLIST: ${{ inputs.google-service-info-plist }}
+      run: echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist

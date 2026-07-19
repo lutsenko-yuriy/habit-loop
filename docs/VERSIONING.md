@@ -23,12 +23,14 @@ Version name changes are manual and require reasoning presented to the user befo
 
 `version-tag` gates on *either* `distribute-android` or `distribute-testflight` succeeding — a failure on one platform's distribution must never block tagging the release on the other's account (see HAB-180).
 
-**CI/CD pipeline structure:**
+**CI/CD pipeline structure:** the automatic push/PR/main job graph lives in `.github/workflows/full_release_cycle.yml` (`name: full-release-cycle`; renamed from `ci.yml`/`build-and-deploy-apps` in HAB-183 — same triggers, same job graph, no behavior change):
 ```
 check-skip (+ build gate + dispatch plan) → test → resolve-version → build-android → distribute-android ─┐
                                                                     → build-ios     → distribute-testflight ┼→ version-tag (if ≥1 platform distributed)
                                                                                      → set-testflight-notes (isolated — never blocks version-tag)
 ```
+
+Job *bodies* are thin wrappers over shared composite actions in `.github/actions/` (`setup-flutter`, `restore-firebase-config`, `resolve-version`, `build-android-app`, `build-ios-app`, `run-tests`, `run-scenarios`) — introduced in HAB-183 to remove step-level duplication across jobs (and, from HAB-183 WU2 onward, across the granular manual-dispatch workflow files that reuse the same composites). Distribution steps (`distribute-android`, `distribute-testflight`, `set-testflight-notes`) stay inline — each is already a single script call, so a composite wrapper would add a layer without removing any duplication.
 
 `check-skip` runs `scripts/changelog/distribute.py` to determine `should_build`, and `scripts/ci/dispatch_plan.py` to resolve per-job flags (`build_android`, `build_ios`, `distribute_android`, `distribute_testflight`, `group_alias`). Builds, distribution, and version tagging only run on the `main` branch when `should_build=true`. Feature branches run tests only and never build or tag.
 
