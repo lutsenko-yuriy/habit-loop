@@ -140,12 +140,14 @@ Each WU gets its own branch (`feature/HAB-XX-WUN-<short>`, where N is the WU num
 
 **CHANGELOG tags for intermediate WUs**
 
-Use `[wip]` as the classification tag for all intermediate WU CHANGELOG entries — every WU except the final one that makes the feature user-visible. `[wip]` suppresses builds and distribution so testers do not receive partial builds mid-ticket. The final WU uses `[user]` (and/or `[app]`) — this is when CI builds and distributes, and "What's New" aggregates all `[user]` content back to the last published tag.
+Use `[wip]` as the classification tag for all intermediate WU CHANGELOG entries — every WU except the final one. `[wip]` suppresses builds and distribution so testers do not receive partial builds mid-ticket. The final WU uses whichever tag actually reflects what the ticket produced: `[user]`/`[app]` if it's user-facing (this is when CI builds and distributes, and "What's New" aggregates all `[user]` content back to the last published tag), or `[ci]`/`[meta]`/`[test]` if the ticket is pure process/CI/tooling work end-to-end with nothing user-facing to ship.
 
 **WU cycle (WU1 onwards)**
 
 For each WU in sequence:
 1. Create a fresh branch from the latest `origin/main` using the branch name from the plan table.
-2. Follow steps 2–12 (widget tests, TDD cycles, validate, format, PR, review loop, ship). The full review loop (step 10) — `review-architecture`, `audit-code`, Codecov, and user sign-off — is mandatory for every WU PR without exception.
-3. **Hard checkpoint:** after `ship` merges, explicitly tell the user to compact context now, before continuing — state it as its own message and wait for it to happen.
-4. Fetch `origin/main` and start the next WU from the freshly updated tip.
+2. Follow steps 2–11 (widget tests, TDD cycles, validate, format, PR, review loop). The full review loop (step 10) — `review-architecture`, `audit-code`, Codecov, and user sign-off — is mandatory for every WU PR without exception.
+3. **If this is the final WU** (the one that completes the ticket): invoke `debrief` now (step 12), before shipping — the same order as the single-WU flow. **If this is an intermediate WU**: skip debrief; it runs exactly once, at the final WU.
+4. Invoke `ship` (step 13).
+5. **Hard checkpoint:** after `ship` merges, explicitly tell the user to compact context now, before continuing — state it as its own message and wait for it to happen.
+6. Fetch `origin/main` and start the next WU from the freshly updated tip.
