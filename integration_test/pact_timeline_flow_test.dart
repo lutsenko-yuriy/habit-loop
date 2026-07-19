@@ -620,11 +620,6 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.byKey(const Key('showup-note-field')), newNote);
         await tester.pump();
-        // HAB-179: a fixed pump(300ms) after enterText was not reliably
-        // enough on the CI Android emulator for ensureVisible to find this
-        // button (still failed live-CI-validated at 300ms) — poll instead of
-        // guessing a duration, matching this file's own waitFor convention
-        // used elsewhere for exactly this kind of hardware-dependent timing.
         await waitFor(tester, find.byKey(const Key('showup-note-save-button')));
         await tester.ensureVisible(find.byKey(const Key('showup-note-save-button')));
         await tester.pump();
