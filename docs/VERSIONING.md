@@ -11,7 +11,7 @@ The app follows [Semantic Versioning](https://semver.org/) with the Flutter vers
 
 Version name changes are manual and require reasoning presented to the user before bumping.
 
-**The `[Unreleased]` section (HAB-185):** `docs/CHANGELOG.md` opens with a permanent `## [Unreleased]` section — CHANGELOG entries with no `[user]`/`[app]` tag land there as plain bullets instead of getting their own numbered `## [X.Y.Z]` heading. `ship` never bumps `pubspec.yaml` for these. Entries stay under `## [Unreleased]` permanently — they are never retroactively folded into a later numbered release once one ships. `## [Unreleased]` must always remain at position 0 in the file; new numbered headings are inserted immediately below it, never above.
+**The `[Unreleased]` section (HAB-185):** `docs/CHANGELOG.md` opens with a permanent `## [Unreleased]` section — CHANGELOG entries with no `[user]`/`[app]` tag land there as plain bullets instead of getting their own numbered `## [X.Y.Z]` heading. `ship` never bumps `pubspec.yaml` for these. Entries stay under `## [Unreleased]` permanently — they are never retroactively folded into a later numbered release once one ships. `## [Unreleased]` must always remain at position 0 in the file; new numbered headings are inserted directly above the file's current topmost numbered heading — i.e. after all of `## [Unreleased]`'s current content, however many bullets it holds — never inside or above it.
 
 Do not confuse this with the unrelated, legacy `(unreleased)` marker that appears inside some older entries' date parenthetical (e.g. `## [0.50.29] — 2026-07-17 (unreleased)`) — that predates HAB-185, marks a `[wip]` entry that still received a version number under the old scheme, and is left as-is.
 

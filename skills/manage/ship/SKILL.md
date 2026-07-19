@@ -105,8 +105,14 @@ git add <version-file>                         # paths from project config
 git add <product-spec> <glossary>              # paths from project config
 # add if present and uncommitted:
 git add docs/knowledge/notes/HAB-XX*.md        # catches /note output missed earlier in the session
-git commit -m "chore: release HAB-XX, bump version to X.Y.Z"     # if version bumped
-git commit -m "chore: release HAB-XX (internal-only, no version bump)"  # if not
+```
+
+Commit with **exactly one** of these two messages — whichever matches what step 4 actually did — then push:
+
+- Step 4 bumped the version: `git commit -m "chore: release HAB-XX, bump version to X.Y.Z"`
+- Step 4 was skipped (entry went to `## [Unreleased]`): `git commit -m "chore: release HAB-XX (internal-only, no version bump)"`
+
+```bash
 git push
 ```
 
