@@ -44,7 +44,7 @@ Move each linked issue to the chosen state (PM mapping: **Move issue to state**)
 
 Determine this entry's classification tags first (per the table above), then route it:
 
-**If the entry contains at least one `[user]` and/or `[app]` tag** (an app-changing entry — this is what triggers step 4's version bump below): insert a fresh numbered heading **immediately below the `## [Unreleased]` section** (never above it — `## [Unreleased]` must always stay at position 0 in the file):
+**If the entry contains at least one `[user]` and/or `[app]` tag** (an app-changing entry — this is what triggers step 4's version bump below): insert a fresh numbered heading directly above the file's current topmost numbered `## [X.Y.Z]` heading — i.e. **after all of `## [Unreleased]`'s existing content, however many bullets it currently holds** (never inside or above `## [Unreleased]` — that section must always stay at position 0 in the file):
 
 ```markdown
 ## [X.Y.Z] — YYYY-MM-DD (PR #N merged)
