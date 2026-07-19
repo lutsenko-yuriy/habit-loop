@@ -75,6 +75,7 @@ CLASSIFICATION_TAGS: frozenset[str] = frozenset({
 # ---------------------------------------------------------------------------
 
 _VERSION_HEADER = re.compile(r'^## \[(\d+\.\d+\.\d+)\]', re.MULTILINE)
+_UNRELEASED_HEADER = re.compile(r'^## \[Unreleased\]', re.MULTILINE)
 
 # Matches "[tag]" at the start of a bullet's text (after the leading "- ").
 _BRACKET_TAG = re.compile(r'^\[([^\]]+)\]')
@@ -83,6 +84,19 @@ _BRACKET_TAG = re.compile(r'^\[([^\]]+)\]')
 # ---------------------------------------------------------------------------
 # Lint
 # ---------------------------------------------------------------------------
+
+def _bullet_tags(body: str) -> list[str]:
+    """Return the bracket tag (if any) of each '- ' bullet line in body, in order."""
+    tags: list[str] = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith('- '):
+            continue
+        tag_match = _BRACKET_TAG.match(stripped[2:])
+        if tag_match:
+            tags.append(tag_match.group(1))
+    return tags
+
 
 def lint(path: str, last_version: Optional[str]) -> list[str]:
     """Return a list of error messages for entries with missing or invalid markers.
@@ -97,6 +111,32 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
     all_headings = heading_starts(content)
 
     errors: list[str] = []
+
+    # WU2 (HAB-185): scan the OPEN ## [Unreleased] batch only — the one that
+    # is literally the file's first heading (per WU1's invariant, at most one
+    # batch is ever open, and it always sits before the first heading). Sealed
+    # batches elsewhere in the file are permanent, immutable CHANGELOG history
+    # and are deliberately NOT re-checked here, for the same reason the
+    # numbered-entry check below stops at last_version: this tool guards new
+    # commits, not history. Re-scanning sealed batches would also mean a tag
+    # later removed from KNOWN_TAGS could retroactively break CI on every
+    # future unrelated PR. No classification-tag requirement either way —
+    # Unreleased is a rolling aggregate of bullets, not a single releasable
+    # entry, so the "every entry needs ≥1 classification tag" rule below does
+    # not apply to it.
+    unreleased_matches = list(_UNRELEASED_HEADER.finditer(content))
+    if unreleased_matches and all_headings and unreleased_matches[0].start() == all_headings[0]:
+        open_match = unreleased_matches[0]
+        body_start = open_match.end()
+        body_end = body_end_for(open_match.start(), all_headings, len(content))
+        body = content[body_start:body_end]
+
+        for tag in _bullet_tags(body):
+            if tag not in KNOWN_TAGS:
+                errors.append(
+                    f'  [Unreleased]: unknown tag [{tag}]\n'
+                    f'    Known tags: {", ".join(sorted(KNOWN_TAGS))}'
+                )
 
     for match in matches:
         version_str = match.group(1)
@@ -115,22 +155,9 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
         body_end = body_end_for(match.start(), all_headings, len(content))
         body = content[body_start:body_end]
 
-        has_classification = False
-        unknown_tags: list[str] = []
-
-        for line in body.splitlines():
-            stripped = line.strip()
-            if not stripped.startswith('- '):
-                continue
-            text = stripped[2:]  # drop leading "- "
-
-            tag_match = _BRACKET_TAG.match(text)
-            if tag_match:
-                tag = tag_match.group(1)
-                if tag not in KNOWN_TAGS:
-                    unknown_tags.append(tag)
-                elif tag in CLASSIFICATION_TAGS:
-                    has_classification = True
+        tags = _bullet_tags(body)
+        unknown_tags = [t for t in tags if t not in KNOWN_TAGS]
+        has_classification = any(t in CLASSIFICATION_TAGS for t in tags)
 
         for tag in unknown_tags:
             errors.append(
