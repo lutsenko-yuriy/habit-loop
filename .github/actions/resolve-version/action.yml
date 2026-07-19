@@ -2,11 +2,15 @@ name: resolve-version
 description: Resolve the version name/build number for this run and generate release notes.
 
 inputs:
-  is-main-release:
+  environment:
+    description: "'production' or 'staging' — mirrors the build-android-app/build-ios-app input; 'staging' resolves build_number to 0."
+    required: false
+    default: 'production'
+  is-main-branch:
     description: >-
-      'true' for a real main-branch release build (consumes a real build
-      number); 'false' for a feature-branch or staging build (build_number
-      resolves to 0 so no real build number is consumed).
+      'true' only for an actual push to main. A real build number is
+      consumed when this is 'true' AND environment != 'staging'; otherwise
+      build_number resolves to 0.
     required: false
     default: 'false'
 
@@ -31,7 +35,7 @@ runs:
         VERSION_FULL=${VERSION_LINE#version: }
         VERSION_NAME=${VERSION_FULL%+*}
 
-        if [[ "${{ inputs.is-main-release }}" != "true" ]]; then
+        if [[ "${{ inputs.is-main-branch }}" != "true" || "${{ inputs.environment }}" == "staging" ]]; then
           # Feature-branch or staging build — use 0 to avoid consuming a real build number.
           echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
           echo "build_number=0"             >> "$GITHUB_OUTPUT"

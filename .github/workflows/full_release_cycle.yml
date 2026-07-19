@@ -135,7 +135,8 @@ jobs:
       - id: resolve
         uses: ./.github/actions/resolve-version
         with:
-          is-main-release: ${{ github.ref == 'refs/heads/main' && github.event.inputs.environment != 'staging' }}
+          environment: ${{ github.event.inputs.environment || 'production' }}
+          is-main-branch: ${{ github.ref == 'refs/heads/main' }}
 
   # ── Build signed Android AAB ──────────────────────────────────────────────
   build-android:
