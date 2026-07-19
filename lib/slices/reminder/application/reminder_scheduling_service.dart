@@ -75,11 +75,6 @@ final class ReminderSchedulingService {
     final maxShowups = _isIOS ? (_iosMaxPendingNotifications ~/ _notificationsPerShowupIos) : qualifyingShowups.length;
     final showupsToSchedule = qualifyingShowups.take(maxShowups).toList();
 
-    // TEMP DIAGNOSTIC (HAB-179) — remove after confirming/refuting the
-    // platform-channel-latency theory via a live CI dispatch.
-    // ignore: avoid_print
-    print('HAB-179 DIAG: scheduling loop start, count=${showupsToSchedule.length}, t=${DateTime.now()}');
-
     var scheduledCount = 0;
     for (final showup in showupsToSchedule) {
       final reminderText = NotificationTextBuilder.buildReminderText(
@@ -90,16 +85,12 @@ final class ReminderSchedulingService {
         l10n: l10n,
       );
 
-      // ignore: avoid_print
-      print('HAB-179 DIAG: before scheduleShowupReminder #$scheduledCount, t=${DateTime.now()}');
       await _notificationService.scheduleShowupReminder(
         showup: showup,
         pact: pact,
         titleText: reminderText.title,
         bodyText: reminderText.body,
       );
-      // ignore: avoid_print
-      print('HAB-179 DIAG: after scheduleShowupReminder #$scheduledCount, t=${DateTime.now()}');
 
       if (scheduleDeadline) {
         await _notificationService.scheduleDeadlineNotification(
@@ -111,8 +102,6 @@ final class ReminderSchedulingService {
 
       scheduledCount += scheduleDeadline ? 2 : 1;
     }
-    // ignore: avoid_print
-    print('HAB-179 DIAG: scheduling loop end, scheduledCount=$scheduledCount, t=${DateTime.now()}');
 
     if (scheduledCount > 0) {
       await _analytics.logEvent(
