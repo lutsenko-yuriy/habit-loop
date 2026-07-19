@@ -75,6 +75,7 @@ CLASSIFICATION_TAGS: frozenset[str] = frozenset({
 # ---------------------------------------------------------------------------
 
 _VERSION_HEADER = re.compile(r'^## \[(\d+\.\d+\.\d+)\]', re.MULTILINE)
+_UNRELEASED_HEADER = re.compile(r'^## \[Unreleased\]', re.MULTILINE)
 
 # Matches "[tag]" at the start of a bullet's text (after the leading "- ").
 _BRACKET_TAG = re.compile(r'^\[([^\]]+)\]')
@@ -83,6 +84,19 @@ _BRACKET_TAG = re.compile(r'^\[([^\]]+)\]')
 # ---------------------------------------------------------------------------
 # Lint
 # ---------------------------------------------------------------------------
+
+def _bullet_tags(body: str) -> list[str]:
+    """Return the bracket tag (if any) of each '- ' bullet line in body, in order."""
+    tags: list[str] = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith('- '):
+            continue
+        tag_match = _BRACKET_TAG.match(stripped[2:])
+        if tag_match:
+            tags.append(tag_match.group(1))
+    return tags
+
 
 def lint(path: str, last_version: Optional[str]) -> list[str]:
     """Return a list of error messages for entries with missing or invalid markers.
@@ -97,6 +111,24 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
     all_headings = heading_starts(content)
 
     errors: list[str] = []
+
+    # WU2 (HAB-185): scan every ## [Unreleased] batch — sealed or open — for
+    # unknown bracket tags. No classification-tag requirement here: Unreleased
+    # is a rolling aggregate of bullets, not a single releasable entry, so the
+    # "every entry needs ≥1 classification tag" rule below does not apply to
+    # it. Not filtered by last_version — a sealed batch is permanent CHANGELOG
+    # content, not transient PR state.
+    for unreleased_match in _UNRELEASED_HEADER.finditer(content):
+        body_start = unreleased_match.end()
+        body_end = body_end_for(unreleased_match.start(), all_headings, len(content))
+        body = content[body_start:body_end]
+
+        for tag in _bullet_tags(body):
+            if tag not in KNOWN_TAGS:
+                errors.append(
+                    f'  [Unreleased]: unknown tag [{tag}]\n'
+                    f'    Known tags: {", ".join(sorted(KNOWN_TAGS))}'
+                )
 
     for match in matches:
         version_str = match.group(1)
@@ -115,22 +147,9 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
         body_end = body_end_for(match.start(), all_headings, len(content))
         body = content[body_start:body_end]
 
-        has_classification = False
-        unknown_tags: list[str] = []
-
-        for line in body.splitlines():
-            stripped = line.strip()
-            if not stripped.startswith('- '):
-                continue
-            text = stripped[2:]  # drop leading "- "
-
-            tag_match = _BRACKET_TAG.match(text)
-            if tag_match:
-                tag = tag_match.group(1)
-                if tag not in KNOWN_TAGS:
-                    unknown_tags.append(tag)
-                elif tag in CLASSIFICATION_TAGS:
-                    has_classification = True
+        tags = _bullet_tags(body)
+        unknown_tags = [t for t in tags if t not in KNOWN_TAGS]
+        has_classification = any(t in CLASSIFICATION_TAGS for t in tags)
 
         for tag in unknown_tags:
             errors.append(

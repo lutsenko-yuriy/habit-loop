@@ -211,3 +211,117 @@ class TestLintUnknownTags(unittest.TestCase):
             )
         finally:
             os.unlink(path)
+
+
+class TestUnreleasedTagHygiene(unittest.TestCase):
+    """WU2: ## [Unreleased] bullets aren't covered by the numbered-entry scan
+    above (they have no version heading), so this guard checks them
+    separately — known tags only, but no classification-tag requirement
+    (Unreleased is a rolling aggregate, not a single releasable entry)."""
+
+    def test_known_tag_in_open_unreleased_batch_passes(self):
+        path = _tmp("""\
+            ## [Unreleased]
+
+            blurb.
+
+            - [ci] fine.
+            - [meta] also fine.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Real release.
+        """)
+        try:
+            self.assertEqual(lint(path, '0.0.0'), [])
+        finally:
+            os.unlink(path)
+
+    def test_unknown_tag_in_open_unreleased_batch_fails(self):
+        path = _tmp("""\
+            ## [Unreleased]
+
+            blurb.
+
+            - [met] typo'd tag.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Real release.
+        """)
+        try:
+            errors = lint(path, '0.0.0')
+            self.assertTrue(
+                any('met' in e for e in errors),
+                f'Expected an error mentioning unknown tag [met]; got: {errors}',
+            )
+        finally:
+            os.unlink(path)
+
+    def test_unknown_tag_in_sealed_unreleased_batch_also_fails(self):
+        """Sealed batches (sandwiched between two releases) are still checked —
+        they're permanent CHANGELOG content, not just transient state."""
+        path = _tmp("""\
+            ## [1.1.0] — 2026-02-01
+            - [user] Newer release.
+
+            ## [Unreleased]
+
+            blurb.
+
+            - [typo] sealed batch, still worth catching.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Older release.
+        """)
+        try:
+            errors = lint(path, '1.0.0')
+            self.assertTrue(
+                any('typo' in e for e in errors),
+                f'Expected an error mentioning unknown tag [typo]; got: {errors}',
+            )
+        finally:
+            os.unlink(path)
+
+    def test_unreleased_batch_with_no_classification_tag_at_all_does_not_fail(self):
+        """Unlike numbered entries, a bullet with NO bracket tag at all inside
+        Unreleased is not an error — no classification requirement applies there."""
+        path = _tmp("""\
+            ## [Unreleased]
+
+            blurb.
+
+            - a bullet with no bracket tag at all.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Real release.
+        """)
+        try:
+            self.assertEqual(lint(path, '0.0.0'), [])
+        finally:
+            os.unlink(path)
+
+    def test_multiple_unreleased_batches_all_checked_independently(self):
+        path = _tmp("""\
+            ## [Unreleased]
+
+            blurb.
+
+            - [bad-open] wrong tag in the open batch.
+
+            ## [2.0.0] — 2026-03-01
+            - [user] Newest release.
+
+            ## [Unreleased]
+
+            blurb.
+
+            - [bad-sealed] wrong tag in a sealed batch.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Older release.
+        """)
+        try:
+            errors = lint(path, '1.0.0')
+            self.assertTrue(any('bad-open' in e for e in errors), errors)
+            self.assertTrue(any('bad-sealed' in e for e in errors), errors)
+        finally:
+            os.unlink(path)
