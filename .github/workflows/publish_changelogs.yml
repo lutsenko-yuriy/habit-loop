@@ -1,0 +1,47 @@
+name: publish-changelogs
+
+# Re-annotates an already-uploaded TestFlight build's "What's New" text.
+#
+# Scope note: this covers iOS/TestFlight only. set_testflight_whatsnew.py
+# patches notes onto an existing processed build via the App Store Connect
+# REST API — there is no equivalent for it. Firebase (Android) has no
+# standalone notes-update path: release notes there are set inside
+# distribute.sh as part of a full upload, so a notes-only Android run isn't
+# expressible without re-distributing the build. This asymmetry is
+# intentional, not an oversight.
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: 'Build number of the already-uploaded TestFlight build to annotate'
+        type: string
+        required: true
+      version_name:
+        description: 'Version name (X.Y.Z) of the already-uploaded TestFlight build'
+        type: string
+        required: true
+
+jobs:
+  publish-changelogs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full tag history for release-notes generation
+
+      - id: notes
+        uses: ./.github/actions/generate-release-notes
+
+      - run: pip install pyjwt cryptography
+
+      - name: Set TestFlight What's New
+        env:
+          APP_STORE_CONNECT_KEY_ID:     ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID:  ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+          BUILD_NUMBER:                 ${{ inputs.build_number }}
+          VERSION_NAME:                 ${{ inputs.version_name }}
+          RELEASE_NOTES:                ${{ steps.notes.outputs.release_notes }}
+        run: python3 scripts/appstore/set_testflight_whatsnew.py

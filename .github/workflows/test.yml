@@ -1,0 +1,17 @@
+name: test-only
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history + all tags needed for CHANGELOG lint
+
+      - uses: ./.github/actions/run-tests
+        with:
+          firebase-options-dart: ${{ secrets.FIREBASE_OPTIONS_DART }}
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
