@@ -108,7 +108,7 @@ See `docs/CODE_STYLE.md`. Flutter style guide is the base; the document adds pro
 
 ## Versioning
 
-Update `pubspec.yaml` version name (`X.Y.Z`) whenever a new `CHANGELOG.md` entry is added — no separate approval needed.
+Update `pubspec.yaml` version name (`X.Y.Z`) whenever a new `CHANGELOG.md` entry carrying a `[user]`/`[app]` tag is added — no separate approval needed. Entries without one land under `## [Unreleased]` instead and never bump the version (HAB-185).
 CI handles build numbers automatically — do not touch.
 Details: @docs/VERSIONING.md
 

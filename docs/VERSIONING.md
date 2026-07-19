@@ -2,12 +2,18 @@
 
 The app follows [Semantic Versioning](https://semver.org/) with the Flutter version format `X.Y.Z+buildNumber` in `pubspec.yaml`.
 
+**`pubspec.yaml`'s version represents the app's build version, not the repo's commit history (HAB-185).** It only advances for CHANGELOG entries that actually change the app — i.e. entries carrying at least one `[user]` and/or `[app]` tag. Entries classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]` never touch `pubspec.yaml` — see "The `[Unreleased]` section" below.
+
 **Version name (`X.Y.Z`):**
 - **Major (X)** — breaking changes (incompatible file format, dropped platform support)
 - **Minor (Y)** — new features (new counter operations, new platform support, new UI capabilities)
 - **Patch (Z)** — bug fixes and small improvements
 
 Version name changes are manual and require reasoning presented to the user before bumping.
+
+**The `[Unreleased]` section (HAB-185):** `docs/CHANGELOG.md` opens with a permanent `## [Unreleased]` section — CHANGELOG entries with no `[user]`/`[app]` tag land there as plain bullets instead of getting their own numbered `## [X.Y.Z]` heading. `ship` never bumps `pubspec.yaml` for these. Entries stay under `## [Unreleased]` permanently — they are never retroactively folded into a later numbered release once one ships. `## [Unreleased]` must always remain at position 0 in the file; new numbered headings are inserted immediately below it, never above.
+
+Do not confuse this with the unrelated, legacy `(unreleased)` marker that appears inside some older entries' date parenthetical (e.g. `## [0.50.29] — 2026-07-17 (unreleased)`) — that predates HAB-185, marks a `[wip]` entry that still received a version number under the old scheme, and is left as-is.
 
 **Build number (`+N`):**
 - Auto-incremented by CI only on the `main` branch, after each pipeline run where at least one platform is successfully distributed.

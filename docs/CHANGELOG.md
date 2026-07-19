@@ -4,6 +4,10 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule. Entries here stay here permanently; they are never folded into a later numbered release (HAB-185).
+
 ## [0.50.39] — 2026-07-19 (PR #287 merged)
 
 ### Changed

@@ -38,7 +38,13 @@ Move each linked issue to the chosen state (PM mapping: **Move issue to state**)
 
 ### 2. Add a CHANGELOG entry
 
-Open `docs/CHANGELOG.md` and prepend a new entry at the top:
+**Release note tagging — required for every entry:**
+
+@skills/manage/ship/resources/changelog-tags.md
+
+Determine this entry's classification tags first (per the table above), then route it:
+
+**If the entry contains at least one `[user]` and/or `[app]` tag** (an app-changing entry — this is what triggers step 4's version bump below): insert a fresh numbered heading **immediately below the `## [Unreleased]` section** (never above it — `## [Unreleased]` must always stay at position 0 in the file):
 
 ```markdown
 ## [X.Y.Z] — YYYY-MM-DD (PR #N merged)
@@ -51,9 +57,13 @@ Open `docs/CHANGELOG.md` and prepend a new entry at the top:
 
 Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor for new features, major for breaking changes.
 
-**Release note tagging — required for every entry:**
+**Otherwise** (entry classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]` — nothing here changed the app): append the bullets to the **top of the bullet list inside the existing `## [Unreleased]` section** (right after its explanatory blurb paragraph) — do **not** create a new numbered heading:
 
-@skills/manage/ship/resources/changelog-tags.md
+```markdown
+- [ci] (PR #N) HAB-XX: <technical detail for developers>
+```
+
+Entries added to `## [Unreleased]` stay there permanently — never move them into a later numbered release once one ships.
 
 ### 3. Regenerate BACKLOG.md
 
@@ -63,7 +73,9 @@ Do not rewrite the rest of the file.
 
 ### 4. Bump the version
 
-Open the version file (from the project config) and update the version name (`X.Y.Z` part) to match the new `[X.Y.Z]` entry added in step 2.
+**Only if step 2 created a new numbered heading** (the entry had a `[user]`/`[app]` tag): open the version file (from the project config) and update the version name (`X.Y.Z` part) to match the new `[X.Y.Z]` entry added in step 2.
+
+**If step 2 instead appended to `## [Unreleased]`:** skip this step entirely — do not touch the version file. `pubspec.yaml`'s version represents the app's build version, not the repo's commit history (`docs/VERSIONING.md`); it only changes when the app itself changes.
 
 Do not touch the build number — CI manages it automatically (see version management in project config).
 
@@ -86,12 +98,15 @@ If no changes are needed for a file, skip it. If the user declines all changes, 
 Stage the files changed above and commit onto the feature branch. Include the product spec and glossary (paths from the project config) only if they were modified in step 5. Also check for an uncommitted knowledge note for this ticket (`git status --short docs/knowledge/notes/HAB-XX*.md`) — `/note` may have written one earlier in the session that never got staged; include it in this commit if found.
 
 ```bash
-git add <changelog> <backlog> <version-file>   # paths from project config
+git add <changelog> <backlog>                  # paths from project config
+# add only if step 4 actually bumped it:
+git add <version-file>                         # paths from project config
 # add only if modified:
 git add <product-spec> <glossary>              # paths from project config
 # add if present and uncommitted:
 git add docs/knowledge/notes/HAB-XX*.md        # catches /note output missed earlier in the session
-git commit -m "chore: release HAB-XX, bump version to X.Y.Z"
+git commit -m "chore: release HAB-XX, bump version to X.Y.Z"     # if version bumped
+git commit -m "chore: release HAB-XX (internal-only, no version bump)"  # if not
 git push
 ```
 
@@ -105,4 +120,4 @@ Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 
 ### 7. Report back
 
-Confirm: issue(s) moved to In QA (or Done), changelog updated, version bumped, docs updated (list which files changed), PR merged. Include the new version number and the PR URL. Remind the user to move the ticket to Done in the PM tool once QA has passed.
+Confirm: issue(s) moved to In QA (or Done), changelog updated (state whether it landed under a new `[X.Y.Z]` heading or `## [Unreleased]`), version bumped or explicitly left untouched, docs updated (list which files changed), PR merged. Include the new version number (if bumped) and the PR URL. Remind the user to move the ticket to Done in the PM tool once QA has passed.
