@@ -619,12 +619,13 @@ void main() {
         await tester.tap(find.byKey(const Key('showup-note-field')));
         await tester.pumpAndSettle();
         await tester.enterText(find.byKey(const Key('showup-note-field')), newNote);
-        // HAB-179: a bare pump() wasn't enough time for the keyboard-show
-        // animation to catch up before ensureVisible ran, on the CI Android
-        // emulator — matches the established convention elsewhere (see
-        // _swipeWizardForward's comment in create_pact_flow_test.dart).
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
+        // HAB-179: a fixed pump(300ms) after enterText was not reliably
+        // enough on the CI Android emulator for ensureVisible to find this
+        // button (still failed live-CI-validated at 300ms) — poll instead of
+        // guessing a duration, matching this file's own waitFor convention
+        // used elsewhere for exactly this kind of hardware-dependent timing.
+        await waitFor(tester, find.byKey(const Key('showup-note-save-button')));
         await tester.ensureVisible(find.byKey(const Key('showup-note-save-button')));
         await tester.pump();
         await tester.tap(find.byKey(const Key('showup-note-save-button')));
