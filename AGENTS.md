@@ -114,14 +114,17 @@ Details: @docs/VERSIONING.md
 
 ## Session start
 
-A `SessionStart` hook (`.claude/hooks/session_start.sh`, matcher `startup` only — deliberately excluding `resume` so reattaching to an in-progress ticket doesn't re-trigger the checklist mid-task — wired in `.claude/settings.local.json`, HAB-186) injects steps 1-4 below as context automatically — Claude does not need to be told to run them. Steps 5-6 still happen inline as part of following that context. This section stays the source of truth for what the checklist does; the hook is just the trigger.
+At the beginning of every new session, before doing anything else, this checklist runs in two parts:
 
-At the beginning of every new session, before doing anything else:
+**Automated by the `SessionStart` hook** (`.claude/hooks/session_start.sh`, matcher `startup` only — deliberately excluding `resume` so reattaching to an in-progress ticket doesn't re-trigger the checklist mid-task — wired in `.claude/settings.local.json`, HAB-186). The hook injects steps 1-4 below as context automatically; Claude does not need to be told to run them. This section stays the source of truth for what the checklist does — the hook is just the trigger:
 
 1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
 2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `skills/configure/style/`). Default to DETAILED if absent.
 3. Invoke the `summarize` skill: `Invoke the summarize skill to present the current backlog from Linear`.
 4. Run `scripts/checkup/due.py --format=session`. If it reports a tier as due, recommend running `/checkup` before picking up a new ticket, alongside the backlog summary.
+
+**Performed by the agent itself**, following on from the hook-injected context above:
+
 5. The skill will summarise what has been done and what is remaining, then ask *"What goes into the next release? Pick an existing ticket or describe something new."*.
 6. Wait for the user's answer before proceeding. If the user wants to describe something new, invoke the `brief` skill before any planning begins.
 
@@ -129,6 +132,7 @@ At the beginning of every new session, before doing anything else:
 
 @docs/FEATURE_WORKFLOW.md
 @docs/TROUBLESHOOT_WORKFLOW.md
+@docs/RESEARCH_WORKFLOW.md
 
 ## Progress signaling
 
