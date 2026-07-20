@@ -104,7 +104,7 @@ When in doubt, use **In QA**.
    - The `implement` skill invokes `review-architecture` and `audit-code` automatically after the PR is open.
 10. **Review loop** — repeat until the user explicitly approves the PR:
     1. Wait for both review skills (`review-architecture`, `audit-code`), the Codecov patch-coverage report, and the user to finish leaving comments.
-    2. For each comment: either fix it in a new commit and push, or post a one-sentence explanation of why the fix will not be implemented.
+    2. For each comment: either fix it in a new commit and push, or post a one-sentence explanation of why the fix will not be implemented — as a threaded reply under the original comment (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies`), prefixed with `[<skill> reply]` matching the finding's own `[review]`/`[audit]` prefix (e.g. `[audit reply]`).
     3. Check the Codecov patch-coverage report (posted automatically as a PR comment by CI). If patch coverage is below the project threshold, add tests for the uncovered lines where it is reasonable to do so — skip lines that require disproportionate test infrastructure (e.g. `ConsumerStatefulWidget` screens with no widget-test harness). Explain skipped lines in a PR comment.
     4. If the cumulative changes since the last review pass are non-trivial (new files, logic changes, interface changes), re-invoke both review skills and return to step 10.1.
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
