@@ -114,6 +114,8 @@ Details: @docs/VERSIONING.md
 
 ## Session start
 
+A `SessionStart` hook (`.claude/hooks/session_start.sh`, matcher `startup|resume`, wired in `.claude/settings.local.json`, HAB-186) injects steps 1-4 below as context automatically — Claude does not need to be told to run them. Steps 5-6 still happen inline as part of following that context. This section stays the source of truth for what the checklist does; the hook is just the trigger.
+
 At the beginning of every new session, before doing anything else:
 
 1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
