@@ -82,7 +82,7 @@ These aliases appear in code, UI copy, analytics, or older docs. Prefer the **ca
 | session, check-in | **showup** | — | Use *showup* everywhere. |
 | commitment | **pact** | EXP-003 "commitment confirmation" | The pact *embodies* a commitment; the confirmation dialog is correctly named, but the entity is a *pact*. |
 | made, "made it to" | **done** | `docs/PRODUCT_SPEC.md` prose | The status and stat field are `done` / `showupsDone`. |
-| cancelled | **stopped** | l10n `filterCancelled`, `pactsCancelled`, `pactCancelledOn` | Domain status is `stopped`. UI still labels it "Cancelled" — a known mismatch; don't rename strings without a deliberate copy pass. |
+| cancelled | **stopped** | l10n `filterCancelled`, `pactsCancelled`, `pactCancelledOn` | Domain status is `stopped`. The l10n *key names* still say `Cancelled`, but their rendered UI copy already says "Stopped" — don't rename the keys without a deliberate pass, since they're referenced throughout the codebase. |
 | weekday (schedule) | **weekly** | legacy class `WeekdaySchedule` / `WeekdayEntry` | The new card UX (`WeeklySlot`), `ScheduleType.weekly`, and the `schedule_type` analytics value all say *weekly*. Legacy `WeekdaySchedule` predates the rename and still loads for old pacts. |
 | session length | **showup duration** | — | `showupDuration` / `Showup.duration`. |
 | notification | **reminder** | `flutter_local_notifications`, `NotificationService` | *Reminder* is the user-facing concept; *notification* is the platform delivery mechanism. Both are correct in their layer. |
