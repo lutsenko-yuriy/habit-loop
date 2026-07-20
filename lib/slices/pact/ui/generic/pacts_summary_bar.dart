@@ -70,9 +70,6 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
 
   double _computedMaxSize = 0.55; // reasonable fallback (= _expandedSize)
 
-  double _dragStartSize = 0.0;
-  double _dragStartGlobalY = 0.0;
-
   @override
   void initState() {
     super.initState();
@@ -133,6 +130,12 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
   double _computeMaxSize(double parentHeight) {
     if (parentHeight <= 0) return _expandedSize;
     return ((parentHeight - _calendarHeight) / parentHeight).clamp(_expandedSize, 1.0);
+  }
+
+  void _toggleArchived(PactListState state) {
+    final wasShowingArchived = state.showArchived;
+    ref.read(pactListViewModelProvider.notifier).toggleArchived();
+    if (!wasShowingArchived) _expandMax();
   }
 
   @override
@@ -215,270 +218,32 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
 
                     return Column(
                       children: [
-                        // ── Sticky: drag handle + pact counts ──
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                          ),
-                          child: SizedBox(
-                            height: headerH,
-                            child: GestureDetector(
-                              key: const Key('pacts-panel-drag-handle'),
-                              onTap: _expand,
-                              behavior: HitTestBehavior.opaque,
-                              onVerticalDragStart: (d) {
-                                _dragStartSize = _controller.size;
-                                _dragStartGlobalY = d.globalPosition.dy;
-                              },
-                              onVerticalDragUpdate: (d) {
-                                if (parentHeight <= 0) return;
-                                final delta = -(d.globalPosition.dy - _dragStartGlobalY) / parentHeight;
-                                _controller.jumpTo(
-                                  (_dragStartSize + delta).clamp(minSize, maxSize),
-                                );
-                              },
-                              onVerticalDragEnd: (d) {
-                                final target = pactsPickSnapTarget(
-                                  velocity: d.velocity.pixelsPerSecond.dy,
-                                  currentSize: _controller.size,
-                                  snapSizes: snapSizes,
-                                  maxSize: _computedMaxSize,
-                                  minSize: _computedMinSize,
-                                );
-                                unawaited(_controller.animateTo(
-                                  target,
-                                  duration: const Duration(milliseconds: 250),
-                                  curve: Curves.easeOut,
-                                ));
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-                                child: Column(
-                                  // mainAxisSize.max: Column fills the SizedBox height so
-                                  // Flexible(Align) never causes a layout overflow.
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 4,
-                                      margin: const EdgeInsets.only(bottom: 10),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.outlineVariant,
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                    Flexible(
-                                      child: Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          summaryLines,
-                                          style: Theme.of(context).textTheme.bodyMedium,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
+                        _PactsPanelHeader(
+                          height: headerH,
+                          summaryLines: summaryLines,
+                          controller: _controller,
+                          parentHeight: parentHeight,
+                          minSize: minSize,
+                          maxSize: maxSize,
+                          snapSizes: snapSizes,
+                          onTap: _expand,
                         ),
 
                         Container(height: dividerH, color: Theme.of(context).dividerColor),
 
                         // ── Scrollable pact list ──
-                        // NotificationListener blocks ScrollNotification from reaching
-                        // the Scaffold so the Material 3 AppBar elevation tint is not
-                        // triggered when the sheet's list is scrolled.
                         Expanded(
-                          child: NotificationListener<ScrollNotification>(
-                            onNotification: (_) => true,
-                            child: CustomScrollView(
-                              controller: scrollController,
-                              slivers: [
-                                // ── Title + add button ──
-                                SliverToBoxAdapter(
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            l10n.pactListTitle,
-                                            style: Theme.of(context).textTheme.titleLarge,
-                                          ),
-                                        ),
-                                        TextButton.icon(
-                                          onPressed: _addPact,
-                                          icon: const Icon(Icons.add, size: 18),
-                                          label: Text(l10n.addPact),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                                // ── Filter chips ──
-                                SliverToBoxAdapter(
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    child: Row(
-                                      children: [
-                                        FilterChip(
-                                          label: Text(l10n.filterActive),
-                                          selected: state.activeFilters.contains(PactStatus.active),
-                                          onSelected: (_) => ref
-                                              .read(pactListViewModelProvider.notifier)
-                                              .toggleFilter(PactStatus.active),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        FilterChip(
-                                          label: Text(l10n.filterDone),
-                                          selected: state.activeFilters.contains(PactStatus.completed),
-                                          onSelected: (_) => ref
-                                              .read(pactListViewModelProvider.notifier)
-                                              .toggleFilter(PactStatus.completed),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        FilterChip(
-                                          label: Text(l10n.filterCancelled),
-                                          selected: state.activeFilters.contains(PactStatus.stopped),
-                                          onSelected: (_) => ref
-                                              .read(pactListViewModelProvider.notifier)
-                                              .toggleFilter(PactStatus.stopped),
-                                        ),
-                                        // Archived chip animates in when first archived pact exists.
-                                        AnimatedSize(
-                                          duration: const Duration(milliseconds: 250),
-                                          curve: Curves.easeInOut,
-                                          child: state.archivedCount > 0
-                                              ? Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    const SizedBox(width: 8),
-                                                    FilterChip(
-                                                      key: const Key('archive-filter-chip'),
-                                                      label: Text(l10n.filterArchived),
-                                                      selected: state.showArchived,
-                                                      onSelected: (_) {
-                                                        ref.read(pactListViewModelProvider.notifier).toggleArchived();
-                                                        if (!state.showArchived) _expandMax();
-                                                      },
-                                                    ),
-                                                  ],
-                                                )
-                                              : const SizedBox.shrink(),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                                // ── Pact list body ──
-                                if (state.isLoading)
-                                  SliverFillRemaining(
-                                    child: Padding(
-                                      padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
-                                      child: const Center(child: CircularProgressIndicator()),
-                                    ),
-                                  )
-                                else if (allEmpty)
-                                  SliverFillRemaining(
-                                    child: Padding(
-                                      padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(ctx).bottom),
-                                      child: Center(child: Text(l10n.noPactsYet)),
-                                    ),
-                                  )
-                                else ...[
-                                  if (unarchivedEntries.isNotEmpty)
-                                    SliverList.separated(
-                                      itemCount: unarchivedEntries.length,
-                                      separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
-                                      itemBuilder: (_, i) => _PactTile(
-                                        entry: unarchivedEntries[i],
-                                        onTap: () => _navigateToPact(unarchivedEntries[i]),
-                                      ),
-                                    ),
-                                  if (state.archivedCount > 0)
-                                    SliverToBoxAdapter(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (unarchivedEntries.isNotEmpty) const Divider(height: 1, indent: 16),
-                                          InkWell(
-                                            key: const Key('show-archived-pacts-row'),
-                                            onTap: () {
-                                              ref.read(pactListViewModelProvider.notifier).toggleArchived();
-                                              if (!state.showArchived) _expandMax();
-                                            },
-                                            child: Padding(
-                                              padding: const EdgeInsets.fromLTRB(20, 14, 16, 8),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      l10n.archivedPacts(state.archivedCount),
-                                                      style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                                                            color: Theme.of(ctx).colorScheme.primary,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                  AnimatedRotation(
-                                                    turns: state.showArchived ? 0.5 : 0.0,
-                                                    duration: const Duration(milliseconds: 250),
-                                                    child: Icon(
-                                                      Icons.keyboard_arrow_down,
-                                                      size: 18,
-                                                      color: Theme.of(ctx).colorScheme.primary,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  SliverToBoxAdapter(
-                                    child: AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 250),
-                                      transitionBuilder: (child, animation) => SizeTransition(
-                                        sizeFactor: CurvedAnimation(
-                                          parent: animation,
-                                          curve: Curves.easeInOut,
-                                        ),
-                                        alignment: Alignment.topCenter,
-                                        child: child,
-                                      ),
-                                      layoutBuilder: (currentChild, previousChildren) => Stack(
-                                        alignment: Alignment.topCenter,
-                                        children: [
-                                          ...previousChildren,
-                                          if (currentChild != null) currentChild,
-                                        ],
-                                      ),
-                                      child: state.showArchived && archivedEntries.isNotEmpty
-                                          ? Column(
-                                              key: const ValueKey('archived-pacts'),
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                for (int i = 0; i < archivedEntries.length; i++) ...[
-                                                  if (i > 0) const Divider(height: 1, indent: 16),
-                                                  _PactTile(
-                                                    entry: archivedEntries[i],
-                                                    onTap: () => _navigateToPact(archivedEntries[i]),
-                                                  ),
-                                                ],
-                                              ],
-                                            )
-                                          : const SizedBox.shrink(),
-                                    ),
-                                  ),
-                                  SliverToBoxAdapter(
-                                    child: SizedBox(height: MediaQuery.viewPaddingOf(ctx).bottom),
-                                  ),
-                                ],
-                              ],
-                            ),
+                          child: _PactListBody(
+                            scrollController: scrollController,
+                            state: state,
+                            unarchivedEntries: unarchivedEntries,
+                            archivedEntries: archivedEntries,
+                            allEmpty: allEmpty,
+                            onAddPact: _addPact,
+                            onToggleFilter: (status) =>
+                                ref.read(pactListViewModelProvider.notifier).toggleFilter(status),
+                            onToggleArchived: () => _toggleArchived(state),
+                            onTapEntry: _navigateToPact,
                           ),
                         ),
                       ],
@@ -490,6 +255,388 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
           },
         );
       },
+    );
+  }
+}
+
+/// Sticky header: drag handle + pact-count summary text.
+///
+/// Owns the drag gesture math (start/update/end) entirely — the parent
+/// [_PactsPanelState] only supplies the [DraggableScrollableController] and
+/// the current [minSize]/[maxSize]/[snapSizes]/[parentHeight] for this build.
+class _PactsPanelHeader extends StatefulWidget {
+  final double height;
+  final String summaryLines;
+  final DraggableScrollableController controller;
+  final double parentHeight;
+  final double minSize;
+  final double maxSize;
+  final List<double> snapSizes;
+  final VoidCallback onTap;
+
+  const _PactsPanelHeader({
+    required this.height,
+    required this.summaryLines,
+    required this.controller,
+    required this.parentHeight,
+    required this.minSize,
+    required this.maxSize,
+    required this.snapSizes,
+    required this.onTap,
+  });
+
+  @override
+  State<_PactsPanelHeader> createState() => _PactsPanelHeaderState();
+}
+
+class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
+  double _dragStartSize = 0.0;
+  double _dragStartGlobalY = 0.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+      ),
+      child: SizedBox(
+        height: widget.height,
+        child: GestureDetector(
+          key: const Key('pacts-panel-drag-handle'),
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          onVerticalDragStart: (d) {
+            _dragStartSize = widget.controller.size;
+            _dragStartGlobalY = d.globalPosition.dy;
+          },
+          onVerticalDragUpdate: (d) {
+            if (widget.parentHeight <= 0) return;
+            final delta = -(d.globalPosition.dy - _dragStartGlobalY) / widget.parentHeight;
+            widget.controller.jumpTo(
+              (_dragStartSize + delta).clamp(widget.minSize, widget.maxSize),
+            );
+          },
+          onVerticalDragEnd: (d) {
+            final target = pactsPickSnapTarget(
+              velocity: d.velocity.pixelsPerSecond.dy,
+              currentSize: widget.controller.size,
+              snapSizes: widget.snapSizes,
+              maxSize: widget.maxSize,
+              minSize: widget.minSize,
+            );
+            unawaited(widget.controller.animateTo(
+              target,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+            ));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+            child: Column(
+              // mainAxisSize.max: Column fills the SizedBox height so
+              // Flexible(Align) never causes a layout overflow.
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      widget.summaryLines,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Horizontal row of status filter chips, plus the archived-pacts chip that
+/// animates in once at least one archived pact exists.
+class _PactFilterChipsRow extends StatelessWidget {
+  final Set<PactStatus> activeFilters;
+  final int archivedCount;
+  final bool showArchived;
+  final ValueChanged<PactStatus> onToggleFilter;
+  final VoidCallback onToggleArchived;
+
+  const _PactFilterChipsRow({
+    required this.activeFilters,
+    required this.archivedCount,
+    required this.showArchived,
+    required this.onToggleFilter,
+    required this.onToggleArchived,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          FilterChip(
+            label: Text(l10n.filterActive),
+            selected: activeFilters.contains(PactStatus.active),
+            onSelected: (_) => onToggleFilter(PactStatus.active),
+          ),
+          const SizedBox(width: 8),
+          FilterChip(
+            label: Text(l10n.filterDone),
+            selected: activeFilters.contains(PactStatus.completed),
+            onSelected: (_) => onToggleFilter(PactStatus.completed),
+          ),
+          const SizedBox(width: 8),
+          FilterChip(
+            label: Text(l10n.filterCancelled),
+            selected: activeFilters.contains(PactStatus.stopped),
+            onSelected: (_) => onToggleFilter(PactStatus.stopped),
+          ),
+          // Archived chip animates in when first archived pact exists.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: archivedCount > 0
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        key: const Key('archive-filter-chip'),
+                        label: Text(l10n.filterArchived),
+                        selected: showArchived,
+                        onSelected: (_) => onToggleArchived(),
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The scrollable body: title/add-pact row, filter chips, and the pact list
+/// (loading / empty / populated), followed by the archived-pacts section.
+class _PactListBody extends StatelessWidget {
+  final ScrollController scrollController;
+  final PactListState state;
+  final List<PactListEntry> unarchivedEntries;
+  final List<PactListEntry> archivedEntries;
+  final bool allEmpty;
+  final VoidCallback onAddPact;
+  final ValueChanged<PactStatus> onToggleFilter;
+  final VoidCallback onToggleArchived;
+  final void Function(PactListEntry) onTapEntry;
+
+  const _PactListBody({
+    required this.scrollController,
+    required this.state,
+    required this.unarchivedEntries,
+    required this.archivedEntries,
+    required this.allEmpty,
+    required this.onAddPact,
+    required this.onToggleFilter,
+    required this.onToggleArchived,
+    required this.onTapEntry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    // NotificationListener blocks ScrollNotification from reaching the
+    // Scaffold so the Material 3 AppBar elevation tint is not triggered
+    // when the sheet's list is scrolled.
+    return NotificationListener<ScrollNotification>(
+      onNotification: (_) => true,
+      child: CustomScrollView(
+        controller: scrollController,
+        slivers: [
+          // ── Title + add button ──
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.pactListTitle,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: onAddPact,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(l10n.addPact),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Filter chips ──
+          SliverToBoxAdapter(
+            child: _PactFilterChipsRow(
+              activeFilters: state.activeFilters,
+              archivedCount: state.archivedCount,
+              showArchived: state.showArchived,
+              onToggleFilter: onToggleFilter,
+              onToggleArchived: onToggleArchived,
+            ),
+          ),
+
+          // ── Pact list body ──
+          if (state.isLoading)
+            SliverFillRemaining(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(context).bottom),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            )
+          else if (allEmpty)
+            SliverFillRemaining(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(context).bottom),
+                child: Center(child: Text(l10n.noPactsYet)),
+              ),
+            )
+          else ...[
+            if (unarchivedEntries.isNotEmpty)
+              SliverList.separated(
+                itemCount: unarchivedEntries.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
+                itemBuilder: (_, i) => _PactTile(
+                  entry: unarchivedEntries[i],
+                  onTap: () => onTapEntry(unarchivedEntries[i]),
+                ),
+              ),
+            SliverToBoxAdapter(
+              child: _ArchivedPactsSection(
+                showDividerAboveToggle: unarchivedEntries.isNotEmpty,
+                archivedCount: state.archivedCount,
+                showArchived: state.showArchived,
+                archivedEntries: archivedEntries,
+                onToggleArchived: onToggleArchived,
+                onTapEntry: onTapEntry,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Archived-pacts toggle row (visible once ≥1 archived pact exists) and the
+/// animated list of archived entries it reveals.
+class _ArchivedPactsSection extends StatelessWidget {
+  final bool showDividerAboveToggle;
+  final int archivedCount;
+  final bool showArchived;
+  final List<PactListEntry> archivedEntries;
+  final VoidCallback onToggleArchived;
+  final void Function(PactListEntry) onTapEntry;
+
+  const _ArchivedPactsSection({
+    required this.showDividerAboveToggle,
+    required this.archivedCount,
+    required this.showArchived,
+    required this.archivedEntries,
+    required this.onToggleArchived,
+    required this.onTapEntry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (archivedCount > 0) ...[
+          if (showDividerAboveToggle) const Divider(height: 1, indent: 16),
+          InkWell(
+            key: const Key('show-archived-pacts-row'),
+            onTap: onToggleArchived,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.archivedPacts(archivedCount),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: showArchived ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 250),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, animation) => SizeTransition(
+            sizeFactor: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeInOut,
+            ),
+            alignment: Alignment.topCenter,
+            child: child,
+          ),
+          layoutBuilder: (currentChild, previousChildren) => Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              ...previousChildren,
+              if (currentChild != null) currentChild,
+            ],
+          ),
+          child: showArchived && archivedEntries.isNotEmpty
+              ? Column(
+                  key: const ValueKey('archived-pacts'),
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (int i = 0; i < archivedEntries.length; i++) ...[
+                      if (i > 0) const Divider(height: 1, indent: 16),
+                      _PactTile(
+                        entry: archivedEntries[i],
+                        onTap: () => onTapEntry(archivedEntries[i]),
+                      ),
+                    ],
+                  ],
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 }
