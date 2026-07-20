@@ -1,8 +1,10 @@
 #!/bin/bash
-# SessionStart hook — fires on session startup/resume (matcher "startup|resume"
-# in .claude/settings.local.json) and injects the AGENTS.md "Session start"
-# checklist (steps 1-4) as additionalContext so Claude runs it automatically
-# instead of relying on the manual instruction alone. See HAB-186.
+# SessionStart hook — fires on brand-new sessions only (matcher "startup" in
+# .claude/settings.local.json, deliberately excluding "resume" so reattaching
+# to an in-progress ticket via --resume/--continue doesn't re-inject "ask what
+# goes into the next release?" mid-task) and injects the AGENTS.md "Session
+# start" checklist (steps 1-4) as additionalContext so Claude runs it
+# automatically instead of relying on the manual instruction alone. See HAB-186.
 #
 # What this script checks directly (cheap, deterministic):
 #   - LINEAR_API_KEY / LM_API_TOKEN presence in the environment (CLAUDE.local.md)
