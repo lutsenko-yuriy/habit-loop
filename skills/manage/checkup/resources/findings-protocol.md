@@ -32,7 +32,7 @@ Every finding — inline-fixed or deferred — gets a block in the run's `docs/k
 
 ## 4. Ledger deadline-line format
 
-Deferred findings get a row in `docs/knowledge/checkups/README.md`'s **Open findings** table — no individual Linear ticket is filed (per ADR-0003):
+Deferred findings get a row in `docs/knowledge/checkups/LEDGER.md`'s **Open findings** table — no individual Linear ticket is filed (per ADR-0003):
 
 ```markdown
 | CHK-YYYY-MM-DD-<tier>-<n> | YYYY-MM-DD | light\|heavy | <dimension> | <quadrant> | <one-line summary> | YYYY-MM-DD | [CHK-YYYY-MM-DD-<tier>](CHK-YYYY-MM-DD-<tier>.md) |

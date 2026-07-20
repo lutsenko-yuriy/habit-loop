@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """due.py — Due-status detector for the two-tier periodic code-quality checkup.
 
-Reads the cadence table in docs/knowledge/checkups/README.md and reports
+Reads the cadence table in docs/knowledge/checkups/LEDGER.md and reports
 which tier(s) — light, heavy — are due for review this period, per ADR-0003.
 The report itself is advisory (never blocks CI or commits) and always exits
 0; only setup errors (missing pubspec.yaml, bad --format) exit non-zero.
@@ -23,7 +23,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-LEDGER_REL_PATH = Path('docs/knowledge/checkups/README.md')
+LEDGER_REL_PATH = Path('docs/knowledge/checkups/LEDGER.md')
 
 _CADENCE_SECTION_RE = re.compile(r'^## Cadence & due status\s*$', re.MULTILINE)
 _NEXT_SECTION_RE = re.compile(r'^## ', re.MULTILINE)
