@@ -41,7 +41,7 @@ Create `docs/knowledge/checkups/CHK-YYYY-MM-DD-<tier>.md` from `docs/knowledge/c
 
 ### 5. Update the ledger
 
-In `docs/knowledge/checkups/README.md`:
+In `docs/knowledge/checkups/LEDGER.md`:
 - **Cadence & due status** — set the run tier's `Last run` to today's date and `Period covered` to the current period (`YYYY-MM` for light, `YYYY-Qn` for heavy — same math `due.py` uses).
 - **Open findings** — append one row per deferred finding, per the findings protocol's ID/deadline format.
 - **Resolved findings** — move any rows for findings this run closed out (fixed and verified, or superseded).
@@ -75,4 +75,4 @@ One line per tier run: dimensions walked, findings fixed inline, findings deferr
 - An inline fix must stay within Boy Scout Rule scope — small and safe without its own test-writing cycle. Anything larger gets deferred, not force-fitted into this skill's commit.
 - Do not touch `## Resolved findings` rows other than moving matching IDs in from `## Open findings` — never fabricate a resolution.
 - Do not merge the PR opened in step 6 — that's the user's call.
-- Never modify `docs/knowledge/checkups/README.md`'s table structure — only the rows, per the format WU1 established.
+- Never modify `docs/knowledge/checkups/LEDGER.md`'s table structure — only the rows, per the format WU1 established.
