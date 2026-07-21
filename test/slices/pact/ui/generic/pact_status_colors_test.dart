@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 void main() {
   group('PactStatusColors.cupertino', () {

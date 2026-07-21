@@ -9,6 +9,8 @@ import 'package:habit_loop/slices/pact/ui/generic/option_tile.dart';
 import 'package:habit_loop/slices/pact/ui/generic/schedule_details_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/slot_schedule_editor.dart';
 import 'package:habit_loop/slices/pact/ui/ios/cupertino_picker_sheet.dart';
+import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class ScheduleStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -36,7 +38,7 @@ class ScheduleStepIos extends StatelessWidget {
     return options.map((option) {
       final (type, label) = option;
       return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         child: OptionTile(
           isSelected: state.scheduleType == type,
           label: label,
@@ -56,19 +58,19 @@ class ScheduleStepIos extends StatelessWidget {
     final isSlot = state.scheduleType == ScheduleType.slot;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           l10n.scheduleStep,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: AppTypography.wizardStepTitle,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         if (!isSlot) ...[
           Text(l10n.scheduleTypeLabel),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           ..._scheduleOptions(context),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           if (state.scheduleType != null)
             ScheduleDetailsIos(
               state: state,
@@ -76,7 +78,7 @@ class ScheduleStepIos extends StatelessWidget {
               onScheduleChanged: onScheduleChanged,
             ),
         ] else ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           ScheduleDetailsIos(
             state: state,
             l10n: l10n,

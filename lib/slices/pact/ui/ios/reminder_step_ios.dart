@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/option_tile.dart';
+import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class ReminderStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -31,23 +33,20 @@ class ReminderStepIos extends StatelessWidget {
     final unselectedColor = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           l10n.reminderStep,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTypography.wizardStepTitle,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(l10n.reminderLabel),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         ...options.map((option) {
           final isSelected = state.reminderOffset == option.offset;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: OptionTile(
               isSelected: isSelected,
               label: option.label,

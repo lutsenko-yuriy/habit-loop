@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 
 class PactDurationStepIos extends StatelessWidget {
@@ -28,17 +30,14 @@ class PactDurationStepIos extends StatelessWidget {
     final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           l10n.pactDurationStep,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTypography.wizardStepTitle,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         DateRowTile(
           label: l10n.startDateLabel,
           value: formatLocaleDate(state.startDate),
@@ -51,7 +50,7 @@ class PactDurationStepIos extends StatelessWidget {
             onDateChanged: onStartDateChanged,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         DateRowTile(
           label: l10n.endDateLabel,
           value: formatLocaleDate(state.endDate),

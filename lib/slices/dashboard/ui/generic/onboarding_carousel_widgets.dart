@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 /// Shared page-indicator dots row for the onboarding carousel.
 ///

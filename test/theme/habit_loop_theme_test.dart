@@ -8,7 +8,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 void main() {
   testWidgets('HabitLoopApp applies the shared Habit Loop brand color', (tester) async {

@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 class WizardStyle {
   final Color activeStepColor;

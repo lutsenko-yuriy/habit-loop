@@ -5,6 +5,8 @@ import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/tappable_summary_row.dart';
 import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
+import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class SummaryStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -31,13 +33,13 @@ class SummaryStepIos extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             children: [
-              const SizedBox(height: 16),
-              Text(l10n.wizardSummaryTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
+              Text(l10n.wizardSummaryTitle, style: AppTypography.wizardStepTitle),
+              const SizedBox(height: AppSpacing.lg),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
                   color: style.cardColor,
                   borderRadius: BorderRadius.circular(12),
@@ -86,12 +88,12 @@ class SummaryStepIos extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: SizedBox(
             width: double.infinity,
             child: CupertinoButton.filled(
