@@ -682,7 +682,7 @@ class _PactTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
             decoration: BoxDecoration(
               color: badgeBg,
               borderRadius: BorderRadius.circular(10),

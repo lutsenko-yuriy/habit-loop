@@ -35,7 +35,7 @@ class HabitNameStepIos extends StatelessWidget {
         focusNode: fn,
         autofocus: true,
         onChanged: onHabitNameChanged,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s14),
       ),
       buildWarning: (ctx, l10n) => Container(
         key: const Key('pact-creation-habit-name-commitment-rules'),
