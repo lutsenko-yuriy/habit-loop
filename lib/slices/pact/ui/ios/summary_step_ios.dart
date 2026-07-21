@@ -33,13 +33,13 @@ class SummaryStepIos extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
             children: [
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.s16),
               Text(l10n.wizardSummaryTitle, style: AppTypography.wizardStepTitle),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.s16),
               Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
                   color: style.cardColor,
                   borderRadius: BorderRadius.circular(12),
@@ -88,12 +88,12 @@ class SummaryStepIos extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: SizedBox(
             width: double.infinity,
             child: CupertinoButton.filled(

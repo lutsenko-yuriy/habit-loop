@@ -33,20 +33,20 @@ class ReminderStepIos extends StatelessWidget {
     final unselectedColor = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       children: [
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.s16),
         Text(
           l10n.reminderStep,
           style: AppTypography.wizardStepTitle,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.s8),
         Text(l10n.reminderLabel),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.s16),
         ...options.map((option) {
           final isSelected = state.reminderOffset == option.offset;
           return Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
             child: OptionTile(
               isSelected: isSelected,
               label: option.label,
