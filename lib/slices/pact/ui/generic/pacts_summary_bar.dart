@@ -332,7 +332,7 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
             ));
           },
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, AppSpacing.s12),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s10, AppSpacing.s20, AppSpacing.s12),
             child: Column(
               // mainAxisSize.max: Column fills the SizedBox height so
               // Flexible(Align) never causes a layout overflow.
@@ -340,7 +340,7 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
                 Container(
                   width: 36,
                   height: AppSpacing.s4,
-                  margin: const EdgeInsets.only(bottom: 10),
+                  margin: const EdgeInsets.only(bottom: AppSpacing.s10),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
@@ -472,7 +472,7 @@ class _PactListBody extends StatelessWidget {
           // ── Title + add button ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, AppSpacing.s4, AppSpacing.s12, AppSpacing.s4),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s4, AppSpacing.s12, AppSpacing.s4),
               child: Row(
                 children: [
                   Expanded(
@@ -579,7 +579,7 @@ class _ArchivedPactsSection extends StatelessWidget {
             key: const Key('show-archived-pacts-row'),
             onTap: onToggleArchived,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, AppSpacing.s16, AppSpacing.s8),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s14, AppSpacing.s16, AppSpacing.s8),
               child: Row(
                 children: [
                   Expanded(
