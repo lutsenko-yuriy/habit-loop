@@ -95,7 +95,7 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                       ),
                     ),
                 buildRestartBanner: (ctx) => const Padding(
-                      padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, 0),
+                      padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s0),
                       child: RestartRequiredBanner(
                         key: Key('debug-backend-restart-banner'),
                         color: Colors.amber,

@@ -97,7 +97,7 @@ class _WizardPageScaffoldState extends State<WizardPageScaffold> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s0, AppSpacing.s16, AppSpacing.s12),
           child: Text(
             widget.hintText,
             textAlign: TextAlign.center,
