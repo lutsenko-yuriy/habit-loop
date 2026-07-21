@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
 import 'package:habit_loop/theme/colors.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 /// Shared page-indicator dots row for the onboarding carousel.
 ///
@@ -24,7 +25,7 @@ class OnboardingDotsRow extends StatelessWidget {
         final active = i == currentIndex;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s16),
           width: active ? 20 : 8,
           height: 8,
           decoration: BoxDecoration(
@@ -47,7 +48,7 @@ class OnboardingSlideWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -57,13 +58,13 @@ class OnboardingSlideWidget extends StatelessWidget {
               child: SvgPicture.asset(slide.assetPath, width: 200, fit: BoxFit.contain),
             ),
           ),
-          const Flexible(child: SizedBox(height: 32)),
+          const Flexible(child: SizedBox(height: AppSpacing.s32)),
           Text(
             slide.title(l10n),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Text(
             slide.body(l10n),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),

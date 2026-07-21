@@ -11,6 +11,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_carousel_scaff
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_sign_in_controller.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_android.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class OnboardingCarouselAndroid extends ConsumerWidget {
   const OnboardingCarouselAndroid({super.key, required this.onCreatePact});
@@ -41,7 +42,7 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
                 child: Text(l10n.createPact),
               ),
               if (featureFlags.networkSyncEnabled && (isAnonymous || isSigningIn)) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 OutlinedButton(
                   onPressed: isSigningIn
                       ? null
@@ -58,21 +59,21 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             SizedBox(
-                              width: 16,
-                              height: 16,
+                              width: AppSpacing.s16,
+                              height: AppSpacing.s16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Theme.of(ctx).colorScheme.primary,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpacing.s8),
                             Text(l10n.fetchingPacts),
                           ],
                         )
                       : Text(l10n.signInWithGoogle),
                 ),
               ],
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               if (featureFlags.languageSelectionEnabled)
                 TextButton(
                   onPressed: () => unawaited(openLanguagePicker(
@@ -109,7 +110,7 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
                   ),
                   child: const Text('Remote Config'),
                 ),
-              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + AppSpacing.s8),
             ],
           ),
         ),

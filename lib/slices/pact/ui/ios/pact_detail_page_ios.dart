@@ -8,6 +8,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
+import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -126,7 +127,7 @@ class _PactDetailContent extends StatelessWidget {
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
+      padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
         // Habit name + status badge
         Row(
@@ -140,41 +141,41 @@ class _PactDetailContent extends StatelessWidget {
             StatusBadge(text: statusText, color: statusColor),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.s24),
 
         // Stats cards
         SectionHeader(title: l10n.sectionStats, labelColor: CupertinoColors.systemGrey),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
             Expanded(child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone))),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
             if (pact.status == PactStatus.active)
               Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
             else if (pact.status == PactStatus.stopped)
               Expanded(child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
-            if (pact.status != PactStatus.completed) const SizedBox(width: 8),
+            if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
             Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.s24),
 
         // Time details
         SectionHeader(title: l10n.sectionTimeline, labelColor: CupertinoColors.systemGrey),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         DateRowTile(
           label: l10n.pactStartDate,
           value: formatLocaleDate(pact.startDate),
           valueColor: CupertinoColors.systemGrey,
           backgroundColor: fill,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
           DateRowTile(
             label: l10n.pactStoppedDate,
@@ -182,7 +183,7 @@ class _PactDetailContent extends StatelessWidget {
             valueColor: CupertinoColors.systemGrey,
             backgroundColor: fill,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
         ],
         DateRowTile(
           label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
@@ -191,17 +192,17 @@ class _PactDetailContent extends StatelessWidget {
           backgroundColor: fill,
         ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           DateRowTile(label: l10n.daysRemaining(daysLeft), backgroundColor: fill),
         ],
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         DateRowTile(
           label: l10n.summaryShowupDuration,
           value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
           valueColor: CupertinoColors.systemGrey,
           backgroundColor: fill,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         DateRowTile(
           label: l10n.summaryReminder,
           value: reminderDescription(l10n, pact.reminderOffset),
@@ -211,7 +212,7 @@ class _PactDetailContent extends StatelessWidget {
 
         // View Timeline entry point (flag-gated)
         if (pactTimelineEnabled && onOpenTimeline != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           CupertinoButton(
             key: const Key('pact-detail-timeline-button'),
             padding: EdgeInsets.zero,
@@ -222,7 +223,7 @@ class _PactDetailContent extends StatelessWidget {
 
         // Editable note section for inactive pacts
         if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
           PactNoteSection(
             savedNote: pact.stopReason,
             isSaving: state.isSavingNote,
@@ -255,9 +256,9 @@ class _PactDetailContent extends StatelessWidget {
 
         // Archive section for completed and stopped pacts
         if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
           SectionHeader(title: l10n.sectionArchive, labelColor: CupertinoColors.systemGrey),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           CupertinoButton(
             key: const Key('archive-pact-button'),
             onPressed: state.isArchiving ? null : () => onArchivePact(!pact.archived),
@@ -269,14 +270,14 @@ class _PactDetailContent extends StatelessWidget {
 
         // Stop pact button
         if (pact.status == PactStatus.active) ...[
-          const SizedBox(height: 32),
+          const SizedBox(height: AppSpacing.s32),
           if (state.stopError != null) ...[
             Text(
               l10n.stopPactError,
               style: const TextStyle(color: CupertinoColors.destructiveRed),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
           ],
           CupertinoButton(
             onPressed: state.isStopping ? null : () => _showStopDialog(context),
@@ -303,9 +304,9 @@ class _PactDetailContent extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               Text(l10n.stopPactBody),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               CupertinoTextField(
                 controller: reasonController,
                 placeholder: l10n.stopPactReasonHint,
@@ -345,7 +346,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
         color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
         borderRadius: BorderRadius.circular(10),
@@ -354,7 +355,7 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey)),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         ],
       ),

@@ -10,6 +10,7 @@ import 'package:habit_loop/slices/pact/ui/generic/wizard_step_indicator.dart';
 import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
 import 'package:habit_loop/slices/pact/ui/ios/habit_name_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/reminder_step_ios.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 // iOS edit wizard: 3-page PageView (habit name → reminder → summary). × dismisses without saving.
 class PactEditPageIos extends StatelessWidget {
@@ -158,14 +159,14 @@ class _EditSummaryStepIos extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
             children: [
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               Text(l10n.wizardSummaryTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               Container(
                 key: const Key('pact-edit-summary-card'),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(color: style.cardColor, borderRadius: BorderRadius.circular(12)),
                 child: Column(
                   children: [
@@ -188,7 +189,7 @@ class _EditSummaryStepIos extends StatelessWidget {
                 ),
               ),
               if (saveError != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 Text(
                   l10n.pactEditSaveError,
                   key: const Key('pact-edit-save-error'),
@@ -199,12 +200,12 @@ class _EditSummaryStepIos extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ],
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: SizedBox(
             width: double.infinity,
             child: CupertinoButton.filled(

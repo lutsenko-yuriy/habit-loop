@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show Icons, InkWell;
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/slices/pact/ui/generic/summary_row.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class TappableSummaryRow extends StatelessWidget {
   final String tapKey;
@@ -43,7 +44,7 @@ class TappableSummaryRow extends StatelessWidget {
         key: Key(tapKey),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
           child: content,
         ),
       );

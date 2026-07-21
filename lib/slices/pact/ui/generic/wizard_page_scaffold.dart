@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/widgets.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class WizardPageScaffold extends StatefulWidget {
   final int currentPage;
@@ -96,7 +97,7 @@ class _WizardPageScaffoldState extends State<WizardPageScaffold> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s12),
           child: Text(
             widget.hintText,
             textAlign: TextAlign.center,

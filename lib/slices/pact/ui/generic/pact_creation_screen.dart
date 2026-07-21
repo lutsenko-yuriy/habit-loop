@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/ui/android/pact_creation_page_android.dar
 import 'package:habit_loop/slices/pact/ui/generic/commitment_dialog_content.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_creation_page_ios.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class PactCreationScreen extends ConsumerStatefulWidget {
   const PactCreationScreen({super.key});
@@ -76,7 +77,7 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
       builder: (dialogContext) {
         return Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.s20),
             child: CommitmentDialogContent(
               variant: variant,
               habitName: ref.read(pactCreationViewModelProvider).habitName,

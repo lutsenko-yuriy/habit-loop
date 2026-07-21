@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class DateRowTile extends StatelessWidget {
   final String label;
@@ -24,14 +25,14 @@ class DateRowTile extends StatelessWidget {
         ? Row(
             children: [
               Expanded(child: Text(label)),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(value!, style: TextStyle(color: valueColor)),
             ],
           )
         : Text(label);
 
     Widget tile = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(cornerRadius),

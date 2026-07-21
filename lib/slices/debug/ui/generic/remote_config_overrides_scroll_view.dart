@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/seed_section.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 typedef RemoteConfigOverridesSlots = ({
   /// Optional builder for a section rendered above seed data.
@@ -70,11 +71,11 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
         slots.buildSectionDivider(context),
         if (showBackendRestartBanner) ...[
           slots.buildRestartBanner(context),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
         ],
         if (toggleEntries.isNotEmpty) ...[
           slots.buildSectionHeader(context, 'FEATURE TOGGLES'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           for (final entry in toggleEntries) ...[
             slots.buildEntryTile(context, entry, () => onEntryTap(entry)),
             slots.buildEntrySeparator(context),
@@ -85,13 +86,13 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
         ],
         if (experimentEntries.isNotEmpty) ...[
           slots.buildSectionHeader(context, 'A/B TESTS'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           for (final entry in experimentEntries) ...[
             slots.buildEntryTile(context, entry, () => onEntryTap(entry)),
             slots.buildEntrySeparator(context),
           ],
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
       ],
     );
   }

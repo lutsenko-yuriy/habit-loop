@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/option_tile.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class ReminderStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -31,17 +32,17 @@ class ReminderStepAndroid extends StatelessWidget {
     final unselectedColor = Theme.of(context).colorScheme.surfaceContainerHighest;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         Text(l10n.reminderStep, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         Text(l10n.reminderLabel),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         ...options.map((option) {
           final isSelected = state.reminderOffset == option.offset;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
             child: OptionTile(
               isSelected: isSelected,
               label: option.label,

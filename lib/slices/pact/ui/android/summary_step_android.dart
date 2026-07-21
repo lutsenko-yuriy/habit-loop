@@ -4,6 +4,7 @@ import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/tappable_summary_row.dart';
 import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class SummaryStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -31,13 +32,13 @@ class SummaryStepAndroid extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
             children: [
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               Text(l10n.wizardSummaryTitle, style: theme.textTheme.headlineSmall),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
                   color: style.cardColor,
                   borderRadius: BorderRadius.circular(12),
@@ -91,12 +92,12 @@ class SummaryStepAndroid extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: SizedBox(
             width: double.infinity,
             child: FilledButton(

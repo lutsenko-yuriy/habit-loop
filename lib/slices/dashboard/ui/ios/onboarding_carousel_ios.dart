@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_sign_in_contro
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/ios/language_picker_dialog_ios.dart';
 import 'package:habit_loop/slices/debug/ui/ios/remote_config_overrides_page_ios.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class OnboardingCarouselIos extends ConsumerWidget {
   const OnboardingCarouselIos({super.key, required this.onCreatePact});
@@ -43,7 +44,7 @@ class OnboardingCarouselIos extends ConsumerWidget {
                 child: Text(l10n.createPact),
               ),
               if (featureFlags.networkSyncEnabled && (isAnonymous || isSigningIn)) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 CupertinoButton(
                   onPressed: isSigningIn
                       ? null
@@ -59,14 +60,14 @@ class OnboardingCarouselIos extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const CupertinoActivityIndicator(),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpacing.s8),
                             Text(l10n.fetchingPacts),
                           ],
                         )
                       : Text(l10n.signInWithGoogle),
                 ),
               ],
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               if (featureFlags.languageSelectionEnabled)
                 CupertinoButton(
                   padding: EdgeInsets.zero,
@@ -106,7 +107,7 @@ class OnboardingCarouselIos extends ConsumerWidget {
                     ),
                   ),
                 ),
-              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + AppSpacing.s8),
             ],
           ),
         ),

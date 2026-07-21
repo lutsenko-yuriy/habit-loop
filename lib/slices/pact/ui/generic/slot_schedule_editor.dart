@@ -3,6 +3,7 @@ import 'dart:async' show unawaited;
 import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 // Card-based SlotSchedule editor. showTimePicker is platform-injected (null = cancelled).
 // Test keys: slot-card-<i>, remove-slot-<i>, add-weekly-slot, add-monthly-slot,
@@ -66,7 +67,7 @@ class SlotScheduleEditor extends StatelessWidget {
             onRemove: () => _removeSlot(index),
           );
         }),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
             TextButton.icon(
@@ -75,7 +76,7 @@ class SlotScheduleEditor extends StatelessWidget {
               icon: const Icon(Icons.add, size: 18),
               label: Text(l10n.scheduleCardWeekly),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             TextButton.icon(
               key: const Key('add-monthly-slot'),
               onPressed: _addMonthlySlot,
@@ -113,8 +114,8 @@ class _SlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.s12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
@@ -183,7 +184,7 @@ class _WeeklySlotContent extends StatelessWidget {
         Row(
           children: [
             Icon(Icons.calendar_view_week, size: 16, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Text(l10n.scheduleCardWeekly, style: Theme.of(context).textTheme.labelLarge),
             const Spacer(),
             Visibility(
@@ -202,14 +203,14 @@ class _WeeklySlotContent extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.s10),
         _WeekdayToggleRow(
           slotIndex: slotIndex,
           selected: slot.weekdays,
           l10n: l10n,
           onToggle: _toggleWeekday,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.s10),
         Align(
           alignment: Alignment.centerRight,
           child: _TimeChipButton(
@@ -252,7 +253,7 @@ class _MonthlySlotContent extends StatelessWidget {
         Row(
           children: [
             Icon(Icons.calendar_month, size: 16, color: theme.colorScheme.primary),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Text(l10n.scheduleCardMonthly, style: theme.textTheme.labelLarge),
             const Spacer(),
             Visibility(
@@ -271,11 +272,11 @@ class _MonthlySlotContent extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.s10),
         Row(
           children: [
             Text(l10n.dayOfMonthLabel, style: theme.textTheme.bodyMedium),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             DropdownButton<int>(
               key: Key('day-of-month-$slotIndex'),
               value: slot.dayOfMonth,
@@ -341,8 +342,8 @@ class _WeekdayToggleRow extends StatelessWidget {
             onTap: () => onToggle(weekday),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
               decoration: BoxDecoration(
                 color: isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(6),
@@ -388,7 +389,7 @@ class _TimeChipButton extends StatelessWidget {
       key: Key('time-chip-$slotIndex'),
       onTap: () => unawaited(_pick(context)),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
         decoration: BoxDecoration(
           color: theme.colorScheme.primary,
           borderRadius: BorderRadius.circular(8),

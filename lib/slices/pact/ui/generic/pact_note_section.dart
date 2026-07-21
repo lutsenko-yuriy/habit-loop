@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 
 typedef PactNoteSlots = ({
@@ -66,9 +67,9 @@ class _PactNoteSectionState extends State<PactNoteSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(title: l10n.pactNoteLabel, labelColor: widget.labelColor),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         widget.slots.buildNoteField(context, _controller),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: _controller,
           builder: (context, value, _) {
@@ -82,7 +83,7 @@ class _PactNoteSectionState extends State<PactNoteSection> {
           },
         ),
         if (widget.noteError != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             l10n.pactNoteError,
             style: TextStyle(color: widget.errorColor),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class ShowupDurationStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -19,20 +20,20 @@ class ShowupDurationStepAndroid extends StatelessWidget {
     final currentMinutes = state.showupDuration?.inMinutes ?? 10;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         Text(l10n.showupDurationStep, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         Text(l10n.showupDurationLabel),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.s24),
         Center(
           child: Text(
             l10n.showupDurationMinutes(currentMinutes),
             style: Theme.of(context).textTheme.displaySmall,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         Slider(
           value: currentMinutes.toDouble(),
           min: 1,

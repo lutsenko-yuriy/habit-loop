@@ -7,6 +7,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 typedef DashboardShowupTileBuilder = Widget Function(
   BuildContext context,
@@ -104,7 +105,7 @@ class _CalendarStrip extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12, horizontal: AppSpacing.s8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(state.calendarDays.length, (index) {
@@ -135,7 +136,7 @@ class _CalendarStrip extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.s4),
                 ShowupStatusDots(
                   showups: entry.showups,
                   date: entry.date,
@@ -168,7 +169,7 @@ class _NoPactsCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -177,7 +178,7 @@ class _NoPactsCta extends StatelessWidget {
             style: TextStyle(color: noPactsTextColor),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.s20),
           buildButton(context, onCreatePact),
         ],
       ),
@@ -203,7 +204,7 @@ class _ShowupList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: showups.length,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
       itemBuilder: (context, index) {
         final showup = showups[index];
         return buildShowupTile(

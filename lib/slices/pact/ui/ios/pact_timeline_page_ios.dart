@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_formatters.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_spine.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 import 'package:habit_loop/theme/colors.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 // ── Public page widget ─────────────────────────────────────────────────────────
 
@@ -121,7 +122,7 @@ class _TimelineList extends StatelessWidget {
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return SingleChildScrollView(
-      padding: EdgeInsets.only(top: 8, bottom: 24 + bottomInset),
+      padding: EdgeInsets.only(top: AppSpacing.s8, bottom: AppSpacing.s24 + bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
@@ -181,7 +182,8 @@ class _SpineItem extends StatelessWidget {
           Flexible(
             flex: 382,
             child: Padding(
-              padding: EdgeInsets.only(top: vertPad, bottom: vertPad + extraBottomPad, left: 16, right: 6),
+              padding: EdgeInsets.only(
+                  top: vertPad, bottom: vertPad + extraBottomPad, left: AppSpacing.s16, right: AppSpacing.s6),
               child: Align(
                 alignment: Alignment.topRight,
                 child: _MilestoneDateContent(milestone: milestone),
@@ -206,7 +208,7 @@ class _SpineItem extends StatelessWidget {
           Flexible(
             flex: 618,
             child: Padding(
-              padding: EdgeInsets.only(top: vertPad, bottom: vertPad + extraBottomPad, right: 16),
+              padding: EdgeInsets.only(top: vertPad, bottom: vertPad + extraBottomPad, right: AppSpacing.s16),
               child: _MilestoneLabelContent(milestone: milestone, l10n: l10n),
             ),
           ),
@@ -243,7 +245,7 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Container(height: 0.5, color: sep),
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 7),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
           child: Text(
             label,
             textAlign: TextAlign.center,
@@ -352,9 +354,9 @@ class _PactCreatedLabel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.timelinePactCreated, style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(m.habitName, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             l10n.pactPlannedUntil(formatLocaleDate(m.plannedEndDate)),
             style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: CupertinoColors.systemGrey),
@@ -374,7 +376,7 @@ class _CurrentStateLabel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.timelineCurrentState, style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey)),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(l10n.timelineShowupsRemaining(m.showupsRemaining), style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       );
@@ -396,7 +398,7 @@ class _PactConcludedLabel extends StatelessWidget {
       children: [
         Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         if (m.note != null && m.note!.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(m.note!, style: const TextStyle(fontSize: 13)),
         ],
       ],
@@ -433,7 +435,7 @@ class _NotedShowupLabel extends StatelessWidget {
             milestoneTitle(l10n, m),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(m.note, style: const TextStyle(fontSize: 13)),
         ],
       );

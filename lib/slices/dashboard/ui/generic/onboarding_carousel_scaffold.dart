@@ -7,6 +7,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_carousel_widgets.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_view_model.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 /// Shared onboarding carousel body — owns [PageController] lifecycle and
 /// the [ref.listen] page-animation hook. Platform scaffold chrome lives in
@@ -85,7 +86,7 @@ class _OnboardingCarouselScaffoldState extends ConsumerState<OnboardingCarouselS
           inactiveDotColor: widget.inactiveDotColor,
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
           child: widget.buildActions(context, isSigningIn, isAnonymous),
         ),
       ],

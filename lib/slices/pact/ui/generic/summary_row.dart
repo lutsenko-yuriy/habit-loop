@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 /// Platform-agnostic two-column label/value row used in the commitment step's
 /// summary card. Extracted from `commitment_step_ios.dart` and
@@ -28,7 +29,7 @@ class SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
