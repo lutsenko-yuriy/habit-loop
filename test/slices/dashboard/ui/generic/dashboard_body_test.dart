@@ -38,6 +38,7 @@ Widget _wrap(
   bool hasPacts = true,
   ValueChanged<int>? onDaySelected,
   Future<void> Function(String)? onShowupTapped,
+  TextScaler? textScaler,
 }) {
   return MaterialApp(
     localizationsDelegates: const [
@@ -47,6 +48,12 @@ Widget _wrap(
       GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: AppLocalizations.supportedLocales,
+    builder: textScaler == null
+        ? null
+        : (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+              child: child!,
+            ),
     home: Scaffold(
       body: DashboardBody(
         state: state,
@@ -88,6 +95,97 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('2'));
       expect(selected, 0);
+    });
+  });
+
+  group('DashboardBody — calendar strip accessibility', () {
+    testWidgets('day buttons meet the Android and iOS tap-target guidelines', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(_wrap(_state([])));
+      await tester.pump();
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+      handle.dispose();
+    });
+
+    testWidgets('selected day exposes a selected semantics flag', (tester) async {
+      final handle = tester.ensureSemantics();
+      final days = List.generate(
+          7,
+          (i) => CalendarDayEntry(
+                date: DateTime(2026, 6, i + 2),
+                showups: const [],
+              ));
+      final state = DashboardState(
+        calendarDays: days,
+        selectedDayIndex: 3,
+        isLoading: false,
+        pactNames: const {},
+        todayIndex: 6, // deliberately distinct from selectedDayIndex/index 0 so "today" wording doesn't leak in
+      );
+      await tester.pumpWidget(_wrap(state));
+      await tester.pump();
+
+      expect(
+        tester.getSemantics(find.text('5')), // selectedDayIndex is 3 → date 2026-06-05
+        matchesSemantics(
+          label: 'Friday, June 5, 2026',
+          isButton: true,
+          isSelected: true,
+          hasSelectedState: true,
+          hasTapAction: true,
+        ),
+      );
+      expect(
+        tester.getSemantics(find.text('2')),
+        matchesSemantics(
+          label: 'Tuesday, June 2, 2026',
+          isButton: true,
+          isSelected: false,
+          hasSelectedState: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('today carries a distinct semantic label from other days', (tester) async {
+      final handle = tester.ensureSemantics();
+      final days = List.generate(
+          7,
+          (i) => CalendarDayEntry(
+                date: DateTime(2026, 6, i + 2),
+                showups: const [],
+              ));
+      final state = DashboardState(
+        calendarDays: days,
+        selectedDayIndex: 3,
+        isLoading: false,
+        pactNames: const {},
+        todayIndex: 5,
+      );
+      await tester.pumpWidget(_wrap(state));
+      await tester.pump();
+
+      expect(
+        tester.getSemantics(find.text('7')), // todayIndex 5 → date 2026-06-07
+        matchesSemantics(
+          label: 'Sunday, June 7, 2026, today',
+          isButton: true,
+          isSelected: false,
+          hasSelectedState: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('day digit does not overflow at a large system text-scale factor', (tester) async {
+      await tester.pumpWidget(_wrap(_state([]), textScaler: const TextScaler.linear(3.0)));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
     });
   });
 
