@@ -8,6 +8,7 @@ import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/option_tile.dart';
 import 'package:habit_loop/slices/pact/ui/generic/schedule_details_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/slot_schedule_editor.dart';
+import 'package:habit_loop/slices/pact/ui/ios/cupertino_picker_sheet.dart';
 
 class ScheduleStepIos extends StatelessWidget {
   final PactCreationState state;
@@ -119,36 +120,16 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
   /// Platform time picker for [SlotScheduleEditor] on iOS.
   Future<Duration?> _showCupertinoTimePicker(BuildContext ctx, Duration initial) async {
     Duration? result;
-    await showCupertinoModalPopup<void>(
+    await showCupertinoPickerSheet(
       context: ctx,
-      builder: (popupCtx) => ColoredBox(
-        color: CupertinoColors.systemBackground.resolveFrom(popupCtx),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CupertinoButton(
-                  onPressed: () => Navigator.pop(popupCtx),
-                  child: Text(widget.l10n.pickerDone),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 216,
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                use24hFormat: MediaQuery.alwaysUse24HourFormatOf(popupCtx),
-                initialDateTime: DateTime(2026, 1, 1, initial.inHours, initial.inMinutes % 60),
-                onDateTimeChanged: (dt) {
-                  result = Duration(hours: dt.hour, minutes: dt.minute);
-                },
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(popupCtx).viewPadding.bottom),
-          ],
-        ),
+      doneLabel: widget.l10n.pickerDone,
+      pickerBuilder: (popupCtx) => CupertinoDatePicker(
+        mode: CupertinoDatePickerMode.time,
+        use24hFormat: MediaQuery.alwaysUse24HourFormatOf(popupCtx),
+        initialDateTime: DateTime(2026, 1, 1, initial.inHours, initial.inMinutes % 60),
+        onDateTimeChanged: (dt) {
+          result = Duration(hours: dt.hour, minutes: dt.minute);
+        },
       ),
     );
     return result;
@@ -156,42 +137,16 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
 
   void _showTimePicker(Duration initial, ValueChanged<Duration> onChanged) {
     unawaited(
-      showCupertinoModalPopup<void>(
+      showCupertinoPickerSheet(
         context: context,
-        builder: (ctx) => ColoredBox(
-          color: CupertinoColors.systemBackground.resolveFrom(ctx),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CupertinoButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: Text(widget.l10n.pickerDone),
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 216,
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.time,
-                  use24hFormat: MediaQuery.alwaysUse24HourFormatOf(ctx),
-                  initialDateTime: DateTime(
-                    2026,
-                    1,
-                    1,
-                    initial.inHours,
-                    initial.inMinutes % 60,
-                  ),
-                  onDateTimeChanged: (dt) {
-                    onChanged(Duration(hours: dt.hour, minutes: dt.minute));
-                  },
-                ),
-              ),
-              SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-            ],
-          ),
+        doneLabel: widget.l10n.pickerDone,
+        pickerBuilder: (ctx) => CupertinoDatePicker(
+          mode: CupertinoDatePickerMode.time,
+          use24hFormat: MediaQuery.alwaysUse24HourFormatOf(ctx),
+          initialDateTime: DateTime(2026, 1, 1, initial.inHours, initial.inMinutes % 60),
+          onDateTimeChanged: (dt) {
+            onChanged(Duration(hours: dt.hour, minutes: dt.minute));
+          },
         ),
       ),
     );
@@ -550,36 +505,16 @@ class _DropdownWeekday extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       onPressed: () {
         unawaited(
-          showCupertinoModalPopup<void>(
+          showCupertinoPickerSheet(
             context: context,
-            builder: (ctx) => ColoredBox(
-              color: CupertinoColors.systemBackground.resolveFrom(ctx),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      CupertinoButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 216,
-                    child: CupertinoPicker(
-                      scrollController: FixedExtentScrollController(initialItem: value - 1),
-                      itemExtent: 40,
-                      onSelectedItemChanged: (i) => onChanged(i + 1),
-                      children: List.generate(
-                        7,
-                        (i) => Center(child: Text(weekdayName(i + 1))),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-                ],
+            doneLabel: AppLocalizations.of(context)!.pickerDone,
+            pickerBuilder: (ctx) => CupertinoPicker(
+              scrollController: FixedExtentScrollController(initialItem: value - 1),
+              itemExtent: 40,
+              onSelectedItemChanged: (i) => onChanged(i + 1),
+              children: List.generate(
+                7,
+                (i) => Center(child: Text(weekdayName(i + 1))),
               ),
             ),
           ),
@@ -607,36 +542,16 @@ class _DropdownOccurrence extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       onPressed: () {
         unawaited(
-          showCupertinoModalPopup<void>(
+          showCupertinoPickerSheet(
             context: context,
-            builder: (ctx) => ColoredBox(
-              color: CupertinoColors.systemBackground.resolveFrom(ctx),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      CupertinoButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 216,
-                    child: CupertinoPicker(
-                      scrollController: FixedExtentScrollController(initialItem: value - 1),
-                      itemExtent: 40,
-                      onSelectedItemChanged: (i) => onChanged(i + 1),
-                      children: List.generate(
-                        4,
-                        (i) => Center(child: Text(occurrenceName(i + 1))),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-                ],
+            doneLabel: AppLocalizations.of(context)!.pickerDone,
+            pickerBuilder: (ctx) => CupertinoPicker(
+              scrollController: FixedExtentScrollController(initialItem: value - 1),
+              itemExtent: 40,
+              onSelectedItemChanged: (i) => onChanged(i + 1),
+              children: List.generate(
+                4,
+                (i) => Center(child: Text(occurrenceName(i + 1))),
               ),
             ),
           ),
@@ -663,36 +578,16 @@ class _DayOfMonthPicker extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         unawaited(
-          showCupertinoModalPopup<void>(
+          showCupertinoPickerSheet(
             context: context,
-            builder: (ctx) => ColoredBox(
-              color: CupertinoColors.systemBackground.resolveFrom(ctx),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      CupertinoButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text(AppLocalizations.of(ctx)!.pickerDone),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 216,
-                    child: CupertinoPicker(
-                      scrollController: FixedExtentScrollController(initialItem: value - 1),
-                      itemExtent: 40,
-                      onSelectedItemChanged: (index) => onChanged(index + 1),
-                      children: List.generate(
-                        31,
-                        (i) => Center(child: Text('${i + 1}')),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom),
-                ],
+            doneLabel: AppLocalizations.of(context)!.pickerDone,
+            pickerBuilder: (ctx) => CupertinoPicker(
+              scrollController: FixedExtentScrollController(initialItem: value - 1),
+              itemExtent: 40,
+              onSelectedItemChanged: (index) => onChanged(index + 1),
+              children: List.generate(
+                31,
+                (i) => Center(child: Text('${i + 1}')),
               ),
             ),
           ),
