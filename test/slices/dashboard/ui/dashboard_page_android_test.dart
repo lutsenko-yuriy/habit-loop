@@ -84,8 +84,7 @@ void main() {
     final syncButton = tester.widget<IconButton>(find.byKey(const Key('sync-status-button')));
     expect(syncButton.tooltip, 'Sync status');
 
-    final kebabButton =
-        tester.widget<PopupMenuButton<DashboardActionType>>(find.byKey(const Key('kebab-menu-button')));
+    final kebabButton = tester.widget<PopupMenuButton<DashboardActionType>>(find.byKey(const Key('kebab-menu-button')));
     expect(kebabButton.tooltip, 'More options');
 
     final fab = tester.widget<FloatingActionButton>(find.byKey(const Key('create-pact-button')));

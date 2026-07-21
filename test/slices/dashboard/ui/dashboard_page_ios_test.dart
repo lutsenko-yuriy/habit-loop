@@ -126,8 +126,7 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('iOS standalone debug button keeps its Semantics label when promoted out of the kebab',
-      (tester) async {
+  testWidgets('iOS standalone debug button keeps its Semantics label when promoted out of the kebab', (tester) async {
     final handle = tester.ensureSemantics();
     await tester.pumpWidget(_buildTestApp(
       remoteConfig: FakeRemoteConfigService(overrides: {
