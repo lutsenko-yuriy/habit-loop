@@ -183,8 +183,8 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
           final index = e.key;
           final entry = e.value;
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: AppSpacing.s12),
+            padding: const EdgeInsets.all(AppSpacing.s12),
             decoration: BoxDecoration(
               color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
               borderRadius: BorderRadius.circular(10),
@@ -203,7 +203,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
                     },
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 _TimeChip(
                   time: entry.timeOfDay,
                   onTap: () => _showTimePicker(entry.timeOfDay, (t) {
@@ -215,7 +215,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
                 ),
                 if (weekdayEntries.length > 1)
                   CupertinoButton(
-                    padding: const EdgeInsets.only(left: 4),
+                    padding: const EdgeInsets.only(left: AppSpacing.s4),
                     child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
                     onPressed: () {
                       setState(() => weekdayEntries.removeAt(index));
@@ -237,7 +237,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(CupertinoIcons.add_circled, size: 20),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.s4),
               Text(widget.l10n.addEntry),
             ],
           ),
@@ -255,8 +255,8 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
           final index = e.key;
           final entry = e.value;
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: AppSpacing.s12),
+            padding: const EdgeInsets.all(AppSpacing.s12),
             decoration: BoxDecoration(
               color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
               borderRadius: BorderRadius.circular(10),
@@ -334,7 +334,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(CupertinoIcons.add_circled, size: 20),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.s4),
               Text(widget.l10n.addEntry),
             ],
           ),
@@ -352,7 +352,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
           final index = e.key;
           final entry = e.value;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s12),
             child: Row(
               children: [
                 Expanded(
@@ -367,7 +367,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 _TimeChip(
                   time: entry.timeOfDay,
                   onTap: () => _showTimePicker(entry.timeOfDay, (t) {
@@ -401,7 +401,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(CupertinoIcons.add_circled, size: 20),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.s4),
               Text(widget.l10n.addEntry),
             ],
           ),
@@ -438,7 +438,7 @@ class _TimeRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
         decoration: BoxDecoration(
           color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
           borderRadius: BorderRadius.circular(10),
@@ -474,7 +474,7 @@ class _TimeChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
         decoration: BoxDecoration(
           color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
           borderRadius: BorderRadius.circular(8),
@@ -504,7 +504,7 @@ class _DropdownWeekday extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
       onPressed: () {
         unawaited(
           showCupertinoPickerSheet(
@@ -541,7 +541,7 @@ class _DropdownOccurrence extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
       onPressed: () {
         unawaited(
           showCupertinoPickerSheet(
@@ -596,7 +596,7 @@ class _DayOfMonthPicker extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
         decoration: BoxDecoration(
           color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
           borderRadius: BorderRadius.circular(8),
