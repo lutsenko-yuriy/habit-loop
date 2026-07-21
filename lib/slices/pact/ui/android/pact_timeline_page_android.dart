@@ -7,7 +7,7 @@ import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_spine.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 // ── Public page widget ─────────────────────────────────────────────────────────
 

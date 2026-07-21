@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
-import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 // Status-color palette for pact badges and detail screens.
 // Two constant instances: cupertino (Cupertino primitives) and material (HabitLoopColors constants).

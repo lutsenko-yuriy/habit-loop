@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/typography.dart';
 
-export 'package:habit_loop/theme/colors.dart' show HabitLoopColors;
-
 abstract final class HabitLoopTheme {
   static ThemeData get materialTheme => _buildMaterialTheme(Brightness.light);
 

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 void main() {
