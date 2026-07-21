@@ -332,14 +332,14 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
             ));
           },
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, AppSpacing.md),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, AppSpacing.s12),
             child: Column(
               // mainAxisSize.max: Column fills the SizedBox height so
               // Flexible(Align) never causes a layout overflow.
               children: [
                 Container(
                   width: 36,
-                  height: AppSpacing.xs,
+                  height: AppSpacing.s4,
                   margin: const EdgeInsets.only(bottom: 10),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.outlineVariant,
@@ -387,7 +387,7 @@ class _PactFilterChipsRow extends StatelessWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       child: Row(
         children: [
           FilterChip(
@@ -395,13 +395,13 @@ class _PactFilterChipsRow extends StatelessWidget {
             selected: activeFilters.contains(PactStatus.active),
             onSelected: (_) => onToggleFilter(PactStatus.active),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: AppSpacing.s8),
           FilterChip(
             label: Text(l10n.filterDone),
             selected: activeFilters.contains(PactStatus.completed),
             onSelected: (_) => onToggleFilter(PactStatus.completed),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: AppSpacing.s8),
           FilterChip(
             label: Text(l10n.filterCancelled),
             selected: activeFilters.contains(PactStatus.stopped),
@@ -415,7 +415,7 @@ class _PactFilterChipsRow extends StatelessWidget {
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: AppSpacing.s8),
                       FilterChip(
                         key: const Key('archive-filter-chip'),
                         label: Text(l10n.filterArchived),
@@ -472,7 +472,7 @@ class _PactListBody extends StatelessWidget {
           // ── Title + add button ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, AppSpacing.xs, AppSpacing.md, AppSpacing.xs),
+              padding: const EdgeInsets.fromLTRB(20, AppSpacing.s4, AppSpacing.s12, AppSpacing.s4),
               child: Row(
                 children: [
                   Expanded(
@@ -521,7 +521,7 @@ class _PactListBody extends StatelessWidget {
             if (unarchivedEntries.isNotEmpty)
               SliverList.separated(
                 itemCount: unarchivedEntries.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, indent: AppSpacing.lg),
+                separatorBuilder: (_, __) => const Divider(height: 1, indent: AppSpacing.s16),
                 itemBuilder: (_, i) => _PactTile(
                   entry: unarchivedEntries[i],
                   onTap: () => onTapEntry(unarchivedEntries[i]),
@@ -574,12 +574,12 @@ class _ArchivedPactsSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (archivedCount > 0) ...[
-          if (showDividerAboveToggle) const Divider(height: 1, indent: AppSpacing.lg),
+          if (showDividerAboveToggle) const Divider(height: 1, indent: AppSpacing.s16),
           InkWell(
             key: const Key('show-archived-pacts-row'),
             onTap: onToggleArchived,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, AppSpacing.lg, AppSpacing.sm),
+              padding: const EdgeInsets.fromLTRB(20, 14, AppSpacing.s16, AppSpacing.s8),
               child: Row(
                 children: [
                   Expanded(
@@ -627,7 +627,7 @@ class _ArchivedPactsSection extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (int i = 0; i < archivedEntries.length; i++) ...[
-                      if (i > 0) const Divider(height: 1, indent: AppSpacing.lg),
+                      if (i > 0) const Divider(height: 1, indent: AppSpacing.s16),
                       _PactTile(
                         entry: archivedEntries[i],
                         onTap: () => onTapEntry(archivedEntries[i]),
@@ -682,7 +682,7 @@ class _PactTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 2),
             decoration: BoxDecoration(
               color: badgeBg,
               borderRadius: BorderRadius.circular(10),

@@ -30,14 +30,14 @@ class PactDurationStepIos extends StatelessWidget {
     final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       children: [
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.s16),
         Text(
           l10n.pactDurationStep,
           style: AppTypography.wizardStepTitle,
         ),
-        const SizedBox(height: AppSpacing.xl),
+        const SizedBox(height: AppSpacing.s24),
         DateRowTile(
           label: l10n.startDateLabel,
           value: formatLocaleDate(state.startDate),
@@ -50,7 +50,7 @@ class PactDurationStepIos extends StatelessWidget {
             onDateChanged: onStartDateChanged,
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.s16),
         DateRowTile(
           label: l10n.endDateLabel,
           value: formatLocaleDate(state.endDate),

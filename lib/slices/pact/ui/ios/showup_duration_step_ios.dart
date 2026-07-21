@@ -21,23 +21,23 @@ class ShowupDurationStepIos extends StatelessWidget {
     final currentMinutes = state.showupDuration?.inMinutes ?? 10;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       children: [
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.s16),
         Text(
           l10n.showupDurationStep,
           style: AppTypography.wizardStepTitle,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.s8),
         Text(l10n.showupDurationLabel),
-        const SizedBox(height: AppSpacing.xl),
+        const SizedBox(height: AppSpacing.s24),
         Center(
           child: Text(
             l10n.showupDurationMinutes(currentMinutes),
             style: AppTypography.wizardHeroNumber,
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.s16),
         SizedBox(
           height: 200,
           child: CupertinoPicker(

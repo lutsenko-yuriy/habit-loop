@@ -56,7 +56,7 @@ Platform-split presentation:
 
 `lib/theme/widgets/` holds domain-agnostic presentational widgets used by more than one feature slice — currently `StatusBadge`, `SectionHeader`, and `DateRowTile`. Any purely decorative, parameter-driven widget that would create a cross-slice dependency if kept inside a single slice belongs here.
 
-`lib/theme/spacing.dart` (`AppSpacing`) and `lib/theme/typography.dart` (`AppTypography`) are bare `abstract final class` constant scales (spacing: `xs`/`sm`/`md`/`lg`/`xl`; typography: a shared `CupertinoTextThemeData` wired into `HabitLoopTheme.cupertinoTheme`) — introduced to replace screen-by-screen hardcoded `EdgeInsets`/`TextStyle` values, starting with the iOS widgets that had none (HAB-187). Not a `ThemeExtension`: spacing and type scale don't vary by brightness/theme in this app today, so bare constants avoid the `BuildContext`-lookup ceremony a `ThemeExtension` would add at each of the ~20 call sites this migration touches.
+`lib/theme/spacing.dart` (`AppSpacing`) and `lib/theme/typography.dart` (`AppTypography`) are bare `abstract final class` constant scales (spacing: a numeric `s2`-`s32` scale, each constant named after its own value; typography: a shared `CupertinoTextThemeData` wired into `HabitLoopTheme.cupertinoTheme`) — introduced to replace screen-by-screen hardcoded `EdgeInsets`/`TextStyle` values, starting with the iOS widgets that had none (HAB-187). Not a `ThemeExtension`: spacing and type scale don't vary by brightness/theme in this app today, so bare constants avoid the `BuildContext`-lookup ceremony a `ThemeExtension` would add at each of the ~20 call sites this migration touches.
 
 ### Infrastructure (`lib/infrastructure/`)
 

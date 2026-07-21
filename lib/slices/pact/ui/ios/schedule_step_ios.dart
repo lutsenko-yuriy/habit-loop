@@ -38,7 +38,7 @@ class ScheduleStepIos extends StatelessWidget {
     return options.map((option) {
       final (type, label) = option;
       return Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        padding: const EdgeInsets.only(bottom: AppSpacing.s8),
         child: OptionTile(
           isSelected: state.scheduleType == type,
           label: label,
@@ -58,19 +58,19 @@ class ScheduleStepIos extends StatelessWidget {
     final isSlot = state.scheduleType == ScheduleType.slot;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       children: [
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.s16),
         Text(
           l10n.scheduleStep,
           style: AppTypography.wizardStepTitle,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.s8),
         if (!isSlot) ...[
           Text(l10n.scheduleTypeLabel),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.s16),
           ..._scheduleOptions(context),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.s24),
           if (state.scheduleType != null)
             ScheduleDetailsIos(
               state: state,
@@ -78,7 +78,7 @@ class ScheduleStepIos extends StatelessWidget {
               onScheduleChanged: onScheduleChanged,
             ),
         ] else ...[
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.s8),
           ScheduleDetailsIos(
             state: state,
             l10n: l10n,
