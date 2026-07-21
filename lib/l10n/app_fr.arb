@@ -343,5 +343,11 @@
   "aboutTitle": "À propos",
   "aboutSendFeedback": "Envoyer des commentaires",
 
-  "dashboardDebugMenuItem": "Débogage"
+  "dashboardDebugMenuItem": "Débogage",
+
+  "dashboardMoreOptionsTooltip": "Plus d'options",
+  "dashboardDayToday": "{date}, aujourd'hui",
+  "@dashboardDayToday": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }
