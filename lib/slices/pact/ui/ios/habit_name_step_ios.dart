@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/habit_name_step.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class HabitNameStepIos extends StatelessWidget {
   const HabitNameStepIos({
@@ -34,7 +35,7 @@ class HabitNameStepIos extends StatelessWidget {
         focusNode: fn,
         autofocus: true,
         onChanged: onHabitNameChanged,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 14),
       ),
       buildWarning: (ctx, l10n) => Container(
         key: const Key('pact-creation-habit-name-commitment-rules'),
