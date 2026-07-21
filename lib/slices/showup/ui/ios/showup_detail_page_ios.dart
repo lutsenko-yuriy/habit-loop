@@ -4,6 +4,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 /// Cupertino (iOS) implementation of the showup detail screen.
 class ShowupDetailPageIos extends StatelessWidget {
@@ -58,7 +59,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(l10n.showupNotFound, textAlign: TextAlign.center),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: AppSpacing.s16),
                                 CupertinoButton(
                                   onPressed: () => Navigator.of(context).pop(),
                                   child: Text(l10n.back),
@@ -89,7 +90,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                                 ? const CupertinoActivityIndicator(color: Colors.white)
                                                 : Text(l10n.markDone),
                                           ),
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: AppSpacing.s8),
                                           CupertinoButton(
                                             onPressed: s.isSaving ? null : onMarkFailed,
                                             child: Text(
@@ -105,7 +106,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         placeholder: l10n.showupNoteLabel,
                                         maxLines: 4,
                                         minLines: 2,
-                                        padding: const EdgeInsets.all(12),
+                                        padding: const EdgeInsets.all(AppSpacing.s12),
                                       ),
                                   buildSaveButton: (ctx, onPressed) => CupertinoButton(
                                         key: const Key('showup-note-save-button'),
@@ -114,7 +115,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                       ),
                                   buildErrorContainer: (ctx) => Container(
                                         width: double.infinity,
-                                        padding: const EdgeInsets.all(12),
+                                        padding: const EdgeInsets.all(AppSpacing.s12),
                                         decoration: BoxDecoration(
                                           color: CupertinoColors.systemRed.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(10),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class OptionTile extends StatelessWidget {
   final bool isSelected;
@@ -27,7 +28,7 @@ class OptionTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
         decoration: BoxDecoration(
           color: isSelected ? selectedColor.withValues(alpha: 0.1) : unselectedColor,
           borderRadius: BorderRadius.circular(10),
@@ -40,7 +41,7 @@ class OptionTile extends StatelessWidget {
               color:
                   isSelected ? selectedColor : (unselectedIconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Text(label),
           ],
         ),

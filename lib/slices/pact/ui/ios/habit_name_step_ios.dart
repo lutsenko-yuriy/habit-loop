@@ -39,7 +39,7 @@ class HabitNameStepIos extends StatelessWidget {
       ),
       buildWarning: (ctx, l10n) => Container(
         key: const Key('pact-creation-habit-name-commitment-rules'),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpacing.s14),
         decoration: BoxDecoration(
           color: CupertinoColors.systemYellow.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),

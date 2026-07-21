@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/habit_name_step.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class HabitNameStepAndroid extends StatelessWidget {
   const HabitNameStepAndroid({
@@ -44,7 +45,7 @@ class HabitNameStepAndroid extends StatelessWidget {
         final t = Theme.of(ctx);
         return Container(
           key: const Key('pact-creation-habit-name-commitment-rules'),
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.s14),
           decoration: BoxDecoration(
             color: t.colorScheme.tertiaryContainer,
             borderRadius: BorderRadius.circular(12),

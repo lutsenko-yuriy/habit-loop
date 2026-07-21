@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_edit_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_edit_page_ios.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 /// Screen orchestrator for the edit-pact wizard.
 ///
@@ -213,7 +214,7 @@ class _ErrorScaffold extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, size: 48),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           TextButton(onPressed: onClose, child: Text(l10n.cancel)),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 // EXP-003 commitment dialog. Variants: button / checkbox / retype.
 // Never pops the navigator — caller's responsibility.
@@ -59,13 +60,13 @@ class _CommitmentDialogContentState extends State<CommitmentDialogContent> {
           l10n.commitmentStep,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         Text(
           key: const Key('commitment-dialog-warning'),
           l10n.commitmentWarning,
           style: const TextStyle(fontSize: 14, height: 1.5),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         if (widget.variant == 'checkbox')
           CheckboxListTile(
             key: const Key('commitment-dialog-checkbox'),
@@ -77,7 +78,7 @@ class _CommitmentDialogContentState extends State<CommitmentDialogContent> {
           ),
         if (widget.variant == 'retype') ...[
           Text(l10n.commitmentRetypePrompt),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           TextField(
             key: const Key('commitment-dialog-retype-field'),
             controller: _retypeController,
@@ -88,15 +89,15 @@ class _CommitmentDialogContentState extends State<CommitmentDialogContent> {
               isDense: true,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
         ],
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         FilledButton(
           key: const Key('commitment-dialog-accept'),
           onPressed: _canAccept ? widget.onAccept : null,
           child: Text(acceptLabel),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         OutlinedButton(
           key: const Key('commitment-dialog-cancel'),
           onPressed: widget.onDismiss,

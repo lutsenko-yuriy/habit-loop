@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 // debug_backend takes effect only after a restart — banner makes that visible.
 class RestartRequiredBanner extends StatelessWidget {
@@ -10,7 +11,7 @@ class RestartRequiredBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(10),
@@ -19,7 +20,7 @@ class RestartRequiredBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon ?? Icons.warning_amber_rounded, size: 16, color: color),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           const Expanded(
             child: Text(
               'debug_backend changed — restart the app to apply',

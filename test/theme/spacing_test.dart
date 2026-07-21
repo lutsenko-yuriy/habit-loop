@@ -4,6 +4,7 @@ import 'package:habit_loop/theme/spacing.dart';
 void main() {
   test('AppSpacing exposes an ascending, distinct scale', () {
     const scale = [
+      AppSpacing.s0,
       AppSpacing.s2,
       AppSpacing.s4,
       AppSpacing.s6,
@@ -24,6 +25,7 @@ void main() {
   });
 
   test('AppSpacing values match the documented scale', () {
+    expect(AppSpacing.s0, 0);
     expect(AppSpacing.s2, 2);
     expect(AppSpacing.s4, 4);
     expect(AppSpacing.s6, 6);

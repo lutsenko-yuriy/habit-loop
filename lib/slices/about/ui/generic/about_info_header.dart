@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:habit_loop/theme/spacing.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AboutInfoHeader extends StatelessWidget {
@@ -9,7 +10,7 @@ class AboutInfoHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32, horizontal: AppSpacing.s16),
       child: Column(
         children: [
           ClipRRect(
@@ -20,19 +21,19 @@ class AboutInfoHeader extends StatelessWidget {
               height: 72,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           const Text(
             'Habit Loop',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           if (versionText != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               versionText!,
               style: const TextStyle(fontSize: 13),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           const Text(
             '© 2026 Iurii Lutsenko',
             style: TextStyle(fontSize: 13),

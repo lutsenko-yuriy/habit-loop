@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show Divider;
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 typedef SeedSectionSlots = ({
   Widget Function(BuildContext context) buildHeader,
@@ -53,7 +54,7 @@ class SeedSection extends StatelessWidget {
         slots.buildHeader(context),
         slots.buildButtonContainer(context, buttons),
         if (state.status != DebugSeedState.idle) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           slots.buildStatusText(context, const Key('seed-status-text'), state.message ?? '', state.status),
         ],
       ],

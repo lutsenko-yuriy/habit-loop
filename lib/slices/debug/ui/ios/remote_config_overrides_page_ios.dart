@@ -10,6 +10,7 @@ import 'package:habit_loop/slices/debug/ui/generic/rc_entry_edit_state.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_scroll_view.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class RemoteConfigOverridesPageIos extends ConsumerWidget {
   const RemoteConfigOverridesPageIos({super.key});
@@ -75,7 +76,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                           ),
                           child: CupertinoButton(
                             key: const Key('test-notification-button'),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
                             onPressed: () => scheduleTestNotification(
                               ref.read(notificationServiceProvider),
                               ref.read(pactRepositoryProvider),
@@ -84,7 +85,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                             child: const Row(
                               children: [
                                 Icon(CupertinoIcons.bell),
-                                SizedBox(width: 10),
+                                SizedBox(width: AppSpacing.s10),
                                 Text('Fire test notification'),
                               ],
                             ),
@@ -95,13 +96,13 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                           entry: entry,
                           onTap: onTap,
                         ),
-                    buildEntrySeparator: (ctx) => const SizedBox(height: 8),
+                    buildEntrySeparator: (ctx) => const SizedBox(height: AppSpacing.s8),
                     buildSectionDivider: (ctx) => const Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: [SizedBox(height: 8), Divider(), SizedBox(height: 8)],
+                          children: [SizedBox(height: AppSpacing.s8), Divider(), SizedBox(height: AppSpacing.s8)],
                         ),
                     buildSectionHeader: (ctx, title) => Padding(
-                          padding: const EdgeInsets.only(left: 4, bottom: 6),
+                          padding: const EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s6),
                           child: Text(
                             title,
                             style: const TextStyle(
@@ -119,7 +120,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                         ),
                     seedSlots: (
                       buildHeader: (ctx) => const Padding(
-                            padding: EdgeInsets.only(left: 4, bottom: 8),
+                            padding: EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s8),
                             child: Text(
                               'SEED DATA',
                               style: TextStyle(
@@ -132,7 +133,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                           ),
                       buildButton: (ctx, key, label, isBusy, onPressed) => CupertinoButton(
                             key: key,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
                             onPressed: isBusy ? null : onPressed,
                             child: Align(alignment: Alignment.centerLeft, child: Text(label)),
                           ),
@@ -145,7 +146,7 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttons),
                           ),
                       buildStatusText: (ctx, key, message, status) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
                             child: Text(
                               message,
                               key: key,
@@ -161,7 +162,8 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                           ),
                     ),
                     wrapSeedSection: (ctx, child) => child,
-                    listPadding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomPadding),
+                    listPadding: EdgeInsets.fromLTRB(
+                        AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomPadding),
                   ),
                 ),
               ),
@@ -210,7 +212,7 @@ class _RcEntryRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
         decoration: BoxDecoration(
           color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
           borderRadius: BorderRadius.circular(10),
@@ -225,7 +227,7 @@ class _RcEntryRow extends StatelessWidget {
                     entry.key,
                     style: const TextStyle(fontFamily: 'Courier', fontSize: 13),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.s2),
                   Text(
                     'Value: ${entry.effectiveValue}',
                     style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey),
@@ -233,9 +235,9 @@ class _RcEntryRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             OverrideBadge(isOverridden: entry.isOverridden),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Icon(
               CupertinoIcons.chevron_right,
               size: 14,
@@ -305,13 +307,13 @@ class _EditDialogIosState extends State<_EditDialogIos> {
             style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
           ),
           if (widget.entry.hasValueHint) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               widget.entry.valueHint!,
               style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           switch (_editState) {
             RcEntryEditAllowedValues(:final selected) => CupertinoSlidingSegmentedControl<String>(
                 key: const Key('override-value-picker'),
@@ -434,12 +436,12 @@ class _SeedPercentDialogIosState extends State<_SeedPercentDialogIos> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(
             '${_percent.round()}% done',
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           CupertinoSlider(
             value: _percent,
             min: 0,

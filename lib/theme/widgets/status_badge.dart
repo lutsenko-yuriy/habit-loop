@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class StatusBadge extends StatelessWidget {
   final String text;
@@ -9,7 +10,7 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),

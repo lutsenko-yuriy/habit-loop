@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class WizardStepIndicator extends StatelessWidget {
   final WizardStyle style;
@@ -23,7 +24,7 @@ class WizardStepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       key: Key(keyPrefix),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
       child: Row(
         children: List.generate(stepCount, (index) {
           return Expanded(
@@ -33,7 +34,7 @@ class WizardStepIndicator extends StatelessWidget {
               child: Container(
                 key: Key('$keyPrefix-segment-$index'),
                 height: 4,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
+                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
                   color: index < currentIndex

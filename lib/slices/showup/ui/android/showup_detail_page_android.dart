@@ -3,6 +3,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 /// Material (Android) implementation of the showup detail screen.
 class ShowupDetailPageAndroid extends StatelessWidget {
@@ -47,7 +48,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(l10n.showupNotFound, textAlign: TextAlign.center),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpacing.s16),
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(),
                               child: Text(l10n.back),
@@ -79,8 +80,8 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                         ),
                                         child: s.isSaving
                                             ? const SizedBox(
-                                                height: 20,
-                                                width: 20,
+                                                height: AppSpacing.s20,
+                                                width: AppSpacing.s20,
                                                 child: CircularProgressIndicator(
                                                   strokeWidth: 2,
                                                   color: Colors.white,
@@ -88,7 +89,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                               )
                                             : Text(l10n.markDone),
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: AppSpacing.s8),
                                       OutlinedButton(
                                         onPressed: s.isSaving ? null : onMarkFailed,
                                         style: OutlinedButton.styleFrom(
@@ -116,7 +117,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                     color: theme.colorScheme.errorContainer,
                                     margin: EdgeInsets.zero,
                                     child: Padding(
-                                      padding: const EdgeInsets.all(12),
+                                      padding: const EdgeInsets.all(AppSpacing.s12),
                                       child: Text(
                                         l10n.showupAutoFailed,
                                         style: TextStyle(color: theme.colorScheme.onErrorContainer),

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class HabitNameStep extends StatefulWidget {
   final PactCreationState state;
@@ -58,20 +59,20 @@ class _HabitNameStepState extends State<HabitNameStep> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         Text(
           widget.l10n.habitNameLabel,
           style: widget.titleStyle ?? const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         widget.buildField(context, widget.l10n, _controller, widget.focusNode),
         if (widget.showCommitmentWarning && widget.buildWarning != null) ...[
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
           widget.buildWarning!(context, widget.l10n),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
       ],
     );
   }

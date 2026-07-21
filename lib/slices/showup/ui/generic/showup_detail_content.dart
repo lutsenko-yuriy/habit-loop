@@ -4,6 +4,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -98,7 +99,8 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     final statusText = showupUiStateText(l10n, uiState);
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + widget.bottomPadding),
+      padding:
+          EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + widget.bottomPadding),
       children: [
         Row(
           children: [
@@ -112,7 +114,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
           ],
         ),
         if (widget.onOpenPact != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           GestureDetector(
             key: const Key('showup-pact-link'),
             onTap: widget.onOpenPact,
@@ -128,28 +130,28 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             ),
           ),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         DateRowTile(
           label: l10n.showupDetailScheduledAt,
           value: '$scheduledDate  $scheduledTime',
           valueColor: widget.labelColor,
           backgroundColor: widget.tileColor,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         DateRowTile(
           label: l10n.showupDetailDuration,
           value: l10n.showupDurationMinutes(durationMins),
           valueColor: widget.labelColor,
           backgroundColor: widget.tileColor,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.s24),
         if (state.wasAutoFailed) ...[
           widget.slots.buildErrorContainer(context),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
         ],
         if (isPending) ...[
           widget.slots.buildActionButtons(context, state),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
         ],
         if (state.markError != null) ...[
           Text(
@@ -157,12 +159,12 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             style: TextStyle(color: widget.statusColors.failed),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
         ],
         SectionHeader(title: l10n.showupNoteLabel, labelColor: widget.labelColor),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         widget.slots.buildNoteField(context, _noteController),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: _noteController,
           builder: (context, value, _) {
@@ -177,7 +179,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
           },
         ),
         if (state.noteError != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             l10n.showupNoteError,
             style: TextStyle(color: widget.statusColors.failed),
@@ -192,7 +194,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
           child: state.canRedeem
               ? Padding(
                   key: const ValueKey('redeem-section'),
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.only(top: AppSpacing.s16),
                   child: () {
                     final hasNote = showup.note?.isNotEmpty ?? false;
                     final enabled = hasNote && !state.isSaving;
@@ -213,7 +215,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
                           ),
                         ),
                         if (!hasNote) ...[
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.s8),
                           widget.slots.buildRedemptionHint(context),
                         ],
                       ],

@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/debug/ui/generic/rc_entry_edit_state.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_scroll_view.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
   const RemoteConfigOverridesPageAndroid({super.key});
@@ -82,9 +83,9 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                       onTap: onTap,
                     ),
                 buildEntrySeparator: (ctx) => const Divider(height: 1),
-                buildSectionDivider: (ctx) => const SizedBox(height: 8),
+                buildSectionDivider: (ctx) => const SizedBox(height: AppSpacing.s8),
                 buildSectionHeader: (ctx, title) => Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 6, top: 4),
+                      padding: const EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s6, top: AppSpacing.s4),
                       child: Text(
                         title,
                         style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
@@ -94,7 +95,7 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                       ),
                     ),
                 buildRestartBanner: (ctx) => const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s0),
                       child: RestartRequiredBanner(
                         key: Key('debug-backend-restart-banner'),
                         color: Colors.amber,
@@ -132,10 +133,10 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                       ),
                 ),
                 wrapSeedSection: (ctx, child) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
                       child: child,
                     ),
-                listPadding: EdgeInsets.only(top: 8, bottom: 8 + bottomInset),
+                listPadding: EdgeInsets.only(top: AppSpacing.s8, bottom: AppSpacing.s8 + bottomInset),
               ),
             ),
           ),
@@ -229,13 +230,13 @@ class _EditDialogAndroidState extends State<_EditDialogAndroid> {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           if (widget.entry.hasValueHint) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               widget.entry.valueHint!,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           switch (_editState) {
             RcEntryEditAllowedValues(:final selected) => RadioGroup<String>(
                 key: const Key('override-value-picker'),

@@ -10,6 +10,7 @@
 /// migrated to a token when it already matches one of these values exactly,
 /// so migrating a widget never changes its rendered layout.
 abstract final class AppSpacing {
+  static const double s0 = 0;
   static const double s2 = 2;
   static const double s4 = 4;
   static const double s6 = 6;

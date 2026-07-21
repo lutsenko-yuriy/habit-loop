@@ -5,6 +5,7 @@ import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/option_tile.dart';
 import 'package:habit_loop/slices/pact/ui/generic/schedule_details_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/slot_schedule_editor.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 class ScheduleStepAndroid extends StatelessWidget {
   final PactCreationState state;
@@ -31,7 +32,7 @@ class ScheduleStepAndroid extends StatelessWidget {
     return options.map((option) {
       final (type, label) = option;
       return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: AppSpacing.s8),
         child: OptionTile(
           isSelected: state.scheduleType == type,
           label: label,
@@ -48,16 +49,16 @@ class ScheduleStepAndroid extends StatelessWidget {
     final isSlot = state.scheduleType == ScheduleType.slot;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         Text(l10n.scheduleStep, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         if (!isSlot) ...[
           Text(l10n.scheduleTypeLabel),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           ..._scheduleOptions(context),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
           if (state.scheduleType != null)
             ScheduleDetailsAndroid(
               state: state,
@@ -65,7 +66,7 @@ class ScheduleStepAndroid extends StatelessWidget {
               onScheduleChanged: onScheduleChanged,
             ),
         ] else ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           ScheduleDetailsAndroid(
             state: state,
             l10n: l10n,
@@ -214,10 +215,10 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid>
           final index = e.key;
           final entry = e.value;
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Row(
               children: [
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpacing.s16),
                 DropdownButton<int>(
                   value: entry.occurrence,
                   items: List.generate(
@@ -236,7 +237,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid>
                     widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(monthlyWeekdayEntries)));
                   },
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 DropdownButton<int>(
                   value: entry.weekday,
                   items: List.generate(
@@ -280,7 +281,7 @@ class ScheduleDetailsAndroidState extends State<ScheduleDetailsAndroid>
                       widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(monthlyWeekdayEntries)));
                     },
                   ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
               ],
             ),
           );
