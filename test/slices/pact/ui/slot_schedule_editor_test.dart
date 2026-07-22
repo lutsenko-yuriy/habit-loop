@@ -432,6 +432,31 @@ void main() {
         }
         handle.dispose();
       });
+
+      testWidgets('tapping near the top edge of the enlarged hit area still toggles the weekday', (tester) async {
+        // Regression test: the GestureDetector must use HitTestBehavior.opaque so the
+        // full 48px-tall ConstrainedBox is tappable, not just the smaller painted pill
+        // centered inside it (tester.tap() alone wouldn't catch this — it taps dead center).
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+        ]);
+        SlotSchedule? emitted;
+        await tester.pumpWidget(_wrap(
+          SlotScheduleEditor(
+            schedule: schedule,
+            onChanged: (s) => emitted = s,
+            showTimePicker: _noopTimePicker,
+          ),
+        ));
+
+        final rect = tester.getRect(find.byKey(const Key('weekday-0-3')));
+        await tester.tapAt(Offset(rect.center.dx, rect.top + 2));
+        await tester.pump();
+
+        expect(emitted, isNotNull);
+        final slot = emitted!.slots[0] as WeeklySlot;
+        expect(slot.weekdays, containsAll([1, 3]));
+      });
     });
   });
 }

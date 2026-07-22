@@ -345,6 +345,7 @@ class _WeekdayToggleRow extends StatelessWidget {
             child: GestureDetector(
               key: Key('weekday-$slotIndex-$weekday'),
               onTap: () => onToggle(weekday),
+              behavior: HitTestBehavior.opaque,
               child: ExcludeSemantics(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: _weekdayToggleTapTargetMinSize),
