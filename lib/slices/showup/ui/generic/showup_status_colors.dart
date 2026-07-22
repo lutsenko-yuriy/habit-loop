@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, ColorScheme;
+import 'package:flutter/material.dart' show ColorScheme;
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 // Status-color palette for dashboard dots and list tiles.
 // Two factories: cupertino() (dark-mode-adaptive) and material() (ColorScheme slots).
@@ -30,7 +31,7 @@ class ShowupStatusColors {
         done: cs.secondary,
         failed: cs.error,
         pending: cs.onSurfaceVariant,
-        waitingForStart: Colors.amber,
+        waitingForStart: HabitLoopColors.sunrise,
       );
 
   Color forStatus(ShowupStatus status) => switch (status) {

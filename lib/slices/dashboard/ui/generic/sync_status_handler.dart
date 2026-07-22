@@ -10,6 +10,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/sync_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 IconData syncStatusIconData(SyncUiState state) => switch (state) {
       SyncUiState.synced => Icons.cloud_done_outlined,
@@ -22,9 +23,9 @@ IconData syncStatusIconData(SyncUiState state) => switch (state) {
 
 Color syncStatusIconColor(SyncUiState state, BuildContext context) {
   return switch (state) {
-    SyncUiState.synced => CupertinoColors.systemGreen.resolveFrom(context),
-    SyncUiState.degraded => CupertinoColors.systemOrange.resolveFrom(context),
-    SyncUiState.suspended => CupertinoColors.systemRed.resolveFrom(context),
+    SyncUiState.synced => HabitLoopColors.success,
+    SyncUiState.degraded => HabitLoopColors.sunrise,
+    SyncUiState.suspended => HabitLoopColors.danger,
     SyncUiState.noInternet || SyncUiState.notLinked => CupertinoColors.systemGrey.resolveFrom(context),
     SyncUiState.connecting => Theme.of(context).colorScheme.primary,
   };

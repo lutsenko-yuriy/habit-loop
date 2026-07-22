@@ -14,6 +14,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/onboarding/fake_onboarding_preference_service.dart';
@@ -333,7 +334,7 @@ void main() {
       // All showups are ShowupUiState.active (no planned) → amber (not grey, not green, not red).
       final greyColor = Theme.of(tester.element(find.byType(DashboardScreen))).colorScheme.onSurfaceVariant;
       expect(decoration.color, isNot(equals(greyColor)));
-      expect(decoration.color, equals(Colors.amber));
+      expect(decoration.color, equals(HabitLoopColors.sunrise));
     });
 
     testWidgets('overflow dot is amber when some done but one is in active/past window', (tester) async {
@@ -387,7 +388,7 @@ void main() {
       );
       final decoration = dot.decoration! as BoxDecoration;
       // One showup is ShowupUiState.active (no planned) → amber (not grey, not green).
-      expect(decoration.color, equals(Colors.amber));
+      expect(decoration.color, equals(HabitLoopColors.sunrise));
     });
 
     testWidgets('shows dialog when 3 or more active pacts exist on create tap', (tester) async {

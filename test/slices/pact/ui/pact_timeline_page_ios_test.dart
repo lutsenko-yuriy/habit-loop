@@ -9,6 +9,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_timeline_page_ios.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:intl/intl.dart';
 
@@ -170,7 +171,7 @@ void main() {
       final ctx = tester.element(find.byType(PactTimelinePageIos));
       final l10n = AppLocalizations.of(ctx)!;
       final text = tester.widget<Text>(find.text(l10n.showupDone));
-      expect(text.style?.color, CupertinoColors.systemGreen.resolveFrom(ctx));
+      expect(text.style?.color, HabitLoopColors.success);
     });
 
     testWidgets('failed single showup status text is colored red', (tester) async {
@@ -185,7 +186,7 @@ void main() {
       final ctx = tester.element(find.byType(PactTimelinePageIos));
       final l10n = AppLocalizations.of(ctx)!;
       final text = tester.widget<Text>(find.text(l10n.showupFailed));
-      expect(text.style?.color, CupertinoColors.systemRed.resolveFrom(ctx));
+      expect(text.style?.color, HabitLoopColors.danger);
     });
 
     testWidgets('pending single showup status text is colored grey', (tester) async {
