@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class HabitNameStep extends StatefulWidget {
   final PactCreationState state;
@@ -64,7 +65,7 @@ class _HabitNameStepState extends State<HabitNameStep> {
         const SizedBox(height: AppSpacing.s16),
         Text(
           widget.l10n.habitNameLabel,
-          style: widget.titleStyle ?? const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: widget.titleStyle ?? AppTypography.wizardStepTitle,
         ),
         const SizedBox(height: AppSpacing.s16),
         widget.buildField(context, widget.l10n, _controller, widget.focusNode),

@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class WizardPageScaffold extends StatefulWidget {
   final int currentPage;
@@ -101,7 +102,7 @@ class _WizardPageScaffoldState extends State<WizardPageScaffold> {
           child: Text(
             widget.hintText,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: widget.hintTextColor),
+            style: AppTypography.caption.copyWith(color: widget.hintTextColor),
           ),
         ),
       ],

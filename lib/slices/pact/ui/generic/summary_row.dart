@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 /// Platform-agnostic two-column label/value row used in the commitment step's
 /// summary card. Extracted from `commitment_step_ios.dart` and
@@ -37,7 +38,7 @@ class SummaryRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: TextStyle(color: labelColor, fontSize: 14),
+              style: AppTypography.body.copyWith(color: labelColor),
             ),
           ),
           Expanded(

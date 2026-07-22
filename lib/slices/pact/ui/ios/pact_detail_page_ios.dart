@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -135,7 +136,7 @@ class _PactDetailContent extends StatelessWidget {
             Expanded(
               child: Text(
                 pact.habitName,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: AppTypography.sectionTitle,
               ),
             ),
             StatusBadge(text: statusText, color: statusColor),
@@ -356,7 +357,7 @@ class _StatCard extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey)),
           const SizedBox(height: AppSpacing.s4),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(value, style: AppTypography.valueEmphasis),
         ],
       ),
     );

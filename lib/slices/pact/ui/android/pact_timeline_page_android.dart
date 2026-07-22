@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_spine.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 // ── Public page widget ─────────────────────────────────────────────────────────
 
@@ -226,11 +227,7 @@ class _SectionHeader extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              letterSpacing: 0.4,
-              color: onSurfaceVariant,
-            ),
+            style: AppTypography.overline.copyWith(color: onSurfaceVariant),
           ),
         ),
         Container(height: 0.5, color: outline),
@@ -277,11 +274,7 @@ class _MilestoneDateContent extends StatelessWidget {
     return Text(
       text,
       textAlign: TextAlign.right,
-      style: TextStyle(
-        fontSize: 12,
-        fontStyle: FontStyle.italic,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      style: AppTypography.dateCaption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 
@@ -336,13 +329,13 @@ class _PactCreatedLabel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.timelinePactCreated, style: TextStyle(fontSize: 13, color: muted)),
+        Text(l10n.timelinePactCreated, style: AppTypography.caption.copyWith(color: muted)),
         const SizedBox(height: AppSpacing.s2),
-        Text(m.habitName, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(m.habitName, style: AppTypography.emphasis),
         const SizedBox(height: AppSpacing.s2),
         Text(
           l10n.pactPlannedUntil(formatLocaleDate(m.plannedEndDate)),
-          style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: muted),
+          style: AppTypography.captionItalic.copyWith(color: muted),
         ),
       ],
     );
@@ -361,9 +354,9 @@ class _CurrentStateLabel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.timelineCurrentState, style: TextStyle(fontSize: 13, color: muted)),
+        Text(l10n.timelineCurrentState, style: AppTypography.caption.copyWith(color: muted)),
         const SizedBox(height: AppSpacing.s2),
-        Text(l10n.timelineShowupsRemaining(m.showupsRemaining), style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(l10n.timelineShowupsRemaining(m.showupsRemaining), style: AppTypography.emphasis),
       ],
     );
   }
@@ -383,10 +376,10 @@ class _PactConcludedLabel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(title, style: AppTypography.emphasis),
         if (m.note != null && m.note!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s4),
-          Text(m.note!, style: const TextStyle(fontSize: 13)),
+          Text(m.note!, style: AppTypography.caption),
         ],
       ],
     );
@@ -404,7 +397,7 @@ class _StreakLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         milestoneTitle(l10n, m),
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
+        style: AppTypography.valueEmphasis.copyWith(color: _outcomeColor(m.outcome, context)),
       );
 }
 
@@ -420,10 +413,10 @@ class _NotedShowupLabel extends StatelessWidget {
         children: [
           Text(
             milestoneTitle(l10n, m),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
+            style: AppTypography.valueEmphasis.copyWith(color: _outcomeColor(m.outcome, context)),
           ),
           const SizedBox(height: AppSpacing.s4),
-          Text(m.note, style: const TextStyle(fontSize: 13)),
+          Text(m.note, style: AppTypography.caption),
         ],
       );
 }
@@ -437,6 +430,6 @@ class _SingleShowupLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         milestoneTitle(l10n, m),
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _outcomeColor(m.outcome, context)),
+        style: AppTypography.valueEmphasis.copyWith(color: _outcomeColor(m.outcome, context)),
       );
 }

@@ -13,6 +13,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_view_model.dar
 import 'package:habit_loop/slices/dashboard/ui/ios/language_picker_dialog_ios.dart';
 import 'package:habit_loop/slices/debug/ui/ios/remote_config_overrides_page_ios.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class OnboardingCarouselIos extends ConsumerWidget {
   const OnboardingCarouselIos({super.key, required this.onCreatePact});
@@ -79,10 +80,7 @@ class OnboardingCarouselIos extends ConsumerWidget {
                   )),
                   child: Text(
                     l10n.languagePickerTitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: CupertinoColors.secondaryLabel.resolveFrom(ctx),
-                    ),
+                    style: AppTypography.caption.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(ctx)),
                   ),
                 ),
               // Debug/profile only — not visible in release builds.

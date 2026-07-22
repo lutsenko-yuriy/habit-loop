@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 // EXP-003 commitment dialog. Variants: button / checkbox / retype.
 // Never pops the navigator — caller's responsibility.
@@ -64,7 +65,7 @@ class _CommitmentDialogContentState extends State<CommitmentDialogContent> {
         Text(
           key: const Key('commitment-dialog-warning'),
           l10n.commitmentWarning,
-          style: const TextStyle(fontSize: 14, height: 1.5),
+          style: AppTypography.bodyRelaxed,
         ),
         const SizedBox(height: AppSpacing.s16),
         if (widget.variant == 'checkbox')
