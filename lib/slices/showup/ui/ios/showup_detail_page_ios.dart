@@ -4,6 +4,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 /// Cupertino (iOS) implementation of the showup detail screen.
@@ -95,7 +96,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                             onPressed: s.isSaving ? null : onMarkFailed,
                                             child: Text(
                                               l10n.markFailed,
-                                              style: const TextStyle(color: CupertinoColors.destructiveRed),
+                                              style: const TextStyle(color: HabitLoopColors.danger),
                                             ),
                                           ),
                                         ],
@@ -117,16 +118,16 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         width: double.infinity,
                                         padding: const EdgeInsets.all(AppSpacing.s12),
                                         decoration: BoxDecoration(
-                                          color: CupertinoColors.systemRed.withValues(alpha: 0.1),
+                                          color: HabitLoopColors.danger.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(10),
                                           border: Border.all(
-                                            color: CupertinoColors.systemRed.withValues(alpha: 0.4),
+                                            color: HabitLoopColors.danger.withValues(alpha: 0.4),
                                           ),
                                         ),
                                         child: Text(
                                           l10n.showupAutoFailed,
                                           style: const TextStyle(
-                                            color: CupertinoColors.systemRed,
+                                            color: HabitLoopColors.danger,
                                             fontSize: 14,
                                           ),
                                         ),
