@@ -9,9 +9,9 @@ import 'package:intl/intl.dart';
 // app language locale carries no country code.
 String formatLocaleDate(DateTime date) => DateFormat.yMd(_effectiveLocale()).format(date);
 
-/// Formats a full, screen-reader-friendly date (weekday + month + day) using the
-/// app's display locale, e.g. "Tuesday, July 21" — used for Semantics labels where
-/// a compact numeric date (`formatLocaleDate`) would be ambiguous when spoken aloud.
+/// Formats a full, screen-reader-friendly date (weekday + month + day + year) using
+/// the app's display locale, e.g. "Tuesday, July 21, 2026" — used for Semantics labels
+/// where a compact numeric date (`formatLocaleDate`) would be ambiguous when spoken aloud.
 String formatAccessibleDate(BuildContext context, DateTime date) =>
     DateFormat.yMMMMEEEEd(Localizations.localeOf(context).toString()).format(date);
 
