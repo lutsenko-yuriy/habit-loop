@@ -269,9 +269,7 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
     return HabitLoopColors.primary;
   }
   if (m is PactConcludedMilestone) {
-    return m.finalStatus == PactStatus.completed
-        ? CupertinoColors.systemGreen.resolveFrom(context)
-        : CupertinoColors.systemRed.resolveFrom(context);
+    return m.finalStatus == PactStatus.completed ? HabitLoopColors.success : HabitLoopColors.danger;
   }
   final outcome = switch (m) {
     ShowupStreakMilestone s => s.outcome,

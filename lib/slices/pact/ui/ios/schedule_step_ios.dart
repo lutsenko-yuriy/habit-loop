@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/pact/ui/generic/option_tile.dart';
 import 'package:habit_loop/slices/pact/ui/generic/schedule_details_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/slot_schedule_editor.dart';
 import 'package:habit_loop/slices/pact/ui/ios/cupertino_picker_sheet.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
 
@@ -216,7 +217,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
                 if (weekdayEntries.length > 1)
                   CupertinoButton(
                     padding: const EdgeInsets.only(left: AppSpacing.s4),
-                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
+                    child: const Icon(CupertinoIcons.minus_circle, color: HabitLoopColors.danger, size: 22),
                     onPressed: () {
                       setState(() => weekdayEntries.removeAt(index));
                       widget.onScheduleChanged(WeekdaySchedule(entries: List.of(weekdayEntries)));
@@ -312,7 +313,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
                 if (monthlyWeekdayEntries.length > 1)
                   CupertinoButton(
                     padding: EdgeInsets.zero,
-                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
+                    child: const Icon(CupertinoIcons.minus_circle, color: HabitLoopColors.danger, size: 22),
                     onPressed: () {
                       setState(() => monthlyWeekdayEntries.removeAt(index));
                       widget.onScheduleChanged(MonthlyByWeekdaySchedule(entries: List.of(monthlyWeekdayEntries)));
@@ -380,7 +381,7 @@ class ScheduleDetailsIosState extends State<ScheduleDetailsIos> with ScheduleDet
                 if (monthlyDateEntries.length > 1)
                   CupertinoButton(
                     padding: EdgeInsets.zero,
-                    child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 22),
+                    child: const Icon(CupertinoIcons.minus_circle, color: HabitLoopColors.danger, size: 22),
                     onPressed: () {
                       setState(() => monthlyDateEntries.removeAt(index));
                       widget.onScheduleChanged(MonthlyByDateSchedule(entries: List.of(monthlyDateEntries)));

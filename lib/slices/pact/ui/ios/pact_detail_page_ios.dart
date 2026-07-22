@@ -229,7 +229,7 @@ class _PactDetailContent extends StatelessWidget {
             isSaving: state.isSavingNote,
             noteError: state.noteError,
             labelColor: CupertinoColors.systemGrey,
-            errorColor: CupertinoColors.destructiveRed,
+            errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
             onSaveNote: onSaveNote,
             slots: (
               buildNoteField: (context, controller) => CupertinoTextField(
@@ -274,7 +274,7 @@ class _PactDetailContent extends StatelessWidget {
           if (state.stopError != null) ...[
             Text(
               l10n.stopPactError,
-              style: const TextStyle(color: CupertinoColors.destructiveRed),
+              style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.s8),
@@ -285,7 +285,7 @@ class _PactDetailContent extends StatelessWidget {
                 ? const CupertinoActivityIndicator()
                 : Text(
                     l10n.stopPact,
-                    style: const TextStyle(color: CupertinoColors.destructiveRed),
+                    style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
                   ),
           ),
         ],
