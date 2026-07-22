@@ -11,6 +11,7 @@ import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
 import 'package:habit_loop/slices/pact/ui/ios/habit_name_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/reminder_step_ios.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 // iOS edit wizard: 3-page PageView (habit name → reminder → summary). × dismisses without saving.
 class PactEditPageIos extends StatelessWidget {
@@ -162,7 +163,7 @@ class _EditSummaryStepIos extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
             children: [
               const SizedBox(height: AppSpacing.s16),
-              Text(l10n.wizardSummaryTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(l10n.wizardSummaryTitle, style: AppTypography.sectionTitle),
               const SizedBox(height: AppSpacing.s16),
               Container(
                 key: const Key('pact-edit-summary-card'),
@@ -193,10 +194,7 @@ class _EditSummaryStepIos extends StatelessWidget {
                 Text(
                   l10n.pactEditSaveError,
                   key: const Key('pact-edit-save-error'),
-                  style: TextStyle(
-                    color: CupertinoColors.destructiveRed.resolveFrom(context),
-                    fontSize: 14,
-                  ),
+                  style: AppTypography.body.copyWith(color: CupertinoColors.destructiveRed.resolveFrom(context)),
                   textAlign: TextAlign.center,
                 ),
               ],

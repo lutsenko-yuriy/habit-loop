@@ -4,6 +4,7 @@ import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/habit_name_step.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class HabitNameStepIos extends StatelessWidget {
   const HabitNameStepIos({
@@ -45,7 +46,7 @@ class HabitNameStepIos extends StatelessWidget {
           color: HabitLoopColors.sunrise.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(l10n.commitmentWarning, style: const TextStyle(fontSize: 14, height: 1.5)),
+        child: Text(l10n.commitmentWarning, style: AppTypography.bodyRelaxed),
       ),
     );
   }

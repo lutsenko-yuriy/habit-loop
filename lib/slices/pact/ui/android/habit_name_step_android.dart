@@ -3,6 +3,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/habit_name_step.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class HabitNameStepAndroid extends StatelessWidget {
   const HabitNameStepAndroid({
@@ -52,7 +53,7 @@ class HabitNameStepAndroid extends StatelessWidget {
           ),
           child: Text(
             l10n.commitmentWarning,
-            style: TextStyle(fontSize: 14, height: 1.5, color: t.colorScheme.onTertiaryContainer),
+            style: AppTypography.bodyRelaxed.copyWith(color: t.colorScheme.onTertiaryContainer),
           ),
         );
       },

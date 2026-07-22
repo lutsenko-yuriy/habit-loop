@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 const double _weekdayToggleTapTargetMinSize = 48;
 
@@ -410,10 +411,7 @@ class _TimeChipButton extends StatelessWidget {
         ),
         child: Text(
           tod.format(context),
-          style: TextStyle(
-            color: theme.colorScheme.onPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTypography.emphasis.copyWith(color: theme.colorScheme.onPrimary),
         ),
       ),
     );

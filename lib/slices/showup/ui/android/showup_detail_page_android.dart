@@ -4,6 +4,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 /// Material (Android) implementation of the showup detail screen.
 class ShowupDetailPageAndroid extends StatelessWidget {
@@ -131,10 +132,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                   ),
                               buildRedemptionHint: (ctx) => Text(
                                     l10n.showupRedeemAddNoteHint,
-                                    style: TextStyle(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                      fontSize: 13,
-                                    ),
+                                    style: AppTypography.caption.copyWith(color: theme.colorScheme.onSurfaceVariant),
                                     textAlign: TextAlign.center,
                                   ),
                             ),

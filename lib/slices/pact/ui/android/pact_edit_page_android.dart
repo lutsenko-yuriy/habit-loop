@@ -10,6 +10,7 @@ import 'package:habit_loop/slices/pact/ui/generic/wizard_page_scaffold.dart';
 import 'package:habit_loop/slices/pact/ui/generic/wizard_step_indicator.dart';
 import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 // Android edit wizard: 3-page PageView (habit name → reminder → summary). × dismisses without saving.
 class PactEditPageAndroid extends StatelessWidget {
@@ -188,7 +189,7 @@ class _EditSummaryStepAndroid extends StatelessWidget {
                 Text(
                   l10n.pactEditSaveError,
                   key: const Key('pact-edit-save-error'),
-                  style: TextStyle(color: theme.colorScheme.error, fontSize: 14),
+                  style: AppTypography.body.copyWith(color: theme.colorScheme.error),
                   textAlign: TextAlign.center,
                 ),
               ],

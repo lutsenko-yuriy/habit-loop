@@ -6,6 +6,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 /// Cupertino (iOS) implementation of the showup detail screen.
 class ShowupDetailPageIos extends StatelessWidget {
@@ -126,9 +127,8 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         ),
                                         child: Text(
                                           l10n.showupAutoFailed,
-                                          style: TextStyle(
+                                          style: AppTypography.body.copyWith(
                                             color: CupertinoColors.destructiveRed.resolveFrom(ctx),
-                                            fontSize: 14,
                                           ),
                                         ),
                                       ),
@@ -139,10 +139,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                       ),
                                   buildRedemptionHint: (ctx) => Text(
                                         l10n.showupRedeemAddNoteHint,
-                                        style: const TextStyle(
-                                          color: CupertinoColors.systemGrey,
-                                          fontSize: 13,
-                                        ),
+                                        style: AppTypography.caption.copyWith(color: CupertinoColors.systemGrey),
                                         textAlign: TextAlign.center,
                                       ),
                                 ),

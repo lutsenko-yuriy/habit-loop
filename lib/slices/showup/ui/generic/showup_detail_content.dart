@@ -5,6 +5,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -107,7 +108,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             Expanded(
               child: Text(
                 state.habitName ?? l10n.showupHabitDeleted,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: AppTypography.sectionTitle,
               ),
             ),
             StatusBadge(text: statusText, color: statusColor),
@@ -123,7 +124,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
               children: [
                 Text(
                   l10n.showupViewPactDetails,
-                  style: TextStyle(fontSize: 13, color: widget.linkColor),
+                  style: AppTypography.caption.copyWith(color: widget.linkColor),
                 ),
                 Icon(Icons.chevron_right, size: 13, color: widget.linkColor),
               ],

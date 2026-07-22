@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AboutInfoHeader extends StatelessWidget {
@@ -24,19 +25,19 @@ class AboutInfoHeader extends StatelessWidget {
           const SizedBox(height: AppSpacing.s12),
           const Text(
             'Habit Loop',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: AppTypography.sectionTitle,
           ),
           if (versionText != null) ...[
             const SizedBox(height: AppSpacing.s4),
             Text(
               versionText!,
-              style: const TextStyle(fontSize: 13),
+              style: AppTypography.caption,
             ),
           ],
           const SizedBox(height: AppSpacing.s8),
           const Text(
             '© 2026 Iurii Lutsenko',
-            style: TextStyle(fontSize: 13),
+            style: AppTypography.caption,
           ),
         ],
       ),

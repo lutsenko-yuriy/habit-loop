@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_sign_in_contro
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_android.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class OnboardingCarouselAndroid extends ConsumerWidget {
   const OnboardingCarouselAndroid({super.key, required this.onCreatePact});
@@ -84,7 +85,7 @@ class OnboardingCarouselAndroid extends ConsumerWidget {
                   )),
                   style: TextButton.styleFrom(
                     foregroundColor: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.5),
-                    textStyle: const TextStyle(fontSize: 13),
+                    textStyle: AppTypography.caption,
                   ),
                   child: Text(l10n.languagePickerTitle),
                 ),
