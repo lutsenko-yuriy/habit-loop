@@ -8,7 +8,6 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
-import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
@@ -230,7 +229,7 @@ class _PactDetailContent extends StatelessWidget {
             isSaving: state.isSavingNote,
             noteError: state.noteError,
             labelColor: CupertinoColors.systemGrey,
-            errorColor: HabitLoopColors.danger,
+            errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
             onSaveNote: onSaveNote,
             slots: (
               buildNoteField: (context, controller) => CupertinoTextField(
@@ -275,7 +274,7 @@ class _PactDetailContent extends StatelessWidget {
           if (state.stopError != null) ...[
             Text(
               l10n.stopPactError,
-              style: const TextStyle(color: HabitLoopColors.danger),
+              style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.s8),
@@ -286,7 +285,7 @@ class _PactDetailContent extends StatelessWidget {
                 ? const CupertinoActivityIndicator()
                 : Text(
                     l10n.stopPact,
-                    style: const TextStyle(color: HabitLoopColors.danger),
+                    style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
                   ),
           ),
         ],

@@ -10,7 +10,6 @@ import 'package:habit_loop/slices/pact/ui/generic/wizard_step_indicator.dart';
 import 'package:habit_loop/slices/pact/ui/generic/wizard_style.dart';
 import 'package:habit_loop/slices/pact/ui/ios/habit_name_step_ios.dart';
 import 'package:habit_loop/slices/pact/ui/ios/reminder_step_ios.dart';
-import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 // iOS edit wizard: 3-page PageView (habit name → reminder → summary). × dismisses without saving.
@@ -194,8 +193,8 @@ class _EditSummaryStepIos extends StatelessWidget {
                 Text(
                   l10n.pactEditSaveError,
                   key: const Key('pact-edit-save-error'),
-                  style: const TextStyle(
-                    color: HabitLoopColors.danger,
+                  style: TextStyle(
+                    color: CupertinoColors.destructiveRed.resolveFrom(context),
                     fontSize: 14,
                   ),
                   textAlign: TextAlign.center,

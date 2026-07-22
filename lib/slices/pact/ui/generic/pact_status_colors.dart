@@ -15,10 +15,10 @@ class PactStatusColors {
     required this.completed,
   });
 
-  static PactStatusColors cupertino(BuildContext context) => const PactStatusColors(
+  static PactStatusColors cupertino(BuildContext context) => PactStatusColors(
         active: HabitLoopColors.primary,
-        stopped: HabitLoopColors.danger,
-        completed: HabitLoopColors.success,
+        stopped: CupertinoColors.destructiveRed.resolveFrom(context),
+        completed: CupertinoColors.activeGreen.resolveFrom(context),
       );
 
   static const PactStatusColors material = PactStatusColors(

@@ -281,8 +281,8 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
 }
 
 Color _outcomeColor(ShowupStatus outcome, BuildContext context) => switch (outcome) {
-      ShowupStatus.done => HabitLoopColors.success,
-      ShowupStatus.failed => HabitLoopColors.danger,
+      ShowupStatus.done => CupertinoColors.systemGreen.resolveFrom(context),
+      ShowupStatus.failed => CupertinoColors.systemRed.resolveFrom(context),
       ShowupStatus.pending => CupertinoColors.systemGrey.resolveFrom(context),
     };
 

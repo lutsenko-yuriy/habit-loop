@@ -96,7 +96,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                             onPressed: s.isSaving ? null : onMarkFailed,
                                             child: Text(
                                               l10n.markFailed,
-                                              style: const TextStyle(color: HabitLoopColors.danger),
+                                              style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(ctx)),
                                             ),
                                           ),
                                         ],
@@ -126,8 +126,8 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         ),
                                         child: Text(
                                           l10n.showupAutoFailed,
-                                          style: const TextStyle(
-                                            color: HabitLoopColors.danger,
+                                          style: TextStyle(
+                                            color: CupertinoColors.destructiveRed.resolveFrom(ctx),
                                             fontSize: 14,
                                           ),
                                         ),

@@ -154,8 +154,8 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 color: switch (status) {
-                                  DebugSeedState.error => HabitLoopColors.danger,
-                                  DebugSeedState.done => HabitLoopColors.success,
+                                  DebugSeedState.error => CupertinoColors.systemRed.resolveFrom(ctx),
+                                  DebugSeedState.done => CupertinoColors.systemGreen.resolveFrom(ctx),
                                   _ => CupertinoColors.systemGrey.resolveFrom(ctx),
                                 },
                               ),
