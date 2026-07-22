@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/habit_name_step.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 class HabitNameStepIos extends StatelessWidget {
@@ -41,7 +42,7 @@ class HabitNameStepIos extends StatelessWidget {
         key: const Key('pact-creation-habit-name-commitment-rules'),
         padding: const EdgeInsets.all(AppSpacing.s14),
         decoration: BoxDecoration(
-          color: CupertinoColors.systemYellow.withValues(alpha: 0.15),
+          color: HabitLoopColors.sunrise.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(l10n.commitmentWarning, style: const TextStyle(fontSize: 14, height: 1.5)),

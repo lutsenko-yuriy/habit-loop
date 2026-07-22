@@ -10,6 +10,7 @@ import 'package:habit_loop/slices/debug/ui/generic/rc_entry_edit_state.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_scroll_view.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 class RemoteConfigOverridesPageIos extends ConsumerWidget {
@@ -113,9 +114,9 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                             ),
                           ),
                         ),
-                    buildRestartBanner: (ctx) => RestartRequiredBanner(
-                          key: const Key('debug-backend-restart-banner'),
-                          color: CupertinoColors.systemYellow.resolveFrom(ctx),
+                    buildRestartBanner: (ctx) => const RestartRequiredBanner(
+                          key: Key('debug-backend-restart-banner'),
+                          color: HabitLoopColors.sunrise,
                           icon: CupertinoIcons.exclamationmark_triangle_fill,
                         ),
                     seedSlots: (
@@ -153,8 +154,8 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 color: switch (status) {
-                                  DebugSeedState.error => CupertinoColors.systemRed.resolveFrom(ctx),
-                                  DebugSeedState.done => CupertinoColors.systemGreen.resolveFrom(ctx),
+                                  DebugSeedState.error => HabitLoopColors.danger,
+                                  DebugSeedState.done => HabitLoopColors.success,
                                   _ => CupertinoColors.systemGrey.resolveFrom(ctx),
                                 },
                               ),

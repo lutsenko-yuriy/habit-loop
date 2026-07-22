@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/debug/ui/generic/rc_entry_edit_state.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_scroll_view.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
@@ -98,7 +99,7 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s0),
                       child: RestartRequiredBanner(
                         key: Key('debug-backend-restart-banner'),
-                        color: Colors.amber,
+                        color: HabitLoopColors.sunrise,
                       ),
                     ),
                 seedSlots: (
@@ -126,7 +127,7 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                           fontSize: 12,
                           color: switch (status) {
                             DebugSeedState.error => Theme.of(ctx).colorScheme.error,
-                            DebugSeedState.done => Colors.green,
+                            DebugSeedState.done => HabitLoopColors.success,
                             _ => Theme.of(ctx).colorScheme.onSurfaceVariant,
                           },
                         ),
