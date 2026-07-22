@@ -109,7 +109,6 @@ class _CalendarStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final today = state.calendarDays.isNotEmpty ? state.calendarDays[state.todayIndex].date : DateTime.now();
-    final cs = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12, horizontal: AppSpacing.s8),
@@ -123,55 +122,89 @@ class _CalendarStrip extends StatelessWidget {
           final semanticLabel = isToday ? l10n.dashboardDayToday(formattedDate) : formattedDate;
 
           return Expanded(
-            child: Semantics(
-              label: semanticLabel,
-              selected: isSelected,
-              button: true,
-              child: GestureDetector(
-                onTap: () => onDaySelected(index),
-                behavior: HitTestBehavior.opaque,
-                child: ExcludeSemantics(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: _dayTapTargetMinSize),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isSelected ? cs.primary : null,
-                              border: isToday && !isSelected ? Border.all(color: cs.primary, width: 2) : null,
-                            ),
-                            alignment: Alignment.center,
-                            child: FittedBox(
-                              child: Text(
-                                '${entry.date.day}',
-                                style: TextStyle(
-                                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                                  color: isSelected ? cs.onPrimary : null,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.s4),
-                          ShowupStatusDots(
-                            showups: entry.showups,
-                            date: entry.date,
-                            colors: statusColors,
-                            uiStates: deriveUiStates(entry.showups, state.reminderOffsetByPactId),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            child: _CalendarDayCell(
+              entry: entry,
+              isToday: isToday,
+              isSelected: isSelected,
+              statusColors: statusColors,
+              reminderOffsetByPactId: state.reminderOffsetByPactId,
+              semanticLabel: semanticLabel,
+              onTap: () => onDaySelected(index),
             ),
           );
         }),
+      ),
+    );
+  }
+}
+
+class _CalendarDayCell extends StatelessWidget {
+  final CalendarDayEntry entry;
+  final bool isToday;
+  final bool isSelected;
+  final ShowupStatusColors statusColors;
+  final Map<String, Duration?> reminderOffsetByPactId;
+  final String semanticLabel;
+  final VoidCallback onTap;
+
+  const _CalendarDayCell({
+    required this.entry,
+    required this.isToday,
+    required this.isSelected,
+    required this.statusColors,
+    required this.reminderOffsetByPactId,
+    required this.semanticLabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Semantics(
+      label: semanticLabel,
+      selected: isSelected,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: ExcludeSemantics(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: _dayTapTargetMinSize),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected ? cs.primary : null,
+                      border: isToday && !isSelected ? Border.all(color: cs.primary, width: 2) : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: FittedBox(
+                      child: Text(
+                        '${entry.date.day}',
+                        style: TextStyle(
+                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? cs.onPrimary : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  ShowupStatusDots(
+                    showups: entry.showups,
+                    date: entry.date,
+                    colors: statusColors,
+                    uiStates: deriveUiStates(entry.showups, reminderOffsetByPactId),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
