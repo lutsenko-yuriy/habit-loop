@@ -92,12 +92,13 @@ class DashboardPageAndroid extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.dashboardTitle),
         actions: [
-          ...otherStandalone.map((a) => _buildAppBarButton(context, a, syncState)),
+          ...otherStandalone.map((a) => _buildAppBarButton(context, a, syncState, l10n)),
           if (kebabItems.isNotEmpty) _buildKebabButton(context, ref, kebabItems, l10n),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         key: const Key('create-pact-button'),
+        tooltip: l10n.createPact,
         onPressed: onCreatePact,
         child: const Icon(Icons.add),
       ),
@@ -141,6 +142,7 @@ Widget _buildKebabButton(
   return PopupMenuButton<DashboardActionType>(
     key: const Key('kebab-menu-button'),
     icon: const Icon(Icons.more_vert),
+    tooltip: l10n.dashboardMoreOptionsTooltip,
     onOpened: () {
       unawaited(ref.read(analyticsServiceProvider).logEvent(const KebabMenuOpenedEvent()));
     },
@@ -164,11 +166,18 @@ String _kebabItemLabel(DashboardActionType type, AppLocalizations l10n) => switc
       _ => '',
     };
 
-Widget _buildAppBarButton(BuildContext context, DashboardActionDescriptor action, dynamic syncState) {
+Widget _buildAppBarButton(
+  BuildContext context,
+  DashboardActionDescriptor action,
+  dynamic syncState,
+  AppLocalizations l10n,
+) {
+  final tooltip = dashboardActionLabel(action.type, l10n);
   return switch (action.type) {
     DashboardActionType.rcOverrides => IconButton(
         key: action.key,
         icon: const Icon(Icons.tune),
+        tooltip: tooltip,
         onPressed: action.onPressed,
       ),
     DashboardActionType.syncStatus => IconButton(
@@ -177,17 +186,20 @@ Widget _buildAppBarButton(BuildContext context, DashboardActionDescriptor action
           syncStatusIconData(syncState),
           color: syncStatusIconColor(syncState, context),
         ),
+        tooltip: tooltip,
         onPressed: action.onPressed,
       ),
     DashboardActionType.languagePicker => IconButton(
         key: action.key,
         icon: const Icon(Icons.language),
+        tooltip: tooltip,
         onPressed: action.onPressed,
       ),
     DashboardActionType.createPact => const SizedBox.shrink(),
     DashboardActionType.about => IconButton(
         key: action.key,
         icon: const Icon(Icons.info_outline),
+        tooltip: tooltip,
         onPressed: action.onPressed,
       ),
   };

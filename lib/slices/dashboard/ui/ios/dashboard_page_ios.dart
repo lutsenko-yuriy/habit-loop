@@ -98,9 +98,9 @@ class DashboardPageIos extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ...otherStandalone.map((a) => _buildNavBarButton(context, a, syncState)),
+            ...otherStandalone.map((a) => _buildNavBarButton(context, a, syncState, l10n)),
             if (kebabItems.isNotEmpty) _buildKebabButton(context, ref, kebabItems, l10n),
-            _buildNavBarButton(context, createPactAction, syncState),
+            _buildNavBarButton(context, createPactAction, syncState, l10n),
           ],
         ),
       ),
@@ -148,35 +148,44 @@ Widget _buildKebabButton(
   List<DashboardActionDescriptor> items,
   AppLocalizations l10n,
 ) {
-  return CupertinoButton(
-    key: const Key('kebab-menu-button'),
-    padding: EdgeInsets.zero,
-    onPressed: () async {
-      unawaited(ref.read(analyticsServiceProvider).logEvent(const KebabMenuOpenedEvent()));
-      if (!context.mounted) return;
-      await showCupertinoModalPopup<void>(
-        context: context,
-        builder: (ctx) => CupertinoActionSheet(
-          actions: items
-              .map(
-                (item) => CupertinoActionSheetAction(
-                  key: item.key,
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    item.onPressed();
-                  },
-                  child: Text(_kebabItemLabel(item.type, l10n)),
-                ),
-              )
-              .toList(),
-          cancelButton: CupertinoActionSheetAction(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(CupertinoLocalizations.of(ctx).cancelButtonLabel),
-          ),
+  Future<void> onKebabPressed() async {
+    unawaited(ref.read(analyticsServiceProvider).logEvent(const KebabMenuOpenedEvent()));
+    if (!context.mounted) return;
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        actions: items
+            .map(
+              (item) => CupertinoActionSheetAction(
+                key: item.key,
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  item.onPressed();
+                },
+                child: Text(_kebabItemLabel(item.type, l10n)),
+              ),
+            )
+            .toList(),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(CupertinoLocalizations.of(ctx).cancelButtonLabel),
         ),
-      );
-    },
-    child: const Icon(CupertinoIcons.ellipsis),
+      ),
+    );
+  }
+
+  return Semantics(
+    label: l10n.dashboardMoreOptionsTooltip,
+    button: true,
+    onTap: () => unawaited(onKebabPressed()),
+    child: ExcludeSemantics(
+      child: CupertinoButton(
+        key: const Key('kebab-menu-button'),
+        padding: EdgeInsets.zero,
+        onPressed: onKebabPressed,
+        child: const Icon(CupertinoIcons.ellipsis),
+      ),
+    ),
   );
 }
 
@@ -187,8 +196,13 @@ String _kebabItemLabel(DashboardActionType type, AppLocalizations l10n) => switc
       _ => '',
     };
 
-Widget _buildNavBarButton(BuildContext context, DashboardActionDescriptor action, dynamic syncState) {
-  return switch (action.type) {
+Widget _buildNavBarButton(
+  BuildContext context,
+  DashboardActionDescriptor action,
+  dynamic syncState,
+  AppLocalizations l10n,
+) {
+  final button = switch (action.type) {
     DashboardActionType.rcOverrides => CupertinoButton(
         key: action.key,
         padding: EdgeInsets.zero,
@@ -223,6 +237,12 @@ Widget _buildNavBarButton(BuildContext context, DashboardActionDescriptor action
         child: const Icon(CupertinoIcons.info_circle),
       ),
   };
+  return Semantics(
+    label: dashboardActionLabel(action.type, l10n),
+    button: true,
+    onTap: action.onPressed,
+    child: ExcludeSemantics(child: button),
+  );
 }
 
 class _ShowupTile extends StatelessWidget {

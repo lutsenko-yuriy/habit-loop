@@ -107,6 +107,41 @@ void main() {
     expect(find.byKey(const Key('language-picker-button')), findsNothing);
   });
 
+  testWidgets('iOS dashboard nav bar buttons expose Semantics labels for screen readers', (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(_buildTestApp());
+
+    expect(
+      tester.getSemantics(find.byKey(const Key('sync-status-button'))),
+      matchesSemantics(label: 'Sync status', isButton: true, hasTapAction: true),
+    );
+    expect(
+      tester.getSemantics(find.byKey(const Key('kebab-menu-button'))),
+      matchesSemantics(label: 'More options', isButton: true, hasTapAction: true),
+    );
+    expect(
+      tester.getSemantics(find.byKey(const Key('create-pact-button'))),
+      matchesSemantics(label: 'Create a Pact', isButton: true, hasTapAction: true),
+    );
+    handle.dispose();
+  });
+
+  testWidgets('iOS standalone debug button keeps its Semantics label when promoted out of the kebab', (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(_buildTestApp(
+      remoteConfig: FakeRemoteConfigService(overrides: {
+        'about_screen_enabled': false,
+        'language_selection_enabled': false,
+      }),
+    ));
+
+    expect(
+      tester.getSemantics(find.byKey(const Key('remote-config-debug-button'))),
+      matchesSemantics(label: 'Debug', isButton: true, hasTapAction: true),
+    );
+    handle.dispose();
+  });
+
   testWidgets('iOS dashboard hides sync button when network_sync_enabled is false', (tester) async {
     await tester.pumpWidget(_buildTestApp(
       remoteConfig: FakeRemoteConfigService(overrides: {'network_sync_enabled': false}),

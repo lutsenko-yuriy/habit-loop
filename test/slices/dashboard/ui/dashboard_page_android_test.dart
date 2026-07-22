@@ -11,6 +11,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/android/dashboard_page_android.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_actions.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
@@ -75,6 +76,31 @@ void main() {
     expect(find.byKey(const Key('kebab-menu-button')), findsOneWidget);
     // language picker is inside the kebab, not directly in the app bar
     expect(find.byIcon(Icons.language), findsNothing);
+  });
+
+  testWidgets('Android dashboard app bar buttons expose accessible tooltips', (tester) async {
+    await tester.pumpWidget(_buildTestApp());
+
+    final syncButton = tester.widget<IconButton>(find.byKey(const Key('sync-status-button')));
+    expect(syncButton.tooltip, 'Sync status');
+
+    final kebabButton = tester.widget<PopupMenuButton<DashboardActionType>>(find.byKey(const Key('kebab-menu-button')));
+    expect(kebabButton.tooltip, 'More options');
+
+    final fab = tester.widget<FloatingActionButton>(find.byKey(const Key('create-pact-button')));
+    expect(fab.tooltip, 'Create a Pact');
+  });
+
+  testWidgets('Android standalone debug button keeps its tooltip when promoted out of the kebab', (tester) async {
+    await tester.pumpWidget(_buildTestApp(
+      remoteConfig: FakeRemoteConfigService(overrides: {
+        'language_selection_enabled': false,
+        'about_screen_enabled': false,
+      }),
+    ));
+
+    final debugButton = tester.widget<IconButton>(find.byKey(const Key('remote-config-debug-button')));
+    expect(debugButton.tooltip, 'Debug');
   });
 
   testWidgets('Android dashboard hides sync button when network_sync_enabled is false', (tester) async {

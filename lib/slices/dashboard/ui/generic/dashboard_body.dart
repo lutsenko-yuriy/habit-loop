@@ -2,12 +2,18 @@ import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Theme;
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 import 'package:habit_loop/theme/spacing.dart';
+
+/// Minimum tap-target size (logical pixels) applied to the calendar-strip day
+/// buttons — satisfies both Android's 48dp and iOS's 44pt guideline minimums
+/// (`CHK-2026-07-20-heavy-8`).
+const double _dayTapTargetMinSize = 48;
 
 typedef DashboardShowupTileBuilder = Widget Function(
   BuildContext context,
@@ -101,52 +107,104 @@ class _CalendarStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final today = state.calendarDays.isNotEmpty ? state.calendarDays[state.todayIndex].date : DateTime.now();
-    final cs = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12, horizontal: AppSpacing.s8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(state.calendarDays.length, (index) {
           final entry = state.calendarDays[index];
           final isToday =
               entry.date.day == today.day && entry.date.month == today.month && entry.date.year == today.year;
           final isSelected = index == state.selectedDayIndex;
+          final formattedDate = formatAccessibleDate(context, entry.date);
+          final semanticLabel = isToday ? l10n.dashboardDayToday(formattedDate) : formattedDate;
 
-          return GestureDetector(
-            onTap: () => onDaySelected(index),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? cs.primary : null,
-                    border: isToday && !isSelected ? Border.all(color: cs.primary, width: 2) : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${entry.date.day}',
-                    style: TextStyle(
-                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? cs.onPrimary : null,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                ShowupStatusDots(
-                  showups: entry.showups,
-                  date: entry.date,
-                  colors: statusColors,
-                  uiStates: deriveUiStates(entry.showups, state.reminderOffsetByPactId),
-                ),
-              ],
+          return Expanded(
+            child: _CalendarDayCell(
+              entry: entry,
+              isToday: isToday,
+              isSelected: isSelected,
+              statusColors: statusColors,
+              reminderOffsetByPactId: state.reminderOffsetByPactId,
+              semanticLabel: semanticLabel,
+              onTap: () => onDaySelected(index),
             ),
           );
         }),
+      ),
+    );
+  }
+}
+
+class _CalendarDayCell extends StatelessWidget {
+  final CalendarDayEntry entry;
+  final bool isToday;
+  final bool isSelected;
+  final ShowupStatusColors statusColors;
+  final Map<String, Duration?> reminderOffsetByPactId;
+  final String semanticLabel;
+  final VoidCallback onTap;
+
+  const _CalendarDayCell({
+    required this.entry,
+    required this.isToday,
+    required this.isSelected,
+    required this.statusColors,
+    required this.reminderOffsetByPactId,
+    required this.semanticLabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Semantics(
+      label: semanticLabel,
+      selected: isSelected,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: ExcludeSemantics(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: _dayTapTargetMinSize),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected ? cs.primary : null,
+                      border: isToday && !isSelected ? Border.all(color: cs.primary, width: 2) : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: FittedBox(
+                      child: Text(
+                        '${entry.date.day}',
+                        style: TextStyle(
+                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? cs.onPrimary : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  ShowupStatusDots(
+                    showups: entry.showups,
+                    date: entry.date,
+                    colors: statusColors,
+                    uiStates: deriveUiStates(entry.showups, reminderOffsetByPactId),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

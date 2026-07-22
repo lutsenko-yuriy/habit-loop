@@ -4,10 +4,22 @@ import 'package:flutter/foundation.dart' show kDebugMode, kProfileMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
 enum DashboardActionType { rcOverrides, syncStatus, languagePicker, createPact, about }
+
+/// Localized accessible label for [type] — used as a Material `tooltip`
+/// (Android) or wrapped in a `Semantics` label (iOS, which has no built-in
+/// tooltip widget on `CupertinoButton`).
+String dashboardActionLabel(DashboardActionType type, AppLocalizations l10n) => switch (type) {
+      DashboardActionType.rcOverrides => l10n.dashboardDebugMenuItem,
+      DashboardActionType.syncStatus => l10n.syncStatusTitle,
+      DashboardActionType.languagePicker => l10n.languagePickerTitle,
+      DashboardActionType.about => l10n.aboutTitle,
+      DashboardActionType.createPact => l10n.createPact,
+    };
 
 class DashboardActionDescriptor {
   final DashboardActionType type;

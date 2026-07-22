@@ -344,5 +344,11 @@
   "aboutTitle": "About",
   "aboutSendFeedback": "Send feedback",
 
-  "dashboardDebugMenuItem": "Debug"
+  "dashboardDebugMenuItem": "Debug",
+
+  "dashboardMoreOptionsTooltip": "More options",
+  "dashboardDayToday": "{date}, today",
+  "@dashboardDayToday": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }

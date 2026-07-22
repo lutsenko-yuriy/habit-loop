@@ -343,5 +343,11 @@
   "aboutTitle": "О приложении",
   "aboutSendFeedback": "Отправить отзыв",
 
-  "dashboardDebugMenuItem": "Отладка"
+  "dashboardDebugMenuItem": "Отладка",
+
+  "dashboardMoreOptionsTooltip": "Дополнительные параметры",
+  "dashboardDayToday": "{date}, сегодня",
+  "@dashboardDayToday": {
+    "placeholders": { "date": { "type": "String" } }
+  }
 }
