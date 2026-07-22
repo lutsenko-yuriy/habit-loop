@@ -250,7 +250,7 @@ class _SectionHeader extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: AppTypography.overline.copyWith(color: CupertinoColors.systemGrey),
+            style: AppTypography.overline.copyWith(color: HabitLoopColors.secondaryText(context)),
           ),
         ),
         Container(height: 0.5, color: sep),
@@ -280,7 +280,7 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
 Color _outcomeColor(ShowupStatus outcome, BuildContext context) => switch (outcome) {
       ShowupStatus.done => CupertinoColors.systemGreen.resolveFrom(context),
       ShowupStatus.failed => CupertinoColors.systemRed.resolveFrom(context),
-      ShowupStatus.pending => CupertinoColors.systemGrey.resolveFrom(context),
+      ShowupStatus.pending => HabitLoopColors.secondaryText(context),
     };
 
 // ── Date content (left of spine) ───────────────────────────────────────────────
@@ -297,7 +297,7 @@ class _MilestoneDateContent extends StatelessWidget {
     return Text(
       text,
       textAlign: TextAlign.right,
-      style: AppTypography.dateCaption.copyWith(color: CupertinoColors.systemGrey),
+      style: AppTypography.dateCaption.copyWith(color: HabitLoopColors.secondaryText(context)),
     );
   }
 
@@ -348,13 +348,14 @@ class _PactCreatedLabel extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.timelinePactCreated, style: AppTypography.caption.copyWith(color: CupertinoColors.systemGrey)),
+          Text(l10n.timelinePactCreated,
+              style: AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(context))),
           const SizedBox(height: AppSpacing.s2),
           Text(m.habitName, style: AppTypography.emphasis),
           const SizedBox(height: AppSpacing.s2),
           Text(
             l10n.pactPlannedUntil(formatLocaleDate(m.plannedEndDate)),
-            style: AppTypography.captionItalic.copyWith(color: CupertinoColors.systemGrey),
+            style: AppTypography.captionItalic.copyWith(color: HabitLoopColors.secondaryText(context)),
           ),
         ],
       );
@@ -370,7 +371,8 @@ class _CurrentStateLabel extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.timelineCurrentState, style: AppTypography.caption.copyWith(color: CupertinoColors.systemGrey)),
+          Text(l10n.timelineCurrentState,
+              style: AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(context))),
           const SizedBox(height: AppSpacing.s2),
           Text(l10n.timelineShowupsRemaining(m.showupsRemaining), style: AppTypography.emphasis),
         ],

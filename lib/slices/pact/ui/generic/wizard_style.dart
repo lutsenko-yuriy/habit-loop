@@ -25,8 +25,8 @@ class WizardStyle {
         activeStepColor: HabitLoopColors.primary,
         pastStepColor: HabitLoopColors.primary.withValues(alpha: 0.3),
         inactiveStepColor: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-        hintTextColor: CupertinoColors.systemGrey.resolveFrom(context),
-        labelColor: CupertinoColors.systemGrey.resolveFrom(context),
+        hintTextColor: HabitLoopColors.secondaryText(context),
+        labelColor: HabitLoopColors.secondaryText(context),
         cardColor: CupertinoColors.tertiarySystemFill.resolveFrom(context),
         dividerColor: CupertinoColors.separator.resolveFrom(context),
       );

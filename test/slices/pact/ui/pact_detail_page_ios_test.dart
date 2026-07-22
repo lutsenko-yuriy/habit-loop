@@ -42,9 +42,10 @@ Widget _buildApp(
   PactDetailState state, {
   bool pactTimelineEnabled = false,
   VoidCallback? onOpenTimeline,
+  Brightness brightness = Brightness.light,
 }) {
   return MaterialApp(
-    theme: HabitLoopTheme.materialTheme,
+    theme: brightness == Brightness.dark ? HabitLoopTheme.darkMaterialTheme : HabitLoopTheme.materialTheme,
     localizationsDelegates: const [
       AppLocalizations.delegate,
       GlobalMaterialLocalizations.delegate,
@@ -152,5 +153,18 @@ void main() {
     final theme = Theme.of(tester.element(find.byType(PactDetailPageIos)));
 
     expect(scaffold.backgroundColor, theme.colorScheme.surface);
+  });
+
+  group('PactDetailPageIos — WCAG AA contrast', () {
+    for (final brightness in [Brightness.light, Brightness.dark]) {
+      testWidgets('pact detail text meets AA contrast in ${brightness.name} mode', (tester) async {
+        final handle = tester.ensureSemantics();
+        await tester.pumpWidget(_buildApp(_loadedState(_stoppedPact), brightness: brightness));
+        await tester.pumpAndSettle();
+
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        handle.dispose();
+      });
+    }
   });
 }

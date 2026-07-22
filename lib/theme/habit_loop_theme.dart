@@ -20,11 +20,15 @@ abstract final class HabitLoopTheme {
       brightness: brightness,
     ).copyWith(
       primary: HabitLoopColors.primary,
+      onPrimary: _onColorFor(HabitLoopColors.primary),
       secondary: HabitLoopColors.growth,
+      onSecondary: _onColorFor(HabitLoopColors.growth),
       tertiary: HabitLoopColors.sunrise,
+      onTertiary: _onColorFor(HabitLoopColors.sunrise),
       tertiaryContainer: sunriseScheme.primaryContainer,
       onTertiaryContainer: sunriseScheme.onPrimaryContainer,
       error: HabitLoopColors.danger,
+      onError: _onColorFor(HabitLoopColors.danger),
     );
 
     return ThemeData(
@@ -51,6 +55,15 @@ abstract final class HabitLoopTheme {
       ),
     );
   }
+
+  // ColorScheme.fromSeed's auto-derived "on*" colors are paired against its own
+  // algorithmic tone for that role — not against a brand color overridden via
+  // copyWith afterwards. Since our brand colors are fixed (brightness-independent),
+  // their AA-safe contrasting text color is fixed too; estimateBrightnessForColor
+  // picks black or white to match, exactly as Flutter's own defaults would if the
+  // seed tone and the override happened to coincide.
+  static Color _onColorFor(Color background) =>
+      ThemeData.estimateBrightnessForColor(background) == Brightness.dark ? Colors.white : Colors.black87;
 
   static const cupertinoTheme = CupertinoThemeData(
     primaryColor: HabitLoopColors.primary,

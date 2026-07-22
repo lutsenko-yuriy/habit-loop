@@ -8,6 +8,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
@@ -145,7 +146,7 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: AppSpacing.s24),
 
         // Stats cards
-        SectionHeader(title: l10n.sectionStats, labelColor: CupertinoColors.systemGrey),
+        SectionHeader(title: l10n.sectionStats, labelColor: HabitLoopColors.secondaryText(context)),
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
@@ -168,12 +169,12 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: AppSpacing.s24),
 
         // Time details
-        SectionHeader(title: l10n.sectionTimeline, labelColor: CupertinoColors.systemGrey),
+        SectionHeader(title: l10n.sectionTimeline, labelColor: HabitLoopColors.secondaryText(context)),
         const SizedBox(height: AppSpacing.s8),
         DateRowTile(
           label: l10n.pactStartDate,
           value: formatLocaleDate(pact.startDate),
-          valueColor: CupertinoColors.systemGrey,
+          valueColor: HabitLoopColors.secondaryText(context),
           backgroundColor: fill,
         ),
         const SizedBox(height: AppSpacing.s8),
@@ -181,7 +182,7 @@ class _PactDetailContent extends StatelessWidget {
           DateRowTile(
             label: l10n.pactStoppedDate,
             value: formatLocaleDate(pact.stoppedAt!),
-            valueColor: CupertinoColors.systemGrey,
+            valueColor: HabitLoopColors.secondaryText(context),
             backgroundColor: fill,
           ),
           const SizedBox(height: AppSpacing.s8),
@@ -189,7 +190,7 @@ class _PactDetailContent extends StatelessWidget {
         DateRowTile(
           label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
           value: formatLocaleDate(pact.endDate),
-          valueColor: CupertinoColors.systemGrey,
+          valueColor: HabitLoopColors.secondaryText(context),
           backgroundColor: fill,
         ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
@@ -200,14 +201,14 @@ class _PactDetailContent extends StatelessWidget {
         DateRowTile(
           label: l10n.summaryShowupDuration,
           value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
-          valueColor: CupertinoColors.systemGrey,
+          valueColor: HabitLoopColors.secondaryText(context),
           backgroundColor: fill,
         ),
         const SizedBox(height: AppSpacing.s8),
         DateRowTile(
           label: l10n.summaryReminder,
           value: reminderDescription(l10n, pact.reminderOffset),
-          valueColor: CupertinoColors.systemGrey,
+          valueColor: HabitLoopColors.secondaryText(context),
           backgroundColor: fill,
         ),
 
@@ -229,7 +230,7 @@ class _PactDetailContent extends StatelessWidget {
             savedNote: pact.stopReason,
             isSaving: state.isSavingNote,
             noteError: state.noteError,
-            labelColor: CupertinoColors.systemGrey,
+            labelColor: HabitLoopColors.secondaryText(context),
             errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
             onSaveNote: onSaveNote,
             slots: (
@@ -258,7 +259,7 @@ class _PactDetailContent extends StatelessWidget {
         // Archive section for completed and stopped pacts
         if (pact.status != PactStatus.active) ...[
           const SizedBox(height: AppSpacing.s24),
-          SectionHeader(title: l10n.sectionArchive, labelColor: CupertinoColors.systemGrey),
+          SectionHeader(title: l10n.sectionArchive, labelColor: HabitLoopColors.secondaryText(context)),
           const SizedBox(height: AppSpacing.s8),
           CupertinoButton(
             key: const Key('archive-pact-button'),
@@ -355,7 +356,7 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey)),
+          Text(label, style: TextStyle(fontSize: 12, color: HabitLoopColors.secondaryText(context))),
           const SizedBox(height: AppSpacing.s4),
           Text(value, style: AppTypography.valueEmphasis),
         ],

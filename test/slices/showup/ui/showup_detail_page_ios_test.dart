@@ -8,6 +8,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 import 'package:habit_loop/slices/showup/ui/ios/showup_detail_page_ios.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 final _showup = Showup(
@@ -27,9 +28,13 @@ final _redeemableShowup = Showup(
   redeemable: true,
 );
 
-Widget _buildApp(ShowupDetailState state, {Future<void> Function()? onRedeemShowup}) {
+Widget _buildApp(
+  ShowupDetailState state, {
+  Future<void> Function()? onRedeemShowup,
+  Brightness brightness = Brightness.light,
+}) {
   return MaterialApp(
-    theme: HabitLoopTheme.materialTheme,
+    theme: brightness == Brightness.dark ? HabitLoopTheme.darkMaterialTheme : HabitLoopTheme.materialTheme,
     localizationsDelegates: const [
       AppLocalizations.delegate,
       GlobalMaterialLocalizations.delegate,
@@ -173,5 +178,32 @@ void main() {
     await tester.pump();
 
     expect(called, isTrue);
+  });
+
+  group('ShowupDetailPageIos — on-color pairing', () {
+    // Targeted checks rather than a whole-screen meetsGuideline(textContrastGuideline)
+    // sweep: the sibling "Save Note" CupertinoButton on this same screen hits a
+    // separate, larger, deferred contrast issue (primaryColor used as text-on-surface
+    // — HAB-187 debrief notes) that a whole-page sweep would trip regardless of this fix.
+    // HabitLoopColors.secondaryText's own AA compliance is verified directly in
+    // habit_loop_theme_test.dart.
+    for (final brightness in [Brightness.light, Brightness.dark]) {
+      testWidgets('redemption hint uses the AA-compliant secondary text color (${brightness.name})', (tester) async {
+        final state = ShowupDetailState(
+          showup: _redeemableShowup,
+          habitName: 'Meditate',
+          isLoading: false,
+          uiState: ShowupUiState.failed,
+          canRedeem: true,
+        );
+        await tester.pumpWidget(_buildApp(state, brightness: brightness));
+        await tester.pump();
+
+        final ctx = tester.element(find.byType(ShowupDetailPageIos));
+        final l10n = AppLocalizations.of(ctx)!;
+        final hintText = tester.widget<Text>(find.text(l10n.showupRedeemAddNoteHint));
+        expect(hintText.style?.color, HabitLoopColors.secondaryText(ctx));
+      });
+    }
   });
 }

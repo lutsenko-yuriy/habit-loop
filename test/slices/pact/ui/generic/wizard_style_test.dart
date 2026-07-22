@@ -36,7 +36,7 @@ void main() {
       expect(style.inactiveStepColor, CupertinoColors.tertiarySystemFill.resolveFrom(capturedCtx));
     });
 
-    testWidgets('hintTextColor resolves from Cupertino systemGrey', (tester) async {
+    testWidgets('hintTextColor resolves to the AA-compliant secondary text color', (tester) async {
       late WizardStyle style;
       late BuildContext capturedCtx;
       await tester.pumpWidget(CupertinoApp(home: Builder(builder: (ctx) {
@@ -44,7 +44,18 @@ void main() {
         style = WizardStyle.cupertino(ctx);
         return const SizedBox();
       })));
-      expect(style.hintTextColor, CupertinoColors.systemGrey.resolveFrom(capturedCtx));
+      expect(style.hintTextColor, HabitLoopColors.secondaryText(capturedCtx));
+    });
+
+    testWidgets('labelColor resolves to the AA-compliant secondary text color', (tester) async {
+      late WizardStyle style;
+      late BuildContext capturedCtx;
+      await tester.pumpWidget(CupertinoApp(home: Builder(builder: (ctx) {
+        capturedCtx = ctx;
+        style = WizardStyle.cupertino(ctx);
+        return const SizedBox();
+      })));
+      expect(style.labelColor, HabitLoopColors.secondaryText(capturedCtx));
     });
   });
 

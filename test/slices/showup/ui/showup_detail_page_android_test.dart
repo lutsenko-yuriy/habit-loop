@@ -9,6 +9,14 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 
+final _pendingShowup = Showup(
+  id: 's0',
+  pactId: 'p1',
+  scheduledAt: DateTime(2026, 3, 29, 8, 0),
+  duration: const Duration(minutes: 10),
+  status: ShowupStatus.pending,
+);
+
 final _redeemableShowup = Showup(
   id: 's1',
   pactId: 'p1',
@@ -18,9 +26,13 @@ final _redeemableShowup = Showup(
   redeemable: true,
 );
 
-Widget _buildApp(ShowupDetailState state, {Future<void> Function()? onRedeemShowup}) {
+Widget _buildApp(
+  ShowupDetailState state, {
+  Future<void> Function()? onRedeemShowup,
+  Brightness brightness = Brightness.light,
+}) {
   return MaterialApp(
-    theme: HabitLoopTheme.materialTheme,
+    theme: brightness == Brightness.dark ? HabitLoopTheme.darkMaterialTheme : HabitLoopTheme.materialTheme,
     localizationsDelegates: const [
       AppLocalizations.delegate,
       GlobalMaterialLocalizations.delegate,
@@ -133,5 +145,31 @@ void main() {
     await tester.pump();
 
     expect(called, isTrue);
+  });
+
+  group('ShowupDetailPageAndroid — Mark Done button on-color pairing', () {
+    // Scoped to just this button's foregroundColor rather than a full-screen
+    // meetsGuideline(textContrastGuideline) sweep: the sibling "Mark as Failed"
+    // button on this same screen has a separate, larger, deferred contrast issue
+    // (colorScheme.error used as text-on-surface — HAB-187 debrief notes) that
+    // is out of scope here and would make a whole-screen sweep fail regardless
+    // of this fix.
+    for (final brightness in [Brightness.light, Brightness.dark]) {
+      testWidgets('foregroundColor is onSecondary, pairing with its secondary background (${brightness.name})',
+          (tester) async {
+        final state = ShowupDetailState(
+          showup: _pendingShowup,
+          habitName: 'Meditate',
+          isLoading: false,
+          uiState: ShowupUiState.planned,
+        );
+        await tester.pumpWidget(_buildApp(state, brightness: brightness));
+        await tester.pump();
+
+        final theme = Theme.of(tester.element(find.byType(ShowupDetailPageAndroid)));
+        final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Mark as Done'));
+        expect(button.style?.foregroundColor?.resolve({}), theme.colorScheme.onSecondary);
+      });
+    }
   });
 }
