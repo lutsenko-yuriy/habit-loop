@@ -15,6 +15,13 @@ String formatLocaleDate(DateTime date) => DateFormat.yMd(_effectiveLocale()).for
 String formatAccessibleDate(BuildContext context, DateTime date) =>
     DateFormat.yMMMMEEEEd(Localizations.localeOf(context).toString()).format(date);
 
+/// Formats the full, localized weekday name (e.g. "Monday") for a `DateTime.weekday`
+/// value (1=Monday..7=Sunday), for Semantics labels where a short display abbreviation
+/// (e.g. "Mon") would be ambiguous when spoken aloud. Uses Jan 1-7 2024 (a Monday) as an
+/// arbitrary reference week purely to resolve the localized weekday name via `intl`.
+String formatWeekdayName(BuildContext context, int weekday) =>
+    DateFormat.EEEE(Localizations.localeOf(context).toString()).format(DateTime(2024, 1, weekday));
+
 String _effectiveLocale() {
   final primary = WidgetsBinding.instance.platformDispatcher.locale;
   if (primary.countryCode?.isNotEmpty == true) return primary.toString();

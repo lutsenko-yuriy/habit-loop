@@ -349,5 +349,11 @@
   "dashboardDayToday": "{date}, сегодня",
   "@dashboardDayToday": {
     "placeholders": { "date": { "type": "String" } }
-  }
+  },
+
+  "wizardStepIndicatorLabel": "Шаг {current} из {total}",
+  "@wizardStepIndicatorLabel": {
+    "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "scheduleRemoveSlotTooltip": "Удалить временной интервал"
 }
