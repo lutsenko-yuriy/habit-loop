@@ -2,8 +2,11 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/theme/spacing.dart';
+
+const double _weekdayToggleTapTargetMinSize = 48;
 
 // Card-based SlotSchedule editor. showTimePicker is platform-injected (null = cancelled).
 // Test keys: slot-card-<i>, remove-slot-<i>, add-weekly-slot, add-monthly-slot,
@@ -196,8 +199,7 @@ class _WeeklySlotContent extends StatelessWidget {
                 key: Key('remove-slot-$slotIndex'),
                 icon: const Icon(Icons.remove_circle_outline, size: 20),
                 color: Theme.of(context).colorScheme.error,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                tooltip: l10n.scheduleRemoveSlotTooltip,
                 onPressed: onRemove,
               ),
             ),
@@ -265,8 +267,7 @@ class _MonthlySlotContent extends StatelessWidget {
                 key: Key('remove-slot-$slotIndex'),
                 icon: const Icon(Icons.remove_circle_outline, size: 20),
                 color: theme.colorScheme.error,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                tooltip: l10n.scheduleRemoveSlotTooltip,
                 onPressed: onRemove,
               ),
             ),
@@ -337,26 +338,39 @@ class _WeekdayToggleRow extends StatelessWidget {
         final weekday = i + 1;
         final isSelected = selected.contains(weekday);
         return Expanded(
-          child: GestureDetector(
-            key: Key('weekday-$slotIndex-$weekday'),
-            onTap: () => onToggle(weekday),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
-              decoration: BoxDecoration(
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  dayLabels[i],
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          child: Semantics(
+            label: formatWeekdayName(context, weekday),
+            selected: isSelected,
+            button: true,
+            child: GestureDetector(
+              key: Key('weekday-$slotIndex-$weekday'),
+              onTap: () => onToggle(weekday),
+              behavior: HitTestBehavior.opaque,
+              child: ExcludeSemantics(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: _weekdayToggleTapTargetMinSize),
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+                      decoration: BoxDecoration(
+                        color: isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          dayLabels[i],
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

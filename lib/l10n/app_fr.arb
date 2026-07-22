@@ -349,5 +349,11 @@
   "dashboardDayToday": "{date}, aujourd'hui",
   "@dashboardDayToday": {
     "placeholders": { "date": { "type": "String" } }
-  }
+  },
+
+  "wizardStepIndicatorLabel": "Étape {current} sur {total}",
+  "@wizardStepIndicatorLabel": {
+    "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "scheduleRemoveSlotTooltip": "Supprimer le créneau"
 }

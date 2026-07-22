@@ -121,4 +121,61 @@ void main() {
     final decoration = container.decoration as BoxDecoration;
     expect(decoration.border, isNull);
   });
+
+  group('accessibility', () {
+    testWidgets('exposes a Semantics label with selected state', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(wrap(OptionTile(
+        isSelected: true,
+        label: 'Daily',
+        onTap: () {},
+        selectedColor: Colors.teal,
+        unselectedColor: Colors.grey,
+      )));
+
+      expect(
+        tester.getSemantics(find.byType(OptionTile)),
+        matchesSemantics(label: 'Daily', isButton: true, isSelected: true, hasSelectedState: true, hasTapAction: true),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('unselected tile exposes isSelected: false', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(wrap(OptionTile(
+        isSelected: false,
+        label: 'Weekdays',
+        onTap: () {},
+        selectedColor: Colors.teal,
+        unselectedColor: Colors.grey,
+      )));
+
+      expect(
+        tester.getSemantics(find.byType(OptionTile)),
+        matchesSemantics(
+          label: 'Weekdays',
+          isButton: true,
+          isSelected: false,
+          hasSelectedState: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('meets the Android and iOS tap-target guidelines', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(wrap(OptionTile(
+        isSelected: false,
+        label: 'Option',
+        onTap: () {},
+        selectedColor: Colors.teal,
+        unselectedColor: Colors.grey,
+      )));
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+      handle.dispose();
+    });
+  });
 }

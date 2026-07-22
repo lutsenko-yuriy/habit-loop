@@ -349,5 +349,11 @@
   "dashboardDayToday": "{date}, heute",
   "@dashboardDayToday": {
     "placeholders": { "date": { "type": "String" } }
-  }
+  },
+
+  "wizardStepIndicatorLabel": "Schritt {current} von {total}",
+  "@wizardStepIndicatorLabel": {
+    "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "scheduleRemoveSlotTooltip": "Zeitfenster entfernen"
 }

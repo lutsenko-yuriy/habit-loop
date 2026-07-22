@@ -350,5 +350,11 @@
   "dashboardDayToday": "{date}, today",
   "@dashboardDayToday": {
     "placeholders": { "date": { "type": "String" } }
-  }
+  },
+
+  "wizardStepIndicatorLabel": "Step {current} of {total}",
+  "@wizardStepIndicatorLabel": {
+    "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "scheduleRemoveSlotTooltip": "Remove time slot"
 }

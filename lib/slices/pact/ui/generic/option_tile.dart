@@ -25,25 +25,33 @@ class OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
-        decoration: BoxDecoration(
-          color: isSelected ? selectedColor.withValues(alpha: 0.1) : unselectedColor,
-          borderRadius: BorderRadius.circular(10),
-          border: isSelected ? Border.all(color: selectedColor, width: 2) : null,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              isSelected ? (selectedIcon ?? Icons.check_circle) : (unselectedIcon ?? Icons.radio_button_unchecked),
-              color:
-                  isSelected ? selectedColor : (unselectedIconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
+    return Semantics(
+      label: label,
+      selected: isSelected,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: ExcludeSemantics(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
+            decoration: BoxDecoration(
+              color: isSelected ? selectedColor.withValues(alpha: 0.1) : unselectedColor,
+              borderRadius: BorderRadius.circular(10),
+              border: isSelected ? Border.all(color: selectedColor, width: 2) : null,
             ),
-            const SizedBox(width: AppSpacing.s12),
-            Text(label),
-          ],
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? (selectedIcon ?? Icons.check_circle) : (unselectedIcon ?? Icons.radio_button_unchecked),
+                  color: isSelected
+                      ? selectedColor
+                      : (unselectedIconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                Text(label),
+              ],
+            ),
+          ),
         ),
       ),
     );
