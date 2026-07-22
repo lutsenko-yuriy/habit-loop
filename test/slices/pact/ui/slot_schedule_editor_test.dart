@@ -339,5 +339,99 @@ void main() {
         expect(find.byKey(const Key('day-of-month-0')), findsOneWidget);
       });
     });
+
+    group('accessibility', () {
+      // Scoped to specific keys via tester.getRect rather than a whole-tree
+      // meetsGuideline check: the sibling time-chip button is out of WU5's
+      // scope and is not yet guideline-compliant, so a tree-wide check would
+      // fail for an unrelated reason.
+      testWidgets('remove-slot button exposes a tooltip and meets the tap-target minimum', (tester) async {
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+          const MonthlySlot(dayOfMonth: 15, timeOfDay: Duration(hours: 18)),
+        ]);
+        final handle = tester.ensureSemantics();
+        await tester.pumpWidget(_wrap(
+          SlotScheduleEditor(
+            schedule: schedule,
+            onChanged: (_) {},
+            showTimePicker: _noopTimePicker,
+          ),
+        ));
+
+        expect(
+          tester.getSemantics(find.byKey(const Key('remove-slot-0'))),
+          matchesSemantics(
+            tooltip: 'Remove time slot',
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            isFocusable: true,
+            hasFocusAction: true,
+            hasTapAction: true,
+          ),
+        );
+        final rect = tester.getRect(find.byKey(const Key('remove-slot-0')));
+        expect(rect.width, greaterThanOrEqualTo(48));
+        expect(rect.height, greaterThanOrEqualTo(48));
+        handle.dispose();
+      });
+
+      testWidgets('weekday toggle exposes the full weekday name and selected state', (tester) async {
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+        ]);
+        final handle = tester.ensureSemantics();
+        await tester.pumpWidget(_wrap(
+          SlotScheduleEditor(
+            schedule: schedule,
+            onChanged: (_) {},
+            showTimePicker: _noopTimePicker,
+          ),
+        ));
+
+        expect(
+          tester.getSemantics(find.byKey(const Key('weekday-0-1'))),
+          matchesSemantics(
+            label: 'Monday',
+            isButton: true,
+            isSelected: true,
+            hasSelectedState: true,
+            hasTapAction: true,
+          ),
+        );
+        expect(
+          tester.getSemantics(find.byKey(const Key('weekday-0-2'))),
+          matchesSemantics(
+            label: 'Tuesday',
+            isButton: true,
+            isSelected: false,
+            hasSelectedState: true,
+            hasTapAction: true,
+          ),
+        );
+        handle.dispose();
+      });
+
+      testWidgets('weekday toggles meet the tap-target minimum height', (tester) async {
+        final schedule = SlotSchedule(slots: [
+          WeeklySlot(weekdays: {1}, timeOfDay: const Duration(hours: 8)),
+        ]);
+        final handle = tester.ensureSemantics();
+        await tester.pumpWidget(_wrap(
+          SlotScheduleEditor(
+            schedule: schedule,
+            onChanged: (_) {},
+            showTimePicker: _noopTimePicker,
+          ),
+        ));
+
+        for (var weekday = 1; weekday <= 7; weekday++) {
+          final rect = tester.getRect(find.byKey(Key('weekday-0-$weekday')));
+          expect(rect.height, greaterThanOrEqualTo(48));
+        }
+        handle.dispose();
+      });
+    });
   });
 }
