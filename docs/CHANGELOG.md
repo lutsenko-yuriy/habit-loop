@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.51.0] — 2026-07-24 (PR #318 merged)
+
+### Fixed
+
+- [user] Buttons across the app now consistently show which action is the primary one, and the sync status icon on iOS now matches the rest of the app's visual style instead of looking out of place.
+- [app] HAB-188 (final): Checkup cleanup consolidating 5 independent findings — deleted a dead pagination test stub with no driver code (WU1); fixed two Android buttons using the wrong emphasis level to match the `FilledButton`/`OutlinedButton`/`TextButton` hierarchy used everywhere else (WU2); split the sync-status icon into Material/Cupertino variants so iOS renders `CupertinoIcons` instead of a Material icon, plus a follow-up fix for two integration tests that had the same bug baked into their assertions (WU3); split `DashboardViewModel._loadInner` into named steps with a shared `_autoFailShowup` helper to de-duplicate two near-identical sweep loops (WU4); unified Firestore's duplicate pact/showup merge-rule logic behind one generic `_mergeRemoteRecord<T>` helper (WU5, final). All refactors are behaviour-preserving, verified by their existing test suites.
+
 ## [0.50.40] — 2026-07-23 (PR #311 merged)
 
 ### Changed
