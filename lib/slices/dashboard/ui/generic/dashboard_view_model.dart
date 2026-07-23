@@ -5,9 +5,12 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
+import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 
 final todayProvider = Provider<DateTime>((ref) => DateTime.now());
@@ -18,6 +21,14 @@ final dashboardViewModelProvider = NotifierProvider<DashboardViewModel, Dashboar
 
 final hasActivePactsProvider = FutureProvider<bool>((ref) async {
   return ref.watch(pactListQueryServiceProvider).hasActivePacts();
+});
+
+// Active-pact context threaded between _loadInner's split steps.
+typedef _PactsContext = ({
+  List<Pact> allPacts,
+  List<Pact> activePacts,
+  Map<String, String> pactNames,
+  Set<String> activePactIds,
 });
 
 class DashboardViewModel extends Notifier<DashboardState> {
@@ -46,10 +57,48 @@ class DashboardViewModel extends Notifier<DashboardState> {
   Future<void> _loadInner() async {
     final today = ref.read(todayProvider);
     final todayNorm = DateTime(today.year, today.month, today.day);
-    final queryService = ref.read(dashboardQueryServiceProvider);
     final crashlytics = ref.read(crashlyticsServiceProvider);
 
     await crashlytics.log('screen: dashboard');
+
+    final pactsContext = await _loadPactsContext(crashlytics: crashlytics);
+
+    await _runGapFillSweepAndScheduleReminders(
+      activePacts: pactsContext.activePacts,
+      today: today,
+      todayNorm: todayNorm,
+      crashlytics: crashlytics,
+    );
+
+    // todayIndex = min(daysSinceOldestPact, 3): ramps 0→3 over first 3 days, then stays 3.
+    // ALL pacts (active/stopped/completed) contribute so deleting one never shifts the strip.
+    final computedTodayIndex = _computeTodayIndex(pactsContext.allPacts, todayNorm);
+
+    // Single DB query covers the full 7-day strip; reused for auto-fail sweep below.
+    final stripStart = DateTime(todayNorm.year, todayNorm.month, todayNorm.day - computedTodayIndex);
+    final stripEnd = DateTime(todayNorm.year, todayNorm.month, todayNorm.day + (6 - computedTodayIndex));
+
+    final updatedShowups = await _runAutoFailSweep(
+      stripStart: stripStart,
+      stripEnd: stripEnd,
+      activePactIds: pactsContext.activePactIds,
+      today: today,
+      crashlytics: crashlytics,
+    );
+
+    _assembleAndSetState(
+      stripStart: stripStart,
+      updatedShowups: updatedShowups,
+      activePactIds: pactsContext.activePactIds,
+      allPacts: pactsContext.allPacts,
+      pactNames: pactsContext.pactNames,
+      computedTodayIndex: computedTodayIndex,
+    );
+  }
+
+  // Job 1: fetch all pacts and derive the active-pact context reused by every later step.
+  Future<_PactsContext> _loadPactsContext({required CrashlyticsService crashlytics}) async {
+    final queryService = ref.read(dashboardQueryServiceProvider);
 
     final allPacts = await queryService.getAllPacts();
     final activePacts = allPacts.where((p) => p.status == PactStatus.active).toList();
@@ -59,6 +108,18 @@ class DashboardViewModel extends Notifier<DashboardState> {
     // PII rule: active pact count is safe (no habit names).
     await crashlytics.setCustomKey('active_pacts_count', activePacts.length);
 
+    return (allPacts: allPacts, activePacts: activePacts, pactNames: pactNames, activePactIds: activePactIds);
+  }
+
+  // Job 2: per-active-pact — ensure showups exist for the generation window, auto-fail the
+  // gap showups (before today), and schedule reminders for the newly generated future showups.
+  Future<void> _runGapFillSweepAndScheduleReminders({
+    required List<Pact> activePacts,
+    required DateTime today,
+    required DateTime todayNorm,
+    required CrashlyticsService crashlytics,
+  }) async {
+    final queryService = ref.read(dashboardQueryServiceProvider);
     final generationService = ref.read(showupGenerationServiceProvider);
     final pactStatsService = ref.read(pactStatsServiceProvider);
     final schedulingService = ref.read(reminderSchedulingServiceProvider);
@@ -94,18 +155,15 @@ class DashboardViewModel extends Notifier<DashboardState> {
       // Per-showup errors isolated so a single bad row cannot block the rest.
       // TODO(perf): batch persistShowupStatus calls per pact to reduce syncStats round-trips.
       for (final showup in gapShowups) {
-        try {
-          await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed, now: today);
-        } catch (error, stackTrace) {
-          unawaited(crashlytics.log('gap_fill_sweep: error failing showup ${showup.id}: $error'));
-          unawaited(ref.read(crashlyticsServiceProvider).recordError(error, stackTrace));
-          continue;
-        }
-        unawaited(
-          ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+        final failed = await _autoFailShowup(
+          showup,
+          pactStatsService: pactStatsService,
+          schedulingService: schedulingService,
+          crashlytics: crashlytics,
+          today: today,
+          sweepLabel: 'gap_fill_sweep',
         );
-        unawaited(schedulingService.cancelRemindersForShowup(showup.id));
-        gapFailedCount++;
+        if (failed) gapFailedCount++;
       }
 
       if (futureShowups.isNotEmpty) {
@@ -138,9 +196,11 @@ class DashboardViewModel extends Notifier<DashboardState> {
         );
       }
     }
+  }
 
-    // todayIndex = min(daysSinceOldestPact, 3): ramps 0→3 over first 3 days, then stays 3.
-    // ALL pacts (active/stopped/completed) contribute so deleting one never shifts the strip.
+  // Job 4: todayIndex = min(daysSinceOldestPact, 3): ramps 0→3 over first 3 days, then stays 3.
+  // ALL pacts (active/stopped/completed) contribute so deleting one never shifts the strip.
+  int _computeTodayIndex(List<Pact> allPacts, DateTime todayNorm) {
     int computedTodayIndex = 3;
     if (allPacts.isNotEmpty) {
       DateTime? earliestStart;
@@ -155,10 +215,21 @@ class DashboardViewModel extends Notifier<DashboardState> {
         computedTodayIndex = daysSince.clamp(0, 3);
       }
     }
+    return computedTodayIndex;
+  }
 
-    // Single DB query covers the full 7-day strip; reused for auto-fail sweep below.
-    final stripStart = DateTime(todayNorm.year, todayNorm.month, todayNorm.day - computedTodayIndex);
-    final stripEnd = DateTime(todayNorm.year, todayNorm.month, todayNorm.day + (6 - computedTodayIndex));
+  // Job 5: fetch the 7-day calendar strip's showups, then auto-fail any pending showup whose
+  // window has elapsed. Returns the showups list patched with the auto-failed statuses.
+  Future<List<Showup>> _runAutoFailSweep({
+    required DateTime stripStart,
+    required DateTime stripEnd,
+    required Set<String> activePactIds,
+    required DateTime today,
+    required CrashlyticsService crashlytics,
+  }) async {
+    final queryService = ref.read(dashboardQueryServiceProvider);
+    final pactStatsService = ref.read(pactStatsServiceProvider);
+    final schedulingService = ref.read(reminderSchedulingServiceProvider);
 
     final showups = await queryService.getShowupsForDateRange(stripStart, stripEnd);
 
@@ -172,30 +243,60 @@ class DashboardViewModel extends Notifier<DashboardState> {
       final windowEnd = showup.scheduledAt.add(showup.duration);
       if (!today.isAfter(windowEnd)) continue;
 
-      try {
-        await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed, now: today);
-      } catch (error, stackTrace) {
-        unawaited(
-          crashlytics.log(
-            'auto_fail_sweep: error persisting showup ${showup.id}: $error',
-          ),
-        );
-        unawaited(ref.read(crashlyticsServiceProvider).recordError(error, stackTrace));
-        continue;
-      }
-      autoFailedById[showup.id] = showup.copyWith(status: ShowupStatus.failed);
-      unawaited(
-        ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+      final failed = await _autoFailShowup(
+        showup,
+        pactStatsService: pactStatsService,
+        schedulingService: schedulingService,
+        crashlytics: crashlytics,
+        today: today,
+        sweepLabel: 'auto_fail_sweep',
       );
-      unawaited(schedulingService.cancelRemindersForShowup(showup.id));
+      if (!failed) continue;
+      autoFailedById[showup.id] = showup.copyWith(status: ShowupStatus.failed);
       autoFailedCount++;
     }
     if (autoFailedCount > 0) {
       unawaited(crashlytics.log('auto_fail_sweep: count=$autoFailedCount'));
     }
 
-    final updatedShowups = autoFailedById.isEmpty ? showups : showups.map((s) => autoFailedById[s.id] ?? s).toList();
+    return autoFailedById.isEmpty ? showups : showups.map((s) => autoFailedById[s.id] ?? s).toList();
+  }
 
+  // Persists a showup as failed and fires the standard auto-fail side effects
+  // (analytics event + reminder cancellation). Returns whether the persist
+  // succeeded so each sweep can still update its own counter/map on failure.
+  Future<bool> _autoFailShowup(
+    Showup showup, {
+    required PactStatsService pactStatsService,
+    required ReminderSchedulingService schedulingService,
+    required CrashlyticsService crashlytics,
+    required DateTime today,
+    required String sweepLabel,
+  }) async {
+    try {
+      await pactStatsService.persistShowupStatus(showup: showup, status: ShowupStatus.failed, now: today);
+    } catch (error, stackTrace) {
+      unawaited(crashlytics.log('$sweepLabel: error failing showup ${showup.id}: $error'));
+      unawaited(ref.read(crashlyticsServiceProvider).recordError(error, stackTrace));
+      return false;
+    }
+    unawaited(
+      ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+    );
+    unawaited(schedulingService.cancelRemindersForShowup(showup.id));
+    return true;
+  }
+
+  // Job 6: assemble the 7 CalendarDayEntry's from the (possibly auto-failed-patched) showups,
+  // compute reminderOffsetByPactId, preserve/reset selectedDayIndex, and update state.
+  void _assembleAndSetState({
+    required DateTime stripStart,
+    required List<Showup> updatedShowups,
+    required Set<String> activePactIds,
+    required List<Pact> allPacts,
+    required Map<String, String> pactNames,
+    required int computedTodayIndex,
+  }) {
     final days = List.generate(7, (i) {
       final date = DateTime(stripStart.year, stripStart.month, stripStart.day + i);
       final dayShowups =
