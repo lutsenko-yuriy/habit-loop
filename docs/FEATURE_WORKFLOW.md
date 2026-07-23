@@ -74,6 +74,7 @@ When in doubt, use **In QA**.
    1. **Red** — Write a small set of failing unit tests for one logical unit of work.
    2. **Green** — Implement the minimum code to make them pass.
       **Opportunistic changes:** If an idea arises to modify existing or in-flight functionality, write the integration test for that change first. Never modify observable behaviour without a covering integration test.
+      **Scope-expansion discoveries:** If implementation surfaces a question like "does this pattern/bug exist elsewhere in the app too?", do not revise the current ticket's plan (or add new work units) to investigate app-wide — capture the question via `/note` and schedule a dedicated follow-up ticket after this one ships. Small, directly-related fixes discovered along the way (e.g. one companion bug blocking this ticket's own tests) can still be folded in with a quick check — it's broadening the ticket's own charter mid-flight that compounds scope (HAB-187's WU7-10 plan revision, added mid-review of WU3, ballooned a ~6-WU ticket into 11).
    3. **Refactor and commit** — Clean up without breaking tests, then commit this micro-cycle as one atomic commit before moving to the next logical unit:
       ```
       git commit -m "feat: <what this logical unit does>"

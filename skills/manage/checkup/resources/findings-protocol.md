@@ -45,3 +45,7 @@ When a deferred finding is later resolved (in this run or a future one), move it
 ## 5. Discovery outcome — graduation candidates
 
 If a dimension turns out to be mechanically measurable (a lint rule, a CI check, a script), do not automate it in place — flag it as a graduation candidate in the write-up (see the template block above) so a future ticket can wire it into CI (HAB-143 territory). This is how the manual checklist is meant to shrink over time.
+
+## 6. Scheduling ledger findings into tickets
+
+When it's time to turn deferred ledger findings into actual implementation work, first do a lightweight dependency-graph pass across the findings being scheduled — the same "find real dependency/impact relationships, not just same dimension" analysis used for HAB-187 — to determine both **grouping and order**. Default to **one small ticket per finding** rather than bundling multiple findings into a single ticket — small, few-hour-sized tickets are easier to schedule opportunistically and don't require re-deriving the dependency graph from scratch each time. Use the graph to decide the tickets' working order (a finding whose fix shrinks or simplifies another's surface should ship first), and only bundle findings into one ticket when there is a **real, direct dependency** between them (one finding's fix would be redone or complicated by doing another first) — not merely "same dimension" or "same code area." When bundling, state the dependency explicitly in the ticket description before work starts (see HAB-187 for a worked example).
