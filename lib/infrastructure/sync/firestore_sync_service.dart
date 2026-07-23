@@ -176,54 +176,67 @@ class FirestoreSyncService implements SyncService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  // Merge rules: absent → insert; dirty → keep local; remote newer → overwrite; else → keep local.
-  Future<void> _mergeRemotePact(Map<String, dynamic> doc, DateTime now) async {
+  // Merge rules: absent → insert; dirty → keep local; remote newer → overwrite;
+  // else → keep local. [existsGuard], if given, re-checks existence right
+  // before the update to guard a TOCTOU window (used only by the showup path,
+  // where stopPactTransaction can delete a showup between the initial check
+  // and now).
+  Future<void> _mergeRemoteRecord<T>({
+    required Map<String, dynamic> doc,
+    required DateTime now,
+    required Future<T?> Function(String id) getLocal,
+    required Future<DateTime?> Function(String id) getSyncedAt,
+    required T Function(Map<String, dynamic>) fromDocument,
+    required Future<void> Function(T) insert,
+    required Future<void> Function(T) update,
+    required Future<void> Function(String id, DateTime now) markSynced,
+    Future<bool> Function(String id)? existsGuard,
+  }) async {
     final String id = doc['id'] as String;
-    final localPact = await _pactRepository.getPactById(id);
+    final local = await getLocal(id);
 
-    if (localPact == null) {
-      final pact = SyncMapper.pactFromDocument(doc);
-      await _pactRepository.savePact(pact);
-      await _pactSyncRepository.markPactSynced(id, now);
+    if (local == null) {
+      final record = fromDocument(doc);
+      await insert(record);
+      await markSynced(id, now);
       return;
     }
 
-    final localSyncedAt = await _pactSyncRepository.getPactSyncedAt(id);
+    final localSyncedAt = await getSyncedAt(id);
     if (localSyncedAt == null) return; // dirty → keep local
 
     final remoteUpdatedAt = SyncMapper.updatedAtFromDocument(doc);
     if (remoteUpdatedAt == null || !remoteUpdatedAt.isAfter(localSyncedAt)) return; // not newer
 
-    final remotePact = SyncMapper.pactFromDocument(doc);
-    await _pactRepository.updatePact(remotePact);
-    await _pactSyncRepository.markPactSynced(id, now);
+    if (existsGuard != null && !(await existsGuard(id))) return;
+
+    final remote = fromDocument(doc);
+    await update(remote);
+    await markSynced(id, now);
   }
 
-  // Same merge rules as _mergeRemotePact.
-  Future<void> _mergeRemoteShowup(Map<String, dynamic> doc, DateTime now) async {
-    final String id = doc['id'] as String;
-    final localShowup = await _showupRepository.getShowupById(id);
+  Future<void> _mergeRemotePact(Map<String, dynamic> doc, DateTime now) => _mergeRemoteRecord<Pact>(
+        doc: doc,
+        now: now,
+        getLocal: _pactRepository.getPactById,
+        getSyncedAt: _pactSyncRepository.getPactSyncedAt,
+        fromDocument: SyncMapper.pactFromDocument,
+        insert: _pactRepository.savePact,
+        update: _pactRepository.updatePact,
+        markSynced: _pactSyncRepository.markPactSynced,
+      );
 
-    if (localShowup == null) {
-      final showup = SyncMapper.showupFromDocument(doc);
-      await _showupRepository.saveShowup(showup);
-      await _showupSyncRepository.markShowupSynced(id, now);
-      return;
-    }
-
-    final localSyncedAt = await _showupSyncRepository.getShowupSyncedAt(id);
-    if (localSyncedAt == null) return; // dirty → keep local
-
-    final remoteUpdatedAt = SyncMapper.updatedAtFromDocument(doc);
-    if (remoteUpdatedAt == null || !remoteUpdatedAt.isAfter(localSyncedAt)) return; // not newer
-
-    // Re-check existence to guard the TOCTOU window: stopPactTransaction may
-    // have deleted this showup between the check above and now.
-    if (await _showupRepository.getShowupById(id) == null) return;
-    final remoteShowup = SyncMapper.showupFromDocument(doc);
-    await _showupRepository.updateShowup(remoteShowup);
-    await _showupSyncRepository.markShowupSynced(id, now);
-  }
+  Future<void> _mergeRemoteShowup(Map<String, dynamic> doc, DateTime now) => _mergeRemoteRecord<Showup>(
+        doc: doc,
+        now: now,
+        getLocal: _showupRepository.getShowupById,
+        getSyncedAt: _showupSyncRepository.getShowupSyncedAt,
+        fromDocument: SyncMapper.showupFromDocument,
+        insert: _showupRepository.saveShowup,
+        update: _showupRepository.updateShowup,
+        markSynced: _showupSyncRepository.markShowupSynced,
+        existsGuard: (id) async => await _showupRepository.getShowupById(id) != null,
+      );
 
   // If CB transitions halfOpen → closed on success, fires flushDirtyRecords
   // to pick up records that accumulated while the CB was non-closed.
