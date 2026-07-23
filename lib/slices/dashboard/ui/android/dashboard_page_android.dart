@@ -120,7 +120,7 @@ class DashboardPageAndroid extends ConsumerWidget {
                     habitName: habitName,
                     onTap: onTap,
                   ),
-                  buildNoPactsCta: (ctx, createPact) => ElevatedButton(
+                  buildNoPactsCta: (ctx, createPact) => FilledButton(
                     key: const Key('create-first-pact-button'),
                     onPressed: createPact,
                     child: Text(l10n.createPact),
