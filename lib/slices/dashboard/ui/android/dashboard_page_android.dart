@@ -183,7 +183,7 @@ Widget _buildAppBarButton(
     DashboardActionType.syncStatus => IconButton(
         key: action.key,
         icon: Icon(
-          syncStatusIconData(syncState),
+          syncStatusIconDataMaterial(syncState),
           color: syncStatusIconColor(syncState, context),
         ),
         tooltip: tooltip,

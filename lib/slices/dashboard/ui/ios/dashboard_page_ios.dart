@@ -214,7 +214,7 @@ Widget _buildNavBarButton(
         padding: EdgeInsets.zero,
         onPressed: action.onPressed,
         child: Icon(
-          syncStatusIconData(syncState),
+          syncStatusIconDataCupertino(syncState),
           color: syncStatusIconColor(syncState, context),
         ),
       ),

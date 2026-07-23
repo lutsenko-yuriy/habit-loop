@@ -1,6 +1,6 @@
 import 'dart:async' show unawaited;
 
-import 'package:flutter/cupertino.dart' show CupertinoColors;
+import 'package:flutter/cupertino.dart' show CupertinoColors, CupertinoIcons;
 import 'package:flutter/material.dart' show IconData, Icons, ScaffoldMessengerState, SnackBar, Text, Theme;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,13 +12,22 @@ import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.da
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 import 'package:habit_loop/theme/colors.dart';
 
-IconData syncStatusIconData(SyncUiState state) => switch (state) {
+IconData syncStatusIconDataMaterial(SyncUiState state) => switch (state) {
       SyncUiState.synced => Icons.cloud_done_outlined,
       SyncUiState.degraded => Icons.sync_problem_outlined,
       SyncUiState.suspended => Icons.sync_disabled_outlined,
       SyncUiState.noInternet => Icons.wifi_off_outlined,
       SyncUiState.connecting => Icons.cloud_outlined,
       SyncUiState.notLinked => Icons.cloud_off_outlined,
+    };
+
+IconData syncStatusIconDataCupertino(SyncUiState state) => switch (state) {
+      SyncUiState.synced => CupertinoIcons.cloud_fill,
+      SyncUiState.degraded => CupertinoIcons.exclamationmark_triangle_fill,
+      SyncUiState.suspended => CupertinoIcons.xmark_circle_fill,
+      SyncUiState.noInternet => CupertinoIcons.wifi_slash,
+      SyncUiState.connecting => CupertinoIcons.cloud,
+      SyncUiState.notLinked => CupertinoIcons.cloud_download,
     };
 
 Color syncStatusIconColor(SyncUiState state, BuildContext context) {
