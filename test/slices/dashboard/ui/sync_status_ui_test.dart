@@ -135,14 +135,14 @@ void main() {
       await tester.pumpWidget(_buildIosApp(syncState: SyncUiState.synced));
       await tester.pump();
 
-      expect(find.byIcon(Icons.cloud_done_outlined), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.cloud_fill), findsOneWidget);
     });
 
     testWidgets('button shows wifi-off icon when noInternet', (tester) async {
       await tester.pumpWidget(_buildIosApp(syncState: SyncUiState.noInternet));
       await tester.pump();
 
-      expect(find.byIcon(Icons.wifi_off_outlined), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.wifi_slash), findsOneWidget);
     });
 
     testWidgets('tapping button shows Cupertino sync dialog', (tester) async {
