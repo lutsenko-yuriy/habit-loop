@@ -44,7 +44,7 @@ runs:
 
           # Highest build number recorded in any version-* git tag
           TAG_BUILD=$(git tag --list 'version-*' \
-            | grep -oP '(?<=version-[0-9]+\.[0-9]+\.[0-9]+-)\d+' \
+            | grep -oP '(?<=version-)[0-9]+\.[0-9]+\.[0-9]+-\K\d+' \
             | sort -n | tail -1)
           TAG_BUILD=${TAG_BUILD:-0}
 
