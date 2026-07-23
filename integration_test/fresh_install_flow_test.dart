@@ -7,9 +7,9 @@
 //
 // Run with: flutter test integration_test/fresh_install_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/fresh_install_flow_test.dart
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -72,7 +72,7 @@ void main() {
 
         // User stays Google-linked → cloud_off (notLinked) must not appear.
         await tester.pump(const Duration(milliseconds: 200));
-        expect(find.byIcon(Icons.cloud_off_outlined), findsNothing);
+        expect(find.byIcon(syncIconFor(SyncUiState.notLinked)), findsNothing);
       },
     );
   });

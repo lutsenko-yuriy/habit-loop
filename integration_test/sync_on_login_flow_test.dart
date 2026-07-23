@@ -14,6 +14,7 @@ import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
@@ -234,14 +235,14 @@ void main() {
       expect(capturer.forceSyncAllCount, isZero);
 
       // ── 2. Open sync status dialog and sign in ────────────────────────────
-      await waitFor(tester, find.byIcon(Icons.cloud_off_outlined));
+      await waitFor(tester, find.byIcon(syncIconFor(SyncUiState.notLinked)));
       await tester.tap(find.byKey(const Key('sync-status-button')));
       await tester.pumpAndSettle();
       await tester.tap(find.text(l10n(tester).signInWithGoogle));
       await tester.pump();
 
       // ── 3. Wait for the icon to flip to cloud_done (auth → synced state) ─
-      await waitFor(tester, find.byIcon(Icons.cloud_done_outlined));
+      await waitFor(tester, find.byIcon(syncIconFor(SyncUiState.synced)));
 
       // ── 4. forceSyncAll was called and found the dirty records ────────────
       expect(capturer.forceSyncAllCount, equals(1));
@@ -273,7 +274,7 @@ void main() {
       expect(find.text('Morning Run'), findsNothing);
 
       // ── 2. Open sync status dialog ────────────────────────────────────────
-      await waitFor(tester, find.byIcon(Icons.cloud_off_outlined));
+      await waitFor(tester, find.byIcon(syncIconFor(SyncUiState.notLinked)));
       await tester.tap(find.byKey(const Key('sync-status-button')));
       // Verify the dialog opened by checking the sign-in action is present
       // (platform-agnostic: Android shows AlertDialog, iOS shows CupertinoAlertDialog).
