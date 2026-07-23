@@ -34,7 +34,7 @@ class ShowupDetailPageIos extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = ShowupStatusColors.cupertino(context);
-    final labelColor = CupertinoColors.systemGrey.resolveFrom(context);
+    final labelColor = HabitLoopColors.secondaryText(context);
     final tileColor = CupertinoColors.tertiarySystemFill.resolveFrom(context);
     final linkColor = CupertinoColors.activeBlue.resolveFrom(context);
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
@@ -139,7 +139,8 @@ class ShowupDetailPageIos extends StatelessWidget {
                                       ),
                                   buildRedemptionHint: (ctx) => Text(
                                         l10n.showupRedeemAddNoteHint,
-                                        style: AppTypography.caption.copyWith(color: CupertinoColors.systemGrey),
+                                        style:
+                                            AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(ctx)),
                                         textAlign: TextAlign.center,
                                       ),
                                 ),

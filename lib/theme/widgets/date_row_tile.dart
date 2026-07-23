@@ -13,7 +13,7 @@ class DateRowTile extends StatelessWidget {
     super.key,
     required this.label,
     this.value,
-    this.valueColor = Colors.grey,
+    this.valueColor = Colors.black87,
     required this.backgroundColor,
     this.cornerRadius = 10,
     this.onTap,

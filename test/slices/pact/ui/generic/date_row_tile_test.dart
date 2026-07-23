@@ -62,4 +62,16 @@ void main() {
     final valueText = tester.widget<Text>(find.text('Jan 1, 2026'));
     expect(valueText.style?.color, color);
   });
+
+  testWidgets('default valueColor meets WCAG AA text contrast against a light background', (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(wrap(const DateRowTile(
+      label: 'Start date',
+      value: 'Jan 1, 2026',
+      backgroundColor: Colors.white,
+    )));
+
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    handle.dispose();
+  });
 }

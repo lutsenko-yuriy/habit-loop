@@ -78,6 +78,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                         onPressed: s.isSaving ? null : onMarkDone,
                                         style: FilledButton.styleFrom(
                                           backgroundColor: theme.colorScheme.secondary,
+                                          foregroundColor: theme.colorScheme.onSecondary,
                                         ),
                                         child: s.isSaving
                                             ? const SizedBox(

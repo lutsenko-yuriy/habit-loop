@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.50.40] — 2026-07-23 (PR #311 merged)
+
+### Changed
+
+- [user] Improved text readability throughout the app, especially in dark mode.
+- [app] HAB-187 WU6 (final): WCAG AA contrast pass — replaced `CupertinoColors.systemGrey` (~2.85:1) with a new AA-compliant adaptive `HabitLoopColors.secondaryText` token across `pact_detail_page_ios.dart`, `pact_timeline_page_ios.dart`, `showup_detail_page_ios.dart`, and `wizard_style.dart` (`CupertinoColors.secondaryLabel` was tried first but only reaches ~3.4:1, still short of the 4.5:1 minimum); gave `DateRowTile`'s default `valueColor` an AA-safe default. Also fixed `HabitLoopTheme`'s `colorScheme.copyWith(primary/secondary/tertiary/error: ...)` overrides silently breaking their paired `onPrimary`/`onSecondary`/`onTertiary`/`onError` companions in dark mode (measured 2.48:1 against the always-fixed brand primary) — now derived per-role via `ThemeData.estimateBrightnessForColor`; fixed the one concrete site this broke, `showup_detail_page_android.dart`'s "Mark Done" button. A related, larger dark-mode contrast gap (brand colors used as raw text-on-surface, e.g. the default `TextButton` foreground and `colorScheme.error` across ~7 Android files) was found but deliberately deferred as a follow-up — see `docs/knowledge/notes/HAB-187.md`. Added `flutter_test`'s `meetsGuideline(textContrastGuideline)` as a real regression net on the touched screens, plus direct contrast unit tests for the new token and the theme's on-color pairing.
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.

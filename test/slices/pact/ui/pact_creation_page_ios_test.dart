@@ -2,11 +2,28 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show MaterialApp, Theme;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_creation_page_ios.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
+
+/// A fully-complete state on the summary page: every required field filled
+/// in, so the "Create Pact" button is enabled — an intentionally-disabled
+/// button's low contrast is exempt under WCAG 1.4.3 and would otherwise be a
+/// false positive unrelated to the WizardStyle.labelColor fix under test.
+PactCreationState _completeSummaryState(DateTime today) => PactCreationState(
+      today: today,
+      currentStep: PactWizardStep.summary,
+      builder: PactBuilder(
+        today: today,
+        habitName: 'Meditate',
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+      ),
+    );
 
 void main() {
   testWidgets('iOS pact creation shows a themed step indicator', (tester) async {
@@ -99,5 +116,46 @@ void main() {
     final theme = Theme.of(tester.element(find.byType(PactCreationPageIos)));
 
     expect(navBar.backgroundColor, theme.colorScheme.surface);
+  });
+
+  group('PactCreationPageIos — WCAG AA contrast', () {
+    for (final brightness in [Brightness.light, Brightness.dark]) {
+      testWidgets('summary step text meets AA contrast in ${brightness.name} mode', (tester) async {
+        final handle = tester.ensureSemantics();
+        final state = _completeSummaryState(DateTime(2026, 3, 30));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: brightness == Brightness.dark ? HabitLoopTheme.darkMaterialTheme : HabitLoopTheme.materialTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: PactCreationPageIos(
+              state: state,
+              onHabitNameChanged: (_) {},
+              onStartDateChanged: (_) {},
+              onEndDateChanged: (_) {},
+              onShowupDurationChanged: (_) {},
+              onScheduleTypeChanged: (_) {},
+              onScheduleChanged: (_) {},
+              onReminderOffsetChanged: (_) {},
+              onClearReminder: () {},
+              onPageChanged: (_) {},
+              onJumpToStep: (_) {},
+              onClose: () {},
+              onSubmit: () {},
+            ),
+          ),
+        );
+        await tester.pump();
+
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        handle.dispose();
+      });
+    }
   });
 }

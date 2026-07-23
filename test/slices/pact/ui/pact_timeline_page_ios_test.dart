@@ -9,6 +9,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_state.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_timeline_page_ios.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:intl/intl.dart';
 
@@ -58,9 +59,10 @@ final _single = SingleShowupMilestone(
 Widget _buildApp(
   PactTimelineState state, {
   void Function(PactTimelineMilestone)? onMilestoneTapped,
+  Brightness brightness = Brightness.light,
 }) {
   return MaterialApp(
-    theme: HabitLoopTheme.materialTheme,
+    theme: brightness == Brightness.dark ? HabitLoopTheme.darkMaterialTheme : HabitLoopTheme.materialTheme,
     localizationsDelegates: const [
       AppLocalizations.delegate,
       GlobalMaterialLocalizations.delegate,
@@ -200,8 +202,36 @@ void main() {
       final ctx = tester.element(find.byType(PactTimelinePageIos));
       final l10n = AppLocalizations.of(ctx)!;
       final text = tester.widget<Text>(find.text(l10n.showupPending));
-      expect(text.style?.color, CupertinoColors.systemGrey.resolveFrom(ctx));
+      expect(text.style?.color, HabitLoopColors.secondaryText(ctx));
     });
+  });
+
+  group('PactTimelinePageIos — WCAG AA contrast', () {
+    // Anchors + a pending milestone only: their captions/date labels/section header
+    // all use the secondaryText fix this WU is scoped to. Deliberately avoids
+    // done/failed milestones — their systemGreen/systemRed outcome text has a
+    // separate, larger, pre-existing contrast gap (HAB-187 debrief notes) that
+    // isn't part of this WU's fix and would fail this check regardless.
+    final pendingSingle = SingleShowupMilestone(
+      sortAt: DateTime(2024, 2, 1),
+      showupId: 'pending-1',
+      outcome: ShowupStatus.pending,
+      scheduledAt: DateTime(2024, 2, 1, 8),
+    );
+
+    for (final brightness in [Brightness.light, Brightness.dark]) {
+      testWidgets('timeline text meets AA contrast in ${brightness.name} mode', (tester) async {
+        final handle = tester.ensureSemantics();
+        await tester.pumpWidget(_buildApp(
+          _loaded(milestones: [pendingSingle]),
+          brightness: brightness,
+        ));
+        await tester.pump();
+
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        handle.dispose();
+      });
+    }
   });
 
   group('PactTimelinePageIos — date positioning', () {
