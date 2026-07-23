@@ -408,24 +408,6 @@ void main() {
     );
   });
 
-  group('Pact timeline — pagination', () {
-    late AppHarness h;
-    tearDown(() => h.dispose());
-
-    testWidgets(
-      'load_more_reveals_older_events: tapping Load More shows older events and fires analytics',
-      (tester) async {
-        h = await AppHarness.create(tester);
-        // TODO: 1. Override first-page size to 3 via extraOverrides to keep test data small.
-        // TODO: 2. Seed a pact with more than 3 showups.
-        // TODO: 3. Open timeline; assert only the most recent 3 events (plus anchors) are visible.
-        // TODO: 4. Trigger the "Load more" control (scroll up or tap button).
-        // TODO: 5. Assert older events appear above the previously visible ones.
-        // TODO: 6. Assert h.analytics contains a pact_timeline_load_more event with page_number=2.
-      },
-    );
-  });
-
   group('Pact timeline — tappable events', () {
     late AppHarness h;
     tearDown(() => h.dispose());
