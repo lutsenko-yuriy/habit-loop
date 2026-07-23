@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,8 @@ import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/main.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -233,6 +236,15 @@ AppLocalizations l10n(WidgetTester tester) {
   final context = tester.element(find.byType(Navigator).first);
   return AppLocalizations.of(context)!;
 }
+
+/// The sync-status icon actually rendered for [state] on the platform this
+/// test is running on — mirrors `DashboardScreen`'s own `defaultTargetPlatform`
+/// switch. Use this instead of hardcoding a Material `Icons.*` literal: the
+/// real dashboard renders `CupertinoIcons.*` on iOS (see HAB-188 WU3), and a
+/// hardcoded Material icon happens to "pass" there only by coincidence.
+IconData syncIconFor(SyncUiState state) => defaultTargetPlatform == TargetPlatform.iOS
+    ? syncStatusIconDataCupertino(state)
+    : syncStatusIconDataMaterial(state);
 
 /// Pumps until [finder] has at least one match or [timeout] expires.
 ///
