@@ -24,6 +24,7 @@ import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 Widget _buildTestApp({
   bool hasPacts = true,
+  bool? showCarousel,
   FakeAnalyticsService? analyticsService,
   FakeLocalePreferenceService? localeService,
   FakeRemoteConfigService? remoteConfig,
@@ -54,7 +55,7 @@ Widget _buildTestApp({
       home: DashboardPageAndroid(
         state: state,
         hasPacts: hasPacts,
-        showCarousel: !hasPacts,
+        showCarousel: showCarousel ?? !hasPacts,
         onDaySelected: (_) {},
         onCreatePact: () async {},
         onShowupTapped: (_) async {},
@@ -131,6 +132,17 @@ void main() {
     // Carousel replaces the regular scaffold — no app bar or kebab button.
     expect(find.byKey(const Key('kebab-menu-button')), findsNothing);
     expect(find.text('Create a Pact'), findsOneWidget);
+  });
+
+  testWidgets('Android dashboard no-pacts CTA is a FilledButton (not ElevatedButton)', (tester) async {
+    // hasPacts=false with showCarousel explicitly false exercises the signed-in,
+    // zero-pacts empty state (as opposed to the anonymous-user carousel).
+    await tester.pumpWidget(_buildTestApp(hasPacts: false, showCarousel: false));
+    await tester.pumpAndSettle();
+
+    final ctaFinder = find.byKey(const Key('create-first-pact-button'));
+    expect(ctaFinder, findsOneWidget);
+    expect(tester.widget<FilledButton>(ctaFinder), isA<FilledButton>());
   });
 
   testWidgets('Android dashboard single-item shortcut shows standalone button with no kebab', (tester) async {

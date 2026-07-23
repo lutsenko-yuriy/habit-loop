@@ -243,7 +243,7 @@ class _PactDetailContent extends StatelessWidget {
                     maxLines: null,
                     minLines: 3,
                   ),
-              buildSaveButton: (context, onPressed) => ElevatedButton(
+              buildSaveButton: (context, onPressed) => FilledButton(
                     key: const Key('pact-note-save-button'),
                     onPressed: onPressed,
                     child: Text(l10n.pactNoteSave),

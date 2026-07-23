@@ -158,6 +158,30 @@ void main() {
     });
   });
 
+  group('PactDetailPageAndroid – note save button', () {
+    testWidgets('save-note button is a FilledButton (not ElevatedButton)', (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_stoppedPact),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll down — the extra "stopped on" date row pushes the note section
+      // below the default test viewport height.
+      final saveButtonFinder = find.byKey(const Key('pact-note-save-button'));
+      await tester.scrollUntilVisible(saveButtonFinder, 200);
+
+      expect(saveButtonFinder, findsOneWidget);
+      expect(tester.widget<FilledButton>(saveButtonFinder), isA<FilledButton>());
+    });
+  });
+
   group('PactDetailPageAndroid – showup duration and reminder rows', () {
     testWidgets('shows showup duration row with correct value', (tester) async {
       await tester.pumpWidget(
