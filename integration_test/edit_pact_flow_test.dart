@@ -203,6 +203,10 @@ void main() {
         // enterText fired onChanged before we swipe away from the name page.
         expect(find.text('Morning Run'), findsWidgets, reason: 'enterText did not fire onChanged');
 
+        // Extra settle for the keyboard-show animation before the first swipe
+        // reads the PageView's rect — same fix as HAB-155 in create_pact_flow_test.dart.
+        await tester.pump(const Duration(milliseconds: 300));
+
         // ── 7. Swipe to reminder page, then to summary page ──────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
         await _swipeEditWizardForward(tester); // page 1 → 2 (summary)
@@ -325,6 +329,10 @@ void main() {
 
         // Same check as flow 1: AppBar title reflects the new name.
         expect(find.text('Yoga'), findsWidgets, reason: 'enterText did not fire onChanged');
+
+        // Extra settle for the keyboard-show animation before the first swipe
+        // reads the PageView's rect — same fix as HAB-155 in create_pact_flow_test.dart.
+        await tester.pump(const Duration(milliseconds: 300));
 
         // ── 7. Swipe to summary ──────────────────────────────────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
