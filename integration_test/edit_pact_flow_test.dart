@@ -53,34 +53,37 @@ final _showup = buildShowup(
 
 /// Swipes the edit-wizard [PageView] forward by one page.
 ///
-/// Uses [find.byType(PageView)] so this works on both iOS and Android —
-/// each platform uses a different key (`pact-edit-pageview-ios` /
-/// `pact-edit-pageview-android`) but both contain exactly one [PageView].
+/// Starts near the **top-right** of the PageView (the static title area),
+/// mirroring `create_pact_flow_test.dart`'s `_swipeWizardForward` — dragging
+/// from the widget's geometric center previously landed the touch-down point
+/// on the just-focused habit-name field on page 0, which won the gesture
+/// arena for text selection instead of yielding to the PageView, so the
+/// swipe never advanced the page at all (HAB-196 diagnostic data).
 ///
-/// Uses [WidgetTester.timedDrag] with a short duration for high effective
-/// velocity (well above [kMinFlingVelocity] = 365 px/s) so the PageView
-/// reliably snaps to the next page regardless of which page's content is
-/// currently displayed (some pages use a [ListView] that can compete with the
-/// [PageView]'s gesture recognizer under [flingFrom]).
+/// Uses [WidgetTester.timedDragFrom] with a short duration for high
+/// effective velocity (well above [kMinFlingVelocity] = 365 px/s) so the
+/// PageView reliably snaps to the next page.
 Future<void> _swipeEditWizardForward(WidgetTester tester) async {
-  final pageViewFinder = find.byType(PageView);
+  const iosKey = Key('pact-edit-pageview-ios');
+  const androidKey = Key('pact-edit-pageview-android');
+  final key = find.byKey(iosKey).evaluate().isNotEmpty ? iosKey : androidKey;
+  final pageViewFinder = find.byKey(key);
   const nameFieldKey = Key('pact-creation-habit-name-field');
   const summaryCardKey = Key('pact-edit-summary-card');
   final nameFieldCountBefore = find.byKey(nameFieldKey).evaluate().length;
   final summaryCardCountBefore = find.byKey(summaryCardKey).evaluate().length;
-  final pageViewCount = pageViewFinder.evaluate().length;
-  final rectBefore = tester.getRect(pageViewFinder);
+  final rect = tester.getRect(pageViewFinder);
   // ignore: avoid_print
   print(
-    'DIAG swipe-start: nameField=$nameFieldCountBefore summaryCard=$summaryCardCountBefore '
-    'pageViewCount=$pageViewCount rect=$rectBefore',
+    'DIAG swipe-start: nameField=$nameFieldCountBefore summaryCard=$summaryCardCountBefore rect=$rect',
   );
   // 300 px in 50 ms → velocity ≈ 6000 px/s (above the snap threshold).
-  // 300 px keeps the drag within one page width on any ≥300 dp device:
-  // (300/320)+0.5=1.44 → rounds to 1, so one page advance per swipe.
-  // A 400 px drag overshoots to page 2 on ≤400 dp screens (CI AVD is 320 dp):
-  // (400/320)+0.5=1.75 → rounds to 2, skipping the reminder step entirely.
-  await tester.timedDrag(pageViewFinder, const Offset(-300, 0), const Duration(milliseconds: 50));
+  // Y = top + 40: safely inside the title text area on every wizard page.
+  await tester.timedDragFrom(
+    Offset(rect.right - 10, rect.top + 40),
+    const Offset(-300, 0),
+    const Duration(milliseconds: 50),
+  );
   await tester.pumpAndSettle();
   final nameFieldCountAfter = find.byKey(nameFieldKey).evaluate().length;
   final summaryCardCountAfter = find.byKey(summaryCardKey).evaluate().length;
