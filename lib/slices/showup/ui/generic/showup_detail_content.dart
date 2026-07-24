@@ -183,6 +183,12 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             final hasChanged = value.text != savedNote;
             final onPressed =
                 (widget.state.isSaving || !hasChanged) ? null : () => widget.onSaveNote(_noteController.text);
+            // ignore: avoid_print
+            print(
+              'DIAG note-save ValueListenableBuilder: text="${value.text}" savedNote="$savedNote" '
+              'hasChanged=$hasChanged isSaving=${widget.state.isSaving} enabled=${onPressed != null} '
+              'at ${DateTime.now().toIso8601String()}',
+            );
             return Align(
               alignment: Alignment.centerRight,
               child: widget.slots.buildSaveButton(context, onPressed),

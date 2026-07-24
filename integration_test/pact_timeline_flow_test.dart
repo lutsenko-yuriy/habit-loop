@@ -602,6 +602,15 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.byKey(const Key('showup-note-field')), newNote);
         await tester.pump();
+        const noteFieldKey = Key('showup-note-field');
+        const saveButtonKey = Key('showup-note-save-button');
+        final noteFieldCount = find.byKey(noteFieldKey).evaluate().length;
+        final saveButtonCount = find.byKey(saveButtonKey).evaluate().length;
+        // ignore: avoid_print
+        print(
+          'DIAG right after enterText: noteField=$noteFieldCount saveButton=$saveButtonCount '
+          'at ${DateTime.now().toIso8601String()}',
+        );
         await waitFor(tester, find.byKey(const Key('showup-note-save-button')));
         await tester.ensureVisible(find.byKey(const Key('showup-note-save-button')));
         await tester.pump();
