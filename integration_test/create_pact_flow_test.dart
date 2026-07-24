@@ -137,7 +137,24 @@ void main() {
       // ── 11. Dashboard shows pact name and today's showup ─────────────────
       // ignore: avoid_print
       print('DIAG pact_created observed, starting waitFor(Meditate) at ${DateTime.now().toIso8601String()}');
-      await waitFor(tester, find.text('Meditate'), timeout: const Duration(seconds: 60));
+      // Inlined waitFor with periodic progress prints (HAB-196 diagnostic):
+      // reveals whether tester.pump() itself is returning during the stall,
+      // or whether it's the widget tree that never rebuilds.
+      final waitDeadline = tester.binding.clock.now().add(const Duration(seconds: 60));
+      var diagIteration = 0;
+      while (find.text('Meditate').evaluate().isEmpty) {
+        if (tester.binding.clock.now().isAfter(waitDeadline)) {
+          // ignore: avoid_print
+          print('DIAG waitFor(Meditate) giving up at iteration $diagIteration, ${DateTime.now().toIso8601String()}');
+          throw TestFailure('waitFor timed out: ${find.text('Meditate')}');
+        }
+        diagIteration++;
+        if (diagIteration % 10 == 0) {
+          // ignore: avoid_print
+          print('DIAG waitFor(Meditate) iteration $diagIteration at ${DateTime.now().toIso8601String()}');
+        }
+        await tester.pump(const Duration(milliseconds: 100));
+      }
       // At least one showup tile is present for the current day.
       expect(find.text('Meditate'), findsWidgets);
     });

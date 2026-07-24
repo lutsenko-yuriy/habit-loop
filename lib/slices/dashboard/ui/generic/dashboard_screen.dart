@@ -80,6 +80,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
   Widget build(BuildContext context) {
     final state = ref.watch(dashboardViewModelProvider);
     final hasActivePacts = ref.watch(hasActivePactsProvider);
+    // ignore: avoid_print
+    print(
+      'DIAG DashboardScreen.build at ${DateTime.now().toIso8601String()} '
+      'isLoading=${state.isLoading} pactNames=${state.pactNames} '
+      'hasActivePacts=${hasActivePacts.asData?.value} '
+      'isCurrent=${ModalRoute.of(context)?.isCurrent} '
+      'animStatus=${ModalRoute.of(context)?.animation?.status}',
+    );
 
     void onDaySelected(int index) {
       ref.read(dashboardViewModelProvider.notifier).selectDay(index);
