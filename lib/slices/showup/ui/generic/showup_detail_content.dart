@@ -88,7 +88,17 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     final state = widget.state;
     final showup = state.showup;
     assert(showup != null, 'ShowupDetailContent must only be shown after a successful load');
-    if (showup == null) return const SizedBox.shrink();
+    if (showup == null) {
+      // ignore: avoid_print
+      print(
+        'DIAG ShowupDetailContent.build: showup=null isLoading=${state.isLoading} '
+        'at ${DateTime.now().toIso8601String()}',
+      );
+      return const SizedBox.shrink();
+    }
+    // ignore: avoid_print
+    print(
+        'DIAG ShowupDetailContent.build: showup=${showup.id} note=${showup.note} at ${DateTime.now().toIso8601String()}');
 
     final l10n = widget.l10n;
     final scheduledDate = formatShowupDate(showup.scheduledAt);

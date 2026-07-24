@@ -19,6 +19,8 @@ final showupDetailViewModelProvider =
 class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState, String> {
   @override
   ShowupDetailState build(String showupId) {
+    // ignore: avoid_print
+    print('DIAG ShowupDetailViewModel.build($showupId) at ${DateTime.now().toIso8601String()}');
     return const ShowupDetailState();
   }
 
