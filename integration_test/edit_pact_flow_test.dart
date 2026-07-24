@@ -55,10 +55,10 @@ final _showup = buildShowup(
 ///
 /// Starts near the **top-right** of the PageView (the static title area),
 /// mirroring `create_pact_flow_test.dart`'s `_swipeWizardForward` — dragging
-/// from the widget's geometric center previously landed the touch-down point
-/// on the just-focused habit-name field on page 0, which won the gesture
-/// arena for text selection instead of yielding to the PageView, so the
-/// swipe never advanced the page at all (HAB-196 diagnostic data).
+/// from the widget's geometric center instead lands the touch-down point on
+/// the just-focused habit-name field on page 0, which wins the gesture arena
+/// for text selection instead of yielding to the PageView, so the swipe never
+/// advances the page at all.
 ///
 /// Uses [WidgetTester.timedDragFrom] with a short duration for high
 /// effective velocity (well above [kMinFlingVelocity] = 365 px/s) so the
@@ -67,16 +67,7 @@ Future<void> _swipeEditWizardForward(WidgetTester tester) async {
   const iosKey = Key('pact-edit-pageview-ios');
   const androidKey = Key('pact-edit-pageview-android');
   final key = find.byKey(iosKey).evaluate().isNotEmpty ? iosKey : androidKey;
-  final pageViewFinder = find.byKey(key);
-  const nameFieldKey = Key('pact-creation-habit-name-field');
-  const summaryCardKey = Key('pact-edit-summary-card');
-  final nameFieldCountBefore = find.byKey(nameFieldKey).evaluate().length;
-  final summaryCardCountBefore = find.byKey(summaryCardKey).evaluate().length;
-  final rect = tester.getRect(pageViewFinder);
-  // ignore: avoid_print
-  print(
-    'DIAG swipe-start: nameField=$nameFieldCountBefore summaryCard=$summaryCardCountBefore rect=$rect',
-  );
+  final rect = tester.getRect(find.byKey(key));
   // 300 px in 50 ms → velocity ≈ 6000 px/s (above the snap threshold).
   // Y = top + 40: safely inside the title text area on every wizard page.
   await tester.timedDragFrom(
@@ -85,10 +76,6 @@ Future<void> _swipeEditWizardForward(WidgetTester tester) async {
     const Duration(milliseconds: 50),
   );
   await tester.pumpAndSettle();
-  final nameFieldCountAfter = find.byKey(nameFieldKey).evaluate().length;
-  final summaryCardCountAfter = find.byKey(summaryCardKey).evaluate().length;
-  // ignore: avoid_print
-  print('DIAG swipe-end: nameField=$nameFieldCountAfter summaryCard=$summaryCardCountAfter');
 }
 
 /// Expands the pacts panel by tapping its collapsed header.

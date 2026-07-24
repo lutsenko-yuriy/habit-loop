@@ -88,17 +88,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     final state = widget.state;
     final showup = state.showup;
     assert(showup != null, 'ShowupDetailContent must only be shown after a successful load');
-    if (showup == null) {
-      // ignore: avoid_print
-      print(
-        'DIAG ShowupDetailContent.build: showup=null isLoading=${state.isLoading} '
-        'at ${DateTime.now().toIso8601String()}',
-      );
-      return const SizedBox.shrink();
-    }
-    // ignore: avoid_print
-    print(
-        'DIAG ShowupDetailContent.build: showup=${showup.id} note=${showup.note} at ${DateTime.now().toIso8601String()}');
+    if (showup == null) return const SizedBox.shrink();
 
     final l10n = widget.l10n;
     final scheduledDate = formatShowupDate(showup.scheduledAt);
@@ -183,12 +173,6 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             final hasChanged = value.text != savedNote;
             final onPressed =
                 (widget.state.isSaving || !hasChanged) ? null : () => widget.onSaveNote(_noteController.text);
-            // ignore: avoid_print
-            print(
-              'DIAG note-save ValueListenableBuilder: text="${value.text}" savedNote="$savedNote" '
-              'hasChanged=$hasChanged isSaving=${widget.state.isSaving} enabled=${onPressed != null} '
-              'at ${DateTime.now().toIso8601String()}',
-            );
             return Align(
               alignment: Alignment.centerRight,
               child: widget.slots.buildSaveButton(context, onPressed),
