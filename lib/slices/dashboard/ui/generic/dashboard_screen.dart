@@ -80,13 +80,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
   Widget build(BuildContext context) {
     final state = ref.watch(dashboardViewModelProvider);
     final hasActivePacts = ref.watch(hasActivePactsProvider);
+    final calendarDaysSummary =
+        state.calendarDays.map((d) => '${d.date.year}-${d.date.month}-${d.date.day}:${d.showups.length}').join(',');
     // ignore: avoid_print
     print(
       'DIAG DashboardScreen.build at ${DateTime.now().toIso8601String()} '
       'isLoading=${state.isLoading} pactNames=${state.pactNames} '
       'hasActivePacts=${hasActivePacts.asData?.value} '
       'isCurrent=${ModalRoute.of(context)?.isCurrent} '
-      'animStatus=${ModalRoute.of(context)?.animation?.status}',
+      'animStatus=${ModalRoute.of(context)?.animation?.status} '
+      'selectedDayIndex=${state.selectedDayIndex} todayIndex=${state.todayIndex} '
+      'selectedDayShowups=${state.selectedDayShowups.length} '
+      'calendarDays=$calendarDaysSummary',
     );
 
     void onDaySelected(int index) {
