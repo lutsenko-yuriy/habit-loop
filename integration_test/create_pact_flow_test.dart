@@ -135,6 +135,8 @@ void main() {
       }
 
       // ── 11. Dashboard shows pact name and today's showup ─────────────────
+      // ignore: avoid_print
+      print('DIAG pact_created observed, starting waitFor(Meditate) at ${DateTime.now().toIso8601String()}');
       await waitFor(tester, find.text('Meditate'), timeout: const Duration(seconds: 60));
       // At least one showup tile is present for the current day.
       expect(find.text('Meditate'), findsWidgets);

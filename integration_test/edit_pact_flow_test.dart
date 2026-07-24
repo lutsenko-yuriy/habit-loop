@@ -64,6 +64,17 @@ final _showup = buildShowup(
 /// [PageView]'s gesture recognizer under [flingFrom]).
 Future<void> _swipeEditWizardForward(WidgetTester tester) async {
   final pageViewFinder = find.byType(PageView);
+  const nameFieldKey = Key('pact-creation-habit-name-field');
+  const summaryCardKey = Key('pact-edit-summary-card');
+  final nameFieldCountBefore = find.byKey(nameFieldKey).evaluate().length;
+  final summaryCardCountBefore = find.byKey(summaryCardKey).evaluate().length;
+  final pageViewCount = pageViewFinder.evaluate().length;
+  final rectBefore = tester.getRect(pageViewFinder);
+  // ignore: avoid_print
+  print(
+    'DIAG swipe-start: nameField=$nameFieldCountBefore summaryCard=$summaryCardCountBefore '
+    'pageViewCount=$pageViewCount rect=$rectBefore',
+  );
   // 300 px in 50 ms → velocity ≈ 6000 px/s (above the snap threshold).
   // 300 px keeps the drag within one page width on any ≥300 dp device:
   // (300/320)+0.5=1.44 → rounds to 1, so one page advance per swipe.
@@ -71,6 +82,10 @@ Future<void> _swipeEditWizardForward(WidgetTester tester) async {
   // (400/320)+0.5=1.75 → rounds to 2, skipping the reminder step entirely.
   await tester.timedDrag(pageViewFinder, const Offset(-300, 0), const Duration(milliseconds: 50));
   await tester.pumpAndSettle();
+  final nameFieldCountAfter = find.byKey(nameFieldKey).evaluate().length;
+  final summaryCardCountAfter = find.byKey(summaryCardKey).evaluate().length;
+  // ignore: avoid_print
+  print('DIAG swipe-end: nameField=$nameFieldCountAfter summaryCard=$summaryCardCountAfter');
 }
 
 /// Expands the pacts panel by tapping its collapsed header.

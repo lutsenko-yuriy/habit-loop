@@ -38,6 +38,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
   @override
   DashboardState build() {
     ref.listen(dashboardRefreshSignalProvider, (_, __) {
+      // ignore: avoid_print
+      print('DIAG refreshSignal listener fired at ${DateTime.now().toIso8601String()}');
       ref.invalidate(hasActivePactsProvider);
       unawaited(load());
     });
@@ -45,6 +47,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
   }
 
   Future<void> load() async {
+    // ignore: avoid_print
+    print('DIAG load() called, _loadInProgress=$_loadInProgress at ${DateTime.now().toIso8601String()}');
     if (_loadInProgress) return;
     _loadInProgress = true;
     try {
@@ -55,6 +59,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
   }
 
   Future<void> _loadInner() async {
+    // ignore: avoid_print
+    print('DIAG _loadInner start at ${DateTime.now().toIso8601String()}');
     final today = ref.read(todayProvider);
     final todayNorm = DateTime(today.year, today.month, today.day);
     final crashlytics = ref.read(crashlyticsServiceProvider);
@@ -62,6 +68,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
     await crashlytics.log('screen: dashboard');
 
     final pactsContext = await _loadPactsContext(crashlytics: crashlytics);
+    // ignore: avoid_print
+    print('DIAG _loadPactsContext done at ${DateTime.now().toIso8601String()}');
 
     await _runGapFillSweepAndScheduleReminders(
       activePacts: pactsContext.activePacts,
@@ -69,6 +77,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
       todayNorm: todayNorm,
       crashlytics: crashlytics,
     );
+    // ignore: avoid_print
+    print('DIAG _runGapFillSweepAndScheduleReminders done at ${DateTime.now().toIso8601String()}');
 
     // todayIndex = min(daysSinceOldestPact, 3): ramps 0→3 over first 3 days, then stays 3.
     // ALL pacts (active/stopped/completed) contribute so deleting one never shifts the strip.
@@ -85,6 +95,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
       today: today,
       crashlytics: crashlytics,
     );
+    // ignore: avoid_print
+    print('DIAG _runAutoFailSweep done at ${DateTime.now().toIso8601String()}');
 
     _assembleAndSetState(
       stripStart: stripStart,
@@ -94,6 +106,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
       pactNames: pactsContext.pactNames,
       computedTodayIndex: computedTodayIndex,
     );
+    // ignore: avoid_print
+    print('DIAG _assembleAndSetState done, isLoading should be false at ${DateTime.now().toIso8601String()}');
   }
 
   // Job 1: fetch all pacts and derive the active-pact context reused by every later step.

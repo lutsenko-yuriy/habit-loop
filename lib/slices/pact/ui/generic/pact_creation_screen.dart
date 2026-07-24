@@ -114,7 +114,11 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
     if (ref.read(pactCreationViewModelProvider).submitError != null) return;
 
     _pactCreated = true;
+    // ignore: avoid_print
+    print('DIAG submit() done, bumping refresh signal at ${DateTime.now().toIso8601String()}');
     ref.read(dashboardRefreshSignalProvider.notifier).update((n) => n + 1);
+    // ignore: avoid_print
+    print('DIAG about to pop navigator at ${DateTime.now().toIso8601String()}');
     Navigator.of(context).pop();
   }
 
