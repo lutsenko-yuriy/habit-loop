@@ -602,17 +602,18 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.byKey(const Key('showup-note-field')), newNote);
         await tester.pump();
-        const noteFieldKey = Key('showup-note-field');
-        const saveButtonKey = Key('showup-note-save-button');
-        final noteFieldCount = find.byKey(noteFieldKey).evaluate().length;
-        final saveButtonCount = find.byKey(saveButtonKey).evaluate().length;
-        // ignore: avoid_print
-        print(
-          'DIAG right after enterText: noteField=$noteFieldCount saveButton=$saveButtonCount '
-          'at ${DateTime.now().toIso8601String()}',
+        // The save button sits right below the multi-line note field; once the
+        // keyboard opens it can end up below the fold. ShowupDetailContent's
+        // ListView only realizes children within the viewport/cache extent, so
+        // find.byKey never matches an element that hasn't been scrolled into
+        // range yet — no amount of pumping/waiting helps (HAB-196 diagnostic
+        // data). dragUntilVisible re-evaluates the finder after each scroll
+        // step instead of assuming the target already exists.
+        await tester.dragUntilVisible(
+          find.byKey(const Key('showup-note-save-button')),
+          find.ancestor(of: find.byKey(const Key('showup-note-field')), matching: find.byType(Scrollable)),
+          const Offset(0, -100),
         );
-        await waitFor(tester, find.byKey(const Key('showup-note-save-button')));
-        await tester.ensureVisible(find.byKey(const Key('showup-note-save-button')));
         await tester.pump();
         await tester.tap(find.byKey(const Key('showup-note-save-button')));
         await tester.pump();
