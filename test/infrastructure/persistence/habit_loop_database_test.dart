@@ -79,6 +79,13 @@ void main() {
       expect(result, hasLength(1));
     });
 
+    test('creates the pact_breaks table', () async {
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='pact_breaks'",
+      );
+      expect(result, hasLength(1));
+    });
+
     test('creates idx_showups_pact_id index', () async {
       final result = await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_showups_pact_id'",
@@ -89,6 +96,13 @@ void main() {
     test('creates idx_showups_scheduled_at index', () async {
       final result = await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_showups_scheduled_at'",
+      );
+      expect(result, hasLength(1));
+    });
+
+    test('creates idx_pact_breaks_pact_id index', () async {
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pact_breaks_pact_id'",
       );
       expect(result, hasLength(1));
     });
@@ -146,6 +160,38 @@ void main() {
       final rowsAffected = await db.rawInsert(
         'INSERT INTO showups (id, pact_id, scheduled_at, duration, status) VALUES (?, ?, ?, ?, ?)',
         ['showup-1', 'pact-1', 0, 600000000, 'pending'],
+      );
+      expect(rowsAffected, equals(1));
+    });
+
+    test('pact_breaks table has expected columns', () async {
+      final result = await db.rawQuery('PRAGMA table_info(pact_breaks)');
+      final columnNames = result.map((row) => row['name'] as String).toSet();
+      expect(
+        columnNames,
+        containsAll([
+          'id',
+          'pact_id',
+          'start_date',
+          'rationale',
+          'planned_end_date',
+          'created_at',
+          'stopped_at',
+          'dirty',
+          'synced_at',
+        ]),
+      );
+    });
+
+    test('can insert a pact_breaks row after inserting its pact', () async {
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        ['pact-1', 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active', 0],
+      );
+      final rowsAffected = await db.rawInsert(
+        'INSERT INTO pact_breaks (id, pact_id, start_date, rationale) VALUES (?, ?, ?, ?)',
+        ['break-1', 'pact-1', 0, 'Recovering from a cold'],
       );
       expect(rowsAffected, equals(1));
     });
@@ -362,6 +408,100 @@ void main() {
         ['showup-1', 'failed'],
       );
       expect(rows.first['redeemable'], equals(1));
+    });
+  });
+
+  group('HabitLoopDatabase — migration v4 → v5', () {
+    late Database db;
+
+    setUp(() async {
+      db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      // Build a v4 schema manually (no pact_breaks table yet).
+      await db.execute('''
+        CREATE TABLE pacts (
+          id                   TEXT    NOT NULL PRIMARY KEY,
+          habit_name           TEXT    NOT NULL,
+          start_date           INTEGER NOT NULL,
+          scheduled_end_date   INTEGER NOT NULL,
+          actual_end_date      INTEGER NOT NULL,
+          showup_duration      INTEGER NOT NULL,
+          schedule             TEXT    NOT NULL,
+          status               TEXT    NOT NULL,
+          reminder_offset      INTEGER,
+          stop_reason          TEXT,
+          total_showups        INTEGER,
+          created_at           INTEGER,
+          dirty                INTEGER NOT NULL DEFAULT 1,
+          synced_at            INTEGER,
+          archived             INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE showups (
+          id           TEXT    NOT NULL PRIMARY KEY,
+          pact_id      TEXT    NOT NULL,
+          scheduled_at INTEGER NOT NULL,
+          duration     INTEGER NOT NULL,
+          status       TEXT    NOT NULL,
+          note         TEXT,
+          redeemable   INTEGER NOT NULL DEFAULT 1,
+          dirty        INTEGER NOT NULL DEFAULT 1,
+          synced_at    INTEGER,
+          FOREIGN KEY (pact_id) REFERENCES pacts(id)
+        )
+      ''');
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        ['pact-1', 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active'],
+      );
+    });
+
+    tearDown(() async => db.close());
+
+    test('upgrade creates the pact_breaks table', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 4, 5);
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='pact_breaks'",
+      );
+      expect(result, hasLength(1));
+    });
+
+    test('upgrade creates idx_pact_breaks_pact_id index', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 4, 5);
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pact_breaks_pact_id'",
+      );
+      expect(result, hasLength(1));
+    });
+
+    test('pact_breaks table has expected columns after v4→v5', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 4, 5);
+      final result = await db.rawQuery('PRAGMA table_info(pact_breaks)');
+      final columnNames = result.map((row) => row['name'] as String).toSet();
+      expect(
+        columnNames,
+        containsAll([
+          'id',
+          'pact_id',
+          'start_date',
+          'rationale',
+          'planned_end_date',
+          'created_at',
+          'stopped_at',
+          'dirty',
+          'synced_at',
+        ]),
+      );
+    });
+
+    test('can insert a pact_breaks row referencing an existing pact after migration', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 4, 5);
+      final rowsAffected = await db.rawInsert(
+        'INSERT INTO pact_breaks (id, pact_id, start_date, rationale) VALUES (?, ?, ?, ?)',
+        ['break-1', 'pact-1', 0, 'Recovering from a cold'],
+      );
+      expect(rowsAffected, equals(1));
     });
   });
 }
