@@ -602,8 +602,14 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.byKey(const Key('showup-note-field')), newNote);
         await tester.pump();
-        await waitFor(tester, find.byKey(const Key('showup-note-save-button')));
-        await tester.ensureVisible(find.byKey(const Key('showup-note-save-button')));
+        // The keyboard can push the save button below the fold, where ListView
+        // hasn't realized it yet — dragUntilVisible scrolls and re-checks
+        // instead of assuming the button already exists.
+        await tester.dragUntilVisible(
+          find.byKey(const Key('showup-note-save-button')),
+          find.ancestor(of: find.byKey(const Key('showup-note-field')), matching: find.byType(Scrollable)),
+          const Offset(0, -100),
+        );
         await tester.pump();
         await tester.tap(find.byKey(const Key('showup-note-save-button')));
         await tester.pump();

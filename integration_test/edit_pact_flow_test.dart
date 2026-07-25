@@ -53,23 +53,21 @@ final _showup = buildShowup(
 
 /// Swipes the edit-wizard [PageView] forward by one page.
 ///
-/// Uses [find.byType(PageView)] so this works on both iOS and Android —
-/// each platform uses a different key (`pact-edit-pageview-ios` /
-/// `pact-edit-pageview-android`) but both contain exactly one [PageView].
-///
-/// Uses [WidgetTester.timedDrag] with a short duration for high effective
-/// velocity (well above [kMinFlingVelocity] = 365 px/s) so the PageView
-/// reliably snaps to the next page regardless of which page's content is
-/// currently displayed (some pages use a [ListView] that can compete with the
-/// [PageView]'s gesture recognizer under [flingFrom]).
+/// Drags from the top-right (static title area), not the center — a center
+/// drag lands on the focused habit-name field on page 0 and loses the
+/// gesture arena to text selection instead of paging.
 Future<void> _swipeEditWizardForward(WidgetTester tester) async {
-  final pageViewFinder = find.byType(PageView);
+  const iosKey = Key('pact-edit-pageview-ios');
+  const androidKey = Key('pact-edit-pageview-android');
+  final key = find.byKey(iosKey).evaluate().isNotEmpty ? iosKey : androidKey;
+  final rect = tester.getRect(find.byKey(key));
   // 300 px in 50 ms → velocity ≈ 6000 px/s (above the snap threshold).
-  // 300 px keeps the drag within one page width on any ≥300 dp device:
-  // (300/320)+0.5=1.44 → rounds to 1, so one page advance per swipe.
-  // A 400 px drag overshoots to page 2 on ≤400 dp screens (CI AVD is 320 dp):
-  // (400/320)+0.5=1.75 → rounds to 2, skipping the reminder step entirely.
-  await tester.timedDrag(pageViewFinder, const Offset(-300, 0), const Duration(milliseconds: 50));
+  // Y = top + 40: safely inside the title text area on every wizard page.
+  await tester.timedDragFrom(
+    Offset(rect.right - 10, rect.top + 40),
+    const Offset(-300, 0),
+    const Duration(milliseconds: 50),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -203,6 +201,9 @@ void main() {
         // enterText fired onChanged before we swipe away from the name page.
         expect(find.text('Morning Run'), findsWidgets, reason: 'enterText did not fire onChanged');
 
+        // Lets the keyboard-show animation settle before the first swipe reads the rect.
+        await tester.pump(const Duration(milliseconds: 300));
+
         // ── 7. Swipe to reminder page, then to summary page ──────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
         await _swipeEditWizardForward(tester); // page 1 → 2 (summary)
@@ -325,6 +326,9 @@ void main() {
 
         // Same check as flow 1: AppBar title reflects the new name.
         expect(find.text('Yoga'), findsWidgets, reason: 'enterText did not fire onChanged');
+
+        // Lets the keyboard-show animation settle before the first swipe reads the rect.
+        await tester.pump(const Duration(milliseconds: 300));
 
         // ── 7. Swipe to summary ──────────────────────────────────────────
         await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)

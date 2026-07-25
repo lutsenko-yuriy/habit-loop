@@ -6,10 +6,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
+import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
+
+// 5 min before the wizard's default Mon-Fri 08:00 slot, so today's showup
+// stays in the future regardless of real wall-clock time.
+final _testNow = DateTime(2099, 6, 15, 7, 55);
 
 /// Swipes the pact-creation [PageView] to the next page.
 ///
@@ -61,6 +67,9 @@ void main() {
               'exp_003_commitment_confirmation': 'button',
             }),
           ),
+          pactCreationTodayProvider.overrideWithValue(_testNow),
+          pactCreationSubmitNowProvider.overrideWithValue(() => _testNow),
+          todayProvider.overrideWithValue(_testNow),
         ],
       );
       final strings = l10n(tester);
