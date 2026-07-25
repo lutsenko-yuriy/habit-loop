@@ -399,6 +399,34 @@ No properties — screen view provides sufficient context.
 
 ---
 
+### `pact_break_started`
+
+Fired when the break-creation flow is submitted successfully and the break is persisted. No dedicated screen view is tracked for the flow itself — consistent with the stop-pact dialog, which is also untracked as a screen view. (HAB-195)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact the break was started on |
+| `source` | `string` | Entry point used: `pact_detail` \| `tail_zone_showup` |
+| `end_type` | `string` | `fixed_date` \| `until_pact_ends` |
+| `duration_days` | `int?` | Planned break length in days; `null` if `until_pact_ends` |
+| `rationale_length` | `int` | Character count of the mandatory rationale; no raw text included |
+
+No PII risk — rationale content is never included; only its character length (mirrors `note_length`).
+
+---
+
+### `pact_break_stopped`
+
+Fired when the user taps "Resume pact" on the Pact Detail banner. Named to match the break's own domain lifecycle (a break is *stopped*, mirroring how a pact is *stopped* — the record is never deleted, only given a real end date); the UI action copy reads "Resume pact." (HAB-195)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact whose break was stopped |
+| `original_end_type` | `string` | `fixed_date` \| `until_pact_ends` — the break's planned end type before it was stopped |
+| `days_since_start` | `int` | Number of days the break had been active before it was stopped |
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.

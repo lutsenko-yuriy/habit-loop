@@ -10,6 +10,7 @@ import 'package:integration_test/integration_test.dart';
 
 import 'about_screen_flow_test.dart' as about;
 import 'archive_pact_flow_test.dart' as archive_pact;
+import 'break_flow_test.dart' as break_flow;
 import 'create_pact_flow_test.dart' as create_pact;
 import 'dashboard_kebab_menu_flow_test.dart' as kebab_menu;
 import 'edit_pact_flow_test.dart' as edit_pact;
@@ -33,6 +34,7 @@ void main() {
 
   about.main();
   archive_pact.main();
+  break_flow.main();
   create_pact.main();
   kebab_menu.main();
   edit_pact.main();
