@@ -150,5 +150,134 @@ void main() {
         expect(breaks.map((b) => b.id).toList(), equals(['break-earlier', 'break-later']));
       });
     });
+
+    // -------------------------------------------------------------------------
+    // getBreakById
+    // -------------------------------------------------------------------------
+
+    group('getBreakById', () {
+      test('returns the break with the given id', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak());
+
+        final result = await repository.getBreakById('break-1');
+        expect(result?.id, equals('break-1'));
+      });
+
+      test('returns null when no break with the given id exists', () async {
+        await insertPact();
+        expect(await repository.getBreakById('nonexistent'), isNull);
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // getDirtyPactBreaks
+    // -------------------------------------------------------------------------
+
+    group('getDirtyPactBreaks', () {
+      test('returns all breaks after initial insert — all start dirty', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak(id: 'break-1'));
+        await repository.saveBreak(makeBreak(id: 'break-2'));
+        final dirty = await repository.getDirtyPactBreaks();
+        expect(dirty.map((b) => b.id), containsAll(['break-1', 'break-2']));
+      });
+
+      test('returns empty list when no breaks exist', () async {
+        await insertPact();
+        expect(await repository.getDirtyPactBreaks(), isEmpty);
+      });
+
+      test('excludes breaks marked as synced', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak(id: 'break-1'));
+        await repository.saveBreak(makeBreak(id: 'break-2'));
+        await repository.markPactBreakSynced('break-1', DateTime(2026, 5, 1));
+        final dirty = await repository.getDirtyPactBreaks();
+        expect(dirty.map((b) => b.id), equals(['break-2']));
+      });
+    });
+
+    group('markPactBreakSynced', () {
+      test('removes break from dirty list after marking synced', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak());
+        await repository.markPactBreakSynced('break-1', DateTime(2026, 5, 1));
+        expect(await repository.getDirtyPactBreaks(), isEmpty);
+      });
+
+      test('re-appears as dirty after updateBreak', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak());
+        await repository.markPactBreakSynced('break-1', DateTime(2026, 5, 1));
+        await repository.updateBreak(makeBreak(stoppedAt: DateTime(2026, 3, 5)));
+        final dirty = await repository.getDirtyPactBreaks();
+        expect(dirty.map((b) => b.id), contains('break-1'));
+      });
+    });
+
+    group('getPactBreakSyncedAt', () {
+      test('returns null for non-existent break', () async {
+        await insertPact();
+        expect(await repository.getPactBreakSyncedAt('no-such-id'), isNull);
+      });
+
+      test('returns null when break is dirty (never synced)', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak());
+        expect(await repository.getPactBreakSyncedAt('break-1'), isNull);
+      });
+
+      test('returns syncedAt timestamp after markPactBreakSynced', () async {
+        await insertPact();
+        final syncedAt = DateTime(2026, 5, 1, 12, 0);
+        await repository.saveBreak(makeBreak());
+        await repository.markPactBreakSynced('break-1', syncedAt);
+        final result = await repository.getPactBreakSyncedAt('break-1');
+        expect(result, isNotNull);
+        expect(result!.millisecondsSinceEpoch, syncedAt.millisecondsSinceEpoch);
+      });
+
+      test('returns null again after updateBreak re-dirtifies the record', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak());
+        await repository.markPactBreakSynced('break-1', DateTime(2026, 5, 1));
+        await repository.updateBreak(makeBreak(stoppedAt: DateTime(2026, 3, 5)));
+        expect(await repository.getPactBreakSyncedAt('break-1'), isNull);
+      });
+    });
+
+    group('markAllPactBreaksDirty', () {
+      test('re-dirtifies all previously-synced breaks', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak(id: 'break-1'));
+        await repository.saveBreak(makeBreak(id: 'break-2'));
+        await repository.markPactBreakSynced('break-1', DateTime(2026, 5, 1));
+        await repository.markPactBreakSynced('break-2', DateTime(2026, 5, 1));
+        expect(await repository.getDirtyPactBreaks(), isEmpty);
+
+        await repository.markAllPactBreaksDirty();
+
+        final dirty = await repository.getDirtyPactBreaks();
+        expect(dirty.map((b) => b.id), containsAll(['break-1', 'break-2']));
+      });
+
+      test('no-op when no breaks exist', () async {
+        await insertPact();
+        await expectLater(repository.markAllPactBreaksDirty(), completes);
+        expect(await repository.getDirtyPactBreaks(), isEmpty);
+      });
+
+      test('getPactBreakSyncedAt returns null after markAllPactBreaksDirty', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak());
+        await repository.markPactBreakSynced('break-1', DateTime(2026, 5, 1));
+        expect(await repository.getPactBreakSyncedAt('break-1'), isNotNull);
+
+        await repository.markAllPactBreaksDirty();
+
+        expect(await repository.getPactBreakSyncedAt('break-1'), isNull);
+      });
+    });
   });
 }

@@ -16,6 +16,14 @@ class InMemoryPactBreakRepository implements PactBreakRepository {
   }
 
   @override
+  Future<PactBreak?> getBreakById(String id) async {
+    for (final b in _pactBreaks) {
+      if (b.id == id) return b;
+    }
+    return null;
+  }
+
+  @override
   Future<void> saveBreak(PactBreak pactBreak) async {
     if (_pactBreaks.any((b) => b.id == pactBreak.id)) {
       throw ArgumentError('PactBreak with id "${pactBreak.id}" already exists.');
