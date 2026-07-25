@@ -105,11 +105,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
         unawaited(
           ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),
         );
-        // hasActivePactsProvider and the dashboard reload are already handled by
-        // dashboardRefreshSignalProvider's listener when a pact was actually
-        // created (bumped from PactCreationScreen before it pops) — invalidating
-        // and reloading again here raced with that listener's own invalidation
-        // of the same FutureProvider.
+        // hasActivePactsProvider/dashboard reload already handled by
+        // dashboardRefreshSignalProvider's listener when a pact was created.
         unawaited(ref.read(pactListViewModelProvider.notifier).load());
       }
     }

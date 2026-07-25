@@ -53,16 +53,9 @@ final _showup = buildShowup(
 
 /// Swipes the edit-wizard [PageView] forward by one page.
 ///
-/// Starts near the **top-right** of the PageView (the static title area),
-/// mirroring `create_pact_flow_test.dart`'s `_swipeWizardForward` — dragging
-/// from the widget's geometric center instead lands the touch-down point on
-/// the just-focused habit-name field on page 0, which wins the gesture arena
-/// for text selection instead of yielding to the PageView, so the swipe never
-/// advances the page at all.
-///
-/// Uses [WidgetTester.timedDragFrom] with a short duration for high
-/// effective velocity (well above [kMinFlingVelocity] = 365 px/s) so the
-/// PageView reliably snaps to the next page.
+/// Drags from the top-right (static title area), not the center — a center
+/// drag lands on the focused habit-name field on page 0 and loses the
+/// gesture arena to text selection instead of paging.
 Future<void> _swipeEditWizardForward(WidgetTester tester) async {
   const iosKey = Key('pact-edit-pageview-ios');
   const androidKey = Key('pact-edit-pageview-android');
@@ -208,8 +201,7 @@ void main() {
         // enterText fired onChanged before we swipe away from the name page.
         expect(find.text('Morning Run'), findsWidgets, reason: 'enterText did not fire onChanged');
 
-        // Extra settle for the keyboard-show animation before the first swipe
-        // reads the PageView's rect — same fix as HAB-155 in create_pact_flow_test.dart.
+        // Lets the keyboard-show animation settle before the first swipe reads the rect.
         await tester.pump(const Duration(milliseconds: 300));
 
         // ── 7. Swipe to reminder page, then to summary page ──────────────
@@ -335,8 +327,7 @@ void main() {
         // Same check as flow 1: AppBar title reflects the new name.
         expect(find.text('Yoga'), findsWidgets, reason: 'enterText did not fire onChanged');
 
-        // Extra settle for the keyboard-show animation before the first swipe
-        // reads the PageView's rect — same fix as HAB-155 in create_pact_flow_test.dart.
+        // Lets the keyboard-show animation settle before the first swipe reads the rect.
         await tester.pump(const Duration(milliseconds: 300));
 
         // ── 7. Swipe to summary ──────────────────────────────────────────

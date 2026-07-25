@@ -13,13 +13,8 @@ import 'package:integration_test/integration_test.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
-// Fixed clock, 5 minutes before the wizard's default Mon-Fri 08:00 slot, so
-// today's showup is guaranteed to still be in the future regardless of the
-// real wall-clock time the suite happens to run at. Same value used by
-// edit_pact_flow_test.dart and pact_timeline_flow_test.dart. All three
-// "now" providers touched by pact creation must agree, or the wizard's
-// default start date, the submit-time eligibility check, and the
-// dashboard's own calendar strip end up reasoning about different days.
+// 5 min before the wizard's default Mon-Fri 08:00 slot, so today's showup
+// stays in the future regardless of real wall-clock time.
 final _testNow = DateTime(2099, 6, 15, 7, 55);
 
 /// Swipes the pact-creation [PageView] to the next page.
