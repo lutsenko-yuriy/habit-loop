@@ -61,8 +61,7 @@ abstract final class AppContainer {
       if (pactSyncRepository != null) pactSyncRepositoryProvider.overrideWithValue(pactSyncRepository),
       if (showupSyncRepository != null) showupSyncRepositoryProvider.overrideWithValue(showupSyncRepository),
       if (pactBreakRepository != null) pactBreakRepositoryProvider.overrideWithValue(pactBreakRepository),
-      if (pactBreakSyncRepository != null)
-        pactBreakSyncRepositoryProvider.overrideWithValue(pactBreakSyncRepository),
+      if (pactBreakSyncRepository != null) pactBreakSyncRepositoryProvider.overrideWithValue(pactBreakSyncRepository),
       if (logService != null) logServiceProvider.overrideWithValue(logService),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),
