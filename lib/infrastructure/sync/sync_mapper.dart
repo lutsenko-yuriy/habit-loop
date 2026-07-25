@@ -1,4 +1,5 @@
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -111,6 +112,50 @@ abstract final class SyncMapper {
       note: doc['note'] as String?,
       // absent means a legacy document predating v4 — treat as redeemable.
       redeemable: (doc['redeemable'] as bool?) ?? true,
+    );
+  }
+
+  /// Encodes [pactBreak] to a Firestore document map.
+  ///
+  /// [updatedAt] is written as `updated_at` (epoch ms). Defaults to
+  /// [DateTime.now] when not supplied.
+  static Map<String, dynamic> pactBreakToDocument(PactBreak pactBreak, {DateTime? updatedAt}) {
+    return {
+      'id': pactBreak.id,
+      'pact_id': pactBreak.pactId,
+      'start_date': pactBreak.startDate.millisecondsSinceEpoch,
+      'rationale': pactBreak.rationale,
+      'planned_end_date': pactBreak.plannedEndDate?.millisecondsSinceEpoch,
+      'created_at': pactBreak.createdAt?.millisecondsSinceEpoch,
+      'stopped_at': pactBreak.stoppedAt?.millisecondsSinceEpoch,
+      'updated_at': (updatedAt ?? DateTime.now()).millisecondsSinceEpoch,
+    };
+  }
+
+  /// Decodes a Firestore document map back into a [PactBreak].
+  ///
+  /// All [DateTime] fields are reconstructed as **local-time** values,
+  /// matching the convention used by [PactBreakMapper.fromRow].
+  ///
+  /// `updated_at` is NOT propagated to the domain model; callers that need
+  /// the remote timestamp should call [updatedAtFromDocument] separately.
+  ///
+  /// Throws if any required field is absent or has an unexpected type.
+  static PactBreak pactBreakFromDocument(Map<String, dynamic> doc) {
+    return PactBreak(
+      id: doc['id'] as String,
+      pactId: doc['pact_id'] as String,
+      startDate: DateTime.fromMillisecondsSinceEpoch(
+        (doc['start_date'] as num).toInt(),
+      ),
+      rationale: doc['rationale'] as String,
+      plannedEndDate: doc['planned_end_date'] != null
+          ? DateTime.fromMillisecondsSinceEpoch((doc['planned_end_date'] as num).toInt())
+          : null,
+      createdAt:
+          doc['created_at'] != null ? DateTime.fromMillisecondsSinceEpoch((doc['created_at'] as num).toInt()) : null,
+      stoppedAt:
+          doc['stopped_at'] != null ? DateTime.fromMillisecondsSinceEpoch((doc['stopped_at'] as num).toInt()) : null,
     );
   }
 
