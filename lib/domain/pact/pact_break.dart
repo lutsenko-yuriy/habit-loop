@@ -24,14 +24,26 @@ class PactBreak {
 
   DateTime? get effectiveEnd => stoppedAt ?? plannedEndDate;
 
-  bool contains(DateTime scheduledAt) =>
-      !scheduledAt.isBefore(startDate) && (effectiveEnd == null || !scheduledAt.isAfter(effectiveEnd!));
+  bool contains(DateTime scheduledAt) {
+    final end = effectiveEnd;
+    return !scheduledAt.isBefore(startDate) && (end == null || !scheduledAt.isAfter(end));
+  }
 
   bool isActiveAt(DateTime now) => contains(now);
 
-  bool isResolved(DateTime now) => stoppedAt != null || (plannedEndDate != null && now.isAfter(plannedEndDate!));
+  bool isResolved(DateTime now) {
+    final plannedEnd = plannedEndDate;
+    return stoppedAt != null || (plannedEnd != null && now.isAfter(plannedEnd));
+  }
 
-  PactBreak stop(DateTime now) => copyWith(stoppedAt: now);
+  // No-op once already stopped, and clamps to plannedEndDate — stopping an
+  // already-elapsed fixed-end break must not extend/revive its window.
+  PactBreak stop(DateTime now) {
+    if (stoppedAt != null) return this;
+    final plannedEnd = plannedEndDate;
+    final clamped = plannedEnd != null && now.isAfter(plannedEnd) ? plannedEnd : now;
+    return copyWith(stoppedAt: clamped);
+  }
 
   // id, pactId, and startDate are immutable — they form the identity of a break.
   PactBreak copyWith({

@@ -226,6 +226,49 @@ void main() {
         expect(stopped.effectiveEnd, DateTime(2026, 3, 5));
         expect(b.stoppedAt, isNull);
       });
+
+      test('clamps to plannedEndDate rather than extending an already-elapsed fixed-end break', () {
+        final b = PactBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 3, 1),
+          plannedEndDate: DateTime(2026, 3, 10),
+          rationale: 'r',
+        );
+
+        final stopped = b.stop(DateTime(2026, 3, 15));
+
+        expect(stopped.stoppedAt, DateTime(2026, 3, 10));
+        expect(stopped.effectiveEnd, DateTime(2026, 3, 10));
+      });
+
+      test('is a no-op if already stopped, so calling it twice never moves effectiveEnd', () {
+        final b = PactBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 3, 1),
+          rationale: 'r',
+          stoppedAt: DateTime(2026, 3, 5),
+        );
+
+        final restopped = b.stop(DateTime(2026, 3, 20));
+
+        expect(restopped.stoppedAt, DateTime(2026, 3, 5));
+        expect(identical(restopped, b), isTrue);
+      });
+
+      test('does not clamp an open-ended break, since there is no plannedEndDate to clamp to', () {
+        final b = PactBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 3, 1),
+          rationale: 'r',
+        );
+
+        final stopped = b.stop(DateTime(2030, 1, 1));
+
+        expect(stopped.stoppedAt, DateTime(2030, 1, 1));
+      });
     });
 
     group('copyWith', () {
