@@ -7,6 +7,7 @@ final class FeatureFlags {
     required this.pactTimelineEnabled,
     required this.showupRedemptionEnabled,
     required this.aboutScreenEnabled,
+    required this.pactBreaksEnabled,
   });
 
   factory FeatureFlags.fromRemoteConfig(RemoteConfigService rc) {
@@ -16,6 +17,7 @@ final class FeatureFlags {
       pactTimelineEnabled: rc.getBool('pact_timeline_enabled'),
       showupRedemptionEnabled: rc.getBool('showup_redemption_enabled'),
       aboutScreenEnabled: rc.getBool('about_screen_enabled'),
+      pactBreaksEnabled: rc.getBool('pact_breaks_enabled'),
     );
   }
 
@@ -31,6 +33,9 @@ final class FeatureFlags {
   /// Whether the About screen entry point is visible on the dashboard.
   final bool aboutScreenEnabled;
 
+  /// Whether the pact-breaks feature (HAB-195) is enabled.
+  final bool pactBreaksEnabled;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -39,7 +44,8 @@ final class FeatureFlags {
           networkSyncEnabled == other.networkSyncEnabled &&
           pactTimelineEnabled == other.pactTimelineEnabled &&
           showupRedemptionEnabled == other.showupRedemptionEnabled &&
-          aboutScreenEnabled == other.aboutScreenEnabled;
+          aboutScreenEnabled == other.aboutScreenEnabled &&
+          pactBreaksEnabled == other.pactBreaksEnabled;
 
   @override
   int get hashCode => Object.hash(
@@ -48,5 +54,6 @@ final class FeatureFlags {
         pactTimelineEnabled,
         showupRedemptionEnabled,
         aboutScreenEnabled,
+        pactBreaksEnabled,
       );
 }

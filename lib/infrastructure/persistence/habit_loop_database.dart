@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 /// [databaseFactoryFfi]-opened in-memory database — never use the singleton in
 /// tests (it would open a file-backed database on the test host).
 ///
-/// Schema version: 4.
+/// Schema version: 5.
 class HabitLoopDatabase {
   HabitLoopDatabase._();
 
@@ -33,7 +33,7 @@ class HabitLoopDatabase {
     final path = join(await getDatabasesPath(), 'habit_loop.db');
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onConfigure: (db) async {
         // Enable WAL journal mode so concurrent readers (main isolate) and the
         // background notification handler isolate can operate simultaneously
@@ -73,7 +73,11 @@ class HabitLoopDatabase {
   // Migration callbacks (public so tests can invoke them directly)
   // ---------------------------------------------------------------------------
 
-  /// Schema v1 DDL — creates both tables and their indexes.
+  /// Current full schema DDL — creates all tables and their indexes.
+  ///
+  /// Used as `onCreate` for fresh installs, so it always reflects the latest
+  /// schema version rather than just v1; existing installs instead go through
+  /// [runUpgradeMigrations].
   ///
   /// Exposed as a public static so unit tests can pass it directly to
   /// [OpenDatabaseOptions.onCreate] with a [databaseFactoryFfi] in-memory
@@ -114,6 +118,21 @@ class HabitLoopDatabase {
     ''');
     await db.execute('CREATE INDEX idx_showups_pact_id ON showups (pact_id)');
     await db.execute('CREATE INDEX idx_showups_scheduled_at ON showups (scheduled_at)');
+    await db.execute('''
+      CREATE TABLE pact_breaks (
+        id                TEXT    NOT NULL PRIMARY KEY,
+        pact_id           TEXT    NOT NULL,
+        start_date        INTEGER NOT NULL,
+        rationale         TEXT    NOT NULL,
+        planned_end_date  INTEGER,
+        created_at        INTEGER,
+        stopped_at        INTEGER,
+        dirty             INTEGER NOT NULL DEFAULT 1,
+        synced_at         INTEGER,
+        FOREIGN KEY (pact_id) REFERENCES pacts(id)
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_pact_breaks_pact_id ON pact_breaks (pact_id)');
   }
 
   /// Incremental schema upgrades from [oldVersion] to [newVersion].
@@ -138,6 +157,24 @@ class HabitLoopDatabase {
       // historical failed rows redeemable — correct for data-loss scenarios.
       await db.execute('ALTER TABLE showups ADD COLUMN redeemable INTEGER NOT NULL DEFAULT 1');
     }
+    if (oldVersion < 5) {
+      // v5 adds the pact_breaks table (HAB-195).
+      await db.execute('''
+        CREATE TABLE pact_breaks (
+          id                TEXT    NOT NULL PRIMARY KEY,
+          pact_id           TEXT    NOT NULL,
+          start_date        INTEGER NOT NULL,
+          rationale         TEXT    NOT NULL,
+          planned_end_date  INTEGER,
+          created_at        INTEGER,
+          stopped_at        INTEGER,
+          dirty             INTEGER NOT NULL DEFAULT 1,
+          synced_at         INTEGER,
+          FOREIGN KEY (pact_id) REFERENCES pacts(id)
+        )
+      ''');
+      await db.execute('CREATE INDEX idx_pact_breaks_pact_id ON pact_breaks (pact_id)');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -153,7 +190,7 @@ class HabitLoopDatabase {
     return databaseFactory.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
-        version: 4,
+        version: 5,
         onConfigure: (db) async {
           try {
             await db.rawQuery('PRAGMA journal_mode=WAL');
