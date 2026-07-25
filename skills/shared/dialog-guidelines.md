@@ -44,9 +44,7 @@ The assistant's role is to be a helpful mirror: paraphrase what the user said in
 
 ## Format of the question
 
-Default to free-form text for open/reflective questions ("how did it go," "what
-else stood out"). Reserve the structured multiple-choice tool for genuine forks
-with discrete, enumerable options — not as the default shape for every question.
+Default to free-form text for open/reflective questions ("how did it go," "what else stood out"). Reserve the structured multiple-choice tool for genuine forks with discrete, enumerable options — not as the default shape for every question.
 
 ## Option-space breadth
 
