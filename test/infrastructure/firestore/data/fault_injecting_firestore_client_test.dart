@@ -23,6 +23,11 @@ void main() {
               's-1': <String, dynamic>{'status': 'pending'}
             }
           },
+          pactBreaks: {
+            'user-1': {
+              'break-1': <String, dynamic>{'rationale': 'Recovering'}
+            }
+          },
         ));
     });
 
@@ -59,6 +64,10 @@ void main() {
         expect(await makePerfect().getShowups('user-1'), hasLength(1));
       });
 
+      test('getPactBreaks delegates to inner and returns its results', () async {
+        expect(await makePerfect().getPactBreaks('user-1'), hasLength(1));
+      });
+
       test('upsertPact delegates to inner', () async {
         await makePerfect().upsertPact('user-1', 'pact-2', {'habit_name': 'Jog'});
         expect(await inner.getPacts('user-1'), hasLength(2));
@@ -69,6 +78,11 @@ void main() {
         expect(await inner.getShowups('user-1'), hasLength(2));
       });
 
+      test('upsertPactBreak delegates to inner', () async {
+        await makePerfect().upsertPactBreak('user-1', 'break-2', {'rationale': 'Illness'});
+        expect(await inner.getPactBreaks('user-1'), hasLength(2));
+      });
+
       test('deletePact delegates to inner', () async {
         await makePerfect().deletePact('user-1', 'pact-1');
         expect(await inner.getPacts('user-1'), isEmpty);
@@ -77,6 +91,11 @@ void main() {
       test('deleteShowup delegates to inner', () async {
         await makePerfect().deleteShowup('user-1', 's-1');
         expect(await inner.getShowups('user-1'), isEmpty);
+      });
+
+      test('deletePactBreak delegates to inner', () async {
+        await makePerfect().deletePactBreak('user-1', 'break-1');
+        expect(await inner.getPactBreaks('user-1'), isEmpty);
       });
     });
 
@@ -93,6 +112,10 @@ void main() {
         expect(makeAbsent().getShowups('user-1'), throwsException);
       });
 
+      test('getPactBreaks throws', () {
+        expect(makeAbsent().getPactBreaks('user-1'), throwsException);
+      });
+
       test('upsertPact throws', () {
         expect(makeAbsent().upsertPact('user-1', 'pact-1', {}), throwsException);
       });
@@ -101,12 +124,20 @@ void main() {
         expect(makeAbsent().upsertShowup('user-1', 's-1', {}), throwsException);
       });
 
+      test('upsertPactBreak throws', () {
+        expect(makeAbsent().upsertPactBreak('user-1', 'break-1', {}), throwsException);
+      });
+
       test('deletePact throws', () {
         expect(makeAbsent().deletePact('user-1', 'pact-1'), throwsException);
       });
 
       test('deleteShowup throws', () {
         expect(makeAbsent().deleteShowup('user-1', 's-1'), throwsException);
+      });
+
+      test('deletePactBreak throws', () {
+        expect(makeAbsent().deletePactBreak('user-1', 'break-1'), throwsException);
       });
     });
 

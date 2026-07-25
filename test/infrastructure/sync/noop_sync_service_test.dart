@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -36,6 +37,16 @@ void main() {
       await expectLater(svc.uploadShowup(showup), completes);
     });
 
+    test('uploadPactBreak does not throw', () async {
+      final pactBreak = PactBreak(
+        id: 'b1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 1, 1),
+        rationale: 'Travel',
+      );
+      await expectLater(svc.uploadPactBreak(pactBreak), completes);
+    });
+
     test('flushDirtyRecords does not throw', () async {
       await expectLater(svc.flushDirtyRecords(), completes);
     });
@@ -49,6 +60,7 @@ void main() {
       expect(result.attempted, equals(0));
       expect(result.pactsFailed, equals(0));
       expect(result.showupsFailed, equals(0));
+      expect(result.pactBreaksFailed, equals(0));
     });
 
     test('pullRemoteChanges does not throw', () async {

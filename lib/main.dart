@@ -51,6 +51,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
+import 'package:habit_loop/slices/pact/data/sqlite_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
@@ -259,6 +260,7 @@ Future<void> main() async {
     final Database db = await HabitLoopDatabase.instance.database;
     final pactRepo = SqlitePactRepository(db);
     final showupRepo = SqliteShowupRepository(db);
+    final pactBreakRepo = SqlitePactBreakRepository(db);
     final txService = SqlitePactTransactionService(db);
 
     // Assign notificationAnalyticsService so the warm-start callback (closed
@@ -284,6 +286,8 @@ Future<void> main() async {
       showupRepository: showupRepo,
       pactSyncRepository: pactRepo,
       showupSyncRepository: showupRepo,
+      pactBreakRepository: pactBreakRepo,
+      pactBreakSyncRepository: pactBreakRepo,
       transactionService: txService,
       logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
       analyticsService: analyticsService,

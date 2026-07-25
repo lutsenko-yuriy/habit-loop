@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -228,6 +229,99 @@ void main() {
     test('defaults redeemable to true when absent in legacy document', () {
       final doc = SyncMapper.showupToDocument(showup)..remove('redeemable');
       expect(SyncMapper.showupFromDocument(doc).redeemable, isTrue);
+    });
+  });
+
+  group('SyncMapper.pactBreakToDocument', () {
+    final pactBreak = PactBreak(
+      id: 'b1',
+      pactId: 'p1',
+      startDate: DateTime(2026, 3, 1),
+      rationale: 'Recovering from a cold',
+      plannedEndDate: DateTime(2026, 3, 10),
+      createdAt: DateTime(2026, 2, 28),
+    );
+
+    test('includes all domain fields', () {
+      final doc = SyncMapper.pactBreakToDocument(pactBreak);
+      expect(doc['id'], 'b1');
+      expect(doc['pact_id'], 'p1');
+      expect(doc['start_date'], pactBreak.startDate.millisecondsSinceEpoch);
+      expect(doc['rationale'], 'Recovering from a cold');
+      expect(doc['planned_end_date'], pactBreak.plannedEndDate!.millisecondsSinceEpoch);
+      expect(doc['created_at'], pactBreak.createdAt!.millisecondsSinceEpoch);
+    });
+
+    test('excludes dirty and synced_at', () {
+      final doc = SyncMapper.pactBreakToDocument(pactBreak);
+      expect(doc.containsKey('dirty'), isFalse);
+      expect(doc.containsKey('synced_at'), isFalse);
+    });
+
+    test('includes updated_at when provided', () {
+      final updatedAt = DateTime(2026, 5, 1);
+      final doc = SyncMapper.pactBreakToDocument(pactBreak, updatedAt: updatedAt);
+      expect(doc['updated_at'], updatedAt.millisecondsSinceEpoch);
+    });
+
+    test('includes updated_at as a non-null timestamp when not provided', () {
+      final doc = SyncMapper.pactBreakToDocument(pactBreak);
+      expect(doc.containsKey('updated_at'), isTrue);
+      expect(doc['updated_at'], isA<int>());
+    });
+
+    test('encodes null plannedEndDate as null (open-ended break)', () {
+      final open = pactBreak.copyWith(clearPlannedEndDate: true);
+      expect(SyncMapper.pactBreakToDocument(open)['planned_end_date'], isNull);
+    });
+
+    test('encodes stoppedAt when present', () {
+      final stopped = pactBreak.copyWith(stoppedAt: DateTime(2026, 3, 5));
+      expect(SyncMapper.pactBreakToDocument(stopped)['stopped_at'], DateTime(2026, 3, 5).millisecondsSinceEpoch);
+    });
+
+    test('encodes null stoppedAt as null', () {
+      expect(SyncMapper.pactBreakToDocument(pactBreak)['stopped_at'], isNull);
+    });
+  });
+
+  group('SyncMapper.pactBreakFromDocument', () {
+    final pactBreak = PactBreak(
+      id: 'b1',
+      pactId: 'p1',
+      startDate: DateTime(2026, 3, 1),
+      rationale: 'Recovering from a cold',
+      plannedEndDate: DateTime(2026, 3, 10),
+      createdAt: DateTime(2026, 2, 28),
+    );
+
+    test('round-trips a pact break through pactBreakToDocument → pactBreakFromDocument', () {
+      final doc = SyncMapper.pactBreakToDocument(pactBreak);
+      final decoded = SyncMapper.pactBreakFromDocument(doc);
+
+      expect(decoded.id, pactBreak.id);
+      expect(decoded.pactId, pactBreak.pactId);
+      expect(decoded.startDate, pactBreak.startDate);
+      expect(decoded.rationale, pactBreak.rationale);
+      expect(decoded.plannedEndDate, pactBreak.plannedEndDate);
+      expect(decoded.createdAt, pactBreak.createdAt);
+    });
+
+    test('decodes null plannedEndDate (open-ended break)', () {
+      final open = pactBreak.copyWith(clearPlannedEndDate: true);
+      final doc = SyncMapper.pactBreakToDocument(open);
+      expect(SyncMapper.pactBreakFromDocument(doc).plannedEndDate, isNull);
+    });
+
+    test('decodes stoppedAt when present', () {
+      final stopped = pactBreak.copyWith(stoppedAt: DateTime(2026, 3, 5));
+      final doc = SyncMapper.pactBreakToDocument(stopped);
+      expect(SyncMapper.pactBreakFromDocument(doc).stoppedAt, DateTime(2026, 3, 5));
+    });
+
+    test('decodes null stoppedAt as null', () {
+      final doc = SyncMapper.pactBreakToDocument(pactBreak);
+      expect(SyncMapper.pactBreakFromDocument(doc).stoppedAt, isNull);
     });
   });
 

@@ -86,5 +86,17 @@ void main() {
       final breaks = await repo.getBreaksForPact('pact-1');
       expect(breaks, hasLength(1));
     });
+
+    group('getBreakById', () {
+      test('returns the break with the given id', () async {
+        await repo.saveBreak(makeBreak());
+        final result = await repo.getBreakById('break-1');
+        expect(result?.id, equals('break-1'));
+      });
+
+      test('returns null when no break with the given id exists', () async {
+        expect(await repo.getBreakById('nonexistent'), isNull);
+      });
+    });
   });
 }

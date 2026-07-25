@@ -17,20 +17,13 @@ final class FirebaseFirestoreClientAdapter implements FirestoreClient {
   CollectionReference<Map<String, dynamic>> _showups(String userId) =>
       _firestore.collection('users').doc(userId).collection('showups');
 
+  CollectionReference<Map<String, dynamic>> _pactBreaks(String userId) =>
+      _firestore.collection('users').doc(userId).collection('pact_breaks');
+
   @override
   Future<List<Map<String, dynamic>>> getPacts(String userId) async {
     try {
       final snapshot = await _pacts(userId).get();
-      return snapshot.docs.map((d) => d.data()).toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> getShowups(String userId) async {
-    try {
-      final snapshot = await _showups(userId).get();
       return snapshot.docs.map((d) => d.data()).toList();
     } catch (_) {
       return [];
@@ -49,6 +42,23 @@ final class FirebaseFirestoreClientAdapter implements FirestoreClient {
   }
 
   @override
+  Future<void> deletePact(String userId, String pactId) async {
+    try {
+      await _pacts(userId).doc(pactId).delete();
+    } catch (_) {}
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getShowups(String userId) async {
+    try {
+      final snapshot = await _showups(userId).get();
+      return snapshot.docs.map((d) => d.data()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
   Future<void> upsertShowup(
     String userId,
     String showupId,
@@ -60,16 +70,37 @@ final class FirebaseFirestoreClientAdapter implements FirestoreClient {
   }
 
   @override
-  Future<void> deletePact(String userId, String pactId) async {
+  Future<void> deleteShowup(String userId, String showupId) async {
     try {
-      await _pacts(userId).doc(pactId).delete();
+      await _showups(userId).doc(showupId).delete();
     } catch (_) {}
   }
 
   @override
-  Future<void> deleteShowup(String userId, String showupId) async {
+  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async {
     try {
-      await _showups(userId).doc(showupId).delete();
+      final snapshot = await _pactBreaks(userId).get();
+      return snapshot.docs.map((d) => d.data()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> upsertPactBreak(
+    String userId,
+    String pactBreakId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      await _pactBreaks(userId).doc(pactBreakId).set(data);
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> deletePactBreak(String userId, String pactBreakId) async {
+    try {
+      await _pactBreaks(userId).doc(pactBreakId).delete();
     } catch (_) {}
   }
 }

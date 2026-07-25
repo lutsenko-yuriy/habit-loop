@@ -19,6 +19,10 @@ void main() {
       expect(await client.getShowups('user-1'), isEmpty);
     });
 
+    test('getPactBreaks returns empty list when nothing seeded', () async {
+      expect(await client.getPactBreaks('user-1'), isEmpty);
+    });
+
     // -------------------------------------------------------------------------
     // seed()
     // -------------------------------------------------------------------------
@@ -50,6 +54,20 @@ void main() {
         final showups = await client.getShowups('user-1');
         expect(showups, hasLength(1));
         expect(showups.first['status'], 'done');
+      });
+
+      test('populates pact breaks for the seeded userId', () async {
+        client.seed(const FakeFirestoreSeedData(
+          pactBreaks: {
+            'user-1': {
+              'break-1': <String, dynamic>{'rationale': 'Recovering from a cold'}
+            },
+          },
+        ));
+
+        final pactBreaks = await client.getPactBreaks('user-1');
+        expect(pactBreaks, hasLength(1));
+        expect(pactBreaks.first['rationale'], 'Recovering from a cold');
       });
 
       test('is additive — second seed merges new documents with existing ones', () async {
@@ -97,7 +115,7 @@ void main() {
     // clear()
     // -------------------------------------------------------------------------
 
-    test('clear removes all pacts and showups', () async {
+    test('clear removes all pacts, showups, and pact breaks', () async {
       client.seed(const FakeFirestoreSeedData(
         pacts: {
           'user-1': {'pact-1': <String, dynamic>{}}
@@ -105,12 +123,16 @@ void main() {
         showups: {
           'user-1': {'s-1': <String, dynamic>{}}
         },
+        pactBreaks: {
+          'user-1': {'break-1': <String, dynamic>{}}
+        },
       ));
 
       client.clear();
 
       expect(await client.getPacts('user-1'), isEmpty);
       expect(await client.getShowups('user-1'), isEmpty);
+      expect(await client.getPactBreaks('user-1'), isEmpty);
     });
 
     // -------------------------------------------------------------------------
@@ -270,6 +292,38 @@ void main() {
     });
 
     // -------------------------------------------------------------------------
+    // upsertPactBreak / deletePactBreak
+    // -------------------------------------------------------------------------
+
+    test('upsertPactBreak adds a new document', () async {
+      await client.upsertPactBreak('user-1', 'break-1', {'rationale': 'Travel'});
+
+      final pactBreaks = await client.getPactBreaks('user-1');
+      expect(pactBreaks, hasLength(1));
+      expect(pactBreaks.first['rationale'], 'Travel');
+    });
+
+    test('upsertPactBreak overwrites an existing document with the same id', () async {
+      await client.upsertPactBreak('user-1', 'break-1', {'rationale': 'Old'});
+      await client.upsertPactBreak('user-1', 'break-1', {'rationale': 'New'});
+
+      final pactBreaks = await client.getPactBreaks('user-1');
+      expect(pactBreaks, hasLength(1));
+      expect(pactBreaks.first['rationale'], 'New');
+    });
+
+    test('deletePactBreak removes the document', () async {
+      await client.upsertPactBreak('user-1', 'break-1', {'rationale': 'A'});
+      await client.deletePactBreak('user-1', 'break-1');
+
+      expect(await client.getPactBreaks('user-1'), isEmpty);
+    });
+
+    test('deletePactBreak is a no-op when document does not exist', () async {
+      await expectLater(client.deletePactBreak('user-1', 'nonexistent'), completes);
+    });
+
+    // -------------------------------------------------------------------------
     // Defensive copies — getPacts / getShowups return copies
     // -------------------------------------------------------------------------
 
@@ -300,10 +354,13 @@ void main() {
     test('all operations complete without throwing', () async {
       await expectLater(client.getPacts('nobody'), completes);
       await expectLater(client.getShowups('nobody'), completes);
+      await expectLater(client.getPactBreaks('nobody'), completes);
       await expectLater(client.upsertPact('u', 'p', {}), completes);
       await expectLater(client.upsertShowup('u', 's', {}), completes);
+      await expectLater(client.upsertPactBreak('u', 'b', {}), completes);
       await expectLater(client.deletePact('u', 'nonexistent'), completes);
       await expectLater(client.deleteShowup('u', 'nonexistent'), completes);
+      await expectLater(client.deletePactBreak('u', 'nonexistent'), completes);
     });
   });
 }

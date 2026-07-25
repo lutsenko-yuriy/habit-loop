@@ -9,6 +9,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/pact_break_repository.dart';
+import 'package:habit_loop/domain/pact/pact_break_sync_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
@@ -49,6 +51,8 @@ import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_config.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
+import 'package:habit_loop/slices/pact/data/noop_pact_break_sync_repository.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
@@ -199,6 +203,18 @@ final showupSyncRepositoryProvider = Provider<ShowupSyncRepository>(
   (ref) => const NoopShowupSyncRepository(),
 );
 
+// No must-override throw here (unlike pactRepositoryProvider/showupRepositoryProvider):
+// nothing reads pact breaks outside the sync layer yet (PactBreakService lands in WU2),
+// so an inert in-memory default keeps every existing pactServiceProvider/syncServiceProvider
+// consumer working without an explicit override.
+final pactBreakRepositoryProvider = Provider<PactBreakRepository>(
+  (ref) => InMemoryPactBreakRepository(),
+);
+
+final pactBreakSyncRepositoryProvider = Provider<PactBreakSyncRepository>(
+  (ref) => const NoopPactBreakSyncRepository(),
+);
+
 // ---------------------------------------------------------------------------
 // Application service providers
 // ---------------------------------------------------------------------------
@@ -333,6 +349,8 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     showupSyncRepository: ref.watch(showupSyncRepositoryProvider),
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
+    pactBreakSyncRepository: ref.watch(pactBreakSyncRepositoryProvider),
+    pactBreakRepository: ref.watch(pactBreakRepositoryProvider),
     remoteConfig: ref.watch(remoteConfigServiceProvider),
   );
 });

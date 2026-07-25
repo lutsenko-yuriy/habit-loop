@@ -17,6 +17,11 @@ void main() {
       expect(result, isEmpty);
     });
 
+    test('getPactBreaks returns an empty list', () async {
+      final result = await client.getPactBreaks('user-1');
+      expect(result, isEmpty);
+    });
+
     test('upsertPact completes without throwing', () async {
       await expectLater(
         client.upsertPact('user-1', 'pact-1', {'habit_name': 'Meditate'}),
@@ -31,12 +36,23 @@ void main() {
       );
     });
 
+    test('upsertPactBreak completes without throwing', () async {
+      await expectLater(
+        client.upsertPactBreak('user-1', 'break-1', {'rationale': 'Travel'}),
+        completes,
+      );
+    });
+
     test('deletePact completes without throwing', () async {
       await expectLater(client.deletePact('user-1', 'pact-1'), completes);
     });
 
     test('deleteShowup completes without throwing', () async {
       await expectLater(client.deleteShowup('user-1', 'showup-1'), completes);
+    });
+
+    test('deletePactBreak completes without throwing', () async {
+      await expectLater(client.deletePactBreak('user-1', 'break-1'), completes);
     });
   });
 }

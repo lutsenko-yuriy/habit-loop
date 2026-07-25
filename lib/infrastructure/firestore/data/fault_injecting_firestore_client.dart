@@ -67,21 +67,9 @@ class FaultInjectingFirestoreClient implements FirestoreClient {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getShowups(String userId) async {
-    _maybeFail();
-    return _inner.getShowups(userId);
-  }
-
-  @override
   Future<void> upsertPact(String userId, String pactId, Map<String, dynamic> data) async {
     _maybeFail();
     return _inner.upsertPact(userId, pactId, data);
-  }
-
-  @override
-  Future<void> upsertShowup(String userId, String showupId, Map<String, dynamic> data) async {
-    _maybeFail();
-    return _inner.upsertShowup(userId, showupId, data);
   }
 
   @override
@@ -91,8 +79,38 @@ class FaultInjectingFirestoreClient implements FirestoreClient {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> getShowups(String userId) async {
+    _maybeFail();
+    return _inner.getShowups(userId);
+  }
+
+  @override
+  Future<void> upsertShowup(String userId, String showupId, Map<String, dynamic> data) async {
+    _maybeFail();
+    return _inner.upsertShowup(userId, showupId, data);
+  }
+
+  @override
   Future<void> deleteShowup(String userId, String showupId) async {
     _maybeFail();
     return _inner.deleteShowup(userId, showupId);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async {
+    _maybeFail();
+    return _inner.getPactBreaks(userId);
+  }
+
+  @override
+  Future<void> upsertPactBreak(String userId, String pactBreakId, Map<String, dynamic> data) async {
+    _maybeFail();
+    return _inner.upsertPactBreak(userId, pactBreakId, data);
+  }
+
+  @override
+  Future<void> deletePactBreak(String userId, String pactBreakId) async {
+    _maybeFail();
+    return _inner.deletePactBreak(userId, pactBreakId);
   }
 }

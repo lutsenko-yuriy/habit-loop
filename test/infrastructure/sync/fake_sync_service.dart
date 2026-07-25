@@ -1,4 +1,5 @@
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
@@ -7,11 +8,13 @@ import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 class FakeSyncService implements SyncService {
   final List<String> uploadedPactIds = [];
   final List<String> uploadedShowupIds = [];
+  final List<String> uploadedPactBreakIds = [];
   int flushCount = 0;
   int triggerManualSyncCount = 0;
   int forceSyncAllCount = 0;
   int forceSyncAllPactsFailed = 0;
   int forceSyncAllShowupsFailed = 0;
+  int forceSyncAllPactBreaksFailed = 0;
   int pullRemoteChangesCount = 0;
 
   @override
@@ -22,6 +25,11 @@ class FakeSyncService implements SyncService {
   @override
   Future<void> uploadShowup(Showup showup) async {
     uploadedShowupIds.add(showup.id);
+  }
+
+  @override
+  Future<void> uploadPactBreak(PactBreak pactBreak) async {
+    uploadedPactBreakIds.add(pactBreak.id);
   }
 
   @override
@@ -38,9 +46,10 @@ class FakeSyncService implements SyncService {
   Future<ForceSyncResult> forceSyncAll() async {
     forceSyncAllCount++;
     return ForceSyncResult(
-      attempted: forceSyncAllPactsFailed + forceSyncAllShowupsFailed,
+      attempted: forceSyncAllPactsFailed + forceSyncAllShowupsFailed + forceSyncAllPactBreaksFailed,
       pactsFailed: forceSyncAllPactsFailed,
       showupsFailed: forceSyncAllShowupsFailed,
+      pactBreaksFailed: forceSyncAllPactBreaksFailed,
     );
   }
 
