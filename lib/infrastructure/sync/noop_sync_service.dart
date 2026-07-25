@@ -1,4 +1,5 @@
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
@@ -15,6 +16,9 @@ class NoopSyncService implements SyncService {
 
   @override
   Future<void> uploadShowup(Showup showup) async {}
+
+  @override
+  Future<void> uploadPactBreak(PactBreak pactBreak) async {}
 
   @override
   Future<void> flushDirtyRecords() async {}

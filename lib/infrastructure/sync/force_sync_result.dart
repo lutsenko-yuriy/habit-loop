@@ -4,6 +4,7 @@ class ForceSyncResult {
     required this.attempted,
     required this.pactsFailed,
     required this.showupsFailed,
+    this.pactBreaksFailed = 0,
   });
 
   /// Total records marked dirty before the flush pass.
@@ -15,6 +16,9 @@ class ForceSyncResult {
   /// Showups still dirty after the flush (failed to upload).
   final int showupsFailed;
 
-  int get failed => pactsFailed + showupsFailed;
+  /// Pact breaks still dirty after the flush (failed to upload).
+  final int pactBreaksFailed;
+
+  int get failed => pactsFailed + showupsFailed + pactBreaksFailed;
   int get succeeded => attempted - failed;
 }

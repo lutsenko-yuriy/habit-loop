@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
+import 'package:habit_loop/domain/pact/pact_break_repository.dart';
+import 'package:habit_loop/domain/pact/pact_break_sync_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -24,8 +27,10 @@ class FirestoreSyncService implements SyncService {
   final SyncCircuitBreaker _circuitBreaker;
   final PactSyncRepository _pactSyncRepository;
   final ShowupSyncRepository _showupSyncRepository;
+  final PactBreakSyncRepository _pactBreakSyncRepository;
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
+  final PactBreakRepository _pactBreakRepository;
   final RemoteConfigService? _remoteConfig;
 
   bool get _syncEnabled => _remoteConfig?.getBool('network_sync_enabled') ?? true;
@@ -38,14 +43,18 @@ class FirestoreSyncService implements SyncService {
     required ShowupSyncRepository showupSyncRepository,
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
+    required PactBreakSyncRepository pactBreakSyncRepository,
+    required PactBreakRepository pactBreakRepository,
     RemoteConfigService? remoteConfig,
   })  : _firestoreClient = firestoreClient,
         _authService = authService,
         _circuitBreaker = circuitBreaker,
         _pactSyncRepository = pactSyncRepository,
         _showupSyncRepository = showupSyncRepository,
+        _pactBreakSyncRepository = pactBreakSyncRepository,
         _pactRepository = pactRepository,
         _showupRepository = showupRepository,
+        _pactBreakRepository = pactBreakRepository,
         _remoteConfig = remoteConfig;
 
   @override
@@ -81,6 +90,23 @@ class FirestoreSyncService implements SyncService {
   }
 
   @override
+  Future<void> uploadPactBreak(PactBreak pactBreak) async {
+    if (!_syncEnabled) return;
+    final userId = _authService.currentUserId;
+    if (userId == null || _authService.isAnonymous) return;
+    await _uploadWithCb(
+      upload: () async {
+        final now = DateTime.now();
+        await _firestoreClient.upsertPactBreak(
+            userId, pactBreak.id, SyncMapper.pactBreakToDocument(pactBreak, updatedAt: now));
+      },
+      onSynced: () async {
+        await _pactBreakSyncRepository.markPactBreakSynced(pactBreak.id, DateTime.now());
+      },
+    );
+  }
+
+  @override
   Future<void> flushDirtyRecords() async {
     if (!_syncEnabled) return;
     if (!_circuitBreaker.canRequest) return;
@@ -88,6 +114,7 @@ class FirestoreSyncService implements SyncService {
 
     final dirtyPacts = await _pactSyncRepository.getDirtyPacts();
     final dirtyShowups = await _showupSyncRepository.getDirtyShowups();
+    final dirtyPactBreaks = await _pactBreakSyncRepository.getDirtyPactBreaks();
 
     final items = <Future<void> Function()>[];
     for (final pact in dirtyPacts) {
@@ -95,6 +122,9 @@ class FirestoreSyncService implements SyncService {
     }
     for (final showup in dirtyShowups) {
       items.add(() => uploadShowup(showup));
+    }
+    for (final pactBreak in dirtyPactBreaks) {
+      items.add(() => uploadPactBreak(pactBreak));
     }
 
     final capped = items.take(_flushCap);
@@ -119,18 +149,22 @@ class FirestoreSyncService implements SyncService {
     try {
       await _pactSyncRepository.markAllPactsDirty();
       await _showupSyncRepository.markAllShowupsDirty();
+      await _pactBreakSyncRepository.markAllPactBreaksDirty();
       final allDirtyPacts = await _pactSyncRepository.getDirtyPacts();
       final allDirtyShowups = await _showupSyncRepository.getDirtyShowups();
-      final attempted = allDirtyPacts.length + allDirtyShowups.length;
+      final allDirtyPactBreaks = await _pactBreakSyncRepository.getDirtyPactBreaks();
+      final attempted = allDirtyPacts.length + allDirtyShowups.length + allDirtyPactBreaks.length;
       await flushDirtyRecords();
       // Successfully uploaded records are marked synced (dirty=0) and no longer
       // returned here — what remains are upload failures.
       final remainingPacts = await _pactSyncRepository.getDirtyPacts();
       final remainingShowups = await _showupSyncRepository.getDirtyShowups();
+      final remainingPactBreaks = await _pactBreakSyncRepository.getDirtyPactBreaks();
       return ForceSyncResult(
         attempted: attempted,
         pactsFailed: remainingPacts.length,
         showupsFailed: remainingShowups.length,
+        pactBreaksFailed: remainingPactBreaks.length,
       );
     } catch (_) {
       return const ForceSyncResult(attempted: 0, pactsFailed: 0, showupsFailed: 0);
@@ -163,6 +197,17 @@ class FirestoreSyncService implements SyncService {
       for (final doc in remoteShowupDocs) {
         try {
           await _mergeRemoteShowup(doc, now);
+        } catch (_) {
+          // Isolate per-record errors.
+        }
+      }
+
+      if (_circuitBreaker.currentState != SyncCircuitBreakerState.closed) return;
+
+      final remotePactBreakDocs = await _firestoreClient.getPactBreaks(userId);
+      for (final doc in remotePactBreakDocs) {
+        try {
+          await _mergeRemotePactBreak(doc, now);
         } catch (_) {
           // Isolate per-record errors.
         }
@@ -236,6 +281,17 @@ class FirestoreSyncService implements SyncService {
         update: _showupRepository.updateShowup,
         markSynced: _showupSyncRepository.markShowupSynced,
         existsGuard: (id) async => await _showupRepository.getShowupById(id) != null,
+      );
+
+  Future<void> _mergeRemotePactBreak(Map<String, dynamic> doc, DateTime now) => _mergeRemoteRecord<PactBreak>(
+        doc: doc,
+        now: now,
+        getLocal: _pactBreakRepository.getBreakById,
+        getSyncedAt: _pactBreakSyncRepository.getPactBreakSyncedAt,
+        fromDocument: SyncMapper.pactBreakFromDocument,
+        insert: _pactBreakRepository.saveBreak,
+        update: _pactBreakRepository.updateBreak,
+        markSynced: _pactBreakSyncRepository.markPactBreakSynced,
       );
 
   // If CB transitions halfOpen → closed on success, fires flushDirtyRecords

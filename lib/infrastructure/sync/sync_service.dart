@@ -1,4 +1,5 @@
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 
@@ -25,12 +26,17 @@ abstract class SyncService {
   /// Same success/failure semantics as [uploadPact].
   Future<void> uploadShowup(Showup showup);
 
+  /// Uploads [pactBreak] to Firestore if the circuit breaker allows requests.
+  ///
+  /// Same success/failure semantics as [uploadPact].
+  Future<void> uploadPactBreak(PactBreak pactBreak);
+
   /// Loads all locally-dirty records and uploads them to Firestore.
   ///
-  /// Processes pacts and showups sequentially; stops early if the circuit
-  /// breaker transitions to [SyncCircuitBreakerState.open] mid-flush.
-  /// Capped at 400 items per invocation to stay below the Firestore 500-write
-  /// batch limit.
+  /// Processes pacts, showups, and pact breaks sequentially; stops early if
+  /// the circuit breaker transitions to [SyncCircuitBreakerState.open]
+  /// mid-flush. Capped at 400 items per invocation to stay below the
+  /// Firestore 500-write batch limit.
   Future<void> flushDirtyRecords();
 
   /// Transitions the circuit breaker from open to half-open and immediately
@@ -56,8 +62,8 @@ abstract class SyncService {
   /// methods also have no-throw contracts).
   Future<ForceSyncResult> forceSyncAll();
 
-  /// Fetches all remote pacts and showups for the current user from Firestore
-  /// and merges them into the local SQLite database.
+  /// Fetches all remote pacts, showups, and pact breaks for the current user
+  /// from Firestore and merges them into the local SQLite database.
   ///
   /// Merge rules (per record):
   /// - Not in local DB → insert as new, mark synced.

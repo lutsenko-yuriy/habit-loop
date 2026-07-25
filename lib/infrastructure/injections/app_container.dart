@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/pact_break_repository.dart';
+import 'package:habit_loop/domain/pact/pact_break_sync_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
@@ -31,6 +33,8 @@ abstract final class AppContainer {
     required PactTransactionService transactionService,
     PactSyncRepository? pactSyncRepository,
     ShowupSyncRepository? showupSyncRepository,
+    PactBreakRepository? pactBreakRepository,
+    PactBreakSyncRepository? pactBreakSyncRepository,
     AnalyticsService? analyticsService,
     CrashlyticsService? crashlyticsService,
     LogService? logService,
@@ -56,6 +60,9 @@ abstract final class AppContainer {
       pactTransactionServiceProvider.overrideWithValue(transactionService),
       if (pactSyncRepository != null) pactSyncRepositoryProvider.overrideWithValue(pactSyncRepository),
       if (showupSyncRepository != null) showupSyncRepositoryProvider.overrideWithValue(showupSyncRepository),
+      if (pactBreakRepository != null) pactBreakRepositoryProvider.overrideWithValue(pactBreakRepository),
+      if (pactBreakSyncRepository != null)
+        pactBreakSyncRepositoryProvider.overrideWithValue(pactBreakSyncRepository),
       if (logService != null) logServiceProvider.overrideWithValue(logService),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),
