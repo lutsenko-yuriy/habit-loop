@@ -1,0 +1,114 @@
+import 'dart:async';
+
+import 'package:habit_loop/domain/pact/break_derivation.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
+import 'package:habit_loop/domain/pact/pact_break_repository.dart';
+import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/infrastructure/sync/sync_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
+
+/// Owns pact-break creation and resolution (HAB-195): starting a break,
+/// stopping ("Resume pact") it, and querying the break that currently blocks
+/// a pact from starting another one.
+class PactBreakService {
+  PactBreakService({
+    required PactBreakRepository pactBreakRepository,
+    required ShowupRepository showupRepository,
+    required ReminderSchedulingService reminderSchedulingService,
+    required SyncService syncService,
+    required PactDetailCache cache,
+  })  : _pactBreakRepository = pactBreakRepository,
+        _showupRepository = showupRepository,
+        _reminderSchedulingService = reminderSchedulingService,
+        _syncService = syncService,
+        _cache = cache;
+
+  final PactBreakRepository _pactBreakRepository;
+  final ShowupRepository _showupRepository;
+  final ReminderSchedulingService _reminderSchedulingService;
+  final SyncService _syncService;
+  final PactDetailCache _cache;
+
+  /// The single break that currently blocks a new one from starting for
+  /// [pactId] — i.e. the one unresolved (active-or-scheduled) break, if any.
+  /// Only one can exist at a time; [startBreak] enforces this.
+  Future<PactBreak?> getActiveBreak(String pactId, {required DateTime now}) async {
+    final breaks = await _pactBreakRepository.getBreaksForPact(pactId);
+    for (final b in breaks) {
+      if (!b.isResolved(now)) return b;
+    }
+    return null;
+  }
+
+  /// All breaks (stopped and unstopped) recorded for [pactId], oldest first.
+  Future<List<PactBreak>> getBreaksForPact(String pactId) => _pactBreakRepository.getBreaksForPact(pactId);
+
+  /// Starts a new break, cancels reminders for showups already inside its
+  /// window, and write-through syncs it.
+  ///
+  /// Throws [ArgumentError] if [rationale] is empty or only whitespace, and
+  /// [StateError] if [pactId] already has an unresolved break.
+  Future<PactBreak> startBreak({
+    required String id,
+    required String pactId,
+    required DateTime startDate,
+    required String rationale,
+    required DateTime now,
+    DateTime? plannedEndDate,
+  }) async {
+    if (rationale.trim().isEmpty) {
+      throw ArgumentError.value(rationale, 'rationale', 'must not be empty');
+    }
+
+    final existing = await getActiveBreak(pactId, now: now);
+    if (existing != null) {
+      throw StateError('Pact $pactId already has an unresolved break (${existing.id}).');
+    }
+
+    final pactBreak = PactBreak(
+      id: id,
+      pactId: pactId,
+      startDate: startDate,
+      rationale: rationale,
+      plannedEndDate: plannedEndDate,
+      createdAt: now,
+    );
+
+    await _pactBreakRepository.saveBreak(pactBreak);
+    unawaited(_syncService.uploadPactBreak(pactBreak));
+    await _cancelInWindowReminders(pactBreak);
+    _cache.evict(pactId);
+
+    return pactBreak;
+  }
+
+  /// Stops ("Resume pact") the break identified by [breakId], fixing its
+  /// window at [now] (or its planned end, if that already elapsed — see
+  /// [PactBreak.stop]). Showups already on-break before this call keep that
+  /// marking permanently; only future scheduling resumes.
+  ///
+  /// Throws [ArgumentError] if no break with [breakId] exists.
+  Future<PactBreak> stopBreak(String breakId, {required DateTime now}) async {
+    final existing = await _pactBreakRepository.getBreakById(breakId);
+    if (existing == null) {
+      throw ArgumentError.value(breakId, 'breakId', 'no PactBreak found with this id');
+    }
+
+    final stopped = existing.stop(now);
+    await _pactBreakRepository.updateBreak(stopped);
+    unawaited(_syncService.uploadPactBreak(stopped));
+    _cache.evict(stopped.pactId);
+
+    return stopped;
+  }
+
+  Future<void> _cancelInWindowReminders(PactBreak pactBreak) async {
+    final showups = await _showupRepository.getShowupsForPact(pactBreak.pactId);
+    for (final showup in showups) {
+      if (BreakDerivation.isShowupOnBreak(showup: showup, breaks: [pactBreak])) {
+        await _reminderSchedulingService.cancelRemindersForShowup(showup.id);
+      }
+    }
+  }
+}
