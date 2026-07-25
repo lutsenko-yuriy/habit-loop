@@ -86,14 +86,21 @@ class PactService {
   // Write-through to the shared cache for every status, not just completed —
   // a plain note/habitName/reminder edit must also be reflected immediately
   // (HAB-174 WU0 finding: the completed-only branch this replaced left note
-  // edits silently stale). reuseCachedShowups is safe here: updatePact never
-  // changes a pact's showups, only pact-level fields.
+  // edits silently stale). reuseCachedShowups/reuseCachedBreaks are both safe
+  // here: updatePact never changes a pact's showups or breaks, only
+  // pact-level fields.
   Future<void> updatePact(Pact pact, {DateTime? now}) async {
     await _pactRepository.updatePact(pact);
     // now is forwarded from the caller's own clock rather than left to
     // PactDetailCache's real-wall-clock fallback — see persistStats's comment
     // in pact_stats_service.dart for why this matters for the cached timeline.
-    await _cache.refresh(pact.id, pact: pact, reuseCachedShowups: true, now: now);
+    await _cache.refresh(
+      pact.id,
+      pact: pact,
+      reuseCachedShowups: true,
+      reuseCachedBreaks: true,
+      now: now,
+    );
     unawaited(_syncService.uploadPact(pact));
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -246,6 +247,32 @@ void main() {
       expect(countingShowupRepo.getShowupsForPactCallCount, callsAfterLoad,
           reason: 'updatePact never changes showups, so refreshing the cache must reuse the already-cached list');
     });
+
+    test('updatePact reuses the cached break list instead of re-fetching from DB', () async {
+      await pactRepo.savePact(_pact);
+      final countingBreakRepo = _CountingPactBreakRepository();
+      final cache = PactDetailCache(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        pactBreakRepository: countingBreakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+      final serviceWithCache = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
+        cache: cache,
+      );
+
+      await cache.load('p1');
+      final callsAfterLoad = countingBreakRepo.getBreaksForPactCallCount;
+
+      await serviceWithCache.updatePact(_pact.copyWith(habitName: 'Jog'));
+
+      expect(countingBreakRepo.getBreaksForPactCallCount, callsAfterLoad,
+          reason: 'updatePact never changes breaks, so refreshing the cache must reuse the already-cached list');
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -413,5 +440,16 @@ class _CountingShowupRepository extends InMemoryShowupRepository {
   Future<List<Showup>> getShowupsForPact(String pactId) async {
     getShowupsForPactCallCount++;
     return super.getShowupsForPact(pactId);
+  }
+}
+
+/// Wraps [InMemoryPactBreakRepository] and counts calls to [getBreaksForPact].
+class _CountingPactBreakRepository extends InMemoryPactBreakRepository {
+  int getBreaksForPactCallCount = 0;
+
+  @override
+  Future<List<PactBreak>> getBreaksForPact(String pactId) async {
+    getBreaksForPactCallCount++;
+    return super.getBreaksForPact(pactId);
   }
 }
