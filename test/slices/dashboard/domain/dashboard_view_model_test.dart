@@ -11,6 +11,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
@@ -577,6 +578,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: InMemoryPactBreakRepository(),
         grouper: const PactTimelineGrouper(),
       );
       final statsService = PactStatsService(
@@ -633,6 +635,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: InMemoryPactBreakRepository(),
         grouper: const PactTimelineGrouper(),
       );
       final statsService = PactStatsService(
@@ -1149,6 +1152,7 @@ void main() {
         cache: PactDetailCache(
           pactRepository: pactRepo,
           showupRepository: showupRepo,
+          pactBreakRepository: InMemoryPactBreakRepository(),
           grouper: const PactTimelineGrouper(),
         ),
         errorOnShowupIds: {'s-fail'},

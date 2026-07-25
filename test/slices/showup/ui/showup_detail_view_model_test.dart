@@ -11,6 +11,7 @@ import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
@@ -439,6 +440,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: InMemoryPactBreakRepository(),
         grouper: const PactTimelineGrouper(),
       );
       final container = ProviderContainer(overrides: [

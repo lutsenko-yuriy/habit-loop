@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -9,6 +10,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
@@ -84,14 +86,43 @@ class _CountingShowupRepository extends InMemoryShowupRepository {
   }
 }
 
+/// Wraps [InMemoryPactBreakRepository] and counts calls to [getBreaksForPact].
+class _CountingPactBreakRepository extends InMemoryPactBreakRepository {
+  _CountingPactBreakRepository(super.pactBreaks);
+
+  int getBreaksForPactCallCount = 0;
+
+  @override
+  Future<List<PactBreak>> getBreaksForPact(String pactId) async {
+    getBreaksForPactCallCount++;
+    return super.getBreaksForPact(pactId);
+  }
+}
+
+PactBreak _pactBreak({
+  String id = 'b1',
+  String pactId = 'p1',
+  required DateTime startDate,
+  DateTime? plannedEndDate,
+}) =>
+    PactBreak(
+      id: id,
+      pactId: pactId,
+      startDate: startDate,
+      rationale: 'Recovering',
+      plannedEndDate: plannedEndDate,
+    );
+
 PactDetailCache _cache({
   List<Pact>? pacts,
   List<Showup>? showups,
+  List<PactBreak>? breaks,
   PactTimelineGrouper? grouper,
 }) =>
     PactDetailCache(
       pactRepository: _CountingPactRepository(pacts ?? []),
       showupRepository: _CountingShowupRepository(showups ?? []),
+      pactBreakRepository: _CountingPactBreakRepository(breaks ?? []),
       grouper: grouper ?? const PactTimelineGrouper(),
     );
 
@@ -156,6 +187,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -180,6 +212,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -215,6 +248,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -237,6 +271,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -255,6 +290,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -286,6 +322,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -315,6 +352,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -333,6 +371,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -350,6 +389,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: const PactTimelineGrouper(),
       );
 
@@ -359,6 +399,132 @@ void main() {
 
       expect(pactRepo.getPactByIdCallCount, 2);
       expect(showupRepo.getShowupsForPactCallCount, 2);
+    });
+  });
+
+  group('PactDetailCache — breaks', () {
+    test('fetches breaks alongside showups on a cache miss and exposes them on the bundle', () async {
+      final breakRepo = _CountingPactBreakRepository([_pactBreak(startDate: DateTime(2024, 1, 1))]);
+      final cache = PactDetailCache(
+        pactRepository: _CountingPactRepository([_pact()]),
+        showupRepository:
+            _CountingShowupRepository([_showup('s1', DateTime(2024, 1, 5), status: ShowupStatus.pending)]),
+        pactBreakRepository: breakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+
+      final bundle = await cache.load('p1', now: DateTime(2024, 2, 1));
+
+      expect(breakRepo.getBreaksForPactCallCount, 1);
+      expect(bundle.breaks, hasLength(1));
+    });
+
+    test('cache hit serves the cached breaks without a further DB call', () async {
+      final breakRepo = _CountingPactBreakRepository([_pactBreak(startDate: DateTime(2024, 1, 1))]);
+      final cache = PactDetailCache(
+        pactRepository: _CountingPactRepository([_pact()]),
+        showupRepository: _CountingShowupRepository([_showup('s1', DateTime(2024, 1, 5))]),
+        pactBreakRepository: breakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+
+      await cache.load('p1', now: DateTime(2024, 2, 1));
+      final callsAfterFirst = breakRepo.getBreaksForPactCallCount;
+      await cache.load('p1', now: DateTime(2024, 2, 1));
+
+      expect(breakRepo.getBreaksForPactCallCount, callsAfterFirst);
+    });
+
+    test('a pending showup inside a break window is counted in bundle.stats.skippedOnBreak', () async {
+      final cache = _cache(
+        pacts: [_pact()],
+        showups: [_showup('s1', DateTime(2024, 1, 5), status: ShowupStatus.pending)],
+        breaks: [_pactBreak(startDate: DateTime(2024, 1, 1), plannedEndDate: DateTime(2024, 1, 10))],
+      );
+
+      final bundle = await cache.load('p1', now: DateTime(2024, 1, 6));
+
+      expect(bundle.stats.skippedOnBreak, 1);
+    });
+
+    test('refresh re-fetches breaks from DB by default (no reuseCachedBreaks opt-in)', () async {
+      final breakRepo = _CountingPactBreakRepository([_pactBreak(startDate: DateTime(2024, 1, 1))]);
+      final pact = _pact();
+      final cache = PactDetailCache(
+        pactRepository: _CountingPactRepository([pact]),
+        showupRepository: _CountingShowupRepository([_showup('s1', DateTime(2024, 1, 5))]),
+        pactBreakRepository: breakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+
+      await cache.load('p1', now: DateTime(2024, 2, 1));
+      final callsAfterLoad = breakRepo.getBreaksForPactCallCount;
+
+      await cache.refresh('p1', pact: pact, showups: [_showup('s1', DateTime(2024, 1, 5))], now: DateTime(2024, 2, 1));
+
+      expect(breakRepo.getBreaksForPactCallCount, greaterThan(callsAfterLoad));
+    });
+
+    test('refresh skips the breaks fetch when explicit breaks are passed in', () async {
+      final breakRepo = _CountingPactBreakRepository([_pactBreak(startDate: DateTime(2024, 1, 1))]);
+      final pact = _pact();
+      final cache = PactDetailCache(
+        pactRepository: _CountingPactRepository([pact]),
+        showupRepository: _CountingShowupRepository([]),
+        pactBreakRepository: breakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+
+      await cache.refresh(
+        'p1',
+        pact: pact,
+        showups: [_showup('s1', DateTime(2024, 1, 5))],
+        breaks: const [],
+        now: DateTime(2024, 2, 1),
+      );
+
+      expect(breakRepo.getBreaksForPactCallCount, 0);
+    });
+
+    test('refresh reuses cached breaks when reuseCachedBreaks is explicitly true', () async {
+      final breakRepo = _CountingPactBreakRepository([_pactBreak(startDate: DateTime(2024, 1, 1))]);
+      final pact = _pact();
+      final cache = PactDetailCache(
+        pactRepository: _CountingPactRepository([pact]),
+        showupRepository: _CountingShowupRepository([_showup('s1', DateTime(2024, 1, 5))]),
+        pactBreakRepository: breakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+
+      await cache.load('p1', now: DateTime(2024, 2, 1));
+      final callsAfterLoad = breakRepo.getBreaksForPactCallCount;
+
+      final refreshed = await cache.refresh(
+        'p1',
+        pact: pact,
+        reuseCachedShowups: true,
+        reuseCachedBreaks: true,
+        now: DateTime(2024, 2, 1),
+      );
+
+      expect(breakRepo.getBreaksForPactCallCount, callsAfterLoad);
+      expect(refreshed.breaks, hasLength(1));
+    });
+
+    test('evict clears the cached breaks — a subsequent load re-fetches them', () async {
+      final breakRepo = _CountingPactBreakRepository([_pactBreak(startDate: DateTime(2024, 1, 1))]);
+      final cache = PactDetailCache(
+        pactRepository: _CountingPactRepository([_pact()]),
+        showupRepository: _CountingShowupRepository([_showup('s1', DateTime(2024, 1, 5))]),
+        pactBreakRepository: breakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+
+      await cache.load('p1', now: DateTime(2024, 2, 1));
+      cache.evict('p1');
+      await cache.load('p1', now: DateTime(2024, 2, 1));
+
+      expect(breakRepo.getBreaksForPactCallCount, 2);
     });
   });
 
@@ -408,6 +574,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: _CountingPactRepository([pact]),
         showupRepository: _CountingShowupRepository(showups),
+        pactBreakRepository: _CountingPactBreakRepository([]),
         grouper: grouper,
       );
 

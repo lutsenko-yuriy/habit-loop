@@ -232,6 +232,7 @@ final pactDetailCacheProvider = Provider<PactDetailCache>((ref) {
   return PactDetailCache(
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
+    pactBreakRepository: ref.watch(pactBreakRepositoryProvider),
     grouper: PactTimelineGrouper(
       noGroupingTailPeriodInDays: config.noGroupingTailPeriodInDays,
     ),

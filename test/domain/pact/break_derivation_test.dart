@@ -85,7 +85,8 @@ void main() {
     test('a stopped break keeps showups already inside its fixed window on-break', () {
       final showup = _showup(ShowupStatus.pending, DateTime(2026, 3, 3));
       final breaks = [
-        _pactBreak(startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 10), stoppedAt: DateTime(2026, 3, 4)),
+        _pactBreak(
+            startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 10), stoppedAt: DateTime(2026, 3, 4)),
       ];
       expect(BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks), isTrue);
     });
@@ -93,7 +94,8 @@ void main() {
     test('a stopped break excludes showups after the stop date', () {
       final showup = _showup(ShowupStatus.pending, DateTime(2026, 3, 6));
       final breaks = [
-        _pactBreak(startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 10), stoppedAt: DateTime(2026, 3, 4)),
+        _pactBreak(
+            startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 10), stoppedAt: DateTime(2026, 3, 4)),
       ];
       expect(BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks), isFalse);
     });
