@@ -100,26 +100,8 @@ class FakeFirestoreClient implements FirestoreClient {
       (_pacts[userId] ?? {}).values.map((d) => Map<String, dynamic>.from(d)).toList();
 
   @override
-  Future<List<Map<String, dynamic>>> getShowups(String userId) async =>
-      (_showups[userId] ?? {}).values.map((d) => Map<String, dynamic>.from(d)).toList();
-
-  @override
-  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async =>
-      (_pactBreaks[userId] ?? {}).values.map((d) => Map<String, dynamic>.from(d)).toList();
-
-  @override
   Future<void> upsertPact(String userId, String pactId, Map<String, dynamic> data) async {
     _pacts.putIfAbsent(userId, () => {})[pactId] = Map<String, dynamic>.from(data);
-  }
-
-  @override
-  Future<void> upsertShowup(String userId, String showupId, Map<String, dynamic> data) async {
-    _showups.putIfAbsent(userId, () => {})[showupId] = Map<String, dynamic>.from(data);
-  }
-
-  @override
-  Future<void> upsertPactBreak(String userId, String pactBreakId, Map<String, dynamic> data) async {
-    _pactBreaks.putIfAbsent(userId, () => {})[pactBreakId] = Map<String, dynamic>.from(data);
   }
 
   @override
@@ -128,8 +110,26 @@ class FakeFirestoreClient implements FirestoreClient {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> getShowups(String userId) async =>
+      (_showups[userId] ?? {}).values.map((d) => Map<String, dynamic>.from(d)).toList();
+
+  @override
+  Future<void> upsertShowup(String userId, String showupId, Map<String, dynamic> data) async {
+    _showups.putIfAbsent(userId, () => {})[showupId] = Map<String, dynamic>.from(data);
+  }
+
+  @override
   Future<void> deleteShowup(String userId, String showupId) async {
     _showups[userId]?.remove(showupId);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async =>
+      (_pactBreaks[userId] ?? {}).values.map((d) => Map<String, dynamic>.from(d)).toList();
+
+  @override
+  Future<void> upsertPactBreak(String userId, String pactBreakId, Map<String, dynamic> data) async {
+    _pactBreaks.putIfAbsent(userId, () => {})[pactBreakId] = Map<String, dynamic>.from(data);
   }
 
   @override

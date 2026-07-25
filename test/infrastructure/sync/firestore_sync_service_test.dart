@@ -43,12 +43,6 @@ class _FakeFirestoreClient implements FirestoreClient {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getShowups(String userId) async => remoteShowupDocs;
-
-  @override
-  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async => remotePactBreakDocs;
-
-  @override
   Future<void> upsertPact(String userId, String pactId, Map<String, dynamic> data) async {
     if (throwOnNext) {
       throwOnNext = false;
@@ -56,6 +50,12 @@ class _FakeFirestoreClient implements FirestoreClient {
     }
     upsertedPacts.add(data);
   }
+
+  @override
+  Future<void> deletePact(String userId, String pactId) async {}
+
+  @override
+  Future<List<Map<String, dynamic>>> getShowups(String userId) async => remoteShowupDocs;
 
   @override
   Future<void> upsertShowup(String userId, String showupId, Map<String, dynamic> data) async {
@@ -67,6 +67,12 @@ class _FakeFirestoreClient implements FirestoreClient {
   }
 
   @override
+  Future<void> deleteShowup(String userId, String showupId) async {}
+
+  @override
+  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async => remotePactBreakDocs;
+
+  @override
   Future<void> upsertPactBreak(String userId, String pactBreakId, Map<String, dynamic> data) async {
     if (throwOnNext) {
       throwOnNext = false;
@@ -74,12 +80,6 @@ class _FakeFirestoreClient implements FirestoreClient {
     }
     upsertedPactBreaks.add(data);
   }
-
-  @override
-  Future<void> deletePact(String userId, String pactId) async {}
-
-  @override
-  Future<void> deleteShowup(String userId, String showupId) async {}
 
   @override
   Future<void> deletePactBreak(String userId, String pactBreakId) async {}
@@ -104,27 +104,27 @@ class _ThrowingFirestoreClient implements FirestoreClient {
   Future<List<Map<String, dynamic>>> getPacts(String userId) async => [];
 
   @override
-  Future<List<Map<String, dynamic>>> getShowups(String userId) async => [];
-
-  @override
-  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async => [];
-
-  @override
   Future<void> upsertPact(String userId, String pactId, Map<String, dynamic> data) async => throw Exception('error');
+
+  @override
+  Future<void> deletePact(String userId, String pactId) async {}
+
+  @override
+  Future<List<Map<String, dynamic>>> getShowups(String userId) async => [];
 
   @override
   Future<void> upsertShowup(String userId, String showupId, Map<String, dynamic> data) async =>
       throw Exception('error');
 
   @override
+  Future<void> deleteShowup(String userId, String showupId) async {}
+
+  @override
+  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async => [];
+
+  @override
   Future<void> upsertPactBreak(String userId, String pactBreakId, Map<String, dynamic> data) async =>
       throw Exception('error');
-
-  @override
-  Future<void> deletePact(String userId, String pactId) async {}
-
-  @override
-  Future<void> deleteShowup(String userId, String showupId) async {}
 
   @override
   Future<void> deletePactBreak(String userId, String pactBreakId) async {}
