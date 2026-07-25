@@ -335,6 +335,14 @@ Pact buildPact({
       archived: archived,
     );
 
+// TODO(HAB-195 WU1.1): add a `buildBreak` fixture here, mirroring `buildPact`/
+// `buildShowup` above, once the `PactBreak` domain model lands (WU1.1). It
+// cannot be written yet — `PactBreak` does not exist in `lib/domain/pact/`
+// as of WU0, and this file must compile against production code only.
+// Expected shape (per the approved plan): `buildBreak({required id, required
+// pactId, required startDate, DateTime? plannedEndDate, required rationale,
+// DateTime? createdAt, DateTime? stoppedAt})` returning a `PactBreak`.
+
 /// Builds a [Showup] fixture with defaults suited to integration tests.
 Showup buildShowup({
   required String id,
