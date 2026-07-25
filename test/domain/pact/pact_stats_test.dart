@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -36,12 +37,27 @@ PactStats _computeStats(
   Pact pact,
   List<Showup> showups, {
   int? totalShowups,
+  List<PactBreak> breaks = const [],
 }) {
   return PactStats.compute(
     startDate: pact.startDate,
     endDate: pact.endDate,
     showups: showups,
     totalShowups: totalShowups,
+    breaks: breaks,
+  );
+}
+
+PactBreak _pactBreak({
+  required DateTime startDate,
+  DateTime? plannedEndDate,
+}) {
+  return PactBreak(
+    id: 'break-1',
+    pactId: 'pact-1',
+    startDate: startDate,
+    rationale: 'Recovering',
+    plannedEndDate: plannedEndDate,
   );
 }
 
@@ -146,6 +162,94 @@ void main() {
       expect(stats.showupsRemaining, 0);
       expect(stats.totalShowups, 0);
       expect(stats.currentStreak, 0);
+      expect(stats.skippedOnBreak, 0);
+    });
+
+    group('skippedOnBreak', () {
+      test('defaults to zero when no breaks are given', () {
+        final showups = [
+          _showup('1', ShowupStatus.pending, DateTime(2026, 4, 5, 7)),
+        ];
+        final stats = _computeStats(_pact(), showups);
+        expect(stats.skippedOnBreak, 0);
+      });
+
+      test('counts a pending showup inside a break window', () {
+        final showups = [
+          _showup('1', ShowupStatus.pending, DateTime(2026, 4, 5, 7)),
+        ];
+        final breaks = [_pactBreak(startDate: DateTime(2026, 4, 1), plannedEndDate: DateTime(2026, 4, 10))];
+        final stats = _computeStats(_pact(), showups, breaks: breaks);
+        expect(stats.skippedOnBreak, 1);
+      });
+
+      test('does not count a done or failed showup even inside a break window', () {
+        final showups = [
+          _showup('1', ShowupStatus.done, DateTime(2026, 4, 5, 7)),
+          _showup('2', ShowupStatus.failed, DateTime(2026, 4, 6, 7)),
+        ];
+        final breaks = [_pactBreak(startDate: DateTime(2026, 4, 1), plannedEndDate: DateTime(2026, 4, 10))];
+        final stats = _computeStats(_pact(), showups, breaks: breaks);
+        expect(stats.skippedOnBreak, 0);
+      });
+
+      test('does not count a pending showup outside every break window', () {
+        final showups = [
+          _showup('1', ShowupStatus.pending, DateTime(2026, 4, 20, 7)),
+        ];
+        final breaks = [_pactBreak(startDate: DateTime(2026, 4, 1), plannedEndDate: DateTime(2026, 4, 10))];
+        final stats = _computeStats(_pact(), showups, breaks: breaks);
+        expect(stats.skippedOnBreak, 0);
+      });
+
+      test('an on-break pending showup does not break or advance the streak', () {
+        // done, done, on-break-pending — streak should stay 2, matching the
+        // existing "pending showups at the end don't affect streak" rule.
+        final showups = [
+          _showup('1', ShowupStatus.done, DateTime(2026, 4, 1, 7)),
+          _showup('2', ShowupStatus.done, DateTime(2026, 4, 2, 7)),
+          _showup('3', ShowupStatus.pending, DateTime(2026, 4, 5, 7)),
+        ];
+        final breaks = [_pactBreak(startDate: DateTime(2026, 4, 1), plannedEndDate: DateTime(2026, 4, 10))];
+        final stats = _computeStats(_pact(), showups, breaks: breaks);
+
+        expect(stats.currentStreak, 2);
+        expect(stats.skippedOnBreak, 1);
+      });
+
+      test('fromCounts threads skippedOnBreak straight through', () {
+        final stats = PactStats.fromCounts(
+          startDate: DateTime(2026, 4, 1),
+          endDate: DateTime(2026, 4, 30),
+          showupsDone: 2,
+          showupsFailed: 1,
+          currentStreak: 0,
+          pendingCount: 4,
+          skippedOnBreak: 3,
+        );
+        expect(stats.skippedOnBreak, 3);
+      });
+
+      test('copyWith updates skippedOnBreak independently', () {
+        final stats = _computeStats(_pact(), []);
+        final updated = stats.copyWith(skippedOnBreak: 5);
+        expect(updated.skippedOnBreak, 5);
+        expect(updated.showupsDone, stats.showupsDone);
+      });
+
+      test('two PactStats differing only by skippedOnBreak are not equal', () {
+        final a = PactStats.fromCounts(
+          startDate: DateTime(2026, 4, 1),
+          endDate: DateTime(2026, 4, 30),
+          showupsDone: 0,
+          showupsFailed: 0,
+          currentStreak: 0,
+          pendingCount: 1,
+          skippedOnBreak: 0,
+        );
+        final b = a.copyWith(skippedOnBreak: 1);
+        expect(a, isNot(equals(b)));
+      });
     });
 
     test('two PactStats with same fields are equal', () {

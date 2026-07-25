@@ -1,3 +1,5 @@
+import 'package:habit_loop/domain/pact/break_derivation.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 
@@ -7,6 +9,11 @@ class PactStats {
   final int showupsRemaining;
   final int totalShowups;
   final int currentStreak;
+
+  /// Pending showups whose scheduledAt falls inside an active break window
+  /// (HAB-195). A subset of the pending count — not its own bucket in
+  /// showupsRemaining, which is unaffected by breaks.
+  final int skippedOnBreak;
   final DateTime startDate;
   final DateTime endDate;
 
@@ -18,6 +25,7 @@ class PactStats {
     required this.currentStreak,
     required this.startDate,
     required this.endDate,
+    this.skippedOnBreak = 0,
   });
 
   @override
@@ -29,6 +37,7 @@ class PactStats {
           showupsRemaining == other.showupsRemaining &&
           totalShowups == other.totalShowups &&
           currentStreak == other.currentStreak &&
+          skippedOnBreak == other.skippedOnBreak &&
           startDate == other.startDate &&
           endDate == other.endDate;
 
@@ -39,6 +48,7 @@ class PactStats {
         showupsRemaining,
         totalShowups,
         currentStreak,
+        skippedOnBreak,
         startDate,
         endDate,
       );
@@ -49,6 +59,7 @@ class PactStats {
     int? showupsRemaining,
     int? totalShowups,
     int? currentStreak,
+    int? skippedOnBreak,
     DateTime? startDate,
     DateTime? endDate,
   }) {
@@ -58,6 +69,7 @@ class PactStats {
       showupsRemaining: showupsRemaining ?? this.showupsRemaining,
       totalShowups: totalShowups ?? this.totalShowups,
       currentStreak: currentStreak ?? this.currentStreak,
+      skippedOnBreak: skippedOnBreak ?? this.skippedOnBreak,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
     );
@@ -65,15 +77,21 @@ class PactStats {
 
   /// [totalShowups] overrides list-length derivation: remaining = totalShowups - done - failed
   /// (accounts for showups outside the persisted window). Omit to derive both from the list.
+  ///
+  /// [breaks] is used only to derive [skippedOnBreak] (HAB-195) — on-break
+  /// showups stay [ShowupStatus.pending], so they are already excluded from
+  /// done/failed and the trailing-done streak without any extra branching.
   factory PactStats.compute({
     required DateTime startDate,
     required DateTime endDate,
     required List<Showup> showups,
     int? totalShowups,
+    List<PactBreak> breaks = const [],
   }) {
     var done = 0;
     var failed = 0;
     var pending = 0;
+    var skippedOnBreak = 0;
     // Pending showups are excluded from resolved — they haven't been resolved yet.
     final resolved = <Showup>[];
     for (final showup in showups) {
@@ -86,6 +104,7 @@ class PactStats {
           resolved.add(showup);
         case ShowupStatus.pending:
           pending++;
+          if (BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks)) skippedOnBreak++;
       }
     }
     resolved.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
@@ -107,6 +126,7 @@ class PactStats {
       currentStreak: streak,
       pendingCount: pending,
       totalShowups: totalShowups ?? showups.length,
+      skippedOnBreak: skippedOnBreak,
     );
   }
 
@@ -125,6 +145,7 @@ class PactStats {
     required int currentStreak,
     required int pendingCount,
     int? totalShowups,
+    int skippedOnBreak = 0,
   }) {
     final effectiveTotal = totalShowups ?? (showupsDone + showupsFailed + pendingCount);
     final remaining =
@@ -136,6 +157,7 @@ class PactStats {
       showupsRemaining: remaining,
       totalShowups: effectiveTotal,
       currentStreak: currentStreak,
+      skippedOnBreak: skippedOnBreak,
       startDate: startDate,
       endDate: endDate,
     );

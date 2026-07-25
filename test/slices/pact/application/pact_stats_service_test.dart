@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -9,6 +10,7 @@ import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -31,6 +33,7 @@ class _CountingShowupRepository extends InMemoryShowupRepository {
 PactDetailCache _makeCache(InMemoryPactRepository pactRepo, InMemoryShowupRepository showupRepo) => PactDetailCache(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
+      pactBreakRepository: InMemoryPactBreakRepository(),
       grouper: const PactTimelineGrouper(),
     );
 
@@ -52,8 +55,17 @@ final _pendingShowup = Showup(
   status: ShowupStatus.pending,
 );
 
+PactBreak _pactBreak({DateTime? startDate, DateTime? plannedEndDate}) => PactBreak(
+      id: 'b1',
+      pactId: 'p1',
+      startDate: startDate ?? DateTime(2026, 4, 1),
+      rationale: 'Recovering',
+      plannedEndDate: plannedEndDate,
+    );
+
 void main() {
   _syncHookTests();
+  _breaksTests();
 
   group('PactStatsService.currentStats — lazy cache-on-miss', () {
     test('first call with empty showups loads from DB and populates cache', () async {
@@ -319,6 +331,115 @@ void _syncHookTests() {
       await Future<void>.delayed(Duration.zero);
 
       expect(fake.uploadedPactIds, contains(_pact.id));
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Breaks (HAB-195)
+// ---------------------------------------------------------------------------
+
+void _breaksTests() {
+  group('PactStatsService — breaks (HAB-195)', () {
+    test('buildStats counts a pending showup inside a break window', () {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
+      );
+
+      final stats = service.buildStats(
+        pact: _pact,
+        showups: [_pendingShowup],
+        breaks: [_pactBreak(plannedEndDate: DateTime(2026, 4, 10))],
+      );
+
+      expect(stats.skippedOnBreak, 1);
+    });
+
+    test('buildStats defaults skippedOnBreak to zero when no breaks are given', () {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
+      );
+
+      final stats = service.buildStats(pact: _pact, showups: [_pendingShowup]);
+
+      expect(stats.skippedOnBreak, 0);
+    });
+
+    test('currentStats with non-empty showups threads explicit breaks through to skippedOnBreak', () async {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
+        cache: _makeCache(pactRepo, showupRepo),
+      );
+
+      final stats = await service.currentStats(
+        pact: _pact,
+        showups: [_pendingShowup],
+        breaks: [_pactBreak(plannedEndDate: DateTime(2026, 4, 10))],
+      );
+
+      expect(stats.skippedOnBreak, 1);
+    });
+
+    test('persistStats with explicit breaks persists a matching skippedOnBreak and the cache agrees', () async {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final cache = _makeCache(pactRepo, showupRepo);
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
+        cache: cache,
+      );
+      final breaks = [_pactBreak(plannedEndDate: DateTime(2026, 4, 10))];
+
+      final updatedPact = await service.persistStats(pact: _pact, showups: [_pendingShowup], breaks: breaks);
+
+      expect(updatedPact.stats?.skippedOnBreak, 1);
+      expect(cache.peek(_pact.id)?.stats.skippedOnBreak, 1);
+    });
+
+    test(
+        'persistStats without explicit breaks conservatively persists zero, but the live cache still fetches the '
+        'real breaks and stays correct', () async {
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository([_pendingShowup]);
+      final breakRepo = InMemoryPactBreakRepository([_pactBreak(plannedEndDate: DateTime(2026, 4, 10))]);
+      final cache = PactDetailCache(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        pactBreakRepository: breakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+      final service = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: InMemoryPactTransactionService(pactRepo, showupRepo),
+        syncService: const NoopSyncService(),
+        cache: cache,
+      );
+
+      final updatedPact = await service.persistStats(pact: _pact, showups: [_pendingShowup]);
+
+      expect(updatedPact.stats?.skippedOnBreak, 0, reason: 'conservative default until a caller supplies real breaks');
+      expect(cache.peek(_pact.id)?.stats.skippedOnBreak, 1, reason: 'the cache always fetches the real breaks itself');
     });
   });
 }

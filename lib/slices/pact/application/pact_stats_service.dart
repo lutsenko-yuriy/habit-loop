@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -40,10 +41,16 @@ class PactStatsService {
         _syncService = syncService,
         _cache = cache;
 
+  /// [breaks] is used only to derive [PactStats.skippedOnBreak] (HAB-195) —
+  /// defaults to empty, so a caller that doesn't yet know about breaks (every
+  /// call site until WU3 wires the dashboard/showup-detail view models
+  /// through) simply computes 0, never a regression versus pre-HAB-195
+  /// behaviour.
   PactStats buildStats({
     required Pact pact,
     required List<Showup> showups,
     DateTime? endDate,
+    List<PactBreak> breaks = const [],
   }) {
     final effectivePact = endDate == null ? pact : pact.copyWith(endDate: endDate);
     return PactStats.compute(
@@ -51,29 +58,42 @@ class PactStatsService {
       endDate: effectivePact.endDate,
       showups: showups,
       totalShowups: ShowupGenerator.countTotal(effectivePact),
+      breaks: breaks,
     );
   }
 
   // Non-empty showups → computes fresh stats directly (bypasses cache).
   // Empty showups → delegates to PactDetailCache.load (lazy hit/miss + the
-  // frozen-snapshot fallback both live there now).
+  // frozen-snapshot fallback both live there now) — already break-aware
+  // (HAB-195 WU2), since PactDetailCache fetches the pact's breaks itself.
   Future<PactStats> currentStats({
     required Pact pact,
     required List<Showup> showups,
+    List<PactBreak> breaks = const [],
   }) async {
     if (showups.isNotEmpty) {
-      return buildStats(pact: pact, showups: showups);
+      return buildStats(pact: pact, showups: showups, breaks: breaks);
     }
     final bundle = await _cache.load(pact.id);
     return bundle.stats;
   }
 
+  /// [breaks] is `null` by default rather than defaulting to an empty list —
+  /// that distinction matters here (HAB-195): when `null`, [_cache.refresh]
+  /// is called *without* a breaks argument, so it falls back to its own
+  /// correct behaviour of fetching the pact's real breaks from the DB
+  /// (HAB-195 WU2). Only the frozen `pact.stats` snapshot written here
+  /// conservatively computes 0 for skippedOnBreak in that case — the cache's
+  /// bundle (the live read path Pact Detail actually uses) stays correct
+  /// either way. Pass an explicit list (even an empty one) once a caller
+  /// knows the pact's breaks, and both the snapshot and the cache agree.
   Future<Pact> persistStats({
     required Pact pact,
     required List<Showup> showups,
     DateTime? now,
+    List<PactBreak>? breaks,
   }) async {
-    final stats = buildStats(pact: pact, showups: showups);
+    final stats = buildStats(pact: pact, showups: showups, breaks: breaks ?? const []);
     final updatedPact = pact.copyWith(stats: stats);
     await _pactRepository.updatePact(updatedPact);
     // Populate the cache without a redundant DB re-fetch — pact and showups are in hand.
@@ -81,7 +101,7 @@ class PactStatsService {
     // rather than left to PactDetailCache's real-wall-clock fallback, which would otherwise
     // mis-bucket the cached timeline's tail zone whenever a test (or a paused/backgrounded
     // session) has the app clock diverge from the real one.
-    await _cache.refresh(pact.id, pact: updatedPact, showups: showups, now: now);
+    await _cache.refresh(pact.id, pact: updatedPact, showups: showups, breaks: breaks, now: now);
     unawaited(_syncService.uploadPact(updatedPact));
     return updatedPact;
   }

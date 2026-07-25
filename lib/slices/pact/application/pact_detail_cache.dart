@@ -1,4 +1,7 @@
+import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
+import 'package:habit_loop/domain/pact/pact_break_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -27,13 +30,16 @@ class PactDetailCache {
   PactDetailCache({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
+    required PactBreakRepository pactBreakRepository,
     required PactTimelineGrouper grouper,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
+        _pactBreakRepository = pactBreakRepository,
         _grouper = grouper;
 
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
+  final PactBreakRepository _pactBreakRepository;
   final PactTimelineGrouper _grouper;
 
   final Map<String, PactDetailBundle> _bundles = {};
@@ -43,17 +49,21 @@ class PactDetailCache {
   // (e.g. a note edit), without a redundant DB round-trip.
   final Map<String, List<Showup>> _showups = {};
 
+  // Parallel to _bundles, same reuse rationale as _showups above (HAB-195).
+  final Map<String, List<PactBreak>> _breaks = {};
+
   /// Cache hit: returns immediately, no DB call, no recompute.
-  /// Cache miss: fetches [Pact] + showups once, computes the bundle, stores,
-  /// and returns it. Throws [ArgumentError] if the pact doesn't exist (same
-  /// contract the now-deleted `PactTimelineService.loadAll` had).
+  /// Cache miss: fetches [Pact] + showups + breaks once, computes the bundle,
+  /// stores, and returns it. Throws [ArgumentError] if the pact doesn't exist
+  /// (same contract the now-deleted `PactTimelineService.loadAll` had).
   Future<PactDetailBundle> load(String pactId, {DateTime? now}) async {
     final cached = _bundles[pactId];
     if (cached != null) return cached;
 
     final pact = await _fetchPact(pactId);
     final showups = await _showupRepository.getShowupsForPact(pactId);
-    return _populate(pactId, pact: pact, showups: showups, now: now);
+    final breaks = await _pactBreakRepository.getBreaksForPact(pactId);
+    return _populate(pactId, pact: pact, showups: showups, breaks: breaks, now: now);
   }
 
   /// Synchronous, cache-only — no fetch. Used to seed the Timeline title from
@@ -61,14 +71,14 @@ class PactDetailCache {
   PactDetailBundle? peek(String pactId) => _bundles[pactId];
 
   /// The one write-through entry point. Skips the corresponding DB fetch for
-  /// whichever of [pact]/[showups] the caller already has in hand.
+  /// whichever of [pact]/[showups]/[breaks] the caller already has in hand.
   ///
-  /// [reuseCachedShowups] must be set explicitly to reuse the previously
-  /// cached showup list instead of re-fetching — safe only when the caller
-  /// knows the pact's showups did not change (e.g. a note or habit-name
-  /// edit). Defaults to `false`: without an explicit [showups] list, a bare
+  /// [reuseCachedShowups]/[reuseCachedBreaks] must be set explicitly to reuse
+  /// the previously cached list instead of re-fetching — safe only when the
+  /// caller knows that data did not change (e.g. a note or habit-name edit).
+  /// Both default to `false`: without an explicit list, a bare
   /// `refresh(pactId)` always re-fetches from the DB, so a caller that
-  /// forgets to pass the fresh showups after a status change can never
+  /// forgets to pass the fresh data after a status change can never
   /// silently serve a stale, pre-change cached list — this was a latent
   /// version of the exact stale-cache bug this class exists to prevent
   /// (HAB-126).
@@ -79,12 +89,16 @@ class PactDetailCache {
     Pact? pact,
     List<Showup>? showups,
     bool reuseCachedShowups = false,
+    List<PactBreak>? breaks,
+    bool reuseCachedBreaks = false,
     DateTime? now,
   }) async {
     final effectivePact = pact ?? await _fetchPact(pactId);
     final effectiveShowups =
         showups ?? (reuseCachedShowups ? _showups[pactId] : null) ?? await _showupRepository.getShowupsForPact(pactId);
-    return _populate(pactId, pact: effectivePact, showups: effectiveShowups, now: now);
+    final effectiveBreaks =
+        breaks ?? (reuseCachedBreaks ? _breaks[pactId] : null) ?? await _pactBreakRepository.getBreaksForPact(pactId);
+    return _populate(pactId, pact: effectivePact, showups: effectiveShowups, breaks: effectiveBreaks, now: now);
   }
 
   /// Evict-only — for when there is nothing valid left to cache (e.g. after
@@ -93,6 +107,7 @@ class PactDetailCache {
   void evict(String pactId) {
     _bundles.remove(pactId);
     _showups.remove(pactId);
+    _breaks.remove(pactId);
   }
 
   Future<Pact> _fetchPact(String pactId) async {
@@ -105,11 +120,13 @@ class PactDetailCache {
     String pactId, {
     required Pact pact,
     required List<Showup> showups,
+    required List<PactBreak> breaks,
     DateTime? now,
   }) {
-    final bundle = _computeBundle(pact: pact, showups: showups, now: now ?? DateTime.now());
+    final bundle = _computeBundle(pact: pact, showups: showups, breaks: breaks, now: now ?? DateTime.now());
     _bundles[pactId] = bundle;
     _showups[pactId] = showups;
+    _breaks[pactId] = breaks;
     return bundle;
   }
 
@@ -125,12 +142,17 @@ class PactDetailCache {
   PactDetailBundle _computeBundle({
     required Pact pact,
     required List<Showup> showups,
+    required List<PactBreak> breaks,
     required DateTime now,
   }) {
     final sorted = [...showups]..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
     final grouped = _grouper.groupWithStats(sorted, now: now);
     final pendingCount = sorted.length - grouped.showupsDone - grouped.showupsFailed;
+    // groupWithStats is not yet break-aware (HAB-195 WU5.1 threads breaks
+    // into the grouper/timeline); skippedOnBreak is derived separately here
+    // from the same sorted list so it stays in sync with pendingCount.
+    final skippedOnBreak = sorted.where((s) => BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks)).length;
 
     // Frozen-snapshot fallback: a cache miss with an empty showup list (a
     // stopped/completed pact whose showups were deleted by
@@ -149,6 +171,7 @@ class PactDetailCache {
             currentStreak: grouped.currentStreak,
             pendingCount: pendingCount,
             totalShowups: ShowupGenerator.countTotal(pact),
+            skippedOnBreak: skippedOnBreak,
           );
 
     final timelinePage = PactTimelinePage(
@@ -159,7 +182,7 @@ class PactDetailCache {
       tailStartIndex: grouped.tailStartIndex,
     );
 
-    return PactDetailBundle(pact: pact, stats: stats, timelinePage: timelinePage);
+    return PactDetailBundle(pact: pact, stats: stats, timelinePage: timelinePage, breaks: breaks);
   }
 
   // Formerly duplicated from PactTimelineService._buildAnchorStart, which was

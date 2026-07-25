@@ -10,6 +10,7 @@ import 'package:habit_loop/slices/pact/analytics/pact_timeline_analytics_events.
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_milestone.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -49,6 +50,7 @@ Showup _showup(String id, DateTime at, {ShowupStatus status = ShowupStatus.done,
   final cache = PactDetailCache(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
+    pactBreakRepository: InMemoryPactBreakRepository(),
     grouper: grouper,
   );
   final container = ProviderContainer(
@@ -119,6 +121,7 @@ void main() {
       final cache = PactDetailCache(
         pactRepository: pactRepo,
         showupRepository: showupRepo,
+        pactBreakRepository: InMemoryPactBreakRepository(),
         grouper: const PactTimelineGrouper(),
       );
       final container = ProviderContainer(
