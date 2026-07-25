@@ -124,6 +124,7 @@ abstract final class RemoteConfigDefaults {
     'pact_timeline_enabled',
     'showup_redemption_enabled',
     'about_screen_enabled',
+    'pact_breaks_enabled',
   };
 
   /// Feature toggle: show the About screen entry point on the dashboard.
@@ -155,6 +156,13 @@ abstract final class RemoteConfigDefaults {
   /// and will be replayed when the flag is re-enabled. Override to `false`
   /// in the Firebase Remote Config console to disable sync without a release.
   static const bool networkSyncEnabled = true;
+
+  /// Feature toggle: kill-switch for the pact-breaks feature (HAB-195).
+  ///
+  /// Deliberately defaults to `false` during development (deviation from the
+  /// usual default-true convention for feature toggles) — flips to `true` in
+  /// the final ship WU once the feature is complete end-to-end.
+  static const bool pactBreaksEnabled = false;
 
   /// Optional short hint shown in the debug override dialog for keys whose
   /// numeric range has a concrete semantic meaning.
@@ -189,6 +197,7 @@ abstract final class RemoteConfigDefaults {
     'showup_redemption_enabled': showupRedemptionEnabled,
     'about_screen_enabled': aboutScreenEnabled,
     'pact_timeline_no_grouping_tail_period_in_days': pactTimelineNoGroupingTailPeriodInDays,
+    'pact_breaks_enabled': pactBreaksEnabled,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -207,6 +216,7 @@ abstract final class RemoteConfigDefaults {
     'pact_timeline_enabled': ['true', 'false'],
     'showup_redemption_enabled': ['true', 'false'],
     'about_screen_enabled': ['true', 'false'],
+    'pact_breaks_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

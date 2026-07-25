@@ -144,6 +144,29 @@ void main() {
       });
     });
 
+    group('pact_breaks_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_breaks_enabled'), isTrue);
+      });
+
+      test('default value is false', () {
+        expect(RemoteConfigDefaults.all['pact_breaks_enabled'], isFalse);
+      });
+
+      test('constant matches all map value', () {
+        expect(RemoteConfigDefaults.pactBreaksEnabled, equals(RemoteConfigDefaults.all['pact_breaks_enabled']));
+      });
+
+      test('appears in featureToggleKeys', () {
+        expect(RemoteConfigDefaults.featureToggleKeys.contains('pact_breaks_enabled'), isTrue);
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_breaks_enabled'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['pact_breaks_enabled'], containsAll(['true', 'false']));
+      });
+    });
+
     group('showup_redemption_enabled', () {
       test('key exists in all map', () {
         expect(RemoteConfigDefaults.all.containsKey('showup_redemption_enabled'), isTrue);
