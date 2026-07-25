@@ -17,6 +17,9 @@ final class FirebaseFirestoreClientAdapter implements FirestoreClient {
   CollectionReference<Map<String, dynamic>> _showups(String userId) =>
       _firestore.collection('users').doc(userId).collection('showups');
 
+  CollectionReference<Map<String, dynamic>> _pactBreaks(String userId) =>
+      _firestore.collection('users').doc(userId).collection('pact_breaks');
+
   @override
   Future<List<Map<String, dynamic>>> getPacts(String userId) async {
     try {
@@ -31,6 +34,16 @@ final class FirebaseFirestoreClientAdapter implements FirestoreClient {
   Future<List<Map<String, dynamic>>> getShowups(String userId) async {
     try {
       final snapshot = await _showups(userId).get();
+      return snapshot.docs.map((d) => d.data()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async {
+    try {
+      final snapshot = await _pactBreaks(userId).get();
       return snapshot.docs.map((d) => d.data()).toList();
     } catch (_) {
       return [];
@@ -60,6 +73,17 @@ final class FirebaseFirestoreClientAdapter implements FirestoreClient {
   }
 
   @override
+  Future<void> upsertPactBreak(
+    String userId,
+    String pactBreakId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      await _pactBreaks(userId).doc(pactBreakId).set(data);
+    } catch (_) {}
+  }
+
+  @override
   Future<void> deletePact(String userId, String pactId) async {
     try {
       await _pacts(userId).doc(pactId).delete();
@@ -70,6 +94,13 @@ final class FirebaseFirestoreClientAdapter implements FirestoreClient {
   Future<void> deleteShowup(String userId, String showupId) async {
     try {
       await _showups(userId).doc(showupId).delete();
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> deletePactBreak(String userId, String pactBreakId) async {
+    try {
+      await _pactBreaks(userId).doc(pactBreakId).delete();
     } catch (_) {}
   }
 }

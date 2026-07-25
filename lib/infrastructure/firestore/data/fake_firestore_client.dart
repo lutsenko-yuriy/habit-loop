@@ -4,14 +4,17 @@ import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.d
 ///
 /// [pacts] maps `userId → pactId → document fields`.
 /// [showups] maps `userId → showupId → document fields`.
+/// [pactBreaks] maps `userId → pactBreakId → document fields`.
 class FakeFirestoreSeedData {
   const FakeFirestoreSeedData({
     this.pacts = const {},
     this.showups = const {},
+    this.pactBreaks = const {},
   });
 
   final Map<String, Map<String, Map<String, dynamic>>> pacts;
   final Map<String, Map<String, Map<String, dynamic>>> showups;
+  final Map<String, Map<String, Map<String, dynamic>>> pactBreaks;
 }
 
 /// In-memory [FirestoreClient] for debug and profile builds.
@@ -36,6 +39,9 @@ class FakeFirestoreClient implements FirestoreClient {
   // userId → showupId → document fields
   final Map<String, Map<String, Map<String, dynamic>>> _showups = {};
 
+  // userId → pactBreakId → document fields
+  final Map<String, Map<String, Map<String, dynamic>>> _pactBreaks = {};
+
   /// Pre-populates the client with [data].
   ///
   /// Additive: calling [seed] multiple times merges all datasets. When two
@@ -49,12 +55,17 @@ class FakeFirestoreClient implements FirestoreClient {
       final bucket = _showups.putIfAbsent(entry.key, () => {});
       entry.value.forEach((id, doc) => bucket[id] = Map<String, dynamic>.from(doc));
     }
+    for (final entry in data.pactBreaks.entries) {
+      final bucket = _pactBreaks.putIfAbsent(entry.key, () => {});
+      entry.value.forEach((id, doc) => bucket[id] = Map<String, dynamic>.from(doc));
+    }
   }
 
-  /// Removes all pacts and showups from in-memory storage.
+  /// Removes all pacts, showups, and pact breaks from in-memory storage.
   void clear() {
     _pacts.clear();
     _showups.clear();
+    _pactBreaks.clear();
   }
 
   /// Returns a deep snapshot of the current in-memory state.
@@ -75,6 +86,12 @@ class FakeFirestoreClient implements FirestoreClient {
           docs.map((id, doc) => MapEntry(id, Map<String, dynamic>.from(doc))),
         ),
       ),
+      pactBreaks: _pactBreaks.map(
+        (uid, docs) => MapEntry(
+          uid,
+          docs.map((id, doc) => MapEntry(id, Map<String, dynamic>.from(doc))),
+        ),
+      ),
     );
   }
 
@@ -87,6 +104,10 @@ class FakeFirestoreClient implements FirestoreClient {
       (_showups[userId] ?? {}).values.map((d) => Map<String, dynamic>.from(d)).toList();
 
   @override
+  Future<List<Map<String, dynamic>>> getPactBreaks(String userId) async =>
+      (_pactBreaks[userId] ?? {}).values.map((d) => Map<String, dynamic>.from(d)).toList();
+
+  @override
   Future<void> upsertPact(String userId, String pactId, Map<String, dynamic> data) async {
     _pacts.putIfAbsent(userId, () => {})[pactId] = Map<String, dynamic>.from(data);
   }
@@ -97,6 +118,11 @@ class FakeFirestoreClient implements FirestoreClient {
   }
 
   @override
+  Future<void> upsertPactBreak(String userId, String pactBreakId, Map<String, dynamic> data) async {
+    _pactBreaks.putIfAbsent(userId, () => {})[pactBreakId] = Map<String, dynamic>.from(data);
+  }
+
+  @override
   Future<void> deletePact(String userId, String pactId) async {
     _pacts[userId]?.remove(pactId);
   }
@@ -104,5 +130,10 @@ class FakeFirestoreClient implements FirestoreClient {
   @override
   Future<void> deleteShowup(String userId, String showupId) async {
     _showups[userId]?.remove(showupId);
+  }
+
+  @override
+  Future<void> deletePactBreak(String userId, String pactBreakId) async {
+    _pactBreaks[userId]?.remove(pactBreakId);
   }
 }

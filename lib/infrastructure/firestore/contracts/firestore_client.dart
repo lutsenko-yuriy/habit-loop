@@ -8,6 +8,7 @@
 /// The flat schema mirrors the local SQLite structure:
 ///   /users/{userId}/pacts/{pactId}
 ///   /users/{userId}/showups/{showupId}
+///   /users/{userId}/pact_breaks/{pactBreakId}
 ///
 /// All data is passed as plain [Map<String, dynamic>] so this interface has
 /// no dependency on the `cloud_firestore` SDK — test fakes can implement it
@@ -19,6 +20,9 @@ abstract class FirestoreClient {
   /// Returns all showup documents for [userId] as raw field maps.
   Future<List<Map<String, dynamic>>> getShowups(String userId);
 
+  /// Returns all pact-break documents for [userId] as raw field maps.
+  Future<List<Map<String, dynamic>>> getPactBreaks(String userId);
+
   /// Writes (creates or overwrites) the pact document at
   /// `/users/[userId]/pacts/[pactId]` with [data].
   Future<void> upsertPact(String userId, String pactId, Map<String, dynamic> data);
@@ -27,9 +31,16 @@ abstract class FirestoreClient {
   /// `/users/[userId]/showups/[showupId]` with [data].
   Future<void> upsertShowup(String userId, String showupId, Map<String, dynamic> data);
 
+  /// Writes (creates or overwrites) the pact-break document at
+  /// `/users/[userId]/pact_breaks/[pactBreakId]` with [data].
+  Future<void> upsertPactBreak(String userId, String pactBreakId, Map<String, dynamic> data);
+
   /// Deletes the pact document at `/users/[userId]/pacts/[pactId]`.
   Future<void> deletePact(String userId, String pactId);
 
   /// Deletes the showup document at `/users/[userId]/showups/[showupId]`.
   Future<void> deleteShowup(String userId, String showupId);
+
+  /// Deletes the pact-break document at `/users/[userId]/pact_breaks/[pactBreakId]`.
+  Future<void> deletePactBreak(String userId, String pactBreakId);
 }
