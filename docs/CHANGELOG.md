@@ -9,6 +9,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
 - [test] HAB-195 WU0: Added `integration_test/break_flow_test.dart` (10 stub scenarios covering pact breaks — start/stop, tail-zone entry, auto-fail/notification suppression, streak/stats, and the pact-list Break filter chip), registered in `test_runner.dart`. Plan approval also folded in `docs/ANALYTICS_EVENTS.md` (`pact_break_started`, `pact_break_stopped`) and `docs/ARCHITECTURE.md` (new `PactBreak` domain entity, schema v5, `pact_breaks_enabled` flag) updates from the approved plan.
+- [wip] HAB-195 WU1.1: Added the `PactBreak` domain model (`lib/domain/pact/pact_break.dart`) — `stop()`, `effectiveEnd`, `contains()`, `isActiveAt()`, `isResolved()` — and the `PactBreakRepository` interface. Pure domain, no I/O; not yet wired into any UI or persistence.
 
 ## [0.51.0] — 2026-07-24 (PR #318 merged)
 
