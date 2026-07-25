@@ -493,6 +493,18 @@ void main() {
       expect(() => container.read(syncServiceProvider), returnsNormally);
     });
 
+    test('pactBreakServiceProvider resolves without throwing', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(pactBreakServiceProvider), returnsNormally);
+    });
+
     test('remoteConfigOverrideStoreProvider resolves to noop default when not provided', () async {
       final overrides = await AppContainer.overrides(
         pactRepository: pactRepo,

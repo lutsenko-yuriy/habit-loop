@@ -44,6 +44,7 @@ import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_break_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_list_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
@@ -254,6 +255,16 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
     transactionService: ref.watch(pactTransactionServiceProvider),
+    syncService: ref.watch(syncServiceProvider),
+    cache: ref.watch(pactDetailCacheProvider),
+  );
+});
+
+final pactBreakServiceProvider = Provider<PactBreakService>((ref) {
+  return PactBreakService(
+    pactBreakRepository: ref.watch(pactBreakRepositoryProvider),
+    showupRepository: ref.watch(showupRepositoryProvider),
+    reminderSchedulingService: ref.watch(reminderSchedulingServiceProvider),
     syncService: ref.watch(syncServiceProvider),
     cache: ref.watch(pactDetailCacheProvider),
   );
