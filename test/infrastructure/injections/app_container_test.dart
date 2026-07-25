@@ -12,8 +12,10 @@ import 'package:habit_loop/infrastructure/locale/data/noop_locale_preference_ser
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_override_store.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
+import 'package:habit_loop/slices/pact/data/noop_pact_break_sync_repository.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
@@ -357,6 +359,60 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(showupSyncRepositoryProvider), same(syncRepo));
+    });
+
+    test('pactBreakRepositoryProvider resolves to a non-throwing default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(pactBreakRepositoryProvider), returnsNormally);
+    });
+
+    test('pactBreakSyncRepositoryProvider resolves to noop default when not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(() => container.read(pactBreakSyncRepositoryProvider), returnsNormally);
+    });
+
+    test('pactBreakRepositoryProvider override is included when provided', () async {
+      final pactBreakRepo = InMemoryPactBreakRepository();
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactBreakRepository: pactBreakRepo,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(pactBreakRepositoryProvider), same(pactBreakRepo));
+    });
+
+    test('pactBreakSyncRepositoryProvider override is included when provided', () async {
+      const syncRepo = NoopPactBreakSyncRepository();
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        pactBreakSyncRepository: syncRepo,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(pactBreakSyncRepositoryProvider), same(syncRepo));
     });
 
     test('firestoreClientProvider resolves to noop default when not provided', () async {
