@@ -1,0 +1,202 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/pact/application/pact_break_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
+import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_view_model.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+
+import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/locale/fake_locale_preference_service.dart';
+import '../../../infrastructure/notifications/fake_notification_service.dart';
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
+import '../../../infrastructure/sync/fake_sync_service.dart';
+
+final _pact = Pact(
+  id: 'p1',
+  habitName: 'Meditate',
+  startDate: DateTime(2026, 3, 1),
+  endDate: DateTime(2026, 9, 1),
+  showupDuration: const Duration(minutes: 10),
+  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+  status: PactStatus.active,
+);
+
+ProviderContainer _makeContainer({
+  DateTime? now,
+  List<Override> extras = const [],
+}) {
+  final pactRepo = InMemoryPactRepository([_pact]);
+  final showupRepo = InMemoryShowupRepository();
+  final breakRepo = InMemoryPactBreakRepository();
+  final cache = PactDetailCache(
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+    pactBreakRepository: breakRepo,
+    grouper: const PactTimelineGrouper(),
+  );
+  final reminderService = ReminderSchedulingService(
+    notificationService: FakeNotificationService(),
+    remoteConfig: FakeRemoteConfigService(),
+    analytics: FakeAnalyticsService(),
+    localePreference: FakeLocalePreferenceService(),
+  );
+  final service = PactBreakService(
+    pactBreakRepository: breakRepo,
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+    reminderSchedulingService: reminderService,
+    syncService: FakeSyncService(),
+    cache: cache,
+  );
+
+  return ProviderContainer(
+    overrides: [
+      pactBreakServiceProvider.overrideWithValue(service),
+      pactBreakRepositoryProvider.overrideWithValue(breakRepo),
+      if (now != null) pactBreakCreationNowProvider.overrideWithValue(now),
+      ...extras,
+    ],
+  );
+}
+
+void main() {
+  group('PactBreakCreationViewModel', () {
+    test('build defaults startDate to today and endDate to today + 7 days', () {
+      final container = _makeContainer(now: DateTime(2026, 6, 15, 10, 30));
+      addTearDown(container.dispose);
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.startDate, DateTime(2026, 6, 15));
+      expect(state.endDate, DateTime(2026, 6, 22));
+      expect(state.untilPactEnds, false);
+      expect(state.rationale, '');
+      expect(state.canSubmit, false); // empty rationale
+    });
+
+    test('setRationale updates state and canSubmit becomes true', () {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setRationale('Feeling sick');
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.rationale, 'Feeling sick');
+      expect(state.canSubmit, true);
+    });
+
+    test('canSubmit is false when rationale is only whitespace', () {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setRationale('   ');
+      expect(container.read(pactBreakCreationViewModelProvider('p1')).canSubmit, false);
+    });
+
+    test('setStartDate and setEndDate normalize to midnight', () {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setStartDate(DateTime(2026, 6, 20, 14, 30));
+      notifier.setEndDate(DateTime(2026, 6, 25, 9, 0));
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.startDate, DateTime(2026, 6, 20));
+      expect(state.endDate, DateTime(2026, 6, 25));
+    });
+
+    test('setUntilPactEnds toggles the flag without discarding endDate', () {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      final originalEndDate = container.read(pactBreakCreationViewModelProvider('p1')).endDate;
+      notifier.setUntilPactEnds(true);
+      var state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.untilPactEnds, true);
+      expect(state.endDate, originalEndDate);
+      notifier.setUntilPactEnds(false);
+      state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.untilPactEnds, false);
+      expect(state.endDate, originalEndDate);
+    });
+
+    test('submit returns false and does nothing when rationale is empty', () async {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      final result = await notifier.submit(source: 'pact_detail');
+      expect(result, false);
+      final breaks = await container.read(pactBreakRepositoryProvider).getBreaksForPact('p1');
+      expect(breaks, isEmpty);
+    });
+
+    test('submit persists a fixed-end break and fires PactBreakStartedEvent', () async {
+      final analytics = FakeAnalyticsService();
+      final container = _makeContainer(now: DateTime(2026, 6, 15), extras: [
+        analyticsServiceProvider.overrideWithValue(analytics),
+      ]);
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setRationale('Feeling sick');
+
+      final result = await notifier.submit(source: 'pact_detail');
+      expect(result, true);
+
+      final breaks = await container.read(pactBreakRepositoryProvider).getBreaksForPact('p1');
+      expect(breaks, hasLength(1));
+      expect(breaks.first.startDate, DateTime(2026, 6, 15));
+      expect(breaks.first.plannedEndDate, DateTime(2026, 6, 22));
+      expect(breaks.first.rationale, 'Feeling sick');
+
+      expect(analytics.loggedEvents, hasLength(1));
+      final params = analytics.loggedEvents.first.toParameters();
+      expect(analytics.loggedEvents.first.name, 'pact_break_started');
+      expect(params['pact_id'], 'p1');
+      expect(params['source'], 'pact_detail');
+      expect(params['end_type'], 'fixed_date');
+      expect(params['duration_days'], 7);
+      expect(params['rationale_length'], 'Feeling sick'.length);
+
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.isSubmitting, false);
+      expect(state.submitError, isNull);
+    });
+
+    test('submit persists an open-ended break when untilPactEnds is true', () async {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setRationale('Travel');
+      notifier.setUntilPactEnds(true);
+
+      final result = await notifier.submit(source: 'tail_zone_showup');
+      expect(result, true);
+
+      final breaks = await container.read(pactBreakRepositoryProvider).getBreaksForPact('p1');
+      expect(breaks.first.plannedEndDate, isNull);
+    });
+
+    test('submit sets submitError and returns false when the service throws', () async {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setRationale('First break');
+      await notifier.submit(source: 'pact_detail');
+
+      // A second break for the same pact is rejected by PactBreakService
+      // (only one unresolved break allowed at a time) — exercises the catch path.
+      final notifier2 = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier2.setRationale('Second break');
+      final result = await notifier2.submit(source: 'pact_detail');
+
+      expect(result, false);
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.submitError, isNotNull);
+      expect(state.isSubmitting, false);
+    });
+  });
+}
