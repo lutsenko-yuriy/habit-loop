@@ -255,7 +255,9 @@ void main() {
       );
       ShowupUiState? captured;
       await tester.pumpWidget(_wrap(
-        _state([_showup('s1')], breaksByPactId: {
+        _state([
+          _showup('s1')
+        ], breaksByPactId: {
           'p-1': [onBreak]
         }),
         onTileUiState: (id, uiState) => captured = uiState,
