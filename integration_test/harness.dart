@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -15,6 +16,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/main.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -45,6 +47,7 @@ class AppHarness {
   AppHarness._({
     required this.pactRepo,
     required this.showupRepo,
+    required this.pactBreakRepo,
     required this.auth,
     required this.analytics,
     required this.notifications,
@@ -56,6 +59,7 @@ class AppHarness {
 
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
+  final InMemoryPactBreakRepository pactBreakRepo;
   final FakeAuthService auth;
   final FakeAnalyticsService analytics;
   final FakeNotificationService notifications;
@@ -125,6 +129,7 @@ class AppHarness {
   }) async {
     final pactRepo = InMemoryPactRepository();
     final showupRepo = InMemoryShowupRepository();
+    final pactBreakRepo = InMemoryPactBreakRepository();
     final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
 
     final auth = FakeAuthService(userId: 'test-user', isAnonymous: initiallyAnonymous);
@@ -137,6 +142,7 @@ class AppHarness {
       pactRepository: pactRepo,
       showupRepository: showupRepo,
       transactionService: txService,
+      pactBreakRepository: pactBreakRepo,
       authService: auth,
       analyticsService: analytics,
       notificationService: notifications,
@@ -148,6 +154,7 @@ class AppHarness {
     final harness = AppHarness._(
       pactRepo: pactRepo,
       showupRepo: showupRepo,
+      pactBreakRepo: pactBreakRepo,
       auth: auth,
       analytics: analytics,
       notifications: notifications,
@@ -335,13 +342,25 @@ Pact buildPact({
       archived: archived,
     );
 
-// TODO(HAB-195 WU1.1): add a `buildBreak` fixture here, mirroring `buildPact`/
-// `buildShowup` above, once the `PactBreak` domain model lands (WU1.1). It
-// cannot be written yet — `PactBreak` does not exist in `lib/domain/pact/`
-// as of WU0, and this file must compile against production code only.
-// Expected shape (per the approved plan): `buildBreak({required id, required
-// pactId, required startDate, DateTime? plannedEndDate, required rationale,
-// DateTime? createdAt, DateTime? stoppedAt})` returning a `PactBreak`.
+/// Builds a [PactBreak] fixture with defaults suited to integration tests.
+PactBreak buildBreak({
+  required String id,
+  required String pactId,
+  required DateTime startDate,
+  DateTime? plannedEndDate,
+  String rationale = 'Taking a break',
+  DateTime? createdAt,
+  DateTime? stoppedAt,
+}) =>
+    PactBreak(
+      id: id,
+      pactId: pactId,
+      startDate: startDate,
+      rationale: rationale,
+      plannedEndDate: plannedEndDate,
+      createdAt: createdAt,
+      stoppedAt: stoppedAt,
+    );
 
 /// Builds a [Showup] fixture with defaults suited to integration tests.
 Showup buildShowup({

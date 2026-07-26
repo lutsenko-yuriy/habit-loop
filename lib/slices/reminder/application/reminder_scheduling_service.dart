@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart' show Locale;
+import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
@@ -46,13 +48,15 @@ final class ReminderSchedulingService {
   final bool _isIOS;
   final Locale _systemLocale;
 
-  // Qualifies showups by: pending status + scheduledAt after now + non-null reminderOffset.
+  // Qualifies showups by: pending status + scheduledAt after now + non-null reminderOffset
+  // + not on break (HAB-195 WU3 — reminders must not fire while a break covers the showup).
   // EXP-002: deadline notification scheduled on iOS always; on Android only when behavior == 'encourage'.
   // [now] is injectable for tests.
   Future<void> scheduleRemindersForShowups({
     required Pact pact,
     required List<Showup> showups,
     DateTime? now,
+    List<PactBreak> breaks = const [],
   }) async {
     if (pact.reminderOffset == null) return;
 
@@ -66,11 +70,12 @@ final class ReminderSchedulingService {
 
     final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
 
-    final qualifyingShowups = showups.where((s) {
-      if (s.status != ShowupStatus.pending) return false;
-      if (!s.scheduledAt.subtract(pact.reminderOffset!).isAfter(effectiveNow)) return false;
-      return true;
-    }).toList();
+    final qualifyingShowups = showups
+        .where((s) =>
+            s.status == ShowupStatus.pending &&
+            s.scheduledAt.subtract(pact.reminderOffset!).isAfter(effectiveNow) &&
+            !BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks))
+        .toList();
 
     final maxShowups = _isIOS ? (_iosMaxPendingNotifications ~/ _notificationsPerShowupIos) : qualifyingShowups.length;
     final showupsToSchedule = qualifyingShowups.take(maxShowups).toList();

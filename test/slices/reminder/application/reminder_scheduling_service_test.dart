@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -354,6 +355,68 @@ void main() {
         // Should still schedule using English fallback.
         expect(notificationService.scheduledReminders, hasLength(1));
       });
+    });
+  });
+
+  group('on-break suppression (HAB-195 WU3)', () {
+    test('does not schedule a reminder for a showup inside an active break window', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+
+      final showups = [
+        _makeShowup(id: 'su-onbreak', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
+        _makeShowup(id: 'su-offbreak', scheduledAt: DateTime(2026, 5, 20, 8, 0)),
+      ];
+      final breaks = [
+        PactBreak(
+          id: 'brk-1',
+          pactId: 'pact-1',
+          startDate: DateTime(2026, 5, 5),
+          plannedEndDate: DateTime(2026, 5, 10),
+          rationale: 'Traveling',
+        ),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now, breaks: breaks);
+
+      expect(notificationService.scheduledReminders, hasLength(1));
+      expect(notificationService.scheduledReminders.first.showup.id, equals('su-offbreak'));
+    });
+
+    test('schedules normally when breaks list is empty (default)', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledReminders, hasLength(1));
+    });
+
+    test('schedules a showup scheduled after the break window ends', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+
+      final showups = [
+        _makeShowup(id: 'su-after-break', scheduledAt: DateTime(2026, 5, 15, 8, 0)),
+      ];
+      final breaks = [
+        PactBreak(
+          id: 'brk-1',
+          pactId: 'pact-1',
+          startDate: DateTime(2026, 5, 5),
+          plannedEndDate: DateTime(2026, 5, 10),
+          rationale: 'Traveling',
+        ),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now, breaks: breaks);
+
+      expect(notificationService.scheduledReminders, hasLength(1));
+      expect(notificationService.scheduledReminders.first.showup.id, equals('su-after-break'));
     });
   });
 
