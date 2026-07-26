@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Icon, Icons;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_dots.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 Showup _s(String id, ShowupStatus status) => Showup(
       id: id,
@@ -23,6 +25,26 @@ Future<void> _pump(WidgetTester tester, List<Showup> showups, DateTime date) {
           showups: showups,
           date: date,
           colors: ShowupStatusColors.cupertino(context),
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _pumpWithStates(
+  WidgetTester tester,
+  List<Showup> showups,
+  List<ShowupUiState> uiStates,
+  DateTime date,
+) {
+  return tester.pumpWidget(
+    CupertinoApp(
+      home: Builder(
+        builder: (context) => ShowupStatusDots(
+          showups: showups,
+          date: date,
+          colors: ShowupStatusColors.cupertino(context),
+          uiStates: uiStates,
         ),
       ),
     ),
@@ -88,4 +110,55 @@ void main() {
     await _pump(tester, showups, early);
     expect(find.byKey(const Key('status-dot-overflow-2026-01-05')), findsOneWidget);
   });
+
+  group('onBreak (HAB-195 WU5.1)', () {
+    testWidgets('individual dot renders blue with a pause glyph when onBreak', (tester) async {
+      final showups = [_s('a', ShowupStatus.pending)];
+      await _pumpWithStates(tester, showups, [ShowupUiState.onBreak], date);
+
+      final ctx = tester.element(find.byKey(const Key('status-dot-a')));
+      final container = tester.widget<Container>(find.byKey(const Key('status-dot-a')));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, CupertinoColors.systemBlue.resolveFrom(ctx));
+
+      expect(
+        find.descendant(of: find.byKey(const Key('status-dot-a')), matching: find.byIcon(Icons.pause)),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('individual dot has no pause glyph for non-onBreak states', (tester) async {
+      final showups = [_s('a', ShowupStatus.done)];
+      await _pumpWithStates(tester, showups, [ShowupUiState.done], date);
+
+      expect(
+        find.descendant(of: find.byKey(const Key('status-dot-a')), matching: find.byIcon(Icons.pause)),
+        findsNothing,
+      );
+    });
+
+    testWidgets('overflow dot is blue with a pause glyph when any showup is onBreak', (tester) async {
+      final showups = List.generate(4, (i) => _s('s$i', ShowupStatus.pending));
+      final uiStates = [
+        ShowupUiState.active,
+        ShowupUiState.onBreak,
+        ShowupUiState.planned,
+        ShowupUiState.active,
+      ];
+      await _pumpWithStates(tester, showups, uiStates, date);
+
+      final overflowKey = Key('status-dot-overflow-${_dateKey(date)}');
+      final ctx = tester.element(find.byKey(overflowKey));
+      final container = tester.widget<Container>(find.byKey(overflowKey));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, CupertinoColors.systemBlue.resolveFrom(ctx));
+      expect(
+        find.descendant(of: find.byKey(overflowKey), matching: find.byIcon(Icons.pause)),
+        findsOneWidget,
+      );
+    });
+  });
 }
+
+String _dateKey(DateTime date) =>
+    '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';

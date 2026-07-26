@@ -1,7 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+
+PactBreak _pactBreak({
+  required DateTime startDate,
+  DateTime? plannedEndDate,
+  DateTime? stoppedAt,
+}) =>
+    PactBreak(
+      id: 'b-1',
+      pactId: 'test-pact',
+      startDate: startDate,
+      rationale: 'travelling',
+      plannedEndDate: plannedEndDate,
+      stoppedAt: stoppedAt,
+    );
 
 /// Helper to build a minimal [Showup] for tests.
 Showup _showup({
@@ -199,6 +214,80 @@ void main() {
         expect(
           deriveShowupUiState(showup: showup, now: baseTime, reminderOffset: reminderOffset),
           ShowupUiState.failed,
+        );
+      });
+    });
+
+    group('onBreak (HAB-195 WU5.1 — checked after done/failed, before active/waitingForStart/planned)', () {
+      test('returns onBreak when a pending showup falls inside an open-ended break window', () {
+        final showup = _showup(scheduledAt: baseTime.subtract(const Duration(hours: 1)));
+        final breaks = [_pactBreak(startDate: baseTime.subtract(const Duration(days: 1)))];
+        expect(
+          deriveShowupUiState(showup: showup, now: baseTime, breaks: breaks),
+          ShowupUiState.onBreak,
+        );
+      });
+
+      test('returns onBreak when a pending showup falls inside a fixed-end break window', () {
+        final showup = _showup(scheduledAt: baseTime);
+        final breaks = [
+          _pactBreak(
+            startDate: baseTime.subtract(const Duration(days: 1)),
+            plannedEndDate: baseTime.add(const Duration(days: 1)),
+          ),
+        ];
+        expect(
+          deriveShowupUiState(showup: showup, now: baseTime, breaks: breaks),
+          ShowupUiState.onBreak,
+        );
+      });
+
+      test('done overrides onBreak — an explicit mark always wins', () {
+        final showup = _showup(status: ShowupStatus.done, scheduledAt: baseTime);
+        final breaks = [_pactBreak(startDate: baseTime.subtract(const Duration(days: 1)))];
+        expect(
+          deriveShowupUiState(showup: showup, now: baseTime, breaks: breaks),
+          ShowupUiState.done,
+        );
+      });
+
+      test('failed overrides onBreak — an explicit mark always wins', () {
+        final showup = _showup(status: ShowupStatus.failed, scheduledAt: baseTime);
+        final breaks = [_pactBreak(startDate: baseTime.subtract(const Duration(days: 1)))];
+        expect(
+          deriveShowupUiState(showup: showup, now: baseTime, breaks: breaks),
+          ShowupUiState.failed,
+        );
+      });
+
+      test('returns active (not onBreak) when the showup is outside every break window', () {
+        final showup = _showup(scheduledAt: baseTime.subtract(const Duration(hours: 1)));
+        final breaks = [
+          _pactBreak(
+            startDate: baseTime.add(const Duration(days: 5)),
+            plannedEndDate: baseTime.add(const Duration(days: 10)),
+          ),
+        ];
+        expect(
+          deriveShowupUiState(showup: showup, now: baseTime, breaks: breaks),
+          ShowupUiState.active,
+        );
+      });
+
+      test('returns onBreak even for a future-scheduled showup inside the window (not yet active)', () {
+        final showup = _showup(scheduledAt: baseTime.add(const Duration(hours: 3)));
+        final breaks = [_pactBreak(startDate: baseTime.subtract(const Duration(days: 1)))];
+        expect(
+          deriveShowupUiState(showup: showup, now: baseTime, breaks: breaks),
+          ShowupUiState.onBreak,
+        );
+      });
+
+      test('empty breaks list never produces onBreak', () {
+        final showup = _showup(scheduledAt: baseTime.subtract(const Duration(hours: 1)));
+        expect(
+          deriveShowupUiState(showup: showup, now: baseTime),
+          ShowupUiState.active,
         );
       });
     });

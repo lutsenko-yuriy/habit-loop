@@ -1,7 +1,9 @@
+import 'package:habit_loop/domain/pact/break_derivation.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 
-// NOT a domain state — computed from time, scheduledAt, duration, status, and reminderOffset.
+// NOT a domain state — computed from time, scheduledAt, duration, status, reminderOffset, and breaks.
 enum ShowupUiState {
   /// Before the reminder fires (or before start time if no reminder).
   planned,
@@ -17,6 +19,10 @@ enum ShowupUiState {
   /// future ones that are still [planned].
   active,
 
+  /// Pending showup whose scheduledAt falls inside an active pact break window
+  /// (HAB-195). An explicit done/failed mark always overrides this.
+  onBreak,
+
   /// Manually or automatically marked as done.
   done,
 
@@ -24,23 +30,27 @@ enum ShowupUiState {
   failed,
 }
 
-/// Derives the UI state for a [showup] given [now] and the pact's [reminderOffset].
+/// Derives the UI state for a [showup] given [now], the pact's [reminderOffset],
+/// and the pact's [breaks] (HAB-195).
 ///
 /// Rules (evaluated in order):
 /// 1. If [showup.status] is done → [ShowupUiState.done]
 /// 2. If [showup.status] is failed → [ShowupUiState.failed]
-/// 3. If now >= scheduledAt → [ShowupUiState.active] (active window or past)
-/// 4. If reminderOffset is not null and > Duration.zero:
+/// 3. If the showup falls inside any of [breaks]' windows → [ShowupUiState.onBreak]
+/// 4. If now >= scheduledAt → [ShowupUiState.active] (active window or past)
+/// 5. If reminderOffset is not null and > Duration.zero:
 ///    - reminderFiresAt = scheduledAt - reminderOffset
 ///    - If now >= reminderFiresAt → [ShowupUiState.waitingForStart]
-/// 5. Otherwise → [ShowupUiState.planned]
+/// 6. Otherwise → [ShowupUiState.planned]
 ShowupUiState deriveShowupUiState({
   required Showup showup,
   required DateTime now,
   Duration? reminderOffset,
+  List<PactBreak> breaks = const [],
 }) {
   if (showup.status == ShowupStatus.done) return ShowupUiState.done;
   if (showup.status == ShowupStatus.failed) return ShowupUiState.failed;
+  if (BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks)) return ShowupUiState.onBreak;
   if (!now.isBefore(showup.scheduledAt)) return ShowupUiState.active;
   if (reminderOffset != null && reminderOffset > Duration.zero) {
     final reminderFiresAt = showup.scheduledAt.subtract(reminderOffset);
@@ -52,8 +62,9 @@ ShowupUiState deriveShowupUiState({
 // TODO(HAB-54): add a periodic timer to invalidate state at reminderFiresAt / scheduledAt crossings.
 List<ShowupUiState> deriveUiStates(
   List<Showup> showups,
-  Map<String, Duration?> reminderOffsetByPactId,
-) {
+  Map<String, Duration?> reminderOffsetByPactId, {
+  Map<String, List<PactBreak>> breaksByPactId = const {},
+}) {
   final now = DateTime.now();
   return [
     for (final s in showups)
@@ -61,6 +72,7 @@ List<ShowupUiState> deriveUiStates(
         showup: s,
         now: now,
         reminderOffset: reminderOffsetByPactId[s.pactId],
+        breaks: breaksByPactId[s.pactId] ?? const [],
       ),
   ];
 }
