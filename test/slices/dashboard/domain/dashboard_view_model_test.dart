@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -107,6 +108,7 @@ void main() {
   ProviderContainer createContainer({
     List<Pact> pacts = const [],
     List<Showup> showups = const [],
+    List<PactBreak> breaks = const [],
   }) {
     final pactRepo = InMemoryPactRepository(pacts);
     final showupRepo = InMemoryShowupRepository(showups);
@@ -117,6 +119,7 @@ void main() {
         showupRepositoryProvider.overrideWithValue(showupRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
         todayProvider.overrideWithValue(today),
+        pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
       ],
     );
   }
@@ -739,6 +742,54 @@ void main() {
       expect(fakeNotifications.scheduledReminders, isEmpty,
           reason: 'Dashboard must NOT schedule reminders when pact has no reminderOffset');
     });
+
+    test('does not schedule reminders for showups inside an active break window (HAB-195 WU3)', () async {
+      final fakeNotifications = FakeNotificationService();
+      final pact = Pact(
+        id: 'p-break',
+        habitName: 'Jog',
+        startDate: today,
+        endDate: DateTime(today.year, today.month + 6, today.day),
+        showupDuration: const Duration(minutes: 20),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+        reminderOffset: const Duration(minutes: 15),
+      );
+      // Covers today and tomorrow's showups; day-after-tomorrow's 7am showup
+      // falls after the break's midnight end date, so it stays reminded.
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p-break',
+        startDate: today,
+        plannedEndDate: DateTime(today.year, today.month, today.day + 2),
+        rationale: 'Sick',
+      );
+      final pactRepo = InMemoryPactRepository([pact]);
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+      final c = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(today),
+          notificationServiceProvider.overrideWithValue(fakeNotifications),
+          pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository([onBreak])),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(dashboardViewModelProvider.notifier).load();
+
+      expect(fakeNotifications.scheduledReminders, isNotEmpty,
+          reason: 'Showups scheduled after the break window ends must still get reminders');
+      expect(
+        fakeNotifications.scheduledReminders.every((r) => r.showup.scheduledAt.isAfter(onBreak.plannedEndDate!)),
+        isTrue,
+        reason: 'No reminder must be scheduled for a showup whose scheduledAt falls inside the break window',
+      );
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -765,6 +816,7 @@ void main() {
       FakeAnalyticsService? analytics,
       FakeNotificationService? notifications,
       InMemoryShowupRepository? showupRepoOverride,
+      List<PactBreak> breaks = const [],
     }) {
       final pactRepo = InMemoryPactRepository(pacts);
       final showupRepo = showupRepoOverride ?? InMemoryShowupRepository(showups);
@@ -776,6 +828,7 @@ void main() {
           showupRepositoryProvider.overrideWithValue(showupRepo),
           pactTransactionServiceProvider.overrideWithValue(txService),
           todayProvider.overrideWithValue(today),
+          pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
           if (analytics != null) analyticsServiceProvider.overrideWithValue(analytics),
           if (notifications != null) notificationServiceProvider.overrideWithValue(notifications),
         ],
@@ -850,6 +903,33 @@ void main() {
       final updated = await showupRepo.getShowupsForPact('p1');
       final target = updated.firstWhere((s) => s.id == 's-future', orElse: () => futureWindowShowup);
       expect(target.status, ShowupStatus.pending, reason: 'Showup whose window has not elapsed must remain pending');
+    });
+
+    test('does not auto-fail a past-due pending showup that is on break (HAB-195 WU3)', () async {
+      final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
+      final showup = pastDuePending(id: 's-onbreak', pactId: 'p1');
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 20),
+        plannedEndDate: DateTime(2026, 4, 1),
+        rationale: 'Sick',
+      );
+
+      final showupRepo = InMemoryShowupRepository([showup]);
+      final c = buildContainer(
+        pacts: [pact],
+        showups: [],
+        showupRepoOverride: showupRepo,
+        breaks: [onBreak],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(dashboardViewModelProvider.notifier).load();
+
+      final updated = await showupRepo.getShowupsForPact('p1');
+      final target = updated.firstWhere((s) => s.id == 's-onbreak');
+      expect(target.status, ShowupStatus.pending, reason: 'On-break showup must not be auto-failed by the sweep');
     });
 
     test('does not touch already-resolved (done) showups', () async {
@@ -1125,6 +1205,39 @@ void main() {
           mar26Showups.every((s) => s.status == ShowupStatus.failed),
           isTrue,
           reason: 'Gap-filled showup on 3/26 must appear as failed in the strip',
+        );
+      });
+
+      test('does not auto-fail gap-filled showups that fall inside an active break window (HAB-195 WU3)', () async {
+        // Pact started 4 days ago; gap days [3/25..3/28] would normally be
+        // generated and immediately failed. A break covering that whole
+        // window must leave them pending instead.
+        final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 25));
+        final onBreak = PactBreak(
+          id: 'brk-1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 3, 20),
+          plannedEndDate: DateTime(2026, 4, 5),
+          rationale: 'Traveling',
+        );
+        final showupRepo = InMemoryShowupRepository();
+        final c = buildContainer(
+          pacts: [pact],
+          showups: [],
+          showupRepoOverride: showupRepo,
+          breaks: [onBreak],
+        );
+        addTearDown(c.dispose);
+
+        await c.read(dashboardViewModelProvider.notifier).load();
+
+        final allShowups = await showupRepo.getShowupsForPact('p1');
+        final gapShowups = allShowups.where((s) => s.scheduledAt.isBefore(today)).toList();
+        expect(gapShowups, isNotEmpty, reason: 'Gap-fill must still generate the past-due showups');
+        expect(
+          gapShowups.every((s) => s.status == ShowupStatus.pending),
+          isTrue,
+          reason: 'Gap-filled showups inside an active break window must stay pending, not failed',
         );
       });
     });

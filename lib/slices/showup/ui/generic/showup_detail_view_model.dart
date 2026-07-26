@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/tail_zone.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
@@ -59,17 +60,22 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       if (showup.status == ShowupStatus.pending) {
         final endTime = showup.scheduledAt.add(showup.duration);
         if (now.isAfter(endTime)) {
-          showup = await pactStatsService.persistShowupStatus(
-            showup: showup,
-            status: ShowupStatus.failed,
-            now: now,
-          );
-          wasAutoFailed = true;
+          // On-break showups must not be auto-failed on a late open (HAB-195 WU3).
+          final breaks = await ref.read(pactBreakRepositoryProvider).getBreaksForPact(showup.pactId);
+          final onBreak = BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks);
+          if (!onBreak) {
+            showup = await pactStatsService.persistShowupStatus(
+              showup: showup,
+              status: ShowupStatus.failed,
+              now: now,
+            );
+            wasAutoFailed = true;
 
-          unawaited(
-            ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
-          );
-          unawaited(ref.read(logServiceProvider).info('showup_auto_failed: id=$arg pactId=${showup.pactId}'));
+            unawaited(
+              ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+            );
+            unawaited(ref.read(logServiceProvider).info('showup_auto_failed: id=$arg pactId=${showup.pactId}'));
+          }
         }
       }
 

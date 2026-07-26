@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -77,6 +78,7 @@ ProviderContainer _makeContainer({
   required Showup showup,
   Pact? pact,
   DateTime? nowOverride,
+  List<PactBreak> breaks = const [],
 }) {
   final showupRepo = InMemoryShowupRepository([showup]);
   final pactRepo = InMemoryPactRepository(pact != null ? [pact] : []);
@@ -88,6 +90,7 @@ ProviderContainer _makeContainer({
       showupRepositoryProvider.overrideWithValue(showupRepo),
       pactTransactionServiceProvider.overrideWithValue(txService),
       syncServiceProvider.overrideWithValue(const NoopSyncService()),
+      pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
       if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
     ],
   );
@@ -191,6 +194,36 @@ void main() {
 
       expect(state.showup?.status, ShowupStatus.pending);
       expect(state.wasAutoFailed, false);
+    });
+
+    test('load() does not auto-fail a pending showup on a late open when it is on break', () async {
+      // HAB-195 WU3: a break covering the showup's scheduledAt must suppress
+      // the late-open auto-fail — it stays pending, not failed.
+      final showup = _pendingPastShowup(); // scheduledAt=08:00 on 2020-01-01
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2019, 12, 25),
+        plannedEndDate: DateTime(2020, 1, 5),
+        rationale: 'Sick',
+      );
+      final container = _makeContainer(
+        showup: showup,
+        pact: _pact,
+        nowOverride: _past, // well after the showup's window end
+        breaks: [onBreak],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+
+      expect(state.showup?.status, ShowupStatus.pending, reason: 'On-break showup must not be auto-failed');
+      expect(state.wasAutoFailed, false);
+
+      final showupRepo = container.read(showupRepositoryProvider);
+      final persisted = await showupRepo.getShowupById(showup.id);
+      expect(persisted?.status, ShowupStatus.pending, reason: 'On-break showup must not be persisted as failed');
     });
 
     test('load() does not auto-fail an already-done showup even if past time', () async {
@@ -544,6 +577,7 @@ void main() {
       required Showup showup,
       Pact? pact,
       DateTime? nowOverride,
+      List<PactBreak> breaks = const [],
     }) {
       fakeAnalytics = FakeAnalyticsService();
       final showupRepo = InMemoryShowupRepository([showup]);
@@ -556,6 +590,7 @@ void main() {
           pactTransactionServiceProvider.overrideWithValue(txService),
           syncServiceProvider.overrideWithValue(const NoopSyncService()),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+          pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
           if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
         ],
       );
@@ -582,6 +617,28 @@ void main() {
       final container = makeContainerWithAnalytics(
         showup: showup,
         pact: _pact,
+      );
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
+
+    test('load() does NOT fire ShowupAutoFailedEvent when the late-open showup is on break', () async {
+      final showup = _pendingPastShowup();
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2019, 12, 25),
+        plannedEndDate: DateTime(2020, 1, 5),
+        rationale: 'Sick',
+      );
+      final container = makeContainerWithAnalytics(
+        showup: showup,
+        pact: _pact,
+        nowOverride: _past,
+        breaks: [onBreak],
       );
       addTearDown(container.dispose);
 

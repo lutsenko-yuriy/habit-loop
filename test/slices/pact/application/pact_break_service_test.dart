@@ -83,6 +83,7 @@ void main() {
     );
     service = PactBreakService(
       pactBreakRepository: breakRepo,
+      pactRepository: pactRepo,
       showupRepository: showupRepo,
       reminderSchedulingService: reminderSchedulingService,
       syncService: syncService,
@@ -285,6 +286,80 @@ void main() {
       await service.stopBreak('b1', now: DateTime(2026, 3, 20));
 
       expect(cache.peek('p1'), isNull);
+    });
+
+    // HAB-195 WU3: auto-fail resumes "for free" because on-break state is
+    // derived at read time, but reminder scheduling is a one-shot side effect
+    // cancelled by startBreak — stopBreak must explicitly restore it.
+    group('reminder rescheduling (HAB-195 WU3)', () {
+      test('reschedules reminders for future showups released by the stop', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        await showupRepo.saveShowup(_showup('s-released', DateTime(2026, 4, 5, 8)));
+        await breakRepo.saveBreak(_pactBreak(plannedEndDate: DateTime(2026, 4, 10)));
+
+        await service.stopBreak('b1', now: DateTime(2026, 3, 20));
+
+        expect(notificationService.scheduledReminders.map((r) => r.showup.id), contains('s-released'));
+      });
+
+      test('does not reschedule a showup that stays on break (scheduled at/before the stop instant)', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        await showupRepo.saveShowup(_showup('s-still-onbreak', DateTime(2026, 3, 18, 8)));
+        await breakRepo.saveBreak(_pactBreak(plannedEndDate: DateTime(2026, 4, 10)));
+
+        await service.stopBreak('b1', now: DateTime(2026, 3, 20));
+
+        expect(notificationService.scheduledReminders, isEmpty);
+      });
+
+      test('does not reschedule a showup outside the break window in the first place', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        await showupRepo.saveShowup(_showup('s-never-onbreak', DateTime(2026, 5, 1, 8)));
+        await breakRepo.saveBreak(_pactBreak(plannedEndDate: DateTime(2026, 4, 10)));
+
+        await service.stopBreak('b1', now: DateTime(2026, 3, 20));
+
+        expect(notificationService.scheduledReminders, isEmpty);
+      });
+
+      test('does not reschedule a done showup even if it falls in the released window', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        await showupRepo.saveShowup(_showup('s-done', DateTime(2026, 4, 5, 8), status: ShowupStatus.done));
+        await breakRepo.saveBreak(_pactBreak(plannedEndDate: DateTime(2026, 4, 10)));
+
+        await service.stopBreak('b1', now: DateTime(2026, 3, 20));
+
+        expect(notificationService.scheduledReminders, isEmpty);
+      });
+
+      test('does not reschedule when the pact has no reminderOffset', () async {
+        await showupRepo.saveShowup(_showup('s-no-offset', DateTime(2026, 4, 5, 8)));
+        await breakRepo.saveBreak(_pactBreak(plannedEndDate: DateTime(2026, 4, 10)));
+
+        await service.stopBreak('b1', now: DateTime(2026, 3, 20));
+
+        expect(notificationService.scheduledReminders, isEmpty);
+      });
+
+      test('does not reschedule a released showup still covered by a second, unrelated break', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        await showupRepo.saveShowup(_showup('s-double-covered', DateTime(2026, 4, 5, 8)));
+        await breakRepo.saveBreak(_pactBreak(plannedEndDate: DateTime(2026, 4, 10)));
+        // A second, already-stopped break that still happens to cover 4/5 — simulates
+        // break history overlap; the showup must remain unscheduled either way.
+        await breakRepo.saveBreak(
+          _pactBreak(
+            id: 'b2',
+            startDate: DateTime(2026, 4, 4),
+            plannedEndDate: DateTime(2026, 4, 6),
+            stoppedAt: DateTime(2026, 4, 6),
+          ),
+        );
+
+        await service.stopBreak('b1', now: DateTime(2026, 3, 20));
+
+        expect(notificationService.scheduledReminders, isEmpty);
+      });
     });
   });
 

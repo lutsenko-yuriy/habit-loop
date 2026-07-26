@@ -205,8 +205,7 @@ final showupSyncRepositoryProvider = Provider<ShowupSyncRepository>(
 );
 
 // No must-override throw here (unlike pactRepositoryProvider/showupRepositoryProvider):
-// nothing reads pact breaks outside the sync layer yet (PactBreakService lands in WU2),
-// so an inert in-memory default keeps every existing pactServiceProvider/syncServiceProvider
+// an inert in-memory default keeps every existing pactServiceProvider/syncServiceProvider
 // consumer working without an explicit override.
 final pactBreakRepositoryProvider = Provider<PactBreakRepository>(
   (ref) => InMemoryPactBreakRepository(),
@@ -263,6 +262,7 @@ final pactStatsServiceProvider = Provider<PactStatsService>((ref) {
 final pactBreakServiceProvider = Provider<PactBreakService>((ref) {
   return PactBreakService(
     pactBreakRepository: ref.watch(pactBreakRepositoryProvider),
+    pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
     reminderSchedulingService: ref.watch(reminderSchedulingServiceProvider),
     syncService: ref.watch(syncServiceProvider),

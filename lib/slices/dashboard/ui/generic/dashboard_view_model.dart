@@ -1,7 +1,9 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -29,6 +31,7 @@ typedef _PactsContext = ({
   List<Pact> activePacts,
   Map<String, String> pactNames,
   Set<String> activePactIds,
+  Map<String, List<PactBreak>> breaksByPactId,
 });
 
 class DashboardViewModel extends Notifier<DashboardState> {
@@ -68,6 +71,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
       today: today,
       todayNorm: todayNorm,
       crashlytics: crashlytics,
+      breaksByPactId: pactsContext.breaksByPactId,
     );
 
     // todayIndex = min(daysSinceOldestPact, 3): ramps 0→3 over first 3 days, then stays 3.
@@ -84,6 +88,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
       activePactIds: pactsContext.activePactIds,
       today: today,
       crashlytics: crashlytics,
+      breaksByPactId: pactsContext.breaksByPactId,
     );
 
     _assembleAndSetState(
@@ -99,16 +104,30 @@ class DashboardViewModel extends Notifier<DashboardState> {
   // Job 1: fetch all pacts and derive the active-pact context reused by every later step.
   Future<_PactsContext> _loadPactsContext({required CrashlyticsService crashlytics}) async {
     final queryService = ref.read(dashboardQueryServiceProvider);
+    final pactBreakRepository = ref.read(pactBreakRepositoryProvider);
 
     final allPacts = await queryService.getAllPacts();
     final activePacts = allPacts.where((p) => p.status == PactStatus.active).toList();
     final pactNames = {for (final p in allPacts) p.id: p.habitName};
     final activePactIds = {for (final p in activePacts) p.id};
 
+    // Fetched once per load and threaded through both sweeps below so on-break
+    // showups are neither auto-failed nor reminded (HAB-195 WU3).
+    final breaksByPactId = <String, List<PactBreak>>{};
+    for (final pact in activePacts) {
+      breaksByPactId[pact.id] = await pactBreakRepository.getBreaksForPact(pact.id);
+    }
+
     // PII rule: active pact count is safe (no habit names).
     await crashlytics.setCustomKey('active_pacts_count', activePacts.length);
 
-    return (allPacts: allPacts, activePacts: activePacts, pactNames: pactNames, activePactIds: activePactIds);
+    return (
+      allPacts: allPacts,
+      activePacts: activePacts,
+      pactNames: pactNames,
+      activePactIds: activePactIds,
+      breaksByPactId: breaksByPactId,
+    );
   }
 
   // Job 2: per-active-pact — ensure showups exist for the generation window, auto-fail the
@@ -118,6 +137,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
     required DateTime today,
     required DateTime todayNorm,
     required CrashlyticsService crashlytics,
+    required Map<String, List<PactBreak>> breaksByPactId,
   }) async {
     final queryService = ref.read(dashboardQueryServiceProvider);
     final generationService = ref.read(showupGenerationServiceProvider);
@@ -132,6 +152,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
     final Map<Pact, List<Showup>> newShowupsByPact = {};
     var gapFailedCount = 0;
     for (final pact in activePacts) {
+      final breaks = breaksByPactId[pact.id] ?? const [];
       final latestDate = await queryService.getLatestScheduledAtForPact(pact.id);
 
       final DateTime windowStart;
@@ -155,6 +176,8 @@ class DashboardViewModel extends Notifier<DashboardState> {
       // Per-showup errors isolated so a single bad row cannot block the rest.
       // TODO(perf): batch persistShowupStatus calls per pact to reduce syncStats round-trips.
       for (final showup in gapShowups) {
+        // On-break gap showups stay pending — they must not be auto-failed (HAB-195 WU3).
+        if (BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks)) continue;
         final failed = await _autoFailShowup(
           showup,
           pactStatsService: pactStatsService,
@@ -184,6 +207,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
             pact: pact,
             showups: entry.value,
             now: todayNorm,
+            breaks: breaksByPactId[pact.id] ?? const [],
           ),
         );
         totalNewCount += entry.value.length;
@@ -226,6 +250,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
     required Set<String> activePactIds,
     required DateTime today,
     required CrashlyticsService crashlytics,
+    required Map<String, List<PactBreak>> breaksByPactId,
   }) async {
     final queryService = ref.read(dashboardQueryServiceProvider);
     final pactStatsService = ref.read(pactStatsServiceProvider);
@@ -242,6 +267,9 @@ class DashboardViewModel extends Notifier<DashboardState> {
       if (!activePactIds.contains(showup.pactId)) continue;
       final windowEnd = showup.scheduledAt.add(showup.duration);
       if (!today.isAfter(windowEnd)) continue;
+      // On-break showups stay pending — they must not be auto-failed (HAB-195 WU3).
+      final breaks = breaksByPactId[showup.pactId] ?? const [];
+      if (BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks)) continue;
 
       final failed = await _autoFailShowup(
         showup,

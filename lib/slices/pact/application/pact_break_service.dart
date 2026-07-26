@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_break_repository.dart';
+import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
@@ -14,17 +16,20 @@ import 'package:habit_loop/slices/reminder/application/reminder_scheduling_servi
 class PactBreakService {
   PactBreakService({
     required PactBreakRepository pactBreakRepository,
+    required PactRepository pactRepository,
     required ShowupRepository showupRepository,
     required ReminderSchedulingService reminderSchedulingService,
     required SyncService syncService,
     required PactDetailCache cache,
   })  : _pactBreakRepository = pactBreakRepository,
+        _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _reminderSchedulingService = reminderSchedulingService,
         _syncService = syncService,
         _cache = cache;
 
   final PactBreakRepository _pactBreakRepository;
+  final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
   final ReminderSchedulingService _reminderSchedulingService;
   final SyncService _syncService;
@@ -99,6 +104,7 @@ class PactBreakService {
     await _pactBreakRepository.updateBreak(stopped);
     unawaited(_syncService.uploadPactBreak(stopped));
     _cache.evict(stopped.pactId);
+    await _rescheduleRemindersAfterStop(original: existing, stopped: stopped, now: now);
 
     return stopped;
   }
@@ -110,5 +116,38 @@ class PactBreakService {
         await _reminderSchedulingService.cancelRemindersForShowup(showup.id);
       }
     }
+  }
+
+  // Reminders cancelled by _cancelInWindowReminders when the break started are
+  // not restored by anything else once it ends — auto-fail resumes "for free"
+  // because on-break state is derived at read time, but notification
+  // scheduling is a one-shot side effect (HAB-195 WU3). Only showups that were
+  // inside the break's *original* (pre-stop) window and are no longer covered
+  // by any of the pact's remaining breaks are rescheduled — showups still
+  // inside the now-clamped window stay on-break permanently, per spec.
+  Future<void> _rescheduleRemindersAfterStop({
+    required PactBreak original,
+    required PactBreak stopped,
+    required DateTime now,
+  }) async {
+    final pact = await _pactRepository.getPactById(stopped.pactId);
+    if (pact == null || pact.reminderOffset == null) return;
+
+    final remainingBreaks = await _pactBreakRepository.getBreaksForPact(stopped.pactId);
+    final showups = await _showupRepository.getShowupsForPact(stopped.pactId);
+
+    final toReschedule = showups.where((s) {
+      if (s.status != ShowupStatus.pending) return false;
+      if (!BreakDerivation.isShowupOnBreak(showup: s, breaks: [original])) return false;
+      return !BreakDerivation.isShowupOnBreak(showup: s, breaks: remainingBreaks);
+    }).toList();
+
+    if (toReschedule.isEmpty) return;
+    await _reminderSchedulingService.scheduleRemindersForShowups(
+      pact: pact,
+      showups: toReschedule,
+      now: now,
+      breaks: remainingBreaks,
+    );
   }
 }
