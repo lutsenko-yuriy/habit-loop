@@ -98,6 +98,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
       allPacts: pactsContext.allPacts,
       pactNames: pactsContext.pactNames,
       computedTodayIndex: computedTodayIndex,
+      breaksByPactId: pactsContext.breaksByPactId,
     );
   }
 
@@ -324,6 +325,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
     required List<Pact> allPacts,
     required Map<String, String> pactNames,
     required int computedTodayIndex,
+    required Map<String, List<PactBreak>> breaksByPactId,
   }) {
     final days = List.generate(7, (i) {
       final date = DateTime(stripStart.year, stripStart.month, stripStart.day + i);
@@ -346,6 +348,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
       todayIndex: computedTodayIndex,
       selectedDayIndex: newSelectedDayIndex,
       reminderOffsetByPactId: reminderOffsetByPactId,
+      breaksByPactId: breaksByPactId,
     );
   }
 
