@@ -166,6 +166,23 @@ void main() {
       expect(state.selectedDayShowups, isEmpty);
     });
 
+    test('breaksByPactId exposes each active pact\'s break history (HAB-195 WU5.1)', () async {
+      final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 20),
+        plannedEndDate: DateTime(2026, 4, 5),
+        rationale: 'Travelling',
+      );
+      container = createContainer(pacts: [pact], breaks: [onBreak]);
+
+      await container.read(dashboardViewModelProvider.notifier).load();
+      final state = container.read(dashboardViewModelProvider);
+
+      expect(state.breaksByPactId['p1'], [onBreak]);
+    });
+
     test('loads showups into correct calendar days', () async {
       final showupToday = Showup(
         id: '1',

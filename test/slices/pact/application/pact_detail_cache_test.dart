@@ -419,6 +419,21 @@ void main() {
       expect(bundle.breaks, hasLength(1));
     });
 
+    test('threads breaks into the grouper so an on-break showup is painted on the timeline (HAB-195 WU5.1)', () async {
+      final cache = _cache(
+        pacts: [_pact()],
+        showups: [_showup('s1', DateTime(2024, 1, 7), status: ShowupStatus.pending)],
+        breaks: [_pactBreak(startDate: DateTime(2024, 1, 5), plannedEndDate: DateTime(2024, 1, 10))],
+      );
+
+      final bundle = await cache.load('p1', now: DateTime(2024, 2, 1));
+
+      expect(bundle.timelinePage.milestones, hasLength(1));
+      final m = bundle.timelinePage.milestones.single as SingleShowupMilestone;
+      expect(m.isOnBreak, isTrue);
+      expect(m.breakRationale, 'Recovering');
+    });
+
     test('cache hit serves the cached breaks without a further DB call', () async {
       final breakRepo = _CountingPactBreakRepository([_pactBreak(startDate: DateTime(2024, 1, 1))]);
       final cache = PactDetailCache(

@@ -9,6 +9,10 @@ abstract final class HabitLoopColors {
   static const danger = Color(0xFFC62828);
   static const pending = Color(0xFFF57C00);
 
+  /// Break-related UI (calendar dots, status badges, timeline entries) — blue,
+  /// paired with a pause glyph where the surface supports an icon (HAB-195).
+  static const onBreak = Color(0xFF1976D2);
+
   /// AA-compliant (>=4.5:1), dark-mode-adaptive muted/secondary text color.
   ///
   /// `CupertinoColors.secondaryLabel` only reaches ~3.4:1 against

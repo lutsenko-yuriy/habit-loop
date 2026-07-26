@@ -268,6 +268,9 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
   if (m is PactConcludedMilestone) {
     return m.finalStatus == PactStatus.completed ? HabitLoopColors.success : HabitLoopColors.danger;
   }
+  if ((m is ShowupStreakMilestone && m.isOnBreak) || (m is SingleShowupMilestone && m.isOnBreak)) {
+    return _breakColor(context);
+  }
   final outcome = switch (m) {
     ShowupStreakMilestone s => s.outcome,
     NotedShowupMilestone n => n.outcome,
@@ -282,6 +285,8 @@ Color _outcomeColor(ShowupStatus outcome, BuildContext context) => switch (outco
       ShowupStatus.failed => CupertinoColors.systemRed.resolveFrom(context),
       ShowupStatus.pending => HabitLoopColors.secondaryText(context),
     };
+
+Color _breakColor(BuildContext context) => CupertinoColors.systemBlue.resolveFrom(context);
 
 // ── Date content (left of spine) ───────────────────────────────────────────────
 
@@ -303,7 +308,11 @@ class _MilestoneDateContent extends StatelessWidget {
 
   String? _text(BuildContext context) => switch (milestone) {
         PactCreatedMilestone m => formatLocaleDate(m.sortAt),
-        CurrentStateMilestone m => m.nextScheduledAt != null ? formatLocaleDate(m.nextScheduledAt!) : null,
+        // sortAt is "now" (set at bundle-computation time) — showing it here, not
+        // nextScheduledAt, anchors the "Active" entry to today regardless of how far
+        // overdue the earliest pending showup is (HAB-195: on-break showups can now
+        // stay pending for the whole break, making that lag far more common).
+        CurrentStateMilestone m => formatLocaleDate(m.sortAt),
         PactConcludedMilestone m => formatLocaleDate(m.concludedAt),
         ShowupStreakMilestone m => _dateRange(m.firstAt, m.lastAt),
         NotedShowupMilestone m => formatLocaleDate(m.scheduledAt),
@@ -412,10 +421,19 @@ class _StreakLabel extends StatelessWidget {
   const _StreakLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) => Text(
-        milestoneTitle(l10n, m),
-        style: AppTypography.valueEmphasis.copyWith(color: _outcomeColor(m.outcome, context)),
-      );
+  Widget build(BuildContext context) {
+    final color = m.isOnBreak ? _breakColor(context) : _outcomeColor(m.outcome, context);
+    final title = Text(milestoneTitle(l10n, m), style: AppTypography.valueEmphasis.copyWith(color: color));
+    if (!m.isOnBreak || m.breakRationale == null) return title;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        title,
+        const SizedBox(height: AppSpacing.s4),
+        Text(m.breakRationale!, style: AppTypography.caption),
+      ],
+    );
+  }
 }
 
 class _NotedShowupLabel extends StatelessWidget {
@@ -445,8 +463,17 @@ class _SingleShowupLabel extends StatelessWidget {
   const _SingleShowupLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) => Text(
-        milestoneTitle(l10n, m),
-        style: AppTypography.valueEmphasis.copyWith(color: _outcomeColor(m.outcome, context)),
-      );
+  Widget build(BuildContext context) {
+    final color = m.isOnBreak ? _breakColor(context) : _outcomeColor(m.outcome, context);
+    final title = Text(milestoneTitle(l10n, m), style: AppTypography.valueEmphasis.copyWith(color: color));
+    if (!m.isOnBreak || m.breakRationale == null) return title;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        title,
+        const SizedBox(height: AppSpacing.s4),
+        Text(m.breakRationale!, style: AppTypography.caption),
+      ],
+    );
+  }
 }

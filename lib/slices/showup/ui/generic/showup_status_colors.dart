@@ -13,11 +13,15 @@ class ShowupStatusColors {
 
   final Color waitingForStart;
 
+  // Break-related UI is shown in blue, consistently across surfaces (HAB-195).
+  final Color onBreak;
+
   const ShowupStatusColors({
     required this.done,
     required this.failed,
     required this.pending,
     required this.waitingForStart,
+    required this.onBreak,
   });
 
   static ShowupStatusColors cupertino(BuildContext context) => ShowupStatusColors(
@@ -25,6 +29,7 @@ class ShowupStatusColors {
         failed: CupertinoColors.destructiveRed.resolveFrom(context),
         pending: CupertinoColors.systemGrey.resolveFrom(context),
         waitingForStart: CupertinoColors.systemYellow.resolveFrom(context),
+        onBreak: CupertinoColors.systemBlue.resolveFrom(context),
       );
 
   static ShowupStatusColors material(ColorScheme cs) => ShowupStatusColors(
@@ -32,6 +37,7 @@ class ShowupStatusColors {
         failed: cs.error,
         pending: cs.onSurfaceVariant,
         waitingForStart: HabitLoopColors.sunrise,
+        onBreak: HabitLoopColors.onBreak,
       );
 
   Color forStatus(ShowupStatus status) => switch (status) {
@@ -44,6 +50,7 @@ class ShowupStatusColors {
         ShowupUiState.planned => pending,
         ShowupUiState.waitingForStart => waitingForStart,
         ShowupUiState.active => waitingForStart,
+        ShowupUiState.onBreak => onBreak,
         ShowupUiState.done => done,
         ShowupUiState.failed => failed,
       };
@@ -58,10 +65,11 @@ class ShowupStatusColors {
     return doneCount >= failedCount ? done : failed;
   }
 
-  // Priority: active (no planned ahead) → amber; any planned → gray; resolved → green/red.
+  // Priority: any onBreak → blue (a break is the most actionable state to surface);
+  // active (no planned ahead) → amber; any planned → gray; resolved → green/red.
   // "AND no planned" prevents premature amber when only some showups entered their window.
   Color overflowForUiState(List<ShowupUiState> uiStates) {
-    var activeCount = 0, plannedCount = 0, doneCount = 0, failedCount = 0;
+    var activeCount = 0, plannedCount = 0, doneCount = 0, failedCount = 0, onBreakCount = 0;
     for (final s in uiStates) {
       switch (s) {
         case ShowupUiState.waitingForStart:
@@ -73,8 +81,11 @@ class ShowupStatusColors {
           doneCount++;
         case ShowupUiState.failed:
           failedCount++;
+        case ShowupUiState.onBreak:
+          onBreakCount++;
       }
     }
+    if (onBreakCount > 0) return onBreak;
     if (activeCount > 0 && plannedCount == 0) return waitingForStart;
     if (plannedCount > 0) return pending;
     return doneCount >= failedCount ? done : failed;

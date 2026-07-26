@@ -45,23 +45,20 @@ class ShowupStatusDots extends StatelessWidget {
               }
               return colors.overflow(doneCount: done, failedCount: failed, pendingCount: pending);
             }();
-      return Container(
+      return _dotCircle(
         key: Key('status-dot-overflow-${_dateKey(date)}'),
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: overflowColor),
+        size: 10,
+        color: overflowColor,
       );
     }
 
     Widget dot(Showup s, int index) {
       final color = useUiStates ? colors.forUiState(uiStates![index]) : colors.forStatus(s.status);
-      return Container(
-        key: Key('status-dot-${s.id}'),
-        width: 6,
-        height: 6,
-        margin: const EdgeInsets.symmetric(horizontal: 1),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 1),
+        child: _dotCircle(
+          key: Key('status-dot-${s.id}'),
+          size: 6,
           color: color,
         ),
       );
@@ -86,4 +83,17 @@ class ShowupStatusDots extends StatelessWidget {
 
   static String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+  static Widget _dotCircle({
+    required Key key,
+    required double size,
+    required Color color,
+  }) {
+    return Container(
+      key: key,
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+    );
+  }
 }

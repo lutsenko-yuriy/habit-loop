@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/theme/colors.dart';
 
 void main() {
   // Helper to pump a widget under a CupertinoTheme and capture the BuildContext.
@@ -103,6 +105,23 @@ void main() {
         CupertinoColors.destructiveRed.resolveFrom(ctx),
       );
     });
+
+    testWidgets('forUiState maps onBreak → resolved systemBlue', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = ShowupStatusColors.cupertino(ctx);
+      expect(colors.forUiState(ShowupUiState.onBreak), CupertinoColors.systemBlue.resolveFrom(ctx));
+    });
+
+    testWidgets('overflowForUiState is onBreak color when any showup is on break, even amid active/planned', (
+      tester,
+    ) async {
+      final ctx = await buildContext(tester);
+      final colors = ShowupStatusColors.cupertino(ctx);
+      expect(
+        colors.overflowForUiState([ShowupUiState.active, ShowupUiState.onBreak, ShowupUiState.planned]),
+        CupertinoColors.systemBlue.resolveFrom(ctx),
+      );
+    });
   });
 
   group('ShowupStatusColors.material', () {
@@ -126,6 +145,17 @@ void main() {
 
     test('overflow is error when resolved and failed > done', () {
       expect(colors.overflow(doneCount: 1, failedCount: 3, pendingCount: 0), colorScheme.error);
+    });
+
+    test('forUiState maps onBreak → HabitLoopColors.onBreak', () {
+      expect(colors.forUiState(ShowupUiState.onBreak), HabitLoopColors.onBreak);
+    });
+
+    test('overflowForUiState is onBreak color when any showup is on break', () {
+      expect(
+        colors.overflowForUiState([ShowupUiState.done, ShowupUiState.onBreak]),
+        HabitLoopColors.onBreak,
+      );
     });
   });
 }

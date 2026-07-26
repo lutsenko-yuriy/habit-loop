@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/tail_zone.dart';
@@ -26,8 +28,9 @@ class PactTimelineGrouper {
   ({List<PactTimelineMilestone> milestones, int tailStartIndex}) group(
     List<Showup> showups, {
     DateTime? now,
+    List<PactBreak> breaks = const [],
   }) {
-    final result = groupWithStats(showups, now: now);
+    final result = groupWithStats(showups, now: now, breaks: breaks);
     return (milestones: result.milestones, tailStartIndex: result.tailStartIndex);
   }
 
@@ -44,6 +47,14 @@ class PactTimelineGrouper {
   /// Non-tail showups accumulate into same-outcome streaks that flush to a
   /// [ShowupStreakMilestone] (run ≥ 2) or [SingleShowupMilestone] (run of 1) on
   /// outcome change; tail showups are always emitted individually.
+  ///
+  /// [breaks] (HAB-195 WU5.1) makes on-break pending showups participate in this
+  /// same grouping instead of being silently skipped like ordinary pending showups:
+  /// they paint blue, stream into runs/streaks of their own (split whenever the
+  /// covering break changes, so two adjacent breaks never merge into one entry),
+  /// and show the covering break's rationale in place of a note. They never touch
+  /// [showupsDone]/[showupsFailed]/the trailing streak — on-break time is neither
+  /// broken nor advanced, exactly like an ordinary unresolved pending showup.
   ({
     List<PactTimelineMilestone> milestones,
     int tailStartIndex,
@@ -53,13 +64,18 @@ class PactTimelineGrouper {
   }) groupWithStats(
     List<Showup> showups, {
     DateTime? now,
+    List<PactBreak> breaks = const [],
   }) {
     final effectiveNow = now ?? DateTime.now();
+    final today = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day);
 
     final result = <PactTimelineMilestone>[];
     var tailStartIndex = -1;
 
     ShowupStatus? streakOutcome;
+    var streakIsOnBreak = false;
+    String? streakBreakId;
+    String? streakBreakRationale;
     var streakCount = 0;
     DateTime? streakFirstAt;
     DateTime? streakLastAt;
@@ -77,6 +93,8 @@ class PactTimelineGrouper {
           showupId: streakLastShowupId!,
           outcome: streakOutcome!,
           scheduledAt: streakFirstAt!,
+          isOnBreak: streakIsOnBreak,
+          breakRationale: streakBreakRationale,
         ));
       } else {
         result.add(ShowupStreakMilestone(
@@ -85,25 +103,51 @@ class PactTimelineGrouper {
           count: streakCount,
           firstAt: streakFirstAt!,
           lastAt: streakLastAt!,
+          isOnBreak: streakIsOnBreak,
+          breakRationale: streakBreakRationale,
         ));
       }
       streakCount = 0;
       streakOutcome = null;
+      streakIsOnBreak = false;
+      streakBreakId = null;
+      streakBreakRationale = null;
       streakFirstAt = null;
       streakLastAt = null;
       streakLastShowupId = null;
     }
 
     for (final showup in showups) {
-      if (showup.status == ShowupStatus.pending) continue;
+      final scheduledDay = DateTime(showup.scheduledAt.year, showup.scheduledAt.month, showup.scheduledAt.day);
+      final isFuture = scheduledDay.isAfter(today);
 
-      if (showup.status == ShowupStatus.done) {
-        showupsDone++;
-        trailingStreak++;
-      } else {
-        showupsFailed++;
-        trailingStreak = 0;
+      // A pending showup is only "settled" enough to paint on-break once its own day has
+      // arrived — TailZone.contains has no upper bound, so without this a break covering
+      // future dates would otherwise leak those dates onto the timeline before they happen,
+      // unlike an ordinary future pending showup, which stays invisible until its day arrives.
+      final coveringBreak = showup.status == ShowupStatus.pending && !isFuture
+          ? breaks.firstWhereOrNull((b) => b.contains(showup.scheduledAt))
+          : null;
+      if (showup.status == ShowupStatus.pending && coveringBreak == null) continue;
+
+      final isOnBreak = coveringBreak != null;
+
+      if (!isOnBreak) {
+        if (showup.status == ShowupStatus.done) {
+          showupsDone++;
+          trailingStreak++;
+        } else {
+          showupsFailed++;
+          trailingStreak = 0;
+        }
       }
+
+      // A manually-resolved showup dated after today (an explicit mark always overrides
+      // a break, and nothing stops marking a not-yet-due showup done/failed early) still
+      // counts toward the stats above, but never appears on the timeline itself — the
+      // timeline is a record of what already happened, same rule the on-break guard above
+      // already applies to pending showups.
+      if (isFuture) continue;
 
       final inTail =
           TailZone.contains(scheduledAt: showup.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays);
@@ -111,20 +155,44 @@ class PactTimelineGrouper {
       if (inTail) {
         flushStreak();
         if (tailStartIndex == -1) tailStartIndex = result.length;
-        result.add(showup.note != null
-            ? NotedShowupMilestone(
+        result.add(isOnBreak
+            ? SingleShowupMilestone(
                 sortAt: showup.scheduledAt,
                 showupId: showup.id,
-                scheduledAt: showup.scheduledAt,
                 outcome: showup.status,
-                note: showup.note!,
+                scheduledAt: showup.scheduledAt,
+                isOnBreak: true,
+                breakRationale: coveringBreak.rationale,
               )
-            : SingleShowupMilestone(
-                sortAt: showup.scheduledAt,
-                showupId: showup.id,
-                outcome: showup.status,
-                scheduledAt: showup.scheduledAt,
-              ));
+            : showup.note != null
+                ? NotedShowupMilestone(
+                    sortAt: showup.scheduledAt,
+                    showupId: showup.id,
+                    scheduledAt: showup.scheduledAt,
+                    outcome: showup.status,
+                    note: showup.note!,
+                  )
+                : SingleShowupMilestone(
+                    sortAt: showup.scheduledAt,
+                    showupId: showup.id,
+                    outcome: showup.status,
+                    scheduledAt: showup.scheduledAt,
+                  ));
+        continue;
+      }
+
+      if (isOnBreak) {
+        if (!streakIsOnBreak || streakBreakId != coveringBreak.id) {
+          flushStreak();
+        }
+        streakOutcome = showup.status;
+        streakIsOnBreak = true;
+        streakBreakId = coveringBreak.id;
+        streakBreakRationale = coveringBreak.rationale;
+        streakCount++;
+        streakFirstAt ??= showup.scheduledAt;
+        streakLastAt = showup.scheduledAt;
+        streakLastShowupId = showup.id;
         continue;
       }
 
@@ -138,10 +206,11 @@ class PactTimelineGrouper {
           note: showup.note!,
         ));
       } else {
-        if (streakOutcome != null && streakOutcome != showup.status) {
+        if (streakOutcome != null && (streakIsOnBreak || streakOutcome != showup.status)) {
           flushStreak();
         }
         streakOutcome = showup.status;
+        streakIsOnBreak = false;
         streakCount++;
         streakFirstAt ??= showup.scheduledAt;
         streakLastAt = showup.scheduledAt;

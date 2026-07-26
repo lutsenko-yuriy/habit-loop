@@ -125,6 +125,34 @@ void main() {
       );
       expect(milestoneTitle(l10n, m), l10n.timelinePactConcludedStopped);
     });
+
+    testWidgets('on-break SingleShowupMilestone returns the on-break label (HAB-195 WU5.1)', (tester) async {
+      final l10n = await _getL10n(tester);
+      final m = SingleShowupMilestone(
+        sortAt: DateTime(2024, 1, 5),
+        showupId: 's1',
+        outcome: ShowupStatus.pending,
+        scheduledAt: DateTime(2024, 1, 5),
+        isOnBreak: true,
+        breakRationale: 'Travelling',
+      );
+      expect(milestoneTitle(l10n, m), l10n.showupOnBreak);
+    });
+
+    testWidgets('on-break ShowupStreakMilestone returns the on-break label, not "in a row" (HAB-195 WU5.1)',
+        (tester) async {
+      final l10n = await _getL10n(tester);
+      final m = ShowupStreakMilestone(
+        sortAt: DateTime(2024, 1, 5),
+        outcome: ShowupStatus.pending,
+        count: 3,
+        firstAt: DateTime(2024, 1, 5),
+        lastAt: DateTime(2024, 1, 7),
+        isOnBreak: true,
+        breakRationale: 'Travelling',
+      );
+      expect(milestoneTitle(l10n, m), l10n.showupOnBreak);
+    });
   });
 
   group('milestoneDateRange', () {

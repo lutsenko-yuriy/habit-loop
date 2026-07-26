@@ -33,6 +33,7 @@ String showupUiStateText(AppLocalizations l10n, ShowupUiState state) => switch (
       ShowupUiState.planned => l10n.showupPlanned,
       ShowupUiState.waitingForStart => l10n.showupWaitingForStart,
       ShowupUiState.active => l10n.showupPending,
+      ShowupUiState.onBreak => l10n.showupOnBreak,
       ShowupUiState.done => l10n.showupDone,
       ShowupUiState.failed => l10n.showupFailed,
     };

@@ -1,3 +1,4 @@
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 
 class DashboardState {
@@ -18,6 +19,11 @@ class DashboardState {
   /// round-trip. A null value means the pact has no reminder set.
   final Map<String, Duration?> reminderOffsetByPactId;
 
+  /// Each active pact's break history, keyed by pact ID. Used by the
+  /// dashboard UI to derive the on-break [ShowupUiState] for calendar dots
+  /// and list tiles without a second DB round-trip (HAB-195 WU5.1).
+  final Map<String, List<PactBreak>> breaksByPactId;
+
   const DashboardState({
     this.calendarDays = const [],
     this.selectedDayIndex = 3,
@@ -25,6 +31,7 @@ class DashboardState {
     this.pactNames = const {},
     this.todayIndex = 3,
     this.reminderOffsetByPactId = const {},
+    this.breaksByPactId = const {},
   });
 
   List<Showup> get selectedDayShowups => calendarDays.isEmpty ? [] : calendarDays[selectedDayIndex].showups;
@@ -38,6 +45,7 @@ class DashboardState {
     Map<String, String>? pactNames,
     int? todayIndex,
     Map<String, Duration?>? reminderOffsetByPactId,
+    Map<String, List<PactBreak>>? breaksByPactId,
   }) {
     return DashboardState(
       calendarDays: calendarDays ?? this.calendarDays,
@@ -46,6 +54,7 @@ class DashboardState {
       pactNames: pactNames ?? this.pactNames,
       todayIndex: todayIndex ?? this.todayIndex,
       reminderOffsetByPactId: reminderOffsetByPactId ?? this.reminderOffsetByPactId,
+      breaksByPactId: breaksByPactId ?? this.breaksByPactId,
     );
   }
 }

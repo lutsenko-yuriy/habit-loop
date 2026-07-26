@@ -56,6 +56,25 @@ final _single = SingleShowupMilestone(
   scheduledAt: DateTime(2024, 1, 25, 8),
 );
 
+final _break = SingleShowupMilestone(
+  sortAt: DateTime(2024, 1, 15),
+  showupId: 'break-single-1',
+  outcome: ShowupStatus.pending,
+  scheduledAt: DateTime(2024, 1, 15),
+  isOnBreak: true,
+  breakRationale: 'Travelling for work',
+);
+
+final _breakStreak = ShowupStreakMilestone(
+  sortAt: DateTime(2024, 1, 15),
+  outcome: ShowupStatus.pending,
+  count: 3,
+  firstAt: DateTime(2024, 1, 15),
+  lastAt: DateTime(2024, 1, 17),
+  isOnBreak: true,
+  breakRationale: 'Travelling for work',
+);
+
 Widget _buildApp(
   PactTimelineState state, {
   void Function(PactTimelineMilestone)? onMilestoneTapped,
@@ -127,6 +146,18 @@ void main() {
       expect(find.text(l10n.timelineCurrentState), findsWidgets);
     });
 
+    testWidgets('current-state anchor date shows sortAt (today), not the possibly-overdue nextScheduledAt', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_buildApp(_loaded(anchorEnd: _currentState)));
+      await tester.pump();
+      final locale = Localizations.localeOf(tester.element(find.byType(PactTimelinePageIos)));
+      final sortAtStr = DateFormat.yMd(locale.toString()).format(_currentState.sortAt);
+      final nextScheduledStr = DateFormat.yMd(locale.toString()).format(_currentState.nextScheduledAt!);
+      expect(find.text(sortAtStr), findsOneWidget);
+      expect(find.text(nextScheduledStr), findsNothing);
+    });
+
     testWidgets('shows concluded anchor label for stopped pact', (tester) async {
       await tester.pumpWidget(_buildApp(_loaded(anchorEnd: _concluded)));
       await tester.pump();
@@ -145,6 +176,22 @@ void main() {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_noted])));
       await tester.pump();
       expect(find.text('Best session ever'), findsWidgets);
+    });
+
+    testWidgets('shows a single on-break showup with its rationale (HAB-195 WU5.1)', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_break])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
+      expect(find.text(l10n.showupOnBreak), findsOneWidget);
+      expect(find.text('Travelling for work'), findsOneWidget);
+    });
+
+    testWidgets('shows a streak of on-break showups with its rationale (HAB-195 WU5.1)', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_breakStreak])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
+      expect(find.text(l10n.showupOnBreak), findsOneWidget);
+      expect(find.text('Travelling for work'), findsOneWidget);
     });
   });
 
@@ -203,6 +250,15 @@ void main() {
       final l10n = AppLocalizations.of(ctx)!;
       final text = tester.widget<Text>(find.text(l10n.showupPending));
       expect(text.style?.color, HabitLoopColors.secondaryText(ctx));
+    });
+
+    testWidgets('break milestone title is colored blue (HAB-195 WU5.1)', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_break])));
+      await tester.pump();
+      final ctx = tester.element(find.byType(PactTimelinePageIos));
+      final l10n = AppLocalizations.of(ctx)!;
+      final text = tester.widget<Text>(find.text(l10n.showupOnBreak));
+      expect(text.style?.color, CupertinoColors.systemBlue.resolveFrom(ctx));
     });
   });
 
