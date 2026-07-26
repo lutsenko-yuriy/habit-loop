@@ -119,6 +119,13 @@
   "breakUntilPactEnds": "Дата окончания пока не определена",
   "breakRationaleHint": "Причина (обязательно)",
   "showupOnBreak": "На перерыве",
+  "pactOnBreakTitle": "На перерыве",
+  "pactBreakUntilLabel": "До",
+  "resumePact": "Возобновить пакт",
+  "resumePactTitle": "Возобновить этот пакт?",
+  "resumePactBody": "Явки, уже отмеченные как перерыв, останутся такими. Новые явки вернутся к обычному расписанию.",
+  "resumePactConfirm": "Возобновить",
+  "resumePactError": "Не удалось возобновить пакт. Попробуйте ещё раз.",
   "pactsActive": "{count, plural, =0{Нет активных пактов} one{{count} активный пакт} few{{count} активных пакта} many{{count} активных пактов} other{{count} активных пакта}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }

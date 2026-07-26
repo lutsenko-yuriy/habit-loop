@@ -306,6 +306,37 @@ final class PactBreakStartedEvent extends AnalyticsEvent {
       };
 }
 
+/// Fired when the user taps "Resume pact" on the Pact Detail banner and
+/// confirms. Named to match the break's own domain lifecycle — a break is
+/// *stopped*, mirroring how a pact is *stopped* — even though the UI action
+/// copy reads "Resume pact." (HAB-195)
+final class PactBreakStoppedEvent extends AnalyticsEvent {
+  PactBreakStoppedEvent({
+    required this.pactId,
+    required this.originalEndType,
+    required this.daysSinceStart,
+  });
+
+  final String pactId;
+
+  /// The break's planned end type before it was stopped: `fixed_date` |
+  /// `until_pact_ends`.
+  final String originalEndType;
+
+  /// Number of days the break had been active before it was stopped.
+  final int daysSinceStart;
+
+  @override
+  String get name => 'pact_break_stopped';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'original_end_type': originalEndType,
+        'days_since_start': daysSinceStart,
+      };
+}
+
 /// Screen identifier for the pact creation wizard.
 class PactCreationAnalyticsScreen implements AnalyticsScreen {
   const PactCreationAnalyticsScreen();

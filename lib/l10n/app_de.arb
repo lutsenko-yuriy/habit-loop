@@ -119,6 +119,13 @@
   "breakUntilPactEnds": "Noch kein Enddatum",
   "breakRationaleHint": "Grund (erforderlich)",
   "showupOnBreak": "In Pause",
+  "pactOnBreakTitle": "In Pause",
+  "pactBreakUntilLabel": "Bis",
+  "resumePact": "Pakt fortsetzen",
+  "resumePactTitle": "Diesen Pakt fortsetzen?",
+  "resumePactBody": "Bereits pausierte Showups bleiben so markiert. Neue Showups folgen wieder dem normalen Zeitplan.",
+  "resumePactConfirm": "Fortsetzen",
+  "resumePactError": "Pakt konnte nicht fortgesetzt werden. Bitte versuche es erneut.",
   "pactsActive": "{count, plural, =0{Keine aktiven Pakte} one{1 Pakt aktiv} other{{count} Pakte aktiv}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }

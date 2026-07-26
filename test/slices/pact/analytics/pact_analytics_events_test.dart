@@ -265,6 +265,29 @@ void main() {
     });
   });
 
+  group('PactBreakStoppedEvent', () {
+    test('has correct name', () {
+      final event = PactBreakStoppedEvent(
+        pactId: 'p1',
+        originalEndType: 'fixed_date',
+        daysSinceStart: 3,
+      );
+      expect(event.name, 'pact_break_stopped');
+    });
+
+    test('toParameters includes all properties', () {
+      final event = PactBreakStoppedEvent(
+        pactId: 'p1',
+        originalEndType: 'until_pact_ends',
+        daysSinceStart: 10,
+      );
+      final params = event.toParameters();
+      expect(params['pact_id'], 'p1');
+      expect(params['original_end_type'], 'until_pact_ends');
+      expect(params['days_since_start'], 10);
+    });
+  });
+
   group('PactDetailAnalyticsScreen', () {
     test('implements AnalyticsScreen', () {
       expect(const PactDetailAnalyticsScreen(), isA<AnalyticsScreen>());

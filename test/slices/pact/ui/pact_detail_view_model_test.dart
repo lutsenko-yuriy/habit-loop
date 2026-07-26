@@ -11,6 +11,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
+import 'package:habit_loop/slices/pact/application/pact_break_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
@@ -19,10 +20,14 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/locale/fake_locale_preference_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
+import '../../../infrastructure/sync/fake_sync_service.dart';
 
 final _pact = Pact(
   id: 'p1',
@@ -81,8 +86,14 @@ ProviderContainer _makeContainer({
 }) {
   final pactRepo = InMemoryPactRepository(pacts);
   final showupRepo = InMemoryShowupRepository(showups);
+  final breakRepo = InMemoryPactBreakRepository(breaks);
   final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-  final cache = _makeCache(pactRepo, showupRepo, breaks: breaks);
+  final cache = PactDetailCache(
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+    pactBreakRepository: breakRepo,
+    grouper: const PactTimelineGrouper(),
+  );
   final statsService = PactStatsService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
@@ -97,11 +108,26 @@ ProviderContainer _makeContainer({
     syncService: const NoopSyncService(),
     cache: cache,
   );
+  final reminderService = ReminderSchedulingService(
+    notificationService: FakeNotificationService(),
+    remoteConfig: FakeRemoteConfigService(),
+    analytics: FakeAnalyticsService(),
+    localePreference: FakeLocalePreferenceService(),
+  );
+  final breakService = PactBreakService(
+    pactBreakRepository: breakRepo,
+    pactRepository: pactRepo,
+    showupRepository: showupRepo,
+    reminderSchedulingService: reminderService,
+    syncService: FakeSyncService(),
+    cache: cache,
+  );
   return ProviderContainer(
     overrides: [
       pactServiceProvider.overrideWithValue(service),
       pactStatsServiceProvider.overrideWithValue(statsService),
       pactDetailCacheProvider.overrideWithValue(cache),
+      pactBreakServiceProvider.overrideWithValue(breakService),
       // Required so stopPact can load showup IDs for deterministic notification
       // cancellation (HAB-100) without hitting the default UnimplementedError.
       showupRepositoryProvider.overrideWithValue(showupRepo),
@@ -167,6 +193,46 @@ void main() {
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
       final state = container.read(pactDetailViewModelProvider('p1'));
       expect(state.activeBreak?.id, 'brk-1');
+    });
+
+    test('stopBreak clears activeBreak on success (HAB-195 WU5.2)', () async {
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 10),
+        plannedEndDate: DateTime(2026, 3, 20),
+        rationale: 'Sick',
+      );
+      final container = _makeContainer(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [onBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 15))],
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(pactDetailViewModelProvider('p1').notifier);
+      await notifier.load();
+      expect(container.read(pactDetailViewModelProvider('p1')).activeBreak, isNotNull);
+
+      await notifier.stopBreak();
+
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.activeBreak, isNull);
+      expect(state.isStoppingBreak, false);
+      expect(state.stopBreakError, isNull);
+    });
+
+    test('stopBreak is a no-op when there is no active break (HAB-195 WU5.2)', () async {
+      final container = _makeContainer(pacts: [_pact], showups: _showups);
+      addTearDown(container.dispose);
+      final notifier = container.read(pactDetailViewModelProvider('p1').notifier);
+      await notifier.load();
+
+      await notifier.stopBreak();
+
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.activeBreak, isNull);
+      expect(state.isStoppingBreak, false);
     });
 
     test('load leaves activeBreak null when the only break is already resolved (HAB-195)', () async {
@@ -595,12 +661,15 @@ void main() {
     ProviderContainer makeContainerWithAnalytics({
       List<Pact> pacts = const [],
       List<Showup> showups = const [],
+      List<PactBreak> breaks = const [],
+      List<Override> extras = const [],
     }) {
       fakeAnalytics = FakeAnalyticsService();
       return _makeContainer(
         pacts: pacts,
         showups: showups,
-        extras: [analyticsServiceProvider.overrideWithValue(fakeAnalytics)],
+        breaks: breaks,
+        extras: [analyticsServiceProvider.overrideWithValue(fakeAnalytics), ...extras],
       );
     }
 
@@ -705,6 +774,150 @@ void main() {
       expect(state.stopError, isNotNull);
       expect(fakeAnalytics.loggedEvents, isEmpty);
     });
+
+    test('stopBreak fires PactBreakStoppedEvent with correct properties on success (HAB-195 WU5.2)', () async {
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 10),
+        plannedEndDate: DateTime(2026, 3, 20),
+        rationale: 'Sick',
+      );
+      final container = makeContainerWithAnalytics(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [onBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 15))],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopBreak();
+
+      expect(fakeAnalytics.loggedEvents, hasLength(1));
+      final event = fakeAnalytics.loggedEvents.first as PactBreakStoppedEvent;
+      expect(event.pactId, 'p1');
+      expect(event.originalEndType, 'fixed_date');
+      expect(event.daysSinceStart, 5); // Mar 15 - Mar 10
+    });
+
+    test('stopBreak reports until_pact_ends as the original end type for an open-ended break', () async {
+      final openEndedBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 10),
+        rationale: 'Sick',
+      );
+      final container = makeContainerWithAnalytics(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [openEndedBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 12))],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopBreak();
+
+      final event = fakeAnalytics.loggedEvents.first as PactBreakStoppedEvent;
+      expect(event.originalEndType, 'until_pact_ends');
+      expect(event.daysSinceStart, 2);
+    });
+
+    test('stopBreak clamps daysSinceStart to 0 for a break whose startDate is still in the future', () async {
+      // startDate is 3 days after "now" — a not-yet-started, unresolved
+      // break, which load() still surfaces as activeBreak (HAB-195 audit
+      // finding: resuming it must not report a negative day count).
+      final notYetStartedBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 18),
+        plannedEndDate: DateTime(2026, 3, 25),
+        rationale: 'Planned ahead',
+      );
+      final container = makeContainerWithAnalytics(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [notYetStartedBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 15))],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopBreak();
+
+      final event = fakeAnalytics.loggedEvents.first as PactBreakStoppedEvent;
+      expect(event.daysSinceStart, 0);
+    });
+
+    test('stopBreak does NOT fire event on failure', () async {
+      fakeAnalytics = FakeAnalyticsService();
+
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 10),
+        plannedEndDate: DateTime(2026, 3, 20),
+        rationale: 'Sick',
+      );
+      final pactRepo = InMemoryPactRepository([_pact]);
+      final showupRepo = InMemoryShowupRepository(_showups);
+      final throwingBreakRepo = _ThrowingOnUpdatePactBreakRepository([onBreak]);
+      final cache = PactDetailCache(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        pactBreakRepository: throwingBreakRepo,
+        grouper: const PactTimelineGrouper(),
+      );
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      final statsService = PactStatsService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+        cache: cache,
+      );
+      final service = PactService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        syncService: const NoopSyncService(),
+        cache: cache,
+      );
+      final reminderService = ReminderSchedulingService(
+        notificationService: FakeNotificationService(),
+        remoteConfig: FakeRemoteConfigService(),
+        analytics: fakeAnalytics,
+        localePreference: FakeLocalePreferenceService(),
+      );
+      final breakService = PactBreakService(
+        pactBreakRepository: throwingBreakRepo,
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        reminderSchedulingService: reminderService,
+        syncService: FakeSyncService(),
+        cache: cache,
+      );
+      final failContainer = ProviderContainer(
+        overrides: [
+          pactServiceProvider.overrideWithValue(service),
+          pactStatsServiceProvider.overrideWithValue(statsService),
+          pactDetailCacheProvider.overrideWithValue(cache),
+          pactBreakServiceProvider.overrideWithValue(breakService),
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+          pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 15)),
+        ],
+      );
+      addTearDown(failContainer.dispose);
+
+      await failContainer.read(pactDetailViewModelProvider('p1').notifier).load();
+      await failContainer.read(pactDetailViewModelProvider('p1').notifier).stopBreak();
+
+      final state = failContainer.read(pactDetailViewModelProvider('p1'));
+      expect(state.stopBreakError, isNotNull);
+      expect(state.activeBreak, isNotNull); // unchanged on failure
+      expect(fakeAnalytics.loggedEvents, isEmpty);
+    });
   });
 
   group('PactDetailViewModel notification cancellation', () {
@@ -776,6 +989,13 @@ class _ThrowingOnUpdatePactRepository extends InMemoryPactRepository {
 
   @override
   Future<void> updatePact(Pact pact) async => throw Exception('update failed intentionally');
+}
+
+class _ThrowingOnUpdatePactBreakRepository extends InMemoryPactBreakRepository {
+  _ThrowingOnUpdatePactBreakRepository(super.pactBreaks);
+
+  @override
+  Future<void> updateBreak(PactBreak pactBreak) async => throw Exception('update failed intentionally');
 }
 
 final _stoppedPact = Pact(

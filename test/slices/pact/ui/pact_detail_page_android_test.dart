@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
@@ -46,6 +48,21 @@ PactDetailState _loadedState(Pact pact) => PactDetailState(
       stats: _stats,
       isLoading: false,
     );
+
+final _fixedEndBreak = PactBreak(
+  id: 'brk-1',
+  pactId: 'p1',
+  startDate: DateTime(2026, 3, 10),
+  plannedEndDate: DateTime(2026, 3, 20),
+  rationale: 'Feeling sick',
+);
+
+final _openEndedBreak = PactBreak(
+  id: 'brk-2',
+  pactId: 'p1',
+  startDate: DateTime(2026, 3, 10),
+  rationale: 'Travelling',
+);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -309,6 +326,213 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       expect(tapped, isTrue);
+    });
+  });
+
+  group('PactDetailPageAndroid — Resume pact banner (HAB-195 WU5.2)', () {
+    testWidgets('shows banner with rationale and end date for a fixed-end break', (tester) async {
+      final state = PactDetailState(pact: _activePact, stats: _stats, isLoading: false, activeBreak: _fixedEndBreak);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStopBreak: () async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-break-banner')), findsOneWidget);
+      expect(find.text('Feeling sick'), findsOneWidget);
+      expect(find.textContaining(formatLocaleDate(DateTime(2026, 3, 20))), findsOneWidget);
+    });
+
+    testWidgets('shows open-ended copy when the break has no planned end date', (tester) async {
+      final state = PactDetailState(pact: _activePact, stats: _stats, isLoading: false, activeBreak: _openEndedBreak);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStopBreak: () async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      expect(find.text(l10n.breakUntilPactEnds), findsOneWidget);
+    });
+
+    testWidgets('hides banner when there is no active break', (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_activePact),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-break-banner')), findsNothing);
+    });
+
+    testWidgets('tapping Resume pact opens a confirmation dialog; confirming calls onStopBreak', (tester) async {
+      var called = false;
+      final state = PactDetailState(pact: _activePact, stats: _stats, isLoading: false, activeBreak: _fixedEndBreak);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStopBreak: () async {
+              called = true;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-resume-pact-button'), skipOffstage: false));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('pact-detail-resume-pact-button')));
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      expect(find.text(l10n.resumePactTitle), findsOneWidget);
+
+      await tester.tap(find.text(l10n.resumePactConfirm));
+      await tester.pumpAndSettle();
+
+      expect(called, isTrue);
+    });
+
+    testWidgets('cancelling the confirmation dialog does not call onStopBreak', (tester) async {
+      var called = false;
+      final state = PactDetailState(pact: _activePact, stats: _stats, isLoading: false, activeBreak: _fixedEndBreak);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStopBreak: () async {
+              called = true;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-resume-pact-button'), skipOffstage: false));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('pact-detail-resume-pact-button')));
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+
+      expect(called, isFalse);
+    });
+
+    testWidgets('shows resumePactError text when stopBreakError is set', (tester) async {
+      final state = PactDetailState(
+        pact: _activePact,
+        stats: _stats,
+        isLoading: false,
+        activeBreak: _fixedEndBreak,
+        stopBreakError: Exception('boom'),
+      );
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStopBreak: () async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await tester.scrollUntilVisible(find.text(l10n.resumePactError), 200);
+      expect(find.text(l10n.resumePactError), findsOneWidget);
+    });
+
+    testWidgets('animates the banner out instead of vanishing instantly when activeBreak becomes null', (tester) async {
+      final withBreak =
+          PactDetailState(pact: _activePact, stats: _stats, isLoading: false, activeBreak: _fixedEndBreak);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: withBreak,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStopBreak: () async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-break-banner')), findsOneWidget);
+
+      final withoutBreak = _loadedState(_activePact);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: withoutBreak,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStopBreak: () async {},
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('pact-detail-break-banner')), findsOneWidget,
+          reason: 'The banner must still be visible/fading on the frame right after activeBreak becomes null');
+
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-break-banner')), findsNothing);
+    });
+
+    testWidgets('shows a loading indicator on Resume pact while isStoppingBreak is true', (tester) async {
+      final state = PactDetailState(
+        pact: _activePact,
+        stats: _stats,
+        isLoading: false,
+        activeBreak: _fixedEndBreak,
+        isStoppingBreak: true,
+      );
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStopBreak: () async {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.scrollUntilVisible(find.byType(CircularProgressIndicator), 200);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
   });
 }

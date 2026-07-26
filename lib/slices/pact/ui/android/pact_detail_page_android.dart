@@ -3,6 +3,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
+import 'package:habit_loop/slices/pact/ui/generic/break_banner.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
@@ -39,6 +40,10 @@ class PactDetailPageAndroid extends StatelessWidget {
   /// off, or a break already blocks starting a new one.
   final VoidCallback? onStartBreak;
 
+  /// Called when the user confirms "Resume pact" on the active-break banner
+  /// (HAB-195 WU5.2).
+  final Future<void> Function()? onStopBreak;
+
   const PactDetailPageAndroid({
     super.key,
     required this.state,
@@ -49,6 +54,7 @@ class PactDetailPageAndroid extends StatelessWidget {
     this.pactTimelineEnabled = false,
     this.onOpenTimeline,
     this.onStartBreak,
+    this.onStopBreak,
   });
 
   bool get _isActive => state.pact?.status == PactStatus.active;
@@ -87,6 +93,7 @@ class PactDetailPageAndroid extends StatelessWidget {
                         pactTimelineEnabled: pactTimelineEnabled,
                         onOpenTimeline: onOpenTimeline,
                         onStartBreak: onStartBreak,
+                        onStopBreak: onStopBreak,
                       ),
           ),
         ],
@@ -104,6 +111,7 @@ class _PactDetailContent extends StatelessWidget {
   final bool pactTimelineEnabled;
   final VoidCallback? onOpenTimeline;
   final VoidCallback? onStartBreak;
+  final Future<void> Function()? onStopBreak;
 
   const _PactDetailContent({
     required this.state,
@@ -114,6 +122,7 @@ class _PactDetailContent extends StatelessWidget {
     this.pactTimelineEnabled = false,
     this.onOpenTimeline,
     this.onStartBreak,
+    this.onStopBreak,
   });
 
   @override
@@ -148,6 +157,19 @@ class _PactDetailContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.s24),
+
+        // "In a break" banner + Resume pact action (HAB-195 WU5.2) — shown
+        // instead of the Take a Break button when a break already blocks
+        // starting a new one. Animated via AnimatedReveal (mirrors the
+        // break-creation flow's end-date-row toggle) so resuming the pact
+        // fades/collapses the banner instead of it vanishing instantly.
+        BreakBannerReveal(
+          activeBreak: state.activeBreak,
+          isStopping: state.isStoppingBreak,
+          stopError: state.stopBreakError,
+          onStopBreak: onStopBreak,
+          l10n: l10n,
+        ),
 
         // Stats cards
         SectionHeader(title: l10n.sectionStats, labelColor: theme.colorScheme.onSurfaceVariant),
