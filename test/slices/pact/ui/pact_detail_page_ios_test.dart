@@ -42,6 +42,7 @@ Widget _buildApp(
   PactDetailState state, {
   bool pactTimelineEnabled = false,
   VoidCallback? onOpenTimeline,
+  VoidCallback? onStartBreak,
   Brightness brightness = Brightness.light,
 }) {
   return MaterialApp(
@@ -60,6 +61,7 @@ Widget _buildApp(
       onArchivePact: (_) async {},
       pactTimelineEnabled: pactTimelineEnabled,
       onOpenTimeline: onOpenTimeline,
+      onStartBreak: onStartBreak,
     ),
   );
 }
@@ -131,6 +133,39 @@ void main() {
       await tester.pumpWidget(_buildApp(state, pactTimelineEnabled: true));
       await tester.pump();
       expect(find.byKey(const Key('pact-detail-timeline-button')), findsNothing);
+    });
+  });
+
+  group('PactDetailPageIos — Take a break button (HAB-195)', () {
+    testWidgets('shows button for an active pact when onStartBreak is provided', (tester) async {
+      final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(state, onStartBreak: () {}));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-start-break-button')), findsOneWidget);
+    });
+
+    testWidgets('hides button when onStartBreak is null (flag off or break already active)', (tester) async {
+      final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(state));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
+    });
+
+    testWidgets('hides button for a stopped pact even when onStartBreak is provided', (tester) async {
+      await tester.pumpWidget(_buildApp(_loadedState(_stoppedPact), onStartBreak: () {}));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
+    });
+
+    testWidgets('tapping the button calls onStartBreak', (tester) async {
+      bool tapped = false;
+      final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(state, onStartBreak: () => tapped = true));
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
+      expect(tapped, isTrue);
     });
   });
 

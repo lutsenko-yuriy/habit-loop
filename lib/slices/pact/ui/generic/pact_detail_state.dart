@@ -1,4 +1,5 @@
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
 
 class PactDetailState {
@@ -13,6 +14,11 @@ class PactDetailState {
   final bool isArchiving;
   final Object? archiveError;
 
+  /// The single unresolved break for this pact, if any (HAB-195). `null`
+  /// means no break is currently active or scheduled, so a new one may be
+  /// started.
+  final PactBreak? activeBreak;
+
   const PactDetailState({
     this.pact,
     this.stats,
@@ -24,6 +30,7 @@ class PactDetailState {
     this.noteError,
     this.isArchiving = false,
     this.archiveError,
+    this.activeBreak,
   });
 
   PactDetailState copyWith({
@@ -41,6 +48,8 @@ class PactDetailState {
     bool? isArchiving,
     Object? archiveError,
     bool clearArchiveError = false,
+    PactBreak? activeBreak,
+    bool clearActiveBreak = false,
   }) {
     return PactDetailState(
       pact: pact ?? this.pact,
@@ -53,6 +62,7 @@ class PactDetailState {
       noteError: clearNoteError ? null : (noteError ?? this.noteError),
       isArchiving: isArchiving ?? this.isArchiving,
       archiveError: clearArchiveError ? null : (archiveError ?? this.archiveError),
+      activeBreak: clearActiveBreak ? null : (activeBreak ?? this.activeBreak),
     );
   }
 }
