@@ -322,6 +322,14 @@ class PactDetailAnalyticsScreen implements AnalyticsScreen {
   String get name => 'pact_detail';
 }
 
+/// Screen identifier for the break-creation flow. (HAB-195)
+class PactBreakCreationAnalyticsScreen implements AnalyticsScreen {
+  const PactBreakCreationAnalyticsScreen();
+
+  @override
+  String get name => 'pact_break_creation';
+}
+
 /// Screen identifier for the edit pact wizard. (HAB-79)
 class PactEditAnalyticsScreen implements AnalyticsScreen {
   const PactEditAnalyticsScreen();

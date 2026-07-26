@@ -70,6 +70,10 @@ void main() {
       // Back on Pact Detail: the break was persisted and blocks a new one.
       expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
 
+      // The break-creation screen fired its own screen view (it's a full
+      // screen, not a dialog, so unlike stop-pact it's tracked separately).
+      expect(h.analytics.loggedScreens.any((s) => s.name == 'pact_break_creation'), isTrue);
+
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
       expect(breaks.first.startDate, DateTime(2099, 6, 15));

@@ -275,6 +275,16 @@ void main() {
     });
   });
 
+  group('PactBreakCreationAnalyticsScreen', () {
+    test('implements AnalyticsScreen', () {
+      expect(const PactBreakCreationAnalyticsScreen(), isA<AnalyticsScreen>());
+    });
+
+    test('name is pact_break_creation', () {
+      expect(const PactBreakCreationAnalyticsScreen().name, 'pact_break_creation');
+    });
+  });
+
   group('PactWizardSummaryAnalyticsScreen', () {
     test('implements AnalyticsScreen', () {
       expect(const PactWizardSummaryAnalyticsScreen(mode: 'creation'), isA<AnalyticsScreen>());

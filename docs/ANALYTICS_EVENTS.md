@@ -401,7 +401,7 @@ No properties — screen view provides sufficient context.
 
 ### `pact_break_started`
 
-Fired when the break-creation flow is submitted successfully and the break is persisted. No dedicated screen view is tracked for the flow itself — consistent with the stop-pact dialog, which is also untracked as a screen view. (HAB-195)
+Fired when the break-creation flow is submitted successfully and the break is persisted. The flow itself is a dedicated screen (not a dialog, unlike stop-pact) and its screen view is tracked separately — see `PactBreakCreationAnalyticsScreen` below. (HAB-195)
 
 | Property | Type | Description |
 |---|---|---|
@@ -442,6 +442,7 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 | `PactWizardSummaryAnalyticsScreen` | `pact_wizard_summary` | `slices/pact/analytics/pact_analytics_events.dart` | User lands on the Summary page inside the wizard (creation or editing mode); `mode` passed as a constructor parameter and forwarded as a screen property — HAB-82 |
 | `PactEditAnalyticsScreen` | `pact_edit` | `slices/pact/analytics/pact_analytics_events.dart` | Edit pact wizard opens (pencil icon tapped on pact detail screen) — HAB-79 |
 | `PactDetailAnalyticsScreen` | `pact_detail` | `slices/pact/analytics/pact_analytics_events.dart` | Pact detail screen opens |
+| `PactBreakCreationAnalyticsScreen` | `pact_break_creation` | `slices/pact/analytics/pact_analytics_events.dart` | Break-creation flow opens (from Pact Detail's "Take a break" entry point, or the tail-zone showup entry point in WU4.2) — HAB-195 |
 | `ShowupDetailAnalyticsScreen` | `showup_detail` | `slices/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |
 | `PactTimelineAnalyticsScreen` | `pact_timeline` | `slices/pact/analytics/pact_timeline_analytics_events.dart` | Pact Timeline screen opens; properties: `pact_id: string`, `pact_status: string` (`active \| completed \| stopped`), `total_showup_count: int` — HAB-116 |
 | `AboutAnalyticsScreen` | `about` | `slices/about/analytics/about_analytics_events.dart` | About screen opens — HAB-149 |
