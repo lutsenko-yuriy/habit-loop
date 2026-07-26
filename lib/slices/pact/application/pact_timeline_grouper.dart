@@ -118,12 +118,14 @@ class PactTimelineGrouper {
     }
 
     for (final showup in showups) {
+      final scheduledDay = DateTime(showup.scheduledAt.year, showup.scheduledAt.month, showup.scheduledAt.day);
+      final isFuture = scheduledDay.isAfter(today);
+
       // A pending showup is only "settled" enough to paint on-break once its own day has
       // arrived — TailZone.contains has no upper bound, so without this a break covering
       // future dates would otherwise leak those dates onto the timeline before they happen,
       // unlike an ordinary future pending showup, which stays invisible until its day arrives.
-      final scheduledDay = DateTime(showup.scheduledAt.year, showup.scheduledAt.month, showup.scheduledAt.day);
-      final coveringBreak = showup.status == ShowupStatus.pending && !scheduledDay.isAfter(today)
+      final coveringBreak = showup.status == ShowupStatus.pending && !isFuture
           ? breaks.firstWhereOrNull((b) => b.contains(showup.scheduledAt))
           : null;
       if (showup.status == ShowupStatus.pending && coveringBreak == null) continue;
@@ -139,6 +141,13 @@ class PactTimelineGrouper {
           trailingStreak = 0;
         }
       }
+
+      // A manually-resolved showup dated after today (an explicit mark always overrides
+      // a break, and nothing stops marking a not-yet-due showup done/failed early) still
+      // counts toward the stats above, but never appears on the timeline itself — the
+      // timeline is a record of what already happened, same rule the on-break guard above
+      // already applies to pending showups.
+      if (isFuture) continue;
 
       final inTail =
           TailZone.contains(scheduledAt: showup.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays);

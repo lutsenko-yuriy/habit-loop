@@ -497,6 +497,47 @@ void main() {
           expect(result.tailStartIndex, 1);
         });
       });
+
+      group('a manually-resolved future showup is not on-break, but still must not appear', () {
+        test('a done showup dated after today never appears on the timeline', () {
+          final result = _g().groupWithStats([_sh('s1', ShowupStatus.done, 15)], now: _now);
+          expect(result.milestones, isEmpty);
+        });
+
+        test('a done showup dated after today still counts toward showupsDone/currentStreak', () {
+          final result = _g().groupWithStats([_sh('s1', ShowupStatus.done, 15)], now: _now);
+          expect(result.showupsDone, 1);
+          expect(result.currentStreak, 1);
+        });
+
+        test('a past streak stays intact when a future done showup follows it', () {
+          final showups = [_done('s1', 1), _done('s2', 2), _sh('s3', ShowupStatus.done, 15)];
+          final result = _g().groupWithStats(showups, now: _now);
+          expect(result.milestones, hasLength(1));
+          expect((result.milestones.single as ShowupStreakMilestone).count, 2);
+        });
+
+        test('today itself still shows, along with an on-break run before it (regression guard)', () {
+          // Anchors this exact bug report: today's own entry and a preceding on-break
+          // streak must both still render even though a later, manually-resolved
+          // future showup is present in the same list.
+          final showups = [
+            pending('s1', 12),
+            pending('s2', 13),
+            _done('s3', 14), // today
+            _sh('s4', ShowupStatus.done, 16), // future — must be excluded
+          ];
+          final result = _g().groupWithStats(showups, now: _now, breaks: [brk('b1', startDay: 12, plannedEndDay: 13)]);
+          expect(result.milestones, hasLength(2));
+          final onBreakRun = result.milestones[0] as ShowupStreakMilestone;
+          expect(onBreakRun.isOnBreak, isTrue);
+          expect(onBreakRun.count, 2);
+          final todayEntry = result.milestones[1] as SingleShowupMilestone;
+          expect(todayEntry.isOnBreak, isFalse);
+          expect(todayEntry.outcome, ShowupStatus.done);
+          expect(todayEntry.scheduledAt, DateTime(2024, 1, 14));
+        });
+      });
     });
   });
 }
