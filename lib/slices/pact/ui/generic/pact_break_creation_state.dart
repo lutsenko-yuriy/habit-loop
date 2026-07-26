@@ -2,7 +2,8 @@ class PactBreakCreationState {
   final DateTime startDate;
   final DateTime endDate;
 
-  /// `true` when the break has no planned end date ("until pact ends").
+  /// `true` when the break has no planned end date (open-ended — the user
+  /// resumes whenever they choose, shown in the UI as "No end date yet").
   /// [endDate] is retained even when this is `true` so the end-date picker
   /// keeps a sensible value if the user toggles back off.
   final bool untilPactEnds;

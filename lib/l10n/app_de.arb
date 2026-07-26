@@ -116,7 +116,7 @@
   "startBreakTitle": "Pause starten",
   "startBreakConfirm": "Pause starten",
   "startBreakError": "Pause konnte nicht gestartet werden. Bitte versuche es erneut.",
-  "breakUntilPactEnds": "Bis zum Ende des Pakts",
+  "breakUntilPactEnds": "Noch kein Enddatum",
   "breakRationaleHint": "Grund (erforderlich)",
   "pactsActive": "{count, plural, =0{Keine aktiven Pakte} one{1 Pakt aktiv} other{{count} Pakte aktiv}}",
   "@pactsActive": {

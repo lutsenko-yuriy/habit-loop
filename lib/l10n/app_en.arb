@@ -116,7 +116,7 @@
   "startBreakTitle": "Start a Break",
   "startBreakConfirm": "Start Break",
   "startBreakError": "Failed to start break. Please try again.",
-  "breakUntilPactEnds": "Until pact ends",
+  "breakUntilPactEnds": "No end date yet",
   "breakRationaleHint": "Reason (required)",
   "pactsActive": "{count, plural, =0{No pacts active} one{1 pact active} other{{count} pacts active}}",
   "@pactsActive": {

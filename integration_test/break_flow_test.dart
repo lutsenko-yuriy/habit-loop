@@ -126,7 +126,7 @@ void main() {
 
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
-      expect(breaks.first.plannedEndDate, isNull, reason: '"Until pact ends" must persist a null planned end date');
+      expect(breaks.first.plannedEndDate, isNull, reason: 'The open-ended toggle must persist a null planned end date');
 
       // A far-future showup is still covered by an open-ended window.
       final farFuture = DateTime(2099, 12, 1);

@@ -116,7 +116,7 @@
   "startBreakTitle": "Démarrer une pause",
   "startBreakConfirm": "Démarrer la pause",
   "startBreakError": "Échec du démarrage de la pause. Veuillez réessayer.",
-  "breakUntilPactEnds": "Jusqu'à la fin du pacte",
+  "breakUntilPactEnds": "Pas encore de date de fin",
   "breakRationaleHint": "Raison (obligatoire)",
   "pactsActive": "{count, plural, =0{Aucun pacte actif} one{1 pacte actif} other{{count} pactes actifs}}",
   "@pactsActive": {

@@ -25,7 +25,7 @@ class PactBreakCreationViewModel extends AutoDisposeFamilyNotifier<PactBreakCrea
     return PactBreakCreationState(
       startDate: today,
       // A week is a reasonable initial suggestion; freely adjustable via the
-      // end-date picker, or overridden entirely by "until pact ends".
+      // end-date picker, or overridden entirely by the open-ended toggle.
       endDate: today.add(const Duration(days: 7)),
     );
   }
