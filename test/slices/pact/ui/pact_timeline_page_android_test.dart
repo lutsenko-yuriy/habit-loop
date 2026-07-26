@@ -54,6 +54,13 @@ final _single = SingleShowupMilestone(
   scheduledAt: DateTime(2024, 1, 25, 8),
 );
 
+final _break = PactBreakMilestone(
+  sortAt: DateTime(2024, 1, 15),
+  rationale: 'Travelling for work',
+  startDate: DateTime(2024, 1, 15),
+  plannedEndDate: DateTime(2024, 1, 22),
+);
+
 Widget _buildApp(
   PactTimelineState state, {
   void Function(PactTimelineMilestone)? onMilestoneTapped,
@@ -142,6 +149,14 @@ void main() {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_noted])));
       await tester.pump();
       expect(find.text('Best session ever'), findsWidgets);
+    });
+
+    testWidgets('shows a break milestone with its rationale (HAB-195 WU5.1)', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_break])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageAndroid)))!;
+      expect(find.text(l10n.showupOnBreak), findsOneWidget);
+      expect(find.text('Travelling for work'), findsOneWidget);
     });
   });
 

@@ -19,6 +19,7 @@ String milestoneTitle(AppLocalizations l10n, PactTimelineMilestone milestone) =>
       CurrentStateMilestone _ => l10n.timelineCurrentState,
       PactConcludedMilestone m =>
         m.finalStatus == PactStatus.completed ? l10n.timelinePactConcludedCompleted : l10n.timelinePactConcludedStopped,
+      PactBreakMilestone _ => l10n.showupOnBreak,
     };
 
 /// Returns a locale-aware date range string for milestones that span a range.

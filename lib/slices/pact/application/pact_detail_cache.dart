@@ -147,11 +147,12 @@ class PactDetailCache {
   }) {
     final sorted = [...showups]..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
-    final grouped = _grouper.groupWithStats(sorted, now: now);
+    final grouped = _grouper.groupWithStats(sorted, now: now, breaks: breaks);
     final pendingCount = sorted.length - grouped.showupsDone - grouped.showupsFailed;
-    // groupWithStats is not yet break-aware (HAB-195 WU5.1 threads breaks
-    // into the grouper/timeline); skippedOnBreak is derived separately here
-    // from the same sorted list so it stays in sync with pendingCount.
+    // groupWithStats only merges breaks into the timeline's milestone list
+    // (HAB-195 WU5.1) — it doesn't touch pending showups, so skippedOnBreak is
+    // still derived separately here from the same sorted list, in sync with
+    // pendingCount.
     final skippedOnBreak = sorted.where((s) => BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks)).length;
 
     // Frozen-snapshot fallback: a cache miss with an empty showup list (a

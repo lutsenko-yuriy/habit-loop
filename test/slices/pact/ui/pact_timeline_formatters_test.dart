@@ -125,6 +125,16 @@ void main() {
       );
       expect(milestoneTitle(l10n, m), l10n.timelinePactConcludedStopped);
     });
+
+    testWidgets('PactBreakMilestone returns the on-break label (HAB-195 WU5.1)', (tester) async {
+      final l10n = await _getL10n(tester);
+      final m = PactBreakMilestone(
+        sortAt: DateTime(2024, 1, 5),
+        rationale: 'Travelling',
+        startDate: DateTime(2024, 1, 5),
+      );
+      expect(milestoneTitle(l10n, m), l10n.showupOnBreak);
+    });
   });
 
   group('milestoneDateRange', () {

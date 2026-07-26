@@ -268,6 +268,9 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
   if (m is PactConcludedMilestone) {
     return m.finalStatus == PactStatus.completed ? HabitLoopColors.success : HabitLoopColors.danger;
   }
+  if (m is PactBreakMilestone) {
+    return _breakColor(context);
+  }
   final outcome = switch (m) {
     ShowupStreakMilestone s => s.outcome,
     NotedShowupMilestone n => n.outcome,
@@ -282,6 +285,8 @@ Color _outcomeColor(ShowupStatus outcome, BuildContext context) => switch (outco
       ShowupStatus.failed => CupertinoColors.systemRed.resolveFrom(context),
       ShowupStatus.pending => HabitLoopColors.secondaryText(context),
     };
+
+Color _breakColor(BuildContext context) => CupertinoColors.systemBlue.resolveFrom(context);
 
 // ── Date content (left of spine) ───────────────────────────────────────────────
 
@@ -308,6 +313,7 @@ class _MilestoneDateContent extends StatelessWidget {
         ShowupStreakMilestone m => _dateRange(m.firstAt, m.lastAt),
         NotedShowupMilestone m => formatLocaleDate(m.scheduledAt),
         SingleShowupMilestone m => formatLocaleDate(m.scheduledAt),
+        PactBreakMilestone m => formatLocaleDate(m.startDate),
       };
 
   String _dateRange(DateTime first, DateTime last) {
@@ -333,6 +339,7 @@ class _MilestoneLabelContent extends StatelessWidget {
         ShowupStreakMilestone m => _StreakLabel(m: m, l10n: l10n),
         NotedShowupMilestone m => _NotedShowupLabel(m: m, l10n: l10n),
         SingleShowupMilestone m => _SingleShowupLabel(m: m, l10n: l10n),
+        PactBreakMilestone m => _PactBreakLabel(m: m, l10n: l10n),
       };
 }
 
@@ -401,6 +408,26 @@ class _PactConcludedLabel extends StatelessWidget {
       ],
     );
   }
+}
+
+class _PactBreakLabel extends StatelessWidget {
+  final PactBreakMilestone m;
+  final AppLocalizations l10n;
+
+  const _PactBreakLabel({required this.m, required this.l10n});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.showupOnBreak,
+            style: AppTypography.valueEmphasis.copyWith(color: _breakColor(context)),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(m.rationale, style: AppTypography.caption),
+        ],
+      );
 }
 
 // ── Showup milestone label widgets ─────────────────────────────────────────────
