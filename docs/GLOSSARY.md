@@ -110,3 +110,4 @@ Canonical translation for each domain concept across all supported locales. Cons
 | **schedule** | Расписание | Horaire | Zeitplan |
 | **reminder** | Напоминание | Rappel | Erinnerung |
 | **archive** | Архив | Archivage | Archiv |
+| **break** | перерыв | pause | Pause |
