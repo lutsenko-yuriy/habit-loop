@@ -19,6 +19,9 @@ class PactDetailState {
   /// started.
   final PactBreak? activeBreak;
 
+  final bool isStoppingBreak;
+  final Object? stopBreakError;
+
   const PactDetailState({
     this.pact,
     this.stats,
@@ -31,6 +34,8 @@ class PactDetailState {
     this.isArchiving = false,
     this.archiveError,
     this.activeBreak,
+    this.isStoppingBreak = false,
+    this.stopBreakError,
   });
 
   PactDetailState copyWith({
@@ -50,6 +55,9 @@ class PactDetailState {
     bool clearArchiveError = false,
     PactBreak? activeBreak,
     bool clearActiveBreak = false,
+    bool? isStoppingBreak,
+    Object? stopBreakError,
+    bool clearStopBreakError = false,
   }) {
     return PactDetailState(
       pact: pact ?? this.pact,
@@ -63,6 +71,8 @@ class PactDetailState {
       isArchiving: isArchiving ?? this.isArchiving,
       archiveError: clearArchiveError ? null : (archiveError ?? this.archiveError),
       activeBreak: clearActiveBreak ? null : (activeBreak ?? this.activeBreak),
+      isStoppingBreak: isStoppingBreak ?? this.isStoppingBreak,
+      stopBreakError: clearStopBreakError ? null : (stopBreakError ?? this.stopBreakError),
     );
   }
 }

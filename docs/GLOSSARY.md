@@ -111,3 +111,4 @@ Canonical translation for each domain concept across all supported locales. Cons
 | **reminder** | Напоминание | Rappel | Erinnerung |
 | **archive** | Архив | Archivage | Archiv |
 | **break** | перерыв | pause | Pause |
+| **resume** (pact, ending a break) | Возобновить | Reprendre | Fortsetzen |

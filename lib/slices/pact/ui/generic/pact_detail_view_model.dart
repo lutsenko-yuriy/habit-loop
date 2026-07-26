@@ -146,6 +146,36 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     }
   }
 
+  /// Stops ("Resume pact") the pact's active break (HAB-195 WU5.2). No-op if
+  /// there is no active break loaded in state.
+  Future<void> stopBreak() async {
+    final activeBreak = state.activeBreak;
+    if (activeBreak == null) return;
+
+    state = state.copyWith(isStoppingBreak: true, clearStopBreakError: true);
+    try {
+      final now = ref.read(pactDetailNowProvider);
+      await ref.read(pactBreakServiceProvider).stopBreak(activeBreak.id, now: now);
+      state = state.copyWith(isStoppingBreak: false, clearActiveBreak: true);
+
+      // PII rule: only pact ID — no rationale.
+      unawaited(ref.read(crashlyticsServiceProvider).log('pact_break_stopped: pactId=$arg'));
+      unawaited(ref.read(logServiceProvider).info('pact_break_stopped: pactId=$arg'));
+      unawaited(
+        ref.read(analyticsServiceProvider).logEvent(PactBreakStoppedEvent(
+              pactId: arg,
+              originalEndType: activeBreak.plannedEndDate == null ? 'until_pact_ends' : 'fixed_date',
+              daysSinceStart: now.difference(activeBreak.startDate).inDays,
+            )),
+      );
+    } catch (e, st) {
+      unawaited(
+        ref.read(logServiceProvider).error('pact_break_stop_failed: pactId=$arg', exception: e, stackTrace: st),
+      );
+      state = state.copyWith(isStoppingBreak: false, stopBreakError: e);
+    }
+  }
+
   Future<void> archivePact(bool archive, {required String source}) async {
     final pact = state.pact;
     if (pact == null) return;

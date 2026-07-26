@@ -115,8 +115,13 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).archivePact(archive, source: 'detail_screen');
     }
 
+    Future<void> onStopBreak() async {
+      ref.invalidate(pactDetailNowProvider);
+      await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).stopBreak();
+    }
+
     // "Take a break" is only offered while no break already blocks a new one
-    // (HAB-195) — Resume pact / banner for an active break lands in WU5.2.
+    // (HAB-195) — an active break shows the "Resume pact" banner instead (WU5.2).
     final onStartBreak = flags.pactBreaksEnabled && state.activeBreak == null ? _onStartBreak : null;
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
@@ -129,6 +134,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         pactTimelineEnabled: flags.pactTimelineEnabled,
         onOpenTimeline: _onOpenTimeline,
         onStartBreak: onStartBreak,
+        onStopBreak: onStopBreak,
       );
     }
     return PactDetailPageAndroid(
@@ -140,6 +146,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       pactTimelineEnabled: flags.pactTimelineEnabled,
       onOpenTimeline: _onOpenTimeline,
       onStartBreak: onStartBreak,
+      onStopBreak: onStopBreak,
     );
   }
 }
