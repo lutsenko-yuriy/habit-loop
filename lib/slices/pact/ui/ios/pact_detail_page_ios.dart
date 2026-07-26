@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Divider, Material, MaterialType, Theme;
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -281,11 +281,13 @@ class _PactDetailContent extends StatelessWidget {
         ],
 
         // Take a break + stop pact — grouped together as pact-lifecycle
-        // actions, visually separated from the read-only sections above by
-        // the larger gap (HAB-195: keep "Take a break" closer to "Stop pact"
-        // than to "View Timeline").
+        // actions, set off from the read-only sections above by a divider
+        // (HAB-195: keep "Take a break" closer to "Stop pact" than to "View
+        // Timeline").
         if (pact.status == PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s32),
+          const SizedBox(height: AppSpacing.s24),
+          Divider(color: CupertinoColors.separator.resolveFrom(context)),
+          const SizedBox(height: AppSpacing.s8),
           if (onStartBreak != null) ...[
             CupertinoButton(
               key: const Key('pact-detail-start-break-button'),

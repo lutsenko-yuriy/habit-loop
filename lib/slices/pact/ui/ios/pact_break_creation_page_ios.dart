@@ -100,29 +100,34 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
                   onDateChanged: widget.onStartDateChanged,
                 ),
               ),
-              AnimatedSwitcher(
+              AnimatedSize(
                 duration: const Duration(milliseconds: 250),
-                child: state.untilPactEnds
-                    ? const SizedBox.shrink()
-                    : Column(
-                        key: const Key('break-end-date-row'),
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: AppSpacing.s12),
-                          DateRowTile(
-                            label: l10n.endDateLabel,
-                            value: formatLocaleDate(state.endDate),
-                            valueColor: primaryColor,
-                            backgroundColor: fill,
-                            onTap: () => _showDatePicker(
-                              context,
-                              state.endDate,
-                              minimumDate: state.startDate.add(const Duration(days: 1)),
-                              onDateChanged: widget.onEndDateChanged,
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: state.untilPactEnds
+                      ? const SizedBox.shrink()
+                      : Column(
+                          key: const Key('break-end-date-row'),
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: AppSpacing.s12),
+                            DateRowTile(
+                              label: l10n.endDateLabel,
+                              value: formatLocaleDate(state.endDate),
+                              valueColor: primaryColor,
+                              backgroundColor: fill,
+                              onTap: () => _showDatePicker(
+                                context,
+                                state.endDate,
+                                minimumDate: state.startDate.add(const Duration(days: 1)),
+                                onDateChanged: widget.onEndDateChanged,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                ),
               ),
               const SizedBox(height: AppSpacing.s12),
               Row(

@@ -95,33 +95,38 @@ class _PactBreakCreationPageAndroidState extends State<PactBreakCreationPageAndr
               if (picked != null) widget.onStartDateChanged(picked);
             },
           ),
-          AnimatedSwitcher(
+          AnimatedSize(
             duration: const Duration(milliseconds: 250),
-            child: state.untilPactEnds
-                ? const SizedBox.shrink()
-                : Column(
-                    key: const Key('break-end-date-row'),
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: AppSpacing.s12),
-                      DateRowTile(
-                        label: l10n.endDateLabel,
-                        value: formatLocaleDate(state.endDate),
-                        valueColor: primaryColor,
-                        backgroundColor: tileColor,
-                        cornerRadius: 12,
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: state.endDate,
-                            firstDate: state.startDate.add(const Duration(days: 1)),
-                            lastDate: DateTime(2040),
-                          );
-                          if (picked != null) widget.onEndDateChanged(picked);
-                        },
-                      ),
-                    ],
-                  ),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: state.untilPactEnds
+                  ? const SizedBox.shrink()
+                  : Column(
+                      key: const Key('break-end-date-row'),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: AppSpacing.s12),
+                        DateRowTile(
+                          label: l10n.endDateLabel,
+                          value: formatLocaleDate(state.endDate),
+                          valueColor: primaryColor,
+                          backgroundColor: tileColor,
+                          cornerRadius: 12,
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: state.endDate,
+                              firstDate: state.startDate.add(const Duration(days: 1)),
+                              lastDate: DateTime(2040),
+                            );
+                            if (picked != null) widget.onEndDateChanged(picked);
+                          },
+                        ),
+                      ],
+                    ),
+            ),
           ),
           const SizedBox(height: AppSpacing.s12),
           Row(
