@@ -140,6 +140,12 @@ void main() {
     testWidgets('shows button for an active pact when onStartBreak is provided', (tester) async {
       final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
       await tester.pumpWidget(_buildApp(state, onStartBreak: () {}));
+      await tester.pump();
+      // skipOffstage: false — the button now sits far enough down the
+      // ListView to be off the default test viewport, and the default
+      // (skipOffstage: true) finder used by ensureVisible would find
+      // nothing to scroll to in the first place.
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button'), skipOffstage: false));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('pact-detail-start-break-button')), findsOneWidget);
     });
@@ -162,7 +168,7 @@ void main() {
       final state = PactDetailState(pact: _pact, stats: _stats, isLoading: false);
       await tester.pumpWidget(_buildApp(state, onStartBreak: () => tapped = true));
       await tester.pump();
-      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button'), skipOffstage: false));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       expect(tapped, isTrue);

@@ -280,20 +280,21 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Take a break entry point (HAB-195)
-        if (pact.status == PactStatus.active && onStartBreak != null) ...[
-          const SizedBox(height: AppSpacing.s8),
-          CupertinoButton(
-            key: const Key('pact-detail-start-break-button'),
-            padding: EdgeInsets.zero,
-            onPressed: onStartBreak,
-            child: Text(l10n.startBreak),
-          ),
-        ],
-
-        // Stop pact button
+        // Take a break + stop pact — grouped together as pact-lifecycle
+        // actions, visually separated from the read-only sections above by
+        // the larger gap (HAB-195: keep "Take a break" closer to "Stop pact"
+        // than to "View Timeline").
         if (pact.status == PactStatus.active) ...[
           const SizedBox(height: AppSpacing.s32),
+          if (onStartBreak != null) ...[
+            CupertinoButton(
+              key: const Key('pact-detail-start-break-button'),
+              padding: EdgeInsets.zero,
+              onPressed: onStartBreak,
+              child: Text(l10n.startBreak),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+          ],
           if (state.stopError != null) ...[
             Text(
               l10n.stopPactError,
