@@ -26,11 +26,8 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
 
     // Banner only when pending debug_backend differs from the value running at startup.
     final startupBackend = ref.watch(debugBackendAtStartupProvider);
-    final showBackendRestartBanner = entries.any((e) {
-      if (e.key != 'debug_backend') return false;
-      final pendingValue = e.overrideValue ?? RemoteConfigDefaults.debugBackend;
-      return pendingValue != startupBackend;
-    });
+    final showBackendRestartBanner = entries.any(
+        (e) => e.key == 'debug_backend' && (e.overrideValue ?? RemoteConfigDefaults.debugBackend) != startupBackend);
 
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
     return CupertinoPageScaffold(

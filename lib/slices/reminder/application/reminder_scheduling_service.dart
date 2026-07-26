@@ -70,12 +70,12 @@ final class ReminderSchedulingService {
 
     final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
 
-    final qualifyingShowups = showups.where((s) {
-      if (s.status != ShowupStatus.pending) return false;
-      if (!s.scheduledAt.subtract(pact.reminderOffset!).isAfter(effectiveNow)) return false;
-      if (BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks)) return false;
-      return true;
-    }).toList();
+    final qualifyingShowups = showups
+        .where((s) =>
+            s.status == ShowupStatus.pending &&
+            s.scheduledAt.subtract(pact.reminderOffset!).isAfter(effectiveNow) &&
+            !BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks))
+        .toList();
 
     final maxShowups = _isIOS ? (_iosMaxPendingNotifications ~/ _notificationsPerShowupIos) : qualifyingShowups.length;
     final showupsToSchedule = qualifyingShowups.take(maxShowups).toList();
