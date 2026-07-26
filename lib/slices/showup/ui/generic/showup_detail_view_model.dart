@@ -89,6 +89,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         showup: showup,
         now: now,
         reminderOffset: pact?.reminderOffset,
+        breaks: breaks,
       );
 
       final rc = ref.read(remoteConfigServiceProvider);

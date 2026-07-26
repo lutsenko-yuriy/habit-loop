@@ -18,6 +18,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.d
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
@@ -220,6 +221,7 @@ void main() {
 
       expect(state.showup?.status, ShowupStatus.pending, reason: 'On-break showup must not be auto-failed');
       expect(state.wasAutoFailed, false);
+      expect(state.uiState, ShowupUiState.onBreak, reason: 'HAB-195 WU5.1 — badge must show the on-break state');
 
       final showupRepo = container.read(showupRepositoryProvider);
       final persisted = await showupRepo.getShowupById(showup.id);
@@ -1187,7 +1189,9 @@ void _startBreakTests() {
 
       await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
 
-      expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isFalse);
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+      expect(state.canStartBreak, isFalse);
+      expect(state.uiState, ShowupUiState.onBreak, reason: 'HAB-195 WU5.1 — badge must reflect the active break');
     });
 
     test('false when the pact has been deleted', () async {
