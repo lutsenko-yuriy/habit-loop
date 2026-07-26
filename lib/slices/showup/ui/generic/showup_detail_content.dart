@@ -19,6 +19,7 @@ typedef ShowupDetailSlots = ({
   // onPressed is null when the note is empty (button visible but disabled).
   Widget Function(BuildContext context, VoidCallback? onRedeem) buildRedemptionButton,
   Widget Function(BuildContext context) buildRedemptionHint,
+  Widget Function(BuildContext context, VoidCallback onPressed) buildStartBreakButton,
 });
 
 /// Shared showup detail body — owns [TextEditingController] lifecycle and
@@ -29,6 +30,8 @@ class ShowupDetailContent extends StatefulWidget {
   final Future<void> Function(String note) onSaveNote;
   final Future<void> Function() onRedeemShowup;
   final VoidCallback? onOpenPact;
+  // Null hides the "Take a break" tail-zone entry point (HAB-195 WU4.2).
+  final VoidCallback? onStartBreak;
   final ShowupStatusColors statusColors;
   final Color labelColor;
   final Color tileColor;
@@ -52,6 +55,7 @@ class ShowupDetailContent extends StatefulWidget {
     required this.linkColor,
     required this.slots,
     this.onOpenPact,
+    this.onStartBreak,
     this.bottomPadding = 0,
   });
 
@@ -148,6 +152,10 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
         const SizedBox(height: AppSpacing.s24),
         if (state.wasAutoFailed) ...[
           widget.slots.buildErrorContainer(context),
+          const SizedBox(height: AppSpacing.s16),
+        ],
+        if (widget.onStartBreak != null) ...[
+          widget.slots.buildStartBreakButton(context, widget.onStartBreak!),
           const SizedBox(height: AppSpacing.s16),
         ],
         if (isPending) ...[

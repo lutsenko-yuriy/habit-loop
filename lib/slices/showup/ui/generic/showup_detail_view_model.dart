@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/break_derivation.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/tail_zone.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
@@ -55,13 +56,18 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
 
       final now = ref.read(showupDetailNowProvider);
 
+      // Fetched once, shared by the auto-fail suppression check below (WU3)
+      // and the "Take a break" tail-zone entry point gate (WU4.2).
+      final breaks = pact != null
+          ? await ref.read(pactBreakRepositoryProvider).getBreaksForPact(showup.pactId)
+          : const <PactBreak>[];
+
       bool wasAutoFailed = false;
       final pactStatsService = ref.read(pactStatsServiceProvider);
       if (showup.status == ShowupStatus.pending) {
         final endTime = showup.scheduledAt.add(showup.duration);
         if (now.isAfter(endTime)) {
           // On-break showups must not be auto-failed on a late open (HAB-195 WU3).
-          final breaks = await ref.read(pactBreakRepositoryProvider).getBreaksForPact(showup.pactId);
           final onBreak = BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks);
           if (!onBreak) {
             showup = await pactStatsService.persistShowupStatus(
@@ -98,6 +104,15 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         );
       }
 
+      // Mirrors PactDetailViewModel's activeBreak gate: only one unresolved
+      // break can exist per pact at a time (HAB-195).
+      final hasActiveBreak = breaks.any((b) => !b.isResolved(now));
+      final canStartBreak = pact != null &&
+          ref.read(featureFlagsProvider).pactBreaksEnabled &&
+          !hasActiveBreak &&
+          showup.status != ShowupStatus.done &&
+          TailZone.contains(scheduledAt: showup.scheduledAt, now: now, days: tailDays);
+
       state = state.copyWith(
         showup: showup,
         habitName: habitName,
@@ -107,6 +122,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         isLoading: false,
         wasAutoFailed: wasAutoFailed,
         canRedeem: canRedeem,
+        canStartBreak: canStartBreak,
       );
     } catch (e, st) {
       unawaited(

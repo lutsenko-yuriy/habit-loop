@@ -18,6 +18,10 @@ class ShowupDetailState {
   final bool isShowupNotFound;
   // True when the showup is auto-failed, in the tail zone, and the RC flag is on.
   final bool canRedeem;
+  // True when the "Take a break" tail-zone entry point should be shown (HAB-195 WU4.2):
+  // pact still exists, breaks are enabled, no unresolved break already blocks a new one,
+  // the showup is unresolved or auto-failed (not done), and it's within the tail zone.
+  final bool canStartBreak;
 
   const ShowupDetailState({
     this.showup,
@@ -32,6 +36,7 @@ class ShowupDetailState {
     this.wasAutoFailed = false,
     this.isShowupNotFound = false,
     this.canRedeem = false,
+    this.canStartBreak = false,
   });
 
   ShowupDetailState copyWith({
@@ -51,6 +56,7 @@ class ShowupDetailState {
     bool? wasAutoFailed,
     bool? isShowupNotFound,
     bool? canRedeem,
+    bool? canStartBreak,
   }) {
     return ShowupDetailState(
       showup: showup ?? this.showup,
@@ -65,6 +71,7 @@ class ShowupDetailState {
       wasAutoFailed: wasAutoFailed ?? this.wasAutoFailed,
       isShowupNotFound: isShowupNotFound ?? this.isShowupNotFound,
       canRedeem: canRedeem ?? this.canRedeem,
+      canStartBreak: canStartBreak ?? this.canStartBreak,
     );
   }
 }
