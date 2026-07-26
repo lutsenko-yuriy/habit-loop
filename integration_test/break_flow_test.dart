@@ -11,6 +11,8 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -22,6 +24,14 @@ import 'harness.dart';
 final _breaksEnabled = remoteConfigServiceProvider.overrideWithValue(
   FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true}),
 );
+
+Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId) async {
+  final tileKey = Key('timeline-milestone-$showupId');
+  await waitFor(tester, find.byKey(tileKey));
+  await tester.tap(find.byKey(tileKey));
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pump(const Duration(milliseconds: 100));
+}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -180,6 +190,81 @@ void main() {
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
       expect(breaks.first.rationale, 'Busy week');
+    });
+
+    testWidgets('start_break_from_tailzone_showup_defaults_to_today', (tester) async {
+      const pactId = 'test-pact-tailzone-break';
+      final pact = buildPact(id: pactId, habitName: 'Read', startDate: DateTime(2099, 6, 1));
+
+      // 1 day before testNow — within the 7-day tail zone. The dashboard's
+      // gap-fill sweep generates June 15+ only (mirrors redeem_showup_flow_test.dart's
+      // approach), so this stays the sole showup and auto-fails nothing else.
+      const showupId = 'tailzone-break-showup';
+      final showupAt = DateTime(2099, 6, 14, 8, 0);
+      final testNow = DateTime(2099, 6, 15, 7, 55);
+      final showup = buildShowup(id: showupId, pactId: pactId, scheduledAt: showupAt, status: ShowupStatus.failed);
+
+      // A later showup (outside this seeded pair) that will fall inside the
+      // break window created below, to verify it gets marked on-break.
+      const laterShowupId = 'tailzone-break-later-showup';
+      final laterShowupAt = DateTime(2099, 6, 16, 8, 0);
+      final laterShowup = buildShowup(id: laterShowupId, pactId: pactId, scheduledAt: laterShowupAt);
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          todayProvider.overrideWithValue(testNow),
+          pactDetailNowProvider.overrideWithValue(testNow),
+          pactTimelineNowProvider.overrideWithValue(testNow),
+          showupDetailNowProvider.overrideWithValue(testNow),
+          pactBreakCreationNowProvider.overrideWithValue(testNow),
+          _breaksEnabled,
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(pact);
+          await h.showupRepo.saveShowup(showup);
+          await h.showupRepo.saveShowup(laterShowup);
+        },
+      );
+
+      // ── 1. Open the tail-zone (auto-failed, past) showup's detail via the timeline ──
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Read');
+      await openTimeline(tester);
+      await _openShowupDetailFromTimeline(tester, showupId);
+
+      // ── 2. The break entry point is present ───────────────────────────────
+      await waitFor(tester, find.byKey(const Key('showup-detail-start-break-button')));
+
+      // ── 3. Tap it and submit — defaults are accepted (today .. today+7) ────
+      await tester.tap(find.byKey(const Key('showup-detail-start-break-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Feeling sick');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('break-submit-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // ── 4. Start date defaults to today (testNow's date), not the past
+      //         triggering showup's own (June 14) date ─────────────────────
+      final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
+      expect(breaks, hasLength(1));
+      expect(breaks.first.startDate, DateTime(2099, 6, 15));
+
+      // ── 5. The triggering showup is unaffected — still failed, unchanged ──
+      final triggering = await h.showupRepo.getShowupById(showupId);
+      expect(triggering?.status, ShowupStatus.failed);
+      expect(breaks.first.contains(showupAt), isFalse,
+          reason: 'The break starts today (June 15), so it must not retroactively cover the June 14 showup');
+
+      // ── 6. A later showup that does fall inside the new window is on-break ──
+      expect(breaks.first.contains(laterShowupAt), isTrue);
+
+      // ── 7. pact_break_started fired with source=tail_zone_showup ──────────
+      final started = h.analytics.loggedEvents.firstWhere((e) => e.name == 'pact_break_started');
+      expect(started.toParameters()['source'], 'tail_zone_showup');
     });
 
     testWidgets('start_break_blocked_while_break_active', (tester) async {

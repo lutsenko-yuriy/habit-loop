@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/android/showup_detail_page_android.dart';
@@ -88,7 +89,32 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       }
     }
 
+    // Start-break entry point (HAB-195 WU4.2) — pushes the same break-creation
+    // flow already wired from Pact Detail (WU4.1), with source='tail_zone_showup'.
+    Future<void> onStartBreak() async {
+      if (!mounted) return;
+      final pactId = state.showup!.pactId;
+      final result = await Navigator.of(context).push<bool>(
+        defaultTargetPlatform == TargetPlatform.iOS
+            ? CupertinoPageRoute<bool>(
+                builder: (_) => PactBreakCreationScreen(pactId: pactId, source: 'tail_zone_showup'),
+              )
+            : MaterialPageRoute<bool>(
+                builder: (_) => PactBreakCreationScreen(pactId: pactId, source: 'tail_zone_showup'),
+              ),
+      );
+
+      // Reload if a break was created, so canStartBreak reflects it.
+      if (result == true && mounted) {
+        ref.invalidate(showupDetailNowProvider);
+        unawaited(
+          ref.read(showupDetailViewModelProvider(widget.showupId).notifier).load(),
+        );
+      }
+    }
+
     final openPactCallback = (state.showup != null && state.habitName != null) ? onOpenPact : null;
+    final startBreakCallback = state.canStartBreak ? onStartBreak : null;
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return ShowupDetailPageIos(
@@ -98,6 +124,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
         onSaveNote: onSaveNote,
         onRedeemShowup: onRedeemShowup,
         onOpenPact: openPactCallback,
+        onStartBreak: startBreakCallback,
       );
     }
     return ShowupDetailPageAndroid(
@@ -107,6 +134,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       onSaveNote: onSaveNote,
       onRedeemShowup: onRedeemShowup,
       onOpenPact: openPactCallback,
+      onStartBreak: startBreakCallback,
     );
   }
 }

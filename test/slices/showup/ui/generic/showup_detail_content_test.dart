@@ -52,6 +52,7 @@ ShowupDetailSlots _slots({
   String errorKey = 'error-container',
   String redeemKey = 'redeem-button',
   String redeemHintKey = 'redeem-hint',
+  String startBreakKey = 'start-break-button',
   VoidCallback? onSavePressed,
 }) =>
     (
@@ -68,6 +69,11 @@ ShowupDetailSlots _slots({
             child: const Text('Redeem'),
           ),
       buildRedemptionHint: (ctx) => SizedBox(key: Key(redeemHintKey)),
+      buildStartBreakButton: (ctx, onPressed) => TextButton(
+            key: Key(startBreakKey),
+            onPressed: onPressed,
+            child: const Text('Take a Break'),
+          ),
     );
 
 // Wrap helper
@@ -75,6 +81,7 @@ ShowupDetailSlots _slots({
 Widget _wrap(
   ShowupDetailState state, {
   VoidCallback? onOpenPact,
+  VoidCallback? onStartBreak,
   ShowupDetailSlots? slots,
   Future<void> Function(String)? onSaveNote,
 }) {
@@ -94,6 +101,7 @@ Widget _wrap(
           onSaveNote: onSaveNote ?? (_) async {},
           onRedeemShowup: () async {},
           onOpenPact: onOpenPact,
+          onStartBreak: onStartBreak,
           statusColors: ShowupStatusColors.material(Theme.of(context).colorScheme),
           labelColor: Colors.grey,
           tileColor: Colors.grey.shade100,
@@ -151,6 +159,20 @@ void main() {
       await tester.pumpWidget(_wrap(_loadedState()));
       await tester.pump();
       expect(find.byKey(const Key('showup-pact-link')), findsNothing);
+    });
+  });
+
+  group('ShowupDetailContent — start break button', () {
+    testWidgets('shows start break button when onStartBreak is provided', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState(), onStartBreak: () {}));
+      await tester.pump();
+      expect(find.byKey(const Key('start-break-button')), findsOneWidget);
+    });
+
+    testWidgets('hides start break button when onStartBreak is null', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState()));
+      await tester.pump();
+      expect(find.byKey(const Key('start-break-button')), findsNothing);
     });
   });
 

@@ -20,6 +20,9 @@ class ShowupDetailPageIos extends StatelessWidget {
   /// Null when the pact has been deleted (habitName is also null in that case).
   final VoidCallback? onOpenPact;
 
+  /// Null hides the "Take a break" tail-zone entry point (HAB-195 WU4.2).
+  final VoidCallback? onStartBreak;
+
   const ShowupDetailPageIos({
     super.key,
     required this.state,
@@ -28,6 +31,7 @@ class ShowupDetailPageIos extends StatelessWidget {
     required this.onSaveNote,
     required this.onRedeemShowup,
     this.onOpenPact,
+    this.onStartBreak,
   });
 
   @override
@@ -77,6 +81,7 @@ class ShowupDetailPageIos extends StatelessWidget {
                                 onSaveNote: onSaveNote,
                                 onRedeemShowup: onRedeemShowup,
                                 onOpenPact: onOpenPact,
+                                onStartBreak: onStartBreak,
                                 statusColors: colors,
                                 labelColor: labelColor,
                                 tileColor: tileColor,
@@ -142,6 +147,12 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         style:
                                             AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(ctx)),
                                         textAlign: TextAlign.center,
+                                      ),
+                                  buildStartBreakButton: (ctx, onPressed) => CupertinoButton(
+                                        key: const Key('showup-detail-start-break-button'),
+                                        padding: EdgeInsets.zero,
+                                        onPressed: onPressed,
+                                        child: Text(l10n.startBreak),
                                       ),
                                 ),
                               ),

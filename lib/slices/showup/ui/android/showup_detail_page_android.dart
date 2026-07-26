@@ -18,6 +18,9 @@ class ShowupDetailPageAndroid extends StatelessWidget {
   /// Null when the pact has been deleted (habitName is also null in that case).
   final VoidCallback? onOpenPact;
 
+  /// Null hides the "Take a break" tail-zone entry point (HAB-195 WU4.2).
+  final VoidCallback? onStartBreak;
+
   const ShowupDetailPageAndroid({
     super.key,
     required this.state,
@@ -26,6 +29,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
     required this.onSaveNote,
     required this.onRedeemShowup,
     this.onOpenPact,
+    this.onStartBreak,
   });
 
   @override
@@ -65,6 +69,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                             onSaveNote: onSaveNote,
                             onRedeemShowup: onRedeemShowup,
                             onOpenPact: onOpenPact,
+                            onStartBreak: onStartBreak,
                             statusColors: colors,
                             labelColor: theme.colorScheme.onSurfaceVariant,
                             tileColor: theme.colorScheme.surfaceContainerHighest,
@@ -135,6 +140,11 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                     l10n.showupRedeemAddNoteHint,
                                     style: AppTypography.caption.copyWith(color: theme.colorScheme.onSurfaceVariant),
                                     textAlign: TextAlign.center,
+                                  ),
+                              buildStartBreakButton: (ctx, onPressed) => TextButton(
+                                    key: const Key('showup-detail-start-break-button'),
+                                    onPressed: onPressed,
+                                    child: Text(l10n.startBreak),
                                   ),
                             ),
                           ),

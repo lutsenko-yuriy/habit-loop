@@ -703,6 +703,7 @@ void main() {
   });
 
   _redemptionTests();
+  _startBreakTests();
 
   group('ShowupDetailViewModel notification cancellation', () {
     ProviderContainer makeNotificationContainer({
@@ -1051,6 +1052,152 @@ void _redemptionNoteToggleTest() {
       // canRedeem is still true (the section stays visible); the UI disables
       // onPressed because note is empty. We verify the note is null so the
       // content layer's `hasNote` check evaluates to false.
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Start break (tail-zone entry point) tests — HAB-195 WU4.2
+// ---------------------------------------------------------------------------
+
+// Anchored "now": 2099-06-15 12:00 — mirrors _redemptionNow's far-future anchor.
+final _startBreakNow = DateTime(2099, 6, 15, 12, 0);
+
+// Scheduled tomorrow — stays pending (not yet elapsed), and falls in the tail
+// zone (TailZone.contains has no upper bound, only a "no earlier than" floor).
+Showup _inTailPendingShowup() => Showup(
+      id: 'sb1',
+      pactId: 'p1',
+      scheduledAt: DateTime(2099, 6, 16, 8, 0),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.pending,
+    );
+
+Showup _inTailFailedShowup() => Showup(
+      id: 'sb2',
+      pactId: 'p1',
+      scheduledAt: DateTime(2099, 6, 10, 8, 0), // 5 days before _startBreakNow — in tail zone
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.failed,
+    );
+
+Showup _inTailDoneShowup() => Showup(
+      id: 'sb3',
+      pactId: 'p1',
+      scheduledAt: DateTime(2099, 6, 10, 8, 0),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.done,
+    );
+
+// Well before the tail-zone cutoff (_startBreakNow - 7 days = 2099-06-08).
+Showup _outOfTailPendingShowup() => Showup(
+      id: 'sb4',
+      pactId: 'p1',
+      scheduledAt: DateTime(2099, 5, 1, 8, 0),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.pending,
+    );
+
+ProviderContainer _makeStartBreakContainer({
+  required Showup showup,
+  bool breaksEnabled = true,
+  bool includePact = true,
+  List<PactBreak> breaks = const [],
+}) {
+  final rc = FakeRemoteConfigService(overrides: {'pact_breaks_enabled': breaksEnabled});
+  final showupRepo = InMemoryShowupRepository([showup]);
+  final pactRepo = InMemoryPactRepository(includePact ? [_pact] : []);
+  final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+  return ProviderContainer(
+    overrides: [
+      remoteConfigServiceProvider.overrideWithValue(rc),
+      pactRepositoryProvider.overrideWithValue(pactRepo),
+      showupRepositoryProvider.overrideWithValue(showupRepo),
+      pactTransactionServiceProvider.overrideWithValue(txService),
+      syncServiceProvider.overrideWithValue(const NoopSyncService()),
+      pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
+      showupDetailNowProvider.overrideWithValue(_startBreakNow),
+    ],
+  );
+}
+
+void _startBreakTests() {
+  group('ShowupDetailViewModel — canStartBreak', () {
+    test('true for in-tail pending showup when flag is on and no active break', () async {
+      final showup = _inTailPendingShowup();
+      final container = _makeStartBreakContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isTrue);
+    });
+
+    test('true for in-tail auto-failed showup', () async {
+      final showup = _inTailFailedShowup();
+      final container = _makeStartBreakContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isTrue);
+    });
+
+    test('false for a done showup', () async {
+      final showup = _inTailDoneShowup();
+      final container = _makeStartBreakContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isFalse);
+    });
+
+    test('false for a showup outside the tail zone', () async {
+      final showup = _outOfTailPendingShowup();
+      final container = _makeStartBreakContainer(showup: showup);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isFalse);
+    });
+
+    test('false when pact_breaks_enabled flag is off', () async {
+      final showup = _inTailPendingShowup();
+      final container = _makeStartBreakContainer(showup: showup, breaksEnabled: false);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isFalse);
+    });
+
+    test('false when an unresolved break already exists on the pact', () async {
+      final showup = _inTailPendingShowup();
+      final existingBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2099, 6, 1),
+        plannedEndDate: DateTime(2099, 6, 20),
+        rationale: 'Already on break',
+      );
+      final container = _makeStartBreakContainer(showup: showup, breaks: [existingBreak]);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isFalse);
+    });
+
+    test('false when the pact has been deleted', () async {
+      final showup = _inTailPendingShowup();
+      final container = _makeStartBreakContainer(showup: showup, includePact: false);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isFalse);
     });
   });
 }
