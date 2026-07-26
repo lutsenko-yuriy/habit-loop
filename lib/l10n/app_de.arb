@@ -112,6 +112,12 @@
   "stopPactBody": "Diese Aktion kann nicht rückgängig gemacht werden. Du kannst den Pakt-Verlauf danach noch einsehen.",
   "stopPactReasonHint": "Grund (optional)",
   "stopPactConfirm": "Stoppen",
+  "startBreak": "Pause einlegen",
+  "startBreakTitle": "Pause starten",
+  "startBreakConfirm": "Pause starten",
+  "startBreakError": "Pause konnte nicht gestartet werden. Bitte versuche es erneut.",
+  "breakUntilPactEnds": "Bis zum Ende des Pakts",
+  "breakRationaleHint": "Grund (erforderlich)",
   "pactsActive": "{count, plural, =0{Keine aktiven Pakte} one{1 Pakt aktiv} other{{count} Pakte aktiv}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }
