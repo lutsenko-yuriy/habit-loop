@@ -283,7 +283,11 @@ class _MilestoneDateContent extends StatelessWidget {
 
   String? _text(BuildContext context) => switch (milestone) {
         PactCreatedMilestone m => formatLocaleDate(m.sortAt),
-        CurrentStateMilestone m => m.nextScheduledAt != null ? formatLocaleDate(m.nextScheduledAt!) : null,
+        // sortAt is "now" (set at bundle-computation time) — showing it here, not
+        // nextScheduledAt, anchors the "Active" entry to today regardless of how far
+        // overdue the earliest pending showup is (HAB-195: on-break showups can now
+        // stay pending for the whole break, making that lag far more common).
+        CurrentStateMilestone m => formatLocaleDate(m.sortAt),
         PactConcludedMilestone m => formatLocaleDate(m.concludedAt),
         ShowupStreakMilestone m => _dateRange(m.firstAt, m.lastAt),
         NotedShowupMilestone m => formatLocaleDate(m.scheduledAt),

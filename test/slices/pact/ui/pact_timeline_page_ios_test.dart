@@ -146,6 +146,18 @@ void main() {
       expect(find.text(l10n.timelineCurrentState), findsWidgets);
     });
 
+    testWidgets('current-state anchor date shows sortAt (today), not the possibly-overdue nextScheduledAt', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_buildApp(_loaded(anchorEnd: _currentState)));
+      await tester.pump();
+      final locale = Localizations.localeOf(tester.element(find.byType(PactTimelinePageIos)));
+      final sortAtStr = DateFormat.yMd(locale.toString()).format(_currentState.sortAt);
+      final nextScheduledStr = DateFormat.yMd(locale.toString()).format(_currentState.nextScheduledAt!);
+      expect(find.text(sortAtStr), findsOneWidget);
+      expect(find.text(nextScheduledStr), findsNothing);
+    });
+
     testWidgets('shows concluded anchor label for stopped pact', (tester) async {
       await tester.pumpWidget(_buildApp(_loaded(anchorEnd: _concluded)));
       await tester.pump();
