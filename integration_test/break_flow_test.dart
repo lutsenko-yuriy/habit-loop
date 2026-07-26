@@ -119,7 +119,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       await tester.tap(find.byKey(const Key('break-until-pact-ends-switch')));
-      await tester.pump();
+      await tester.pumpAndSettle(); // let the end-date row's AnimatedSwitcher collapse finish
       expect(find.byKey(const Key('break-end-date-row')), findsNothing);
 
       await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Travel');
