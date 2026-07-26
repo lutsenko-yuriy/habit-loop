@@ -42,13 +42,15 @@ class _AnimatedRevealState extends State<AnimatedReveal> with SingleTickerProvid
     vsync: this,
     value: widget.visible ? 1 : 0,
   );
-  late Animation<double> _animation = CurvedAnimation(parent: _controller, curve: widget.curve);
+  late CurvedAnimation _animation = CurvedAnimation(parent: _controller, curve: widget.curve);
 
   @override
   void didUpdateWidget(covariant AnimatedReveal oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.curve != oldWidget.curve) {
+      final oldAnimation = _animation;
       _animation = CurvedAnimation(parent: _controller, curve: widget.curve);
+      oldAnimation.dispose();
     }
     if (widget.duration != oldWidget.duration) {
       _controller.duration = widget.duration;
@@ -60,6 +62,7 @@ class _AnimatedRevealState extends State<AnimatedReveal> with SingleTickerProvid
 
   @override
   void dispose() {
+    _animation.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -69,7 +72,9 @@ class _AnimatedRevealState extends State<AnimatedReveal> with SingleTickerProvid
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        final value = _animation.value;
+        // Clamp: a caller-supplied overshoot curve (e.g. easeOutBack) can push
+        // the raw value outside [0, 1], which Opacity.opacity asserts against.
+        final value = _animation.value.clamp(0.0, 1.0);
         if (value <= 0) return const SizedBox.shrink();
         return Align(
           alignment: widget.alignment,
