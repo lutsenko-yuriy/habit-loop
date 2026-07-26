@@ -27,12 +27,21 @@ final class ShowupStreakMilestone extends PactTimelineMilestone {
     required this.count,
     required this.firstAt,
     required this.lastAt,
+    this.isOnBreak = false,
+    this.breakRationale,
   });
 
   final ShowupStatus outcome;
   final int count;
   final DateTime firstAt;
   final DateTime lastAt;
+
+  /// A run of consecutive on-break showups (HAB-195 WU5.1) — [outcome] is
+  /// [ShowupStatus.pending] in this case, since the underlying showups are
+  /// still unresolved. [breakRationale] is the covering break's rationale,
+  /// shown in place of a note.
+  final bool isOnBreak;
+  final String? breakRationale;
 }
 
 final class SingleShowupMilestone extends PactTimelineMilestone {
@@ -41,11 +50,17 @@ final class SingleShowupMilestone extends PactTimelineMilestone {
     required this.showupId,
     required this.outcome,
     required this.scheduledAt,
+    this.isOnBreak = false,
+    this.breakRationale,
   });
 
   final String showupId;
   final ShowupStatus outcome;
   final DateTime scheduledAt;
+
+  /// A single on-break showup (HAB-195 WU5.1) — see [ShowupStreakMilestone.isOnBreak].
+  final bool isOnBreak;
+  final String? breakRationale;
 }
 
 final class NotedShowupMilestone extends PactTimelineMilestone {
@@ -89,27 +104,4 @@ final class PactConcludedMilestone extends PactTimelineMilestone {
   final DateTime concludedAt;
   final PactStatus finalStatus;
   final String? note;
-}
-
-/// A pact break's own timeline entry — one per [PactBreak], sorted by its
-/// [startDate] (HAB-195 WU5.1). Distinct from the individual pending showups
-/// that fall inside the break window, which stay invisible on the timeline
-/// exactly like any other pending showup.
-final class PactBreakMilestone extends PactTimelineMilestone {
-  const PactBreakMilestone({
-    required super.sortAt,
-    required this.rationale,
-    required this.startDate,
-    this.plannedEndDate,
-    this.stoppedAt,
-  });
-
-  final String rationale;
-  final DateTime startDate;
-
-  /// null = "until pact ends".
-  final DateTime? plannedEndDate;
-
-  /// null = not stopped (still active or scheduled).
-  final DateTime? stoppedAt;
 }

@@ -56,11 +56,23 @@ final _single = SingleShowupMilestone(
   scheduledAt: DateTime(2024, 1, 25, 8),
 );
 
-final _break = PactBreakMilestone(
+final _break = SingleShowupMilestone(
   sortAt: DateTime(2024, 1, 15),
-  rationale: 'Travelling for work',
-  startDate: DateTime(2024, 1, 15),
-  plannedEndDate: DateTime(2024, 1, 22),
+  showupId: 'break-single-1',
+  outcome: ShowupStatus.pending,
+  scheduledAt: DateTime(2024, 1, 15),
+  isOnBreak: true,
+  breakRationale: 'Travelling for work',
+);
+
+final _breakStreak = ShowupStreakMilestone(
+  sortAt: DateTime(2024, 1, 15),
+  outcome: ShowupStatus.pending,
+  count: 3,
+  firstAt: DateTime(2024, 1, 15),
+  lastAt: DateTime(2024, 1, 17),
+  isOnBreak: true,
+  breakRationale: 'Travelling for work',
 );
 
 Widget _buildApp(
@@ -154,8 +166,16 @@ void main() {
       expect(find.text('Best session ever'), findsWidgets);
     });
 
-    testWidgets('shows a break milestone with its rationale (HAB-195 WU5.1)', (tester) async {
+    testWidgets('shows a single on-break showup with its rationale (HAB-195 WU5.1)', (tester) async {
       await tester.pumpWidget(_buildApp(_loaded(milestones: [_break])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
+      expect(find.text(l10n.showupOnBreak), findsOneWidget);
+      expect(find.text('Travelling for work'), findsOneWidget);
+    });
+
+    testWidgets('shows a streak of on-break showups with its rationale (HAB-195 WU5.1)', (tester) async {
+      await tester.pumpWidget(_buildApp(_loaded(milestones: [_breakStreak])));
       await tester.pump();
       final l10n = AppLocalizations.of(tester.element(find.byType(PactTimelinePageIos)))!;
       expect(find.text(l10n.showupOnBreak), findsOneWidget);

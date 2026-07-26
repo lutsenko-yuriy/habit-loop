@@ -364,6 +364,8 @@ void main() {
             stoppedAt: stoppedDay != null ? DateTime(2024, 1, stoppedDay) : null,
           );
 
+      Showup pending(String id, int day) => _sh(id, ShowupStatus.pending, day);
+
       test('no breaks produces the same milestones as the showup-only path', () {
         final showups = [_done('s1', 1), _fail('s2', 2)];
         final withBreaks = _g().groupWithStats(showups, breaks: const []);
@@ -372,66 +374,91 @@ void main() {
         expect(withBreaks.tailStartIndex, without.tailStartIndex);
       });
 
-      test('a break becomes a PactBreakMilestone carrying its rationale and dates', () {
-        final result = _g().groupWithStats([], breaks: [brk('b1', startDay: 5, plannedEndDay: 10)]);
-        expect(result.milestones, hasLength(1));
-        final m = result.milestones.single as PactBreakMilestone;
-        expect(m.rationale, 'rationale-b1');
-        expect(m.startDate, DateTime(2024, 1, 5));
-        expect(m.plannedEndDate, DateTime(2024, 1, 10));
-        expect(m.stoppedAt, isNull);
-        expect(m.sortAt, DateTime(2024, 1, 5));
+      test('an ordinary pending showup (no covering break) is still skipped', () {
+        final result = _g().groupWithStats([pending('s1', 1)]);
+        expect(result.milestones, isEmpty);
       });
 
-      test('a break milestone is interleaved chronologically with showup milestones', () {
-        final showups = [_done('s1', 1), _done('s2', 2), _done('s3', 3)];
-        final breaks = [brk('b1', startDay: 2)];
+      test('a lone on-break showup (non-tail) becomes a SingleShowupMilestone painted on-break', () {
+        final result = _g().groupWithStats([pending('s1', 5)], breaks: [brk('b1', startDay: 1, plannedEndDay: 10)]);
+        expect(result.milestones, hasLength(1));
+        final m = result.milestones.single as SingleShowupMilestone;
+        expect(m.isOnBreak, isTrue);
+        expect(m.breakRationale, 'rationale-b1');
+        expect(m.outcome, ShowupStatus.pending);
+        expect(m.scheduledAt, DateTime(2024, 1, 5));
+      });
+
+      test('consecutive on-break showups (non-tail) form a ShowupStreakMilestone', () {
+        final showups = [pending('s1', 1), pending('s2', 2), pending('s3', 3)];
+        final result = _g().groupWithStats(showups, breaks: [brk('b1', startDay: 1, plannedEndDay: 10)]);
+        expect(result.milestones, hasLength(1));
+        final m = result.milestones.single as ShowupStreakMilestone;
+        expect(m.isOnBreak, isTrue);
+        expect(m.breakRationale, 'rationale-b1');
+        expect(m.count, 3);
+        expect(m.outcome, ShowupStatus.pending);
+      });
+
+      test('on-break run does not merge with an adjacent done streak', () {
+        final showups = [_done('s1', 1), _done('s2', 2), pending('s3', 3), pending('s4', 4)];
+        final result = _g().groupWithStats(showups, breaks: [brk('b1', startDay: 3, plannedEndDay: 10)]);
+        expect(result.milestones, hasLength(2));
+        expect((result.milestones[0] as ShowupStreakMilestone).isOnBreak, isFalse);
+        expect((result.milestones[0] as ShowupStreakMilestone).count, 2);
+        expect((result.milestones[1] as ShowupStreakMilestone).isOnBreak, isTrue);
+        expect((result.milestones[1] as ShowupStreakMilestone).count, 2);
+      });
+
+      test('two adjacent breaks with no gap split into two separate entries', () {
+        final showups = [pending('s1', 1), pending('s2', 2)];
+        final breaks = [
+          brk('b1', startDay: 1, plannedEndDay: 1, stoppedDay: 1),
+          brk('b2', startDay: 2, plannedEndDay: 10),
+        ];
         final result = _g().groupWithStats(showups, breaks: breaks);
-        // s1/s2 done-streak flushes as one run of 2 (Jan1-2), then s3 alone (Jan3) —
-        // but the break at Jan2 sorts between them once merged.
-        final sortAts = result.milestones.map((m) => m.sortAt).toList();
-        final sorted = [...sortAts]..sort();
-        expect(sortAts, sorted);
-        expect(result.milestones.whereType<PactBreakMilestone>(), hasLength(1));
+        expect(result.milestones, hasLength(2));
+        expect((result.milestones[0] as SingleShowupMilestone).breakRationale, 'rationale-b1');
+        expect((result.milestones[1] as SingleShowupMilestone).breakRationale, 'rationale-b2');
+      });
+
+      test('on-break showup inside the tail zone is always individual, never part of a streak', () {
+        // cutoff(7 days from _now=Jan14) = Jan 7 — Jan 10-12 are all in-tail.
+        final showups = [pending('s1', 10), pending('s2', 11), pending('s3', 12)];
+        final result = _g(tailPeriodInDays: 7).groupWithStats(
+          showups,
+          now: _now,
+          breaks: [brk('b1', startDay: 1, plannedEndDay: 20)],
+        );
+        expect(result.milestones, hasLength(3));
+        for (final m in result.milestones) {
+          expect(m, isA<SingleShowupMilestone>());
+          expect((m as SingleShowupMilestone).isOnBreak, isTrue);
+        }
       });
 
       test('does not affect showupsDone/showupsFailed/currentStreak stats', () {
-        final showups = [_done('s1', 1), _fail('s2', 2)];
-        final breaks = [brk('b1', startDay: 1, plannedEndDay: 2)];
+        final showups = [_done('s1', 1), _fail('s2', 2), pending('s3', 3)];
+        final breaks = [brk('b1', startDay: 3, plannedEndDay: 4)];
         final result = _g().groupWithStats(showups, breaks: breaks);
         expect(result.showupsDone, 1);
         expect(result.showupsFailed, 1);
         expect(result.currentStreak, 0);
       });
 
-      test('multiple breaks each become their own milestone, sorted by startDate', () {
-        final breaks = [brk('b2', startDay: 10), brk('b1', startDay: 5)];
-        final result = _g().groupWithStats([], breaks: breaks);
-        expect(result.milestones, hasLength(2));
-        expect((result.milestones[0] as PactBreakMilestone).rationale, 'rationale-b1');
-        expect((result.milestones[1] as PactBreakMilestone).rationale, 'rationale-b2');
+      test('an on-break gap is transparent to the trailing streak, same as any other pending gap', () {
+        final showups = [_done('s1', 1), _done('s2', 2), pending('s3', 3), _done('s4', 4), _done('s5', 5)];
+        final result = _g().groupWithStats(showups, breaks: [brk('b1', startDay: 3, plannedEndDay: 3)]);
+        // s3 is on-break and skips the stats block entirely, so it neither breaks nor
+        // advances the running trailing-streak counter — s4/s5 continue incrementing
+        // from where s1/s2 left it (pre-existing behaviour for any pending gap).
+        expect(result.currentStreak, 4);
       });
 
-      test('tailStartIndex accounts for a break milestone that falls in the tail zone', () {
-        // cutoff(7 days from _now=Jan14) = Jan 7 — a break starting Jan 10 is in-tail.
-        final showups = [_done('s1', 1)]; // non-tail
-        final breaks = [brk('b1', startDay: 10)]; // tail
-        final result = _g(tailPeriodInDays: 7).groupWithStats(showups, now: _now, breaks: breaks);
-        expect(result.milestones, hasLength(2));
-        expect(result.tailStartIndex, 1);
-        expect(result.milestones[1], isA<PactBreakMilestone>());
-      });
-
-      test('a stopped break carries its stoppedAt through to the milestone', () {
-        final result = _g().groupWithStats([], breaks: [brk('b1', startDay: 1, plannedEndDay: 20, stoppedDay: 5)]);
-        final m = result.milestones.single as PactBreakMilestone;
-        expect(m.stoppedAt, DateTime(2024, 1, 5));
-      });
-
-      test('group() (not just groupWithStats()) also merges break milestones', () {
-        final result = _g().group([], breaks: [brk('b1', startDay: 5)]);
+      test('group() (not just groupWithStats()) also reflects on-break painting', () {
+        final result = _g().group([pending('s1', 5)], breaks: [brk('b1', startDay: 1, plannedEndDay: 10)]);
         expect(result.milestones, hasLength(1));
-        expect(result.milestones.single, isA<PactBreakMilestone>());
+        expect((result.milestones.single as SingleShowupMilestone).isOnBreak, isTrue);
       });
     });
   });

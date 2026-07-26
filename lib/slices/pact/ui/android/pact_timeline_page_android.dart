@@ -245,7 +245,7 @@ Color _dotColor(PactTimelineMilestone m, BuildContext context) {
   if (m is PactConcludedMilestone) {
     return m.finalStatus == PactStatus.completed ? HabitLoopColors.success : HabitLoopColors.danger;
   }
-  if (m is PactBreakMilestone) {
+  if ((m is ShowupStreakMilestone && m.isOnBreak) || (m is SingleShowupMilestone && m.isOnBreak)) {
     return HabitLoopColors.onBreak;
   }
   final outcome = switch (m) {
@@ -288,7 +288,6 @@ class _MilestoneDateContent extends StatelessWidget {
         ShowupStreakMilestone m => _dateRange(m.firstAt, m.lastAt),
         NotedShowupMilestone m => formatLocaleDate(m.scheduledAt),
         SingleShowupMilestone m => formatLocaleDate(m.scheduledAt),
-        PactBreakMilestone m => formatLocaleDate(m.startDate),
       };
 
   String _dateRange(DateTime first, DateTime last) {
@@ -315,7 +314,6 @@ class _MilestoneLabelContent extends StatelessWidget {
       ShowupStreakMilestone m => _StreakLabel(m: m, l10n: l10n),
       NotedShowupMilestone m => _NotedShowupLabel(m: m, l10n: l10n),
       SingleShowupMilestone m => _SingleShowupLabel(m: m, l10n: l10n),
-      PactBreakMilestone m => _PactBreakLabel(m: m, l10n: l10n),
     };
   }
 }
@@ -391,26 +389,6 @@ class _PactConcludedLabel extends StatelessWidget {
   }
 }
 
-class _PactBreakLabel extends StatelessWidget {
-  final PactBreakMilestone m;
-  final AppLocalizations l10n;
-
-  const _PactBreakLabel({required this.m, required this.l10n});
-
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.showupOnBreak,
-            style: AppTypography.valueEmphasis.copyWith(color: HabitLoopColors.onBreak),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(m.rationale, style: AppTypography.caption),
-        ],
-      );
-}
-
 // ── Showup milestone label widgets ─────────────────────────────────────────────
 
 class _StreakLabel extends StatelessWidget {
@@ -420,10 +398,19 @@ class _StreakLabel extends StatelessWidget {
   const _StreakLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) => Text(
-        milestoneTitle(l10n, m),
-        style: AppTypography.valueEmphasis.copyWith(color: _outcomeColor(m.outcome, context)),
-      );
+  Widget build(BuildContext context) {
+    final color = m.isOnBreak ? HabitLoopColors.onBreak : _outcomeColor(m.outcome, context);
+    final title = Text(milestoneTitle(l10n, m), style: AppTypography.valueEmphasis.copyWith(color: color));
+    if (!m.isOnBreak || m.breakRationale == null) return title;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        title,
+        const SizedBox(height: AppSpacing.s4),
+        Text(m.breakRationale!, style: AppTypography.caption),
+      ],
+    );
+  }
 }
 
 class _NotedShowupLabel extends StatelessWidget {
@@ -453,8 +440,17 @@ class _SingleShowupLabel extends StatelessWidget {
   const _SingleShowupLabel({required this.m, required this.l10n});
 
   @override
-  Widget build(BuildContext context) => Text(
-        milestoneTitle(l10n, m),
-        style: AppTypography.valueEmphasis.copyWith(color: _outcomeColor(m.outcome, context)),
-      );
+  Widget build(BuildContext context) {
+    final color = m.isOnBreak ? HabitLoopColors.onBreak : _outcomeColor(m.outcome, context);
+    final title = Text(milestoneTitle(l10n, m), style: AppTypography.valueEmphasis.copyWith(color: color));
+    if (!m.isOnBreak || m.breakRationale == null) return title;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        title,
+        const SizedBox(height: AppSpacing.s4),
+        Text(m.breakRationale!, style: AppTypography.caption),
+      ],
+    );
+  }
 }

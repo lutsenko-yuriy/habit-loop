@@ -149,10 +149,10 @@ class PactDetailCache {
 
     final grouped = _grouper.groupWithStats(sorted, now: now, breaks: breaks);
     final pendingCount = sorted.length - grouped.showupsDone - grouped.showupsFailed;
-    // groupWithStats only merges breaks into the timeline's milestone list
-    // (HAB-195 WU5.1) — it doesn't touch pending showups, so skippedOnBreak is
-    // still derived separately here from the same sorted list, in sync with
-    // pendingCount.
+    // groupWithStats folds on-break showups into the timeline's milestone list
+    // (HAB-195 WU5.1) but deliberately never touches showupsDone/showupsFailed
+    // for them, so skippedOnBreak is still derived separately here from the
+    // same sorted list, in sync with pendingCount.
     final skippedOnBreak = sorted.where((s) => BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks)).length;
 
     // Frozen-snapshot fallback: a cache miss with an empty showup list (a

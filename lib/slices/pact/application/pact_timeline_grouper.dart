@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -46,6 +47,14 @@ class PactTimelineGrouper {
   /// Non-tail showups accumulate into same-outcome streaks that flush to a
   /// [ShowupStreakMilestone] (run ≥ 2) or [SingleShowupMilestone] (run of 1) on
   /// outcome change; tail showups are always emitted individually.
+  ///
+  /// [breaks] (HAB-195 WU5.1) makes on-break pending showups participate in this
+  /// same grouping instead of being silently skipped like ordinary pending showups:
+  /// they paint blue, stream into runs/streaks of their own (split whenever the
+  /// covering break changes, so two adjacent breaks never merge into one entry),
+  /// and show the covering break's rationale in place of a note. They never touch
+  /// [showupsDone]/[showupsFailed]/the trailing streak — on-break time is neither
+  /// broken nor advanced, exactly like an ordinary unresolved pending showup.
   ({
     List<PactTimelineMilestone> milestones,
     int tailStartIndex,
@@ -63,6 +72,9 @@ class PactTimelineGrouper {
     var tailStartIndex = -1;
 
     ShowupStatus? streakOutcome;
+    var streakIsOnBreak = false;
+    String? streakBreakId;
+    String? streakBreakRationale;
     var streakCount = 0;
     DateTime? streakFirstAt;
     DateTime? streakLastAt;
@@ -80,6 +92,8 @@ class PactTimelineGrouper {
           showupId: streakLastShowupId!,
           outcome: streakOutcome!,
           scheduledAt: streakFirstAt!,
+          isOnBreak: streakIsOnBreak,
+          breakRationale: streakBreakRationale,
         ));
       } else {
         result.add(ShowupStreakMilestone(
@@ -88,24 +102,35 @@ class PactTimelineGrouper {
           count: streakCount,
           firstAt: streakFirstAt!,
           lastAt: streakLastAt!,
+          isOnBreak: streakIsOnBreak,
+          breakRationale: streakBreakRationale,
         ));
       }
       streakCount = 0;
       streakOutcome = null;
+      streakIsOnBreak = false;
+      streakBreakId = null;
+      streakBreakRationale = null;
       streakFirstAt = null;
       streakLastAt = null;
       streakLastShowupId = null;
     }
 
     for (final showup in showups) {
-      if (showup.status == ShowupStatus.pending) continue;
+      final coveringBreak =
+          showup.status == ShowupStatus.pending ? breaks.firstWhereOrNull((b) => b.contains(showup.scheduledAt)) : null;
+      if (showup.status == ShowupStatus.pending && coveringBreak == null) continue;
 
-      if (showup.status == ShowupStatus.done) {
-        showupsDone++;
-        trailingStreak++;
-      } else {
-        showupsFailed++;
-        trailingStreak = 0;
+      final isOnBreak = coveringBreak != null;
+
+      if (!isOnBreak) {
+        if (showup.status == ShowupStatus.done) {
+          showupsDone++;
+          trailingStreak++;
+        } else {
+          showupsFailed++;
+          trailingStreak = 0;
+        }
       }
 
       final inTail =
@@ -114,20 +139,44 @@ class PactTimelineGrouper {
       if (inTail) {
         flushStreak();
         if (tailStartIndex == -1) tailStartIndex = result.length;
-        result.add(showup.note != null
-            ? NotedShowupMilestone(
+        result.add(isOnBreak
+            ? SingleShowupMilestone(
                 sortAt: showup.scheduledAt,
                 showupId: showup.id,
-                scheduledAt: showup.scheduledAt,
                 outcome: showup.status,
-                note: showup.note!,
+                scheduledAt: showup.scheduledAt,
+                isOnBreak: true,
+                breakRationale: coveringBreak.rationale,
               )
-            : SingleShowupMilestone(
-                sortAt: showup.scheduledAt,
-                showupId: showup.id,
-                outcome: showup.status,
-                scheduledAt: showup.scheduledAt,
-              ));
+            : showup.note != null
+                ? NotedShowupMilestone(
+                    sortAt: showup.scheduledAt,
+                    showupId: showup.id,
+                    scheduledAt: showup.scheduledAt,
+                    outcome: showup.status,
+                    note: showup.note!,
+                  )
+                : SingleShowupMilestone(
+                    sortAt: showup.scheduledAt,
+                    showupId: showup.id,
+                    outcome: showup.status,
+                    scheduledAt: showup.scheduledAt,
+                  ));
+        continue;
+      }
+
+      if (isOnBreak) {
+        if (!streakIsOnBreak || streakBreakId != coveringBreak.id) {
+          flushStreak();
+        }
+        streakOutcome = showup.status;
+        streakIsOnBreak = true;
+        streakBreakId = coveringBreak.id;
+        streakBreakRationale = coveringBreak.rationale;
+        streakCount++;
+        streakFirstAt ??= showup.scheduledAt;
+        streakLastAt = showup.scheduledAt;
+        streakLastShowupId = showup.id;
         continue;
       }
 
@@ -141,10 +190,11 @@ class PactTimelineGrouper {
           note: showup.note!,
         ));
       } else {
-        if (streakOutcome != null && streakOutcome != showup.status) {
+        if (streakOutcome != null && (streakIsOnBreak || streakOutcome != showup.status)) {
           flushStreak();
         }
         streakOutcome = showup.status;
+        streakIsOnBreak = false;
         streakCount++;
         streakFirstAt ??= showup.scheduledAt;
         streakLastAt = showup.scheduledAt;
@@ -154,37 +204,9 @@ class PactTimelineGrouper {
 
     flushStreak();
 
-    if (breaks.isEmpty) {
-      return (
-        milestones: result,
-        tailStartIndex: tailStartIndex == -1 ? result.length : tailStartIndex,
-        showupsDone: showupsDone,
-        showupsFailed: showupsFailed,
-        currentStreak: trailingStreak,
-      );
-    }
-
-    // Each break gets its own timeline entry (HAB-195 WU5.1), merged in sortAt
-    // order alongside the showup milestones above — separately from the
-    // showup loop so break windows never influence streak/stats math.
-    final breakMilestones = breaks.map((b) => PactBreakMilestone(
-          sortAt: b.startDate,
-          rationale: b.rationale,
-          startDate: b.startDate,
-          plannedEndDate: b.plannedEndDate,
-          stoppedAt: b.stoppedAt,
-        ));
-    final merged = [...result, ...breakMilestones]..sort((a, b) => a.sortAt.compareTo(b.sortAt));
-
-    // Tail-zone membership is a pure function of sortAt vs. now, and merged is
-    // sorted ascending, so the first tail-zone hit is the authoritative boundary.
-    final mergedTailStartIndex = merged.indexWhere(
-      (m) => TailZone.contains(scheduledAt: m.sortAt, now: effectiveNow, days: noGroupingTailPeriodInDays),
-    );
-
     return (
-      milestones: merged,
-      tailStartIndex: mergedTailStartIndex == -1 ? merged.length : mergedTailStartIndex,
+      milestones: result,
+      tailStartIndex: tailStartIndex == -1 ? result.length : tailStartIndex,
       showupsDone: showupsDone,
       showupsFailed: showupsFailed,
       currentStreak: trailingStreak,

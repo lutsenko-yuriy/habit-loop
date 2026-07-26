@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -30,7 +29,6 @@ class ShowupStatusDots extends StatelessWidget {
     final useUiStates = uiStates != null && uiStates!.length == showups.length;
 
     if (showups.length >= 4) {
-      final overflowIsOnBreak = useUiStates && uiStates!.any((s) => s == ShowupUiState.onBreak);
       final overflowColor = useUiStates
           ? colors.overflowForUiState(uiStates!)
           : () {
@@ -51,12 +49,10 @@ class ShowupStatusDots extends StatelessWidget {
         key: Key('status-dot-overflow-${_dateKey(date)}'),
         size: 10,
         color: overflowColor,
-        showPauseGlyph: overflowIsOnBreak,
       );
     }
 
     Widget dot(Showup s, int index) {
-      final isOnBreak = useUiStates && uiStates![index] == ShowupUiState.onBreak;
       final color = useUiStates ? colors.forUiState(uiStates![index]) : colors.forStatus(s.status);
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 1),
@@ -64,7 +60,6 @@ class ShowupStatusDots extends StatelessWidget {
           key: Key('status-dot-${s.id}'),
           size: 6,
           color: color,
-          showPauseGlyph: isOnBreak,
         ),
       );
     }
@@ -89,21 +84,16 @@ class ShowupStatusDots extends StatelessWidget {
   static String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-  // A pause glyph on top of the colored circle marks the on-break state
-  // (HAB-195); other states stay glyph-free, matching the pre-existing look.
   static Widget _dotCircle({
     required Key key,
     required double size,
     required Color color,
-    required bool showPauseGlyph,
   }) {
     return Container(
       key: key,
       width: size,
       height: size,
-      alignment: Alignment.center,
       decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-      child: showPauseGlyph ? Icon(Icons.pause, size: size * 0.75, color: const Color(0xFFFFFFFF)) : null,
     );
   }
 }

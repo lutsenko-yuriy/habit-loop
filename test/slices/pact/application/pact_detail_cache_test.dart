@@ -175,15 +175,6 @@ Object _describe(PactTimelineMilestone m) => switch (m) {
           finalStatus,
           note,
         ),
-      PactBreakMilestone(:final sortAt, :final rationale, :final startDate, :final plannedEndDate, :final stoppedAt) =>
-        (
-          'break',
-          sortAt,
-          rationale,
-          startDate,
-          plannedEndDate,
-          stoppedAt,
-        ),
     };
 
 List<Object> _describeAll(List<PactTimelineMilestone> milestones) => milestones.map(_describe).toList();
@@ -428,19 +419,19 @@ void main() {
       expect(bundle.breaks, hasLength(1));
     });
 
-    test('threads breaks into the grouper so a PactBreakMilestone appears on the timeline (HAB-195 WU5.1)', () async {
+    test('threads breaks into the grouper so an on-break showup is painted on the timeline (HAB-195 WU5.1)', () async {
       final cache = _cache(
         pacts: [_pact()],
-        showups: [_showup('s1', DateTime(2024, 1, 20))],
+        showups: [_showup('s1', DateTime(2024, 1, 7), status: ShowupStatus.pending)],
         breaks: [_pactBreak(startDate: DateTime(2024, 1, 5), plannedEndDate: DateTime(2024, 1, 10))],
       );
 
       final bundle = await cache.load('p1', now: DateTime(2024, 2, 1));
 
-      final breakMilestones = bundle.timelinePage.milestones.whereType<PactBreakMilestone>();
-      expect(breakMilestones, hasLength(1));
-      expect(breakMilestones.single.rationale, 'Recovering');
-      expect(breakMilestones.single.startDate, DateTime(2024, 1, 5));
+      expect(bundle.timelinePage.milestones, hasLength(1));
+      final m = bundle.timelinePage.milestones.single as SingleShowupMilestone;
+      expect(m.isOnBreak, isTrue);
+      expect(m.breakRationale, 'Recovering');
     });
 
     test('cache hit serves the cached breaks without a further DB call', () async {

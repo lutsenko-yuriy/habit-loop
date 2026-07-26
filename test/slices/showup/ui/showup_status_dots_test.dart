@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -112,7 +111,7 @@ void main() {
   });
 
   group('onBreak (HAB-195 WU5.1)', () {
-    testWidgets('individual dot renders blue with a pause glyph when onBreak', (tester) async {
+    testWidgets('individual dot renders blue when onBreak — no icon overlay', (tester) async {
       final showups = [_s('a', ShowupStatus.pending)];
       await _pumpWithStates(tester, showups, [ShowupUiState.onBreak], date);
 
@@ -120,24 +119,10 @@ void main() {
       final container = tester.widget<Container>(find.byKey(const Key('status-dot-a')));
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.color, CupertinoColors.systemBlue.resolveFrom(ctx));
-
-      expect(
-        find.descendant(of: find.byKey(const Key('status-dot-a')), matching: find.byIcon(Icons.pause)),
-        findsOneWidget,
-      );
+      expect(container.child, isNull);
     });
 
-    testWidgets('individual dot has no pause glyph for non-onBreak states', (tester) async {
-      final showups = [_s('a', ShowupStatus.done)];
-      await _pumpWithStates(tester, showups, [ShowupUiState.done], date);
-
-      expect(
-        find.descendant(of: find.byKey(const Key('status-dot-a')), matching: find.byIcon(Icons.pause)),
-        findsNothing,
-      );
-    });
-
-    testWidgets('overflow dot is blue with a pause glyph when any showup is onBreak', (tester) async {
+    testWidgets('overflow dot is blue when any showup is onBreak — no icon overlay', (tester) async {
       final showups = List.generate(4, (i) => _s('s$i', ShowupStatus.pending));
       final uiStates = [
         ShowupUiState.active,
@@ -152,10 +137,7 @@ void main() {
       final container = tester.widget<Container>(find.byKey(overflowKey));
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.color, CupertinoColors.systemBlue.resolveFrom(ctx));
-      expect(
-        find.descendant(of: find.byKey(overflowKey), matching: find.byIcon(Icons.pause)),
-        findsOneWidget,
-      );
+      expect(container.child, isNull);
     });
   });
 }
