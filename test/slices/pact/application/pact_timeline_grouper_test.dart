@@ -460,6 +460,43 @@ void main() {
         expect(result.milestones, hasLength(1));
         expect((result.milestones.single as SingleShowupMilestone).isOnBreak, isTrue);
       });
+
+      group('future dates stay invisible, like any other unresolved pending showup', () {
+        // _now = Jan 14. Break spans Jan 10-20, covering yesterday, today, and future days.
+        final spanningBreak = brk('b1', startDay: 10, plannedEndDay: 20);
+
+        test('an on-break showup scheduled for today is shown', () {
+          final result = _g().groupWithStats([pending('s1', 14)], now: _now, breaks: [spanningBreak]);
+          expect(result.milestones, hasLength(1));
+          expect((result.milestones.single as SingleShowupMilestone).isOnBreak, isTrue);
+        });
+
+        test('an on-break showup scheduled for tomorrow is not shown at all', () {
+          final result = _g().groupWithStats([pending('s1', 15)], now: _now, breaks: [spanningBreak]);
+          expect(result.milestones, isEmpty);
+        });
+
+        test('a past run still streaks together while a same-break future day is excluded entirely', () {
+          // Jan 11-13 are non-tail (cutoff=Jan14 with the default 0-day tail) and stream
+          // into one streak; Jan 15 is both in the future and, separately, in-tail — either
+          // reason alone would keep it out of this streak, but it must not appear at all.
+          final showups = [pending('s1', 11), pending('s2', 12), pending('s3', 13), pending('s4', 15)];
+          final result = _g().groupWithStats(showups, now: _now, breaks: [spanningBreak]);
+          expect(result.milestones, hasLength(1));
+          final m = result.milestones.single as ShowupStreakMilestone;
+          expect(m.count, 3);
+          expect(m.lastAt, DateTime(2024, 1, 13));
+        });
+
+        test('future on-break showups do not affect tailStartIndex either', () {
+          final showups = [_done('s0', 1), pending('s1', 14), pending('s2', 15)];
+          final result = _g(tailPeriodInDays: 7).groupWithStats(showups, now: _now, breaks: [spanningBreak]);
+          // cutoff = Jan 7: s0 (Jan 1) is non-tail, s1 (Jan 14, on-break, shown) is in-tail;
+          // s2 (Jan 15, future) never enters the milestone list at all.
+          expect(result.milestones, hasLength(2));
+          expect(result.tailStartIndex, 1);
+        });
+      });
     });
   });
 }
