@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Theme;
 import 'package:flutter/widgets.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -18,6 +19,7 @@ const double _dayTapTargetMinSize = 48;
 typedef DashboardShowupTileBuilder = Widget Function(
   BuildContext context,
   Showup showup,
+  ShowupUiState uiState,
   String habitName,
   VoidCallback onTap,
 );
@@ -128,6 +130,7 @@ class _CalendarStrip extends StatelessWidget {
               isSelected: isSelected,
               statusColors: statusColors,
               reminderOffsetByPactId: state.reminderOffsetByPactId,
+              breaksByPactId: state.breaksByPactId,
               semanticLabel: semanticLabel,
               onTap: () => onDaySelected(index),
             ),
@@ -144,6 +147,7 @@ class _CalendarDayCell extends StatelessWidget {
   final bool isSelected;
   final ShowupStatusColors statusColors;
   final Map<String, Duration?> reminderOffsetByPactId;
+  final Map<String, List<PactBreak>> breaksByPactId;
   final String semanticLabel;
   final VoidCallback onTap;
 
@@ -153,6 +157,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.isSelected,
     required this.statusColors,
     required this.reminderOffsetByPactId,
+    required this.breaksByPactId,
     required this.semanticLabel,
     required this.onTap,
   });
@@ -198,7 +203,7 @@ class _CalendarDayCell extends StatelessWidget {
                     showups: entry.showups,
                     date: entry.date,
                     colors: statusColors,
-                    uiStates: deriveUiStates(entry.showups, reminderOffsetByPactId),
+                    uiStates: deriveUiStates(entry.showups, reminderOffsetByPactId, breaksByPactId: breaksByPactId),
                   ),
                 ],
               ),
@@ -260,14 +265,22 @@ class _ShowupList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     return ListView.builder(
       itemCount: showups.length,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
       itemBuilder: (context, index) {
         final showup = showups[index];
+        final uiState = deriveShowupUiState(
+          showup: showup,
+          now: now,
+          reminderOffset: state.reminderOffsetByPactId[showup.pactId],
+          breaks: state.breaksByPactId[showup.pactId] ?? const [],
+        );
         return buildShowupTile(
           context,
           showup,
+          uiState,
           state.habitName(showup.pactId),
           () => onShowupTapped(showup.id),
         );

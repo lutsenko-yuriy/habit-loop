@@ -118,6 +118,7 @@
   "startBreakError": "Failed to start break. Please try again.",
   "breakUntilPactEnds": "No end date yet",
   "breakRationaleHint": "Reason (required)",
+  "showupOnBreak": "On break",
   "pactsActive": "{count, plural, =0{No pacts active} one{1 pact active} other{{count} pacts active}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }

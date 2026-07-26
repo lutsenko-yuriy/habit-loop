@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_body.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 Showup _showup(String id) => Showup(
       id: id,
@@ -17,7 +19,7 @@ Showup _showup(String id) => Showup(
       note: null,
     );
 
-DashboardState _state(List<Showup> showups) {
+DashboardState _state(List<Showup> showups, {Map<String, List<PactBreak>> breaksByPactId = const {}}) {
   final days = List.generate(
       7,
       (i) => CalendarDayEntry(
@@ -30,6 +32,7 @@ DashboardState _state(List<Showup> showups) {
     isLoading: false,
     pactNames: {'p-1': 'Meditate'},
     todayIndex: 3,
+    breaksByPactId: breaksByPactId,
   );
 }
 
@@ -39,6 +42,7 @@ Widget _wrap(
   ValueChanged<int>? onDaySelected,
   Future<void> Function(String)? onShowupTapped,
   TextScaler? textScaler,
+  void Function(String showupId, ShowupUiState uiState)? onTileUiState,
 }) {
   return MaterialApp(
     localizationsDelegates: const [
@@ -64,11 +68,14 @@ Widget _wrap(
         onCreatePact: () async {},
         onDaySelected: onDaySelected ?? (_) {},
         onShowupTapped: onShowupTapped ?? (_) async {},
-        buildShowupTile: (ctx, showup, habitName, onTap) => GestureDetector(
-          key: Key('tile-${showup.id}'),
-          onTap: onTap,
-          child: Text(habitName),
-        ),
+        buildShowupTile: (ctx, showup, uiState, habitName, onTap) {
+          onTileUiState?.call(showup.id, uiState);
+          return GestureDetector(
+            key: Key('tile-${showup.id}'),
+            onTap: onTap,
+            child: Text(habitName),
+          );
+        },
         buildNoPactsCta: (ctx, createPact) => ElevatedButton(
           key: const Key('no-pacts-cta-button'),
           onPressed: createPact,
@@ -234,6 +241,27 @@ void main() {
       await tester.pumpWidget(_wrap(_state([_showup('s1')])));
       await tester.pump();
       expect(find.text('Meditate'), findsOneWidget);
+    });
+
+    testWidgets('passes onBreak uiState to buildShowupTile when the showup falls in a break window (HAB-195 WU5.1)',
+        (tester) async {
+      // Fixture showup is scheduledAt=2026-06-08; an open-ended break starting well
+      // before it covers it regardless of the real DateTime.now() at test time.
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p-1',
+        startDate: DateTime(2020, 1, 1),
+        rationale: 'Travelling',
+      );
+      ShowupUiState? captured;
+      await tester.pumpWidget(_wrap(
+        _state([_showup('s1')], breaksByPactId: {
+          'p-1': [onBreak]
+        }),
+        onTileUiState: (id, uiState) => captured = uiState,
+      ));
+      await tester.pump();
+      expect(captured, ShowupUiState.onBreak);
     });
   });
 }

@@ -20,6 +20,7 @@ import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 class DashboardPageAndroid extends ConsumerWidget {
   final DashboardState state;
@@ -115,8 +116,9 @@ class DashboardPageAndroid extends ConsumerWidget {
                   onCreatePact: onCreatePact,
                   onDaySelected: onDaySelected,
                   onShowupTapped: onShowupTapped,
-                  buildShowupTile: (ctx, showup, habitName, onTap) => _ShowupTile(
+                  buildShowupTile: (ctx, showup, uiState, habitName, onTap) => _ShowupTile(
                     showup: showup,
+                    uiState: uiState,
                     habitName: habitName,
                     onTap: onTap,
                   ),
@@ -207,11 +209,13 @@ Widget _buildAppBarButton(
 
 class _ShowupTile extends StatelessWidget {
   final Showup showup;
+  final ShowupUiState uiState;
   final String habitName;
   final VoidCallback onTap;
 
   const _ShowupTile({
     required this.showup,
+    required this.uiState,
     required this.habitName,
     required this.onTap,
   });
@@ -219,17 +223,21 @@ class _ShowupTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final icon = switch (showup.status) {
-      ShowupStatus.done => Icons.check_circle,
-      ShowupStatus.failed => Icons.cancel,
-      ShowupStatus.pending => Icons.radio_button_unchecked,
-    };
+    final isOnBreak = uiState == ShowupUiState.onBreak;
+    final icon = isOnBreak
+        ? Icons.pause_circle_filled
+        : switch (showup.status) {
+            ShowupStatus.done => Icons.check_circle,
+            ShowupStatus.failed => Icons.cancel,
+            ShowupStatus.pending => Icons.radio_button_unchecked,
+          };
     final colors = ShowupStatusColors.material(Theme.of(context).colorScheme);
-    final statusText = showupStatusText(l10n, showup.status);
+    final color = isOnBreak ? colors.onBreak : colors.forStatus(showup.status);
+    final statusText = isOnBreak ? l10n.showupOnBreak : showupStatusText(l10n, showup.status);
 
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: colors.forStatus(showup.status)),
+      leading: Icon(icon, color: color),
       title: Text(habitName),
       subtitle: Text('${l10n.showupDurationMinutes(showup.duration.inMinutes)} — $statusText'),
     );

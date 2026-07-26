@@ -118,6 +118,7 @@
   "startBreakError": "Pause konnte nicht gestartet werden. Bitte versuche es erneut.",
   "breakUntilPactEnds": "Noch kein Enddatum",
   "breakRationaleHint": "Grund (erforderlich)",
+  "showupOnBreak": "Pausiert",
   "pactsActive": "{count, plural, =0{Keine aktiven Pakte} one{1 Pakt aktiv} other{{count} Pakte aktiv}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }

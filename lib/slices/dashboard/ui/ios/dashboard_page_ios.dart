@@ -21,6 +21,7 @@ import 'package:habit_loop/slices/debug/ui/ios/remote_config_overrides_page_ios.
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
 class DashboardPageIos extends ConsumerWidget {
   final DashboardState state;
@@ -122,8 +123,9 @@ class DashboardPageIos extends ConsumerWidget {
                       onCreatePact: onCreatePact,
                       onDaySelected: onDaySelected,
                       onShowupTapped: onShowupTapped,
-                      buildShowupTile: (ctx, showup, habitName, onTap) => _ShowupTile(
+                      buildShowupTile: (ctx, showup, uiState, habitName, onTap) => _ShowupTile(
                         showup: showup,
+                        uiState: uiState,
                         habitName: habitName,
                         onTap: onTap,
                       ),
@@ -247,11 +249,13 @@ Widget _buildNavBarButton(
 
 class _ShowupTile extends StatelessWidget {
   final Showup showup;
+  final ShowupUiState uiState;
   final String habitName;
   final VoidCallback onTap;
 
   const _ShowupTile({
     required this.showup,
+    required this.uiState,
     required this.habitName,
     required this.onTap,
   });
@@ -259,18 +263,22 @@ class _ShowupTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final statusText = showupStatusText(l10n, showup.status);
+    final isOnBreak = uiState == ShowupUiState.onBreak;
+    final statusText = isOnBreak ? l10n.showupOnBreak : showupStatusText(l10n, showup.status);
+    final colors = ShowupStatusColors.cupertino(context);
 
     return CupertinoListTile(
       backgroundColor: CupertinoColors.transparent,
       onTap: onTap,
       leading: Icon(
-        switch (showup.status) {
-          ShowupStatus.done => CupertinoIcons.check_mark_circled_solid,
-          ShowupStatus.failed => CupertinoIcons.xmark_circle_fill,
-          ShowupStatus.pending => CupertinoIcons.circle,
-        },
-        color: ShowupStatusColors.cupertino(context).forStatus(showup.status),
+        isOnBreak
+            ? CupertinoIcons.pause_circle_fill
+            : switch (showup.status) {
+                ShowupStatus.done => CupertinoIcons.check_mark_circled_solid,
+                ShowupStatus.failed => CupertinoIcons.xmark_circle_fill,
+                ShowupStatus.pending => CupertinoIcons.circle,
+              },
+        color: isOnBreak ? colors.onBreak : colors.forStatus(showup.status),
       ),
       title: Text(habitName),
       subtitle: Text('${l10n.showupDurationMinutes(showup.duration.inMinutes)} — $statusText'),
