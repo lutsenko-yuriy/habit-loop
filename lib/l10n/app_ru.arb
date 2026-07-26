@@ -112,6 +112,12 @@
   "stopPactBody": "Это действие необратимо. Вы сможете просмотреть историю пакта позже.",
   "stopPactReasonHint": "Причина (необязательно)",
   "stopPactConfirm": "Остановить",
+  "startBreak": "Сделать перерыв",
+  "startBreakTitle": "Начать перерыв",
+  "startBreakConfirm": "Начать перерыв",
+  "startBreakError": "Не удалось начать перерыв. Попробуйте ещё раз.",
+  "breakUntilPactEnds": "Дата окончания пока не определена",
+  "breakRationaleHint": "Причина (обязательно)",
   "pactsActive": "{count, plural, =0{Нет активных пактов} one{{count} активный пакт} few{{count} активных пакта} many{{count} активных пактов} other{{count} активных пакта}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }

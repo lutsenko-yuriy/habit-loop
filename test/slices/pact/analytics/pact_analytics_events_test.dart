@@ -225,6 +225,46 @@ void main() {
     });
   });
 
+  group('PactBreakStartedEvent', () {
+    test('has correct name', () {
+      final event = PactBreakStartedEvent(
+        pactId: 'p1',
+        source: 'pact_detail',
+        endType: 'fixed_date',
+        durationDays: 7,
+        rationaleLength: 12,
+      );
+      expect(event.name, 'pact_break_started');
+    });
+
+    test('toParameters includes all properties', () {
+      final event = PactBreakStartedEvent(
+        pactId: 'p1',
+        source: 'tail_zone_showup',
+        endType: 'fixed_date',
+        durationDays: 14,
+        rationaleLength: 20,
+      );
+      final params = event.toParameters();
+      expect(params['pact_id'], 'p1');
+      expect(params['source'], 'tail_zone_showup');
+      expect(params['end_type'], 'fixed_date');
+      expect(params['duration_days'], 14);
+      expect(params['rationale_length'], 20);
+    });
+
+    test('toParameters omits null duration_days for until_pact_ends', () {
+      final event = PactBreakStartedEvent(
+        pactId: 'p1',
+        source: 'pact_detail',
+        endType: 'until_pact_ends',
+        durationDays: null,
+        rationaleLength: 5,
+      );
+      expect(event.toParameters().containsKey('duration_days'), isFalse);
+    });
+  });
+
   group('PactDetailAnalyticsScreen', () {
     test('implements AnalyticsScreen', () {
       expect(const PactDetailAnalyticsScreen(), isA<AnalyticsScreen>());
@@ -232,6 +272,16 @@ void main() {
 
     test('name is pact_detail', () {
       expect(const PactDetailAnalyticsScreen().name, 'pact_detail');
+    });
+  });
+
+  group('PactBreakCreationAnalyticsScreen', () {
+    test('implements AnalyticsScreen', () {
+      expect(const PactBreakCreationAnalyticsScreen(), isA<AnalyticsScreen>());
+    });
+
+    test('name is pact_break_creation', () {
+      expect(const PactBreakCreationAnalyticsScreen().name, 'pact_break_creation');
     });
   });
 

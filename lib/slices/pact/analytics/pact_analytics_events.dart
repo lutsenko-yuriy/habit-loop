@@ -267,6 +267,45 @@ final class PactUnarchivedEvent extends AnalyticsEvent {
       };
 }
 
+/// Fired when the break-creation flow is submitted successfully and the
+/// break is persisted. No dedicated screen view is tracked for the flow
+/// itself — consistent with the stop-pact dialog. (HAB-195)
+final class PactBreakStartedEvent extends AnalyticsEvent {
+  PactBreakStartedEvent({
+    required this.pactId,
+    required this.source,
+    required this.endType,
+    required this.durationDays,
+    required this.rationaleLength,
+  });
+
+  final String pactId;
+
+  /// Entry point used: `pact_detail` | `tail_zone_showup`.
+  final String source;
+
+  /// `fixed_date` | `until_pact_ends`.
+  final String endType;
+
+  /// Planned break length in days; `null` when [endType] is `until_pact_ends`.
+  final int? durationDays;
+
+  /// Character count of the mandatory rationale; no raw text included.
+  final int rationaleLength;
+
+  @override
+  String get name => 'pact_break_started';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'source': source,
+        'end_type': endType,
+        if (durationDays != null) 'duration_days': durationDays!,
+        'rationale_length': rationaleLength,
+      };
+}
+
 /// Screen identifier for the pact creation wizard.
 class PactCreationAnalyticsScreen implements AnalyticsScreen {
   const PactCreationAnalyticsScreen();
@@ -281,6 +320,14 @@ class PactDetailAnalyticsScreen implements AnalyticsScreen {
 
   @override
   String get name => 'pact_detail';
+}
+
+/// Screen identifier for the break-creation flow. (HAB-195)
+class PactBreakCreationAnalyticsScreen implements AnalyticsScreen {
+  const PactBreakCreationAnalyticsScreen();
+
+  @override
+  String get name => 'pact_break_creation';
 }
 
 /// Screen identifier for the edit pact wizard. (HAB-79)

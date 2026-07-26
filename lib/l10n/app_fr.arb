@@ -112,6 +112,12 @@
   "stopPactBody": "Cette action est irréversible. Vous pourrez toujours consulter l'historique du pacte.",
   "stopPactReasonHint": "Raison (facultatif)",
   "stopPactConfirm": "Arrêter",
+  "startBreak": "Faire une pause",
+  "startBreakTitle": "Démarrer une pause",
+  "startBreakConfirm": "Démarrer la pause",
+  "startBreakError": "Échec du démarrage de la pause. Veuillez réessayer.",
+  "breakUntilPactEnds": "Pas encore de date de fin",
+  "breakRationaleHint": "Raison (obligatoire)",
   "pactsActive": "{count, plural, =0{Aucun pacte actif} one{1 pacte actif} other{{count} pactes actifs}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_screen.dart';
@@ -58,6 +59,26 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     }
   }
 
+  Future<void> _onStartBreak() async {
+    final result = await Navigator.of(context).push<bool>(
+      defaultTargetPlatform == TargetPlatform.iOS
+          ? CupertinoPageRoute<bool>(
+              builder: (_) => PactBreakCreationScreen(pactId: widget.pactId, source: 'pact_detail'),
+            )
+          : MaterialPageRoute<bool>(
+              builder: (_) => PactBreakCreationScreen(pactId: widget.pactId, source: 'pact_detail'),
+            ),
+    );
+
+    // Reload pact detail if a break was created, so activeBreak reflects it.
+    if (result == true && mounted) {
+      ref.invalidate(pactDetailNowProvider);
+      unawaited(
+        ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
+      );
+    }
+  }
+
   Future<void> _onEditPact() async {
     final result = await Navigator.of(context).push<bool>(
       defaultTargetPlatform == TargetPlatform.iOS
@@ -94,6 +115,10 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).archivePact(archive, source: 'detail_screen');
     }
 
+    // "Take a break" is only offered while no break already blocks a new one
+    // (HAB-195) — Resume pact / banner for an active break lands in WU5.2.
+    final onStartBreak = flags.pactBreaksEnabled && state.activeBreak == null ? _onStartBreak : null;
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return PactDetailPageIos(
         state: state,
@@ -103,6 +128,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         onEditPact: _onEditPact,
         pactTimelineEnabled: flags.pactTimelineEnabled,
         onOpenTimeline: _onOpenTimeline,
+        onStartBreak: onStartBreak,
       );
     }
     return PactDetailPageAndroid(
@@ -113,6 +139,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       onEditPact: _onEditPact,
       pactTimelineEnabled: flags.pactTimelineEnabled,
       onOpenTimeline: _onOpenTimeline,
+      onStartBreak: onStartBreak,
     );
   }
 }

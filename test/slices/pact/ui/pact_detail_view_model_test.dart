@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_stats.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -60,22 +61,28 @@ final _showups = [
       status: ShowupStatus.pending),
 ];
 
-PactDetailCache _makeCache(InMemoryPactRepository pactRepo, InMemoryShowupRepository showupRepo) => PactDetailCache(
+PactDetailCache _makeCache(
+  InMemoryPactRepository pactRepo,
+  InMemoryShowupRepository showupRepo, {
+  List<PactBreak> breaks = const [],
+}) =>
+    PactDetailCache(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
-      pactBreakRepository: InMemoryPactBreakRepository(),
+      pactBreakRepository: InMemoryPactBreakRepository(breaks),
       grouper: const PactTimelineGrouper(),
     );
 
 ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
+  List<PactBreak> breaks = const [],
   List<Override> extras = const [],
 }) {
   final pactRepo = InMemoryPactRepository(pacts);
   final showupRepo = InMemoryShowupRepository(showups);
   final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-  final cache = _makeCache(pactRepo, showupRepo);
+  final cache = _makeCache(pactRepo, showupRepo, breaks: breaks);
   final statsService = PactStatsService(
     pactRepository: pactRepo,
     showupRepository: showupRepo,
@@ -140,6 +147,47 @@ void main() {
       final expectedTotal = ShowupGenerator.countTotal(_pact);
       expect(state.stats?.totalShowups, expectedTotal);
       expect(state.stats?.showupsRemaining, expectedTotal - 2 - 1); // total - done - failed
+    });
+
+    test('load populates activeBreak when an unresolved break exists (HAB-195)', () async {
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 10),
+        plannedEndDate: DateTime(2026, 3, 20),
+        rationale: 'Sick',
+      );
+      final container = _makeContainer(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [onBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 15))],
+      );
+      addTearDown(container.dispose);
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.activeBreak?.id, 'brk-1');
+    });
+
+    test('load leaves activeBreak null when the only break is already resolved (HAB-195)', () async {
+      final stoppedBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 1),
+        plannedEndDate: DateTime(2026, 3, 5),
+        rationale: 'Sick',
+        stoppedAt: DateTime(2026, 3, 3),
+      );
+      final container = _makeContainer(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [stoppedBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 15))],
+      );
+      addTearDown(container.dispose);
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.activeBreak, isNull);
     });
 
     test('load sets error when pact not found', () async {

@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
@@ -66,7 +67,24 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         }
       }
 
-      state = state.copyWith(pact: pact, stats: stats, isLoading: false);
+      // Only one unresolved break can exist per pact at a time (HAB-195),
+      // enforced by PactBreakService.startBreak — find it from the bundle
+      // already loaded above rather than a separate repository round-trip.
+      PactBreak? activeBreak;
+      for (final b in bundle.breaks) {
+        if (!b.isResolved(now)) {
+          activeBreak = b;
+          break;
+        }
+      }
+
+      state = state.copyWith(
+        pact: pact,
+        stats: stats,
+        isLoading: false,
+        activeBreak: activeBreak,
+        clearActiveBreak: activeBreak == null,
+      );
     } catch (e, st) {
       unawaited(ref.read(logServiceProvider).error('pact_detail_load_failed: id=$arg', exception: e, stackTrace: st));
       state = state.copyWith(isLoading: false, loadError: e);

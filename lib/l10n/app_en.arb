@@ -112,6 +112,12 @@
   "stopPactBody": "This cannot be undone. You can still view the pact history afterwards.",
   "stopPactReasonHint": "Reason (optional)",
   "stopPactConfirm": "Stop",
+  "startBreak": "Take a Break",
+  "startBreakTitle": "Start a Break",
+  "startBreakConfirm": "Start Break",
+  "startBreakError": "Failed to start break. Please try again.",
+  "breakUntilPactEnds": "No end date yet",
+  "breakRationaleHint": "Reason (required)",
   "pactsActive": "{count, plural, =0{No pacts active} one{1 pact active} other{{count} pacts active}}",
   "@pactsActive": {
     "placeholders": { "count": { "type": "int" } }

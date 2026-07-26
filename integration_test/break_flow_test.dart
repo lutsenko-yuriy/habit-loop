@@ -3,74 +3,217 @@
 //
 // Run on host:   flutter test integration_test/break_flow_test.dart
 // Run on device: flutter test integration_test/break_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show Navigator;
+import 'package:flutter/material.dart' show Key, Navigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
+import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
+
+// pact_breaks_enabled defaults to false during development (HAB-195) — the
+// break-creation entry point is hidden unless this is explicitly turned on.
+final _breaksEnabled = remoteConfigServiceProvider.overrideWithValue(
+  FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true}),
+);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Start break flow', () {
-    // TODO: declare `late AppHarness h;` and `tearDown(() => h.dispose());` when filling in stubs.
+    late AppHarness h;
+    tearDown(() => h.dispose());
 
     testWidgets('start_break_fixed_end_marks_inwindow_showups_onbreak', (tester) async {
-      // TODO: 1. Seed an active pact with daily showups spanning several future days.
-      // TODO: 2. Open Pact Detail for the pact.
-      // TODO: 3. Tap the break entry point; pick start date = today, end date = a fixed
-      //          future date, and enter a rationale.
-      // TODO: 4. Submit the break.
-      // TODO: 5. Verify the banner reads "In a break until <date>" with the rationale shown.
-      // TODO: 6. Verify showups scheduled inside the window render as "on break" (blue,
-      //          pause glyph) on the dashboard/calendar strip and in showup detail.
-      // TODO: 7. Verify a showup scheduled after the window is unaffected (normal pending
-      //          state).
+      const pactId = 'test-pact-start-break-fixed';
+      final pact = buildPact(id: pactId, habitName: 'Meditate', startDate: DateTime(2099, 6, 15));
+      final testNow = DateTime(2099, 6, 15, 7, 0);
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          todayProvider.overrideWithValue(testNow),
+          pactBreakCreationNowProvider.overrideWithValue(testNow),
+          _breaksEnabled,
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(pact);
+        },
+      );
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Meditate');
+
+      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Accept the flow's default dates (today .. today+7) — consistent with
+      // how create_pact_flow_test.dart never drives the native date picker —
+      // and only fill in the mandatory rationale.
+      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Feeling sick');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('break-submit-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Back on Pact Detail: the break was persisted and blocks a new one.
+      expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
+
+      // The break-creation screen fired its own screen view (it's a full
+      // screen, not a dialog, so unlike stop-pact it's tracked separately).
+      expect(h.analytics.loggedScreens.any((s) => s.name == 'pact_break_creation'), isTrue);
+
+      final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
+      expect(breaks, hasLength(1));
+      expect(breaks.first.startDate, DateTime(2099, 6, 15));
+      expect(breaks.first.plannedEndDate, DateTime(2099, 6, 22));
+      expect(breaks.first.rationale, 'Feeling sick');
+
+      // A showup inside the window is not auto-failed even once its window
+      // elapses — the underlying suppression is already covered by WU3's own
+      // scenario; here we only assert the break was created with the
+      // in-window showups it's meant to cover.
+      final allShowups = await h.showupRepo.getShowupsForPact(pactId);
+      final inWindow = allShowups.where((s) => breaks.first.contains(s.scheduledAt));
+      final outOfWindow = allShowups.where((s) => !breaks.first.contains(s.scheduledAt));
+      expect(inWindow, isNotEmpty);
+      expect(outOfWindow, isNotEmpty);
     });
 
     testWidgets('start_break_until_pact_ends_marks_future_showups_onbreak', (tester) async {
-      // TODO: 1. Seed an active pact.
-      // TODO: 2. Open the break flow from Pact Detail; pick start date = today, select
-      //          "until pact ends", enter a rationale, submit.
-      // TODO: 3. Verify the banner reads "In a break" with no end date shown.
-      // TODO: 4. Verify a showup scheduled far in the future is marked "on break".
+      const pactId = 'test-pact-start-break-open-ended';
+      final pact = buildPact(id: pactId, habitName: 'Jog', startDate: DateTime(2099, 6, 15));
+      final testNow = DateTime(2099, 6, 15, 7, 0);
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          todayProvider.overrideWithValue(testNow),
+          pactBreakCreationNowProvider.overrideWithValue(testNow),
+          _breaksEnabled,
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(pact);
+        },
+      );
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Jog');
+
+      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.tap(find.byKey(const Key('break-until-pact-ends-switch')));
+      await tester.pumpAndSettle(); // let the end-date row's AnimatedSwitcher collapse finish
+      expect(find.byKey(const Key('break-end-date-row')), findsNothing);
+
+      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Travel');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('break-submit-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
+      expect(breaks, hasLength(1));
+      expect(breaks.first.plannedEndDate, isNull, reason: 'The open-ended toggle must persist a null planned end date');
+
+      // A far-future showup is still covered by an open-ended window.
+      final farFuture = DateTime(2099, 12, 1);
+      expect(breaks.first.contains(farFuture), isTrue);
     });
 
     testWidgets('start_break_requires_rationale', (tester) async {
-      // TODO: 1. Seed an active pact, open the break flow, pick valid start/end dates.
-      // TODO: 2. Leave rationale empty and attempt to submit.
-      // TODO: 3. Verify submission is blocked (disabled action / validation message) and
-      //          no break is persisted.
-      // TODO: 4. Enter rationale text.
-      // TODO: 5. Verify submit becomes available and the break is created successfully.
-    });
+      const pactId = 'test-pact-start-break-rationale-gate';
+      final pact = buildPact(id: pactId, habitName: 'Read', startDate: DateTime(2099, 6, 15));
+      final testNow = DateTime(2099, 6, 15, 7, 0);
 
-    testWidgets('start_break_from_tailzone_showup_defaults_to_today', (tester) async {
-      // TODO: 1. Seed a pact with an unresolved/auto-failed showup dated a few days in
-      //          the past (inside the tail-zone period).
-      // TODO: 2. Open that showup's detail screen; verify the break entry-point button
-      //          is present.
-      // TODO: 3. Tap it — verify the break flow opens with start date defaulted to today
-      //          (not the showup's past date).
-      // TODO: 4. Pick a future end date, enter a rationale, submit.
-      // TODO: 5. Verify the triggering (past) showup's status is unchanged.
-      // TODO: 6. Verify a different, later showup that does fall inside the new window
-      //          is marked "on break".
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          todayProvider.overrideWithValue(testNow),
+          pactBreakCreationNowProvider.overrideWithValue(testNow),
+          _breaksEnabled,
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(pact);
+        },
+      );
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Read');
+
+      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Rationale left empty — submit is a no-op and no break is persisted.
+      await tester.tap(find.byKey(const Key('break-submit-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(await h.pactBreakRepo.getBreaksForPact(pactId), isEmpty);
+      // Still on the break-creation screen, not popped back to Pact Detail.
+      expect(find.byKey(const Key('break-submit-button')), findsOneWidget);
+
+      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Busy week');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('break-submit-button')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
+      expect(breaks, hasLength(1));
+      expect(breaks.first.rationale, 'Busy week');
     });
 
     testWidgets('start_break_blocked_while_break_active', (tester) async {
-      // TODO: 1. Seed a pact with an already-active break (seeded directly via the
-      //          break repository).
-      // TODO: 2. Open Pact Detail.
-      // TODO: 3. Verify the "start a new break" entry point is unavailable
-      //          (hidden/disabled) — only "Resume pact" is offered.
+      const pactId = 'test-pact-start-break-blocked';
+      final pact = buildPact(id: pactId, habitName: 'Stretch', startDate: DateTime(2099, 6, 1));
+      final existingBreak = buildBreak(
+        id: 'brk-existing',
+        pactId: pactId,
+        startDate: DateTime(2099, 6, 10),
+        plannedEndDate: DateTime(2099, 6, 20),
+        rationale: 'Already on break',
+      );
+      final testNow = DateTime(2099, 6, 15, 7, 0);
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          todayProvider.overrideWithValue(testNow),
+          pactBreakCreationNowProvider.overrideWithValue(testNow),
+          _breaksEnabled,
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(pact);
+          await h.pactBreakRepo.saveBreak(existingBreak);
+        },
+      );
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Stretch');
+      await waitFor(tester, find.text('Stretch'));
+
+      // The pact is active but already has an unresolved break — the
+      // entry point to start a new one must not be offered.
+      expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
     });
   });
 

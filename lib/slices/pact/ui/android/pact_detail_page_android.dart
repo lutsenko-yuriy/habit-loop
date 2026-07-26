@@ -33,6 +33,12 @@ class PactDetailPageAndroid extends StatelessWidget {
   /// `null` hides the button regardless of [pactTimelineEnabled].
   final VoidCallback? onOpenTimeline;
 
+  /// Called when the user taps "Take a break" (HAB-195).
+  ///
+  /// `null` hides the button — the pact is not active, the feature toggle is
+  /// off, or a break already blocks starting a new one.
+  final VoidCallback? onStartBreak;
+
   const PactDetailPageAndroid({
     super.key,
     required this.state,
@@ -42,6 +48,7 @@ class PactDetailPageAndroid extends StatelessWidget {
     this.onEditPact,
     this.pactTimelineEnabled = false,
     this.onOpenTimeline,
+    this.onStartBreak,
   });
 
   bool get _isActive => state.pact?.status == PactStatus.active;
@@ -79,6 +86,7 @@ class PactDetailPageAndroid extends StatelessWidget {
                         onArchivePact: onArchivePact,
                         pactTimelineEnabled: pactTimelineEnabled,
                         onOpenTimeline: onOpenTimeline,
+                        onStartBreak: onStartBreak,
                       ),
           ),
         ],
@@ -95,6 +103,7 @@ class _PactDetailContent extends StatelessWidget {
   final Future<void> Function(bool archive) onArchivePact;
   final bool pactTimelineEnabled;
   final VoidCallback? onOpenTimeline;
+  final VoidCallback? onStartBreak;
 
   const _PactDetailContent({
     required this.state,
@@ -104,6 +113,7 @@ class _PactDetailContent extends StatelessWidget {
     required this.onArchivePact,
     this.pactTimelineEnabled = false,
     this.onOpenTimeline,
+    this.onStartBreak,
   });
 
   @override
@@ -267,9 +277,20 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Stop pact button
+        // Take a break + stop pact — grouped together as pact-lifecycle
+        // actions, visually separated from the read-only sections above by
+        // the larger gap (HAB-195: keep "Take a break" closer to "Stop pact"
+        // than to "View Timeline").
         if (pact.status == PactStatus.active) ...[
           const SizedBox(height: AppSpacing.s32),
+          if (onStartBreak != null) ...[
+            TextButton(
+              key: const Key('pact-detail-start-break-button'),
+              onPressed: onStartBreak,
+              child: Text(l10n.startBreak),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+          ],
           if (state.stopError != null) ...[
             Text(l10n.stopPactError, style: TextStyle(color: theme.colorScheme.error)),
             const SizedBox(height: AppSpacing.s8),

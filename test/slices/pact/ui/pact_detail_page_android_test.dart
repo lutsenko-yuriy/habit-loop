@@ -236,4 +236,79 @@ void main() {
       expect(find.text('No reminder'), findsOneWidget);
     });
   });
+
+  group('PactDetailPageAndroid – Take a break button (HAB-195)', () {
+    testWidgets('shows button for an active pact when onStartBreak is provided', (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_activePact),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStartBreak: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+      // skipOffstage: false — the button now sits far enough down the
+      // ListView to be off the default test viewport, and the default
+      // (skipOffstage: true) finder used by ensureVisible would find
+      // nothing to scroll to in the first place.
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button'), skipOffstage: false));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-start-break-button')), findsOneWidget);
+    });
+
+    testWidgets('hides button when onStartBreak is null (flag off or break already active)', (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_activePact),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
+    });
+
+    testWidgets('hides button for a stopped pact even when onStartBreak is provided', (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_stoppedPact),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStartBreak: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
+    });
+
+    testWidgets('tapping the button calls onStartBreak', (tester) async {
+      bool tapped = false;
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_activePact),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onStartBreak: () => tapped = true,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button'), skipOffstage: false));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
+      expect(tapped, isTrue);
+    });
+  });
 }
