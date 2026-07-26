@@ -5,7 +5,6 @@ import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_break_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
@@ -136,11 +135,11 @@ class PactBreakService {
     final remainingBreaks = await _pactBreakRepository.getBreaksForPact(stopped.pactId);
     final showups = await _showupRepository.getShowupsForPact(stopped.pactId);
 
-    final toReschedule = showups.where((s) {
-      if (s.status != ShowupStatus.pending) return false;
-      if (!BreakDerivation.isShowupOnBreak(showup: s, breaks: [original])) return false;
-      return !BreakDerivation.isShowupOnBreak(showup: s, breaks: remainingBreaks);
-    }).toList();
+    final toReschedule = showups
+        .where((s) =>
+            BreakDerivation.isShowupOnBreak(showup: s, breaks: [original]) &&
+            !BreakDerivation.isShowupOnBreak(showup: s, breaks: remainingBreaks))
+        .toList();
 
     if (toReschedule.isEmpty) return;
     await _reminderSchedulingService.scheduleRemindersForShowups(
