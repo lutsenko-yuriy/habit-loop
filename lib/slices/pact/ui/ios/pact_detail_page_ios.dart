@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Divider, Material, MaterialType, Theme;
-import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/ui/generic/break_banner.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
@@ -12,7 +12,6 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
-import 'package:habit_loop/theme/widgets/animated_reveal.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -170,7 +169,7 @@ class _PactDetailContent extends StatelessWidget {
         // starting a new one. Animated via AnimatedReveal (mirrors the
         // break-creation flow's end-date-row toggle) so resuming the pact
         // fades/collapses the banner instead of it vanishing instantly.
-        _BreakBannerReveal(
+        BreakBannerReveal(
           activeBreak: state.activeBreak,
           isStopping: state.isStoppingBreak,
           stopError: state.stopBreakError,
@@ -383,174 +382,6 @@ class _PactDetailContent extends StatelessWidget {
       }
     } finally {
       reasonController.dispose();
-    }
-  }
-}
-
-// Remembers the last non-null break so the banner can keep rendering (and
-// fading/collapsing via AnimatedReveal) for the instant after `activeBreak`
-// goes null following a successful resume, instead of disappearing abruptly.
-class _BreakBannerReveal extends StatefulWidget {
-  final PactBreak? activeBreak;
-  final bool isStopping;
-  final Object? stopError;
-  final Future<void> Function()? onStopBreak;
-  final AppLocalizations l10n;
-
-  const _BreakBannerReveal({
-    required this.activeBreak,
-    required this.isStopping,
-    required this.stopError,
-    required this.onStopBreak,
-    required this.l10n,
-  });
-
-  @override
-  State<_BreakBannerReveal> createState() => _BreakBannerRevealState();
-}
-
-class _BreakBannerRevealState extends State<_BreakBannerReveal> {
-  PactBreak? _lastBreak;
-
-  @override
-  void initState() {
-    super.initState();
-    _lastBreak = widget.activeBreak;
-  }
-
-  @override
-  void didUpdateWidget(covariant _BreakBannerReveal oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.activeBreak != null) _lastBreak = widget.activeBreak;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final activeBreak = _lastBreak;
-    return AnimatedReveal(
-      visible: widget.activeBreak != null,
-      child: activeBreak == null
-          ? const SizedBox.shrink()
-          : Column(
-              children: [
-                _BreakBanner(
-                  activeBreak: activeBreak,
-                  isStopping: widget.isStopping,
-                  stopError: widget.stopError,
-                  onStopBreak: widget.onStopBreak,
-                  l10n: widget.l10n,
-                ),
-                const SizedBox(height: AppSpacing.s24),
-              ],
-            ),
-    );
-  }
-}
-
-class _BreakBanner extends StatelessWidget {
-  final PactBreak activeBreak;
-  final bool isStopping;
-  final Object? stopError;
-  final Future<void> Function()? onStopBreak;
-  final AppLocalizations l10n;
-
-  const _BreakBanner({
-    required this.activeBreak,
-    required this.isStopping,
-    required this.stopError,
-    required this.onStopBreak,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = CupertinoColors.systemBlue.resolveFrom(context);
-    final plannedEnd = activeBreak.plannedEndDate;
-
-    return Container(
-      key: const Key('pact-detail-break-banner'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(CupertinoIcons.pause_circle_fill, size: 18, color: color),
-                        const SizedBox(width: AppSpacing.s8),
-                        Text(
-                          l10n.pactOnBreakTitle,
-                          style: AppTypography.body.copyWith(color: color, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(activeBreak.rationale, style: AppTypography.body),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      plannedEnd != null
-                          ? '${l10n.pactBreakUntilLabel} ${formatLocaleDate(plannedEnd)}'
-                          : l10n.breakUntilPactEnds,
-                      style: AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(context)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              CupertinoButton(
-                key: const Key('pact-detail-resume-pact-button'),
-                padding: EdgeInsets.zero,
-                onPressed: isStopping || onStopBreak == null ? null : () => _confirmResume(context),
-                child: isStopping
-                    ? const CupertinoActivityIndicator()
-                    : Text(l10n.resumePact, style: TextStyle(color: color)),
-              ),
-            ],
-          ),
-          if (stopError != null) ...[
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.resumePactError,
-              style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Future<void> _confirmResume(BuildContext context) async {
-    final confirmed = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text(l10n.resumePactTitle),
-        content: Text(l10n.resumePactBody),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.resumePactConfirm),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await onStopBreak?.call();
     }
   }
 }

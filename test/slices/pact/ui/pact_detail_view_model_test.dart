@@ -824,6 +824,32 @@ void main() {
       expect(event.daysSinceStart, 2);
     });
 
+    test('stopBreak clamps daysSinceStart to 0 for a break whose startDate is still in the future', () async {
+      // startDate is 3 days after "now" — a not-yet-started, unresolved
+      // break, which load() still surfaces as activeBreak (HAB-195 audit
+      // finding: resuming it must not report a negative day count).
+      final notYetStartedBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 18),
+        plannedEndDate: DateTime(2026, 3, 25),
+        rationale: 'Planned ahead',
+      );
+      final container = makeContainerWithAnalytics(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [notYetStartedBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 15))],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      await container.read(pactDetailViewModelProvider('p1').notifier).stopBreak();
+
+      final event = fakeAnalytics.loggedEvents.first as PactBreakStoppedEvent;
+      expect(event.daysSinceStart, 0);
+    });
+
     test('stopBreak does NOT fire event on failure', () async {
       fakeAnalytics = FakeAnalyticsService();
 

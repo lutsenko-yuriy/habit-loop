@@ -161,11 +161,15 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       // PII rule: only pact ID — no rationale.
       unawaited(ref.read(crashlyticsServiceProvider).log('pact_break_stopped: pactId=$arg'));
       unawaited(ref.read(logServiceProvider).info('pact_break_stopped: pactId=$arg'));
+      // A break's startDate can be future-dated (not yet begun) — clamp so
+      // this never reports negative, matching the event's documented
+      // contract of "days the break had been active".
+      final daysSinceStart = now.difference(activeBreak.startDate).inDays;
       unawaited(
         ref.read(analyticsServiceProvider).logEvent(PactBreakStoppedEvent(
               pactId: arg,
               originalEndType: activeBreak.plannedEndDate == null ? 'until_pact_ends' : 'fixed_date',
-              daysSinceStart: now.difference(activeBreak.startDate).inDays,
+              daysSinceStart: daysSinceStart < 0 ? 0 : daysSinceStart,
             )),
       );
     } catch (e, st) {

@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show MaterialApp, Theme;
+import 'package:flutter/material.dart' show CircularProgressIndicator, MaterialApp, Theme;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
@@ -307,8 +307,11 @@ void main() {
       await tester.pumpWidget(_buildApp(state));
       await tester.pump();
 
-      await tester.scrollUntilVisible(find.byType(CupertinoActivityIndicator), 200);
-      expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
+      // The break banner is shared Material widgetry across both platforms
+      // (HAB-195 WU5.2, `lib/slices/pact/ui/generic/break_banner.dart`), so
+      // its loading indicator is a CircularProgressIndicator even on iOS.
+      await tester.scrollUntilVisible(find.byType(CircularProgressIndicator), 200);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
   });
 
