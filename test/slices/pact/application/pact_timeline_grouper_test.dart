@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
@@ -350,6 +351,87 @@ void main() {
         final showups = List.generate(10, (i) => _done('s$i', i + 1));
         final result = _g(tailPeriodInDays: 3).groupWithStats(showups, now: _now);
         expect(result.currentStreak, 10);
+      });
+    });
+
+    group('breaks (HAB-195 WU5.1)', () {
+      PactBreak brk(String id, {required int startDay, int? plannedEndDay, int? stoppedDay}) => PactBreak(
+            id: id,
+            pactId: 'p',
+            startDate: DateTime(2024, 1, startDay),
+            rationale: 'rationale-$id',
+            plannedEndDate: plannedEndDay != null ? DateTime(2024, 1, plannedEndDay) : null,
+            stoppedAt: stoppedDay != null ? DateTime(2024, 1, stoppedDay) : null,
+          );
+
+      test('no breaks produces the same milestones as the showup-only path', () {
+        final showups = [_done('s1', 1), _fail('s2', 2)];
+        final withBreaks = _g().groupWithStats(showups, breaks: const []);
+        final without = _g().groupWithStats(showups);
+        expect(withBreaks.milestones.map((m) => m.runtimeType), without.milestones.map((m) => m.runtimeType));
+        expect(withBreaks.tailStartIndex, without.tailStartIndex);
+      });
+
+      test('a break becomes a PactBreakMilestone carrying its rationale and dates', () {
+        final result = _g().groupWithStats([], breaks: [brk('b1', startDay: 5, plannedEndDay: 10)]);
+        expect(result.milestones, hasLength(1));
+        final m = result.milestones.single as PactBreakMilestone;
+        expect(m.rationale, 'rationale-b1');
+        expect(m.startDate, DateTime(2024, 1, 5));
+        expect(m.plannedEndDate, DateTime(2024, 1, 10));
+        expect(m.stoppedAt, isNull);
+        expect(m.sortAt, DateTime(2024, 1, 5));
+      });
+
+      test('a break milestone is interleaved chronologically with showup milestones', () {
+        final showups = [_done('s1', 1), _done('s2', 2), _done('s3', 3)];
+        final breaks = [brk('b1', startDay: 2)];
+        final result = _g().groupWithStats(showups, breaks: breaks);
+        // s1/s2 done-streak flushes as one run of 2 (Jan1-2), then s3 alone (Jan3) —
+        // but the break at Jan2 sorts between them once merged.
+        final sortAts = result.milestones.map((m) => m.sortAt).toList();
+        final sorted = [...sortAts]..sort();
+        expect(sortAts, sorted);
+        expect(result.milestones.whereType<PactBreakMilestone>(), hasLength(1));
+      });
+
+      test('does not affect showupsDone/showupsFailed/currentStreak stats', () {
+        final showups = [_done('s1', 1), _fail('s2', 2)];
+        final breaks = [brk('b1', startDay: 1, plannedEndDay: 2)];
+        final result = _g().groupWithStats(showups, breaks: breaks);
+        expect(result.showupsDone, 1);
+        expect(result.showupsFailed, 1);
+        expect(result.currentStreak, 0);
+      });
+
+      test('multiple breaks each become their own milestone, sorted by startDate', () {
+        final breaks = [brk('b2', startDay: 10), brk('b1', startDay: 5)];
+        final result = _g().groupWithStats([], breaks: breaks);
+        expect(result.milestones, hasLength(2));
+        expect((result.milestones[0] as PactBreakMilestone).rationale, 'rationale-b1');
+        expect((result.milestones[1] as PactBreakMilestone).rationale, 'rationale-b2');
+      });
+
+      test('tailStartIndex accounts for a break milestone that falls in the tail zone', () {
+        // cutoff(7 days from _now=Jan14) = Jan 7 — a break starting Jan 10 is in-tail.
+        final showups = [_done('s1', 1)]; // non-tail
+        final breaks = [brk('b1', startDay: 10)]; // tail
+        final result = _g(tailPeriodInDays: 7).groupWithStats(showups, now: _now, breaks: breaks);
+        expect(result.milestones, hasLength(2));
+        expect(result.tailStartIndex, 1);
+        expect(result.milestones[1], isA<PactBreakMilestone>());
+      });
+
+      test('a stopped break carries its stoppedAt through to the milestone', () {
+        final result = _g().groupWithStats([], breaks: [brk('b1', startDay: 1, plannedEndDay: 20, stoppedDay: 5)]);
+        final m = result.milestones.single as PactBreakMilestone;
+        expect(m.stoppedAt, DateTime(2024, 1, 5));
+      });
+
+      test('group() (not just groupWithStats()) also merges break milestones', () {
+        final result = _g().group([], breaks: [brk('b1', startDay: 5)]);
+        expect(result.milestones, hasLength(1));
+        expect(result.milestones.single, isA<PactBreakMilestone>());
       });
     });
   });

@@ -1,3 +1,4 @@
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/tail_zone.dart';
@@ -26,8 +27,9 @@ class PactTimelineGrouper {
   ({List<PactTimelineMilestone> milestones, int tailStartIndex}) group(
     List<Showup> showups, {
     DateTime? now,
+    List<PactBreak> breaks = const [],
   }) {
-    final result = groupWithStats(showups, now: now);
+    final result = groupWithStats(showups, now: now, breaks: breaks);
     return (milestones: result.milestones, tailStartIndex: result.tailStartIndex);
   }
 
@@ -53,6 +55,7 @@ class PactTimelineGrouper {
   }) groupWithStats(
     List<Showup> showups, {
     DateTime? now,
+    List<PactBreak> breaks = const [],
   }) {
     final effectiveNow = now ?? DateTime.now();
 
@@ -151,9 +154,37 @@ class PactTimelineGrouper {
 
     flushStreak();
 
+    if (breaks.isEmpty) {
+      return (
+        milestones: result,
+        tailStartIndex: tailStartIndex == -1 ? result.length : tailStartIndex,
+        showupsDone: showupsDone,
+        showupsFailed: showupsFailed,
+        currentStreak: trailingStreak,
+      );
+    }
+
+    // Each break gets its own timeline entry (HAB-195 WU5.1), merged in sortAt
+    // order alongside the showup milestones above — separately from the
+    // showup loop so break windows never influence streak/stats math.
+    final breakMilestones = breaks.map((b) => PactBreakMilestone(
+          sortAt: b.startDate,
+          rationale: b.rationale,
+          startDate: b.startDate,
+          plannedEndDate: b.plannedEndDate,
+          stoppedAt: b.stoppedAt,
+        ));
+    final merged = [...result, ...breakMilestones]..sort((a, b) => a.sortAt.compareTo(b.sortAt));
+
+    // Tail-zone membership is a pure function of sortAt vs. now, and merged is
+    // sorted ascending, so the first tail-zone hit is the authoritative boundary.
+    final mergedTailStartIndex = merged.indexWhere(
+      (m) => TailZone.contains(scheduledAt: m.sortAt, now: effectiveNow, days: noGroupingTailPeriodInDays),
+    );
+
     return (
-      milestones: result,
-      tailStartIndex: tailStartIndex == -1 ? result.length : tailStartIndex,
+      milestones: merged,
+      tailStartIndex: mergedTailStartIndex == -1 ? merged.length : mergedTailStartIndex,
       showupsDone: showupsDone,
       showupsFailed: showupsFailed,
       currentStreak: trailingStreak,
