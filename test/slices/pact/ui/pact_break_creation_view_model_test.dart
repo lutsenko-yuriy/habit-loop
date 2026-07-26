@@ -109,6 +109,28 @@ void main() {
       expect(state.endDate, DateTime(2026, 6, 25));
     });
 
+    test('setStartDate bumps endDate forward when it would otherwise become <= startDate', () {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      // Default endDate is 2026-06-22 — moving startDate past it must not
+      // leave an inverted/zero-length window.
+      notifier.setStartDate(DateTime(2026, 6, 25));
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.startDate, DateTime(2026, 6, 25));
+      expect(state.endDate.isAfter(state.startDate), true);
+    });
+
+    test('setStartDate leaves endDate untouched when it is still after the new startDate', () {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setStartDate(DateTime(2026, 6, 16));
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.startDate, DateTime(2026, 6, 16));
+      expect(state.endDate, DateTime(2026, 6, 22)); // untouched default
+    });
+
     test('setUntilPactEnds toggles the flag without discarding endDate', () {
       final container = _makeContainer(now: DateTime(2026, 6, 15));
       addTearDown(container.dispose);

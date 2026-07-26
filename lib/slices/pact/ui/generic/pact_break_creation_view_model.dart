@@ -30,8 +30,14 @@ class PactBreakCreationViewModel extends AutoDisposeFamilyNotifier<PactBreakCrea
     );
   }
 
+  // The start-date picker's floor is always "today", independent of the
+  // current endDate — bump endDate forward when it would otherwise become
+  // <= the new startDate (a zero-length or inverted window that still
+  // counts as "unresolved" and blocks starting any other break).
   void setStartDate(DateTime date) {
-    state = state.copyWith(startDate: DateTime(date.year, date.month, date.day));
+    final normalized = DateTime(date.year, date.month, date.day);
+    final endDate = state.endDate.isAfter(normalized) ? state.endDate : normalized.add(const Duration(days: 7));
+    state = state.copyWith(startDate: normalized, endDate: endDate);
   }
 
   void setEndDate(DateTime date) {

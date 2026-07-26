@@ -178,7 +178,7 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
                 children: [
                   CupertinoButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Done'),
+                    child: Text(AppLocalizations.of(ctx)!.pickerDone),
                   ),
                 ],
               ),
