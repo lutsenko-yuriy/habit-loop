@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [test] HAB-198: Fixed `break_flow_test.dart`'s `onbreak_showup_not_autofailed_by_sweep_or_late_open` asserting a stale "Pending" status text for an on-break showup — WU5.1 (HAB-195) changed `ShowupUiState.onBreak` to render as "On break" instead, but this WU3-era test was never updated to match, so it had been failing deterministically (not flakily, as previously assumed across several HAB-195 WUs) ever since. Updated the assertion to wait for the correct post-WU5.1 text. Verified passing on both the Android emulator and the iOS simulator.
+
 ## [0.52.0] — 2026-07-27 (PR #332 merged)
 
 ### Added

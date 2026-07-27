@@ -347,13 +347,14 @@ void main() {
           reason: 'On-break showup must not be auto-failed by the dashboard sweep');
 
       // ── 2. Opening showup detail directly must also not auto-fail it ─────
-      // Note: the "on break" visual marking (blue/pause glyph) lands in WU5.1
-      // — this asserts the underlying auto-fail suppression only.
+      // The status badge shows "On break" (WU5.1's on-break visual
+      // treatment), not the plain "Pending" label — this still asserts the
+      // underlying auto-fail suppression, just via the correct post-WU5.1 text.
       await tester.tap(find.text('Meditate').first);
       final strings = l10n(tester);
-      await waitFor(tester, find.text(strings.showupPending));
-      expect(find.text(strings.showupPending), findsOneWidget,
-          reason: 'On-break showup must display as Pending (not Failed) on a late open');
+      await waitFor(tester, find.text(strings.showupOnBreak));
+      expect(find.text(strings.showupOnBreak), findsOneWidget,
+          reason: 'On-break showup must display as On break (not Failed) on a late open');
 
       final persisted = await h.showupRepo.getShowupById(showupId);
       expect(persisted?.status, ShowupStatus.pending);
