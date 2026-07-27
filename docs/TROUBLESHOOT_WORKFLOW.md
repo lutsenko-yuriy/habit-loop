@@ -15,6 +15,7 @@ For new features, enhancements, and planned changes, use `docs/FEATURE_WORKFLOW.
 
 - Check recent changes: `git log --oneline -20`, recent PRs, recent dependency bumps.
 - For third-party tool failures: read the changelog for breaking changes around the time the failure started.
+- **Before writing off a failing integration test as "known flaky"**, re-run it in isolation at least once to confirm it's actually intermittent, not deterministic. A symptom that looks like known flakiness (e.g. a `waitFor` timeout) can be a real, consistent bug wearing the same clothes (HAB-198: a stale assertion failed the same way every time for three WUs before anyone re-ran it and noticed it never once passed).
 - Form a hypothesis before attempting any fix.
 
 ## 3. Open a tracking ticket
