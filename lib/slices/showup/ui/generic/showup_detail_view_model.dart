@@ -62,26 +62,30 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
           ? await ref.read(pactBreakRepositoryProvider).getBreaksForPact(showup.pactId)
           : const <PactBreak>[];
 
+      // Computed once, before any status mutation below, so it reflects the
+      // showup's original pending state — shared by the late-open auto-fail
+      // suppression check (WU3) and the "Take a break" gate (WU4.2/WU6): a
+      // showup already on break (even permanently, via a since-resumed break
+      // — HAB-195's "stays on break forever" rule) is already covered and
+      // must never offer starting another.
+      final isOnBreak = BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks);
+
       bool wasAutoFailed = false;
       final pactStatsService = ref.read(pactStatsServiceProvider);
-      if (showup.status == ShowupStatus.pending) {
+      if (showup.status == ShowupStatus.pending && !isOnBreak) {
         final endTime = showup.scheduledAt.add(showup.duration);
         if (now.isAfter(endTime)) {
-          // On-break showups must not be auto-failed on a late open (HAB-195 WU3).
-          final onBreak = BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks);
-          if (!onBreak) {
-            showup = await pactStatsService.persistShowupStatus(
-              showup: showup,
-              status: ShowupStatus.failed,
-              now: now,
-            );
-            wasAutoFailed = true;
+          showup = await pactStatsService.persistShowupStatus(
+            showup: showup,
+            status: ShowupStatus.failed,
+            now: now,
+          );
+          wasAutoFailed = true;
 
-            unawaited(
-              ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
-            );
-            unawaited(ref.read(logServiceProvider).info('showup_auto_failed: id=$arg pactId=${showup.pactId}'));
-          }
+          unawaited(
+            ref.read(analyticsServiceProvider).logEvent(ShowupAutoFailedEvent(pactId: showup.pactId)),
+          );
+          unawaited(ref.read(logServiceProvider).info('showup_auto_failed: id=$arg pactId=${showup.pactId}'));
         }
       }
 
@@ -111,6 +115,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final canStartBreak = pact != null &&
           ref.read(featureFlagsProvider).pactBreaksEnabled &&
           !hasActiveBreak &&
+          !isOnBreak &&
           showup.status != ShowupStatus.done &&
           TailZone.contains(scheduledAt: showup.scheduledAt, now: now, days: tailDays);
 

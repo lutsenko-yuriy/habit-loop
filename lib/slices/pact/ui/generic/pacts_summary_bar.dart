@@ -14,6 +14,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 /// Returns the snap target for the pact panel drag gesture.
@@ -142,6 +143,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pactListViewModelProvider);
+    final breaksEnabled = ref.watch(featureFlagsProvider).pactBreaksEnabled;
     final l10n = AppLocalizations.of(context)!;
 
     if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0 && state.archivedCount == 0) {
@@ -237,12 +239,14 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                           child: _PactListBody(
                             scrollController: scrollController,
                             state: state,
+                            breaksEnabled: breaksEnabled,
                             unarchivedEntries: unarchivedEntries,
                             archivedEntries: archivedEntries,
                             allEmpty: allEmpty,
                             onAddPact: _addPact,
                             onToggleFilter: (status) =>
                                 ref.read(pactListViewModelProvider.notifier).toggleFilter(status),
+                            onToggleBreakFilter: () => ref.read(pactListViewModelProvider.notifier).toggleBreakFilter(),
                             onToggleArchived: () => _toggleArchived(state),
                             onTapEntry: _navigateToPact,
                           ),
@@ -364,20 +368,32 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
   }
 }
 
-/// Horizontal row of status filter chips, plus the archived-pacts chip that
-/// animates in once at least one archived pact exists.
+/// Staggered, multi-row (no horizontal scroll) grid of status filter chips,
+/// plus the archived-pacts chip that animates in once at least one archived
+/// pact exists (HAB-195 WU6 — grew from 3 to 5 chips with the addition of
+/// Break, which no longer fit a single scrollable row on narrow screens).
+/// Selection is shown by fill color only — no checkmarks. All chips are
+/// independent multi-select toggles, but Break and Active are mutually
+/// exclusive *for on-break pacts specifically*: Break, not Active, decides
+/// whether an on-break pact is shown — see [PactListState.breakSelected].
 class _PactFilterChipsRow extends StatelessWidget {
   final Set<PactStatus> activeFilters;
+  final bool breakSelected;
+  final bool breaksEnabled;
   final int archivedCount;
   final bool showArchived;
   final ValueChanged<PactStatus> onToggleFilter;
+  final VoidCallback onToggleBreakFilter;
   final VoidCallback onToggleArchived;
 
   const _PactFilterChipsRow({
     required this.activeFilters,
+    required this.breakSelected,
+    required this.breaksEnabled,
     required this.archivedCount,
     required this.showArchived,
     required this.onToggleFilter,
+    required this.onToggleBreakFilter,
     required this.onToggleArchived,
   });
 
@@ -385,26 +401,38 @@ class _PactFilterChipsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
-      child: Row(
+      child: Wrap(
+        spacing: AppSpacing.s8,
+        runSpacing: AppSpacing.s8,
         children: [
           FilterChip(
             label: Text(l10n.filterActive),
             selected: activeFilters.contains(PactStatus.active),
+            showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.active),
           ),
-          const SizedBox(width: AppSpacing.s8),
+          // Hidden when the feature is disabled (HAB-195 kill-switch) — a
+          // disabled feature has no on-break pacts to filter to.
+          if (breaksEnabled)
+            FilterChip(
+              key: const Key('break-filter-chip'),
+              label: Text(l10n.filterBreak),
+              selected: breakSelected,
+              showCheckmark: false,
+              onSelected: (_) => onToggleBreakFilter(),
+            ),
           FilterChip(
             label: Text(l10n.filterDone),
             selected: activeFilters.contains(PactStatus.completed),
+            showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.completed),
           ),
-          const SizedBox(width: AppSpacing.s8),
           FilterChip(
             label: Text(l10n.filterCancelled),
             selected: activeFilters.contains(PactStatus.stopped),
+            showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.stopped),
           ),
           // Archived chip animates in when first archived pact exists.
@@ -412,17 +440,12 @@ class _PactFilterChipsRow extends StatelessWidget {
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
             child: archivedCount > 0
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(width: AppSpacing.s8),
-                      FilterChip(
-                        key: const Key('archive-filter-chip'),
-                        label: Text(l10n.filterArchived),
-                        selected: showArchived,
-                        onSelected: (_) => onToggleArchived(),
-                      ),
-                    ],
+                ? FilterChip(
+                    key: const Key('archive-filter-chip'),
+                    label: Text(l10n.filterArchived),
+                    selected: showArchived,
+                    showCheckmark: false,
+                    onSelected: (_) => onToggleArchived(),
                   )
                 : const SizedBox.shrink(),
           ),
@@ -437,22 +460,26 @@ class _PactFilterChipsRow extends StatelessWidget {
 class _PactListBody extends StatelessWidget {
   final ScrollController scrollController;
   final PactListState state;
+  final bool breaksEnabled;
   final List<PactListEntry> unarchivedEntries;
   final List<PactListEntry> archivedEntries;
   final bool allEmpty;
   final VoidCallback onAddPact;
   final ValueChanged<PactStatus> onToggleFilter;
+  final VoidCallback onToggleBreakFilter;
   final VoidCallback onToggleArchived;
   final void Function(PactListEntry) onTapEntry;
 
   const _PactListBody({
     required this.scrollController,
     required this.state,
+    required this.breaksEnabled,
     required this.unarchivedEntries,
     required this.archivedEntries,
     required this.allEmpty,
     required this.onAddPact,
     required this.onToggleFilter,
+    required this.onToggleBreakFilter,
     required this.onToggleArchived,
     required this.onTapEntry,
   });
@@ -495,9 +522,12 @@ class _PactListBody extends StatelessWidget {
           SliverToBoxAdapter(
             child: _PactFilterChipsRow(
               activeFilters: state.activeFilters,
+              breakSelected: state.breakSelected,
+              breaksEnabled: breaksEnabled,
               archivedCount: state.archivedCount,
               showArchived: state.showArchived,
               onToggleFilter: onToggleFilter,
+              onToggleBreakFilter: onToggleBreakFilter,
               onToggleArchived: onToggleArchived,
             ),
           ),
@@ -666,13 +696,19 @@ class _PactTile extends StatelessWidget {
           : cancelledStr;
     }
 
-    final statusText = pactStatusText(l10n, pact.status);
+    // On-break pacts get a distinct badge instead of reading as plain
+    // "Active" (HAB-195) — mirrors the blue on-break treatment already used
+    // for showups (WU5.1), reusing its "On break" string rather than adding
+    // a near-duplicate one.
+    final statusText = entry.onBreak ? l10n.showupOnBreak : pactStatusText(l10n, pact.status);
     final cs = Theme.of(context).colorScheme;
-    final (badgeBg, badgeFg) = switch (pact.status) {
-      PactStatus.active => (cs.primaryContainer, cs.onPrimaryContainer),
-      PactStatus.completed => (cs.secondaryContainer, cs.onSecondaryContainer),
-      PactStatus.stopped => (cs.errorContainer, cs.onErrorContainer),
-    };
+    final (badgeBg, badgeFg) = entry.onBreak
+        ? (HabitLoopColors.onBreak.withValues(alpha: 0.15), HabitLoopColors.onBreak)
+        : switch (pact.status) {
+            PactStatus.active => (cs.primaryContainer, cs.onPrimaryContainer),
+            PactStatus.completed => (cs.secondaryContainer, cs.onSecondaryContainer),
+            PactStatus.stopped => (cs.errorContainer, cs.onErrorContainer),
+          };
 
     return ListTile(
       onTap: onTap,

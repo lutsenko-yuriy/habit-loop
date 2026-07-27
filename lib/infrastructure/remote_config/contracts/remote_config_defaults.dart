@@ -159,10 +159,12 @@ abstract final class RemoteConfigDefaults {
 
   /// Feature toggle: kill-switch for the pact-breaks feature (HAB-195).
   ///
-  /// Deliberately defaults to `false` during development (deviation from the
-  /// usual default-true convention for feature toggles) — flips to `true` in
-  /// the final ship WU once the feature is complete end-to-end.
-  static const bool pactBreaksEnabled = false;
+  /// Defaulted to `false` during development (deviation from the usual
+  /// default-true convention for feature toggles) and flipped to `true` here
+  /// in the final ship WU (WU6) now that the feature is complete end-to-end.
+  /// Override to `false` in the Firebase Remote Config console to disable
+  /// pact breaks without a release.
+  static const bool pactBreaksEnabled = true;
 
   /// Optional short hint shown in the debug override dialog for keys whose
   /// numeric range has a concrete semantic meaning.

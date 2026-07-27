@@ -149,8 +149,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('pact_breaks_enabled'), isTrue);
       });
 
-      test('default value is false', () {
-        expect(RemoteConfigDefaults.all['pact_breaks_enabled'], isFalse);
+      test('default value is true', () {
+        expect(RemoteConfigDefaults.all['pact_breaks_enabled'], isTrue);
       });
 
       test('constant matches all map value', () {

@@ -301,6 +301,7 @@ final pactListQueryServiceProvider = Provider<PactListQueryService>((ref) {
   return PactListQueryService(
     pactRepository: ref.watch(pactRepositoryProvider),
     showupRepository: ref.watch(showupRepositoryProvider),
+    pactBreakRepository: ref.watch(pactBreakRepositoryProvider),
   );
 });
 

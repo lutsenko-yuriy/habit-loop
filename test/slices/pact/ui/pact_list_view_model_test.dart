@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -29,13 +31,25 @@ Showup _showup(String id, String pactId, DateTime scheduledAt, {ShowupStatus sta
       status: status,
     );
 
+PactBreak _pactBreak(String id, String pactId, {DateTime? startDate, DateTime? plannedEndDate, DateTime? stoppedAt}) =>
+    PactBreak(
+      id: id,
+      pactId: pactId,
+      startDate: startDate ?? DateTime(2026, 1, 1),
+      plannedEndDate: plannedEndDate,
+      stoppedAt: stoppedAt,
+      rationale: 'Recovering',
+    );
+
 ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
+  List<PactBreak> breaks = const [],
 }) {
   return ProviderContainer(overrides: [
     pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
     showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+    pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
   ]);
 }
 
@@ -258,6 +272,143 @@ void main() {
       c.read(pactListViewModelProvider.notifier).toggleArchived();
       final ids = c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toList();
       expect(ids, ['active', 'unarch-completed', 'unarch-stopped', 'arch-completed', 'arch-stopped']);
+    });
+
+    test('load: entry.onBreak is true for an active pact with an unresolved break', () async {
+      final pact = _pact('p1', PactStatus.active);
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [_pactBreak('b1', 'p1')],
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isTrue);
+    });
+
+    test('load: entry.onBreak is false for an active pact with a stopped break', () async {
+      final pact = _pact('p1', PactStatus.active);
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [_pactBreak('b1', 'p1', stoppedAt: DateTime(2026, 1, 5))],
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isFalse);
+    });
+
+    test('load: entry.onBreak is false for an active pact with no breaks', () async {
+      final pact = _pact('p1', PactStatus.active);
+      final c = _makeContainer(pacts: [pact]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isFalse);
+    });
+
+    test('load: entry.onBreak is false for a non-active pact even with an unresolved break', () async {
+      final pact = _pact('p1', PactStatus.stopped);
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [_pactBreak('b1', 'p1')],
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isFalse);
+    });
+
+    test('toggleBreakFilter flips breakSelected', () {
+      final c = _makeContainer();
+      addTearDown(c.dispose);
+      expect(c.read(pactListViewModelProvider).breakSelected, isFalse);
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+      expect(c.read(pactListViewModelProvider).breakSelected, isTrue);
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+      expect(c.read(pactListViewModelProvider).breakSelected, isFalse);
+    });
+
+    test('toggleFilter is unaffected by breakSelected — behaves like any other status toggle', () async {
+      final c = _makeContainer(pacts: [
+        _pact('onbreak', PactStatus.active),
+        _pact('plain', PactStatus.active),
+      ], breaks: [
+        _pactBreak('b1', 'onbreak'),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+
+      final state = c.read(pactListViewModelProvider);
+      expect(state.breakSelected, isTrue, reason: 'Toggling a status chip must not touch the Break chip');
+      expect(state.activeFilters, {PactStatus.completed, PactStatus.stopped});
+    });
+
+    // Truth table (A = Active chip, B = Break chip) for a plain active pact
+    // and an on-break active pact, both otherwise identical:
+    //   !A & !B → neither visible
+    //    A & !B → only the plain active pact (on-break excluded)
+    //   !A &  B → only the on-break pact
+    //    A &  B → both
+    // Break exclusively governs on-break pacts' visibility — Active alone
+    // never surfaces them, matching how the pact list tile now visibly
+    // distinguishes "Active" from "On break" (the badge added alongside).
+    group('filteredEntries: Active/Break truth table', () {
+      late ProviderContainer c;
+
+      setUp(() async {
+        c = _makeContainer(pacts: [
+          _pact('plain', PactStatus.active),
+          _pact('onbreak', PactStatus.active),
+        ], breaks: [
+          _pactBreak('b1', 'onbreak'),
+        ]);
+        await c.read(pactListViewModelProvider.notifier).load();
+        // Start from a clean slate: both Active and Break deselected.
+        c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+      });
+
+      tearDown(() => c.dispose());
+
+      Set<String> visibleIds() => c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toSet();
+
+      test('!A & !B → neither pact visible', () {
+        expect(visibleIds(), isEmpty);
+      });
+
+      test('!A & B → only the on-break pact is visible', () {
+        c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+        expect(visibleIds(), {'onbreak'});
+      });
+
+      test('A & !B → only the plain active pact is visible, on-break excluded', () {
+        c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+        expect(visibleIds(), {'plain'});
+      });
+
+      test('A & B → both pacts are visible', () {
+        c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+        c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+        expect(visibleIds(), {'plain', 'onbreak'});
+      });
+    });
+
+    test('filteredEntries: Break has no effect on non-active pacts', () async {
+      final c = _makeContainer(pacts: [
+        _pact('stopped', PactStatus.stopped),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+
+      expect(c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id), ['stopped']);
+
+      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.stopped);
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+
+      expect(c.read(pactListViewModelProvider).filteredEntries, isEmpty,
+          reason: 'Break only ever matches on-break pacts — it must not resurrect a deselected Stopped pact');
     });
 
     test('concurrent load() calls: only one runs at a time', () async {

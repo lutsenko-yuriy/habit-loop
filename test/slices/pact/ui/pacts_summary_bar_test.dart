@@ -12,10 +12,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart';
+
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 // ── fixtures ─────────────────────────────────────────────────────────────────
 
@@ -56,9 +59,12 @@ final _mixedState = PactListState(
 
 // ── harness ──────────────────────────────────────────────────────────────────
 
-Widget _buildApp(PactListState listState, {AsyncCallback? onCreatePact}) => ProviderScope(
+Widget _buildApp(PactListState listState, {AsyncCallback? onCreatePact, bool breaksEnabled = true}) => ProviderScope(
       overrides: [
         pactListViewModelProvider.overrideWith(() => _FakePactListViewModel(listState)),
+        remoteConfigServiceProvider.overrideWithValue(
+          FakeRemoteConfigService(overrides: {'pact_breaks_enabled': breaksEnabled}),
+        ),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -153,6 +159,72 @@ void main() {
       // Unaffected filters keep their entries visible.
       expect(find.text('Journal'), findsOneWidget);
     });
+
+    testWidgets('renders a Break chip (HAB-195)', (tester) async {
+      await tester.pumpWidget(_buildApp(_mixedState));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      expect(find.byKey(const Key('break-filter-chip')), findsOneWidget);
+      expect(find.widgetWithText(FilterChip, 'Break'), findsOneWidget);
+    });
+
+    testWidgets('hides the Break chip when pact_breaks_enabled is off', (tester) async {
+      await tester.pumpWidget(_buildApp(_mixedState, breaksEnabled: false));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      expect(find.byKey(const Key('break-filter-chip')), findsNothing);
+    });
+
+    testWidgets('Active selected (default) does not surface an on-break pact until Break is also selected',
+        (tester) async {
+      final onBreakState = PactListState(
+        entries: [
+          PactListEntry(pact: _activePact, onBreak: true),
+          PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
+        ],
+      );
+      await tester.pumpWidget(_buildApp(onBreakState));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      // Active is selected by default, Break is not — the on-break pact
+      // must stay hidden even though its underlying status is Active.
+      expect(find.text('Meditate'), findsNothing);
+      expect(find.text('Yoga'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pumpAndSettle();
+
+      // Selecting Break on top of the already-selected Active reveals it.
+      expect(find.text('Meditate'), findsOneWidget);
+      expect(find.text('Yoga'), findsOneWidget);
+    });
+
+    testWidgets('deselecting Active then selecting Break isolates on-break pacts, matching any other filter combo',
+        (tester) async {
+      final onBreakState = PactListState(
+        entries: [
+          PactListEntry(pact: _activePact, onBreak: true),
+          PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
+        ],
+      );
+      await tester.pumpWidget(_buildApp(onBreakState));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      await tester.tap(find.widgetWithText(FilterChip, 'Active'));
+      await tester.pumpAndSettle();
+      expect(find.text('Meditate'), findsNothing);
+      expect(find.text('Yoga'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Meditate'), findsOneWidget);
+      expect(find.text('Yoga'), findsNothing);
+    });
   });
 
   group('PactsPanel list body', () {
@@ -165,6 +237,30 @@ void main() {
       expect(find.text('Journal'), findsOneWidget);
       // Archived entry is not shown until "show archived" is toggled on.
       expect(find.text('Stretch'), findsNothing);
+    });
+
+    testWidgets('shows an "On break" badge instead of "Active" for an on-break pact (HAB-195)', (tester) async {
+      final state = PactListState(
+        entries: [
+          PactListEntry(pact: _activePact, onBreak: true),
+          PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
+        ],
+        // Break must be selected for the on-break pact to be visible at all
+        // (HAB-195 WU6 fix: Active alone no longer surfaces on-break pacts).
+        breakSelected: true,
+      );
+      await tester.pumpWidget(_buildApp(state));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      expect(find.text('On break'), findsOneWidget);
+      // The plain active pact still reads "Active" — the badge only changes
+      // for entries actually on break. Scoped to the Yoga tile since the
+      // Active *filter chip* also renders the literal text "Active".
+      expect(
+        find.descendant(of: find.widgetWithText(ListTile, 'Yoga'), matching: find.text('Active')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows the empty state when there are no visible entries', (tester) async {

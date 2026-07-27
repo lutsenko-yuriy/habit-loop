@@ -61,6 +61,8 @@ git checkout -b feature/HAB-XX-WUN-<short> origin/main
 
 @skills/build/implement/resources/tdd-cycle.md
 
+**Widget test failing in a way that looks like "the widget exists but the test can't see it"?** Check `skills/build/implement/resources/widget-test-gotchas.md` before reaching for print-and-inspect instrumentation.
+
 ### 4.1 Rework cycle checkpoint
 
 A **rework cycle** is counted when the current WU approach is scrapped and restarted with a significantly different implementation — e.g. changing the widget tree structure, rewriting display logic, or switching the data model. Minor adjustments (padding, button colour, widget reordering) do not count.

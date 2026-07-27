@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/pact/application/pact_list_query_service.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
@@ -26,13 +28,22 @@ Showup _showup(String id, String pactId) => Showup(
       status: ShowupStatus.pending,
     );
 
+PactBreak _pactBreak(String id, String pactId, {DateTime? startDate}) => PactBreak(
+      id: id,
+      pactId: pactId,
+      startDate: startDate ?? DateTime(2026, 4, 1),
+      rationale: 'Recovering',
+    );
+
 PactListQueryService _makeService({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
+  List<PactBreak> breaks = const [],
 }) =>
     PactListQueryService(
       pactRepository: InMemoryPactRepository(pacts),
       showupRepository: InMemoryShowupRepository(showups),
+      pactBreakRepository: InMemoryPactBreakRepository(breaks),
     );
 
 void main() {
@@ -57,6 +68,19 @@ void main() {
 
     test('returns empty when pact has no showups', () async {
       expect(await _makeService().getShowupsForPact('p1'), isEmpty);
+    });
+  });
+
+  group('PactListQueryService.getBreaksForPact', () {
+    test('returns breaks belonging to the given pact', () async {
+      final b1 = _pactBreak('b1', 'p1');
+      final b2 = _pactBreak('b2', 'p2');
+      final service = _makeService(breaks: [b1, b2]);
+      expect(await service.getBreaksForPact('p1'), [b1]);
+    });
+
+    test('returns empty when pact has no breaks', () async {
+      expect(await _makeService().getBreaksForPact('p1'), isEmpty);
     });
   });
 

@@ -15,6 +15,8 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
@@ -99,6 +101,12 @@ List<Override> _overrides({
     showupRepositoryProvider.overrideWithValue(showupRepo),
     pactTransactionServiceProvider.overrideWithValue(txService),
     if (nowOverride != null) showupDetailNowProvider.overrideWithValue(nowOverride),
+    // These tests exercise the note-saving flow, not pact breaks — pin the
+    // flag off so the "Take a Break" entry point (HAB-195, on by default)
+    // doesn't add extra content that pushes Save Note out of the viewport.
+    remoteConfigServiceProvider.overrideWithValue(
+      FakeRemoteConfigService(overrides: const {'pact_breaks_enabled': false}),
+    ),
   ];
 }
 
