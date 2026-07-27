@@ -142,6 +142,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pactListViewModelProvider);
+    final breaksEnabled = ref.watch(featureFlagsProvider).pactBreaksEnabled;
     final l10n = AppLocalizations.of(context)!;
 
     if (state.activeCount == 0 && state.doneCount == 0 && state.cancelledCount == 0 && state.archivedCount == 0) {
@@ -237,6 +238,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                           child: _PactListBody(
                             scrollController: scrollController,
                             state: state,
+                            breaksEnabled: breaksEnabled,
                             unarchivedEntries: unarchivedEntries,
                             archivedEntries: archivedEntries,
                             allEmpty: allEmpty,
@@ -373,6 +375,7 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
 class _PactFilterChipsRow extends StatelessWidget {
   final Set<PactStatus> activeFilters;
   final bool breakOnly;
+  final bool breaksEnabled;
   final int archivedCount;
   final bool showArchived;
   final ValueChanged<PactStatus> onToggleFilter;
@@ -382,6 +385,7 @@ class _PactFilterChipsRow extends StatelessWidget {
   const _PactFilterChipsRow({
     required this.activeFilters,
     required this.breakOnly,
+    required this.breaksEnabled,
     required this.archivedCount,
     required this.showArchived,
     required this.onToggleFilter,
@@ -411,13 +415,16 @@ class _PactFilterChipsRow extends StatelessWidget {
             showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.active),
           ),
-          FilterChip(
-            key: const Key('break-filter-chip'),
-            label: Text(l10n.filterBreak),
-            selected: breakOnly,
-            showCheckmark: false,
-            onSelected: (_) => onToggleBreakOnly(),
-          ),
+          // Hidden when the feature is disabled (HAB-195 kill-switch) — a
+          // disabled feature has no on-break pacts to filter to.
+          if (breaksEnabled)
+            FilterChip(
+              key: const Key('break-filter-chip'),
+              label: Text(l10n.filterBreak),
+              selected: breakOnly,
+              showCheckmark: false,
+              onSelected: (_) => onToggleBreakOnly(),
+            ),
           FilterChip(
             label: Text(l10n.filterDone),
             selected: selected(PactStatus.completed),
@@ -455,6 +462,7 @@ class _PactFilterChipsRow extends StatelessWidget {
 class _PactListBody extends StatelessWidget {
   final ScrollController scrollController;
   final PactListState state;
+  final bool breaksEnabled;
   final List<PactListEntry> unarchivedEntries;
   final List<PactListEntry> archivedEntries;
   final bool allEmpty;
@@ -467,6 +475,7 @@ class _PactListBody extends StatelessWidget {
   const _PactListBody({
     required this.scrollController,
     required this.state,
+    required this.breaksEnabled,
     required this.unarchivedEntries,
     required this.archivedEntries,
     required this.allEmpty,
@@ -516,6 +525,7 @@ class _PactListBody extends StatelessWidget {
             child: _PactFilterChipsRow(
               activeFilters: state.activeFilters,
               breakOnly: state.breakOnly,
+              breaksEnabled: breaksEnabled,
               archivedCount: state.archivedCount,
               showArchived: state.showArchived,
               onToggleFilter: onToggleFilter,

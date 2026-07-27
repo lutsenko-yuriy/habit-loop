@@ -12,10 +12,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart';
+
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 // ── fixtures ─────────────────────────────────────────────────────────────────
 
@@ -56,9 +59,12 @@ final _mixedState = PactListState(
 
 // ── harness ──────────────────────────────────────────────────────────────────
 
-Widget _buildApp(PactListState listState, {AsyncCallback? onCreatePact}) => ProviderScope(
+Widget _buildApp(PactListState listState, {AsyncCallback? onCreatePact, bool breaksEnabled = true}) => ProviderScope(
       overrides: [
         pactListViewModelProvider.overrideWith(() => _FakePactListViewModel(listState)),
+        remoteConfigServiceProvider.overrideWithValue(
+          FakeRemoteConfigService(overrides: {'pact_breaks_enabled': breaksEnabled}),
+        ),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -161,6 +167,14 @@ void main() {
 
       expect(find.byKey(const Key('break-filter-chip')), findsOneWidget);
       expect(find.widgetWithText(FilterChip, 'Break'), findsOneWidget);
+    });
+
+    testWidgets('hides the Break chip when pact_breaks_enabled is off', (tester) async {
+      await tester.pumpWidget(_buildApp(_mixedState, breaksEnabled: false));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      expect(find.byKey(const Key('break-filter-chip')), findsNothing);
     });
 
     testWidgets('tapping the Break chip narrows the list to on-break pacts only', (tester) async {

@@ -344,6 +344,26 @@ void main() {
       expect(ids, {'onbreak'});
     });
 
+    test('filteredEntries: breakOnly overrides activeFilters even when Active was manually deselected', () async {
+      final c = _makeContainer(pacts: [
+        _pact('onbreak', PactStatus.active),
+      ], breaks: [
+        _pactBreak('b1', 'onbreak'),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      // Deselect Active directly (not via the break-only exit path) — a
+      // normal, always-available action independent of the Break chip.
+      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+      expect(c.read(pactListViewModelProvider).activeFilters, {PactStatus.completed, PactStatus.stopped});
+
+      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
+
+      final ids = c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toSet();
+      expect(ids, {'onbreak'},
+          reason: 'The Break lens must show on-break pacts regardless of the Active status filter');
+    });
+
     test('toggleFilter exits breakOnly mode instead of toggling the tapped status', () async {
       final c = _makeContainer(pacts: [
         _pact('onbreak', PactStatus.active),
