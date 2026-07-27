@@ -14,6 +14,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 /// Returns the snap target for the pact panel drag gesture.
@@ -245,7 +246,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                             onAddPact: _addPact,
                             onToggleFilter: (status) =>
                                 ref.read(pactListViewModelProvider.notifier).toggleFilter(status),
-                            onToggleBreakOnly: () => ref.read(pactListViewModelProvider.notifier).toggleBreakOnly(),
+                            onToggleBreakFilter: () => ref.read(pactListViewModelProvider.notifier).toggleBreakFilter(),
                             onToggleArchived: () => _toggleArchived(state),
                             onTapEntry: _navigateToPact,
                           ),
@@ -371,37 +372,34 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
 /// plus the archived-pacts chip that animates in once at least one archived
 /// pact exists (HAB-195 WU6 — grew from 3 to 5 chips with the addition of
 /// Break, which no longer fit a single scrollable row on narrow screens).
-/// Selection is shown by fill color only — no checkmarks.
+/// Selection is shown by fill color only — no checkmarks. All chips are
+/// independent multi-select toggles whose matching entries are unioned
+/// together, Break included — selecting it just adds on-break pacts to
+/// whatever is already shown, exactly like selecting any other chip.
 class _PactFilterChipsRow extends StatelessWidget {
   final Set<PactStatus> activeFilters;
-  final bool breakOnly;
+  final bool breakSelected;
   final bool breaksEnabled;
   final int archivedCount;
   final bool showArchived;
   final ValueChanged<PactStatus> onToggleFilter;
-  final VoidCallback onToggleBreakOnly;
+  final VoidCallback onToggleBreakFilter;
   final VoidCallback onToggleArchived;
 
   const _PactFilterChipsRow({
     required this.activeFilters,
-    required this.breakOnly,
+    required this.breakSelected,
     required this.breaksEnabled,
     required this.archivedCount,
     required this.showArchived,
     required this.onToggleFilter,
-    required this.onToggleBreakOnly,
+    required this.onToggleBreakFilter,
     required this.onToggleArchived,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-
-    // While the Break lens is active, the real-status chips display as
-    // deselected (even though activeFilters is untouched underneath) so
-    // tapping one reads as "select" rather than "toggle off" — see
-    // PactListViewModel.toggleFilter's break-only exit behaviour.
-    bool selected(PactStatus status) => !breakOnly && activeFilters.contains(status);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
@@ -411,7 +409,7 @@ class _PactFilterChipsRow extends StatelessWidget {
         children: [
           FilterChip(
             label: Text(l10n.filterActive),
-            selected: selected(PactStatus.active),
+            selected: activeFilters.contains(PactStatus.active),
             showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.active),
           ),
@@ -421,19 +419,19 @@ class _PactFilterChipsRow extends StatelessWidget {
             FilterChip(
               key: const Key('break-filter-chip'),
               label: Text(l10n.filterBreak),
-              selected: breakOnly,
+              selected: breakSelected,
               showCheckmark: false,
-              onSelected: (_) => onToggleBreakOnly(),
+              onSelected: (_) => onToggleBreakFilter(),
             ),
           FilterChip(
             label: Text(l10n.filterDone),
-            selected: selected(PactStatus.completed),
+            selected: activeFilters.contains(PactStatus.completed),
             showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.completed),
           ),
           FilterChip(
             label: Text(l10n.filterCancelled),
-            selected: selected(PactStatus.stopped),
+            selected: activeFilters.contains(PactStatus.stopped),
             showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.stopped),
           ),
@@ -468,7 +466,7 @@ class _PactListBody extends StatelessWidget {
   final bool allEmpty;
   final VoidCallback onAddPact;
   final ValueChanged<PactStatus> onToggleFilter;
-  final VoidCallback onToggleBreakOnly;
+  final VoidCallback onToggleBreakFilter;
   final VoidCallback onToggleArchived;
   final void Function(PactListEntry) onTapEntry;
 
@@ -481,7 +479,7 @@ class _PactListBody extends StatelessWidget {
     required this.allEmpty,
     required this.onAddPact,
     required this.onToggleFilter,
-    required this.onToggleBreakOnly,
+    required this.onToggleBreakFilter,
     required this.onToggleArchived,
     required this.onTapEntry,
   });
@@ -524,12 +522,12 @@ class _PactListBody extends StatelessWidget {
           SliverToBoxAdapter(
             child: _PactFilterChipsRow(
               activeFilters: state.activeFilters,
-              breakOnly: state.breakOnly,
+              breakSelected: state.breakSelected,
               breaksEnabled: breaksEnabled,
               archivedCount: state.archivedCount,
               showArchived: state.showArchived,
               onToggleFilter: onToggleFilter,
-              onToggleBreakOnly: onToggleBreakOnly,
+              onToggleBreakFilter: onToggleBreakFilter,
               onToggleArchived: onToggleArchived,
             ),
           ),
@@ -698,13 +696,19 @@ class _PactTile extends StatelessWidget {
           : cancelledStr;
     }
 
-    final statusText = pactStatusText(l10n, pact.status);
+    // On-break pacts get a distinct badge instead of reading as plain
+    // "Active" (HAB-195) — mirrors the blue on-break treatment already used
+    // for showups (WU5.1), reusing its "On break" string rather than adding
+    // a near-duplicate one.
+    final statusText = entry.onBreak ? l10n.showupOnBreak : pactStatusText(l10n, pact.status);
     final cs = Theme.of(context).colorScheme;
-    final (badgeBg, badgeFg) = switch (pact.status) {
-      PactStatus.active => (cs.primaryContainer, cs.onPrimaryContainer),
-      PactStatus.completed => (cs.secondaryContainer, cs.onSecondaryContainer),
-      PactStatus.stopped => (cs.errorContainer, cs.onErrorContainer),
-    };
+    final (badgeBg, badgeFg) = entry.onBreak
+        ? (HabitLoopColors.onBreak.withValues(alpha: 0.15), HabitLoopColors.onBreak)
+        : switch (pact.status) {
+            PactStatus.active => (cs.primaryContainer, cs.onPrimaryContainer),
+            PactStatus.completed => (cs.secondaryContainer, cs.onSecondaryContainer),
+            PactStatus.stopped => (cs.errorContainer, cs.onErrorContainer),
+          };
 
     return ListTile(
       onTap: onTap,

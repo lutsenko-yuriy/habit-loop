@@ -20,11 +20,12 @@ class PactListState {
   final Set<PactStatus> activeFilters;
   final bool showArchived;
 
-  /// "Break" chip (HAB-195) — an exclusive overlay lens, not part of
-  /// [activeFilters]: when true, [filteredEntries] narrows to on-break
-  /// entries regardless of the underlying status selection, which stays
-  /// untouched so it's restored as-is once break-only mode is exited.
-  final bool breakOnly;
+  /// "Break" chip (HAB-195) — kept separate from [activeFilters] since Break
+  /// isn't a [PactStatus], but otherwise an independent multi-select toggle
+  /// just like the status chips: selecting it adds on-break entries to
+  /// whatever [activeFilters] already shows (OR, not a replacement), exactly
+  /// mirroring how selecting an additional status chip adds its entries.
+  final bool breakSelected;
 
   const PactListState({
     this.entries = const [],
@@ -35,7 +36,7 @@ class PactListState {
       PactStatus.stopped,
     },
     this.showArchived = false,
-    this.breakOnly = false,
+    this.breakSelected = false,
   });
 
   int get activeCount => entries.where((e) => e.pact.status == PactStatus.active).length;
@@ -51,7 +52,7 @@ class PactListState {
   int get archivedCancelledCount => entries.where((e) => e.pact.archived && e.pact.status == PactStatus.stopped).length;
 
   List<PactListEntry> get filteredEntries => entries
-      .where((e) => breakOnly ? e.onBreak : activeFilters.contains(e.pact.status))
+      .where((e) => activeFilters.contains(e.pact.status) || (breakSelected && e.onBreak))
       .where((e) => showArchived || !e.pact.archived)
       .toList();
 
@@ -60,14 +61,14 @@ class PactListState {
     bool? isLoading,
     Set<PactStatus>? activeFilters,
     bool? showArchived,
-    bool? breakOnly,
+    bool? breakSelected,
   }) {
     return PactListState(
       entries: entries ?? this.entries,
       isLoading: isLoading ?? this.isLoading,
       activeFilters: activeFilters ?? this.activeFilters,
       showArchived: showArchived ?? this.showArchived,
-      breakOnly: breakOnly ?? this.breakOnly,
+      breakSelected: breakSelected ?? this.breakSelected,
     );
   }
 }

@@ -611,7 +611,16 @@ void main() {
       expect(find.text('Yoga'), findsOneWidget);
       expect(find.text('Cycling'), findsOneWidget);
 
-      // ── 2. Tap the "Break" chip — only the on-break pact is listed ──────
+      // ── 2. Deselect every status chip, then select Break — only the
+      //         on-break pact is listed. Break behaves exactly like any
+      //         other filter chip (an independent, additive toggle), so
+      //         isolating it requires deselecting the rest first, same as
+      //         isolating any other single status would ──────────────────
+      final strings = l10n(tester);
+      for (final label in [strings.filterActive, strings.filterDone, strings.filterCancelled]) {
+        await tester.tap(find.widgetWithText(FilterChip, label));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
       await tester.tap(find.byKey(const Key('break-filter-chip')));
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -619,17 +628,16 @@ void main() {
       expect(find.text('Yoga'), findsNothing);
       expect(find.text('Cycling'), findsNothing);
 
-      // ── 3. Tap the "Active" chip — both active pacts (on-break + plain)
-      //         are listed, confirming Break is a subset, not a separate
-      //         status: the underlying Active/Done/Stopped selection was
-      //         never actually touched while the Break lens was showing ──
-      final strings = l10n(tester);
+      // ── 3. Re-select the "Active" chip — both active pacts (on-break +
+      //         plain) are listed, since Break only adds to whatever is
+      //         already selected rather than replacing it; Cycling (stopped)
+      //         stays hidden since Stopped is still deselected ────────────
       await tester.tap(find.widgetWithText(FilterChip, strings.filterActive));
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Swim'), findsOneWidget);
       expect(find.text('Yoga'), findsOneWidget);
-      expect(find.text('Cycling'), findsOneWidget);
+      expect(find.text('Cycling'), findsNothing);
     });
   });
 }

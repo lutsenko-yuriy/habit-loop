@@ -177,7 +177,8 @@ void main() {
       expect(find.byKey(const Key('break-filter-chip')), findsNothing);
     });
 
-    testWidgets('tapping the Break chip narrows the list to on-break pacts only', (tester) async {
+    testWidgets('tapping the Break chip alone (Active still selected) adds nothing new — already covered by Active',
+        (tester) async {
       final onBreakState = PactListState(
         entries: [
           PactListEntry(pact: _activePact, onBreak: true),
@@ -188,17 +189,17 @@ void main() {
       await tester.pumpAndSettle();
       await _expandPanel(tester);
 
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pumpAndSettle();
+
+      // Break is additive (OR), not a replacement — both stay visible since
+      // Active is still selected and already covers both entries.
       expect(find.text('Meditate'), findsOneWidget);
       expect(find.text('Yoga'), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('break-filter-chip')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Meditate'), findsOneWidget);
-      expect(find.text('Yoga'), findsNothing);
     });
 
-    testWidgets('tapping a status chip while Break is active exits break-only mode', (tester) async {
+    testWidgets('deselecting Active then selecting Break isolates on-break pacts, matching any other filter combo',
+        (tester) async {
       final onBreakState = PactListState(
         entries: [
           PactListEntry(pact: _activePact, onBreak: true),
@@ -208,16 +209,17 @@ void main() {
       await tester.pumpWidget(_buildApp(onBreakState));
       await tester.pumpAndSettle();
       await _expandPanel(tester);
-
-      await tester.tap(find.byKey(const Key('break-filter-chip')));
-      await tester.pumpAndSettle();
-      expect(find.text('Yoga'), findsNothing);
 
       await tester.tap(find.widgetWithText(FilterChip, 'Active'));
       await tester.pumpAndSettle();
+      expect(find.text('Meditate'), findsNothing);
+      expect(find.text('Yoga'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pumpAndSettle();
 
       expect(find.text('Meditate'), findsOneWidget);
-      expect(find.text('Yoga'), findsOneWidget);
+      expect(find.text('Yoga'), findsNothing);
     });
   });
 
@@ -231,6 +233,27 @@ void main() {
       expect(find.text('Journal'), findsOneWidget);
       // Archived entry is not shown until "show archived" is toggled on.
       expect(find.text('Stretch'), findsNothing);
+    });
+
+    testWidgets('shows an "On break" badge instead of "Active" for an on-break pact (HAB-195)', (tester) async {
+      final state = PactListState(
+        entries: [
+          PactListEntry(pact: _activePact, onBreak: true),
+          PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
+        ],
+      );
+      await tester.pumpWidget(_buildApp(state));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      expect(find.text('On break'), findsOneWidget);
+      // The plain active pact still reads "Active" — the badge only changes
+      // for entries actually on break. Scoped to the Yoga tile since the
+      // Active *filter chip* also renders the literal text "Active".
+      expect(
+        find.descendant(of: find.widgetWithText(ListTile, 'Yoga'), matching: find.text('Active')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows the empty state when there are no visible entries', (tester) async {

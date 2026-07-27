@@ -319,17 +319,34 @@ void main() {
       expect(entry.onBreak, isFalse);
     });
 
-    test('toggleBreakOnly flips breakOnly', () {
+    test('toggleBreakFilter flips breakSelected', () {
       final c = _makeContainer();
       addTearDown(c.dispose);
-      expect(c.read(pactListViewModelProvider).breakOnly, isFalse);
-      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
-      expect(c.read(pactListViewModelProvider).breakOnly, isTrue);
-      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
-      expect(c.read(pactListViewModelProvider).breakOnly, isFalse);
+      expect(c.read(pactListViewModelProvider).breakSelected, isFalse);
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+      expect(c.read(pactListViewModelProvider).breakSelected, isTrue);
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+      expect(c.read(pactListViewModelProvider).breakSelected, isFalse);
     });
 
-    test('filteredEntries: breakOnly narrows to on-break active pacts only', () async {
+    test('toggleFilter is unaffected by breakSelected — behaves like any other status toggle', () async {
+      final c = _makeContainer(pacts: [
+        _pact('onbreak', PactStatus.active),
+        _pact('plain', PactStatus.active),
+      ], breaks: [
+        _pactBreak('b1', 'onbreak'),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+
+      final state = c.read(pactListViewModelProvider);
+      expect(state.breakSelected, isTrue, reason: 'Toggling a status chip must not touch the Break chip');
+      expect(state.activeFilters, {PactStatus.completed, PactStatus.stopped});
+    });
+
+    test('filteredEntries: selecting Break alone (with all statuses deselected) shows only on-break pacts', () async {
       final c = _makeContainer(pacts: [
         _pact('onbreak', PactStatus.active),
         _pact('plain', PactStatus.active),
@@ -339,50 +356,52 @@ void main() {
       ]);
       addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
-      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
+      // Deselect every status chip, mirroring how a user would isolate any
+      // other single filter (e.g. "only Stopped") — no special-casing.
+      for (final status in [PactStatus.active, PactStatus.completed, PactStatus.stopped]) {
+        c.read(pactListViewModelProvider.notifier).toggleFilter(status);
+      }
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+
       final ids = c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toSet();
       expect(ids, {'onbreak'});
     });
 
-    test('filteredEntries: breakOnly overrides activeFilters even when Active was manually deselected', () async {
+    test('filteredEntries: Break adds on-break pacts on top of whatever statuses are already selected', () async {
       final c = _makeContainer(pacts: [
         _pact('onbreak', PactStatus.active),
+        _pact('stopped', PactStatus.stopped),
       ], breaks: [
         _pactBreak('b1', 'onbreak'),
       ]);
       addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
-      // Deselect Active directly (not via the break-only exit path) — a
-      // normal, always-available action independent of the Break chip.
+      // Deselect everything except Stopped, then add Break on top — exactly
+      // like combining any two independent filter chips.
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
-      expect(c.read(pactListViewModelProvider).activeFilters, {PactStatus.completed, PactStatus.stopped});
-
-      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
+      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.completed);
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
 
       final ids = c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toSet();
-      expect(ids, {'onbreak'},
-          reason: 'The Break lens must show on-break pacts regardless of the Active status filter');
+      expect(ids, {'onbreak', 'stopped'},
+          reason: 'Break is additive (OR), not a replacement for the selected statuses');
     });
 
-    test('toggleFilter exits breakOnly mode instead of toggling the tapped status', () async {
+    test('filteredEntries: deselecting Break removes on-break pacts whose own status is also deselected', () async {
       final c = _makeContainer(pacts: [
         _pact('onbreak', PactStatus.active),
-        _pact('plain', PactStatus.active),
       ], breaks: [
         _pactBreak('b1', 'onbreak'),
       ]);
       addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
-      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
-      expect(c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toSet(), {'onbreak'});
-
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+      expect(c.read(pactListViewModelProvider).filteredEntries, isNotEmpty);
 
-      final state = c.read(pactListViewModelProvider);
-      expect(state.breakOnly, isFalse);
-      expect(state.activeFilters, {PactStatus.active, PactStatus.completed, PactStatus.stopped},
-          reason: 'The status set is untouched by exiting break-only mode');
-      expect(state.filteredEntries.map((e) => e.pact.id).toSet(), {'onbreak', 'plain'});
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+
+      expect(c.read(pactListViewModelProvider).filteredEntries, isEmpty);
     });
 
     test('concurrent load() calls: only one runs at a time', () async {
