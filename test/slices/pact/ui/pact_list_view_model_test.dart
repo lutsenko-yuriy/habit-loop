@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -29,13 +31,25 @@ Showup _showup(String id, String pactId, DateTime scheduledAt, {ShowupStatus sta
       status: status,
     );
 
+PactBreak _pactBreak(String id, String pactId, {DateTime? startDate, DateTime? plannedEndDate, DateTime? stoppedAt}) =>
+    PactBreak(
+      id: id,
+      pactId: pactId,
+      startDate: startDate ?? DateTime(2026, 1, 1),
+      plannedEndDate: plannedEndDate,
+      stoppedAt: stoppedAt,
+      rationale: 'Recovering',
+    );
+
 ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
+  List<PactBreak> breaks = const [],
 }) {
   return ProviderContainer(overrides: [
     pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
     showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
+    pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
   ]);
 }
 
@@ -258,6 +272,97 @@ void main() {
       c.read(pactListViewModelProvider.notifier).toggleArchived();
       final ids = c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toList();
       expect(ids, ['active', 'unarch-completed', 'unarch-stopped', 'arch-completed', 'arch-stopped']);
+    });
+
+    test('load: entry.onBreak is true for an active pact with an unresolved break', () async {
+      final pact = _pact('p1', PactStatus.active);
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [_pactBreak('b1', 'p1')],
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isTrue);
+    });
+
+    test('load: entry.onBreak is false for an active pact with a stopped break', () async {
+      final pact = _pact('p1', PactStatus.active);
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [_pactBreak('b1', 'p1', stoppedAt: DateTime(2026, 1, 5))],
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isFalse);
+    });
+
+    test('load: entry.onBreak is false for an active pact with no breaks', () async {
+      final pact = _pact('p1', PactStatus.active);
+      final c = _makeContainer(pacts: [pact]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isFalse);
+    });
+
+    test('load: entry.onBreak is false for a non-active pact even with an unresolved break', () async {
+      final pact = _pact('p1', PactStatus.stopped);
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [_pactBreak('b1', 'p1')],
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isFalse);
+    });
+
+    test('toggleBreakOnly flips breakOnly', () {
+      final c = _makeContainer();
+      addTearDown(c.dispose);
+      expect(c.read(pactListViewModelProvider).breakOnly, isFalse);
+      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
+      expect(c.read(pactListViewModelProvider).breakOnly, isTrue);
+      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
+      expect(c.read(pactListViewModelProvider).breakOnly, isFalse);
+    });
+
+    test('filteredEntries: breakOnly narrows to on-break active pacts only', () async {
+      final c = _makeContainer(pacts: [
+        _pact('onbreak', PactStatus.active),
+        _pact('plain', PactStatus.active),
+        _pact('stopped', PactStatus.stopped),
+      ], breaks: [
+        _pactBreak('b1', 'onbreak'),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
+      final ids = c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toSet();
+      expect(ids, {'onbreak'});
+    });
+
+    test('toggleFilter exits breakOnly mode instead of toggling the tapped status', () async {
+      final c = _makeContainer(pacts: [
+        _pact('onbreak', PactStatus.active),
+        _pact('plain', PactStatus.active),
+      ], breaks: [
+        _pactBreak('b1', 'onbreak'),
+      ]);
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      c.read(pactListViewModelProvider.notifier).toggleBreakOnly();
+      expect(c.read(pactListViewModelProvider).filteredEntries.map((e) => e.pact.id).toSet(), {'onbreak'});
+
+      c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+
+      final state = c.read(pactListViewModelProvider);
+      expect(state.breakOnly, isFalse);
+      expect(state.activeFilters, {PactStatus.active, PactStatus.completed, PactStatus.stopped},
+          reason: 'The status set is untouched by exiting break-only mode');
+      expect(state.filteredEntries.map((e) => e.pact.id).toSet(), {'onbreak', 'plain'});
     });
 
     test('concurrent load() calls: only one runs at a time', () async {

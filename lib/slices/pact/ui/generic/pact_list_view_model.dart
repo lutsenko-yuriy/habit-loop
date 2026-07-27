@@ -37,13 +37,17 @@ class PactListViewModel extends Notifier<PactListState> {
       final entries = <PactListEntry>[];
       for (final pact in pacts) {
         DateTime? nextShowupAt;
+        var onBreak = false;
         if (pact.status == PactStatus.active) {
           final showups = await queryService.getShowupsForPact(pact.id);
           final pending = showups.where((s) => s.status == ShowupStatus.pending && s.scheduledAt.isAfter(now)).toList()
             ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
           if (pending.isNotEmpty) nextShowupAt = pending.first.scheduledAt;
+
+          final breaks = await queryService.getBreaksForPact(pact.id);
+          onBreak = breaks.any((b) => !b.isResolved(now));
         }
-        entries.add(PactListEntry(pact: pact, nextShowupAt: nextShowupAt));
+        entries.add(PactListEntry(pact: pact, nextShowupAt: nextShowupAt, onBreak: onBreak));
       }
 
       entries.sort((a, b) {
@@ -65,6 +69,14 @@ class PactListViewModel extends Notifier<PactListState> {
   }
 
   void toggleFilter(PactStatus status) {
+    if (state.breakOnly) {
+      // Break is an exclusive overlay lens (HAB-195 WU6), not part of the
+      // multi-select status set — tapping a status chip exits it instead of
+      // toggling, since the tapped status was never actually removed from
+      // activeFilters while the Break lens was showing.
+      state = state.copyWith(breakOnly: false);
+      return;
+    }
     final current = state.activeFilters;
     final next = Set<PactStatus>.of(current);
     if (current.contains(status)) {
@@ -73,6 +85,10 @@ class PactListViewModel extends Notifier<PactListState> {
       next.add(status);
     }
     state = state.copyWith(activeFilters: next);
+  }
+
+  void toggleBreakOnly() {
+    state = state.copyWith(breakOnly: !state.breakOnly);
   }
 
   void toggleArchived() {

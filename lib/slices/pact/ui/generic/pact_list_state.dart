@@ -7,7 +7,11 @@ class PactListEntry {
   /// The next scheduled pending showup time, only set for active pacts.
   final DateTime? nextShowupAt;
 
-  const PactListEntry({required this.pact, this.nextShowupAt});
+  /// True iff this pact is active and currently has an unresolved break
+  /// (HAB-195). Always false for non-active pacts.
+  final bool onBreak;
+
+  const PactListEntry({required this.pact, this.nextShowupAt, this.onBreak = false});
 }
 
 class PactListState {
@@ -15,6 +19,12 @@ class PactListState {
   final bool isLoading;
   final Set<PactStatus> activeFilters;
   final bool showArchived;
+
+  /// "Break" chip (HAB-195) — an exclusive overlay lens, not part of
+  /// [activeFilters]: when true, [filteredEntries] narrows to on-break
+  /// entries regardless of the underlying status selection, which stays
+  /// untouched so it's restored as-is once break-only mode is exited.
+  final bool breakOnly;
 
   const PactListState({
     this.entries = const [],
@@ -25,6 +35,7 @@ class PactListState {
       PactStatus.stopped,
     },
     this.showArchived = false,
+    this.breakOnly = false,
   });
 
   int get activeCount => entries.where((e) => e.pact.status == PactStatus.active).length;
@@ -41,6 +52,7 @@ class PactListState {
 
   List<PactListEntry> get filteredEntries => entries
       .where((e) => activeFilters.contains(e.pact.status))
+      .where((e) => !breakOnly || e.onBreak)
       .where((e) => showArchived || !e.pact.archived)
       .toList();
 
@@ -49,12 +61,14 @@ class PactListState {
     bool? isLoading,
     Set<PactStatus>? activeFilters,
     bool? showArchived,
+    bool? breakOnly,
   }) {
     return PactListState(
       entries: entries ?? this.entries,
       isLoading: isLoading ?? this.isLoading,
       activeFilters: activeFilters ?? this.activeFilters,
       showArchived: showArchived ?? this.showArchived,
+      breakOnly: breakOnly ?? this.breakOnly,
     );
   }
 }

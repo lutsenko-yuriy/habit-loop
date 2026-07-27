@@ -11,3 +11,4 @@ Boolean Firebase Remote Config flags that enable/disable features without a rele
 | `pact_timeline_enabled` | `true` | "View timeline" button hidden from pact detail screens; timeline route unreachable; no data is cleared | 2026-11-16 |
 | `showup_redemption_enabled` | `true` | Redemption button hidden on showup detail screen; auto-failed tail-zone showups cannot be redeemed; `redeemable` flag on showup records is unaffected | 2026-11-16 |
 | `about_screen_enabled` | `true` | About icon button hidden from the dashboard nav bar; the About screen is unreachable | 2026-11-16 |
+| `pact_breaks_enabled` | `true` | Break-related UI and actions hidden entirely: "Take a break" entry points (pact detail + tail-zone showup), the "In a break" banner/"Resume pact" action, on-break display treatment, and the pact list's "Break" filter chip; existing breaks are unaffected in storage, just not surfaced | 2026-11-27 |

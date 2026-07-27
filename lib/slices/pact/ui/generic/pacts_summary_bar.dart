@@ -243,6 +243,7 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
                             onAddPact: _addPact,
                             onToggleFilter: (status) =>
                                 ref.read(pactListViewModelProvider.notifier).toggleFilter(status),
+                            onToggleBreakOnly: () => ref.read(pactListViewModelProvider.notifier).toggleBreakOnly(),
                             onToggleArchived: () => _toggleArchived(state),
                             onTapEntry: _navigateToPact,
                           ),
@@ -364,20 +365,27 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
   }
 }
 
-/// Horizontal row of status filter chips, plus the archived-pacts chip that
-/// animates in once at least one archived pact exists.
+/// Staggered, multi-row (no horizontal scroll) grid of status filter chips,
+/// plus the archived-pacts chip that animates in once at least one archived
+/// pact exists (HAB-195 WU6 — grew from 3 to 5 chips with the addition of
+/// Break, which no longer fit a single scrollable row on narrow screens).
+/// Selection is shown by fill color only — no checkmarks.
 class _PactFilterChipsRow extends StatelessWidget {
   final Set<PactStatus> activeFilters;
+  final bool breakOnly;
   final int archivedCount;
   final bool showArchived;
   final ValueChanged<PactStatus> onToggleFilter;
+  final VoidCallback onToggleBreakOnly;
   final VoidCallback onToggleArchived;
 
   const _PactFilterChipsRow({
     required this.activeFilters,
+    required this.breakOnly,
     required this.archivedCount,
     required this.showArchived,
     required this.onToggleFilter,
+    required this.onToggleBreakOnly,
     required this.onToggleArchived,
   });
 
@@ -385,26 +393,41 @@ class _PactFilterChipsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    // While the Break lens is active, the real-status chips display as
+    // deselected (even though activeFilters is untouched underneath) so
+    // tapping one reads as "select" rather than "toggle off" — see
+    // PactListViewModel.toggleFilter's break-only exit behaviour.
+    bool selected(PactStatus status) => !breakOnly && activeFilters.contains(status);
+
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
-      child: Row(
+      child: Wrap(
+        spacing: AppSpacing.s8,
+        runSpacing: AppSpacing.s8,
         children: [
           FilterChip(
             label: Text(l10n.filterActive),
-            selected: activeFilters.contains(PactStatus.active),
+            selected: selected(PactStatus.active),
+            showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.active),
           ),
-          const SizedBox(width: AppSpacing.s8),
+          FilterChip(
+            key: const Key('break-filter-chip'),
+            label: Text(l10n.filterBreak),
+            selected: breakOnly,
+            showCheckmark: false,
+            onSelected: (_) => onToggleBreakOnly(),
+          ),
           FilterChip(
             label: Text(l10n.filterDone),
-            selected: activeFilters.contains(PactStatus.completed),
+            selected: selected(PactStatus.completed),
+            showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.completed),
           ),
-          const SizedBox(width: AppSpacing.s8),
           FilterChip(
             label: Text(l10n.filterCancelled),
-            selected: activeFilters.contains(PactStatus.stopped),
+            selected: selected(PactStatus.stopped),
+            showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.stopped),
           ),
           // Archived chip animates in when first archived pact exists.
@@ -412,17 +435,12 @@ class _PactFilterChipsRow extends StatelessWidget {
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
             child: archivedCount > 0
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(width: AppSpacing.s8),
-                      FilterChip(
-                        key: const Key('archive-filter-chip'),
-                        label: Text(l10n.filterArchived),
-                        selected: showArchived,
-                        onSelected: (_) => onToggleArchived(),
-                      ),
-                    ],
+                ? FilterChip(
+                    key: const Key('archive-filter-chip'),
+                    label: Text(l10n.filterArchived),
+                    selected: showArchived,
+                    showCheckmark: false,
+                    onSelected: (_) => onToggleArchived(),
                   )
                 : const SizedBox.shrink(),
           ),
@@ -442,6 +460,7 @@ class _PactListBody extends StatelessWidget {
   final bool allEmpty;
   final VoidCallback onAddPact;
   final ValueChanged<PactStatus> onToggleFilter;
+  final VoidCallback onToggleBreakOnly;
   final VoidCallback onToggleArchived;
   final void Function(PactListEntry) onTapEntry;
 
@@ -453,6 +472,7 @@ class _PactListBody extends StatelessWidget {
     required this.allEmpty,
     required this.onAddPact,
     required this.onToggleFilter,
+    required this.onToggleBreakOnly,
     required this.onToggleArchived,
     required this.onTapEntry,
   });
@@ -495,9 +515,11 @@ class _PactListBody extends StatelessWidget {
           SliverToBoxAdapter(
             child: _PactFilterChipsRow(
               activeFilters: state.activeFilters,
+              breakOnly: state.breakOnly,
               archivedCount: state.archivedCount,
               showArchived: state.showArchived,
               onToggleFilter: onToggleFilter,
+              onToggleBreakOnly: onToggleBreakOnly,
               onToggleArchived: onToggleArchived,
             ),
           ),

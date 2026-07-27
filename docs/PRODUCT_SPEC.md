@@ -9,7 +9,7 @@ The Habit Loop app allows the user to:
   - The user can create a new pact on a separate screen
   - Multiple pacts can be active simultaneously
 - Create such pacts to show up
-  - Before creating a pact, the user must confirm that they understand the commitment: missing a showup counts as a failure, no exceptions. There is no pausing a pact.
+  - Before creating a pact, the user must confirm that they understand the commitment: missing a showup counts as a failure, with one exception — a break, for when life gets in the way.
   - The user must define a habit the user wants to develop
   - The user must define the time span when the pact is active (by default it is defined 6 months)
   - The user can define when the pact starts if they don't want to start it today (by default it is today)
@@ -37,6 +37,13 @@ The Habit Loop app allows the user to:
     - An "Archived pacts (N)" row and an Archived chip appear in the pact list when at least one pact is archived; both are hidden when none are archived; the chip row is animated (AnimatedSize + FadeTransition)
     - The Archived chip and the "Archived pacts (N)" row stay in sync — toggling one toggles the other
     - Sort order in the pact list: active → unarchived completed → unarchived stopped → archived completed → archived stopped
+  - The user can pause an active pact with a break instead of stopping it, so showups during the break don't count as failures (feature flag: `pact_breaks_enabled`)
+    - A break is started from the pact detail screen, or from a button on a recent unresolved/auto-failed showup (which always defaults the break's start date to today, regardless of which showup it was opened from); only one break can be active or scheduled per pact at a time
+    - The user picks a start date (today or later) and either a specific end date or "until the pact ends" (open-ended), and must enter a rationale — the break cannot be created without one
+    - Showups scheduled inside the break window show a blue "on break" treatment everywhere showups are shown (calendar dots, today's list, showup detail, timeline) instead of failing, unless the user already explicitly marked them done or failed; on-break showups don't break or advance the streak, and are counted separately as "Skipped on break" in the pact's stats
+    - Reminders for showups inside an active break window are not sent
+    - The pact detail screen shows a banner while a break is active, with its rationale and a "Resume pact" action that ends the break immediately; showups already on break at that point stay on break permanently, while later ones resume normal scheduling
+    - The pact list has a "Break" filter chip showing only active pacts currently on break (a subset of the Active filter, not a separate pact status)
   - The user can view the pact's timeline by tapping "View Timeline" on the pact detail screen (feature flag: `pact_timeline_enabled`)
     - The timeline shows all milestones in chronological order: pact-created anchor, showup streaks, showup groups, noted showups, single tail-zone showups, and a current-state anchor (active) or pact-concluded anchor (stopped/completed)
     - Noted showups and single tail-zone showups are tappable and navigate to the showup detail screen

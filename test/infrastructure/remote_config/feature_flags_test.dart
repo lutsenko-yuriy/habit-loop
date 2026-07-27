@@ -55,16 +55,16 @@ void main() {
         expect(flags.showupRedemptionEnabled, isFalse);
       });
 
-      test('pactBreaksEnabled defaults to false', () {
+      test('pactBreaksEnabled defaults to true', () {
         final rc = FakeRemoteConfigService();
         final flags = FeatureFlags.fromRemoteConfig(rc);
-        expect(flags.pactBreaksEnabled, isFalse);
+        expect(flags.pactBreaksEnabled, isTrue);
       });
 
-      test('pactBreaksEnabled reads true from RC override', () {
-        final rc = FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true});
+      test('pactBreaksEnabled reads false from RC override', () {
+        final rc = FakeRemoteConfigService(overrides: {'pact_breaks_enabled': false});
         final flags = FeatureFlags.fromRemoteConfig(rc);
-        expect(flags.pactBreaksEnabled, isTrue);
+        expect(flags.pactBreaksEnabled, isFalse);
       });
 
       test('default values match RemoteConfigDefaults constants', () {
@@ -112,9 +112,9 @@ void main() {
       });
 
       test('instances differ when pact_breaks_enabled differs', () {
-        final rcOff = FakeRemoteConfigService();
-        final rcOn = FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true});
-        expect(FeatureFlags.fromRemoteConfig(rcOff), isNot(equals(FeatureFlags.fromRemoteConfig(rcOn))));
+        final rcOn = FakeRemoteConfigService();
+        final rcOff = FakeRemoteConfigService(overrides: {'pact_breaks_enabled': false});
+        expect(FeatureFlags.fromRemoteConfig(rcOn), isNot(equals(FeatureFlags.fromRemoteConfig(rcOff))));
       });
     });
   });

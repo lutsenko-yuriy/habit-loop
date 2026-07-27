@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.52.0] — 2026-07-27
+
+### Added
+
+- [user] You can now pause a pact with a break instead of stopping it — showups during the break won't count as failures, and you can pick up right where you left off with a "Resume pact" action whenever you're ready.
+- [app] HAB-195 WU6 (final): Added the pact list's "Break" filter chip (`PactListState.breakOnly`) showing only active pacts currently on break — an exclusive overlay lens on top of the existing status filters, not a new `PactStatus`; `PactListEntry.onBreak` is derived per active pact via a new `PactListQueryService.getBreaksForPact`. Reworked `_PactFilterChipsRow` from a horizontally-scrolling `Row` to a staggered, no-scroll `Wrap` (`showCheckmark: false`) to fit the 5th chip. Reworded the pact-creation commitment gate across all 4 languages to acknowledge breaks as the one exception to "no exceptions" instead of promising "no pausing a pact." Flipped the `pact_breaks_enabled` Remote Config default from `false` to `true`, completing the pact-breaks feature end-to-end. Filled integration scenario S9 (Break chip narrows to on-break pacts only; tapping a status chip afterward restores the prior selection, proving Break is a subset filter). Updated `docs/PRODUCT_SPEC.md` and `docs/FEATURE_TOGGLES.md`.
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.

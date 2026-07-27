@@ -153,6 +153,58 @@ void main() {
       // Unaffected filters keep their entries visible.
       expect(find.text('Journal'), findsOneWidget);
     });
+
+    testWidgets('renders a Break chip (HAB-195)', (tester) async {
+      await tester.pumpWidget(_buildApp(_mixedState));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      expect(find.byKey(const Key('break-filter-chip')), findsOneWidget);
+      expect(find.widgetWithText(FilterChip, 'Break'), findsOneWidget);
+    });
+
+    testWidgets('tapping the Break chip narrows the list to on-break pacts only', (tester) async {
+      final onBreakState = PactListState(
+        entries: [
+          PactListEntry(pact: _activePact, onBreak: true),
+          PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
+        ],
+      );
+      await tester.pumpWidget(_buildApp(onBreakState));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      expect(find.text('Meditate'), findsOneWidget);
+      expect(find.text('Yoga'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Meditate'), findsOneWidget);
+      expect(find.text('Yoga'), findsNothing);
+    });
+
+    testWidgets('tapping a status chip while Break is active exits break-only mode', (tester) async {
+      final onBreakState = PactListState(
+        entries: [
+          PactListEntry(pact: _activePact, onBreak: true),
+          PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
+        ],
+      );
+      await tester.pumpWidget(_buildApp(onBreakState));
+      await tester.pumpAndSettle();
+      await _expandPanel(tester);
+
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pumpAndSettle();
+      expect(find.text('Yoga'), findsNothing);
+
+      await tester.tap(find.widgetWithText(FilterChip, 'Active'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Meditate'), findsOneWidget);
+      expect(find.text('Yoga'), findsOneWidget);
+    });
   });
 
   group('PactsPanel list body', () {

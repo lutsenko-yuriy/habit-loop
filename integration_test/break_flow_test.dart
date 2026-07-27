@@ -3,10 +3,11 @@
 //
 // Run on host:   flutter test integration_test/break_flow_test.dart
 // Run on device: flutter test integration_test/break_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show Key, Navigator;
+import 'package:flutter/material.dart' show FilterChip, Key, Navigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
@@ -19,8 +20,8 @@ import 'package:integration_test/integration_test.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
-// pact_breaks_enabled defaults to false during development (HAB-195) — the
-// break-creation entry point is hidden unless this is explicitly turned on.
+// pact_breaks_enabled now defaults to true (HAB-195 WU6) — this override is
+// kept for explicitness/determinism, independent of the production default.
 final _breaksEnabled = remoteConfigServiceProvider.overrideWithValue(
   FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true}),
 );
@@ -556,15 +557,79 @@ void main() {
   });
 
   group('Pact list Break filter', () {
-    // TODO: declare `late AppHarness h;` and `tearDown(() => h.dispose());` when filling in stubs.
+    late AppHarness h;
+    tearDown(() => h.dispose());
 
     testWidgets('pact_list_break_chip_filters_to_onbreak_pacts', (tester) async {
-      // TODO: 1. Seed three pacts: one active pact with an active break, one plain
-      //          active pact (no break), one stopped pact.
-      // TODO: 2. Open the pacts panel/list.
-      // TODO: 3. Tap the "Break" chip — verify only the on-break pact is listed.
-      // TODO: 4. Tap the "Active" chip — verify both active pacts (on-break + plain)
-      //          are listed, confirming Break is a subset, not a separate status.
+      // Both active pacts start after testNow (below) so the dashboard's
+      // "today" todo list — which also renders habitName text — has nothing
+      // to generate yet; otherwise a due-today showup would make the habit
+      // name ambiguous between the todo list and the pacts panel tile.
+      final onBreakPact = buildPact(
+        id: 'test-pact-list-onbreak',
+        habitName: 'Swim',
+        startDate: DateTime(2099, 7, 1),
+      );
+      final plainPact = buildPact(
+        id: 'test-pact-list-plain',
+        habitName: 'Yoga',
+        startDate: DateTime(2099, 7, 1),
+      );
+      final stoppedPact = buildPact(
+        id: 'test-pact-list-stopped',
+        habitName: 'Cycling',
+        startDate: DateTime(2099, 1, 1),
+        status: PactStatus.stopped,
+        stoppedAt: DateTime(2099, 3, 1),
+      );
+      final onBreak = buildBreak(
+        id: 'brk-list-1',
+        pactId: onBreakPact.id,
+        startDate: DateTime(2099, 6, 10),
+        plannedEndDate: DateTime(2099, 6, 20),
+        rationale: 'Recovering',
+      );
+      final testNow = DateTime(2099, 6, 16, 9, 0);
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          todayProvider.overrideWithValue(testNow),
+          _breaksEnabled,
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(onBreakPact);
+          await h.pactRepo.savePact(plainPact);
+          await h.pactRepo.savePact(stoppedPact);
+          await h.pactBreakRepo.saveBreak(onBreak);
+        },
+      );
+
+      // ── 1. Open the pacts panel — all 3 pacts are listed ────────────────
+      await openPactsPanel(tester);
+      await waitFor(tester, find.text('Swim'));
+      expect(find.text('Yoga'), findsOneWidget);
+      expect(find.text('Cycling'), findsOneWidget);
+
+      // ── 2. Tap the "Break" chip — only the on-break pact is listed ──────
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Swim'), findsOneWidget);
+      expect(find.text('Yoga'), findsNothing);
+      expect(find.text('Cycling'), findsNothing);
+
+      // ── 3. Tap the "Active" chip — both active pacts (on-break + plain)
+      //         are listed, confirming Break is a subset, not a separate
+      //         status: the underlying Active/Done/Stopped selection was
+      //         never actually touched while the Break lens was showing ──
+      final strings = l10n(tester);
+      await tester.tap(find.widgetWithText(FilterChip, strings.filterActive));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Swim'), findsOneWidget);
+      expect(find.text('Yoga'), findsOneWidget);
+      expect(find.text('Cycling'), findsOneWidget);
     });
   });
 }
