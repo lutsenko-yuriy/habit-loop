@@ -511,7 +511,13 @@ void main() {
       final futureShowup = allShowups.firstWhere((s) => s.scheduledAt == futureShowupAt);
 
       // ── 2. Open Pact Detail — the "In a break" banner is shown ───────────
+      // The pact is on break, so it's hidden from the default Active-only
+      // pact list view (HAB-195 WU6) — select the Break chip first so its
+      // tile actually renders in the panel before tapping it by habit name.
       await openPactsPanel(tester);
+      await waitFor(tester, find.byKey(const Key('break-filter-chip')));
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pump(const Duration(milliseconds: 300));
       await openPactDetail(tester, 'Swim');
       await waitFor(tester, find.byKey(const Key('pact-detail-break-banner')));
 

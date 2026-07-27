@@ -1203,5 +1203,36 @@ void _startBreakTests() {
 
       expect(container.read(showupDetailViewModelProvider(showup.id)).canStartBreak, isFalse);
     });
+
+    test('false for a showup on break via a since-resumed (stopped) break — HAB-195 WU6', () async {
+      // Scheduled inside the break's original window, which stays fixed once
+      // stopped — the showup is permanently on break per HAB-195's "stays on
+      // break forever" rule, even though the break itself is now resolved
+      // and no longer blocks starting a *new* one (hasActiveBreak is false).
+      final showup = Showup(
+        id: 'sb5',
+        pactId: 'p1',
+        scheduledAt: DateTime(2099, 6, 12, 8, 0),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final resumedBreak = PactBreak(
+        id: 'brk-resumed',
+        pactId: 'p1',
+        startDate: DateTime(2099, 6, 10),
+        plannedEndDate: DateTime(2099, 6, 20),
+        stoppedAt: DateTime(2099, 6, 13),
+        rationale: 'Recovering',
+      );
+      final container = _makeStartBreakContainer(showup: showup, breaks: [resumedBreak]);
+      addTearDown(container.dispose);
+
+      await container.read(showupDetailViewModelProvider(showup.id).notifier).load();
+
+      final state = container.read(showupDetailViewModelProvider(showup.id));
+      expect(state.canStartBreak, isFalse,
+          reason: 'A showup already on break must never offer starting another break for it');
+      expect(state.uiState, ShowupUiState.onBreak);
+    });
   });
 }
