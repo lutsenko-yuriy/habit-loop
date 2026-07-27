@@ -54,5 +54,6 @@ Prefer flat control flow over nested conditionals — guard clauses first, then 
 | `if (a) { if (b) { ... } }` (single logical gate) | `if (a && b) { ... }` |
 | Nesting past ~3 levels (`for` → `if` → `try`) | Extract the inner block into a well-named function |
 | Wrapping a loop body in `if (shouldProcess(item)) { ... }` | `if (!shouldProcess(item)) continue;` at the top of the loop |
+| Sequential `if (...) return false;` guards with nothing after them (a `.where()` predicate, a plain bool-returning getter) | Collapse into a single `&&`-chained expression |
 
-Nesting depth is a readability cost on its own, independent of line count.
+Nesting depth is a readability cost on its own, independent of line count. Guard clauses earn their keep when there's a non-trivial body *after* the checks — when the entire body *is* the check, a single logical expression is more direct with no performance difference (Dart short-circuits `&&` the same way sequential early returns do).
