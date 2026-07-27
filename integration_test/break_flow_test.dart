@@ -605,39 +605,37 @@ void main() {
         },
       );
 
-      // ── 1. Open the pacts panel — all 3 pacts are listed ────────────────
+      // ── 1. Open the pacts panel with default filters (Active/Done/Stopped
+      //         selected, Break not selected) — the on-break pact (Swim) is
+      //         hidden even though its underlying status is Active; Break
+      //         exclusively governs on-break pacts' visibility, so Active
+      //         alone never surfaces them ───────────────────────────────
       await openPactsPanel(tester);
-      await waitFor(tester, find.text('Swim'));
-      expect(find.text('Yoga'), findsOneWidget);
+      await waitFor(tester, find.text('Yoga'));
       expect(find.text('Cycling'), findsOneWidget);
+      expect(find.text('Swim'), findsNothing);
 
-      // ── 2. Deselect every status chip, then select Break — only the
-      //         on-break pact is listed. Break behaves exactly like any
-      //         other filter chip (an independent, additive toggle), so
-      //         isolating it requires deselecting the rest first, same as
-      //         isolating any other single status would ──────────────────
+      // ── 2. Select the "Break" chip on top of the already-selected Active
+      //         — the on-break pact now joins the plain active one; Cycling
+      //         (stopped) is unaffected, its own chip untouched ──────────
       final strings = l10n(tester);
-      for (final label in [strings.filterActive, strings.filterDone, strings.filterCancelled]) {
-        await tester.tap(find.widgetWithText(FilterChip, label));
-        await tester.pump(const Duration(milliseconds: 100));
-      }
       await tester.tap(find.byKey(const Key('break-filter-chip')));
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Swim'), findsOneWidget);
-      expect(find.text('Yoga'), findsNothing);
-      expect(find.text('Cycling'), findsNothing);
+      expect(find.text('Yoga'), findsOneWidget);
+      expect(find.text('Cycling'), findsOneWidget);
 
-      // ── 3. Re-select the "Active" chip — both active pacts (on-break +
-      //         plain) are listed, since Break only adds to whatever is
-      //         already selected rather than replacing it; Cycling (stopped)
-      //         stays hidden since Stopped is still deselected ────────────
+      // ── 3. Deselect "Active" — only the on-break pact remains among the
+      //         active-status pacts (Break alone now governs it); the plain
+      //         active pact (Yoga) disappears; Cycling stays, still
+      //         unaffected by the Active/Break axis ─────────────────────
       await tester.tap(find.widgetWithText(FilterChip, strings.filterActive));
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Swim'), findsOneWidget);
-      expect(find.text('Yoga'), findsOneWidget);
-      expect(find.text('Cycling'), findsNothing);
+      expect(find.text('Yoga'), findsNothing);
+      expect(find.text('Cycling'), findsOneWidget);
     });
   });
 }

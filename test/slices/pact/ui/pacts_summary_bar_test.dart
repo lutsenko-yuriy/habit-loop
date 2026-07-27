@@ -177,7 +177,7 @@ void main() {
       expect(find.byKey(const Key('break-filter-chip')), findsNothing);
     });
 
-    testWidgets('tapping the Break chip alone (Active still selected) adds nothing new — already covered by Active',
+    testWidgets('Active selected (default) does not surface an on-break pact until Break is also selected',
         (tester) async {
       final onBreakState = PactListState(
         entries: [
@@ -189,11 +189,15 @@ void main() {
       await tester.pumpAndSettle();
       await _expandPanel(tester);
 
+      // Active is selected by default, Break is not — the on-break pact
+      // must stay hidden even though its underlying status is Active.
+      expect(find.text('Meditate'), findsNothing);
+      expect(find.text('Yoga'), findsOneWidget);
+
       await tester.tap(find.byKey(const Key('break-filter-chip')));
       await tester.pumpAndSettle();
 
-      // Break is additive (OR), not a replacement — both stay visible since
-      // Active is still selected and already covers both entries.
+      // Selecting Break on top of the already-selected Active reveals it.
       expect(find.text('Meditate'), findsOneWidget);
       expect(find.text('Yoga'), findsOneWidget);
     });
@@ -241,6 +245,9 @@ void main() {
           PactListEntry(pact: _activePact, onBreak: true),
           PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
         ],
+        // Break must be selected for the on-break pact to be visible at all
+        // (HAB-195 WU6 fix: Active alone no longer surfaces on-break pacts).
+        breakSelected: true,
       );
       await tester.pumpWidget(_buildApp(state));
       await tester.pumpAndSettle();

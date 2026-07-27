@@ -22,9 +22,12 @@ class PactListState {
 
   /// "Break" chip (HAB-195) — kept separate from [activeFilters] since Break
   /// isn't a [PactStatus], but otherwise an independent multi-select toggle
-  /// just like the status chips: selecting it adds on-break entries to
-  /// whatever [activeFilters] already shows (OR, not a replacement), exactly
-  /// mirroring how selecting an additional status chip adds its entries.
+  /// just like the status chips. It splits the Active bucket into two
+  /// mutually exclusive parts: an on-break pact is matched *only* by this
+  /// flag, never by [activeFilters] containing [PactStatus.active] — so
+  /// Active selected + Break deselected shows active-but-not-on-break pacts
+  /// only, and Break selected + Active deselected shows on-break pacts only.
+  /// A non-active pact is entirely unaffected by this flag.
   final bool breakSelected;
 
   const PactListState({
@@ -52,7 +55,7 @@ class PactListState {
   int get archivedCancelledCount => entries.where((e) => e.pact.archived && e.pact.status == PactStatus.stopped).length;
 
   List<PactListEntry> get filteredEntries => entries
-      .where((e) => activeFilters.contains(e.pact.status) || (breakSelected && e.onBreak))
+      .where((e) => e.onBreak ? breakSelected : activeFilters.contains(e.pact.status))
       .where((e) => showArchived || !e.pact.archived)
       .toList();
 

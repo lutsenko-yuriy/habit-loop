@@ -373,9 +373,9 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
 /// pact exists (HAB-195 WU6 — grew from 3 to 5 chips with the addition of
 /// Break, which no longer fit a single scrollable row on narrow screens).
 /// Selection is shown by fill color only — no checkmarks. All chips are
-/// independent multi-select toggles whose matching entries are unioned
-/// together, Break included — selecting it just adds on-break pacts to
-/// whatever is already shown, exactly like selecting any other chip.
+/// independent multi-select toggles, but Break and Active are mutually
+/// exclusive *for on-break pacts specifically*: Break, not Active, decides
+/// whether an on-break pact is shown — see [PactListState.breakSelected].
 class _PactFilterChipsRow extends StatelessWidget {
   final Set<PactStatus> activeFilters;
   final bool breakSelected;
