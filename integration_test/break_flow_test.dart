@@ -3,7 +3,7 @@
 //
 // Run on host:   flutter test integration_test/break_flow_test.dart
 // Run on device: flutter test integration_test/break_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show FilterChip, Key, Navigator;
+import 'package:flutter/material.dart' show FilterChip, Key, Navigator, Scrollable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
@@ -62,8 +62,16 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Meditate');
 
-      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      // The button sits below the timeline button and several DateRowTiles in
+      // pact detail's sliver-backed ListView — on a short viewport (CI's Android
+      // emulator) it isn't realized yet, so waitFor alone can time out even
+      // though the widget legitimately exists once scrolled into range (HAB-199,
+      // same root cause as HAB-196 Fix 4).
+      await tester.dragUntilVisible(
+        find.byKey(const Key('pact-detail-start-break-button')),
+        find.ancestor(of: find.byKey(const Key('pact-detail-timeline-button')), matching: find.byType(Scrollable)),
+        const Offset(0, -100),
+      );
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));
@@ -122,8 +130,16 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Jog');
 
-      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      // The button sits below the timeline button and several DateRowTiles in
+      // pact detail's sliver-backed ListView — on a short viewport (CI's Android
+      // emulator) it isn't realized yet, so waitFor alone can time out even
+      // though the widget legitimately exists once scrolled into range (HAB-199,
+      // same root cause as HAB-196 Fix 4).
+      await tester.dragUntilVisible(
+        find.byKey(const Key('pact-detail-start-break-button')),
+        find.ancestor(of: find.byKey(const Key('pact-detail-timeline-button')), matching: find.byType(Scrollable)),
+        const Offset(0, -100),
+      );
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));
@@ -168,8 +184,16 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Read');
 
-      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      // The button sits below the timeline button and several DateRowTiles in
+      // pact detail's sliver-backed ListView — on a short viewport (CI's Android
+      // emulator) it isn't realized yet, so waitFor alone can time out even
+      // though the widget legitimately exists once scrolled into range (HAB-199,
+      // same root cause as HAB-196 Fix 4).
+      await tester.dragUntilVisible(
+        find.byKey(const Key('pact-detail-start-break-button')),
+        find.ancestor(of: find.byKey(const Key('pact-detail-timeline-button')), matching: find.byType(Scrollable)),
+        const Offset(0, -100),
+      );
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));
@@ -619,6 +643,15 @@ void main() {
       //         alone never surfaces them ───────────────────────────────
       await openPactsPanel(tester);
       await waitFor(tester, find.text('Yoga'));
+      // Cycling is 3rd in the panel's SliverList — on a short viewport (CI's
+      // Android emulator) it isn't realized yet, so a bare expect can find 0
+      // widgets even though it legitimately exists once scrolled into range
+      // (HAB-199, same root cause as HAB-196 Fix 4).
+      await tester.dragUntilVisible(
+        find.text('Cycling'),
+        find.ancestor(of: find.text('Yoga'), matching: find.byType(Scrollable)),
+        const Offset(0, -100),
+      );
       expect(find.text('Cycling'), findsOneWidget);
       expect(find.text('Swim'), findsNothing);
 
