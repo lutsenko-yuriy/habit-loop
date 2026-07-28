@@ -19,6 +19,11 @@ Fired when the user successfully completes the pact creation wizard and the pact
 | `showups_expected` | `int` | Total number of showups scheduled over the full pact |
 | `used_summary_jump` | `bool` | `true` if the user tapped at least one Summary-screen row to jump back to a step before submitting; `false` if they swiped through linearly. Added in HAB-82. |
 | `commitment_variant` | `string` | Commitment confirmation dialog variant shown to this user: `button` \| `checkbox` \| `retype`. Read from Remote Config flag `exp_003_commitment_confirmation`. Added for EXP-003. |
+| `source` | `string` | `blank` \| `adjust_and_start_again` — entry point the wizard was opened from. Added in HAB-202. |
+| `predecessor_pact_id` | `string?` | ID of the pact this was adjusted from; present only when `source = adjust_and_start_again`. Added in HAB-202. |
+| `habit_name_changed_from_suggestion` | `bool?` | `true` if the user changed the auto-suggested `(v{n+1})` name before saving; present only when `source = adjust_and_start_again`. Added in HAB-202. |
+| `schedule_changed_from_predecessor` | `bool?` | `true` if the schedule was changed from the pre-filled value; present only when `source = adjust_and_start_again`. Added in HAB-202. |
+| `reminder_changed_from_predecessor` | `bool?` | `true` if the reminder offset was changed from the pre-filled value; present only when `source = adjust_and_start_again`. Added in HAB-202. |
 
 ---
 
@@ -294,6 +299,7 @@ Fired when the user dismisses the wizard via back-navigation (`PopScope`) withou
 |---|---|---|
 | `mode` | `string` | `creation` \| `editing` |
 | `last_step` | `string` | Page visible when the user exited: `commitment` \| `habit_name` \| `duration` \| `showup_duration` \| `schedule` \| `reminder` \| `summary` |
+| `source` | `string?` | `blank` \| `adjust_and_start_again`; present only when `mode = creation` — there is no chain concept in editing mode. Added in HAB-202. |
 
 ---
 
@@ -424,6 +430,28 @@ Fired when the user taps "Resume pact" on the Pact Detail banner. Named to match
 | `pact_id` | `string` | ID of the pact whose break was stopped |
 | `original_end_type` | `string` | `fixed_date` \| `until_pact_ends` — the break's planned end type before it was stopped |
 | `days_since_start` | `int` | Number of days the break had been active before it was stopped |
+
+---
+
+### `pact_adjust_and_start_again_tapped`
+
+Fired when the user taps "Adjust and start again" on a finished pact's detail screen — before the pre-filled creation wizard opens. (HAB-202)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the finished (predecessor) pact |
+| `pact_status` | `string` | `completed` \| `stopped` |
+
+---
+
+### `pact_chain_link_tapped`
+
+Fired when the user taps "Previous Pact" or "Next Pact" on a pact detail screen to navigate to the linked pact. (HAB-202)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact the link is shown on (not the pact navigated to) |
+| `direction` | `string` | `previous` \| `next` |
 
 ---
 

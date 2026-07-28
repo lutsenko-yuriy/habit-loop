@@ -20,6 +20,7 @@ import 'language_change_flow_test.dart' as language_change;
 import 'mark_showup_done_flow_test.dart' as mark_showup_done;
 import 'notification_navigation_flow_test.dart' as notification_nav;
 import 'onboarding_carousel_flow_test.dart' as onboarding;
+import 'pact_chain_test.dart' as pact_chain;
 import 'pact_note_flow_test.dart' as pact_note;
 import 'pact_timeline_flow_test.dart' as pact_timeline;
 import 'redeem_showup_flow_test.dart' as redeem_showup;
@@ -44,6 +45,7 @@ void main() {
   mark_showup_done.main();
   notification_nav.main();
   onboarding.main();
+  pact_chain.main();
   pact_note.main();
   pact_timeline.main();
   redeem_showup.main();
