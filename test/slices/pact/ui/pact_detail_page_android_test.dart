@@ -332,11 +332,7 @@ void main() {
   group('PactDetailPageAndroid — Resume pact banner (HAB-195 WU5.2)', () {
     testWidgets('shows banner with rationale and end date for a fixed-end break', (tester) async {
       final state = PactDetailState(
-          pact: _activePact,
-          stats: _stats,
-          isLoading: false,
-          activeBreak: _fixedEndBreak,
-          currentBreak: _fixedEndBreak);
+          pact: _activePact, stats: _stats, isLoading: false, activeBreak: _fixedEndBreak, isBreakActiveNow: true);
       await tester.pumpWidget(
         _testApp(
           child: PactDetailPageAndroid(
@@ -357,11 +353,7 @@ void main() {
 
     testWidgets('shows open-ended copy when the break has no planned end date', (tester) async {
       final state = PactDetailState(
-          pact: _activePact,
-          stats: _stats,
-          isLoading: false,
-          activeBreak: _openEndedBreak,
-          currentBreak: _openEndedBreak);
+          pact: _activePact, stats: _stats, isLoading: false, activeBreak: _openEndedBreak, isBreakActiveNow: true);
       await tester.pumpWidget(
         _testApp(
           child: PactDetailPageAndroid(
@@ -398,11 +390,7 @@ void main() {
     testWidgets('tapping Resume pact opens a confirmation dialog; confirming calls onStopBreak', (tester) async {
       var called = false;
       final state = PactDetailState(
-          pact: _activePact,
-          stats: _stats,
-          isLoading: false,
-          activeBreak: _fixedEndBreak,
-          currentBreak: _fixedEndBreak);
+          pact: _activePact, stats: _stats, isLoading: false, activeBreak: _fixedEndBreak, isBreakActiveNow: true);
       await tester.pumpWidget(
         _testApp(
           child: PactDetailPageAndroid(
@@ -435,11 +423,7 @@ void main() {
     testWidgets('cancelling the confirmation dialog does not call onStopBreak', (tester) async {
       var called = false;
       final state = PactDetailState(
-          pact: _activePact,
-          stats: _stats,
-          isLoading: false,
-          activeBreak: _fixedEndBreak,
-          currentBreak: _fixedEndBreak);
+          pact: _activePact, stats: _stats, isLoading: false, activeBreak: _fixedEndBreak, isBreakActiveNow: true);
       await tester.pumpWidget(
         _testApp(
           child: PactDetailPageAndroid(
@@ -473,7 +457,7 @@ void main() {
         stats: _stats,
         isLoading: false,
         activeBreak: _fixedEndBreak,
-        currentBreak: _fixedEndBreak,
+        isBreakActiveNow: true,
         stopBreakError: Exception('boom'),
       );
       await tester.pumpWidget(
@@ -496,11 +480,7 @@ void main() {
 
     testWidgets('animates the banner out instead of vanishing instantly when activeBreak becomes null', (tester) async {
       final withBreak = PactDetailState(
-          pact: _activePact,
-          stats: _stats,
-          isLoading: false,
-          activeBreak: _fixedEndBreak,
-          currentBreak: _fixedEndBreak);
+          pact: _activePact, stats: _stats, isLoading: false, activeBreak: _fixedEndBreak, isBreakActiveNow: true);
       await tester.pumpWidget(
         _testApp(
           child: PactDetailPageAndroid(
@@ -541,7 +521,7 @@ void main() {
         stats: _stats,
         isLoading: false,
         activeBreak: _fixedEndBreak,
-        currentBreak: _fixedEndBreak,
+        isBreakActiveNow: true,
         isStoppingBreak: true,
       );
       await tester.pumpWidget(
