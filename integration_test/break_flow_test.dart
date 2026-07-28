@@ -3,7 +3,7 @@
 //
 // Run on host:   flutter test integration_test/break_flow_test.dart
 // Run on device: flutter test integration_test/break_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show FilterChip, Key, Navigator, Scrollable;
+import 'package:flutter/material.dart' show FilterChip, Key, Navigator, Scrollable, ScrollableState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
@@ -241,12 +241,22 @@ void main() {
 
       await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Feeling sick');
       await tester.pump();
-      // Unlike the pact-detail entry point, this flow shows the end-date row
-      // (untilPactEnds defaults to false here — "today .. today+7"), adding
-      // enough height that the submit button falls outside CI's shorter
-      // emulator viewport once the keyboard is up (HAB-199).
       await tester.ensureVisible(find.byKey(const Key('break-submit-button')));
       await tester.pump();
+      // TEMP DIAGNOSTIC (HAB-199): CI's tap on break-submit-button misses the
+      // button at the same offset regardless of ensureVisible, so the button
+      // is likely not actually off-screen — dump what's really there before
+      // guessing again (HAB-196 debrief: static reasoning about this failure
+      // class was wrong twice; validate with real data instead).
+      final submitButtonKey = find.byKey(const Key('break-submit-button'));
+      final devicePixelRatio = tester.view.devicePixelRatio;
+      // ignore: avoid_print
+      print(
+        'HAB199_DEBUG rect=${tester.getRect(submitButtonKey)} '
+        'physicalSize=${tester.view.physicalSize} devicePixelRatio=$devicePixelRatio '
+        'viewInsetsBottom=${tester.view.viewInsets.bottom / devicePixelRatio} '
+        'scrollOffset=${tester.state<ScrollableState>(find.byType(Scrollable)).position.pixels}',
+      );
       await tester.tap(find.byKey(const Key('break-submit-button')));
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pump(const Duration(milliseconds: 100));
