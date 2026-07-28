@@ -45,7 +45,9 @@ class PactListViewModel extends Notifier<PactListState> {
           if (pending.isNotEmpty) nextShowupAt = pending.first.scheduledAt;
 
           final breaks = await queryService.getBreaksForPact(pact.id);
-          onBreak = breaks.any((b) => !b.isResolved(now));
+          // Must reflect "on break right now" — a scheduled-but-not-yet-
+          // started break is unresolved but not yet active (HAB-201).
+          onBreak = breaks.any((b) => b.isActiveAt(now));
         }
         entries.add(PactListEntry(pact: pact, nextShowupAt: nextShowupAt, onBreak: onBreak));
       }

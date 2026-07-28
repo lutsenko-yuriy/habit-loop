@@ -286,6 +286,20 @@ void main() {
       expect(entry.onBreak, isTrue);
     });
 
+    test('load: entry.onBreak is false for an active pact with a break scheduled to start in the future (HAB-201)',
+        () async {
+      final pact = _pact('p1', PactStatus.active);
+      final futureStart = DateTime.now().add(const Duration(days: 1));
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [_pactBreak('b1', 'p1', startDate: futureStart)],
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isFalse);
+    });
+
     test('load: entry.onBreak is false for an active pact with a stopped break', () async {
       final pact = _pact('p1', PactStatus.active);
       final c = _makeContainer(
