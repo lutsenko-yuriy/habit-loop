@@ -8,14 +8,20 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
-- [test] HAB-198: Fixed `break_flow_test.dart`'s `onbreak_showup_not_autofailed_by_sweep_or_late_open` asserting a stale "Pending" status text for an on-break showup — WU5.1 (HAB-195) changed `ShowupUiState.onBreak` to render as "On break" instead, but this WU3-era test was never updated to match, so it had been failing deterministically (not flakily, as previously assumed across several HAB-195 WUs) ever since. Updated the assertion to wait for the correct post-WU5.1 text. Verified passing on both the Android emulator and the iOS simulator.
-- [test] HAB-199: Fixed 4 `break_flow_test.dart` failures that were deterministic on the CI Android emulator (short viewport) while passing locally (taller viewport) — `pact-detail-start-break-button` and the pacts-panel's `Cycling` entry sit below the fold in lazy Sliver-backed lists (`ListView`/`SliverList.builder`), which only realize an `Element` for children within the viewport + cache extent. `waitFor` polls the Element tree, so it can never find a widget that hasn't been realized yet, no matter how long it waits; the same is true of a bare `expect` with no preceding scroll. Replaced both patterns with `tester.dragUntilVisible`, scoped to each widget's nearest `Scrollable` ancestor — same fix as HAB-196 Fix 4, applied to a different screen. Verified passing on the `API29_CI_Match` local emulator (mirrors CI's AVD) and confirmed live via a standalone `scenarios.yml` dispatch.
+- [test] HAB-202: Added `integration_test/pact_chain_test.dart` (5 stub scenarios covering pact chaining — adjust-and-start-again creation with prefill/backlink, root-based default naming, completed-pact eligibility, feature-flag gating, and wizard cancellation), registered in `test_runner.dart`. Plan approval also folded in `docs/GLOSSARY.md` ("Chain (of pacts)"), `docs/ANALYTICS_EVENTS.md` (`pact_adjust_and_start_again_tapped`, `pact_chain_link_tapped`, and enrichments to `pact_created`/`pact_wizard_abandoned`), and `docs/ARCHITECTURE.md` (`Pact.predecessorPactId`, `PactChainService`, `PactRepository.getSuccessor`, schema v6) updates from the approved plan.
 
 ## [0.52.1] — 2026-07-28 (PR #335 merged)
 
 ### Fixed
 
 - [user] Pact list and detail screen no longer show "On break" status for a break scheduled to start in the future — only shows once the break actually begins.
+
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [test] HAB-198: Fixed `break_flow_test.dart`'s `onbreak_showup_not_autofailed_by_sweep_or_late_open` asserting a stale "Pending" status text for an on-break showup — WU5.1 (HAB-195) changed `ShowupUiState.onBreak` to render as "On break" instead, but this WU3-era test was never updated to match, so it had been failing deterministically (not flakily, as previously assumed across several HAB-195 WUs) ever since. Updated the assertion to wait for the correct post-WU5.1 text. Verified passing on both the Android emulator and the iOS simulator.
+- [test] HAB-199: Fixed 4 `break_flow_test.dart` failures that were deterministic on the CI Android emulator (short viewport) while passing locally (taller viewport) — `pact-detail-start-break-button` and the pacts-panel's `Cycling` entry sit below the fold in lazy Sliver-backed lists (`ListView`/`SliverList.builder`), which only realize an `Element` for children within the viewport + cache extent. `waitFor` polls the Element tree, so it can never find a widget that hasn't been realized yet, no matter how long it waits; the same is true of a bare `expect` with no preceding scroll. Replaced both patterns with `tester.dragUntilVisible`, scoped to each widget's nearest `Scrollable` ancestor — same fix as HAB-196 Fix 4, applied to a different screen. Verified passing on the `API29_CI_Match` local emulator (mirrors CI's AVD) and confirmed live via a standalone `scenarios.yml` dispatch.
 
 ## [0.52.0] — 2026-07-27 (PR #332 merged)
 
