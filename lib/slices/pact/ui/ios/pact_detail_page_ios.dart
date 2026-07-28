@@ -170,7 +170,7 @@ class _PactDetailContent extends StatelessWidget {
         // break-creation flow's end-date-row toggle) so resuming the pact
         // fades/collapses the banner instead of it vanishing instantly.
         BreakBannerReveal(
-          activeBreak: state.activeBreak,
+          activeBreak: state.isBreakActiveNow ? state.activeBreak : null,
           isStopping: state.isStoppingBreak,
           stopError: state.stopBreakError,
           onStopBreak: onStopBreak,
