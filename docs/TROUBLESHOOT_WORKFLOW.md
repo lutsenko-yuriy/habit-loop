@@ -16,7 +16,7 @@ For new features, enhancements, and planned changes, use `docs/FEATURE_WORKFLOW.
 - Check recent changes: `git log --oneline -20`, recent PRs, recent dependency bumps.
 - For third-party tool failures: read the changelog for breaking changes around the time the failure started.
 - **Before writing off a failing integration test as "known flaky"**, re-run it in isolation at least once to confirm it's actually intermittent, not deterministic. A symptom that looks like known flakiness (e.g. a `waitFor` timeout) can be a real, consistent bug wearing the same clothes (HAB-198: a stale assertion failed the same way every time for three WUs before anyone re-ran it and noticed it never once passed).
-- Form a hypothesis before attempting any fix.
+- Form a hypothesis before attempting any fix. **If a hypothesis is disproven by a live CI run, don't form a second one from code reading alone** — add targeted diagnostic instrumentation (print the actual widget rect, viewport size, scroll offset, etc.) and validate against real data before the next attempt. Two hypotheses were disproven this way in HAB-196; HAB-199 repeated the same guessing before applying the lesson (see docs/knowledge/notes/HAB-196.md).
 
 ## 3. Open a tracking ticket
 

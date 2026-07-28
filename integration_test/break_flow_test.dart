@@ -3,7 +3,7 @@
 //
 // Run on host:   flutter test integration_test/break_flow_test.dart
 // Run on device: flutter test integration_test/break_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show FilterChip, Key, Navigator;
+import 'package:flutter/material.dart' show FilterChip, Key, Navigator, Scrollable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
@@ -34,6 +34,24 @@ Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId)
   await tester.pump(const Duration(milliseconds: 100));
 }
 
+/// Types [rationale] into the break-rationale field and submits.
+///
+/// The keyboard-inset relayout must settle *before* `ensureVisible` computes
+/// its scroll target — a bare `pump()` doesn't advance time, so on a
+/// still-growing inset `ensureVisible` under-scrolls and the submit button
+/// ends up back under the keyboard once the inset finishes animating in,
+/// causing tap() to miss it (HAB-199: confirmed via CI diagnostic — the
+/// button's unscrolled rect was identical between a passing and a failing
+/// run, only the scroll offset differed).
+Future<void> _enterRationaleAndSubmit(WidgetTester tester, String rationale) async {
+  await tester.enterText(find.byKey(const Key('break-rationale-field')), rationale);
+  await tester.pump(const Duration(milliseconds: 450));
+  await tester.ensureVisible(find.byKey(const Key('break-submit-button')));
+  await tester.pump();
+  await tester.tap(find.byKey(const Key('break-submit-button')));
+  await tester.pump(const Duration(milliseconds: 450));
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
@@ -62,8 +80,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Meditate');
 
-      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      await scrollToPactDetailStartBreakButton(tester);
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));
@@ -72,11 +89,7 @@ void main() {
       // Accept the flow's default dates (today .. today+7) — consistent with
       // how create_pact_flow_test.dart never drives the native date picker —
       // and only fill in the mandatory rationale.
-      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Feeling sick');
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await _enterRationaleAndSubmit(tester, 'Feeling sick');
 
       // Back on Pact Detail: the break was persisted and blocks a new one.
       expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
@@ -122,8 +135,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Jog');
 
-      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      await scrollToPactDetailStartBreakButton(tester);
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));
@@ -133,11 +145,7 @@ void main() {
       await tester.pumpAndSettle(); // let the end-date row's AnimatedSwitcher collapse finish
       expect(find.byKey(const Key('break-end-date-row')), findsNothing);
 
-      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Travel');
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await _enterRationaleAndSubmit(tester, 'Travel');
 
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
@@ -168,8 +176,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Read');
 
-      await waitFor(tester, find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.ensureVisible(find.byKey(const Key('pact-detail-start-break-button')));
+      await scrollToPactDetailStartBreakButton(tester);
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));
@@ -182,11 +189,7 @@ void main() {
       // Still on the break-creation screen, not popped back to Pact Detail.
       expect(find.byKey(const Key('break-submit-button')), findsOneWidget);
 
-      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Busy week');
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await _enterRationaleAndSubmit(tester, 'Busy week');
 
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
@@ -242,11 +245,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pump(const Duration(milliseconds: 100));
 
-      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Feeling sick');
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await _enterRationaleAndSubmit(tester, 'Feeling sick');
 
       // ── 4. Start date defaults to today (testNow's date), not the past
       //         triggering showup's own (June 14) date ─────────────────────
@@ -619,6 +618,15 @@ void main() {
       //         alone never surfaces them ───────────────────────────────
       await openPactsPanel(tester);
       await waitFor(tester, find.text('Yoga'));
+      // Cycling is 3rd in the panel's SliverList — on a short viewport (CI's
+      // Android emulator) it isn't realized yet, so a bare expect can find 0
+      // widgets even though it legitimately exists once scrolled into range
+      // (HAB-199, same root cause as HAB-196 Fix 4).
+      await tester.dragUntilVisible(
+        find.text('Cycling'),
+        find.ancestor(of: find.text('Yoga'), matching: find.byType(Scrollable)),
+        const Offset(0, -100),
+      );
       expect(find.text('Cycling'), findsOneWidget);
       expect(find.text('Swim'), findsNothing);
 

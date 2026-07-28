@@ -109,7 +109,8 @@ When in doubt, use **In QA**.
     3. Check the Codecov patch-coverage report (posted automatically as a PR comment by CI). If patch coverage is below the project threshold, add tests for the uncovered lines where it is reasonable to do so — skip lines that require disproportionate test infrastructure (e.g. `ConsumerStatefulWidget` screens with no widget-test harness). Explain skipped lines in a PR comment.
     4. If the cumulative changes since the last review pass are non-trivial (new files, logic changes, interface changes), re-invoke both review skills and return to step 10.1.
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
-    6. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.).
+    6. For PRs that touch `integration_test/`: dispatch the `scenarios.yml` CI workflow (`gh workflow run scenarios.yml --ref <branch>`) and confirm it passes — required before the loop can close, in addition to any local `/run-scenarios` run. CI's short-viewport/headless Android emulator surfaces timing and layout races that don't reproduce locally (HAB-199).
+    7. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.) and the scenarios CI dispatch (step 10.6, when applicable) has passed.
 11. Remind the user to compact context after each commit to keep the conversation lean.
 12. When the user approves the PR, invoke `debrief` on the current feature branch to capture the retrospective before merging:
     ```
