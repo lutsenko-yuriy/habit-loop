@@ -250,12 +250,15 @@ void main() {
       // class was wrong twice; validate with real data instead).
       final submitButtonKey = find.byKey(const Key('break-submit-button'));
       final devicePixelRatio = tester.view.devicePixelRatio;
+      // Multiple Scrollables can be mounted at once (the route underneath
+      // plus the dialog's own), so use stateList instead of state/single.
+      final scrollOffsets = tester.stateList<ScrollableState>(find.byType(Scrollable)).map((s) => s.position.pixels);
       // ignore: avoid_print
       print(
         'HAB199_DEBUG rect=${tester.getRect(submitButtonKey)} '
         'physicalSize=${tester.view.physicalSize} devicePixelRatio=$devicePixelRatio '
         'viewInsetsBottom=${tester.view.viewInsets.bottom / devicePixelRatio} '
-        'scrollOffset=${tester.state<ScrollableState>(find.byType(Scrollable)).position.pixels}',
+        'scrollOffsets=${scrollOffsets.toList()}',
       );
       await tester.tap(find.byKey(const Key('break-submit-button')));
       await tester.pump(const Duration(milliseconds: 350));
