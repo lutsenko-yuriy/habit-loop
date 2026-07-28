@@ -78,15 +78,15 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         }
       }
 
+      final currentBreak = activeBreak != null && activeBreak.isActiveAt(now) ? activeBreak : null;
       state = state.copyWith(
         pact: pact,
         stats: stats,
         isLoading: false,
         activeBreak: activeBreak,
         clearActiveBreak: activeBreak == null,
-        // Display-only: the banner must wait until the break actually
-        // starts, unlike activeBreak's own "unresolved" gating (HAB-201).
-        isBreakActiveNow: activeBreak != null && activeBreak.isActiveAt(now),
+        currentBreak: currentBreak,
+        clearCurrentBreak: currentBreak == null,
       );
     } catch (e, st) {
       unawaited(ref.read(logServiceProvider).error('pact_detail_load_failed: id=$arg', exception: e, stackTrace: st));
@@ -159,7 +159,7 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     try {
       final now = ref.read(pactDetailNowProvider);
       await ref.read(pactBreakServiceProvider).stopBreak(activeBreak.id, now: now);
-      state = state.copyWith(isStoppingBreak: false, clearActiveBreak: true, isBreakActiveNow: false);
+      state = state.copyWith(isStoppingBreak: false, clearActiveBreak: true, clearCurrentBreak: true);
 
       // PII rule: only pact ID — no rationale.
       unawaited(ref.read(crashlyticsServiceProvider).log('pact_break_stopped: pactId=$arg'));
