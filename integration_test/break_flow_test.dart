@@ -241,6 +241,12 @@ void main() {
 
       await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Feeling sick');
       await tester.pump();
+      // Unlike the pact-detail entry point, this flow shows the end-date row
+      // (untilPactEnds defaults to false here — "today .. today+7"), adding
+      // enough height that the submit button falls outside CI's shorter
+      // emulator viewport once the keyboard is up (HAB-199).
+      await tester.ensureVisible(find.byKey(const Key('break-submit-button')));
+      await tester.pump();
       await tester.tap(find.byKey(const Key('break-submit-button')));
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pump(const Duration(milliseconds: 100));
