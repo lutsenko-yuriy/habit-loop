@@ -34,6 +34,26 @@ Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId)
   await tester.pump(const Duration(milliseconds: 100));
 }
 
+/// Types [rationale] into the break-rationale field and submits.
+///
+/// The keyboard-inset relayout must settle *before* `ensureVisible` computes
+/// its scroll target — a bare `pump()` doesn't advance time, so on a
+/// still-growing inset `ensureVisible` under-scrolls and the submit button
+/// ends up back under the keyboard once the inset finishes animating in,
+/// causing tap() to miss it (HAB-199: confirmed via CI diagnostic — the
+/// button's unscrolled rect was identical between a passing and a failing
+/// run, only the scroll offset differed).
+Future<void> _enterRationaleAndSubmit(WidgetTester tester, String rationale) async {
+  await tester.enterText(find.byKey(const Key('break-rationale-field')), rationale);
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pump(const Duration(milliseconds: 100));
+  await tester.ensureVisible(find.byKey(const Key('break-submit-button')));
+  await tester.pump();
+  await tester.tap(find.byKey(const Key('break-submit-button')));
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
@@ -71,11 +91,7 @@ void main() {
       // Accept the flow's default dates (today .. today+7) — consistent with
       // how create_pact_flow_test.dart never drives the native date picker —
       // and only fill in the mandatory rationale.
-      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Feeling sick');
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await _enterRationaleAndSubmit(tester, 'Feeling sick');
 
       // Back on Pact Detail: the break was persisted and blocks a new one.
       expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
@@ -131,11 +147,7 @@ void main() {
       await tester.pumpAndSettle(); // let the end-date row's AnimatedSwitcher collapse finish
       expect(find.byKey(const Key('break-end-date-row')), findsNothing);
 
-      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Travel');
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await _enterRationaleAndSubmit(tester, 'Travel');
 
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
@@ -179,11 +191,7 @@ void main() {
       // Still on the break-creation screen, not popped back to Pact Detail.
       expect(find.byKey(const Key('break-submit-button')), findsOneWidget);
 
-      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Busy week');
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await _enterRationaleAndSubmit(tester, 'Busy week');
 
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
@@ -239,22 +247,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pump(const Duration(milliseconds: 100));
 
-      await tester.enterText(find.byKey(const Key('break-rationale-field')), 'Feeling sick');
-      // The keyboard-inset animation (Scaffold's resizeToAvoidBottomInset)
-      // must settle *before* ensureVisible computes its scroll target — a
-      // single pump() doesn't advance time, so on a still-growing inset
-      // ensureVisible under-scrolls and the button ends up back under the
-      // keyboard once it finishes animating in, causing tap() to miss it
-      // (HAB-199: confirmed via CI diagnostic — rect fell right at the
-      // keyboard boundary, and the miss's hit-test offset matched the
-      // pre-settle scroll position).
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.ensureVisible(find.byKey(const Key('break-submit-button')));
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await _enterRationaleAndSubmit(tester, 'Feeling sick');
 
       // ── 4. Start date defaults to today (testNow's date), not the past
       //         triggering showup's own (June 14) date ─────────────────────
