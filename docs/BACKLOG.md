@@ -11,6 +11,8 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-201**: Bug: pact shows "On break" (list + detail banner) before the break actually starts (PR #335)
+
 - **HAB-183**: Manual-dispatch-only CI pipelines for granular build/test/notes procedures (PR #287)
 
 - **HAB-158**: Bug: language picker option text overflows on narrow Android screens (PR #250)
