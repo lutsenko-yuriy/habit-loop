@@ -45,13 +45,11 @@ Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId)
 /// run, only the scroll offset differed).
 Future<void> _enterRationaleAndSubmit(WidgetTester tester, String rationale) async {
   await tester.enterText(find.byKey(const Key('break-rationale-field')), rationale);
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
+  await tester.pump(const Duration(milliseconds: 450));
   await tester.ensureVisible(find.byKey(const Key('break-submit-button')));
   await tester.pump();
   await tester.tap(find.byKey(const Key('break-submit-button')));
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
+  await tester.pump(const Duration(milliseconds: 450));
 }
 
 void main() {
