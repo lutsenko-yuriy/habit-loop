@@ -16,8 +16,15 @@ class PactDetailState {
 
   /// The single unresolved break for this pact, if any (HAB-195). `null`
   /// means no break is currently active or scheduled, so a new one may be
-  /// started.
+  /// started. Intentionally includes a break that hasn't started yet —
+  /// this still gates "Take a Break" and `stopBreak`'s cancel-ahead-of-time
+  /// support. Use [isBreakActiveNow] for display purposes instead.
   final PactBreak? activeBreak;
+
+  /// Whether [activeBreak] has actually started (`now` falls within its
+  /// window) as opposed to being merely scheduled — the signal the break
+  /// banner should render on. `false` whenever [activeBreak] is null (HAB-201).
+  final bool isBreakActiveNow;
 
   final bool isStoppingBreak;
   final Object? stopBreakError;
@@ -34,6 +41,7 @@ class PactDetailState {
     this.isArchiving = false,
     this.archiveError,
     this.activeBreak,
+    this.isBreakActiveNow = false,
     this.isStoppingBreak = false,
     this.stopBreakError,
   });
@@ -55,6 +63,7 @@ class PactDetailState {
     bool clearArchiveError = false,
     PactBreak? activeBreak,
     bool clearActiveBreak = false,
+    bool? isBreakActiveNow,
     bool? isStoppingBreak,
     Object? stopBreakError,
     bool clearStopBreakError = false,
@@ -71,6 +80,7 @@ class PactDetailState {
       isArchiving: isArchiving ?? this.isArchiving,
       archiveError: clearArchiveError ? null : (archiveError ?? this.archiveError),
       activeBreak: clearActiveBreak ? null : (activeBreak ?? this.activeBreak),
+      isBreakActiveNow: isBreakActiveNow ?? this.isBreakActiveNow,
       isStoppingBreak: isStoppingBreak ?? this.isStoppingBreak,
       stopBreakError: clearStopBreakError ? null : (stopBreakError ?? this.stopBreakError),
     );

@@ -193,6 +193,33 @@ void main() {
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
       final state = container.read(pactDetailViewModelProvider('p1'));
       expect(state.activeBreak?.id, 'brk-1');
+      expect(state.isBreakActiveNow, isTrue);
+    });
+
+    test(
+        'load surfaces activeBreak but leaves isBreakActiveNow false for a break scheduled to start in the future (HAB-201)',
+        () async {
+      final notYetStartedBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 18),
+        plannedEndDate: DateTime(2026, 3, 25),
+        rationale: 'Planned ahead',
+      );
+      final container = _makeContainer(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [notYetStartedBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 3, 15))],
+      );
+      addTearDown(container.dispose);
+      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      // activeBreak stays non-null — it still gates "Take a Break" and
+      // stopBreak's cancel-ahead-of-time support — but the banner (driven by
+      // isBreakActiveNow) must not show until the break actually starts.
+      expect(state.activeBreak?.id, 'brk-1');
+      expect(state.isBreakActiveNow, isFalse);
     });
 
     test('stopBreak clears activeBreak on success (HAB-195 WU5.2)', () async {
@@ -218,6 +245,7 @@ void main() {
 
       final state = container.read(pactDetailViewModelProvider('p1'));
       expect(state.activeBreak, isNull);
+      expect(state.isBreakActiveNow, isFalse);
       expect(state.isStoppingBreak, false);
       expect(state.stopBreakError, isNull);
     });
