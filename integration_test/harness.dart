@@ -301,10 +301,16 @@ Future<void> openPactDetail(WidgetTester tester, String habitName) async {
 /// emulator) it isn't realized yet, so waitFor alone can time out even
 /// though the widget legitimately exists once scrolled into range (HAB-199,
 /// same root cause as HAB-196 Fix 4).
+///
+/// Anchors on `find.byType(Scrollable)` rather than a nearby widget (e.g. the
+/// timeline button) so the helper doesn't depend on `pact_timeline_enabled`.
+/// Pact detail renders a single `ListView`, and `CommonFinders` skip offstage
+/// elements by default, so the previous route's own Scrollable (still mounted
+/// underneath, per HAB-196 Fix 4's precedent) doesn't create ambiguity.
 Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) async {
   await tester.dragUntilVisible(
     find.byKey(const Key('pact-detail-start-break-button')),
-    find.ancestor(of: find.byKey(const Key('pact-detail-timeline-button')), matching: find.byType(Scrollable)),
+    find.byType(Scrollable),
     const Offset(0, -100),
   );
 }
