@@ -62,16 +62,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Meditate');
 
-      // The button sits below the timeline button and several DateRowTiles in
-      // pact detail's sliver-backed ListView — on a short viewport (CI's Android
-      // emulator) it isn't realized yet, so waitFor alone can time out even
-      // though the widget legitimately exists once scrolled into range (HAB-199,
-      // same root cause as HAB-196 Fix 4).
-      await tester.dragUntilVisible(
-        find.byKey(const Key('pact-detail-start-break-button')),
-        find.ancestor(of: find.byKey(const Key('pact-detail-timeline-button')), matching: find.byType(Scrollable)),
-        const Offset(0, -100),
-      );
+      await scrollToPactDetailStartBreakButton(tester);
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));
@@ -130,16 +121,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Jog');
 
-      // The button sits below the timeline button and several DateRowTiles in
-      // pact detail's sliver-backed ListView — on a short viewport (CI's Android
-      // emulator) it isn't realized yet, so waitFor alone can time out even
-      // though the widget legitimately exists once scrolled into range (HAB-199,
-      // same root cause as HAB-196 Fix 4).
-      await tester.dragUntilVisible(
-        find.byKey(const Key('pact-detail-start-break-button')),
-        find.ancestor(of: find.byKey(const Key('pact-detail-timeline-button')), matching: find.byType(Scrollable)),
-        const Offset(0, -100),
-      );
+      await scrollToPactDetailStartBreakButton(tester);
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));
@@ -184,16 +166,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Read');
 
-      // The button sits below the timeline button and several DateRowTiles in
-      // pact detail's sliver-backed ListView — on a short viewport (CI's Android
-      // emulator) it isn't realized yet, so waitFor alone can time out even
-      // though the widget legitimately exists once scrolled into range (HAB-199,
-      // same root cause as HAB-196 Fix 4).
-      await tester.dragUntilVisible(
-        find.byKey(const Key('pact-detail-start-break-button')),
-        find.ancestor(of: find.byKey(const Key('pact-detail-timeline-button')), matching: find.byType(Scrollable)),
-        const Offset(0, -100),
-      );
+      await scrollToPactDetailStartBreakButton(tester);
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
       await tester.pump(const Duration(milliseconds: 350));

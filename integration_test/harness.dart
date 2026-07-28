@@ -293,6 +293,22 @@ Future<void> openPactDetail(WidgetTester tester, String habitName) async {
   await tester.pump(const Duration(milliseconds: 100));
 }
 
+/// Scrolls pact detail's "Take a break" button into view from an
+/// already-open pact detail screen.
+///
+/// The button sits below the timeline button and several DateRowTiles in
+/// pact detail's sliver-backed ListView — on a short viewport (CI's Android
+/// emulator) it isn't realized yet, so waitFor alone can time out even
+/// though the widget legitimately exists once scrolled into range (HAB-199,
+/// same root cause as HAB-196 Fix 4).
+Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) async {
+  await tester.dragUntilVisible(
+    find.byKey(const Key('pact-detail-start-break-button')),
+    find.ancestor(of: find.byKey(const Key('pact-detail-timeline-button')), matching: find.byType(Scrollable)),
+    const Offset(0, -100),
+  );
+}
+
 /// Opens the timeline screen from an already-open pact detail screen.
 Future<void> openTimeline(WidgetTester tester) async {
   // Wait for the pact detail to finish loading before scrolling — the button
