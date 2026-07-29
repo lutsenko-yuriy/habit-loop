@@ -173,6 +173,11 @@ class _PactDetailContent extends StatelessWidget {
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
+      // Pact-specific key (HAB-202) — disambiguates this screen's own
+      // Scrollable from an earlier PactDetailScreen still mounted underneath
+      // it (Navigator keeps prior routes mounted by default) when a test
+      // needs to scroll a specific screen's content into view.
+      key: Key('pact-detail-scroll-view-${pact.id}'),
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
         // Habit name + status badge

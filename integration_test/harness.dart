@@ -333,6 +333,15 @@ Future<void> openTimeline(WidgetTester tester) async {
 /// `createdAt` defaults to `startDate` — every fixture across the suite
 /// creates the pact on its own start date, so this removes a field that
 /// was otherwise repeated at every call site.
+///
+/// **`endDate` defaults to `2099-12-31`.** Every fixture in this suite that
+/// omits `endDate` also uses a `startDate` near 2099, keeping the resulting
+/// span short (weeks to months). A near-term `startDate` (e.g. 2026) combined
+/// with the far-future default produces a decades-long pact, which can make
+/// per-load work (e.g. `ShowupGenerator` enumerating occurrences) expensive
+/// enough to look like a hang rather than a slow test (HAB-202, 2026-07-30 —
+/// see `docs/knowledge/notes/HAB-202.md`). Pass an explicit `endDate` for any
+/// fixture that isn't dated near 2099.
 Pact buildPact({
   required String id,
   String habitName = 'Test Habit',
@@ -347,6 +356,7 @@ Pact buildPact({
   PactStats? stats,
   DateTime? stoppedAt,
   bool archived = false,
+  String? predecessorPactId,
 }) =>
     Pact(
       id: id,
@@ -362,6 +372,7 @@ Pact buildPact({
       stats: stats,
       stoppedAt: stoppedAt,
       archived: archived,
+      predecessorPactId: predecessorPactId,
     );
 
 /// Builds a [PactBreak] fixture with defaults suited to integration tests.
