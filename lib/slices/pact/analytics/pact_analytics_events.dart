@@ -271,6 +271,27 @@ final class PactArchivedEvent extends AnalyticsEvent {
       };
 }
 
+/// Fired when the user taps "Previous Pact" or "Next Pact" on a pact detail
+/// screen to navigate to the linked pact. (HAB-202)
+final class PactChainLinkTappedEvent extends AnalyticsEvent {
+  PactChainLinkTappedEvent({required this.pactId, required this.direction});
+
+  /// ID of the pact the link is shown on (not the pact navigated to).
+  final String pactId;
+
+  /// `previous` | `next`
+  final String direction;
+
+  @override
+  String get name => 'pact_chain_link_tapped';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'direction': direction,
+      };
+}
+
 /// Fired when the user unarchives a pact. (HAB-114)
 final class PactUnarchivedEvent extends AnalyticsEvent {
   PactUnarchivedEvent({required this.pactId, required this.pactStatus, required this.source});
