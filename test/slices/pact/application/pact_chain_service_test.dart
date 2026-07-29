@@ -78,6 +78,27 @@ void main() {
 
       expect(result, 'Orphaned (v2)');
     });
+
+    test('tolerates a self-referential predecessorPactId without looping forever', () async {
+      final selfLoop = _pact(id: 'self', habitName: 'Self Loop', predecessorPactId: 'self');
+      repo = InMemoryPactRepository([selfLoop]);
+      service = PactChainService(pactRepository: repo);
+
+      final result = await service.defaultNameFor(selfLoop);
+
+      expect(result, 'Self Loop (v2)');
+    });
+
+    test('tolerates a mutual (A<->B) predecessor cycle without looping forever', () async {
+      final a = _pact(id: 'a', habitName: 'A', predecessorPactId: 'b');
+      final b = _pact(id: 'b', habitName: 'B', predecessorPactId: 'a');
+      repo = InMemoryPactRepository([a, b]);
+      service = PactChainService(pactRepository: repo);
+
+      final result = await service.defaultNameFor(a);
+
+      expect(result, 'B (v3)');
+    });
   });
 
   group('buildPrefillFor', () {

@@ -14,13 +14,21 @@ class PactChainService {
   /// Walks predecessorPactId links from [predecessor] back to the chain's
   /// root, counting hops. Tolerates a dangling reference (predecessor id with
   /// no matching row — possible under out-of-order sync) by stopping there
-  /// and treating the last-reached pact as root.
+  /// and treating the last-reached pact as root. Also tolerates a cyclic
+  /// chain (self-loop or mutual A<->B links from corrupt/malicious sync
+  /// data) by stopping at the first already-visited id rather than looping
+  /// forever — there is no DB constraint preventing a cycle, only "at most
+  /// one successor per predecessor".
   Future<({Pact root, int hopsToRoot})> _walkToRoot(Pact predecessor) async {
     var current = predecessor;
     var hops = 0;
+    final visited = {predecessor.id};
     while (current.predecessorPactId != null) {
-      final next = await _pactRepository.getPactById(current.predecessorPactId!);
+      final nextId = current.predecessorPactId!;
+      if (visited.contains(nextId)) break;
+      final next = await _pactRepository.getPactById(nextId);
       if (next == null) break;
+      visited.add(nextId);
       current = next;
       hops++;
     }
