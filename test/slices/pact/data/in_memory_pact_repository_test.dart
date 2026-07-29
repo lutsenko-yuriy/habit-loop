@@ -127,5 +127,79 @@ void main() {
 
       expect(() => repo.archivePact('non-existent', true), throwsArgumentError);
     });
+
+    group('getSuccessor', () {
+      test('returns the pact whose predecessorPactId matches', () async {
+        final successor = Pact(
+          id: 'succ',
+          habitName: 'Meditate (v2)',
+          startDate: activePact.startDate,
+          endDate: activePact.endDate,
+          showupDuration: activePact.showupDuration,
+          schedule: activePact.schedule,
+          status: PactStatus.active,
+          predecessorPactId: activePact.id,
+        );
+        repo = InMemoryPactRepository([activePact, successor]);
+
+        final result = await repo.getSuccessor(activePact.id);
+
+        expect(result, successor);
+      });
+
+      test('returns null when no pact has this predecessorPactId', () async {
+        repo = InMemoryPactRepository([activePact]);
+
+        final result = await repo.getSuccessor(activePact.id);
+
+        expect(result, isNull);
+      });
+    });
+
+    group('savePact — successor uniqueness', () {
+      test('throws ArgumentError when predecessorPactId already has a successor', () async {
+        final firstSuccessor = Pact(
+          id: 'succ-1',
+          habitName: 'Meditate (v2)',
+          startDate: activePact.startDate,
+          endDate: activePact.endDate,
+          showupDuration: activePact.showupDuration,
+          schedule: activePact.schedule,
+          status: PactStatus.active,
+          predecessorPactId: activePact.id,
+        );
+        final secondSuccessor = Pact(
+          id: 'succ-2',
+          habitName: 'Meditate (v3)',
+          startDate: activePact.startDate,
+          endDate: activePact.endDate,
+          showupDuration: activePact.showupDuration,
+          schedule: activePact.schedule,
+          status: PactStatus.active,
+          predecessorPactId: activePact.id,
+        );
+        repo = InMemoryPactRepository([activePact]);
+        await repo.savePact(firstSuccessor);
+
+        expect(() => repo.savePact(secondSuccessor), throwsArgumentError);
+      });
+
+      test('allows saving a pact with a null predecessorPactId regardless of existing successors', () async {
+        repo = InMemoryPactRepository([activePact]);
+        final unrelated = Pact(
+          id: 'unrelated',
+          habitName: 'Jog',
+          startDate: activePact.startDate,
+          endDate: activePact.endDate,
+          showupDuration: activePact.showupDuration,
+          schedule: activePact.schedule,
+          status: PactStatus.active,
+        );
+
+        await repo.savePact(unrelated);
+
+        expect(await repo.getPactById('unrelated'), unrelated);
+      });
+    });
   });
 }

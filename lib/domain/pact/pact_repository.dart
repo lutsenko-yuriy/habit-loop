@@ -5,9 +5,16 @@ abstract class PactRepository {
   Future<List<Pact>> getAllPacts();
   Future<Pact?> getPactById(String id);
 
+  /// Returns the pact whose `predecessorPactId` equals [pactId], if any.
+  ///
+  /// A pact has at most one successor (HAB-202) — enforced by [savePact].
+  Future<Pact?> getSuccessor(String pactId);
+
   /// Persists a new pact.
   ///
-  /// Throws [ArgumentError] if a pact with the same id already exists.
+  /// Throws [ArgumentError] if a pact with the same id already exists, or if
+  /// [pact] has a non-null `predecessorPactId` that already has a successor
+  /// (each pact may have at most one successor — HAB-202).
   Future<void> savePact(Pact pact);
 
   /// Updates an existing pact by id.
