@@ -78,6 +78,12 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         }
       }
 
+      // Chain links (HAB-202) — cheap, uncached reads; a pact has at most one
+      // predecessor and one successor.
+      final predecessorPactId = pact.predecessorPactId;
+      final predecessorPact = predecessorPactId == null ? null : await pactService.getPact(predecessorPactId);
+      final successorPact = await pactService.getSuccessor(pact.id);
+
       state = state.copyWith(
         pact: pact,
         stats: stats,
@@ -87,6 +93,10 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         // Display-only: the banner must wait until the break actually
         // starts, unlike activeBreak's own "unresolved" gating (HAB-201).
         isBreakActiveNow: activeBreak != null && activeBreak.isActiveAt(now),
+        predecessorPact: predecessorPact,
+        clearPredecessorPact: predecessorPact == null,
+        successorPact: successorPact,
+        clearSuccessorPact: successorPact == null,
       );
     } catch (e, st) {
       unawaited(ref.read(logServiceProvider).error('pact_detail_load_failed: id=$arg', exception: e, stackTrace: st));

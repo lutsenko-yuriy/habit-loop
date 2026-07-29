@@ -73,6 +73,10 @@ class PactService {
 
   Future<Pact?> getPact(String id) => _pactRepository.getPactById(id);
 
+  /// The pact chained from [pactId], if any (HAB-202) — `null` if [pactId]
+  /// has no successor.
+  Future<Pact?> getSuccessor(String pactId) => _pactRepository.getSuccessor(pactId);
+
   Future<List<Pact>> getAllPacts() => _pactRepository.getAllPacts();
 
   Future<List<Pact>> getActivePacts() => _pactRepository.getActivePacts();
