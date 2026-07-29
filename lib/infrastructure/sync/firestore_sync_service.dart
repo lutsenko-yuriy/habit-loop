@@ -266,10 +266,42 @@ class FirestoreSyncService implements SyncService {
         getLocal: _pactRepository.getPactById,
         getSyncedAt: _pactSyncRepository.getPactSyncedAt,
         fromDocument: SyncMapper.pactFromDocument,
-        insert: _pactRepository.savePact,
+        insert: (pact) async => _pactRepository.savePact(await _resolvePredecessorConflict(pact)),
         update: _pactRepository.updatePact,
         markSynced: _pactSyncRepository.markPactSynced,
       );
+
+  /// Resolves a HAB-202 chain conflict before inserting a newly-pulled remote
+  /// pact: two offline devices may each independently create a successor for
+  /// the same predecessor. `savePact`'s "at most one successor" guard would
+  /// otherwise throw here, and the per-record try/catch in [pullRemoteChanges]
+  /// would silently swallow it — permanently hiding the losing record, even
+  /// though it still exists in Firestore and on its origin device.
+  ///
+  /// Last-write-wins on `createdAt` (falling back to `startDate` for
+  /// pre-HAB-116 pacts with no `createdAt`, matching [Pact.createdAt]'s own
+  /// documented convention): whichever successor was created later keeps its
+  /// link; the other has [Pact.predecessorPactId] cleared via
+  /// `clearPredecessorPactId` — the record itself is never dropped, it just
+  /// surfaces as unlinked.
+  Future<Pact> _resolvePredecessorConflict(Pact pact) async {
+    final predecessorId = pact.predecessorPactId;
+    if (predecessorId == null) return pact;
+
+    final existingSuccessor = await _pactRepository.getSuccessor(predecessorId);
+    if (existingSuccessor == null) return pact;
+
+    DateTime effectiveCreatedAt(Pact p) => p.createdAt ?? p.startDate;
+
+    if (effectiveCreatedAt(existingSuccessor).isAfter(effectiveCreatedAt(pact))) {
+      // Existing local successor wins — the incoming remote record loses its link.
+      return pact.copyWith(clearPredecessorPactId: true);
+    }
+
+    // Incoming remote successor wins — clear the existing local successor's link.
+    await _pactRepository.updatePact(existingSuccessor.copyWith(clearPredecessorPactId: true));
+    return pact;
+  }
 
   Future<void> _mergeRemoteShowup(Map<String, dynamic> doc, DateTime now) => _mergeRemoteRecord<Showup>(
         doc: doc,

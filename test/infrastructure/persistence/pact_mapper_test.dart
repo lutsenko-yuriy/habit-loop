@@ -366,9 +366,14 @@ void main() {
         expect(PactMapper.toUpdateRow(basePact(archived: true))['archived'], equals(1));
       });
 
-      test('does not include predecessor_pact_id — immutable after insert', () {
+      test('includes predecessor_pact_id — mutable only via clearPredecessorPactId (HAB-202)', () {
         final pact = basePact(predecessorPactId: 'pact-0');
-        expect(PactMapper.toUpdateRow(pact).containsKey('predecessor_pact_id'), isFalse);
+        expect(PactMapper.toUpdateRow(pact)['predecessor_pact_id'], equals('pact-0'));
+      });
+
+      test('maps predecessor_pact_id as null when cleared', () {
+        final pact = basePact(predecessorPactId: 'pact-0').copyWith(clearPredecessorPactId: true);
+        expect(PactMapper.toUpdateRow(pact)['predecessor_pact_id'], isNull);
       });
     });
 

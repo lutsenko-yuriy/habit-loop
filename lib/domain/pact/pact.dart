@@ -24,7 +24,10 @@ class Pact {
   final bool archived;
 
   // The pact this one was adjusted from via "Adjust and start again"
-  // (HAB-202). Immutable after insert — never overridden by copyWith.
+  // (HAB-202). Immutable after insert — copyWith never overwrites it with a
+  // new value, but it can be nulled out via clearPredecessorPactId, used only
+  // by FirestoreSyncService's last-write-wins conflict resolution when two
+  // offline devices independently create a successor for the same predecessor.
   final String? predecessorPactId;
 
   const Pact({
@@ -61,6 +64,7 @@ class Pact {
     bool clearStopReason = false,
     bool clearStats = false,
     bool clearStoppedAt = false,
+    bool clearPredecessorPactId = false,
   }) {
     return Pact(
       id: id,
@@ -76,7 +80,8 @@ class Pact {
       createdAt: createdAt, // immutable — never overridden by copyWith
       stoppedAt: clearStoppedAt ? null : (stoppedAt ?? this.stoppedAt),
       archived: archived ?? this.archived,
-      predecessorPactId: predecessorPactId, // immutable — never overridden by copyWith
+      // Immutable except via clearPredecessorPactId — see field doc comment.
+      predecessorPactId: clearPredecessorPactId ? null : predecessorPactId,
     );
   }
 
