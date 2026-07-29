@@ -9,6 +9,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
 - [test] HAB-202: Added `integration_test/pact_chain_test.dart` (5 stub scenarios covering pact chaining — adjust-and-start-again creation with prefill/backlink, root-based default naming, completed-pact eligibility, feature-flag gating, and wizard cancellation), registered in `test_runner.dart`. Plan approval also folded in `docs/GLOSSARY.md` ("Chain (of pacts)"), `docs/ANALYTICS_EVENTS.md` (`pact_adjust_and_start_again_tapped`, `pact_chain_link_tapped`, and enrichments to `pact_created`/`pact_wizard_abandoned`), and `docs/ARCHITECTURE.md` (`Pact.predecessorPactId`, `PactChainService`, `PactRepository.getSuccessor`, schema v6) updates from the approved plan.
+- [test] HAB-202 WU0-scenario_correction: Added 2 stub scenarios to `pact_chain_test.dart` covering "Previous Pact"/"Next Pact" navigation-stack behaviour — bouncing between a predecessor and successor pact's detail screens must pop back to the existing page instance instead of pushing a duplicate, so the back stack never grows unbounded. Correction to the plan, made before WU1 started; the underlying nav rule (`cameFromPactId`-based pop-or-push) is implemented in WU3.
 
 ## [0.52.1] — 2026-07-28 (PR #335 merged)
 

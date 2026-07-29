@@ -41,6 +41,43 @@ void main() {
     });
   });
 
+  group('Pact chain — navigation stack', () {
+    // TODO: declare `late AppHarness h;` and `tearDown(() => h.dispose());` when filling in stubs.
+    // Both scenarios below use P_p (predecessor / "parent") and P_c (successor
+    // / "child"): P_c.predecessorPactId == P_p.id. They verify that bouncing
+    // between "Previous Pact"/"Next Pact" links pops back to the existing page
+    // instance instead of pushing a duplicate — so the back stack never grows
+    // past however deep the user has actually gone in one direction.
+
+    testWidgets('chain_navigation_previous_then_next_returns_to_same_page_instance', (tester) async {
+      // TODO: 1. Seed predecessor/parent pact P_p (stopped, "Vibe coding") and
+      //          successor/child pact P_c ("Vibe coding (v2)",
+      //          predecessorPactId=P_p.id), saved directly via the repo.
+      // TODO: 2. Open Pacts List; tap P_c.
+      // TODO: 3. Verify P_c's detail screen is shown.
+      // TODO: 4. Tap "Previous Pact" — verify P_p's detail screen is shown
+      //          (pushed on top of P_c).
+      // TODO: 5. Tap "Next Pact" — verify P_c's detail screen is shown again.
+      // TODO: 6. tester.pageBack() once — verify Pacts List is shown directly
+      //          (proves step 5 popped back to the original P_c page instance
+      //          rather than pushing a second copy of it).
+    });
+
+    testWidgets('chain_navigation_next_then_previous_returns_to_same_page_instance', (tester) async {
+      // TODO: 1. Seed the same P_p (predecessor/parent) / P_c (successor/child)
+      //          pair as above, saved directly via the repo.
+      // TODO: 2. Open Pacts List; tap P_p.
+      // TODO: 3. Verify P_p's detail screen is shown.
+      // TODO: 4. Tap "Next Pact" — verify P_c's detail screen is shown (pushed
+      //          on top of P_p).
+      // TODO: 5. Tap "Previous Pact" — verify P_p's detail screen is shown
+      //          again.
+      // TODO: 6. tester.pageBack() once — verify Pacts List is shown directly
+      //          (proves step 5 popped back to the original P_p page instance
+      //          rather than pushing a second copy of it).
+    });
+  });
+
   group('Pact chain — default naming', () {
     // TODO: declare `late AppHarness h;` and `tearDown(() => h.dispose());` when filling in stubs.
 
