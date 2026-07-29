@@ -100,7 +100,9 @@ void main() {
       expect(builder.scheduleType, ScheduleType.slot);
       expect(
         builder.schedule,
-        SlotSchedule(slots: [WeeklySlot(weekdays: {2}, timeOfDay: const Duration(hours: 9))]),
+        SlotSchedule(slots: [
+          WeeklySlot(weekdays: {2}, timeOfDay: const Duration(hours: 9))
+        ]),
       );
     });
 

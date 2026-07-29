@@ -686,8 +686,7 @@ void main() {
       expect(event.reminderChangedFromPredecessor, isNull);
     });
 
-    test('submit fires PactCreatedEvent with source/predecessor and false changed-from flags when unedited',
-        () async {
+    test('submit fires PactCreatedEvent with source/predecessor and false changed-from flags when unedited', () async {
       final fakeAnalytics = FakeAnalyticsService();
       final prefill = prefillBuilder();
       final c = _makeContainer(

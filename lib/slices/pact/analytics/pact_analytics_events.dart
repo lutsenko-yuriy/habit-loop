@@ -76,8 +76,7 @@ final class PactCreatedEvent extends AnalyticsEvent {
       'commitment_variant': commitmentVariant,
       'source': source,
       if (predecessorPactId != null) 'predecessor_pact_id': predecessorPactId!,
-      if (habitNameChangedFromSuggestion != null)
-        'habit_name_changed_from_suggestion': habitNameChangedFromSuggestion!,
+      if (habitNameChangedFromSuggestion != null) 'habit_name_changed_from_suggestion': habitNameChangedFromSuggestion!,
       if (scheduleChangedFromPredecessor != null) 'schedule_changed_from_predecessor': scheduleChangedFromPredecessor!,
       if (reminderChangedFromPredecessor != null) 'reminder_changed_from_predecessor': reminderChangedFromPredecessor!,
     };
