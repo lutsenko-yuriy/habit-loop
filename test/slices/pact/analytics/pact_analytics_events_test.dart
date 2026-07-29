@@ -88,6 +88,57 @@ void main() {
       final params = event.toParameters();
       expect(params.values.whereType<Null>(), isEmpty);
     });
+
+    test('source defaults to blank', () {
+      final event = PactCreatedEvent(
+        scheduleType: 'daily',
+        durationDays: 180,
+        showupDurationMinutes: 10,
+        showupsExpected: 180,
+        usedSummaryJump: false,
+        commitmentVariant: 'button',
+      );
+      expect(event.source, 'blank');
+      expect(event.toParameters()['source'], 'blank');
+    });
+
+    test('toParameters omits null chain properties when source is blank', () {
+      final event = PactCreatedEvent(
+        scheduleType: 'daily',
+        durationDays: 180,
+        showupDurationMinutes: 10,
+        showupsExpected: 180,
+        usedSummaryJump: false,
+        commitmentVariant: 'button',
+      );
+      final params = event.toParameters();
+      expect(params.containsKey('predecessor_pact_id'), isFalse);
+      expect(params.containsKey('habit_name_changed_from_suggestion'), isFalse);
+      expect(params.containsKey('schedule_changed_from_predecessor'), isFalse);
+      expect(params.containsKey('reminder_changed_from_predecessor'), isFalse);
+    });
+
+    test('toParameters includes chain properties when source is adjust_and_start_again', () {
+      final event = PactCreatedEvent(
+        scheduleType: 'daily',
+        durationDays: 180,
+        showupDurationMinutes: 10,
+        showupsExpected: 180,
+        usedSummaryJump: false,
+        commitmentVariant: 'button',
+        source: 'adjust_and_start_again',
+        predecessorPactId: 'p1',
+        habitNameChangedFromSuggestion: true,
+        scheduleChangedFromPredecessor: false,
+        reminderChangedFromPredecessor: true,
+      );
+      final params = event.toParameters();
+      expect(params['source'], 'adjust_and_start_again');
+      expect(params['predecessor_pact_id'], 'p1');
+      expect(params['habit_name_changed_from_suggestion'], true);
+      expect(params['schedule_changed_from_predecessor'], false);
+      expect(params['reminder_changed_from_predecessor'], true);
+    });
   });
 
   group('PactStoppedEvent', () {

@@ -12,6 +12,11 @@ final class PactCreatedEvent extends AnalyticsEvent {
     required this.showupsExpected,
     required this.usedSummaryJump,
     required this.commitmentVariant,
+    this.source = 'blank',
+    this.predecessorPactId,
+    this.habitNameChangedFromSuggestion,
+    this.scheduleChangedFromPredecessor,
+    this.reminderChangedFromPredecessor,
   });
 
   /// One of `daily`, `weekly`, or `monthly`.
@@ -38,6 +43,24 @@ final class PactCreatedEvent extends AnalyticsEvent {
   /// `exp_003_commitment_confirmation`.
   final String commitmentVariant;
 
+  /// `blank` | `adjust_and_start_again` — entry point the wizard was opened from. (HAB-202)
+  final String source;
+
+  /// ID of the pact this was adjusted from; present only when [source] is `adjust_and_start_again`. (HAB-202)
+  final String? predecessorPactId;
+
+  /// `true` if the user changed the auto-suggested `(v{n+1})` name before saving;
+  /// present only when [source] is `adjust_and_start_again`. (HAB-202)
+  final bool? habitNameChangedFromSuggestion;
+
+  /// `true` if the schedule was changed from the pre-filled value;
+  /// present only when [source] is `adjust_and_start_again`. (HAB-202)
+  final bool? scheduleChangedFromPredecessor;
+
+  /// `true` if the reminder offset was changed from the pre-filled value;
+  /// present only when [source] is `adjust_and_start_again`. (HAB-202)
+  final bool? reminderChangedFromPredecessor;
+
   @override
   String get name => 'pact_created';
 
@@ -51,6 +74,12 @@ final class PactCreatedEvent extends AnalyticsEvent {
       'showups_expected': showupsExpected,
       'used_summary_jump': usedSummaryJump,
       'commitment_variant': commitmentVariant,
+      'source': source,
+      if (predecessorPactId != null) 'predecessor_pact_id': predecessorPactId!,
+      if (habitNameChangedFromSuggestion != null)
+        'habit_name_changed_from_suggestion': habitNameChangedFromSuggestion!,
+      if (scheduleChangedFromPredecessor != null) 'schedule_changed_from_predecessor': scheduleChangedFromPredecessor!,
+      if (reminderChangedFromPredecessor != null) 'reminder_changed_from_predecessor': reminderChangedFromPredecessor!,
     };
   }
 }
