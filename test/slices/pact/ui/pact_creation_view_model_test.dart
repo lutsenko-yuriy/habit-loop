@@ -9,6 +9,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
+import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_creation_state.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
@@ -100,6 +101,9 @@ void main() {
       expect(state.endDate, DateTime(2054, 9, 30));
       expect(state.commitmentAccepted, false);
       expect(state.usedSummaryJump, false);
+      expect(state.source, 'blank');
+      expect(state.predecessorPactId, isNull);
+      expect(state.prefillBuilder, isNull);
     });
 
     test('setHabitName updates habit name', () {
@@ -571,6 +575,172 @@ void main() {
         isTrue,
         reason: 'Window (09:00–09:30) is still open at submit time (09:10) — must be saved',
       );
+    });
+  });
+
+  group('PactCreationViewModel — chain seeding (HAB-202)', () {
+    PactBuilder prefillBuilder() => PactBuilder(today: today).copyWith(
+          habitName: 'Vibe coding (v2)',
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          reminderOffset: const Duration(minutes: 15),
+        );
+
+    test('build() seeds state from pactCreationConfigProvider when set', () {
+      final prefill = prefillBuilder();
+      final c = _makeContainer(
+        pactRepo: pactRepo,
+        showupRepo: showupRepo,
+        today: today,
+        extras: [
+          pactCreationConfigProvider.overrideWith(
+            (ref) => PactCreationConfig(predecessorPactId: 'root', prefillBuilder: prefill),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      final state = c.read(pactCreationViewModelProvider);
+
+      expect(state.source, 'adjust_and_start_again');
+      expect(state.predecessorPactId, 'root');
+      expect(state.prefillBuilder, prefill);
+      expect(state.habitName, 'Vibe coding (v2)');
+      expect(state.showupDuration, const Duration(minutes: 10));
+      expect(state.reminderOffset, const Duration(minutes: 15));
+    });
+
+    test('build() defaults to a blank wizard when no config is set', () {
+      final state = readState();
+
+      expect(state.source, 'blank');
+      expect(state.predecessorPactId, isNull);
+      expect(state.prefillBuilder, isNull);
+    });
+
+    test('resetting pactCreationConfigProvider to null after use makes the next build blank', () {
+      final prefill = prefillBuilder();
+      container.read(pactCreationConfigProvider.notifier).state = PactCreationConfig(
+        predecessorPactId: 'root',
+        prefillBuilder: prefill,
+      );
+
+      final seeded = container.read(pactCreationViewModelProvider);
+      expect(seeded.source, 'adjust_and_start_again');
+
+      // Caller resets the config once the creation screen is popped —
+      // Riverpod forbids the VM from doing this itself during its own build().
+      container.read(pactCreationConfigProvider.notifier).state = null;
+      container.invalidate(pactCreationViewModelProvider);
+      final rebuilt = container.read(pactCreationViewModelProvider);
+
+      expect(rebuilt.source, 'blank');
+    });
+
+    test('submit persists predecessorPactId on the new pact', () async {
+      final prefill = prefillBuilder();
+      final c = _makeContainer(
+        pactRepo: pactRepo,
+        showupRepo: showupRepo,
+        today: today,
+        extras: [
+          pactCreationConfigProvider.overrideWith(
+            (ref) => PactCreationConfig(predecessorPactId: 'root', prefillBuilder: prefill),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      vm.setCommitmentAccepted(true);
+      await vm.submit(commitmentVariant: 'button');
+
+      final pacts = await pactRepo.getActivePacts();
+      expect(pacts, hasLength(1));
+      expect(pacts.first.predecessorPactId, 'root');
+    });
+
+    test('submit fires PactCreatedEvent with source blank and null chain fields for a plain create', () async {
+      final fakeAnalytics = FakeAnalyticsService();
+      final c = _makeContainer(
+        pactRepo: pactRepo,
+        showupRepo: showupRepo,
+        today: today,
+        extras: [analyticsServiceProvider.overrideWithValue(fakeAnalytics)],
+      );
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      vm.setHabitName('Meditate');
+      vm.setShowupDuration(const Duration(minutes: 10));
+      vm.setScheduleType(ScheduleType.daily);
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 7)));
+      vm.setCommitmentAccepted(true);
+      await vm.submit(commitmentVariant: 'button');
+
+      final event = fakeAnalytics.loggedEvents.single as PactCreatedEvent;
+      expect(event.source, 'blank');
+      expect(event.predecessorPactId, isNull);
+      expect(event.habitNameChangedFromSuggestion, isNull);
+      expect(event.scheduleChangedFromPredecessor, isNull);
+      expect(event.reminderChangedFromPredecessor, isNull);
+    });
+
+    test('submit fires PactCreatedEvent with source/predecessor and false changed-from flags when unedited', () async {
+      final fakeAnalytics = FakeAnalyticsService();
+      final prefill = prefillBuilder();
+      final c = _makeContainer(
+        pactRepo: pactRepo,
+        showupRepo: showupRepo,
+        today: today,
+        extras: [
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+          pactCreationConfigProvider.overrideWith(
+            (ref) => PactCreationConfig(predecessorPactId: 'root', prefillBuilder: prefill),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      vm.setCommitmentAccepted(true);
+      await vm.submit(commitmentVariant: 'button');
+
+      final event = fakeAnalytics.loggedEvents.single as PactCreatedEvent;
+      expect(event.source, 'adjust_and_start_again');
+      expect(event.predecessorPactId, 'root');
+      expect(event.habitNameChangedFromSuggestion, false);
+      expect(event.scheduleChangedFromPredecessor, false);
+      expect(event.reminderChangedFromPredecessor, false);
+    });
+
+    test('submit fires PactCreatedEvent with true changed-from flags when the user edits the prefill', () async {
+      final fakeAnalytics = FakeAnalyticsService();
+      final prefill = prefillBuilder();
+      final c = _makeContainer(
+        pactRepo: pactRepo,
+        showupRepo: showupRepo,
+        today: today,
+        extras: [
+          analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+          pactCreationConfigProvider.overrideWith(
+            (ref) => PactCreationConfig(predecessorPactId: 'root', prefillBuilder: prefill),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      final vm = c.read(pactCreationViewModelProvider.notifier);
+      vm.setHabitName('Custom name');
+      vm.setSchedule(const DailySchedule(timeOfDay: Duration(hours: 9)));
+      vm.setReminderOffset(const Duration(minutes: 30));
+      vm.setCommitmentAccepted(true);
+      await vm.submit(commitmentVariant: 'button');
+
+      final event = fakeAnalytics.loggedEvents.single as PactCreatedEvent;
+      expect(event.habitNameChangedFromSuggestion, true);
+      expect(event.scheduleChangedFromPredecessor, true);
+      expect(event.reminderChangedFromPredecessor, true);
     });
   });
 

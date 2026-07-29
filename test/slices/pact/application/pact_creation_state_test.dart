@@ -34,6 +34,52 @@ void main() {
       expect(state.submitError, isNull);
     });
 
+    test('source defaults to blank', () {
+      final state = PactCreationState(today: DateTime(2026, 3, 30));
+      expect(state.source, 'blank');
+    });
+
+    test('predecessorPactId defaults to null', () {
+      final state = PactCreationState(today: DateTime(2026, 3, 30));
+      expect(state.predecessorPactId, isNull);
+    });
+
+    test('prefillBuilder defaults to null', () {
+      final state = PactCreationState(today: DateTime(2026, 3, 30));
+      expect(state.prefillBuilder, isNull);
+    });
+
+    test('source, predecessorPactId and prefillBuilder can be set at construction', () {
+      final today = DateTime(2026, 3, 30);
+      final prefill = PactBuilder(today: today).copyWith(habitName: 'Vibe coding (v2)');
+      final state = PactCreationState(
+        today: today,
+        source: 'adjust_and_start_again',
+        predecessorPactId: 'root',
+        prefillBuilder: prefill,
+      );
+      expect(state.source, 'adjust_and_start_again');
+      expect(state.predecessorPactId, 'root');
+      expect(state.prefillBuilder, prefill);
+    });
+
+    test('copyWith preserves source, predecessorPactId and prefillBuilder — immutable after creation', () {
+      final today = DateTime(2026, 3, 30);
+      final prefill = PactBuilder(today: today).copyWith(habitName: 'Vibe coding (v2)');
+      final state = PactCreationState(
+        today: today,
+        source: 'adjust_and_start_again',
+        predecessorPactId: 'root',
+        prefillBuilder: prefill,
+      );
+
+      final updated = state.copyWith(currentStep: PactWizardStep.schedule);
+
+      expect(updated.source, 'adjust_and_start_again');
+      expect(updated.predecessorPactId, 'root');
+      expect(updated.prefillBuilder, prefill);
+    });
+
     group('proxy getters delegate to builder', () {
       test('habitName proxies builder.habitName', () {
         final today = DateTime(2026, 3, 30);

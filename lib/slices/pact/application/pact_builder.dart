@@ -123,7 +123,7 @@ class PactBuilder {
   // ---------------------------------------------------------------------------
 
   // Throws StateError if isComplete is false.
-  Pact build({required String id, required DateTime createdAt}) {
+  Pact build({required String id, required DateTime createdAt, String? predecessorPactId}) {
     if (!isComplete) {
       throw StateError('Cannot build a Pact from an incomplete PactBuilder. '
           'Check isComplete before calling build().');
@@ -138,6 +138,7 @@ class PactBuilder {
       status: PactStatus.active,
       reminderOffset: reminderOffset,
       createdAt: createdAt,
+      predecessorPactId: predecessorPactId,
     );
   }
 

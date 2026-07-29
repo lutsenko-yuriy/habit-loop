@@ -12,6 +12,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/persistence/habit_loop_database.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_builder.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_timeline_grouper.dart';
@@ -126,6 +127,43 @@ void main() {
       // Pact must be rolled back — no orphan.
       final pacts = await pactRepo.getAllPacts();
       expect(pacts, isEmpty);
+    });
+
+    // createPactFromBuilder — predecessorPactId plumbing (HAB-202) ----------
+
+    group('createPactFromBuilder — predecessorPactId', () {
+      final today = DateTime(2054, 3, 30);
+
+      PactBuilder completeBuilder() => PactBuilder(today: today).copyWith(
+            habitName: 'Meditate (v2)',
+            showupDuration: const Duration(minutes: 10),
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+          );
+
+      test('persists the given predecessorPactId on the built pact', () async {
+        final pact = await service.createPactFromBuilder(
+          builder: completeBuilder(),
+          id: 'p2',
+          now: today,
+          windowEnd: today.add(const Duration(days: 10)),
+          predecessorPactId: 'p1',
+        );
+
+        expect(pact.predecessorPactId, 'p1');
+        final persisted = await pactRepo.getPactById('p2');
+        expect(persisted?.predecessorPactId, 'p1');
+      });
+
+      test('defaults predecessorPactId to null when not provided', () async {
+        final pact = await service.createPactFromBuilder(
+          builder: completeBuilder(),
+          id: 'p2',
+          now: today,
+          windowEnd: today.add(const Duration(days: 10)),
+        );
+
+        expect(pact.predecessorPactId, isNull);
+      });
     });
 
     // Delegation tests --------------------------------------------------------

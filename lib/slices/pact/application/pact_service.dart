@@ -55,8 +55,9 @@ class PactService {
     required String id,
     required DateTime now,
     required DateTime windowEnd,
+    String? predecessorPactId,
   }) async {
-    final pact = builder.build(id: id, createdAt: now);
+    final pact = builder.build(id: id, createdAt: now, predecessorPactId: predecessorPactId);
     final showups = ShowupGenerator.generateWindow(
       pact,
       from: pact.startDate,

@@ -284,6 +284,16 @@ void main() {
           throwsA(isA<StateError>()),
         );
       });
+
+      test('predecessorPactId defaults to null', () {
+        final pact = completeBuilder().build(id: 'test-id', createdAt: today);
+        expect(pact.predecessorPactId, isNull);
+      });
+
+      test('injects the provided predecessorPactId', () {
+        final pact = completeBuilder().build(id: 'test-id', createdAt: today, predecessorPactId: 'root');
+        expect(pact.predecessorPactId, 'root');
+      });
     });
 
     group('copyWith', () {

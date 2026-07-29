@@ -45,6 +45,7 @@ import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_break_service.dart';
+import 'package:habit_loop/slices/pact/application/pact_chain_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_list_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_service.dart';
@@ -268,6 +269,12 @@ final pactBreakServiceProvider = Provider<PactBreakService>((ref) {
     syncService: ref.watch(syncServiceProvider),
     cache: ref.watch(pactDetailCacheProvider),
   );
+});
+
+/// Chain-of-pacts defaults for "Adjust and start again" (HAB-202) — no UI
+/// consumer yet; wired up in WU3/WU4.
+final pactChainServiceProvider = Provider<PactChainService>((ref) {
+  return PactChainService(pactRepository: ref.watch(pactRepositoryProvider));
 });
 
 final firestoreClientProvider = Provider<FirestoreClient>(
