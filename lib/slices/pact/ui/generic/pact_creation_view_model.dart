@@ -15,6 +15,25 @@ final pactCreationTodayProvider = Provider<DateTime>((ref) => DateTime.now());
 // using stale time would generate showups that immediately auto-fail (HAB-84).
 final pactCreationSubmitNowProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
+/// Seed for an "Adjust and start again" wizard open (HAB-202): the
+/// predecessor's id and a pre-filled [PactBuilder] (from `PactChainService`).
+/// The caller sets this immediately before invalidating/pushing the creation
+/// screen, and must reset it back to null once the screen is popped (mirrors
+/// how [pactCreationViewModelProvider] itself is invalidated per open) —
+/// otherwise the next blank creation would inherit a stale prefill. Riverpod
+/// forbids a provider from clearing this itself during its own build().
+class PactCreationConfig {
+  const PactCreationConfig({
+    required this.predecessorPactId,
+    required this.prefillBuilder,
+  });
+
+  final String predecessorPactId;
+  final PactBuilder prefillBuilder;
+}
+
+final pactCreationConfigProvider = StateProvider<PactCreationConfig?>((ref) => null);
+
 final pactCreationViewModelProvider = NotifierProvider<PactCreationViewModel, PactCreationState>(
   PactCreationViewModel.new,
 );
@@ -23,6 +42,18 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
   @override
   PactCreationState build() {
     final today = ref.read(pactCreationTodayProvider);
+
+    final config = ref.read(pactCreationConfigProvider);
+    if (config != null) {
+      return PactCreationState(
+        today: today,
+        builder: config.prefillBuilder,
+        source: 'adjust_and_start_again',
+        predecessorPactId: config.predecessorPactId,
+        prefillBuilder: config.prefillBuilder,
+      );
+    }
+
     final base = PactCreationState(today: today);
     return base.copyWith(
       builder: base.builder.copyWith(
@@ -141,6 +172,7 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
         id: DateTime.now().microsecondsSinceEpoch.toString(),
         now: now,
         windowEnd: windowEnd,
+        predecessorPactId: state.predecessorPactId,
       );
 
       final showups = await service.getShowupsForPact(pact.id);
@@ -175,6 +207,10 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
         ref.read(logServiceProvider).info('pact_created: id=${pact.id} scheduleType=$scheduleTypeName'
             ' showupsExpected=$totalShowups'),
       );
+
+      // Chain "changed from suggestion/predecessor" diffs are only meaningful
+      // when the wizard was seeded from a prefill (HAB-202) — null otherwise.
+      final prefill = state.prefillBuilder;
       unawaited(
         ref.read(analyticsServiceProvider).logEvent(PactCreatedEvent(
               scheduleType: scheduleTypeName,
@@ -184,6 +220,13 @@ class PactCreationViewModel extends Notifier<PactCreationState> {
               showupsExpected: totalShowups,
               usedSummaryJump: state.usedSummaryJump,
               commitmentVariant: commitmentVariant,
+              source: state.source,
+              predecessorPactId: state.predecessorPactId,
+              habitNameChangedFromSuggestion:
+                  prefill != null ? state.builder.habitName.trim() != prefill.habitName.trim() : null,
+              scheduleChangedFromPredecessor: prefill != null ? state.builder.schedule != prefill.schedule : null,
+              reminderChangedFromPredecessor:
+                  prefill != null ? state.builder.reminderOffset != prefill.reminderOffset : null,
             )),
       );
     } catch (e, st) {
