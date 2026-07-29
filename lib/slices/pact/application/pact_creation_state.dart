@@ -46,6 +46,20 @@ class PactCreationState {
   final bool isSubmitting;
   final Object? submitError;
 
+  // Chain-of-pacts seeding (HAB-202) — set once at construction from
+  // pactCreationConfigProvider, never touched by copyWith afterwards, same
+  // immutable-after-creation pattern as Pact.predecessorPactId.
+
+  /// Entry point this wizard was opened from: `blank` | `adjust_and_start_again`.
+  final String source;
+
+  /// Id of the pact this one is being adjusted from; null unless [source] is `adjust_and_start_again`.
+  final String? predecessorPactId;
+
+  /// Snapshot of the pre-filled builder at wizard-open time, used to detect which
+  /// fields the user changed before submitting; null when [source] is `blank`.
+  final PactBuilder? prefillBuilder;
+
   PactCreationState({
     required DateTime today,
     PactBuilder? builder,
@@ -54,6 +68,9 @@ class PactCreationState {
     this.usedSummaryJump = false,
     this.isSubmitting = false,
     this.submitError,
+    this.source = 'blank',
+    this.predecessorPactId,
+    this.prefillBuilder,
   }) : builder = builder ?? PactBuilder(today: today);
 
   PactCreationState._internal({
@@ -63,6 +80,9 @@ class PactCreationState {
     required this.usedSummaryJump,
     required this.isSubmitting,
     required this.submitError,
+    required this.source,
+    required this.predecessorPactId,
+    required this.prefillBuilder,
   });
 
   // ---------------------------------------------------------------------------
@@ -97,6 +117,9 @@ class PactCreationState {
       usedSummaryJump: usedSummaryJump ?? this.usedSummaryJump,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
+      source: source,
+      predecessorPactId: predecessorPactId,
+      prefillBuilder: prefillBuilder,
     );
   }
 }
