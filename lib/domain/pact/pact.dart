@@ -23,6 +23,10 @@ class Pact {
 
   final bool archived;
 
+  // The pact this one was adjusted from via "Adjust and start again"
+  // (HAB-202). Immutable after insert — never overridden by copyWith.
+  final String? predecessorPactId;
+
   const Pact({
     required this.id,
     required this.habitName,
@@ -37,6 +41,7 @@ class Pact {
     this.createdAt,
     this.stoppedAt,
     this.archived = false,
+    this.predecessorPactId,
   });
 
   // id is immutable — identity and foreign key for all showups of this pact.
@@ -71,6 +76,7 @@ class Pact {
       createdAt: createdAt, // immutable — never overridden by copyWith
       stoppedAt: clearStoppedAt ? null : (stoppedAt ?? this.stoppedAt),
       archived: archived ?? this.archived,
+      predecessorPactId: predecessorPactId, // immutable — never overridden by copyWith
     );
   }
 
@@ -90,7 +96,8 @@ class Pact {
           stats == other.stats &&
           createdAt == other.createdAt &&
           stoppedAt == other.stoppedAt &&
-          archived == other.archived;
+          archived == other.archived &&
+          predecessorPactId == other.predecessorPactId;
 
   @override
   int get hashCode => Object.hash(
@@ -107,5 +114,6 @@ class Pact {
         createdAt,
         stoppedAt,
         archived,
+        predecessorPactId,
       );
 }
