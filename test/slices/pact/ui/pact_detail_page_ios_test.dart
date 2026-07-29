@@ -372,7 +372,8 @@ void main() {
 
   group('PactDetailPageIos — chain links (HAB-202)', () {
     testWidgets('shows Previous Pact link when predecessor is provided and chaining is enabled', (tester) async {
-      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
+      final state =
+          PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
       await tester.pumpWidget(_buildApp(state, pactChainingEnabled: true, onOpenPreviousPact: () {}));
       await tester.pumpAndSettle();
 
@@ -389,7 +390,8 @@ void main() {
     });
 
     testWidgets('hides Previous Pact link when pactChainingEnabled is false, even with a predecessor', (tester) async {
-      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
+      final state =
+          PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
       await tester.pumpWidget(_buildApp(state, onOpenPreviousPact: () {}));
       await tester.pumpAndSettle();
 
@@ -398,7 +400,8 @@ void main() {
 
     testWidgets('tapping Previous Pact link calls onOpenPreviousPact', (tester) async {
       var tapped = false;
-      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
+      final state =
+          PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
       await tester.pumpWidget(_buildApp(state, pactChainingEnabled: true, onOpenPreviousPact: () => tapped = true));
       await tester.pumpAndSettle();
 
