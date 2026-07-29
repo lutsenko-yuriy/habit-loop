@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 /// [databaseFactoryFfi]-opened in-memory database — never use the singleton in
 /// tests (it would open a file-backed database on the test host).
 ///
-/// Schema version: 5.
+/// Schema version: 6.
 class HabitLoopDatabase {
   HabitLoopDatabase._();
 
@@ -33,7 +33,7 @@ class HabitLoopDatabase {
     final path = join(await getDatabasesPath(), 'habit_loop.db');
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onConfigure: (db) async {
         // Enable WAL journal mode so concurrent readers (main isolate) and the
         // background notification handler isolate can operate simultaneously
@@ -99,9 +99,18 @@ class HabitLoopDatabase {
         created_at           INTEGER,
         dirty                INTEGER NOT NULL DEFAULT 1,
         synced_at            INTEGER,
-        archived             INTEGER NOT NULL DEFAULT 0
+        archived             INTEGER NOT NULL DEFAULT 0,
+        predecessor_pact_id  TEXT
       )
     ''');
+    // Enforces "at most one successor per pact" (HAB-202) — no self-referential
+    // FK is declared on predecessor_pact_id, so a chained pact synced down from
+    // Firestore before its predecessor arrives locally can never trigger an FK
+    // violation; validity of the reference itself is enforced at the app layer.
+    await db.execute(
+      'CREATE UNIQUE INDEX idx_pacts_predecessor_pact_id ON pacts (predecessor_pact_id) '
+      'WHERE predecessor_pact_id IS NOT NULL',
+    );
     await db.execute('''
       CREATE TABLE showups (
         id           TEXT    NOT NULL PRIMARY KEY,
@@ -175,6 +184,16 @@ class HabitLoopDatabase {
       ''');
       await db.execute('CREATE INDEX idx_pact_breaks_pact_id ON pact_breaks (pact_id)');
     }
+    if (oldVersion < 6) {
+      // v6 adds pact chaining (HAB-202) — predecessor_pact_id links a pact to
+      // the one it was adjusted from. No FK: see the runMigrations comment on
+      // the same index for why.
+      await db.execute('ALTER TABLE pacts ADD COLUMN predecessor_pact_id TEXT');
+      await db.execute(
+        'CREATE UNIQUE INDEX idx_pacts_predecessor_pact_id ON pacts (predecessor_pact_id) '
+        'WHERE predecessor_pact_id IS NOT NULL',
+      );
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -190,7 +209,7 @@ class HabitLoopDatabase {
     return databaseFactory.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
-        version: 5,
+        version: 6,
         onConfigure: (db) async {
           try {
             await db.rawQuery('PRAGMA journal_mode=WAL');
