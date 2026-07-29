@@ -26,6 +26,7 @@ void main() {
       PactStatus status = PactStatus.active,
       String? stopReason,
       bool archived = false,
+      String? predecessorPactId,
     }) =>
         Pact(
           id: id,
@@ -38,6 +39,7 @@ void main() {
           createdAt: createdAt,
           stopReason: stopReason,
           archived: archived,
+          predecessorPactId: predecessorPactId,
         );
 
     setUp(() async {
@@ -111,6 +113,57 @@ void main() {
         await repository.savePact(makePact());
         final retrieved = await repository.getPactById('pact-1');
         expect(retrieved!.stats, isNull);
+      });
+
+      test('preserves predecessorPactId', () async {
+        await repository.savePact(makePact());
+        final successor = makePact(id: 'pact-2', predecessorPactId: 'pact-1');
+        await repository.savePact(successor);
+
+        final retrieved = await repository.getPactById('pact-2');
+        expect(retrieved!.predecessorPactId, equals('pact-1'));
+      });
+
+      test('throws ArgumentError when predecessorPactId already has a successor', () async {
+        await repository.savePact(makePact());
+        await repository.savePact(makePact(id: 'pact-2', predecessorPactId: 'pact-1'));
+
+        await expectLater(
+          () => repository.savePact(makePact(id: 'pact-3', predecessorPactId: 'pact-1')),
+          throwsArgumentError,
+        );
+      });
+
+      test('allows saving multiple pacts with a null predecessorPactId', () async {
+        await repository.savePact(makePact());
+        await repository.savePact(makePact(id: 'pact-2'));
+
+        final retrieved = await repository.getPactById('pact-2');
+        expect(retrieved, isNotNull);
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // getSuccessor
+    // -------------------------------------------------------------------------
+
+    group('getSuccessor', () {
+      test('returns the pact whose predecessorPactId matches', () async {
+        await repository.savePact(makePact());
+        final successor = makePact(id: 'pact-2', predecessorPactId: 'pact-1');
+        await repository.savePact(successor);
+
+        final result = await repository.getSuccessor('pact-1');
+
+        expect(result?.id, equals('pact-2'));
+      });
+
+      test('returns null when no pact has this predecessorPactId', () async {
+        await repository.savePact(makePact());
+
+        final result = await repository.getSuccessor('pact-1');
+
+        expect(result, isNull);
       });
     });
 

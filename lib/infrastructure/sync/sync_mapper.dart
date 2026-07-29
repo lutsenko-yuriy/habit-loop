@@ -34,6 +34,7 @@ abstract final class SyncMapper {
       'created_at': pact.createdAt?.millisecondsSinceEpoch,
       'updated_at': (updatedAt ?? DateTime.now()).millisecondsSinceEpoch,
       'archived': pact.archived,
+      'predecessor_pact_id': pact.predecessorPactId,
     };
   }
 
@@ -89,6 +90,9 @@ abstract final class SyncMapper {
           : null,
       // archived absent means the document predates v3 — treat as false.
       archived: (doc['archived'] as bool?) ?? false,
+      // Absent means a legacy document predating HAB-202, or a chain
+      // reference that hasn't been synced yet — either way, no predecessor.
+      predecessorPactId: doc['predecessor_pact_id'] as String?,
     );
   }
 

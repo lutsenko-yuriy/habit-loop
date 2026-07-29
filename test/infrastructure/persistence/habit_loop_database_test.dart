@@ -107,6 +107,13 @@ void main() {
       expect(result, hasLength(1));
     });
 
+    test('creates idx_pacts_predecessor_pact_id index', () async {
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pacts_predecessor_pact_id'",
+      );
+      expect(result, hasLength(1));
+    });
+
     test('pacts table has expected columns', () async {
       final result = await db.rawQuery('PRAGMA table_info(pacts)');
       final columnNames = result.map((row) => row['name'] as String).toSet();
@@ -128,6 +135,7 @@ void main() {
           'dirty',
           'synced_at',
           'archived',
+          'predecessor_pact_id',
         ]),
       );
     });
@@ -194,6 +202,74 @@ void main() {
         ['break-1', 'pact-1', 0, 'Recovering from a cold'],
       );
       expect(rowsAffected, equals(1));
+    });
+
+    test('can insert a pact row with a predecessor_pact_id', () async {
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        ['pact-1', 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active', 0],
+      );
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status, created_at, predecessor_pact_id) '
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          'pact-2',
+          'Meditate (v2)',
+          0,
+          1000,
+          1000,
+          600000000,
+          '{"type":"daily","timeOfDay":28800000000}',
+          'active',
+          0,
+          'pact-1',
+        ],
+      );
+      final rows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-2']);
+      expect(rows.single['predecessor_pact_id'], equals('pact-1'));
+    });
+
+    test('rejects a second pact with the same predecessor_pact_id — at most one successor', () async {
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        ['pact-1', 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active', 0],
+      );
+      Future<void> insertSuccessor(String id) => db.rawInsert(
+            'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+            'showup_duration, schedule, status, created_at, predecessor_pact_id) '
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+              id,
+              'Meditate (vN)',
+              0,
+              1000,
+              1000,
+              600000000,
+              '{"type":"daily","timeOfDay":28800000000}',
+              'active',
+              0,
+              'pact-1',
+            ],
+          );
+
+      await insertSuccessor('pact-2');
+      await expectLater(() => insertSuccessor('pact-3'), throwsA(isA<DatabaseException>()));
+    });
+
+    test('allows multiple pacts with a null predecessor_pact_id — uniqueness is partial', () async {
+      Future<void> insertRoot(String id) => db.rawInsert(
+            'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+            'showup_duration, schedule, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active', 0],
+          );
+
+      await insertRoot('pact-1');
+      await insertRoot('pact-2');
+      final rows = await db.query('pacts');
+      expect(rows, hasLength(2));
     });
   });
 
@@ -502,6 +578,105 @@ void main() {
         ['break-1', 'pact-1', 0, 'Recovering from a cold'],
       );
       expect(rowsAffected, equals(1));
+    });
+  });
+
+  group('HabitLoopDatabase — migration v5 → v6', () {
+    late Database db;
+
+    setUp(() async {
+      db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      // Build a v5 schema manually (no predecessor_pact_id column yet).
+      await db.execute('''
+        CREATE TABLE pacts (
+          id                   TEXT    NOT NULL PRIMARY KEY,
+          habit_name           TEXT    NOT NULL,
+          start_date           INTEGER NOT NULL,
+          scheduled_end_date   INTEGER NOT NULL,
+          actual_end_date      INTEGER NOT NULL,
+          showup_duration      INTEGER NOT NULL,
+          schedule             TEXT    NOT NULL,
+          status               TEXT    NOT NULL,
+          reminder_offset      INTEGER,
+          stop_reason          TEXT,
+          total_showups        INTEGER,
+          created_at           INTEGER,
+          dirty                INTEGER NOT NULL DEFAULT 1,
+          synced_at            INTEGER,
+          archived             INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        ['pact-1', 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active'],
+      );
+    });
+
+    tearDown(() async => db.close());
+
+    test('upgrade adds the predecessor_pact_id column', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 5, 6);
+      final result = await db.rawQuery('PRAGMA table_info(pacts)');
+      final columnNames = result.map((row) => row['name'] as String).toSet();
+      expect(columnNames, contains('predecessor_pact_id'));
+    });
+
+    test('upgrade creates idx_pacts_predecessor_pact_id index', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 5, 6);
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pacts_predecessor_pact_id'",
+      );
+      expect(result, hasLength(1));
+    });
+
+    test('existing pre-migration row reads back with predecessor_pact_id null', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 5, 6);
+      final rows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-1']);
+      expect(rows.single['predecessor_pact_id'], isNull);
+    });
+
+    test('can set a predecessor_pact_id on a new pact after migration', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 5, 6);
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status, predecessor_pact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          'pact-2',
+          'Meditate (v2)',
+          0,
+          1000,
+          1000,
+          600000000,
+          '{"type":"daily","timeOfDay":28800000000}',
+          'active',
+          'pact-1'
+        ],
+      );
+      final rows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-2']);
+      expect(rows.single['predecessor_pact_id'], equals('pact-1'));
+    });
+
+    test('rejects a second pact with the same predecessor_pact_id after migration', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 5, 6);
+      Future<void> insertSuccessor(String id) => db.rawInsert(
+            'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+            'showup_duration, schedule, status, predecessor_pact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+              id,
+              'Meditate (vN)',
+              0,
+              1000,
+              1000,
+              600000000,
+              '{"type":"daily","timeOfDay":28800000000}',
+              'active',
+              'pact-1'
+            ],
+          );
+
+      await insertSuccessor('pact-2');
+      await expectLater(() => insertSuccessor('pact-3'), throwsA(isA<DatabaseException>()));
     });
   });
 }

@@ -57,6 +57,24 @@ void main() {
       final completed = pact.copyWith(status: PactStatus.completed);
       expect(SyncMapper.pactToDocument(completed)['status'], 'completed');
     });
+
+    test('includes predecessor_pact_id when set', () {
+      final chained = Pact(
+        id: 'p2',
+        habitName: 'Meditate (v2)',
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 6, 30),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+        status: PactStatus.active,
+        predecessorPactId: 'p1',
+      );
+      expect(SyncMapper.pactToDocument(chained)['predecessor_pact_id'], 'p1');
+    });
+
+    test('includes predecessor_pact_id as null when not set', () {
+      expect(SyncMapper.pactToDocument(pact)['predecessor_pact_id'], isNull);
+    });
   });
 
   group('SyncMapper.showupToDocument', () {
@@ -180,6 +198,17 @@ void main() {
     test('archived absent in document defaults to false (backward compat for old docs)', () {
       final doc = SyncMapper.pactToDocument(pact)..remove('archived');
       expect(SyncMapper.pactFromDocument(doc).archived, isFalse);
+    });
+
+    test('decodes predecessor_pact_id when present', () {
+      final chained = pact.copyWith();
+      final doc = SyncMapper.pactToDocument(chained)..['predecessor_pact_id'] = 'p0';
+      expect(SyncMapper.pactFromDocument(doc).predecessorPactId, 'p0');
+    });
+
+    test('decodes predecessor_pact_id as null when absent (tolerates a dangling/legacy document)', () {
+      final doc = SyncMapper.pactToDocument(pact)..remove('predecessor_pact_id');
+      expect(SyncMapper.pactFromDocument(doc).predecessorPactId, isNull);
     });
   });
 

@@ -52,6 +52,13 @@ class SqlitePactRepository implements PactRepository, PactSyncRepository {
     return rows.map(PactMapper.fromRow).toList();
   }
 
+  @override
+  Future<Pact?> getSuccessor(String pactId) async {
+    final rows = await _db.query(_table, where: 'predecessor_pact_id = ?', whereArgs: [pactId]);
+    if (rows.isEmpty) return null;
+    return PactMapper.fromRow(rows.first);
+  }
+
   // ---------------------------------------------------------------------------
   // Writes
   // ---------------------------------------------------------------------------
@@ -61,6 +68,12 @@ class SqlitePactRepository implements PactRepository, PactSyncRepository {
     final existing = await getPactById(pact.id);
     if (existing != null) {
       throw ArgumentError('Pact with id "${pact.id}" already exists.');
+    }
+    // At most one successor per pact (HAB-202) — belt-and-braces alongside the
+    // idx_pacts_predecessor_pact_id partial unique index.
+    final predecessorId = pact.predecessorPactId;
+    if (predecessorId != null && await getSuccessor(predecessorId) != null) {
+      throw ArgumentError('Pact with id "$predecessorId" already has a successor.');
     }
     await _db.insert(_table, PactMapper.toRow(pact));
   }

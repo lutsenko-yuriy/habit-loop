@@ -24,9 +24,24 @@ class InMemoryPactRepository implements PactRepository {
   }
 
   @override
+  Future<Pact?> getSuccessor(String pactId) async {
+    try {
+      return _pacts.firstWhere((p) => p.predecessorPactId == pactId);
+    } on StateError {
+      return null;
+    }
+  }
+
+  @override
   Future<void> savePact(Pact pact) async {
     if (_pacts.any((p) => p.id == pact.id)) {
       throw ArgumentError('Pact with id "${pact.id}" already exists.');
+    }
+    // At most one successor per pact (HAB-202) — belt-and-braces alongside the
+    // SQLite partial unique index; this is the sole enforcement for the
+    // in-memory repo.
+    if (pact.predecessorPactId != null && _pacts.any((p) => p.predecessorPactId == pact.predecessorPactId)) {
+      throw ArgumentError('Pact with id "${pact.predecessorPactId}" already has a successor.');
     }
     _pacts.add(pact);
   }
