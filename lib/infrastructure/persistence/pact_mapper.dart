@@ -31,6 +31,7 @@ abstract final class PactMapper {
       'dirty': 1,
       'synced_at': null,
       'archived': pact.archived ? 1 : 0,
+      'predecessor_pact_id': pact.predecessorPactId,
     };
   }
 
@@ -68,13 +69,16 @@ abstract final class PactMapper {
       // dirty and synced_at live only in the sync layer — not on the domain model.
       // archived absent means the row predates v3 — treat as false.
       archived: (row['archived'] as int? ?? 0) == 1,
+      // predecessor_pact_id absent means the row predates v6 — treat as no predecessor.
+      predecessorPactId: row['predecessor_pact_id'] as String?,
       stats: null,
     );
   }
 
   /// Mutable-only columns for UPDATE — excludes immutable structural fields
   /// (`id`, `start_date`, `scheduled_end_date`, `showup_duration`, `schedule`,
-  /// `created_at`, `total_showups`) that must never be overwritten after insert.
+  /// `created_at`, `total_showups`, `predecessor_pact_id`) that must never be
+  /// overwritten after insert.
   static Map<String, dynamic> toUpdateRow(Pact pact) {
     return {
       'habit_name': pact.habitName,

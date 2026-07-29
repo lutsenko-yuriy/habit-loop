@@ -23,6 +23,7 @@ void main() {
     DateTime? pactCreatedAt,
     PactStats? stats,
     bool archived = false,
+    String? predecessorPactId,
   }) =>
       Pact(
         id: 'pact-1',
@@ -37,6 +38,7 @@ void main() {
         createdAt: pactCreatedAt,
         stats: stats,
         archived: archived,
+        predecessorPactId: predecessorPactId,
       );
 
   group('PactMapper', () {
@@ -143,6 +145,17 @@ void main() {
       test('archived true maps to 1', () {
         expect(PactMapper.toRow(basePact(archived: true))['archived'], equals(1));
       });
+
+      test('maps predecessor_pact_id when set', () {
+        final pact = basePact(predecessorPactId: 'pact-0');
+        final row = PactMapper.toRow(pact);
+        expect(row['predecessor_pact_id'], equals('pact-0'));
+      });
+
+      test('maps predecessor_pact_id as null when not set', () {
+        final row = PactMapper.toRow(basePact());
+        expect(row['predecessor_pact_id'], isNull);
+      });
     });
 
     group('fromRow', () {
@@ -163,6 +176,7 @@ void main() {
             'dirty': 1,
             'synced_at': null,
             'archived': 0,
+            'predecessor_pact_id': null,
           };
 
       test('reconstructs required fields correctly', () {
@@ -270,6 +284,23 @@ void main() {
         expect(PactMapper.fromRow(row).archived, isFalse);
       });
 
+      test('reconstructs predecessorPactId when present', () {
+        final row = baseRow()..['predecessor_pact_id'] = 'pact-0';
+        final pact = PactMapper.fromRow(row);
+        expect(pact.predecessorPactId, equals('pact-0'));
+      });
+
+      test('reconstructs predecessorPactId as null when absent', () {
+        final pact = PactMapper.fromRow(baseRow());
+        expect(pact.predecessorPactId, isNull);
+      });
+
+      test('predecessor_pact_id absent from row entirely does not cause error (legacy rows)', () {
+        final row = baseRow()..remove('predecessor_pact_id');
+        expect(() => PactMapper.fromRow(row), returnsNormally);
+        expect(PactMapper.fromRow(row).predecessorPactId, isNull);
+      });
+
       test('dirty and synced_at columns in row are ignored — not on domain model', () {
         // Verify fromRow succeeds with both dirty=0 and synced_at set,
         // since the sync layer may later read back rows in a synced state.
@@ -333,6 +364,11 @@ void main() {
 
       test('archived true maps to 1 in update row', () {
         expect(PactMapper.toUpdateRow(basePact(archived: true))['archived'], equals(1));
+      });
+
+      test('does not include predecessor_pact_id — immutable after insert', () {
+        final pact = basePact(predecessorPactId: 'pact-0');
+        expect(PactMapper.toUpdateRow(pact).containsKey('predecessor_pact_id'), isFalse);
       });
     });
 
@@ -413,6 +449,12 @@ void main() {
         final row = PactMapper.toRow(pact);
         final restored = PactMapper.fromRow({...row, 'total_showups': null, 'dirty': 1, 'synced_at': null});
         expect(restored.archived, isTrue);
+      });
+
+      test('predecessorPactId survives round-trip', () {
+        final pact = basePact(predecessorPactId: 'pact-0');
+        final restored = PactMapper.fromRow(PactMapper.toRow(pact));
+        expect(restored.predecessorPactId, equals('pact-0'));
       });
     });
   });
