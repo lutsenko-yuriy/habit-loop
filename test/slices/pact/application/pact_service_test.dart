@@ -179,6 +179,31 @@ void main() {
       expect(result, isNull);
     });
 
+    test('getSuccessor delegates to PactRepository.getSuccessor (HAB-202)', () async {
+      await pactRepo.savePact(_pact);
+      final successor = Pact(
+        id: 'v2',
+        habitName: '${_pact.habitName} (v2)',
+        startDate: _pact.startDate,
+        endDate: _pact.endDate,
+        showupDuration: _pact.showupDuration,
+        schedule: _pact.schedule,
+        status: PactStatus.active,
+        predecessorPactId: 'p1',
+      );
+      await pactRepo.savePact(successor);
+
+      final result = await service.getSuccessor('p1');
+
+      expect(result?.id, 'v2');
+    });
+
+    test('getSuccessor returns null when there is no successor (HAB-202)', () async {
+      await pactRepo.savePact(_pact);
+      final result = await service.getSuccessor('p1');
+      expect(result, isNull);
+    });
+
     test('getAllPacts delegates to PactRepository.getAllPacts', () async {
       await pactRepo.savePact(_pact);
       final result = await service.getAllPacts();

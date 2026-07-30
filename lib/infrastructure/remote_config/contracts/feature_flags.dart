@@ -8,6 +8,7 @@ final class FeatureFlags {
     required this.showupRedemptionEnabled,
     required this.aboutScreenEnabled,
     required this.pactBreaksEnabled,
+    required this.pactChainingEnabled,
   });
 
   factory FeatureFlags.fromRemoteConfig(RemoteConfigService rc) {
@@ -18,6 +19,7 @@ final class FeatureFlags {
       showupRedemptionEnabled: rc.getBool('showup_redemption_enabled'),
       aboutScreenEnabled: rc.getBool('about_screen_enabled'),
       pactBreaksEnabled: rc.getBool('pact_breaks_enabled'),
+      pactChainingEnabled: rc.getBool('pact_chaining_enabled'),
     );
   }
 
@@ -36,6 +38,9 @@ final class FeatureFlags {
   /// Whether the pact-breaks feature (HAB-195) is enabled.
   final bool pactBreaksEnabled;
 
+  /// Whether the pact-chaining feature (HAB-202) is enabled.
+  final bool pactChainingEnabled;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -45,7 +50,8 @@ final class FeatureFlags {
           pactTimelineEnabled == other.pactTimelineEnabled &&
           showupRedemptionEnabled == other.showupRedemptionEnabled &&
           aboutScreenEnabled == other.aboutScreenEnabled &&
-          pactBreaksEnabled == other.pactBreaksEnabled;
+          pactBreaksEnabled == other.pactBreaksEnabled &&
+          pactChainingEnabled == other.pactChainingEnabled;
 
   @override
   int get hashCode => Object.hash(
@@ -55,5 +61,6 @@ final class FeatureFlags {
         showupRedemptionEnabled,
         aboutScreenEnabled,
         pactBreaksEnabled,
+        pactChainingEnabled,
       );
 }

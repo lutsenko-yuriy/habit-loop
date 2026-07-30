@@ -77,8 +77,15 @@ abstract final class PactMapper {
 
   /// Mutable-only columns for UPDATE — excludes immutable structural fields
   /// (`id`, `start_date`, `scheduled_end_date`, `showup_duration`, `schedule`,
-  /// `created_at`, `total_showups`, `predecessor_pact_id`) that must never be
-  /// overwritten after insert.
+  /// `created_at`, `total_showups`) that must never be overwritten after
+  /// insert.
+  ///
+  /// `predecessor_pact_id` **is** included, despite being immutable through
+  /// ordinary `Pact.copyWith` calls — it is only ever nulled out by
+  /// `FirestoreSyncService`'s last-write-wins conflict resolution (HAB-202),
+  /// via the `clearPredecessorPactId` copyWith flag. Every other caller's
+  /// `copyWith` preserves the existing value, so this column is a no-op write
+  /// for all other update paths.
   static Map<String, dynamic> toUpdateRow(Pact pact) {
     return {
       'habit_name': pact.habitName,
@@ -91,6 +98,7 @@ abstract final class PactMapper {
       // Every update re-marks the record dirty — the sync layer will re-upload it.
       'dirty': 1,
       'archived': pact.archived ? 1 : 0,
+      'predecessor_pact_id': pact.predecessorPactId,
     };
   }
 

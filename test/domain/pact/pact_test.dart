@@ -104,6 +104,23 @@ void main() {
       expect(updated.predecessorPactId, '1');
     });
 
+    test('copyWith clearPredecessorPactId clears predecessorPactId (HAB-202 sync-conflict resolution)', () {
+      final pact = Pact(
+        id: '2',
+        habitName: 'Meditate (v2)',
+        startDate: DateTime(2026, 3, 29),
+        endDate: DateTime(2026, 9, 29),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+        status: PactStatus.active,
+        predecessorPactId: '1',
+      );
+
+      final updated = pact.copyWith(clearPredecessorPactId: true);
+
+      expect(updated.predecessorPactId, isNull);
+    });
+
     test('two pacts differing only in predecessorPactId are not equal', () {
       final base = Pact(
         id: '2',

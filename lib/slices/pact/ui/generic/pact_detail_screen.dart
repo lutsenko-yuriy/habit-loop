@@ -16,7 +16,16 @@ import 'package:habit_loop/slices/pact/ui/ios/pact_detail_page_ios.dart';
 class PactDetailScreen extends ConsumerStatefulWidget {
   final String pactId;
 
-  const PactDetailScreen({super.key, required this.pactId});
+  /// The pact id of whatever detail screen pushed this one, if any (HAB-202).
+  ///
+  /// `null` when this screen was opened from the pact list (or any other
+  /// non-chain-link entry point). Used by [_onOpenChainLink] to decide
+  /// whether tapping a chain link should pop back to an existing page
+  /// instance or push a new one — see the navigation-stack rule in
+  /// `docs/knowledge/notes/HAB-202.md`.
+  final String? cameFromPactId;
+
+  const PactDetailScreen({super.key, required this.pactId, this.cameFromPactId});
 
   @override
   ConsumerState<PactDetailScreen> createState() => _PactDetailScreenState();
@@ -79,6 +88,34 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     }
   }
 
+  /// Navigates to a chain-linked pact (HAB-202). Pops back to an existing
+  /// page instance if [targetPactId] matches [cameFromPactId] — i.e. the user
+  /// is bouncing back the way they came — otherwise pushes a new screen.
+  /// This keeps the back stack from growing unbounded when the user bounces
+  /// between "Previous Pact" and "Next Pact" links.
+  Future<void> _onOpenChainLink(String targetPactId, {required String direction}) async {
+    unawaited(
+      ref.read(analyticsServiceProvider).logEvent(
+            PactChainLinkTappedEvent(pactId: widget.pactId, direction: direction),
+          ),
+    );
+
+    if (targetPactId == widget.cameFromPactId) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    await Navigator.of(context).push<void>(
+      defaultTargetPlatform == TargetPlatform.iOS
+          ? CupertinoPageRoute<void>(
+              builder: (_) => PactDetailScreen(pactId: targetPactId, cameFromPactId: widget.pactId),
+            )
+          : MaterialPageRoute<void>(
+              builder: (_) => PactDetailScreen(pactId: targetPactId, cameFromPactId: widget.pactId),
+            ),
+    );
+  }
+
   Future<void> _onEditPact() async {
     final result = await Navigator.of(context).push<bool>(
       defaultTargetPlatform == TargetPlatform.iOS
@@ -124,6 +161,15 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     // (HAB-195) — an active break shows the "Resume pact" banner instead (WU5.2).
     final onStartBreak = flags.pactBreaksEnabled && state.activeBreak == null ? _onStartBreak : null;
 
+    // Chain links (HAB-202) — hidden unless the toggle is on and the linked
+    // pact actually exists.
+    final onOpenPreviousPact = flags.pactChainingEnabled && state.predecessorPact != null
+        ? () => _onOpenChainLink(state.predecessorPact!.id, direction: 'previous')
+        : null;
+    final onOpenNextPact = flags.pactChainingEnabled && state.successorPact != null
+        ? () => _onOpenChainLink(state.successorPact!.id, direction: 'next')
+        : null;
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return PactDetailPageIos(
         state: state,
@@ -135,6 +181,9 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         onOpenTimeline: _onOpenTimeline,
         onStartBreak: onStartBreak,
         onStopBreak: onStopBreak,
+        pactChainingEnabled: flags.pactChainingEnabled,
+        onOpenPreviousPact: onOpenPreviousPact,
+        onOpenNextPact: onOpenNextPact,
       );
     }
     return PactDetailPageAndroid(
@@ -147,6 +196,9 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       onOpenTimeline: _onOpenTimeline,
       onStartBreak: onStartBreak,
       onStopBreak: onStopBreak,
+      pactChainingEnabled: flags.pactChainingEnabled,
+      onOpenPreviousPact: onOpenPreviousPact,
+      onOpenNextPact: onOpenNextPact,
     );
   }
 }

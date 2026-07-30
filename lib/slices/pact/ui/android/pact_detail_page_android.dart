@@ -44,6 +44,19 @@ class PactDetailPageAndroid extends StatelessWidget {
   /// (HAB-195 WU5.2).
   final Future<void> Function()? onStopBreak;
 
+  /// Whether the pact-chaining feature is enabled via Remote Config (HAB-202).
+  final bool pactChainingEnabled;
+
+  /// Called when the user taps the "Previous Pact" link.
+  ///
+  /// `null` hides the link — no predecessor, or the feature toggle is off.
+  final VoidCallback? onOpenPreviousPact;
+
+  /// Called when the user taps the "Next Pact" link.
+  ///
+  /// `null` hides the link — no successor, or the feature toggle is off.
+  final VoidCallback? onOpenNextPact;
+
   const PactDetailPageAndroid({
     super.key,
     required this.state,
@@ -55,6 +68,9 @@ class PactDetailPageAndroid extends StatelessWidget {
     this.onOpenTimeline,
     this.onStartBreak,
     this.onStopBreak,
+    this.pactChainingEnabled = false,
+    this.onOpenPreviousPact,
+    this.onOpenNextPact,
   });
 
   bool get _isActive => state.pact?.status == PactStatus.active;
@@ -94,6 +110,9 @@ class PactDetailPageAndroid extends StatelessWidget {
                         onOpenTimeline: onOpenTimeline,
                         onStartBreak: onStartBreak,
                         onStopBreak: onStopBreak,
+                        pactChainingEnabled: pactChainingEnabled,
+                        onOpenPreviousPact: onOpenPreviousPact,
+                        onOpenNextPact: onOpenNextPact,
                       ),
           ),
         ],
@@ -112,6 +131,9 @@ class _PactDetailContent extends StatelessWidget {
   final VoidCallback? onOpenTimeline;
   final VoidCallback? onStartBreak;
   final Future<void> Function()? onStopBreak;
+  final bool pactChainingEnabled;
+  final VoidCallback? onOpenPreviousPact;
+  final VoidCallback? onOpenNextPact;
 
   const _PactDetailContent({
     required this.state,
@@ -123,6 +145,9 @@ class _PactDetailContent extends StatelessWidget {
     this.onOpenTimeline,
     this.onStartBreak,
     this.onStopBreak,
+    this.pactChainingEnabled = false,
+    this.onOpenPreviousPact,
+    this.onOpenNextPact,
   });
 
   @override
@@ -142,6 +167,11 @@ class _PactDetailContent extends StatelessWidget {
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
+      // Pact-specific key (HAB-202) — disambiguates this screen's own
+      // Scrollable from an earlier PactDetailScreen still mounted underneath
+      // it (Navigator keeps prior routes mounted by default) when a test
+      // needs to scroll a specific screen's content into view.
+      key: Key('pact-detail-scroll-view-${pact.id}'),
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
         // Habit name + status badge
@@ -156,6 +186,14 @@ class _PactDetailContent extends StatelessWidget {
             StatusBadge(text: statusText, color: statusColor),
           ],
         ),
+        if (pactChainingEnabled && state.predecessorPact != null) ...[
+          const SizedBox(height: AppSpacing.s4),
+          TextButton(
+            key: const Key('pact-detail-previous-pact-link'),
+            onPressed: onOpenPreviousPact,
+            child: Text(l10n.pactDetailPreviousPact(state.predecessorPact!.habitName)),
+          ),
+        ],
         const SizedBox(height: AppSpacing.s24),
 
         // "In a break" banner + Resume pact action (HAB-195 WU5.2) — shown
@@ -331,6 +369,16 @@ class _PactDetailContent extends StatelessWidget {
                     width: AppSpacing.s20,
                     child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onError))
                 : Text(l10n.stopPact),
+          ),
+        ],
+
+        // Next Pact link (HAB-202) — bottom action area.
+        if (pactChainingEnabled && state.successorPact != null) ...[
+          const SizedBox(height: AppSpacing.s24),
+          TextButton(
+            key: const Key('pact-detail-next-pact-link'),
+            onPressed: onOpenNextPact,
+            child: Text(l10n.pactDetailNextPact(state.successorPact!.habitName)),
           ),
         ],
       ],

@@ -339,6 +339,27 @@ void main() {
     });
   });
 
+  group('PactChainLinkTappedEvent (HAB-202)', () {
+    test('has correct name', () {
+      final event = PactChainLinkTappedEvent(pactId: 'p1', direction: 'previous');
+      expect(event.name, 'pact_chain_link_tapped');
+    });
+
+    test('toParameters includes all properties for previous', () {
+      final event = PactChainLinkTappedEvent(pactId: 'p1', direction: 'previous');
+      final params = event.toParameters();
+      expect(params['pact_id'], 'p1');
+      expect(params['direction'], 'previous');
+    });
+
+    test('toParameters includes all properties for next', () {
+      final event = PactChainLinkTappedEvent(pactId: 'p1', direction: 'next');
+      final params = event.toParameters();
+      expect(params['pact_id'], 'p1');
+      expect(params['direction'], 'next');
+    });
+  });
+
   group('PactDetailAnalyticsScreen', () {
     test('implements AnalyticsScreen', () {
       expect(const PactDetailAnalyticsScreen(), isA<AnalyticsScreen>());

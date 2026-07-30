@@ -293,6 +293,80 @@ void main() {
       expect(state.loadError, isNotNull);
     });
 
+    group('load — chain fields (HAB-202)', () {
+      final predecessor = Pact(
+        id: 'root',
+        habitName: 'Vibe coding',
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 3, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+        status: PactStatus.stopped,
+      );
+
+      test('populates predecessorPact when pact.predecessorPactId is set', () async {
+        final successor = Pact(
+          id: 'p1',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          predecessorPactId: 'root',
+        );
+        final container = _makeContainer(pacts: [predecessor, successor], showups: _showups);
+        addTearDown(container.dispose);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        final state = container.read(pactDetailViewModelProvider('p1'));
+
+        expect(state.predecessorPact?.id, 'root');
+        expect(state.predecessorPact?.habitName, 'Vibe coding');
+      });
+
+      test('leaves predecessorPact null when pact has no predecessor', () async {
+        final container = _makeContainer(pacts: [_pact], showups: _showups);
+        addTearDown(container.dispose);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        final state = container.read(pactDetailViewModelProvider('p1'));
+
+        expect(state.predecessorPact, isNull);
+      });
+
+      test('populates successorPact when a successor pact exists', () async {
+        final successor = Pact(
+          id: 'v2',
+          habitName: 'Meditate (v2)',
+          startDate: DateTime(2026, 9, 2),
+          endDate: DateTime(2027, 3, 2),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          predecessorPactId: 'p1',
+        );
+        final container = _makeContainer(pacts: [_pact, successor], showups: _showups);
+        addTearDown(container.dispose);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        final state = container.read(pactDetailViewModelProvider('p1'));
+
+        expect(state.successorPact?.id, 'v2');
+        expect(state.successorPact?.habitName, 'Meditate (v2)');
+      });
+
+      test('leaves successorPact null when there is no successor', () async {
+        final container = _makeContainer(pacts: [_pact], showups: _showups);
+        addTearDown(container.dispose);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        final state = container.read(pactDetailViewModelProvider('p1'));
+
+        expect(state.successorPact, isNull);
+      });
+    });
+
     test('stopPact updates pact status to stopped with reason', () async {
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);

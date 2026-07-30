@@ -47,6 +47,9 @@ Widget _buildApp(
   VoidCallback? onStartBreak,
   Future<void> Function()? onStopBreak,
   Brightness brightness = Brightness.light,
+  bool pactChainingEnabled = false,
+  VoidCallback? onOpenPreviousPact,
+  VoidCallback? onOpenNextPact,
 }) {
   return MaterialApp(
     theme: brightness == Brightness.dark ? HabitLoopTheme.darkMaterialTheme : HabitLoopTheme.materialTheme,
@@ -66,6 +69,9 @@ Widget _buildApp(
       onOpenTimeline: onOpenTimeline,
       onStartBreak: onStartBreak,
       onStopBreak: onStopBreak ?? () async {},
+      pactChainingEnabled: pactChainingEnabled,
+      onOpenPreviousPact: onOpenPreviousPact,
+      onOpenNextPact: onOpenNextPact,
     ),
   );
 }
@@ -86,6 +92,27 @@ final _openEndedBreak = PactBreak(
 );
 
 PactDetailState _loadedState(Pact pact) => PactDetailState(pact: pact, stats: _stats, isLoading: false);
+
+final _predecessorPact = Pact(
+  id: 'root',
+  habitName: 'Vibe coding',
+  startDate: DateTime(2026, 1, 1),
+  endDate: DateTime(2026, 3, 1),
+  showupDuration: const Duration(minutes: 10),
+  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+  status: PactStatus.stopped,
+);
+
+final _successorPact = Pact(
+  id: 'v2',
+  habitName: 'Meditate (v2)',
+  startDate: DateTime(2026, 9, 2),
+  endDate: DateTime(2027, 3, 2),
+  showupDuration: const Duration(minutes: 10),
+  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+  status: PactStatus.active,
+  predecessorPactId: 'p1',
+);
 
 void main() {
   group('PactDetailPageIos – note section visibility', () {
@@ -341,6 +368,91 @@ void main() {
     final theme = Theme.of(tester.element(find.byType(PactDetailPageIos)));
 
     expect(scaffold.backgroundColor, theme.colorScheme.surface);
+  });
+
+  group('PactDetailPageIos — chain links (HAB-202)', () {
+    testWidgets('shows Previous Pact link when predecessor is provided and chaining is enabled', (tester) async {
+      final state =
+          PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
+      await tester.pumpWidget(_buildApp(state, pactChainingEnabled: true, onOpenPreviousPact: () {}));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsOneWidget);
+      expect(find.textContaining('Vibe coding'), findsOneWidget);
+    });
+
+    testWidgets('hides Previous Pact link when predecessor is null', (tester) async {
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(state, pactChainingEnabled: true, onOpenPreviousPact: () {}));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsNothing);
+    });
+
+    testWidgets('hides Previous Pact link when pactChainingEnabled is false, even with a predecessor', (tester) async {
+      final state =
+          PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
+      await tester.pumpWidget(_buildApp(state, onOpenPreviousPact: () {}));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsNothing);
+    });
+
+    testWidgets('tapping Previous Pact link calls onOpenPreviousPact', (tester) async {
+      var tapped = false;
+      final state =
+          PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, predecessorPact: _predecessorPact);
+      await tester.pumpWidget(_buildApp(state, pactChainingEnabled: true, onOpenPreviousPact: () => tapped = true));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('pact-detail-previous-pact-link')));
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('shows Next Pact link when successor is provided and chaining is enabled', (tester) async {
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, successorPact: _successorPact);
+      await tester.pumpWidget(_buildApp(state, pactChainingEnabled: true, onOpenNextPact: () {}));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-detail-next-pact-link')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(find.byKey(const Key('pact-detail-next-pact-link')), findsOneWidget);
+      expect(find.textContaining('Meditate (v2)'), findsOneWidget);
+    });
+
+    testWidgets('hides Next Pact link when successor is null', (tester) async {
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(_buildApp(state, pactChainingEnabled: true, onOpenNextPact: () {}));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-next-pact-link')), findsNothing);
+    });
+
+    testWidgets('hides Next Pact link when pactChainingEnabled is false, even with a successor', (tester) async {
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, successorPact: _successorPact);
+      await tester.pumpWidget(_buildApp(state, onOpenNextPact: () {}));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-next-pact-link')), findsNothing);
+    });
+
+    testWidgets('tapping Next Pact link calls onOpenNextPact', (tester) async {
+      var tapped = false;
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, successorPact: _successorPact);
+      await tester.pumpWidget(_buildApp(state, pactChainingEnabled: true, onOpenNextPact: () => tapped = true));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-detail-next-pact-link')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
+      expect(tapped, isTrue);
+    });
   });
 
   group('PactDetailPageIos — WCAG AA contrast', () {

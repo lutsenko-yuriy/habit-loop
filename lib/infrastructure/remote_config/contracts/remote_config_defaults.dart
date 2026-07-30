@@ -125,6 +125,7 @@ abstract final class RemoteConfigDefaults {
     'showup_redemption_enabled',
     'about_screen_enabled',
     'pact_breaks_enabled',
+    'pact_chaining_enabled',
   };
 
   /// Feature toggle: show the About screen entry point on the dashboard.
@@ -166,6 +167,15 @@ abstract final class RemoteConfigDefaults {
   /// pact breaks without a release.
   static const bool pactBreaksEnabled = true;
 
+  /// Feature toggle: kill-switch for the pact-chaining feature (HAB-202).
+  ///
+  /// Defaulted to `false` during development (same deviation as
+  /// [pactBreaksEnabled] — the gated UI is incomplete until WU4) and flipped
+  /// to `true` here in the final ship WU (WU4) now that the feature is
+  /// complete end-to-end. Override to `false` in the Firebase Remote Config
+  /// console to disable pact chaining without a release.
+  static const bool pactChainingEnabled = false;
+
   /// Optional short hint shown in the debug override dialog for keys whose
   /// numeric range has a concrete semantic meaning.
   ///
@@ -200,6 +210,7 @@ abstract final class RemoteConfigDefaults {
     'about_screen_enabled': aboutScreenEnabled,
     'pact_timeline_no_grouping_tail_period_in_days': pactTimelineNoGroupingTailPeriodInDays,
     'pact_breaks_enabled': pactBreaksEnabled,
+    'pact_chaining_enabled': pactChainingEnabled,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -219,6 +230,7 @@ abstract final class RemoteConfigDefaults {
     'showup_redemption_enabled': ['true', 'false'],
     'about_screen_enabled': ['true', 'false'],
     'pact_breaks_enabled': ['true', 'false'],
+    'pact_chaining_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

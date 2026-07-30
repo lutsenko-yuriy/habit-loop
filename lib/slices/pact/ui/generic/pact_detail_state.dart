@@ -29,6 +29,16 @@ class PactDetailState {
   final bool isStoppingBreak;
   final Object? stopBreakError;
 
+  /// The predecessor pact this pact was chained from (HAB-202), if any —
+  /// i.e. the pact referenced by `pact.predecessorPactId`. `null` if this
+  /// pact has no predecessor.
+  final Pact? predecessorPact;
+
+  /// The successor pact chained from this pact (HAB-202), if any — i.e. the
+  /// pact whose `predecessorPactId` equals this pact's id. `null` if no
+  /// successor exists yet.
+  final Pact? successorPact;
+
   const PactDetailState({
     this.pact,
     this.stats,
@@ -44,6 +54,8 @@ class PactDetailState {
     this.isBreakActiveNow = false,
     this.isStoppingBreak = false,
     this.stopBreakError,
+    this.predecessorPact,
+    this.successorPact,
   });
 
   PactDetailState copyWith({
@@ -67,6 +79,10 @@ class PactDetailState {
     bool? isStoppingBreak,
     Object? stopBreakError,
     bool clearStopBreakError = false,
+    Pact? predecessorPact,
+    bool clearPredecessorPact = false,
+    Pact? successorPact,
+    bool clearSuccessorPact = false,
   }) {
     return PactDetailState(
       pact: pact ?? this.pact,
@@ -83,6 +99,8 @@ class PactDetailState {
       isBreakActiveNow: isBreakActiveNow ?? this.isBreakActiveNow,
       isStoppingBreak: isStoppingBreak ?? this.isStoppingBreak,
       stopBreakError: clearStopBreakError ? null : (stopBreakError ?? this.stopBreakError),
+      predecessorPact: clearPredecessorPact ? null : (predecessorPact ?? this.predecessorPact),
+      successorPact: clearSuccessorPact ? null : (successorPact ?? this.successorPact),
     );
   }
 }

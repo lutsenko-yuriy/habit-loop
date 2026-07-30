@@ -245,7 +245,7 @@ class _InMemoryPactBreakSyncRepo implements PactBreakSyncRepository {
 // Helpers
 // ---------------------------------------------------------------------------
 
-Pact _pact(String id) => Pact(
+Pact _pact(String id, {String? predecessorPactId, DateTime? createdAt}) => Pact(
       id: id,
       habitName: 'Meditate',
       startDate: DateTime(2026, 1, 1),
@@ -253,6 +253,8 @@ Pact _pact(String id) => Pact(
       showupDuration: const Duration(minutes: 10),
       schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
       status: PactStatus.active,
+      predecessorPactId: predecessorPactId,
+      createdAt: createdAt,
     );
 
 Showup _showup(String id) => Showup(
@@ -270,8 +272,9 @@ PactBreak _pactBreak(String id) => PactBreak(
       rationale: 'Recovering from a cold',
     );
 
-Map<String, dynamic> _remotePactDoc(String id, {DateTime? updatedAt}) =>
-    SyncMapper.pactToDocument(_pact(id), updatedAt: updatedAt);
+Map<String, dynamic> _remotePactDoc(String id, {DateTime? updatedAt, String? predecessorPactId, DateTime? createdAt}) =>
+    SyncMapper.pactToDocument(_pact(id, predecessorPactId: predecessorPactId, createdAt: createdAt),
+        updatedAt: updatedAt);
 
 Map<String, dynamic> _remoteShowupDoc(String id, {DateTime? updatedAt}) =>
     SyncMapper.showupToDocument(_showup(id), updatedAt: updatedAt);
@@ -952,6 +955,100 @@ void main() {
 
       // Should not throw.
       await expectLater(svc.pullRemoteChanges(), completes);
+    });
+
+    group('predecessor conflict resolution (HAB-202)', () {
+      // Two offline devices each create a successor for the same predecessor
+      // before ever syncing. savePact's "at most one successor" guard would
+      // otherwise throw on insert, silently swallowed by the per-record
+      // try/catch in pullRemoteChanges — permanently hiding the losing
+      // record. Last-write-wins on createdAt instead clears the loser's
+      // link so the record still lands, just unlinked.
+      test('remote successor has a later createdAt: local successor loses its link, remote keeps its own', () async {
+        final root = _pact('root');
+        final localSucc = _pact('local-succ', predecessorPactId: 'root', createdAt: DateTime(2026, 1, 1));
+        final pactRepo = InMemoryPactRepository([root, localSucc]);
+        final client = _FakeFirestoreClient()
+          ..remotePactDocs = [
+            _remotePactDoc('remote-succ', predecessorPactId: 'root', createdAt: DateTime(2026, 2, 1)),
+          ];
+        final svc = _makeService(client: client, pactRepository: pactRepo);
+
+        await svc.pullRemoteChanges();
+
+        expect((await pactRepo.getPactById('remote-succ'))?.predecessorPactId, 'root');
+        expect((await pactRepo.getPactById('local-succ'))?.predecessorPactId, isNull);
+      });
+
+      test('remote successor has an earlier createdAt: remote loses its link on insert, local successor untouched',
+          () async {
+        final root = _pact('root');
+        final localSucc = _pact('local-succ', predecessorPactId: 'root', createdAt: DateTime(2026, 3, 1));
+        final pactRepo = InMemoryPactRepository([root, localSucc]);
+        final client = _FakeFirestoreClient()
+          ..remotePactDocs = [
+            _remotePactDoc('remote-succ', predecessorPactId: 'root', createdAt: DateTime(2026, 1, 1)),
+          ];
+        final svc = _makeService(client: client, pactRepository: pactRepo);
+
+        await svc.pullRemoteChanges();
+
+        expect((await pactRepo.getPactById('remote-succ'))?.predecessorPactId, isNull);
+        expect((await pactRepo.getPactById('local-succ'))?.predecessorPactId, 'root');
+      });
+
+      test('no existing successor: remote pact is inserted with its predecessorPactId intact', () async {
+        final root = _pact('root');
+        final pactRepo = InMemoryPactRepository([root]);
+        final client = _FakeFirestoreClient()
+          ..remotePactDocs = [
+            _remotePactDoc('remote-succ', predecessorPactId: 'root', createdAt: DateTime(2026, 1, 1)),
+          ];
+        final svc = _makeService(client: client, pactRepository: pactRepo);
+
+        await svc.pullRemoteChanges();
+
+        expect((await pactRepo.getPactById('remote-succ'))?.predecessorPactId, 'root');
+      });
+
+      // Exact createdAt tie — a comparison that always favours the incoming
+      // record (isAfter alone) would make BOTH devices independently clear
+      // their own local successor's link, converging to zero winners instead
+      // of one. Simulate both devices by seeding the same two ids as
+      // existing/incoming in each order and asserting they agree on a winner.
+      test('createdAt tie: same two ids in either existing/incoming role converge on the same winner', () async {
+        final root = _pact('root');
+        final tiedAt = DateTime(2026, 1, 1);
+        final successorA = _pact('succ-a', predecessorPactId: 'root', createdAt: tiedAt);
+        final successorB = _pact('succ-b', predecessorPactId: 'root', createdAt: tiedAt);
+
+        // Device 1: 'succ-a' already exists locally, 'succ-b' arrives as the remote pull.
+        final pactRepo1 = InMemoryPactRepository([root, successorA]);
+        final client1 = _FakeFirestoreClient()
+          ..remotePactDocs = [_remotePactDoc('succ-b', predecessorPactId: 'root', createdAt: tiedAt)];
+        await _makeService(client: client1, pactRepository: pactRepo1).pullRemoteChanges();
+
+        // Device 2: 'succ-b' already exists locally, 'succ-a' arrives as the remote pull —
+        // existing/incoming roles reversed from device 1.
+        final pactRepo2 = InMemoryPactRepository([root, successorB]);
+        final client2 = _FakeFirestoreClient()
+          ..remotePactDocs = [_remotePactDoc('succ-a', predecessorPactId: 'root', createdAt: tiedAt)];
+        await _makeService(client: client2, pactRepository: pactRepo2).pullRemoteChanges();
+
+        final device1Winner = (await pactRepo1.getPactById('succ-a'))?.predecessorPactId != null
+            ? 'succ-a'
+            : (await pactRepo1.getPactById('succ-b'))?.predecessorPactId != null
+                ? 'succ-b'
+                : null;
+        final device2Winner = (await pactRepo2.getPactById('succ-a'))?.predecessorPactId != null
+            ? 'succ-a'
+            : (await pactRepo2.getPactById('succ-b'))?.predecessorPactId != null
+                ? 'succ-b'
+                : null;
+
+        expect(device1Winner, isNotNull, reason: 'exactly one successor must keep its link, not zero');
+        expect(device1Winner, device2Winner, reason: 'both devices must converge on the same winner');
+      });
     });
   });
 

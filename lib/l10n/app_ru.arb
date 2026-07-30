@@ -328,6 +328,18 @@
   "@pactTimelineTitle": {},
   "pactDetailViewTimeline": "Хронология пакта",
   "@pactDetailViewTimeline": {},
+  "pactDetailPreviousPact": "Предыдущий пакт: «{habitName}»",
+  "@pactDetailPreviousPact": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "pactDetailNextPact": "Следующий пакт: «{habitName}»",
+  "@pactDetailNextPact": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
   "timelinePactCreated": "Пакт начат",
   "@timelinePactCreated": {},
   "timelineCurrentState": "Активен",

@@ -191,6 +191,29 @@ void main() {
       });
     });
 
+    group('pact_chaining_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('pact_chaining_enabled'), isTrue);
+      });
+
+      test('default value is false during development (HAB-202)', () {
+        expect(RemoteConfigDefaults.all['pact_chaining_enabled'], isFalse);
+      });
+
+      test('constant matches all map value', () {
+        expect(RemoteConfigDefaults.pactChainingEnabled, equals(RemoteConfigDefaults.all['pact_chaining_enabled']));
+      });
+
+      test('appears in featureToggleKeys', () {
+        expect(RemoteConfigDefaults.featureToggleKeys.contains('pact_chaining_enabled'), isTrue);
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('pact_chaining_enabled'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['pact_chaining_enabled'], containsAll(['true', 'false']));
+      });
+    });
+
     group('pact_timeline_no_grouping_tail_period_in_days', () {
       test('key exists in all map', () {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_period_in_days'), isTrue);

@@ -328,6 +328,18 @@
   "@pactTimelineTitle": {},
   "pactDetailViewTimeline": "Voir la chronologie",
   "@pactDetailViewTimeline": {},
+  "pactDetailPreviousPact": "Pacte précédent : « {habitName} »",
+  "@pactDetailPreviousPact": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "pactDetailNextPact": "Pacte suivant : « {habitName} »",
+  "@pactDetailNextPact": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
   "timelinePactCreated": "Pacte commencé",
   "@timelinePactCreated": {},
   "timelineCurrentState": "Actif",
