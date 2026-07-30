@@ -170,11 +170,11 @@ abstract final class RemoteConfigDefaults {
   /// Feature toggle: kill-switch for the pact-chaining feature (HAB-202).
   ///
   /// Defaulted to `false` during development (same deviation as
-  /// [pactBreaksEnabled] — the gated UI is incomplete until WU4) and flipped
+  /// [pactBreaksEnabled] — the gated UI was incomplete until WU4) and flipped
   /// to `true` here in the final ship WU (WU4) now that the feature is
   /// complete end-to-end. Override to `false` in the Firebase Remote Config
   /// console to disable pact chaining without a release.
-  static const bool pactChainingEnabled = false;
+  static const bool pactChainingEnabled = true;
 
   /// Optional short hint shown in the debug override dialog for keys whose
   /// numeric range has a concrete semantic meaning.
