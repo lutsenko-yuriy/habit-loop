@@ -167,9 +167,13 @@ Post a comment on the issue with the PR URL (PM mapping: **Post comment on issue
 PR opened: <PR URL>
 ```
 
-### 15. Invoke reviews
+### 15. Wait for the user's review command
 
-Invoke both review skills simultaneously — they are independent and can run in parallel:
+Do **not** auto-invoke the review skills here. Tell the user the PR is open and ready, and that
+the review loop starts on their explicit command — this gives them room to check the running
+app (especially for UI-touching work) and request changes before review effort is spent on code
+that might still move. When the user gives that command, invoke both review skills
+simultaneously — they are independent and can run in parallel:
 
 - **`review-architecture`** — architectural review (`/review-architecture PR #<N>`)
 - **`audit-code`** — runtime/launch/migration review (`/audit-code PR #<N>`)

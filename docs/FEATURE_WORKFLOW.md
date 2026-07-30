@@ -102,8 +102,8 @@ When in doubt, use **In QA**.
    - Open a PR.
    - Move the Linear ticket to **In Review**.
    - Inform the user of the PR URL.
-   - The `implement` skill invokes `review-architecture` and `audit-code` automatically after the PR is open.
-10. **Review loop** — repeat until the user explicitly approves the PR:
+   - The review loop (step 10) starts only on the user's explicit command — not automatically. This gives the user room to check the running app and request changes before review effort is spent on code that might still move.
+10. **Review loop** — started by the user's explicit command (not automatically after step 9); repeat until the user explicitly approves the PR:
     1. Wait for both review skills (`review-architecture`, `audit-code`), the Codecov patch-coverage report, and the user to finish leaving comments.
     2. For each comment: either fix it in a new commit and push, or post a one-sentence explanation of why the fix will not be implemented — as a threaded reply under the original comment (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies`), prefixed with `[<skill> reply]` matching the finding's own `[review]`/`[audit]` prefix (e.g. `[audit reply]`).
     3. Check the Codecov patch-coverage report (posted automatically as a PR comment by CI). If patch coverage is below the project threshold, add tests for the uncovered lines where it is reasonable to do so — skip lines that require disproportionate test infrastructure (e.g. `ConsumerStatefulWidget` screens with no widget-test harness). Explain skipped lines in a PR comment.
