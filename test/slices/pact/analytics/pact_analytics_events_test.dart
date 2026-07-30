@@ -243,6 +243,37 @@ void main() {
         expect(event.toParameters()['last_step'], step);
       }
     });
+
+    test('toParameters omits source when not provided (HAB-202)', () {
+      final event = PactWizardAbandonedEvent(mode: 'editing', lastStep: 'schedule');
+      expect(event.toParameters().containsKey('source'), isFalse);
+    });
+
+    test('toParameters includes source when provided (HAB-202)', () {
+      final event = PactWizardAbandonedEvent(mode: 'creation', lastStep: 'schedule', source: 'adjust_and_start_again');
+      expect(event.toParameters()['source'], 'adjust_and_start_again');
+    });
+  });
+
+  group('PactAdjustAndStartAgainTappedEvent (HAB-202)', () {
+    test('has correct name', () {
+      final event = PactAdjustAndStartAgainTappedEvent(pactId: 'p1', pactStatus: 'stopped');
+      expect(event.name, 'pact_adjust_and_start_again_tapped');
+    });
+
+    test('toParameters includes all properties for stopped', () {
+      final event = PactAdjustAndStartAgainTappedEvent(pactId: 'p1', pactStatus: 'stopped');
+      final params = event.toParameters();
+      expect(params['pact_id'], 'p1');
+      expect(params['pact_status'], 'stopped');
+    });
+
+    test('toParameters includes all properties for completed', () {
+      final event = PactAdjustAndStartAgainTappedEvent(pactId: 'p1', pactStatus: 'completed');
+      final params = event.toParameters();
+      expect(params['pact_id'], 'p1');
+      expect(params['pact_status'], 'completed');
+    });
   });
 
   group('PactCreationAnalyticsScreen', () {
