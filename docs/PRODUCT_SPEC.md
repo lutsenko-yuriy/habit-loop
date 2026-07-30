@@ -53,6 +53,10 @@ The Habit Loop app allows the user to:
     - The timeline screen title shows the pact's habit name followed by "– Timeline" (e.g. "Meditate – Timeline")
     - A section header ("Showups from the last N days") separates individually-shown tail-zone showups from grouped milestones above; N defaults to 7 and is configurable via Remote Config (range 7–21)
     - The timeline reloads automatically after returning from the showup detail screen, reflecting any status change immediately
+  - On a finished (completed or stopped) pact with no successor yet, the user can tap "Adjust and start again" to create a new pact pre-filled from it — habit name, schedule, showup duration, and reminder offset carry over (all editable); the start date always defaults to today (feature flag: `pact_chaining_enabled`)
+    - The default habit name is the chain's root pact name plus a version suffix (e.g. "Vibe coding (v2)", then "Vibe coding (v3)" on the next adjustment), regardless of what the immediate predecessor was renamed to
+    - The new pact's detail screen shows a tappable "Previous Pact" link to the predecessor; the predecessor's detail screen shows a tappable "Next Pact" link to the new pact, replacing its "Adjust and start again" button
+    - Each pact can have at most one successor — no branching. Stats and streaks are never shared across a chain; it is purely a navigational link
 - See the details of a specific showup
   - The user must see the time of the showup
   - The user must see the habit in this showup
