@@ -384,13 +384,16 @@ class _PactDetailContent extends StatelessWidget {
 
         // Adjust and start again / Next Pact — bottom action area for
         // finished pacts (HAB-202). "Next Pact" takes priority once a
-        // successor exists — at most one of the two ever shows.
+        // successor exists — at most one of the two ever shows. No divider
+        // here (unlike the active-pact actions above) — this keeps the exact
+        // spacing the "Next Pact" link already had pre-HAB-202-WU4, since the
+        // extra height of a divider pushed it past the reachable scroll
+        // extent on a short viewport (real regression against WU3's own
+        // nav-stack scenarios, caught in WU4 — see docs/knowledge/notes/HAB-202.md).
         if (pactChainingEnabled &&
             pact.status != PactStatus.active &&
             (state.successorPact != null || onAdjustAndStartAgain != null)) ...[
           const SizedBox(height: AppSpacing.s24),
-          const Divider(),
-          const SizedBox(height: AppSpacing.s8),
           if (state.successorPact != null)
             TextButton(
               key: const Key('pact-detail-next-pact-link'),
