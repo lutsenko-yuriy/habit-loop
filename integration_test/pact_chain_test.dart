@@ -134,7 +134,12 @@ Future<void> _swipeWizardForward(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// Swipes from the habit-name page all the way to the summary page (5 pages).
+/// Swipes from the habit-name page all the way to the summary page.
+///
+/// 8 swipes, not 5 (the number of page transitions needed) — a forward drag
+/// occasionally doesn't cross the PageView's snap threshold on the last hop
+/// into the reminder/summary pages, observed empirically on iOS; the extra
+/// margin is harmless since swiping past the last page is a no-op.
 Future<void> _swipeWizardToSummary(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
     await _swipeWizardForward(tester);
@@ -258,7 +263,9 @@ void main() {
       // migration) — same daily 8am cadence, different schedule shape.
       expect(
         successor.schedule,
-        SlotSchedule(slots: [WeeklySlot(weekdays: const {1, 2, 3, 4, 5, 6, 7}, timeOfDay: const Duration(hours: 8))]),
+        SlotSchedule(slots: [
+          WeeklySlot(weekdays: const {1, 2, 3, 4, 5, 6, 7}, timeOfDay: const Duration(hours: 8))
+        ]),
       );
       expect(successor.showupDuration, predecessor.showupDuration);
       expect(successor.reminderOffset, predecessor.reminderOffset);
