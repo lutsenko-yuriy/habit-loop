@@ -64,6 +64,13 @@ class PactDetailPageIos extends StatelessWidget {
   /// or the feature toggle is off.
   final VoidCallback? onAdjustAndStartAgain;
 
+  /// Controller for the content `ListView`, owned by [PactDetailScreen]
+  /// (HAB-202) so it can reset scroll position back to the top after
+  /// returning from the "Adjust and start again" wizard — otherwise a
+  /// newly-relevant "Next Pact" link at the top of the list can stay
+  /// scrolled out of view. `null` in tests that don't exercise this.
+  final ScrollController? scrollController;
+
   const PactDetailPageIos({
     super.key,
     required this.state,
@@ -79,6 +86,7 @@ class PactDetailPageIos extends StatelessWidget {
     this.onOpenPreviousPact,
     this.onOpenNextPact,
     this.onAdjustAndStartAgain,
+    this.scrollController,
   });
 
   @override
@@ -127,6 +135,7 @@ class PactDetailPageIos extends StatelessWidget {
                             onOpenPreviousPact: onOpenPreviousPact,
                             onOpenNextPact: onOpenNextPact,
                             onAdjustAndStartAgain: onAdjustAndStartAgain,
+                            scrollController: scrollController,
                           ),
               ),
             ],
@@ -151,6 +160,7 @@ class _PactDetailContent extends StatelessWidget {
   final VoidCallback? onOpenPreviousPact;
   final VoidCallback? onOpenNextPact;
   final VoidCallback? onAdjustAndStartAgain;
+  final ScrollController? scrollController;
 
   const _PactDetailContent({
     required this.state,
@@ -166,6 +176,7 @@ class _PactDetailContent extends StatelessWidget {
     this.onOpenPreviousPact,
     this.onOpenNextPact,
     this.onAdjustAndStartAgain,
+    this.scrollController,
   });
 
   @override
@@ -188,6 +199,7 @@ class _PactDetailContent extends StatelessWidget {
       // it (Navigator keeps prior routes mounted by default) when a test
       // needs to scroll a specific screen's content into view.
       key: Key('pact-detail-scroll-view-${pact.id}'),
+      controller: scrollController,
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
         // Habit name + status badge

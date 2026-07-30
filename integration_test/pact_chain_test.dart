@@ -296,14 +296,14 @@ void main() {
 
       // ── 7. Back on the (reloaded) predecessor: "Adjust and start again" is
       //        gone; "Next Pact: 'Vibe coding (v2)'" now shows under the
-      //        title instead — scroll back up first, the list is still
-      //        scrolled to where "Adjust and start again" was tapped from ──
-      await _scrollToDetailKey(
-        tester,
-        const Key('pact-detail-next-pact-link'),
-        pactId: predecessor.id,
-        moveStep: const Offset(0, 100),
-      );
+      //        title instead. No manual scroll needed — PactDetailScreen
+      //        resets scroll position to the top after this round trip, so
+      //        the newly-relevant top-of-list content is already visible.
+      await waitFor(tester, find.byKey(const Key('pact-detail-next-pact-link')));
+      // The scroll-to-top jump is synchronous, but the resulting relayout
+      // needs a settled frame before a tap's hit-test coordinates are
+      // reliable — same class of race as the push-transition settle above.
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsNothing);
 
       // ── 8. Tap "Next Pact" — navigates to the new pact's detail screen ──

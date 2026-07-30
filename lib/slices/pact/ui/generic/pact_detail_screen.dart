@@ -35,6 +35,13 @@ class PactDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
+  // Owned here (not by the stateless platform pages) so _onAdjustAndStartAgain
+  // can reset scroll position after returning from the wizard (HAB-202) — the
+  // ListView otherwise keeps whatever offset it had before the push, which
+  // can leave newly-relevant top-of-list content (e.g. a fresh "Next Pact"
+  // link) scrolled out of view.
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +59,12 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         );
       }),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _onOpenTimeline() async {
@@ -157,6 +170,13 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     ref.read(pactCreationConfigProvider.notifier).state = null;
 
     if (!mounted) return;
+    // Whatever now belongs at the top of the list (the "Next Pact" link on
+    // success, or nothing new on cancel) must actually be visible — the
+    // ListView otherwise keeps its pre-push scroll offset indefinitely,
+    // since this is the same screen instance throughout.
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
     ref.invalidate(pactDetailNowProvider);
     unawaited(
       ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
@@ -241,6 +261,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         onOpenPreviousPact: onOpenPreviousPact,
         onOpenNextPact: onOpenNextPact,
         onAdjustAndStartAgain: onAdjustAndStartAgain,
+        scrollController: _scrollController,
       );
     }
     return PactDetailPageAndroid(
@@ -257,6 +278,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       onOpenPreviousPact: onOpenPreviousPact,
       onOpenNextPact: onOpenNextPact,
       onAdjustAndStartAgain: onAdjustAndStartAgain,
+      scrollController: _scrollController,
     );
   }
 }
