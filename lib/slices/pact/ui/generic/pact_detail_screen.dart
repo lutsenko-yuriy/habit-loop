@@ -135,7 +135,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
           ),
     );
 
-    final prefillBuilder = await ref.read(pactChainServiceProvider).buildPrefillFor(pact, today: DateTime.now());
+    final today = ref.read(pactDetailNowProvider);
+    final prefillBuilder = await ref.read(pactChainServiceProvider).buildPrefillFor(pact, today: today);
     if (!mounted) return;
 
     ref.read(pactCreationConfigProvider.notifier).state = PactCreationConfig(
