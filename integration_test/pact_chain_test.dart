@@ -20,8 +20,9 @@ import 'package:integration_test/integration_test.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
-// pact_chaining_enabled defaults to false while the feature is mid-rollout
-// (see docs/FEATURE_TOGGLES.md) — scenarios that exercise the links need it on.
+// pact_chaining_enabled now defaults to true (HAB-202 WU4 shipped), but an
+// explicit override still keeps these scenarios independent of that default
+// — see the flag-off scenario below, which needs the opposite override.
 final _chainingEnabled = remoteConfigServiceProvider.overrideWithValue(
   FakeRemoteConfigService(overrides: {'pact_chaining_enabled': true}),
 );
@@ -102,7 +103,21 @@ Future<void> _tapNextPactLink(WidgetTester tester, {required String currentPactI
 /// (HAB-202) — see `_tapNextPactLink`'s comment above for why an unscoped
 /// `Scrollable` finder can target the wrong (offstage) screen when multiple
 /// `PactDetailScreen`s are mounted at once.
-Future<void> _scrollToDetailKey(WidgetTester tester, Key key, {required String pactId}) async {
+///
+/// [moveStep] defaults to scrolling *down* (revealing content below the
+/// fold, e.g. "Adjust and start again" near the bottom). Pass a positive Y
+/// offset to scroll *up* instead — needed for "Previous"/"Next Pact" (near
+/// the top) when the list is already scrolled down from an earlier call on
+/// the same still-mounted screen instance (its scroll position persists
+/// across a push/pop round trip, so scrolling toward the bottom for one
+/// widget can leave a top-of-list widget outside the lazy ListView's built
+/// range entirely, not just offstage — HAB-202 WU4).
+Future<void> _scrollToDetailKey(
+  WidgetTester tester,
+  Key key, {
+  required String pactId,
+  Offset moveStep = const Offset(0, -100),
+}) async {
   await tester.dragUntilVisible(
     find.byKey(key),
     find
@@ -111,8 +126,13 @@ Future<void> _scrollToDetailKey(WidgetTester tester, Key key, {required String p
           matching: find.byType(Scrollable),
         )
         .first,
-    const Offset(0, -100),
+    moveStep,
   );
+  // dragUntilVisible's own trailing Scrollable.ensureVisible() call can leave
+  // its scroll-into-view animation still settling by the time control
+  // returns — observed as a tap landing a few px past the viewport's bottom
+  // edge (HAB-202 WU4). Drain it before the caller taps.
+  await tester.pumpAndSettle();
 }
 
 /// Swipes the pact-creation [PageView] to the next page.
@@ -275,13 +295,18 @@ void main() {
       );
 
       // ── 7. Back on the (reloaded) predecessor: "Adjust and start again" is
-      //        gone, replaced by "Next Pact: 'Vibe coding (v2)'" ───────────
-      await waitFor(tester, find.byKey(const Key('pact-detail-next-pact-link')));
-      await tester.pumpAndSettle();
+      //        gone; "Next Pact: 'Vibe coding (v2)'" now shows under the
+      //        title instead — scroll back up first, the list is still
+      //        scrolled to where "Adjust and start again" was tapped from ──
+      await _scrollToDetailKey(
+        tester,
+        const Key('pact-detail-next-pact-link'),
+        pactId: predecessor.id,
+        moveStep: const Offset(0, 100),
+      );
       expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsNothing);
 
       // ── 8. Tap "Next Pact" — navigates to the new pact's detail screen ──
-      await _scrollToDetailKey(tester, const Key('pact-detail-next-pact-link'), pactId: predecessor.id);
       await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
       await tester.pumpAndSettle();
 
@@ -517,8 +542,14 @@ void main() {
     testWidgets('flag_off_hides_adjust_button_and_chain_links', (tester) async {
       h = await AppHarness.create(
         tester,
-        // 2. pact_chaining_enabled: false (the default while mid-rollout).
-        extraOverrides: const [],
+        // 2. Explicit override — pact_chaining_enabled now defaults to
+        // `true` (HAB-202 WU4 shipped), so this scenario's premise (the
+        // flag being off) must be forced rather than relying on the default.
+        extraOverrides: [
+          remoteConfigServiceProvider.overrideWithValue(
+            FakeRemoteConfigService(overrides: {'pact_chaining_enabled': false}),
+          ),
+        ],
         beforePump: (h) async {
           await h.pactRepo.savePact(flagOffPredecessor);
           await h.pactRepo.savePact(flagOffSuccessor);

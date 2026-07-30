@@ -660,11 +660,6 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('pact-detail-next-pact-link')),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
 
       expect(find.byKey(const Key('pact-detail-next-pact-link')), findsOneWidget);
       expect(find.textContaining('Meditate (v2)'), findsOneWidget);
@@ -723,14 +718,42 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('pact-detail-next-pact-link')),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
 
       await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
       expect(tapped, isTrue);
+    });
+
+    testWidgets('shows both Previous and Next Pact links for a pact with both a predecessor and a successor',
+        (tester) async {
+      final state = PactDetailState(
+        pact: _stoppedPact,
+        stats: _stats,
+        isLoading: false,
+        predecessorPact: _predecessorPact,
+        successorPact: _successorPact,
+      );
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            pactChainingEnabled: true,
+            onOpenPreviousPact: () {},
+            onOpenNextPact: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsOneWidget);
+      expect(find.byKey(const Key('pact-detail-next-pact-link')), findsOneWidget);
+      // Same row, Previous to the left of Next.
+      final previousPos = tester.getTopLeft(find.byKey(const Key('pact-detail-previous-pact-link')));
+      final nextPos = tester.getTopLeft(find.byKey(const Key('pact-detail-next-pact-link')));
+      expect(previousPos.dy, nextPos.dy);
+      expect(previousPos.dx, lessThan(nextPos.dx));
     });
   });
 
