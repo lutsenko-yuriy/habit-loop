@@ -1010,6 +1010,45 @@ void main() {
 
         expect((await pactRepo.getPactById('remote-succ'))?.predecessorPactId, 'root');
       });
+
+      // Exact createdAt tie — a comparison that always favours the incoming
+      // record (isAfter alone) would make BOTH devices independently clear
+      // their own local successor's link, converging to zero winners instead
+      // of one. Simulate both devices by seeding the same two ids as
+      // existing/incoming in each order and asserting they agree on a winner.
+      test('createdAt tie: same two ids in either existing/incoming role converge on the same winner', () async {
+        final root = _pact('root');
+        final tiedAt = DateTime(2026, 1, 1);
+        final successorA = _pact('succ-a', predecessorPactId: 'root', createdAt: tiedAt);
+        final successorB = _pact('succ-b', predecessorPactId: 'root', createdAt: tiedAt);
+
+        // Device 1: 'succ-a' already exists locally, 'succ-b' arrives as the remote pull.
+        final pactRepo1 = InMemoryPactRepository([root, successorA]);
+        final client1 = _FakeFirestoreClient()
+          ..remotePactDocs = [_remotePactDoc('succ-b', predecessorPactId: 'root', createdAt: tiedAt)];
+        await _makeService(client: client1, pactRepository: pactRepo1).pullRemoteChanges();
+
+        // Device 2: 'succ-b' already exists locally, 'succ-a' arrives as the remote pull —
+        // existing/incoming roles reversed from device 1.
+        final pactRepo2 = InMemoryPactRepository([root, successorB]);
+        final client2 = _FakeFirestoreClient()
+          ..remotePactDocs = [_remotePactDoc('succ-a', predecessorPactId: 'root', createdAt: tiedAt)];
+        await _makeService(client: client2, pactRepository: pactRepo2).pullRemoteChanges();
+
+        final device1Winner = (await pactRepo1.getPactById('succ-a'))?.predecessorPactId != null
+            ? 'succ-a'
+            : (await pactRepo1.getPactById('succ-b'))?.predecessorPactId != null
+                ? 'succ-b'
+                : null;
+        final device2Winner = (await pactRepo2.getPactById('succ-a'))?.predecessorPactId != null
+            ? 'succ-a'
+            : (await pactRepo2.getPactById('succ-b'))?.predecessorPactId != null
+                ? 'succ-b'
+                : null;
+
+        expect(device1Winner, isNotNull, reason: 'exactly one successor must keep its link, not zero');
+        expect(device1Winner, device2Winner, reason: 'both devices must converge on the same winner');
+      });
     });
   });
 

@@ -284,6 +284,14 @@ class FirestoreSyncService implements SyncService {
   /// link; the other has [Pact.predecessorPactId] cleared via
   /// `clearPredecessorPactId` — the record itself is never dropped, it just
   /// surfaces as unlinked.
+  ///
+  /// On an exact `createdAt` tie, breaks on `id` (lexicographically greater
+  /// wins) rather than always favouring the incoming record. A tie-break that
+  /// always resolves the same way regardless of which side is "existing" vs
+  /// "incoming" is required for convergence: `isAfter` alone always takes the
+  /// incoming-wins branch on a tie, so both devices would independently clear
+  /// their own *local* successor's link — surfacing zero links instead of one
+  /// (HAB-202 audit finding, PR #340).
   Future<Pact> _resolvePredecessorConflict(Pact pact) async {
     final predecessorId = pact.predecessorPactId;
     if (predecessorId == null) return pact;
@@ -292,8 +300,13 @@ class FirestoreSyncService implements SyncService {
     if (existingSuccessor == null) return pact;
 
     DateTime effectiveCreatedAt(Pact p) => p.createdAt ?? p.startDate;
+    final existingCreatedAt = effectiveCreatedAt(existingSuccessor);
+    final incomingCreatedAt = effectiveCreatedAt(pact);
 
-    if (effectiveCreatedAt(existingSuccessor).isAfter(effectiveCreatedAt(pact))) {
+    final existingWins = existingCreatedAt.isAfter(incomingCreatedAt) ||
+        (existingCreatedAt.isAtSameMomentAs(incomingCreatedAt) && existingSuccessor.id.compareTo(pact.id) > 0);
+
+    if (existingWins) {
       // Existing local successor wins — the incoming remote record loses its link.
       return pact.copyWith(clearPredecessorPactId: true);
     }
