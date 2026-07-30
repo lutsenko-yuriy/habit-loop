@@ -86,6 +86,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     }
 
     Future<void> navigateToPactCreation() async {
+      // Defensively clear any chain prefill (HAB-202) left behind by an
+      // "Adjust and start again" flow that didn't reach its own cleanup
+      // (e.g. the pact detail screen was disposed while the wizard was
+      // still open) — otherwise this blank creation would silently inherit
+      // a stale predecessor link and pre-filled name.
+      ref.read(pactCreationConfigProvider.notifier).state = null;
       ref.invalidate(pactCreationViewModelProvider);
       if (!context.mounted) return;
       if (defaultTargetPlatform == TargetPlatform.iOS) {

@@ -157,7 +157,7 @@ final class PactWizardStepJumpedEvent extends AnalyticsEvent {
 /// Fired when the user dismisses the wizard via back-navigation (`PopScope`)
 /// without completing it. (HAB-82)
 final class PactWizardAbandonedEvent extends AnalyticsEvent {
-  PactWizardAbandonedEvent({required this.mode, required this.lastStep});
+  PactWizardAbandonedEvent({required this.mode, required this.lastStep, this.source});
 
   /// `creation` | `editing`.
   final String mode;
@@ -166,6 +166,10 @@ final class PactWizardAbandonedEvent extends AnalyticsEvent {
   /// `duration` | `showup_duration` | `schedule` | `reminder` | `summary`.
   final String lastStep;
 
+  /// `blank` | `adjust_and_start_again`; present only when [mode] is
+  /// `creation` — there is no chain concept in editing mode. (HAB-202)
+  final String? source;
+
   @override
   String get name => 'pact_wizard_abandoned';
 
@@ -173,6 +177,28 @@ final class PactWizardAbandonedEvent extends AnalyticsEvent {
   Map<String, Object?> toParameters() => {
         'mode': mode,
         'last_step': lastStep,
+        if (source != null) 'source': source!,
+      };
+}
+
+/// Fired when the user taps "Adjust and start again" on a finished pact's
+/// detail screen — before the pre-filled creation wizard opens. (HAB-202)
+final class PactAdjustAndStartAgainTappedEvent extends AnalyticsEvent {
+  PactAdjustAndStartAgainTappedEvent({required this.pactId, required this.pactStatus});
+
+  /// ID of the finished (predecessor) pact.
+  final String pactId;
+
+  /// `completed` | `stopped`
+  final String pactStatus;
+
+  @override
+  String get name => 'pact_adjust_and_start_again_tapped';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'pact_id': pactId,
+        'pact_status': pactStatus,
       };
 }
 

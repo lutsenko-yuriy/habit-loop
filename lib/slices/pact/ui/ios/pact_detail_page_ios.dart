@@ -58,6 +58,19 @@ class PactDetailPageIos extends StatelessWidget {
   /// `null` hides the link — no successor, or the feature toggle is off.
   final VoidCallback? onOpenNextPact;
 
+  /// Called when the user taps "Adjust and start again" (HAB-202).
+  ///
+  /// `null` hides the button — the pact is active, already has a successor,
+  /// or the feature toggle is off.
+  final VoidCallback? onAdjustAndStartAgain;
+
+  /// Controller for the content `ListView`, owned by [PactDetailScreen]
+  /// (HAB-202) so it can reset scroll position back to the top after
+  /// returning from the "Adjust and start again" wizard — otherwise a
+  /// newly-relevant "Next Pact" link at the top of the list can stay
+  /// scrolled out of view. `null` in tests that don't exercise this.
+  final ScrollController? scrollController;
+
   const PactDetailPageIos({
     super.key,
     required this.state,
@@ -72,6 +85,8 @@ class PactDetailPageIos extends StatelessWidget {
     this.pactChainingEnabled = false,
     this.onOpenPreviousPact,
     this.onOpenNextPact,
+    this.onAdjustAndStartAgain,
+    this.scrollController,
   });
 
   @override
@@ -119,6 +134,8 @@ class PactDetailPageIos extends StatelessWidget {
                             pactChainingEnabled: pactChainingEnabled,
                             onOpenPreviousPact: onOpenPreviousPact,
                             onOpenNextPact: onOpenNextPact,
+                            onAdjustAndStartAgain: onAdjustAndStartAgain,
+                            scrollController: scrollController,
                           ),
               ),
             ],
@@ -142,6 +159,8 @@ class _PactDetailContent extends StatelessWidget {
   final bool pactChainingEnabled;
   final VoidCallback? onOpenPreviousPact;
   final VoidCallback? onOpenNextPact;
+  final VoidCallback? onAdjustAndStartAgain;
+  final ScrollController? scrollController;
 
   const _PactDetailContent({
     required this.state,
@@ -156,6 +175,8 @@ class _PactDetailContent extends StatelessWidget {
     this.pactChainingEnabled = false,
     this.onOpenPreviousPact,
     this.onOpenNextPact,
+    this.onAdjustAndStartAgain,
+    this.scrollController,
   });
 
   @override
@@ -178,6 +199,7 @@ class _PactDetailContent extends StatelessWidget {
       // it (Navigator keeps prior routes mounted by default) when a test
       // needs to scroll a specific screen's content into view.
       key: Key('pact-detail-scroll-view-${pact.id}'),
+      controller: scrollController,
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
         // Habit name + status badge
@@ -192,13 +214,50 @@ class _PactDetailContent extends StatelessWidget {
             StatusBadge(text: statusText, color: statusColor),
           ],
         ),
-        if (pactChainingEnabled && state.predecessorPact != null) ...[
-          const SizedBox(height: AppSpacing.s4),
-          CupertinoButton(
-            key: const Key('pact-detail-previous-pact-link'),
-            padding: EdgeInsets.zero,
-            onPressed: onOpenPreviousPact,
-            child: Text(l10n.pactDetailPreviousPact(state.predecessorPact!.habitName)),
+        // Previous/Next Pact links (HAB-202) — grouped in a row right under
+        // the title, independent of the bottom action area (which shows
+        // only "Adjust and start again", and only while no successor exists
+        // yet). spaceBetween pins Next to the trailing edge, mirroring a
+        // pagination-style Previous/Next affordance, and degenerates to a
+        // plain leading-aligned single link when only one is present.
+        // minimumSize: Size.zero — CupertinoButton's 44pt default tap-target
+        // height otherwise dwarfs these single-line secondary links.
+        // Flexible — long habit names must not overflow the Row on a narrow
+        // screen.
+        if (pactChainingEnabled && (state.predecessorPact != null || state.successorPact != null)) ...[
+          const SizedBox(height: AppSpacing.s12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (state.predecessorPact != null)
+                Flexible(
+                  child: CupertinoButton(
+                    key: const Key('pact-detail-previous-pact-link'),
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    onPressed: onOpenPreviousPact,
+                    child: Text(
+                      l10n.pactDetailPreviousPact(state.predecessorPact!.habitName),
+                      style: AppTypography.caption,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              if (state.successorPact != null)
+                Flexible(
+                  child: CupertinoButton(
+                    key: const Key('pact-detail-next-pact-link'),
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    onPressed: onOpenNextPact,
+                    child: Text(
+                      l10n.pactDetailNextPact(state.successorPact!.habitName),
+                      style: AppTypography.caption,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
         const SizedBox(height: AppSpacing.s24),
@@ -377,14 +436,23 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Next Pact link (HAB-202) — bottom action area.
-        if (pactChainingEnabled && state.successorPact != null) ...[
+        // Adjust and start again — bottom action area for a finished pact
+        // with no successor yet (HAB-202). Once a successor exists, this is
+        // simply absent — "Next Pact" lives with "Previous Pact" under the
+        // title instead (see above), not here. No divider here (unlike the
+        // active-pact actions above) — an earlier attempt added one and
+        // pushed this button past the reachable scroll extent on a short
+        // viewport, breaking WU3's own nav-stack scenarios (see
+        // docs/knowledge/notes/HAB-202.md).
+        if (pactChainingEnabled &&
+            pact.status != PactStatus.active &&
+            state.successorPact == null &&
+            onAdjustAndStartAgain != null) ...[
           const SizedBox(height: AppSpacing.s24),
-          CupertinoButton(
-            key: const Key('pact-detail-next-pact-link'),
-            padding: EdgeInsets.zero,
-            onPressed: onOpenNextPact,
-            child: Text(l10n.pactDetailNextPact(state.successorPact!.habitName)),
+          CupertinoButton.filled(
+            key: const Key('pact-detail-adjust-and-start-again-button'),
+            onPressed: onAdjustAndStartAgain,
+            child: Text(l10n.pactDetailAdjustAndStartAgain),
           ),
         ],
       ],

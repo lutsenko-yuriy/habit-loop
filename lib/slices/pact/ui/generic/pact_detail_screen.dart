@@ -4,10 +4,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_screen.dart';
@@ -32,6 +35,13 @@ class PactDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
+  // Owned here (not by the stateless platform pages) so _onAdjustAndStartAgain
+  // can reset scroll position after returning from the wizard (HAB-202) — the
+  // ListView otherwise keeps whatever offset it had before the push, which
+  // can leave newly-relevant top-of-list content (e.g. a fresh "Next Pact"
+  // link) scrolled out of view.
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +59,12 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         );
       }),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _onOpenTimeline() async {
@@ -116,6 +132,57 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     );
   }
 
+  /// Opens the pact-creation wizard pre-filled from this (finished) pact
+  /// (HAB-202). On return, the config is reset and the detail screen reloads
+  /// so a newly-created successor's "Next Pact" link appears immediately.
+  Future<void> _onAdjustAndStartAgain() async {
+    final pact = ref.read(pactDetailViewModelProvider(widget.pactId)).pact;
+    if (pact == null) return;
+
+    unawaited(
+      ref.read(analyticsServiceProvider).logEvent(
+            PactAdjustAndStartAgainTappedEvent(
+              pactId: pact.id,
+              pactStatus: pact.status == PactStatus.completed ? 'completed' : 'stopped',
+            ),
+          ),
+    );
+
+    final today = ref.read(pactDetailNowProvider);
+    final prefillBuilder = await ref.read(pactChainServiceProvider).buildPrefillFor(pact, today: today);
+    if (!mounted) return;
+
+    ref.read(pactCreationConfigProvider.notifier).state = PactCreationConfig(
+      predecessorPactId: pact.id,
+      prefillBuilder: prefillBuilder,
+    );
+    ref.invalidate(pactCreationViewModelProvider);
+
+    await Navigator.of(context).push<void>(
+      defaultTargetPlatform == TargetPlatform.iOS
+          ? CupertinoPageRoute<void>(builder: (_) => const PactCreationScreen())
+          : MaterialPageRoute<void>(builder: (_) => const PactCreationScreen()),
+    );
+
+    // Reset so a later blank creation doesn't inherit a stale prefill —
+    // Riverpod forbids a provider from clearing its own state during
+    // another provider's build() (see pactCreationConfigProvider's doc comment).
+    ref.read(pactCreationConfigProvider.notifier).state = null;
+
+    if (!mounted) return;
+    // Whatever now belongs at the top of the list (the "Next Pact" link on
+    // success, or nothing new on cancel) must actually be visible — the
+    // ListView otherwise keeps its pre-push scroll offset indefinitely,
+    // since this is the same screen instance throughout.
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    ref.invalidate(pactDetailNowProvider);
+    unawaited(
+      ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
+    );
+  }
+
   Future<void> _onEditPact() async {
     final result = await Navigator.of(context).push<bool>(
       defaultTargetPlatform == TargetPlatform.iOS
@@ -170,6 +237,15 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         ? () => _onOpenChainLink(state.successorPact!.id, direction: 'next')
         : null;
 
+    // "Adjust and start again" (HAB-202) — only for a finished pact with no
+    // successor yet; once a successor exists, "Next Pact" takes its place.
+    final onAdjustAndStartAgain = flags.pactChainingEnabled &&
+            state.pact != null &&
+            state.pact!.status != PactStatus.active &&
+            state.successorPact == null
+        ? _onAdjustAndStartAgain
+        : null;
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return PactDetailPageIos(
         state: state,
@@ -184,6 +260,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         pactChainingEnabled: flags.pactChainingEnabled,
         onOpenPreviousPact: onOpenPreviousPact,
         onOpenNextPact: onOpenNextPact,
+        onAdjustAndStartAgain: onAdjustAndStartAgain,
+        scrollController: _scrollController,
       );
     }
     return PactDetailPageAndroid(
@@ -199,6 +277,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       pactChainingEnabled: flags.pactChainingEnabled,
       onOpenPreviousPact: onOpenPreviousPact,
       onOpenNextPact: onOpenNextPact,
+      onAdjustAndStartAgain: onAdjustAndStartAgain,
+      scrollController: _scrollController,
     );
   }
 }

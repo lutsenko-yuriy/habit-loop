@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.53.0] — 2026-07-31 (PR #341 merged)
+
+### Added
+
+- [user] You can now adjust and restart a habit that didn't quite work — create a new pact pre-filled from a finished one (same schedule, showup length, and reminder, with a fresh start date) right from its detail screen. Pact detail screens now show links to hop between a habit's different attempts.
+- [app] HAB-202 WU4 (final): Added the "Adjust and start again" button to a finished pact's detail screen (bottom action area, gated on no successor existing yet); `PactDetailScreen._onAdjustAndStartAgain` builds the chain prefill via `PactChainService`, seeds the creation wizard via `pactCreationConfigProvider`, and resets scroll position + reloads detail state on return. Added `PactAdjustAndStartAgainTappedEvent` analytics and an optional `source` field on `PactWizardAbandonedEvent`. Regrouped "Previous Pact"/"Next Pact" into a single row under the habit name (shrink-wrapped, `MainAxisAlignment.spaceBetween`) per live UI review, replacing WU3's original split (Next Pact previously lived alone in the bottom action area). Drives all 7 `pact_chain_test.dart` integration scenarios green. Flips the `pact_chaining_enabled` Remote Config default to `true`, completing the feature end-to-end — **note: the live Firebase console value still needs a manual flip to match** (see `docs/knowledge/notes/HAB-202.md`).
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.

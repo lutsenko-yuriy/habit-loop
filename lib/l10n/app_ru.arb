@@ -340,6 +340,8 @@
       "habitName": { "type": "String" }
     }
   },
+  "pactDetailAdjustAndStartAgain": "Изменить и начать заново",
+  "@pactDetailAdjustAndStartAgain": {},
   "timelinePactCreated": "Пакт начат",
   "@timelinePactCreated": {},
   "timelineCurrentState": "Активен",
