@@ -171,6 +171,7 @@ class _PactCreationScreenState extends ConsumerState<PactCreationScreen> {
                   PactWizardAbandonedEvent(
                     mode: 'creation',
                     lastStep: state.currentStep.analyticsName,
+                    source: state.source,
                   ),
                 ),
           );

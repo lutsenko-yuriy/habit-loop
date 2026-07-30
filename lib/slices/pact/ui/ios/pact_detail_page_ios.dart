@@ -58,6 +58,12 @@ class PactDetailPageIos extends StatelessWidget {
   /// `null` hides the link — no successor, or the feature toggle is off.
   final VoidCallback? onOpenNextPact;
 
+  /// Called when the user taps "Adjust and start again" (HAB-202).
+  ///
+  /// `null` hides the button — the pact is active, already has a successor,
+  /// or the feature toggle is off.
+  final VoidCallback? onAdjustAndStartAgain;
+
   const PactDetailPageIos({
     super.key,
     required this.state,
@@ -72,6 +78,7 @@ class PactDetailPageIos extends StatelessWidget {
     this.pactChainingEnabled = false,
     this.onOpenPreviousPact,
     this.onOpenNextPact,
+    this.onAdjustAndStartAgain,
   });
 
   @override
@@ -119,6 +126,7 @@ class PactDetailPageIos extends StatelessWidget {
                             pactChainingEnabled: pactChainingEnabled,
                             onOpenPreviousPact: onOpenPreviousPact,
                             onOpenNextPact: onOpenNextPact,
+                            onAdjustAndStartAgain: onAdjustAndStartAgain,
                           ),
               ),
             ],
@@ -142,6 +150,7 @@ class _PactDetailContent extends StatelessWidget {
   final bool pactChainingEnabled;
   final VoidCallback? onOpenPreviousPact;
   final VoidCallback? onOpenNextPact;
+  final VoidCallback? onAdjustAndStartAgain;
 
   const _PactDetailContent({
     required this.state,
@@ -156,6 +165,7 @@ class _PactDetailContent extends StatelessWidget {
     this.pactChainingEnabled = false,
     this.onOpenPreviousPact,
     this.onOpenNextPact,
+    this.onAdjustAndStartAgain,
   });
 
   @override
@@ -377,15 +387,28 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Next Pact link (HAB-202) — bottom action area.
-        if (pactChainingEnabled && state.successorPact != null) ...[
+        // Adjust and start again / Next Pact — bottom action area for
+        // finished pacts (HAB-202). "Next Pact" takes priority once a
+        // successor exists — at most one of the two ever shows.
+        if (pactChainingEnabled &&
+            pact.status != PactStatus.active &&
+            (state.successorPact != null || onAdjustAndStartAgain != null)) ...[
           const SizedBox(height: AppSpacing.s24),
-          CupertinoButton(
-            key: const Key('pact-detail-next-pact-link'),
-            padding: EdgeInsets.zero,
-            onPressed: onOpenNextPact,
-            child: Text(l10n.pactDetailNextPact(state.successorPact!.habitName)),
-          ),
+          Divider(color: CupertinoColors.separator.resolveFrom(context)),
+          const SizedBox(height: AppSpacing.s8),
+          if (state.successorPact != null)
+            CupertinoButton(
+              key: const Key('pact-detail-next-pact-link'),
+              padding: EdgeInsets.zero,
+              onPressed: onOpenNextPact,
+              child: Text(l10n.pactDetailNextPact(state.successorPact!.habitName)),
+            )
+          else if (onAdjustAndStartAgain != null)
+            CupertinoButton.filled(
+              key: const Key('pact-detail-adjust-and-start-again-button'),
+              onPressed: onAdjustAndStartAgain,
+              child: Text(l10n.pactDetailAdjustAndStartAgain),
+            ),
         ],
       ],
     );

@@ -733,4 +733,165 @@ void main() {
       expect(tapped, isTrue);
     });
   });
+
+  group('PactDetailPageAndroid — adjust and start again (HAB-202)', () {
+    testWidgets('shows Adjust and start again button on stopped pact with no successor when chaining is enabled',
+        (tester) async {
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            pactChainingEnabled: true,
+            onAdjustAndStartAgain: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-detail-adjust-and-start-again-button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsOneWidget);
+    });
+
+    testWidgets('shows Adjust and start again button on completed pact with no successor when chaining is enabled',
+        (tester) async {
+      final state = PactDetailState(pact: _completedPact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            pactChainingEnabled: true,
+            onAdjustAndStartAgain: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-detail-adjust-and-start-again-button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsOneWidget);
+    });
+
+    testWidgets('hides Adjust and start again button when a successor already exists, shows Next Pact instead',
+        (tester) async {
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false, successorPact: _successorPact);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            pactChainingEnabled: true,
+            onOpenNextPact: () {},
+            onAdjustAndStartAgain: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-detail-next-pact-link')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsNothing);
+      expect(find.byKey(const Key('pact-detail-next-pact-link')), findsOneWidget);
+    });
+
+    testWidgets('hides Adjust and start again button when pactChainingEnabled is false', (tester) async {
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            onAdjustAndStartAgain: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsNothing);
+    });
+
+    testWidgets('hides Adjust and start again button when onAdjustAndStartAgain is null', (tester) async {
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            pactChainingEnabled: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsNothing);
+    });
+
+    testWidgets('hides Adjust and start again button on an active pact even if onAdjustAndStartAgain is provided',
+        (tester) async {
+      final state = PactDetailState(pact: _activePact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            pactChainingEnabled: true,
+            onAdjustAndStartAgain: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsNothing);
+    });
+
+    testWidgets('tapping Adjust and start again button calls onAdjustAndStartAgain', (tester) async {
+      var tapped = false;
+      final state = PactDetailState(pact: _stoppedPact, stats: _stats, isLoading: false);
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: state,
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            pactChainingEnabled: true,
+            onAdjustAndStartAgain: () => tapped = true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-detail-adjust-and-start-again-button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      await tester.tap(find.byKey(const Key('pact-detail-adjust-and-start-again-button')));
+      expect(tapped, isTrue);
+    });
+  });
 }
