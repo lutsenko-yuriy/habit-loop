@@ -196,8 +196,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('pact_chaining_enabled'), isTrue);
       });
 
-      test('default value is false during development (HAB-202)', () {
-        expect(RemoteConfigDefaults.all['pact_chaining_enabled'], isFalse);
+      test('default value is true (HAB-202 WU4, feature complete)', () {
+        expect(RemoteConfigDefaults.all['pact_chaining_enabled'], isTrue);
       });
 
       test('constant matches all map value', () {
