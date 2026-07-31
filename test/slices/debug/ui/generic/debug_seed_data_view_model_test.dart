@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/infrastructure/auth/data/local_auth_service.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -16,10 +18,12 @@ void main() {
   group('DebugSeedDataViewModel', () {
     late InMemoryPactRepository pactRepo;
     late InMemoryShowupRepository showupRepo;
+    late InMemoryPactBreakRepository pactBreakRepo;
 
     setUp(() {
       pactRepo = InMemoryPactRepository();
       showupRepo = InMemoryShowupRepository();
+      pactBreakRepo = InMemoryPactBreakRepository();
     });
 
     ProviderContainer makeContainer({
@@ -31,6 +35,7 @@ void main() {
       final container = ProviderContainer(overrides: [
         pactRepositoryProvider.overrideWithValue(pactRepo),
         showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactBreakRepositoryProvider.overrideWithValue(pactBreakRepo),
         pactTransactionServiceProvider.overrideWithValue(txService),
         remoteConfigServiceProvider.overrideWithValue(rc),
         syncServiceProvider.overrideWithValue(const NoopSyncService()),
@@ -103,6 +108,29 @@ void main() {
       final state = container.read(debugSeedDataViewModelProvider);
       expect(state.status, DebugSeedState.done);
       expect((await pactRepo.getAllPacts()).length, 2);
+    });
+
+    test('seedLocalPacts deletes an existing pact\'s breaks before deleting the pact (HAB-208)', () async {
+      // pact_breaks.pact_id has a foreign key to pacts.id — a debug pact that
+      // ever had a break (e.g. from testing the stop-break flow) must have
+      // its breaks cleaned up first, or a real SQLite run would hit a
+      // FOREIGN KEY constraint error deleting the pact.
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 1});
+      final notifier = container.read(debugSeedDataViewModelProvider.notifier);
+      await notifier.seedLocalPacts();
+
+      await pactBreakRepo.saveBreak(PactBreak(
+        id: 'brk-1',
+        pactId: 'debug-seed-local-0',
+        startDate: DateTime.now(),
+        rationale: 'Testing',
+      ));
+
+      await notifier.seedLocalPacts();
+
+      final state = container.read(debugSeedDataViewModelProvider);
+      expect(state.status, DebugSeedState.done);
+      expect(await pactBreakRepo.getBreaksForPact('debug-seed-local-0'), isEmpty);
     });
 
     test('seedLocalPacts pact IDs are stable across the same seed index', () async {

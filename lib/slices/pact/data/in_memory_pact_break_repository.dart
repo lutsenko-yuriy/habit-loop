@@ -39,4 +39,9 @@ class InMemoryPactBreakRepository implements PactBreakRepository {
     }
     _pactBreaks[index] = pactBreak;
   }
+
+  @override
+  Future<void> deleteBreaksForPact(String pactId) async {
+    _pactBreaks.removeWhere((b) => b.pactId == pactId);
+  }
 }

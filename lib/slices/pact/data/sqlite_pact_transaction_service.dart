@@ -39,16 +39,16 @@ class SqlitePactTransactionService implements PactTransactionService {
     });
   }
 
-  /// Atomically updates the pact row (status, actual_end_date, stop_reason)
-  /// and deletes all showups for the pact in a single transaction.
+  /// Updates the pact row and deletes only its pending-and-future showups —
+  /// see [PactTransactionService.stopPactTransaction] for why.
   ///
-  /// Only the mutable columns are written (via [PactMapper.toUpdateRow]) —
-  /// `scheduled_end_date` and `total_showups` are intentionally excluded and
-  /// preserved intact.
+  /// Only mutable columns are written (via [PactMapper.toUpdateRow]);
+  /// `scheduled_end_date`/`total_showups` are preserved untouched.
   @override
   Future<void> stopPactTransaction({
     required Pact updatedPact,
     required String pactId,
+    required DateTime now,
   }) async {
     await _db.transaction((txn) async {
       final affected = await txn.update(
@@ -60,7 +60,11 @@ class SqlitePactTransactionService implements PactTransactionService {
       if (affected == 0) {
         throw StateError('stopPactTransaction: pact $pactId not found');
       }
-      await txn.delete('showups', where: 'pact_id = ?', whereArgs: [pactId]);
+      await txn.delete(
+        'showups',
+        where: 'pact_id = ? AND scheduled_at > ? AND status = ?',
+        whereArgs: [pactId, now.millisecondsSinceEpoch, 'pending'],
+      );
     });
   }
 }

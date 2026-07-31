@@ -144,52 +144,95 @@ void main() {
     // -------------------------------------------------------------------------
 
     group('stopPactTransaction', () {
-      test('updates pact row and deletes pending showups atomically', () async {
+      test('updates pact row and deletes only showups scheduled after now', () async {
         final pact = makePact();
-        final showup = makeShowup(id: 's1', pactId: 'pact-1');
-        await service.savePactWithShowups(pact, [showup]);
+        // s1 is in the past relative to `now` below, s2 is in the future.
+        final pastShowup = makeShowup(id: 's1', pactId: 'pact-1');
+        final futureShowup = Showup(
+          id: 's2',
+          pactId: 'pact-1',
+          scheduledAt: DateTime(2026, 3, 5, 8),
+          duration: const Duration(minutes: 30),
+          status: ShowupStatus.pending,
+        );
+        await service.savePactWithShowups(pact, [pastShowup, futureShowup]);
 
-        final stopDate = DateTime(2026, 3, 1);
+        final now = DateTime(2026, 3, 1);
         final stoppedPact = pact.copyWith(
           status: PactStatus.stopped,
-          endDate: stopDate,
+          endDate: now,
           stopReason: 'Changed plans',
         );
 
         await service.stopPactTransaction(
           updatedPact: stoppedPact,
           pactId: 'pact-1',
+          now: now,
         );
 
         // Pact status and actual_end_date updated.
         final pactRows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-1']);
         expect(pactRows, hasLength(1));
         expect(pactRows.first['status'], equals('stopped'));
-        expect(pactRows.first['actual_end_date'], equals(stopDate.millisecondsSinceEpoch));
+        expect(pactRows.first['actual_end_date'], equals(now.millisecondsSinceEpoch));
         expect(pactRows.first['stop_reason'], equals('Changed plans'));
 
-        // All showups for the pact deleted.
+        // Only the future showup is deleted — the past one is real history
+        // and must survive (HAB-208).
         final showupRows = await db.query('showups', where: 'pact_id = ?', whereArgs: ['pact-1']);
-        expect(showupRows, isEmpty, reason: 'pending showups must be deleted on stop');
+        expect(showupRows.map((r) => r['id']), equals(['s1']),
+            reason: 'showups at or before now must be kept; only future ones are deleted');
       });
 
-      test('rolls back pact update if showup delete fails — impossible with cascade but verifiable via FK violation',
-          () async {
-        // This test verifies that if the pact row update goes through but the
-        // showup delete step raises an error, the whole transaction is atomic.
-        // We use a spy database that throws during DELETE to simulate the failure.
-        // Since real sqflite cannot easily simulate that, we verify via the
-        // contract: after a successful call the pact must be updated and showups gone.
-        // The failure path is covered by the "rolls back" test above for savePactWithShowups.
+      test('keeps a future showup that was already manually marked done (HAB-208 audit)', () async {
+        // A showup can be marked done/failed ahead of its scheduled time —
+        // showup_detail_view_model.dart's markDone/markFailed only gate on
+        // status == pending, with no time check. Deleting purely by schedule
+        // date would silently drop that real history.
         final pact = makePact();
-        await service.savePactWithShowups(pact, []);
+        final now = DateTime(2026, 3, 1);
+        final futureDoneShowup = Showup(
+          id: 's1',
+          pactId: 'pact-1',
+          scheduledAt: DateTime(2026, 3, 5, 8),
+          duration: const Duration(minutes: 30),
+          status: ShowupStatus.done,
+        );
+        final futurePendingShowup = Showup(
+          id: 's2',
+          pactId: 'pact-1',
+          scheduledAt: DateTime(2026, 3, 6, 8),
+          duration: const Duration(minutes: 30),
+          status: ShowupStatus.pending,
+        );
+        await service.savePactWithShowups(pact, [futureDoneShowup, futurePendingShowup]);
 
-        final stopDate = DateTime(2026, 4, 1);
-        final stoppedPact = pact.copyWith(status: PactStatus.stopped, endDate: stopDate);
-        await service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'pact-1');
+        final stoppedPact = pact.copyWith(status: PactStatus.stopped, endDate: now);
+        await service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'pact-1', now: now);
 
-        final pactRows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-1']);
-        expect(pactRows.first['status'], equals('stopped'));
+        final showupRows = await db.query('showups', where: 'pact_id = ?', whereArgs: ['pact-1']);
+        expect(showupRows.map((r) => r['id']), equals(['s1']),
+            reason: 'a future showup already marked done is real history and must survive; only the still-pending '
+                'future showup should be deleted');
+      });
+
+      test('keeps a showup scheduled exactly at now', () async {
+        final pact = makePact();
+        final now = DateTime(2026, 3, 1, 8);
+        final showupAtNow = Showup(
+          id: 's1',
+          pactId: 'pact-1',
+          scheduledAt: now,
+          duration: const Duration(minutes: 30),
+          status: ShowupStatus.pending,
+        );
+        await service.savePactWithShowups(pact, [showupAtNow]);
+
+        final stoppedPact = pact.copyWith(status: PactStatus.stopped, endDate: now);
+        await service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'pact-1', now: now);
+
+        final showupRows = await db.query('showups', where: 'pact_id = ?', whereArgs: ['pact-1']);
+        expect(showupRows, hasLength(1), reason: 'a showup scheduled exactly at now must not be deleted');
       });
 
       test('preserves scheduled_end_date after stop', () async {
@@ -198,7 +241,7 @@ void main() {
 
         final stopDate = DateTime(2026, 3, 1);
         final stoppedPact = pact.copyWith(status: PactStatus.stopped, endDate: stopDate);
-        await service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'pact-1');
+        await service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'pact-1', now: stopDate);
 
         final pactRows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-1']);
         expect(
@@ -223,7 +266,7 @@ void main() {
 
         final stopDate = DateTime(2026, 3, 1);
         final stoppedPact = pact.copyWith(status: PactStatus.stopped, endDate: stopDate);
-        await service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'pact-1');
+        await service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'pact-1', now: stopDate);
 
         final pactRows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-1']);
         expect(
@@ -235,13 +278,14 @@ void main() {
 
       test('throws StateError when pact id does not exist', () async {
         final nonExistentPact = makePact(id: 'does-not-exist');
+        final now = DateTime(2026, 3, 1);
         final stoppedPact = nonExistentPact.copyWith(
           status: PactStatus.stopped,
-          endDate: DateTime(2026, 3, 1),
+          endDate: now,
         );
 
         await expectLater(
-          () => service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'does-not-exist'),
+          () => service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'does-not-exist', now: now),
           throwsA(isA<StateError>()),
         );
       });

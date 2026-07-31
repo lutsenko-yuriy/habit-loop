@@ -367,6 +367,78 @@ void main() {
     });
 
     // -------------------------------------------------------------------------
+    // deleteShowupsForPactAfter (HAB-208)
+    // -------------------------------------------------------------------------
+
+    group('deleteShowupsForPactAfter', () {
+      test('keeps showups at or before the cutoff, deletes only those after it', () async {
+        await insertPact();
+        final cutoff = DateTime(2026, 1, 2, 8, 0);
+        await repository.saveShowup(makeShowup(id: 'past', scheduledAt: DateTime(2026, 1, 1, 8, 0)));
+        await repository.saveShowup(makeShowup(id: 'at-cutoff', scheduledAt: cutoff));
+        await repository.saveShowup(makeShowup(id: 'future', scheduledAt: DateTime(2026, 1, 3, 8, 0)));
+
+        await repository.deleteShowupsForPactAfter('pact-1', cutoff);
+
+        final remaining = await repository.getShowupsForPact('pact-1');
+        expect(remaining.map((s) => s.id).toSet(), {'past', 'at-cutoff'});
+      });
+
+      test('no-op when no showups for pact', () async {
+        await expectLater(
+          () => repository.deleteShowupsForPactAfter('non-existent', DateTime(2026, 1, 1)),
+          returnsNormally,
+        );
+      });
+
+      test('keeps a future showup already marked done or failed (HAB-208 audit)', () async {
+        await insertPact();
+        final cutoff = DateTime(2026, 1, 2);
+        await repository.saveShowup(
+          makeShowup(id: 'future-done', scheduledAt: DateTime(2026, 1, 5, 8), status: ShowupStatus.done),
+        );
+        await repository.saveShowup(
+          makeShowup(id: 'future-failed', scheduledAt: DateTime(2026, 1, 6, 8), status: ShowupStatus.failed),
+        );
+        await repository.saveShowup(
+          makeShowup(id: 'future-pending', scheduledAt: DateTime(2026, 1, 7, 8), status: ShowupStatus.pending),
+        );
+
+        await repository.deleteShowupsForPactAfter('pact-1', cutoff);
+
+        final remaining = await repository.getShowupsForPact('pact-1');
+        expect(remaining.map((s) => s.id).toSet(), {'future-done', 'future-failed'});
+      });
+
+      test('only deletes future showups for the targeted pact', () async {
+        await insertPact();
+        await insertPact(
+          Pact(
+            id: 'pact-2',
+            habitName: 'Jog',
+            startDate: DateTime(2026, 1, 1),
+            endDate: DateTime(2026, 7, 1),
+            showupDuration: const Duration(minutes: 20),
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
+            status: PactStatus.active,
+            createdAt: DateTime(2026, 1, 1, 7, 0, 0),
+          ),
+        );
+        final cutoff = DateTime(2026, 1, 2);
+        await repository.saveShowup(
+          makeShowup(id: 's1', pactId: 'pact-1', scheduledAt: DateTime(2026, 1, 5, 8, 0)),
+        );
+        await repository.saveShowup(
+          makeShowup(id: 's2', pactId: 'pact-2', scheduledAt: DateTime(2026, 1, 5, 7, 0)),
+        );
+        await repository.deleteShowupsForPactAfter('pact-1', cutoff);
+
+        final remaining = await repository.getShowupsForPact('pact-2');
+        expect(remaining, hasLength(1), reason: 'pact-2 showups must be untouched');
+      });
+    });
+
+    // -------------------------------------------------------------------------
     // ShowupSyncRepository
     // -------------------------------------------------------------------------
 

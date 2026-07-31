@@ -121,7 +121,21 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
             existingStats: state.stats,
           );
       final stats = updated.stats!;
-      state = state.copyWith(pact: updated, stats: stats, isStopping: false);
+
+      // Resolve any active break too — stopping the pact must not leave a
+      // dangling break banner (HAB-208).
+      final activeBreak = state.activeBreak;
+      if (activeBreak != null) {
+        await ref.read(pactBreakServiceProvider).stopBreak(activeBreak.id, now: now);
+      }
+
+      state = state.copyWith(
+        pact: updated,
+        stats: stats,
+        isStopping: false,
+        clearActiveBreak: true,
+        isBreakActiveNow: false,
+      );
 
       unawaited(ref.read(reminderSchedulingServiceProvider).cancelAllRemindersForPact(arg, showupIds: showupIds));
       unawaited(

@@ -101,9 +101,9 @@ class PactDetailCache {
     return _populate(pactId, pact: effectivePact, showups: effectiveShowups, breaks: effectiveBreaks, now: now);
   }
 
-  /// Evict-only — for when there is nothing valid left to cache (e.g. after
-  /// `stopPactTransaction` deletes the pact's showups). The next [load] miss
-  /// falls back to the frozen `pact.stats` snapshot.
+  /// Evict-only — used after a mutation whose caller doesn't have the fresh
+  /// showup list in hand (e.g. `stopPactTransaction`, HAB-208). The next
+  /// [load] miss re-fetches and recomputes from the DB.
   void evict(String pactId) {
     _bundles.remove(pactId);
     _showups.remove(pactId);
@@ -155,13 +155,9 @@ class PactDetailCache {
     // same sorted list, in sync with pendingCount.
     final skippedOnBreak = sorted.where((s) => BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks)).length;
 
-    // Frozen-snapshot fallback: a cache miss with an empty showup list (a
-    // stopped/completed pact whose showups were deleted by
-    // stopPactTransaction) uses the frozen Pact.stats snapshot instead of
-    // recomputing from nothing, which would zero everything out. The
-    // timelinePage below is still built normally from the empty list —
-    // _buildAnchorEnd already handles non-active pact status via
-    // PactConcludedMilestone regardless of showup count.
+    // Frozen-snapshot fallback: empty showups now only means a pact stopped
+    // before its first showup ever occurred (HAB-208 keeps past ones), so
+    // falls back to the frozen snapshot instead of zeroing everything out.
     final stats = sorted.isEmpty && pact.stats != null
         ? pact.stats!
         : PactStats.fromCounts(

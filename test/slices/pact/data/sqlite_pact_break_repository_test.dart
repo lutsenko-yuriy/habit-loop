@@ -56,7 +56,11 @@ void main() {
     setUp(() async {
       db = await databaseFactoryFfi.openDatabase(
         inMemoryDatabasePath,
-        options: OpenDatabaseOptions(version: 1, onCreate: HabitLoopDatabase.runMigrations),
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: HabitLoopDatabase.runMigrations,
+          onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+        ),
       );
       repository = SqlitePactBreakRepository(db);
     });
@@ -148,6 +152,61 @@ void main() {
 
         final breaks = await repository.getBreaksForPact('pact-1');
         expect(breaks.map((b) => b.id).toList(), equals(['break-earlier', 'break-later']));
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // deleteBreaksForPact (HAB-208)
+    // -------------------------------------------------------------------------
+
+    group('deleteBreaksForPact', () {
+      test('removes all breaks for the given pact', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak(id: 'break-1'));
+        await repository.saveBreak(makeBreak(id: 'break-2', startDate: DateTime(2026, 4, 1)));
+
+        await repository.deleteBreaksForPact('pact-1');
+
+        expect(await repository.getBreaksForPact('pact-1'), isEmpty);
+      });
+
+      test('no-op when no breaks for pact', () async {
+        await insertPact();
+        await expectLater(() => repository.deleteBreaksForPact('pact-1'), returnsNormally);
+      });
+
+      test('only deletes breaks for the targeted pact', () async {
+        await insertPact();
+        await insertPact(
+          Pact(
+            id: 'pact-2',
+            habitName: 'Jog',
+            startDate: DateTime(2026, 1, 1),
+            endDate: DateTime(2026, 7, 1),
+            showupDuration: const Duration(minutes: 30),
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+            status: PactStatus.active,
+            createdAt: DateTime(2026, 1, 1, 9, 0, 0),
+          ),
+        );
+        await repository.saveBreak(makeBreak(id: 'break-1', pactId: 'pact-1'));
+        await repository.saveBreak(makeBreak(id: 'break-2', pactId: 'pact-2'));
+
+        await repository.deleteBreaksForPact('pact-1');
+
+        expect(await repository.getBreaksForPact('pact-2'), hasLength(1));
+      });
+
+      test('allows deleting the parent pact afterward without a FOREIGN KEY error', () async {
+        await insertPact();
+        await repository.saveBreak(makeBreak(id: 'break-1'));
+
+        await repository.deleteBreaksForPact('pact-1');
+
+        await expectLater(
+          () => db.delete('pacts', where: 'id = ?', whereArgs: ['pact-1']),
+          returnsNormally,
+        );
       });
     });
 

@@ -151,6 +151,15 @@ class SqliteShowupRepository implements ShowupRepository, ShowupSyncRepository {
     await _db.delete(_table, where: 'pact_id = ?', whereArgs: [pactId]);
   }
 
+  @override
+  Future<void> deleteShowupsForPactAfter(String pactId, DateTime after) async {
+    await _db.delete(
+      _table,
+      where: 'pact_id = ? AND scheduled_at > ? AND status = ?',
+      whereArgs: [pactId, after.millisecondsSinceEpoch, 'pending'],
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // ShowupSyncRepository
   // ---------------------------------------------------------------------------

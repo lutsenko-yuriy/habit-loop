@@ -16,4 +16,9 @@ abstract class PactBreakRepository {
   ///
   /// Throws [ArgumentError] if no break with the given id exists.
   Future<void> updateBreak(PactBreak pactBreak);
+
+  /// Deletes all breaks recorded for [pactId]. Callers that delete a pact
+  /// directly (bypassing `PactTransactionService`) must call this first —
+  /// `pact_breaks.pact_id` has a foreign key to `pacts.id`.
+  Future<void> deleteBreaksForPact(String pactId);
 }
