@@ -58,12 +58,17 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
     try {
       final pactService = ref.read(pactServiceProvider);
       final showupRepo = ref.read(showupRepositoryProvider);
+      final pactBreakRepo = ref.read(pactBreakRepositoryProvider);
       final rc = ref.read(remoteConfigServiceProvider);
       final n = rc.getInt('max_active_pacts').clamp(1, _kHabitNames.length * 2);
 
       final existingPacts = await pactService.getAllPacts();
       for (final p in existingPacts) {
         await showupRepo.deleteShowupsForPact(p.id);
+        // pact_breaks.pact_id has a foreign key to pacts.id — a pact that
+        // ever had a break (e.g. from testing the stop-break flow) fails to
+        // delete with a FOREIGN KEY constraint error otherwise (HAB-208).
+        await pactBreakRepo.deleteBreaksForPact(p.id);
         await pactService.deletePact(p.id);
       }
 

@@ -81,6 +81,30 @@ void main() {
       });
     });
 
+    group('deleteBreaksForPact', () {
+      test('removes all breaks for the given pact', () async {
+        await repo.saveBreak(makeBreak(id: 'break-1'));
+        await repo.saveBreak(makeBreak(id: 'break-2', startDate: DateTime(2026, 4, 1)));
+
+        await repo.deleteBreaksForPact('pact-1');
+
+        expect(await repo.getBreaksForPact('pact-1'), isEmpty);
+      });
+
+      test('no-op when no breaks for pact', () async {
+        await expectLater(() => repo.deleteBreaksForPact('pact-1'), returnsNormally);
+      });
+
+      test('only deletes breaks for the targeted pact', () async {
+        await repo.saveBreak(makeBreak(id: 'break-1', pactId: 'pact-1'));
+        await repo.saveBreak(makeBreak(id: 'break-2', pactId: 'pact-2'));
+
+        await repo.deleteBreaksForPact('pact-1');
+
+        expect(await repo.getBreaksForPact('pact-2'), hasLength(1));
+      });
+    });
+
     test('constructor accepts an initial list of breaks', () async {
       repo = InMemoryPactBreakRepository([makeBreak()]);
       final breaks = await repo.getBreaksForPact('pact-1');

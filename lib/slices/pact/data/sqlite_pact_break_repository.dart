@@ -50,6 +50,11 @@ class SqlitePactBreakRepository implements PactBreakRepository, PactBreakSyncRep
   }
 
   @override
+  Future<void> deleteBreaksForPact(String pactId) async {
+    await _db.delete(_table, where: 'pact_id = ?', whereArgs: [pactId]);
+  }
+
+  @override
   Future<List<PactBreak>> getDirtyPactBreaks() async {
     final rows = await _db.query(_table, where: 'dirty = ?', whereArgs: [1]);
     return rows.map(PactBreakMapper.fromRow).toList();
