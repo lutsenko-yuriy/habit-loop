@@ -54,6 +54,8 @@ final class FeatureFlags {
       showupRedemptionEnabled: rc.getBool('showup_redemption_enabled'),
       aboutScreenEnabled: rc.getBool('about_screen_enabled'),
       pactBreaksEnabled: rc.getBool('pact_breaks_enabled'),
+      // Release-version gating (HAB-207) starts at 0.53.0 — every flag above
+      // predates it and is intentionally left ungated, by design.
       pactChainingEnabled: resolveReleaseGatedFlag(
         rawValue: rc.getBool('pact_chaining_enabled'),
         releaseVersion: RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'],

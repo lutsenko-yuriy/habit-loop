@@ -227,6 +227,23 @@ void main() {
         expect(RemoteConfigDefaults.releaseVersions.containsKey('about_screen_enabled'), isFalse);
         expect(RemoteConfigDefaults.releaseVersions.containsKey('pact_breaks_enabled'), isFalse);
       });
+
+      test('every key is a real, known feature-toggle key (catches typos)', () {
+        // A typo'd or non-existent key here would silently never gate
+        // anything — resolveReleaseGatedFlag is only ever consulted for keys
+        // a caller explicitly wires up, so a mismatched key wouldn't error,
+        // it would just be dead data. This at least catches "misspelled an
+        // existing key" — it can't catch "forgot to add a key at all" for a
+        // flag that should be gated but isn't wired through
+        // resolveReleaseGatedFlag in the first place.
+        for (final key in RemoteConfigDefaults.releaseVersions.keys) {
+          expect(
+            RemoteConfigDefaults.featureToggleKeys.contains(key),
+            isTrue,
+            reason: '"$key" in releaseVersions is not a known feature toggle key — likely a typo',
+          );
+        }
+      });
     });
 
     group('pact_timeline_no_grouping_tail_period_in_days', () {

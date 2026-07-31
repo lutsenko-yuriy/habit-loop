@@ -36,13 +36,19 @@ bool isAtLeast(String current, String required) {
 
 /// Parses an `X.Y.Z`-style version string into its integer segments.
 ///
-/// Returns `null` if the string is empty or any segment fails to parse as a
-/// non-negative integer.
+/// Strips build metadata first (`+build`/`-prerelease`, e.g. the
+/// `pubspec.yaml`-style `"0.53.0+174"`) so passing the full version string
+/// by mistake degrades to comparing the `X.Y.Z` part instead of failing
+/// closed on the non-numeric build number.
+///
+/// Returns `null` if the string is empty or any remaining segment fails to
+/// parse as a non-negative integer.
 List<int>? _parseVersion(String version) {
   if (version.isEmpty) {
     return null;
   }
-  final segments = version.split('.');
+  final withoutMetadata = version.split(RegExp(r'[+-]')).first;
+  final segments = withoutMetadata.split('.');
   final parsed = <int>[];
   for (final segment in segments) {
     final value = int.tryParse(segment);
