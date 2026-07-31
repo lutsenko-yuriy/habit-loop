@@ -57,6 +57,7 @@ import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -85,6 +86,13 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Release-version gating (HAB-207) — '' fails closed, unlike the test
+  // sentinel unspecifiedAppVersion, which fails open.
+  String runningAppVersion = '';
+  try {
+    runningAppVersion = (await PackageInfo.fromPlatform()).version;
+  } catch (_) {}
 
   if (kReleaseMode) {
     FlutterError.onError = (details) {
@@ -312,6 +320,7 @@ Future<void> main() async {
             ),
       fakeFirestoreClient: (!kReleaseMode && useLocalBackend) ? sharedFakeFirestore : null,
       debugBackendAtStartup: !kReleaseMode ? debugBackend : null,
+      runningAppVersion: runningAppVersion,
     );
 
     runApp(

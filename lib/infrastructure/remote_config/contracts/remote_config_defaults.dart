@@ -176,6 +176,16 @@ abstract final class RemoteConfigDefaults {
   /// console to disable pact chaining without a release.
   static const bool pactChainingEnabled = true;
 
+  /// Release-version gate for feature-toggle kill-switches (HAB-207).
+  /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
+  /// in release builds (see [FeatureFlags.fromRemoteConfig]); `null` = not
+  /// yet released, always hidden. Debug/profile skip the check. Only for
+  /// toggles introduced after HAB-207 — `pact_chaining_enabled` (HAB-202)
+  /// is the sole pre-existing retrofit.
+  static const Map<String, String?> releaseVersions = {
+    'pact_chaining_enabled': '0.53.0',
+  };
+
   /// Optional short hint shown in the debug override dialog for keys whose
   /// numeric range has a concrete semantic meaning.
   ///

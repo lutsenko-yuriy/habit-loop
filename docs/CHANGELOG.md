@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.53.2] — 2026-07-31 (PR #342 merged)
+
+### Added
+
+- [app] HAB-207: Remote Config feature-flag kill-switches introduced from this point onward can be gated on the app's real running version via a new `RemoteConfigDefaults.releaseVersions` map — flipping a flag `true` in the console can no longer expose an unfinished feature before its intended release actually reaches users. Debug/profile builds and all pre-existing toggles are unaffected. No user-visible behavior change.
+
 ## [0.53.1] — 2026-07-31 (PR #343 merged)
 
 ### Fixed

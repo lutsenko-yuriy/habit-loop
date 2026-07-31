@@ -34,6 +34,7 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 import 'package:habit_loop/infrastructure/notifications/data/noop_notification_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/infrastructure/onboarding/data/noop_onboarding_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/app_version.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/feature_flags.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_override_store.dart';
@@ -171,8 +172,16 @@ final remoteConfigServiceProvider = Provider<RemoteConfigService>(
   (ref) => NoopRemoteConfigService(),
 );
 
+/// Real running app version (HAB-207), overridden by `main.dart` at startup.
+/// Safe-default like [remoteConfigServiceProvider] — not every test needs to
+/// override it.
+final runningAppVersionProvider = Provider<String>((ref) => unspecifiedAppVersion);
+
 final featureFlagsProvider = Provider<FeatureFlags>(
-  (ref) => FeatureFlags.fromRemoteConfig(ref.watch(remoteConfigServiceProvider)),
+  (ref) => FeatureFlags.fromRemoteConfig(
+    ref.watch(remoteConfigServiceProvider),
+    appVersion: ref.watch(runningAppVersionProvider),
+  ),
 );
 
 final remoteConfigOverrideStoreProvider = Provider<RemoteConfigOverrideStore>(
