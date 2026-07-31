@@ -86,7 +86,9 @@ Do not rewrite the rest of the file.
 
 **Only if step 2 created a new numbered heading** (the entry had a `[user]`/`[app]` tag): open the version file (from the project config) and update the version name (`X.Y.Z` part) to match the new `[X.Y.Z]` entry added in step 2.
 
-**If step 2 instead appended to `## [Unreleased]`:** skip this step entirely — do not touch the version file. `pubspec.yaml`'s version represents the app's build version, not the repo's commit history (`docs/VERSIONING.md`); it only changes when the app itself changes.
+Also update `currentAppVersion` in `lib/infrastructure/remote_config/contracts/app_version.dart` to the same `X.Y.Z` value, in the same commit (HAB-207). This constant backs `RemoteConfigDefaults.releaseVersions`-gated feature flags — `test/infrastructure/remote_config/app_version_test.dart` asserts it stays in sync with `pubspec.yaml` and will fail the build if this step is skipped.
+
+**If step 2 instead appended to `## [Unreleased]`:** skip this step entirely — do not touch the version file or `currentAppVersion`. `pubspec.yaml`'s version represents the app's build version, not the repo's commit history (`docs/VERSIONING.md`); it only changes when the app itself changes.
 
 Do not touch the build number — CI manages it automatically (see version management in project config).
 
