@@ -3,6 +3,7 @@ import 'package:habit_loop/domain/showup/save_showups_result.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_date_utils.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 
 // Fast in-memory fake used by unit tests that don't need SQLite fidelity.
 // Migration to sqflite_common_ffi is tracked in HAB-99.
@@ -97,6 +98,6 @@ class InMemoryShowupRepository implements ShowupRepository {
 
   @override
   Future<void> deleteShowupsForPactAfter(String pactId, DateTime after) async {
-    _showups.removeWhere((s) => s.pactId == pactId && s.scheduledAt.isAfter(after));
+    _showups.removeWhere((s) => s.pactId == pactId && s.scheduledAt.isAfter(after) && s.status == ShowupStatus.pending);
   }
 }

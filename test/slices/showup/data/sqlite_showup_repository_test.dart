@@ -391,6 +391,25 @@ void main() {
         );
       });
 
+      test('keeps a future showup already marked done or failed (HAB-208 audit)', () async {
+        await insertPact();
+        final cutoff = DateTime(2026, 1, 2);
+        await repository.saveShowup(
+          makeShowup(id: 'future-done', scheduledAt: DateTime(2026, 1, 5, 8), status: ShowupStatus.done),
+        );
+        await repository.saveShowup(
+          makeShowup(id: 'future-failed', scheduledAt: DateTime(2026, 1, 6, 8), status: ShowupStatus.failed),
+        );
+        await repository.saveShowup(
+          makeShowup(id: 'future-pending', scheduledAt: DateTime(2026, 1, 7, 8), status: ShowupStatus.pending),
+        );
+
+        await repository.deleteShowupsForPactAfter('pact-1', cutoff);
+
+        final remaining = await repository.getShowupsForPact('pact-1');
+        expect(remaining.map((s) => s.id).toSet(), {'future-done', 'future-failed'});
+      });
+
       test('only deletes future showups for the targeted pact', () async {
         await insertPact();
         await insertPact(

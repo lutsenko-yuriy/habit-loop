@@ -184,6 +184,38 @@ void main() {
             reason: 'showups at or before now must be kept; only future ones are deleted');
       });
 
+      test('keeps a future showup that was already manually marked done (HAB-208 audit)', () async {
+        // A showup can be marked done/failed ahead of its scheduled time —
+        // showup_detail_view_model.dart's markDone/markFailed only gate on
+        // status == pending, with no time check. Deleting purely by schedule
+        // date would silently drop that real history.
+        final pact = makePact();
+        final now = DateTime(2026, 3, 1);
+        final futureDoneShowup = Showup(
+          id: 's1',
+          pactId: 'pact-1',
+          scheduledAt: DateTime(2026, 3, 5, 8),
+          duration: const Duration(minutes: 30),
+          status: ShowupStatus.done,
+        );
+        final futurePendingShowup = Showup(
+          id: 's2',
+          pactId: 'pact-1',
+          scheduledAt: DateTime(2026, 3, 6, 8),
+          duration: const Duration(minutes: 30),
+          status: ShowupStatus.pending,
+        );
+        await service.savePactWithShowups(pact, [futureDoneShowup, futurePendingShowup]);
+
+        final stoppedPact = pact.copyWith(status: PactStatus.stopped, endDate: now);
+        await service.stopPactTransaction(updatedPact: stoppedPact, pactId: 'pact-1', now: now);
+
+        final showupRows = await db.query('showups', where: 'pact_id = ?', whereArgs: ['pact-1']);
+        expect(showupRows.map((r) => r['id']), equals(['s1']),
+            reason: 'a future showup already marked done is real history and must survive; only the still-pending '
+                'future showup should be deleted');
+      });
+
       test('keeps a showup scheduled exactly at now', () async {
         final pact = makePact();
         final now = DateTime(2026, 3, 1, 8);

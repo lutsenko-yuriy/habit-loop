@@ -40,13 +40,18 @@ class SqlitePactTransactionService implements PactTransactionService {
   }
 
   /// Atomically updates the pact row (status, actual_end_date, stop_reason)
-  /// and deletes only its showups scheduled after [now] in a single
-  /// transaction.
+  /// and deletes only its still-pending showups scheduled after [now] in a
+  /// single transaction.
   ///
   /// Only the mutable columns are written (via [PactMapper.toUpdateRow]) —
   /// `scheduled_end_date` and `total_showups` are intentionally excluded and
   /// preserved intact. Showups at or before [now] are kept (HAB-208) — see
-  /// [PactTransactionService.stopPactTransaction] for why.
+  /// [PactTransactionService.stopPactTransaction] for why. The delete is
+  /// additionally scoped to `status = 'pending'`: a showup can be marked
+  /// done/failed ahead of its scheduled time (`markDone`/`markFailed` only
+  /// gate on pending status, not on time), and such a showup is real history
+  /// that must survive the stop just like a past one — only a future showup
+  /// nothing has happened to yet is safe to drop.
   @override
   Future<void> stopPactTransaction({
     required Pact updatedPact,
@@ -65,8 +70,8 @@ class SqlitePactTransactionService implements PactTransactionService {
       }
       await txn.delete(
         'showups',
-        where: 'pact_id = ? AND scheduled_at > ?',
-        whereArgs: [pactId, now.millisecondsSinceEpoch],
+        where: 'pact_id = ? AND scheduled_at > ? AND status = ?',
+        whereArgs: [pactId, now.millisecondsSinceEpoch, 'pending'],
       );
     });
   }
