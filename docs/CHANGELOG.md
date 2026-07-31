@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.53.1] — 2026-07-31 (PR #343 merged)
+
+### Fixed
+
+- [user] Stopping a pact no longer resets its stats to zero or leaves a stuck "on break" banner when you come back to it later.
+- [app] HAB-208: `stopPactTransaction` now only deletes showups scheduled after the stop moment, preserving past showups so stats recompute correctly on reload. `stopPact` now also resolves any active break before finishing, clearing the break banner.
+
 ## [0.53.0] — 2026-07-31 (PR #341 merged)
 
 ### Added
