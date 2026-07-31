@@ -352,6 +352,13 @@ jobs:
           # finish.
           git pull --rebase origin main
 
+          # Re-derive the version name from the just-pulled pubspec.yaml, not
+          # $VERSION (captured at pipeline-start) — a concurrently-merged PR
+          # may have bumped the version name while this pipeline was still
+          # running, and only the build number is this job's own to advance
+          # (HAB-210).
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/^version: //' | cut -d'+' -f1)
+
           sed -i "s/^version: .*/version: ${VERSION}+${BUILD}/" pubspec.yaml
           git add pubspec.yaml
           git commit -m "chore: bump build number to ${BUILD} [skip ci]"
