@@ -30,9 +30,8 @@ abstract class ShowupRepository {
   /// Atomic: either all showups for the pact are deleted or none are.
   Future<void> deleteShowupsForPact(String pactId);
 
-  /// Deletes only still-**pending** showups scheduled strictly after [after]
-  /// — used by the stop-pact flow, which must keep past showups (and any
-  /// showup already manually marked done/failed ahead of its scheduled time)
-  /// so stats/timeline stay intact (HAB-208).
+  /// Deletes only still-pending showups after [after] — used on stop-pact,
+  /// which keeps everything else (past or already resolved) as real history
+  /// (HAB-208).
   Future<void> deleteShowupsForPactAfter(String pactId, DateTime after);
 }

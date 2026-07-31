@@ -155,15 +155,9 @@ class PactDetailCache {
     // same sorted list, in sync with pendingCount.
     final skippedOnBreak = sorted.where((s) => BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks)).length;
 
-    // Frozen-snapshot fallback: an empty showup list normally only happens
-    // for a pact stopped before its first showup ever occurred (nothing to
-    // recompute from) — stopPactTransaction keeps past showups since HAB-208,
-    // so this is no longer the common post-stop case. Falls back to the
-    // frozen Pact.stats snapshot instead of recomputing from nothing, which
-    // would zero everything out. The timelinePage below is still built
-    // normally from the empty list — _buildAnchorEnd already handles
-    // non-active pact status via PactConcludedMilestone regardless of showup
-    // count.
+    // Frozen-snapshot fallback: empty showups now only means a pact stopped
+    // before its first showup ever occurred (HAB-208 keeps past ones), so
+    // falls back to the frozen snapshot instead of zeroing everything out.
     final stats = sorted.isEmpty && pact.stats != null
         ? pact.stats!
         : PactStats.fromCounts(

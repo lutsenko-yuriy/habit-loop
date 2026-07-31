@@ -11,16 +11,13 @@ abstract class PactTransactionService {
   /// orphaned pact row, no partial showup inserts).
   Future<void> savePactWithShowups(Pact pact, List<Showup> showups);
 
-  /// Atomically updates the pact row and deletes its still-pending showups
-  /// scheduled after [now].
+  /// Atomically updates the pact row and deletes its still-pending future
+  /// showups (scheduled after [now]).
   ///
-  /// Used by the stop-pact flow: the pact status update and the showup
-  /// deletion are wrapped in a single operation so either both succeed or
-  /// both are rolled back. Showups at or before [now], and any showup
-  /// already manually marked done/failed regardless of its scheduled time,
-  /// are kept — they are real history and must survive the stop so stats
-  /// and the timeline stay intact (HAB-208). Only pending showups that would
-  /// never happen — scheduled strictly after [now] — are removed.
+  /// Kept: showups at/before [now], plus any showup already marked
+  /// done/failed regardless of time — both are real history the stop must
+  /// not lose (HAB-208). Only pending showups that would never happen are
+  /// removed.
   Future<void> stopPactTransaction({
     required Pact updatedPact,
     required String pactId,
