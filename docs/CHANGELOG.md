@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [ci] HAB-210: Fixed `version-tag`'s build-number-bump step overwriting a concurrently-merged PR's `pubspec.yaml` version-name bump with a stale value captured at pipeline-start. It now re-derives the version name from the freshly-pulled `pubspec.yaml` instead of trusting `resolve-version`'s pipeline-start output — only the build number is this job's own to advance. Also hotfixed `pubspec.yaml` on `main`, which had been silently reverted from `0.53.2` back to `0.53.1` by this exact race.
+
 ## [0.53.2] — 2026-07-31 (PR #342 merged)
 
 ### Added
