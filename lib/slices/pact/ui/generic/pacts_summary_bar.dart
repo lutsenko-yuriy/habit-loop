@@ -494,6 +494,7 @@ class _PactListBody extends StatelessWidget {
     return NotificationListener<ScrollNotification>(
       onNotification: (_) => true,
       child: CustomScrollView(
+        key: const Key('pacts-panel-scrollable'),
         controller: scrollController,
         slivers: [
           // ── Title + add button ──

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 
 final pactListViewModelProvider = NotifierProvider<PactListViewModel, PactListState>(PactListViewModel.new);
@@ -32,7 +33,10 @@ class PactListViewModel extends Notifier<PactListState> {
     try {
       final queryService = ref.read(pactListQueryServiceProvider);
       final pacts = await queryService.getAllPacts();
-      final now = DateTime.now();
+      // Reads todayProvider (not DateTime.now() directly) so tests can
+      // override "now" — the panel is embedded in the dashboard, which
+      // already treats todayProvider as its own clock (HAB-211).
+      final now = ref.read(todayProvider);
 
       final entries = <PactListEntry>[];
       for (final pact in pacts) {

@@ -7,6 +7,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
 import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
@@ -45,11 +46,13 @@ ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
   List<PactBreak> breaks = const [],
+  DateTime? now,
 }) {
   return ProviderContainer(overrides: [
     pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
     showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
     pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
+    if (now != null) todayProvider.overrideWithValue(now),
   ]);
 }
 
@@ -310,6 +313,25 @@ void main() {
       await c.read(pactListViewModelProvider.notifier).load();
       final entry = c.read(pactListViewModelProvider).entries.first;
       expect(entry.onBreak, isFalse);
+    });
+
+    test('load: onBreak respects an overridden todayProvider, not real wall-clock time (HAB-211)', () async {
+      // The break window (2099) is nowhere near real "now" — this only
+      // passes if load() actually reads todayProvider instead of calling
+      // DateTime.now() directly.
+      final pact = _pact('p1', PactStatus.active);
+      final overriddenNow = DateTime(2099, 6, 16);
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [
+          _pactBreak('b1', 'p1', startDate: DateTime(2099, 6, 10), plannedEndDate: DateTime(2099, 6, 20)),
+        ],
+        now: overriddenNow,
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isTrue);
     });
 
     test('load: entry.onBreak is false for an active pact with no breaks', () async {

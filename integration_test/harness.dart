@@ -286,9 +286,21 @@ Future<void> openPactsPanel(WidgetTester tester) async {
 }
 
 /// Opens the detail screen for the pact named [habitName] from the pacts panel.
+///
+/// Scrolls the panel's list into view first — on a short viewport (CI's
+/// Android emulator) a pact further down the list isn't realized yet, so a
+/// bare waitFor can time out even though it legitimately exists once
+/// scrolled into range (HAB-211, same root cause as HAB-196/HAB-199).
 Future<void> openPactDetail(WidgetTester tester, String habitName) async {
-  await waitFor(tester, find.text(habitName));
-  await tester.tap(find.text(habitName).last);
+  final scrollableFinder = find.byKey(const Key('pacts-panel-scrollable'));
+  // Scoped to the panel, not a bare find.text(habitName) — the same habit
+  // name can also appear in the dashboard's "today" todo list, and
+  // dragUntilVisible's internal Scrollable.ensureVisible(element(finder))
+  // calls finder.evaluate().single, which throws on that ambiguity even
+  // though the tap below already disambiguates via .last (HAB-211).
+  final panelEntryFinder = find.descendant(of: scrollableFinder, matching: find.text(habitName));
+  await tester.dragUntilVisible(panelEntryFinder, scrollableFinder, const Offset(0, -100));
+  await tester.tap(panelEntryFinder.last);
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump(const Duration(milliseconds: 100));
 }
@@ -317,11 +329,17 @@ Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) async {
 
 /// Opens the timeline screen from an already-open pact detail screen.
 Future<void> openTimeline(WidgetTester tester) async {
-  // Wait for the pact detail to finish loading before scrolling — the button
-  // only appears once the view model has resolved, which can take >450 ms on
-  // a real device; calling ensureVisible before that causes a deadlock.
-  await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
-  await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
+  // dragUntilVisible (not waitFor + ensureVisible) — the button only appears
+  // once the view model has resolved *and* it may sit below several
+  // DateRowTiles on a short viewport (CI's Android emulator), where it isn't
+  // realized yet; ensureVisible can't scroll a not-yet-built lazy-list child
+  // into view (HAB-211, same root cause as HAB-196/HAB-199, same pattern as
+  // scrollToPactDetailStartBreakButton above).
+  await tester.dragUntilVisible(
+    find.byKey(const Key('pact-detail-timeline-button')),
+    find.byType(Scrollable),
+    const Offset(0, -100),
+  );
   await tester.pump();
   await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
   await tester.pump(const Duration(milliseconds: 350));
