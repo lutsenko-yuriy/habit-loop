@@ -94,4 +94,9 @@ class InMemoryShowupRepository implements ShowupRepository {
   Future<void> deleteShowupsForPact(String pactId) async {
     _showups.removeWhere((s) => s.pactId == pactId);
   }
+
+  @override
+  Future<void> deleteShowupsForPactAfter(String pactId, DateTime after) async {
+    _showups.removeWhere((s) => s.pactId == pactId && s.scheduledAt.isAfter(after));
+  }
 }

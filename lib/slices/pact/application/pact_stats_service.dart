@@ -142,7 +142,8 @@ class PactStatsService {
     return updatedShowup;
   }
 
-  // Atomic: pact update + showup deletion via transactionService.
+  // Atomic: pact update + future-showup deletion via transactionService.
+  // Past showups are kept (HAB-208) — see PactTransactionService.stopPactTransaction.
   Future<Pact> stopPact({
     required Pact pact,
     required String pactId,
@@ -167,12 +168,15 @@ class PactStatsService {
     await _transactionService.stopPactTransaction(
       updatedPact: updated,
       pactId: pactId,
+      now: now,
     );
 
     unawaited(_syncService.uploadPact(updated));
 
-    // Evict-only: showups are deleted by the transaction, so there is nothing
-    // valid to cache.  The next read will use the frozen pact.stats snapshot.
+    // Evict-only: the transaction only removed future showups (HAB-208), but
+    // this call site doesn't have the pruned list in hand — the next load()
+    // miss re-fetches the pact's real remaining showups from the DB and
+    // recomputes fresh, correct stats from them.
     _cache.evict(pactId);
 
     return updated;

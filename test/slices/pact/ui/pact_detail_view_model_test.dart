@@ -435,6 +435,40 @@ void main() {
       expect(persisted?.stopReason, isNull);
     });
 
+    test('stopPact resolves the active break and clears the banner (HAB-208)', () async {
+      final onBreak = PactBreak(
+        id: 'brk-1',
+        pactId: 'p1',
+        startDate: DateTime(2026, 3, 1),
+        plannedEndDate: DateTime(2026, 3, 20),
+        rationale: 'Sick',
+      );
+      final now = DateTime(2026, 3, 10);
+      final container = _makeContainer(
+        pacts: [_pact],
+        showups: _showups,
+        breaks: [onBreak],
+        extras: [pactDetailNowProvider.overrideWithValue(now)],
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(pactDetailViewModelProvider('p1').notifier);
+      await notifier.load();
+      expect(container.read(pactDetailViewModelProvider('p1')).isBreakActiveNow, isTrue);
+
+      await notifier.stopPact('Not for me');
+
+      final state = container.read(pactDetailViewModelProvider('p1'));
+      expect(state.activeBreak, isNull);
+      expect(state.isBreakActiveNow, isFalse);
+
+      // Reloading (leaving and returning) must not resurrect the banner —
+      // the break itself was resolved, not just cleared from local state.
+      await notifier.load();
+      final reloadedState = container.read(pactDetailViewModelProvider('p1'));
+      expect(reloadedState.activeBreak, isNull);
+      expect(reloadedState.isBreakActiveNow, isFalse);
+    });
+
     test('load recomputes fresh stats when persisted snapshot is stale', () async {
       final stalePact = _pact.copyWith(
         stats: PactStats(
@@ -498,7 +532,11 @@ void main() {
       expect(await throwingShowupRepo.getShowupsForPact('p1'), isNotEmpty);
     });
 
-    test('stopPact preserves historical stats even after showups are removed', () async {
+    test('stopPact keeps past showups and preserves stats after navigating away and back (HAB-208)', () async {
+      // now sits between s3 (done/failed history) and s4 (still pending) —
+      // s4 is the only showup scheduled after now, so it's the only one
+      // stopPactTransaction removes.
+      final now = DateTime(2026, 3, 3, 12);
       final pactRepo = InMemoryPactRepository([_pact]);
       final showupRepo = InMemoryShowupRepository(_showups);
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
@@ -522,66 +560,33 @@ void main() {
         pactStatsServiceProvider.overrideWithValue(statsService),
         pactDetailCacheProvider.overrideWithValue(cache),
         showupRepositoryProvider.overrideWithValue(showupRepo),
+        pactDetailNowProvider.overrideWithValue(now),
       ]);
       addTearDown(container.dispose);
 
-      await container.read(pactDetailViewModelProvider('p1').notifier).load();
+      final notifier = container.read(pactDetailViewModelProvider('p1').notifier);
+      await notifier.load();
       final statsBeforeStop = container.read(pactDetailViewModelProvider('p1')).stats;
+      expect(statsBeforeStop?.showupsDone, 2);
+      expect(statsBeforeStop?.showupsFailed, 1);
 
-      await container.read(pactDetailViewModelProvider('p1').notifier).stopPact('Not for me');
+      await notifier.stopPact('Not for me');
 
+      // Only the future (pending) showup s4 is gone — s1..s3 are real history.
       final remainingShowups = await showupRepo.getShowupsForPact('p1');
-      expect(remainingShowups, isEmpty);
+      expect(remainingShowups.map((s) => s.id).toSet(), {'s1', 's2', 's3'});
 
-      final reloadedPactRepo = InMemoryPactRepository([await pactRepo.getPactById('p1') ?? _pact]);
-      final reloadedShowupRepo = InMemoryShowupRepository();
-      final reloadedTxService = InMemoryPactTransactionService(reloadedPactRepo, reloadedShowupRepo);
-      final reloadedCache = _makeCache(reloadedPactRepo, reloadedShowupRepo);
-      final reloadedStatsService = PactStatsService(
-        pactRepository: reloadedPactRepo,
-        showupRepository: reloadedShowupRepo,
-        transactionService: reloadedTxService,
-        syncService: const NoopSyncService(),
-        cache: reloadedCache,
-      );
-      final reloadedService = PactService(
-        pactRepository: reloadedPactRepo,
-        showupRepository: reloadedShowupRepo,
-        transactionService: reloadedTxService,
-        syncService: const NoopSyncService(),
-        cache: reloadedCache,
-      );
-      final reloadedContainer = ProviderContainer(overrides: [
-        pactServiceProvider.overrideWithValue(reloadedService),
-        pactStatsServiceProvider.overrideWithValue(reloadedStatsService),
-        pactDetailCacheProvider.overrideWithValue(reloadedCache),
-        showupRepositoryProvider.overrideWithValue(showupRepo),
-      ]);
-      addTearDown(reloadedContainer.dispose);
+      // Simulates leaving and returning to Pact Details: load() again on the
+      // same (now-evicted) cache, re-fetching from the same repositories.
+      await notifier.load();
 
-      await reloadedContainer.read(pactDetailViewModelProvider('p1').notifier).load();
-
-      final reloadedState = reloadedContainer.read(pactDetailViewModelProvider('p1'));
+      final reloadedState = container.read(pactDetailViewModelProvider('p1'));
       expect(reloadedState.pact?.status, PactStatus.stopped);
-      expect(reloadedState.pact?.stats, isNotNull);
       expect(reloadedState.stats?.showupsDone, statsBeforeStop?.showupsDone);
-      expect(
-        reloadedState.stats?.showupsFailed,
-        statsBeforeStop?.showupsFailed,
-      );
-      expect(
-        reloadedState.stats?.showupsRemaining,
-        statsBeforeStop?.showupsRemaining,
-      );
-      expect(
-        reloadedState.stats?.totalShowups,
-        statsBeforeStop?.totalShowups,
-      );
-      expect(
-        reloadedState.stats?.currentStreak,
-        statsBeforeStop?.currentStreak,
-      );
-      expect(reloadedState.pact?.stats, reloadedState.stats);
+      expect(reloadedState.stats?.showupsFailed, statsBeforeStop?.showupsFailed);
+      expect(reloadedState.stats?.showupsRemaining, statsBeforeStop?.showupsRemaining);
+      expect(reloadedState.stats?.totalShowups, statsBeforeStop?.totalShowups);
+      expect(reloadedState.stats?.currentStreak, statsBeforeStop?.currentStreak);
     });
 
     test('load auto-completes an active pact whose end date is in the past', () async {
@@ -1126,7 +1131,8 @@ class _ThrowingOnDeleteShowupRepository extends InMemoryShowupRepository {
   _ThrowingOnDeleteShowupRepository(super.initialShowups);
 
   @override
-  Future<void> deleteShowupsForPact(String pactId) async => throw Exception('delete failed intentionally');
+  Future<void> deleteShowupsForPactAfter(String pactId, DateTime after) async =>
+      throw Exception('delete failed intentionally');
 }
 
 class _ThrowingOnArchivePactRepository extends InMemoryPactRepository {

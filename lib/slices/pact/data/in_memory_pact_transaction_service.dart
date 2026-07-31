@@ -40,8 +40,9 @@ class InMemoryPactTransactionService implements PactTransactionService {
   Future<void> stopPactTransaction({
     required Pact updatedPact,
     required String pactId,
+    required DateTime now,
   }) async {
-    await _showupRepository.deleteShowupsForPact(pactId);
+    await _showupRepository.deleteShowupsForPactAfter(pactId, now);
     final stopped = updatedPact.copyWith(status: PactStatus.stopped);
     await _pactRepository.updatePact(stopped);
   }
