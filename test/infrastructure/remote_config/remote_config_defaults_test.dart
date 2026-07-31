@@ -214,6 +214,21 @@ void main() {
       });
     });
 
+    group('releaseVersions (HAB-207)', () {
+      test('pact_chaining_enabled maps to its actual shipped version', () {
+        expect(RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'], '0.53.0');
+      });
+
+      test('pre-existing toggles are absent (not retrofitted)', () {
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('language_selection_enabled'), isFalse);
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('network_sync_enabled'), isFalse);
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('pact_timeline_enabled'), isFalse);
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('showup_redemption_enabled'), isFalse);
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('about_screen_enabled'), isFalse);
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('pact_breaks_enabled'), isFalse);
+      });
+    });
+
     group('pact_timeline_no_grouping_tail_period_in_days', () {
       test('key exists in all map', () {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_period_in_days'), isTrue);
