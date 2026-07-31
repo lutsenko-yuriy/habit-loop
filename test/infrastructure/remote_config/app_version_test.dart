@@ -1,25 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/app_version.dart';
 
 void main() {
-  group('currentAppVersion', () {
-    test('stays in sync with pubspec.yaml\'s version', () {
-      final pubspec = File('pubspec.yaml').readAsStringSync();
-      final match = RegExp(r'^version:\s*(\d+\.\d+\.\d+)', multiLine: true).firstMatch(pubspec);
-      expect(match, isNotNull, reason: 'could not find a version: line in pubspec.yaml');
-      expect(
-        currentAppVersion,
-        match!.group(1),
-        reason: 'currentAppVersion must be bumped in the same commit as pubspec.yaml\'s version — '
-            'ship bumps pubspec.yaml AFTER this PR merges, so if this fails, currentAppVersion is '
-            'stale-by-one and any release-version-gated flag could stay hidden in the release it '
-            'was meant to ship in.',
-      );
-    });
-  });
-
   group('isAtLeast', () {
     test('equal versions satisfy the requirement', () {
       expect(isAtLeast('0.53.0', '0.53.0'), isTrue);

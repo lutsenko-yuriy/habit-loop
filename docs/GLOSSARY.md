@@ -72,6 +72,7 @@ When you find a different word used for the same concept, look it up in **[Known
 | **Pacts panel** | The draggable sheet listing all pacts with Active / Done / Stopped filter chips. |
 | **Onboarding carousel** | The four-slide intro shown only to users with zero pacts. |
 | **Pact timeline** | The full-history milestone view of a pact's showups, reached via "View timeline" on pact detail. Loaded and grouped in one pass — no pagination. Gated by `pact_timeline_enabled`. |
+| **Chain navigation stripe** | The Previous/Next Pact strip under a chained pact's habit name; tapping either side swaps the detail screen's data in place to the neighboring pact instead of pushing a new screen (HAB-206, replacing HAB-202's original push/pop links). |
 
 ---
 

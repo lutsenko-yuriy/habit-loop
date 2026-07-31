@@ -48,6 +48,7 @@ abstract final class AppContainer {
     FirestoreClient? firestoreClient,
     Object? fakeFirestoreClient,
     String? debugBackendAtStartup,
+    String? runningAppVersion,
   }) async {
     Locale? initialLocale;
     if (localePreferenceService != null) {
@@ -78,6 +79,7 @@ abstract final class AppContainer {
       if (firestoreClient != null) firestoreClientProvider.overrideWithValue(firestoreClient),
       if (fakeFirestoreClient != null) fakeFirestoreClientProvider.overrideWithValue(fakeFirestoreClient),
       if (debugBackendAtStartup != null) debugBackendAtStartupProvider.overrideWithValue(debugBackendAtStartup),
+      if (runningAppVersion != null) runningAppVersionProvider.overrideWithValue(runningAppVersion),
     ];
   }
 }

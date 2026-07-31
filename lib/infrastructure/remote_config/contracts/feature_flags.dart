@@ -6,7 +6,7 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 /// Computes whether a release-gated feature flag should be enabled (HAB-207).
 ///
 /// Pure and independently testable: [currentVersion] and [isDebugOrProfile]
-/// are passed explicitly rather than read from [currentAppVersion] /
+/// are passed explicitly rather than read from `runningAppVersionProvider` /
 /// `kDebugMode` / `kProfileMode` directly, so tests can exercise arbitrary
 /// combinations without needing real debug/profile builds.
 /// [FeatureFlags.fromRemoteConfig] is the sole call site that wires in the
@@ -45,7 +45,12 @@ final class FeatureFlags {
     required this.pactChainingEnabled,
   });
 
-  factory FeatureFlags.fromRemoteConfig(RemoteConfigService rc) {
+  /// [appVersion] is the app's real running version (from `PackageInfo` via
+  /// `runningAppVersionProvider`, resolved once at startup — see
+  /// `main.dart`). Defaults to [unspecifiedAppVersion] for the many call
+  /// sites (most existing tests) that don't care about release-version
+  /// gating — that sentinel always satisfies every gate.
+  factory FeatureFlags.fromRemoteConfig(RemoteConfigService rc, {String appVersion = unspecifiedAppVersion}) {
     const isDebugOrProfile = kDebugMode || kProfileMode;
     return FeatureFlags._(
       languageSelectionEnabled: rc.getBool('language_selection_enabled'),
@@ -59,7 +64,7 @@ final class FeatureFlags {
       pactChainingEnabled: resolveReleaseGatedFlag(
         rawValue: rc.getBool('pact_chaining_enabled'),
         releaseVersion: RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'],
-        currentVersion: currentAppVersion,
+        currentVersion: appVersion,
         isDebugOrProfile: isDebugOrProfile,
       ),
     );

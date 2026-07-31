@@ -181,7 +181,7 @@ abstract final class RemoteConfigDefaults {
   /// Only toggles that need gating appear as keys here — everything absent
   /// is unaffected (unchanged, ungated behaviour, exactly as before this
   /// mechanism existed). A present key with a non-null value gates the flag
-  /// on `currentAppVersion >= value` in release builds (see
+  /// on `runningAppVersion >= value` in release builds (see
   /// [FeatureFlags.fromRemoteConfig]); a present key mapped to `null` means
   /// the feature is still under construction and can never show in a
   /// release build regardless of the toggle's own boolean value. Debug and

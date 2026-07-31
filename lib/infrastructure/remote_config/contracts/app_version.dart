@@ -1,12 +1,13 @@
-/// The running app's version name, kept in sync with `pubspec.yaml`'s
-/// `version:` field.
+/// Sentinel "current version" for callers that don't care about
+/// release-version gating (most `FeatureFlags.fromRemoteConfig` call sites —
+/// see its `appVersion` parameter default, and `AppContainer.overrides`'s
+/// `runningAppVersion` default for tests).
 ///
-/// Manually bumped in the same commit that bumps `pubspec.yaml` — mirrors
-/// `docs/VERSIONING.md`'s existing "manual, reasoned" version-bump ritual.
-/// Used by [RemoteConfigDefaults.releaseVersions]-gated feature flags
-/// (`FeatureFlags.fromRemoteConfig`) to decide whether a toggle's release
-/// version requirement is satisfied by the version actually running.
-const String currentAppVersion = '0.53.0';
+/// Deliberately far in the future so it satisfies every currently-defined
+/// [RemoteConfigDefaults.releaseVersions] entry, keeping every gate "open" by
+/// default — the opposite of the fail-closed empty-string fallback
+/// `main.dart` uses when the real running version can't be determined.
+const String unspecifiedAppVersion = '9999.0.0';
 
 /// Whether [current] is at least [required], comparing both as `X.Y.Z`
 /// version strings.

@@ -4,6 +4,8 @@ Boolean Firebase Remote Config flags that enable/disable features without a rele
 
 `Review by` is assigned/verified during the `/checkup` light-tier feature-flag-lifecycle pass — a flag past its review date is a candidate for either removal (feature graduated to permanent) or a fresh review date, not an automatic deadline for action.
 
+**Release-version gating (HAB-207):** flags introduced from `0.53.0` onward (see `pact_chaining_enabled` below) are additionally gated on the app's real running version, so flipping a switch to `true` in the Remote Config console can never expose an unfinished feature before its intended release actually reaches users. `RemoteConfigDefaults.releaseVersions` maps a flag key to the minimum version required for it to take effect; `FeatureFlags.fromRemoteConfig` compares this against `runningAppVersionProvider` (the real version from `PackageInfo.fromPlatform()`, resolved once at startup in `main.dart`). Debug and profile builds skip the check entirely. Flags predating HAB-207 are not retrofitted.
+
 | Flag | Default | Effect when `false` | Review by |
 |---|---|---|---|
 | `language_selection_enabled` | `true` | Language-picker button hidden from dashboard and onboarding carousel; locale preference unchanged, replays on re-enable | 2027-01-16 |
