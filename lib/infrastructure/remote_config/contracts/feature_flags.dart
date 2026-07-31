@@ -1,4 +1,38 @@
+import 'package:flutter/foundation.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/app_version.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
+
+/// Computes whether a release-gated feature flag should be enabled (HAB-207).
+///
+/// Pure and independently testable: [currentVersion] and [isDebugOrProfile]
+/// are passed explicitly rather than read from [currentAppVersion] /
+/// `kDebugMode` / `kProfileMode` directly, so tests can exercise arbitrary
+/// combinations without needing real debug/profile builds.
+/// [FeatureFlags.fromRemoteConfig] is the sole call site that wires in the
+/// real values.
+///
+/// Both of the following must hold for the result to be `true`:
+/// - [rawValue] (the flag's raw boolean read from Remote Config) is `true`.
+/// - [isDebugOrProfile] is `true` (release-version check skipped entirely in
+///   debug/profile builds), OR [releaseVersion] is non-null and
+///   `isAtLeast(currentVersion, releaseVersion)` — a `null` [releaseVersion]
+///   means the feature is still under construction and can never show in a
+///   release build, regardless of [rawValue].
+bool resolveReleaseGatedFlag({
+  required bool rawValue,
+  required String? releaseVersion,
+  required String currentVersion,
+  required bool isDebugOrProfile,
+}) {
+  if (!rawValue) {
+    return false;
+  }
+  if (isDebugOrProfile) {
+    return true;
+  }
+  return releaseVersion != null && isAtLeast(currentVersion, releaseVersion);
+}
 
 final class FeatureFlags {
   const FeatureFlags._({
@@ -12,6 +46,7 @@ final class FeatureFlags {
   });
 
   factory FeatureFlags.fromRemoteConfig(RemoteConfigService rc) {
+    final isDebugOrProfile = kDebugMode || kProfileMode;
     return FeatureFlags._(
       languageSelectionEnabled: rc.getBool('language_selection_enabled'),
       networkSyncEnabled: rc.getBool('network_sync_enabled'),
@@ -19,7 +54,12 @@ final class FeatureFlags {
       showupRedemptionEnabled: rc.getBool('showup_redemption_enabled'),
       aboutScreenEnabled: rc.getBool('about_screen_enabled'),
       pactBreaksEnabled: rc.getBool('pact_breaks_enabled'),
-      pactChainingEnabled: rc.getBool('pact_chaining_enabled'),
+      pactChainingEnabled: resolveReleaseGatedFlag(
+        rawValue: rc.getBool('pact_chaining_enabled'),
+        releaseVersion: RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'],
+        currentVersion: currentAppVersion,
+        isDebugOrProfile: isDebugOrProfile,
+      ),
     );
   }
 

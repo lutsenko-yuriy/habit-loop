@@ -91,6 +91,80 @@ void main() {
       });
     });
 
+    group('resolveReleaseGatedFlag (HAB-207)', () {
+      test('RC-false is always false regardless of release version or debug/profile', () {
+        expect(
+          resolveReleaseGatedFlag(
+            rawValue: false,
+            releaseVersion: '0.53.0',
+            currentVersion: '1.0.0',
+            isDebugOrProfile: true,
+          ),
+          isFalse,
+        );
+      });
+
+      test('RC-true + version satisfied + not debug/profile is true', () {
+        expect(
+          resolveReleaseGatedFlag(
+            rawValue: true,
+            releaseVersion: '0.53.0',
+            currentVersion: '0.53.0',
+            isDebugOrProfile: false,
+          ),
+          isTrue,
+        );
+      });
+
+      test('RC-true + version NOT satisfied + not debug/profile is false', () {
+        expect(
+          resolveReleaseGatedFlag(
+            rawValue: true,
+            releaseVersion: '0.53.0',
+            currentVersion: '0.52.0',
+            isDebugOrProfile: false,
+          ),
+          isFalse,
+        );
+      });
+
+      test('RC-true + no release version set (under construction) + not debug/profile is false', () {
+        expect(
+          resolveReleaseGatedFlag(
+            rawValue: true,
+            releaseVersion: null,
+            currentVersion: '99.0.0',
+            isDebugOrProfile: false,
+          ),
+          isFalse,
+        );
+      });
+
+      test('RC-true + no release version set + debug/profile is true (bypass)', () {
+        expect(
+          resolveReleaseGatedFlag(
+            rawValue: true,
+            releaseVersion: null,
+            currentVersion: '0.0.1',
+            isDebugOrProfile: true,
+          ),
+          isTrue,
+        );
+      });
+
+      test('RC-true + version NOT satisfied + debug/profile is true (bypass)', () {
+        expect(
+          resolveReleaseGatedFlag(
+            rawValue: true,
+            releaseVersion: '99.0.0',
+            currentVersion: '0.0.1',
+            isDebugOrProfile: true,
+          ),
+          isTrue,
+        );
+      });
+    });
+
     group('equality', () {
       test('two instances with same values are equal', () {
         final rc = FakeRemoteConfigService();
