@@ -46,7 +46,7 @@ final class FeatureFlags {
   });
 
   factory FeatureFlags.fromRemoteConfig(RemoteConfigService rc) {
-    final isDebugOrProfile = kDebugMode || kProfileMode;
+    const isDebugOrProfile = kDebugMode || kProfileMode;
     return FeatureFlags._(
       languageSelectionEnabled: rc.getBool('language_selection_enabled'),
       networkSyncEnabled: rc.getBool('network_sync_enabled'),
