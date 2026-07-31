@@ -1,22 +1,11 @@
-/// Sentinel "current version" for callers that don't care about
-/// release-version gating (most `FeatureFlags.fromRemoteConfig` call sites —
-/// see its `appVersion` parameter default, and `AppContainer.overrides`'s
-/// `runningAppVersion` default for tests).
-///
-/// Deliberately far in the future so it satisfies every currently-defined
-/// [RemoteConfigDefaults.releaseVersions] entry, keeping every gate "open" by
-/// default — the opposite of the fail-closed empty-string fallback
-/// `main.dart` uses when the real running version can't be determined.
+/// Sentinel version that satisfies every release gate — the default for
+/// callers that don't care about gating (most tests). Opposite of
+/// `main.dart`'s fail-closed `''` fallback.
 const String unspecifiedAppVersion = '9999.0.0';
 
-/// Whether [current] is at least [required], comparing both as `X.Y.Z`
-/// version strings.
-///
-/// Missing trailing segments are treated as `0` (e.g. `"1.2"` == `"1.2.0"`).
-/// Defensive: any non-numeric segment in either string makes the comparison
-/// unparseable, and this returns `false` (not satisfied) rather than
-/// throwing — the safe fallback for a release-gating check, where failing
-/// closed (feature stays hidden) is preferable to failing open.
+/// Whether [current] is at least [required] (`X.Y.Z` strings). Missing
+/// segments count as `0`. Unparseable input fails closed (`false`) — safer
+/// for a release gate than throwing.
 bool isAtLeast(String current, String required) {
   final currentParts = _parseVersion(current);
   final requiredParts = _parseVersion(required);
@@ -35,15 +24,9 @@ bool isAtLeast(String current, String required) {
   return true;
 }
 
-/// Parses an `X.Y.Z`-style version string into its integer segments.
-///
-/// Strips build metadata first (`+build`/`-prerelease`, e.g. the
-/// `pubspec.yaml`-style `"0.53.0+174"`) so passing the full version string
-/// by mistake degrades to comparing the `X.Y.Z` part instead of failing
-/// closed on the non-numeric build number.
-///
-/// Returns `null` if the string is empty or any remaining segment fails to
-/// parse as a non-negative integer.
+/// Parses `X.Y.Z` into integer segments, stripping `+build`/`-prerelease`
+/// first (e.g. `pubspec.yaml`'s `"0.53.0+174"`). Returns `null` if any
+/// segment isn't a non-negative integer.
 List<int>? _parseVersion(String version) {
   if (version.isEmpty) {
     return null;

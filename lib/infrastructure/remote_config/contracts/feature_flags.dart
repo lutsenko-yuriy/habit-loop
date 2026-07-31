@@ -3,22 +3,10 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/app_version.da
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 
-/// Computes whether a release-gated feature flag should be enabled (HAB-207).
-///
-/// Pure and independently testable: [currentVersion] and [isDebugOrProfile]
-/// are passed explicitly rather than read from `runningAppVersionProvider` /
-/// `kDebugMode` / `kProfileMode` directly, so tests can exercise arbitrary
-/// combinations without needing real debug/profile builds.
-/// [FeatureFlags.fromRemoteConfig] is the sole call site that wires in the
-/// real values.
-///
-/// Both of the following must hold for the result to be `true`:
-/// - [rawValue] (the flag's raw boolean read from Remote Config) is `true`.
-/// - [isDebugOrProfile] is `true` (release-version check skipped entirely in
-///   debug/profile builds), OR [releaseVersion] is non-null and
-///   `isAtLeast(currentVersion, releaseVersion)` — a `null` [releaseVersion]
-///   means the feature is still under construction and can never show in a
-///   release build, regardless of [rawValue].
+/// True iff [rawValue] is true AND (debug/profile OR [releaseVersion] is set
+/// and satisfied by [currentVersion]) (HAB-207). Pure — real values are
+/// wired in only by [FeatureFlags.fromRemoteConfig], so tests can pass
+/// anything here without needing real debug builds.
 bool resolveReleaseGatedFlag({
   required bool rawValue,
   required String? releaseVersion,
@@ -45,11 +33,9 @@ final class FeatureFlags {
     required this.pactChainingEnabled,
   });
 
-  /// [appVersion] is the app's real running version (from `PackageInfo` via
-  /// `runningAppVersionProvider`, resolved once at startup — see
-  /// `main.dart`). Defaults to [unspecifiedAppVersion] for the many call
-  /// sites (most existing tests) that don't care about release-version
-  /// gating — that sentinel always satisfies every gate.
+  /// [appVersion] is the real running version (see `runningAppVersionProvider`
+  /// in main.dart); defaults to [unspecifiedAppVersion] so callers that don't
+  /// care about gating (most tests) always satisfy every gate.
   factory FeatureFlags.fromRemoteConfig(RemoteConfigService rc, {String appVersion = unspecifiedAppVersion}) {
     const isDebugOrProfile = kDebugMode || kProfileMode;
     return FeatureFlags._(
@@ -59,8 +45,7 @@ final class FeatureFlags {
       showupRedemptionEnabled: rc.getBool('showup_redemption_enabled'),
       aboutScreenEnabled: rc.getBool('about_screen_enabled'),
       pactBreaksEnabled: rc.getBool('pact_breaks_enabled'),
-      // Release-version gating (HAB-207) starts at 0.53.0 — every flag above
-      // predates it and is intentionally left ungated, by design.
+      // Release-version gating (HAB-207) starts here — flags above predate it.
       pactChainingEnabled: resolveReleaseGatedFlag(
         rawValue: rc.getBool('pact_chaining_enabled'),
         releaseVersion: RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'],

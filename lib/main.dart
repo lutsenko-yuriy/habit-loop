@@ -87,9 +87,8 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Resolved once at startup for release-version-gated feature flags
-  // (HAB-207). Falls back to '' (fails closed — every gate stays hidden)
-  // rather than the test sentinel `unspecifiedAppVersion`, which fails open.
+  // Release-version gating (HAB-207) — '' fails closed, unlike the test
+  // sentinel unspecifiedAppVersion, which fails open.
   String runningAppVersion = '';
   try {
     runningAppVersion = (await PackageInfo.fromPlatform()).version;

@@ -172,12 +172,9 @@ final remoteConfigServiceProvider = Provider<RemoteConfigService>(
   (ref) => NoopRemoteConfigService(),
 );
 
-/// The app's real running version (from `PackageInfo.fromPlatform()`),
-/// resolved once at startup (HAB-207) and overridden by `main.dart`.
-/// Defaults to [unspecifiedAppVersion] — unlike `pactRepositoryProvider`
-/// and friends, this isn't a dependency every test setup can be expected to
-/// supply, so it follows [remoteConfigServiceProvider]'s safe-default
-/// pattern instead of the must-override-or-throw one.
+/// Real running app version (HAB-207), overridden by `main.dart` at startup.
+/// Safe-default like [remoteConfigServiceProvider] — not every test needs to
+/// override it.
 final runningAppVersionProvider = Provider<String>((ref) => unspecifiedAppVersion);
 
 final featureFlagsProvider = Provider<FeatureFlags>(
