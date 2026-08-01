@@ -8,6 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [test] HAB-206 (WU0): Rewrote `pact_chain_test.dart`'s two nav-stack scenarios as stubs asserting in-place-swap semantics (single mounted `PactDetailScreen`, no push/pop) instead of the old pop/push model, and added a new stub scenario asserting the back button exits directly to the Pacts List after a single chain-navigation hop. Removed the now-obsolete push/pop-specific helpers (`_tapPreviousPactLink`/`_tapNextPactLink`) and their fixtures — `implement` will rewrite them to match the new model in WU1.
 - [ci] HAB-210: Fixed `version-tag`'s build-number-bump step overwriting a concurrently-merged PR's `pubspec.yaml` version-name bump with a stale value captured at pipeline-start. It now re-derives the version name from the freshly-pulled `pubspec.yaml` instead of trusting `resolve-version`'s pipeline-start output — only the build number is this job's own to advance. `main` had briefly shown this exact corruption (`0.53.2` reverted to `0.53.1`) before a later, independently-triggered pipeline run happened to self-correct it by the luck of race ordering — this fix removes the ordering dependency rather than relying on that luck recurring.
 
 ## [0.53.3] — 2026-08-01 (PR #345 merged)
