@@ -32,6 +32,7 @@ class DateRowTile extends StatelessWidget {
         : Text(label);
 
     Widget tile = Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
       decoration: BoxDecoration(
         color: backgroundColor,

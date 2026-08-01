@@ -214,28 +214,28 @@ class _PactDetailContent extends StatelessWidget {
       controller: scrollController,
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
-        PactDetailContentTransition(
-          key: const Key('pact-detail-heading-transition'),
-          contentId: contentId ?? pact.id,
-          sectionId: 'heading',
-          direction: transitionDirection,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Habit name + status badge
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      pact.habitName,
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  StatusBadge(text: statusText, color: statusColor),
-                ],
+        Row(
+          children: [
+            Expanded(
+              child: PactDetailContentTransition(
+                key: const Key('pact-detail-heading-transition'),
+                contentId: contentId ?? pact.id,
+                sectionId: 'habit-name',
+                direction: transitionDirection,
+                child: Text(
+                  pact.habitName,
+                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            PactDetailContentTransition(
+              contentId: contentId ?? pact.id,
+              sectionId: 'status-badge',
+              direction: transitionDirection,
+              child: StatusBadge(text: statusText, color: statusColor),
+            ),
+          ],
         ),
         // Previous/Next Pact links (HAB-202) — grouped in a row right under
         // the title, independent of the bottom action area (which shows
@@ -305,119 +305,161 @@ class _PactDetailContent extends StatelessWidget {
         ),
 
         // Stats cards
-        PactDetailContentTransition(
-          key: const Key('pact-detail-stats-transition'),
-          contentId: contentId ?? pact.id,
-          sectionId: 'stats',
-          direction: transitionDirection,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SectionHeader(title: l10n.sectionStats, labelColor: theme.colorScheme.onSurfaceVariant),
-              const SizedBox(height: AppSpacing.s8),
-              Row(
-                children: [
-                  Expanded(child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone))),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
-                ],
+        SectionHeader(title: l10n.sectionStats, labelColor: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(height: AppSpacing.s8),
+        Row(
+          children: [
+            Expanded(
+              child: PactDetailContentTransition(
+                contentId: contentId ?? pact.id,
+                sectionId: 'stats-done',
+                direction: transitionDirection,
+                child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone)),
               ),
-              const SizedBox(height: AppSpacing.s8),
-              Row(
-                children: [
-                  if (pact.status == PactStatus.active)
-                    Expanded(
-                        child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
-                  else if (pact.status == PactStatus.stopped)
-                    Expanded(
-                        child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
-                  if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
-                  Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
-                ],
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: PactDetailContentTransition(
+                contentId: contentId ?? pact.id,
+                sectionId: 'stats-failed',
+                direction: transitionDirection,
+                child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed)),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        Row(
+          children: [
+            if (pact.status == PactStatus.active)
+              Expanded(
+                child: PactDetailContentTransition(
+                  contentId: contentId ?? pact.id,
+                  sectionId: 'stats-remaining',
+                  direction: transitionDirection,
+                  child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)),
+                ),
+              )
+            else if (pact.status == PactStatus.stopped)
+              Expanded(
+                child: PactDetailContentTransition(
+                  contentId: contentId ?? pact.id,
+                  sectionId: 'stats-remaining',
+                  direction: transitionDirection,
+                  child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining)),
+                ),
+              ),
+            if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: PactDetailContentTransition(
+                contentId: contentId ?? pact.id,
+                sectionId: 'stats-streak',
+                direction: transitionDirection,
+                child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak)),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: AppSpacing.s24),
 
+        SectionHeader(title: l10n.sectionTimeline, labelColor: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(height: AppSpacing.s8),
         PactDetailContentTransition(
-          key: const Key('pact-detail-timeline-transition'),
           contentId: contentId ?? pact.id,
-          sectionId: 'timeline',
+          sectionId: 'timeline-start-date',
           direction: transitionDirection,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Time details
-              SectionHeader(title: l10n.sectionTimeline, labelColor: theme.colorScheme.onSurfaceVariant),
-              const SizedBox(height: AppSpacing.s8),
-              DateRowTile(
-                label: l10n.pactStartDate,
-                value: formatLocaleDate(pact.startDate),
-                valueColor: valueColor,
-                backgroundColor: tileColor,
-                cornerRadius: 12,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
-                DateRowTile(
+          child: DateRowTile(
+            label: l10n.pactStartDate,
+            value: formatLocaleDate(pact.startDate),
+            valueColor: valueColor,
+            backgroundColor: tileColor,
+            cornerRadius: 12,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        PactDetailContentTransition(
+          contentId: contentId ?? pact.id,
+          sectionId: 'timeline-stopped-date',
+          direction: transitionDirection,
+          child: pact.status == PactStatus.stopped && pact.stoppedAt != null
+              ? DateRowTile(
                   label: l10n.pactStoppedDate,
                   value: formatLocaleDate(pact.stoppedAt!),
                   valueColor: valueColor,
                   backgroundColor: tileColor,
                   cornerRadius: 12,
-                ),
-                const SizedBox(height: AppSpacing.s8),
-              ],
-              DateRowTile(
-                label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
-                value: formatLocaleDate(pact.endDate),
-                valueColor: valueColor,
-                backgroundColor: tileColor,
-                cornerRadius: 12,
-              ),
-              if (pact.status == PactStatus.active && daysLeft >= 0) ...[
-                const SizedBox(height: AppSpacing.s8),
-                DateRowTile(
-                  label: l10n.daysRemaining(daysLeft),
-                  backgroundColor: tileColor,
-                  cornerRadius: 12,
-                ),
-              ],
-              const SizedBox(height: AppSpacing.s8),
-              DateRowTile(
-                label: l10n.summaryShowupDuration,
-                value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
-                valueColor: valueColor,
-                backgroundColor: tileColor,
-                cornerRadius: 12,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              DateRowTile(
-                label: l10n.summaryReminder,
-                value: reminderDescription(l10n, pact.reminderOffset),
-                valueColor: valueColor,
-                backgroundColor: tileColor,
-                cornerRadius: 12,
-              ),
-
-              // View Timeline entry point (flag-gated)
-              if (pactTimelineEnabled && onOpenTimeline != null) ...[
-                const SizedBox(height: AppSpacing.s8),
-                TextButton(
-                  key: const Key('pact-detail-timeline-button'),
-                  onPressed: onOpenTimeline,
-                  child: Text(l10n.pactDetailViewTimeline),
-                ),
-              ],
-            ],
+                )
+              : const SizedBox.shrink(),
+        ),
+        if (pact.status == PactStatus.stopped && pact.stoppedAt != null) const SizedBox(height: AppSpacing.s8),
+        PactDetailContentTransition(
+          contentId: contentId ?? pact.id,
+          sectionId: 'timeline-end-date',
+          direction: transitionDirection,
+          child: DateRowTile(
+            label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
+            value: formatLocaleDate(pact.endDate),
+            valueColor: valueColor,
+            backgroundColor: tileColor,
+            cornerRadius: 12,
           ),
         ),
+        if (pact.status == PactStatus.active && daysLeft >= 0) ...[
+          const SizedBox(height: AppSpacing.s8),
+          PactDetailContentTransition(
+            contentId: contentId ?? pact.id,
+            sectionId: 'timeline-days-remaining',
+            direction: transitionDirection,
+            child: DateRowTile(
+              label: l10n.daysRemaining(daysLeft),
+              backgroundColor: tileColor,
+              cornerRadius: 12,
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.s8),
+        PactDetailContentTransition(
+          contentId: contentId ?? pact.id,
+          sectionId: 'timeline-duration',
+          direction: transitionDirection,
+          child: DateRowTile(
+            label: l10n.summaryShowupDuration,
+            value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
+            valueColor: valueColor,
+            backgroundColor: tileColor,
+            cornerRadius: 12,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        PactDetailContentTransition(
+          contentId: contentId ?? pact.id,
+          sectionId: 'timeline-reminder',
+          direction: transitionDirection,
+          child: DateRowTile(
+            label: l10n.summaryReminder,
+            value: reminderDescription(l10n, pact.reminderOffset),
+            valueColor: valueColor,
+            backgroundColor: tileColor,
+            cornerRadius: 12,
+          ),
+        ),
+
+        // View Timeline entry point (flag-gated)
+        if (pactTimelineEnabled && onOpenTimeline != null) ...[
+          const SizedBox(height: AppSpacing.s8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              key: const Key('pact-detail-timeline-button'),
+              onPressed: onOpenTimeline,
+              child: Text(l10n.pactDetailViewTimeline),
+            ),
+          ),
+        ],
 
         // Editable note section for inactive pacts
         if (pact.status != PactStatus.active) ...[
           PactDetailContentTransition(
-            key: const Key('pact-detail-note-transition'),
             contentId: contentId ?? pact.id,
             sectionId: 'note',
             direction: transitionDirection,
