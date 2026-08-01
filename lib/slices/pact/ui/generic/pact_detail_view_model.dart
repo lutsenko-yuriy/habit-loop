@@ -129,7 +129,9 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       await cache.load(pactId, now: now);
     } catch (e, st) {
       unawaited(
-        ref.read(logServiceProvider).error('pact_detail_chain_cache_warm_failed: id=$pactId', exception: e, stackTrace: st),
+        ref
+            .read(logServiceProvider)
+            .error('pact_detail_chain_cache_warm_failed: id=$pactId', exception: e, stackTrace: st),
       );
     }
   }
