@@ -314,15 +314,19 @@ Future<void> openPactDetail(WidgetTester tester, String habitName) async {
 /// though the widget legitimately exists once scrolled into range (HAB-199,
 /// same root cause as HAB-196 Fix 4).
 ///
-/// Anchors on `find.byType(Scrollable)` rather than a nearby widget (e.g. the
+/// Anchors on `find.byType(ListView)` rather than a nearby widget (e.g. the
 /// timeline button) so the helper doesn't depend on `pact_timeline_enabled`.
 /// Pact detail renders a single `ListView`, and `CommonFinders` skip offstage
-/// elements by default, so the previous route's own Scrollable (still mounted
-/// underneath, per HAB-196 Fix 4's precedent) doesn't create ambiguity.
+/// elements by default, so the previous route's own list (still mounted
+/// underneath, per HAB-196 Fix 4's precedent) doesn't create ambiguity. Uses
+/// `ListView` rather than the broader `Scrollable` — a focused `TextField`
+/// has its own internal `Scrollable` too, which `find.byType(Scrollable)`
+/// would also match if a text field was interacted with just before this
+/// call (HAB-211).
 Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) async {
   await tester.dragUntilVisible(
     find.byKey(const Key('pact-detail-start-break-button')),
-    find.byType(Scrollable),
+    find.byType(ListView),
     const Offset(0, -100),
   );
 }
@@ -333,11 +337,12 @@ Future<void> openTimeline(WidgetTester tester) async {
   // once the view model has resolved *and* it may sit below several
   // DateRowTiles on a short viewport (CI's Android emulator), where it isn't
   // realized yet; ensureVisible can't scroll a not-yet-built lazy-list child
-  // into view (HAB-211, same root cause as HAB-196/HAB-199, same pattern as
-  // scrollToPactDetailStartBreakButton above).
+  // into view (HAB-211, same root cause as HAB-196/HAB-199). Uses
+  // find.byType(ListView), not the broader Scrollable — see
+  // scrollToPactDetailStartBreakButton above for why.
   await tester.dragUntilVisible(
     find.byKey(const Key('pact-detail-timeline-button')),
-    find.byType(Scrollable),
+    find.byType(ListView),
     const Offset(0, -100),
   );
   await tester.pump();

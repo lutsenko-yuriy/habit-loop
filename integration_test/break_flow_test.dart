@@ -292,7 +292,17 @@ void main() {
         },
       );
 
+      // The pact is on break, so it's hidden from the default Active-only
+      // pact list view (HAB-195 WU6) — select the Break chip first so its
+      // tile actually renders in the panel before tapping it by habit name
+      // (previously masked by HAB-211's PactListViewModel bug, which made
+      // onBreak evaluate against real wall-clock time instead of this
+      // test's overridden todayProvider, so it never actually hit the
+      // on-break filter path here).
       await openPactsPanel(tester);
+      await waitFor(tester, find.byKey(const Key('break-filter-chip')));
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pump(const Duration(milliseconds: 300));
       await openPactDetail(tester, 'Stretch');
       await waitFor(tester, find.text('Stretch'));
 
@@ -629,7 +639,12 @@ void main() {
 
       // ── 2. Select the "Break" chip on top of the already-selected Active
       //         — the on-break pact now joins the plain active one; Cycling
-      //         (stopped) is unaffected, its own chip untouched ──────────
+      //         (stopped) is unaffected, its own chip untouched. Only 3
+      //         pacts total in this list — small enough that all of them
+      //         stay realized regardless of scroll position, so a bare
+      //         expect (no scrolling) is sufficient here, unlike step 1's
+      //         very first check right after opening a freshly-collapsed
+      //         panel (HAB-211). ─────────────────────────────────────────
       final strings = l10n(tester);
       await tester.tap(find.byKey(const Key('break-filter-chip')));
       await tester.pump(const Duration(milliseconds: 300));
