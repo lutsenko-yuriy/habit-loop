@@ -41,6 +41,7 @@ Present this alongside the trade-off table, not only when asked.
 - One branch per attempt: `feature/HAB-XX-<short-description>`
 - Record each failed attempt in the ticket description before moving on.
 - Use `workflow_dispatch` or equivalent to test CI fixes without merging.
+- If the fix loop looks like it will need multiple real CI dispatches to validate (e.g. CI-only environment flakiness), say so explicitly — at ticket start if apparent from the outset, or the moment it becomes apparent mid-ticket — so the user can choose to step away (e.g. overnight) instead of staying attached through every dispatch.
 
 ## 5. Ship
 

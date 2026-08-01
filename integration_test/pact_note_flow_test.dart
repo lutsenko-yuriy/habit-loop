@@ -83,6 +83,26 @@ Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) asyn
   // the VM finishes loading — reliable on any screen size. The note field is
   // below the fold; each test uses scrollUntilVisible to bring it into view.
   await waitFor(tester, find.text(l10n(tester).sectionStats.toUpperCase()));
+  // Lets any work still in flight from navigating in (e.g. a screen-view log,
+  // an analytics call) fully settle before a test starts typing — otherwise a
+  // late rebuild while the note field has unsaved input risks resetting it
+  // (HAB-211).
+  await tester.pumpAndSettle();
+}
+
+/// Types [text] into the note field and waits for the save button to reflect
+/// the change. enterText's update reaches the button via a
+/// ValueListenableBuilder rebuild that intermittently takes far more than a
+/// couple of frames on CI's emulator — sometimes several seconds — so a
+/// fixed pump count is not reliable (HAB-211).
+Future<void> _enterNoteText(WidgetTester tester, String text) async {
+  await tester.tap(find.byKey(const Key('pact-note-field')));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byKey(const Key('pact-note-field')), text);
+  final deadline = tester.binding.clock.now().add(const Duration(seconds: 10));
+  while (!_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -132,10 +152,7 @@ void main() {
       expect(_saveButtonEnabled(tester), isFalse);
 
       // ── 3. Edit the note ───────────────────────────────────────────────────
-      await tester.tap(find.byKey(const Key('pact-note-field')));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('pact-note-field')), 'Injured knee — resting now');
-      await tester.pump();
+      await _enterNoteText(tester, 'Injured knee — resting now');
 
       // ── 4. Save button becomes enabled ────────────────────────────────────
       expect(_saveButtonEnabled(tester), isTrue);
@@ -185,10 +202,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byKey(const Key('pact-note-field')));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('pact-note-field')), '');
-      await tester.pump();
+      await _enterNoteText(tester, '');
 
       await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
@@ -228,10 +242,7 @@ void main() {
           matching: find.byType(Scrollable),
         ),
       );
-      await tester.tap(find.byKey(const Key('pact-note-field')));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('pact-note-field')), 'Injured knee — resting now');
-      await tester.pump();
+      await _enterNoteText(tester, 'Injured knee — resting now');
 
       await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
@@ -285,10 +296,7 @@ void main() {
       expect(_noteFieldText(tester), isEmpty);
 
       // ── 2. Write and save ─────────────────────────────────────────────────
-      await tester.tap(find.byKey(const Key('pact-note-field')));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('pact-note-field')), 'Felt great throughout!');
-      await tester.pump();
+      await _enterNoteText(tester, 'Felt great throughout!');
 
       // Scroll the save button into view before tapping — the software keyboard
       // opened by the text field pushes the button off-screen on small CI AVDs.

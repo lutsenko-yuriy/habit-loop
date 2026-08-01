@@ -45,11 +45,13 @@ ProviderContainer _makeContainer({
   List<Pact> pacts = const [],
   List<Showup> showups = const [],
   List<PactBreak> breaks = const [],
+  DateTime? now,
 }) {
   return ProviderContainer(overrides: [
     pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
     showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
     pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
+    if (now != null) pactListNowProvider.overrideWithValue(now),
   ]);
 }
 
@@ -310,6 +312,25 @@ void main() {
       await c.read(pactListViewModelProvider.notifier).load();
       final entry = c.read(pactListViewModelProvider).entries.first;
       expect(entry.onBreak, isFalse);
+    });
+
+    test('load: onBreak respects an overridden pactListNowProvider, not real wall-clock time (HAB-211)', () async {
+      // The break window (2099) is nowhere near real "now" — this only
+      // passes if load() actually reads pactListNowProvider instead of
+      // calling DateTime.now() directly.
+      final pact = _pact('p1', PactStatus.active);
+      final overriddenNow = DateTime(2099, 6, 16);
+      final c = _makeContainer(
+        pacts: [pact],
+        breaks: [
+          _pactBreak('b1', 'p1', startDate: DateTime(2099, 6, 10), plannedEndDate: DateTime(2099, 6, 20)),
+        ],
+        now: overriddenNow,
+      );
+      addTearDown(c.dispose);
+      await c.read(pactListViewModelProvider.notifier).load();
+      final entry = c.read(pactListViewModelProvider).entries.first;
+      expect(entry.onBreak, isTrue);
     });
 
     test('load: entry.onBreak is false for an active pact with no breaks', () async {

@@ -10,6 +10,14 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 
 - [ci] HAB-210: Fixed `version-tag`'s build-number-bump step overwriting a concurrently-merged PR's `pubspec.yaml` version-name bump with a stale value captured at pipeline-start. It now re-derives the version name from the freshly-pulled `pubspec.yaml` instead of trusting `resolve-version`'s pipeline-start output — only the build number is this job's own to advance. `main` had briefly shown this exact corruption (`0.53.2` reverted to `0.53.1`) before a later, independently-triggered pipeline run happened to self-correct it by the luck of race ordering — this fix removes the ordering dependency rather than relying on that luck recurring.
 
+## [0.53.3] — 2026-08-01 (PR #345 merged)
+
+### Fixed
+
+- [test] HAB-211: Replaced bare `waitFor` with `dragUntilVisible` in harness.dart (openPactDetail, openTimeline) — scenario failures on CI's short-viewport Android emulator were caused by list entries sitting below the fold in lazy Slivers that only realize Elements within the viewport + cache extent. Bare `waitFor` polls the Element tree and can never find unrealized widgets no matter how long it waits; `dragUntilVisible` scrolls to make them visible first. Scoped finders to each widget's nearest Scrollable ancestor to disambiguate when the same text (habit name) appears twice on screen. Verified passing on local `API29_CI_Match` emulator and confirmed via live `scenarios.yml` dispatch.
+- [app] HAB-211: `PactListViewModel._loadInner` now reads `todayProvider` instead of `DateTime.now()`, matching every other view model in the app that threads an overridable "now" through. This fixes `pact_list_break_chip_filters_to_onbreak_pacts` which was silently ignoring test-override `todayProvider` values for on-break filtering — the pact never evaluated as on-break against real wall-clock time, so it leaked into the wrong filter bucket.
+- [meta] HAB-211: Updated TROUBLESHOOT_WORKFLOW.md step 4 to flag CI-dispatch-heavy fix loops explicitly (at ticket start or the moment it becomes apparent mid-ticket) so the user can choose to step away during long-running real-time CI round-trips instead of staying attached.
+
 ## [0.53.2] — 2026-07-31 (PR #342 merged)
 
 ### Added

@@ -3,7 +3,7 @@
 //
 // Run on host:   flutter test integration_test/break_flow_test.dart
 // Run on device: flutter test integration_test/break_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show FilterChip, Key, Navigator, Scrollable;
+import 'package:flutter/material.dart' show FilterChip, Key, Navigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
@@ -13,6 +13,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
@@ -69,6 +70,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
@@ -124,6 +126,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
@@ -165,6 +168,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
@@ -218,6 +222,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactDetailNowProvider.overrideWithValue(testNow),
           pactTimelineNowProvider.overrideWithValue(testNow),
           showupDetailNowProvider.overrideWithValue(testNow),
@@ -283,6 +288,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
@@ -292,7 +298,17 @@ void main() {
         },
       );
 
+      // The pact is on break, so it's hidden from the default Active-only
+      // pact list view (HAB-195 WU6) — select the Break chip first so its
+      // tile actually renders in the panel before tapping it by habit name
+      // (previously masked by HAB-211's PactListViewModel bug, which made
+      // onBreak evaluate against real wall-clock time instead of this
+      // test's overridden todayProvider, so it never actually hit the
+      // on-break filter path here).
       await openPactsPanel(tester);
+      await waitFor(tester, find.byKey(const Key('break-filter-chip')));
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pump(const Duration(milliseconds: 300));
       await openPactDetail(tester, 'Stretch');
       await waitFor(tester, find.text('Stretch'));
 
@@ -330,6 +346,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           showupDetailNowProvider.overrideWithValue(testNow),
         ],
         beforePump: (h) async {
@@ -375,6 +392,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(DateTime(2099, 6, 15, 7, 0)),
+          pactListNowProvider.overrideWithValue(DateTime(2099, 6, 15, 7, 0)),
         ],
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
@@ -495,6 +513,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactDetailNowProvider.overrideWithValue(testNow),
         ],
         beforePump: (h) async {
@@ -601,6 +620,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
         beforePump: (h) async {
@@ -617,39 +637,67 @@ void main() {
       //         exclusively governs on-break pacts' visibility, so Active
       //         alone never surfaces them ───────────────────────────────
       await openPactsPanel(tester);
-      await waitFor(tester, find.text('Yoga'));
-      // Cycling is 3rd in the panel's SliverList — on a short viewport (CI's
-      // Android emulator) it isn't realized yet, so a bare expect can find 0
-      // widgets even though it legitimately exists once scrolled into range
-      // (HAB-199, same root cause as HAB-196 Fix 4).
-      await tester.dragUntilVisible(
-        find.text('Cycling'),
-        find.ancestor(of: find.text('Yoga'), matching: find.byType(Scrollable)),
-        const Offset(0, -100),
-      );
+      // Yoga and Cycling may both be unrealized on a short viewport (CI's
+      // Android emulator) — anchor on the panel's own scrollable rather than
+      // Yoga's own text, which may not exist yet (HAB-211, same root cause
+      // as HAB-196 Fix 4 / HAB-199).
+      const panelScrollable = Key('pacts-panel-scrollable');
+      await tester.dragUntilVisible(find.text('Yoga'), find.byKey(panelScrollable), const Offset(0, -100));
+      await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
       expect(find.text('Cycling'), findsOneWidget);
       expect(find.text('Swim'), findsNothing);
 
       // ── 2. Select the "Break" chip on top of the already-selected Active
       //         — the on-break pact now joins the plain active one; Cycling
-      //         (stopped) is unaffected, its own chip untouched ──────────
+      //         (stopped) is unaffected, its own chip untouched. ─────────
       final strings = l10n(tester);
+      // Step 1 scrolled down to reveal Cycling — the filter-chip row is
+      // part of the same CustomScrollView, above the list items, so it
+      // scrolled out of view along with the title. Scroll back up (positive
+      // offset) before tapping it (HAB-211 — a real CI-only miss: the chip
+      // being out of view didn't reproduce on the local emulator's taller
+      // viewport).
+      await tester.dragUntilVisible(
+        find.byKey(const Key('break-filter-chip')),
+        find.byKey(panelScrollable),
+        const Offset(0, 100),
+      );
+      // dragUntilVisible's own found-check only confirms the element exists
+      // in the tree — a lazy list's cache extent can pre-build an item
+      // that isn't actually painted at a stable on-screen position yet, so
+      // an immediate tap's hit-test can still miss (CI-only: real device
+      // cache-extent/paint timing differs from the local emulator) —
+      // settle first (HAB-211).
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('break-filter-chip')));
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Swim'), findsOneWidget);
       expect(find.text('Yoga'), findsOneWidget);
+      // Scrolling back up to reach the chip pushed Cycling (the last item)
+      // out of the lazy list's cache extent on CI's short viewport — it's
+      // not just off-screen, it's unrealized. Scroll back down to it before
+      // asserting, same as step 1 (HAB-211: 3 items is not "small enough to
+      // always stay realized" on CI's viewport).
+      await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
       expect(find.text('Cycling'), findsOneWidget);
 
       // ── 3. Deselect "Active" — only the on-break pact remains among the
       //         active-status pacts (Break alone now governs it); the plain
       //         active pact (Yoga) disappears; Cycling stays, still
       //         unaffected by the Active/Break axis ─────────────────────
+      await tester.dragUntilVisible(
+        find.widgetWithText(FilterChip, strings.filterActive),
+        find.byKey(panelScrollable),
+        const Offset(0, 100),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilterChip, strings.filterActive));
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Swim'), findsOneWidget);
       expect(find.text('Yoga'), findsNothing);
+      await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
       expect(find.text('Cycling'), findsOneWidget);
     });
   });
