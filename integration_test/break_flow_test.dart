@@ -639,12 +639,7 @@ void main() {
 
       // ── 2. Select the "Break" chip on top of the already-selected Active
       //         — the on-break pact now joins the plain active one; Cycling
-      //         (stopped) is unaffected, its own chip untouched. Only 3
-      //         pacts total in this list — small enough that all of them
-      //         stay realized regardless of scroll position, so a bare
-      //         expect (no scrolling) is sufficient here, unlike step 1's
-      //         very first check right after opening a freshly-collapsed
-      //         panel (HAB-211). ─────────────────────────────────────────
+      //         (stopped) is unaffected, its own chip untouched. ─────────
       final strings = l10n(tester);
       // Step 1 scrolled down to reveal Cycling — the filter-chip row is
       // part of the same CustomScrollView, above the list items, so it
@@ -669,17 +664,30 @@ void main() {
 
       expect(find.text('Swim'), findsOneWidget);
       expect(find.text('Yoga'), findsOneWidget);
+      // Scrolling back up to reach the chip pushed Cycling (the last item)
+      // out of the lazy list's cache extent on CI's short viewport — it's
+      // not just off-screen, it's unrealized. Scroll back down to it before
+      // asserting, same as step 1 (HAB-211: 3 items is not "small enough to
+      // always stay realized" on CI's viewport).
+      await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
       expect(find.text('Cycling'), findsOneWidget);
 
       // ── 3. Deselect "Active" — only the on-break pact remains among the
       //         active-status pacts (Break alone now governs it); the plain
       //         active pact (Yoga) disappears; Cycling stays, still
       //         unaffected by the Active/Break axis ─────────────────────
+      await tester.dragUntilVisible(
+        find.widgetWithText(FilterChip, strings.filterActive),
+        find.byKey(panelScrollable),
+        const Offset(0, 100),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilterChip, strings.filterActive));
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Swim'), findsOneWidget);
       expect(find.text('Yoga'), findsNothing);
+      await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
       expect(find.text('Cycling'), findsOneWidget);
     });
   });
