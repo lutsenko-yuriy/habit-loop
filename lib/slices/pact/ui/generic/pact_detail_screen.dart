@@ -9,6 +9,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_content_transition.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
@@ -44,6 +45,10 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   // _onOpenChainLink so a second tap mid-transition is a no-op rather than
   // interrupting or racing the first.
   bool _isAnimating = false;
+
+  // Tracks the most recent chain-navigation direction so the current pact's
+  // content can slide/fade in from the correct side (HAB-206 WU3).
+  PactDetailTransitionDirection? _lastDirection;
 
   @override
   void initState() {
@@ -126,17 +131,30 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
           ),
     );
 
+    ref.invalidate(pactDetailNowProvider);
     setState(() {
       _isAnimating = true;
-      _currentPactId = targetPactId;
     });
 
-    ref.invalidate(pactDetailNowProvider);
-    await ref.read(pactDetailViewModelProvider(_currentPactId).notifier).load();
+    await ref.read(pactDetailViewModelProvider(targetPactId).notifier).load();
     if (!mounted) return;
+
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
+
+    setState(() {
+      _currentPactId = targetPactId;
+      _lastDirection = switch (direction) {
+        'previous' => PactDetailTransitionDirection.toPredecessor,
+        'next' => PactDetailTransitionDirection.toSuccessor,
+        _ => null,
+      };
+    });
+
+    await Future<void>.delayed(PactDetailContentTransition.duration);
+    if (!mounted) return;
+
     setState(() {
       _isAnimating = false;
     });
@@ -274,6 +292,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         onOpenNextPact: onOpenNextPact,
         onAdjustAndStartAgain: onAdjustAndStartAgain,
         scrollController: _scrollController,
+        contentId: _currentPactId,
+        transitionDirection: _lastDirection,
       );
     }
     return PactDetailPageAndroid(
@@ -291,6 +311,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       onOpenNextPact: onOpenNextPact,
       onAdjustAndStartAgain: onAdjustAndStartAgain,
       scrollController: _scrollController,
+      contentId: _currentPactId,
+      transitionDirection: _lastDirection,
     );
   }
 }
