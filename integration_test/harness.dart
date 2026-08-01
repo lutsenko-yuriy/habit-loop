@@ -340,11 +340,25 @@ Future<void> openTimeline(WidgetTester tester) async {
   // into view (HAB-211, same root cause as HAB-196/HAB-199). Uses
   // find.byType(ListView), not the broader Scrollable — see
   // scrollToPactDetailStartBreakButton above for why.
-  await tester.dragUntilVisible(
-    find.byKey(const Key('pact-detail-timeline-button')),
-    find.byType(ListView),
-    const Offset(0, -100),
-  );
+  final listViewFinder = find.byType(ListView);
+  final buttonFinder = find.byKey(const Key('pact-detail-timeline-button'));
+  // ignore: avoid_print
+  print('DEBUG openTimeline: ListView matches=${listViewFinder.evaluate().length}, '
+      'button matches (pre-scroll)=${buttonFinder.evaluate().length}');
+  var scrolled = 0;
+  while (scrolled < 50 && buttonFinder.evaluate().isEmpty) {
+    await tester.drag(listViewFinder, const Offset(0, -100));
+    await tester.pump(const Duration(milliseconds: 50));
+    scrolled++;
+  }
+  if (buttonFinder.evaluate().isEmpty) {
+    // ignore: avoid_print
+    print('DEBUG openTimeline: button still not found after $scrolled scrolls. '
+        'ListView matches=${listViewFinder.evaluate().length}, '
+        'rect=${listViewFinder.evaluate().isNotEmpty ? tester.getRect(listViewFinder) : "n/a"}, '
+        'all texts on screen=${find.byType(Text).evaluate().map((e) => (e.widget as Text).data).toList()}');
+  }
+  await tester.dragUntilVisible(buttonFinder, listViewFinder, const Offset(0, -100));
   await tester.pump();
   await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
   await tester.pump(const Duration(milliseconds: 350));

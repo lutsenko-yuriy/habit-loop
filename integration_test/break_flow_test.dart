@@ -646,6 +646,17 @@ void main() {
       //         very first check right after opening a freshly-collapsed
       //         panel (HAB-211). ─────────────────────────────────────────
       final strings = l10n(tester);
+      // Step 1 scrolled down to reveal Cycling — the filter-chip row is
+      // part of the same CustomScrollView, above the list items, so it
+      // scrolled out of view along with the title. Scroll back up (positive
+      // offset) before tapping it (HAB-211 — a real CI-only miss: the chip
+      // being out of view didn't reproduce on the local emulator's taller
+      // viewport).
+      await tester.dragUntilVisible(
+        find.byKey(const Key('break-filter-chip')),
+        find.byKey(panelScrollable),
+        const Offset(0, 100),
+      );
       await tester.tap(find.byKey(const Key('break-filter-chip')));
       await tester.pump(const Duration(milliseconds: 300));
 
