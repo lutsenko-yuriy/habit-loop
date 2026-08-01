@@ -27,32 +27,6 @@ final _chainingEnabled = remoteConfigServiceProvider.overrideWithValue(
   FakeRemoteConfigService(overrides: {'pact_chaining_enabled': true}),
 );
 
-const _predecessorId = 'chain-nav-predecessor';
-const _successorId = 'chain-nav-successor';
-
-// Dated near 2099 (short spans, matching every other integration-test
-// fixture in this suite) rather than the ticket's illustrative 2026 dates —
-// buildPact's default endDate is 2099-12-31, so a near-term startDate here
-// would produce a ~74-year pact span and force ShowupGenerator to compute
-// tens of thousands of daily occurrences on every load (HAB-202 debugging
-// note, 2026-07-30: this was the actual cause of an apparent test hang).
-final _predecessorPact = buildPact(
-  id: _predecessorId,
-  habitName: 'Vibe coding',
-  startDate: DateTime(2099, 1, 1),
-  endDate: DateTime(2099, 6, 1),
-  status: PactStatus.stopped,
-  stoppedAt: DateTime(2099, 3, 1),
-);
-
-final _successorPact = buildPact(
-  id: _successorId,
-  habitName: 'Vibe coding (v2)',
-  startDate: DateTime(2099, 3, 2),
-  endDate: DateTime(2099, 9, 2),
-  predecessorPactId: _predecessorId,
-);
-
 /// The pactId of the topmost mounted [PactDetailScreen] — i.e. the one
 /// currently visible. Earlier routes stay mounted underneath a pushed one
 /// (Navigator's default `maintainState: true`), so `find.text(habitName)`
@@ -60,42 +34,6 @@ final _successorPact = buildPact(
 /// mounted behind it; this reads the unambiguous `pactId` field instead.
 String _currentDetailPactId(WidgetTester tester) =>
     tester.widgetList<PactDetailScreen>(find.byType(PactDetailScreen)).last.pactId;
-
-Future<void> _tapPreviousPactLink(WidgetTester tester) async {
-  await waitFor(tester, find.byKey(const Key('pact-detail-previous-pact-link')));
-  await tester.tap(find.byKey(const Key('pact-detail-previous-pact-link')));
-  // pumpAndSettle (not fixed-duration pumps) — a pop needs the exit
-  // transition to fully finish before the popped screen's PactDetailScreen
-  // is actually removed from the tree, otherwise _currentDetailPactId's
-  // find.byType(PactDetailScreen).last can still match the mid-transition
-  // outgoing screen (HAB-202 debugging note, 2026-07-30).
-  await tester.pumpAndSettle();
-}
-
-/// Taps "Next Pact" on the currently-visible screen for [currentPactId].
-///
-/// Scoped to that screen's own `pact-detail-scroll-view-<id>` Scrollable
-/// (HAB-202) rather than `find.byType(Scrollable).first` — an earlier
-/// PactDetailScreen stays mounted underneath a pushed one, so an
-/// unscoped Scrollable finder can match the wrong (offstage) screen's list
-/// and never actually bring the visible screen's link into view.
-Future<void> _tapNextPactLink(WidgetTester tester, {required String currentPactId}) async {
-  await tester.dragUntilVisible(
-    find.byKey(const Key('pact-detail-next-pact-link')),
-    find
-        .descendant(
-          of: find.byKey(Key('pact-detail-scroll-view-$currentPactId')),
-          matching: find.byType(Scrollable),
-        )
-        .first,
-    const Offset(0, -100),
-  );
-  await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
-  // pumpAndSettle — see _tapPreviousPactLink's comment; this link can
-  // trigger either a push or a pop depending on cameFromPactId, and both
-  // need their transition to fully finish before asserting.
-  await tester.pumpAndSettle();
-}
 
 /// Scrolls [key] into view within the pact detail screen for [pactId].
 ///
@@ -324,80 +262,52 @@ void main() {
   });
 
   group('Pact chain — navigation stack', () {
-    late AppHarness h;
-    tearDown(() => h.dispose());
-    // Both scenarios below use P_p (predecessor / "parent") and P_c (successor
-    // / "child"): P_c.predecessorPactId == P_p.id. They verify that bouncing
-    // between "Previous Pact"/"Next Pact" links pops back to the existing page
-    // instance instead of pushing a duplicate — so the back stack never grows
-    // past however deep the user has actually gone in one direction.
+    // Scenarios below use P_p (predecessor / "parent") and P_c (successor /
+    // "child"): P_c.predecessorPactId == P_p.id. They verify that tapping
+    // "Previous Pact"/"Next Pact" swaps data in place on a single mounted
+    // PactDetailScreen route (no push/pop) — see HAB-206's "Update — animated
+    // transitions" for the full spec this stubs against.
+    //
+    // TODO(implement, WU1): declare `late AppHarness h;` and
+    // `tearDown(() => h.dispose());` here when filling in the driver code.
 
     testWidgets('chain_navigation_previous_then_next_returns_to_same_page_instance', (tester) async {
-      h = await AppHarness.create(
-        tester,
-        extraOverrides: [_chainingEnabled],
-        beforePump: (h) async {
-          await h.pactRepo.savePact(_predecessorPact);
-          await h.pactRepo.savePact(_successorPact);
-        },
-      );
-
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Vibe coding (v2)');
-
-      // ── 3. P_c's detail screen is shown ───────────────────────────────────
-      expect(_currentDetailPactId(tester), _successorId);
-
-      // ── 4. Tap "Previous Pact" — P_p's detail screen pushed on top ────────
-      await _tapPreviousPactLink(tester);
-      expect(_currentDetailPactId(tester), _predecessorId);
-
-      // ── 5. Tap "Next Pact" — back to P_c ──────────────────────────────────
-      await _tapNextPactLink(tester, currentPactId: _predecessorId);
-      expect(_currentDetailPactId(tester), _successorId);
-
-      // ── 6. A single pop lands directly on the Pacts List, proving step 5
-      //        popped back to the original P_c page instance rather than
-      //        pushing a second copy of it. ─────────────────────────────────
-      await tester.pumpAndSettle(const Duration(milliseconds: 50));
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('pacts-panel-drag-handle')), findsOneWidget);
-      expect(find.byType(PactDetailScreen), findsNothing);
+      // TODO: 1. Seed predecessor pact ("Vibe coding") and linked successor
+      //          pact ("Vibe coding (v2)").
+      // TODO: 2. Open pacts panel, open the successor's detail screen.
+      // TODO: 3. Verify exactly one PactDetailScreen is mounted, showing the
+      //          successor's pactId.
+      // TODO: 4. Tap "Previous Pact" — verify still exactly one
+      //          PactDetailScreen mounted (no push occurred), now showing the
+      //          predecessor's pactId.
+      // TODO: 5. Tap "Next Pact" — verify still exactly one PactDetailScreen
+      //          mounted, now showing the successor's pactId again.
+      // TODO: 6. Press system back — verify it exits directly to the Pacts
+      //          List in a single pop (no PactDetailScreen remains mounted).
     });
 
     testWidgets('chain_navigation_next_then_previous_returns_to_same_page_instance', (tester) async {
-      h = await AppHarness.create(
-        tester,
-        extraOverrides: [_chainingEnabled],
-        beforePump: (h) async {
-          await h.pactRepo.savePact(_predecessorPact);
-          await h.pactRepo.savePact(_successorPact);
-        },
-      );
+      // TODO: 1. Seed predecessor and successor pacts.
+      // TODO: 2. Open pacts panel, open the predecessor's detail screen.
+      // TODO: 3. Verify exactly one PactDetailScreen mounted, showing the
+      //          predecessor's pactId.
+      // TODO: 4. Tap "Next Pact" — verify still exactly one PactDetailScreen
+      //          mounted, now showing the successor's pactId.
+      // TODO: 5. Tap "Previous Pact" — verify still exactly one
+      //          PactDetailScreen mounted, now showing the predecessor's
+      //          pactId again.
+      // TODO: 6. Press system back — verify direct exit to the Pacts List in
+      //          a single pop.
+    });
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Vibe coding');
-
-      // ── 3. P_p's detail screen is shown ───────────────────────────────────
-      expect(_currentDetailPactId(tester), _predecessorId);
-
-      // ── 4. Tap "Next Pact" — P_c's detail screen pushed on top ────────────
-      await _tapNextPactLink(tester, currentPactId: _predecessorId);
-      expect(_currentDetailPactId(tester), _successorId);
-
-      // ── 5. Tap "Previous Pact" — back to P_p ──────────────────────────────
-      await _tapPreviousPactLink(tester);
-      expect(_currentDetailPactId(tester), _predecessorId);
-
-      // ── 6. A single pop lands directly on the Pacts List, proving step 5
-      //        popped back to the original P_p page instance rather than
-      //        pushing a second copy of it. ─────────────────────────────────
-      await tester.pumpAndSettle(const Duration(milliseconds: 50));
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('pacts-panel-drag-handle')), findsOneWidget);
-      expect(find.byType(PactDetailScreen), findsNothing);
+    testWidgets('chain_navigation_back_exits_directly_after_a_single_hop', (tester) async {
+      // TODO: 1. Seed predecessor and successor pacts.
+      // TODO: 2. Open pacts panel, open the predecessor's detail screen.
+      // TODO: 3. Tap "Next Pact" — now viewing the successor (a single hop,
+      //          not returned to the start).
+      // TODO: 4. Press system back — verify it exits directly to the Pacts
+      //          List in a single pop, with no PactDetailScreen remaining
+      //          mounted.
     });
   });
 
