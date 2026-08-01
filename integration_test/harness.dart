@@ -300,6 +300,11 @@ Future<void> openPactDetail(WidgetTester tester, String habitName) async {
   // though the tap below already disambiguates via .last (HAB-211).
   final panelEntryFinder = find.descendant(of: scrollableFinder, matching: find.text(habitName));
   await tester.dragUntilVisible(panelEntryFinder, scrollableFinder, const Offset(0, -100));
+  // dragUntilVisible's found-check only confirms the element exists in the
+  // tree — a lazy list's cache extent can pre-build an item before it's
+  // actually painted at a stable on-screen position, so an immediate tap's
+  // hit-test can still miss on a real device (HAB-211). Settle first.
+  await tester.pumpAndSettle();
   await tester.tap(panelEntryFinder.last);
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump(const Duration(milliseconds: 100));

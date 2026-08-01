@@ -657,6 +657,13 @@ void main() {
         find.byKey(panelScrollable),
         const Offset(0, 100),
       );
+      // dragUntilVisible's own found-check only confirms the element exists
+      // in the tree — a lazy list's cache extent can pre-build an item
+      // that isn't actually painted at a stable on-screen position yet, so
+      // an immediate tap's hit-test can still miss (CI-only: real device
+      // cache-extent/paint timing differs from the local emulator) —
+      // settle first (HAB-211).
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('break-filter-chip')));
       await tester.pump(const Duration(milliseconds: 300));
 

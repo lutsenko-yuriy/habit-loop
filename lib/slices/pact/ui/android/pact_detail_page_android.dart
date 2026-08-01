@@ -177,6 +177,9 @@ class _PactDetailContent extends StatelessWidget {
     final stats = state.stats;
     assert(pact != null && stats != null, '_PactDetailContent must only be shown after a successful load');
     if (pact == null || stats == null) return const SizedBox.shrink();
+    // ignore: avoid_print
+    print('DEBUG _PactDetailContent.build: pactId=${pact.id} status=${pact.status} '
+        'pactTimelineEnabled=$pactTimelineEnabled onOpenTimeline=${onOpenTimeline != null}');
     final theme = Theme.of(context);
     final today = DateTime.now();
     final daysLeft = pact.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
