@@ -135,16 +135,27 @@ void main() {
       await tester.tap(find.byKey(const Key('pact-note-field')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('pact-note-field')), 'Injured knee — resting now');
-      // Poll rather than a fixed pump count — confirmed via CI diagnostics
-      // that the ValueListenableBuilder rebuild driving the button's enabled
-      // state doesn't land within a deterministic number of frames on CI's
-      // emulator (HAB-211: passed once with an extra pump added, then failed
-      // again identically on the next dispatch — genuine flakiness, not a
-      // fixed-count-of-frames problem).
+      // Poll rather than a fixed pump count (HAB-211) — the fixed-pump-count
+      // approach passed once then failed identically on the next dispatch.
+      // The poll itself then ran its full timeout without the button ever
+      // enabling, which rules out plain frame lag — trace the field's text
+      // across iterations to see whether it takes the new value at all, or
+      // takes it and reverts.
       final deadline = tester.binding.clock.now().add(const Duration(seconds: 5));
+      var iterations = 0;
       while (!_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
         await tester.pump(const Duration(milliseconds: 50));
+        iterations++;
+        if (iterations <= 5 || iterations % 10 == 0) {
+          // ignore: avoid_print
+          print('DEBUG HAB-211 poll#$iterations: noteFieldText="${_noteFieldText(tester)}" '
+              'saveButtonEnabled=${_saveButtonEnabled(tester)} '
+              'hasFocus=${FocusManager.instance.primaryFocus?.hasFocus}');
+        }
       }
+      // ignore: avoid_print
+      print('DEBUG HAB-211 final: iterations=$iterations noteFieldText="${_noteFieldText(tester)}" '
+          'saveButtonEnabled=${_saveButtonEnabled(tester)}');
 
       // ── 4. Save button becomes enabled ────────────────────────────────────
       expect(_saveButtonEnabled(tester), isTrue);
