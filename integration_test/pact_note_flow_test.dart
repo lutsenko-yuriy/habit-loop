@@ -135,13 +135,13 @@ void main() {
       await tester.tap(find.byKey(const Key('pact-note-field')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('pact-note-field')), 'Injured knee — resting now');
-      // A single pump can land before the ValueListenableBuilder rebuild
-      // completes on CI's slower emulator (HAB-211: this assertion — unlike
-      // the other enterText call sites in this file, which go straight to
-      // tapping Save without checking button state first — is the only one
-      // that reads the button's enabled state immediately afterward).
       await tester.pump();
       await tester.pump();
+      // ignore: avoid_print
+      print('DEBUG HAB-211: noteFieldText="${_noteFieldText(tester)}" '
+          'saveButtonEnabled=${_saveButtonEnabled(tester)} '
+          'foundOldText=${find.text('Got injured').evaluate().length} '
+          'foundNewText=${find.text('Injured knee — resting now').evaluate().length}');
 
       // ── 4. Save button becomes enabled ────────────────────────────────────
       expect(_saveButtonEnabled(tester), isTrue);
