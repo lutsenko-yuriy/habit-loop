@@ -135,13 +135,16 @@ void main() {
       await tester.tap(find.byKey(const Key('pact-note-field')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('pact-note-field')), 'Injured knee — resting now');
-      await tester.pump();
-      await tester.pump();
-      // ignore: avoid_print
-      print('DEBUG HAB-211: noteFieldText="${_noteFieldText(tester)}" '
-          'saveButtonEnabled=${_saveButtonEnabled(tester)} '
-          'foundOldText=${find.text('Got injured').evaluate().length} '
-          'foundNewText=${find.text('Injured knee — resting now').evaluate().length}');
+      // Poll rather than a fixed pump count — confirmed via CI diagnostics
+      // that the ValueListenableBuilder rebuild driving the button's enabled
+      // state doesn't land within a deterministic number of frames on CI's
+      // emulator (HAB-211: passed once with an extra pump added, then failed
+      // again identically on the next dispatch — genuine flakiness, not a
+      // fixed-count-of-frames problem).
+      final deadline = tester.binding.clock.now().add(const Duration(seconds: 5));
+      while (!_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
 
       // ── 4. Save button becomes enabled ────────────────────────────────────
       expect(_saveButtonEnabled(tester), isTrue);
