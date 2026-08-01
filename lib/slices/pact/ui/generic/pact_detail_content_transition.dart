@@ -59,14 +59,30 @@ class PactDetailContentTransition extends StatelessWidget {
         ),
         transitionBuilder: (child, animation) {
           final isIncoming = child.key == ValueKey('$contentId::$sectionId');
-          final begin = isIncoming ? incomingOffset : outgoingOffset;
-          final position = Tween<Offset>(
-            begin: begin,
-            end: Offset.zero,
-          ).chain(CurveTween(curve: Curves.easeOutCubic)).animate(animation);
+          final phase = isIncoming
+              ? CurvedAnimation(
+                  parent: animation,
+                  curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
+                )
+              : CurvedAnimation(
+                  parent: ReverseAnimation(animation),
+                  curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
+                );
+          final opacity = isIncoming
+              ? Tween<double>(begin: 0, end: 1).animate(phase)
+              : Tween<double>(begin: 1, end: 0).animate(phase);
+          final position = isIncoming
+              ? Tween<Offset>(
+                  begin: incomingOffset,
+                  end: Offset.zero,
+                ).animate(phase)
+              : Tween<Offset>(
+                  begin: Offset.zero,
+                  end: outgoingOffset,
+                ).animate(phase);
 
           return FadeTransition(
-            opacity: animation,
+            opacity: opacity,
             child: SlideTransition(
               position: position,
               child: child,
