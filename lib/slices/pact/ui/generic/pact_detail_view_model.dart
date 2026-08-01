@@ -6,6 +6,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_bundle.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 
 // Overridable in tests to make daysActive computation in stopPact deterministic.
@@ -31,10 +32,11 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
 
       final pactService = ref.read(pactServiceProvider);
       final now = ref.read(pactDetailNowProvider);
+      final cache = ref.read(pactDetailCacheProvider);
 
       final PactDetailBundle bundle;
       try {
-        bundle = await ref.read(pactDetailCacheProvider).load(arg, now: now);
+        bundle = await cache.load(arg, now: now);
       } on ArgumentError {
         state = state.copyWith(
           isLoading: false,
@@ -84,6 +86,20 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       final predecessorPact = predecessorPactId == null ? null : await pactService.getPact(predecessorPactId);
       final successorPact = await pactService.getSuccessor(pact.id);
 
+      // Cache-warm the neighbor bundles (HAB-206 WU2) so a subsequent
+      // chain-link swap hits a warm PactDetailCache instead of a fresh DB
+      // round trip. Fire-and-forget — must not delay this pact's own load.
+      // Swallows ArgumentError (neighbor deleted/concurrently modified
+      // mid-warm) so it can't surface as a fatal Crashlytics report via the
+      // global error handler — the swap itself will re-surface a real "not
+      // found" if the user actually navigates there.
+      if (predecessorPact != null) {
+        unawaited(_warmChainCache(cache, predecessorPact.id, now));
+      }
+      if (successorPact != null) {
+        unawaited(_warmChainCache(cache, successorPact.id, now));
+      }
+
       state = state.copyWith(
         pact: pact,
         stats: stats,
@@ -101,6 +117,20 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     } catch (e, st) {
       unawaited(ref.read(logServiceProvider).error('pact_detail_load_failed: id=$arg', exception: e, stackTrace: st));
       state = state.copyWith(isLoading: false, loadError: e);
+    }
+  }
+
+  // Best-effort — this is unawaited by every caller, so any exception here
+  // (ArgumentError for a deleted neighbor, or a transient DB read failure)
+  // must be swallowed rather than escaping to the global error handler,
+  // which would record a harmless background warm as a fatal crash.
+  Future<void> _warmChainCache(PactDetailCache cache, String pactId, DateTime now) async {
+    try {
+      await cache.load(pactId, now: now);
+    } catch (e, st) {
+      unawaited(
+        ref.read(logServiceProvider).error('pact_detail_chain_cache_warm_failed: id=$pactId', exception: e, stackTrace: st),
+      );
     }
   }
 
