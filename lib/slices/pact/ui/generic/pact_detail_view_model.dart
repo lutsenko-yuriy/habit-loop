@@ -120,11 +120,17 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     }
   }
 
+  // Best-effort — this is unawaited by every caller, so any exception here
+  // (ArgumentError for a deleted neighbor, or a transient DB read failure)
+  // must be swallowed rather than escaping to the global error handler,
+  // which would record a harmless background warm as a fatal crash.
   Future<void> _warmChainCache(PactDetailCache cache, String pactId, DateTime now) async {
     try {
       await cache.load(pactId, now: now);
-    } on ArgumentError {
-      // Neighbor no longer exists — nothing to warm.
+    } catch (e, st) {
+      unawaited(
+        ref.read(logServiceProvider).error('pact_detail_chain_cache_warm_failed: id=$pactId', exception: e, stackTrace: st),
+      );
     }
   }
 
