@@ -19,16 +19,7 @@ import 'package:habit_loop/slices/pact/ui/ios/pact_detail_page_ios.dart';
 class PactDetailScreen extends ConsumerStatefulWidget {
   final String pactId;
 
-  /// The pact id of whatever detail screen pushed this one, if any (HAB-202).
-  ///
-  /// `null` when this screen was opened from the pact list (or any other
-  /// non-chain-link entry point). Used by [_onOpenChainLink] to decide
-  /// whether tapping a chain link should pop back to an existing page
-  /// instance or push a new one — see the navigation-stack rule in
-  /// `docs/knowledge/notes/HAB-202.md`.
-  final String? cameFromPactId;
-
-  const PactDetailScreen({super.key, required this.pactId, this.cameFromPactId});
+  const PactDetailScreen({super.key, required this.pactId});
 
   @override
   ConsumerState<PactDetailScreen> createState() => _PactDetailScreenState();
@@ -42,9 +33,22 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   // link) scrolled out of view.
   final _scrollController = ScrollController();
 
+  // The pact currently displayed (HAB-206). Mutable — chain-link taps swap
+  // this in place instead of pushing a new PactDetailScreen route, so the
+  // nav stack never grows past however deep the user entered the chain from
+  // (see docs/knowledge/notes/HAB-206.md).
+  late String _currentPactId;
+
+  // Guards against overlapping chain-link taps. Set for the duration of a
+  // swap (data reload + WU3's future transition animation) and checked by
+  // _onOpenChainLink so a second tap mid-transition is a no-op rather than
+  // interrupting or racing the first.
+  bool _isAnimating = false;
+
   @override
   void initState() {
     super.initState();
+    _currentPactId = widget.pactId;
     unawaited(
       Future.microtask(() {
         unawaited(
@@ -55,7 +59,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         // ref.invalidate(showupDetailNowProvider) pattern in ShowupDetailScreen.
         ref.invalidate(pactDetailNowProvider);
         unawaited(
-          ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
+          ref.read(pactDetailViewModelProvider(_currentPactId).notifier).load(),
         );
       }),
     );
@@ -72,13 +76,13 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await Navigator.of(context).push(
         CupertinoPageRoute<void>(
-          builder: (_) => PactTimelineScreen(pactId: widget.pactId),
+          builder: (_) => PactTimelineScreen(pactId: _currentPactId),
         ),
       );
     } else {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => PactTimelineScreen(pactId: widget.pactId),
+          builder: (_) => PactTimelineScreen(pactId: _currentPactId),
         ),
       );
     }
@@ -88,10 +92,10 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     final result = await Navigator.of(context).push<bool>(
       defaultTargetPlatform == TargetPlatform.iOS
           ? CupertinoPageRoute<bool>(
-              builder: (_) => PactBreakCreationScreen(pactId: widget.pactId, source: 'pact_detail'),
+              builder: (_) => PactBreakCreationScreen(pactId: _currentPactId, source: 'pact_detail'),
             )
           : MaterialPageRoute<bool>(
-              builder: (_) => PactBreakCreationScreen(pactId: widget.pactId, source: 'pact_detail'),
+              builder: (_) => PactBreakCreationScreen(pactId: _currentPactId, source: 'pact_detail'),
             ),
     );
 
@@ -99,44 +103,50 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     if (result == true && mounted) {
       ref.invalidate(pactDetailNowProvider);
       unawaited(
-        ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
+        ref.read(pactDetailViewModelProvider(_currentPactId).notifier).load(),
       );
     }
   }
 
-  /// Navigates to a chain-linked pact (HAB-202). Pops back to an existing
-  /// page instance if [targetPactId] matches [cameFromPactId] — i.e. the user
-  /// is bouncing back the way they came — otherwise pushes a new screen.
-  /// This keeps the back stack from growing unbounded when the user bounces
-  /// between "Previous Pact" and "Next Pact" links.
+  /// Navigates to a chain-linked pact (HAB-202) by swapping [_currentPactId]
+  /// in place (HAB-206) — no push, so a single PactDetailScreen route stays
+  /// mounted regardless of how far the user bounces between "Previous Pact"
+  /// and "Next Pact" links; the system back button always exits directly to
+  /// wherever this screen was originally opened from.
+  ///
+  /// No-ops while [_isAnimating] is already true — a second tap mid-swap
+  /// (data reload today; also the WU3 transition animation once it lands)
+  /// is ignored rather than interrupting or racing the first.
   Future<void> _onOpenChainLink(String targetPactId, {required String direction}) async {
+    if (_isAnimating) return;
+
     unawaited(
       ref.read(analyticsServiceProvider).logEvent(
-            PactChainLinkTappedEvent(pactId: widget.pactId, direction: direction),
+            PactChainLinkTappedEvent(pactId: _currentPactId, direction: direction),
           ),
     );
 
-    if (targetPactId == widget.cameFromPactId) {
-      Navigator.of(context).pop();
-      return;
-    }
+    setState(() {
+      _isAnimating = true;
+      _currentPactId = targetPactId;
+    });
 
-    await Navigator.of(context).push<void>(
-      defaultTargetPlatform == TargetPlatform.iOS
-          ? CupertinoPageRoute<void>(
-              builder: (_) => PactDetailScreen(pactId: targetPactId, cameFromPactId: widget.pactId),
-            )
-          : MaterialPageRoute<void>(
-              builder: (_) => PactDetailScreen(pactId: targetPactId, cameFromPactId: widget.pactId),
-            ),
-    );
+    ref.invalidate(pactDetailNowProvider);
+    await ref.read(pactDetailViewModelProvider(_currentPactId).notifier).load();
+    if (!mounted) return;
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    setState(() {
+      _isAnimating = false;
+    });
   }
 
   /// Opens the pact-creation wizard pre-filled from this (finished) pact
   /// (HAB-202). On return, the config is reset and the detail screen reloads
   /// so a newly-created successor's "Next Pact" link appears immediately.
   Future<void> _onAdjustAndStartAgain() async {
-    final pact = ref.read(pactDetailViewModelProvider(widget.pactId)).pact;
+    final pact = ref.read(pactDetailViewModelProvider(_currentPactId)).pact;
     if (pact == null) return;
 
     unawaited(
@@ -179,49 +189,51 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     }
     ref.invalidate(pactDetailNowProvider);
     unawaited(
-      ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
+      ref.read(pactDetailViewModelProvider(_currentPactId).notifier).load(),
     );
   }
 
   Future<void> _onEditPact() async {
     final result = await Navigator.of(context).push<bool>(
       defaultTargetPlatform == TargetPlatform.iOS
-          ? CupertinoPageRoute<bool>(builder: (_) => PactEditScreen(pactId: widget.pactId))
-          : MaterialPageRoute<bool>(builder: (_) => PactEditScreen(pactId: widget.pactId)),
+          ? CupertinoPageRoute<bool>(builder: (_) => PactEditScreen(pactId: _currentPactId))
+          : MaterialPageRoute<bool>(builder: (_) => PactEditScreen(pactId: _currentPactId)),
     );
 
     // Reload pact detail if the edit was saved successfully.
     if (result == true && mounted) {
       ref.invalidate(pactDetailNowProvider);
       unawaited(
-        ref.read(pactDetailViewModelProvider(widget.pactId).notifier).load(),
+        ref.read(pactDetailViewModelProvider(_currentPactId).notifier).load(),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(pactDetailViewModelProvider(widget.pactId));
+    final state = ref.watch(pactDetailViewModelProvider(_currentPactId));
     final flags = ref.watch(featureFlagsProvider);
 
     Future<void> onStopPact(String? reason) async {
       // Invalidate so stopPact() samples the real current time even if the
       // screen has been open for an extended period.
       ref.invalidate(pactDetailNowProvider);
-      await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).stopPact(reason);
+      await ref.read(pactDetailViewModelProvider(_currentPactId).notifier).stopPact(reason);
     }
 
     Future<void> onSaveNote(String note) async {
-      await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).saveNote(note);
+      await ref.read(pactDetailViewModelProvider(_currentPactId).notifier).saveNote(note);
     }
 
     Future<void> onArchivePact(bool archive) async {
-      await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).archivePact(archive, source: 'detail_screen');
+      await ref
+          .read(pactDetailViewModelProvider(_currentPactId).notifier)
+          .archivePact(archive, source: 'detail_screen');
     }
 
     Future<void> onStopBreak() async {
       ref.invalidate(pactDetailNowProvider);
-      await ref.read(pactDetailViewModelProvider(widget.pactId).notifier).stopBreak();
+      await ref.read(pactDetailViewModelProvider(_currentPactId).notifier).stopBreak();
     }
 
     // "Take a break" is only offered while no break already blocks a new one
