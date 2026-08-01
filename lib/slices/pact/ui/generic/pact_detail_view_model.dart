@@ -32,10 +32,11 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
 
       final pactService = ref.read(pactServiceProvider);
       final now = ref.read(pactDetailNowProvider);
+      final cache = ref.read(pactDetailCacheProvider);
 
       final PactDetailBundle bundle;
       try {
-        bundle = await ref.read(pactDetailCacheProvider).load(arg, now: now);
+        bundle = await cache.load(arg, now: now);
       } on ArgumentError {
         state = state.copyWith(
           isLoading: false,
@@ -92,7 +93,6 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       // mid-warm) so it can't surface as a fatal Crashlytics report via the
       // global error handler — the swap itself will re-surface a real "not
       // found" if the user actually navigates there.
-      final cache = ref.read(pactDetailCacheProvider);
       if (predecessorPact != null) {
         unawaited(_warmChainCache(cache, predecessorPact.id, now));
       }
