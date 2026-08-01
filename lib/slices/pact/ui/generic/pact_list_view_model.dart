@@ -2,10 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 
 final pactListViewModelProvider = NotifierProvider<PactListViewModel, PactListState>(PactListViewModel.new);
+
+// Overridable in tests; invalidated by dashboard_screen.dart on a
+// midnight-crossing resume, mirroring todayProvider's own lifecycle.
+final pactListNowProvider = Provider<DateTime>((ref) => DateTime.now());
 
 class PactListViewModel extends Notifier<PactListState> {
   /// True while a [load] call is already awaiting completion.
@@ -33,10 +36,11 @@ class PactListViewModel extends Notifier<PactListState> {
     try {
       final queryService = ref.read(pactListQueryServiceProvider);
       final pacts = await queryService.getAllPacts();
-      // Reads todayProvider (not DateTime.now() directly) so tests can
-      // override "now" — the panel is embedded in the dashboard, which
-      // already treats todayProvider as its own clock (HAB-211).
-      final now = ref.read(todayProvider);
+      // Reads pactListNowProvider (not DateTime.now() directly) so tests can
+      // override "now" — this notifier previously called DateTime.now()
+      // directly, which made on-break filtering silently use real wall-clock
+      // time regardless of test overrides (HAB-211).
+      final now = ref.read(pactListNowProvider);
 
       final entries = <PactListEntry>[];
       for (final pact in pacts) {

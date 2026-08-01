@@ -13,6 +13,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
@@ -69,6 +70,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
@@ -124,6 +126,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
@@ -165,6 +168,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
@@ -218,6 +222,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactDetailNowProvider.overrideWithValue(testNow),
           pactTimelineNowProvider.overrideWithValue(testNow),
           showupDetailNowProvider.overrideWithValue(testNow),
@@ -283,6 +288,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
@@ -340,6 +346,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           showupDetailNowProvider.overrideWithValue(testNow),
         ],
         beforePump: (h) async {
@@ -385,6 +392,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(DateTime(2099, 6, 15, 7, 0)),
+          pactListNowProvider.overrideWithValue(DateTime(2099, 6, 15, 7, 0)),
         ],
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
@@ -505,6 +513,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           pactDetailNowProvider.overrideWithValue(testNow),
         ],
         beforePump: (h) async {
@@ -611,6 +620,7 @@ void main() {
         tester,
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
           _breaksEnabled,
         ],
         beforePump: (h) async {

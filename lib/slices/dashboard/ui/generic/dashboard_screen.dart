@@ -66,6 +66,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     // Update guard first so re-entrant resume during the async load below is no-op'd.
     _lastLoadDate = today;
     ref.invalidate(todayProvider);
+    ref.invalidate(pactListNowProvider);
     ref.invalidate(hasActivePactsProvider);
     unawaited(
       ref.read(analyticsServiceProvider).logScreenView(const DashboardAnalyticsScreen()),

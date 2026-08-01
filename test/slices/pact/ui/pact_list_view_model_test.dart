@@ -7,7 +7,6 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
-import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
 import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
@@ -52,7 +51,7 @@ ProviderContainer _makeContainer({
     pactRepositoryProvider.overrideWithValue(InMemoryPactRepository(pacts)),
     showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository(showups)),
     pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
-    if (now != null) todayProvider.overrideWithValue(now),
+    if (now != null) pactListNowProvider.overrideWithValue(now),
   ]);
 }
 
@@ -315,10 +314,10 @@ void main() {
       expect(entry.onBreak, isFalse);
     });
 
-    test('load: onBreak respects an overridden todayProvider, not real wall-clock time (HAB-211)', () async {
+    test('load: onBreak respects an overridden pactListNowProvider, not real wall-clock time (HAB-211)', () async {
       // The break window (2099) is nowhere near real "now" — this only
-      // passes if load() actually reads todayProvider instead of calling
-      // DateTime.now() directly.
+      // passes if load() actually reads pactListNowProvider instead of
+      // calling DateTime.now() directly.
       final pact = _pact('p1', PactStatus.active);
       final overriddenNow = DateTime(2099, 6, 16);
       final c = _makeContainer(
