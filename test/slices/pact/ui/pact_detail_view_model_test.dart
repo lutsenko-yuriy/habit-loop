@@ -365,6 +365,51 @@ void main() {
 
         expect(state.successorPact, isNull);
       });
+
+      test('warms the cache for predecessor and successor pacts (HAB-206 WU2)', () async {
+        final successor = Pact(
+          id: 'v2',
+          habitName: 'Meditate (v2)',
+          startDate: DateTime(2026, 9, 2),
+          endDate: DateTime(2027, 3, 2),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          predecessorPactId: 'p1',
+        );
+        final current = Pact(
+          id: 'p1',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          predecessorPactId: 'root',
+        );
+        final container = _makeContainer(pacts: [predecessor, current, successor], showups: _showups);
+        addTearDown(container.dispose);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        // Cache warming is fire-and-forget — flush the event loop so the
+        // unawaited load() calls it kicked off have a chance to complete.
+        await Future<void>.delayed(Duration.zero);
+
+        final cache = container.read(pactDetailCacheProvider);
+        expect(cache.peek('root'), isNotNull, reason: 'predecessor bundle must be warmed');
+        expect(cache.peek('v2'), isNotNull, reason: 'successor bundle must be warmed');
+      });
+
+      test('does not attempt to warm the cache for a neighbor that does not exist', () async {
+        final container = _makeContainer(pacts: [_pact], showups: _showups);
+        addTearDown(container.dispose);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        await Future<void>.delayed(Duration.zero);
+
+        final state = container.read(pactDetailViewModelProvider('p1'));
+        expect(state.loadError, isNull, reason: 'no predecessor/successor means nothing to warm, not an error');
+      });
     });
 
     test('stopPact updates pact status to stopped with reason', () async {

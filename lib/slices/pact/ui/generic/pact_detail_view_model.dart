@@ -84,6 +84,17 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       final predecessorPact = predecessorPactId == null ? null : await pactService.getPact(predecessorPactId);
       final successorPact = await pactService.getSuccessor(pact.id);
 
+      // Cache-warm the neighbor bundles (HAB-206 WU2) so a subsequent
+      // chain-link swap hits a warm PactDetailCache instead of a fresh DB
+      // round trip. Fire-and-forget — must not delay this pact's own load.
+      final cache = ref.read(pactDetailCacheProvider);
+      if (predecessorPactId != null) {
+        unawaited(cache.load(predecessorPactId, now: now));
+      }
+      if (successorPact != null) {
+        unawaited(cache.load(successorPact.id, now: now));
+      }
+
       state = state.copyWith(
         pact: pact,
         stats: stats,
