@@ -292,6 +292,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         onOpenNextPact: onOpenNextPact,
         onAdjustAndStartAgain: onAdjustAndStartAgain,
         scrollController: _scrollController,
+        scrollViewId: widget.pactId,
         contentId: _currentPactId,
         transitionDirection: _lastDirection,
       );
@@ -311,6 +312,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       onOpenNextPact: onOpenNextPact,
       onAdjustAndStartAgain: onAdjustAndStartAgain,
       scrollController: _scrollController,
+      scrollViewId: widget.pactId,
       contentId: _currentPactId,
       transitionDirection: _lastDirection,
     );

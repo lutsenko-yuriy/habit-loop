@@ -213,7 +213,8 @@ void main() {
       // Scroll down — the extra "stopped on" date row pushes the note section
       // below the default test viewport height.
       final saveButtonFinder = find.byKey(const Key('pact-note-save-button'));
-      await tester.scrollUntilVisible(saveButtonFinder, 200);
+      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button'), skipOffstage: false));
+      await tester.pumpAndSettle();
 
       expect(saveButtonFinder, findsOneWidget);
       expect(tester.widget<FilledButton>(saveButtonFinder), isA<FilledButton>());

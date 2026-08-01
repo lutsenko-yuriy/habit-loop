@@ -103,7 +103,9 @@ void main() {
       await tester.pump();
       await tester.pump(PactDetailContentTransition.duration ~/ 2);
 
-      final transition = tester.widget<PactDetailContentTransition>(find.byType(PactDetailContentTransition));
+      final transition = tester.widget<PactDetailContentTransition>(
+        find.byKey(const Key('pact-detail-heading-transition')),
+      );
       expect(transition.direction, PactDetailTransitionDirection.toPredecessor);
 
       await tester.pump(PactDetailContentTransition.duration);
@@ -121,7 +123,9 @@ void main() {
       await tester.pump();
       await tester.pump(PactDetailContentTransition.duration ~/ 2);
 
-      final transition = tester.widget<PactDetailContentTransition>(find.byType(PactDetailContentTransition));
+      final transition = tester.widget<PactDetailContentTransition>(
+        find.byKey(const Key('pact-detail-heading-transition')),
+      );
       expect(transition.direction, PactDetailTransitionDirection.toSuccessor);
 
       await tester.pump(PactDetailContentTransition.duration);

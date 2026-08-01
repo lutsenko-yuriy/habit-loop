@@ -71,6 +71,7 @@ class PactDetailPageIos extends StatelessWidget {
   /// newly-relevant "Next Pact" link at the top of the list can stay
   /// scrolled out of view. `null` in tests that don't exercise this.
   final ScrollController? scrollController;
+  final String? scrollViewId;
   final String? contentId;
   final PactDetailTransitionDirection? transitionDirection;
 
@@ -90,6 +91,7 @@ class PactDetailPageIos extends StatelessWidget {
     this.onOpenNextPact,
     this.onAdjustAndStartAgain,
     this.scrollController,
+    this.scrollViewId,
     this.contentId,
     this.transitionDirection,
   });
@@ -126,25 +128,24 @@ class PactDetailPageIos extends StatelessWidget {
                     ? const Center(child: CupertinoActivityIndicator())
                     : state.loadError != null
                         ? Center(child: Text(state.loadError.toString()))
-                        : PactDetailContentTransition(
-                            contentId: contentId ?? state.pact!.id,
-                            direction: transitionDirection,
-                            child: _PactDetailContent(
-                              state: state,
-                              l10n: l10n,
-                              onStopPact: onStopPact,
-                              onSaveNote: onSaveNote,
-                              onArchivePact: onArchivePact,
-                              pactTimelineEnabled: pactTimelineEnabled,
-                              onOpenTimeline: onOpenTimeline,
-                              onStartBreak: onStartBreak,
-                              onStopBreak: onStopBreak,
-                              pactChainingEnabled: pactChainingEnabled,
-                              onOpenPreviousPact: onOpenPreviousPact,
-                              onOpenNextPact: onOpenNextPact,
-                              onAdjustAndStartAgain: onAdjustAndStartAgain,
-                              scrollController: scrollController,
-                            ),
+                        : _PactDetailContent(
+                            state: state,
+                            l10n: l10n,
+                            onStopPact: onStopPact,
+                            onSaveNote: onSaveNote,
+                            onArchivePact: onArchivePact,
+                            pactTimelineEnabled: pactTimelineEnabled,
+                            onOpenTimeline: onOpenTimeline,
+                            onStartBreak: onStartBreak,
+                            onStopBreak: onStopBreak,
+                            pactChainingEnabled: pactChainingEnabled,
+                            onOpenPreviousPact: onOpenPreviousPact,
+                            onOpenNextPact: onOpenNextPact,
+                            onAdjustAndStartAgain: onAdjustAndStartAgain,
+                            scrollController: scrollController,
+                            scrollViewId: scrollViewId,
+                            contentId: contentId,
+                            transitionDirection: transitionDirection,
                           ),
               ),
             ],
@@ -170,6 +171,9 @@ class _PactDetailContent extends StatelessWidget {
   final VoidCallback? onOpenNextPact;
   final VoidCallback? onAdjustAndStartAgain;
   final ScrollController? scrollController;
+  final String? scrollViewId;
+  final String? contentId;
+  final PactDetailTransitionDirection? transitionDirection;
 
   const _PactDetailContent({
     required this.state,
@@ -186,6 +190,9 @@ class _PactDetailContent extends StatelessWidget {
     this.onOpenNextPact,
     this.onAdjustAndStartAgain,
     this.scrollController,
+    this.scrollViewId,
+    this.contentId,
+    this.transitionDirection,
   });
 
   @override
@@ -206,22 +213,35 @@ class _PactDetailContent extends StatelessWidget {
       // Pact-specific key (HAB-202) — disambiguates this screen's own
       // Scrollable from an earlier PactDetailScreen still mounted underneath
       // it (Navigator keeps prior routes mounted by default) when a test
-      // needs to scroll a specific screen's content into view.
-      key: Key('pact-detail-scroll-view-${pact.id}'),
+      // needs to scroll a specific screen's content into view. Must stay
+      // stable across in-place chain navigation swaps so the inner section
+      // transitions keep their state long enough to animate (HAB-206 WU3).
+      key: Key('pact-detail-scroll-view-${scrollViewId ?? pact.id}'),
       controller: scrollController,
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
-        // Habit name + status badge
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                pact.habitName,
-                style: AppTypography.sectionTitle,
+        PactDetailContentTransition(
+          key: const Key('pact-detail-heading-transition'),
+          contentId: contentId ?? pact.id,
+          sectionId: 'heading',
+          direction: transitionDirection,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Habit name + status badge
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      pact.habitName,
+                      style: AppTypography.sectionTitle,
+                    ),
+                  ),
+                  StatusBadge(text: statusText, color: statusColor),
+                ],
               ),
-            ),
-            StatusBadge(text: statusText, color: statusColor),
-          ],
+            ],
+          ),
         ),
         // Previous/Next Pact links (HAB-202) — grouped in a row right under
         // the title, independent of the bottom action area (which shows
@@ -285,112 +305,149 @@ class _PactDetailContent extends StatelessWidget {
         ),
 
         // Stats cards
-        SectionHeader(title: l10n.sectionStats, labelColor: HabitLoopColors.secondaryText(context)),
-        const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            Expanded(child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone))),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            if (pact.status == PactStatus.active)
-              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
-            else if (pact.status == PactStatus.stopped)
-              Expanded(child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
-            if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
-          ],
+        PactDetailContentTransition(
+          key: const Key('pact-detail-stats-transition'),
+          contentId: contentId ?? pact.id,
+          sectionId: 'stats',
+          direction: transitionDirection,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SectionHeader(title: l10n.sectionStats, labelColor: HabitLoopColors.secondaryText(context)),
+              const SizedBox(height: AppSpacing.s8),
+              Row(
+                children: [
+                  Expanded(child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone))),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              Row(
+                children: [
+                  if (pact.status == PactStatus.active)
+                    Expanded(
+                        child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
+                  else if (pact.status == PactStatus.stopped)
+                    Expanded(
+                        child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
+                  if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
+                  Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+                ],
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.s24),
 
-        // Time details
-        SectionHeader(title: l10n.sectionTimeline, labelColor: HabitLoopColors.secondaryText(context)),
-        const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
-          label: l10n.pactStartDate,
-          value: formatLocaleDate(pact.startDate),
-          valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
-          DateRowTile(
-            label: l10n.pactStoppedDate,
-            value: formatLocaleDate(pact.stoppedAt!),
-            valueColor: HabitLoopColors.secondaryText(context),
-            backgroundColor: fill,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-        ],
-        DateRowTile(
-          label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
-          value: formatLocaleDate(pact.endDate),
-          valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
-        ),
-        if (pact.status == PactStatus.active && daysLeft >= 0) ...[
-          const SizedBox(height: AppSpacing.s8),
-          DateRowTile(label: l10n.daysRemaining(daysLeft), backgroundColor: fill),
-        ],
-        const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
-          label: l10n.summaryShowupDuration,
-          value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
-          valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
-          label: l10n.summaryReminder,
-          value: reminderDescription(l10n, pact.reminderOffset),
-          valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
-        ),
+        PactDetailContentTransition(
+          key: const Key('pact-detail-timeline-transition'),
+          contentId: contentId ?? pact.id,
+          sectionId: 'timeline',
+          direction: transitionDirection,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Time details
+              SectionHeader(title: l10n.sectionTimeline, labelColor: HabitLoopColors.secondaryText(context)),
+              const SizedBox(height: AppSpacing.s8),
+              DateRowTile(
+                label: l10n.pactStartDate,
+                value: formatLocaleDate(pact.startDate),
+                valueColor: HabitLoopColors.secondaryText(context),
+                backgroundColor: fill,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
+                DateRowTile(
+                  label: l10n.pactStoppedDate,
+                  value: formatLocaleDate(pact.stoppedAt!),
+                  valueColor: HabitLoopColors.secondaryText(context),
+                  backgroundColor: fill,
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              DateRowTile(
+                label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
+                value: formatLocaleDate(pact.endDate),
+                valueColor: HabitLoopColors.secondaryText(context),
+                backgroundColor: fill,
+              ),
+              if (pact.status == PactStatus.active && daysLeft >= 0) ...[
+                const SizedBox(height: AppSpacing.s8),
+                DateRowTile(label: l10n.daysRemaining(daysLeft), backgroundColor: fill),
+              ],
+              const SizedBox(height: AppSpacing.s8),
+              DateRowTile(
+                label: l10n.summaryShowupDuration,
+                value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
+                valueColor: HabitLoopColors.secondaryText(context),
+                backgroundColor: fill,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              DateRowTile(
+                label: l10n.summaryReminder,
+                value: reminderDescription(l10n, pact.reminderOffset),
+                valueColor: HabitLoopColors.secondaryText(context),
+                backgroundColor: fill,
+              ),
 
-        // View Timeline entry point (flag-gated)
-        if (pactTimelineEnabled && onOpenTimeline != null) ...[
-          const SizedBox(height: AppSpacing.s8),
-          CupertinoButton(
-            key: const Key('pact-detail-timeline-button'),
-            padding: EdgeInsets.zero,
-            onPressed: onOpenTimeline,
-            child: Text(l10n.pactDetailViewTimeline),
+              // View Timeline entry point (flag-gated)
+              if (pactTimelineEnabled && onOpenTimeline != null) ...[
+                const SizedBox(height: AppSpacing.s8),
+                CupertinoButton(
+                  key: const Key('pact-detail-timeline-button'),
+                  padding: EdgeInsets.zero,
+                  onPressed: onOpenTimeline,
+                  child: Text(l10n.pactDetailViewTimeline),
+                ),
+              ],
+            ],
           ),
-        ],
+        ),
 
         // Editable note section for inactive pacts
         if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s24),
-          PactNoteSection(
-            savedNote: pact.stopReason,
-            isSaving: state.isSavingNote,
-            noteError: state.noteError,
-            labelColor: HabitLoopColors.secondaryText(context),
-            errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
-            onSaveNote: onSaveNote,
-            slots: (
-              buildNoteField: (context, controller) => CupertinoTextField(
-                    key: const Key('pact-note-field'),
-                    controller: controller,
-                    placeholder: l10n.stopPactReasonHint,
-                    maxLines: null,
-                    minLines: 3,
+          PactDetailContentTransition(
+            key: const Key('pact-detail-note-transition'),
+            contentId: contentId ?? pact.id,
+            sectionId: 'note',
+            direction: transitionDirection,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: AppSpacing.s24),
+                PactNoteSection(
+                  savedNote: pact.stopReason,
+                  isSaving: state.isSavingNote,
+                  noteError: state.noteError,
+                  labelColor: HabitLoopColors.secondaryText(context),
+                  errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
+                  onSaveNote: onSaveNote,
+                  slots: (
+                    buildNoteField: (context, controller) => CupertinoTextField(
+                          key: const Key('pact-note-field'),
+                          controller: controller,
+                          placeholder: l10n.stopPactReasonHint,
+                          maxLines: null,
+                          minLines: 3,
+                        ),
+                    buildSaveButton: (context, onPressed) => CupertinoButton(
+                          key: const Key('pact-note-save-button'),
+                          padding: EdgeInsets.zero,
+                          onPressed: onPressed,
+                          child: Text(
+                            l10n.pactNoteSave,
+                            style: TextStyle(
+                              color: onPressed != null
+                                  ? CupertinoTheme.of(context).primaryColor
+                                  : CupertinoColors.systemGrey,
+                            ),
+                          ),
+                        ),
                   ),
-              buildSaveButton: (context, onPressed) => CupertinoButton(
-                    key: const Key('pact-note-save-button'),
-                    padding: EdgeInsets.zero,
-                    onPressed: onPressed,
-                    child: Text(
-                      l10n.pactNoteSave,
-                      style: TextStyle(
-                        color: onPressed != null ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
-                      ),
-                    ),
-                  ),
+                ),
+              ],
             ),
           ),
         ],
