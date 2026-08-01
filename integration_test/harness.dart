@@ -337,7 +337,20 @@ Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) async {
 }
 
 /// Opens the timeline screen from an already-open pact detail screen.
+///
+/// Resets scroll position to the top first — a caller that scrolled down
+/// for an earlier interaction (e.g. editing the note field, which sits
+/// *below* the timeline button) would otherwise have this scroll the wrong
+/// direction: `dragUntilVisible`'s single fixed direction can't recover
+/// from starting already past the target (HAB-211, confirmed via CI
+/// diagnostics — the button was always present in the tree with
+/// pactTimelineEnabled=true, just never scrolled back into range).
 Future<void> openTimeline(WidgetTester tester) async {
+  final listViewFinder = find.byType(ListView);
+  for (var i = 0; i < 15; i++) {
+    await tester.drag(listViewFinder, const Offset(0, 100));
+    await tester.pump();
+  }
   // dragUntilVisible (not waitFor + ensureVisible) — the button only appears
   // once the view model has resolved *and* it may sit below several
   // DateRowTiles on a short viewport (CI's Android emulator), where it isn't
@@ -345,26 +358,16 @@ Future<void> openTimeline(WidgetTester tester) async {
   // into view (HAB-211, same root cause as HAB-196/HAB-199). Uses
   // find.byType(ListView), not the broader Scrollable — see
   // scrollToPactDetailStartBreakButton above for why.
-  final listViewFinder = find.byType(ListView);
-  final buttonFinder = find.byKey(const Key('pact-detail-timeline-button'));
-  // ignore: avoid_print
-  print('DEBUG openTimeline: ListView matches=${listViewFinder.evaluate().length}, '
-      'button matches (pre-scroll)=${buttonFinder.evaluate().length}');
-  var scrolled = 0;
-  while (scrolled < 50 && buttonFinder.evaluate().isEmpty) {
-    await tester.drag(listViewFinder, const Offset(0, -100));
-    await tester.pump(const Duration(milliseconds: 50));
-    scrolled++;
-  }
-  if (buttonFinder.evaluate().isEmpty) {
-    // ignore: avoid_print
-    print('DEBUG openTimeline: button still not found after $scrolled scrolls. '
-        'ListView matches=${listViewFinder.evaluate().length}, '
-        'rect=${listViewFinder.evaluate().isNotEmpty ? tester.getRect(listViewFinder) : "n/a"}, '
-        'all texts on screen=${find.byType(Text).evaluate().map((e) => (e.widget as Text).data).toList()}');
-  }
-  await tester.dragUntilVisible(buttonFinder, listViewFinder, const Offset(0, -100));
-  await tester.pump();
+  await tester.dragUntilVisible(
+    find.byKey(const Key('pact-detail-timeline-button')),
+    listViewFinder,
+    const Offset(0, -100),
+  );
+  // dragUntilVisible's found-check only confirms the element exists in the
+  // tree — a lazy list's cache extent can pre-build an item before it's
+  // actually painted at a stable on-screen position, so an immediate tap's
+  // hit-test can still miss on a real device (HAB-211). Settle first.
+  await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
   await tester.pump(const Duration(milliseconds: 350));
   await tester.pump(const Duration(milliseconds: 100));
