@@ -410,6 +410,32 @@ void main() {
         final state = container.read(pactDetailViewModelProvider('p1'));
         expect(state.loadError, isNull, reason: 'no predecessor/successor means nothing to warm, not an error');
       });
+
+      test('does not surface an error when predecessorPactId points at a pact that no longer exists', () async {
+        // predecessorPactId is set but no such pact exists in the repo — a
+        // dangling reference (e.g. concurrent delete). Warming must not throw
+        // an uncaught async error; getPact already returns null for display.
+        final danglingRef = Pact(
+          id: 'p1',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          predecessorPactId: 'missing-predecessor',
+        );
+        final container = _makeContainer(pacts: [danglingRef], showups: _showups);
+        addTearDown(container.dispose);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        await Future<void>.delayed(Duration.zero);
+
+        final state = container.read(pactDetailViewModelProvider('p1'));
+        expect(state.loadError, isNull);
+        expect(state.predecessorPact, isNull);
+        expect(container.read(pactDetailCacheProvider).peek('missing-predecessor'), isNull);
+      });
     });
 
     test('stopPact updates pact status to stopped with reason', () async {

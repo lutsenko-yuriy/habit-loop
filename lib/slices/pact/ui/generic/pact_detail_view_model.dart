@@ -6,6 +6,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_bundle.dart';
+import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 
 // Overridable in tests to make daysActive computation in stopPact deterministic.
@@ -87,12 +88,16 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       // Cache-warm the neighbor bundles (HAB-206 WU2) so a subsequent
       // chain-link swap hits a warm PactDetailCache instead of a fresh DB
       // round trip. Fire-and-forget — must not delay this pact's own load.
+      // Swallows ArgumentError (neighbor deleted/concurrently modified
+      // mid-warm) so it can't surface as a fatal Crashlytics report via the
+      // global error handler — the swap itself will re-surface a real "not
+      // found" if the user actually navigates there.
       final cache = ref.read(pactDetailCacheProvider);
-      if (predecessorPactId != null) {
-        unawaited(cache.load(predecessorPactId, now: now));
+      if (predecessorPact != null) {
+        unawaited(_warmChainCache(cache, predecessorPact.id, now));
       }
       if (successorPact != null) {
-        unawaited(cache.load(successorPact.id, now: now));
+        unawaited(_warmChainCache(cache, successorPact.id, now));
       }
 
       state = state.copyWith(
@@ -112,6 +117,14 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
     } catch (e, st) {
       unawaited(ref.read(logServiceProvider).error('pact_detail_load_failed: id=$arg', exception: e, stackTrace: st));
       state = state.copyWith(isLoading: false, loadError: e);
+    }
+  }
+
+  Future<void> _warmChainCache(PactDetailCache cache, String pactId, DateTime now) async {
+    try {
+      await cache.load(pactId, now: now);
+    } on ArgumentError {
+      // Neighbor no longer exists — nothing to warm.
     }
   }
 
