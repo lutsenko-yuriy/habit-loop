@@ -444,6 +444,11 @@ class _PactDetailContent extends StatelessWidget {
           visible: pact.status == PactStatus.stopped && pact.stoppedAt != null,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            // stretch, not the Column default of center — Align (inside
+            // AnimatedReveal) loosens the incoming width constraint, and
+            // without stretch this Column shrink-wraps to its content's own
+            // intrinsic width instead of filling the row (HAB-206 WU3).
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _animatedDateTile(
                 label: l10n.pactStoppedDate,
@@ -470,6 +475,7 @@ class _PactDetailContent extends StatelessWidget {
           visible: pact.status == PactStatus.active && daysLeft >= 0,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.s8),
               _animatedDateTile(
@@ -508,49 +514,72 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Editable note section for inactive pacts
-        if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s24),
-          PactNoteSection(
-            savedNote: pact.stopReason,
-            isSaving: state.isSavingNote,
-            noteError: state.noteError,
-            labelColor: HabitLoopColors.secondaryText(context),
-            errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
-            onSaveNote: onSaveNote,
-            slots: (
-              buildNoteField: (context, controller) => CupertinoTextField(
-                    key: const Key('pact-note-field'),
-                    controller: controller,
-                    placeholder: l10n.stopPactReasonHint,
-                    maxLines: null,
-                    minLines: 3,
-                  ),
-              buildSaveButton: (context, onPressed) => CupertinoButton(
-                    key: const Key('pact-note-save-button'),
-                    padding: EdgeInsets.zero,
-                    onPressed: onPressed,
-                    child: Text(
-                      l10n.pactNoteSave,
-                      style: TextStyle(
-                        color: onPressed != null ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
+        // Editable note section for inactive pacts — revealed/collapsed
+        // (HAB-206 WU3) rather than popping. Falls back to the outgoing
+        // pact's own stopReason while collapsing (an active pact has none of
+        // its own). crossAxisAlignment.stretch matters here — without it the
+        // multi-line note field shrink-wraps narrower than before, which
+        // forces more wrapped lines than it has height for and makes it
+        // start scrolling internally.
+        AnimatedReveal(
+          visible: pact.status != PactStatus.active,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppSpacing.s24),
+              PactNoteSection(
+                savedNote: pact.stopReason ?? previousPact?.stopReason,
+                isSaving: state.isSavingNote,
+                noteError: state.noteError,
+                labelColor: HabitLoopColors.secondaryText(context),
+                errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
+                onSaveNote: onSaveNote,
+                slots: (
+                  buildNoteField: (context, controller) => CupertinoTextField(
+                        key: const Key('pact-note-field'),
+                        controller: controller,
+                        placeholder: l10n.stopPactReasonHint,
+                        maxLines: null,
+                        minLines: 3,
                       ),
-                    ),
-                  ),
-            ),
+                  buildSaveButton: (context, onPressed) => CupertinoButton(
+                        key: const Key('pact-note-save-button'),
+                        padding: EdgeInsets.zero,
+                        onPressed: onPressed,
+                        child: Text(
+                          l10n.pactNoteSave,
+                          style: TextStyle(
+                            color: onPressed != null
+                                ? CupertinoTheme.of(context).primaryColor
+                                : CupertinoColors.systemGrey,
+                          ),
+                        ),
+                      ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
 
         // Archive section for completed and stopped pacts — revealed/
         // collapsed (HAB-206 WU3) rather than popping, same rationale as the
-        // date tiles above.
+        // date tiles above. mainAxisSize stays min (not stretch) — the
+        // button is meant to stay a small centered link like "View
+        // Timeline", not grow full-width; only the header needs its own
+        // explicit left alignment, since without any stretch the whole
+        // Column (and thus every un-aligned child, header included) centers
+        // by default.
         AnimatedReveal(
           visible: pact.status != PactStatus.active,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: AppSpacing.s24),
-              SectionHeader(title: l10n.sectionArchive, labelColor: HabitLoopColors.secondaryText(context)),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SectionHeader(title: l10n.sectionArchive, labelColor: HabitLoopColors.secondaryText(context)),
+              ),
               const SizedBox(height: AppSpacing.s8),
               CupertinoButton(
                 key: const Key('archive-pact-button'),

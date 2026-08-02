@@ -450,6 +450,13 @@ class _PactDetailContent extends StatelessWidget {
             // one a ListView item normally gets, which made the multi-line
             // note TextField further down start scrolling internally.
             mainAxisSize: MainAxisSize.min,
+            // stretch, not the Column default of center — Align (inside
+            // AnimatedReveal) loosens the incoming width constraint, and
+            // without stretch this Column (and everything in it) shrink-
+            // wraps to its content's own intrinsic width instead of filling
+            // the row, which is what made this tile narrow and centered
+            // instead of full-width like its un-revealed siblings.
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _animatedDateTile(
                 label: l10n.pactStoppedDate,
@@ -476,6 +483,7 @@ class _PactDetailContent extends StatelessWidget {
           visible: pact.status == PactStatus.active && daysLeft >= 0,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.s8),
               _animatedDateTile(
@@ -513,47 +521,67 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Editable note section for inactive pacts. Deliberately NOT wrapped
-        // in AnimatedReveal like the sections below (HAB-206 WU3) — doing so
-        // made the multi-line note TextField's own internal EditableText
-        // scrollable spuriously mount, which broke scrollUntilVisible's
-        // default (unscoped) Scrollable lookup elsewhere in this file. Still
-        // pops in/out instantly, same as before WU3.
-        if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s24),
-          PactNoteSection(
-            savedNote: pact.stopReason ?? previousPact?.stopReason,
-            isSaving: state.isSavingNote,
-            noteError: state.noteError,
-            labelColor: theme.colorScheme.onSurfaceVariant,
-            errorColor: theme.colorScheme.error,
-            onSaveNote: onSaveNote,
-            slots: (
-              buildNoteField: (context, controller) => TextField(
-                    key: const Key('pact-note-field'),
-                    controller: controller,
-                    decoration: InputDecoration(hintText: l10n.stopPactReasonHint),
-                    maxLines: null,
-                    minLines: 3,
-                  ),
-              buildSaveButton: (context, onPressed) => FilledButton(
-                    key: const Key('pact-note-save-button'),
-                    onPressed: onPressed,
-                    child: Text(l10n.pactNoteSave),
-                  ),
-            ),
+        // Editable note section for inactive pacts — revealed/collapsed
+        // (HAB-206 WU3) rather than popping. An earlier attempt at this
+        // broke the multi-line note TextField's own internal scrolling; the
+        // real cause turned out to be a missing crossAxisAlignment.stretch
+        // on the wrapper Column below (Align, inside AnimatedReveal, loosens
+        // the incoming width constraint, so without stretch the Column
+        // shrink-wraps to a narrower width than before — and a *narrower*
+        // multi-line field needs more wrapped lines of height than it
+        // actually has room for, which is what triggered the internal
+        // scroll). Falls back to the outgoing pact's own stopReason while
+        // collapsing (an active pact has none of its own).
+        AnimatedReveal(
+          visible: pact.status != PactStatus.active,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppSpacing.s24),
+              PactNoteSection(
+                savedNote: pact.stopReason ?? previousPact?.stopReason,
+                isSaving: state.isSavingNote,
+                noteError: state.noteError,
+                labelColor: theme.colorScheme.onSurfaceVariant,
+                errorColor: theme.colorScheme.error,
+                onSaveNote: onSaveNote,
+                slots: (
+                  buildNoteField: (context, controller) => TextField(
+                        key: const Key('pact-note-field'),
+                        controller: controller,
+                        decoration: InputDecoration(hintText: l10n.stopPactReasonHint),
+                        maxLines: null,
+                        minLines: 3,
+                      ),
+                  buildSaveButton: (context, onPressed) => FilledButton(
+                        key: const Key('pact-note-save-button'),
+                        onPressed: onPressed,
+                        child: Text(l10n.pactNoteSave),
+                      ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
 
         // Archive section for completed and stopped pacts — same
-        // reveal/collapse treatment as the note section above.
+        // reveal/collapse treatment as the note section above. mainAxisSize
+        // stays min (not stretch, unlike the sections above) — the button
+        // is meant to stay a small centered link like "View Timeline", not
+        // grow full-width; only the header needs its own explicit left
+        // alignment, since without any stretch the whole Column (and thus
+        // every un-aligned child, header included) centers by default.
         AnimatedReveal(
           visible: pact.status != PactStatus.active,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: AppSpacing.s24),
-              SectionHeader(title: l10n.sectionArchive, labelColor: theme.colorScheme.onSurfaceVariant),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SectionHeader(title: l10n.sectionArchive, labelColor: theme.colorScheme.onSurfaceVariant),
+              ),
               const SizedBox(height: AppSpacing.s8),
               OutlinedButton(
                 key: const Key('archive-pact-button'),
