@@ -87,7 +87,9 @@ class ChainNavigationStripe extends StatelessWidget {
       final chevron = Icon(leading ? Icons.chevron_left : Icons.chevron_right, size: 16);
       return Row(
         mainAxisSize: MainAxisSize.min,
-        children: leading ? [chevron, const SizedBox(width: AppSpacing.s4), text] : [text, const SizedBox(width: AppSpacing.s4), chevron],
+        children: leading
+            ? [chevron, const SizedBox(width: AppSpacing.s4), text]
+            : [text, const SizedBox(width: AppSpacing.s4), chevron],
       );
     }
 
@@ -119,7 +121,8 @@ class ChainNavigationStripe extends StatelessWidget {
       child: Text(
         habitName,
         overflow: TextOverflow.ellipsis,
-        style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600, color: theme.colorScheme.onSecondaryContainer),
+        style:
+            AppTypography.caption.copyWith(fontWeight: FontWeight.w600, color: theme.colorScheme.onSecondaryContainer),
       ),
     );
   }
