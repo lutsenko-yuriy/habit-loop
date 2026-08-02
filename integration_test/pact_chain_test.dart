@@ -338,9 +338,9 @@ void main() {
       // ── 8. Tap "Next Pact" — navigates to the new pact's detail screen ──
       await _tapNextPactLink(tester, originalPactId: predecessor.id);
 
-      // ── 9. Successor detail shows "Previous Pact: 'Vibe coding'" ─────────
+      // ── 9. Successor detail shows the predecessor's name in the chevron stripe ──
       await waitFor(tester, find.byKey(const Key('pact-detail-previous-pact-link')));
-      expect(find.text(strings.pactDetailPreviousPact('Vibe coding')), findsOneWidget);
+      expect(find.textContaining('Vibe coding'), findsOneWidget);
 
       // ── 10. Tap "Previous Pact" — navigates back to the predecessor's
       //         detail screen (pops to the originating page instance) ─────

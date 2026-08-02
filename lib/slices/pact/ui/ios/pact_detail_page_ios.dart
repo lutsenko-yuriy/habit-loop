@@ -4,6 +4,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/break_banner.dart';
+import 'package:habit_loop/slices/pact/ui/generic/chain_navigation_stripe.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
@@ -273,50 +274,22 @@ class _PactDetailContent extends StatelessWidget {
             ),
           ],
         ),
-        // Previous/Next Pact links (HAB-202) — grouped in a row right under
-        // the title, independent of the bottom action area (which shows
-        // only "Adjust and start again", and only while no successor exists
-        // yet). spaceBetween pins Next to the trailing edge, mirroring a
-        // pagination-style Previous/Next affordance, and degenerates to a
-        // plain leading-aligned single link when only one is present.
-        // minimumSize: Size.zero — CupertinoButton's 44pt default tap-target
-        // height otherwise dwarfs these single-line secondary links.
-        // Flexible — long habit names must not overflow the Row on a narrow
-        // screen.
+        // 3-slot chevron-stripe carousel (HAB-206 WU4), replacing HAB-202's
+        // plain Previous/Next links — grouped right under the title,
+        // independent of the bottom action area (which shows only "Adjust
+        // and start again", and only while no successor exists yet).
         if (pactChainingEnabled && (state.predecessorPact != null || state.successorPact != null)) ...[
           const SizedBox(height: AppSpacing.s12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (state.predecessorPact != null)
-                Flexible(
-                  child: CupertinoButton(
-                    key: const Key('pact-detail-previous-pact-link'),
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    onPressed: onOpenPreviousPact,
-                    child: Text(
-                      l10n.pactDetailPreviousPact(state.predecessorPact!.habitName),
-                      style: AppTypography.caption,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              if (state.successorPact != null)
-                Flexible(
-                  child: CupertinoButton(
-                    key: const Key('pact-detail-next-pact-link'),
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    onPressed: onOpenNextPact,
-                    child: Text(
-                      l10n.pactDetailNextPact(state.successorPact!.habitName),
-                      style: AppTypography.caption,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-            ],
+          ChainNavigationStripe(
+            current: pact,
+            predecessor: state.predecessorPact,
+            successor: state.successorPact,
+            previousCurrent: previousPact,
+            previousPredecessor: previousState?.predecessorPact,
+            previousSuccessor: previousState?.successorPact,
+            direction: chainNavigationDirection,
+            onOpenPrevious: onOpenPreviousPact,
+            onOpenNext: onOpenNextPact,
           ),
         ],
         const SizedBox(height: AppSpacing.s24),

@@ -329,18 +329,6 @@
   "@pactTimelineTitle": {},
   "pactDetailViewTimeline": "View Timeline",
   "@pactDetailViewTimeline": {},
-  "pactDetailPreviousPact": "Previous Pact: '{habitName}'",
-  "@pactDetailPreviousPact": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "pactDetailNextPact": "Next Pact: '{habitName}'",
-  "@pactDetailNextPact": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
   "pactDetailAdjustAndStartAgain": "Adjust and start again",
   "@pactDetailAdjustAndStartAgain": {},
   "timelinePactCreated": "Pact started",
