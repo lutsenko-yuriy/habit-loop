@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.54.0] — 2026-08-02
+
+### Added
+
+- [user] Hopping between a habit's different attempts now feels instant: tapping the previous/next pact link swaps the screen's content in place — no page flip, no loading spinner — with a quick slide/fade instead of a hard cut.
+- HAB-206 (WU4, final): `ChainNavigationStripe` (`lib/slices/pact/ui/generic/chain_navigation_stripe.dart`) replaces the plain Previous/Next Pact `TextButton` row with a shared 2-slot (predecessor/successor) widget reused by both platform pages, keeping the pre-existing `pact-detail-previous-pact-link`/`-next-pact-link` keys so `pact_chain_test.dart`'s scenarios needed no changes. A center current-pact chip was part of the original spec but dropped before merge (user call, post-implementation) — it added no information the screen's own title didn't already show. Each slot's content crossfades independently via `AnimatedValueTransition` rather than the whole stripe sliding as one spatial strip, since a slot's identity changes on every navigation regardless of direction — the plan's own pre-approved fallback if a true spatial carousel proved too fiddly. A slot appearing or disappearing (e.g. the chain head gaining a predecessor slot after one hop) now fades/slides in or out the same way instead of popping — caught live by the user testing the chain-head/chain-tail edges, gated on `direction != null` so it never fires on a plain screen load. Fixed a follow-on bug from that same fix: `PactDetailScreen._lastDirection` was never cleared after a transition settled, so ~250ms after every chain-link swap (when `_outgoingSnapshot` clears on its own timer) a slot present both before and after would misread the now-null `previousPact` as "just appeared" and replay its reveal animation a second time — also caught live. `_lastDirection` now clears in the same `setState` as `_outgoingSnapshot`. Removed the now-dead `pactDetailPreviousPact`/`pactDetailNextPact` l10n strings across all 4 locales.
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.

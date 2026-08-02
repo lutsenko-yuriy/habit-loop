@@ -154,6 +154,10 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     setState(() {
       _isAnimating = false;
       _outgoingSnapshot = null;
+      // Cleared alongside _outgoingSnapshot — left set, a stale direction
+      // makes ChainNavigationStripe replay its reveal animation on settle
+      // for any slot that was present the whole time (HAB-206 WU4 fix).
+      _lastDirection = null;
     });
   }
 
