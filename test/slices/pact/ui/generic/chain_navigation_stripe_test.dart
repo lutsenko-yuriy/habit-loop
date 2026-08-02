@@ -18,47 +18,44 @@ Pact _pact(String id, String habitName) => Pact(
     );
 
 void main() {
-  final current = _pact('current', 'Meditate (v2)');
   final predecessor = _pact('predecessor', 'Meditate (v1)');
   final successor = _pact('successor', 'Meditate (v3)');
+  final farPredecessor = _pact('far-predecessor', 'Meditate (v0)');
 
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
   testWidgets('shows only the successor slot when there is no predecessor', (tester) async {
-    await tester.pumpWidget(wrap(ChainNavigationStripe(current: current, successor: successor)));
+    await tester.pumpWidget(wrap(ChainNavigationStripe(successor: successor)));
 
     expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsNothing);
     expect(find.byKey(const Key('pact-detail-next-pact-link')), findsOneWidget);
-    expect(find.byKey(const Key('pact-detail-current-pact-chip')), findsOneWidget);
     expect(find.textContaining('Meditate (v3)'), findsOneWidget);
-    expect(find.textContaining('Meditate (v2)'), findsOneWidget);
   });
 
   testWidgets('shows only the predecessor slot when there is no successor', (tester) async {
-    await tester.pumpWidget(wrap(ChainNavigationStripe(current: current, predecessor: predecessor)));
+    await tester.pumpWidget(wrap(ChainNavigationStripe(predecessor: predecessor)));
 
     expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsOneWidget);
     expect(find.byKey(const Key('pact-detail-next-pact-link')), findsNothing);
-    expect(find.byKey(const Key('pact-detail-current-pact-chip')), findsOneWidget);
     expect(find.textContaining('Meditate (v1)'), findsOneWidget);
-    expect(find.textContaining('Meditate (v2)'), findsOneWidget);
   });
 
-  testWidgets('shows all three slots for a mid-chain pact', (tester) async {
-    await tester.pumpWidget(
-      wrap(ChainNavigationStripe(current: current, predecessor: predecessor, successor: successor)),
-    );
+  testWidgets('shows both slots for a mid-chain pact', (tester) async {
+    await tester.pumpWidget(wrap(ChainNavigationStripe(predecessor: predecessor, successor: successor)));
 
     expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsOneWidget);
     expect(find.byKey(const Key('pact-detail-next-pact-link')), findsOneWidget);
-    expect(find.byKey(const Key('pact-detail-current-pact-chip')), findsOneWidget);
-    expect(find.textContaining('Meditate (v2)'), findsOneWidget);
+    // Predecessor to the left of successor, same row.
+    final previousPos = tester.getTopLeft(find.byKey(const Key('pact-detail-previous-pact-link')));
+    final nextPos = tester.getTopLeft(find.byKey(const Key('pact-detail-next-pact-link')));
+    expect(previousPos.dy, nextPos.dy);
+    expect(previousPos.dx, lessThan(nextPos.dx));
   });
 
   testWidgets('tapping the predecessor slot calls onOpenPrevious', (tester) async {
     var tapped = false;
     await tester.pumpWidget(
-      wrap(ChainNavigationStripe(current: current, predecessor: predecessor, onOpenPrevious: () => tapped = true)),
+      wrap(ChainNavigationStripe(predecessor: predecessor, onOpenPrevious: () => tapped = true)),
     );
 
     await tester.tap(find.byKey(const Key('pact-detail-previous-pact-link')));
@@ -68,46 +65,33 @@ void main() {
   testWidgets('tapping the successor slot calls onOpenNext', (tester) async {
     var tapped = false;
     await tester.pumpWidget(
-      wrap(ChainNavigationStripe(current: current, successor: successor, onOpenNext: () => tapped = true)),
+      wrap(ChainNavigationStripe(successor: successor, onOpenNext: () => tapped = true)),
     );
 
     await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
     expect(tapped, isTrue);
   });
 
-  testWidgets('current slot is not tappable', (tester) async {
-    await tester.pumpWidget(wrap(ChainNavigationStripe(current: current)));
-
-    expect(find.byKey(const Key('pact-detail-current-pact-chip')), findsOneWidget);
-    expect(
-      find.ancestor(of: find.byKey(const Key('pact-detail-current-pact-chip')), matching: find.byType(TextButton)),
-      findsNothing,
-    );
-  });
-
-  testWidgets('predecessor and current slots crossfade mid-transition, both old and new visible', (tester) async {
-    await tester.pumpWidget(
-      wrap(ChainNavigationStripe(current: predecessor, successor: current)),
-    );
+  testWidgets('predecessor slot crossfades mid-transition, both old and new visible', (tester) async {
+    await tester.pumpWidget(wrap(ChainNavigationStripe(predecessor: predecessor)));
     await tester.pumpAndSettle();
 
-    // Simulates navigating forward: old current (predecessor arg here) becomes
-    // the new predecessor slot; old successor (current arg here) becomes the
-    // new current slot — mirrors PactDetailScreen's own re-mapping on a "next" tap.
+    // Simulates navigating: the predecessor slot's identity changes (e.g. the
+    // new predecessor is one hop further up the chain) even though it stays
+    // the same logical slot.
     await tester.pumpWidget(
       wrap(
         ChainNavigationStripe(
-          current: current,
-          predecessor: predecessor,
-          direction: SlideDirection.forward,
-          previousCurrent: predecessor,
+          predecessor: farPredecessor,
+          direction: SlideDirection.backward,
+          previousPredecessor: predecessor,
         ),
       ),
     );
     await tester.pump(const Duration(milliseconds: 125));
 
-    expect(find.textContaining('Meditate (v1)'), findsWidgets);
-    expect(find.textContaining('Meditate (v2)'), findsOneWidget);
+    expect(find.textContaining('Meditate (v1)'), findsOneWidget);
+    expect(find.textContaining('Meditate (v0)'), findsOneWidget);
 
     await tester.pumpAndSettle();
   });

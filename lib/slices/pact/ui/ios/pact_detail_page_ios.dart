@@ -281,10 +281,8 @@ class _PactDetailContent extends StatelessWidget {
         if (pactChainingEnabled && (state.predecessorPact != null || state.successorPact != null)) ...[
           const SizedBox(height: AppSpacing.s12),
           ChainNavigationStripe(
-            current: pact,
             predecessor: state.predecessorPact,
             successor: state.successorPact,
-            previousCurrent: previousPact,
             previousPredecessor: previousState?.predecessorPact,
             previousSuccessor: previousState?.successorPact,
             direction: chainNavigationDirection,
