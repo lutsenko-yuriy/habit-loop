@@ -95,4 +95,55 @@ void main() {
 
     await tester.pumpAndSettle();
   });
+
+  testWidgets('a newly-appearing slot fades/slides in instead of popping into place', (tester) async {
+    await tester.pumpWidget(wrap(ChainNavigationStripe(successor: successor)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsNothing);
+
+    // Simulates navigating forward off the chain head: the new current pact
+    // now has a predecessor slot that didn't exist a moment ago.
+    await tester.pumpWidget(
+      wrap(ChainNavigationStripe(predecessor: predecessor, successor: successor, direction: SlideDirection.forward)),
+    );
+    await tester.pump(const Duration(milliseconds: 125));
+
+    expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsOneWidget);
+    expect(find.byType(Opacity), findsWidgets);
+
+    await tester.pumpAndSettle();
+    expect(find.byType(Opacity), findsNothing);
+  });
+
+  testWidgets('a newly-appearing slot on first load does not animate', (tester) async {
+    // No `direction` set — this is a fresh screen load, not a chain-link
+    // swap, even though previousPredecessor also happens to be null.
+    await tester.pumpWidget(wrap(ChainNavigationStripe(predecessor: predecessor, successor: successor)));
+
+    expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsOneWidget);
+    expect(find.byType(Opacity), findsNothing);
+  });
+
+  testWidgets('a disappearing slot fades/slides out instead of popping away', (tester) async {
+    await tester.pumpWidget(wrap(ChainNavigationStripe(predecessor: predecessor, successor: successor)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pact-detail-next-pact-link')), findsOneWidget);
+
+    await tester.pumpWidget(
+      wrap(
+        ChainNavigationStripe(
+          predecessor: predecessor,
+          direction: SlideDirection.backward,
+          previousSuccessor: successor,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 125));
+
+    expect(find.byType(Opacity), findsWidgets);
+
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pact-detail-next-pact-link')), findsNothing);
+    expect(find.byType(Opacity), findsNothing);
+  });
 }
