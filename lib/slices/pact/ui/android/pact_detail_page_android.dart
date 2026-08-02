@@ -5,6 +5,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 import 'package:habit_loop/slices/pact/ui/generic/break_banner.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_content_transition.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
@@ -70,6 +71,11 @@ class PactDetailPageAndroid extends StatelessWidget {
   /// scrolled out of view. `null` in tests that don't exercise this.
   final ScrollController? scrollController;
 
+  /// Direction of the most recent chain-link navigation (HAB-206 WU3) — drives
+  /// which way the main content slides when [state]'s pact changes. `null`
+  /// on the initial load, before any chain-link has been tapped.
+  final ChainNavigationDirection? chainNavigationDirection;
+
   const PactDetailPageAndroid({
     super.key,
     required this.state,
@@ -86,6 +92,7 @@ class PactDetailPageAndroid extends StatelessWidget {
     this.onOpenNextPact,
     this.onAdjustAndStartAgain,
     this.scrollController,
+    this.chainNavigationDirection,
   });
 
   bool get _isActive => state.pact?.status == PactStatus.active;
@@ -115,21 +122,25 @@ class PactDetailPageAndroid extends StatelessWidget {
                 ? const Center(child: CircularProgressIndicator())
                 : state.loadError != null
                     ? Center(child: Text(state.loadError.toString()))
-                    : _PactDetailContent(
-                        state: state,
-                        l10n: l10n,
-                        onStopPact: onStopPact,
-                        onSaveNote: onSaveNote,
-                        onArchivePact: onArchivePact,
-                        pactTimelineEnabled: pactTimelineEnabled,
-                        onOpenTimeline: onOpenTimeline,
-                        onStartBreak: onStartBreak,
-                        onStopBreak: onStopBreak,
-                        pactChainingEnabled: pactChainingEnabled,
-                        onOpenPreviousPact: onOpenPreviousPact,
-                        onOpenNextPact: onOpenNextPact,
-                        onAdjustAndStartAgain: onAdjustAndStartAgain,
-                        scrollController: scrollController,
+                    : PactDetailContentTransition(
+                        transitionKey: state.pact!.id,
+                        direction: chainNavigationDirection,
+                        child: _PactDetailContent(
+                          state: state,
+                          l10n: l10n,
+                          onStopPact: onStopPact,
+                          onSaveNote: onSaveNote,
+                          onArchivePact: onArchivePact,
+                          pactTimelineEnabled: pactTimelineEnabled,
+                          onOpenTimeline: onOpenTimeline,
+                          onStartBreak: onStartBreak,
+                          onStopBreak: onStopBreak,
+                          pactChainingEnabled: pactChainingEnabled,
+                          onOpenPreviousPact: onOpenPreviousPact,
+                          onOpenNextPact: onOpenNextPact,
+                          onAdjustAndStartAgain: onAdjustAndStartAgain,
+                          scrollController: scrollController,
+                        ),
                       ),
           ),
         ],
