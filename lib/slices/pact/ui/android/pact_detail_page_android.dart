@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
+import 'package:habit_loop/theme/widgets/animated_reveal.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -243,6 +244,13 @@ class _PactDetailContent extends StatelessWidget {
     final previousStats = previousState?.stats;
     final previousStatusText = previousPact != null ? pactStatusText(l10n, previousPact.status) : null;
     final previousStatusColor = previousPact != null ? PactStatusColors.material.forStatus(previousPact.status) : null;
+    final previousDaysLeft = previousPact?.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
+
+    // Pinned to the widest of the three possible status labels (HAB-206 WU3)
+    // so the badge never resizes when crossfading between two different
+    // ones — an auto-sized badge shifts the whole Row's layout as it grows
+    // then shrinks back, which reads as the badge jumping sideways.
+    final badgeWidth = StatusBadge.widestOf(context, PactStatus.values.map((s) => pactStatusText(l10n, s)));
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
@@ -283,9 +291,9 @@ class _PactDetailContent extends StatelessWidget {
             PactDetailAnimatedValue(
               direction: chainNavigationDirection,
               previousChild: previousStatusText != null && previousStatusText != statusText
-                  ? StatusBadge(text: previousStatusText, color: previousStatusColor!)
+                  ? StatusBadge(text: previousStatusText, color: previousStatusColor!, width: badgeWidth)
                   : null,
-              child: StatusBadge(text: statusText, color: statusColor),
+              child: StatusBadge(text: statusText, color: statusColor, width: badgeWidth),
             ),
           ],
         ),
@@ -384,30 +392,18 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
-            // The third cell's label (Remaining vs. Cancelled) — and whether
-            // it's shown at all — depends on status, which can differ
-            // structurally between the outgoing and incoming pact. Only
-            // animate the value when the outgoing pact had the exact same
-            // label (i.e. the same status), so a mismatched label+value pair
-            // never gets built as the outgoing snapshot.
-            if (pact.status == PactStatus.active)
+            // The third cell (Remaining/Cancelled) is entirely absent for a
+            // completed pact, so its presence is still a structural, un-
+            // animated toggle (HAB-206 WU3) — but between the two statuses
+            // that DO show it, the whole cell (label and value together)
+            // crossfades, the same way the status badge does.
+            if (_thirdStatCell(pact.status) != null)
               Expanded(
-                child: _animatedStatCard(
-                  l10n.statsRemaining,
-                  l10n.statsShowups(stats.showupsRemaining),
-                  previousStats != null && previousPact?.status == PactStatus.active
-                      ? l10n.statsShowups(previousStats.showupsRemaining)
-                      : null,
-                ),
-              )
-            else if (pact.status == PactStatus.stopped)
-              Expanded(
-                child: _animatedStatCard(
-                  l10n.statsCancelled,
-                  l10n.statsShowups(stats.showupsRemaining),
-                  previousStats != null && previousPact?.status == PactStatus.stopped
-                      ? l10n.statsShowups(previousStats.showupsRemaining)
-                      : null,
+                child: _animatedThirdStatCell(
+                  currentStatus: pact.status,
+                  currentValue: stats.showupsRemaining,
+                  previousStatus: previousPact?.status,
+                  previousValue: previousStats?.showupsRemaining,
                 ),
               ),
             if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
@@ -436,29 +432,59 @@ class _PactDetailContent extends StatelessWidget {
           tileColor: tileColor,
         ),
         const SizedBox(height: AppSpacing.s8),
-        // Presence (stopped-date tile) and label ("Ends" vs. "Ended", days-
-        // remaining tile) can differ structurally between the outgoing and
-        // incoming pact, so these are left unanimated (no previousValue).
-        if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
-          _animatedDateTile(
-            label: l10n.pactStoppedDate,
-            value: formatLocaleDate(pact.stoppedAt!),
-            valueColor: valueColor,
-            tileColor: tileColor,
+        // Presence toggles for these two tiles (stopped-date; days-
+        // remaining) are animated as a reveal/collapse (HAB-206 WU3) rather
+        // than an instant pop — AnimatedReveal already exists for exactly
+        // this (see BreakBannerReveal above); the spacer that separates each
+        // from its neighbor lives *inside* the revealed child so it
+        // collapses along with the tile, keeping spacing identical to the
+        // un-animated `if` this replaces. Falls back to whichever pact
+        // actually has a stoppedAt while the reveal plays, so the tile never
+        // shows blank/wrong content mid-fade.
+        AnimatedReveal(
+          visible: pact.status == PactStatus.stopped && pact.stoppedAt != null,
+          child: Column(
+            // min, not the Column default of max (HAB-206 WU3) — a `max`
+            // Column reaching up through Align's heightFactor sizing ends up
+            // handing descendants a bounded height instead of the unbounded
+            // one a ListView item normally gets, which made the multi-line
+            // note TextField further down start scrolling internally.
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _animatedDateTile(
+                label: l10n.pactStoppedDate,
+                value: formatLocaleDate(pact.stoppedAt ?? previousPact?.stoppedAt ?? pact.startDate),
+                previousValue: previousPact?.stoppedAt != null ? formatLocaleDate(previousPact!.stoppedAt!) : null,
+                valueColor: valueColor,
+                tileColor: tileColor,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+            ],
           ),
-          const SizedBox(height: AppSpacing.s8),
-        ],
+        ),
         _animatedDateTile(
           label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
           value: formatLocaleDate(pact.endDate),
+          previousLabel: previousPact != null
+              ? (previousPact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate)
+              : null,
           previousValue: previousPact != null ? formatLocaleDate(previousPact.endDate) : null,
           valueColor: valueColor,
           tileColor: tileColor,
         ),
-        if (pact.status == PactStatus.active && daysLeft >= 0) ...[
-          const SizedBox(height: AppSpacing.s8),
-          _animatedDateTile(label: l10n.daysRemaining(daysLeft), tileColor: tileColor),
-        ],
+        AnimatedReveal(
+          visible: pact.status == PactStatus.active && daysLeft >= 0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppSpacing.s8),
+              _animatedDateTile(
+                label: l10n.daysRemaining(pact.status == PactStatus.active ? daysLeft : previousDaysLeft ?? daysLeft),
+                tileColor: tileColor,
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: AppSpacing.s8),
         _animatedDateTile(
           label: l10n.summaryShowupDuration,
@@ -487,11 +513,16 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Editable note section for inactive pacts
+        // Editable note section for inactive pacts. Deliberately NOT wrapped
+        // in AnimatedReveal like the sections below (HAB-206 WU3) — doing so
+        // made the multi-line note TextField's own internal EditableText
+        // scrollable spuriously mount, which broke scrollUntilVisible's
+        // default (unscoped) Scrollable lookup elsewhere in this file. Still
+        // pops in/out instantly, same as before WU3.
         if (pact.status != PactStatus.active) ...[
           const SizedBox(height: AppSpacing.s24),
           PactNoteSection(
-            savedNote: pact.stopReason,
+            savedNote: pact.stopReason ?? previousPact?.stopReason,
             isSaving: state.isSavingNote,
             noteError: state.noteError,
             labelColor: theme.colorScheme.onSurfaceVariant,
@@ -514,20 +545,27 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Archive section for completed and stopped pacts
-        if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s24),
-          SectionHeader(title: l10n.sectionArchive, labelColor: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(height: AppSpacing.s8),
-          OutlinedButton(
-            key: const Key('archive-pact-button'),
-            onPressed: state.isArchiving ? null : () => onArchivePact(!pact.archived),
-            child: state.isArchiving
-                ? const SizedBox(
-                    height: AppSpacing.s20, width: AppSpacing.s20, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text(pact.archived ? l10n.unarchivePact : l10n.archivePact),
+        // Archive section for completed and stopped pacts — same
+        // reveal/collapse treatment as the note section above.
+        AnimatedReveal(
+          visible: pact.status != PactStatus.active,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppSpacing.s24),
+              SectionHeader(title: l10n.sectionArchive, labelColor: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(height: AppSpacing.s8),
+              OutlinedButton(
+                key: const Key('archive-pact-button'),
+                onPressed: state.isArchiving ? null : () => onArchivePact(!pact.archived),
+                child: state.isArchiving
+                    ? const SizedBox(
+                        height: AppSpacing.s20, width: AppSpacing.s20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(pact.archived ? l10n.unarchivePact : l10n.archivePact),
+              ),
+            ],
           ),
-        ],
+        ),
 
         // Take a break + stop pact — grouped together as pact-lifecycle
         // actions, set off from the read-only sections above by a divider
@@ -596,18 +634,59 @@ class _PactDetailContent extends StatelessWidget {
     );
   }
 
+  // Remaining/Cancelled — l10n.statsRemaining for an active pact,
+  // l10n.statsCancelled for a stopped one, absent entirely for a completed
+  // one (there's nothing left to call either "remaining" or "cancelled").
+  String? _thirdStatCell(PactStatus status) => switch (status) {
+        PactStatus.active => l10n.statsRemaining,
+        PactStatus.stopped => l10n.statsCancelled,
+        PactStatus.completed => null,
+      };
+
+  // Unlike _animatedStatCard, this crossfades the whole cell (label and
+  // value together) whenever both the outgoing and incoming pact show one
+  // at all (HAB-206 WU3) — the label itself can differ (active <-> stopped
+  // is the single most common chain-link hop, "Adjust and start again"'s
+  // whole purpose), so gating the animation on an unchanged label like the
+  // other stat cards do would mean this one almost never animates in
+  // practice. Presence (vs. a completed pact showing neither) is still a
+  // structural, unanimated toggle.
+  Widget _animatedThirdStatCell({
+    required PactStatus currentStatus,
+    required int currentValue,
+    required PactStatus? previousStatus,
+    required int? previousValue,
+  }) {
+    final currentLabel = _thirdStatCell(currentStatus)!;
+    final previousLabel = previousStatus != null ? _thirdStatCell(previousStatus) : null;
+
+    Widget? previousChild;
+    if (previousLabel != null && previousValue != null) {
+      final changed = previousLabel != currentLabel || previousValue != currentValue;
+      if (changed) previousChild = _StatCard(label: previousLabel, value: l10n.statsShowups(previousValue));
+    }
+
+    return PactDetailAnimatedValue(
+      direction: chainNavigationDirection,
+      previousChild: previousChild,
+      child: _StatCard(label: currentLabel, value: l10n.statsShowups(currentValue)),
+    );
+  }
+
   Widget _animatedDateTile({
     required String label,
+    String? previousLabel,
     String? value,
     String? previousValue,
     Color? valueColor,
     required Color tileColor,
   }) {
+    final effectivePreviousLabel = previousLabel ?? label;
     return PactDetailAnimatedValue(
       direction: chainNavigationDirection,
-      previousChild: previousValue != null && previousValue != value
+      previousChild: previousValue != null && (effectivePreviousLabel != label || previousValue != value)
           ? DateRowTile(
-              label: label,
+              label: effectivePreviousLabel,
               value: previousValue,
               valueColor: valueColor ?? Colors.black87,
               backgroundColor: tileColor,

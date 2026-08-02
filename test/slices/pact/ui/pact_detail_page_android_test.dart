@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
+import 'package:habit_loop/theme/widgets/status_badge.dart';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -32,6 +33,11 @@ final _stoppedPact = _activePact.copyWith(
   status: PactStatus.stopped,
   stoppedAt: DateTime(2026, 4, 1),
 );
+
+// No stoppedAt (unlike _stoppedPact above) — used by tests that need to
+// avoid the "Stopped date" tile's own label colliding with l10n.statsCancelled
+// and the status badge (all three happen to read "Stopped" in English).
+final _stoppedPactNoStopDate = _activePact.copyWith(status: PactStatus.stopped);
 
 final _completedPact = _activePact.copyWith(status: PactStatus.completed);
 
@@ -1033,6 +1039,90 @@ void main() {
 
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.text('Meditate'), findsOneWidget);
+    });
+
+    testWidgets('status badge is pinned to a consistent width across a status crossfade', (tester) async {
+      final pactA = _activePact;
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(pactA),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_stoppedPactNoStopDate),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            chainNavigationDirection: ChainNavigationDirection.toSuccessor,
+            previousState: _loadedState(pactA),
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+
+      // Mid-transition: outgoing ("Active") and incoming ("Stopped") badges
+      // both on screen. A mismatched width here is exactly what makes the
+      // badge visibly jump sideways as the Row relayouts around it.
+      await tester.pump(const Duration(milliseconds: 125));
+      final badges = tester.widgetList<StatusBadge>(find.byType(StatusBadge)).toList();
+      expect(badges, hasLength(2));
+      expect(badges[0].width, isNotNull);
+      expect(badges[0].width, badges[1].width);
+    });
+
+    testWidgets('the Remaining/Cancelled stat cell crossfades label and value across a status change', (tester) async {
+      final pactA = _activePact;
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(pactA),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_stoppedPactNoStopDate),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            chainNavigationDirection: ChainNavigationDirection.toSuccessor,
+            previousState: _loadedState(pactA),
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+
+      // Mid-transition: both the outgoing ("Remaining") and incoming
+      // ("Stopped" — l10n.statsCancelled's actual English string, same text
+      // as the status badge's own "Stopped" label, hence 2 not 1) labels
+      // are visible simultaneously — this used to be an instant, unanimated
+      // swap regardless of status change.
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(find.text('Remaining'), findsOneWidget);
+      expect(find.text('Stopped'), findsNWidgets(2));
+
+      await tester.pumpAndSettle();
+      expect(find.text('Remaining'), findsNothing);
+      expect(find.text('Stopped'), findsNWidgets(2));
     });
   });
 }
