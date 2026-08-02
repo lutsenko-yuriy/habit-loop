@@ -11,7 +11,8 @@ import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_content_transition.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_screen.dart';
@@ -47,10 +48,20 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   bool _isAnimating = false;
 
   // Direction of the most recent chain-link navigation (HAB-206 WU3), fed to
-  // PactDetailContentTransition so it knows which way to slide. Null until
-  // the first chain-link tap; irrelevant afterwards for anything but the
+  // PactDetailAnimatedValue so it knows which way to slide. Null until the
+  // first chain-link tap; irrelevant afterwards for anything but the
   // in-flight/just-finished transition.
   ChainNavigationDirection? _lastDirection;
+
+  // Snapshot of the outgoing pact's state (HAB-206 WU3), captured the
+  // instant before _currentPactId swaps and held for the duration of the
+  // visual transition. Fed to the platform pages so each PactDetailAnimatedValue
+  // can compare the outgoing vs. incoming value itself and decide whether it
+  // has anything to animate — see that class's doc comment for why this
+  // can't be inferred from Element/State identity (the content ListView is
+  // itself keyed by pact id and gets torn down and rebuilt fresh on every
+  // swap). Null outside of an in-flight transition.
+  PactDetailState? _outgoingSnapshot;
 
   @override
   void initState() {
@@ -137,6 +148,9 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       _isAnimating = true;
       _lastDirection =
           direction == 'previous' ? ChainNavigationDirection.toPredecessor : ChainNavigationDirection.toSuccessor;
+      // Captured before _currentPactId swaps below — this is still the
+      // outgoing pact's own state at this point.
+      _outgoingSnapshot = ref.read(pactDetailViewModelProvider(_currentPactId));
       _currentPactId = targetPactId;
     });
 
@@ -153,6 +167,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     if (!mounted) return;
     setState(() {
       _isAnimating = false;
+      _outgoingSnapshot = null;
     });
   }
 
@@ -289,6 +304,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         onAdjustAndStartAgain: onAdjustAndStartAgain,
         scrollController: _scrollController,
         chainNavigationDirection: _lastDirection,
+        previousState: _outgoingSnapshot,
       );
     }
     return PactDetailPageAndroid(
@@ -307,6 +323,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       onAdjustAndStartAgain: onAdjustAndStartAgain,
       scrollController: _scrollController,
       chainNavigationDirection: _lastDirection,
+      previousState: _outgoingSnapshot,
     );
   }
 }

@@ -9,7 +9,9 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
+import 'package:habit_loop/theme/widgets/section_header.dart';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -915,6 +917,73 @@ void main() {
 
       await tester.tap(find.byKey(const Key('pact-detail-adjust-and-start-again-button')));
       expect(tapped, isTrue);
+    });
+  });
+
+  group('PactDetailPageAndroid — chain navigation content transition (HAB-206 WU3)', () {
+    testWidgets('title and stat values animate on chain navigation; section headers do not', (tester) async {
+      final pactA = _activePact;
+      final pactB = Pact(
+        id: 'p2',
+        habitName: 'Journal',
+        startDate: DateTime(2026, 3, 1),
+        endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+        status: PactStatus.active,
+        reminderOffset: const Duration(minutes: 5),
+      );
+      final statsB = _stats.copyWith(showupsDone: 9);
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(pactA),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: PactDetailState(pact: pactB, stats: statsB, isLoading: false),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            chainNavigationDirection: ChainNavigationDirection.toSuccessor,
+            previousState: _loadedState(pactA),
+          ),
+        ),
+      );
+
+      // Mid-transition: both habit names visible simultaneously — the value
+      // wrapper keeps the outgoing one around until the animation completes.
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(find.text('Meditate'), findsOneWidget);
+      expect(find.text('Journal'), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(PactDetailAnimatedValue), matching: find.byType(Opacity)),
+        findsWidgets,
+      );
+
+      // Section headers are pact-independent chrome — never wrapped, so
+      // never mid-animation regardless of what else is transitioning.
+      expect(
+        find.descendant(of: find.byType(PactDetailAnimatedValue), matching: find.byType(SectionHeader)),
+        findsNothing,
+      );
+
+      await tester.pumpAndSettle();
+      expect(find.text('Meditate'), findsNothing);
+      expect(find.text('Journal'), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(PactDetailAnimatedValue), matching: find.byType(Opacity)),
+        findsNothing,
+      );
     });
   });
 }

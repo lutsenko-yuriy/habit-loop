@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider, Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Colors, Divider, Material, MaterialType, Theme;
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/break_banner.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_content_transition.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
@@ -73,9 +73,15 @@ class PactDetailPageIos extends StatelessWidget {
   final ScrollController? scrollController;
 
   /// Direction of the most recent chain-link navigation (HAB-206 WU3) — drives
-  /// which way the main content slides when [state]'s pact changes. `null`
-  /// on the initial load, before any chain-link has been tapped.
+  /// which way an animated value slides when it changes. `null` on the
+  /// initial load, before any chain-link has been tapped.
   final ChainNavigationDirection? chainNavigationDirection;
+
+  /// The outgoing pact's state (HAB-206 WU3), held for the duration of a
+  /// chain-link navigation's visual transition. Non-null only while a
+  /// transition is in flight; each value (title, stat, date...) compares
+  /// itself against this to decide whether it has anything to animate.
+  final PactDetailState? previousState;
 
   const PactDetailPageIos({
     super.key,
@@ -94,6 +100,7 @@ class PactDetailPageIos extends StatelessWidget {
     this.onAdjustAndStartAgain,
     this.scrollController,
     this.chainNavigationDirection,
+    this.previousState,
   });
 
   @override
@@ -128,25 +135,23 @@ class PactDetailPageIos extends StatelessWidget {
                     ? const Center(child: CupertinoActivityIndicator())
                     : state.loadError != null
                         ? Center(child: Text(state.loadError.toString()))
-                        : PactDetailContentTransition(
-                            transitionKey: state.pact!.id,
-                            direction: chainNavigationDirection,
-                            child: _PactDetailContent(
-                              state: state,
-                              l10n: l10n,
-                              onStopPact: onStopPact,
-                              onSaveNote: onSaveNote,
-                              onArchivePact: onArchivePact,
-                              pactTimelineEnabled: pactTimelineEnabled,
-                              onOpenTimeline: onOpenTimeline,
-                              onStartBreak: onStartBreak,
-                              onStopBreak: onStopBreak,
-                              pactChainingEnabled: pactChainingEnabled,
-                              onOpenPreviousPact: onOpenPreviousPact,
-                              onOpenNextPact: onOpenNextPact,
-                              onAdjustAndStartAgain: onAdjustAndStartAgain,
-                              scrollController: scrollController,
-                            ),
+                        : _PactDetailContent(
+                            state: state,
+                            l10n: l10n,
+                            onStopPact: onStopPact,
+                            onSaveNote: onSaveNote,
+                            onArchivePact: onArchivePact,
+                            pactTimelineEnabled: pactTimelineEnabled,
+                            onOpenTimeline: onOpenTimeline,
+                            onStartBreak: onStartBreak,
+                            onStopBreak: onStopBreak,
+                            pactChainingEnabled: pactChainingEnabled,
+                            onOpenPreviousPact: onOpenPreviousPact,
+                            onOpenNextPact: onOpenNextPact,
+                            onAdjustAndStartAgain: onAdjustAndStartAgain,
+                            scrollController: scrollController,
+                            chainNavigationDirection: chainNavigationDirection,
+                            previousState: previousState,
                           ),
               ),
             ],
@@ -172,6 +177,8 @@ class _PactDetailContent extends StatelessWidget {
   final VoidCallback? onOpenNextPact;
   final VoidCallback? onAdjustAndStartAgain;
   final ScrollController? scrollController;
+  final ChainNavigationDirection? chainNavigationDirection;
+  final PactDetailState? previousState;
 
   const _PactDetailContent({
     required this.state,
@@ -188,6 +195,8 @@ class _PactDetailContent extends StatelessWidget {
     this.onOpenNextPact,
     this.onAdjustAndStartAgain,
     this.scrollController,
+    this.chainNavigationDirection,
+    this.previousState,
   });
 
   @override
@@ -203,6 +212,15 @@ class _PactDetailContent extends StatelessWidget {
     final statusColor = PactStatusColors.cupertino(context).forStatus(pact.status);
     final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
+    // Outgoing pact's own values (HAB-206 WU3), only present mid-transition —
+    // each animated field below compares against these to decide whether it
+    // has anything to visibly swap.
+    final previousPact = previousState?.pact;
+    final previousStats = previousState?.stats;
+    final previousStatusText = previousPact != null ? pactStatusText(l10n, previousPact.status) : null;
+    final previousStatusColor =
+        previousPact != null ? PactStatusColors.cupertino(context).forStatus(previousPact.status) : null;
+
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
       // Pact-specific key (HAB-202) — disambiguates this screen's own
@@ -213,16 +231,30 @@ class _PactDetailContent extends StatelessWidget {
       controller: scrollController,
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
-        // Habit name + status badge
+        // Habit name + status badge. Only the value each shows is wrapped in
+        // PactDetailAnimatedValue (HAB-206 WU3) — a habit name or status
+        // change animates in place; the Row itself does not.
         Row(
           children: [
             Expanded(
-              child: Text(
-                pact.habitName,
-                style: AppTypography.sectionTitle,
+              child: PactDetailAnimatedValue(
+                direction: chainNavigationDirection,
+                previousChild: previousPact != null && previousPact.habitName != pact.habitName
+                    ? Text(previousPact.habitName, style: AppTypography.sectionTitle)
+                    : null,
+                child: Text(
+                  pact.habitName,
+                  style: AppTypography.sectionTitle,
+                ),
               ),
             ),
-            StatusBadge(text: statusText, color: statusColor),
+            PactDetailAnimatedValue(
+              direction: chainNavigationDirection,
+              previousChild: previousStatusText != null && previousStatusText != statusText
+                  ? StatusBadge(text: previousStatusText, color: previousStatusColor!)
+                  : null,
+              child: StatusBadge(text: statusText, color: statusColor),
+            ),
           ],
         ),
         // Previous/Next Pact links (HAB-202) — grouped in a row right under
@@ -286,71 +318,107 @@ class _PactDetailContent extends StatelessWidget {
           l10n: l10n,
         ),
 
-        // Stats cards
+        // Stats cards — each card's count is individually wrapped in
+        // PactDetailAnimatedValue (HAB-206 WU3) so only the number itself
+        // animates when it changes; the card, its label, and section header
+        // stay static.
         SectionHeader(title: l10n.sectionStats, labelColor: HabitLoopColors.secondaryText(context)),
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
-            Expanded(child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone))),
+            Expanded(
+              child: _animatedStatCard(
+                l10n.statsDone,
+                l10n.statsShowups(stats.showupsDone),
+                previousStats != null ? l10n.statsShowups(previousStats.showupsDone) : null,
+              ),
+            ),
             const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
+            Expanded(
+              child: _animatedStatCard(
+                l10n.statsFailed,
+                l10n.statsShowups(stats.showupsFailed),
+                previousStats != null ? l10n.statsShowups(previousStats.showupsFailed) : null,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
+            // The third cell's label (Remaining vs. Cancelled) — and whether
+            // it's shown at all — depends on status, which can differ
+            // structurally between the outgoing and incoming pact, so it's
+            // left unanimated (no previousValue) rather than diffed.
             if (pact.status == PactStatus.active)
-              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
+              Expanded(child: _animatedStatCard(l10n.statsRemaining, l10n.statsShowups(stats.showupsRemaining), null))
             else if (pact.status == PactStatus.stopped)
-              Expanded(child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
+              Expanded(child: _animatedStatCard(l10n.statsCancelled, l10n.statsShowups(stats.showupsRemaining), null)),
             if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+            Expanded(
+              child: _animatedStatCard(
+                l10n.statsStreak,
+                l10n.statsShowups(stats.currentStreak),
+                previousStats != null ? l10n.statsShowups(previousStats.currentStreak) : null,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.s24),
 
-        // Time details
+        // Time details — each tile's value (or, for the label-only "days
+        // remaining" tile, its label) is individually wrapped in
+        // PactDetailAnimatedValue (HAB-206 WU3) so only the date/duration
+        // text itself animates when it changes.
         SectionHeader(title: l10n.sectionTimeline, labelColor: HabitLoopColors.secondaryText(context)),
         const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
+        _animatedDateTile(
           label: l10n.pactStartDate,
           value: formatLocaleDate(pact.startDate),
+          previousValue: previousPact != null ? formatLocaleDate(previousPact.startDate) : null,
           valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
+          tileColor: fill,
         ),
         const SizedBox(height: AppSpacing.s8),
+        // Presence (stopped-date tile) and label ("Ends" vs. "Ended", days-
+        // remaining tile) can differ structurally between the outgoing and
+        // incoming pact, so these are left unanimated (no previousValue).
         if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
-          DateRowTile(
+          _animatedDateTile(
             label: l10n.pactStoppedDate,
             value: formatLocaleDate(pact.stoppedAt!),
             valueColor: HabitLoopColors.secondaryText(context),
-            backgroundColor: fill,
+            tileColor: fill,
           ),
           const SizedBox(height: AppSpacing.s8),
         ],
-        DateRowTile(
+        _animatedDateTile(
           label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
           value: formatLocaleDate(pact.endDate),
+          previousValue: previousPact != null ? formatLocaleDate(previousPact.endDate) : null,
           valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
+          tileColor: fill,
         ),
         if (pact.status == PactStatus.active && daysLeft >= 0) ...[
           const SizedBox(height: AppSpacing.s8),
-          DateRowTile(label: l10n.daysRemaining(daysLeft), backgroundColor: fill),
+          _animatedDateTile(label: l10n.daysRemaining(daysLeft), tileColor: fill),
         ],
         const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
+        _animatedDateTile(
           label: l10n.summaryShowupDuration,
           value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
+          previousValue:
+              previousPact != null ? l10n.showupDurationMinutes(previousPact.showupDuration.inMinutes) : null,
           valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
+          tileColor: fill,
         ),
         const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
+        _animatedDateTile(
           label: l10n.summaryReminder,
           value: reminderDescription(l10n, pact.reminderOffset),
+          previousValue: previousPact != null ? reminderDescription(l10n, previousPact.reminderOffset) : null,
           valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
+          tileColor: fill,
         ),
 
         // View Timeline entry point (flag-gated)
@@ -467,6 +535,41 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _animatedStatCard(String label, String value, String? previousValue) {
+    return PactDetailAnimatedValue(
+      direction: chainNavigationDirection,
+      previousChild:
+          previousValue != null && previousValue != value ? _StatCard(label: label, value: previousValue) : null,
+      child: _StatCard(label: label, value: value),
+    );
+  }
+
+  Widget _animatedDateTile({
+    required String label,
+    String? value,
+    String? previousValue,
+    Color? valueColor,
+    required Color tileColor,
+  }) {
+    return PactDetailAnimatedValue(
+      direction: chainNavigationDirection,
+      previousChild: previousValue != null && previousValue != value
+          ? DateRowTile(
+              label: label,
+              value: previousValue,
+              valueColor: valueColor ?? Colors.black87,
+              backgroundColor: tileColor,
+            )
+          : null,
+      child: DateRowTile(
+        label: label,
+        value: value,
+        valueColor: valueColor ?? Colors.black87,
+        backgroundColor: tileColor,
+      ),
     );
   }
 
