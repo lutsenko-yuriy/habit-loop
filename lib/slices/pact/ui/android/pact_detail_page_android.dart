@@ -598,37 +598,48 @@ class _PactDetailContent extends StatelessWidget {
         // Take a break + stop pact — grouped together as pact-lifecycle
         // actions, set off from the read-only sections above by a divider
         // (HAB-195: keep "Take a break" closer to "Stop pact" than to "View
-        // Timeline").
-        if (pact.status == PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s24),
-          const Divider(),
-          const SizedBox(height: AppSpacing.s8),
-          if (onStartBreak != null) ...[
-            TextButton(
-              key: const Key('pact-detail-start-break-button'),
-              onPressed: onStartBreak,
-              child: Text(l10n.startBreak),
-            ),
-            const SizedBox(height: AppSpacing.s8),
-          ],
-          if (state.stopError != null) ...[
-            Text(l10n.stopPactError, style: TextStyle(color: theme.colorScheme.error)),
-            const SizedBox(height: AppSpacing.s8),
-          ],
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
-            ),
-            onPressed: state.isStopping ? null : () => _showStopDialog(context),
-            child: state.isStopping
-                ? SizedBox(
-                    height: AppSpacing.s20,
-                    width: AppSpacing.s20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onError))
-                : Text(l10n.stopPact),
+        // Timeline"). Revealed/collapsed (HAB-206 WU3) rather than popping,
+        // same rationale as the sections above. mainAxisSize stays min (not
+        // stretch) — TextButton/FilledButton here are meant to stay their
+        // established small-centered-link/button sizing, not grow full-
+        // width; Divider fills the available width regardless, that's its
+        // own default behavior independent of the Column's cross alignment.
+        AnimatedReveal(
+          visible: pact.status == PactStatus.active,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppSpacing.s24),
+              const Divider(),
+              const SizedBox(height: AppSpacing.s8),
+              if (onStartBreak != null) ...[
+                TextButton(
+                  key: const Key('pact-detail-start-break-button'),
+                  onPressed: onStartBreak,
+                  child: Text(l10n.startBreak),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              if (state.stopError != null) ...[
+                Text(l10n.stopPactError, style: TextStyle(color: theme.colorScheme.error)),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  foregroundColor: theme.colorScheme.onError,
+                ),
+                onPressed: state.isStopping ? null : () => _showStopDialog(context),
+                child: state.isStopping
+                    ? SizedBox(
+                        height: AppSpacing.s20,
+                        width: AppSpacing.s20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onError))
+                    : Text(l10n.stopPact),
+              ),
+            ],
           ),
-        ],
+        ),
 
         // Adjust and start again — bottom action area for a finished pact
         // with no successor yet (HAB-202). Once a successor exists, this is
