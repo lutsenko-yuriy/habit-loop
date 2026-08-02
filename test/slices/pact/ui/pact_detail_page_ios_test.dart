@@ -123,8 +123,20 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down — the extra "stopped on" date row pushes the note section
-      // below the default test viewport height.
-      await tester.scrollUntilVisible(find.byKey(const Key('pact-note-field')), 200);
+      // below the default test viewport height. Scoped to the pact detail
+      // ListView's own key, not the default (unscoped) Scrollable lookup —
+      // the multi-line note field below has its own internal EditableText
+      // Scrollable, which otherwise makes that lookup ambiguous.
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('pact-note-field')),
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byKey(Key('pact-detail-scroll-view-${_stoppedPact.id}')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
 
       expect(find.byKey(const Key('pact-note-field')), findsOneWidget);
       expect(find.byKey(const Key('pact-note-save-button')), findsOneWidget);

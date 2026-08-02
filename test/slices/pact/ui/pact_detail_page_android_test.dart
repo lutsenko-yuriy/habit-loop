@@ -10,6 +10,9 @@ import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart';
+import 'package:habit_loop/theme/widgets/section_header.dart';
+import 'package:habit_loop/theme/widgets/status_badge.dart';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -30,6 +33,11 @@ final _stoppedPact = _activePact.copyWith(
   status: PactStatus.stopped,
   stoppedAt: DateTime(2026, 4, 1),
 );
+
+// No stoppedAt (unlike _stoppedPact above) — used by tests that need to
+// avoid the "Stopped date" tile's own label colliding with l10n.statsCancelled
+// and the status badge (all three happen to read "Stopped" in English).
+final _stoppedPactNoStopDate = _activePact.copyWith(status: PactStatus.stopped);
 
 final _completedPact = _activePact.copyWith(status: PactStatus.completed);
 
@@ -211,9 +219,21 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down — the extra "stopped on" date row pushes the note section
-      // below the default test viewport height.
+      // below the default test viewport height. Scoped to the pact detail
+      // ListView's own key, not the default (unscoped) Scrollable lookup —
+      // the multi-line note TextField below has its own internal
+      // EditableText Scrollable, which otherwise makes that lookup ambiguous.
       final saveButtonFinder = find.byKey(const Key('pact-note-save-button'));
-      await tester.scrollUntilVisible(saveButtonFinder, 200);
+      await tester.scrollUntilVisible(
+        saveButtonFinder,
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byKey(Key('pact-detail-scroll-view-${_stoppedPact.id}')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
 
       expect(saveButtonFinder, findsOneWidget);
       expect(tester.widget<FilledButton>(saveButtonFinder), isA<FilledButton>());
@@ -915,6 +935,206 @@ void main() {
 
       await tester.tap(find.byKey(const Key('pact-detail-adjust-and-start-again-button')));
       expect(tapped, isTrue);
+    });
+  });
+
+  group('PactDetailPageAndroid — chain navigation content transition (HAB-206 WU3)', () {
+    testWidgets('title and stat values animate on chain navigation; section headers do not', (tester) async {
+      final pactA = _activePact;
+      final pactB = Pact(
+        id: 'p2',
+        habitName: 'Journal',
+        startDate: DateTime(2026, 3, 1),
+        endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 10),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+        status: PactStatus.active,
+        reminderOffset: const Duration(minutes: 5),
+      );
+      final statsB = _stats.copyWith(showupsDone: 9);
+
+      // originalPactId is pinned to pactA.id in BOTH pumps — matching
+      // PactDetailScreen's real behavior (stable across a chain-link swap,
+      // HAB-206 WU3) rather than defaulting to each state's own pact.id.
+      // Without this, the ListView's key would itself differ between the
+      // two pumps, tearing down and rebuilding the whole subtree — which
+      // exercises AnimatedValueTransition's initState path instead of the
+      // didUpdateWidget path a stable Element actually takes in production,
+      // and would silently fail to catch a regression in the latter.
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(pactA),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: PactDetailState(pact: pactB, stats: statsB, isLoading: false),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            chainNavigationDirection: SlideDirection.forward,
+            previousState: _loadedState(pactA),
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+
+      // Mid-transition: both habit names visible simultaneously — the value
+      // wrapper keeps the outgoing one around until the animation completes.
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(find.text('Meditate'), findsOneWidget);
+      expect(find.text('Journal'), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(AnimatedValueTransition), matching: find.byType(Opacity)),
+        findsWidgets,
+      );
+
+      // Section headers are pact-independent chrome — never wrapped, so
+      // never mid-animation regardless of what else is transitioning.
+      expect(
+        find.descendant(of: find.byType(AnimatedValueTransition), matching: find.byType(SectionHeader)),
+        findsNothing,
+      );
+
+      await tester.pumpAndSettle();
+      expect(find.text('Meditate'), findsNothing);
+      expect(find.text('Journal'), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(AnimatedValueTransition), matching: find.byType(Opacity)),
+        findsNothing,
+      );
+    });
+
+    testWidgets('shows the outgoing pact\'s own content, not a spinner, while a chain-link reload is in flight',
+        (tester) async {
+      final pactA = _activePact;
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(pactA),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The incoming pact's own state hasn't resolved yet (isLoading: true,
+      // no pact/stats) — this is exactly the gap that used to fall through
+      // to the generic spinner. previousState carries the outgoing pact's
+      // already-loaded content across it instead (HAB-206 WU3).
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: const PactDetailState(),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            chainNavigationDirection: SlideDirection.forward,
+            previousState: _loadedState(pactA),
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Meditate'), findsOneWidget);
+    });
+
+    testWidgets('status badge is pinned to a consistent width across a status crossfade', (tester) async {
+      final pactA = _activePact;
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(pactA),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_stoppedPactNoStopDate),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            chainNavigationDirection: SlideDirection.forward,
+            previousState: _loadedState(pactA),
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+
+      // Mid-transition: outgoing ("Active") and incoming ("Stopped") badges
+      // both on screen. A mismatched width here is exactly what makes the
+      // badge visibly jump sideways as the Row relayouts around it.
+      await tester.pump(const Duration(milliseconds: 125));
+      final badges = tester.widgetList<StatusBadge>(find.byType(StatusBadge)).toList();
+      expect(badges, hasLength(2));
+      expect(badges[0].width, isNotNull);
+      expect(badges[0].width, badges[1].width);
+    });
+
+    testWidgets('the Remaining/Cancelled stat cell crossfades label and value across a status change', (tester) async {
+      final pactA = _activePact;
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(pactA),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(_stoppedPactNoStopDate),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            chainNavigationDirection: SlideDirection.forward,
+            previousState: _loadedState(pactA),
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+
+      // Mid-transition: both the outgoing ("Remaining") and incoming
+      // ("Stopped" — l10n.statsCancelled's actual English string, same text
+      // as the status badge's own "Stopped" label, hence 2 not 1) labels
+      // are visible simultaneously — this used to be an instant, unanimated
+      // swap regardless of status change.
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(find.text('Remaining'), findsOneWidget);
+      expect(find.text('Stopped'), findsNWidgets(2));
+
+      await tester.pumpAndSettle();
+      expect(find.text('Remaining'), findsNothing);
+      expect(find.text('Stopped'), findsNWidgets(2));
     });
   });
 }

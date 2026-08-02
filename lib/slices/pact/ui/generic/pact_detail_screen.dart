@@ -11,10 +11,12 @@ import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_screen.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_detail_page_ios.dart';
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart';
 
 class PactDetailScreen extends ConsumerStatefulWidget {
   final String pactId;
@@ -39,11 +41,17 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   // (see docs/knowledge/notes/HAB-206.md).
   late String _currentPactId;
 
-  // Guards against overlapping chain-link taps. Set for the duration of a
-  // swap (data reload + WU3's future transition animation) and checked by
-  // _onOpenChainLink so a second tap mid-transition is a no-op rather than
-  // interrupting or racing the first.
+  // Guards against overlapping chain-link taps for the full swap duration
+  // (reload + transition animation) — a second tap mid-transition is a no-op.
   bool _isAnimating = false;
+
+  // Slide direction for the in-flight/just-finished transition (HAB-206 WU3).
+  SlideDirection? _lastDirection;
+
+  // Outgoing pact's state, captured just before _currentPactId swaps
+  // (HAB-206 WU3) — lets each AnimatedValueTransition diff outgoing vs.
+  // incoming itself. Null outside of an in-flight transition.
+  PactDetailState? _outgoingSnapshot;
 
   @override
   void initState() {
@@ -115,8 +123,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   /// wherever this screen was originally opened from.
   ///
   /// No-ops while [_isAnimating] is already true — a second tap mid-swap
-  /// (data reload today; also the WU3 transition animation once it lands)
-  /// is ignored rather than interrupting or racing the first.
+  /// (data reload, then the WU3 content-transition animation) is ignored
+  /// rather than interrupting or racing the first.
   Future<void> _onOpenChainLink(String targetPactId, {required String direction}) async {
     if (_isAnimating) return;
 
@@ -128,6 +136,8 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
 
     setState(() {
       _isAnimating = true;
+      _lastDirection = direction == 'previous' ? SlideDirection.backward : SlideDirection.forward;
+      _outgoingSnapshot = ref.read(pactDetailViewModelProvider(_currentPactId));
       _currentPactId = targetPactId;
     });
 
@@ -137,8 +147,13 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
+    // Keeps _isAnimating set for the full visual transition, not just the
+    // (often near-instant, thanks to WU2's prefetch) data reload above.
+    await Future<void>.delayed(kAnimatedValueTransitionDuration);
+    if (!mounted) return;
     setState(() {
       _isAnimating = false;
+      _outgoingSnapshot = null;
     });
   }
 
@@ -274,6 +289,9 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         onOpenNextPact: onOpenNextPact,
         onAdjustAndStartAgain: onAdjustAndStartAgain,
         scrollController: _scrollController,
+        chainNavigationDirection: _lastDirection,
+        previousState: _outgoingSnapshot,
+        originalPactId: widget.pactId,
       );
     }
     return PactDetailPageAndroid(
@@ -291,6 +309,9 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       onOpenNextPact: onOpenNextPact,
       onAdjustAndStartAgain: onAdjustAndStartAgain,
       scrollController: _scrollController,
+      chainNavigationDirection: _lastDirection,
+      previousState: _outgoingSnapshot,
+      originalPactId: widget.pactId,
     );
   }
 }

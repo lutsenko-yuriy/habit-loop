@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -80,11 +81,21 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         }
       }
 
-      // Chain links (HAB-202) — cheap, uncached reads; a pact has at most one
-      // predecessor and one successor.
+      // Chain links (HAB-202) — a pact has at most one predecessor and one
+      // successor. Checked against PactDetailCache's identity index first
+      // (HAB-206 WU3) — cache.load() above, and any earlier neighbor
+      // resolution, already populates it, so a pact reached via chain-link
+      // navigation usually already knows its own neighbors without a DB
+      // round trip. This — not just the bundle prefetch below — is what
+      // keeps the swap free of a loading-spinner blink.
       final predecessorPactId = pact.predecessorPactId;
-      final predecessorPact = predecessorPactId == null ? null : await pactService.getPact(predecessorPactId);
-      final successorPact = await pactService.getSuccessor(pact.id);
+      Pact? predecessorPact;
+      if (predecessorPactId != null) {
+        predecessorPact = cache.peekPact(predecessorPactId) ?? await pactService.getPact(predecessorPactId);
+        if (predecessorPact != null) cache.rememberPact(predecessorPact);
+      }
+      final successorPact = cache.peekSuccessor(pact.id) ?? await pactService.getSuccessor(pact.id);
+      if (successorPact != null) cache.rememberPact(successorPact);
 
       // Cache-warm the neighbor bundles (HAB-206 WU2) so a subsequent
       // chain-link swap hits a warm PactDetailCache instead of a fresh DB
@@ -93,11 +104,24 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
       // mid-warm) so it can't surface as a fatal Crashlytics report via the
       // global error handler — the swap itself will re-surface a real "not
       // found" if the user actually navigates there.
+      //
+      // Also warms one hop further than the bundle prefetch reaches (HAB-206
+      // WU3) — identity only (which Pact it is, not its full bundle), so it
+      // stays well short of "loading a next-next pact" — just enough that
+      // *its* neighbor resolution above also hits the identity index instead
+      // of a fresh DB round trip once the user actually navigates there.
       if (predecessorPact != null) {
         unawaited(_warmChainCache(cache, predecessorPact.id, now));
+        final grandPredecessorId = predecessorPact.predecessorPactId;
+        if (grandPredecessorId != null && cache.peekPact(grandPredecessorId) == null) {
+          unawaited(_warmChainIdentity(cache, () => pactService.getPact(grandPredecessorId)));
+        }
       }
       if (successorPact != null) {
         unawaited(_warmChainCache(cache, successorPact.id, now));
+        if (cache.peekSuccessor(successorPact.id) == null) {
+          unawaited(_warmChainIdentity(cache, () => pactService.getSuccessor(successorPact.id)));
+        }
       }
 
       state = state.copyWith(
@@ -132,6 +156,22 @@ class PactDetailViewModel extends FamilyNotifier<PactDetailState, String> {
         ref
             .read(logServiceProvider)
             .error('pact_detail_chain_cache_warm_failed: id=$pactId', exception: e, stackTrace: st),
+      );
+    }
+  }
+
+  // Same fire-and-forget/error-swallowing contract as _warmChainCache, but
+  // resolves and remembers a bare Pact identity (HAB-206 WU3) rather than a
+  // full bundle — used to warm one hop further than the bundle prefetch
+  // reaches, so PactDetailCache.peekPact/peekSuccessor can answer without a
+  // DB round trip the moment the user actually navigates that far.
+  Future<void> _warmChainIdentity(PactDetailCache cache, Future<Pact?> Function() resolve) async {
+    try {
+      final resolved = await resolve();
+      if (resolved != null) cache.rememberPact(resolved);
+    } catch (e, st) {
+      unawaited(
+        ref.read(logServiceProvider).error('pact_detail_chain_identity_warm_failed', exception: e, stackTrace: st),
       );
     }
   }

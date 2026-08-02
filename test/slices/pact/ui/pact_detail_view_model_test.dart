@@ -400,6 +400,102 @@ void main() {
         expect(cache.peek('v2'), isNotNull, reason: 'successor bundle must be warmed');
       });
 
+      test('resolves predecessorPact from the identity cache without a repo lookup (HAB-206 WU3)', () async {
+        // The predecessor is NOT in the repo at all — if load() falls back
+        // to pactService.getPact(), it would find nothing and predecessorPact
+        // would stay null. Resolving it correctly proves the identity cache
+        // (pre-seeded here the same way a real chain-link navigation would
+        // seed it) was actually consulted first.
+        final current = Pact(
+          id: 'p1',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          predecessorPactId: 'root',
+        );
+        final container = _makeContainer(pacts: [current], showups: _showups);
+        addTearDown(container.dispose);
+        container.read(pactDetailCacheProvider).rememberPact(predecessor);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        final state = container.read(pactDetailViewModelProvider('p1'));
+
+        expect(state.predecessorPact?.id, 'root');
+      });
+
+      test('resolves successorPact from the identity cache without a repo lookup (HAB-206 WU3)', () async {
+        final successor = Pact(
+          id: 'v2',
+          habitName: 'Meditate (v2)',
+          startDate: DateTime(2026, 9, 2),
+          endDate: DateTime(2027, 3, 2),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          predecessorPactId: 'p1',
+        );
+        final container = _makeContainer(pacts: [_pact], showups: _showups);
+        addTearDown(container.dispose);
+        // Successor is not in the repo — only the identity cache knows it,
+        // pre-seeded the way _warmChainIdentity would after an earlier load.
+        container.read(pactDetailCacheProvider).rememberPact(successor);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        final state = container.read(pactDetailViewModelProvider('p1'));
+
+        expect(state.successorPact?.id, 'v2');
+      });
+
+      test(
+          'warms one hop further than the bundle prefetch reaches — the successor\'s own successor identity '
+          '(HAB-206 WU3)', () async {
+        final current = Pact(
+          id: 'p1',
+          habitName: 'Meditate',
+          startDate: DateTime(2026, 3, 1),
+          endDate: DateTime(2026, 9, 1),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.stopped,
+        );
+        final successor = Pact(
+          id: 'v2',
+          habitName: 'Meditate (v2)',
+          startDate: DateTime(2026, 9, 2),
+          endDate: DateTime(2027, 3, 2),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.stopped,
+          predecessorPactId: 'p1',
+        );
+        final grandSuccessor = Pact(
+          id: 'v3',
+          habitName: 'Meditate (v3)',
+          startDate: DateTime(2027, 3, 3),
+          endDate: DateTime(2027, 9, 3),
+          showupDuration: const Duration(minutes: 10),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          predecessorPactId: 'v2',
+        );
+        final container = _makeContainer(pacts: [current, successor, grandSuccessor], showups: _showups);
+        addTearDown(container.dispose);
+
+        await container.read(pactDetailViewModelProvider('p1').notifier).load();
+        await Future<void>.delayed(Duration.zero);
+
+        final cache = container.read(pactDetailCacheProvider);
+        expect(
+          cache.peekSuccessor('v2')?.id,
+          'v3',
+          reason: "v2's own successor should already be known once p1 finishes loading, "
+              'so navigating p1 -> v2 needs no further DB round trip to resolve it',
+        );
+      });
+
       test('does not attempt to warm the cache for a neighbor that does not exist', () async {
         final container = _makeContainer(pacts: [_pact], showups: _showups);
         addTearDown(container.dispose);

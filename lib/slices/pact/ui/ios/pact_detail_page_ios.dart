@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider, Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Colors, Divider, Material, MaterialType, Theme;
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -12,6 +12,8 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_status_colors.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
+import 'package:habit_loop/theme/widgets/animated_reveal.dart';
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -71,6 +73,21 @@ class PactDetailPageIos extends StatelessWidget {
   /// scrolled out of view. `null` in tests that don't exercise this.
   final ScrollController? scrollController;
 
+  /// Slide direction for the current chain-link transition (HAB-206 WU3).
+  final SlideDirection? chainNavigationDirection;
+
+  /// Outgoing pact's state while a chain-link transition is in flight
+  /// (HAB-206 WU3); each animated value diffs itself against this.
+  final PactDetailState? previousState;
+
+  /// Pact id [PactDetailScreen] was originally opened with (HAB-206 WU3) —
+  /// stable across in-place chain-link swaps, unlike [state]'s own pact id.
+  /// Keys the content `ListView` so its subtree survives a swap instead of
+  /// being rebuilt (which would pop un-animated content like the notes
+  /// section instead of letting it update in place). Falls back to the
+  /// current pact's id for callers that don't exercise chain navigation.
+  final String? originalPactId;
+
   const PactDetailPageIos({
     super.key,
     required this.state,
@@ -87,6 +104,9 @@ class PactDetailPageIos extends StatelessWidget {
     this.onOpenNextPact,
     this.onAdjustAndStartAgain,
     this.scrollController,
+    this.chainNavigationDirection,
+    this.previousState,
+    this.originalPactId,
   });
 
   @override
@@ -117,12 +137,15 @@ class PactDetailPageIos extends StatelessWidget {
             children: [
               Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
               Expanded(
-                child: state.isLoading
+                // Shows the outgoing pact's own content instead of a spinner
+                // while a chain-link reload is in flight (HAB-206 WU3) —
+                // previousState is only ever set for that case.
+                child: (state.isLoading && previousState?.pact == null)
                     ? const Center(child: CupertinoActivityIndicator())
                     : state.loadError != null
                         ? Center(child: Text(state.loadError.toString()))
                         : _PactDetailContent(
-                            state: state,
+                            state: state.isLoading ? previousState! : state,
                             l10n: l10n,
                             onStopPact: onStopPact,
                             onSaveNote: onSaveNote,
@@ -136,8 +159,15 @@ class PactDetailPageIos extends StatelessWidget {
                             onOpenNextPact: onOpenNextPact,
                             onAdjustAndStartAgain: onAdjustAndStartAgain,
                             scrollController: scrollController,
+                            chainNavigationDirection: chainNavigationDirection,
+                            previousState: previousState,
+                            originalPactId: originalPactId ?? state.pact?.id ?? previousState?.pact?.id,
                           ),
               ),
+              // Invisible marker exposing the currently-shown pact id (HAB-206
+              // WU3) — the ListView's own key is pinned to originalPactId now, so
+              // scenarios read this instead (see pact_chain_test.dart).
+              if (state.pact != null) SizedBox.shrink(key: ValueKey('pact-detail-current-pact-id-${state.pact!.id}')),
             ],
           ),
         ),
@@ -161,6 +191,9 @@ class _PactDetailContent extends StatelessWidget {
   final VoidCallback? onOpenNextPact;
   final VoidCallback? onAdjustAndStartAgain;
   final ScrollController? scrollController;
+  final SlideDirection? chainNavigationDirection;
+  final PactDetailState? previousState;
+  final String? originalPactId;
 
   const _PactDetailContent({
     required this.state,
@@ -177,6 +210,9 @@ class _PactDetailContent extends StatelessWidget {
     this.onOpenNextPact,
     this.onAdjustAndStartAgain,
     this.scrollController,
+    this.chainNavigationDirection,
+    this.previousState,
+    this.originalPactId,
   });
 
   @override
@@ -192,26 +228,49 @@ class _PactDetailContent extends StatelessWidget {
     final statusColor = PactStatusColors.cupertino(context).forStatus(pact.status);
     final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
+    // Outgoing pact's values, only present mid-transition (HAB-206 WU3).
+    final previousPact = previousState?.pact;
+    final previousStats = previousState?.stats;
+    final previousStatusText = previousPact != null ? pactStatusText(l10n, previousPact.status) : null;
+    final previousStatusColor =
+        previousPact != null ? PactStatusColors.cupertino(context).forStatus(previousPact.status) : null;
+    final previousDaysLeft = previousPact?.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
+
+    // Pinned to the widest possible status label so the badge doesn't resize
+    // (and shift the Row) when crossfading between two labels (HAB-206 WU3).
+    final badgeWidth = StatusBadge.widestOf(context, PactStatus.values.map((s) => pactStatusText(l10n, s)));
+
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      // Pact-specific key (HAB-202) — disambiguates this screen's own
-      // Scrollable from an earlier PactDetailScreen still mounted underneath
-      // it (Navigator keeps prior routes mounted by default) when a test
-      // needs to scroll a specific screen's content into view.
-      key: Key('pact-detail-scroll-view-${pact.id}'),
+      // Keyed by the screen's original entry pact id (HAB-202's disambiguation
+      // from an underlying route), kept stable across an in-place chain-link
+      // swap (HAB-206 WU3) so un-animated content doesn't pop in/out on swap.
+      key: Key('pact-detail-scroll-view-${originalPactId ?? pact.id}'),
       controller: scrollController,
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
-        // Habit name + status badge
+        // Habit name + status badge, each wrapped so only the value animates (HAB-206 WU3).
         Row(
           children: [
             Expanded(
-              child: Text(
-                pact.habitName,
-                style: AppTypography.sectionTitle,
+              child: AnimatedValueTransition(
+                direction: chainNavigationDirection,
+                previousChild: previousPact != null && previousPact.habitName != pact.habitName
+                    ? Text(previousPact.habitName, style: AppTypography.sectionTitle)
+                    : null,
+                child: Text(
+                  pact.habitName,
+                  style: AppTypography.sectionTitle,
+                ),
               ),
             ),
-            StatusBadge(text: statusText, color: statusColor),
+            AnimatedValueTransition(
+              direction: chainNavigationDirection,
+              previousChild: previousStatusText != null && previousStatusText != statusText
+                  ? StatusBadge(text: previousStatusText, color: previousStatusColor!, width: badgeWidth)
+                  : null,
+              child: StatusBadge(text: statusText, color: statusColor, width: badgeWidth),
+            ),
           ],
         ),
         // Previous/Next Pact links (HAB-202) — grouped in a row right under
@@ -275,71 +334,125 @@ class _PactDetailContent extends StatelessWidget {
           l10n: l10n,
         ),
 
-        // Stats cards
+        // Each stat card's count is individually animated (HAB-206 WU3).
         SectionHeader(title: l10n.sectionStats, labelColor: HabitLoopColors.secondaryText(context)),
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
-            Expanded(child: _StatCard(label: l10n.statsDone, value: l10n.statsShowups(stats.showupsDone))),
+            Expanded(
+              child: _animatedStatCard(
+                l10n.statsDone,
+                l10n.statsShowups(stats.showupsDone),
+                previousStats != null ? l10n.statsShowups(previousStats.showupsDone) : null,
+              ),
+            ),
             const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _StatCard(label: l10n.statsFailed, value: l10n.statsShowups(stats.showupsFailed))),
+            Expanded(
+              child: _animatedStatCard(
+                l10n.statsFailed,
+                l10n.statsShowups(stats.showupsFailed),
+                previousStats != null ? l10n.statsShowups(previousStats.showupsFailed) : null,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
-            if (pact.status == PactStatus.active)
-              Expanded(child: _StatCard(label: l10n.statsRemaining, value: l10n.statsShowups(stats.showupsRemaining)))
-            else if (pact.status == PactStatus.stopped)
-              Expanded(child: _StatCard(label: l10n.statsCancelled, value: l10n.statsShowups(stats.showupsRemaining))),
+            // Presence (Remaining/Cancelled vs. absent for completed) is an unanimated toggle; label+value crossfade.
+            if (_thirdStatCell(pact.status) != null)
+              Expanded(
+                child: _animatedThirdStatCell(
+                  currentStatus: pact.status,
+                  currentValue: stats.showupsRemaining,
+                  previousStatus: previousPact?.status,
+                  previousValue: previousStats?.showupsRemaining,
+                ),
+              ),
             if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _StatCard(label: l10n.statsStreak, value: l10n.statsShowups(stats.currentStreak))),
+            Expanded(
+              child: _animatedStatCard(
+                l10n.statsStreak,
+                l10n.statsShowups(stats.currentStreak),
+                previousStats != null ? l10n.statsShowups(previousStats.currentStreak) : null,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.s24),
 
-        // Time details
+        // Each tile's value (or label, for "days remaining") is individually animated (HAB-206 WU3).
         SectionHeader(title: l10n.sectionTimeline, labelColor: HabitLoopColors.secondaryText(context)),
         const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
+        _animatedDateTile(
           label: l10n.pactStartDate,
           value: formatLocaleDate(pact.startDate),
+          previousValue: previousPact != null ? formatLocaleDate(previousPact.startDate) : null,
           valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
+          tileColor: fill,
         ),
         const SizedBox(height: AppSpacing.s8),
-        if (pact.status == PactStatus.stopped && pact.stoppedAt != null) ...[
-          DateRowTile(
-            label: l10n.pactStoppedDate,
-            value: formatLocaleDate(pact.stoppedAt!),
-            valueColor: HabitLoopColors.secondaryText(context),
-            backgroundColor: fill,
+        // Reveals/collapses instead of popping (HAB-206 WU3); the spacer
+        // lives inside so it collapses with the tile.
+        AnimatedReveal(
+          visible: pact.status == PactStatus.stopped && pact.stoppedAt != null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            // stretch: Align (inside AnimatedReveal) loosens the incoming
+            // width constraint; without stretch this shrink-wraps instead of filling the row.
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _animatedDateTile(
+                label: l10n.pactStoppedDate,
+                value: formatLocaleDate(pact.stoppedAt ?? previousPact?.stoppedAt ?? pact.startDate),
+                previousValue: previousPact?.stoppedAt != null ? formatLocaleDate(previousPact!.stoppedAt!) : null,
+                valueColor: HabitLoopColors.secondaryText(context),
+                tileColor: fill,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+            ],
           ),
-          const SizedBox(height: AppSpacing.s8),
-        ],
-        DateRowTile(
-          label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
-          value: formatLocaleDate(pact.endDate),
-          valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
         ),
-        if (pact.status == PactStatus.active && daysLeft >= 0) ...[
-          const SizedBox(height: AppSpacing.s8),
-          DateRowTile(label: l10n.daysRemaining(daysLeft), backgroundColor: fill),
-        ],
+        _animatedDateTile(
+          label: pact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate,
+          previousLabel: previousPact != null
+              ? (previousPact.status == PactStatus.active ? l10n.pactEndDate : l10n.pactEndedDate)
+              : null,
+          value: formatLocaleDate(pact.endDate),
+          previousValue: previousPact != null ? formatLocaleDate(previousPact.endDate) : null,
+          valueColor: HabitLoopColors.secondaryText(context),
+          tileColor: fill,
+        ),
+        AnimatedReveal(
+          visible: pact.status == PactStatus.active && daysLeft >= 0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppSpacing.s8),
+              _animatedDateTile(
+                label: l10n.daysRemaining(pact.status == PactStatus.active ? daysLeft : previousDaysLeft ?? daysLeft),
+                tileColor: fill,
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
+        _animatedDateTile(
           label: l10n.summaryShowupDuration,
           value: l10n.showupDurationMinutes(pact.showupDuration.inMinutes),
+          previousValue:
+              previousPact != null ? l10n.showupDurationMinutes(previousPact.showupDuration.inMinutes) : null,
           valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
+          tileColor: fill,
         ),
         const SizedBox(height: AppSpacing.s8),
-        DateRowTile(
+        _animatedDateTile(
           label: l10n.summaryReminder,
           value: reminderDescription(l10n, pact.reminderOffset),
+          previousValue: previousPact != null ? reminderDescription(l10n, previousPact.reminderOffset) : null,
           valueColor: HabitLoopColors.secondaryText(context),
-          backgroundColor: fill,
+          tileColor: fill,
         ),
 
         // View Timeline entry point (flag-gated)
@@ -353,88 +466,112 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Editable note section for inactive pacts
-        if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s24),
-          PactNoteSection(
-            savedNote: pact.stopReason,
-            isSaving: state.isSavingNote,
-            noteError: state.noteError,
-            labelColor: HabitLoopColors.secondaryText(context),
-            errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
-            onSaveNote: onSaveNote,
-            slots: (
-              buildNoteField: (context, controller) => CupertinoTextField(
-                    key: const Key('pact-note-field'),
-                    controller: controller,
-                    placeholder: l10n.stopPactReasonHint,
-                    maxLines: null,
-                    minLines: 3,
-                  ),
-              buildSaveButton: (context, onPressed) => CupertinoButton(
-                    key: const Key('pact-note-save-button'),
-                    padding: EdgeInsets.zero,
-                    onPressed: onPressed,
-                    child: Text(
-                      l10n.pactNoteSave,
-                      style: TextStyle(
-                        color: onPressed != null ? CupertinoTheme.of(context).primaryColor : CupertinoColors.systemGrey,
+        // Editable note section for inactive pacts, reveals/collapses (HAB-206 WU3).
+        // Falls back to the outgoing pact's stopReason while collapsing.
+        AnimatedReveal(
+          visible: pact.status != PactStatus.active,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppSpacing.s24),
+              PactNoteSection(
+                savedNote: pact.stopReason ?? previousPact?.stopReason,
+                isSaving: state.isSavingNote,
+                noteError: state.noteError,
+                labelColor: HabitLoopColors.secondaryText(context),
+                errorColor: CupertinoColors.destructiveRed.resolveFrom(context),
+                onSaveNote: onSaveNote,
+                slots: (
+                  buildNoteField: (context, controller) => CupertinoTextField(
+                        key: const Key('pact-note-field'),
+                        controller: controller,
+                        placeholder: l10n.stopPactReasonHint,
+                        maxLines: null,
+                        minLines: 3,
                       ),
-                    ),
-                  ),
-            ),
+                  buildSaveButton: (context, onPressed) => CupertinoButton(
+                        key: const Key('pact-note-save-button'),
+                        padding: EdgeInsets.zero,
+                        onPressed: onPressed,
+                        child: Text(
+                          l10n.pactNoteSave,
+                          style: TextStyle(
+                            color: onPressed != null
+                                ? CupertinoTheme.of(context).primaryColor
+                                : CupertinoColors.systemGrey,
+                          ),
+                        ),
+                      ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
 
-        // Archive section for completed and stopped pacts
-        if (pact.status != PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s24),
-          SectionHeader(title: l10n.sectionArchive, labelColor: HabitLoopColors.secondaryText(context)),
-          const SizedBox(height: AppSpacing.s8),
-          CupertinoButton(
-            key: const Key('archive-pact-button'),
-            onPressed: state.isArchiving ? null : () => onArchivePact(!pact.archived),
-            child: state.isArchiving
-                ? const CupertinoActivityIndicator()
-                : Text(pact.archived ? l10n.unarchivePact : l10n.archivePact),
+        // Archive section, same reveal/collapse treatment. No stretch — the
+        // button stays a small centered link, so the header needs its own explicit left alignment.
+        AnimatedReveal(
+          visible: pact.status != PactStatus.active,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppSpacing.s24),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SectionHeader(title: l10n.sectionArchive, labelColor: HabitLoopColors.secondaryText(context)),
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              CupertinoButton(
+                key: const Key('archive-pact-button'),
+                onPressed: state.isArchiving ? null : () => onArchivePact(!pact.archived),
+                child: state.isArchiving
+                    ? const CupertinoActivityIndicator()
+                    : Text(pact.archived ? l10n.unarchivePact : l10n.archivePact),
+              ),
+            ],
           ),
-        ],
+        ),
 
-        // Take a break + stop pact — grouped together as pact-lifecycle
-        // actions, set off from the read-only sections above by a divider
-        // (HAB-195: keep "Take a break" closer to "Stop pact" than to "View
-        // Timeline").
-        if (pact.status == PactStatus.active) ...[
-          const SizedBox(height: AppSpacing.s24),
-          Divider(color: CupertinoColors.separator.resolveFrom(context)),
-          const SizedBox(height: AppSpacing.s8),
-          if (onStartBreak != null) ...[
-            CupertinoButton(
-              key: const Key('pact-detail-start-break-button'),
-              padding: EdgeInsets.zero,
-              onPressed: onStartBreak,
-              child: Text(l10n.startBreak),
-            ),
-            const SizedBox(height: AppSpacing.s8),
-          ],
-          if (state.stopError != null) ...[
-            Text(
-              l10n.stopPactError,
-              style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-          ],
-          CupertinoButton(
-            onPressed: state.isStopping ? null : () => _showStopDialog(context),
-            child: state.isStopping
-                ? const CupertinoActivityIndicator()
-                : Text(
-                    l10n.stopPact,
-                    style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
-                  ),
+        // Take a break + stop pact, set off by a divider (HAB-195: keep
+        // "Take a break" closer to "Stop pact" than "View Timeline"). Reveals/collapses (HAB-206 WU3).
+        AnimatedReveal(
+          visible: pact.status == PactStatus.active,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppSpacing.s24),
+              Divider(color: CupertinoColors.separator.resolveFrom(context)),
+              const SizedBox(height: AppSpacing.s8),
+              if (onStartBreak != null) ...[
+                CupertinoButton(
+                  key: const Key('pact-detail-start-break-button'),
+                  padding: EdgeInsets.zero,
+                  onPressed: onStartBreak,
+                  child: Text(l10n.startBreak),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              if (state.stopError != null) ...[
+                Text(
+                  l10n.stopPactError,
+                  style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              CupertinoButton(
+                onPressed: state.isStopping ? null : () => _showStopDialog(context),
+                child: state.isStopping
+                    ? const CupertinoActivityIndicator()
+                    : Text(
+                        l10n.stopPact,
+                        style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context)),
+                      ),
+              ),
+            ],
           ),
-        ],
+        ),
 
         // Adjust and start again — bottom action area for a finished pact
         // with no successor yet (HAB-202). Once a successor exists, this is
@@ -456,6 +593,76 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _animatedStatCard(String label, String value, String? previousValue) {
+    return AnimatedValueTransition(
+      direction: chainNavigationDirection,
+      previousChild:
+          previousValue != null && previousValue != value ? _StatCard(label: label, value: previousValue) : null,
+      child: _StatCard(label: label, value: value),
+    );
+  }
+
+  // Remaining/Cancelled — l10n.statsRemaining for an active pact,
+  // l10n.statsCancelled for a stopped one, absent entirely for a completed
+  // one (there's nothing left to call either "remaining" or "cancelled").
+  String? _thirdStatCell(PactStatus status) => switch (status) {
+        PactStatus.active => l10n.statsRemaining,
+        PactStatus.stopped => l10n.statsCancelled,
+        PactStatus.completed => null,
+      };
+
+  // Crossfades label+value together, unlike _animatedStatCard — the label
+  // itself changes on the most common hop (active <-> stopped), so gating on an unchanged label would rarely animate.
+  Widget _animatedThirdStatCell({
+    required PactStatus currentStatus,
+    required int currentValue,
+    required PactStatus? previousStatus,
+    required int? previousValue,
+  }) {
+    final currentLabel = _thirdStatCell(currentStatus)!;
+    final previousLabel = previousStatus != null ? _thirdStatCell(previousStatus) : null;
+
+    Widget? previousChild;
+    if (previousLabel != null && previousValue != null) {
+      final changed = previousLabel != currentLabel || previousValue != currentValue;
+      if (changed) previousChild = _StatCard(label: previousLabel, value: l10n.statsShowups(previousValue));
+    }
+
+    return AnimatedValueTransition(
+      direction: chainNavigationDirection,
+      previousChild: previousChild,
+      child: _StatCard(label: currentLabel, value: l10n.statsShowups(currentValue)),
+    );
+  }
+
+  Widget _animatedDateTile({
+    required String label,
+    String? previousLabel,
+    String? value,
+    String? previousValue,
+    Color? valueColor,
+    required Color tileColor,
+  }) {
+    final effectivePreviousLabel = previousLabel ?? label;
+    return AnimatedValueTransition(
+      direction: chainNavigationDirection,
+      previousChild: previousValue != null && (effectivePreviousLabel != label || previousValue != value)
+          ? DateRowTile(
+              label: effectivePreviousLabel,
+              value: previousValue,
+              valueColor: valueColor ?? Colors.black87,
+              backgroundColor: tileColor,
+            )
+          : null,
+      child: DateRowTile(
+        label: label,
+        value: value,
+        valueColor: valueColor ?? Colors.black87,
+        backgroundColor: tileColor,
+      ),
     );
   }
 
@@ -517,8 +724,10 @@ class _StatCard extends StatelessWidget {
         color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
         borderRadius: BorderRadius.circular(10),
       ),
+      // stretch: under AnimatedValueTransition's Stack, a start-aligned
+      // Column would shrink-wrap to the text width, jumping the card's width mid-transition (HAB-206 WU3).
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(label, style: TextStyle(fontSize: 12, color: HabitLoopColors.secondaryText(context))),
           const SizedBox(height: AppSpacing.s4),

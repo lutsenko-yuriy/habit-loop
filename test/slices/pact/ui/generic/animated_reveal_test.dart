@@ -60,4 +60,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('revealed-content')), findsNothing);
   });
+
+  testWidgets('child ignores taps while collapsing', (tester) async {
+    var tapped = false;
+    Widget wrapTappable({required bool visible}) => MaterialApp(
+          home: Scaffold(
+            body: AnimatedReveal(
+              visible: visible,
+              child: GestureDetector(onTap: () => tapped = true, child: const Text('tap-me')),
+            ),
+          ),
+        );
+
+    await tester.pumpWidget(wrapTappable(visible: true));
+    await tester.pumpWidget(wrapTappable(visible: false));
+    await tester.pump(const Duration(milliseconds: 125));
+    await tester.tap(find.text('tap-me'), warnIfMissed: false);
+    expect(tapped, isFalse, reason: 'collapsing content refers to already-stale state and must not react to taps');
+  });
 }
