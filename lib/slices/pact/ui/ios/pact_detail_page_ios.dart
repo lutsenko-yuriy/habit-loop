@@ -144,12 +144,20 @@ class PactDetailPageIos extends StatelessWidget {
             children: [
               Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
               Expanded(
-                child: state.isLoading
+                // While a chain-link swap's reload is in flight, keep showing
+                // the outgoing pact's own (already-loaded) content instead of
+                // a spinner (HAB-206 WU3) — previousState is only ever set
+                // for exactly that case (see PactDetailScreen's own doc
+                // comment), so this can't mask a genuine first-open loading
+                // state. Robust to however long the reload actually takes,
+                // unlike trying to always out-cache the race: the content
+                // only ever *looks* frozen for a moment, never blank.
+                child: (state.isLoading && previousState?.pact == null)
                     ? const Center(child: CupertinoActivityIndicator())
                     : state.loadError != null
                         ? Center(child: Text(state.loadError.toString()))
                         : _PactDetailContent(
-                            state: state,
+                            state: state.isLoading ? previousState! : state,
                             l10n: l10n,
                             onStopPact: onStopPact,
                             onSaveNote: onSaveNote,
@@ -165,7 +173,7 @@ class PactDetailPageIos extends StatelessWidget {
                             scrollController: scrollController,
                             chainNavigationDirection: chainNavigationDirection,
                             previousState: previousState,
-                            originalPactId: originalPactId ?? state.pact?.id,
+                            originalPactId: originalPactId ?? state.pact?.id ?? previousState?.pact?.id,
                           ),
               ),
               // Invisible marker (HAB-206 WU3) — the content ListView is

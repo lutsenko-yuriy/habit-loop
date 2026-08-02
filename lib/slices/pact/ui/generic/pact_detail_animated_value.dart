@@ -28,14 +28,15 @@ const _slideDistance = 16.0;
 /// pact's data — only when this specific value actually differs between the
 /// outgoing and incoming pact; `null` renders [child] directly, unanimated.
 /// This is deliberately caller-driven rather than inferred from an internal
-/// `didUpdateWidget` key diff: the content `ListView` this lives inside is
-/// itself keyed by pact id (so integration-test scenarios can identify which
-/// pact is currently shown), which means every value widget's Element is
-/// torn down and recreated fresh on every chain-link swap — there is no
-/// surviving State to diff an old vs. new build against. Passing the
-/// snapshot in explicitly sidesteps that entirely: whatever value this
-/// Element is first built with already carries everything it needs to
-/// animate, right from `initState`.
+/// key diff, because this Element's own lifetime is unpredictable from in
+/// here: the content `ListView` it lives inside is keyed by the *screen's*
+/// id (stable across a chain-link swap, so sibling widgets like the
+/// active-break banner can animate too), so most of the time this Element
+/// survives a swap and just gets a normal rebuild (caught in
+/// [State.didUpdateWidget]) — but a value that only exists for certain
+/// pacts (e.g. the "Remaining"/"Cancelled" stat cell) can still appear via a
+/// fresh Element (caught in [State.initState]). Both paths funnel into the
+/// same "adopt previousChild, start the animation" logic.
 ///
 /// Section headers, buttons, dividers, and other pact-independent chrome are
 /// never wrapped in this, so they never animate.
@@ -59,10 +60,9 @@ class _PactDetailAnimatedValueState extends State<PactDetailAnimatedValue> with 
   late final AnimationController _controller;
   late final Animation<double> _progress;
 
-  // Captured once, in initState — see the class doc for why this can't rely
-  // on didUpdateWidget. Cleared once the transition finishes so the old
-  // subtree doesn't linger (and stops intercepting hit-testing, though it's
-  // also wrapped in IgnorePointer for the duration it's shown).
+  // Cleared once the transition finishes so the old subtree doesn't linger
+  // (and stops intercepting hit-testing, though it's also wrapped in
+  // IgnorePointer for the duration it's shown).
   Widget? _outgoingChild;
 
   @override
@@ -70,10 +70,26 @@ class _PactDetailAnimatedValueState extends State<PactDetailAnimatedValue> with 
     super.initState();
     _controller = AnimationController(vsync: this, duration: kChainNavigationTransitionDuration);
     _progress = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    if (widget.previousChild != null) {
-      _outgoingChild = widget.previousChild;
-      unawaited(_controller.forward(from: 0));
+    _adoptPreviousChildIfAny(widget.previousChild);
+  }
+
+  @override
+  void didUpdateWidget(covariant PactDetailAnimatedValue oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only the transition *into* having a previousChild starts a new
+    // animation — once _outgoingSnapshot is set on the screen, every
+    // rebuild during the transition window re-supplies a freshly-built (but
+    // logically unchanged) previousChild, and that must not keep restarting
+    // the animation from scratch.
+    if (widget.previousChild != null && oldWidget.previousChild == null) {
+      _adoptPreviousChildIfAny(widget.previousChild);
     }
+  }
+
+  void _adoptPreviousChildIfAny(Widget? previousChild) {
+    if (previousChild == null) return;
+    _outgoingChild = previousChild;
+    unawaited(_controller.forward(from: 0));
   }
 
   @override

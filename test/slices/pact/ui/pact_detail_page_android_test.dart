@@ -935,6 +935,14 @@ void main() {
       );
       final statsB = _stats.copyWith(showupsDone: 9);
 
+      // originalPactId is pinned to pactA.id in BOTH pumps — matching
+      // PactDetailScreen's real behavior (stable across a chain-link swap,
+      // HAB-206 WU3) rather than defaulting to each state's own pact.id.
+      // Without this, the ListView's key would itself differ between the
+      // two pumps, tearing down and rebuilding the whole subtree — which
+      // exercises PactDetailAnimatedValue's initState path instead of the
+      // didUpdateWidget path a stable Element actually takes in production,
+      // and would silently fail to catch a regression in the latter.
       await tester.pumpWidget(
         _testApp(
           child: PactDetailPageAndroid(
@@ -942,6 +950,7 @@ void main() {
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
             onArchivePact: (_) async {},
+            originalPactId: pactA.id,
           ),
         ),
       );
@@ -956,6 +965,7 @@ void main() {
             onArchivePact: (_) async {},
             chainNavigationDirection: ChainNavigationDirection.toSuccessor,
             previousState: _loadedState(pactA),
+            originalPactId: pactA.id,
           ),
         ),
       );
@@ -984,6 +994,45 @@ void main() {
         find.descendant(of: find.byType(PactDetailAnimatedValue), matching: find.byType(Opacity)),
         findsNothing,
       );
+    });
+
+    testWidgets('shows the outgoing pact\'s own content, not a spinner, while a chain-link reload is in flight',
+        (tester) async {
+      final pactA = _activePact;
+
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: _loadedState(pactA),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The incoming pact's own state hasn't resolved yet (isLoading: true,
+      // no pact/stats) — this is exactly the gap that used to fall through
+      // to the generic spinner. previousState carries the outgoing pact's
+      // already-loaded content across it instead (HAB-206 WU3).
+      await tester.pumpWidget(
+        _testApp(
+          child: PactDetailPageAndroid(
+            state: const PactDetailState(),
+            onStopPact: (_) async {},
+            onSaveNote: (_) async {},
+            onArchivePact: (_) async {},
+            chainNavigationDirection: ChainNavigationDirection.toSuccessor,
+            previousState: _loadedState(pactA),
+            originalPactId: pactA.id,
+          ),
+        ),
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Meditate'), findsOneWidget);
     });
   });
 }
