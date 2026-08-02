@@ -154,13 +154,9 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     setState(() {
       _isAnimating = false;
       _outgoingSnapshot = null;
-      // Cleared together with _outgoingSnapshot (HAB-206 WU4 fix): otherwise
-      // this stays non-null indefinitely after the very first chain-link
-      // navigation, so the next time _outgoingSnapshot clears on its own
-      // (this same setState), ChainNavigationStripe reads it as "a neighbor
-      // that didn't exist a moment ago now does" and replays its reveal
-      // animation a second time for every slot that was actually present
-      // throughout — not just ones genuinely appearing/disappearing.
+      // Cleared alongside _outgoingSnapshot — left set, a stale direction
+      // makes ChainNavigationStripe replay its reveal animation on settle
+      // for any slot that was present the whole time (HAB-206 WU4 fix).
       _lastDirection = null;
     });
   }
