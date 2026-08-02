@@ -44,6 +44,19 @@ class PactDetailCache {
 
   final Map<String, PactDetailBundle> _bundles = {};
 
+  // Identity-only cache (HAB-206 WU3) — every pact whose bundle has ever
+  // been loaded/refreshed, plus any pact remembered via [rememberPact].
+  // Lets chain-link navigation resolve a neighbor's own predecessor/
+  // successor without a DB round trip when that relationship is already
+  // implied by data already in memory (see [peekPact]/[peekSuccessor]).
+  final Map<String, Pact> _pactsById = {};
+
+  // Reverse index for [_pactsById]: predecessor pact id -> its successor.
+  // A pact's own predecessorPactId already tells you who its predecessor
+  // is; this is the other direction, which otherwise requires a DB query
+  // (PactRepository.getSuccessor) to answer.
+  final Map<String, Pact> _successorByPredecessorId = {};
+
   // Parallel to _bundles, keyed the same way — retained so refresh() can
   // reuse the previously-fetched showup list when only the pact changed
   // (e.g. a note edit), without a redundant DB round-trip.
@@ -69,6 +82,32 @@ class PactDetailCache {
   /// Synchronous, cache-only — no fetch. Used to seed the Timeline title from
   /// `build()` without a forwarded navigation argument.
   PactDetailBundle? peek(String pactId) => _bundles[pactId];
+
+  /// Synchronous, cache-only lookup of a previously-seen [Pact] by id — no
+  /// fetch (HAB-206 WU3). Falls back to an already-loaded bundle's own pact
+  /// before [rememberPact]'s explicit entries, so a plain `load()` for
+  /// `id` alone is enough to make it available here.
+  Pact? peekPact(String id) => _pactsById[id] ?? _bundles[id]?.pact;
+
+  /// Synchronous, cache-only lookup of [predecessorId]'s successor — no
+  /// fetch (HAB-206 WU3). Populated by [rememberPact]/[_populate] whenever
+  /// a pact with a `predecessorPactId` becomes known, since that pact IS
+  /// its predecessor's successor by definition — the one relationship a
+  /// pact's own fields can't answer without a reverse DB query
+  /// (`PactRepository.getSuccessor`).
+  Pact? peekSuccessor(String predecessorId) => _successorByPredecessorId[predecessorId];
+
+  /// Records [pact]'s identity for later [peekPact]/[peekSuccessor] lookups
+  /// (HAB-206 WU3). Called whenever a pact's chain neighbor is resolved
+  /// (via `getPact`/`getSuccessor`, not through [load]/[refresh] — those
+  /// already call this via [_populate]) so a later chain-link navigation
+  /// *to* that neighbor can skip re-resolving a relationship it already
+  /// implies.
+  void rememberPact(Pact pact) {
+    _pactsById[pact.id] = pact;
+    final predecessorId = pact.predecessorPactId;
+    if (predecessorId != null) _successorByPredecessorId[predecessorId] = pact;
+  }
 
   /// The one write-through entry point. Skips the corresponding DB fetch for
   /// whichever of [pact]/[showups]/[breaks] the caller already has in hand.
@@ -108,6 +147,7 @@ class PactDetailCache {
     _bundles.remove(pactId);
     _showups.remove(pactId);
     _breaks.remove(pactId);
+    _pactsById.remove(pactId);
   }
 
   Future<Pact> _fetchPact(String pactId) async {
@@ -127,6 +167,7 @@ class PactDetailCache {
     _bundles[pactId] = bundle;
     _showups[pactId] = showups;
     _breaks[pactId] = breaks;
+    rememberPact(pact);
     return bundle;
   }
 

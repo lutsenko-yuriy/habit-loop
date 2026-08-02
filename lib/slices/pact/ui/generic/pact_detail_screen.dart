@@ -305,6 +305,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         scrollController: _scrollController,
         chainNavigationDirection: _lastDirection,
         previousState: _outgoingSnapshot,
+        originalPactId: widget.pactId,
       );
     }
     return PactDetailPageAndroid(
@@ -324,6 +325,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       scrollController: _scrollController,
       chainNavigationDirection: _lastDirection,
       previousState: _outgoingSnapshot,
+      originalPactId: widget.pactId,
     );
   }
 }

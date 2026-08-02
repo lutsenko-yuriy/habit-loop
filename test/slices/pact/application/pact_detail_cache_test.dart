@@ -240,6 +240,83 @@ void main() {
     });
   });
 
+  group('PactDetailCache — pact identity (HAB-206 WU3)', () {
+    test('peekPact returns null before anything is known about that id', () {
+      final cache = _cache(pacts: [_pact()]);
+      expect(cache.peekPact('p1'), isNull);
+    });
+
+    test('peekPact returns the pact off an already-loaded bundle without an explicit rememberPact call', () async {
+      final cache = _cache(pacts: [_pact()]);
+      final bundle = await cache.load('p1', now: DateTime(2024, 2, 1));
+      expect(cache.peekPact('p1'), same(bundle.pact));
+    });
+
+    test('rememberPact makes a pact resolvable via peekPact without ever loading its bundle', () {
+      final cache = _cache(pacts: []);
+      final pact = _pact(id: 'other');
+      cache.rememberPact(pact);
+      expect(cache.peekPact('other'), same(pact));
+    });
+
+    test('rememberPact indexes a pact with a predecessor as that predecessor\'s successor', () {
+      final cache = _cache(pacts: []);
+      final successor = Pact(
+        id: 'v2',
+        habitName: 'Meditate',
+        startDate: _start,
+        endDate: _end,
+        showupDuration: const Duration(minutes: 30),
+        schedule: _schedule,
+        status: PactStatus.active,
+        predecessorPactId: 'v1',
+      );
+      cache.rememberPact(successor);
+      expect(cache.peekSuccessor('v1'), same(successor));
+    });
+
+    test('peekSuccessor returns null when the predecessor has no known successor', () {
+      final cache = _cache(pacts: []);
+      expect(cache.peekSuccessor('v1'), isNull);
+    });
+
+    test('a pact with no predecessorPactId is not indexed as anyone\'s successor', () {
+      final cache = _cache(pacts: []);
+      final pact = _pact(id: 'root');
+      cache.rememberPact(pact);
+      expect(cache.peekSuccessor('root'), isNull);
+    });
+
+    test('loading a pact\'s bundle automatically indexes it as its predecessor\'s successor', () async {
+      final predecessor = _pact(id: 'v1');
+      final successor = Pact(
+        id: 'v2',
+        habitName: 'Meditate',
+        startDate: _start,
+        endDate: _end,
+        showupDuration: const Duration(minutes: 30),
+        schedule: _schedule,
+        status: PactStatus.active,
+        predecessorPactId: 'v1',
+      );
+      final cache = _cache(pacts: [predecessor, successor]);
+
+      final bundle = await cache.load('v2', now: DateTime(2024, 2, 1));
+
+      expect(cache.peekSuccessor('v1'), same(bundle.pact));
+    });
+
+    test('evict clears the pact from peekPact', () async {
+      final cache = _cache(pacts: [_pact()]);
+      await cache.load('p1', now: DateTime(2024, 2, 1));
+      expect(cache.peekPact('p1'), isNotNull);
+
+      cache.evict('p1');
+
+      expect(cache.peekPact('p1'), isNull);
+    });
+  });
+
   group('PactDetailCache — refresh (write-through)', () {
     test('overwrites the cache entry unconditionally', () async {
       final pact = _pact();

@@ -82,6 +82,18 @@ class PactDetailPageAndroid extends StatelessWidget {
   /// itself against this to decide whether it has anything to animate.
   final PactDetailState? previousState;
 
+  /// The pact id [PactDetailScreen] was originally opened with (HAB-206 WU3)
+  /// — stable for this screen instance's whole lifetime, unlike [state]'s
+  /// own pact id, which changes on every in-place chain-link swap. Used to
+  /// key the content `ListView` so its subtree (and everything inside it —
+  /// `BreakBannerReveal`'s own reveal animation, the notes section, etc.)
+  /// survives a chain-link swap instead of being torn down and rebuilt from
+  /// scratch, which otherwise makes those un-animated widgets pop in/out
+  /// abruptly rather than updating smoothly in place. Falls back to the
+  /// currently-shown pact's id when omitted (e.g. by tests that don't
+  /// exercise chain-link navigation), matching the pre-WU3 keying.
+  final String? originalPactId;
+
   const PactDetailPageAndroid({
     super.key,
     required this.state,
@@ -100,6 +112,7 @@ class PactDetailPageAndroid extends StatelessWidget {
     this.scrollController,
     this.chainNavigationDirection,
     this.previousState,
+    this.originalPactId,
   });
 
   bool get _isActive => state.pact?.status == PactStatus.active;
@@ -146,8 +159,15 @@ class PactDetailPageAndroid extends StatelessWidget {
                         scrollController: scrollController,
                         chainNavigationDirection: chainNavigationDirection,
                         previousState: previousState,
+                        originalPactId: originalPactId ?? state.pact?.id,
                       ),
           ),
+          // Invisible marker (HAB-206 WU3) — the content ListView is keyed by
+          // [originalPactId] (stable across chain-link swaps, see its own doc
+          // comment), so it no longer reflects which pact is *currently*
+          // shown. Integration scenarios read that off this marker's key
+          // instead (see pact_chain_test.dart's _currentDetailPactId).
+          if (state.pact != null) SizedBox.shrink(key: ValueKey('pact-detail-current-pact-id-${state.pact!.id}')),
         ],
       ),
     );
@@ -171,6 +191,7 @@ class _PactDetailContent extends StatelessWidget {
   final ScrollController? scrollController;
   final ChainNavigationDirection? chainNavigationDirection;
   final PactDetailState? previousState;
+  final String? originalPactId;
 
   const _PactDetailContent({
     required this.state,
@@ -189,6 +210,7 @@ class _PactDetailContent extends StatelessWidget {
     this.scrollController,
     this.chainNavigationDirection,
     this.previousState,
+    this.originalPactId,
   });
 
   @override
@@ -216,11 +238,17 @@ class _PactDetailContent extends StatelessWidget {
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      // Pact-specific key (HAB-202) — disambiguates this screen's own
+      // Keyed by the screen's original entry pact id, not the currently-
+      // shown one (HAB-206 WU3) — this disambiguates this screen's own
       // Scrollable from an earlier PactDetailScreen still mounted underneath
-      // it (Navigator keeps prior routes mounted by default) when a test
-      // needs to scroll a specific screen's content into view.
-      key: Key('pact-detail-scroll-view-${pact.id}'),
+      // it (HAB-202; Navigator keeps prior routes mounted by default), same
+      // as before, but staying STABLE across an in-place chain-link swap is
+      // now also load-bearing: a changing key would tear down and rebuild
+      // this whole subtree on every swap, which is what previously made
+      // BreakBannerReveal's own reveal animation (and anything else in here
+      // that isn't explicitly wrapped in PactDetailAnimatedValue) pop in/out
+      // abruptly instead of updating in place.
+      key: Key('pact-detail-scroll-view-${originalPactId ?? pact.id}'),
       controller: scrollController,
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
@@ -350,12 +378,30 @@ class _PactDetailContent extends StatelessWidget {
           children: [
             // The third cell's label (Remaining vs. Cancelled) — and whether
             // it's shown at all — depends on status, which can differ
-            // structurally between the outgoing and incoming pact, so it's
-            // left unanimated (no previousValue) rather than diffed.
+            // structurally between the outgoing and incoming pact. Only
+            // animate the value when the outgoing pact had the exact same
+            // label (i.e. the same status), so a mismatched label+value pair
+            // never gets built as the outgoing snapshot.
             if (pact.status == PactStatus.active)
-              Expanded(child: _animatedStatCard(l10n.statsRemaining, l10n.statsShowups(stats.showupsRemaining), null))
+              Expanded(
+                child: _animatedStatCard(
+                  l10n.statsRemaining,
+                  l10n.statsShowups(stats.showupsRemaining),
+                  previousStats != null && previousPact?.status == PactStatus.active
+                      ? l10n.statsShowups(previousStats.showupsRemaining)
+                      : null,
+                ),
+              )
             else if (pact.status == PactStatus.stopped)
-              Expanded(child: _animatedStatCard(l10n.statsCancelled, l10n.statsShowups(stats.showupsRemaining), null)),
+              Expanded(
+                child: _animatedStatCard(
+                  l10n.statsCancelled,
+                  l10n.statsShowups(stats.showupsRemaining),
+                  previousStats != null && previousPact?.status == PactStatus.stopped
+                      ? l10n.statsShowups(previousStats.showupsRemaining)
+                      : null,
+                ),
+              ),
             if (pact.status != PactStatus.completed) const SizedBox(width: AppSpacing.s8),
             Expanded(
               child: _animatedStatCard(
@@ -625,8 +671,13 @@ class _StatCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
+        // stretch, not start (HAB-206 WU3) — under PactDetailAnimatedValue's
+        // Stack mid-transition, this Column's width constraint is loosened;
+        // start-aligned, it would shrink-wrap to the text's intrinsic width
+        // instead of keeping the card's usual full-cell width, causing a
+        // visible width jump for the transition's duration.
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(label, style: Theme.of(context).textTheme.labelSmall),
             const SizedBox(height: AppSpacing.s4),
