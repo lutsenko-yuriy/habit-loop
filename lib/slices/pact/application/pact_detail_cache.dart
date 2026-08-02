@@ -147,7 +147,16 @@ class PactDetailCache {
     _bundles.remove(pactId);
     _showups.remove(pactId);
     _breaks.remove(pactId);
-    _pactsById.remove(pactId);
+    // Both directions of the identity index (HAB-206 WU3) — clearing only
+    // _pactsById would leave a stale Pact reachable via peekSuccessor: if
+    // pactId has a predecessor, that predecessor's _successorByPredecessorId
+    // entry still points at the now-evicted object; if pactId is itself a
+    // predecessor some other pact points back to, that forward-looking entry
+    // is equally stale once pactId's own data is no longer trustworthy.
+    final evictedPact = _pactsById.remove(pactId);
+    final predecessorId = evictedPact?.predecessorPactId;
+    if (predecessorId != null) _successorByPredecessorId.remove(predecessorId);
+    _successorByPredecessorId.remove(pactId);
   }
 
   Future<Pact> _fetchPact(String pactId) async {

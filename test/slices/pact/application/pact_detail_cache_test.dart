@@ -315,6 +315,48 @@ void main() {
 
       expect(cache.peekPact('p1'), isNull);
     });
+
+    test('evicting a successor also clears it from its predecessor\'s peekSuccessor', () async {
+      final predecessor = _pact(id: 'v1');
+      final successor = Pact(
+        id: 'v2',
+        habitName: 'Meditate',
+        startDate: _start,
+        endDate: _end,
+        showupDuration: const Duration(minutes: 30),
+        schedule: _schedule,
+        status: PactStatus.active,
+        predecessorPactId: 'v1',
+      );
+      final cache = _cache(pacts: [predecessor, successor]);
+      await cache.load('v2', now: DateTime(2024, 2, 1));
+      expect(cache.peekSuccessor('v1'), isNotNull);
+
+      cache.evict('v2');
+
+      expect(cache.peekSuccessor('v1'), isNull);
+    });
+
+    test('evicting a predecessor also clears the forward entry pointing at its successor', () async {
+      final predecessor = _pact(id: 'v1');
+      final successor = Pact(
+        id: 'v2',
+        habitName: 'Meditate',
+        startDate: _start,
+        endDate: _end,
+        showupDuration: const Duration(minutes: 30),
+        schedule: _schedule,
+        status: PactStatus.active,
+        predecessorPactId: 'v1',
+      );
+      final cache = _cache(pacts: [predecessor, successor]);
+      await cache.load('v2', now: DateTime(2024, 2, 1));
+      expect(cache.peekSuccessor('v1'), isNotNull);
+
+      cache.evict('v1');
+
+      expect(cache.peekSuccessor('v1'), isNull);
+    });
   });
 
   group('PactDetailCache — refresh (write-through)', () {

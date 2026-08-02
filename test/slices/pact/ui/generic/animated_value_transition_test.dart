@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart';
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart';
 
 Widget _wrap({
   required Widget child,
   Widget? previousChild,
-  ChainNavigationDirection? direction,
+  SlideDirection? direction,
 }) {
   return MaterialApp(
     home: Center(
-      child: PactDetailAnimatedValue(
+      child: AnimatedValueTransition(
         previousChild: previousChild,
         direction: direction,
         child: child,
@@ -31,7 +31,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         previousChild: const Text('5'),
-        direction: ChainNavigationDirection.toSuccessor,
+        direction: SlideDirection.forward,
         child: const Text('8'),
       ),
     );
@@ -75,7 +75,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         previousChild: const Text('8'),
-        direction: ChainNavigationDirection.toPredecessor,
+        direction: SlideDirection.backward,
         child: const Text('5'),
       ),
     );
@@ -102,7 +102,7 @@ void main() {
     // the same value, previousChild is omitted entirely — nothing to
     // visibly swap, so this must render as a plain, unanimated child.
     await tester.pumpWidget(
-      _wrap(direction: ChainNavigationDirection.toSuccessor, child: const Text('0')),
+      _wrap(direction: SlideDirection.forward, child: const Text('0')),
     );
 
     expect(find.text('0'), findsOneWidget);
@@ -115,7 +115,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         previousChild: GestureDetector(onTap: () => tapped = true, child: const Text('a')),
-        direction: ChainNavigationDirection.toSuccessor,
+        direction: SlideDirection.forward,
         child: const Text('b'),
       ),
     );
@@ -127,4 +127,4 @@ void main() {
 }
 
 Finder _transitionDescendants<T extends Widget>() =>
-    find.descendant(of: find.byType(PactDetailAnimatedValue), matching: find.byType(T));
+    find.descendant(of: find.byType(AnimatedValueTransition), matching: find.byType(T));

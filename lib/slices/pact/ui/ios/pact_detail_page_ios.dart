@@ -5,7 +5,6 @@ import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/break_banner.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_formatters.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_formatters.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_note_section.dart';
@@ -14,6 +13,7 @@ import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
 import 'package:habit_loop/theme/widgets/animated_reveal.dart';
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -73,27 +73,19 @@ class PactDetailPageIos extends StatelessWidget {
   /// scrolled out of view. `null` in tests that don't exercise this.
   final ScrollController? scrollController;
 
-  /// Direction of the most recent chain-link navigation (HAB-206 WU3) — drives
-  /// which way an animated value slides when it changes. `null` on the
-  /// initial load, before any chain-link has been tapped.
-  final ChainNavigationDirection? chainNavigationDirection;
+  /// Slide direction for the current chain-link transition (HAB-206 WU3).
+  final SlideDirection? chainNavigationDirection;
 
-  /// The outgoing pact's state (HAB-206 WU3), held for the duration of a
-  /// chain-link navigation's visual transition. Non-null only while a
-  /// transition is in flight; each value (title, stat, date...) compares
-  /// itself against this to decide whether it has anything to animate.
+  /// Outgoing pact's state while a chain-link transition is in flight
+  /// (HAB-206 WU3); each animated value diffs itself against this.
   final PactDetailState? previousState;
 
-  /// The pact id [PactDetailScreen] was originally opened with (HAB-206 WU3)
-  /// — stable for this screen instance's whole lifetime, unlike [state]'s
-  /// own pact id, which changes on every in-place chain-link swap. Used to
-  /// key the content `ListView` so its subtree (and everything inside it —
-  /// `BreakBannerReveal`'s own reveal animation, the notes section, etc.)
-  /// survives a chain-link swap instead of being torn down and rebuilt from
-  /// scratch, which otherwise makes those un-animated widgets pop in/out
-  /// abruptly rather than updating smoothly in place. Falls back to the
-  /// currently-shown pact's id when omitted (e.g. by tests that don't
-  /// exercise chain-link navigation), matching the pre-WU3 keying.
+  /// Pact id [PactDetailScreen] was originally opened with (HAB-206 WU3) —
+  /// stable across in-place chain-link swaps, unlike [state]'s own pact id.
+  /// Keys the content `ListView` so its subtree survives a swap instead of
+  /// being rebuilt (which would pop un-animated content like the notes
+  /// section instead of letting it update in place). Falls back to the
+  /// current pact's id for callers that don't exercise chain navigation.
   final String? originalPactId;
 
   const PactDetailPageIos({
@@ -145,14 +137,9 @@ class PactDetailPageIos extends StatelessWidget {
             children: [
               Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
               Expanded(
-                // While a chain-link swap's reload is in flight, keep showing
-                // the outgoing pact's own (already-loaded) content instead of
-                // a spinner (HAB-206 WU3) — previousState is only ever set
-                // for exactly that case (see PactDetailScreen's own doc
-                // comment), so this can't mask a genuine first-open loading
-                // state. Robust to however long the reload actually takes,
-                // unlike trying to always out-cache the race: the content
-                // only ever *looks* frozen for a moment, never blank.
+                // Shows the outgoing pact's own content instead of a spinner
+                // while a chain-link reload is in flight (HAB-206 WU3) —
+                // previousState is only ever set for that case.
                 child: (state.isLoading && previousState?.pact == null)
                     ? const Center(child: CupertinoActivityIndicator())
                     : state.loadError != null
@@ -177,12 +164,9 @@ class PactDetailPageIos extends StatelessWidget {
                             originalPactId: originalPactId ?? state.pact?.id ?? previousState?.pact?.id,
                           ),
               ),
-              // Invisible marker (HAB-206 WU3) — the content ListView is
-              // keyed by [originalPactId] (stable across chain-link swaps,
-              // see its own doc comment), so it no longer reflects which
-              // pact is *currently* shown. Integration scenarios read that
-              // off this marker's key instead (see pact_chain_test.dart's
-              // _currentDetailPactId).
+              // Invisible marker exposing the currently-shown pact id (HAB-206
+              // WU3) — the ListView's own key is pinned to originalPactId now, so
+              // scenarios read this instead (see pact_chain_test.dart).
               if (state.pact != null) SizedBox.shrink(key: ValueKey('pact-detail-current-pact-id-${state.pact!.id}')),
             ],
           ),
@@ -207,7 +191,7 @@ class _PactDetailContent extends StatelessWidget {
   final VoidCallback? onOpenNextPact;
   final VoidCallback? onAdjustAndStartAgain;
   final ScrollController? scrollController;
-  final ChainNavigationDirection? chainNavigationDirection;
+  final SlideDirection? chainNavigationDirection;
   final PactDetailState? previousState;
   final String? originalPactId;
 
@@ -244,9 +228,7 @@ class _PactDetailContent extends StatelessWidget {
     final statusColor = PactStatusColors.cupertino(context).forStatus(pact.status);
     final fill = CupertinoColors.tertiarySystemFill.resolveFrom(context);
 
-    // Outgoing pact's own values (HAB-206 WU3), only present mid-transition —
-    // each animated field below compares against these to decide whether it
-    // has anything to visibly swap.
+    // Outgoing pact's values, only present mid-transition (HAB-206 WU3).
     final previousPact = previousState?.pact;
     final previousStats = previousState?.stats;
     final previousStatusText = previousPact != null ? pactStatusText(l10n, previousPact.status) : null;
@@ -254,35 +236,24 @@ class _PactDetailContent extends StatelessWidget {
         previousPact != null ? PactStatusColors.cupertino(context).forStatus(previousPact.status) : null;
     final previousDaysLeft = previousPact?.endDate.difference(DateTime(today.year, today.month, today.day)).inDays;
 
-    // Pinned to the widest of the three possible status labels (HAB-206 WU3)
-    // so the badge never resizes when crossfading between two different
-    // ones — an auto-sized badge shifts the whole Row's layout as it grows
-    // then shrinks back, which reads as the badge jumping sideways.
+    // Pinned to the widest possible status label so the badge doesn't resize
+    // (and shift the Row) when crossfading between two labels (HAB-206 WU3).
     final badgeWidth = StatusBadge.widestOf(context, PactStatus.values.map((s) => pactStatusText(l10n, s)));
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      // Keyed by the screen's original entry pact id, not the currently-
-      // shown one (HAB-206 WU3) — this disambiguates this screen's own
-      // Scrollable from an earlier PactDetailScreen still mounted underneath
-      // it (HAB-202; Navigator keeps prior routes mounted by default), same
-      // as before, but staying STABLE across an in-place chain-link swap is
-      // now also load-bearing: a changing key would tear down and rebuild
-      // this whole subtree on every swap, which is what previously made
-      // BreakBannerReveal's own reveal animation (and anything else in here
-      // that isn't explicitly wrapped in PactDetailAnimatedValue) pop in/out
-      // abruptly instead of updating in place.
+      // Keyed by the screen's original entry pact id (HAB-202's disambiguation
+      // from an underlying route), kept stable across an in-place chain-link
+      // swap (HAB-206 WU3) so un-animated content doesn't pop in/out on swap.
       key: Key('pact-detail-scroll-view-${originalPactId ?? pact.id}'),
       controller: scrollController,
       padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + bottomInset),
       children: [
-        // Habit name + status badge. Only the value each shows is wrapped in
-        // PactDetailAnimatedValue (HAB-206 WU3) — a habit name or status
-        // change animates in place; the Row itself does not.
+        // Habit name + status badge, each wrapped so only the value animates (HAB-206 WU3).
         Row(
           children: [
             Expanded(
-              child: PactDetailAnimatedValue(
+              child: AnimatedValueTransition(
                 direction: chainNavigationDirection,
                 previousChild: previousPact != null && previousPact.habitName != pact.habitName
                     ? Text(previousPact.habitName, style: AppTypography.sectionTitle)
@@ -293,7 +264,7 @@ class _PactDetailContent extends StatelessWidget {
                 ),
               ),
             ),
-            PactDetailAnimatedValue(
+            AnimatedValueTransition(
               direction: chainNavigationDirection,
               previousChild: previousStatusText != null && previousStatusText != statusText
                   ? StatusBadge(text: previousStatusText, color: previousStatusColor!, width: badgeWidth)
@@ -363,10 +334,7 @@ class _PactDetailContent extends StatelessWidget {
           l10n: l10n,
         ),
 
-        // Stats cards — each card's count is individually wrapped in
-        // PactDetailAnimatedValue (HAB-206 WU3) so only the number itself
-        // animates when it changes; the card, its label, and section header
-        // stay static.
+        // Each stat card's count is individually animated (HAB-206 WU3).
         SectionHeader(title: l10n.sectionStats, labelColor: HabitLoopColors.secondaryText(context)),
         const SizedBox(height: AppSpacing.s8),
         Row(
@@ -391,11 +359,7 @@ class _PactDetailContent extends StatelessWidget {
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
-            // The third cell (Remaining/Cancelled) is entirely absent for a
-            // completed pact, so its presence is still a structural, un-
-            // animated toggle (HAB-206 WU3) — but between the two statuses
-            // that DO show it, the whole cell (label and value together)
-            // crossfades, the same way the status badge does.
+            // Presence (Remaining/Cancelled vs. absent for completed) is an unanimated toggle; label+value crossfade.
             if (_thirdStatCell(pact.status) != null)
               Expanded(
                 child: _animatedThirdStatCell(
@@ -417,10 +381,7 @@ class _PactDetailContent extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s24),
 
-        // Time details — each tile's value (or, for the label-only "days
-        // remaining" tile, its label) is individually wrapped in
-        // PactDetailAnimatedValue (HAB-206 WU3) so only the date/duration
-        // text itself animates when it changes.
+        // Each tile's value (or label, for "days remaining") is individually animated (HAB-206 WU3).
         SectionHeader(title: l10n.sectionTimeline, labelColor: HabitLoopColors.secondaryText(context)),
         const SizedBox(height: AppSpacing.s8),
         _animatedDateTile(
@@ -431,23 +392,14 @@ class _PactDetailContent extends StatelessWidget {
           tileColor: fill,
         ),
         const SizedBox(height: AppSpacing.s8),
-        // Presence toggles for these two tiles (stopped-date; days-
-        // remaining) are animated as a reveal/collapse (HAB-206 WU3) rather
-        // than an instant pop — AnimatedReveal already exists for exactly
-        // this (see BreakBannerReveal above); the spacer that separates each
-        // from its neighbor lives *inside* the revealed child so it
-        // collapses along with the tile, keeping spacing identical to the
-        // un-animated `if` this replaces. Falls back to whichever pact
-        // actually has a stoppedAt while the reveal plays, so the tile never
-        // shows blank/wrong content mid-fade.
+        // Reveals/collapses instead of popping (HAB-206 WU3); the spacer
+        // lives inside so it collapses with the tile.
         AnimatedReveal(
           visible: pact.status == PactStatus.stopped && pact.stoppedAt != null,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            // stretch, not the Column default of center — Align (inside
-            // AnimatedReveal) loosens the incoming width constraint, and
-            // without stretch this Column shrink-wraps to its content's own
-            // intrinsic width instead of filling the row (HAB-206 WU3).
+            // stretch: Align (inside AnimatedReveal) loosens the incoming
+            // width constraint; without stretch this shrink-wraps instead of filling the row.
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _animatedDateTile(
@@ -514,13 +466,8 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Editable note section for inactive pacts — revealed/collapsed
-        // (HAB-206 WU3) rather than popping. Falls back to the outgoing
-        // pact's own stopReason while collapsing (an active pact has none of
-        // its own). crossAxisAlignment.stretch matters here — without it the
-        // multi-line note field shrink-wraps narrower than before, which
-        // forces more wrapped lines than it has height for and makes it
-        // start scrolling internally.
+        // Editable note section for inactive pacts, reveals/collapses (HAB-206 WU3).
+        // Falls back to the outgoing pact's stopReason while collapsing.
         AnimatedReveal(
           visible: pact.status != PactStatus.active,
           child: Column(
@@ -562,14 +509,8 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ),
 
-        // Archive section for completed and stopped pacts — revealed/
-        // collapsed (HAB-206 WU3) rather than popping, same rationale as the
-        // date tiles above. mainAxisSize stays min (not stretch) — the
-        // button is meant to stay a small centered link like "View
-        // Timeline", not grow full-width; only the header needs its own
-        // explicit left alignment, since without any stretch the whole
-        // Column (and thus every un-aligned child, header included) centers
-        // by default.
+        // Archive section, same reveal/collapse treatment. No stretch — the
+        // button stays a small centered link, so the header needs its own explicit left alignment.
         AnimatedReveal(
           visible: pact.status != PactStatus.active,
           child: Column(
@@ -592,15 +533,8 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ),
 
-        // Take a break + stop pact — grouped together as pact-lifecycle
-        // actions, set off from the read-only sections above by a divider
-        // (HAB-195: keep "Take a break" closer to "Stop pact" than to "View
-        // Timeline"). Revealed/collapsed (HAB-206 WU3) rather than popping,
-        // same rationale as the sections above. mainAxisSize stays min (not
-        // stretch) — the CupertinoButtons here are meant to stay their
-        // established small-centered sizing, not grow full-width; Divider
-        // fills the available width regardless, that's its own default
-        // behavior independent of the Column's cross alignment.
+        // Take a break + stop pact, set off by a divider (HAB-195: keep
+        // "Take a break" closer to "Stop pact" than "View Timeline"). Reveals/collapses (HAB-206 WU3).
         AnimatedReveal(
           visible: pact.status == PactStatus.active,
           child: Column(
@@ -663,7 +597,7 @@ class _PactDetailContent extends StatelessWidget {
   }
 
   Widget _animatedStatCard(String label, String value, String? previousValue) {
-    return PactDetailAnimatedValue(
+    return AnimatedValueTransition(
       direction: chainNavigationDirection,
       previousChild:
           previousValue != null && previousValue != value ? _StatCard(label: label, value: previousValue) : null,
@@ -680,14 +614,8 @@ class _PactDetailContent extends StatelessWidget {
         PactStatus.completed => null,
       };
 
-  // Unlike _animatedStatCard, this crossfades the whole cell (label and
-  // value together) whenever both the outgoing and incoming pact show one
-  // at all (HAB-206 WU3) — the label itself can differ (active <-> stopped
-  // is the single most common chain-link hop, "Adjust and start again"'s
-  // whole purpose), so gating the animation on an unchanged label like the
-  // other stat cards do would mean this one almost never animates in
-  // practice. Presence (vs. a completed pact showing neither) is still a
-  // structural, unanimated toggle.
+  // Crossfades label+value together, unlike _animatedStatCard — the label
+  // itself changes on the most common hop (active <-> stopped), so gating on an unchanged label would rarely animate.
   Widget _animatedThirdStatCell({
     required PactStatus currentStatus,
     required int currentValue,
@@ -703,7 +631,7 @@ class _PactDetailContent extends StatelessWidget {
       if (changed) previousChild = _StatCard(label: previousLabel, value: l10n.statsShowups(previousValue));
     }
 
-    return PactDetailAnimatedValue(
+    return AnimatedValueTransition(
       direction: chainNavigationDirection,
       previousChild: previousChild,
       child: _StatCard(label: currentLabel, value: l10n.statsShowups(currentValue)),
@@ -719,7 +647,7 @@ class _PactDetailContent extends StatelessWidget {
     required Color tileColor,
   }) {
     final effectivePreviousLabel = previousLabel ?? label;
-    return PactDetailAnimatedValue(
+    return AnimatedValueTransition(
       direction: chainNavigationDirection,
       previousChild: previousValue != null && (effectivePreviousLabel != label || previousValue != value)
           ? DateRowTile(
@@ -796,11 +724,8 @@ class _StatCard extends StatelessWidget {
         color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
         borderRadius: BorderRadius.circular(10),
       ),
-      // stretch, not start (HAB-206 WU3) — under PactDetailAnimatedValue's
-      // Stack mid-transition, this Column's width constraint is loosened;
-      // start-aligned, it would shrink-wrap to the text's intrinsic width
-      // instead of keeping the card's usual full-cell width, causing a
-      // visible width jump for the transition's duration.
+      // stretch: under AnimatedValueTransition's Stack, a start-aligned
+      // Column would shrink-wrap to the text width, jumping the card's width mid-transition (HAB-206 WU3).
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

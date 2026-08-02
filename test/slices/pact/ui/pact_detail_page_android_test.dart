@@ -9,8 +9,8 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
 
@@ -958,7 +958,7 @@ void main() {
       // HAB-206 WU3) rather than defaulting to each state's own pact.id.
       // Without this, the ListView's key would itself differ between the
       // two pumps, tearing down and rebuilding the whole subtree — which
-      // exercises PactDetailAnimatedValue's initState path instead of the
+      // exercises AnimatedValueTransition's initState path instead of the
       // didUpdateWidget path a stable Element actually takes in production,
       // and would silently fail to catch a regression in the latter.
       await tester.pumpWidget(
@@ -981,7 +981,7 @@ void main() {
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
             onArchivePact: (_) async {},
-            chainNavigationDirection: ChainNavigationDirection.toSuccessor,
+            chainNavigationDirection: SlideDirection.forward,
             previousState: _loadedState(pactA),
             originalPactId: pactA.id,
           ),
@@ -994,14 +994,14 @@ void main() {
       expect(find.text('Meditate'), findsOneWidget);
       expect(find.text('Journal'), findsOneWidget);
       expect(
-        find.descendant(of: find.byType(PactDetailAnimatedValue), matching: find.byType(Opacity)),
+        find.descendant(of: find.byType(AnimatedValueTransition), matching: find.byType(Opacity)),
         findsWidgets,
       );
 
       // Section headers are pact-independent chrome — never wrapped, so
       // never mid-animation regardless of what else is transitioning.
       expect(
-        find.descendant(of: find.byType(PactDetailAnimatedValue), matching: find.byType(SectionHeader)),
+        find.descendant(of: find.byType(AnimatedValueTransition), matching: find.byType(SectionHeader)),
         findsNothing,
       );
 
@@ -1009,7 +1009,7 @@ void main() {
       expect(find.text('Meditate'), findsNothing);
       expect(find.text('Journal'), findsOneWidget);
       expect(
-        find.descendant(of: find.byType(PactDetailAnimatedValue), matching: find.byType(Opacity)),
+        find.descendant(of: find.byType(AnimatedValueTransition), matching: find.byType(Opacity)),
         findsNothing,
       );
     });
@@ -1042,7 +1042,7 @@ void main() {
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
             onArchivePact: (_) async {},
-            chainNavigationDirection: ChainNavigationDirection.toSuccessor,
+            chainNavigationDirection: SlideDirection.forward,
             previousState: _loadedState(pactA),
             originalPactId: pactA.id,
           ),
@@ -1076,7 +1076,7 @@ void main() {
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
             onArchivePact: (_) async {},
-            chainNavigationDirection: ChainNavigationDirection.toSuccessor,
+            chainNavigationDirection: SlideDirection.forward,
             previousState: _loadedState(pactA),
             originalPactId: pactA.id,
           ),
@@ -1116,7 +1116,7 @@ void main() {
             onStopPact: (_) async {},
             onSaveNote: (_) async {},
             onArchivePact: (_) async {},
-            chainNavigationDirection: ChainNavigationDirection.toSuccessor,
+            chainNavigationDirection: SlideDirection.forward,
             previousState: _loadedState(pactA),
             originalPactId: pactA.id,
           ),

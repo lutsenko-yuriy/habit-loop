@@ -79,7 +79,15 @@ class _AnimatedRevealState extends State<AnimatedReveal> with SingleTickerProvid
         return Align(
           alignment: widget.alignment,
           heightFactor: value,
-          child: Opacity(opacity: value, child: child),
+          // Ignores hit-testing while collapsing (visible == false but value
+          // still > 0 mid-fade-out) so a tap can't land on a control that's
+          // visually on its way out and act on now-stale state — e.g. a
+          // "Stop pact" tap landing during the ~250ms window after the pact
+          // shown underneath has already changed. Taps are still allowed
+          // while revealing (visible == true, value still climbing to 1) —
+          // only the collapsing direction is unsafe, since only there does
+          // the widget's meaning refer to a state that's already gone stale.
+          child: IgnorePointer(ignoring: !widget.visible, child: Opacity(opacity: value, child: child)),
         );
       },
       child: widget.child,

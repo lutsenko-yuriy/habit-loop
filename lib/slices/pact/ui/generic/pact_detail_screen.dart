@@ -11,12 +11,12 @@ import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_screen.dart';
 import 'package:habit_loop/slices/pact/ui/ios/pact_detail_page_ios.dart';
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart';
 
 class PactDetailScreen extends ConsumerStatefulWidget {
   final String pactId;
@@ -41,26 +41,16 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
   // (see docs/knowledge/notes/HAB-206.md).
   late String _currentPactId;
 
-  // Guards against overlapping chain-link taps. Set for the duration of a
-  // swap — the data reload plus the WU3 content-transition animation — and
-  // checked by _onOpenChainLink so a second tap mid-transition is a no-op
-  // rather than interrupting or racing the first.
+  // Guards against overlapping chain-link taps for the full swap duration
+  // (reload + transition animation) — a second tap mid-transition is a no-op.
   bool _isAnimating = false;
 
-  // Direction of the most recent chain-link navigation (HAB-206 WU3), fed to
-  // PactDetailAnimatedValue so it knows which way to slide. Null until the
-  // first chain-link tap; irrelevant afterwards for anything but the
-  // in-flight/just-finished transition.
-  ChainNavigationDirection? _lastDirection;
+  // Slide direction for the in-flight/just-finished transition (HAB-206 WU3).
+  SlideDirection? _lastDirection;
 
-  // Snapshot of the outgoing pact's state (HAB-206 WU3), captured the
-  // instant before _currentPactId swaps and held for the duration of the
-  // visual transition. Fed to the platform pages so each PactDetailAnimatedValue
-  // can compare the outgoing vs. incoming value itself and decide whether it
-  // has anything to animate — see that class's doc comment for why this
-  // can't be inferred from Element/State identity (the content ListView is
-  // itself keyed by pact id and gets torn down and rebuilt fresh on every
-  // swap). Null outside of an in-flight transition.
+  // Outgoing pact's state, captured just before _currentPactId swaps
+  // (HAB-206 WU3) — lets each AnimatedValueTransition diff outgoing vs.
+  // incoming itself. Null outside of an in-flight transition.
   PactDetailState? _outgoingSnapshot;
 
   @override
@@ -146,10 +136,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
 
     setState(() {
       _isAnimating = true;
-      _lastDirection =
-          direction == 'previous' ? ChainNavigationDirection.toPredecessor : ChainNavigationDirection.toSuccessor;
-      // Captured before _currentPactId swaps below — this is still the
-      // outgoing pact's own state at this point.
+      _lastDirection = direction == 'previous' ? SlideDirection.backward : SlideDirection.forward;
       _outgoingSnapshot = ref.read(pactDetailViewModelProvider(_currentPactId));
       _currentPactId = targetPactId;
     });
@@ -160,10 +147,9 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
-    // Keeps the guard set for the full visual transition, not just the
-    // (often near-instant, thanks to WU2's prefetch) data reload above —
-    // otherwise a second tap could interrupt the animation still playing.
-    await Future<void>.delayed(kChainNavigationTransitionDuration);
+    // Keeps _isAnimating set for the full visual transition, not just the
+    // (often near-instant, thanks to WU2's prefetch) data reload above.
+    await Future<void>.delayed(kAnimatedValueTransitionDuration);
     if (!mounted) return;
     setState(() {
       _isAnimating = false;

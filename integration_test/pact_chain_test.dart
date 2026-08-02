@@ -13,10 +13,9 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
-import 'package:habit_loop/slices/pact/ui/generic/pact_detail_animated_value.dart'
-    show kChainNavigationTransitionDuration;
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart' show pactDetailNowProvider;
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart' show kAnimatedValueTransitionDuration;
 import 'package:integration_test/integration_test.dart';
 
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
@@ -70,7 +69,7 @@ Future<void> _tapPreviousPactLink(WidgetTester tester) async {
   await waitFor(tester, find.byKey(const Key('pact-detail-previous-pact-link')));
   await tester.tap(find.byKey(const Key('pact-detail-previous-pact-link')));
   await tester.pumpAndSettle();
-  await tester.pump(kChainNavigationTransitionDuration * 2);
+  await tester.pump(kAnimatedValueTransitionDuration * 2);
 }
 
 /// Taps "Next Pact" on the currently-visible screen, originally opened with
@@ -99,7 +98,7 @@ Future<void> _tapNextPactLink(WidgetTester tester, {required String originalPact
   await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
   await tester.pumpAndSettle();
   // See _tapPreviousPactLink's doc comment for why this extra pump matters.
-  await tester.pump(kChainNavigationTransitionDuration * 2);
+  await tester.pump(kAnimatedValueTransitionDuration * 2);
 }
 
 const _currentPactIdKeyPrefix = 'pact-detail-current-pact-id-';
