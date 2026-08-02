@@ -340,7 +340,13 @@ void main() {
 
       // ── 9. Successor detail shows the predecessor's name in the chevron stripe ──
       await waitFor(tester, find.byKey(const Key('pact-detail-previous-pact-link')));
-      expect(find.textContaining('Vibe coding'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('pact-detail-previous-pact-link')),
+          matching: find.textContaining('Vibe coding'),
+        ),
+        findsOneWidget,
+      );
 
       // ── 10. Tap "Previous Pact" — navigates back to the predecessor's
       //         detail screen (pops to the originating page instance) ─────

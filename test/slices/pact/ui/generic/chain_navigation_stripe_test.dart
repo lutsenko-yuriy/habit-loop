@@ -124,6 +124,41 @@ void main() {
     expect(find.byType(Opacity), findsNothing);
   });
 
+  testWidgets('settling a transition (previousPact and direction clearing together) does not replay the reveal',
+      (tester) async {
+    // Mirrors PactDetailScreen's real 3-frame sequence for a successor slot
+    // present both before and after a "next" tap: static -> mid-transition
+    // (identity crossfade) -> settle, where the caller must clear BOTH
+    // previousSuccessor and direction in the same rebuild. Regression: if
+    // direction stayed set while only previousSuccessor cleared, this slot
+    // would misread "previousPact just went null" as a fresh appearance and
+    // replay its reveal animation a second time.
+    final secondSuccessor = _pact('successor-2', 'Meditate (v4)');
+
+    await tester.pumpWidget(wrap(ChainNavigationStripe(successor: successor)));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(
+      wrap(
+        ChainNavigationStripe(
+          successor: secondSuccessor,
+          direction: SlideDirection.forward,
+          previousSuccessor: successor,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(Opacity), findsNothing);
+
+    // Settle frame: previousSuccessor clears, direction clears alongside it
+    // (the fix) — must render as plainly static, no fresh animation.
+    await tester.pumpWidget(wrap(ChainNavigationStripe(successor: secondSuccessor)));
+    await tester.pump();
+
+    expect(find.byType(Opacity), findsNothing);
+    expect(find.textContaining('Meditate (v4)'), findsOneWidget);
+  });
+
   testWidgets('a disappearing slot fades/slides out instead of popping away', (tester) async {
     await tester.pumpWidget(wrap(ChainNavigationStripe(predecessor: predecessor, successor: successor)));
     await tester.pumpAndSettle();
