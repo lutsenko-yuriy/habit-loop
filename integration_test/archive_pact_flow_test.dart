@@ -229,7 +229,7 @@ void main() {
     late AppHarness h;
     tearDown(() => h.dispose());
 
-    testWidgets('archived_chip_row_hidden_then_revealed: chip row absent at N_A=0 and appears after first archive',
+    testWidgets('archived_row_hidden_then_revealed: row absent at N_A=0 and appears after first archive',
         (tester) async {
       h = await AppHarness.create(
         tester,
@@ -244,8 +244,8 @@ void main() {
 
       await openPactsPanel(tester);
 
-      // ── 1. No Archived chip when N_A = 0 ──────────────────────────────────
-      expect(find.byKey(const Key('archive-filter-chip')), findsNothing);
+      // ── 1. No "Archived pacts" row when N_A = 0 ───────────────────────────
+      expect(find.byKey(const Key('show-archived-pacts-row')), findsNothing);
 
       // ── 2. Archive via detail screen ──────────────────────────────────────
       await openPactDetail(tester, 'Evening Walk');
@@ -264,11 +264,12 @@ void main() {
       await tester.pageBack();
       await tester.pump(const Duration(milliseconds: 500));
 
-      // ── 4. Archived chip row now visible (N_A = 1) ────────────────────────
-      await waitFor(tester, find.byKey(const Key('archive-filter-chip')));
+      // ── 4. "Archived pacts" row now visible (N_A = 1) ─────────────────────
+      await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
     });
 
-    testWidgets('archived_chip_syncs_with_show_row: chip and show-archived row toggle each other', (tester) async {
+    testWidgets('archived_row_toggles_visibility: tapping the row reveals then hides the archived pact',
+        (tester) async {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
@@ -283,22 +284,18 @@ void main() {
 
       await openPactsPanel(tester);
 
-      // ── 1. Archived chip visible; archived pact not shown ─────────────────
-      await waitFor(tester, find.byKey(const Key('archive-filter-chip')));
+      // ── 1. Row visible; archived pact not shown ───────────────────────────
+      await waitFor(tester, find.byKey(const Key('show-archived-pacts-row')));
       expect(find.text('Cycling'), findsNothing);
 
-      // ── 2. Tap chip → archived pact appears ───────────────────────────────
-      // ensureVisible scrolls the horizontal chip row to bring the chip into
-      // view on narrow screens (e.g. 320 dp CI AVD) before tapping.
-      await tester.ensureVisible(find.byKey(const Key('archive-filter-chip')));
-      await tester.tap(find.byKey(const Key('archive-filter-chip')));
+      // ── 2. Tap row → archived pact appears ─────────────────────────────────
+      await tester.ensureVisible(find.byKey(const Key('show-archived-pacts-row')));
+      await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Cycling'), findsOneWidget);
-
-      // ── 3. Show-archived row is also toggled on ────────────────────────────
       expect(find.text(strings.archivedPacts(1)), findsOneWidget);
 
-      // ── 4. Tap show row → archived pact disappears; chip deselected ───────
+      // ── 3. Tap row again → archived pact disappears ────────────────────────
       await tester.tap(find.byKey(const Key('show-archived-pacts-row')));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Cycling'), findsNothing);

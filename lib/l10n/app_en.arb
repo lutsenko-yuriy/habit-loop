@@ -314,13 +314,13 @@
       "count": { "type": "int" }
     }
   },
-  "pactsArchivedParenthetical": "({count} of them archived)",
+  "pactsArchivedParenthetical": "({count} archived)",
   "@pactsArchivedParenthetical": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
-  "pactsAllArchived": "(all of them archived)",
+  "pactsAllArchived": "(all archived)",
   "@pactsAllArchived": {},
 
   "pactTimelineTitle": "Timeline",

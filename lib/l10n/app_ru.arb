@@ -313,13 +313,13 @@
       "count": { "type": "int" }
     }
   },
-  "pactsArchivedParenthetical": "(из них {count} в архиве)",
+  "pactsArchivedParenthetical": "({count} в архиве)",
   "@pactsArchivedParenthetical": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
-  "pactsAllArchived": "(все из них в архиве)",
+  "pactsAllArchived": "(все в архиве)",
   "@pactsAllArchived": {},
 
   "pactTimelineTitle": "Хронология",

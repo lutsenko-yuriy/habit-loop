@@ -12,8 +12,8 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - HAB-212: `PactListState.breakSelected` default flipped `false` → `true`.
 - [user] The "Archived" filter chip on the pacts list is gone — archived pacts are still reachable via the existing "Archived pacts" expandable row.
 - HAB-212: removed the `archive-filter-chip` `FilterChip` from `_PactFilterChipsRow` (`lib/slices/pact/ui/generic/pacts_summary_bar.dart`); the pre-existing `_ArchivedPactsSection` expandable row already toggled `showArchived` independently and is unaffected.
-- [user] The pacts list's "Done"/"Stopped" counts now spell out how many are archived (e.g. "3 pacts done (2 of them archived)") instead of silently excluding archived pacts from the total.
-- HAB-212: `archivedNote`'s base count now uses the full `doneCount`/`cancelledCount` rather than `count - archivedCount`; `pactsArchivedParenthetical`/`pactsAllArchived` l10n strings reworded to "X of them archived"/"all of them archived" across all 4 locales.
+- [user] The pacts list's "Done"/"Stopped" counts now spell out how many are archived (e.g. "3 pacts done (2 archived)") instead of silently excluding archived pacts from the total.
+- HAB-212: `archivedNote`'s base count now uses the full `doneCount`/`cancelledCount` rather than `count - archivedCount`; `pactsArchivedParenthetical`/`pactsAllArchived` l10n strings reworded to "X archived"/"all archived" across all 4 locales.
 
 ## [0.54.0] — 2026-08-02
 
