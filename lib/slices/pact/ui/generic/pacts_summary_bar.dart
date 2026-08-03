@@ -159,12 +159,12 @@ class _PactsPanelState extends ConsumerState<PactsPanel> {
     final summaryLines = [
       l10n.pactsActive(state.activeCount),
       archivedNote(
-        l10n.pactsDone(state.doneCount - state.archivedDoneCount),
+        l10n.pactsDone(state.doneCount),
         state.doneCount,
         state.archivedDoneCount,
       ),
       archivedNote(
-        l10n.pactsCancelled(state.cancelledCount - state.archivedCancelledCount),
+        l10n.pactsCancelled(state.cancelledCount),
         state.cancelledCount,
         state.archivedCancelledCount,
       ),
@@ -368,10 +368,11 @@ class _PactsPanelHeaderState extends State<_PactsPanelHeader> {
   }
 }
 
-/// Staggered, multi-row (no horizontal scroll) grid of status filter chips,
-/// plus the archived-pacts chip that animates in once at least one archived
-/// pact exists (HAB-195 WU6 — grew from 3 to 5 chips with the addition of
-/// Break, which no longer fit a single scrollable row on narrow screens).
+/// Staggered, multi-row (no horizontal scroll) grid of status filter chips
+/// (HAB-195 WU6 — grew from 3 to 4 chips with the addition of Break, which
+/// no longer fit a single scrollable row on narrow screens). Archived pacts
+/// are revealed via the separate expandable row in [_ArchivedPactsSection],
+/// not a filter chip.
 /// Selection is shown by fill color only — no checkmarks. All chips are
 /// independent multi-select toggles, but Break and Active are mutually
 /// exclusive *for on-break pacts specifically*: Break, not Active, decides
@@ -380,21 +381,15 @@ class _PactFilterChipsRow extends StatelessWidget {
   final Set<PactStatus> activeFilters;
   final bool breakSelected;
   final bool breaksEnabled;
-  final int archivedCount;
-  final bool showArchived;
   final ValueChanged<PactStatus> onToggleFilter;
   final VoidCallback onToggleBreakFilter;
-  final VoidCallback onToggleArchived;
 
   const _PactFilterChipsRow({
     required this.activeFilters,
     required this.breakSelected,
     required this.breaksEnabled,
-    required this.archivedCount,
-    required this.showArchived,
     required this.onToggleFilter,
     required this.onToggleBreakFilter,
-    required this.onToggleArchived,
   });
 
   @override
@@ -434,20 +429,6 @@ class _PactFilterChipsRow extends StatelessWidget {
             selected: activeFilters.contains(PactStatus.stopped),
             showCheckmark: false,
             onSelected: (_) => onToggleFilter(PactStatus.stopped),
-          ),
-          // Archived chip animates in when first archived pact exists.
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            child: archivedCount > 0
-                ? FilterChip(
-                    key: const Key('archive-filter-chip'),
-                    label: Text(l10n.filterArchived),
-                    selected: showArchived,
-                    showCheckmark: false,
-                    onSelected: (_) => onToggleArchived(),
-                  )
-                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -525,11 +506,8 @@ class _PactListBody extends StatelessWidget {
               activeFilters: state.activeFilters,
               breakSelected: state.breakSelected,
               breaksEnabled: breaksEnabled,
-              archivedCount: state.archivedCount,
-              showArchived: state.showArchived,
               onToggleFilter: onToggleFilter,
               onToggleBreakFilter: onToggleBreakFilter,
-              onToggleArchived: onToggleArchived,
             ),
           ),
 

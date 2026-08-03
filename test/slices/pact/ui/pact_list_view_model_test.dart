@@ -357,11 +357,11 @@ void main() {
     test('toggleBreakFilter flips breakSelected', () {
       final c = _makeContainer();
       addTearDown(c.dispose);
-      expect(c.read(pactListViewModelProvider).breakSelected, isFalse);
-      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
       expect(c.read(pactListViewModelProvider).breakSelected, isTrue);
       c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
       expect(c.read(pactListViewModelProvider).breakSelected, isFalse);
+      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
+      expect(c.read(pactListViewModelProvider).breakSelected, isTrue);
     });
 
     test('toggleFilter is unaffected by breakSelected — behaves like any other status toggle', () async {
@@ -373,7 +373,6 @@ void main() {
       ]);
       addTearDown(c.dispose);
       await c.read(pactListViewModelProvider.notifier).load();
-      c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
       c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
 
       final state = c.read(pactListViewModelProvider);
@@ -401,8 +400,10 @@ void main() {
           _pactBreak('b1', 'onbreak'),
         ]);
         await c.read(pactListViewModelProvider.notifier).load();
-        // Start from a clean slate: both Active and Break deselected.
+        // Start from a clean slate: both Active and Break deselected
+        // (Break is selected by default, so it must be explicitly toggled off).
         c.read(pactListViewModelProvider.notifier).toggleFilter(PactStatus.active);
+        c.read(pactListViewModelProvider.notifier).toggleBreakFilter();
       });
 
       tearDown(() => c.dispose());

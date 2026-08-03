@@ -39,7 +39,7 @@ class PactListState {
       PactStatus.stopped,
     },
     this.showArchived = false,
-    this.breakSelected = false,
+    this.breakSelected = true,
   });
 
   int get activeCount => entries.where((e) => e.pact.status == PactStatus.active).length;

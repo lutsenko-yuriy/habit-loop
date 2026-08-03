@@ -307,21 +307,19 @@
   "@archivePact": {},
   "unarchivePact": "Разархивировать",
   "@unarchivePact": {},
-  "filterArchived": "Архив",
-  "@filterArchived": {},
   "archivedPacts": "Архивные пакты ({count})",
   "@archivedPacts": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
-  "pactsArchivedParenthetical": "(ещё {count} в архиве)",
+  "pactsArchivedParenthetical": "(из них {count} в архиве)",
   "@pactsArchivedParenthetical": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
-  "pactsAllArchived": "(все в архиве)",
+  "pactsAllArchived": "(все из них в архиве)",
   "@pactsAllArchived": {},
 
   "pactTimelineTitle": "Хронология",

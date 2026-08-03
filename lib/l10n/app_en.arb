@@ -308,21 +308,19 @@
   "@archivePact": {},
   "unarchivePact": "Unarchive",
   "@unarchivePact": {},
-  "filterArchived": "Archived",
-  "@filterArchived": {},
   "archivedPacts": "Archived pacts ({count})",
   "@archivedPacts": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
-  "pactsArchivedParenthetical": "({count} more archived)",
+  "pactsArchivedParenthetical": "({count} of them archived)",
   "@pactsArchivedParenthetical": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
-  "pactsAllArchived": "(all archived)",
+  "pactsAllArchived": "(all of them archived)",
   "@pactsAllArchived": {},
 
   "pactTimelineTitle": "Timeline",
