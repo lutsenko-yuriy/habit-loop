@@ -305,7 +305,7 @@ void main() {
       // wall-clock time instead of this test's overridden todayProvider, so
       // it never actually hit the on-break filter path here).
       await openPactsPanel(tester);
-      await waitFor(tester, find.byKey(const Key('break-filter-chip')));
+      await waitFor(tester, find.text('Stretch'));
       await openPactDetail(tester, 'Stretch');
       await waitFor(tester, find.text('Stretch'));
 
@@ -531,7 +531,6 @@ void main() {
       // pact's tile already renders in the panel — no chip interaction
       // needed before tapping it by habit name.
       await openPactsPanel(tester);
-      await waitFor(tester, find.byKey(const Key('break-filter-chip')));
       await openPactDetail(tester, 'Swim');
       await waitFor(tester, find.byKey(const Key('pact-detail-break-banner')));
 
