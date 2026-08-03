@@ -307,15 +307,13 @@
   "@archivePact": {},
   "unarchivePact": "Разархивировать",
   "@unarchivePact": {},
-  "filterArchived": "Архив",
-  "@filterArchived": {},
   "archivedPacts": "Архивные пакты ({count})",
   "@archivedPacts": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
-  "pactsArchivedParenthetical": "(ещё {count} в архиве)",
+  "pactsArchivedParenthetical": "({count} в архиве)",
   "@pactsArchivedParenthetical": {
     "placeholders": {
       "count": { "type": "int" }

@@ -126,7 +126,7 @@ void main() {
   });
 
   group('PactsPanel filter row', () {
-    testWidgets('renders active/done/cancelled chips, and archived chip once an archived pact exists', (tester) async {
+    testWidgets('renders active/done/cancelled chips', (tester) async {
       await tester.pumpWidget(_buildApp(_mixedState));
       await tester.pumpAndSettle();
       await _expandPanel(tester);
@@ -134,15 +134,6 @@ void main() {
       expect(find.widgetWithText(FilterChip, 'Active'), findsOneWidget);
       expect(find.widgetWithText(FilterChip, 'Done'), findsOneWidget);
       expect(find.widgetWithText(FilterChip, 'Stopped'), findsOneWidget);
-      expect(find.byKey(const Key('archive-filter-chip')), findsOneWidget);
-    });
-
-    testWidgets('no archived chip when there are no archived pacts', (tester) async {
-      await tester.pumpWidget(_buildApp(PactListState(entries: [PactListEntry(pact: _activePact)])));
-      await tester.pumpAndSettle();
-      await _expandPanel(tester);
-
-      expect(find.byKey(const Key('archive-filter-chip')), findsNothing);
     });
 
     testWidgets('toggling the Active filter hides active pacts from the list', (tester) async {
@@ -177,20 +168,21 @@ void main() {
       expect(find.byKey(const Key('break-filter-chip')), findsNothing);
     });
 
-    testWidgets('Active selected (default) does not surface an on-break pact until Break is also selected',
+    testWidgets('Active selected, Break deselected does not surface an on-break pact until Break is also selected',
         (tester) async {
       final onBreakState = PactListState(
         entries: [
           PactListEntry(pact: _activePact, onBreak: true),
           PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
         ],
+        breakSelected: false,
       );
       await tester.pumpWidget(_buildApp(onBreakState));
       await tester.pumpAndSettle();
       await _expandPanel(tester);
 
-      // Active is selected by default, Break is not — the on-break pact
-      // must stay hidden even though its underlying status is Active.
+      // Active is selected, Break is not — the on-break pact must stay
+      // hidden even though its underlying status is Active.
       expect(find.text('Meditate'), findsNothing);
       expect(find.text('Yoga'), findsOneWidget);
 
@@ -209,6 +201,7 @@ void main() {
           PactListEntry(pact: _activePact, onBreak: true),
           PactListEntry(pact: _pact(id: 'p-plain', habitName: 'Yoga', status: PactStatus.active)),
         ],
+        breakSelected: false,
       );
       await tester.pumpWidget(_buildApp(onBreakState));
       await tester.pumpAndSettle();

@@ -298,17 +298,14 @@ void main() {
         },
       );
 
-      // The pact is on break, so it's hidden from the default Active-only
-      // pact list view (HAB-195 WU6) — select the Break chip first so its
-      // tile actually renders in the panel before tapping it by habit name
-      // (previously masked by HAB-211's PactListViewModel bug, which made
-      // onBreak evaluate against real wall-clock time instead of this
-      // test's overridden todayProvider, so it never actually hit the
-      // on-break filter path here).
+      // The Break chip defaults to selected (HAB-212), so the on-break pact's
+      // tile already renders in the panel — no chip interaction needed before
+      // tapping it by habit name (previously masked by HAB-211's
+      // PactListViewModel bug, which made onBreak evaluate against real
+      // wall-clock time instead of this test's overridden todayProvider, so
+      // it never actually hit the on-break filter path here).
       await openPactsPanel(tester);
-      await waitFor(tester, find.byKey(const Key('break-filter-chip')));
-      await tester.tap(find.byKey(const Key('break-filter-chip')));
-      await tester.pump(const Duration(milliseconds: 300));
+      await waitFor(tester, find.text('Stretch'));
       await openPactDetail(tester, 'Stretch');
       await waitFor(tester, find.text('Stretch'));
 
@@ -530,13 +527,10 @@ void main() {
       final futureShowup = allShowups.firstWhere((s) => s.scheduledAt == futureShowupAt);
 
       // ── 2. Open Pact Detail — the "In a break" banner is shown ───────────
-      // The pact is on break, so it's hidden from the default Active-only
-      // pact list view (HAB-195 WU6) — select the Break chip first so its
-      // tile actually renders in the panel before tapping it by habit name.
+      // The Break chip defaults to selected (HAB-212), so the on-break
+      // pact's tile already renders in the panel — no chip interaction
+      // needed before tapping it by habit name.
       await openPactsPanel(tester);
-      await waitFor(tester, find.byKey(const Key('break-filter-chip')));
-      await tester.tap(find.byKey(const Key('break-filter-chip')));
-      await tester.pump(const Duration(milliseconds: 300));
       await openPactDetail(tester, 'Swim');
       await waitFor(tester, find.byKey(const Key('pact-detail-break-banner')));
 
@@ -631,17 +625,29 @@ void main() {
         },
       );
 
-      // ── 1. Open the pacts panel with default filters (Active/Done/Stopped
-      //         selected, Break not selected) — the on-break pact (Swim) is
-      //         hidden even though its underlying status is Active; Break
-      //         exclusively governs on-break pacts' visibility, so Active
-      //         alone never surfaces them ───────────────────────────────
+      // ── 0. Break now defaults to selected (HAB-212) — deselect it first so
+      //         the rest of this scenario still starts from the "Active
+      //         selected, Break not selected" corner of the truth table it's
+      //         actually testing ────────────────────────────────────────────
       await openPactsPanel(tester);
+      const panelScrollable = Key('pacts-panel-scrollable');
+      await tester.dragUntilVisible(
+        find.byKey(const Key('break-filter-chip')),
+        find.byKey(panelScrollable),
+        const Offset(0, -100),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('break-filter-chip')));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // ── 1. Active/Done/Stopped selected, Break deselected — the on-break
+      //         pact (Swim) is hidden even though its underlying status is
+      //         Active; Break exclusively governs on-break pacts'
+      //         visibility, so Active alone never surfaces them ───────────
       // Yoga and Cycling may both be unrealized on a short viewport (CI's
       // Android emulator) — anchor on the panel's own scrollable rather than
       // Yoga's own text, which may not exist yet (HAB-211, same root cause
       // as HAB-196 Fix 4 / HAB-199).
-      const panelScrollable = Key('pacts-panel-scrollable');
       await tester.dragUntilVisible(find.text('Yoga'), find.byKey(panelScrollable), const Offset(0, -100));
       await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
       expect(find.text('Cycling'), findsOneWidget);
