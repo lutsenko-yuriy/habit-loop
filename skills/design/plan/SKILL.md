@@ -31,6 +31,8 @@ Wait for the answer before proceeding.
 
 Read the architecture and product spec files (paths from project config) and the source files most relevant to the work. Use search tools to locate existing models, repositories, view models, and UI files. Name real files and classes — do not invent hypothetical ones.
 
+For a ticket whose goal is to speed up an existing process, apply `skills/shared/decision-guidelines.md` guideline 5 here — decompose the process's current steps into fixed vs. variable cost before proposing a design.
+
 If the user shared an architectural intent in step 1.5, evaluate it against the codebase now. If it may be unworkable (adds complexity, contradicts the architecture, or would make things worse), surface that explicitly before producing any plan and ask:
 
 > "Based on the codebase, [brief reason it may not work]. Do you want to (a) proceed with a different approach, (b) proceed with this approach anyway, or (c) abandon the ticket?"
