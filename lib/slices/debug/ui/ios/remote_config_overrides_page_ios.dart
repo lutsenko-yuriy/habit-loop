@@ -58,8 +58,10 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                   showBackendRestartBanner: showBackendRestartBanner,
                   seedState: seedState,
                   hasFakeBackend: seedNotifier.hasFakeBackend,
+                  pactCount: seedState.pactCount,
                   onSeedLocal: () => _showSeedPercentDialog(context, seedNotifier.seedLocalPacts),
                   onSeedRemote: () => _showSeedPercentDialog(context, seedNotifier.seedRemotePacts),
+                  onPactCountChanged: seedNotifier.setPactCount,
                   onEntryTap: (entry) => _showEditDialog(
                     context: context,
                     entry: entry,
@@ -134,6 +136,49 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
                             onPressed: isBusy ? null : onPressed,
                             child: Align(alignment: Alignment.centerLeft, child: Text(label)),
+                          ),
+                      buildCountStepper: (ctx, key, count, canDecrement, canIncrement, onDecrement, onIncrement) =>
+                          Padding(
+                            key: key,
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Pact count'),
+                                Row(
+                                  children: [
+                                    CupertinoButton(
+                                      key: const Key('seed-count-decrement'),
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      onPressed: canDecrement ? onDecrement : null,
+                                      child: Icon(
+                                        CupertinoIcons.minus,
+                                        color: canDecrement ? null : CupertinoColors.inactiveGray.resolveFrom(ctx),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 28,
+                                      child: Text(
+                                        '$count',
+                                        key: const Key('seed-count-value'),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    CupertinoButton(
+                                      key: const Key('seed-count-increment'),
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      onPressed: canIncrement ? onIncrement : null,
+                                      child: Icon(
+                                        CupertinoIcons.plus,
+                                        color: canIncrement ? null : CupertinoColors.inactiveGray.resolveFrom(ctx),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                       buildButtonContainer: (ctx, buttons) => Container(
                             width: double.infinity,

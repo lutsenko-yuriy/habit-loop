@@ -51,8 +51,10 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
               showBackendRestartBanner: showBackendRestartBanner,
               seedState: seedState,
               hasFakeBackend: seedNotifier.hasFakeBackend,
+              pactCount: seedState.pactCount,
               onSeedLocal: () => _showSeedPercentDialog(context, seedNotifier.seedLocalPacts),
               onSeedRemote: () => _showSeedPercentDialog(context, seedNotifier.seedRemotePacts),
+              onPactCountChanged: seedNotifier.setPactCount,
               onEntryTap: (entry) => _showEditDialog(
                 context: context,
                 entry: entry,
@@ -112,6 +114,31 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                         title: Text(label),
                         onTap: isBusy ? null : onPressed,
                         enabled: !isBusy,
+                      ),
+                  buildCountStepper: (ctx, key, count, canDecrement, canIncrement, onDecrement, onIncrement) => Padding(
+                        key: key,
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Pact count'),
+                            Row(
+                              children: [
+                                IconButton(
+                                  key: const Key('seed-count-decrement'),
+                                  icon: const Icon(Icons.remove),
+                                  onPressed: canDecrement ? onDecrement : null,
+                                ),
+                                Text('$count', key: const Key('seed-count-value')),
+                                IconButton(
+                                  key: const Key('seed-count-increment'),
+                                  icon: const Icon(Icons.add),
+                                  onPressed: canIncrement ? onIncrement : null,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                   buildButtonContainer: (ctx, buttons) => Card(
                         margin: EdgeInsets.zero,

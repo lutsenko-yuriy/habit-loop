@@ -8,6 +8,8 @@ typedef SeedSectionSlots = ({
   Widget Function(BuildContext context, Key key, String label, bool isBusy, VoidCallback onPressed) buildButton,
   Widget Function(BuildContext context, List<Widget> buttons) buildButtonContainer,
   Widget Function(BuildContext context, Key key, String message, DebugSeedState status) buildStatusText,
+  Widget Function(BuildContext context, Key key, int count, bool canDecrement, bool canIncrement,
+      VoidCallback onDecrement, VoidCallback onIncrement) buildCountStepper,
 });
 
 class SeedSection extends StatelessWidget {
@@ -15,15 +17,19 @@ class SeedSection extends StatelessWidget {
     super.key,
     required this.state,
     required this.hasFakeBackend,
+    required this.pactCount,
     required this.onSeedLocal,
     required this.onSeedRemote,
+    required this.onPactCountChanged,
     required this.slots,
   });
 
   final DebugSeedDataState state;
   final bool hasFakeBackend;
+  final int pactCount;
   final VoidCallback onSeedLocal;
   final VoidCallback onSeedRemote;
+  final ValueChanged<int> onPactCountChanged;
   final SeedSectionSlots slots;
 
   @override
@@ -52,6 +58,16 @@ class SeedSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         slots.buildHeader(context),
+        slots.buildCountStepper(
+          context,
+          const Key('seed-count-stepper'),
+          pactCount,
+          pactCount > 1,
+          pactCount < 10,
+          () => onPactCountChanged(pactCount - 1),
+          () => onPactCountChanged(pactCount + 1),
+        ),
+        const SizedBox(height: AppSpacing.s8),
         slots.buildButtonContainer(context, buttons),
         if (state.status != DebugSeedState.idle) ...[
           const SizedBox(height: AppSpacing.s8),

@@ -28,8 +28,10 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
     required this.showBackendRestartBanner,
     required this.seedState,
     required this.hasFakeBackend,
+    required this.pactCount,
     required this.onSeedLocal,
     required this.onSeedRemote,
+    required this.onPactCountChanged,
     required this.onEntryTap,
     required this.slots,
   });
@@ -38,8 +40,10 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
   final bool showBackendRestartBanner;
   final DebugSeedDataState seedState;
   final bool hasFakeBackend;
+  final int pactCount;
   final VoidCallback onSeedLocal;
   final VoidCallback onSeedRemote;
+  final ValueChanged<int> onPactCountChanged;
   final void Function(RemoteConfigEntry entry) onEntryTap;
   final RemoteConfigOverridesSlots slots;
 
@@ -51,8 +55,10 @@ class RemoteConfigOverridesScrollView extends StatelessWidget {
       SeedSection(
         state: seedState,
         hasFakeBackend: hasFakeBackend,
+        pactCount: pactCount,
         onSeedLocal: onSeedLocal,
         onSeedRemote: onSeedRemote,
+        onPactCountChanged: onPactCountChanged,
         slots: slots.seedSlots,
       ),
     );
