@@ -246,4 +246,62 @@ void main() {
       expect(find.byType(SectionHeader), findsOneWidget);
     });
   });
+
+  group('ShowupDetailContent — status badge animation (HAB-213 WU3)', () {
+    testWidgets('crossfades badge text mid-transition, then settles to the new state', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState(uiState: ShowupUiState.planned)));
+      await tester.pump();
+      expect(find.text('Planned'), findsOneWidget);
+
+      await tester.pumpWidget(_wrap(_loadedState(uiState: ShowupUiState.onBreak)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      // Both outgoing and incoming labels are on screen mid-crossfade.
+      expect(find.text('Planned'), findsOneWidget);
+      expect(find.text('On break'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(find.text('Planned'), findsNothing);
+      expect(find.text('On break'), findsOneWidget);
+    });
+  });
+
+  group('ShowupDetailContent — reveal animations (HAB-213 WU3)', () {
+    testWidgets('action buttons fade out through AnimatedReveal when isPending flips to false', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState(status: ShowupStatus.pending)));
+      await tester.pump();
+      expect(find.byKey(const Key('action-buttons')), findsOneWidget);
+
+      await tester.pumpWidget(_wrap(_loadedState(status: ShowupStatus.done)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      final opacity = tester.widget<Opacity>(
+        find.ancestor(of: find.byKey(const Key('action-buttons')), matching: find.byType(Opacity)).first,
+      );
+      expect(opacity.opacity, greaterThan(0));
+      expect(opacity.opacity, lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('action-buttons')), findsNothing);
+    });
+
+    testWidgets('pact link row fades in through AnimatedReveal when onOpenPact becomes non-null', (tester) async {
+      final state = _loadedState();
+      await tester.pumpWidget(_wrap(state));
+      await tester.pump();
+      expect(find.byKey(const Key('showup-pact-link')), findsNothing);
+
+      await tester.pumpWidget(_wrap(state, onOpenPact: () {}));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      final opacity = tester.widget<Opacity>(
+        find.ancestor(of: find.byKey(const Key('showup-pact-link')), matching: find.byType(Opacity)).first,
+      );
+      expect(opacity.opacity, greaterThan(0));
+      expect(opacity.opacity, lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('showup-pact-link')), findsOneWidget);
+    });
+  });
 }

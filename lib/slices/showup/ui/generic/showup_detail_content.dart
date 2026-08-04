@@ -7,6 +7,8 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
+import 'package:habit_loop/theme/widgets/animated_reveal.dart';
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
@@ -67,10 +69,25 @@ class ShowupDetailContent extends StatefulWidget {
 class _ShowupDetailContentState extends State<ShowupDetailContent> {
   late TextEditingController _noteController;
 
+  // Outgoing badge state, only present for the ~250ms crossfade window right
+  // after uiState changes (HAB-213 WU3) — mirrors PactDetailScreen's own
+  // outgoing-snapshot lifecycle at a much smaller scale, since this screen
+  // has no externally-supplied "previous state" to read it from.
+  ShowupUiState? _previousUiState;
+
+  // Remembered so a collapsing AnimatedReveal block can keep calling the
+  // callback that was live when it started collapsing, instead of
+  // dereferencing a now-null widget field mid-animation (HAB-213 WU3;
+  // pattern taken from BreakBannerReveal).
+  VoidCallback? _lastOnOpenPact;
+  VoidCallback? _lastOnStartBreak;
+
   @override
   void initState() {
     super.initState();
     _noteController = TextEditingController(text: widget.state.showup?.note ?? '');
+    _lastOnOpenPact = widget.onOpenPact;
+    _lastOnStartBreak = widget.onStartBreak;
   }
 
   @override
@@ -79,6 +96,20 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     final newNote = widget.state.showup?.note ?? '';
     if (oldWidget.state.showup?.note != widget.state.showup?.note && _noteController.text != newNote) {
       _noteController.text = newNote;
+    }
+    if (widget.onOpenPact != null) _lastOnOpenPact = widget.onOpenPact;
+    if (widget.onStartBreak != null) _lastOnStartBreak = widget.onStartBreak;
+
+    final newUiState = widget.state.uiState;
+    if (oldWidget.state.uiState != newUiState) {
+      _previousUiState = oldWidget.state.uiState;
+      Future.delayed(kAnimatedValueTransitionDuration, () {
+        // Only clear if uiState hasn't moved on again since this timer was
+        // scheduled — a later change already owns the reset by then.
+        if (mounted && widget.state.uiState == newUiState) {
+          setState(() => _previousUiState = null);
+        }
+      });
     }
   }
 
@@ -103,6 +134,10 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     final uiState = state.uiState;
     final statusColor = widget.statusColors.forUiState(uiState);
     final statusText = showupUiStateText(l10n, uiState);
+    // Pinned to the widest possible status label so the badge doesn't resize
+    // (and shift the Row) when crossfading between two labels (HAB-213 WU3).
+    final badgeWidth = StatusBadge.widestOf(context, ShowupUiState.values.map((s) => showupUiStateText(l10n, s)));
+    final previousUiState = _previousUiState;
 
     return ListView(
       padding:
@@ -116,26 +151,45 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
                 style: AppTypography.sectionTitle,
               ),
             ),
-            StatusBadge(text: statusText, color: statusColor),
+            AnimatedValueTransition(
+              direction: null,
+              previousChild: previousUiState != null && previousUiState != uiState
+                  ? StatusBadge(
+                      text: showupUiStateText(l10n, previousUiState),
+                      color: widget.statusColors.forUiState(previousUiState),
+                      width: badgeWidth,
+                    )
+                  : null,
+              child: StatusBadge(text: statusText, color: statusColor, width: badgeWidth),
+            ),
           ],
         ),
-        if (widget.onOpenPact != null) ...[
-          const SizedBox(height: AppSpacing.s4),
-          GestureDetector(
-            key: const Key('showup-pact-link'),
-            onTap: widget.onOpenPact,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.showupViewPactDetails,
-                  style: AppTypography.caption.copyWith(color: widget.linkColor),
+        // Reveals/collapses instead of popping (HAB-213 WU3); not stretched —
+        // this is a link, not a full-width control.
+        AnimatedReveal(
+          visible: widget.onOpenPact != null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.s4),
+              GestureDetector(
+                key: const Key('showup-pact-link'),
+                onTap: _lastOnOpenPact,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.showupViewPactDetails,
+                      style: AppTypography.caption.copyWith(color: widget.linkColor),
+                    ),
+                    Icon(Icons.chevron_right, size: 13, color: widget.linkColor),
+                  ],
                 ),
-                Icon(Icons.chevron_right, size: 13, color: widget.linkColor),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
         const SizedBox(height: AppSpacing.s16),
         DateRowTile(
           label: l10n.showupDetailScheduledAt,
@@ -151,29 +205,60 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
           backgroundColor: widget.tileColor,
         ),
         const SizedBox(height: AppSpacing.s24),
-        if (state.wasAutoFailed) ...[
-          widget.slots.buildErrorContainer(context),
-          const SizedBox(height: AppSpacing.s16),
-        ],
-        if (widget.onStartBreak != null) ...[
-          widget.slots.buildStartBreakButton(context, widget.onStartBreak!),
-          const SizedBox(height: AppSpacing.s16),
-        ],
+        // The six blocks below reveal/collapse via AnimatedReveal rather than
+        // popping in/out, matching the pact detail screen's treatment for the
+        // same class of conditional block (HAB-213 WU3).
+        AnimatedReveal(
+          visible: state.wasAutoFailed,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              widget.slots.buildErrorContainer(context),
+              const SizedBox(height: AppSpacing.s16),
+            ],
+          ),
+        ),
+        AnimatedReveal(
+          visible: widget.onStartBreak != null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              widget.slots.buildStartBreakButton(context, _lastOnStartBreak ?? () {}),
+              const SizedBox(height: AppSpacing.s16),
+            ],
+          ),
+        ),
         // On break, the "On break" badge above already carries the state —
         // Mark Done/Failed would be misleading actions, so hide them entirely
         // rather than show a disabled or replaced control (HAB-213).
-        if (isPending && uiState != ShowupUiState.onBreak) ...[
-          widget.slots.buildActionButtons(context, state),
-          const SizedBox(height: AppSpacing.s16),
-        ],
-        if (state.markError != null) ...[
-          Text(
-            l10n.showupMarkError,
-            style: TextStyle(color: widget.statusColors.failed),
-            textAlign: TextAlign.center,
+        AnimatedReveal(
+          visible: isPending && uiState != ShowupUiState.onBreak,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              widget.slots.buildActionButtons(context, state),
+              const SizedBox(height: AppSpacing.s16),
+            ],
           ),
-          const SizedBox(height: AppSpacing.s8),
-        ],
+        ),
+        AnimatedReveal(
+          visible: state.markError != null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.showupMarkError,
+                style: TextStyle(color: widget.statusColors.failed),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+            ],
+          ),
+        ),
         SectionHeader(title: l10n.showupNoteLabel, labelColor: widget.labelColor),
         const SizedBox(height: AppSpacing.s8),
         widget.slots.buildNoteField(context, _noteController),
@@ -191,14 +276,21 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             );
           },
         ),
-        if (state.noteError != null) ...[
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.showupNoteError,
-            style: TextStyle(color: widget.statusColors.failed),
-            textAlign: TextAlign.center,
+        AnimatedReveal(
+          visible: state.noteError != null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                l10n.showupNoteError,
+                style: TextStyle(color: widget.statusColors.failed),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-        ],
+        ),
         // Redemption section — below the note so the hint text is no longer
         // directionally misleading. AnimatedSwitcher fades between the enabled,
         // disabled, and gone states.
