@@ -82,24 +82,12 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
   VoidCallback? _lastOnOpenPact;
   VoidCallback? _lastOnStartBreak;
 
-  // Snapshot of the last state for which the action buttons were actually
-  // shown — kept frozen for the duration of the collapse instead of tracking
-  // widget.state live, since by the time isPending flips false the mark-done/
-  // failed request has already resolved (isSaving back to false, status now
-  // done/failed). Rendering that live state mid-fade made the button flash
-  // disabled→enabled right before disappearing (reported after WU3 shipped).
-  ShowupDetailState? _lastActionButtonsState;
-
-  bool _showsActionButtons(ShowupDetailState s) =>
-      s.showup?.status == ShowupStatus.pending && s.uiState != ShowupUiState.onBreak;
-
   @override
   void initState() {
     super.initState();
     _noteController = TextEditingController(text: widget.state.showup?.note ?? '');
     _lastOnOpenPact = widget.onOpenPact;
     _lastOnStartBreak = widget.onStartBreak;
-    if (_showsActionButtons(widget.state)) _lastActionButtonsState = widget.state;
   }
 
   @override
@@ -111,7 +99,6 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     }
     if (widget.onOpenPact != null) _lastOnOpenPact = widget.onOpenPact;
     if (widget.onStartBreak != null) _lastOnStartBreak = widget.onStartBreak;
-    if (_showsActionButtons(widget.state)) _lastActionButtonsState = widget.state;
 
     final newUiState = widget.state.uiState;
     if (oldWidget.state.uiState != newUiState) {
@@ -181,7 +168,6 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
         // this is a link, not a full-width control.
         AnimatedReveal(
           visible: widget.onOpenPact != null,
-          alignment: Alignment.topLeft,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +239,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              widget.slots.buildActionButtons(context, _lastActionButtonsState ?? state),
+              widget.slots.buildActionButtons(context, state),
               const SizedBox(height: AppSpacing.s16),
             ],
           ),
