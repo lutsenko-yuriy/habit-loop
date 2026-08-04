@@ -122,7 +122,22 @@ void main() {
       expect(container.child, isNull);
     });
 
-    testWidgets('overflow dot is blue when any showup is onBreak — no icon overlay', (tester) async {
+    testWidgets('overflow dot is blue when ALL showups are onBreak — no icon overlay', (tester) async {
+      final showups = List.generate(4, (i) => _s('s$i', ShowupStatus.pending));
+      final uiStates = List.generate(4, (_) => ShowupUiState.onBreak);
+      await _pumpWithStates(tester, showups, uiStates, date);
+
+      final overflowKey = Key('status-dot-overflow-${_dateKey(date)}');
+      final ctx = tester.element(find.byKey(overflowKey));
+      final container = tester.widget<Container>(find.byKey(overflowKey));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, CupertinoColors.systemBlue.resolveFrom(ctx));
+      expect(container.child, isNull);
+    });
+
+    testWidgets('overflow dot is NOT blue when only some showups are onBreak — falls back to priority logic', (
+      tester,
+    ) async {
       final showups = List.generate(4, (i) => _s('s$i', ShowupStatus.pending));
       final uiStates = [
         ShowupUiState.active,
@@ -136,8 +151,9 @@ void main() {
       final ctx = tester.element(find.byKey(overflowKey));
       final container = tester.widget<Container>(find.byKey(overflowKey));
       final decoration = container.decoration as BoxDecoration;
-      expect(decoration.color, CupertinoColors.systemBlue.resolveFrom(ctx));
-      expect(container.child, isNull);
+      // One planned entry remains → falls to the grey/pending priority tier.
+      expect(decoration.color, CupertinoColors.systemGrey.resolveFrom(ctx));
+      expect(decoration.color, isNot(equals(CupertinoColors.systemBlue.resolveFrom(ctx))));
     });
   });
 }

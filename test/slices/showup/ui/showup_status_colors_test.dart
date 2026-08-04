@@ -112,14 +112,65 @@ void main() {
       expect(colors.forUiState(ShowupUiState.onBreak), CupertinoColors.systemBlue.resolveFrom(ctx));
     });
 
-    testWidgets('overflowForUiState is onBreak color when any showup is on break, even amid active/planned', (
+    testWidgets('overflowForUiState is onBreak color when ALL showups are on break', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = ShowupStatusColors.cupertino(ctx);
+      expect(
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.onBreak]),
+        CupertinoColors.systemBlue.resolveFrom(ctx),
+      );
+    });
+
+    testWidgets('overflowForUiState falls back to amber when only some showups are on break, amid active', (
       tester,
     ) async {
       final ctx = await buildContext(tester);
       final colors = ShowupStatusColors.cupertino(ctx);
       expect(
-        colors.overflowForUiState([ShowupUiState.active, ShowupUiState.onBreak, ShowupUiState.planned]),
-        CupertinoColors.systemBlue.resolveFrom(ctx),
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.active]),
+        CupertinoColors.systemYellow.resolveFrom(ctx),
+      );
+    });
+
+    testWidgets('overflowForUiState falls back to grey when only some showups are on break, amid planned', (
+      tester,
+    ) async {
+      final ctx = await buildContext(tester);
+      final colors = ShowupStatusColors.cupertino(ctx);
+      expect(
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.planned]),
+        CupertinoColors.systemGrey.resolveFrom(ctx),
+      );
+    });
+
+    testWidgets('overflowForUiState falls back to green when only some showups are on break, amid done', (
+      tester,
+    ) async {
+      final ctx = await buildContext(tester);
+      final colors = ShowupStatusColors.cupertino(ctx);
+      expect(
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.done, ShowupUiState.done]),
+        CupertinoColors.activeGreen.resolveFrom(ctx),
+      );
+    });
+
+    testWidgets('overflowForUiState falls back to red when only some showups are on break, amid failed', (
+      tester,
+    ) async {
+      final ctx = await buildContext(tester);
+      final colors = ShowupStatusColors.cupertino(ctx);
+      expect(
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.failed, ShowupUiState.failed]),
+        CupertinoColors.destructiveRed.resolveFrom(ctx),
+      );
+    });
+
+    testWidgets('overflowForUiState on an empty list is unchanged — falls through to done', (tester) async {
+      final ctx = await buildContext(tester);
+      final colors = ShowupStatusColors.cupertino(ctx);
+      expect(
+        colors.overflowForUiState(const []),
+        CupertinoColors.activeGreen.resolveFrom(ctx),
       );
     });
   });
@@ -151,11 +202,43 @@ void main() {
       expect(colors.forUiState(ShowupUiState.onBreak), HabitLoopColors.onBreak);
     });
 
-    test('overflowForUiState is onBreak color when any showup is on break', () {
+    test('overflowForUiState is onBreak color when ALL showups are on break', () {
       expect(
-        colors.overflowForUiState([ShowupUiState.done, ShowupUiState.onBreak]),
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.onBreak]),
         HabitLoopColors.onBreak,
       );
+    });
+
+    test('overflowForUiState falls back to done color when only some showups are on break, amid done', () {
+      expect(
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.done, ShowupUiState.done]),
+        colorScheme.secondary,
+      );
+    });
+
+    test('overflowForUiState falls back to amber when only some showups are on break, amid active', () {
+      expect(
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.active]),
+        HabitLoopColors.sunrise,
+      );
+    });
+
+    test('overflowForUiState falls back to grey when only some showups are on break, amid planned', () {
+      expect(
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.planned]),
+        colorScheme.onSurfaceVariant,
+      );
+    });
+
+    test('overflowForUiState falls back to red when only some showups are on break, amid failed', () {
+      expect(
+        colors.overflowForUiState([ShowupUiState.onBreak, ShowupUiState.failed, ShowupUiState.failed]),
+        colorScheme.error,
+      );
+    });
+
+    test('overflowForUiState on an empty list is unchanged — falls through to done', () {
+      expect(colors.overflowForUiState(const []), colorScheme.secondary);
     });
   });
 }

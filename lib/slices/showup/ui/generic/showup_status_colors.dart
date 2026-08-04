@@ -65,8 +65,12 @@ class ShowupStatusColors {
     return doneCount >= failedCount ? done : failed;
   }
 
-  // Priority: any onBreak → blue (a break is the most actionable state to surface);
-  // active (no planned ahead) → amber; any planned → gray; resolved → green/red.
+  // Priority: ALL onBreak → blue (a break is only the most actionable state to
+  // surface when it's the whole day's story); active (no planned ahead) →
+  // amber; any planned → gray; resolved → green/red. On a mixed day, on-break
+  // entries simply stop pre-empting the rest of the priority logic and
+  // contribute to none of the other counters, so the day resolves on its
+  // non-break showups alone (HAB-213).
   // "AND no planned" prevents premature amber when only some showups entered their window.
   Color overflowForUiState(List<ShowupUiState> uiStates) {
     var activeCount = 0, plannedCount = 0, doneCount = 0, failedCount = 0, onBreakCount = 0;
@@ -85,7 +89,7 @@ class ShowupStatusColors {
           onBreakCount++;
       }
     }
-    if (onBreakCount > 0) return onBreak;
+    if (uiStates.isNotEmpty && onBreakCount == uiStates.length) return onBreak;
     if (activeCount > 0 && plannedCount == 0) return waitingForStart;
     if (plannedCount > 0) return pending;
     return doneCount >= failedCount ? done : failed;
