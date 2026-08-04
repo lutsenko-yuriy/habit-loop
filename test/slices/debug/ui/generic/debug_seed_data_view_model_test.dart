@@ -73,6 +73,60 @@ void main() {
       expect(container.read(debugSeedDataViewModelProvider.notifier).hasFakeBackend, isFalse);
     });
 
+    // ── pactCount ─────────────────────────────────────────────────────────────
+
+    test('initial pactCount defaults to max_active_pacts RC value', () {
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 5});
+      final state = container.read(debugSeedDataViewModelProvider);
+      expect(state.pactCount, 5);
+    });
+
+    test('initial pactCount clamps RC value below 1 up to 1', () {
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 0});
+      final state = container.read(debugSeedDataViewModelProvider);
+      expect(state.pactCount, 1);
+    });
+
+    test('initial pactCount clamps RC value above 10 down to 10', () {
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 99});
+      final state = container.read(debugSeedDataViewModelProvider);
+      expect(state.pactCount, 10);
+    });
+
+    test('setPactCount clamps out-of-range input to 1-10', () {
+      final container = makeContainer();
+      final notifier = container.read(debugSeedDataViewModelProvider.notifier);
+
+      notifier.setPactCount(0);
+      expect(container.read(debugSeedDataViewModelProvider).pactCount, 1);
+
+      notifier.setPactCount(15);
+      expect(container.read(debugSeedDataViewModelProvider).pactCount, 10);
+    });
+
+    test('seedLocalPacts uses pactCount, not RC, once pactCount has been changed', () async {
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 3});
+      final notifier = container.read(debugSeedDataViewModelProvider.notifier);
+      notifier.setPactCount(7);
+
+      await notifier.seedLocalPacts();
+
+      final pacts = await pactRepo.getAllPacts();
+      expect(pacts.length, 7);
+    });
+
+    test('seedRemotePacts uses pactCount, not RC, once pactCount has been changed', () async {
+      final fake = FakeFirestoreClient();
+      final container = makeContainer(fakeFirestore: fake, rcOverrides: {'max_active_pacts': 3});
+      final notifier = container.read(debugSeedDataViewModelProvider.notifier);
+      notifier.setPactCount(7);
+
+      await notifier.seedRemotePacts();
+
+      final snapshot = fake.snapshot();
+      expect(snapshot.pacts[LocalAuthService.localUserId]?.length, 7);
+    });
+
     // ── seedLocalPacts ────────────────────────────────────────────────────────
 
     test('seedLocalPacts creates N pacts from RC max_active_pacts', () async {
