@@ -8,6 +8,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/theme/widgets/animated_reveal.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
 
@@ -302,6 +303,65 @@ void main() {
 
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('showup-pact-link')), findsOneWidget);
+    });
+
+    // Regression: AnimatedReveal's default alignment is topCenter, which
+    // centers a non-stretched child horizontally — the pact link needs
+    // topLeft explicitly, since it's a link, not a full-width control.
+    testWidgets('pact link is left-aligned, not centered', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState(), onOpenPact: () {}));
+      await tester.pump();
+      final reveal = tester.widget<AnimatedReveal>(
+        find.ancestor(of: find.byKey(const Key('showup-pact-link')), matching: find.byType(AnimatedReveal)).first,
+      );
+      expect(reveal.alignment, Alignment.topLeft);
+    });
+  });
+
+  group('ShowupDetailContent — action buttons freeze while collapsing (HAB-213 WU3)', () {
+    // Regression: buildActionButtons must keep rendering the state it had
+    // right before showActions flipped false, not the live (already-resolved)
+    // state — otherwise the buttons visibly flash (e.g. disabled → enabled)
+    // for the ~250ms AnimatedReveal fade-out after a mark-done/failed completes.
+    testWidgets('keeps rendering the pre-completion state while the block fades out', (tester) async {
+      ShowupStatus? lastRenderedStatus;
+      bool? lastRenderedIsSaving;
+      final ShowupDetailSlots customSlots = (
+        buildActionButtons: (context, s) {
+          lastRenderedStatus = s.showup?.status;
+          lastRenderedIsSaving = s.isSaving;
+          return const SizedBox(key: Key('action-buttons'));
+        },
+        buildNoteField: (context, ctrl) => TextField(key: const Key('note-field'), controller: ctrl),
+        buildSaveButton: (context, onPressed) =>
+            TextButton(key: const Key('save-button'), onPressed: onPressed, child: const Text('Save')),
+        buildErrorContainer: (context) => const SizedBox(key: Key('error-container')),
+        buildRedemptionButton: (context, onRedeem) =>
+            TextButton(key: const Key('redeem-button'), onPressed: onRedeem, child: const Text('Redeem')),
+        buildRedemptionHint: (context) => const SizedBox(key: Key('redeem-hint')),
+        buildStartBreakButton: (context, onPressed) =>
+            TextButton(key: const Key('start-break-button'), onPressed: onPressed, child: const Text('Take a Break')),
+      );
+
+      await tester.pumpWidget(
+        _wrap(_loadedState(status: ShowupStatus.pending, isSaving: true), slots: customSlots),
+      );
+      await tester.pump();
+      expect(lastRenderedStatus, ShowupStatus.pending);
+      expect(lastRenderedIsSaving, true);
+
+      // Mark Done just resolved: status flips to done, isSaving flips back to
+      // false — this is the live state the buttons must NOT re-render with
+      // mid-fade.
+      await tester.pumpWidget(
+        _wrap(_loadedState(status: ShowupStatus.done, isSaving: false), slots: customSlots),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(lastRenderedStatus, ShowupStatus.pending);
+      expect(lastRenderedIsSaving, true);
+
+      await tester.pumpAndSettle();
     });
   });
 }
