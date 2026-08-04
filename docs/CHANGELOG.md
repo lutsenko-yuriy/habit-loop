@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.54.2] — 2026-08-04 (PR #359 merged)
+
+### Added
+
+- [app] Debug seed-data screen: added a pact-count stepper (1-10) so testers can choose how many pacts get generated instead of always using the max_active_pacts Remote Config value.
+- HAB-214: `DebugSeedDataState.pactCount` (defaulted from `max_active_pacts` RC, clamped 1-10, overridable via `setPactCount`); `SeedSection` gained a `buildCountStepper` slot implemented on both platform pages; `seedLocalPacts`/`seedRemotePacts` now read `state.pactCount` instead of recomputing from RC each call.
+
 ## [0.54.1] — 2026-08-03 (PR #356 merged)
 
 ### Changed
