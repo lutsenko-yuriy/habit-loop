@@ -247,15 +247,25 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
         // On break, the "On break" badge above already carries the state —
         // Mark Done/Failed would be misleading actions, so hide them entirely
         // rather than show a disabled or replaced control (HAB-213).
-        AnimatedReveal(
-          visible: isPending && uiState != ShowupUiState.onBreak,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              widget.slots.buildActionButtons(context, _lastActionButtonsState ?? state),
-              const SizedBox(height: AppSpacing.s16),
-            ],
+        // Clipped: AnimatedReveal intentionally lets a collapsing child paint
+        // beyond its shrinking reported height (see its own doc comment) so a
+        // sibling shifts in lock-step instead of popping after the fade. For
+        // a single line that's invisible; for this two-button Column it made
+        // Mark Failed look like it got abruptly covered by the note section
+        // sliding up over it, while Mark Done (on top) just faded — reported
+        // after WU3 shipped. ClipRect only affects painting, not the
+        // reported size, so the sibling-shift behavior is unchanged.
+        ClipRect(
+          child: AnimatedReveal(
+            visible: isPending && uiState != ShowupUiState.onBreak,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                widget.slots.buildActionButtons(context, _lastActionButtonsState ?? state),
+                const SizedBox(height: AppSpacing.s16),
+              ],
+            ),
           ),
         ),
         AnimatedReveal(
