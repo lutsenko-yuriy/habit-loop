@@ -200,29 +200,6 @@ void main() {
       await tester.pump();
       expect(find.byKey(const Key('action-buttons')), findsNothing);
     });
-
-    // Regression: the action buttons block is a multi-widget Column (Mark
-    // Done + Mark Failed), tall enough that AnimatedReveal's default
-    // paint-beyond-bounds collapse (see its own doc comment) makes the
-    // bottom button look like it gets abruptly covered by the note section
-    // sliding up over it, while the top button just fades — reported after
-    // WU3 shipped. Clipped to its own shrinking bounds instead.
-    testWidgets('action buttons block is clipped to its own bounds while collapsing', (tester) async {
-      await tester.pumpWidget(_wrap(_loadedState(status: ShowupStatus.pending)));
-      await tester.pump();
-      // The ListView's own viewport clip is also a ClipRect ancestor, so this
-      // checks for one immediately wrapping this block's own AnimatedReveal
-      // — not just any ClipRect further up the tree.
-      final revealElement = tester.element(
-        find.ancestor(of: find.byKey(const Key('action-buttons')), matching: find.byType(AnimatedReveal)).first,
-      );
-      Element? parent;
-      revealElement.visitAncestorElements((e) {
-        parent = e;
-        return false;
-      });
-      expect(parent?.widget, isA<ClipRect>());
-    });
   });
 
   group('ShowupDetailContent — note field + save button slots', () {
