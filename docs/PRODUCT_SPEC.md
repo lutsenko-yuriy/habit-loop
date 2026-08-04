@@ -40,6 +40,7 @@ The Habit Loop app allows the user to:
     - A break is started from the pact detail screen, or from a button on a recent unresolved/auto-failed showup (which always defaults the break's start date to today, regardless of which showup it was opened from); only one break can be active or scheduled per pact at a time
     - The user picks a start date (today or later) and either a specific end date or "until the pact ends" (open-ended), and must enter a rationale — the break cannot be created without one
     - Showups scheduled inside the break window show a blue "on break" treatment everywhere showups are shown (calendar dots, today's list, showup detail, timeline) instead of failing, unless the user already explicitly marked them done or failed; on-break showups don't break or advance the streak, and are counted separately as "Skipped on break" in the pact's stats
+    - On a calendar day with 4 or more showups, they collapse into a single overflow dot; that dot only shows the on-break blue when *every* showup that day is on break — a day with a mix of on-break and other showups shows its usual done/failed/upcoming color instead
     - Reminders for showups inside an active break window are not sent
     - The pact detail screen shows a banner while a break is active, with its rationale and a "Resume pact" action that ends the break immediately; showups already on break at that point stay on break permanently, while later ones resume normal scheduling
     - An on-break pact shows an "On break" status in the pact list instead of "Active"
