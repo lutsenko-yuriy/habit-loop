@@ -20,16 +20,19 @@ class DebugSeedDataState {
   const DebugSeedDataState({
     this.status = DebugSeedState.idle,
     this.message,
+    this.pactCount = 1,
   });
 
   final DebugSeedState status;
   final String? message;
+  final int pactCount;
 
   bool get isBusy => status == DebugSeedState.busy;
 
-  DebugSeedDataState copyWith({DebugSeedState? status, String? message}) => DebugSeedDataState(
+  DebugSeedDataState copyWith({DebugSeedState? status, String? message, int? pactCount}) => DebugSeedDataState(
         status: status ?? this.status,
         message: message ?? this.message,
+        pactCount: pactCount ?? this.pactCount,
       );
 }
 
@@ -45,13 +48,20 @@ const _kHabitNames = [
 // Debug/profile only. seedLocalPacts clears SQLite; seedRemotePacts re-seeds FakeFirestoreClient.
 class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
   @override
-  DebugSeedDataState build() => const DebugSeedDataState();
+  DebugSeedDataState build() {
+    final rc = ref.read(remoteConfigServiceProvider);
+    return DebugSeedDataState(pactCount: rc.getInt('max_active_pacts').clamp(1, 10));
+  }
 
   bool get hasFakeBackend => ref.read(fakeFirestoreClientProvider) is FakeFirestoreClient;
 
+  void setPactCount(int count) {
+    state = state.copyWith(pactCount: count.clamp(1, 10));
+  }
+
   Future<void> seedLocalPacts({int successPercent = 0}) async {
     if (state.isBusy) return;
-    state = const DebugSeedDataState(
+    state = state.copyWith(
       status: DebugSeedState.busy,
       message: 'Generating local pacts…',
     );
@@ -59,8 +69,7 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
       final pactService = ref.read(pactServiceProvider);
       final showupRepo = ref.read(showupRepositoryProvider);
       final pactBreakRepo = ref.read(pactBreakRepositoryProvider);
-      final rc = ref.read(remoteConfigServiceProvider);
-      final n = rc.getInt('max_active_pacts').clamp(1, _kHabitNames.length * 2);
+      final n = state.pactCount;
 
       final existingPacts = await pactService.getAllPacts();
       for (final p in existingPacts) {
@@ -82,14 +91,14 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
         await pactService.createPact(pact, showups);
       }
 
-      state = DebugSeedDataState(
+      state = state.copyWith(
         status: DebugSeedState.done,
         message: 'Local pacts regenerated ($n pacts, $successPercent% done).',
       );
 
       ref.invalidate(hasActivePactsProvider);
     } catch (e) {
-      state = DebugSeedDataState(
+      state = state.copyWith(
         status: DebugSeedState.error,
         message: 'Error: $e',
       );
@@ -102,13 +111,12 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
     final fake = ref.read(fakeFirestoreClientProvider);
     if (fake is! FakeFirestoreClient) return;
 
-    state = const DebugSeedDataState(
+    state = state.copyWith(
       status: DebugSeedState.busy,
       message: 'Generating remote pacts…',
     );
     try {
-      final rc = ref.read(remoteConfigServiceProvider);
-      final n = rc.getInt('max_active_pacts').clamp(1, _kHabitNames.length * 2);
+      final n = state.pactCount;
 
       // Use localUserId so data appears when LocalAuthService sign-in is complete.
       const userId = LocalAuthService.localUserId;
@@ -142,14 +150,14 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
       final sync = ref.read(syncServiceProvider);
       await sync.pullRemoteChanges();
 
-      state = DebugSeedDataState(
+      state = state.copyWith(
         status: DebugSeedState.done,
         message: 'Remote pacts seeded ($n pacts, $successPercent% done).',
       );
 
       ref.invalidate(hasActivePactsProvider);
     } catch (e) {
-      state = DebugSeedDataState(
+      state = state.copyWith(
         status: DebugSeedState.error,
         message: 'Error: $e',
       );

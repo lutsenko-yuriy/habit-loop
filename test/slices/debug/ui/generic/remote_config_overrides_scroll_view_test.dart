@@ -32,6 +32,23 @@ RemoteConfigOverridesSlots _stubSlots({Widget Function(BuildContext)? buildTopSe
             ),
         buildButtonContainer: (ctx, buttons) => Column(mainAxisSize: MainAxisSize.min, children: buttons),
         buildStatusText: (ctx, key, message, status) => Text(message, key: key),
+        buildCountStepper: (ctx, key, count, canDecrement, canIncrement, onDecrement, onIncrement) => Row(
+              key: key,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  key: const Key('seed-count-decrement'),
+                  onPressed: canDecrement ? onDecrement : null,
+                  child: const Text('-'),
+                ),
+                Text('$count', key: const Key('seed-count-value')),
+                TextButton(
+                  key: const Key('seed-count-increment'),
+                  onPressed: canIncrement ? onIncrement : null,
+                  child: const Text('+'),
+                ),
+              ],
+            ),
       ),
       wrapSeedSection: (ctx, child) => child,
       listPadding: EdgeInsets.zero,
@@ -42,6 +59,7 @@ Widget _wrap({
   bool showRestartBanner = false,
   DebugSeedDataState seedState = const DebugSeedDataState(),
   bool hasFakeBackend = false,
+  int pactCount = 5,
   Widget Function(BuildContext)? buildTopSection,
 }) =>
     MaterialApp(
@@ -51,8 +69,10 @@ Widget _wrap({
           showBackendRestartBanner: showRestartBanner,
           seedState: seedState,
           hasFakeBackend: hasFakeBackend,
+          pactCount: pactCount,
           onSeedLocal: () {},
           onSeedRemote: () {},
+          onPactCountChanged: (_) {},
           onEntryTap: (_) {},
           slots: _stubSlots(buildTopSection: buildTopSection),
         ),
@@ -139,8 +159,10 @@ void main() {
           showBackendRestartBanner: false,
           seedState: const DebugSeedDataState(),
           hasFakeBackend: false,
+          pactCount: 5,
           onSeedLocal: () {},
           onSeedRemote: () {},
+          onPactCountChanged: (_) {},
           onEntryTap: (e) => tapped = e,
           slots: _stubSlots(),
         ),

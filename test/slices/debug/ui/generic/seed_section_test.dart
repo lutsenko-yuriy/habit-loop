@@ -12,21 +12,42 @@ SeedSectionSlots _stubSlots() => (
           ),
       buildButtonContainer: (ctx, buttons) => Column(mainAxisSize: MainAxisSize.min, children: buttons),
       buildStatusText: (ctx, key, message, status) => Text(message, key: key),
+      buildCountStepper: (ctx, key, count, canDecrement, canIncrement, onDecrement, onIncrement) => Row(
+            key: key,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextButton(
+                key: const Key('seed-count-decrement'),
+                onPressed: canDecrement ? onDecrement : null,
+                child: const Text('-'),
+              ),
+              Text('$count', key: const Key('seed-count-value')),
+              TextButton(
+                key: const Key('seed-count-increment'),
+                onPressed: canIncrement ? onIncrement : null,
+                child: const Text('+'),
+              ),
+            ],
+          ),
     );
 
 Widget _wrap({
   DebugSeedDataState state = const DebugSeedDataState(),
   bool hasFakeBackend = false,
+  int pactCount = 5,
   VoidCallback? onSeedLocal,
   VoidCallback? onSeedRemote,
+  ValueChanged<int>? onPactCountChanged,
 }) =>
     MaterialApp(
       home: Scaffold(
         body: SeedSection(
           state: state,
           hasFakeBackend: hasFakeBackend,
+          pactCount: pactCount,
           onSeedLocal: onSeedLocal ?? () {},
           onSeedRemote: onSeedRemote ?? () {},
+          onPactCountChanged: onPactCountChanged ?? (_) {},
           slots: _stubSlots(),
         ),
       ),
@@ -93,5 +114,37 @@ void main() {
     await tester.pumpWidget(_wrap(hasFakeBackend: true, onSeedRemote: () => called = true));
     await tester.tap(find.byKey(const Key('seed-remote-button')));
     expect(called, isTrue);
+  });
+
+  testWidgets('renders seed-count-stepper with the given count', (tester) async {
+    await tester.pumpWidget(_wrap(pactCount: 7));
+    expect(find.byKey(const Key('seed-count-stepper')), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+  });
+
+  testWidgets('decrement is disabled at count 1', (tester) async {
+    await tester.pumpWidget(_wrap(pactCount: 1));
+    final decrement = tester.widget<TextButton>(find.byKey(const Key('seed-count-decrement')));
+    expect(decrement.onPressed, isNull);
+  });
+
+  testWidgets('increment is disabled at count 10', (tester) async {
+    await tester.pumpWidget(_wrap(pactCount: 10));
+    final increment = tester.widget<TextButton>(find.byKey(const Key('seed-count-increment')));
+    expect(increment.onPressed, isNull);
+  });
+
+  testWidgets('tapping decrement calls onPactCountChanged with count - 1', (tester) async {
+    int? received;
+    await tester.pumpWidget(_wrap(pactCount: 5, onPactCountChanged: (v) => received = v));
+    await tester.tap(find.byKey(const Key('seed-count-decrement')));
+    expect(received, 4);
+  });
+
+  testWidgets('tapping increment calls onPactCountChanged with count + 1', (tester) async {
+    int? received;
+    await tester.pumpWidget(_wrap(pactCount: 5, onPactCountChanged: (v) => received = v));
+    await tester.tap(find.byKey(const Key('seed-count-increment')));
+    expect(received, 6);
   });
 }
