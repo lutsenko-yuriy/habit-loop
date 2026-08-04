@@ -77,11 +77,12 @@ void main() {
       final container = tester.widget<Container>(find.byKey(overflowKey));
       final decoration = container.decoration as BoxDecoration;
       final ctx = tester.element(find.byKey(overflowKey));
-      final expectedPending = defaultTargetPlatform == TargetPlatform.iOS
-          ? CupertinoColors.systemGrey.resolveFrom(ctx)
-          : Theme.of(ctx).colorScheme.onSurfaceVariant;
+      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+      final expectedPending =
+          isIOS ? CupertinoColors.systemGrey.resolveFrom(ctx) : Theme.of(ctx).colorScheme.onSurfaceVariant;
+      final expectedOnBreak = isIOS ? CupertinoColors.systemBlue.resolveFrom(ctx) : HabitLoopColors.onBreak;
       expect(decoration.color, expectedPending);
-      expect(decoration.color, isNot(equals(HabitLoopColors.onBreak)));
+      expect(decoration.color, isNot(equals(expectedOnBreak)));
     });
   });
 }
