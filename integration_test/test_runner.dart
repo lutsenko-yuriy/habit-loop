@@ -26,6 +26,7 @@ import 'pact_timeline_flow_test.dart' as pact_timeline;
 import 'redeem_showup_flow_test.dart' as redeem_showup;
 import 'reminder_locale_flow_test.dart' as reminder_locale;
 import 'remote_config_overrides_flow_test.dart' as remote_config_overrides;
+import 'showup_on_break_flow_test.dart' as showup_on_break;
 import 'showup_to_pact_navigation_flow_test.dart' as showup_to_pact;
 import 'stop_pact_flow_test.dart' as stop_pact;
 import 'sync_on_login_flow_test.dart' as sync_on_login;
@@ -51,6 +52,7 @@ void main() {
   redeem_showup.main();
   reminder_locale.main();
   remote_config_overrides.main();
+  showup_on_break.main();
   showup_to_pact.main();
   stop_pact.main();
   sync_on_login.main();

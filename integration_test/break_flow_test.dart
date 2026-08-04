@@ -373,6 +373,23 @@ void main() {
       expect(persisted?.status, ShowupStatus.pending);
     });
 
+    testWidgets('onbreak_showup_detail_hides_done_failed_actions', (tester) async {
+      // TODO: 1. Seed a pact ("Meditate") and one pending showup scheduled for
+      //          "today", plus an active PactBreak whose window covers that
+      //          showup's date.
+      // TODO: 2. Boot the harness with todayProvider/pactListNowProvider pinned
+      //          inside the break window, pact_breaks_enabled on.
+      // TODO: 3. From the dashboard, tap into the pact's showup to open the
+      //          showup detail screen.
+      // TODO: 4. Wait for and assert the status badge shows l10n.showupOnBreak
+      //          ("On break").
+      // TODO: 5. Assert find.text(l10n.markDone) finds nothing.
+      // TODO: 6. Assert find.text(l10n.markFailed) finds nothing.
+      // TODO: 7. (Regression guard, same test) Confirm the showup's persisted
+      //          status is still `pending` — the buttons are hidden, not
+      //          because the showup got auto-resolved.
+    });
+
     testWidgets('break_window_suppresses_reminders_and_resumes_after_end', (tester) async {
       const pactId = 'test-pact-reminder-suppression';
       // Pact starts "today" — no historical gap to fill, so nothing but the
