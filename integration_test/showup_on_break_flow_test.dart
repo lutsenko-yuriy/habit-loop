@@ -3,37 +3,85 @@
 //
 // Run on host:   flutter test integration_test/showup_on_break_flow_test.dart
 // Run on device: flutter test integration_test/showup_on_break_flow_test.dart -d <device>
+import 'package:flutter/cupertino.dart' show CupertinoColors;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/material.dart' show Key, Theme;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:integration_test/integration_test.dart';
 
+import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
+
+// pact_breaks_enabled now defaults to true (HAB-195 WU6) — this override is
+// kept for explicitness/determinism, independent of the production default.
+final _breaksEnabled = remoteConfigServiceProvider.overrideWithValue(
+  FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true}),
+);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Calendar strip overflow dot', () {
-    // TODO: declare `late AppHarness h;` and `tearDown(() => h.dispose());` when filling in stubs.
+    late AppHarness h;
+    tearDown(() => h.dispose());
 
     testWidgets('overflow_dot_not_blue_when_only_some_showups_on_break', (tester) async {
-      // TODO: 1. Seed 4 pacts ("Meditate", "Jog", "Read", "Swim"), each with one
-      //          showup scheduled on the same day (2099-06-15), later in the day
-      //          than testNow so all resolve to the `planned` UI state before any
-      //          break is applied.
-      // TODO: 2. Seed an active PactBreak for the "Meditate" pact covering
-      //          2099-06-15, so only that pact's showup resolves to
-      //          ShowupUiState.onBreak; the other three stay `planned`.
-      // TODO: 3. Boot the harness with todayProvider/pactListNowProvider pinned to
-      //          a time on 2099-06-15 before the showups' scheduled time, and
-      //          pact_breaks_enabled on.
-      // TODO: 4. Locate the calendar strip's overflow dot for that day via
-      //          find.byKey(Key('status-dot-overflow-2099-06-15')) and wait for it.
-      // TODO: 5. Read the dot's Container decoration color and the current
-      //          ColorScheme from the widget tree.
-      // TODO: 6. Assert the dot's color equals colorScheme.onSurfaceVariant (the
-      //          pending/grey fallback), and explicitly assert it does NOT equal
-      //          HabitLoopColors.onBreak (blue) — proving the "only some on
-      //          break" case no longer forces blue.
+      final testNow = DateTime(2099, 6, 15, 7, 0);
+      final pacts = [
+        buildPact(id: 'test-pact-overflow-meditate', habitName: 'Meditate', startDate: DateTime(2099, 6, 15)),
+        buildPact(id: 'test-pact-overflow-jog', habitName: 'Jog', startDate: DateTime(2099, 6, 15)),
+        buildPact(id: 'test-pact-overflow-read', habitName: 'Read', startDate: DateTime(2099, 6, 15)),
+        buildPact(id: 'test-pact-overflow-swim', habitName: 'Swim', startDate: DateTime(2099, 6, 15)),
+      ];
+      final onBreak = buildBreak(
+        id: 'brk-overflow-1',
+        pactId: 'test-pact-overflow-meditate',
+        startDate: DateTime(2099, 6, 15),
+        plannedEndDate: DateTime(2099, 6, 22),
+        rationale: 'Feeling sick',
+      );
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          todayProvider.overrideWithValue(testNow),
+          pactListNowProvider.overrideWithValue(testNow),
+          _breaksEnabled,
+        ],
+        beforePump: (h) async {
+          for (final pact in pacts) {
+            await h.pactRepo.savePact(pact);
+          }
+          await h.pactBreakRepo.saveBreak(onBreak);
+        },
+      );
+
+      // ── 1. Dashboard load generates each pact's showup for today and
+      //         resolves Meditate's alone to onBreak, the other three stay
+      //         planned — wait for the overflow dot to appear. ─────────────
+      const overflowKey = Key('status-dot-overflow-2099-06-15');
+      await waitFor(tester, find.byKey(overflowKey));
+
+      // ── 2. Only one of the four showups is on break — the overflow dot
+      //         must fall back to the pending/grey priority color, not blue.
+      //         Each platform page supplies its own statusColors instance
+      //         (cupertino() on iOS, material() on Android — see
+      //         dashboard_page_ios.dart / dashboard_page_android.dart), so
+      //         the expected pending color must match the running platform. ─
+      final container = tester.widget<Container>(find.byKey(overflowKey));
+      final decoration = container.decoration as BoxDecoration;
+      final ctx = tester.element(find.byKey(overflowKey));
+      final expectedPending = defaultTargetPlatform == TargetPlatform.iOS
+          ? CupertinoColors.systemGrey.resolveFrom(ctx)
+          : Theme.of(ctx).colorScheme.onSurfaceVariant;
+      expect(decoration.color, expectedPending);
+      expect(decoration.color, isNot(equals(HabitLoopColors.onBreak)));
     });
   });
 }
