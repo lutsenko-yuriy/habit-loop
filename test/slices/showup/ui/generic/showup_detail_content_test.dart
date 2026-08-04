@@ -190,6 +190,15 @@ void main() {
       await tester.pump();
       expect(find.byKey(const Key('action-buttons')), findsNothing);
     });
+
+    // HAB-213 WU2: on break, the "On break" badge alone carries the state —
+    // Mark Done/Failed would be misleading actions, so they're hidden entirely.
+    testWidgets('does not call buildActionButtons when pending but on break', (tester) async {
+      final state = _loadedState(status: ShowupStatus.pending, uiState: ShowupUiState.onBreak);
+      await tester.pumpWidget(_wrap(state));
+      await tester.pump();
+      expect(find.byKey(const Key('action-buttons')), findsNothing);
+    });
   });
 
   group('ShowupDetailContent — note field + save button slots', () {

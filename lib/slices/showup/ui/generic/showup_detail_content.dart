@@ -4,6 +4,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
 import 'package:habit_loop/theme/widgets/date_row_tile.dart';
@@ -158,7 +159,10 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
           widget.slots.buildStartBreakButton(context, widget.onStartBreak!),
           const SizedBox(height: AppSpacing.s16),
         ],
-        if (isPending) ...[
+        // On break, the "On break" badge above already carries the state —
+        // Mark Done/Failed would be misleading actions, so hide them entirely
+        // rather than show a disabled or replaced control (HAB-213).
+        if (isPending && uiState != ShowupUiState.onBreak) ...[
           widget.slots.buildActionButtons(context, state),
           const SizedBox(height: AppSpacing.s16),
         ],
