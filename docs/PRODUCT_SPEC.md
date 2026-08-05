@@ -39,7 +39,7 @@ The Habit Loop app allows the user to:
   - The user can pause an active pact with a break instead of stopping it, so showups during the break don't count as failures (feature flag: `pact_breaks_enabled`)
     - A break is started from the pact detail screen, or from a button on a recent unresolved/auto-failed showup (which always defaults the break's start date to today, regardless of which showup it was opened from); only one break can be active or scheduled per pact at a time
     - The user picks a start date (today or later) and either a specific end date or "until the pact ends" (open-ended), and must enter a rationale — the break cannot be created without one
-    - Showups scheduled inside the break window show a blue "on break" treatment everywhere showups are shown (calendar dots, today's list, showup detail, timeline) instead of failing, unless the user already explicitly marked them done or failed; on-break showups don't break or advance the streak, and are counted separately as "Skipped on break" in the pact's stats
+    - Showups scheduled inside the break window show a blue "on break" treatment everywhere showups are shown (calendar dots, today's list, showup detail, timeline) instead of failing, unless the user already explicitly marked them done or failed; on-break showups don't break or advance the streak, and are counted separately as "Skipped on break" in the pact's stats. On the showup detail screen, the Mark Done and Mark Failed buttons are hidden while a showup is on break — the status badge alone indicates the break state.
     - On a calendar day with 4 or more showups, they collapse into a single overflow dot; that dot only shows the on-break blue when *every* showup that day is on break — a day with a mix of on-break and other showups shows its usual done/failed/upcoming color instead
     - Reminders for showups inside an active break window are not sent
     - The pact detail screen shows a banner while a break is active, with its rationale and a "Resume pact" action that ends the break immediately; showups already on break at that point stay on break permanently, while later ones resume normal scheduling
@@ -64,6 +64,7 @@ The Habit Loop app allows the user to:
   - If the details of the showup were opened after the showup time (as defined during the pact's creation), the showup is marked as failed
   - The user can leave a note on the showup regardless of the time
   - If a showup was auto-failed (not manually failed) and falls within the tail zone (last N days, controlled by `pact_timeline_no_grouping_tail_period_in_days`), the user can redeem it by writing a note and tapping "Mark as Done (redeem)". The redemption button is always visible when eligible but disabled until a note is saved. Manual fails are not redeemable. The feature is controlled by the `showup_redemption_enabled` kill-switch.
+  - The showup detail screen uses smooth fade and slide transitions when its state changes (status badge, auto-fail banner, Take a Break button, action buttons, notes and mark-error text, pact link row) — matching the pact detail screen's existing animated style.
 - Be reminded about an upcoming showup
   - A notification with a reminder will appear to the user if they defined a reminder
   - The user can see the showup by clicking on the notification

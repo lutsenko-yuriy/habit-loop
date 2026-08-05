@@ -81,26 +81,23 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                     children: [
                                       FilledButton(
                                         onPressed: s.isSaving ? null : onMarkDone,
+                                        // No spinner, no default disabled grey (WU3): both flashed while fading
+                                        // out via AnimatedReveal after the save completed.
                                         style: FilledButton.styleFrom(
                                           backgroundColor: theme.colorScheme.secondary,
                                           foregroundColor: theme.colorScheme.onSecondary,
+                                          disabledBackgroundColor: theme.colorScheme.secondary,
+                                          disabledForegroundColor: theme.colorScheme.onSecondary,
                                         ),
-                                        child: s.isSaving
-                                            ? const SizedBox(
-                                                height: AppSpacing.s20,
-                                                width: AppSpacing.s20,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: Colors.white,
-                                                ),
-                                              )
-                                            : Text(l10n.markDone),
+                                        child: Text(l10n.markDone),
                                       ),
                                       const SizedBox(height: AppSpacing.s8),
                                       OutlinedButton(
                                         onPressed: s.isSaving ? null : onMarkFailed,
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: theme.colorScheme.error,
+                                          disabledForegroundColor: theme.colorScheme.error,
+                                          side: BorderSide(color: theme.colorScheme.outline),
                                         ),
                                         child: Text(l10n.markFailed),
                                       ),

@@ -8,6 +8,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/theme/widgets/animated_reveal.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
 
@@ -201,6 +202,49 @@ void main() {
     });
   });
 
+  group('ShowupDetailContent — action buttons freeze while collapsing (HAB-213 WU3)', () {
+    // Regression: must render isSaving: false throughout the collapse, even
+    // if the last fully-visible frame was mid-save (isSaving: true).
+    testWidgets('freezes to the enabled look (isSaving: false) throughout the fade', (tester) async {
+      ShowupStatus? lastRenderedStatus;
+      bool? lastRenderedIsSaving;
+      final ShowupDetailSlots customSlots = (
+        buildActionButtons: (context, s) {
+          lastRenderedStatus = s.showup?.status;
+          lastRenderedIsSaving = s.isSaving;
+          return const SizedBox(key: Key('action-buttons'));
+        },
+        buildNoteField: (context, ctrl) => TextField(key: const Key('note-field'), controller: ctrl),
+        buildSaveButton: (context, onPressed) =>
+            TextButton(key: const Key('save-button'), onPressed: onPressed, child: const Text('Save')),
+        buildErrorContainer: (context) => const SizedBox(key: Key('error-container')),
+        buildRedemptionButton: (context, onRedeem) =>
+            TextButton(key: const Key('redeem-button'), onPressed: onRedeem, child: const Text('Redeem')),
+        buildRedemptionHint: (context) => const SizedBox(key: Key('redeem-hint')),
+        buildStartBreakButton: (context, onPressed) =>
+            TextButton(key: const Key('start-break-button'), onPressed: onPressed, child: const Text('Take a Break')),
+      );
+
+      // Mid-save: still fully visible, renders live.
+      await tester.pumpWidget(
+        _wrap(_loadedState(status: ShowupStatus.pending, isSaving: true), slots: customSlots),
+      );
+      await tester.pump();
+      expect(lastRenderedStatus, ShowupStatus.pending);
+      expect(lastRenderedIsSaving, true);
+
+      // Save resolved: status flips to done, block starts collapsing.
+      await tester.pumpWidget(
+        _wrap(_loadedState(status: ShowupStatus.done, isSaving: false), slots: customSlots),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(lastRenderedIsSaving, false);
+
+      await tester.pumpAndSettle();
+    });
+  });
+
   group('ShowupDetailContent — note field + save button slots', () {
     testWidgets('renders buildNoteField slot', (tester) async {
       await tester.pumpWidget(_wrap(_loadedState()));
@@ -244,6 +288,76 @@ void main() {
       await tester.pumpWidget(_wrap(_loadedState()));
       await tester.pump();
       expect(find.byType(SectionHeader), findsOneWidget);
+    });
+  });
+
+  group('ShowupDetailContent — status badge animation (HAB-213 WU3)', () {
+    testWidgets('crossfades badge text mid-transition, then settles to the new state', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState(uiState: ShowupUiState.planned)));
+      await tester.pump();
+      expect(find.text('Planned'), findsOneWidget);
+
+      await tester.pumpWidget(_wrap(_loadedState(uiState: ShowupUiState.onBreak)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      // Both outgoing and incoming labels are on screen mid-crossfade.
+      expect(find.text('Planned'), findsOneWidget);
+      expect(find.text('On break'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(find.text('Planned'), findsNothing);
+      expect(find.text('On break'), findsOneWidget);
+    });
+  });
+
+  group('ShowupDetailContent — reveal animations (HAB-213 WU3)', () {
+    testWidgets('action buttons fade out through AnimatedReveal when isPending flips to false', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState(status: ShowupStatus.pending)));
+      await tester.pump();
+      expect(find.byKey(const Key('action-buttons')), findsOneWidget);
+
+      await tester.pumpWidget(_wrap(_loadedState(status: ShowupStatus.done)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      final opacity = tester.widget<Opacity>(
+        find.ancestor(of: find.byKey(const Key('action-buttons')), matching: find.byType(Opacity)).first,
+      );
+      expect(opacity.opacity, greaterThan(0));
+      expect(opacity.opacity, lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('action-buttons')), findsNothing);
+    });
+
+    testWidgets('pact link row fades in through AnimatedReveal when onOpenPact becomes non-null', (tester) async {
+      final state = _loadedState();
+      await tester.pumpWidget(_wrap(state));
+      await tester.pump();
+      expect(find.byKey(const Key('showup-pact-link')), findsNothing);
+
+      await tester.pumpWidget(_wrap(state, onOpenPact: () {}));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      final opacity = tester.widget<Opacity>(
+        find.ancestor(of: find.byKey(const Key('showup-pact-link')), matching: find.byType(Opacity)).first,
+      );
+      expect(opacity.opacity, greaterThan(0));
+      expect(opacity.opacity, lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('showup-pact-link')), findsOneWidget);
+    });
+
+    // Regression: AnimatedReveal's default alignment is topCenter, which
+    // centers a non-stretched child horizontally — the pact link needs
+    // topLeft explicitly, since it's a link, not a full-width control.
+    testWidgets('pact link is left-aligned, not centered', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState(), onOpenPact: () {}));
+      await tester.pump();
+      final reveal = tester.widget<AnimatedReveal>(
+        find.ancestor(of: find.byKey(const Key('showup-pact-link')), matching: find.byType(AnimatedReveal)).first,
+      );
+      expect(reveal.alignment, Alignment.topLeft);
     });
   });
 }

@@ -4,6 +4,23 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.54.3] — 2026-08-05 (PR #361 merged)
+
+### Changed
+
+- [user] Showup detail screen now transitions smoothly — the status badge, action buttons, and all conditional sections (auto-fail banner, Take a Break button, action buttons, note/mark errors, pact-link row) now fade and slide in/out instead of popping abruptly when the showup's state changes. Status badge holds a fixed width so the header row doesn't shift as the label length changes (e.g. "Pending" → "On break").
+- HAB-213 (WU3): Reused `AnimatedReveal` and `AnimatedValueTransition` (existing patterns from pact detail screen); `StatusBadge` takes an optional fixed width (`widestOf`), action-button slot moved inside `AnimatedReveal` so gaps collapse cleanly. Added widget tests for mid-animation states and settled-state badge rendering.
+- [app] Fixed button color flashing on Mark Done/Mark Failed actions — disabled-state colors are now correctly matched to their enabled counterparts (`onSurface` → `onSurfaceVariant`, tracking the button's disabled state directly instead of snapping on spinner visibility).
+- [app] Fixed pact-link row alignment shifting when visible/hidden on break state change.
+
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [test] HAB-213 (WU0): Added stub integration scenarios for the overflow-dot on-break color fix and hiding Done/Failed actions on an on-break showup — `showup_on_break_flow_test.dart` (new) and an addition to `break_flow_test.dart`. Stubs only; `implement` fills in driver code in WU1/WU2.
+- [wip] HAB-213 (WU1): Fixed the calendar-strip overflow dot (4+ showups on one day) forcing blue "on break" as soon as *any* showup that day was on break. `ShowupStatusColors.overflowForUiState` now only returns the on-break color when *all* of the day's showups are on break; a mixed day falls through to the existing amber (active)/grey (planned)/green-or-red (resolved) priority logic on its non-break showups alone, same as before on-break entries existed. Rewrote the three unit tests that asserted the old "any on break" rule and added mixed-day coverage (amber, grey, done, failed, empty-list cases) in `showup_status_colors_test.dart` and `showup_status_dots_test.dart`. Makes WU0's `overflow_dot_not_blue_when_only_some_showups_on_break` scenario green.
+- [wip] HAB-213 (WU2): Showup detail screen now hides the Mark Done/Mark Failed buttons entirely while the showup is on break — the existing "On break" status badge already carries the state, so no replacement control is shown. `ShowupDetailContent` gates its action-buttons slot on `isPending && uiState != ShowupUiState.onBreak`. Makes WU0's `onbreak_showup_detail_hides_done_failed_actions` scenario green.
+
 ## [0.54.2] — 2026-08-04 (PR #359 merged)
 
 ### Added
@@ -41,9 +58,6 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 - [test] HAB-206: Restored the two original push/pop nav-stack scenarios (deleted by the WU0 stub commit below) as an explicitly-labeled legacy group, alongside the new in-place-swap stubs — the app still ships the push/pop model until WU1 lands, so deleting its coverage early would have left a real gap for an urgent release during that window. Deleted in the same commit that makes the new stubs green.
 - [test] HAB-206 (WU0): Rewrote `pact_chain_test.dart`'s two nav-stack scenarios as stubs asserting in-place-swap semantics (single mounted `PactDetailScreen`, no push/pop) instead of the old pop/push model, and added a new stub scenario asserting the back button exits directly to the Pacts List after a single chain-navigation hop.
 - [ci] HAB-210: Fixed `version-tag`'s build-number-bump step overwriting a concurrently-merged PR's `pubspec.yaml` version-name bump with a stale value captured at pipeline-start. It now re-derives the version name from the freshly-pulled `pubspec.yaml` instead of trusting `resolve-version`'s pipeline-start output — only the build number is this job's own to advance. `main` had briefly shown this exact corruption (`0.53.2` reverted to `0.53.1`) before a later, independently-triggered pipeline run happened to self-correct it by the luck of race ordering — this fix removes the ordering dependency rather than relying on that luck recurring.
-- [test] HAB-213 (WU0): Added stub integration scenarios for the overflow-dot on-break color fix and hiding Done/Failed actions on an on-break showup — `showup_on_break_flow_test.dart` (new) and an addition to `break_flow_test.dart`. Stubs only; `implement` fills in driver code in WU1/WU2.
-- [wip] HAB-213 (WU1): Fixed the calendar-strip overflow dot (4+ showups on one day) forcing blue "on break" as soon as *any* showup that day was on break. `ShowupStatusColors.overflowForUiState` now only returns the on-break color when *all* of the day's showups are on break; a mixed day falls through to the existing amber (active)/grey (planned)/green-or-red (resolved) priority logic on its non-break showups alone, same as before on-break entries existed. Rewrote the three unit tests that asserted the old "any on break" rule and added mixed-day coverage (amber, grey, done, failed, empty-list cases) in `showup_status_colors_test.dart` and `showup_status_dots_test.dart`. Makes WU0's `overflow_dot_not_blue_when_only_some_showups_on_break` scenario green.
-- [wip] HAB-213 (WU2): Showup detail screen now hides the Mark Done/Mark Failed buttons entirely while the showup is on break — the existing "On break" status badge already carries the state, so no replacement control is shown. `ShowupDetailContent` gates its action-buttons slot on `isPending && uiState != ShowupUiState.onBreak`. Makes WU0's `onbreak_showup_detail_hides_done_failed_actions` scenario green.
 
 ## [0.53.3] — 2026-08-01 (PR #345 merged)
 

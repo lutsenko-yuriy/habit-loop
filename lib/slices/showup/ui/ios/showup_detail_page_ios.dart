@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
@@ -93,9 +93,10 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         children: [
                                           CupertinoButton.filled(
                                             onPressed: s.isSaving ? null : onMarkDone,
-                                            child: s.isSaving
-                                                ? const CupertinoActivityIndicator(color: Colors.white)
-                                                : Text(l10n.markDone),
+                                            // No spinner, no built-in disabled grey (WU3): both flashed while
+                                            // fading out via AnimatedReveal after the save completed.
+                                            disabledColor: CupertinoTheme.of(ctx).primaryColor,
+                                            child: Text(l10n.markDone),
                                           ),
                                           const SizedBox(height: AppSpacing.s8),
                                           CupertinoButton(
