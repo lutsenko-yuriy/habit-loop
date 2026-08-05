@@ -1,3 +1,5 @@
+import 'dart:async' show Timer;
+
 import 'package:flutter/material.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -81,6 +83,8 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
   // collapsing, so it fades from its enabled look, not a disabled one (WU3).
   ShowupDetailState? _lastActionButtonsState;
 
+  Timer? _badgeResetTimer;
+
   bool _showsActionButtons(ShowupDetailState s) =>
       s.showup?.status == ShowupStatus.pending && s.uiState != ShowupUiState.onBreak;
 
@@ -107,18 +111,16 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     final newUiState = widget.state.uiState;
     if (oldWidget.state.uiState != newUiState) {
       _previousUiState = oldWidget.state.uiState;
-      Future.delayed(kAnimatedValueTransitionDuration, () {
-        // Only clear if uiState hasn't moved on again since this timer was
-        // scheduled — a later change already owns the reset by then.
-        if (mounted && widget.state.uiState == newUiState) {
-          setState(() => _previousUiState = null);
-        }
+      _badgeResetTimer?.cancel();
+      _badgeResetTimer = Timer(kAnimatedValueTransitionDuration, () {
+        setState(() => _previousUiState = null);
       });
     }
   }
 
   @override
   void dispose() {
+    _badgeResetTimer?.cancel();
     _noteController.dispose();
     super.dispose();
   }
@@ -157,7 +159,9 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
               ),
             ),
             AnimatedValueTransition(
-              direction: null,
+              // null still slides forward (see AnimatedValueTransition's own
+              // sign logic) — passing it explicitly here to match reality.
+              direction: SlideDirection.forward,
               previousChild: previousUiState != null && previousUiState != uiState
                   ? StatusBadge(
                       text: showupUiStateText(l10n, previousUiState),

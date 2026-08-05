@@ -97,6 +97,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: theme.colorScheme.error,
                                           disabledForegroundColor: theme.colorScheme.error,
+                                          side: BorderSide(color: theme.colorScheme.outline),
                                         ),
                                         child: Text(l10n.markFailed),
                                       ),
