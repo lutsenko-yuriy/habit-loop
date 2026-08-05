@@ -201,6 +201,63 @@ void main() {
     });
   });
 
+  group('ShowupDetailContent — action buttons freeze while collapsing (HAB-213 WU3)', () {
+    // Regression: buildActionButtons must keep rendering whatever it was
+    // already showing right before the block started collapsing — not the
+    // just-arrived (settled) state. AnimatedReveal's first collapsing frame
+    // still renders at full opacity (the controller hasn't ticked down yet),
+    // so switching to a different-looking render on that exact frame is a
+    // visible flash. Freezing on the pre-transition render keeps the fade
+    // visually continuous with what was already on screen. (An earlier
+    // attempt froze on the settled state instead, which reintroduced the
+    // flash; a spinner-driven icon swap was removed separately since it made
+    // this worse — see the platform button implementations.)
+    testWidgets('keeps rendering the pre-collapse state throughout the fade', (tester) async {
+      ShowupStatus? lastRenderedStatus;
+      bool? lastRenderedIsSaving;
+      final ShowupDetailSlots customSlots = (
+        buildActionButtons: (context, s) {
+          lastRenderedStatus = s.showup?.status;
+          lastRenderedIsSaving = s.isSaving;
+          return const SizedBox(key: Key('action-buttons'));
+        },
+        buildNoteField: (context, ctrl) => TextField(key: const Key('note-field'), controller: ctrl),
+        buildSaveButton: (context, onPressed) =>
+            TextButton(key: const Key('save-button'), onPressed: onPressed, child: const Text('Save')),
+        buildErrorContainer: (context) => const SizedBox(key: Key('error-container')),
+        buildRedemptionButton: (context, onRedeem) =>
+            TextButton(key: const Key('redeem-button'), onPressed: onRedeem, child: const Text('Redeem')),
+        buildRedemptionHint: (context) => const SizedBox(key: Key('redeem-hint')),
+        buildStartBreakButton: (context, onPressed) =>
+            TextButton(key: const Key('start-break-button'), onPressed: onPressed, child: const Text('Take a Break')),
+      );
+
+      // Mid-save: renders live — unaffected by the freeze, since the block
+      // is still fully visible (not collapsing) at this point.
+      await tester.pumpWidget(
+        _wrap(_loadedState(status: ShowupStatus.pending, isSaving: true), slots: customSlots),
+      );
+      await tester.pump();
+      expect(lastRenderedStatus, ShowupStatus.pending);
+      expect(lastRenderedIsSaving, true);
+
+      // Save just resolved: status flips to done, isSaving flips back to
+      // false, in the same update — isPending flips false, so the block
+      // starts collapsing on this exact frame. It must keep rendering the
+      // pre-collapse (pending, isSaving: true) snapshot for the rest of the
+      // fade, not this live update.
+      await tester.pumpWidget(
+        _wrap(_loadedState(status: ShowupStatus.done, isSaving: false), slots: customSlots),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(lastRenderedStatus, ShowupStatus.pending);
+      expect(lastRenderedIsSaving, true);
+
+      await tester.pumpAndSettle();
+    });
+  });
+
   group('ShowupDetailContent — note field + save button slots', () {
     testWidgets('renders buildNoteField slot', (tester) async {
       await tester.pumpWidget(_wrap(_loadedState()));

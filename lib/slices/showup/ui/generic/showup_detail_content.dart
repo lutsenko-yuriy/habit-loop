@@ -82,12 +82,28 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
   VoidCallback? _lastOnOpenPact;
   VoidCallback? _lastOnStartBreak;
 
+  // Snapshot of the last state rendered while the action buttons were still
+  // fully visible — kept frozen for the duration of the collapse instead of
+  // switching to the live (already-settled) state. AnimatedReveal's first
+  // collapsing frame still paints at full opacity (its controller hasn't
+  // ticked down yet), so a render that looks different from the
+  // immediately-preceding frame is a visible flash right there, before any
+  // fading is even perceptible. Freezing on the pre-collapse render keeps
+  // that frame visually continuous with what was already on screen (HAB-213
+  // WU3 follow-up; the buttons' own spinner-on-isSaving swap was removed
+  // separately since it made this worse, not better).
+  ShowupDetailState? _lastActionButtonsState;
+
+  bool _showsActionButtons(ShowupDetailState s) =>
+      s.showup?.status == ShowupStatus.pending && s.uiState != ShowupUiState.onBreak;
+
   @override
   void initState() {
     super.initState();
     _noteController = TextEditingController(text: widget.state.showup?.note ?? '');
     _lastOnOpenPact = widget.onOpenPact;
     _lastOnStartBreak = widget.onStartBreak;
+    if (_showsActionButtons(widget.state)) _lastActionButtonsState = widget.state;
   }
 
   @override
@@ -99,6 +115,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     }
     if (widget.onOpenPact != null) _lastOnOpenPact = widget.onOpenPact;
     if (widget.onStartBreak != null) _lastOnStartBreak = widget.onStartBreak;
+    if (_showsActionButtons(widget.state)) _lastActionButtonsState = widget.state;
 
     final newUiState = widget.state.uiState;
     if (oldWidget.state.uiState != newUiState) {
@@ -239,7 +256,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              widget.slots.buildActionButtons(context, state),
+              widget.slots.buildActionButtons(context, _lastActionButtonsState ?? state),
               const SizedBox(height: AppSpacing.s16),
             ],
           ),

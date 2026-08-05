@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, Material, MaterialType, Theme;
+import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
@@ -93,9 +93,11 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         children: [
                                           CupertinoButton.filled(
                                             onPressed: s.isSaving ? null : onMarkDone,
-                                            child: s.isSaving
-                                                ? const CupertinoActivityIndicator(color: Colors.white)
-                                                : Text(l10n.markDone),
+                                            // No spinner (HAB-213 WU3 follow-up): a live icon swap made the block
+                                            // flash/blink while it was fading out via AnimatedReveal after the
+                                            // save completed. Disabled styling while isSaving already conveys
+                                            // "in progress" without changing the button's content.
+                                            child: Text(l10n.markDone),
                                           ),
                                           const SizedBox(height: AppSpacing.s8),
                                           CupertinoButton(

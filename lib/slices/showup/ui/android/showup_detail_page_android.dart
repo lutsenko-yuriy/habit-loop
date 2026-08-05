@@ -85,16 +85,11 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                           backgroundColor: theme.colorScheme.secondary,
                                           foregroundColor: theme.colorScheme.onSecondary,
                                         ),
-                                        child: s.isSaving
-                                            ? const SizedBox(
-                                                height: AppSpacing.s20,
-                                                width: AppSpacing.s20,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: Colors.white,
-                                                ),
-                                              )
-                                            : Text(l10n.markDone),
+                                        // No spinner (HAB-213 WU3 follow-up): a live icon swap made the block
+                                        // flash/blink while it was fading out via AnimatedReveal after the
+                                        // save completed. Disabled styling while isSaving already conveys
+                                        // "in progress" without changing the button's content.
+                                        child: Text(l10n.markDone),
                                       ),
                                       const SizedBox(height: AppSpacing.s8),
                                       OutlinedButton(
