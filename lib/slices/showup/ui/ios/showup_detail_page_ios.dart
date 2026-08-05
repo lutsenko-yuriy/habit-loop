@@ -97,6 +97,14 @@ class ShowupDetailPageIos extends StatelessWidget {
                                             // flash/blink while it was fading out via AnimatedReveal after the
                                             // save completed. Disabled styling while isSaving already conveys
                                             // "in progress" without changing the button's content.
+                                            //
+                                            // disabledColor matches .filled's own enabled fill (CupertinoTheme's
+                                            // primaryColor) instead of the default quaternarySystemFill grey —
+                                            // isSaving is brief (a local DB write), so disabling still snapped the
+                                            // background to a visibly different color and back within the same
+                                            // fraction of a second, reading as a blink on its own, independent of
+                                            // the AnimatedReveal fade that follows it.
+                                            disabledColor: CupertinoTheme.of(ctx).primaryColor,
                                             child: Text(l10n.markDone),
                                           ),
                                           const SizedBox(height: AppSpacing.s8),

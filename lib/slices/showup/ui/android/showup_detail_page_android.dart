@@ -81,14 +81,23 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                     children: [
                                       FilledButton(
                                         onPressed: s.isSaving ? null : onMarkDone,
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: theme.colorScheme.secondary,
-                                          foregroundColor: theme.colorScheme.onSecondary,
-                                        ),
                                         // No spinner (HAB-213 WU3 follow-up): a live icon swap made the block
                                         // flash/blink while it was fading out via AnimatedReveal after the
                                         // save completed. Disabled styling while isSaving already conveys
                                         // "in progress" without changing the button's content.
+                                        //
+                                        // disabledBackgroundColor/disabledForegroundColor match the enabled
+                                        // colors instead of Material's default greyed-out disabled style —
+                                        // isSaving is brief (a local DB write), so disabling still snapped the
+                                        // button to a visibly different color and back within the same fraction
+                                        // of a second, reading as a blink on its own, independent of the
+                                        // AnimatedReveal fade that follows it.
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: theme.colorScheme.secondary,
+                                          foregroundColor: theme.colorScheme.onSecondary,
+                                          disabledBackgroundColor: theme.colorScheme.secondary,
+                                          disabledForegroundColor: theme.colorScheme.onSecondary,
+                                        ),
                                         child: Text(l10n.markDone),
                                       ),
                                       const SizedBox(height: AppSpacing.s8),
@@ -96,6 +105,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                         onPressed: s.isSaving ? null : onMarkFailed,
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: theme.colorScheme.error,
+                                          disabledForegroundColor: theme.colorScheme.error,
                                         ),
                                         child: Text(l10n.markFailed),
                                       ),
