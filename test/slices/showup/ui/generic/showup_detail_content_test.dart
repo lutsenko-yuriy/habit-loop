@@ -203,17 +203,14 @@ void main() {
   });
 
   group('ShowupDetailContent — action buttons freeze while collapsing (HAB-213 WU3)', () {
-    // Regression: buildActionButtons must keep rendering whatever it was
-    // already showing right before the block started collapsing — not the
-    // just-arrived (settled) state. AnimatedReveal's first collapsing frame
-    // still renders at full opacity (the controller hasn't ticked down yet),
-    // so switching to a different-looking render on that exact frame is a
-    // visible flash. Freezing on the pre-transition render keeps the fade
-    // visually continuous with what was already on screen. (An earlier
-    // attempt froze on the settled state instead, which reintroduced the
-    // flash; a spinner-driven icon swap was removed separately since it made
-    // this worse — see the platform button implementations.)
-    testWidgets('keeps rendering the pre-collapse state throughout the fade', (tester) async {
+    // Regression: buildActionButtons must render with isSaving forced false
+    // for the whole collapse, even if the block was still mid-save (isSaving:
+    // true, disabled/dim style) on the very last frame it was fully visible.
+    // Freezing on that mid-save look instead made the button appear to go
+    // dead/inactive for the whole 250ms fade rather than simply fading away
+    // — IgnorePointer already blocks taps once collapsing, so there's
+    // nothing left for the disabled styling to protect against.
+    testWidgets('freezes to the enabled look (isSaving: false) throughout the fade', (tester) async {
       ShowupStatus? lastRenderedStatus;
       bool? lastRenderedIsSaving;
       final ShowupDetailSlots customSlots = (
@@ -244,16 +241,14 @@ void main() {
 
       // Save just resolved: status flips to done, isSaving flips back to
       // false, in the same update — isPending flips false, so the block
-      // starts collapsing on this exact frame. It must keep rendering the
-      // pre-collapse (pending, isSaving: true) snapshot for the rest of the
-      // fade, not this live update.
+      // starts collapsing on this exact frame. isSaving must read false
+      // throughout the fade — never the true it had one frame earlier.
       await tester.pumpWidget(
         _wrap(_loadedState(status: ShowupStatus.done, isSaving: false), slots: customSlots),
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 125));
-      expect(lastRenderedStatus, ShowupStatus.pending);
-      expect(lastRenderedIsSaving, true);
+      expect(lastRenderedIsSaving, false);
 
       await tester.pumpAndSettle();
     });

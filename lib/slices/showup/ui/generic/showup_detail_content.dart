@@ -82,16 +82,15 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
   VoidCallback? _lastOnOpenPact;
   VoidCallback? _lastOnStartBreak;
 
-  // Snapshot of the last state rendered while the action buttons were still
-  // fully visible — kept frozen for the duration of the collapse instead of
-  // switching to the live (already-settled) state. AnimatedReveal's first
-  // collapsing frame still paints at full opacity (its controller hasn't
-  // ticked down yet), so a render that looks different from the
-  // immediately-preceding frame is a visible flash right there, before any
-  // fading is even perceptible. Freezing on the pre-collapse render keeps
-  // that frame visually continuous with what was already on screen (HAB-213
-  // WU3 follow-up; the buttons' own spinner-on-isSaving swap was removed
-  // separately since it made this worse, not better).
+  // Snapshot of the action buttons' state, frozen to its enabled look
+  // (isSaving forced false) the moment the block starts collapsing — kept
+  // for the whole fade instead of tracking the live state. isSaving is only
+  // meaningful while the block is fully visible (it guards against a
+  // double-tap during the real save); once collapsing, IgnorePointer already
+  // blocks taps, so there's no need to keep showing the disabled/dim style —
+  // doing so made the button look like it had gone dead rather than simply
+  // fading away (HAB-213 WU3 follow-up; a spinner-on-isSaving swap was
+  // removed separately for the same reason).
   ShowupDetailState? _lastActionButtonsState;
 
   bool _showsActionButtons(ShowupDetailState s) =>
@@ -103,7 +102,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     _noteController = TextEditingController(text: widget.state.showup?.note ?? '');
     _lastOnOpenPact = widget.onOpenPact;
     _lastOnStartBreak = widget.onStartBreak;
-    if (_showsActionButtons(widget.state)) _lastActionButtonsState = widget.state;
+    if (_showsActionButtons(widget.state)) _lastActionButtonsState = widget.state.copyWith(isSaving: false);
   }
 
   @override
@@ -115,7 +114,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     }
     if (widget.onOpenPact != null) _lastOnOpenPact = widget.onOpenPact;
     if (widget.onStartBreak != null) _lastOnStartBreak = widget.onStartBreak;
-    if (_showsActionButtons(widget.state)) _lastActionButtonsState = widget.state;
+    if (_showsActionButtons(widget.state)) _lastActionButtonsState = widget.state.copyWith(isSaving: false);
 
     final newUiState = widget.state.uiState;
     if (oldWidget.state.uiState != newUiState) {
@@ -257,7 +256,13 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              widget.slots.buildActionButtons(context, _lastActionButtonsState ?? state),
+              // Live state while actually shown (isSaving still drives the
+              // disabled style then); the frozen, always-enabled snapshot
+              // only once collapsing (see _lastActionButtonsState).
+              widget.slots.buildActionButtons(
+                context,
+                (isPending && uiState != ShowupUiState.onBreak) ? state : (_lastActionButtonsState ?? state),
+              ),
               const SizedBox(height: AppSpacing.s16),
             ],
           ),
