@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.54.3] — 2026-08-05 (PR #361 merged)
+
+### Changed
+
+- [user] Showup detail screen now transitions smoothly — the status badge, action buttons, and all conditional sections (auto-fail banner, Take a Break button, action buttons, note/mark errors, pact-link row) now fade and slide in/out instead of popping abruptly when the showup's state changes. Status badge holds a fixed width so the header row doesn't shift as the label length changes (e.g. "Pending" → "On break").
+- HAB-213 (WU3): Reused `AnimatedReveal` and `AnimatedValueTransition` (existing patterns from pact detail screen); `StatusBadge` takes an optional fixed width (`widestOf`), action-button slot moved inside `AnimatedReveal` so gaps collapse cleanly. Added widget tests for mid-animation states and settled-state badge rendering.
+- [app] Fixed button color flashing on Mark Done/Mark Failed actions — disabled-state colors are now correctly matched to their enabled counterparts (`onSurface` → `onSurfaceVariant`, tracking the button's disabled state directly instead of snapping on spinner visibility).
+- [app] Fixed pact-link row alignment shifting when visible/hidden on break state change.
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
