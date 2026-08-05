@@ -203,13 +203,8 @@ void main() {
   });
 
   group('ShowupDetailContent — action buttons freeze while collapsing (HAB-213 WU3)', () {
-    // Regression: buildActionButtons must render with isSaving forced false
-    // for the whole collapse, even if the block was still mid-save (isSaving:
-    // true, disabled/dim style) on the very last frame it was fully visible.
-    // Freezing on that mid-save look instead made the button appear to go
-    // dead/inactive for the whole 250ms fade rather than simply fading away
-    // — IgnorePointer already blocks taps once collapsing, so there's
-    // nothing left for the disabled styling to protect against.
+    // Regression: must render isSaving: false throughout the collapse, even
+    // if the last fully-visible frame was mid-save (isSaving: true).
     testWidgets('freezes to the enabled look (isSaving: false) throughout the fade', (tester) async {
       ShowupStatus? lastRenderedStatus;
       bool? lastRenderedIsSaving;
@@ -230,8 +225,7 @@ void main() {
             TextButton(key: const Key('start-break-button'), onPressed: onPressed, child: const Text('Take a Break')),
       );
 
-      // Mid-save: renders live — unaffected by the freeze, since the block
-      // is still fully visible (not collapsing) at this point.
+      // Mid-save: still fully visible, renders live.
       await tester.pumpWidget(
         _wrap(_loadedState(status: ShowupStatus.pending, isSaving: true), slots: customSlots),
       );
@@ -239,10 +233,7 @@ void main() {
       expect(lastRenderedStatus, ShowupStatus.pending);
       expect(lastRenderedIsSaving, true);
 
-      // Save just resolved: status flips to done, isSaving flips back to
-      // false, in the same update — isPending flips false, so the block
-      // starts collapsing on this exact frame. isSaving must read false
-      // throughout the fade — never the true it had one frame earlier.
+      // Save resolved: status flips to done, block starts collapsing.
       await tester.pumpWidget(
         _wrap(_loadedState(status: ShowupStatus.done, isSaving: false), slots: customSlots),
       );
