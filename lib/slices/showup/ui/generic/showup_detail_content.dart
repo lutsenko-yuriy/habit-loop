@@ -136,6 +136,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
     final durationMins = showup.duration.inMinutes;
     final isPending = showup.status == ShowupStatus.pending;
     final uiState = state.uiState;
+    final showActions = isPending && uiState != ShowupUiState.onBreak;
     final statusColor = widget.statusColors.forUiState(uiState);
     final statusText = showupUiStateText(l10n, uiState);
     // Pinned to the widest possible status label so the badge doesn't resize
@@ -239,16 +240,13 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
         // Mark Done/Failed would be misleading actions, so hide them entirely
         // rather than show a disabled or replaced control (HAB-213).
         AnimatedReveal(
-          visible: isPending && uiState != ShowupUiState.onBreak,
+          visible: showActions,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Live state while shown; frozen snapshot once collapsing.
-              widget.slots.buildActionButtons(
-                context,
-                (isPending && uiState != ShowupUiState.onBreak) ? state : (_lastActionButtonsState ?? state),
-              ),
+              widget.slots.buildActionButtons(context, showActions ? state : (_lastActionButtonsState ?? state)),
               const SizedBox(height: AppSpacing.s16),
             ],
           ),
