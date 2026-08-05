@@ -185,6 +185,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
         // this is a link, not a full-width control.
         AnimatedReveal(
           visible: widget.onOpenPact != null,
+          alignment: Alignment.topLeft,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -8,6 +8,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
+import 'package:habit_loop/theme/widgets/animated_reveal.dart';
 import 'package:habit_loop/theme/widgets/section_header.dart';
 import 'package:habit_loop/theme/widgets/status_badge.dart';
 
@@ -359,6 +360,18 @@ void main() {
 
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('showup-pact-link')), findsOneWidget);
+    });
+
+    // Regression: AnimatedReveal's default alignment is topCenter, which
+    // centers a non-stretched child horizontally — the pact link needs
+    // topLeft explicitly, since it's a link, not a full-width control.
+    testWidgets('pact link is left-aligned, not centered', (tester) async {
+      await tester.pumpWidget(_wrap(_loadedState(), onOpenPact: () {}));
+      await tester.pump();
+      final reveal = tester.widget<AnimatedReveal>(
+        find.ancestor(of: find.byKey(const Key('showup-pact-link')), matching: find.byType(AnimatedReveal)).first,
+      );
+      expect(reveal.alignment, Alignment.topLeft);
     });
   });
 }
