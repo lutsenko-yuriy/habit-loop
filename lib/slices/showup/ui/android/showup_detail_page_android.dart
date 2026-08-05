@@ -81,17 +81,8 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                     children: [
                                       FilledButton(
                                         onPressed: s.isSaving ? null : onMarkDone,
-                                        // No spinner (HAB-213 WU3 follow-up): a live icon swap made the block
-                                        // flash/blink while it was fading out via AnimatedReveal after the
-                                        // save completed. Disabled styling while isSaving already conveys
-                                        // "in progress" without changing the button's content.
-                                        //
-                                        // disabledBackgroundColor/disabledForegroundColor match the enabled
-                                        // colors instead of Material's default greyed-out disabled style —
-                                        // isSaving is brief (a local DB write), so disabling still snapped the
-                                        // button to a visibly different color and back within the same fraction
-                                        // of a second, reading as a blink on its own, independent of the
-                                        // AnimatedReveal fade that follows it.
+                                        // No spinner, no default disabled grey (WU3): both flashed while fading
+                                        // out via AnimatedReveal after the save completed.
                                         style: FilledButton.styleFrom(
                                           backgroundColor: theme.colorScheme.secondary,
                                           foregroundColor: theme.colorScheme.onSecondary,

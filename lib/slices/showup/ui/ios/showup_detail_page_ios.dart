@@ -93,17 +93,8 @@ class ShowupDetailPageIos extends StatelessWidget {
                                         children: [
                                           CupertinoButton.filled(
                                             onPressed: s.isSaving ? null : onMarkDone,
-                                            // No spinner (HAB-213 WU3 follow-up): a live icon swap made the block
-                                            // flash/blink while it was fading out via AnimatedReveal after the
-                                            // save completed. Disabled styling while isSaving already conveys
-                                            // "in progress" without changing the button's content.
-                                            //
-                                            // disabledColor matches .filled's own enabled fill (CupertinoTheme's
-                                            // primaryColor) instead of the default quaternarySystemFill grey —
-                                            // isSaving is brief (a local DB write), so disabling still snapped the
-                                            // background to a visibly different color and back within the same
-                                            // fraction of a second, reading as a blink on its own, independent of
-                                            // the AnimatedReveal fade that follows it.
+                                            // No spinner, no built-in disabled grey (WU3): both flashed while
+                                            // fading out via AnimatedReveal after the save completed.
                                             disabledColor: CupertinoTheme.of(ctx).primaryColor,
                                             child: Text(l10n.markDone),
                                           ),

@@ -69,28 +69,16 @@ class ShowupDetailContent extends StatefulWidget {
 class _ShowupDetailContentState extends State<ShowupDetailContent> {
   late TextEditingController _noteController;
 
-  // Outgoing badge state, only present for the ~250ms crossfade window right
-  // after uiState changes (HAB-213 WU3) — mirrors PactDetailScreen's own
-  // outgoing-snapshot lifecycle at a much smaller scale, since this screen
-  // has no externally-supplied "previous state" to read it from.
+  // Outgoing badge, held for the crossfade window after uiState changes (WU3).
   ShowupUiState? _previousUiState;
 
-  // Remembered so a collapsing AnimatedReveal block can keep calling the
-  // callback that was live when it started collapsing, instead of
-  // dereferencing a now-null widget field mid-animation (HAB-213 WU3;
-  // pattern taken from BreakBannerReveal).
+  // Last non-null callback, so a collapsing AnimatedReveal block keeps a
+  // valid onTap/onPressed instead of a now-null widget field (WU3).
   VoidCallback? _lastOnOpenPact;
   VoidCallback? _lastOnStartBreak;
 
-  // Snapshot of the action buttons' state, frozen to its enabled look
-  // (isSaving forced false) the moment the block starts collapsing — kept
-  // for the whole fade instead of tracking the live state. isSaving is only
-  // meaningful while the block is fully visible (it guards against a
-  // double-tap during the real save); once collapsing, IgnorePointer already
-  // blocks taps, so there's no need to keep showing the disabled/dim style —
-  // doing so made the button look like it had gone dead rather than simply
-  // fading away (HAB-213 WU3 follow-up; a spinner-on-isSaving swap was
-  // removed separately for the same reason).
+  // Buttons' state frozen (isSaving: false) once the block starts
+  // collapsing, so it fades from its enabled look, not a disabled one (WU3).
   ShowupDetailState? _lastActionButtonsState;
 
   bool _showsActionButtons(ShowupDetailState s) =>
@@ -256,9 +244,7 @@ class _ShowupDetailContentState extends State<ShowupDetailContent> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Live state while actually shown (isSaving still drives the
-              // disabled style then); the frozen, always-enabled snapshot
-              // only once collapsing (see _lastActionButtonsState).
+              // Live state while shown; frozen snapshot once collapsing.
               widget.slots.buildActionButtons(
                 context,
                 (isPending && uiState != ShowupUiState.onBreak) ? state : (_lastActionButtonsState ?? state),
