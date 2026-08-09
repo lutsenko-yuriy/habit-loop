@@ -252,7 +252,14 @@ void main() {
       //         rendering-only change ────────────────────────────────────────
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await waitFor(tester, find.text(strings.statsShowups(1)));
+      // Stat cards sit below the fold on a short viewport (CI's Android emulator) —
+      // dragUntilVisible, not a bare waitFor, since the sliver-backed ListView may
+      // not have realized them yet (HAB-196/HAB-199/HAB-211 root cause).
+      await tester.dragUntilVisible(
+        find.text(strings.statsShowups(1)).first,
+        find.byKey(const Key('pact-detail-scroll-view-$_pactId')),
+        const Offset(0, -100),
+      );
       expect(find.text(strings.statsShowups(1)), findsWidgets);
     });
 
