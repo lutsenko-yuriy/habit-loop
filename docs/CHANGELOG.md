@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [wip] (PR #364) HAB-216 (WU1): `BreakMilestone` sealed-union member added and `PactTimelineGrouper.groupWithStats` restructured to merge every showup covered by the same `PactBreak` into one timeline entry — tail zone included, and regardless of an explicit `done`/`failed` mark inside the break window. `tailStartIndex` resolved lazily at break-run flush time via a `touchesTail` flag, staying a single forward pass. Both platform pages render the new milestone (new `_BreakLabel` widget, non-tappable). Old `isOnBreak`/`breakRationale` fields left in place (dead but compiling) — removed in WU2, which also flips the CHANGELOG classification to `[user]`.
+
 ## [0.55.0] — 2026-08-09 (PR #362 merged)
 
 ### Added

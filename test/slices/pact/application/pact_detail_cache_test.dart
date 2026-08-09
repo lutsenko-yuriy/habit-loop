@@ -161,6 +161,14 @@ Object _describe(PactTimelineMilestone m) => switch (m) {
           outcome,
           note,
         ),
+      BreakMilestone(:final sortAt, :final pactBreak, :final firstAt, :final lastAt, :final count) => (
+          'break',
+          sortAt,
+          pactBreak.id,
+          firstAt,
+          lastAt,
+          count,
+        ),
       CurrentStateMilestone(:final sortAt, :final nextScheduledAt, :final showupsRemaining, :final plannedEndDate) => (
           'current',
           sortAt,
@@ -538,7 +546,7 @@ void main() {
       expect(bundle.breaks, hasLength(1));
     });
 
-    test('threads breaks into the grouper so an on-break showup is painted on the timeline (HAB-195 WU5.1)', () async {
+    test('threads breaks into the grouper so an on-break showup renders as a BreakMilestone (HAB-216)', () async {
       final cache = _cache(
         pacts: [_pact()],
         showups: [_showup('s1', DateTime(2024, 1, 7), status: ShowupStatus.pending)],
@@ -548,9 +556,8 @@ void main() {
       final bundle = await cache.load('p1', now: DateTime(2024, 2, 1));
 
       expect(bundle.timelinePage.milestones, hasLength(1));
-      final m = bundle.timelinePage.milestones.single as SingleShowupMilestone;
-      expect(m.isOnBreak, isTrue);
-      expect(m.breakRationale, 'Recovering');
+      final m = bundle.timelinePage.milestones.single as BreakMilestone;
+      expect(m.pactBreak.rationale, 'Recovering');
     });
 
     test('cache hit serves the cached breaks without a further DB call', () async {
@@ -703,12 +710,13 @@ void main() {
       required PactTimelineGrouper grouper,
       required DateTime now,
       PactStatus status = PactStatus.active,
+      List<PactBreak> breaks = const [],
     }) async {
       final pact = _pact(status: status);
       final cache = PactDetailCache(
         pactRepository: _CountingPactRepository([pact]),
         showupRepository: _CountingShowupRepository(showups),
-        pactBreakRepository: _CountingPactBreakRepository([]),
+        pactBreakRepository: _CountingPactBreakRepository(breaks),
         grouper: grouper,
       );
 
@@ -720,8 +728,9 @@ void main() {
         endDate: pact.endDate,
         showups: sorted,
         totalShowups: ShowupGenerator.countTotal(pact),
+        breaks: breaks,
       );
-      final expectedGrouped = grouper.group(sorted, now: now);
+      final expectedGrouped = grouper.group(sorted, now: now, breaks: breaks);
 
       expect(bundle.stats, expectedStats, reason: 'stats mismatch for $showups');
       expect(
@@ -790,6 +799,22 @@ void main() {
         showups: showups,
         grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 7),
         now: now,
+      );
+    });
+
+    test('a break run merged into a BreakMilestone still matches bundle-level stats (HAB-216)', () async {
+      final showups = [
+        _showup('s1', DateTime(2024, 1, 1), status: ShowupStatus.done),
+        _showup('s2', DateTime(2024, 1, 2), status: ShowupStatus.done),
+        _showup('s3', DateTime(2024, 1, 3), status: ShowupStatus.pending),
+        _showup('s4', DateTime(2024, 1, 4), status: ShowupStatus.pending),
+        _showup('s5', DateTime(2024, 1, 5), status: ShowupStatus.done),
+      ];
+      await expectGoldenMatch(
+        showups: showups,
+        grouper: const PactTimelineGrouper(noGroupingTailPeriodInDays: 7),
+        now: DateTime(2024, 1, 6),
+        breaks: [_pactBreak(startDate: DateTime(2024, 1, 3), plannedEndDate: DateTime(2024, 1, 4))],
       );
     });
 

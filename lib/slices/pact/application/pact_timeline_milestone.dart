@@ -1,3 +1,4 @@
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -76,6 +77,27 @@ final class NotedShowupMilestone extends PactTimelineMilestone {
   final DateTime scheduledAt;
   final ShowupStatus outcome;
   final String note;
+}
+
+/// A run of consecutive showups covered by the same [PactBreak] (HAB-216) — merged
+/// into a single, non-tappable timeline entry regardless of outcome (including
+/// explicit `done`/`failed` marks inside the break window) or tail-zone boundary.
+/// [firstAt]/[lastAt] are the covered-showup range, not [pactBreak]'s own
+/// startDate/effectiveEnd — a break can start before its first showup and extend
+/// into the future, and future days must stay invisible (existing rule).
+final class BreakMilestone extends PactTimelineMilestone {
+  const BreakMilestone({
+    required super.sortAt,
+    required this.pactBreak,
+    required this.firstAt,
+    required this.lastAt,
+    required this.count,
+  });
+
+  final PactBreak pactBreak;
+  final DateTime firstAt;
+  final DateTime lastAt;
+  final int count;
 }
 
 final class CurrentStateMilestone extends PactTimelineMilestone {

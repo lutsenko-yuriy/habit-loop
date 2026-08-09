@@ -73,13 +73,16 @@ class PactTimelineGrouper {
     var tailStartIndex = -1;
 
     ShowupStatus? streakOutcome;
-    var streakIsOnBreak = false;
-    String? streakBreakId;
-    String? streakBreakRationale;
     var streakCount = 0;
     DateTime? streakFirstAt;
     DateTime? streakLastAt;
     String? streakLastShowupId;
+
+    PactBreak? breakRunBreak;
+    var breakRunCount = 0;
+    DateTime? breakRunFirstAt;
+    DateTime? breakRunLastAt;
+    var breakRunTouchesTail = false;
 
     var showupsDone = 0;
     var showupsFailed = 0;
@@ -93,8 +96,6 @@ class PactTimelineGrouper {
           showupId: streakLastShowupId!,
           outcome: streakOutcome!,
           scheduledAt: streakFirstAt!,
-          isOnBreak: streakIsOnBreak,
-          breakRationale: streakBreakRationale,
         ));
       } else {
         result.add(ShowupStreakMilestone(
@@ -103,43 +104,61 @@ class PactTimelineGrouper {
           count: streakCount,
           firstAt: streakFirstAt!,
           lastAt: streakLastAt!,
-          isOnBreak: streakIsOnBreak,
-          breakRationale: streakBreakRationale,
         ));
       }
       streakCount = 0;
       streakOutcome = null;
-      streakIsOnBreak = false;
-      streakBreakId = null;
-      streakBreakRationale = null;
       streakFirstAt = null;
       streakLastAt = null;
       streakLastShowupId = null;
+    }
+
+    // Merges every showup covered by the same PactBreak (HAB-216) — any outcome, tail
+    // zone or not — into one non-tappable entry. tailStartIndex can't be claimed eagerly
+    // like a tail-zone single/streak item is: when the run *starts* we don't yet know
+    // whether it will reach the tail, so it's claimed here at flush time instead, right
+    // before the milestone is added, via the touchesTail flag accumulated below.
+    void flushBreakRun() {
+      if (breakRunCount == 0) return;
+      if (breakRunTouchesTail && tailStartIndex == -1) tailStartIndex = result.length;
+      result.add(BreakMilestone(
+        sortAt: breakRunFirstAt!,
+        pactBreak: breakRunBreak!,
+        firstAt: breakRunFirstAt!,
+        lastAt: breakRunLastAt!,
+        count: breakRunCount,
+      ));
+      breakRunBreak = null;
+      breakRunCount = 0;
+      breakRunFirstAt = null;
+      breakRunLastAt = null;
+      breakRunTouchesTail = false;
     }
 
     for (final showup in showups) {
       final scheduledDay = DateTime(showup.scheduledAt.year, showup.scheduledAt.month, showup.scheduledAt.day);
       final isFuture = scheduledDay.isAfter(today);
 
-      // A pending showup is only "settled" enough to paint on-break once its own day has
-      // arrived — TailZone.contains has no upper bound, so without this a break covering
+      // A showup is only "settled" enough to merge into a break run once its own day has
+      // arrived — PactBreak.contains has no upper bound, so without this a break covering
       // future dates would otherwise leak those dates onto the timeline before they happen,
       // unlike an ordinary future pending showup, which stays invisible until its day arrives.
-      final coveringBreak = showup.status == ShowupStatus.pending && !isFuture
-          ? breaks.firstWhereOrNull((b) => b.contains(showup.scheduledAt))
-          : null;
+      // Computed for every non-future showup, not just pending ones (HAB-216) — otherwise an
+      // explicit done/failed mark inside a break window escapes this merge and splits the run.
+      final coveringBreak = !isFuture ? breaks.firstWhereOrNull((b) => b.contains(showup.scheduledAt)) : null;
       if (showup.status == ShowupStatus.pending && coveringBreak == null) continue;
 
       final isOnBreak = coveringBreak != null;
 
-      if (!isOnBreak) {
-        if (showup.status == ShowupStatus.done) {
-          showupsDone++;
-          trailingStreak++;
-        } else {
-          showupsFailed++;
-          trailingStreak = 0;
-        }
+      // Stats gate (HAB-216): simply "resolved, not pending" — independent of isOnBreak.
+      // An explicit done/failed mark inside a break window still counts exactly as it would
+      // outside one (decision #2); only rendering merges it into the break's milestone below.
+      if (showup.status == ShowupStatus.done) {
+        showupsDone++;
+        trailingStreak++;
+      } else if (showup.status == ShowupStatus.failed) {
+        showupsFailed++;
+        trailingStreak = 0;
       }
 
       // A manually-resolved showup dated after today (an explicit mark always overrides
@@ -152,47 +171,40 @@ class PactTimelineGrouper {
       final inTail =
           TailZone.contains(scheduledAt: showup.scheduledAt, now: effectiveNow, days: noGroupingTailPeriodInDays);
 
+      // Break handling sits above the tail/non-tail split (HAB-216) so a break merges
+      // identically in both zones and across the boundary between them.
+      if (isOnBreak) {
+        if (breakRunCount > 0 && breakRunBreak!.id != coveringBreak.id) {
+          flushBreakRun();
+        } else {
+          flushStreak();
+        }
+        breakRunBreak = coveringBreak;
+        breakRunCount++;
+        breakRunFirstAt ??= showup.scheduledAt;
+        breakRunLastAt = showup.scheduledAt;
+        if (inTail) breakRunTouchesTail = true;
+        continue;
+      }
+      flushBreakRun();
+
       if (inTail) {
         flushStreak();
         if (tailStartIndex == -1) tailStartIndex = result.length;
-        result.add(isOnBreak
-            ? SingleShowupMilestone(
+        result.add(showup.note != null
+            ? NotedShowupMilestone(
+                sortAt: showup.scheduledAt,
+                showupId: showup.id,
+                scheduledAt: showup.scheduledAt,
+                outcome: showup.status,
+                note: showup.note!,
+              )
+            : SingleShowupMilestone(
                 sortAt: showup.scheduledAt,
                 showupId: showup.id,
                 outcome: showup.status,
                 scheduledAt: showup.scheduledAt,
-                isOnBreak: true,
-                breakRationale: coveringBreak.rationale,
-              )
-            : showup.note != null
-                ? NotedShowupMilestone(
-                    sortAt: showup.scheduledAt,
-                    showupId: showup.id,
-                    scheduledAt: showup.scheduledAt,
-                    outcome: showup.status,
-                    note: showup.note!,
-                  )
-                : SingleShowupMilestone(
-                    sortAt: showup.scheduledAt,
-                    showupId: showup.id,
-                    outcome: showup.status,
-                    scheduledAt: showup.scheduledAt,
-                  ));
-        continue;
-      }
-
-      if (isOnBreak) {
-        if (!streakIsOnBreak || streakBreakId != coveringBreak.id) {
-          flushStreak();
-        }
-        streakOutcome = showup.status;
-        streakIsOnBreak = true;
-        streakBreakId = coveringBreak.id;
-        streakBreakRationale = coveringBreak.rationale;
-        streakCount++;
-        streakFirstAt ??= showup.scheduledAt;
-        streakLastAt = showup.scheduledAt;
-        streakLastShowupId = showup.id;
+              ));
         continue;
       }
 
@@ -206,11 +218,10 @@ class PactTimelineGrouper {
           note: showup.note!,
         ));
       } else {
-        if (streakOutcome != null && (streakIsOnBreak || streakOutcome != showup.status)) {
+        if (streakOutcome != null && streakOutcome != showup.status) {
           flushStreak();
         }
         streakOutcome = showup.status;
-        streakIsOnBreak = false;
         streakCount++;
         streakFirstAt ??= showup.scheduledAt;
         streakLastAt = showup.scheduledAt;
@@ -218,6 +229,7 @@ class PactTimelineGrouper {
       }
     }
 
+    flushBreakRun();
     flushStreak();
 
     return (
