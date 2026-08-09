@@ -99,7 +99,9 @@ class PactBreakCreationViewModel extends AutoDisposeFamilyNotifier<PactBreakCrea
       unawaited(ref.read(crashlyticsServiceProvider).log('pact_break_started: pactId=$arg'));
       unawaited(ref.read(logServiceProvider).info('pact_break_started: pactId=$arg source=$source'));
 
-      final durationDays = untilPactEnds ? null : state.endDate.difference(state.startDate).inDays;
+      // +1: inclusive of both start and end dates (HAB-215), matching pact_created's
+      // duration_days convention — a same-day break is 1 day, not 0.
+      final durationDays = untilPactEnds ? null : state.endDate.difference(state.startDate).inDays + 1;
       unawaited(
         ref.read(analyticsServiceProvider).logEvent(PactBreakStartedEvent(
               pactId: arg,

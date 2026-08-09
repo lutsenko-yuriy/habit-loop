@@ -62,6 +62,23 @@ void main() {
       expect(find.byKey(const Key('break-next-showup-hint')), findsOneWidget);
     });
 
+    testWidgets('fades out the last hint text while collapsing, instead of blanking it immediately (HAB-215)',
+        (tester) async {
+      await tester.pumpWidget(_buildApp(_state.copyWith(showupScheduledDates: [DateTime(2026, 6, 24, 8)])));
+      await tester.pumpAndSettle();
+
+      // Rebuild with no next showup — the hint should start collapsing, not vanish instantly.
+      await tester.pumpWidget(_buildApp(_state.copyWith(showupScheduledDates: [])));
+      await tester.pump(const Duration(milliseconds: 50)); // mid-collapse, not settled
+
+      final hintFinder = find.byKey(const Key('break-next-showup-hint'));
+      expect(hintFinder, findsOneWidget, reason: 'still fading out mid-animation');
+      expect(tester.widget<Text>(hintFinder).data, isNotEmpty, reason: 'must keep showing the last known hint text');
+
+      await tester.pumpAndSettle();
+      expect(hintFinder, findsNothing, reason: 'fully collapsed once the animation settles');
+    });
+
     testWidgets('hides end date row when untilPactEnds is true', (tester) async {
       await tester.pumpWidget(_buildApp(_state.copyWith(untilPactEnds: true)));
       await tester.pumpAndSettle();

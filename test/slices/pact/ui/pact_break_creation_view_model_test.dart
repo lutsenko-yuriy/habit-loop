@@ -211,12 +211,26 @@ void main() {
       expect(params['pact_id'], 'p1');
       expect(params['source'], 'pact_detail');
       expect(params['end_type'], 'fixed_date');
-      expect(params['duration_days'], 7);
+      // Inclusive of both start (6/15) and end (6/22) dates (HAB-215): 8, not 7.
+      expect(params['duration_days'], 8);
       expect(params['rationale_length'], 'Feeling sick'.length);
+    });
 
-      final state = container.read(pactBreakCreationViewModelProvider('p1'));
-      expect(state.isSubmitting, false);
-      expect(state.submitError, isNull);
+    test('submit reports duration_days as 1 for a same-day break, not 0 (HAB-215)', () async {
+      final analytics = FakeAnalyticsService();
+      final container = _makeContainer(now: DateTime(2026, 6, 15), extras: [
+        analyticsServiceProvider.overrideWithValue(analytics),
+      ]);
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setStartDate(DateTime(2026, 6, 20));
+      notifier.setEndDate(DateTime(2026, 6, 20));
+      notifier.setRationale('Feeling sick');
+
+      await notifier.submit(source: 'pact_detail');
+
+      final params = analytics.loggedEvents.first.toParameters();
+      expect(params['duration_days'], 1);
     });
 
     test('submit persists a plannedEndDate that still covers a showup later that same day (HAB-215)', () async {

@@ -8,14 +8,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added
 
-- [user] The break screen now shows when the next showup is expected, right below the "No end date yet" toggle, once its end date would push scheduling past it. Animates in/out like the rest of the screen.
+- [user] The break screen now shows when the next showup is expected, right below the end date, once its end date would push scheduling past it.
 - [user] A break's end date can now be the same day it starts — previously the shortest possible break was two days.
-- HAB-215: `PactBreakCreationState.nextShowupAfterEnd` derives the hint from showups fetched via a new `PactBreakService.getShowupScheduledDatesForPact` (keeps the pact-slice UI off another slice's repository); rendered as an `AnimatedReveal`-wrapped caption row (`break-next-showup-hint-row`) between the toggle and the reason field on both platform pages. `setStartDate`'s endDate-bump only fires for an inverted (not merely equal) window; both date pickers' minimum end date dropped from `startDate + 1 day` to `startDate`.
+- HAB-215: `PactBreakCreationState.nextShowupAfterEnd` derives the hint from showups fetched via a new `PactBreakService.getShowupScheduledDatesForPact` (keeps the pact-slice UI off another slice's repository); rendered as an `AnimatedReveal`-wrapped caption row (`break-next-showup-hint-row`) between the end-date row and the toggle on both platform pages, freezing its last non-null value while collapsing (mirrors `ShowupDetailContent`'s `_lastOnStartBreak` pattern) so the fade-out shows real text instead of blanking instantly. `setStartDate`'s endDate-bump only fires for an inverted (not merely equal) window; both date pickers' minimum end date dropped from `startDate + 1 day` to `startDate`. `pact_break_started`'s `duration_days` is now inclusive of both endpoints (matching `pact_created`'s convention) — a same-day break reports `1`, not `0`.
 
 ### Fixed
 
-- [user] Fixed a break resuming a day too early — a pact now stays on break through the entire day the break was set to end, instead of resuming that same evening. This also corrects any break already saved from before this fix, without needing to recreate it.
-- HAB-215: `PactBreak.contains()`/`isResolved()`/`stop()` now treat `plannedEndDate` as naming a whole calendar day (compared against its end-of-day instant) rather than a precise midnight timestamp — fixed at the domain read boundary rather than at write time, so it self-heals breaks already persisted with a midnight `plannedEndDate`. `stoppedAt` (the exact "Resume pact" instant) is unaffected.
+- [user] Fixed a break resuming a day too early — a pact now stays on break through the entire day the break was set to end, instead of resuming that same evening. This corrects the on-break status and auto-fail suppression for any unstopped break already saved from before this fix, without needing to recreate it — though a reminder already cancelled for that day, or a break already stopped before this fix shipped, is not retroactively corrected.
+- HAB-215: `PactBreak.contains()`/`isResolved()`/`stop()` now treat `plannedEndDate` as naming a whole calendar day (compared against its end-of-day instant) rather than a precise midnight timestamp — fixed at the domain read boundary rather than at write time, so it self-heals breaks already persisted with a midnight `plannedEndDate`. `stoppedAt` (the exact "Resume pact" instant) is unaffected, so an already-stopped legacy break keeps its old (midnight-clamped) window permanently.
 
 ## [0.54.3] — 2026-08-05 (PR #361 merged)
 

@@ -38,11 +38,17 @@ class PactBreakCreationPageIos extends StatefulWidget {
 class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
   late final TextEditingController _rationaleController;
 
+  // Last non-null value, so the collapsing AnimatedReveal keeps fading out the
+  // actual hint text instead of a now-null value (HAB-215) — matching
+  // ShowupDetailContent's _lastOnStartBreak pattern for the same reason.
+  DateTime? _lastNextShowupAfterEnd;
+
   @override
   void initState() {
     super.initState();
     _rationaleController = TextEditingController(text: widget.state.rationale)
       ..selection = TextSelection.collapsed(offset: widget.state.rationale.length);
+    _lastNextShowupAfterEnd = widget.state.nextShowupAfterEnd;
   }
 
   @override
@@ -54,6 +60,7 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
         selection: TextSelection.collapsed(offset: widget.state.rationale.length),
       );
     }
+    if (widget.state.nextShowupAfterEnd != null) _lastNextShowupAfterEnd = widget.state.nextShowupAfterEnd;
   }
 
   @override
@@ -126,6 +133,23 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
                   ],
                 ),
               ),
+              AnimatedReveal(
+                visible: state.nextShowupAfterEnd != null,
+                child: Column(
+                  key: const Key('break-next-showup-hint-row'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.s12),
+                    Text(
+                      _lastNextShowupAfterEnd == null
+                          ? ''
+                          : l10n.breakNextShowupHint(formatLocaleDate(_lastNextShowupAfterEnd!)),
+                      key: const Key('break-next-showup-hint'),
+                      style: AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(context)),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: AppSpacing.s12),
               Row(
                 children: [
@@ -136,23 +160,6 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
                     onChanged: widget.onUntilPactEndsChanged,
                   ),
                 ],
-              ),
-              AnimatedReveal(
-                visible: state.nextShowupAfterEnd != null,
-                child: Column(
-                  key: const Key('break-next-showup-hint-row'),
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSpacing.s12),
-                    Text(
-                      state.nextShowupAfterEnd == null
-                          ? ''
-                          : l10n.breakNextShowupHint(formatLocaleDate(state.nextShowupAfterEnd!)),
-                      key: const Key('break-next-showup-hint'),
-                      style: AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(context)),
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(height: AppSpacing.s24),
               CupertinoTextField(
