@@ -3,7 +3,7 @@
 //
 // Run on host:   flutter test integration_test/break_flow_test.dart
 // Run on device: flutter test integration_test/break_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show FilterChip, Key, Navigator;
+import 'package:flutter/material.dart' show FilterChip, Key, ListView, Navigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
@@ -37,17 +37,27 @@ Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId)
 
 /// Types [rationale] into the break-rationale field and submits.
 ///
-/// The keyboard-inset relayout must settle *before* `ensureVisible` computes
-/// its scroll target — a bare `pump()` doesn't advance time, so on a
-/// still-growing inset `ensureVisible` under-scrolls and the submit button
-/// ends up back under the keyboard once the inset finishes animating in,
-/// causing tap() to miss it (HAB-199: confirmed via CI diagnostic — the
-/// button's unscrolled rect was identical between a passing and a failing
-/// run, only the scroll offset differed).
+/// The keyboard-inset relayout must settle *before* scrolling to the submit
+/// button — a bare `pump()` doesn't advance time, so on a still-growing
+/// inset the button ends up back under the keyboard once the inset finishes
+/// animating in, causing tap() to miss it (HAB-199: confirmed via CI
+/// diagnostic — the button's unscrolled rect was identical between a
+/// passing and a failing run, only the scroll offset differed).
+///
+/// Uses `dragUntilVisible`, not `ensureVisible` — the next-showup hint row
+/// (HAB-215) pushed the submit button beyond the ListView's initially
+/// realized extent on CI's short Android viewport, so it isn't built yet
+/// when this is first called; `ensureVisible` requires the element to
+/// already exist in the tree, `dragUntilVisible` incrementally scrolls
+/// until it is (same root cause as HAB-196/HAB-199/HAB-211).
 Future<void> _enterRationaleAndSubmit(WidgetTester tester, String rationale) async {
   await tester.enterText(find.byKey(const Key('break-rationale-field')), rationale);
   await tester.pump(const Duration(milliseconds: 450));
-  await tester.ensureVisible(find.byKey(const Key('break-submit-button')));
+  await tester.dragUntilVisible(
+    find.byKey(const Key('break-submit-button')),
+    find.byType(ListView),
+    const Offset(0, -100),
+  );
   await tester.pump();
   await tester.tap(find.byKey(const Key('break-submit-button')));
   await tester.pump(const Duration(milliseconds: 450));
