@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -126,30 +127,19 @@ void main() {
       expect(milestoneTitle(l10n, m), l10n.timelinePactConcludedStopped);
     });
 
-    testWidgets('on-break SingleShowupMilestone returns the on-break label (HAB-195 WU5.1)', (tester) async {
+    testWidgets('BreakMilestone returns the on-break label (HAB-216)', (tester) async {
       final l10n = await _getL10n(tester);
-      final m = SingleShowupMilestone(
+      final m = BreakMilestone(
         sortAt: DateTime(2024, 1, 5),
-        showupId: 's1',
-        outcome: ShowupStatus.pending,
-        scheduledAt: DateTime(2024, 1, 5),
-        isOnBreak: true,
-        breakRationale: 'Travelling',
-      );
-      expect(milestoneTitle(l10n, m), l10n.showupOnBreak);
-    });
-
-    testWidgets('on-break ShowupStreakMilestone returns the on-break label, not "in a row" (HAB-195 WU5.1)',
-        (tester) async {
-      final l10n = await _getL10n(tester);
-      final m = ShowupStreakMilestone(
-        sortAt: DateTime(2024, 1, 5),
-        outcome: ShowupStatus.pending,
-        count: 3,
+        pactBreak: PactBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2024, 1, 5),
+          rationale: 'Travelling',
+        ),
         firstAt: DateTime(2024, 1, 5),
         lastAt: DateTime(2024, 1, 7),
-        isOnBreak: true,
-        breakRationale: 'Travelling',
+        count: 3,
       );
       expect(milestoneTitle(l10n, m), l10n.showupOnBreak);
     });
@@ -179,6 +169,26 @@ void main() {
         count: 5,
         firstAt: DateTime(2024, 1, 1),
         lastAt: DateTime(2024, 1, 10),
+      );
+      final range = milestoneDateRange(ctx, m);
+      expect(range, isNotNull);
+      expect(range, contains('–'));
+    });
+
+    testWidgets('BreakMilestone shows a date range like ShowupStreakMilestone (HAB-216)', (tester) async {
+      await _getL10n(tester);
+      final ctx = tester.element(find.byType(Scaffold));
+      final m = BreakMilestone(
+        sortAt: DateTime(2024, 1, 5),
+        pactBreak: PactBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2024, 1, 5),
+          rationale: 'Travelling',
+        ),
+        firstAt: DateTime(2024, 1, 5),
+        lastAt: DateTime(2024, 1, 7),
+        count: 3,
       );
       final range = milestoneDateRange(ctx, m);
       expect(range, isNotNull);
