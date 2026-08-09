@@ -118,6 +118,7 @@
   "startBreakError": "Échec du démarrage de la pause. Veuillez réessayer.",
   "breakUntilPactEnds": "Pas encore de date de fin",
   "breakRationaleHint": "Raison (obligatoire)",
+  "breakNextShowupHint": "Prochaine séance prévue le {date}",
   "showupOnBreak": "En pause",
   "pactOnBreakTitle": "En pause",
   "pactBreakUntilLabel": "Jusqu'au",

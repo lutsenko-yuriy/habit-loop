@@ -414,7 +414,7 @@ Fired when the break-creation flow is submitted successfully and the break is pe
 | `pact_id` | `string` | ID of the pact the break was started on |
 | `source` | `string` | Entry point used: `pact_detail` \| `tail_zone_showup` |
 | `end_type` | `string` | `fixed_date` \| `until_pact_ends` |
-| `duration_days` | `int?` | Planned break length in days; `null` if `until_pact_ends` |
+| `duration_days` | `int?` | Planned break length in calendar days, inclusive of both start and end dates (same convention as `pact_created`'s `duration_days`, HAB-215); `null` if `until_pact_ends` |
 | `rationale_length` | `int` | Character count of the mandatory rationale; no raw text included |
 
 No PII risk — rationale content is never included; only its character length (mirrors `note_length`).

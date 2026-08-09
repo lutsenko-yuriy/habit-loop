@@ -120,6 +120,24 @@ void main() {
         expect(b.contains(DateTime(2026, 3, 11)), isFalse);
       });
 
+      test('is true for a time later on the plannedEndDate\'s own day, not just at midnight (HAB-215)', () {
+        // plannedEndDate names a calendar day, not a precise instant — a
+        // showup scheduled that same evening is still covered by the break.
+        // Also self-heals breaks already persisted with a midnight
+        // plannedEndDate from before this fix, since this is evaluated at
+        // read time rather than baked in at write time.
+        final b = PactBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 3, 1),
+          plannedEndDate: DateTime(2026, 3, 10), // legacy-style midnight value
+          rationale: 'r',
+        );
+
+        expect(b.contains(DateTime(2026, 3, 10, 20)), isTrue);
+        expect(b.contains(DateTime(2026, 3, 11)), isFalse);
+      });
+
       test('is true arbitrarily far in the future when open-ended and not stopped', () {
         final b = PactBreak(
           id: 'b1',
@@ -185,6 +203,18 @@ void main() {
         expect(b.isResolved(DateTime(2026, 3, 11)), isTrue);
       });
 
+      test('is false while still on the plannedEndDate\'s own day (HAB-215)', () {
+        final b = PactBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 3, 1),
+          plannedEndDate: DateTime(2026, 3, 10),
+          rationale: 'r',
+        );
+
+        expect(b.isResolved(DateTime(2026, 3, 10, 20)), isFalse);
+      });
+
       test('is false for an open-ended break that has not been stopped, no matter how far in the future', () {
         final b = PactBreak(
           id: 'b1',
@@ -227,7 +257,7 @@ void main() {
         expect(b.stoppedAt, isNull);
       });
 
-      test('clamps to plannedEndDate rather than extending an already-elapsed fixed-end break', () {
+      test('clamps to plannedEndDate\'s end-of-day rather than extending an already-elapsed fixed-end break', () {
         final b = PactBreak(
           id: 'b1',
           pactId: 'p1',
@@ -238,8 +268,25 @@ void main() {
 
         final stopped = b.stop(DateTime(2026, 3, 15));
 
-        expect(stopped.stoppedAt, DateTime(2026, 3, 10));
-        expect(stopped.effectiveEnd, DateTime(2026, 3, 10));
+        expect(stopped.stoppedAt, DateTime(2026, 3, 10, 23, 59, 59, 999));
+        expect(stopped.effectiveEnd, DateTime(2026, 3, 10, 23, 59, 59, 999));
+      });
+
+      test('does not clamp when now falls on the plannedEndDate\'s own day (HAB-215)', () {
+        // Calling "Resume pact" on the planned end date itself is still an
+        // in-progress break — it must clamp to the actual instant, not
+        // treat the day as already elapsed.
+        final b = PactBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 3, 1),
+          plannedEndDate: DateTime(2026, 3, 10),
+          rationale: 'r',
+        );
+
+        final stopped = b.stop(DateTime(2026, 3, 10, 15));
+
+        expect(stopped.stoppedAt, DateTime(2026, 3, 10, 15));
       });
 
       test('is a no-op if already stopped, so calling it twice never moves effectiveEnd', () {

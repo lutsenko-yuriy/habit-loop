@@ -118,6 +118,10 @@
   "startBreakError": "Failed to start break. Please try again.",
   "breakUntilPactEnds": "No end date yet",
   "breakRationaleHint": "Reason (required)",
+  "breakNextShowupHint": "Next showup expected on {date}",
+  "@breakNextShowupHint": {
+    "placeholders": { "date": { "type": "String" } }
+  },
   "showupOnBreak": "On break",
   "pactOnBreakTitle": "In a break",
   "pactBreakUntilLabel": "Until",

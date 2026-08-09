@@ -118,6 +118,7 @@
   "startBreakError": "Не удалось начать перерыв. Попробуйте ещё раз.",
   "breakUntilPactEnds": "Дата окончания пока не определена",
   "breakRationaleHint": "Причина (обязательно)",
+  "breakNextShowupHint": "Следующая явка ожидается {date}",
   "showupOnBreak": "На перерыве",
   "pactOnBreakTitle": "На перерыве",
   "pactBreakUntilLabel": "До",

@@ -48,6 +48,15 @@ class PactBreakService {
   /// All breaks (stopped and unstopped) recorded for [pactId], oldest first.
   Future<List<PactBreak>> getBreaksForPact(String pactId) => _pactBreakRepository.getBreaksForPact(pactId);
 
+  /// This pact's showups' scheduled times, unsorted — a thin pass-through so
+  /// break-creation UI (e.g. the "next showup" hint, HAB-215) doesn't have to
+  /// reach into the showup slice's repository directly; this service already
+  /// holds one for [_cancelInWindowReminders]/[_rescheduleRemindersAfterStop].
+  Future<List<DateTime>> getShowupScheduledDatesForPact(String pactId) async {
+    final showups = await _showupRepository.getShowupsForPact(pactId);
+    return showups.map((s) => s.scheduledAt).toList();
+  }
+
   /// Starts a new break, cancels reminders for showups already inside its
   /// window, and write-through syncs it.
   ///
