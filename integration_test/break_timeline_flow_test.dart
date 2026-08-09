@@ -3,72 +3,305 @@
 //
 // Run on host:   flutter test integration_test/break_timeline_flow_test.dart
 // Run on device: flutter test integration_test/break_timeline_flow_test.dart -d <device>
+import 'package:flutter/material.dart' show Key;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
+import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
+
+final _testNow = DateTime(2099, 6, 15, 7, 55);
+
+const _pactId = 'break-timeline-test';
+final _pact = buildPact(
+  id: _pactId,
+  habitName: 'Exercise',
+  startDate: DateTime(2099, 6, 1),
+  showupDuration: const Duration(minutes: 30),
+);
+
+Showup _showup(String id, DateTime scheduledAt, {ShowupStatus status = ShowupStatus.pending}) => buildShowup(
+      id: id,
+      pactId: _pactId,
+      scheduledAt: scheduledAt,
+      duration: const Duration(minutes: 30),
+      status: status,
+    );
+
+/// RC overrides for the merged-break-milestone scenarios: a 7-day tail zone
+/// (cutoff = Jun 8, relative to [_testNow] = Jun 15) plus breaks enabled.
+FakeRemoteConfigService _rc({int tailPeriodInDays = 7}) => FakeRemoteConfigService(overrides: {
+      'pact_timeline_no_grouping_tail_period_in_days': tailPeriodInDays,
+      'pact_breaks_enabled': true,
+    });
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Pact timeline — merged break milestones (HAB-216)', () {
-    // TODO: declare `late AppHarness h;` and `tearDown(() => h.dispose());` when filling in stubs.
+    late AppHarness h;
+    tearDown(() => h.dispose());
 
     testWidgets('break_inside_tailzone_renders_as_one_milestone', (tester) async {
-      // TODO: 1. Set tail period to 7 days (RC override), pact_breaks_enabled: true, now = Jun 15.
-      // TODO: 2. Seed the active pact and a break startDate Jun 10, plannedEndDate Jun 13
-      //          (wholly inside the Jun 8 tail cutoff), rationale "Feeling sick".
-      // TODO: 3. Seed 4 pending showups Jun 10-13, all covered by the break.
-      // TODO: 4. Open pact detail -> open timeline.
-      // TODO: 5. Verify the rationale text "Feeling sick" appears exactly once (single merged
-      //          milestone, not 4).
-      // TODO: 6. Verify no individual timeline-milestone-<id> key exists for any of the 4
-      //          covered showups.
-      // TODO: 7. Verify the milestone's y-position is below the "Showups from the last 7 days" header.
+      final onBreak = buildBreak(
+        id: 'brk-1',
+        pactId: _pactId,
+        startDate: DateTime(2099, 6, 10),
+        plannedEndDate: DateTime(2099, 6, 13),
+        rationale: 'Feeling sick',
+      );
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          remoteConfigServiceProvider.overrideWithValue(_rc()),
+          todayProvider.overrideWithValue(_testNow),
+          pactDetailNowProvider.overrideWithValue(_testNow),
+          pactTimelineNowProvider.overrideWithValue(_testNow),
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_pact);
+          await h.pactBreakRepo.saveBreak(onBreak);
+          for (var i = 0; i < 4; i++) {
+            await h.showupRepo.saveShowup(_showup('brk1-$i', DateTime(2099, 6, 10 + i, 8)));
+          }
+          // Unrelated, non-tail showup so the section header actually renders —
+          // an all-tail timeline shows no header at all (tailStartIndex == 0).
+          await h.showupRepo.saveShowup(_showup('brk1-unrelated', DateTime(2099, 6, 1, 8), status: ShowupStatus.done));
+        },
+      );
+
+      final strings = l10n(tester);
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Exercise');
+      await tester.pumpAndSettle();
+      await openTimeline(tester);
+      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+
+      // ── 1. Rationale appears exactly once — one merged entry, not 4 ────────
+      await waitFor(tester, find.text('Feeling sick'));
+      expect(find.text('Feeling sick'), findsOneWidget);
+
+      // ── 2. No individual milestone tile for any of the 4 covered showups ───
+      for (var i = 0; i < 4; i++) {
+        expect(find.byKey(Key('timeline-milestone-brk1-$i')), findsNothing);
+      }
+
+      // ── 3. The merged entry sits below the tail-zone section header ────────
+      await waitFor(tester, find.text(strings.timelineRecentSection(7)));
+      final headerDy = tester.getTopLeft(find.text(strings.timelineRecentSection(7))).dy;
+      final rationaleDy = tester.getTopLeft(find.text('Feeling sick')).dy;
+      expect(rationaleDy, greaterThan(headerDy));
     });
 
     testWidgets('break_spanning_tailzone_boundary_renders_as_one_milestone_below_header', (tester) async {
-      // TODO: 1. Same RC setup (tail=7, cutoff=Jun 8).
-      // TODO: 2. Seed a break startDate Jun 5 (before cutoff), plannedEndDate Jun 10 (inside
-      //          tail), rationale "Travel".
-      // TODO: 3. Seed 6 covered showups Jun 5-10.
-      // TODO: 4. Open timeline.
-      // TODO: 5. Verify "Travel" appears exactly once (not split into a grouped part + individual
-      //          tail entries).
-      // TODO: 6. Verify no individual milestone keys exist for the 6 covered showups.
-      // TODO: 7. Verify the milestone's y-position is below the header (since part of it touches
-      //          the tail).
+      final onBreak = buildBreak(
+        id: 'brk-2',
+        pactId: _pactId,
+        startDate: DateTime(2099, 6, 5),
+        plannedEndDate: DateTime(2099, 6, 10),
+        rationale: 'Travel',
+      );
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          remoteConfigServiceProvider.overrideWithValue(_rc()),
+          todayProvider.overrideWithValue(_testNow),
+          pactDetailNowProvider.overrideWithValue(_testNow),
+          pactTimelineNowProvider.overrideWithValue(_testNow),
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_pact);
+          await h.pactBreakRepo.saveBreak(onBreak);
+          for (var i = 0; i < 6; i++) {
+            await h.showupRepo.saveShowup(_showup('brk2-$i', DateTime(2099, 6, 5 + i, 8)));
+          }
+          // Unrelated, non-tail showup before the break so the section header
+          // actually renders above the (boundary-spanning) merged entry.
+          await h.showupRepo.saveShowup(_showup('brk2-unrelated', DateTime(2099, 6, 1, 8), status: ShowupStatus.done));
+        },
+      );
+
+      final strings = l10n(tester);
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Exercise');
+      await tester.pumpAndSettle();
+      await openTimeline(tester);
+      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+
+      // ── 1. "Travel" appears exactly once — not split into a grouped part
+      //         plus individual tail entries ────────────────────────────────
+      await waitFor(tester, find.text('Travel'));
+      expect(find.text('Travel'), findsOneWidget);
+
+      // ── 2. No individual milestone tile for any of the 6 covered showups ───
+      for (var i = 0; i < 6; i++) {
+        expect(find.byKey(Key('timeline-milestone-brk2-$i')), findsNothing);
+      }
+
+      // ── 3. Part of the run touches the tail, so the merged entry sits below
+      //         the section header ───────────────────────────────────────────
+      await waitFor(tester, find.text(strings.timelineRecentSection(7)));
+      final headerDy = tester.getTopLeft(find.text(strings.timelineRecentSection(7))).dy;
+      final rationaleDy = tester.getTopLeft(find.text('Travel')).dy;
+      expect(rationaleDy, greaterThan(headerDy));
     });
 
     testWidgets('break_outside_tailzone_stays_above_header', (tester) async {
-      // TODO: 1. Same RC setup (tail=7, cutoff=Jun 8).
-      // TODO: 2. Seed a break startDate Jun 1, plannedEndDate Jun 3, rationale "Feeling sick",
-      //          with 3 covered showups.
-      // TODO: 3. Seed an unrelated done showup Jun 10 (inside tail) so the header actually renders.
-      // TODO: 4. Open timeline.
-      // TODO: 5. Verify "Feeling sick" appears exactly once.
-      // TODO: 6. Verify the milestone's y-position is above the header.
+      final onBreak = buildBreak(
+        id: 'brk-3',
+        pactId: _pactId,
+        startDate: DateTime(2099, 6, 1),
+        plannedEndDate: DateTime(2099, 6, 3),
+        rationale: 'Feeling sick',
+      );
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          remoteConfigServiceProvider.overrideWithValue(_rc()),
+          todayProvider.overrideWithValue(_testNow),
+          pactDetailNowProvider.overrideWithValue(_testNow),
+          pactTimelineNowProvider.overrideWithValue(_testNow),
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_pact);
+          await h.pactBreakRepo.saveBreak(onBreak);
+          for (var i = 0; i < 3; i++) {
+            await h.showupRepo.saveShowup(_showup('brk3-$i', DateTime(2099, 6, 1 + i, 8)));
+          }
+          // Unrelated, non-break showup inside the tail zone so the section
+          // header actually renders — otherwise there'd be nothing to compare against.
+          await h.showupRepo.saveShowup(_showup('brk3-unrelated', DateTime(2099, 6, 10, 8), status: ShowupStatus.done));
+        },
+      );
+
+      final strings = l10n(tester);
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Exercise');
+      await tester.pumpAndSettle();
+      await openTimeline(tester);
+      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+
+      // ── 1. Rationale appears exactly once (regression: still merges) ───────
+      await waitFor(tester, find.text('Feeling sick'));
+      expect(find.text('Feeling sick'), findsOneWidget);
+
+      // ── 2. The merged entry sits above the tail-zone section header ────────
+      await waitFor(tester, find.text(strings.timelineRecentSection(7)));
+      final headerDy = tester.getTopLeft(find.text(strings.timelineRecentSection(7))).dy;
+      final rationaleDy = tester.getTopLeft(find.text('Feeling sick')).dy;
+      expect(rationaleDy, lessThan(headerDy));
     });
 
     testWidgets('explicit_mark_inside_break_does_not_split_break_milestone', (tester) async {
-      // TODO: 1. Same RC setup. Seed a break Jun 10-13, rationale "Feeling sick".
-      // TODO: 2. Seed showups Jun 10, 12, 13 pending (covered) and Jun 11 explicitly done.
-      // TODO: 3. Open timeline.
-      // TODO: 4. Verify "Feeling sick" appears exactly once (one milestone spanning all 4 days,
-      //          not two around the done showup).
-      // TODO: 5. Verify no individual timeline-milestone-<id> key exists for the Jun 11 showup.
-      // TODO: 6. Navigate to pact detail; verify the "Showups done" stat (l10n.statsShowups(1))
-      //          reflects the Jun 11 done mark - stats unaffected by the visual merge.
+      final onBreak = buildBreak(
+        id: 'brk-4',
+        pactId: _pactId,
+        startDate: DateTime(2099, 6, 10),
+        plannedEndDate: DateTime(2099, 6, 13),
+        rationale: 'Feeling sick',
+      );
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          remoteConfigServiceProvider.overrideWithValue(_rc()),
+          todayProvider.overrideWithValue(_testNow),
+          pactDetailNowProvider.overrideWithValue(_testNow),
+          pactTimelineNowProvider.overrideWithValue(_testNow),
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_pact);
+          await h.pactBreakRepo.saveBreak(onBreak);
+          await h.showupRepo.saveShowup(_showup('brk4-0', DateTime(2099, 6, 10, 8)));
+          // Explicitly resolved (done) mid-break — must not split the merged entry.
+          await h.showupRepo.saveShowup(_showup('brk4-1', DateTime(2099, 6, 11, 8), status: ShowupStatus.done));
+          await h.showupRepo.saveShowup(_showup('brk4-2', DateTime(2099, 6, 12, 8)));
+          await h.showupRepo.saveShowup(_showup('brk4-3', DateTime(2099, 6, 13, 8)));
+        },
+      );
+
+      final strings = l10n(tester);
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Exercise');
+      await tester.pumpAndSettle();
+      await openTimeline(tester);
+      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+
+      // ── 1. One merged entry spanning all 4 days, not two around the done mark ──
+      await waitFor(tester, find.text('Feeling sick'));
+      expect(find.text('Feeling sick'), findsOneWidget);
+
+      // ── 2. No individual milestone tile for the explicitly-done showup ─────
+      expect(find.byKey(const Key('timeline-milestone-brk4-1')), findsNothing);
+
+      // ── 3. The done mark still counts in the pact's stats — the merge is a
+      //         rendering-only change ────────────────────────────────────────
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await waitFor(tester, find.text(strings.statsShowups(1)));
+      expect(find.text(strings.statsShowups(1)), findsWidgets);
     });
 
     testWidgets('two_adjacent_breaks_render_as_two_milestones', (tester) async {
-      // TODO: 1. Same RC setup. Seed break A: Jun 10-11, rationale "Feeling sick". Seed break B:
-      //          Jun 12-13, rationale "Travel" (immediately adjacent, no gap).
-      // TODO: 2. Seed covered showups Jun 10-13.
-      // TODO: 3. Open timeline.
-      // TODO: 4. Verify both "Feeling sick" and "Travel" each appear exactly once (two separate
-      //          milestones).
+      final breakA = buildBreak(
+        id: 'brk-5a',
+        pactId: _pactId,
+        startDate: DateTime(2099, 6, 10),
+        plannedEndDate: DateTime(2099, 6, 11),
+        rationale: 'Feeling sick',
+      );
+      final breakB = buildBreak(
+        id: 'brk-5b',
+        pactId: _pactId,
+        startDate: DateTime(2099, 6, 12),
+        plannedEndDate: DateTime(2099, 6, 13),
+        rationale: 'Travel',
+      );
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [
+          remoteConfigServiceProvider.overrideWithValue(_rc()),
+          todayProvider.overrideWithValue(_testNow),
+          pactDetailNowProvider.overrideWithValue(_testNow),
+          pactTimelineNowProvider.overrideWithValue(_testNow),
+        ],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_pact);
+          await h.pactBreakRepo.saveBreak(breakA);
+          await h.pactBreakRepo.saveBreak(breakB);
+          for (var i = 0; i < 4; i++) {
+            await h.showupRepo.saveShowup(_showup('brk5-$i', DateTime(2099, 6, 10 + i, 8)));
+          }
+        },
+      );
+
+      final strings = l10n(tester);
+
+      await openPactsPanel(tester);
+      await openPactDetail(tester, 'Exercise');
+      await tester.pumpAndSettle();
+      await openTimeline(tester);
+      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+
+      // ── Both rationales appear exactly once — two separate milestones ──────
+      await waitFor(tester, find.text('Feeling sick'));
+      expect(find.text('Feeling sick'), findsOneWidget);
+      expect(find.text('Travel'), findsOneWidget);
     });
   });
 }
