@@ -32,10 +32,11 @@ class PactBreakCreationState {
   bool get canSubmit => rationale.trim().isNotEmpty && !isSubmitting;
 
   /// The earliest showup scheduled after this break's end, mirroring the
-  /// end-of-day window [PactBreakCreationViewModel.submit] actually persists
-  /// (HAB-215) — so a showup later on the picked end date is correctly
-  /// treated as still inside the break, not as "next". `null` when the break
-  /// is open-ended (nothing to compare against) or no such showup exists.
+  /// end-of-day window `PactBreak.contains()` actually applies to
+  /// `plannedEndDate` (HAB-215) — so a showup later on the picked end date
+  /// is correctly treated as still inside the break, not as "next". `null`
+  /// when the break is open-ended (nothing to compare against) or no such
+  /// showup exists.
   DateTime? get nextShowupAfterEnd {
     if (untilPactEnds) return null;
     final endOfPickedDay = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59, 999);
