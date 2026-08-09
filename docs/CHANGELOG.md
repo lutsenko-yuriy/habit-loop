@@ -4,7 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.54.4] — 2026-08-09
+## [0.55.0] — 2026-08-09
+
+### Added
+
+- [user] The break screen now shows when the next showup is expected, right below the reason field, once its end date would push scheduling past it.
+- HAB-215: `PactBreakCreationViewModel.load()` fetches the pact's showups so `PactBreakCreationState.nextShowupAfterEnd` can be derived; rendered as a caption row (`break-next-showup-hint`) on both platform pages, hidden when open-ended or when no such showup exists.
 
 ### Fixed
 

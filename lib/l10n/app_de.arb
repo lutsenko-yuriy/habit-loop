@@ -118,6 +118,7 @@
   "startBreakError": "Pause konnte nicht gestartet werden. Bitte versuche es erneut.",
   "breakUntilPactEnds": "Noch kein Enddatum",
   "breakRationaleHint": "Grund (erforderlich)",
+  "breakNextShowupHint": "Nächster Showup erwartet am {date}",
   "showupOnBreak": "In Pause",
   "pactOnBreakTitle": "In Pause",
   "pactBreakUntilLabel": "Bis",

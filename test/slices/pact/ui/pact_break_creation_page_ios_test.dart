@@ -50,6 +50,18 @@ void main() {
       expect(find.byKey(const Key('break-end-date-row')), findsOneWidget);
     });
 
+    testWidgets('hides the next-showup hint when there is none (HAB-215)', (tester) async {
+      await tester.pumpWidget(_buildApp(_state));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('break-next-showup-hint')), findsNothing);
+    });
+
+    testWidgets('shows the next-showup hint once nextShowupAfterEnd resolves (HAB-215)', (tester) async {
+      await tester.pumpWidget(_buildApp(_state.copyWith(showupScheduledDates: [DateTime(2026, 6, 24, 8)])));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('break-next-showup-hint')), findsOneWidget);
+    });
+
     testWidgets('hides end date row when untilPactEnds is true', (tester) async {
       await tester.pumpWidget(_buildApp(_state.copyWith(untilPactEnds: true)));
       await tester.pumpAndSettle();

@@ -52,6 +52,14 @@ class PactBreakCreationViewModel extends AutoDisposeFamilyNotifier<PactBreakCrea
     state = state.copyWith(rationale: value);
   }
 
+  /// Loads this pact's showups so [PactBreakCreationState.nextShowupAfterEnd]
+  /// can be derived (HAB-215). Fire-and-forget from the screen's `initState`
+  /// — the hint simply stays absent until this resolves.
+  Future<void> load() async {
+    final showups = await ref.read(showupRepositoryProvider).getShowupsForPact(arg);
+    state = state.copyWith(showupScheduledDates: showups.map((s) => s.scheduledAt).toList());
+  }
+
   /// Persists the break via [PactBreakService]. Returns `true` on success.
   /// [source] identifies the entry point for analytics: `pact_detail` |
   /// `tail_zone_showup`.

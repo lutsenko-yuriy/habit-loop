@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/application/pact_break_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
@@ -29,12 +31,13 @@ final _pact = Pact(
   status: PactStatus.active,
 );
 
-ProviderContainer _makeContainer({
+ProviderContainer _makeContainerWithShowupRepo({
   DateTime? now,
   List<Override> extras = const [],
+  List<Showup> showups = const [],
 }) {
   final pactRepo = InMemoryPactRepository([_pact]);
-  final showupRepo = InMemoryShowupRepository();
+  final showupRepo = InMemoryShowupRepository(showups);
   final breakRepo = InMemoryPactBreakRepository();
   final cache = PactDetailCache(
     pactRepository: pactRepo,
@@ -61,11 +64,18 @@ ProviderContainer _makeContainer({
     overrides: [
       pactBreakServiceProvider.overrideWithValue(service),
       pactBreakRepositoryProvider.overrideWithValue(breakRepo),
+      showupRepositoryProvider.overrideWithValue(showupRepo),
       if (now != null) pactBreakCreationNowProvider.overrideWithValue(now),
       ...extras,
     ],
   );
 }
+
+ProviderContainer _makeContainer({
+  DateTime? now,
+  List<Override> extras = const [],
+}) =>
+    _makeContainerWithShowupRepo(now: now, extras: extras);
 
 void main() {
   group('PactBreakCreationViewModel', () {
@@ -217,6 +227,70 @@ void main() {
 
       final breaks = await container.read(pactBreakRepositoryProvider).getBreaksForPact('p1');
       expect(breaks.first.plannedEndDate, isNull);
+    });
+
+    group('load / nextShowupAfterEnd (HAB-215)', () {
+      Showup showup(String id, DateTime scheduledAt) => Showup(
+            id: id,
+            pactId: 'p1',
+            scheduledAt: scheduledAt,
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.pending,
+          );
+
+      test('nextShowupAfterEnd is null before load() resolves', () {
+        final container = _makeContainer(now: DateTime(2026, 6, 15));
+        addTearDown(container.dispose);
+        final state = container.read(pactBreakCreationViewModelProvider('p1'));
+        expect(state.nextShowupAfterEnd, isNull);
+      });
+
+      test('nextShowupAfterEnd is the earliest showup after the end-of-day boundary', () async {
+        final container = _makeContainerWithShowupRepo(
+          now: DateTime(2026, 6, 15),
+          showups: [
+            showup('s1', DateTime(2026, 6, 22, 8)), // inside the break window — must be excluded
+            showup('s2', DateTime(2026, 6, 24, 8)), // the actual next one
+            showup('s3', DateTime(2026, 6, 26, 8)), // later still
+          ],
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+
+        await notifier.load();
+
+        final state = container.read(pactBreakCreationViewModelProvider('p1'));
+        expect(state.nextShowupAfterEnd, DateTime(2026, 6, 24, 8));
+      });
+
+      test('nextShowupAfterEnd is null when untilPactEnds is true, regardless of loaded showups', () async {
+        final container = _makeContainerWithShowupRepo(
+          now: DateTime(2026, 6, 15),
+          showups: [showup('s1', DateTime(2026, 6, 24, 8))],
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+
+        await notifier.load();
+        notifier.setUntilPactEnds(true);
+
+        final state = container.read(pactBreakCreationViewModelProvider('p1'));
+        expect(state.nextShowupAfterEnd, isNull);
+      });
+
+      test('nextShowupAfterEnd is null when no showup falls after the end date', () async {
+        final container = _makeContainerWithShowupRepo(
+          now: DateTime(2026, 6, 15),
+          showups: [showup('s1', DateTime(2026, 6, 20, 8))],
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+
+        await notifier.load();
+
+        final state = container.read(pactBreakCreationViewModelProvider('p1'));
+        expect(state.nextShowupAfterEnd, isNull);
+      });
     });
 
     test('submit sets submitError and returns false when the service throws', () async {

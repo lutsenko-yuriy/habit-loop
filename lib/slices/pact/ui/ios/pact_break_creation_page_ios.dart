@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' show Material, MaterialType, Theme;
 import 'package:habit_loop/l10n/date_formatters.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_state.dart';
+import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 import 'package:habit_loop/theme/typography.dart';
 import 'package:habit_loop/theme/widgets/animated_reveal.dart';
@@ -143,6 +144,14 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
                 minLines: 3,
                 onChanged: widget.onRationaleChanged,
               ),
+              if (state.nextShowupAfterEnd != null) ...[
+                const SizedBox(height: AppSpacing.s12),
+                Text(
+                  l10n.breakNextShowupHint(formatLocaleDate(state.nextShowupAfterEnd!)),
+                  key: const Key('break-next-showup-hint'),
+                  style: AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(context)),
+                ),
+              ],
               const SizedBox(height: AppSpacing.s24),
               if (state.submitError != null) ...[
                 Text(

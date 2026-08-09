@@ -35,6 +35,7 @@ class _PactBreakCreationScreenState extends ConsumerState<PactBreakCreationScree
         unawaited(
           ref.read(analyticsServiceProvider).logScreenView(const PactBreakCreationAnalyticsScreen()),
         );
+        unawaited(ref.read(pactBreakCreationViewModelProvider(widget.pactId).notifier).load());
       }),
     );
   }

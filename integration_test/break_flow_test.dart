@@ -88,6 +88,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pump(const Duration(milliseconds: 100));
 
+      // The screen's own showup load has resolved by now, and the dashboard's
+      // gap-fill sweep already generated showups up to today+10 (June 25) —
+      // beyond the default end date (June 22) — so the "next showup" hint
+      // (HAB-215) should be showing.
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byKey(const Key('break-next-showup-hint')), findsOneWidget);
+
       // Accept the flow's default dates (today .. today+7) — consistent with
       // how create_pact_flow_test.dart never drives the native date picker —
       // and only fill in the mandatory rationale.
@@ -103,7 +110,8 @@ void main() {
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
       expect(breaks.first.startDate, DateTime(2099, 6, 15));
-      expect(breaks.first.plannedEndDate, DateTime(2099, 6, 22));
+      // End-of-day, not midnight (HAB-215) — covers the entire picked end date.
+      expect(breaks.first.plannedEndDate, DateTime(2099, 6, 22, 23, 59, 59, 999));
       expect(breaks.first.rationale, 'Feeling sick');
 
       // A showup inside the window is not auto-failed even once its window
