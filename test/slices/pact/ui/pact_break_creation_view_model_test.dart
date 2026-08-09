@@ -171,7 +171,9 @@ void main() {
       final breaks = await container.read(pactBreakRepositoryProvider).getBreaksForPact('p1');
       expect(breaks, hasLength(1));
       expect(breaks.first.startDate, DateTime(2026, 6, 15));
-      expect(breaks.first.plannedEndDate, DateTime(2026, 6, 22));
+      // End-of-day, not midnight (HAB-215) — otherwise a showup later on the
+      // picked end date would already read as past the break window.
+      expect(breaks.first.plannedEndDate, DateTime(2026, 6, 22, 23, 59, 59, 999));
       expect(breaks.first.rationale, 'Feeling sick');
 
       expect(analytics.loggedEvents, hasLength(1));
@@ -186,6 +188,21 @@ void main() {
       final state = container.read(pactBreakCreationViewModelProvider('p1'));
       expect(state.isSubmitting, false);
       expect(state.submitError, isNull);
+    });
+
+    test('submit persists a plannedEndDate that still covers a showup later that same day (HAB-215)', () async {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      notifier.setRationale('Feeling sick');
+
+      await notifier.submit(source: 'pact_detail');
+
+      final breaks = await container.read(pactBreakRepositoryProvider).getBreaksForPact('p1');
+      // A showup scheduled at 20:00 on the picked end date (2026-06-22) must
+      // still fall inside the break window, not just one scheduled at midnight.
+      expect(breaks.first.contains(DateTime(2026, 6, 22, 20)), isTrue);
+      expect(breaks.first.contains(DateTime(2026, 6, 23)), isFalse);
     });
 
     test('submit persists an open-ended break when untilPactEnds is true', () async {

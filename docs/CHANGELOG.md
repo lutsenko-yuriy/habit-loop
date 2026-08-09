@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.54.4] — 2026-08-09
+
+### Fixed
+
+- [user] Fixed a break resuming a day too early — a pact now stays on break through the entire day the break was set to end, instead of resuming that same evening.
+- HAB-215: `PactBreakCreationViewModel.submit` now passes an end-of-day timestamp (`23:59:59.999`) for `plannedEndDate` instead of midnight, so `PactBreak.contains()` covers the whole picked end date.
+
 ## [0.54.3] — 2026-08-05 (PR #361 merged)
 
 ### Changed

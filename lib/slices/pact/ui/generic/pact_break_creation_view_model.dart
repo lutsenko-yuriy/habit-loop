@@ -64,13 +64,18 @@ class PactBreakCreationViewModel extends AutoDisposeFamilyNotifier<PactBreakCrea
 
     try {
       final now = ref.read(pactBreakCreationNowProvider);
+      // End-of-day, not midnight (HAB-215) — state.endDate is a bare picked
+      // date; passing it straight through would make PactBreak.contains()
+      // treat anything after midnight on that date as already past the
+      // break, resuming a day earlier than the user picked.
+      final endOfPickedDay = DateTime(state.endDate.year, state.endDate.month, state.endDate.day, 23, 59, 59, 999);
       await ref.read(pactBreakServiceProvider).startBreak(
             id: const Uuid().v4(),
             pactId: arg,
             startDate: state.startDate,
             rationale: rationale,
             now: now,
-            plannedEndDate: untilPactEnds ? null : state.endDate,
+            plannedEndDate: untilPactEnds ? null : endOfPickedDay,
           );
 
       // PII rule: only pact ID and rationale length — no rationale text.
