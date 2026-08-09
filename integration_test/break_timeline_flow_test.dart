@@ -252,14 +252,19 @@ void main() {
       //         rendering-only change ────────────────────────────────────────
       await tester.pageBack();
       await tester.pumpAndSettle();
-      // Stat cards sit below the fold on a short viewport (CI's Android emulator) —
-      // dragUntilVisible, not a bare waitFor, since the sliver-backed ListView may
-      // not have realized them yet (HAB-196/HAB-199/HAB-211 root cause).
-      await tester.dragUntilVisible(
-        find.text(strings.statsShowups(1)).first,
-        find.byKey(const Key('pact-detail-scroll-view-$_pactId')),
-        const Offset(0, -100),
-      );
+      // openTimeline scrolled pact detail's own ListView down to reveal the
+      // timeline button, and pageBack() preserves that scroll offset — the stats
+      // section (near the top) is now off the realized extent. Reset to the top
+      // the same way openTimeline resets before scrolling down, rather than
+      // dragUntilVisible: the stats Row has no key and its text repeats across
+      // cards, so there's no single unambiguous, always-non-empty target finder
+      // to drive dragUntilVisible with.
+      final listViewFinder = find.byKey(const Key('pact-detail-scroll-view-$_pactId'));
+      for (var i = 0; i < 15; i++) {
+        await tester.drag(listViewFinder, const Offset(0, 100));
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
       expect(find.text(strings.statsShowups(1)), findsWidgets);
     });
 
