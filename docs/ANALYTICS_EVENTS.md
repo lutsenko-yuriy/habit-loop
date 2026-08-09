@@ -334,6 +334,8 @@ Companion event fired after the Pact Timeline screen finishes loading, carrying 
 
 Fired when the user taps a tappable timeline item (noted showup or lone single-showup) to open the showup detail screen. (HAB-116)
 
+Since HAB-216, a tail-zone showup covered by a break no longer renders as its own tappable `SingleShowupMilestone` — it merges into the non-tappable `BreakMilestone` instead, so this event no longer fires for it. `item_type` stays `noted_showup` \| `single_showup`; no new value was added for the merged case.
+
 | Property | Type | Description |
 |---|---|---|
 | `pact_id` | `string` | ID of the parent pact |
