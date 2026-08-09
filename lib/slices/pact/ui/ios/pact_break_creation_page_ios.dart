@@ -117,7 +117,9 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
                       onTap: () => _showDatePicker(
                         context,
                         state.endDate,
-                        minimumDate: state.startDate.add(const Duration(days: 1)),
+                        // Same-day break allowed (HAB-215) — a break's end date is inclusive of
+                        // that whole day, so start == end already covers a single day off.
+                        minimumDate: state.startDate,
                         onDateChanged: widget.onEndDateChanged,
                       ),
                     ),
@@ -135,6 +137,23 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
                   ),
                 ],
               ),
+              AnimatedReveal(
+                visible: state.nextShowupAfterEnd != null,
+                child: Column(
+                  key: const Key('break-next-showup-hint-row'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.s12),
+                    Text(
+                      state.nextShowupAfterEnd == null
+                          ? ''
+                          : l10n.breakNextShowupHint(formatLocaleDate(state.nextShowupAfterEnd!)),
+                      key: const Key('break-next-showup-hint'),
+                      style: AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(context)),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: AppSpacing.s24),
               CupertinoTextField(
                 key: const Key('break-rationale-field'),
@@ -144,14 +163,6 @@ class _PactBreakCreationPageIosState extends State<PactBreakCreationPageIos> {
                 minLines: 3,
                 onChanged: widget.onRationaleChanged,
               ),
-              if (state.nextShowupAfterEnd != null) ...[
-                const SizedBox(height: AppSpacing.s12),
-                Text(
-                  l10n.breakNextShowupHint(formatLocaleDate(state.nextShowupAfterEnd!)),
-                  key: const Key('break-next-showup-hint'),
-                  style: AppTypography.caption.copyWith(color: HabitLoopColors.secondaryText(context)),
-                ),
-              ],
               const SizedBox(height: AppSpacing.s24),
               if (state.submitError != null) ...[
                 Text(

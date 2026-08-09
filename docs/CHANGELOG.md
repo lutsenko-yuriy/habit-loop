@@ -8,13 +8,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ### Added
 
-- [user] The break screen now shows when the next showup is expected, right below the reason field, once its end date would push scheduling past it.
-- HAB-215: `PactBreakCreationViewModel.load()` fetches the pact's showups so `PactBreakCreationState.nextShowupAfterEnd` can be derived; rendered as a caption row (`break-next-showup-hint`) on both platform pages, hidden when open-ended or when no such showup exists.
+- [user] The break screen now shows when the next showup is expected, right below the "No end date yet" toggle, once its end date would push scheduling past it. Animates in/out like the rest of the screen.
+- [user] A break's end date can now be the same day it starts — previously the shortest possible break was two days.
+- HAB-215: `PactBreakCreationState.nextShowupAfterEnd` derives the hint from showups fetched via a new `PactBreakService.getShowupScheduledDatesForPact` (keeps the pact-slice UI off another slice's repository); rendered as an `AnimatedReveal`-wrapped caption row (`break-next-showup-hint-row`) between the toggle and the reason field on both platform pages. `setStartDate`'s endDate-bump only fires for an inverted (not merely equal) window; both date pickers' minimum end date dropped from `startDate + 1 day` to `startDate`.
 
 ### Fixed
 
-- [user] Fixed a break resuming a day too early — a pact now stays on break through the entire day the break was set to end, instead of resuming that same evening.
-- HAB-215: `PactBreakCreationViewModel.submit` now passes an end-of-day timestamp (`23:59:59.999`) for `plannedEndDate` instead of midnight, so `PactBreak.contains()` covers the whole picked end date.
+- [user] Fixed a break resuming a day too early — a pact now stays on break through the entire day the break was set to end, instead of resuming that same evening. This also corrects any break already saved from before this fix, without needing to recreate it.
+- HAB-215: `PactBreak.contains()`/`isResolved()`/`stop()` now treat `plannedEndDate` as naming a whole calendar day (compared against its end-of-day instant) rather than a precise midnight timestamp — fixed at the domain read boundary rather than at write time, so it self-heals breaks already persisted with a midnight `plannedEndDate`. `stoppedAt` (the exact "Resume pact" instant) is unaffected.
 
 ## [0.54.3] — 2026-08-05 (PR #361 merged)
 

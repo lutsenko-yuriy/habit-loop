@@ -17,9 +17,17 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/locale/fake_locale_preference_service.dart';
+import '../../../infrastructure/logging/fake_log_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 import '../../../infrastructure/sync/fake_sync_service.dart';
+
+/// Throws on every read — used to exercise [PactBreakCreationViewModel.load]'s
+/// error-swallowing contract (HAB-215).
+class _ThrowingShowupRepository extends InMemoryShowupRepository {
+  @override
+  Future<List<Showup>> getShowupsForPact(String pactId) => throw Exception('boom');
+}
 
 final _pact = Pact(
   id: 'p1',
@@ -35,9 +43,10 @@ ProviderContainer _makeContainerWithShowupRepo({
   DateTime? now,
   List<Override> extras = const [],
   List<Showup> showups = const [],
+  InMemoryShowupRepository? showupRepoOverride,
 }) {
   final pactRepo = InMemoryPactRepository([_pact]);
-  final showupRepo = InMemoryShowupRepository(showups);
+  final showupRepo = showupRepoOverride ?? InMemoryShowupRepository(showups);
   final breakRepo = InMemoryPactBreakRepository();
   final cache = PactDetailCache(
     pactRepository: pactRepo,
@@ -119,16 +128,28 @@ void main() {
       expect(state.endDate, DateTime(2026, 6, 25));
     });
 
-    test('setStartDate bumps endDate forward when it would otherwise become <= startDate', () {
+    test('setStartDate bumps endDate forward when it would otherwise become inverted (before startDate)', () {
       final container = _makeContainer(now: DateTime(2026, 6, 15));
       addTearDown(container.dispose);
       final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
       // Default endDate is 2026-06-22 — moving startDate past it must not
-      // leave an inverted/zero-length window.
+      // leave an inverted window.
       notifier.setStartDate(DateTime(2026, 6, 25));
       final state = container.read(pactBreakCreationViewModelProvider('p1'));
       expect(state.startDate, DateTime(2026, 6, 25));
       expect(state.endDate.isAfter(state.startDate), true);
+    });
+
+    test('setStartDate leaves endDate equal to startDate untouched — a same-day break is valid (HAB-215)', () {
+      final container = _makeContainer(now: DateTime(2026, 6, 15));
+      addTearDown(container.dispose);
+      final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+      // Default endDate is 2026-06-22 — moving startDate to exactly that
+      // date must not bump endDate forward; a single-day break is allowed.
+      notifier.setStartDate(DateTime(2026, 6, 22));
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.startDate, DateTime(2026, 6, 22));
+      expect(state.endDate, DateTime(2026, 6, 22));
     });
 
     test('setStartDate leaves endDate untouched when it is still after the new startDate', () {
@@ -181,9 +202,7 @@ void main() {
       final breaks = await container.read(pactBreakRepositoryProvider).getBreaksForPact('p1');
       expect(breaks, hasLength(1));
       expect(breaks.first.startDate, DateTime(2026, 6, 15));
-      // End-of-day, not midnight (HAB-215) — otherwise a showup later on the
-      // picked end date would already read as past the break window.
-      expect(breaks.first.plannedEndDate, DateTime(2026, 6, 22, 23, 59, 59, 999));
+      expect(breaks.first.plannedEndDate, DateTime(2026, 6, 22));
       expect(breaks.first.rationale, 'Feeling sick');
 
       expect(analytics.loggedEvents, hasLength(1));
@@ -276,6 +295,24 @@ void main() {
 
         final state = container.read(pactBreakCreationViewModelProvider('p1'));
         expect(state.nextShowupAfterEnd, isNull);
+      });
+
+      test('load swallows a repository failure instead of crashing (HAB-215)', () async {
+        final logService = FakeLogService();
+        final container = _makeContainerWithShowupRepo(
+          now: DateTime(2026, 6, 15),
+          showupRepoOverride: _ThrowingShowupRepository(),
+          extras: [logServiceProvider.overrideWithValue(logService)],
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(pactBreakCreationViewModelProvider('p1').notifier);
+
+        await notifier.load(); // must not throw
+
+        final state = container.read(pactBreakCreationViewModelProvider('p1'));
+        expect(state.nextShowupAfterEnd, isNull);
+        expect(logService.errorCalls, hasLength(1));
+        expect(logService.errorCalls.first.message, contains('pact_break_creation_showup_load_failed'));
       });
 
       test('nextShowupAfterEnd is null when no showup falls after the end date', () async {

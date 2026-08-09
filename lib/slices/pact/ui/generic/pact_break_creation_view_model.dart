@@ -32,11 +32,12 @@ class PactBreakCreationViewModel extends AutoDisposeFamilyNotifier<PactBreakCrea
 
   // The start-date picker's floor is always "today", independent of the
   // current endDate — bump endDate forward when it would otherwise become
-  // <= the new startDate (a zero-length or inverted window that still
-  // counts as "unresolved" and blocks starting any other break).
+  // an inverted window (endDate before the new startDate). A same-day
+  // window (endDate == startDate) is a valid single-day break (HAB-215) and
+  // is left alone.
   void setStartDate(DateTime date) {
     final normalized = DateTime(date.year, date.month, date.day);
-    final endDate = state.endDate.isAfter(normalized) ? state.endDate : normalized.add(const Duration(days: 7));
+    final endDate = state.endDate.isBefore(normalized) ? normalized.add(const Duration(days: 7)) : state.endDate;
     state = state.copyWith(startDate: normalized, endDate: endDate);
   }
 
@@ -54,10 +55,20 @@ class PactBreakCreationViewModel extends AutoDisposeFamilyNotifier<PactBreakCrea
 
   /// Loads this pact's showups so [PactBreakCreationState.nextShowupAfterEnd]
   /// can be derived (HAB-215). Fire-and-forget from the screen's `initState`
-  /// — the hint simply stays absent until this resolves.
+  /// — any failure is swallowed (mirroring PactDetailViewModel's chain-cache
+  /// warm) rather than escaping to the global error handler as a fatal
+  /// crash; the hint simply stays absent.
   Future<void> load() async {
-    final showups = await ref.read(showupRepositoryProvider).getShowupsForPact(arg);
-    state = state.copyWith(showupScheduledDates: showups.map((s) => s.scheduledAt).toList());
+    try {
+      final scheduledDates = await ref.read(pactBreakServiceProvider).getShowupScheduledDatesForPact(arg);
+      state = state.copyWith(showupScheduledDates: scheduledDates);
+    } catch (e, st) {
+      unawaited(
+        ref
+            .read(logServiceProvider)
+            .error('pact_break_creation_showup_load_failed: pactId=$arg', exception: e, stackTrace: st),
+      );
+    }
   }
 
   /// Persists the break via [PactBreakService]. Returns `true` on success.
@@ -72,18 +83,16 @@ class PactBreakCreationViewModel extends AutoDisposeFamilyNotifier<PactBreakCrea
 
     try {
       final now = ref.read(pactBreakCreationNowProvider);
-      // End-of-day, not midnight (HAB-215) — state.endDate is a bare picked
-      // date; passing it straight through would make PactBreak.contains()
-      // treat anything after midnight on that date as already past the
-      // break, resuming a day earlier than the user picked.
-      final endOfPickedDay = DateTime(state.endDate.year, state.endDate.month, state.endDate.day, 23, 59, 59, 999);
+      // plannedEndDate is stored as the bare picked date — PactBreak treats
+      // it as naming a whole calendar day (HAB-215), not a precise instant,
+      // so no end-of-day conversion is needed here.
       await ref.read(pactBreakServiceProvider).startBreak(
             id: const Uuid().v4(),
             pactId: arg,
             startDate: state.startDate,
             rationale: rationale,
             now: now,
-            plannedEndDate: untilPactEnds ? null : endOfPickedDay,
+            plannedEndDate: untilPactEnds ? null : state.endDate,
           );
 
       // PII rule: only pact ID and rationale length — no rationale text.

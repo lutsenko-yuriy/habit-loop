@@ -24,24 +24,36 @@ class PactBreak {
 
   DateTime? get effectiveEnd => stoppedAt ?? plannedEndDate;
 
+  // plannedEndDate is a picked calendar date (HAB-215), not a precise instant —
+  // it must cover the whole day it names, or a showup later that same day would
+  // read as already past the break. stoppedAt, by contrast, is the exact instant
+  // "Resume pact" was tapped (or an already-elapsed plannedEndDate clamped to
+  // itself, below) and is never widened. Applied at read time (contains/isResolved)
+  // rather than at write time, so it also self-heals breaks already persisted with
+  // a midnight plannedEndDate from before this fix.
+  static DateTime _endOfDay(DateTime d) => DateTime(d.year, d.month, d.day, 23, 59, 59, 999);
+
   bool contains(DateTime scheduledAt) {
-    final end = effectiveEnd;
-    return !scheduledAt.isBefore(startDate) && (end == null || !scheduledAt.isAfter(end));
+    if (scheduledAt.isBefore(startDate)) return false;
+    if (stoppedAt != null) return !scheduledAt.isAfter(stoppedAt!);
+    final planned = plannedEndDate;
+    return planned == null || !scheduledAt.isAfter(_endOfDay(planned));
   }
 
   bool isActiveAt(DateTime now) => contains(now);
 
   bool isResolved(DateTime now) {
     final plannedEnd = plannedEndDate;
-    return stoppedAt != null || (plannedEnd != null && now.isAfter(plannedEnd));
+    return stoppedAt != null || (plannedEnd != null && now.isAfter(_endOfDay(plannedEnd)));
   }
 
-  // No-op once already stopped, and clamps to plannedEndDate — stopping an
-  // already-elapsed fixed-end break must not extend/revive its window.
+  // No-op once already stopped, and clamps to plannedEndDate's end-of-day —
+  // stopping an already-elapsed fixed-end break must not extend/revive its window.
   PactBreak stop(DateTime now) {
     if (stoppedAt != null) return this;
     final plannedEnd = plannedEndDate;
-    final clamped = plannedEnd != null && now.isAfter(plannedEnd) ? plannedEnd : now;
+    final plannedEndOfDay = plannedEnd == null ? null : _endOfDay(plannedEnd);
+    final clamped = plannedEndOfDay != null && now.isAfter(plannedEndOfDay) ? plannedEndOfDay : now;
     return copyWith(stoppedAt: clamped);
   }
 
