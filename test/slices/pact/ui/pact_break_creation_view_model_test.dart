@@ -214,6 +214,10 @@ void main() {
       // Inclusive of both start (6/15) and end (6/22) dates (HAB-215): 8, not 7.
       expect(params['duration_days'], 8);
       expect(params['rationale_length'], 'Feeling sick'.length);
+
+      final state = container.read(pactBreakCreationViewModelProvider('p1'));
+      expect(state.isSubmitting, false);
+      expect(state.submitError, isNull);
     });
 
     test('submit reports duration_days as 1 for a same-day break, not 0 (HAB-215)', () async {
