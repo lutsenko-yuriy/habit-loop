@@ -26,7 +26,7 @@ description: Implement a work unit from an approved plan. Given a PM issue ID, f
 
 Retrieve the issue details and find the implementation plan comment left by the `plan` skill:
 
-Fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**).
+If the issue's description and its plan comment are both already in the transcript from this session's `/plan` or `/draft-scenarios` run, reuse them instead of re-fetching. Otherwise, fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**). See `skills/shared/linear-efficiency.md` for the reuse convention.
 
 **Show the full issue description to the user** and ask: *"Does this match what you want to build? Any scope clarifications before I start?"* Wait for confirmation.
 

@@ -41,4 +41,8 @@ When in doubt, re-fetch — this convention trades a rare redundant call for the
 
 - `summarize`'s per-ticket `get_issue` loop, used only to recover `status` — replaced by `fields`-scoped `list_issues` (WU2).
 - `ship`'s two adjacent "fetch the issue" preconditions — collapsed into one fetch (WU2).
-- `draft-scenarios`/`implement` pairing `get_issue` with a separate `list_comments` where the plan comment was the only thing needed — addressed via the fetch-once convention (WU3).
+- `draft-scenarios`/`implement` pairing `get_issue` with a separate `list_comments` where the plan comment was the only thing needed — addressed via the fetch-once convention (WU3): `analyze`, `plan`, `draft-scenarios`, and `implement` now reuse an issue's full details or plan comment from the session transcript when a preceding step in the same session already fetched them, instead of re-fetching unconditionally.
+
+## Correction: summarize's live-MCP fallback was restored, not deleted
+
+WU2 (open question 3) deleted `summarize`'s live `list_issues`/`list_milestones` fallback path outright, on the reasoning that the pre-fetched `skill_router` path should be the only supported one. In practice this left the session stuck asking the user to fix `skill_router` (LM Studio, env vars, or a `skill_router` bug) before a backlog could be shown at all, with no way to route around a broken script. The fallback (and its product-vs-process classification, step 1a) has been restored — see `skills/manage/summarize/SKILL.md`. The rest of WU2 (fields-scoped `list_issues`/`brief` search, `ship`'s collapsed precondition fetch) stands.

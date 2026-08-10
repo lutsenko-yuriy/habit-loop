@@ -19,7 +19,7 @@ This skill produces scenario files, not production code.
 
 ### 1. Fetch the ticket
 
-Fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**) to find any plan comment left by the `plan` skill. Read the description, acceptance criteria, and plan (if present) to understand the expected behaviour.
+If the issue's description was already fetched in full earlier in this session (e.g. by a preceding `/plan` run), reuse it from the transcript and skip straight to fetching only what's missing: the plan comment, if not already visible in the transcript (a `/plan` run posts it in full, so it usually already is) — list comments (**List comments on issue**) only if it isn't. Otherwise, fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**) to find any plan comment left by the `plan` skill. Read the description, acceptance criteria, and plan (if present) to understand the expected behaviour. See `skills/shared/linear-efficiency.md` for the reuse convention.
 
 ### 2. Read the test harness
 

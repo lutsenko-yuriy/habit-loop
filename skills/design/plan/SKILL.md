@@ -17,7 +17,7 @@ This skill produces plans, not code.
 
 ### 1. Fetch the issue(s)
 
-Fetch each relevant issue (PM mapping: **Fetch issue**). If a milestone was named, fetch the milestone (**Fetch milestone**) then list its issues (**List issues in milestone**).
+For any issue already fetched in full earlier in this session (e.g. by a preceding `/analyze` run) with nothing changed since, reuse those details from the transcript instead of re-fetching. Otherwise, fetch it (PM mapping: **Fetch issue**). If a milestone was named, fetch the milestone (**Fetch milestone**) then list its issues (**List issues in milestone**). See `skills/shared/linear-efficiency.md` for the reuse convention.
 
 ### 1.5 Ask about architectural intent
 

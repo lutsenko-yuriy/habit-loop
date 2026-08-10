@@ -17,7 +17,7 @@ This skill produces an analytics plan, not code.
 
 ### 1. Fetch the issue
 
-Fetch the issue (PM mapping: **Fetch issue**) to retrieve its full details (title, description, acceptance criteria, mockups or flow descriptions).
+If the issue's full details were already fetched earlier in this session (e.g. by a preceding `/plan` run) and nothing has changed since, reuse those details from the transcript. Otherwise, fetch the issue (PM mapping: **Fetch issue**) to retrieve its full details (title, description, acceptance criteria, mockups or flow descriptions). See `skills/shared/linear-efficiency.md` for the reuse convention.
 
 ### 2. Read the existing analytics catalogue
 
