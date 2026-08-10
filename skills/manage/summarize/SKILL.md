@@ -4,7 +4,7 @@ effort: RAPID
 reasoning: MECHANICAL
 context: linear
 output_style: CONCISE
-description: Present the current backlog at session start. Fetches open issues from the PM tool, shows the active milestone and completion percentage, groups work by label, splits it into a product-vs-process ticket count, and asks "What goes into the next release?" Invoke at the start of every session before any work begins.
+description: Present the current backlog at session start. Fetches open issues from the PM tool via the pre-fetched `skill_router` path, shows the active milestone and completion percentage, groups work by label, and asks "What goes into the next release?" Invoke at the start of every session before any work begins.
 ---
 
 @skills/shared/project-config.md
@@ -19,7 +19,7 @@ Check for a `PLAN.local.md` file at the project root (gitignored — a personal,
 
 If it exists and has content:
 1. Read it and extract the listed tickets.
-2. For each ticket, check its current Linear state (PM mapping: **Fetch issue**). Filter out any already `Done`, `Canceled`, or otherwise resolved.
+2. Fetch current state for all listed tickets in one call (PM mapping: **List issues**, `fields: ["identifier", "status", "statusType"]`, `includeArchived: false`) and match by identifier — do not call **Fetch issue** per ticket. Filter out any already `Done`, `Canceled`, or otherwise resolved.
 3. Present the surviving plan to the user (ticket IDs, titles, and any inline notes from the file) before the backlog summary below.
 4. Ask: "Want to follow this plan, modify it, start a new plan alongside it, or set it aside and go with the regular backlog?" Wait for the answer before proceeding to step 1.
 
@@ -27,32 +27,9 @@ This catches stale-but-still-relevant intentions from a prior session before bac
 
 ### 1. Output the pre-fetched backlog
 
-When routed via `skill_router.py` (`context: linear`), the backlog data is injected above this text between `=== PRE-FETCHED BACKLOG ===` sentinels. Copy that block verbatim — do not reformat, do not call any tools. **Known limitation:** the pre-fetched path does not classify product vs. process (step 1a below) — it only groups issues by the existing Bug/Tech Debt/Feature/Improvement Linear labels.
+Routed via `skill_router.py` (`context: linear`) — the backlog data is injected above this text between `=== PRE-FETCHED BACKLOG ===` sentinels. Copy that block verbatim — do not reformat, do not call any tools. **Known limitation:** the pre-fetched path does not classify product vs. process — it only groups issues by the existing Bug/Tech Debt/Feature/Improvement Linear labels.
 
-When running inside Claude Code (fallback path), list issues and milestones (PM mapping: **List issues**, **List milestones** — use the **Project ID** from the PM tool mapping) and produce the summary below:
-
-```
-## Backlog — Habit Loop
-
-### Active milestone: <name> (<X>% complete)
-
-**N product tickets · M process tickets pending.**
-
-### Issues (bugs & tech debt)
-- HAB-XX: <title> — <one-line description>
-
-### Remaining work
-- HAB-XX: <title> — <one-line description>
-```
-
-### 1a. Classify product vs. process (fallback path only)
-
-For each ticket, read its title and description and classify it as:
-
-- **Product** — a user-facing feature, bug fix, or app-facing improvement: anything that changes what the app does or how it behaves for an end user.
-- **Process** — workflow, skill, tooling, CI, docs-audit, or research into how the team/agents work: anything that changes how the app gets built, not what it does.
-
-Do not rely on Linear labels for this — the existing labels (Feature, Bug, Tech Debt, Improvement) don't distinguish product from process work; use judgment from each ticket's content. Compute N (product count) and M (process count) and fill in the summary line above, before the section breakdown. The goal is to make process debt visible at the point the release decision gets made, rather than letting it silently pile up across sessions until it's felt rather than seen (see HAB-154 debrief).
+**No live MCP fallback (HAB-176 WU2):** if the sentinel block is missing — the router script failed and this skill is running via the Agent fallback in `.claude/commands/summarize.md` — do not substitute a live `list_issues`/`list_milestones` fetch. Tell the user the pre-fetched backlog is unavailable (most likely `LM_API_TOKEN`/`LINEAR_API_KEY` not set, or LM Studio not running — see `CLAUDE.local.md`) and ask them to fix that before retrying, instead of silently falling back to a slower, costlier live-fetch path.
 
 ### 2. Ask and wait
 
