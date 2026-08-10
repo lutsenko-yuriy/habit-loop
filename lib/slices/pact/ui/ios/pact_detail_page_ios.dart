@@ -480,12 +480,14 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ),
 
-        // Archive section, same reveal/collapse treatment. No stretch — the
-        // button stays a small centered link, so the header needs its own explicit left alignment.
+        // Archive section, same reveal/collapse treatment. Stretch so the
+        // button fills the row like the other action buttons below (HAB-218
+        // regression fix) — the header stays left-aligned via its own Align.
         AnimatedReveal(
           visible: pact.status != PactStatus.active,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.s24),
               Align(
@@ -506,10 +508,13 @@ class _PactDetailContent extends StatelessWidget {
 
         // Take a break + stop pact, set off by a divider (HAB-195: keep
         // "Take a break" closer to "Stop pact" than "View Timeline"). Reveals/collapses (HAB-206 WU3).
+        // stretch — without it the inner Column shrink-wraps its buttons to text
+        // width instead of filling the row (HAB-218 regression fix).
         AnimatedReveal(
           visible: pact.status == PactStatus.active,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.s24),
               Divider(color: CupertinoColors.separator.resolveFrom(context)),
