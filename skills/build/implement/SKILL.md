@@ -26,7 +26,7 @@ description: Implement a work unit from an approved plan. Given a PM issue ID, f
 
 Retrieve the issue details and find the implementation plan comment left by the `plan` skill:
 
-Fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**).
+If the issue's description and its plan comment are both already in the transcript from this session's `/plan` or `/draft-scenarios` run, reuse them instead of re-fetching. Otherwise, fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**). See `skills/shared/linear-efficiency.md` for the reuse convention.
 
 **Show the full issue description to the user** and ask: *"Does this match what you want to build? Any scope clarifications before I start?"* Wait for confirmation.
 
@@ -114,6 +114,10 @@ Both can be requested simultaneously. Only proceed after the orchestrator confir
 Never update the backlog or changelog (paths from project config) — those are owned by the `ship` skill.
 
 **PII constraint:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
+
+### 8.5. Run the WU0 verification checklist (if this ticket used one instead of scenarios)
+
+If the plan's WU0 was a verification checklist rather than integration scenarios — look in the plan's **Test strategy** section, not a WU0 table row, since a checklist WU0 has no table row (see `plan-template.md`) — and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item. Do not proceed to Format/PR until every item — agent-run or human-confirmed — has actually been executed, not just written.
 
 ### 9. Format
 

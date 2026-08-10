@@ -22,13 +22,16 @@
 
 ### Test strategy
 - <what to test and how; name the test files>
+- **If WU0 is a verification checklist instead of scenarios**, list it here instead of a prose paragraph:
+  - [ ] [agent] <dry-run step the agent runs itself>
+  - [ ] [human] <check only a person can make>
 
 ### Implementation phases
 1. **Phase 1 — <name>**: <what gets done; deliverable>
 2. **Phase 2 — <name>**: <what gets done; deliverable>
 
 ### Work units
-WU0 always contains integration scenarios only (no production code). Subsequent WUs should target ≤ 300 LoC changed and ≤ 10 files; split further if a WU would exceed these. Each WU lists which scenarios it makes green.
+WU0 is always the first unit. When the ticket has a user-facing flow `draft-scenarios` can assert against, WU0 is integration scenarios (no production code) — give it a table row, as below. When it doesn't, WU0 is the verification checklist in Test strategy above instead — it has no branch, PR, or LoC of its own, so **omit its table row entirely**; the table below starts at WU1 in that case. Subsequent WUs should target ≤ 300 LoC changed and ≤ 10 files; split further if a WU would exceed these. Each WU lists which scenarios it makes green.
 
 | # | Unit | Branch | Issues | Scenarios made green | Analytics events fired | Est. LoC | Files touched (approx) |
 |---|------|--------|--------|----------------------|-----------------------|----------|------------------------|

@@ -18,6 +18,7 @@ Request only what the calling step actually needs:
 |---|---|
 | Just filtering/counting by status | `["status", "statusType"]` |
 | Backlog summary rows (title + status + label grouping) | `["title", "status", "statusType", "labels"]` |
+| Backlog summary rows that also need a one-line description per ticket (e.g. `summarize`'s live fallback, which shows a description snippet and needs it for product/process classification) | `["title", "description", "status", "statusType", "labels"]` |
 | Priority-sorted triage | `["title", "status", "priority"]` |
 
 `mcp__linear__get_issue` has **no `fields` parameter** — its payload (full description, state history) is irreducible through the MCP. It does **not** return comments — those require a separate `mcp__linear__list_comments` call (see "Known redundant round-trips" below for where this repo pairs the two unnecessarily). `get_issue` does have three opt-in flags (`includeCustomerNeeds`, `includeRelations`, `includeReleases`, all default `false`) — the guidance there is "don't opt in unless needed," not "no levers exist." Otherwise, the only lever on `get_issue` cost is calling it less (see "Fetch once, reuse" below), not trimming what it returns. When a step genuinely needs the full description (e.g. `/plan`, `/brief`, `/audit-code` acting on ticket content), call it in full — this guidance is about cutting incidental re-fetches, never about reading less than what's needed at the point it's needed.
@@ -32,13 +33,20 @@ Request only what the calling step actually needs:
 A single ticket's lifecycle can otherwise run `get_issue` six or seven times across `/analyze`, `/plan`, `/draft-scenarios`, `/implement`, and `/ship` — each a full-description, full-comment-history fetch of content that usually hasn't changed between those steps.
 
 Once an issue has been fetched in full earlier in the same session, later steps should read its details from the transcript instead of re-fetching, **unless**:
-- The issue may have changed since the last fetch (e.g. after a state transition this session performed, like `/plan` posting a comment or `/ship` moving the ticket to In QA), or
+- The issue itself may have changed since the last fetch (e.g. after a state transition this session performed, like `/ship` moving the ticket to In QA) — a new `/plan` comment being posted is not itself such a change; treat it as new content to read, not a reason to re-fetch the issue's description.
 - A field the current step needs was not captured by the earlier fetch (e.g. an earlier step only listed `title`/`status`, but the current step needs the full description).
+- `plan`'s comment was revised after step 5 approval (the user requested changes later in the same session) — `plan` does not currently re-post automatically in that case, so a downstream step reusing the plan comment from the transcript should confirm it's the final approved version, not an earlier draft.
 
 When in doubt, re-fetch — this convention trades a rare redundant call for the far more common case of not re-reading content that's already in context. It never trades away the accuracy of what a step acts on.
+
+**A compacted transcript doesn't count as "already fetched."** This project's own workflow (`docs/FEATURE_WORKFLOW.md` step 11) recommends compacting context after each commit — after compaction, a full description that was fetched earlier in the session is no longer verbatim in context even though the session is nominally the same one. If context was compacted since the last fetch, treat the issue as not-yet-fetched and re-fetch it.
 
 ## Known redundant round-trips (fixed as part of HAB-176)
 
 - `summarize`'s per-ticket `get_issue` loop, used only to recover `status` — replaced by `fields`-scoped `list_issues` (WU2).
 - `ship`'s two adjacent "fetch the issue" preconditions — collapsed into one fetch (WU2).
-- `draft-scenarios`/`implement` pairing `get_issue` with a separate `list_comments` where the plan comment was the only thing needed — addressed via the fetch-once convention (WU3).
+- `draft-scenarios`/`implement` pairing `get_issue` with a separate `list_comments` where the plan comment was the only thing needed — addressed via the fetch-once convention (WU3): `analyze`, `plan`, `draft-scenarios`, and `implement` now reuse an issue's full details or plan comment from the session transcript when a preceding step in the same session already fetched them, instead of re-fetching unconditionally.
+
+## Correction: summarize's live-MCP fallback was restored, not deleted
+
+WU2 (open question 3) deleted `summarize`'s live `list_issues`/`list_milestones` fallback path outright, on the reasoning that the pre-fetched `skill_router` path should be the only supported one. In practice this left the session stuck asking the user to fix `skill_router` (LM Studio, env vars, or a `skill_router` bug) before a backlog could be shown at all, with no way to route around a broken script. The fallback (and its product-vs-process classification, step 1a) has been restored — see `skills/manage/summarize/SKILL.md`. The rest of WU2 (fields-scoped `list_issues`/`brief` search, `ship`'s collapsed precondition fetch) stands.
