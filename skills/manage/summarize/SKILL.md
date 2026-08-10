@@ -19,7 +19,7 @@ Check for a `PLAN.local.md` file at the project root (gitignored — a personal,
 
 If it exists and has content:
 1. Read it and extract the listed tickets.
-2. Fetch current state for all listed tickets in one call (PM mapping: **List issues**, `fields: ["identifier", "status", "statusType"]`, `includeArchived: false`) and match by identifier — do not call **Fetch issue** per ticket. Filter out any already `Done`, `Canceled`, or otherwise resolved.
+2. Check each listed ticket's current state against the pre-fetched backlog (the `=== PRE-FETCHED BACKLOG ===` block described in step 1 — every issue in it is already state-filtered to non-`Done`/non-`Canceled`, so a listed ticket simply not present has either resolved or fallen outside the block's 50-most-recently-updated window). If that block is unavailable (this skill running via the `.claude/commands/summarize.md` Agent fallback, with no pre-fetch), fetch each listed ticket individually instead (PM mapping: **Fetch issue**). Filter out any already `Done`, `Canceled`, or otherwise resolved.
 3. Present the surviving plan to the user (ticket IDs, titles, and any inline notes from the file) before the backlog summary below.
 4. Ask: "Want to follow this plan, modify it, start a new plan alongside it, or set it aside and go with the regular backlog?" Wait for the answer before proceeding to step 1.
 
