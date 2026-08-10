@@ -9,6 +9,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
 - [meta] (PR #367) HAB-176 (WU1): new `skills/shared/linear-efficiency.md` documents Linear MCP field-selection defaults, a minimum-viable-field-set table, and the fetch-once/reuse-from-transcript convention — plus the finding that MCP tool search (on by default in this Claude Code version) already keeps the 46 unused Linear tool schemas out of context, so the ~12–18k-token fixed-cost estimate in the ticket's original plan didn't hold. `skills/shared/pm-tool-mapping.md` gains a "Default parameters" column.
+- [meta] (PR #368) HAB-176 (WU2): `summarize` drops its per-ticket `get_issue` loop (`PLAN.local.md` survey step) for a single `fields`-scoped `list_issues` call, and drops its live-MCP fallback branch entirely — the `skill_router` pre-fetched path is now the only supported path. `ship` collapses its two adjacent `get_issue` preconditions into one fetch. `brief`'s duplicate-ticket search now passes explicit `fields`/`includeArchived: false`. Highest-value WU of the ticket — est. ~30k+ tokens off a session start.
 
 ## [0.55.1] — 2026-08-10 (PR #365 merged)
 
