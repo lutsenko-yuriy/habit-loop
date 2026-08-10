@@ -18,15 +18,17 @@ All Linear-specific details live here. When porting to a different PM tool, repl
 
 ## Operation mapping
 
-| Operation | MCP tool | Key parameters |
-|---|---|---|
-| Fetch issue | `mcp__linear__get_issue` | `id` |
-| List issues | `mcp__linear__list_issues` | `project`, `state`, `label`, `assignee` |
-| Create issue | `mcp__linear__save_issue` | `title`, `team`, `project`, `state`, `labels`, `priority` |
-| Update issue | `mcp__linear__save_issue` | `id`, plus fields to change (e.g. `state`) |
-| Move issue to state | `mcp__linear__save_issue` | `id`, `state: "<state name>"` |
-| List comments on issue | `mcp__linear__list_comments` | `issueId` |
-| Post comment on issue | `mcp__linear__save_comment` | `issueId`, `body` |
-| Fetch milestone | `mcp__linear__get_milestone` | `id` |
-| List milestones | `mcp__linear__list_milestones` | `project` |
-| List issues in milestone | `mcp__linear__list_issues` | `project`, `milestone` |
+See `skills/shared/linear-efficiency.md` for why the **Default parameters** column below matters and how to choose a narrower `fields` set per step (HAB-176).
+
+| Operation | MCP tool | Key parameters | Default parameters |
+|---|---|---|---|
+| Fetch issue | `mcp__linear__get_issue` | `id` | — (`get_issue` has no `fields` param; prefer reusing an earlier fetch from the transcript over calling again, see linear-efficiency.md) |
+| List issues | `mcp__linear__list_issues` | `project`, `state`, `label`, `assignee` | `fields`: narrowest set the step needs (see linear-efficiency.md table); `includeArchived: false` unless archived tickets are specifically wanted; `limit`: only as high as the step needs (default 50) |
+| Create issue | `mcp__linear__save_issue` | `title`, `team`, `project`, `state`, `labels`, `priority` | — |
+| Update issue | `mcp__linear__save_issue` | `id`, plus fields to change (e.g. `state`) | — |
+| Move issue to state | `mcp__linear__save_issue` | `id`, `state: "<state name>"` | — |
+| List comments on issue | `mcp__linear__list_comments` | `issueId` | — |
+| Post comment on issue | `mcp__linear__save_comment` | `issueId`, `body` | — |
+| Fetch milestone | `mcp__linear__get_milestone` | `id` | — |
+| List milestones | `mcp__linear__list_milestones` | `project` | — |
+| List issues in milestone | `mcp__linear__list_issues` | `project`, `milestone` | Same as List issues above |
