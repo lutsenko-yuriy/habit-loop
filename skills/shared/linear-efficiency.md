@@ -18,6 +18,7 @@ Request only what the calling step actually needs:
 |---|---|
 | Just filtering/counting by status | `["status", "statusType"]` |
 | Backlog summary rows (title + status + label grouping) | `["title", "status", "statusType", "labels"]` |
+| Backlog summary rows that also need a one-line description per ticket (e.g. `summarize`'s live fallback, which shows a description snippet and needs it for product/process classification) | `["title", "description", "status", "statusType", "labels"]` |
 | Priority-sorted triage | `["title", "status", "priority"]` |
 
 `mcp__linear__get_issue` has **no `fields` parameter** — its payload (full description, state history) is irreducible through the MCP. It does **not** return comments — those require a separate `mcp__linear__list_comments` call (see "Known redundant round-trips" below for where this repo pairs the two unnecessarily). `get_issue` does have three opt-in flags (`includeCustomerNeeds`, `includeRelations`, `includeReleases`, all default `false`) — the guidance there is "don't opt in unless needed," not "no levers exist." Otherwise, the only lever on `get_issue` cost is calling it less (see "Fetch once, reuse" below), not trimming what it returns. When a step genuinely needs the full description (e.g. `/plan`, `/brief`, `/audit-code` acting on ticket content), call it in full — this guidance is about cutting incidental re-fetches, never about reading less than what's needed at the point it's needed.

@@ -35,6 +35,6 @@ WU0 is always the first unit. When the ticket has a user-facing flow `draft-scen
 
 | # | Unit | Branch | Issues | Scenarios made green | Analytics events fired | Est. LoC | Files touched (approx) |
 |---|------|--------|--------|----------------------|-----------------------|----------|------------------------|
-| 0 | Integration scenarios (`draft-scenarios` output) — omit this row if WU0 is a checklist instead | `feature/HAB-XX-WU0-scenarios` | HAB-XX | — (stubs; filled in per WU) | — | ~50 | `integration_test/...` |
+| 0 | Integration scenarios (`draft-scenarios` output) | `feature/HAB-XX-WU0-scenarios` | HAB-XX | — (stubs; filled in per WU) | — | ~50 | `integration_test/...` |
 | 1 | <unit name> | `feature/HAB-XX-WU1-<short>` | HAB-XX | S1, S2 | `EventName` | ~150 | <files> |
 ```

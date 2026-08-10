@@ -97,8 +97,10 @@ When in doubt, use **In QA**.
 
    **Never commit a CHANGELOG entry with no classification tag — CI will fail.**
 8. Commit all changes with a descriptive message.
-8.5. If this ticket's WU0 was a verification checklist rather than integration scenarios (see the Multi-WU appendix), and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item now, before opening the PR. Do not proceed on an unexecuted checklist.
-9. Push to the remote and open a PR — all in parallel:
+9. Push to the remote and open a PR — all in parallel, except the checklist gate below which comes first:
+
+   If this ticket's WU0 was a verification checklist rather than integration scenarios (see the Multi-WU appendix), and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item now, before doing any of the following. Do not proceed on an unexecuted checklist.
+
    - Push the branch to the remote.
    - Open a PR.
    - Move the Linear ticket to **In Review**.
