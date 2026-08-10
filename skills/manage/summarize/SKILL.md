@@ -4,7 +4,7 @@ effort: RAPID
 reasoning: MECHANICAL
 context: linear
 output_style: CONCISE
-description: Present the current backlog at session start. Fetches open issues from the PM tool via the pre-fetched `skill_router` path, shows the active milestone and completion percentage, groups work by label, and asks "What goes into the next release?" Invoke at the start of every session before any work begins.
+description: Present the current backlog at session start. Fetches open issues from the PM tool — via the pre-fetched `skill_router` path, or a live fallback (with product-vs-process classification) if that path is unavailable — shows the active milestone and completion percentage, groups work by label, and asks "What goes into the next release?" Invoke at the start of every session before any work begins.
 ---
 
 @skills/shared/project-config.md
@@ -19,7 +19,7 @@ Check for a `PLAN.local.md` file at the project root (gitignored — a personal,
 
 If it exists and has content:
 1. Read it and extract the listed tickets.
-2. Check each listed ticket's current state against the pre-fetched backlog (the `=== PRE-FETCHED BACKLOG ===` block described in step 1 — every issue in it is already state-filtered to non-`Done`/non-`Canceled`, so a listed ticket simply not present has either resolved or fallen outside the block's 50-most-recently-updated window). If that block is unavailable (this skill running via the `.claude/commands/summarize.md` Agent fallback, with no pre-fetch), fetch each listed ticket individually instead (PM mapping: **Fetch issue**). Filter out any already `Done`, `Canceled`, or otherwise resolved.
+2. Check each listed ticket's current state against the pre-fetched backlog (the `=== PRE-FETCHED BACKLOG ===` block described in step 1 — every issue in it is already state-filtered to non-`Done`/non-`Canceled`, so a listed ticket simply not present has either resolved or fallen outside the block's 50-most-recently-updated window). If that block is unavailable, run step 1's live-fallback list fetch now (before continuing here) instead of a fresh per-ticket fetch, and reuse that same list for step 1's backlog output — it is already state-filtered the same way, so the same "not present → resolved or outside the window" reasoning applies, and it saves fetching the same data twice. Filter out any already `Done`, `Canceled`, or otherwise resolved.
 3. Present the surviving plan to the user (ticket IDs, titles, and any inline notes from the file) before the backlog summary below.
 4. Ask: "Want to follow this plan, modify it, start a new plan alongside it, or set it aside and go with the regular backlog?" Wait for the answer before proceeding to step 1.
 
@@ -29,7 +29,7 @@ This catches stale-but-still-relevant intentions from a prior session before bac
 
 Routed via `skill_router.py` (`context: linear`) — the backlog data is injected above this text between `=== PRE-FETCHED BACKLOG ===` sentinels. Copy that block verbatim — do not reformat, do not call any tools. **Known limitation:** the pre-fetched path does not classify product vs. process (step 1a below) — it only groups issues by the existing Bug/Tech Debt/Feature/Improvement Linear labels.
 
-**Live MCP fallback (restored, HAB-176):** if the sentinel block is missing — the router script failed (e.g. `LM_API_TOKEN`/`LINEAR_API_KEY` unset, LM Studio not running, or a `skill_router` bug — see `CLAUDE.local.md`) and this skill is running via the Agent fallback in `.claude/commands/summarize.md` — do not block on the user fixing it first. List issues and milestones directly (PM mapping: **List issues**, **List milestones** — use the **Project ID** from the PM tool mapping) and produce the summary below:
+**Live MCP fallback (restored, HAB-176):** if the sentinel block is missing — the router script failed (e.g. `LM_API_TOKEN`/`LINEAR_API_KEY` unset, LM Studio not running, or a `skill_router` bug — see `CLAUDE.local.md`) and this skill is running via the Agent fallback in `.claude/commands/summarize.md` — do not block on the user fixing it first. Tell the user in one line that the pre-fetch is unavailable and this run is using the slower live path, then list issues and milestones directly (PM mapping: **List issues**, **List milestones** — use the **Project ID** from the PM tool mapping), matching the pre-fetched block's own defaults: `state`/`statusType` filtered to non-`Done`/non-`Canceled`, `includeArchived: false`, and only the `fields` this step actually needs (see `skills/shared/linear-efficiency.md`). Produce the summary below:
 
 ```
 ## Backlog — Habit Loop
