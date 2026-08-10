@@ -115,6 +115,10 @@ Never update the backlog or changelog (paths from project config) — those are 
 
 **PII constraint:** never pass user-entered text (habit names, notes, stop reasons) to `CrashlyticsService` — only field lengths, IDs, counts, and enum values. Local `logLocal()` calls may include more detail since logs never leave the device.
 
+### 8.5. Run the WU0 verification checklist (if this ticket used one instead of scenarios)
+
+If the plan's WU0 was a verification checklist rather than integration scenarios, and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item. Do not proceed to Format/PR until every item — agent-run or human-confirmed — has actually been executed, not just written.
+
 ### 9. Format
 
 Apply `dart format` in a **separate, formatting-only commit after all TDD micro-cycles, before opening the PR**:
