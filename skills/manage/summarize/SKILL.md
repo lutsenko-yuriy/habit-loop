@@ -52,7 +52,7 @@ For each ticket, read its title and description and classify it as:
 - **Product** — a user-facing feature, bug fix, or app-facing improvement: anything that changes what the app does or how it behaves for an end user.
 - **Process** — workflow, skill, tooling, CI, docs-audit, or research into how the team/agents work: anything that changes how the app gets built, not what it does.
 
-Do not rely on Linear labels for this — the existing labels (Feature, Bug, Tech Debt, Improvement) don't distinguish product from process work; use judgment from each ticket's content. Compute N (product count) and M (process count) and fill in the summary line above, before the section breakdown. The goal is to make process debt visible at the point the release decision gets made, rather than letting it silently pile up across sessions until it's felt rather than seen (see HAB-154 debrief).
+Do not rely on Linear labels alone — the existing labels (Feature, Bug, Tech Debt, Improvement) don't distinguish product from process work; use judgment from each ticket's content. Compute N (product count) and M (process count) and fill in the summary line above, before the section breakdown. The goal is to make process debt visible at the point the release decision gets made, rather than letting it silently pile up across sessions until it's felt rather than seen (see HAB-154 debrief).
 
 ### 2. Ask and wait
 
