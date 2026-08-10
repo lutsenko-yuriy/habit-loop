@@ -97,6 +97,7 @@ When in doubt, use **In QA**.
 
    **Never commit a CHANGELOG entry with no classification tag — CI will fail.**
 8. Commit all changes with a descriptive message.
+8.5. If this ticket's WU0 was a verification checklist rather than integration scenarios (see the Multi-WU appendix), and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item now, before opening the PR. Do not proceed on an unexecuted checklist.
 9. Push to the remote and open a PR — all in parallel:
    - Push the branch to the remote.
    - Open a PR.
@@ -135,9 +136,11 @@ When in doubt, use **In QA**.
 
 When the approved plan (step 1.3) contains more than one production work unit (WU1+), follow these rules in addition to the standard workflow.
 
-**WU0 — scenarios only**
+**WU0 — scenarios, or a verification checklist**
 
-After scenarios are approved and written (step 1.6), commit them to `feature/HAB-XX-WU0-scenarios`, push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly — no `ship`, no version bump. Each subsequent WU's plan entry lists which scenarios it makes green.
+For tickets with a user-facing flow `draft-scenarios` can assert against via `AppHarness`: after scenarios are approved and written (step 1.6), commit them to `feature/HAB-XX-WU0-scenarios`, push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly — no `ship`, no version bump. Each subsequent WU's plan entry lists which scenarios it makes green.
+
+For everything else (meta/skills/docs work, backend-only changes, or any ticket where scenario generation is skipped): `plan` writes WU0 as a **verification checklist** in the plan's Test strategy section instead — a plan-only artifact, no separate branch or PR. Each item is tagged **[agent]** (the agent runs it itself) or **[human]** (needs a person's judgment). **Run it before opening the final WU's PR** (step 9 below) regardless of whether `/implement` was formally invoked for that WU — this convention exists specifically because process/meta tickets are often worked directly in the orchestrating session rather than through `/implement`, so the enforcement point cannot live solely in that skill.
 
 **One WU = one branch = one PR**
 

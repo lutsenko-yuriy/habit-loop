@@ -31,10 +31,10 @@
 2. **Phase 2 — <name>**: <what gets done; deliverable>
 
 ### Work units
-WU0 always contains integration scenarios only (no production code) — or, when the ticket has no user-facing flow `draft-scenarios` can assert against, the verification checklist above instead (plan-only artifact, no separate branch/PR). Subsequent WUs should target ≤ 300 LoC changed and ≤ 10 files; split further if a WU would exceed these. Each WU lists which scenarios it makes green.
+WU0 is always the first unit. When the ticket has a user-facing flow `draft-scenarios` can assert against, WU0 is integration scenarios (no production code) — give it a table row, as below. When it doesn't, WU0 is the verification checklist in Test strategy above instead — it has no branch, PR, or LoC of its own, so **omit its table row entirely**; the table below starts at WU1 in that case. Subsequent WUs should target ≤ 300 LoC changed and ≤ 10 files; split further if a WU would exceed these. Each WU lists which scenarios it makes green.
 
 | # | Unit | Branch | Issues | Scenarios made green | Analytics events fired | Est. LoC | Files touched (approx) |
 |---|------|--------|--------|----------------------|-----------------------|----------|------------------------|
-| 0 | Integration scenarios (`draft-scenarios` output) — or verification checklist (see Test strategy) if no scenarios apply | `feature/HAB-XX-WU0-scenarios` (n/a for checklist) | HAB-XX | — (stubs; filled in per WU) | — | ~50 | `integration_test/...` |
+| 0 | Integration scenarios (`draft-scenarios` output) — omit this row if WU0 is a checklist instead | `feature/HAB-XX-WU0-scenarios` | HAB-XX | — (stubs; filled in per WU) | — | ~50 | `integration_test/...` |
 | 1 | <unit name> | `feature/HAB-XX-WU1-<short>` | HAB-XX | S1, S2 | `EventName` | ~150 | <files> |
 ```

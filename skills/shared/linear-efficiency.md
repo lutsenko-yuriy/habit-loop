@@ -32,8 +32,9 @@ Request only what the calling step actually needs:
 A single ticket's lifecycle can otherwise run `get_issue` six or seven times across `/analyze`, `/plan`, `/draft-scenarios`, `/implement`, and `/ship` — each a full-description, full-comment-history fetch of content that usually hasn't changed between those steps.
 
 Once an issue has been fetched in full earlier in the same session, later steps should read its details from the transcript instead of re-fetching, **unless**:
-- The issue may have changed since the last fetch (e.g. after a state transition this session performed, like `/plan` posting a comment or `/ship` moving the ticket to In QA), or
+- The issue itself may have changed since the last fetch (e.g. after a state transition this session performed, like `/ship` moving the ticket to In QA) — a new `/plan` comment being posted is not itself such a change; treat it as new content to read, not a reason to re-fetch the issue's description.
 - A field the current step needs was not captured by the earlier fetch (e.g. an earlier step only listed `title`/`status`, but the current step needs the full description).
+- `plan`'s comment was revised after step 5 approval (the user requested changes later in the same session) — `plan` does not currently re-post automatically in that case, so a downstream step reusing the plan comment from the transcript should confirm it's the final approved version, not an earlier draft.
 
 When in doubt, re-fetch — this convention trades a rare redundant call for the far more common case of not re-reading content that's already in context. It never trades away the accuracy of what a step acts on.
 

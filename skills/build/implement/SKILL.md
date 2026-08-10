@@ -117,7 +117,7 @@ Never update the backlog or changelog (paths from project config) — those are 
 
 ### 8.5. Run the WU0 verification checklist (if this ticket used one instead of scenarios)
 
-If the plan's WU0 was a verification checklist rather than integration scenarios, and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item. Do not proceed to Format/PR until every item — agent-run or human-confirmed — has actually been executed, not just written.
+If the plan's WU0 was a verification checklist rather than integration scenarios — look in the plan's **Test strategy** section, not a WU0 table row, since a checklist WU0 has no table row (see `plan-template.md`) — and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item. Do not proceed to Format/PR until every item — agent-run or human-confirmed — has actually been executed, not just written.
 
 ### 9. Format
 
