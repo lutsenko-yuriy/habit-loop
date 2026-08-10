@@ -4,6 +4,15 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.55.1] — 2026-08-10 (PR #365 merged)
+
+### Fixed
+
+- [user] A break on your timeline now always shows as a single entry, no matter how long it was or when it happened.
+- HAB-216 (WU2, final): removed the now-dead `isOnBreak`/`breakRationale` fields left over from WU1's `BreakMilestone` migration (#364); updated `docs/ARCHITECTURE.md`/`docs/ANALYTICS_EVENTS.md` to describe the new behaviour. Net -13 LoC.
+- [user] The "Take a break", "Stop pact", and "Archive"/"Unarchive" buttons on the pact detail screen are full width again.
+- HAB-218: fixed a regression from HAB-206 WU3, which wrapped these buttons in an `AnimatedReveal`-owned `Column` that shrink-wrapped them to text width instead of stretching to the row.
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.

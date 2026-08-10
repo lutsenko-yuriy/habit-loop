@@ -328,11 +328,15 @@ Companion event fired after the Pact Timeline screen finishes loading, carrying 
 | `pact_status` | `string` | `active` \| `completed` \| `stopped` |
 | `milestone_count` | `int` | Number of milestone items in the loaded page (excludes the two anchors) |
 
+Not comparable across the HAB-216 release boundary for any pact with a break: N break-covered showups that used to contribute N milestones now contribute 1 (`BreakMilestone`).
+
 ---
 
 ### `pact_timeline_milestone_tapped`
 
 Fired when the user taps a tappable timeline item (noted showup or lone single-showup) to open the showup detail screen. (HAB-116)
+
+Since HAB-216, a showup covered by a break — noted or not, tail zone or not — no longer renders as its own tappable `SingleShowupMilestone`/`NotedShowupMilestone`; it merges into the non-tappable `BreakMilestone` instead (the break's rationale shows in place of any note), so this event no longer fires for it. `item_type` stays `noted_showup` \| `single_showup`; no new value was added for the merged case.
 
 | Property | Type | Description |
 |---|---|---|
