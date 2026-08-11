@@ -40,6 +40,10 @@ When in doubt, use **In QA**.
 
 Move each linked issue to the chosen state (PM mapping: **Move issue to state**). If moving to In QA, do **not** move to Done — the ticket stays there until human testers sign off; the user moves it to Done manually.
 
+### 2.0. Draft the [user] bullets
+
+Read `skills/manage/draft-release-notes/SKILL.md` and follow it, passing the PR number already in hand, to produce the entry's `[user]` bullets (possibly zero — a valid outcome). This runs inline, no model switch needed (both skills are RAPID + TACTICAL). Its output feeds step 2 below; `ship` still owns tag classification and `[Unreleased]`-vs-numbered routing itself.
+
 ### 2. Add a CHANGELOG entry
 
 **Release note tagging — required for every entry:**
