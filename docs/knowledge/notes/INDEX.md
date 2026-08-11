@@ -6,73 +6,177 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
+- **debugging-methodology** (10)
+- **multi-wu-scope** (10)
+- **planning-gaps** (10)
+- **ci-flakiness** (9)
+- **research-methodology** (6)
+- **widget-test-gotchas** (6)
+- **code-style** (5)
+- **knowledge-base-process** (5)
+- **review-findings** (5)
+- **changelog-versioning** (4)
+- **appstore-ci** (3)
+- **cross-project-sync** (3)
+- **dead-code** (3)
+- **feature-toggle** (3)
+- **ui-design-iteration** (3)
+- **verify-from-source** (3)
+- **debrief-timing** (2)
+- **scope-creep** (2)
+- **l10n-glossary** (1)
+- **linear-efficiency** (1)
+- **stale-ticket** (1)
 
 ## By bookmark
 
-## Not yet reviewed
+### appstore-ci
+- [HAB-167: Add TestFlight distribution alongside Firebase App Distribution](HAB-167.md)
+- [HAB-180: Remove Firebase iOS distribution; make TestFlight the sole automatic iOS channel](HAB-180.md)
+- [HAB-182: Auto-populate TestFlight "What's New" release notes via App Store Connect API](HAB-182.md)
 
-- [HAB-109: Apply MIT licence to the repository (WU4)](HAB-109.md)
+### changelog-versioning
 - [HAB-116: Pact timeline screen](HAB-116.md)
-- [HAB-120: Port new meta-workflow skills to Yuriys-agentic-boyz](HAB-120.md)
-- [HAB-123: Research: choose a literature-research methodology for an agent research skill](HAB-123.md)
-- [HAB-126: Merge PactTimelineCache and PactStatsCache into a single cache](HAB-126.md)
-- [HAB-128: L10n audit — audit translations and update glossary with canonical per-language terms](HAB-128.md)
-- [HAB-130: Project knowledge base — local Markdown vault with /note and /debrief integration](HAB-130.md)
-- [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
-- [HAB-139: Redeem tail-zone failed showups by adding a note](HAB-139.md)
-- [HAB-140: Research: proof-based redemption for older failed showups](HAB-140.md)
-- [HAB-141: Dashboard stale showup status after notification tap (reopened)](HAB-141-adjust-1.md)
-- [HAB-141: Dashboard stale showup status after notification tap](HAB-141.md)
-- [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
-- [HAB-143: Dead-code detector script + `/dead-code-check` skill](HAB-143.md)
-- [HAB-144: Research: periodic code quality checkup procedure for non-mechanical dimensions](HAB-144.md)
-- [HAB-149: About / Feedback screen](HAB-149.md)
-- [HAB-150: Collapse dashboard nav bar secondary actions into a kebab menu](HAB-150.md)
+- [HAB-183: Manual-dispatch-only CI pipelines for granular build/test/notes procedures](HAB-183.md)
+- [HAB-185: Gate pubspec.yaml version bumps on app-changing CHANGELOG entries](HAB-185.md)
+- [HAB-192: CI: resolve-version fails with "lookbehind assertion is not fixed length"](HAB-192.md)
+
+### ci-flakiness
 - [HAB-151: run-scenarios CI job — integration tests on Android emulator](HAB-151.md)
 - [HAB-153: Audit and clean up integration test scenarios](HAB-153.md)
-- [HAB-154: Standing docs audit and tidy-up](HAB-154-adjust-1.md)
-- [HAB-154: Standing docs audit and tidy-up](HAB-154.md)
+- [HAB-179: CI — two integration scenarios fail on the Android-emulator run-scenarios job](HAB-179.md)
+- [HAB-198: Integration scenario asserts stale "Pending" text for an on-break showup (post-WU5.1 regression)](HAB-198.md)
+- [HAB-199: CI: 4 break_flow_test.dart failures — widgets below the fold not realized in lazy Sliver lists (Android emulator only)](HAB-199.md)
+- [HAB-211: 5 scenarios failing on every main-push CI run since HAB-202 WU4](HAB-211.md)
+- [HAB-212: Pacts list: default "On Break" filter selected, remove Archived chip, show archived counts inline](HAB-212.md)
+- [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
+- [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
+
+### code-style
+- [HAB-139: Redeem tail-zone failed showups by adding a note](HAB-139.md)
 - [HAB-157: Bug: local notifications stay in English after switching app language](HAB-157.md)
-- [HAB-161: Give skill_router's script stub an explicit cheap fallback alias](HAB-161.md)
-- [HAB-162: Notify/speak when a Claude Code session needs input or stops](HAB-162.md)
-- [HAB-163: Too-many-pacts dialog copy implies a hard limit, but it's a soft warning](HAB-163.md)
-- [HAB-164: Research: on-the-fly localization string updates for post-launch fixes](HAB-164.md)
-- [HAB-166: Onboard first iOS tester to Firebase App Distribution](HAB-166.md)
-- [HAB-167: Add TestFlight distribution alongside Firebase App Distribution](HAB-167.md)
-- [HAB-168: ship's state-detection can override an already-in-progress QA status](HAB-168.md)
-- [HAB-169: Research: single docs organisation structure for notes, ADRs, and research artifacts](HAB-169.md)
-- [HAB-170: Migrate existing decision-like docs into the ADR structure (docs/decisions/)](HAB-170.md)
+- [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
+- [HAB-207: Release-version gating for Remote Config kill-switches](HAB-207.md)
+- [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
+
+### cross-project-sync
+- [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
 - [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)
+- [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
+
+### dead-code
+- [HAB-141: Dashboard stale showup status after notification tap (reopened)](HAB-141-adjust-1.md)
+- [HAB-143: Dead-code detector script + `/dead-code-check` skill](HAB-143.md)
+- [HAB-180: Remove Firebase iOS distribution; make TestFlight the sole automatic iOS channel](HAB-180.md)
+
+### debrief-timing
+- [HAB-166: Onboard first iOS tester to Firebase App Distribution](HAB-166.md)
+- [HAB-179: CI — two integration scenarios fail on the Android-emulator run-scenarios job](HAB-179.md)
+
+### debugging-methodology
+- [HAB-151: run-scenarios CI job — integration tests on Android emulator](HAB-151.md)
+- [HAB-153: Audit and clean up integration test scenarios](HAB-153.md)
+- [HAB-196: Integration scenarios: 4 reproducible failures after HAB-188](HAB-196.md)
+- [HAB-198: Integration scenario asserts stale "Pending" text for an on-break showup (post-WU5.1 regression)](HAB-198.md)
+- [HAB-199: CI: 4 break_flow_test.dart failures — widgets below the fold not realized in lazy Sliver lists (Android emulator only)](HAB-199.md)
+- [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
+- [HAB-208: Stop pact: showups wiped entirely and break banner stays after stopping](HAB-208.md)
+- [HAB-211: 5 scenarios failing on every main-push CI run since HAB-202 WU4](HAB-211.md)
+- [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
+- [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
+
+### feature-toggle
+- [HAB-149: About / Feedback screen](HAB-149.md)
+- [HAB-195: Pact breaks — pause a pact without failing showups](HAB-195.md)
+- [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
+
+### knowledge-base-process
+- [HAB-130: Project knowledge base — local Markdown vault with /note and /debrief integration](HAB-130.md)
+- [HAB-141: Dashboard stale showup status after notification tap (reopened)](HAB-141-adjust-1.md)
+- [HAB-149: About / Feedback screen](HAB-149.md)
+- [HAB-154: Standing docs audit and tidy-up](HAB-154.md)
+- [HAB-170: Migrate existing decision-like docs into the ADR structure (docs/decisions/)](HAB-170.md)
+
+### l10n-glossary
+- [HAB-128: L10n audit — audit translations and update glossary with canonical per-language terms](HAB-128.md)
+
+### linear-efficiency
+- [HAB-176: Reduce token consumption from Linear MCP interactions](HAB-176.md)
+
+### multi-wu-scope
+- [HAB-116: Pact timeline screen](HAB-116.md)
+- [HAB-153: Audit and clean up integration test scenarios](HAB-153.md)
+- [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)
+- [HAB-174: Populate a shared pact-detail cache (stats + timeline) when Pact Details is first opened](HAB-174.md)
+- [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
+- [HAB-188: Checkup cleanup: dashboard load method, Firestore merge dedup, Android buttons, iOS toolbar icon, pagination stub](HAB-188.md)
+- [HAB-195: Pact breaks — pause a pact without failing showups](HAB-195.md)
+- [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
+- [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
+- [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
+
+### planning-gaps
+- [HAB-126: Merge PactTimelineCache and PactStatsCache into a single cache](HAB-126.md)
+- [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
+- [HAB-161: Give skill_router's script stub an explicit cheap fallback alias](HAB-161.md)
 - [HAB-173: Timeline screen title shows "Timeline" instead of "<Pact name> - Timeline" until data loads](HAB-173.md)
 - [HAB-174: Populate a shared pact-detail cache (stats + timeline) when Pact Details is first opened](HAB-174.md)
 - [HAB-176: Reduce token consumption from Linear MCP interactions](HAB-176.md)
-- [HAB-177: Simplify PactTimelineGrouper — remove dead grouping-threshold complexity](HAB-177.md)
-- [HAB-178: Build a dialectical research skill (thesis/antithesis/synthesis, steelman-bounded)](HAB-178.md)
-- [HAB-179: CI — two integration scenarios fail on the Android-emulator run-scenarios job](HAB-179.md)
-- [HAB-180: Remove Firebase iOS distribution; make TestFlight the sole automatic iOS channel](HAB-180.md)
-- [HAB-182: Auto-populate TestFlight "What's New" release notes via App Store Connect API](HAB-182.md)
-- [HAB-183: Manual-dispatch-only CI pipelines for granular build/test/notes procedures](HAB-183.md)
 - [HAB-185: Gate pubspec.yaml version bumps on app-changing CHANGELOG entries](HAB-185.md)
-- [HAB-186: Automate session-start checklist via SessionStart hook](HAB-186.md)
-- [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
-- [HAB-188: Checkup cleanup: dashboard load method, Firestore merge dedup, Android buttons, iOS toolbar icon, pagination stub](HAB-188.md)
-- [HAB-192: CI: resolve-version fails with "lookbehind assertion is not fixed length"](HAB-192.md)
 - [HAB-195: Pact breaks — pause a pact without failing showups](HAB-195.md)
-- [HAB-196: Integration scenarios: 4 reproducible failures after HAB-188](HAB-196.md)
 - [HAB-197: CI: let scenarios.yml target a single test file/tag instead of the full suite](HAB-197.md)
-- [HAB-198: Integration scenario asserts stale "Pending" text for an on-break showup (post-WU5.1 regression)](HAB-198.md)
-- [HAB-199: CI: 4 break_flow_test.dart failures — widgets below the fold not realized in lazy Sliver lists (Android emulator only)](HAB-199.md)
 - [HAB-201: Bug: pact shows "On break" (list + detail banner) before the break actually starts](HAB-201.md)
+
+### research-methodology
+- [HAB-123: Research: choose a literature-research methodology for an agent research skill](HAB-123.md)
+- [HAB-140: Research: proof-based redemption for older failed showups](HAB-140.md)
+- [HAB-144: Research: periodic code quality checkup procedure for non-mechanical dimensions](HAB-144.md)
+- [HAB-164: Research: on-the-fly localization string updates for post-launch fixes](HAB-164.md)
+- [HAB-169: Research: single docs organisation structure for notes, ADRs, and research artifacts](HAB-169.md)
+- [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
+
+### review-findings
+- [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
+- [HAB-154: Standing docs audit and tidy-up](HAB-154.md)
+- [HAB-183: Manual-dispatch-only CI pipelines for granular build/test/notes procedures](HAB-183.md)
+- [HAB-186: Automate session-start checklist via SessionStart hook](HAB-186.md)
+- [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
+
+### scope-creep
+- [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
+- [HAB-195: Pact breaks — pause a pact without failing showups](HAB-195.md)
+
+### stale-ticket
+- [HAB-120: Port new meta-workflow skills to Yuriys-agentic-boyz](HAB-120.md)
+
+### ui-design-iteration
+- [HAB-149: About / Feedback screen](HAB-149.md)
 - [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
-- [HAB-207: Release-version gating for Remote Config kill-switches](HAB-207.md)
-- [HAB-208: Stop pact: showups wiped entirely and break banner stays after stopping](HAB-208.md)
-- [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
-- [HAB-211: 5 scenarios failing on every main-push CI run since HAB-202 WU4](HAB-211.md)
-- [HAB-212: Pacts list: default "On Break" filter selected, remove Archived chip, show archived counts inline](HAB-212.md)
-- [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
-- [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
-- [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
-- [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
+
+### verify-from-source
+- [HAB-168: ship's state-detection can override an already-in-progress QA status](HAB-168.md)
+- [HAB-188: Checkup cleanup: dashboard load method, Firestore merge dedup, Android buttons, iOS toolbar icon, pagination stub](HAB-188.md)
 - [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
+
+### widget-test-gotchas
+- [HAB-139: Redeem tail-zone failed showups by adding a note](HAB-139.md)
+- [HAB-195: Pact breaks — pause a pact without failing showups](HAB-195.md)
+- [HAB-199: CI: 4 break_flow_test.dart failures — widgets below the fold not realized in lazy Sliver lists (Android emulator only)](HAB-199.md)
+- [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
+- [HAB-211: 5 scenarios failing on every main-push CI run since HAB-202 WU4](HAB-211.md)
+- [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
+
+## Reviewed — nothing noteworthy
+
+- [HAB-109: Apply MIT licence to the repository (WU4)](HAB-109.md)
+- [HAB-141: Dashboard stale showup status after notification tap](HAB-141.md)
+- [HAB-150: Collapse dashboard nav bar secondary actions into a kebab menu](HAB-150.md)
+- [HAB-154: Standing docs audit and tidy-up](HAB-154-adjust-1.md)
+- [HAB-162: Notify/speak when a Claude Code session needs input or stops](HAB-162.md)
+- [HAB-163: Too-many-pacts dialog copy implies a hard limit, but it's a soft warning](HAB-163.md)
+- [HAB-177: Simplify PactTimelineGrouper — remove dead grouping-threshold complexity](HAB-177.md)
+- [HAB-178: Build a dialectical research skill (thesis/antithesis/synthesis, steelman-bounded)](HAB-178.md)
+- [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
+- [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)

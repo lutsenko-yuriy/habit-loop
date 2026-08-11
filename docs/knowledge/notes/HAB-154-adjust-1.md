@@ -1,3 +1,7 @@
+---
+bookmarks: []
+---
+
 # HAB-154: Standing docs audit and tidy-up
 
 ## Notes
