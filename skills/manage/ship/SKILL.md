@@ -67,6 +67,16 @@ Determine this entry's classification tags first (per the table above), then rou
 - HAB-XX: <technical detail for developers>
 ```
 
+If step 2 returned zero `[user]` bullets (a valid outcome — e.g. a pure refactor with no observable behaviour change), omit the `- [user]` line entirely rather than inventing one; the entry is `[app]`-only:
+
+```markdown
+## [X.Y.Z] — YYYY-MM-DD (PR #N merged)
+
+### Added / Changed / Fixed
+
+- [app] HAB-XX: <technical detail for developers>
+```
+
 Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor for new features, major for breaking changes.
 
 **Otherwise** (entry classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]` — nothing here changed the app): look at the file's current first `## [...]` heading:
@@ -102,7 +112,7 @@ Do not touch the build number — CI manages it automatically (see version manag
 
 Skip this step if the new CHANGELOG entry (added in step 3) contains only `[meta]`, `[ci]`, `[app]`, or `[wip]` tags — those PRs introduce no observable user-facing behaviour change. For all other PRs (`[user]` entries), proceed as follows:
 
-1. Fetch the PR diff: `gh pr diff <number>`
+1. Fetch the PR diff: `gh pr diff <number>` — reuse step 2's fetch if it already ran and no commits landed since (e.g. no review-loop pushes in between); otherwise fetch fresh, since a stale diff here would miss review-driven changes.
 2. Re-read the ticket description (already fetched in step 1).
 3. Determine what changed or was added (file paths from the project config):
    - **Product spec** — identify any new or modified user-facing behaviour. Propose a minimal, precise addition or edit to the relevant section (append a new bullet or update an existing one; never rewrite unrelated content).
