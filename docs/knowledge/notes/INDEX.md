@@ -10,15 +10,15 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **multi-wu-scope** (10)
 - **planning-gaps** (10)
 - **ci-flakiness** (9)
+- **knowledge-base-process** (6)
 - **research-methodology** (6)
 - **widget-test-gotchas** (6)
 - **code-style** (5)
-- **knowledge-base-process** (5)
 - **review-findings** (5)
 - **changelog-versioning** (4)
+- **dead-code** (4)
 - **appstore-ci** (3)
 - **cross-project-sync** (3)
-- **dead-code** (3)
 - **feature-toggle** (3)
 - **ui-design-iteration** (3)
 - **verify-from-source** (3)
@@ -67,6 +67,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ### dead-code
 - [HAB-141: Dashboard stale showup status after notification tap (reopened)](HAB-141-adjust-1.md)
 - [HAB-143: Dead-code detector script + `/dead-code-check` skill](HAB-143.md)
+- [HAB-177: Simplify PactTimelineGrouper — remove dead grouping-threshold complexity](HAB-177.md)
 - [HAB-180: Remove Firebase iOS distribution; make TestFlight the sole automatic iOS channel](HAB-180.md)
 
 ### debrief-timing
@@ -96,6 +97,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-149: About / Feedback screen](HAB-149.md)
 - [HAB-154: Standing docs audit and tidy-up](HAB-154.md)
 - [HAB-170: Migrate existing decision-like docs into the ADR structure (docs/decisions/)](HAB-170.md)
+- [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 
 ### l10n-glossary
 - [HAB-128: L10n audit — audit translations and update glossary with canonical per-language terms](HAB-128.md)
@@ -172,11 +174,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-109: Apply MIT licence to the repository (WU4)](HAB-109.md)
 - [HAB-141: Dashboard stale showup status after notification tap](HAB-141.md)
 - [HAB-150: Collapse dashboard nav bar secondary actions into a kebab menu](HAB-150.md)
-- [HAB-154: Standing docs audit and tidy-up](HAB-154-adjust-1.md)
+- [HAB-154: Standing docs audit and tidy-up (process retro)](HAB-154-adjust-1.md)
 - [HAB-162: Notify/speak when a Claude Code session needs input or stops](HAB-162.md)
 - [HAB-163: Too-many-pacts dialog copy implies a hard limit, but it's a soft warning](HAB-163.md)
-- [HAB-177: Simplify PactTimelineGrouper — remove dead grouping-threshold complexity](HAB-177.md)
 - [HAB-178: Build a dialectical research skill (thesis/antithesis/synthesis, steelman-bounded)](HAB-178.md)
 - [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
 - [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
-- [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)

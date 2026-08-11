@@ -1,7 +1,3 @@
----
-bookmarks: []
----
-
 # HAB-XX: <ticket title>
 
 ## Notes
