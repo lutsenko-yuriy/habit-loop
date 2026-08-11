@@ -38,7 +38,7 @@ One bullet per distinct thing a user would notice. Do not pad the list — **zer
 
 @skills/manage/draft-release-notes/resources/user-bullet-checklist.md
 
-Run every drafted bullet against all six items above before showing it. A bullet that fails any item gets rewritten, not shown with a caveat attached.
+Run every drafted bullet against all seven items above before showing it. A bullet that fails any item gets rewritten, not shown with a caveat attached.
 
 ### 4. Present for approval
 

@@ -1,4 +1,4 @@
-Every drafted `[user]` bullet must pass all six items below before it is shown. A bullet failing any item is rewritten, not presented with a caveat.
+Every drafted `[user]` bullet must pass all seven items below before it is shown. A bullet failing any item is rewritten, not presented with a caveat.
 
 1. **Understandable** — would a user with no background in app development understand this sentence on its own?
 2. **Cared about** — would they actually notice or care, or is this invisible to them?
