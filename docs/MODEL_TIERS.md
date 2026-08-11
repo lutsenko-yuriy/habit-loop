@@ -46,6 +46,7 @@ This project describes what each skill needs from a model using two axes: **Effo
 | `research` | FOCUSED | ARCHITECTURAL | Cited literature research (thesis/antithesis/synthesis or scoping map); owns approval gates and spawns its own search subagents — `needs_session_tools: true`, like `debrief` |
 | `implement` | FOCUSED | TACTICAL | Implement a scoped work unit correctly and completely |
 | `ship` | RAPID | TACTICAL | Structured housekeeping: close issues, update docs, bump version, merge |
+| `draft-release-notes` | RAPID | TACTICAL | Draft [user] bullets from observable diff evidence; runs inline within `ship` with no model switch |
 | `debrief` | FOCUSED | ARCHITECTURAL | Retrospective dialog scoped to one ticket; cross-skill and workflow reasoning |
 | `summarize` | RAPID | MECHANICAL | Structured PM data fetch and format |
 

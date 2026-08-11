@@ -26,7 +26,7 @@ Fetch the issue once (PM mapping: **Fetch issue**) — its state and description
 **Precondition — multi-WU check:** If the fetched description contains a **Work Units** section with any items still marked ⏳ (not started) or 🔄 (in progress), skip the state determination below and instead:
 1. Move the issue to "In Progress" (PM mapping: **Move issue to state**).
 2. Add a PM comment: "WU[N] shipped (PR #…). Remaining: [list pending WU bullets]." (**Post comment on issue**)
-3. Proceed to step 2 (CHANGELOG).
+3. Proceed to step 2 (drafting `[user]` bullets, then the CHANGELOG entry in step 3).
 
 Only continue to the state determination when all WUs are ✅ and the issue is not already In QA/Done per the check above.
 
@@ -40,7 +40,13 @@ When in doubt, use **In QA**.
 
 Move each linked issue to the chosen state (PM mapping: **Move issue to state**). If moving to In QA, do **not** move to Done — the ticket stays there until human testers sign off; the user moves it to Done manually.
 
-### 2. Add a CHANGELOG entry
+### 2. Draft the [user] bullets
+
+**Skip this step if the PR's file list (already fetched in step 1's `gh pr view --json files`, or fetch now if step 1 didn't need it) touches no `lib/` paths** — a PR with no application code cannot have user-facing behaviour, so there is nothing to draft and no reason to pay for a diff fetch or an approval round-trip. Classification tags aren't known yet at this point (step 3 determines those), so this check runs on file paths rather than on `[wip]`/`[meta]`/etc., unlike step 6's equivalent skip.
+
+Otherwise, read `skills/manage/draft-release-notes/SKILL.md` and follow it, passing the PR number already in hand, to produce the entry's `[user]` bullets (possibly zero — still a valid outcome even for a `lib/`-touching PR, e.g. a pure refactor). This runs inline, no model switch needed (both skills are RAPID + TACTICAL). Its output feeds step 3 below; `ship` still owns tag classification and `[Unreleased]`-vs-numbered routing itself.
+
+### 3. Add a CHANGELOG entry
 
 **Release note tagging — required for every entry:**
 
@@ -50,7 +56,7 @@ Move each linked issue to the chosen state (PM mapping: **Move issue to state**)
 
 Determine this entry's classification tags first (per the table above), then route it:
 
-**If the entry contains at least one `[user]` and/or `[app]` tag** (an app-changing entry — this is what triggers step 4's version bump below): insert a fresh numbered heading immediately before the file's current first `## [...]` heading (before anything else — including an open `## [Unreleased]` batch, which this seals in place below the new heading). **If the file has no `## [...]` heading at all yet** (a from-scratch CHANGELOG), insert it right after the file's intro paragraph instead:
+**If the entry contains at least one `[user]` and/or `[app]` tag** (an app-changing entry — this is what triggers step 5's version bump below): insert a fresh numbered heading immediately before the file's current first `## [...]` heading (before anything else — including an open `## [Unreleased]` batch, which this seals in place below the new heading). **If the file has no `## [...]` heading at all yet** (a from-scratch CHANGELOG), insert it right after the file's intro paragraph instead:
 
 ```markdown
 ## [X.Y.Z] — YYYY-MM-DD (PR #N merged)
@@ -59,6 +65,16 @@ Determine this entry's classification tags first (per the table above), then rou
 
 - [user] <user-facing description — what the user sees or gains>
 - HAB-XX: <technical detail for developers>
+```
+
+If step 2 returned zero `[user]` bullets (a valid outcome — e.g. a pure refactor with no observable behaviour change), omit the `- [user]` line entirely rather than inventing one; the entry is `[app]`-only:
+
+```markdown
+## [X.Y.Z] — YYYY-MM-DD (PR #N merged)
+
+### Added / Changed / Fixed
+
+- [app] HAB-XX: <technical detail for developers>
 ```
 
 Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor for new features, major for breaking changes.
@@ -78,25 +94,25 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 
 Once a `## [Unreleased]` batch is sealed by a later release (see the app-changing branch above), its bullets stay exactly where they are permanently — never move them, and never append further bullets to a sealed batch. Only the single batch currently at position 0 (if any) is ever appended to.
 
-### 3. Regenerate BACKLOG.md
+### 4. Regenerate BACKLOG.md
 
 Open `docs/BACKLOG.md` and remove the completed ticket(s) from the remaining-work list for their milestone. If all issues in the milestone are Done, note the milestone as complete.
 
 Do not rewrite the rest of the file.
 
-### 4. Bump the version
+### 5. Bump the version
 
-**Only if step 2 created a new numbered heading** (the entry had a `[user]`/`[app]` tag): open the version file (from the project config) and update the version name (`X.Y.Z` part) to match the new `[X.Y.Z]` entry added in step 2.
+**Only if step 3 created a new numbered heading** (the entry had a `[user]`/`[app]` tag): open the version file (from the project config) and update the version name (`X.Y.Z` part) to match the new `[X.Y.Z]` entry added in step 3.
 
-**If step 2 instead appended to `## [Unreleased]`:** skip this step entirely — do not touch the version file. `pubspec.yaml`'s version represents the app's build version, not the repo's commit history (`docs/VERSIONING.md`); it only changes when the app itself changes.
+**If step 3 instead appended to `## [Unreleased]`:** skip this step entirely — do not touch the version file. `pubspec.yaml`'s version represents the app's build version, not the repo's commit history (`docs/VERSIONING.md`); it only changes when the app itself changes.
 
 Do not touch the build number — CI manages it automatically (see version management in project config).
 
-### 5. Update PRODUCT_SPEC.md and GLOSSARY.md
+### 6. Update PRODUCT_SPEC.md and GLOSSARY.md
 
-Skip this step if the new CHANGELOG entry (added in step 2) contains only `[meta]`, `[ci]`, `[app]`, or `[wip]` tags — those PRs introduce no observable user-facing behaviour change. For all other PRs (`[user]` entries), proceed as follows:
+Skip this step if the new CHANGELOG entry (added in step 3) contains only `[meta]`, `[ci]`, `[app]`, or `[wip]` tags — those PRs introduce no observable user-facing behaviour change. For all other PRs (`[user]` entries), proceed as follows:
 
-1. Fetch the PR diff: `gh pr diff <number>`
+1. Fetch the PR diff: `gh pr diff <number>` — reuse step 2's fetch if it already ran and no commits landed since (e.g. no review-loop pushes in between); otherwise fetch fresh, since a stale diff here would miss review-driven changes.
 2. Re-read the ticket description (already fetched in step 1).
 3. Determine what changed or was added (file paths from the project config):
    - **Product spec** — identify any new or modified user-facing behaviour. Propose a minimal, precise addition or edit to the relevant section (append a new bullet or update an existing one; never rewrite unrelated content).
@@ -104,15 +120,15 @@ Skip this step if the new CHANGELOG entry (added in step 2) contains only `[meta
 4. Present the proposed changes to the user **before writing anything**. Show the exact text to be added or replaced (diff-style if helpful). Wait for explicit approval or revision instructions.
 5. Apply only the approved changes.
 
-If no changes are needed for a file, skip it. If the user declines all changes, skip to step 6.
+If no changes are needed for a file, skip it. If the user declines all changes, skip to step 7.
 
-### 6. Commit, push, and merge
+### 7. Commit, push, and merge
 
-Stage the files changed above and commit onto the feature branch. Include the product spec and glossary (paths from the project config) only if they were modified in step 5. Also check for an uncommitted knowledge note for this ticket (`git status --short docs/knowledge/notes/HAB-XX*.md`) — `/note` may have written one earlier in the session that never got staged; include it in this commit if found.
+Stage the files changed above and commit onto the feature branch. Include the product spec and glossary (paths from the project config) only if they were modified in step 6. Also check for an uncommitted knowledge note for this ticket (`git status --short docs/knowledge/notes/HAB-XX*.md`) — `/note` may have written one earlier in the session that never got staged; include it in this commit if found.
 
 ```bash
 git add <changelog> <backlog>                  # paths from project config
-# add only if step 4 actually bumped it:
+# add only if step 5 actually bumped it:
 git add <version-file>                         # paths from project config
 # add only if modified:
 git add <product-spec> <glossary>              # paths from project config
@@ -120,10 +136,10 @@ git add <product-spec> <glossary>              # paths from project config
 git add docs/knowledge/notes/HAB-XX*.md        # catches /note output missed earlier in the session
 ```
 
-Commit with **exactly one** of these two messages — whichever matches what step 4 actually did — then push:
+Commit with **exactly one** of these two messages — whichever matches what step 5 actually did — then push:
 
-- Step 4 bumped the version: `git commit -m "chore: release HAB-XX, bump version to X.Y.Z"`
-- Step 4 was skipped (entry went to `## [Unreleased]`): `git commit -m "chore: release HAB-XX (internal-only, no version bump)"`
+- Step 5 bumped the version: `git commit -m "chore: release HAB-XX, bump version to X.Y.Z"`
+- Step 5 was skipped (entry went to `## [Unreleased]`): `git commit -m "chore: release HAB-XX (internal-only, no version bump)"`
 
 ```bash
 git push
@@ -137,6 +153,6 @@ gh pr merge <number> --squash --delete-branch
 
 Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 
-### 7. Report back
+### 8. Report back
 
 Confirm: issue(s) moved to In QA (or Done), changelog updated (state whether it landed under a new `[X.Y.Z]` heading or `## [Unreleased]`), version bumped or explicitly left untouched, docs updated (list which files changed), PR merged. Include the new version number (if bumped) and the PR URL. Remind the user to move the ticket to Done in the PM tool once QA has passed.

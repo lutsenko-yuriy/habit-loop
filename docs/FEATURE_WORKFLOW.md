@@ -138,11 +138,15 @@ When in doubt, use **In QA**.
 
 When the approved plan (step 1.3) contains more than one production work unit (WU1+), follow these rules in addition to the standard workflow.
 
-**WU0 — scenarios, or a verification checklist**
+**Research-WU (optional) — then Scenario-WU or Checklist-WU**
 
-For tickets with a user-facing flow `draft-scenarios` can assert against via `AppHarness`: after scenarios are approved and written (step 1.6), commit them to `feature/HAB-XX-WU0-scenarios`, push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly — no `ship`, no version bump. Each subsequent WU's plan entry lists which scenarios it makes green.
+If planning surfaces a design choice that would benefit from external validation (precedent from other apps/tools, a published guideline, an established best practice — the same kind of gap HAB-217's mid-ticket `/research` call filled), `plan` proposes a **Research-WU** as the ticket's first WU, running before Scenario-WU/Checklist-WU. It runs `/research` (or an equivalent bounded, cited check) and writes findings to the ticket's knowledge note. No separate branch or PR — same as Checklist-WU below. **Omit it when the ticket is genuinely novel** — no comparable precedent exists to research.
 
-For everything else (meta/skills/docs work, backend-only changes, or any ticket where scenario generation is skipped): `plan` writes WU0 as a **verification checklist** in the plan's Test strategy section instead — a plan-only artifact, no separate branch or PR. Each item is tagged **[agent]** (the agent runs it itself) or **[human]** (needs a person's judgment). **Run it before opening the final WU's PR** (step 9 below) regardless of whether `/implement` was formally invoked for that WU — this convention exists specifically because process/meta tickets are often worked directly in the orchestrating session rather than through `/implement`, so the enforcement point cannot live solely in that skill.
+**Scenario-WU** — for tickets with a user-facing flow `draft-scenarios` can assert against via `AppHarness`: after scenarios are approved and written (step 1.6), commit them to `feature/HAB-XX-WU0-scenarios`, push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly — no `ship`, no version bump. Each subsequent WU's plan entry lists which scenarios it makes green.
+
+**Checklist-WU** — for everything else (meta/skills/docs work, backend-only changes, or any ticket where scenario generation is skipped): `plan` writes this WU as a **verification checklist** in the plan's Test strategy section instead — a plan-only artifact, no separate branch or PR. Each item is tagged **[agent]** (the agent runs it itself) or **[human]** (needs a person's judgment). **Run it before opening the final WU's PR** (step 9 below) regardless of whether `/implement` was formally invoked for that WU — this convention exists specifically because process/meta tickets are often worked directly in the orchestrating session rather than through `/implement`, so the enforcement point cannot live solely in that skill.
+
+Research-WU, Scenario-WU, and Checklist-WU are named, not numbered — they're pre-implementation units that never carry production code. Everything after them keeps the existing numeric naming (WU1, WU2, …), unchanged by this convention.
 
 **One WU = one branch = one PR**
 
