@@ -42,7 +42,9 @@ Move each linked issue to the chosen state (PM mapping: **Move issue to state**)
 
 ### 2. Draft the [user] bullets
 
-Read `skills/manage/draft-release-notes/SKILL.md` and follow it, passing the PR number already in hand, to produce the entry's `[user]` bullets (possibly zero — a valid outcome). This runs inline, no model switch needed (both skills are RAPID + TACTICAL). Its output feeds step 3 below; `ship` still owns tag classification and `[Unreleased]`-vs-numbered routing itself.
+**Skip this step if the PR's file list (already fetched in step 1's `gh pr view --json files`, or fetch now if step 1 didn't need it) touches no `lib/` paths** — a PR with no application code cannot have user-facing behaviour, so there is nothing to draft and no reason to pay for a diff fetch or an approval round-trip. Classification tags aren't known yet at this point (step 3 determines those), so this check runs on file paths rather than on `[wip]`/`[meta]`/etc., unlike step 6's equivalent skip.
+
+Otherwise, read `skills/manage/draft-release-notes/SKILL.md` and follow it, passing the PR number already in hand, to produce the entry's `[user]` bullets (possibly zero — still a valid outcome even for a `lib/`-touching PR, e.g. a pure refactor). This runs inline, no model switch needed (both skills are RAPID + TACTICAL). Its output feeds step 3 below; `ship` still owns tag classification and `[Unreleased]`-vs-numbered routing itself.
 
 ### 3. Add a CHANGELOG entry
 
