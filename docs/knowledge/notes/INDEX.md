@@ -9,7 +9,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## By bookmark
 
-## No bookmarks yet
+## Not yet reviewed
 
 - [HAB-109: Apply MIT licence to the repository (WU4)](HAB-109.md)
 - [HAB-116: Pact timeline screen](HAB-116.md)

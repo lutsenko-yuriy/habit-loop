@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -49,6 +50,28 @@ class ParseNoteTests(unittest.TestCase):
             self.assertEqual(bookmarks, ["ci-flakiness", "scope-creep"])
 
 
+class MalformedBookmarksTests(unittest.TestCase):
+    def test_inline_list_is_not_malformed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            note = Path(tmp) / "HAB-1.md"
+            write(note, "---\nbookmarks: [ci-flakiness]\n---\n\n# HAB-1: T\n")
+            self.assertIsNone(index.detect_malformed_bookmarks(note))
+
+    def test_no_frontmatter_is_not_malformed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            note = Path(tmp) / "HAB-1.md"
+            write(note, "# HAB-1: T\n\nBody.\n")
+            self.assertIsNone(index.detect_malformed_bookmarks(note))
+
+    def test_block_style_list_is_flagged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            note = Path(tmp) / "HAB-1.md"
+            write(note, "---\nbookmarks:\n  - ci-flakiness\n---\n\n# HAB-1: T\n")
+            error = index.detect_malformed_bookmarks(note)
+            self.assertIsNotNone(error)
+            self.assertIn("block-list", error)
+
+
 class LoadVocabularyTests(unittest.TestCase):
     def test_missing_file_yields_empty_vocabulary(self):
         self.assertEqual(index.load_vocabulary(Path("/nonexistent/BOOKMARKS.md")), set())
@@ -65,6 +88,39 @@ class LoadVocabularyTests(unittest.TestCase):
                 "| `scope-creep` | Ticket grew mid-flight |\n",
             )
             self.assertEqual(index.load_vocabulary(vocab_file), {"ci-flakiness", "scope-creep"})
+
+    def test_malformed_rows_are_excluded_from_vocabulary_not_silently_kept(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vocab_file = Path(tmp) / "BOOKMARKS.md"
+            write(
+                vocab_file,
+                "# Bookmarks\n\n"
+                "| Bookmark | Meaning |\n"
+                "|---|---|\n"
+                "| `CI-Flakiness` | Wrong case |\n"
+                "| `scope creep` | Has a space |\n"
+                "| `ok-one` | Valid |\n",
+            )
+            self.assertEqual(index.load_vocabulary(vocab_file), {"ok-one"})
+
+    def test_validate_vocabulary_reports_malformed_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vocab_file = Path(tmp) / "BOOKMARKS.md"
+            write(
+                vocab_file,
+                "# Bookmarks\n\n| Bookmark | Meaning |\n|---|---|\n| `CI-Flakiness` | Wrong case |\n",
+            )
+            errors = index.validate_vocabulary(vocab_file)
+            self.assertTrue(any("CI-Flakiness" in e for e in errors))
+
+    def test_validate_vocabulary_clean_table_has_no_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vocab_file = Path(tmp) / "BOOKMARKS.md"
+            write(
+                vocab_file,
+                "# Bookmarks\n\n| Bookmark | Meaning |\n|---|---|\n| `ci-flakiness` | x |\n",
+            )
+            self.assertEqual(index.validate_vocabulary(vocab_file), [])
 
 
 class CheckTests(unittest.TestCase):
@@ -126,6 +182,31 @@ class CheckTests(unittest.TestCase):
             errors = index.check(notes_dir, vocab_file, index_file)
             self.assertTrue(any("stale" in e for e in errors))
 
+    def test_block_style_bookmarks_fails_with_specific_message(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir, vocab_file = self._setup_corpus(
+                tmp, {"HAB-1.md": "---\nbookmarks:\n  - ci-flakiness\n---\n\n# HAB-1: T\n"}
+            )
+            index_file = notes_dir / "INDEX.md"
+            index.write_index(notes_dir, vocab_file, index_file)
+            errors = index.check(notes_dir, vocab_file, index_file)
+            self.assertTrue(any("block-list" in e and "HAB-1.md" in e for e in errors))
+            self.assertFalse(any("missing" in e for e in errors))
+
+    def test_malformed_vocabulary_row_surfaces_as_its_own_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir = Path(tmp) / "notes"
+            notes_dir.mkdir()
+            vocab_file = notes_dir / "BOOKMARKS.md"
+            write(
+                vocab_file,
+                "# Bookmarks\n\n| Bookmark | Meaning |\n|---|---|\n| `CI-Flakiness` | Wrong case |\n",
+            )
+            index_file = notes_dir / "INDEX.md"
+            index.write_index(notes_dir, vocab_file, index_file)
+            errors = index.check(notes_dir, vocab_file, index_file)
+            self.assertTrue(any("CI-Flakiness" in e and "not a valid bookmark name" in e for e in errors))
+
     def test_template_and_generated_files_are_excluded_from_scan(self):
         with tempfile.TemporaryDirectory() as tmp:
             notes_dir, vocab_file = self._setup_corpus(
@@ -171,10 +252,11 @@ class ApplyBookmarksTests(unittest.TestCase):
             notes_dir.mkdir()
             note = notes_dir / "HAB-1.md"
             write(note, "# HAB-1: Title\n\nOriginal body text.\n")
-            index.apply_bookmarks(notes_dir, {"HAB-1.md": ["ci-flakiness"]})
+            outcomes = index.apply_bookmarks(notes_dir, {"HAB-1.md": ["ci-flakiness"]})
             content = note.read_text(encoding="utf-8")
             self.assertTrue(content.startswith("---\nbookmarks: [ci-flakiness]\n---\n"))
             self.assertIn("Original body text.", content)
+            self.assertEqual(outcomes, {"HAB-1.md": "applied"})
 
     def test_does_not_overwrite_existing_frontmatter(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -182,9 +264,82 @@ class ApplyBookmarksTests(unittest.TestCase):
             notes_dir.mkdir()
             note = notes_dir / "HAB-1.md"
             write(note, "---\nbookmarks: [scope-creep]\n---\n\n# HAB-1: Title\n")
-            index.apply_bookmarks(notes_dir, {"HAB-1.md": ["ci-flakiness"]})
+            outcomes = index.apply_bookmarks(notes_dir, {"HAB-1.md": ["ci-flakiness"]})
             content = note.read_text(encoding="utf-8")
             self.assertIn("bookmarks: [scope-creep]", content)
+            self.assertEqual(outcomes, {"HAB-1.md": "skipped-already-tagged"})
+
+    def test_missing_file_raises_before_writing_anything(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir = Path(tmp) / "notes"
+            notes_dir.mkdir()
+            note = notes_dir / "HAB-1.md"
+            write(note, "# HAB-1: Title\n\nBody.\n")
+            with self.assertRaises(ValueError):
+                index.apply_bookmarks(
+                    notes_dir, {"HAB-1.md": ["ci-flakiness"], "HAB-999-does-not-exist.md": ["ci-flakiness"]}
+                )
+            # Validation must run before any write — HAB-1.md is untouched.
+            self.assertNotIn("bookmarks:", note.read_text(encoding="utf-8"))
+
+    def test_excluded_file_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir = Path(tmp) / "notes"
+            notes_dir.mkdir()
+            write(notes_dir / "INDEX.md", "generated content\n")
+            with self.assertRaises(ValueError):
+                index.apply_bookmarks(notes_dir, {"INDEX.md": ["ci-flakiness"]})
+
+    def test_path_traversal_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir = Path(tmp) / "notes"
+            notes_dir.mkdir()
+            with self.assertRaises(ValueError):
+                index.apply_bookmarks(notes_dir, {"../outside.md": ["ci-flakiness"]})
+
+    def test_unknown_bookmark_against_vocabulary_raises_before_writing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir = Path(tmp) / "notes"
+            notes_dir.mkdir()
+            note = notes_dir / "HAB-1.md"
+            write(note, "# HAB-1: Title\n\nBody.\n")
+            vocab_file = notes_dir / "BOOKMARKS.md"
+            write(vocab_file, "# Bookmarks\n\n| Bookmark | Meaning |\n|---|---|\n| `ci-flakiness` | x |\n")
+            with self.assertRaises(ValueError):
+                index.apply_bookmarks(notes_dir, {"HAB-1.md": ["not-in-vocabulary"]}, vocab_file)
+            self.assertNotIn("bookmarks:", note.read_text(encoding="utf-8"))
+
+
+class MainCliTests(unittest.TestCase):
+    def test_apply_bookmarks_mode_is_wired(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir = Path(tmp) / "docs" / "knowledge" / "notes"
+            notes_dir.mkdir(parents=True)
+            note = notes_dir / "HAB-1.md"
+            write(note, "# HAB-1: Title\n\nBody.\n")
+            vocab_file = notes_dir / "BOOKMARKS.md"
+            write(vocab_file, "# Bookmarks\n\n| Bookmark | Meaning |\n|---|---|\n| `ci-flakiness` | x |\n")
+            mapping_file = Path(tmp) / "mapping.json"
+            mapping_file.write_text(json.dumps({"HAB-1.md": ["ci-flakiness"]}), encoding="utf-8")
+
+            original_notes_dir, original_bookmarks, original_index = (
+                index.NOTES_DIR, index.BOOKMARKS_FILE, index.INDEX_FILE,
+            )
+            try:
+                index.NOTES_DIR = notes_dir
+                index.BOOKMARKS_FILE = vocab_file
+                index.INDEX_FILE = notes_dir / "INDEX.md"
+                exit_code = index.main(["--apply-bookmarks", str(mapping_file)])
+            finally:
+                index.NOTES_DIR, index.BOOKMARKS_FILE, index.INDEX_FILE = (
+                    original_notes_dir, original_bookmarks, original_index,
+                )
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("bookmarks: [ci-flakiness]", note.read_text(encoding="utf-8"))
+
+    def test_unknown_mode_is_rejected(self):
+        self.assertEqual(index.main(["--nonsense"]), 2)
 
 
 if __name__ == "__main__":
