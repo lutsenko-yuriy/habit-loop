@@ -158,7 +158,6 @@ def apply_bookmarks(notes_dir: Path, mapping: Dict[str, List[str]]) -> None:
             continue
         body = text
         if FRONTMATTER_RE.match(text):
-            # Frontmatter exists but without a bookmarks key — insert the key into it.
             frontmatter_match = FRONTMATTER_RE.match(text)
             new_frontmatter = frontmatter_match.group(1) + f"\nbookmarks: [{', '.join(bookmarks)}]"
             body = f"---\n{new_frontmatter}\n---\n" + text[frontmatter_match.end():]
