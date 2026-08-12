@@ -6,9 +6,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **planning-gaps** (11)
+- **planning-gaps** (12)
+- **multi-wu-scope** (11)
 - **debugging-methodology** (10)
-- **multi-wu-scope** (10)
 - **ci-flakiness** (9)
 - **knowledge-base-process** (6)
 - **research-methodology** (6)
@@ -116,6 +116,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
 - [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
+- [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
 
 ### planning-gaps
 - [HAB-126: Merge PactTimelineCache and PactStatsCache into a single cache](HAB-126.md)
@@ -129,6 +130,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-197: CI: let scenarios.yml target a single test file/tag instead of the full suite](HAB-197.md)
 - [HAB-201: Bug: pact shows "On break" (list + detail banner) before the break actually starts](HAB-201.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
+- [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
 
 ### research-methodology
 - [HAB-123: Research: choose a literature-research methodology for an agent research skill](HAB-123.md)
