@@ -58,6 +58,13 @@ def first_line(text: str | None, max_len: int = 120) -> str:
     return (text or "").split("\n")[0].strip()[:max_len]
 
 
+def active_milestone(milestones: list) -> dict | None:
+    return next(
+        (m for m in milestones if m.get("status") not in ("done", "overdue", "canceled")),
+        None,
+    )
+
+
 def format_linear_context(data: dict) -> str:
     issues = data.get("issues", [])
     milestones = data.get("milestones", [])
@@ -69,10 +76,7 @@ def format_linear_context(data: dict) -> str:
         "",
     ]
 
-    active = next(
-        (m for m in milestones if m.get("status") not in ("done", "overdue", "canceled")),
-        None,
-    )
+    active = active_milestone(milestones)
     lines.append(
         f"### Active milestone: {active['name']} ({active['progress']}% complete)"
         if active

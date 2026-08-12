@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from skill_router.providers.linear.context import (
     ISSUES_QUERY,
+    active_milestone,
     fetch_linear_context,
     first_line,
     format_linear_context,
@@ -122,6 +123,27 @@ class TestFirstLine(unittest.TestCase):
 
     def test_empty_string_returns_empty_string(self):
         self.assertEqual(first_line(""), "")
+
+
+class TestActiveMilestone(unittest.TestCase):
+
+    def test_returns_first_milestone_not_done_overdue_or_canceled(self):
+        milestones = [
+            {"name": "done one", "status": "done"},
+            {"name": "the active one", "status": "started"},
+        ]
+        self.assertEqual(active_milestone(milestones)["name"], "the active one")
+
+    def test_returns_none_when_all_milestones_are_terminal(self):
+        milestones = [
+            {"name": "done one", "status": "done"},
+            {"name": "overdue one", "status": "overdue"},
+            {"name": "canceled one", "status": "canceled"},
+        ]
+        self.assertIsNone(active_milestone(milestones))
+
+    def test_returns_none_for_empty_list(self):
+        self.assertIsNone(active_milestone([]))
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import sys
 from html import escape
 from pathlib import Path
 
-from .context import first_line
+from .context import active_milestone, first_line
 
 _TYPE_PRIORITY = ("Bug", "Tech Debt", "Feature", "Improvement")
 
@@ -46,10 +46,7 @@ def _issue_row(issue: dict) -> str:
 
 
 def _milestone_header(milestones: list) -> str:
-    active = next(
-        (m for m in milestones if m.get("status") not in ("done", "overdue", "canceled")),
-        None,
-    )
+    active = active_milestone(milestones)
     if active:
         return f"Active milestone: {escape(str(active.get('name', '')))} ({active.get('progress', 0)}% complete)"
     return "Active milestone: none"
@@ -127,17 +124,18 @@ def render_backlog_html(data: dict) -> str:
 def write_backlog_html(html: str, path: Path) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(html)
+    path.write_text(html, encoding="utf-8")
     return path
 
 
+_DISABLE_VALUES = {"off", "0", "false", "no"}
+
+
 def open_in_browser(path: Path) -> bool:
-    if os.environ.get("HL_BACKLOG_HTML_OPEN") == "off":
+    if os.environ.get("HL_BACKLOG_HTML_OPEN", "").strip().lower() in _DISABLE_VALUES:
         return False
     if sys.platform == "darwin":
-        subprocess.run(["open", str(path)], check=False)
-        return True
+        return subprocess.run(["open", str(path)], check=False).returncode == 0
     if sys.platform.startswith("linux"):
-        subprocess.run(["xdg-open", str(path)], check=False)
-        return True
+        return subprocess.run(["xdg-open", str(path)], check=False).returncode == 0
     return False

@@ -134,7 +134,16 @@ class TestWriteBacklogHtml(unittest.TestCase):
             path = Path(tmp_dir) / "backlog.local.html"
             returned = write_backlog_html("<!DOCTYPE html><html></html>", path)
             self.assertEqual(returned, path)
-            self.assertEqual(path.read_text(), "<!DOCTYPE html><html></html>")
+            self.assertEqual(path.read_text(encoding="utf-8"), "<!DOCTYPE html><html></html>")
+
+    def test_writes_non_ascii_content_under_a_c_locale(self):
+        # Regression: write_text() without an explicit encoding falls back to the
+        # locale encoding, and rendered docs always contain an em dash (U+2014).
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir) / "backlog.local.html"
+            html = render_backlog_html(FAKE_LINEAR_DATA)
+            write_backlog_html(html, path)
+            self.assertEqual(path.read_text(encoding="utf-8"), html)
 
 
 class TestOpenInBrowser(unittest.TestCase):
@@ -146,16 +155,34 @@ class TestOpenInBrowser(unittest.TestCase):
         mock_run.assert_not_called()
         self.assertFalse(result)
 
+    def test_noop_when_disabled_via_env_case_insensitive_and_other_falsy_values(self):
+        for value in ("OFF", "Off", "0", "false", "FALSE", "no", " off "):
+            with patch.dict(os.environ, {"HL_BACKLOG_HTML_OPEN": value}):
+                with patch("skill_router.providers.linear.html_view.subprocess.run") as mock_run:
+                    result = open_in_browser(Path("/tmp/backlog.local.html"))
+            mock_run.assert_not_called()
+            self.assertFalse(result, f"expected disabled for {value!r}")
+
     def test_calls_open_on_darwin(self):
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("HL_BACKLOG_HTML_OPEN", None)
             with patch("skill_router.providers.linear.html_view.sys.platform", "darwin"):
                 with patch("skill_router.providers.linear.html_view.subprocess.run") as mock_run:
+                    mock_run.return_value.returncode = 0
                     result = open_in_browser(Path("/tmp/backlog.local.html"))
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
         self.assertEqual(args[0], "open")
         self.assertTrue(result)
+
+    def test_returns_false_when_launch_command_fails(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("HL_BACKLOG_HTML_OPEN", None)
+            with patch("skill_router.providers.linear.html_view.sys.platform", "darwin"):
+                with patch("skill_router.providers.linear.html_view.subprocess.run") as mock_run:
+                    mock_run.return_value.returncode = 1
+                    result = open_in_browser(Path("/tmp/backlog.local.html"))
+        self.assertFalse(result)
 
 
 if __name__ == "__main__":
