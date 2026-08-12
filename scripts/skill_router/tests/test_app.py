@@ -18,10 +18,7 @@ _MOD = "skill_router.app"
 
 
 def _fake_load_config(toml_path="skill_router.toml"):
-    """Build a Config from current os.environ (so tests that patch.dict
-    os.environ still see the effect), but pinned to local_models_enabled=True
-    regardless of the real skill_router.toml on disk — most tests here predate
-    that gate and never intended to exercise it."""
+    """Env-driven Config, pinned to local_models_enabled=True — isolates these tests from the real toml on disk."""
     return Config(
         linear_api_key=os.environ.get("LINEAR_API_KEY"),
         linear_project_id=os.environ.get("LINEAR_PROJECT_ID"),

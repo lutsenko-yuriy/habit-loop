@@ -6,11 +6,5 @@ lmstudio_base = "http://localhost:1234/v1"
 
 [core]
 model_tiers_path = "docs/MODEL_TIERS.md"
-# Kill switch (HAB-221 debrief, 2026-08-12): the local-model route produced a
-# real bug (an unrelated CI-file typo) and timed out mid-run during HAB-221
-# WU3, and the laptop load isn't worth the risk on current hardware. Every
-# skill_router invocation now exits 1 immediately, so each .claude/commands/
-# stub's existing cloud fallback (spawn a cloud agent) kicks in uniformly.
-# Re-enable by flipping this to true once HAB-224 (hardware research)
-# concludes hardware/reliability is good enough to trust again.
+# Kill switch (HAB-221 debrief): local models proved unreliable; re-enable once HAB-224 concludes.
 local_models_enabled = false

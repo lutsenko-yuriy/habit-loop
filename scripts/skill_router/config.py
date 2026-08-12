@@ -10,10 +10,8 @@ try:
 except ImportError:
     tomllib = None
 
-# Resolved against this file's location, not the process's cwd — a
-# cwd-relative default would silently miss the real project toml (and fall
-# back open to True) whenever skill_router is invoked from anywhere but the
-# repo root (HAB-221 WU3 third audit pass).
+# Resolved against this file, not cwd — a relative default would miss the
+# real toml (and fail open) when invoked from outside the repo root.
 _DEFAULT_TOML_PATH = Path(__file__).resolve().parents[2] / "skill_router.toml"
 
 
@@ -27,13 +25,7 @@ class Config:
 
 
 def _load_toml(path: Path) -> tuple[dict, bool]:
-    """Returns (data, load_ok). load_ok is False when the file exists but
-    couldn't actually be read — tomllib missing (Python < 3.11, e.g. this
-    machine's bare `python3`, which every .claude/commands/ stub invokes —
-    see CLAUDE.local.md) or malformed TOML. A genuinely absent file is a
-    fully-determined state (load_ok=True, data={}) — callers should only
-    treat load_ok=False specially for anything safety-critical, since an
-    unparseable-but-present file means we cannot know what it actually says."""
+    """Returns (data, load_ok); load_ok is False when the file exists but couldn't be read (see CLAUDE.local.md's python3.12 note)."""
     if not path.exists():
         return {}, True
     if tomllib is None:
@@ -57,11 +49,7 @@ def load_config(toml_path: str | Path = _DEFAULT_TOML_PATH) -> Config:
     if load_ok and isinstance(local_models_enabled_raw, bool):
         local_models_enabled = local_models_enabled_raw
     else:
-        # Fail closed: either the toml exists but couldn't be verified read
-        # (tomllib missing or malformed TOML), or the key is present but not
-        # an actual boolean (e.g. a quoted "false" string, which Python
-        # treats as truthy) — never silently fall through to "enabled"
-        # (HAB-221 debrief; see skill_router.toml's own comment).
+        # Fail closed on any unverified/non-bool value — never default to enabled.
         local_models_enabled = False
     return Config(
         linear_api_key=os.environ.get("LINEAR_API_KEY"),

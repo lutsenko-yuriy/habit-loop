@@ -48,13 +48,7 @@ class TestLocalModelsEnabled(unittest.TestCase):
     @patch.dict("os.environ", {}, clear=True)
     @patch("skill_router.config.tomllib", None)
     def test_fails_closed_when_toml_exists_but_unparseable(self):
-        """A toml file that exists but can't be read (tomllib missing on
-        Python < 3.11 — the exact bare `python3` scenario every
-        .claude/commands/ stub actually invokes — or malformed content)
-        must never silently fall through to the enabled default. Verified
-        live: bare python3 on this machine (3.9, no tomllib) was letting
-        local_models_enabled=false in the real skill_router.toml go
-        unenforced (HAB-221 WU3 audit)."""
+        """An unreadable toml (e.g. no tomllib) must not fall through to enabled."""
         with TemporaryDirectory() as tmp:
             toml_path = self._write_toml(tmp, "[core]\nlocal_models_enabled = false\n")
             cfg = load_config(toml_path)
@@ -72,14 +66,7 @@ class TestLocalModelsEnabled(unittest.TestCase):
 
     @patch.dict("os.environ", {}, clear=True)
     def test_default_toml_path_is_cwd_independent(self):
-        """A caller with no explicit toml_path must still find the real repo
-        skill_router.toml regardless of the process's current working
-        directory — a relative default resolved against cwd would silently
-        miss it from anywhere else and fall open to True (HAB-221 WU3 third
-        audit pass). Asserts equivalence to an explicit repo-root load rather
-        than pinning today's real value, so this doesn't go red for an
-        unrelated reason the day HAB-224 flips the switch back (fourth
-        audit pass)."""
+        """No explicit toml_path must still resolve to the real repo toml from any cwd."""
         repo_toml = Path(config.__file__).resolve().parents[2] / "skill_router.toml"
         expected = load_config(repo_toml).local_models_enabled
 
@@ -95,9 +82,7 @@ class TestLocalModelsEnabled(unittest.TestCase):
     @unittest.skipUnless(_HAS_TOMLLIB, "requires tomllib (Python >= 3.11) to actually parse the toml")
     @patch.dict("os.environ", {}, clear=True)
     def test_non_boolean_value_fails_closed(self):
-        """A quoted "false" is a truthy non-empty string in Python — silently
-        reading as enabled would defeat the whole point of a typo-proof kill
-        switch."""
+        """A quoted "false" is truthy in Python — must not read as enabled."""
         with TemporaryDirectory() as tmp:
             toml_path = self._write_toml(tmp, '[core]\nlocal_models_enabled = "false"\n')
             cfg = load_config(toml_path)
