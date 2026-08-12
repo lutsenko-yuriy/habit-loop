@@ -72,11 +72,17 @@ class TestLocalModelsEnabled(unittest.TestCase):
 
     @patch.dict("os.environ", {}, clear=True)
     def test_default_toml_path_is_cwd_independent(self):
-        """The real skill_router.toml (repo root) has local_models_enabled=false.
-        A caller with no explicit toml_path must still find it regardless of
-        the process's current working directory — a relative default resolved
-        against cwd would silently miss it from anywhere else and fall open
-        to True (HAB-221 WU3 third audit pass)."""
+        """A caller with no explicit toml_path must still find the real repo
+        skill_router.toml regardless of the process's current working
+        directory — a relative default resolved against cwd would silently
+        miss it from anywhere else and fall open to True (HAB-221 WU3 third
+        audit pass). Asserts equivalence to an explicit repo-root load rather
+        than pinning today's real value, so this doesn't go red for an
+        unrelated reason the day HAB-224 flips the switch back (fourth
+        audit pass)."""
+        repo_toml = Path(config.__file__).resolve().parents[2] / "skill_router.toml"
+        expected = load_config(repo_toml).local_models_enabled
+
         original_cwd = os.getcwd()
         with TemporaryDirectory() as tmp:
             os.chdir(tmp)
@@ -84,7 +90,7 @@ class TestLocalModelsEnabled(unittest.TestCase):
                 cfg = load_config()
             finally:
                 os.chdir(original_cwd)
-        self.assertFalse(cfg.local_models_enabled)
+        self.assertEqual(cfg.local_models_enabled, expected)
 
     @unittest.skipUnless(_HAS_TOMLLIB, "requires tomllib (Python >= 3.11) to actually parse the toml")
     @patch.dict("os.environ", {}, clear=True)
