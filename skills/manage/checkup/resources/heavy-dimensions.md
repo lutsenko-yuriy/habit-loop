@@ -29,4 +29,6 @@ Manual audit pass: semantic labels on interactive widgets, tap-target sizes, col
 
 Propose new bookmarks when a recurring pattern emerges from the corpus that doesn't fit existing ones.
 
+Also spot-check notes filed under `bookmarks: []` ("reviewed, nothing noteworthy") against their actual content — since `TEMPLATE.md` seeds this as the default, a note that was never really reviewed is indistinguishable from one that genuinely has nothing worth tagging. This bucket is where that gap would hide.
+
 *Grounding: this is an emergent taxonomy; periodic review ensures it stays aligned with the project's actual pain points and patterns.*
