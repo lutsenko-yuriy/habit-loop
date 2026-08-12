@@ -55,6 +55,8 @@ Resolve the target file: `docs/knowledge/notes/HAB-XX.md` (using the ticket ID f
 
 Use today's date in `YYYY-MM-DD` format.
 
+**Set the `bookmarks:` frontmatter key.** Read `docs/knowledge/notes/BOOKMARKS.md` and pick the 1–3 existing bookmarks that best match the note text. If nothing in the vocabulary fits, use `bookmarks: []` — do not invent a new bookmark here (that stays a `/debrief`-time or `/checkup heavy`-time decision, since both have room for a multi-question dialog and `/note`'s one-question budget above does not). Merge into any existing `bookmarks:` key rather than overwriting it. Then run `python3 scripts/notes/index.py` to regenerate `INDEX.md`.
+
 ### 4. Report back
 
 One line: *"Noted in `docs/knowledge/notes/HAB-XX.md`."*
@@ -66,3 +68,4 @@ One line: *"Noted in `docs/knowledge/notes/HAB-XX.md`."*
 - Never write to `## Debrief summary` — that section belongs to `/debrief`.
 - One question maximum across all steps. If both the ticket and the note text are unknown, ask for the ticket first; ask for the note text in the same response only if the ticket was explicit in the argument.
 - Never modify app code, tests, or any file outside `docs/knowledge/notes/`.
+- Never propose a new bookmark from `/note` — pick only from `docs/knowledge/notes/BOOKMARKS.md`'s existing vocabulary, or use `bookmarks: []`.

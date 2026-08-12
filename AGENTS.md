@@ -32,6 +32,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/TROUBLESHOOT_WORKFLOW.md | Reactive workflow for bugs, CI failures, and infrastructure issues — investigate, ticket, fix, ship |
 | docs/RESEARCH_WORKFLOW.md | Step-by-step workflow for research-only tickets — alternatives survey, constraint evaluation, debrief |
 | docs/knowledge/README.md | Project knowledge base — vault layout, per-ticket file format, how `/note` and `/debrief` write entries |
+| docs/knowledge/notes/INDEX.md | Generated tagged table of contents over `docs/knowledge/notes/` — regenerate via `scripts/notes/index.py`, do not edit by hand (HAB-221) |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 | skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
 | skills/configure/skill-creator/SKILL.md | Create a new skill from scratch (guided wizard), or refactor an existing skill into lean SKILL.md + resource files |

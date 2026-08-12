@@ -16,6 +16,10 @@ runs:
       shell: bash
       run: python3 -m unittest discover -s scripts -p 'test_*.py' -t scripts
 
+    - name: Check knowledge-base index is up to date
+      shell: bash
+      run: python3 scripts/notes/index.py --check
+
     - name: Lint CHANGELOG markers
       shell: bash
       run: |
