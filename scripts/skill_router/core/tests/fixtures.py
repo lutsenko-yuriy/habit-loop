@@ -13,5 +13,8 @@ TIERS_MD_WITH_LMSTUDIO = """\
 SKILL_CONTENT_PLAIN = "---\neffort: RAPID\nreasoning: MECHANICAL\n---\nDo the thing.\n"
 SKILL_CONTENT_NEEDS_MCP = "---\neffort: RAPID\nreasoning: MECHANICAL\nneeds_session_tools: true\n---\nDo the thing.\n"
 SKILL_CONTENT_WITH_CONTEXT = "---\neffort: RAPID\nreasoning: MECHANICAL\ncontext: linear\n---\nDo the thing.\n"
+SKILL_CONTENT_WITH_RENDER_HTML_VIEW = (
+    "---\neffort: RAPID\nreasoning: MECHANICAL\ncontext: linear\nrender_html_view: true\n---\nDo the thing.\n"
+)
 SKILL_CONTENT_WITH_TOOLS = "---\neffort: RAPID\nreasoning: MECHANICAL\ntools: linear,github\n---\nDo the thing.\n"
 SKILL_CONTENT_NO_FM = "No frontmatter here."

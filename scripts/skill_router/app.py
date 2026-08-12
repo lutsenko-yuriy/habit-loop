@@ -36,7 +36,9 @@ def run(argv: list[str]) -> int:
         print(f"[skill_router] Skill file not found: {skill_path}", file=sys.stderr)
         return 2
 
-    effort, reasoning, needs_session_tools, context, tool_groups, max_turns, body = read_frontmatter(skill_path)
+    effort, reasoning, needs_session_tools, context, render_html_view, tool_groups, max_turns, body = read_frontmatter(
+        skill_path
+    )
     if not effort or not reasoning:
         print(f"[skill_router] Could not parse frontmatter in {skill_path}", file=sys.stderr)
         return 2
@@ -70,7 +72,11 @@ def run(argv: list[str]) -> int:
             print(f"[skill_router] {err}", file=sys.stderr)
             return 2
         try:
-            body = f"{ctx_provider.format_context(ctx_provider.fetch_context())}\n\n{body}"
+            ctx_data = ctx_provider.fetch_context()
+            ctx_text = ctx_provider.format_context(ctx_data)
+            if render_html_view and hasattr(ctx_provider, "render_backlog_view"):
+                ctx_text += ctx_provider.render_backlog_view(ctx_data)
+            body = f"{ctx_text}\n\n{body}"
         except Exception as e:
             print(f"[skill_router] Failed to fetch context: {e}", file=sys.stderr)
             return 1

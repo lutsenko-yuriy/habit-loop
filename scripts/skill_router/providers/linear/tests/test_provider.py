@@ -54,52 +54,86 @@ class TestLinearProvider(unittest.TestCase):
         self.assertEqual(json.loads(result), fake_nodes)
         mock_gql.assert_called_once()
 
-    def test_format_context_writes_html_and_appends_file_note(self):
+    def test_format_context_is_pure_markdown_no_side_effects(self):
+        # HAB-222: format_context must never trigger the HTML side effect — only
+        # render_backlog_view does, and only for skills that opt in.
         p = LinearProvider(api_key="key", project_id="proj")
-        with patch(
-            "skill_router.providers.linear.provider.write_backlog_html",
-            return_value=Path("/tmp/backlog.local.html"),
-        ) as mock_write, patch(
-            "skill_router.providers.linear.provider.open_in_browser", return_value=True
+        with patch("skill_router.providers.linear.provider.write_backlog_html") as mock_write, patch(
+            "skill_router.providers.linear.provider.open_in_browser"
         ) as mock_open:
             text = p.format_context(_SAMPLE_DATA)
 
-        mock_write.assert_called_once()
-        mock_open.assert_called_once_with(Path("/tmp/backlog.local.html"))
-        self.assertIn("=== PRE-FETCHED BACKLOG", text)
-        self.assertIn("=== END PRE-FETCHED BACKLOG ===", text)
-        self.assertIn("/tmp/backlog.local.html", text)
+        mock_write.assert_not_called()
+        mock_open.assert_not_called()
+        self.assertEqual(text, format_linear_context(_SAMPLE_DATA))
 
-    def test_format_context_degrades_gracefully_on_html_failure(self):
+    def test_render_backlog_view_writes_html_and_returns_file_note(self):
         p = LinearProvider(api_key="key", project_id="proj")
-        with patch(
-            "skill_router.providers.linear.provider.render_backlog_html",
-            side_effect=RuntimeError("boom"),
-        ):
-            text = p.format_context(_SAMPLE_DATA)
-
-        self.assertIn("=== PRE-FETCHED BACKLOG", text)
-        self.assertIn("=== END PRE-FETCHED BACKLOG ===", text)
-        self.assertNotIn("Backlog table:", text)
-
-    def test_format_context_markdown_block_unchanged_regardless_of_html_outcome(self):
-        expected_markdown = format_linear_context(_SAMPLE_DATA)
-        p = LinearProvider(api_key="key", project_id="proj")
-
+        written_path = Path("/tmp/backlog.local.html")
         with patch(
             "skill_router.providers.linear.provider.write_backlog_html",
-            return_value=Path("/tmp/backlog.local.html"),
-        ), patch("skill_router.providers.linear.provider.open_in_browser", return_value=True):
-            success_text = p.format_context(_SAMPLE_DATA)
+            return_value=written_path,
+        ) as mock_write, patch(
+            "skill_router.providers.linear.provider.open_in_browser", return_value=True
+        ) as mock_open:
+            note = p.render_backlog_view(_SAMPLE_DATA)
 
+        mock_write.assert_called_once()
+        write_args = mock_write.call_args[0]
+        self.assertEqual(write_args[1], Path("backlog.local.html"))
+        # resolve() may remap the mocked path (e.g. /tmp -> /private/tmp on macOS)
+        resolved = written_path.resolve()
+        mock_open.assert_called_once_with(resolved)
+        self.assertIn(str(resolved), note)
+
+    def test_render_backlog_view_honours_path_override_env_var(self):
+        p = LinearProvider(api_key="key", project_id="proj")
+        with patch.dict("os.environ", {"HL_BACKLOG_HTML_PATH": "/tmp/custom.html"}):
+            with patch(
+                "skill_router.providers.linear.provider.write_backlog_html",
+                return_value=Path("/tmp/custom.html"),
+            ) as mock_write, patch("skill_router.providers.linear.provider.open_in_browser", return_value=True):
+                p.render_backlog_view(_SAMPLE_DATA)
+
+        write_args = mock_write.call_args[0]
+        self.assertEqual(write_args[1], Path("/tmp/custom.html"))
+
+    def test_render_backlog_view_returns_empty_string_on_write_failure(self):
+        p = LinearProvider(api_key="key", project_id="proj")
         with patch(
             "skill_router.providers.linear.provider.render_backlog_html",
             side_effect=RuntimeError("boom"),
         ):
-            failure_text = p.format_context(_SAMPLE_DATA)
+            note = p.render_backlog_view(_SAMPLE_DATA)
 
-        self.assertTrue(success_text.startswith(expected_markdown))
-        self.assertEqual(failure_text, expected_markdown)
+        self.assertEqual(note, "")
+
+    def test_render_backlog_view_keeps_file_note_when_only_open_fails(self):
+        # HAB-222 audit finding: a browser-open failure must not drop the note
+        # for a file that was actually written successfully.
+        p = LinearProvider(api_key="key", project_id="proj")
+        written_path = Path("/tmp/backlog.local.html")
+        with patch(
+            "skill_router.providers.linear.provider.write_backlog_html",
+            return_value=written_path,
+        ), patch(
+            "skill_router.providers.linear.provider.open_in_browser",
+            side_effect=RuntimeError("no browser available"),
+        ):
+            note = p.render_backlog_view(_SAMPLE_DATA)
+
+        self.assertIn(str(written_path.resolve()), note)
+
+    def test_render_backlog_view_never_raises(self):
+        p = LinearProvider(api_key="key", project_id="proj")
+        with patch(
+            "skill_router.providers.linear.provider.render_backlog_html",
+            side_effect=RuntimeError("boom"),
+        ):
+            try:
+                p.render_backlog_view(_SAMPLE_DATA)
+            except Exception as e:
+                self.fail(f"render_backlog_view raised {e!r} — it must never raise")
 
 
 if __name__ == "__main__":

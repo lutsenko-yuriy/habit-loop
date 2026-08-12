@@ -10,6 +10,7 @@ from .fixtures import (
     _FM_NO_EFFORT,
     _FM_FOCUSED,
     _FM_WITH_CONTEXT,
+    _FM_WITH_CONTEXT_AND_RENDER_HTML_VIEW,
     _FM_WITH_TOOLS_LINEAR,
     _FM_WITH_TOOLS_GITHUB,
 )
@@ -115,6 +116,46 @@ class TestRun(unittest.TestCase):
         prompt = mock_stream.call_args[0][1]
         self.assertIn("PRE-FETCHED BACKLOG", prompt)
         self.assertIn("body", prompt)
+
+    @patch(f"{_MOD}.stream_completion", return_value=True)
+    @patch(f"{_MOD}.model_loaded", return_value=True)
+    @patch(f"{_MOD}.lookup_lmstudio_model", return_value="qwen/qwen3-8b (MLX, 4-bit)")
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_WITH_CONTEXT)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_context_linear_without_render_html_view_skips_backlog_view(self, _exists, _fm, _model, _loaded, mock_stream):
+        # HAB-222: render_backlog_view must not fire for a context: linear skill
+        # (e.g. draft-scenarios) that doesn't opt in via render_html_view: true.
+        fake_provider = MagicMock()
+        fake_provider.validate.return_value = None
+        fake_provider.fetch_context.return_value = {"issues": [], "milestones": []}
+        fake_provider.format_context.return_value = "=== PRE-FETCHED BACKLOG ===\nstuff\n=== END ==="
+        fake_factory = MagicMock(return_value=fake_provider)
+        with patch.dict(f"{_MOD}._PROVIDER_FACTORIES", {"linear": fake_factory}):
+            with patch.dict("os.environ", {"LINEAR_API_KEY": "lin_api_test"}):
+                self._run(["skill_router", "fake/SKILL.md"])
+        fake_provider.render_backlog_view.assert_not_called()
+
+    @patch(f"{_MOD}.stream_completion", return_value=True)
+    @patch(f"{_MOD}.model_loaded", return_value=True)
+    @patch(f"{_MOD}.lookup_lmstudio_model", return_value="qwen/qwen3-8b (MLX, 4-bit)")
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_WITH_CONTEXT_AND_RENDER_HTML_VIEW)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_context_linear_with_render_html_view_calls_backlog_view(self, _exists, _fm, _model, _loaded, mock_stream):
+        # HAB-222: render_backlog_view must fire for a skill that does opt in
+        # (summarize), and its note must be appended to the prompt.
+        fake_provider = MagicMock()
+        fake_provider.validate.return_value = None
+        fake_data = {"issues": [], "milestones": []}
+        fake_provider.fetch_context.return_value = fake_data
+        fake_provider.format_context.return_value = "=== PRE-FETCHED BACKLOG ===\nstuff\n=== END ==="
+        fake_provider.render_backlog_view.return_value = "\n\n_(Backlog table: backlog.local.html)_"
+        fake_factory = MagicMock(return_value=fake_provider)
+        with patch.dict(f"{_MOD}._PROVIDER_FACTORIES", {"linear": fake_factory}):
+            with patch.dict("os.environ", {"LINEAR_API_KEY": "lin_api_test"}):
+                self._run(["skill_router", "fake/SKILL.md"])
+        fake_provider.render_backlog_view.assert_called_once_with(fake_data)
+        prompt = mock_stream.call_args[0][1]
+        self.assertIn("Backlog table:", prompt)
 
     @patch(f"{_MOD}.read_frontmatter", return_value=_FM_WITH_CONTEXT)
     @patch("pathlib.Path.exists", return_value=True)

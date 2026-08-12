@@ -125,12 +125,21 @@ class LinearProvider:
         return fetch_linear_context(self._api_key, self._project_id)
 
     def format_context(self, data: dict) -> str:
-        text = format_linear_context(data)
+        return format_linear_context(data)
+
+    def render_backlog_view(self, data: dict) -> str:
+        """Render+write+open the HTML backlog table as a side effect. Returns a
+        note to append to the caller's text on success, or "" on any failure —
+        never raises, so a bad write/open can't take down the caller."""
+        target = Path(os.environ.get("HL_BACKLOG_HTML_PATH", "backlog.local.html"))
         try:
             html = render_backlog_html(data)
-            path = write_backlog_html(html, Path(os.environ.get("HL_BACKLOG_HTML_PATH", "backlog.local.html")))
-            open_in_browser(path)
-            text += f"\n\n_(Backlog table: {path})_"
+            path = write_backlog_html(html, target).resolve()
         except Exception as e:
-            print(f"[skill_router] WARNING: failed to write backlog.local.html: {e}", file=sys.stderr)
-        return text
+            print(f"[skill_router] WARNING: failed to write {target}: {e}", file=sys.stderr)
+            return ""
+        try:
+            open_in_browser(path)
+        except Exception as e:
+            print(f"[skill_router] WARNING: failed to open {path} in browser: {e}", file=sys.stderr)
+        return f"\n\n_(Backlog table: {path})_"
