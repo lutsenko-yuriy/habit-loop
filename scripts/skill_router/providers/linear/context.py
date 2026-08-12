@@ -61,8 +61,10 @@ def first_line(text: str | None, max_len: int = 120) -> str:
 
 
 def active_milestone(milestones: list) -> dict | None:
+    # ProjectMilestoneStatus is unstarted/next/overdue/done — "overdue" is deliberately
+    # excluded here too: a slipped milestone still reports as terminal, not active.
     return next(
-        (m for m in milestones if m.get("status") not in ("done", "overdue", "canceled")),
+        (m for m in milestones if m.get("status") not in ("done", "overdue")),
         None,
     )
 

@@ -137,7 +137,7 @@ class TestFirstLine(unittest.TestCase):
 
 class TestActiveMilestone(unittest.TestCase):
 
-    def test_returns_first_milestone_not_done_overdue_or_canceled(self):
+    def test_returns_first_milestone_not_done_or_overdue(self):
         milestones = [
             {"name": "done one", "status": "done"},
             {"name": "the active one", "status": "started"},
@@ -148,7 +148,6 @@ class TestActiveMilestone(unittest.TestCase):
         milestones = [
             {"name": "done one", "status": "done"},
             {"name": "overdue one", "status": "overdue"},
-            {"name": "canceled one", "status": "canceled"},
         ]
         self.assertIsNone(active_milestone(milestones))
 
