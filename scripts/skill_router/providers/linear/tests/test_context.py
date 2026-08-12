@@ -1,7 +1,12 @@
 import unittest
 from unittest.mock import patch
 
-from skill_router.providers.linear.context import fetch_linear_context, format_linear_context
+from skill_router.providers.linear.context import (
+    ISSUES_QUERY,
+    fetch_linear_context,
+    first_line,
+    format_linear_context,
+)
 from .fixtures import FAKE_LINEAR_DATA
 
 
@@ -90,6 +95,33 @@ class TestFormatLinearContext(unittest.TestCase):
         result = format_linear_context(FAKE_LINEAR_DATA)
         self.assertIn("=== PRE-FETCHED BACKLOG", result)
         self.assertIn("=== END PRE-FETCHED BACKLOG ===", result)
+
+
+class TestIssuesQueryUrlField(unittest.TestCase):
+
+    def test_query_requests_url_field(self):
+        self.assertIn("url", ISSUES_QUERY)
+
+
+class TestFirstLine(unittest.TestCase):
+
+    def test_returns_first_line_of_multiline_text(self):
+        self.assertEqual(first_line("first\nsecond\nthird"), "first")
+
+    def test_strips_surrounding_whitespace(self):
+        self.assertEqual(first_line("  padded  \nmore"), "padded")
+
+    def test_truncates_to_max_len(self):
+        self.assertEqual(first_line("a" * 200), "a" * 120)
+
+    def test_truncates_to_custom_max_len(self):
+        self.assertEqual(first_line("a" * 20, max_len=5), "a" * 5)
+
+    def test_none_input_returns_empty_string(self):
+        self.assertEqual(first_line(None), "")
+
+    def test_empty_string_returns_empty_string(self):
+        self.assertEqual(first_line(""), "")
 
 
 if __name__ == "__main__":
