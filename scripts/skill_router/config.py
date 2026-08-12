@@ -17,6 +17,7 @@ class Config:
     linear_project_id: str | None
     lmstudio_base: str
     model_tiers_path: str
+    local_models_enabled: bool
 
 
 def _load_toml(path: Path) -> dict:
@@ -43,4 +44,5 @@ def load_config(toml_path: str = "skill_router.toml") -> Config:
             or data.get("llm", {}).get("lmstudio_base", "http://localhost:1234/v1")
         ),
         model_tiers_path=data.get("core", {}).get("model_tiers_path", "docs/MODEL_TIERS.md"),
+        local_models_enabled=data.get("core", {}).get("local_models_enabled", True),
     )

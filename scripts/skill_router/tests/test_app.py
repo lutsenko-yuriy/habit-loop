@@ -145,6 +145,25 @@ class TestRun(unittest.TestCase):
         self._run(["skill_router", "fake/SKILL.md"])
         mock_stream.assert_called_once()
 
+    @patch(f"{_MOD}.model_loaded")
+    @patch(f"{_MOD}.load_config")
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_PLAIN)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_local_models_disabled_returns_1_without_touching_lmstudio(self, _exists, _fm, mock_load_config, mock_model_loaded):
+        mock_load_config.return_value = MagicMock(local_models_enabled=False)
+        self.assertEqual(self._run(["skill_router", "fake/SKILL.md"]), 1)
+        mock_model_loaded.assert_not_called()
+
+    @patch(f"{_MOD}.stream_completion", return_value=True)
+    @patch(f"{_MOD}.model_loaded", return_value=True)
+    @patch(f"{_MOD}.lookup_lmstudio_model", return_value="qwen/qwen3-8b (MLX, 4-bit)")
+    @patch(f"{_MOD}.load_config")
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_PLAIN)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_local_models_enabled_proceeds_as_normal(self, _exists, _fm, mock_load_config, *_):
+        mock_load_config.return_value = MagicMock(local_models_enabled=True)
+        self.assertEqual(self._run(["skill_router", "fake/SKILL.md"]), 0)
+
     @patch(f"{_MOD}.stream_completion")
     @patch(f"{_MOD}.model_loaded", return_value=True)
     @patch(f"{_MOD}.lookup_lmstudio_model", return_value="qwen/qwen3-8b (MLX, 4-bit)")

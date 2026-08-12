@@ -51,6 +51,14 @@ def run(argv: list[str]) -> int:
 
     cfg = load_config()
 
+    if not cfg.local_models_enabled:
+        print(
+            "[skill_router] Local-model route disabled (skill_router.toml [core] local_models_enabled = false) "
+            "— falling back to the cloud path",
+            file=sys.stderr,
+        )
+        return 1
+
     if context:
         ctx_factory = _PROVIDER_FACTORIES.get(context)
         if not ctx_factory:
