@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
+from pathlib import Path
 
 from .client import _linear_graphql
 from .context import fetch_linear_context, format_linear_context, ISSUES_QUERY
+from .html_view import open_in_browser, render_backlog_html, write_backlog_html
 
 
 _GET_ISSUE_QUERY = """
@@ -121,4 +125,12 @@ class LinearProvider:
         return fetch_linear_context(self._api_key, self._project_id)
 
     def format_context(self, data: dict) -> str:
-        return format_linear_context(data)
+        text = format_linear_context(data)
+        try:
+            html = render_backlog_html(data)
+            path = write_backlog_html(html, Path(os.environ.get("HL_BACKLOG_HTML_PATH", "backlog.local.html")))
+            open_in_browser(path)
+            text += f"\n\n_(Backlog table: {path})_"
+        except Exception as e:
+            print(f"[skill_router] WARNING: failed to write backlog.local.html: {e}", file=sys.stderr)
+        return text
