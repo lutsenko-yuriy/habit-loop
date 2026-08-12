@@ -157,6 +157,27 @@ class TestRun(unittest.TestCase):
         prompt = mock_stream.call_args[0][1]
         self.assertIn("Backlog table:", prompt)
 
+    @patch(f"{_MOD}.stream_completion", return_value=True)
+    @patch(f"{_MOD}.model_loaded", return_value=True)
+    @patch(f"{_MOD}.lookup_lmstudio_model", return_value="qwen/qwen3-8b (MLX, 4-bit)")
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_WITH_CONTEXT_AND_RENDER_HTML_VIEW)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_render_html_view_true_warns_when_provider_lacks_method(self, _exists, _fm, _model, _loaded, mock_stream):
+        # A provider without render_backlog_view (spec restricts attrs so hasattr
+        # is genuinely False, unlike an unspec'd MagicMock) must not silently
+        # no-op — it should warn so a typo'd/misconfigured flag is visible.
+        fake_provider = MagicMock(spec=["validate", "fetch_context", "format_context"])
+        fake_provider.validate.return_value = None
+        fake_provider.fetch_context.return_value = {"issues": [], "milestones": []}
+        fake_provider.format_context.return_value = "=== PRE-FETCHED BACKLOG ===\nstuff\n=== END ==="
+        fake_factory = MagicMock(return_value=fake_provider)
+        with patch.dict(f"{_MOD}._PROVIDER_FACTORIES", {"linear": fake_factory}):
+            with patch.dict("os.environ", {"LINEAR_API_KEY": "lin_api_test"}):
+                with patch(f"{_MOD}.print") as mock_print:
+                    self.assertEqual(self._run(["skill_router", "fake/SKILL.md"]), 0)
+        warnings = [c for c in mock_print.call_args_list if "render_html_view" in str(c)]
+        self.assertTrue(warnings, "expected a WARNING about the unsupported render_html_view flag")
+
     @patch(f"{_MOD}.read_frontmatter", return_value=_FM_WITH_CONTEXT)
     @patch("pathlib.Path.exists", return_value=True)
     def test_context_linear_returns_2_without_api_key(self, *_):

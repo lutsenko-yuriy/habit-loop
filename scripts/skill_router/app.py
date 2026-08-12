@@ -74,8 +74,15 @@ def run(argv: list[str]) -> int:
         try:
             ctx_data = ctx_provider.fetch_context()
             ctx_text = ctx_provider.format_context(ctx_data)
-            if render_html_view and hasattr(ctx_provider, "render_backlog_view"):
-                ctx_text += ctx_provider.render_backlog_view(ctx_data)
+            if render_html_view:
+                if hasattr(ctx_provider, "render_backlog_view"):
+                    ctx_text += ctx_provider.render_backlog_view(ctx_data)
+                else:
+                    print(
+                        f"[skill_router] WARNING: {skill_path} sets render_html_view: true but its "
+                        f"'{context}' provider has no render_backlog_view — ignoring the flag",
+                        file=sys.stderr,
+                    )
             body = f"{ctx_text}\n\n{body}"
         except Exception as e:
             print(f"[skill_router] Failed to fetch context: {e}", file=sys.stderr)
