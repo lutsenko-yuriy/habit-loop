@@ -30,5 +30,3 @@ Manual audit pass: semantic labels on interactive widgets, tap-target sizes, col
 Propose new bookmarks when a recurring pattern emerges from the corpus that doesn't fit existing ones.
 
 *Grounding: this is an emergent taxonomy; periodic review ensures it stays aligned with the project's actual pain points and patterns.*
-
-*Note: This dimension is skipped if `docs/knowledge/notes/BOOKMARKS.md` doesn't exist yet (e.g. before WU2 ships).*
