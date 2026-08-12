@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
+from pathlib import Path
 
 from .client import _linear_graphql
 from .context import fetch_linear_context, format_linear_context, ISSUES_QUERY
+from .html_view import open_in_browser, render_backlog_html, write_backlog_html
 
 
 _GET_ISSUE_QUERY = """
@@ -122,3 +126,20 @@ class LinearProvider:
 
     def format_context(self, data: dict) -> str:
         return format_linear_context(data)
+
+    def render_backlog_view(self, data: dict) -> str:
+        """Render+write+open the HTML backlog table as a side effect. Returns a
+        note to append to the caller's text on success, or "" on any failure —
+        never raises, so a bad write/open can't take down the caller."""
+        target = Path(os.environ.get("HL_BACKLOG_HTML_PATH", "backlog.local.html"))
+        try:
+            html = render_backlog_html(data)
+            path = write_backlog_html(html, target).resolve()
+        except Exception as e:
+            print(f"[skill_router] WARNING: failed to write {target}: {e}", file=sys.stderr)
+            return ""
+        try:
+            open_in_browser(path)
+        except Exception as e:
+            print(f"[skill_router] WARNING: failed to open {path} in browser: {e}", file=sys.stderr)
+        return f"\n\n_(Backlog table: {path})_"
