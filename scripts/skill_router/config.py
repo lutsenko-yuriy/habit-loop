@@ -10,6 +10,12 @@ try:
 except ImportError:
     tomllib = None
 
+# Resolved against this file's location, not the process's cwd — a
+# cwd-relative default would silently miss the real project toml (and fall
+# back open to True) whenever skill_router is invoked from anywhere but the
+# repo root (HAB-221 WU3 third audit pass).
+_DEFAULT_TOML_PATH = Path(__file__).resolve().parents[2] / "skill_router.toml"
+
 
 @dataclass(frozen=True)
 class Config:
@@ -45,14 +51,17 @@ def _load_toml(path: Path) -> tuple[dict, bool]:
         return {}, False
 
 
-def load_config(toml_path: str = "skill_router.toml") -> Config:
+def load_config(toml_path: str | Path = _DEFAULT_TOML_PATH) -> Config:
     data, load_ok = _load_toml(Path(toml_path))
-    if load_ok:
-        local_models_enabled = data.get("core", {}).get("local_models_enabled", True)
+    local_models_enabled_raw = data.get("core", {}).get("local_models_enabled", True)
+    if load_ok and isinstance(local_models_enabled_raw, bool):
+        local_models_enabled = local_models_enabled_raw
     else:
-        # Fail closed: an unparseable-but-present toml means we can't verify
-        # the kill switch's real value — never silently fall through to
-        # "enabled" (HAB-221 debrief; see skill_router.toml's own comment).
+        # Fail closed: either the toml exists but couldn't be verified read
+        # (tomllib missing or malformed TOML), or the key is present but not
+        # an actual boolean (e.g. a quoted "false" string, which Python
+        # treats as truthy) — never silently fall through to "enabled"
+        # (HAB-221 debrief; see skill_router.toml's own comment).
         local_models_enabled = False
     return Config(
         linear_api_key=os.environ.get("LINEAR_API_KEY"),
