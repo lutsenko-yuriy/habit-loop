@@ -1,3 +1,7 @@
+---
+bookmarks: [dead-code, knowledge-base-process]
+---
+
 # HAB-141: Dashboard stale showup status after notification tap (reopened)
 
 ## Notes
