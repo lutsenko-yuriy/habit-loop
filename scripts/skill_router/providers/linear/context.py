@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from .client import _linear_graphql
 
 
 ISSUES_QUERY = """
 {
   issues(
-    filter: { state: { type: { nin: ["completed", "cancelled"] } } }
+    filter: { state: { type: { nin: ["completed", "canceled"] } } }
     orderBy: updatedAt
     first: 50
   ) {
@@ -12,6 +14,7 @@ ISSUES_QUERY = """
       identifier
       title
       description
+      url
       state { name type }
       labels { nodes { name } }
     }
@@ -53,6 +56,19 @@ def fetch_linear_context(api_key: str, project_id: str) -> dict:
     }
 
 
+def first_line(text: str | None, max_len: int = 120) -> str:
+    return (text or "").split("\n")[0].strip()[:max_len]
+
+
+def active_milestone(milestones: list) -> dict | None:
+    # ProjectMilestoneStatus is unstarted/next/overdue/done — "overdue" is deliberately
+    # excluded here too: a slipped milestone still reports as terminal, not active.
+    return next(
+        (m for m in milestones if m.get("status") not in ("done", "overdue")),
+        None,
+    )
+
+
 def format_linear_context(data: dict) -> str:
     issues = data.get("issues", [])
     milestones = data.get("milestones", [])
@@ -64,10 +80,7 @@ def format_linear_context(data: dict) -> str:
         "",
     ]
 
-    active = next(
-        (m for m in milestones if m.get("status") not in ("done", "overdue", "canceled")),
-        None,
-    )
+    active = active_milestone(milestones)
     lines.append(
         f"### Active milestone: {active['name']} ({active['progress']}% complete)"
         if active
@@ -76,7 +89,7 @@ def format_linear_context(data: dict) -> str:
     lines.append("")
 
     def _fmt_issue(i: dict) -> str:
-        desc = (i.get("description") or "").split("\n")[0].strip()[:120]
+        desc = first_line(i.get("description"))
         return f"- {i['identifier']}: {i['title']}" + (f" — {desc}" if desc else "")
 
     bugs = [i for i in issues if any(l["name"] in ("Bug", "Tech Debt") for l in i["labels"]["nodes"])]

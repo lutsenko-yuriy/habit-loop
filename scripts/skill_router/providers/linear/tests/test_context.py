@@ -1,7 +1,13 @@
 import unittest
 from unittest.mock import patch
 
-from skill_router.providers.linear.context import fetch_linear_context, format_linear_context
+from skill_router.providers.linear.context import (
+    ISSUES_QUERY,
+    active_milestone,
+    fetch_linear_context,
+    first_line,
+    format_linear_context,
+)
 from .fixtures import FAKE_LINEAR_DATA
 
 
@@ -90,6 +96,63 @@ class TestFormatLinearContext(unittest.TestCase):
         result = format_linear_context(FAKE_LINEAR_DATA)
         self.assertIn("=== PRE-FETCHED BACKLOG", result)
         self.assertIn("=== END PRE-FETCHED BACKLOG ===", result)
+
+
+class TestIssuesQueryUrlField(unittest.TestCase):
+
+    def test_query_requests_url_field(self):
+        self.assertIn("url", ISSUES_QUERY)
+
+
+class TestIssuesQueryExcludesTerminalStates(unittest.TestCase):
+
+    def test_filter_excludes_completed_and_canceled_state_types(self):
+        # Linear's GraphQL enum spells this state type "canceled" (single L, American
+        # spelling) — "cancelled" never matches, silently letting canceled/abandoned
+        # issues (whose state type is also "canceled") through the filter.
+        self.assertIn('"canceled"', ISSUES_QUERY)
+        self.assertNotIn("cancelled", ISSUES_QUERY)
+
+
+class TestFirstLine(unittest.TestCase):
+
+    def test_returns_first_line_of_multiline_text(self):
+        self.assertEqual(first_line("first\nsecond\nthird"), "first")
+
+    def test_strips_surrounding_whitespace(self):
+        self.assertEqual(first_line("  padded  \nmore"), "padded")
+
+    def test_truncates_to_max_len(self):
+        self.assertEqual(first_line("a" * 200), "a" * 120)
+
+    def test_truncates_to_custom_max_len(self):
+        self.assertEqual(first_line("a" * 20, max_len=5), "a" * 5)
+
+    def test_none_input_returns_empty_string(self):
+        self.assertEqual(first_line(None), "")
+
+    def test_empty_string_returns_empty_string(self):
+        self.assertEqual(first_line(""), "")
+
+
+class TestActiveMilestone(unittest.TestCase):
+
+    def test_returns_first_milestone_not_done_or_overdue(self):
+        milestones = [
+            {"name": "done one", "status": "done"},
+            {"name": "the active one", "status": "started"},
+        ]
+        self.assertEqual(active_milestone(milestones)["name"], "the active one")
+
+    def test_returns_none_when_all_milestones_are_terminal(self):
+        milestones = [
+            {"name": "done one", "status": "done"},
+            {"name": "overdue one", "status": "overdue"},
+        ]
+        self.assertIsNone(active_milestone(milestones))
+
+    def test_returns_none_for_empty_list(self):
+        self.assertIsNone(active_milestone([]))
 
 
 if __name__ == "__main__":
