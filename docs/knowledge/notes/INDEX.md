@@ -6,15 +6,15 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
+- **planning-gaps** (11)
 - **debugging-methodology** (10)
 - **multi-wu-scope** (10)
-- **planning-gaps** (10)
 - **ci-flakiness** (9)
 - **knowledge-base-process** (6)
 - **research-methodology** (6)
+- **review-findings** (6)
 - **widget-test-gotchas** (6)
 - **code-style** (5)
-- **review-findings** (5)
 - **changelog-versioning** (4)
 - **dead-code** (4)
 - **appstore-ci** (3)
@@ -128,6 +128,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-195: Pact breaks — pause a pact without failing showups](HAB-195.md)
 - [HAB-197: CI: let scenarios.yml target a single test file/tag instead of the full suite](HAB-197.md)
 - [HAB-201: Bug: pact shows "On break" (list + detail banner) before the break actually starts](HAB-201.md)
+- [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 
 ### research-methodology
 - [HAB-123: Research: choose a literature-research methodology for an agent research skill](HAB-123.md)
@@ -143,6 +144,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-183: Manual-dispatch-only CI pipelines for granular build/test/notes procedures](HAB-183.md)
 - [HAB-186: Automate session-start checklist via SessionStart hook](HAB-186.md)
 - [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
+- [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 
 ### scope-creep
 - [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)

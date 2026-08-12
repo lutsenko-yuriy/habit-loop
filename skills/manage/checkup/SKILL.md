@@ -4,7 +4,7 @@ effort: THOROUGH
 reasoning: ARCHITECTURAL
 needs_session_tools: true
 output_style: CONCISE
-description: Two-tier periodic code-quality checkup (light monthly / heavy quarterly) covering 8 non-mechanical dimensions that per-PR review doesn't catch. Auto-detects which tier(s) are due via scripts/checkup/due.py, walks the tier's dimension heuristics, fixes findings inline where safe (Boy Scout Rule) or defers them to the ledger with a Fowler-quadrant classification and deadline, writes a dated run write-up, and commits. Invoke as `/checkup`, `/checkup light`, `/checkup heavy`, or `/checkup status`.
+description: Two-tier periodic code-quality checkup (light monthly / heavy quarterly) covering 9 non-mechanical dimensions that per-PR review doesn't catch. Auto-detects which tier(s) are due via scripts/checkup/due.py, walks the tier's dimension heuristics, fixes findings inline where safe (Boy Scout Rule) or defers them to the ledger with a Fowler-quadrant classification and deadline, writes a dated run write-up, and commits. Invoke as `/checkup`, `/checkup light`, `/checkup heavy`, or `/checkup status`.
 ---
 
 @skills/shared/project-config.md
@@ -29,7 +29,7 @@ If both tiers are due (or both are forced across the conversation), run them one
 
 ### 2. Walk the tier's dimensions
 
-Read `resources/light-dimensions.md` (light tier, 5 dimensions) or `resources/heavy-dimensions.md` (heavy tier, 3 dimensions). Work through each dimension in order, applying its heuristic to the current codebase.
+Read `resources/light-dimensions.md` (light tier, 5 dimensions) or `resources/heavy-dimensions.md` (heavy tier, 4 dimensions). Work through each dimension in order, applying its heuristic to the current codebase.
 
 ### 3. Handle each finding
 

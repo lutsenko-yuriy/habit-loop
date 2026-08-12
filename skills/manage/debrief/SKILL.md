@@ -58,6 +58,8 @@ Group by artifact. Present everything to the user and wait for approval. Do not 
 
 If no actionable improvements emerged, say so explicitly and proceed to step 5.
 
+**Bookmark check:** read `docs/knowledge/notes/BOOKMARKS.md`. If the dialog surfaced a recurring theme not covered by the existing vocabulary, include the proposed new bookmark (name + one-line definition) as one more item in this same synthesis, so it rides the existing approval step rather than opening a separate question.
+
 ### 5. Apply approved changes
 
 Write only the approved changes to their respective files. Skip any the user declined.
@@ -88,6 +90,8 @@ Append a dated block to the `## Debrief summary` section of `docs/knowledge/note
 ```
 
 Use today's date. Mirror the content from the dialog — do not ask the user for anything at this step.
+
+**Set the `bookmarks:` frontmatter key.** Pick the 1–3 bookmarks from `docs/knowledge/notes/BOOKMARKS.md` (plus any new one approved in step 4) that best match the debrief. If nothing fits, use `bookmarks: []`. Format: an inline list at the very top of the file, e.g. `bookmarks: [ci-flakiness, scope-creep]`. Merge into any existing `bookmarks:` key rather than overwriting it. If step 4 approved a new bookmark, add it to `docs/knowledge/notes/BOOKMARKS.md` as a new table row — lowercase kebab-case name, matching the file's existing `| \`bookmark-name\` | one-line definition |` format — as part of this same file set. Then run `python3 scripts/notes/index.py` to regenerate `INDEX.md`.
 
 ### 7. Commit — reuse the open PR if one exists
 
@@ -122,3 +126,4 @@ Confirm: knowledge base updated at `docs/knowledge/notes/HAB-XX.md`, list any wo
 - Never modify app code (`lib/`, `test/`, `integration_test/`).
 - Never ask more than one question per turn.
 - Do not write file changes before the user approves them in step 4.
+- A new bookmark is only ever proposed as part of step 4's synthesis — never as a standalone question.

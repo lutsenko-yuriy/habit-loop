@@ -6,3 +6,5 @@ lmstudio_base = "http://localhost:1234/v1"
 
 [core]
 model_tiers_path = "docs/MODEL_TIERS.md"
+# Kill switch (HAB-221 debrief): local models proved unreliable; re-enable once HAB-224 concludes.
+local_models_enabled = false

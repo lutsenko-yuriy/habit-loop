@@ -19,3 +19,16 @@ Full-interface heuristic evaluation, single agent-assisted pass (adapted from NN
 Manual audit pass: semantic labels on interactive widgets, tap-target sizes, colour contrast, text scaling, and screen-reader traversal — complementing (not replacing) any automated scan.
 
 *Grounding: manual accessibility audits are commonly run quarterly/annually for depth alongside continuous automated scans ([TheWCAG](https://www.thewcag.com/accessibility-audit-guide)).*
+
+## 9. Knowledge-corpus bookmark health
+
+**New dimension for HAB-221 (WU3)** — quarterly re-bookmarking of the entire knowledge base. Reads `docs/knowledge/notes/BOOKMARKS.md` and scans all `docs/knowledge/notes/*.md` files for bookmark usage. Flag any bookmarks that are:
+- Unused (no notes reference them)
+- Obsolete (referenced in notes, but no longer make sense in context)
+- Redundant (multiple synonyms for the same concept)
+
+Propose new bookmarks when a recurring pattern emerges from the corpus that doesn't fit existing ones.
+
+Also spot-check notes filed under `bookmarks: []` ("reviewed, nothing noteworthy") against their actual content — since `TEMPLATE.md` seeds this as the default, a note that was never really reviewed is indistinguishable from one that genuinely has nothing worth tagging. This bucket is where that gap would hide.
+
+*Grounding: this is an emergent taxonomy; periodic review ensures it stays aligned with the project's actual pain points and patterns.*

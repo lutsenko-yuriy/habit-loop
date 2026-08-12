@@ -1,7 +1,9 @@
+import os
 import unittest
 from unittest.mock import MagicMock, patch
 
 from skill_router.app import run
+from skill_router.config import Config
 from .fixtures import (
     _FM_PLAIN,
     _FM_SESSION_TOOLS,
@@ -15,7 +17,23 @@ from .fixtures import (
 _MOD = "skill_router.app"
 
 
+def _fake_load_config(toml_path="skill_router.toml"):
+    """Env-driven Config, pinned to local_models_enabled=True — isolates these tests from the real toml on disk."""
+    return Config(
+        linear_api_key=os.environ.get("LINEAR_API_KEY"),
+        linear_project_id=os.environ.get("LINEAR_PROJECT_ID"),
+        lmstudio_base=os.environ.get("LMSTUDIO_BASE", "http://localhost:1234/v1"),
+        model_tiers_path="docs/MODEL_TIERS.md",
+        local_models_enabled=True,
+    )
+
+
 class TestRun(unittest.TestCase):
+
+    def setUp(self):
+        patcher = patch(f"{_MOD}.load_config", side_effect=_fake_load_config)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def _run(self, argv):
         return run(argv)
@@ -144,6 +162,22 @@ class TestRun(unittest.TestCase):
         mock_stream.return_value = True
         self._run(["skill_router", "fake/SKILL.md"])
         mock_stream.assert_called_once()
+
+    @patch(f"{_MOD}.model_loaded")
+    @patch(f"{_MOD}.load_config", return_value=MagicMock(local_models_enabled=False))
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_PLAIN)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_local_models_disabled_returns_1_without_touching_lmstudio(self, _exists, _fm, _cfg, mock_model_loaded):
+        self.assertEqual(self._run(["skill_router", "fake/SKILL.md"]), 1)
+        mock_model_loaded.assert_not_called()
+
+    @patch(f"{_MOD}.stream_completion", return_value=True)
+    @patch(f"{_MOD}.model_loaded", return_value=True)
+    @patch(f"{_MOD}.lookup_lmstudio_model", return_value="qwen/qwen3-8b (MLX, 4-bit)")
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_PLAIN)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_local_models_enabled_proceeds_as_normal(self, *_):
+        self.assertEqual(self._run(["skill_router", "fake/SKILL.md"]), 0)
 
     @patch(f"{_MOD}.stream_completion")
     @patch(f"{_MOD}.model_loaded", return_value=True)
