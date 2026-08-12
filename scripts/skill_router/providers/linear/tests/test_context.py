@@ -104,6 +104,16 @@ class TestIssuesQueryUrlField(unittest.TestCase):
         self.assertIn("url", ISSUES_QUERY)
 
 
+class TestIssuesQueryExcludesTerminalStates(unittest.TestCase):
+
+    def test_filter_excludes_completed_and_canceled_state_types(self):
+        # Linear's GraphQL enum spells this state type "canceled" (single L, American
+        # spelling) — "cancelled" never matches, silently letting canceled/abandoned
+        # issues (whose state type is also "canceled") through the filter.
+        self.assertIn('"canceled"', ISSUES_QUERY)
+        self.assertNotIn("cancelled", ISSUES_QUERY)
+
+
 class TestFirstLine(unittest.TestCase):
 
     def test_returns_first_line_of_multiline_text(self):

@@ -4,7 +4,7 @@ from .client import _linear_graphql
 ISSUES_QUERY = """
 {
   issues(
-    filter: { state: { type: { nin: ["completed", "cancelled"] } } }
+    filter: { state: { type: { nin: ["completed", "canceled"] } } }
     orderBy: updatedAt
     first: 50
   ) {
