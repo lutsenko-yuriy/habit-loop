@@ -35,8 +35,8 @@ class TestRun(unittest.TestCase):
 
     def setUp(self):
         patcher = patch(f"{_MOD}.load_config", side_effect=_fake_load_config)
-        self.addCleanup(patcher.stop)
         patcher.start()
+        self.addCleanup(patcher.stop)
 
     def _run(self, argv):
         return run(argv)
