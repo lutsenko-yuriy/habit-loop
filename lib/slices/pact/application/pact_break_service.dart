@@ -95,11 +95,8 @@ class PactBreakService {
     await _cancelInWindowReminders(pactBreak);
     _cache.evict(pactId);
 
-    // HAB-227/HAB-234: reconcile welcome-back reminders across *all* of the
-    // pact's breaks now, not just this new one — the new break's window may
-    // shadow an earlier break's still-unpersisted welcome-back target (the
-    // showup-repository-only sweep above can't reach it), and this new break
-    // needs its own welcome-back reminder scheduled too.
+    // HAB-234: reconcile all breaks — this new one may shadow an earlier
+    // break's unpersisted welcome-back target, which the sweep above can't reach.
     final pact = await _pactRepository.getPactById(pactId);
     if (pact != null) {
       final allBreaks = await _pactBreakRepository.getBreaksForPact(pactId);
@@ -136,28 +133,11 @@ class PactBreakService {
     return stopped;
   }
 
-  /// HAB-227/HAB-234: brings every welcome-back-eligible reminder for [pact]
-  /// in line with what [breaks] currently says it should be. Stateless and
-  /// idempotent — safe to call after any break mutation (start, stop) and
-  /// from a periodic sweep (e.g. dashboard load, to pick up breaks changed by
-  /// sync on another device), since nothing about "which showup gets the
-  /// welcome-back text" is ever persisted; it's always recomputed here.
-  ///
-  /// For each break's target showup (may not be persisted yet):
-  /// - if another break's window now covers it, its reminder — welcome-back
-  ///   or not — must not fire: cancel it outright. This is the fix for the
-  ///   reported bug, where a later break's cancel-in-window sweep only
-  ///   reached persisted showups and missed an earlier break's synthetic
-  ///   target.
-  /// - otherwise, reschedule it. `scheduleRemindersForShowups` re-derives the
-  ///   correct text from the current [breaks] — welcome-back if the break
-  ///   still qualifies, standard text if (e.g.) it was resumed early since
-  ///   the reminder was first armed.
-  ///
-  /// Cancels and schedules are batched (one `scheduleRemindersForShowups`
-  /// call for every target that needs it, not one per break) — two breaks
-  /// can legitimately share the same target showup, and a per-break call
-  /// would double-count it in `NotificationsScheduledEvent` analytics.
+  /// Stateless reconciliation (HAB-227/HAB-234): re-derives each break's
+  /// welcome-back target and cancels it if another break now shadows it,
+  /// else (re)schedules it — nothing about "which showup" is persisted, so
+  /// this stays correct if called after any break mutation or on a periodic
+  /// sweep (e.g. dashboard load, to catch breaks changed by sync).
   Future<void> reconcileWelcomeBackReminders({
     required Pact pact,
     required List<PactBreak> breaks,
@@ -165,14 +145,12 @@ class PactBreakService {
   }) async {
     if (pact.reminderOffset == null || breaks.isEmpty) return;
 
+    // Keyed by id — two breaks can share a target; schedule it once (below).
     final toSchedule = <String, Showup>{};
     for (final b in breaks) {
-      // Probe with stoppedAt cleared: the target showup id is a function of
-      // plannedEndDate alone (see BreakDerivation.firstShowupAfterBreak) —
-      // whether *this* break still qualifies for welcome-back text (as
-      // opposed to standard text, e.g. because it was resumed early) is
-      // decided below by scheduleRemindersForShowups itself, via the real,
-      // unprobed `b` inside `breaks`.
+      // Probe with stoppedAt cleared: target id depends only on plannedEndDate.
+      // Whether it's welcome-back or standard text is decided by the real
+      // (unprobed) `b` inside scheduleRemindersForShowups below.
       final target = BreakDerivation.firstShowupAfterBreak(pact, b.copyWith(clearStoppedAt: true));
       if (target == null) continue;
 
