@@ -123,7 +123,10 @@ void main() {
       final ids = BreakDerivation.welcomeBackShowupIds(_pact, [b]);
 
       // First daily 8am occurrence strictly after 3/5 23:59:59.999 is 3/6 08:00.
-      final expected = ShowupGenerator.generateWindow(_pact, from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1))).first.id;
+      final expected = ShowupGenerator.generateWindow(_pact,
+              from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1)))
+          .first
+          .id;
       expect(ids, {expected});
     });
 
@@ -152,7 +155,10 @@ void main() {
 
       final ids = BreakDerivation.welcomeBackShowupIds(_pact, [b]);
 
-      final expected = ShowupGenerator.generateWindow(_pact, from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1))).first.id;
+      final expected = ShowupGenerator.generateWindow(_pact,
+              from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1)))
+          .first
+          .id;
       expect(ids, {expected});
     });
 
@@ -168,8 +174,14 @@ void main() {
       final ids = BreakDerivation.welcomeBackShowupIds(_pact, [b1, b2]);
 
       expect(ids, {
-        ShowupGenerator.generateWindow(_pact, from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1))).first.id,
-        ShowupGenerator.generateWindow(_pact, from: DateTime(2026, 6, 6, 8), to: DateTime(2026, 6, 6, 8).add(const Duration(minutes: 1))).first.id,
+        ShowupGenerator.generateWindow(_pact,
+                from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1)))
+            .first
+            .id,
+        ShowupGenerator.generateWindow(_pact,
+                from: DateTime(2026, 6, 6, 8), to: DateTime(2026, 6, 6, 8).add(const Duration(minutes: 1)))
+            .first
+            .id,
       });
     });
 

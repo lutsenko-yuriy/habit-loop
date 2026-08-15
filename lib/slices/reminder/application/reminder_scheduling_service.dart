@@ -18,6 +18,9 @@ const _kNotificationTextVariant = 'notification_text_variant';
 // EXP-002: post-deadline notification behaviour (Android only).
 const _kPostDeadlineNotificationBehavior = 'post_deadline_notification_behavior';
 
+// HAB-227: kill-switch for the break-over "welcome back" reminder text.
+const _kBreakWelcomeBackEnabled = 'break_welcome_back_notification_enabled';
+
 /// Resolves AppLocalizations internally (no BuildContext needed).
 /// [isIOS] is constructor-injected for testability — pass Platform.isIOS at the composition root.
 /// iOS cap: 64 pending notifications max (2 per showup = 32 showups max per pass).
@@ -70,6 +73,13 @@ final class ReminderSchedulingService {
 
     final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
 
+    // Computed once per call, not per showup — welcome-back applies only to
+    // the reminder notification; the deadline notification above always keeps
+    // standard wording, per spec.
+    final welcomeBackIds = _remoteConfig.getBool(_kBreakWelcomeBackEnabled)
+        ? BreakDerivation.welcomeBackShowupIds(pact, breaks)
+        : const <String>{};
+
     final qualifyingShowups = showups
         .where((s) =>
             s.status == ShowupStatus.pending &&
@@ -82,13 +92,15 @@ final class ReminderSchedulingService {
 
     var scheduledCount = 0;
     for (final showup in showupsToSchedule) {
-      final reminderText = NotificationTextBuilder.buildReminderText(
-        variant: variant,
-        habitName: pact.habitName,
-        scheduledAt: showup.scheduledAt,
-        showupDuration: showup.duration,
-        l10n: l10n,
-      );
+      final reminderText = welcomeBackIds.contains(showup.id)
+          ? NotificationTextBuilder.buildWelcomeBackText(habitName: pact.habitName, l10n: l10n)
+          : NotificationTextBuilder.buildReminderText(
+              variant: variant,
+              habitName: pact.habitName,
+              scheduledAt: showup.scheduledAt,
+              showupDuration: showup.duration,
+              l10n: l10n,
+            );
 
       await _notificationService.scheduleShowupReminder(
         showup: showup,
