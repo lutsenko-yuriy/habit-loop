@@ -23,9 +23,12 @@ abstract final class BreakDerivation {
   }
 
   // Bounds the ShowupGenerator lookahead used to find a break's first
-  // post-break showup — comfortably covers even a monthly schedule's cycle
-  // without generating a pact's entire remaining lifetime just to find one id.
-  static const _lookahead = Duration(days: 60);
+  // post-break showup. 400 days rather than ~30-60 — MonthlyByWeekdaySchedule
+  // with occurrence:5 can skip ~91 days between hits, and dayOfMonth:31 skips
+  // ~61 days across short months; 400 comfortably covers any single-schedule
+  // gap (including a sparse yearly one) without generating a pact's entire
+  // remaining lifetime just to find one id.
+  static const _lookahead = Duration(days: 400);
 
   /// The showup that should get "welcome back" reminder text (HAB-227) for
   /// [b] — the first showup scheduled after [b]'s fixed end, as long as [b]
@@ -53,7 +56,8 @@ abstract final class BreakDerivation {
     // otherwise a showup earlier that same day (still inside the break)
     // would wrongly qualify as "the first showup after the break".
     final candidates = ShowupGenerator.generateWindow(pact, from: boundary, to: boundary.add(_lookahead))
-        .where((s) => s.scheduledAt.isAfter(boundary));
+        .where((s) => s.scheduledAt.isAfter(boundary))
+        .toList();
     if (candidates.isEmpty) return null;
     return candidates.reduce((a, c) => c.scheduledAt.isBefore(a.scheduledAt) ? c : a);
   }
