@@ -31,6 +31,7 @@ final class FeatureFlags {
     required this.aboutScreenEnabled,
     required this.pactBreaksEnabled,
     required this.pactChainingEnabled,
+    required this.breakWelcomeBackNotificationEnabled,
   });
 
   /// [appVersion] is the real running version (see `runningAppVersionProvider`
@@ -49,6 +50,12 @@ final class FeatureFlags {
       pactChainingEnabled: resolveReleaseGatedFlag(
         rawValue: rc.getBool('pact_chaining_enabled'),
         releaseVersion: RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'],
+        currentVersion: appVersion,
+        isDebugOrProfile: isDebugOrProfile,
+      ),
+      breakWelcomeBackNotificationEnabled: resolveReleaseGatedFlag(
+        rawValue: rc.getBool('break_welcome_back_notification_enabled'),
+        releaseVersion: RemoteConfigDefaults.releaseVersions['break_welcome_back_notification_enabled'],
         currentVersion: appVersion,
         isDebugOrProfile: isDebugOrProfile,
       ),
@@ -73,6 +80,9 @@ final class FeatureFlags {
   /// Whether the pact-chaining feature (HAB-202) is enabled.
   final bool pactChainingEnabled;
 
+  /// Whether the break-over "welcome back" reminder text (HAB-227) is enabled.
+  final bool breakWelcomeBackNotificationEnabled;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -83,7 +93,8 @@ final class FeatureFlags {
           showupRedemptionEnabled == other.showupRedemptionEnabled &&
           aboutScreenEnabled == other.aboutScreenEnabled &&
           pactBreaksEnabled == other.pactBreaksEnabled &&
-          pactChainingEnabled == other.pactChainingEnabled;
+          pactChainingEnabled == other.pactChainingEnabled &&
+          breakWelcomeBackNotificationEnabled == other.breakWelcomeBackNotificationEnabled;
 
   @override
   int get hashCode => Object.hash(
@@ -94,5 +105,6 @@ final class FeatureFlags {
         aboutScreenEnabled,
         pactBreaksEnabled,
         pactChainingEnabled,
+        breakWelcomeBackNotificationEnabled,
       );
 }
