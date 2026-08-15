@@ -196,8 +196,10 @@ class DashboardViewModel extends Notifier<DashboardState> {
       }
 
       // HAB-234: catches welcome-back reminders left stale by a break mutation synced from another device.
+      // `today` (not `todayNorm`) — midnight would let a same-day target's
+      // reminder qualify as "future" and fire immediately on Android.
       if (breaks.isNotEmpty) {
-        await pactBreakService.reconcileWelcomeBackReminders(pact: pact, breaks: breaks, now: todayNorm);
+        unawaited(pactBreakService.reconcileWelcomeBackReminders(pact: pact, breaks: breaks, now: today));
       }
     }
     if (gapFailedCount > 0) {

@@ -1442,6 +1442,8 @@ void main() {
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
+      // Reconciliation is unawaited (matches the rest of _loadInner) — flush its microtasks.
+      await Future<void>.delayed(Duration.zero);
 
       final reminder = fakeNotifications.scheduledReminders.where((r) => r.showup.id == target.id).toList();
       expect(reminder, isNotEmpty,
