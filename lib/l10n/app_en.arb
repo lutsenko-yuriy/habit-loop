@@ -187,7 +187,7 @@
   "languageRussian": "Russian",
   "languageSystem": "Use system language",
 
-  "notificationReminderTitle": "{habitName}, it's showup time!",
+  "notificationReminderTitle": "Time for {habitName}!",
   "@notificationReminderTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
@@ -220,6 +220,13 @@
   },
   "notificationMissedTitle": "You missed this one",
   "notificationMissedBody": "That's okay — show up next time.",
+  "notificationWelcomeBackTitle": "Alrighty! The break for {habitName} is over!",
+  "@notificationWelcomeBackTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationWelcomeBackBody": "Let's get back to it.",
   "notificationDurationMinutes": "{count} min",
   "@notificationDurationMinutes": {
     "placeholders": {

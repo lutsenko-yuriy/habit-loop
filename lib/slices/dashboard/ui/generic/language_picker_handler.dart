@@ -68,6 +68,7 @@ Future<void> openLanguagePicker({
 Future<void> _rescheduleAllPendingReminders(WidgetRef ref) async {
   final queryService = ref.read(dashboardQueryServiceProvider);
   final schedulingService = ref.read(reminderSchedulingServiceProvider);
+  final pactBreakRepository = ref.read(pactBreakRepositoryProvider);
 
   final activePacts = await queryService.getActivePacts();
   for (final pact in activePacts) {
@@ -75,9 +76,13 @@ Future<void> _rescheduleAllPendingReminders(WidgetRef ref) async {
 
     final showups = await queryService.getShowupsForPact(pact.id);
     final showupIds = showups.map((s) => s.id).toList();
+    // breaks: threaded through so a locale change doesn't resurrect
+    // suppressed on-break reminders (HAB-215 note) or drop welcome-back text
+    // (HAB-227) for every active pact this reschedules.
+    final breaks = await pactBreakRepository.getBreaksForPact(pact.id);
 
     await schedulingService.cancelAllRemindersForPact(pact.id, showupIds: showupIds);
-    unawaited(schedulingService.scheduleRemindersForShowups(pact: pact, showups: showups));
+    unawaited(schedulingService.scheduleRemindersForShowups(pact: pact, showups: showups, breaks: breaks));
   }
 }
 

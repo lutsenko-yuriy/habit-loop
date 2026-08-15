@@ -184,7 +184,7 @@
   "languageRussian": "Russe",
   "languageSystem": "Utiliser la langue du système",
 
-  "notificationReminderTitle": "{habitName}, c'est l'heure de ta séance !",
+  "notificationReminderTitle": "C'est l'heure de {habitName} !",
   "@notificationReminderTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
@@ -217,6 +217,13 @@
   },
   "notificationMissedTitle": "Tu as manqué celui-ci",
   "notificationMissedBody": "Pas de panique — sois là pour la prochaine séance.",
+  "notificationWelcomeBackTitle": "Et voilà, la pause pour {habitName} est terminée !",
+  "@notificationWelcomeBackTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationWelcomeBackBody": "On s'y remet.",
   "notificationDurationMinutes": "{count} min",
   "@notificationDurationMinutes": {
     "placeholders": {

@@ -1,8 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/break_derivation.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+
+final _pact = Pact(
+  id: 'pact-1',
+  habitName: 'Meditate',
+  startDate: DateTime(2026, 1, 1),
+  endDate: DateTime(2026, 12, 1),
+  showupDuration: const Duration(minutes: 10),
+  schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+  status: PactStatus.active,
+  reminderOffset: const Duration(minutes: 15),
+);
 
 Showup _showup(ShowupStatus status, DateTime scheduledAt) {
   return Showup(
@@ -98,6 +113,97 @@ void main() {
             startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 10), stoppedAt: DateTime(2026, 3, 4)),
       ];
       expect(BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks), isFalse);
+    });
+  });
+
+  group('BreakDerivation.firstShowupAfterBreak', () {
+    test('returns the actual Showup, not just its id', () {
+      final b = _pactBreak(startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 5));
+
+      final showup = BreakDerivation.firstShowupAfterBreak(_pact, b);
+
+      expect(showup, isNotNull);
+      expect(showup!.scheduledAt, DateTime(2026, 3, 6, 8));
+      expect(showup.pactId, _pact.id);
+    });
+
+    test('null for an open-ended break', () {
+      final b = _pactBreak(startDate: DateTime(2026, 3, 1));
+      expect(BreakDerivation.firstShowupAfterBreak(_pact, b), isNull);
+    });
+  });
+
+  group('BreakDerivation.welcomeBackShowupIds', () {
+    test('returns the id of the first daily showup after a fixed-end break', () {
+      final b = _pactBreak(startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 5));
+
+      final ids = BreakDerivation.welcomeBackShowupIds(_pact, [b]);
+
+      // First daily 8am occurrence strictly after 3/5 23:59:59.999 is 3/6 08:00.
+      final expected = ShowupGenerator.generateWindow(_pact,
+              from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1)))
+          .first
+          .id;
+      expect(ids, {expected});
+    });
+
+    test('empty for an open-ended break, even though it has a start date', () {
+      final b = _pactBreak(startDate: DateTime(2026, 3, 1));
+
+      expect(BreakDerivation.welcomeBackShowupIds(_pact, [b]), isEmpty);
+    });
+
+    test('empty when the break was resumed early (before its planned end)', () {
+      final b = _pactBreak(
+        startDate: DateTime(2026, 3, 1),
+        plannedEndDate: DateTime(2026, 3, 5),
+        stoppedAt: DateTime(2026, 3, 3, 12),
+      );
+
+      expect(BreakDerivation.welcomeBackShowupIds(_pact, [b]), isEmpty);
+    });
+
+    test('unchanged when the break was resumed at/after its planned end (not early)', () {
+      final b = _pactBreak(
+        startDate: DateTime(2026, 3, 1),
+        plannedEndDate: DateTime(2026, 3, 5),
+        stoppedAt: DateTime(2026, 3, 6, 9),
+      );
+
+      final ids = BreakDerivation.welcomeBackShowupIds(_pact, [b]);
+
+      final expected = ShowupGenerator.generateWindow(_pact,
+              from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1)))
+          .first
+          .id;
+      expect(ids, {expected});
+    });
+
+    test('combines target ids across multiple eligible breaks', () {
+      final b1 = _pactBreak(id: 'b1', startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 5));
+      final b2 = _pactBreak(
+        id: 'b2',
+        startDate: DateTime(2026, 6, 1),
+        plannedEndDate: DateTime(2026, 6, 5),
+        stoppedAt: DateTime(2026, 6, 6, 9),
+      );
+
+      final ids = BreakDerivation.welcomeBackShowupIds(_pact, [b1, b2]);
+
+      expect(ids, {
+        ShowupGenerator.generateWindow(_pact,
+                from: DateTime(2026, 3, 6, 8), to: DateTime(2026, 3, 6, 8).add(const Duration(minutes: 1)))
+            .first
+            .id,
+        ShowupGenerator.generateWindow(_pact,
+                from: DateTime(2026, 6, 6, 8), to: DateTime(2026, 6, 6, 8).add(const Duration(minutes: 1)))
+            .first
+            .id,
+      });
+    });
+
+    test('empty when there are no breaks', () {
+      expect(BreakDerivation.welcomeBackShowupIds(_pact, []), isEmpty);
     });
   });
 }

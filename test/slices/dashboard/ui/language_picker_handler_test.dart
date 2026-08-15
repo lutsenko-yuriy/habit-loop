@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -10,6 +11,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/language_picker_handler.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
@@ -339,6 +341,46 @@ void main() {
 
       expect(notifications.cancelledPactIds, isEmpty);
       expect(notifications.scheduledReminders, isEmpty);
+    });
+
+    // HAB-227 audit finding: this reschedule path previously called
+    // scheduleRemindersForShowups without breaks:, so a locale change would
+    // silently resurrect a reminder for an on-break showup.
+    testWidgets('threads breaks: through so an on-break showup stays unscheduled after a language change',
+        (tester) async {
+      final breakRepo = InMemoryPactBreakRepository();
+      await breakRepo.saveBreak(
+        PactBreak(
+          id: 'brk-1',
+          pactId: 'pact-1',
+          startDate: DateTime.now().subtract(const Duration(hours: 1)),
+          rationale: 'Traveling',
+          plannedEndDate: DateTime.now().add(const Duration(days: 30)), // covers su-1 (tomorrow)
+        ),
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          localeOverride: const Locale('en'),
+          extraOverrides: [
+            pactRepositoryProvider.overrideWithValue(pactRepo),
+            showupRepositoryProvider.overrideWithValue(showupRepo),
+            notificationServiceProvider.overrideWithValue(notifications),
+            pactBreakRepositoryProvider.overrideWithValue(breakRepo),
+          ],
+          child: _PickerTrigger(
+            showPicker: ({required context, required options, required currentOverride}) async {
+              return const Locale('ru');
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Picker'));
+      await tester.pumpAndSettle();
+
+      expect(notifications.cancelledPactIds, contains('pact-1'));
+      expect(notifications.scheduledReminders, isEmpty, reason: 'su-1 falls inside the break window');
     });
   });
 }

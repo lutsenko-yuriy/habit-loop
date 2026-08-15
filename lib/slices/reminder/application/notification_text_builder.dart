@@ -40,6 +40,19 @@ abstract final class NotificationTextBuilder {
     );
   }
 
+  // Reminder text for the first showup after a break ends (HAB-227) —
+  // independent of the EXP-001 variant dispatch above; occasion-based, not a
+  // text-style variant, so it always overrides regardless of the active variant.
+  static ({String title, String body}) buildWelcomeBackText({
+    required String habitName,
+    required AppLocalizations l10n,
+  }) {
+    return (
+      title: l10n.notificationWelcomeBackTitle(habitName),
+      body: l10n.notificationWelcomeBackBody,
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------

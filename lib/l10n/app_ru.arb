@@ -184,7 +184,7 @@
   "languageRussian": "Русский",
   "languageSystem": "Использовать язык системы",
 
-  "notificationReminderTitle": "{habitName}, время для явки!",
+  "notificationReminderTitle": "Время для «{habitName}»!",
   "@notificationReminderTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
@@ -217,6 +217,13 @@
   },
   "notificationMissedTitle": "Вы пропустили эту явку",
   "notificationMissedBody": "Ничего страшного — появитесь в следующий раз.",
+  "notificationWelcomeBackTitle": "Отлично! Перерыв для «{habitName}» закончился!",
+  "@notificationWelcomeBackTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationWelcomeBackBody": "Возвращаемся к делу.",
   "notificationDurationMinutes": "{count} мин",
   "@notificationDurationMinutes": {
     "placeholders": {

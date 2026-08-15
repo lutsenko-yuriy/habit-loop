@@ -126,6 +126,7 @@ abstract final class RemoteConfigDefaults {
     'about_screen_enabled',
     'pact_breaks_enabled',
     'pact_chaining_enabled',
+    'break_welcome_back_notification_enabled',
   };
 
   /// Feature toggle: show the About screen entry point on the dashboard.
@@ -176,6 +177,18 @@ abstract final class RemoteConfigDefaults {
   /// console to disable pact chaining without a release.
   static const bool pactChainingEnabled = true;
 
+  /// Feature toggle: kill-switch for break-over "welcome back" reminder text (HAB-227).
+  ///
+  /// When `false`, the first showup after a break always gets normal reminder
+  /// text — the welcome-back copy substitution is skipped entirely. Override
+  /// to `false` in the Firebase Remote Config console to disable it without a
+  /// release. Read directly by `ReminderSchedulingService` (not via
+  /// [FeatureFlags]) — same pattern as its sibling `notification_text_variant`/
+  /// `post_deadline_notification_behavior` keys — so it is **not** subject to
+  /// HAB-207 release-version gating; that gate only applies to flags exposed
+  /// through `FeatureFlags`.
+  static const bool breakWelcomeBackNotificationEnabled = true;
+
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
   /// in release builds (see [FeatureFlags.fromRemoteConfig]); `null` = not
@@ -221,6 +234,7 @@ abstract final class RemoteConfigDefaults {
     'pact_timeline_no_grouping_tail_period_in_days': pactTimelineNoGroupingTailPeriodInDays,
     'pact_breaks_enabled': pactBreaksEnabled,
     'pact_chaining_enabled': pactChainingEnabled,
+    'break_welcome_back_notification_enabled': breakWelcomeBackNotificationEnabled,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -241,6 +255,7 @@ abstract final class RemoteConfigDefaults {
     'about_screen_enabled': ['true', 'false'],
     'pact_breaks_enabled': ['true', 'false'],
     'pact_chaining_enabled': ['true', 'false'],
+    'break_welcome_back_notification_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

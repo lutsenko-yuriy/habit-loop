@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -479,6 +480,49 @@ void main() {
           await Future<void>.delayed(Duration.zero);
 
           expect(notifications.scheduledReminders, isEmpty);
+        });
+
+        // HAB-227 audit finding: this call site previously scheduled reminders
+        // without passing breaks:, so it silently ignored on-break suppression
+        // (and would drop welcome-back text) for every showup it touched.
+        test('threads breaks: through so on-break suppression survives an edit-triggered reschedule', () async {
+          final breakRepo = InMemoryPactBreakRepository();
+          final breakContainer = _makeContainer(
+            pactRepo: pactRepo,
+            showupRepo: showupRepo,
+            today: today,
+            extras: [
+              analyticsServiceProvider.overrideWithValue(analytics),
+              notificationServiceProvider.overrideWithValue(notifications),
+              pactBreakRepositoryProvider.overrideWithValue(breakRepo),
+            ],
+          );
+          addTearDown(breakContainer.dispose);
+
+          await pactRepo.savePact(_makePact(reminderOffset: null));
+          final onBreakShowup = _makeFutureShowup(); // scheduledAt: 2054-04-01 08:00
+          await showupRepo.saveShowups([onBreakShowup]);
+          await breakRepo.saveBreak(
+            PactBreak(
+              id: 'brk-1',
+              pactId: 'pact-1',
+              startDate: DateTime(2054, 3, 31),
+              rationale: 'Traveling',
+              plannedEndDate: DateTime(2054, 4, 5),
+            ),
+          );
+
+          final vm = breakContainer.read(pactEditViewModelProvider('pact-1').notifier);
+          await vm.load();
+          vm.setReminderOffset(const Duration(minutes: 10));
+          await vm.save();
+          await Future<void>.delayed(Duration.zero);
+
+          expect(
+            notifications.scheduledReminders.map((r) => r.showup.id),
+            isNot(contains(onBreakShowup.id)),
+            reason: 'onBreakShowup falls inside the break window — must not get a reminder',
+          );
         });
       });
 

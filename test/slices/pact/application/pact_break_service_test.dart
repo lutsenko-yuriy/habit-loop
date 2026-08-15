@@ -252,6 +252,69 @@ void main() {
 
       expect(cache.peek('p1'), isNull);
     });
+
+    // HAB-227: the welcome-back reminder is scheduled proactively, at break
+    // creation, not deferred to the next dashboard load.
+    group('welcome-back reminder scheduling (HAB-227)', () {
+      test('schedules the welcome-back reminder for the first showup after a fixed-end break', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+
+        await service.startBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 1),
+          rationale: 'Travel',
+          plannedEndDate: DateTime(2026, 4, 10),
+          now: DateTime(2026, 3, 15),
+        );
+
+        expect(notificationService.scheduledReminders, hasLength(1));
+        expect(notificationService.scheduledReminders.first.showup.scheduledAt, DateTime(2026, 4, 11, 8));
+      });
+
+      test('works even though the target showup has not been generated/persisted yet', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        expect(await showupRepo.getShowupById('anything'), isNull); // nothing persisted
+
+        await service.startBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 1),
+          rationale: 'Travel',
+          plannedEndDate: DateTime(2026, 4, 10),
+          now: DateTime(2026, 3, 15),
+        );
+
+        expect(notificationService.scheduledReminders, hasLength(1));
+      });
+
+      test('does not schedule anything for an open-ended break', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+
+        await service.startBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 1),
+          rationale: 'Travel',
+          now: DateTime(2026, 3, 15),
+        );
+
+        expect(notificationService.scheduledReminders, isEmpty);
+      });
+
+      test('does not schedule anything when the pact has no reminderOffset', () async {
+        await service.startBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 1),
+          rationale: 'Travel',
+          plannedEndDate: DateTime(2026, 4, 10),
+          now: DateTime(2026, 3, 15),
+        );
+
+        expect(notificationService.scheduledReminders, isEmpty);
+      });
+    });
   });
 
   group('PactBreakService.stopBreak', () {
@@ -309,7 +372,10 @@ void main() {
 
         await service.stopBreak('b1', now: DateTime(2026, 3, 20));
 
-        expect(notificationService.scheduledReminders, isEmpty);
+        // now=3/20 is before the planned 4/10 end — an early resume, so this
+        // itself also fires the HAB-227 welcome-back reversion for the 4/11
+        // showup; the assertion here is scoped to s-still-onbreak specifically.
+        expect(notificationService.scheduledReminders.map((r) => r.showup.id), isNot(contains('s-still-onbreak')));
       });
 
       test('does not reschedule a showup outside the break window in the first place', () async {
@@ -319,7 +385,8 @@ void main() {
 
         await service.stopBreak('b1', now: DateTime(2026, 3, 20));
 
-        expect(notificationService.scheduledReminders, isEmpty);
+        // See note above — this early resume also fires the HAB-227 reversion.
+        expect(notificationService.scheduledReminders.map((r) => r.showup.id), isNot(contains('s-never-onbreak')));
       });
 
       test('does not reschedule a done showup even if it falls in the released window', () async {
@@ -329,7 +396,8 @@ void main() {
 
         await service.stopBreak('b1', now: DateTime(2026, 3, 20));
 
-        expect(notificationService.scheduledReminders, isEmpty);
+        // See note above — this early resume also fires the HAB-227 reversion.
+        expect(notificationService.scheduledReminders.map((r) => r.showup.id), isNot(contains('s-done')));
       });
 
       test('does not reschedule when the pact has no reminderOffset', () async {
@@ -357,6 +425,48 @@ void main() {
         );
 
         await service.stopBreak('b1', now: DateTime(2026, 3, 20));
+
+        // See note above — this early resume also fires the HAB-227 reversion.
+        expect(notificationService.scheduledReminders.map((r) => r.showup.id), isNot(contains('s-double-covered')));
+      });
+    });
+
+    // HAB-227: resuming a fixed-end break before its planned end reverts the
+    // welcome-back showup (if one was pre-scheduled at break creation) to
+    // normal reminder text — the break no longer naturally elapsed.
+    group('welcome-back reversion on early resume (HAB-227)', () {
+      test('reverts the welcome-back showup to normal text when resumed before the planned end', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        await breakRepo.saveBreak(_pactBreak(startDate: DateTime(2026, 4, 1), plannedEndDate: DateTime(2026, 4, 10)));
+
+        // Resumed on 4/5 — well before the planned 4/10 end.
+        await service.stopBreak('b1', now: DateTime(2026, 4, 5, 12));
+
+        final reminder = notificationService.scheduledReminders
+            .where((r) => r.showup.scheduledAt == DateTime(2026, 4, 11, 8))
+            .toList();
+        expect(reminder, hasLength(1));
+        expect(reminder.first.titleText, isNot(contains('break')));
+      });
+
+      test('does not touch the welcome-back showup when resumed at/after the planned end', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        await breakRepo.saveBreak(_pactBreak(startDate: DateTime(2026, 4, 1), plannedEndDate: DateTime(2026, 4, 10)));
+
+        await service.stopBreak('b1', now: DateTime(2026, 4, 12));
+
+        expect(
+          notificationService.scheduledReminders.where((r) => r.showup.scheduledAt == DateTime(2026, 4, 11, 8)),
+          isEmpty,
+          reason: 'not an early resume — no reversion call is expected',
+        );
+      });
+
+      test('does nothing for an open-ended break (nothing was ever tagged)', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+        await breakRepo.saveBreak(_pactBreak(startDate: DateTime(2026, 4, 1)));
+
+        await service.stopBreak('b1', now: DateTime(2026, 4, 5));
 
         expect(notificationService.scheduledReminders, isEmpty);
       });

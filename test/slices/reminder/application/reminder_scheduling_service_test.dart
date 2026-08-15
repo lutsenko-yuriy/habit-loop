@@ -5,9 +5,11 @@ import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
+import 'package:habit_loop/slices/reminder/application/notification_text_builder.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
@@ -480,6 +482,138 @@ void main() {
         hasLength(40),
         reason: 'Android: all 40 qualifying showups must be scheduled without a cap',
       );
+    });
+  });
+
+  group('welcome-back reminder text (HAB-227)', () {
+    late AppLocalizations l10n;
+
+    setUpAll(() {
+      l10n = lookupAppLocalizations(const Locale('en'));
+    });
+
+    test('the first showup after a fixed-end break gets welcome-back text', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final breaks = [
+        PactBreak(
+          id: 'brk-1',
+          pactId: 'pact-1',
+          startDate: DateTime(2026, 5, 5),
+          plannedEndDate: DateTime(2026, 5, 10),
+          rationale: 'Traveling',
+        ),
+      ];
+      // Deterministic id for the daily 8am showup on the day after the break ends.
+      final target = ShowupGenerator.generateWindow(
+        pact,
+        from: DateTime(2026, 5, 11, 8),
+        to: DateTime(2026, 5, 11, 8, 1),
+      ).first;
+      final showups = [target];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now, breaks: breaks);
+
+      final expected = NotificationTextBuilder.buildWelcomeBackText(habitName: pact.habitName, l10n: l10n);
+      expect(notificationService.scheduledReminders, hasLength(1));
+      expect(notificationService.scheduledReminders.first.titleText, expected.title);
+      expect(notificationService.scheduledReminders.first.bodyText, expected.body);
+    });
+
+    test('a non-target showup keeps normal reminder text even with a break present', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final breaks = [
+        PactBreak(
+          id: 'brk-1',
+          pactId: 'pact-1',
+          startDate: DateTime(2026, 5, 5),
+          plannedEndDate: DateTime(2026, 5, 10),
+          rationale: 'Traveling',
+        ),
+      ];
+      final showups = [_makeShowup(id: 'su-later', scheduledAt: DateTime(2026, 5, 20, 8, 0))];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now, breaks: breaks);
+
+      final normal = NotificationTextBuilder.buildReminderText(
+        variant: 'control',
+        habitName: pact.habitName,
+        scheduledAt: DateTime(2026, 5, 20, 8, 0),
+        showupDuration: pact.showupDuration,
+        l10n: l10n,
+      );
+      expect(notificationService.scheduledReminders.first.titleText, normal.title);
+    });
+
+    test('the deadline notification keeps standard wording even for the welcome-back showup', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final breaks = [
+        PactBreak(
+          id: 'brk-1',
+          pactId: 'pact-1',
+          startDate: DateTime(2026, 5, 5),
+          plannedEndDate: DateTime(2026, 5, 10),
+          rationale: 'Traveling',
+        ),
+      ];
+      final target = ShowupGenerator.generateWindow(
+        pact,
+        from: DateTime(2026, 5, 11, 8),
+        to: DateTime(2026, 5, 11, 8, 1),
+      ).first;
+      // Android + postDeadlineBehavior=encourage schedules a deadline notification too.
+      final rcWithEncourage = FakeRemoteConfigService(overrides: {'post_deadline_notification_behavior': 'encourage'});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: rcWithEncourage,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: [target], now: now, breaks: breaks);
+
+      final missed = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
+      expect(notificationService.scheduledDeadlines, hasLength(1));
+      expect(notificationService.scheduledDeadlines.first.titleText, missed.title);
+    });
+
+    test('welcome-back text is skipped when break_welcome_back_notification_enabled is false', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final breaks = [
+        PactBreak(
+          id: 'brk-1',
+          pactId: 'pact-1',
+          startDate: DateTime(2026, 5, 5),
+          plannedEndDate: DateTime(2026, 5, 10),
+          rationale: 'Traveling',
+        ),
+      ];
+      final target = ShowupGenerator.generateWindow(
+        pact,
+        from: DateTime(2026, 5, 11, 8),
+        to: DateTime(2026, 5, 11, 8, 1),
+      ).first;
+      final rcDisabled = FakeRemoteConfigService(overrides: {'break_welcome_back_notification_enabled': false});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: rcDisabled,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: [target], now: now, breaks: breaks);
+
+      final normal = NotificationTextBuilder.buildReminderText(
+        variant: 'control',
+        habitName: pact.habitName,
+        scheduledAt: target.scheduledAt,
+        showupDuration: target.duration,
+        l10n: l10n,
+      );
+      expect(notificationService.scheduledReminders.first.titleText, normal.title);
     });
   });
 

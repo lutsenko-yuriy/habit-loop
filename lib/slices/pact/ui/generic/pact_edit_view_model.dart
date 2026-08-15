@@ -179,10 +179,16 @@ class PactEditViewModel extends FamilyNotifier<PactEditWizardState, String> {
       await ref.read(reminderSchedulingServiceProvider).cancelAllRemindersForPact(arg, showupIds: showupIds);
 
       if (newReminderOffset != null) {
+        // breaks: threaded through so on-break suppression and welcome-back
+        // text (HAB-227) stay correct across an edit-triggered reschedule —
+        // without it every pending reminder this touches would silently lose
+        // both, not just this one pact's showups.
+        final breaks = await ref.read(pactBreakRepositoryProvider).getBreaksForPact(arg);
         unawaited(
           ref.read(reminderSchedulingServiceProvider).scheduleRemindersForShowups(
                 pact: updatedPact,
                 showups: showups,
+                breaks: breaks,
               ),
         );
       }
