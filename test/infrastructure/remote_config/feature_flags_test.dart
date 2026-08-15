@@ -79,18 +79,6 @@ void main() {
         expect(flags.pactChainingEnabled, isFalse);
       });
 
-      test('breakWelcomeBackNotificationEnabled defaults to true', () {
-        final rc = FakeRemoteConfigService();
-        final flags = FeatureFlags.fromRemoteConfig(rc);
-        expect(flags.breakWelcomeBackNotificationEnabled, isTrue);
-      });
-
-      test('breakWelcomeBackNotificationEnabled reads false from RC override', () {
-        final rc = FakeRemoteConfigService(overrides: {'break_welcome_back_notification_enabled': false});
-        final flags = FeatureFlags.fromRemoteConfig(rc);
-        expect(flags.breakWelcomeBackNotificationEnabled, isFalse);
-      });
-
       test('default values match RemoteConfigDefaults constants', () {
         final rc = FakeRemoteConfigService();
         final flags = FeatureFlags.fromRemoteConfig(rc);
@@ -100,7 +88,6 @@ void main() {
         expect(flags.showupRedemptionEnabled, RemoteConfigDefaults.showupRedemptionEnabled);
         expect(flags.pactBreaksEnabled, RemoteConfigDefaults.pactBreaksEnabled);
         expect(flags.pactChainingEnabled, RemoteConfigDefaults.pactChainingEnabled);
-        expect(flags.breakWelcomeBackNotificationEnabled, RemoteConfigDefaults.breakWelcomeBackNotificationEnabled);
       });
     });
 

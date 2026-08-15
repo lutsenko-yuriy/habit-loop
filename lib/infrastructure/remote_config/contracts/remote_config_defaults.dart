@@ -182,7 +182,11 @@ abstract final class RemoteConfigDefaults {
   /// When `false`, the first showup after a break always gets normal reminder
   /// text — the welcome-back copy substitution is skipped entirely. Override
   /// to `false` in the Firebase Remote Config console to disable it without a
-  /// release.
+  /// release. Read directly by `ReminderSchedulingService` (not via
+  /// [FeatureFlags]) — same pattern as its sibling `notification_text_variant`/
+  /// `post_deadline_notification_behavior` keys — so it is **not** subject to
+  /// HAB-207 release-version gating; that gate only applies to flags exposed
+  /// through `FeatureFlags`.
   static const bool breakWelcomeBackNotificationEnabled = true;
 
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
@@ -193,7 +197,6 @@ abstract final class RemoteConfigDefaults {
   /// is the sole pre-existing retrofit.
   static const Map<String, String?> releaseVersions = {
     'pact_chaining_enabled': '0.53.0',
-    'break_welcome_back_notification_enabled': '0.56.0',
   };
 
   /// Optional short hint shown in the debug override dialog for keys whose
