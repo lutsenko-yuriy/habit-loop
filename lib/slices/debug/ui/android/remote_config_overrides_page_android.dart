@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/notifications/data/test_notification_helper.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
+import 'package:habit_loop/slices/debug/ui/android/pending_notifications_page_android.dart';
 import 'package:habit_loop/slices/debug/ui/generic/debug_seed_data_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/override_badge.dart';
 import 'package:habit_loop/slices/debug/ui/generic/rc_entry_edit_state.dart';
@@ -62,15 +63,34 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                 onClear: () => notifier.clearOverride(entry.key),
               ),
               slots: (
-                buildTopSection: (ctx) => ListTile(
-                      key: const Key('test-notification-button'),
-                      leading: const Icon(Icons.notifications_outlined),
-                      title: const Text('Fire test notification'),
-                      onTap: () => scheduleTestNotification(
-                        ref.read(notificationServiceProvider),
-                        ref.read(pactRepositoryProvider),
-                        ref.read(showupRepositoryProvider),
-                      ),
+                buildTopSection: (ctx) => Column(
+                      children: [
+                        Card(
+                          margin: EdgeInsets.zero,
+                          child: ListTile(
+                            key: const Key('test-notification-button'),
+                            leading: const Icon(Icons.notifications_outlined),
+                            title: const Text('Fire test notification'),
+                            onTap: () => scheduleTestNotification(
+                              ref.read(notificationServiceProvider),
+                              ref.read(pactRepositoryProvider),
+                              ref.read(showupRepositoryProvider),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.s8),
+                        Card(
+                          margin: EdgeInsets.zero,
+                          child: ListTile(
+                            key: const Key('view-pending-notifications-button'),
+                            leading: const Icon(Icons.list_alt_outlined),
+                            title: const Text('View pending notifications'),
+                            onTap: () => Navigator.of(ctx).push(
+                              MaterialPageRoute<void>(builder: (_) => const PendingNotificationsPageAndroid()),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                 buildEntryTile: (ctx, entry, onTap) => ListTile(
                       key: Key('rc-entry-${entry.key}'),

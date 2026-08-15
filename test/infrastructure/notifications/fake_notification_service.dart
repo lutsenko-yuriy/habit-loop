@@ -79,8 +79,11 @@ final class FakeNotificationService implements NotificationService {
     cancelledPactShowupIds.add(List.unmodifiable(showupIds));
   }
 
+  /// Settable by tests — returned as-is by [getPendingNotifications].
+  List<PendingNotificationInfo> pendingNotifications = const [];
+
   @override
-  Future<List<PendingNotificationInfo>> getPendingNotifications() async => const [];
+  Future<List<PendingNotificationInfo>> getPendingNotifications() async => pendingNotifications;
 
   @override
   Future<NotificationLaunchInfo?> getAppLaunchDetails() async => null;
@@ -93,5 +96,6 @@ final class FakeNotificationService implements NotificationService {
     cancelledShowupIds.clear();
     cancelledPactIds.clear();
     cancelledPactShowupIds.clear();
+    pendingNotifications = const [];
   }
 }

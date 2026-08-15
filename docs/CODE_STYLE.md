@@ -57,3 +57,7 @@ Prefer flat control flow over nested conditionals — guard clauses first, then 
 | Sequential `if (...) return false;` guards with nothing after them (a `.where()` predicate, a plain bool-returning getter) | Collapse into a single `&&`-chained expression |
 
 Nesting depth is a readability cost on its own, independent of line count. Guard clauses earn their keep when there's a non-trivial body *after* the checks — when the entire body *is* the check, a single logical expression is more direct with no performance difference (Dart short-circuits `&&` the same way sequential early returns do).
+
+## Git hygiene
+
+Before the first `git add -A`/commit on a new feature branch, run `git status` and check for pre-existing untracked/modified files unrelated to this ticket — stage only what belongs to the change (`git add <specific files>`) rather than `-A`, to avoid sweeping unrelated working-tree state into the PR (HAB-228: an untracked local config file and a leftover investigation test both got swept into a PR this way, each needing its own cleanup commit).
