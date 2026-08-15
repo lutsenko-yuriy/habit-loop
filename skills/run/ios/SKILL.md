@@ -4,7 +4,7 @@ effort: RAPID
 reasoning: MECHANICAL
 needs_session_tools: true
 output_style: CONCISE
-description: Start the app on iOS. Prefers a connected physical device; falls back to a booted Simulator; if no Simulator is booted, boots the most recent iPhone Simulator and waits before starting the app.
+description: Start the app on iOS. Prefers a booted Simulator; falls back to a wired physical device (with explicit permission); boots a Simulator if none is running. Wireless-only physical devices are skipped.
 ---
 
 Read `CLAUDE.local.md` for the Flutter binary path before running any command.
@@ -34,22 +34,10 @@ If either file is missing and the main project path is unknown, ask the user.
 ```
 
 Parse the output for iOS devices:
-- **Physical device** — a line containing `ios` but NOT containing `simulator`.
+- **Physical device** — a line containing `ios` but NOT containing `simulator`. Note whether it says `(wireless)`.
 - **Running simulator** — a line containing `simulator` or `Simulator`.
 
-### 2a. Physical device found → hand off to the user
-
-Report the device ID and tell the user to run in their terminal (or via `!` in Claude Code):
-
-```
-! <flutter-binary-path> run -d <device-id>
-```
-
-Stop here.
-
-### 2b. No physical device — check for a booted Simulator
-
-If a booted Simulator appears in `flutter devices`, hand off to the user:
+### 2a. Booted Simulator found → hand off to the user
 
 ```
 ! <flutter-binary-path> run -d <simulator-device-id>
@@ -57,7 +45,19 @@ If a booted Simulator appears in `flutter devices`, hand off to the user:
 
 Stop here.
 
-### 2c. No booted Simulator — boot one
+### 2b. No booted Simulator — check for a physical device
+
+**Wireless connection** (device line contains `(wireless)`): skip this device and fall through to 2c (boot a Simulator) instead — wireless LLDB attach has proven unreliable and resource-heavy on this machine (stuck attach, `CoreDeviceError`, high thermal load — see HAB-230). Tell the user why before falling through.
+
+**Wired connection**: ask the user for explicit permission before handing off — running on physical hardware needs their go-ahead, not just a device being present. If granted, report the device ID and hand off:
+
+```
+! <flutter-binary-path> run -d <device-id>
+```
+
+Stop here. If declined, fall through to 2c instead.
+
+### 2c. No usable device — boot a Simulator
 
 List available simulators and find a suitable iPhone model:
 
@@ -96,4 +96,6 @@ Report:
 
 - Never use `flutter run` without `-d` — always specify the target device explicitly.
 - Do not boot more than one Simulator.
+- Never hand off a run on a wired physical device without the user's explicit go-ahead first.
+- Never hand off a run on a wireless-only physical device at all — fall back to a Simulator instead.
 - All setup steps (device detection, Simulator boot, boot wait) are executed by Claude. The final `flutter run` command is handed off to the user — it is interactive and long-running and cannot be executed by Claude.

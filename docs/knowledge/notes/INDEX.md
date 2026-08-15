@@ -7,14 +7,14 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ## Top themes
 
 - **planning-gaps** (12)
+- **debugging-methodology** (11)
 - **multi-wu-scope** (11)
-- **debugging-methodology** (10)
 - **ci-flakiness** (9)
 - **review-findings** (7)
+- **code-style** (6)
 - **knowledge-base-process** (6)
 - **research-methodology** (6)
 - **widget-test-gotchas** (6)
-- **code-style** (5)
 - **changelog-versioning** (4)
 - **dead-code** (4)
 - **appstore-ci** (3)
@@ -58,6 +58,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
 - [HAB-207: Release-version gating for Remote Config kill-switches](HAB-207.md)
 - [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
+- [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
 
 ### cross-project-sync
 - [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
@@ -85,6 +86,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-211: 5 scenarios failing on every main-push CI run since HAB-202 WU4](HAB-211.md)
 - [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
 - [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
+- [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
 
 ### feature-toggle
 - [HAB-149: About / Feedback screen](HAB-149.md)
@@ -185,4 +187,3 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-178: Build a dialectical research skill (thesis/antithesis/synthesis, steelman-bounded)](HAB-178.md)
 - [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
 - [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
-- [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
