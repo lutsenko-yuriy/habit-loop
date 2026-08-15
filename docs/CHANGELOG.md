@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.55.2] — 2026-08-15 (PR #379 merged)
+
+### Added
+
+- [app] HAB-228: debug pending-notifications viewer screen — diagnostic tool for visualizing pending OS notifications and their scheduled fire times.
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
