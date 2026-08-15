@@ -10,7 +10,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **debugging-methodology** (11)
 - **multi-wu-scope** (11)
 - **ci-flakiness** (9)
-- **review-findings** (7)
+- **review-findings** (8)
 - **code-style** (6)
 - **knowledge-base-process** (6)
 - **research-methodology** (6)
@@ -150,6 +150,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
+- [HAB-227: Break-over "welcome back" reminder text](HAB-227.md)
 
 ### scope-creep
 - [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
