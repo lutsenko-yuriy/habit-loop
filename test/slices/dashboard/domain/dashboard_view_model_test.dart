@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
@@ -1388,6 +1389,64 @@ void main() {
         1,
         reason: 'selectedDayIndex must reset to new todayIndex when todayIndex changes between loads',
       );
+    });
+  });
+
+  // HAB-234 WU2: multi-device staleness — a break resumed on another device
+  // never runs PactBreakService's own reconcile locally.
+  group('welcome-back reminder reconciliation on dashboard load (HAB-234 WU2)', () {
+    test('reverts a stale welcome-back reminder to standard text for a break resumed early on another device',
+        () async {
+      final fakeNotifications = FakeNotificationService();
+      final pact = Pact(
+        id: 'p-sync',
+        habitName: 'Jog',
+        startDate: DateTime(2026, 3, 1),
+        endDate: DateTime(2026, 9, 1),
+        showupDuration: const Duration(minutes: 20),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+        status: PactStatus.active,
+        reminderOffset: const Duration(minutes: 15),
+      );
+      // stoppedAt synced in — this device never ran stopBreak itself.
+      final syncedEarlyResume = PactBreak(
+        id: 'brk-1',
+        pactId: 'p-sync',
+        startDate: DateTime(2026, 3, 29),
+        plannedEndDate: DateTime(2026, 4, 2),
+        stoppedAt: DateTime(2026, 3, 30),
+        rationale: 'Travel',
+      );
+      // Pre-seeded as already persisted — only reconciliation reaches it, not
+      // the forward-generation pass (which only reminds new showups).
+      final target = ShowupGenerator.generateWindow(
+        pact,
+        from: DateTime(2026, 4, 3, 8),
+        to: DateTime(2026, 4, 3, 8).add(const Duration(minutes: 1)),
+      ).first;
+
+      final pactRepo = InMemoryPactRepository([pact]);
+      final showupRepo = InMemoryShowupRepository([target]);
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+
+      final c = ProviderContainer(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(today),
+          notificationServiceProvider.overrideWithValue(fakeNotifications),
+          pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository([syncedEarlyResume])),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(dashboardViewModelProvider.notifier).load();
+
+      final reminder = fakeNotifications.scheduledReminders.where((r) => r.showup.id == target.id).toList();
+      expect(reminder, isNotEmpty,
+          reason: 'Dashboard load must reconcile a stale welcome-back reminder from a synced early resume');
+      expect(reminder.first.titleText, isNot(contains('break')));
     });
   });
 }
