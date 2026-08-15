@@ -187,4 +187,39 @@ void main() {
       expect(result.body, isNotEmpty);
     });
   });
+
+  group('NotificationTextBuilder.buildWelcomeBackText', () {
+    const habitName = 'Meditate';
+
+    test('body contains the habit name', () {
+      final result = NotificationTextBuilder.buildWelcomeBackText(habitName: habitName, l10n: l10n);
+
+      expect(result.title, isNotEmpty);
+      expect(result.body, contains(habitName));
+    });
+
+    test('works in French locale', () {
+      final frL10n = lookupAppLocalizations(const Locale('fr'));
+      final result = NotificationTextBuilder.buildWelcomeBackText(habitName: habitName, l10n: frL10n);
+
+      expect(result.title, isNotEmpty);
+      expect(result.body, contains(habitName));
+    });
+
+    test('works in German locale', () {
+      final deL10n = lookupAppLocalizations(const Locale('de'));
+      final result = NotificationTextBuilder.buildWelcomeBackText(habitName: habitName, l10n: deL10n);
+
+      expect(result.title, isNotEmpty);
+      expect(result.body, contains(habitName));
+    });
+
+    test('works in Russian locale', () {
+      final ruL10n = lookupAppLocalizations(const Locale('ru'));
+      final result = NotificationTextBuilder.buildWelcomeBackText(habitName: habitName, l10n: ruL10n);
+
+      expect(result.title, isNotEmpty);
+      expect(result.body, contains(habitName));
+    });
+  });
 }

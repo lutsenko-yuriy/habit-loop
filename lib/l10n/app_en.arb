@@ -220,6 +220,13 @@
   },
   "notificationMissedTitle": "You missed this one",
   "notificationMissedBody": "That's okay — show up next time.",
+  "notificationWelcomeBackTitle": "Alrighty! The break is over!",
+  "notificationWelcomeBackBody": "Let's go back to {habitName}.",
+  "@notificationWelcomeBackBody": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationDurationMinutes": "{count} min",
   "@notificationDurationMinutes": {
     "placeholders": {

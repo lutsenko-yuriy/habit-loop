@@ -217,6 +217,13 @@
   },
   "notificationMissedTitle": "Diesen hast du verpasst",
   "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal.",
+  "notificationWelcomeBackTitle": "Alles klar! Die Pause ist vorbei!",
+  "notificationWelcomeBackBody": "Zurück zu {habitName}.",
+  "@notificationWelcomeBackBody": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationDurationMinutes": "{count} Min.",
   "@notificationDurationMinutes": {
     "placeholders": {
