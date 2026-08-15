@@ -57,7 +57,7 @@ class _PendingNotificationRowTile extends StatelessWidget {
             const SizedBox(height: AppSpacing.s6),
             Text(
               row.fireAt == null
-                  ? 'No scheduled time'
+                  ? 'No scheduled time (${unresolvedFireTimeReasonLabel(row.unresolvedReason)}) — id ${row.id}'
                   : '${formatShowupDate(row.fireAt!)} ${formatShowupTime(context, row.fireAt!)}',
               style: Theme.of(context)
                   .textTheme

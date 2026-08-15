@@ -53,7 +53,7 @@ void main() {
     expect(find.text('Meditate for 10 min'), findsOneWidget);
   });
 
-  testWidgets('iOS — a row with no resolvable fire time shows a placeholder instead of a date', (tester) async {
+  testWidgets('iOS — a row with no resolvable fire time shows a reason and the notification id', (tester) async {
     final service = FakeNotificationService()
       ..pendingNotifications = const [
         PendingNotificationInfo(id: 1, title: 'Orphan', body: 'No payload', payload: null),
@@ -61,7 +61,14 @@ void main() {
     await tester.pumpWidget(_buildTestApp(service));
     await tester.pumpAndSettle();
 
-    expect(find.text('No scheduled time'), findsOneWidget);
+    expect(find.text('No scheduled time (no payload) — id 1'), findsOneWidget);
+  });
+
+  testWidgets('iOS — shows the session-only caveat', (tester) async {
+    await tester.pumpWidget(_buildTestApp(FakeNotificationService()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('ios-session-only-caveat')), findsOneWidget);
   });
 
   testWidgets('iOS — rows are read-only (no dismiss/action affordances)', (tester) async {

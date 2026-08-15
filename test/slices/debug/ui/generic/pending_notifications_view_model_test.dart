@@ -10,6 +10,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_constants.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
+import 'package:habit_loop/slices/debug/ui/generic/pending_notification_row.dart';
 import 'package:habit_loop/slices/debug/ui/generic/pending_notifications_view_model.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
@@ -106,6 +107,7 @@ void main() {
 
     expect(result.first.title, 'Orphan');
     expect(result.first.fireAt, isNull);
+    expect(result.first.unresolvedReason, UnresolvedFireTimeReason.missingPayload);
   });
 
   test('leaves fireAt null when the payload is malformed JSON', () async {
@@ -116,6 +118,7 @@ void main() {
     final result = await container.read(pendingNotificationsViewModelProvider.future);
 
     expect(result.first.fireAt, isNull);
+    expect(result.first.unresolvedReason, UnresolvedFireTimeReason.malformedPayload);
   });
 
   test('leaves fireAt null when the referenced showup no longer exists', () async {
@@ -131,6 +134,30 @@ void main() {
     final result = await container.read(pendingNotificationsViewModelProvider.future);
 
     expect(result.first.fireAt, isNull);
+    expect(result.first.unresolvedReason, UnresolvedFireTimeReason.showupNotFound);
+  });
+
+  test('leaves fireAt null when the referenced pact no longer exists', () async {
+    await showupRepo.saveShowup(Showup(
+      id: 's-orphan-pact',
+      pactId: 'missing-pact',
+      scheduledAt: DateTime(2026, 3, 1, 8),
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.pending,
+    ));
+    notificationService.pendingNotifications = [
+      PendingNotificationInfo(
+        id: NotificationConstants.reminderNotificationId('s-orphan-pact'),
+        title: 'Orphan pact',
+        body: 'b',
+        payload: _payload(showupId: 's-orphan-pact', pactId: 'missing-pact'),
+      ),
+    ];
+
+    final result = await container.read(pendingNotificationsViewModelProvider.future);
+
+    expect(result.first.fireAt, isNull);
+    expect(result.first.unresolvedReason, UnresolvedFireTimeReason.pactNotFound);
   });
 
   test('leaves fireAt null for a reminder whose pact no longer has a reminderOffset', () async {
@@ -148,6 +175,7 @@ void main() {
     final result = await container.read(pendingNotificationsViewModelProvider.future);
 
     expect(result.first.fireAt, isNull);
+    expect(result.first.unresolvedReason, UnresolvedFireTimeReason.noReminderOffset);
   });
 
   test('sorts rows soonest-first, with unresolved fire times last', () async {
@@ -180,5 +208,40 @@ void main() {
     final result = await container.read(pendingNotificationsViewModelProvider.future);
 
     expect(result.map((r) => r.title), ['Earlier', 'Later', 'Unresolved']);
+  });
+
+  test('breaks ties on id for reproducible ordering (equal fire times, and among unresolved rows)', () async {
+    // Reminder and deadline for the same showup fire at different times, so use
+    // two distinct showups with identical scheduledAt to force a real fireAt tie.
+    await showupRepo.saveShowup(_showup);
+    await showupRepo.saveShowup(Showup(
+      id: 's-same-time',
+      pactId: 'p1',
+      scheduledAt: _showup.scheduledAt,
+      duration: const Duration(minutes: 10),
+      status: ShowupStatus.pending,
+    ));
+    final idA = NotificationConstants.reminderNotificationId('s1');
+    final idB = NotificationConstants.reminderNotificationId('s-same-time');
+    final firstId = idA < idB ? idA : idB;
+    final firstShowupId = idA < idB ? 's1' : 's-same-time';
+    final secondShowupId = idA < idB ? 's-same-time' : 's1';
+
+    notificationService.pendingNotifications = [
+      PendingNotificationInfo(
+        id: idA < idB ? idB : idA,
+        title: 'B',
+        body: 'b',
+        payload: _payload(showupId: secondShowupId, pactId: 'p1'),
+      ),
+      PendingNotificationInfo(
+          id: firstId, title: 'A', body: 'b', payload: _payload(showupId: firstShowupId, pactId: 'p1')),
+      const PendingNotificationInfo(id: 20, title: 'Unresolved 20', body: 'b', payload: null),
+      const PendingNotificationInfo(id: 10, title: 'Unresolved 10', body: 'b', payload: null),
+    ];
+
+    final result = await container.read(pendingNotificationsViewModelProvider.future);
+
+    expect(result.map((r) => r.title), ['A', 'B', 'Unresolved 10', 'Unresolved 20']);
   });
 }

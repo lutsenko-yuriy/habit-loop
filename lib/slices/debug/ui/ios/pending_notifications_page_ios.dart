@@ -23,25 +23,47 @@ class PendingNotificationsPageIos extends ConsumerWidget {
         middle: const Text('Pending Notifications'),
       ),
       child: SafeArea(
-        child: Material(
-          type: MaterialType.transparency,
-          child: switch (rowsAsync) {
-            AsyncData(:final value) => value.isEmpty
-                ? const Center(
-                    key: Key('pending-notifications-empty'),
-                    child: Text('No pending notifications', style: TextStyle(color: CupertinoColors.systemGrey)),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(AppSpacing.s16),
-                    itemCount: value.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.s8),
-                    itemBuilder: (context, index) => _PendingNotificationRowTile(row: value[index]),
-                  ),
-            AsyncError() => const Center(
-                child: Text('Could not load pending notifications', style: TextStyle(color: CupertinoColors.systemRed)),
+        child: Column(
+          children: [
+            // iOS's pendingNotificationRequests() is believed to only return
+            // notifications scheduled in the current app session (see the same
+            // caveat on cancelAllRemindersForPact's fallback path in
+            // flutter_local_notification_service.dart) — an empty list here
+            // isn't proof nothing is actually pending with the OS.
+            const Padding(
+              padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s0),
+              child: Text(
+                'iOS may only report notifications scheduled since this app launch — not proof nothing is pending.',
+                key: Key('ios-session-only-caveat'),
+                style: TextStyle(fontSize: 11, color: CupertinoColors.systemGrey),
               ),
-            _ => const Center(child: CupertinoActivityIndicator()),
-          },
+            ),
+            Expanded(
+              child: Material(
+                type: MaterialType.transparency,
+                child: switch (rowsAsync) {
+                  AsyncData(:final value) => value.isEmpty
+                      ? const Center(
+                          key: Key('pending-notifications-empty'),
+                          child: Text('No pending notifications', style: TextStyle(color: CupertinoColors.systemGrey)),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(AppSpacing.s16),
+                          itemCount: value.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.s8),
+                          itemBuilder: (context, index) => _PendingNotificationRowTile(row: value[index]),
+                        ),
+                  AsyncError() => const Center(
+                      child: Text(
+                        'Could not load pending notifications',
+                        style: TextStyle(color: CupertinoColors.systemRed),
+                      ),
+                    ),
+                  _ => const Center(child: CupertinoActivityIndicator()),
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -71,7 +93,7 @@ class _PendingNotificationRowTile extends StatelessWidget {
           const SizedBox(height: AppSpacing.s6),
           Text(
             row.fireAt == null
-                ? 'No scheduled time'
+                ? 'No scheduled time (${unresolvedFireTimeReasonLabel(row.unresolvedReason)}) — id ${row.id}'
                 : '${formatShowupDate(row.fireAt!)} ${formatShowupTime(context, row.fireAt!)}',
             style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey),
           ),

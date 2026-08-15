@@ -50,7 +50,7 @@ void main() {
     expect(find.text('Meditate for 10 min'), findsOneWidget);
   });
 
-  testWidgets('Android — a row with no resolvable fire time shows a placeholder instead of a date', (tester) async {
+  testWidgets('Android — a row with no resolvable fire time shows a reason and the notification id', (tester) async {
     final service = FakeNotificationService()
       ..pendingNotifications = const [
         PendingNotificationInfo(id: 1, title: 'Orphan', body: 'No payload', payload: null),
@@ -58,6 +58,6 @@ void main() {
     await tester.pumpWidget(_buildTestApp(service));
     await tester.pumpAndSettle();
 
-    expect(find.text('No scheduled time'), findsOneWidget);
+    expect(find.text('No scheduled time (no payload) — id 1'), findsOneWidget);
   });
 }
