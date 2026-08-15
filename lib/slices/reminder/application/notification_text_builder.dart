@@ -48,8 +48,8 @@ abstract final class NotificationTextBuilder {
     required AppLocalizations l10n,
   }) {
     return (
-      title: l10n.notificationWelcomeBackTitle,
-      body: l10n.notificationWelcomeBackBody(habitName),
+      title: l10n.notificationWelcomeBackTitle(habitName),
+      body: l10n.notificationWelcomeBackBody,
     );
   }
 

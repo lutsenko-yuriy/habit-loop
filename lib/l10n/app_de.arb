@@ -184,7 +184,7 @@
   "languageRussian": "Russisch",
   "languageSystem": "Systemsprache verwenden",
 
-  "notificationReminderTitle": "{habitName}, Zeit für deinen Showup!",
+  "notificationReminderTitle": "Zeit für {habitName}!",
   "@notificationReminderTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
@@ -217,13 +217,13 @@
   },
   "notificationMissedTitle": "Diesen hast du verpasst",
   "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal.",
-  "notificationWelcomeBackTitle": "Alles klar! Die Pause ist vorbei!",
-  "notificationWelcomeBackBody": "Zurück zu {habitName}.",
-  "@notificationWelcomeBackBody": {
+  "notificationWelcomeBackTitle": "Alles klar! Die Pause für {habitName} ist vorbei!",
+  "@notificationWelcomeBackTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
     }
   },
+  "notificationWelcomeBackBody": "Weiter geht's.",
   "notificationDurationMinutes": "{count} Min.",
   "@notificationDurationMinutes": {
     "placeholders": {
