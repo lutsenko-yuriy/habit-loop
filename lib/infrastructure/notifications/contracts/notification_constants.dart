@@ -3,6 +3,12 @@
 /// Single source of truth — cancellation must use the same IDs as scheduling,
 /// so any formula change must be reflected everywhere.
 abstract final class NotificationConstants {
+  /// Lower bound of [deadlineNotificationId]'s range — any id `>=` this came
+  /// from a deadline notification, not a reminder one (see below). Used to
+  /// classify an already-scheduled id (e.g. from [PendingNotificationInfo])
+  /// without needing to recompute both formulas.
+  static const int deadlineRangeStart = 0x40000000;
+
   /// Range `[0x0, 0x3FFFFFFF]` — disjoint from [deadlineNotificationId].
   ///
   /// Uses FNV-1a 32-bit, not `String.hashCode`. Dart randomises the hashCode
@@ -11,7 +17,7 @@ abstract final class NotificationConstants {
   static int reminderNotificationId(String showupId) => _fnv1a32(showupId) % 0x40000000;
 
   /// Range `[0x40000000, 0x7FFFFFFE]` — disjoint from [reminderNotificationId].
-  static int deadlineNotificationId(String showupId) => (_fnv1a32(showupId) % 0x3FFFFFFF) + 0x40000000;
+  static int deadlineNotificationId(String showupId) => (_fnv1a32(showupId) % 0x3FFFFFFF) + deadlineRangeStart;
 
   /// FNV-1a 32-bit — deterministic across Dart VM restarts (no per-process seed).
   static int _fnv1a32(String s) {
