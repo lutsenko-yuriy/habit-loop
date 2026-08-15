@@ -1,5 +1,7 @@
+import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 
 /// Shared on-break predicate — on-break state is derived at read time, never
@@ -18,5 +20,45 @@ abstract final class BreakDerivation {
   }) {
     if (showup.status != ShowupStatus.pending) return false;
     return breaks.any((b) => b.contains(showup.scheduledAt));
+  }
+
+  // Bounds the ShowupGenerator lookahead used to find a break's first
+  // post-break showup — comfortably covers even a monthly schedule's cycle
+  // without generating a pact's entire remaining lifetime just to find one id.
+  static const _lookahead = Duration(days: 60);
+
+  /// The showup ids that should get "welcome back" reminder text (HAB-227) —
+  /// the first showup scheduled after each of [pact]'s fixed-end-date breaks,
+  /// as long as that break wasn't resumed early via "Resume pact".
+  ///
+  /// Open-ended breaks (no [PactBreak.plannedEndDate]) never qualify — there's
+  /// no fixed end to compute a first-showup-after from, and per spec an
+  /// explicit resume of an open-ended break gets normal reminders throughout.
+  /// Purely a function of [PactBreak.plannedEndDate]/[PactBreak.stoppedAt] —
+  /// nothing is persisted, so this stays correct across recomputation (e.g. a
+  /// showup not yet generated when a break starts still resolves to the right
+  /// id once actually created, and an early resume naturally drops out here
+  /// without any separate "un-tag" step).
+  static Set<String> welcomeBackShowupIds(Pact pact, List<PactBreak> breaks) {
+    final ids = <String>{};
+    for (final b in breaks) {
+      final plannedEnd = b.plannedEndDate;
+      if (plannedEnd == null) continue;
+
+      final boundary = PactBreak.endOfDay(plannedEnd);
+      final resumedEarly = b.stoppedAt != null && b.stoppedAt!.isBefore(boundary);
+      if (resumedEarly) continue;
+
+      // generateWindow's range check is day-granular (from's whole day is
+      // included), so filter to strictly-after the exact boundary instant —
+      // otherwise a showup earlier that same day (still inside the break)
+      // would wrongly qualify as "the first showup after the break".
+      final candidates = ShowupGenerator.generateWindow(pact, from: boundary, to: boundary.add(_lookahead))
+          .where((s) => s.scheduledAt.isAfter(boundary));
+      if (candidates.isEmpty) continue;
+      final first = candidates.reduce((a, c) => c.scheduledAt.isBefore(a.scheduledAt) ? c : a);
+      ids.add(first.id);
+    }
+    return ids;
   }
 }

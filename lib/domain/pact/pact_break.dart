@@ -31,20 +31,20 @@ class PactBreak {
   // itself, below) and is never widened. Applied at read time (contains/isResolved)
   // rather than at write time, so it also self-heals breaks already persisted with
   // a midnight plannedEndDate from before this fix.
-  static DateTime _endOfDay(DateTime d) => DateTime(d.year, d.month, d.day, 23, 59, 59, 999);
+  static DateTime endOfDay(DateTime d) => DateTime(d.year, d.month, d.day, 23, 59, 59, 999);
 
   bool contains(DateTime scheduledAt) {
     if (scheduledAt.isBefore(startDate)) return false;
     if (stoppedAt != null) return !scheduledAt.isAfter(stoppedAt!);
     final planned = plannedEndDate;
-    return planned == null || !scheduledAt.isAfter(_endOfDay(planned));
+    return planned == null || !scheduledAt.isAfter(endOfDay(planned));
   }
 
   bool isActiveAt(DateTime now) => contains(now);
 
   bool isResolved(DateTime now) {
     final plannedEnd = plannedEndDate;
-    return stoppedAt != null || (plannedEnd != null && now.isAfter(_endOfDay(plannedEnd)));
+    return stoppedAt != null || (plannedEnd != null && now.isAfter(endOfDay(plannedEnd)));
   }
 
   // No-op once already stopped, and clamps to plannedEndDate's end-of-day —
@@ -52,7 +52,7 @@ class PactBreak {
   PactBreak stop(DateTime now) {
     if (stoppedAt != null) return this;
     final plannedEnd = plannedEndDate;
-    final plannedEndOfDay = plannedEnd == null ? null : _endOfDay(plannedEnd);
+    final plannedEndOfDay = plannedEnd == null ? null : endOfDay(plannedEnd);
     final clamped = plannedEndOfDay != null && now.isAfter(plannedEndOfDay) ? plannedEndOfDay : now;
     return copyWith(stoppedAt: clamped);
   }
