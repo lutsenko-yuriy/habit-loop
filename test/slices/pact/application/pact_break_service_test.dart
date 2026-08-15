@@ -512,6 +512,51 @@ void main() {
 
         expect(notificationService.scheduledReminders, isEmpty);
       });
+
+      // HAB-234: the restore direction — stopping the break that was shadowing
+      // an earlier break's welcome-back target re-arms it, proving reconcile
+      // is symmetric (not just "cancel on shadow", the whole point of making
+      // it stateless and re-run on every mutation).
+      test("re-arms an earlier break's welcome-back reminder once a later, shadowing break stops covering it",
+          () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+
+        // b1: target is 4/11 08:00, stays armed (resolved at/after planned end).
+        await service.startBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 1),
+          rationale: 'Travel',
+          plannedEndDate: DateTime(2026, 4, 10),
+          now: DateTime(2026, 3, 15),
+        );
+        await service.stopBreak('b1', now: DateTime(2026, 4, 12));
+
+        final targetId = ShowupGenerator.generateWindow(
+          _pact,
+          from: DateTime(2026, 4, 11, 8),
+          to: DateTime(2026, 4, 11, 8).add(const Duration(minutes: 1)),
+        ).first.id;
+
+        // b2 shadows b1's target.
+        await service.startBreak(
+          id: 'b2',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 11),
+          rationale: 'Another trip',
+          plannedEndDate: DateTime(2026, 4, 15),
+          now: DateTime(2026, 4, 12),
+        );
+        expect(notificationService.cancelledShowupIds, contains(targetId));
+
+        // b2 stopped before the target's own scheduled time (07:00, target is
+        // 08:00) — its window no longer covers 4/11 08:00 at all.
+        final scheduledCountBeforeRestore = notificationService.scheduledReminders.length;
+        await service.stopBreak('b2', now: DateTime(2026, 4, 11, 7));
+
+        final newlyScheduled = notificationService.scheduledReminders.skip(scheduledCountBeforeRestore);
+        expect(newlyScheduled.map((r) => r.showup.id), contains(targetId));
+      });
     });
   });
 

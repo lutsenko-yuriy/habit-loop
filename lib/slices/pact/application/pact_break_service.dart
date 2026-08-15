@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_break_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
@@ -152,6 +153,11 @@ class PactBreakService {
   ///   correct text from the current [breaks] — welcome-back if the break
   ///   still qualifies, standard text if (e.g.) it was resumed early since
   ///   the reminder was first armed.
+  ///
+  /// Cancels and schedules are batched (one `scheduleRemindersForShowups`
+  /// call for every target that needs it, not one per break) — two breaks
+  /// can legitimately share the same target showup, and a per-break call
+  /// would double-count it in `NotificationsScheduledEvent` analytics.
   Future<void> reconcileWelcomeBackReminders({
     required Pact pact,
     required List<PactBreak> breaks,
@@ -159,6 +165,7 @@ class PactBreakService {
   }) async {
     if (pact.reminderOffset == null || breaks.isEmpty) return;
 
+    final toSchedule = <String, Showup>{};
     for (final b in breaks) {
       // Probe with stoppedAt cleared: the target showup id is a function of
       // plannedEndDate alone (see BreakDerivation.firstShowupAfterBreak) —
@@ -172,16 +179,18 @@ class PactBreakService {
       final otherBreaks = breaks.where((other) => other.id != b.id).toList();
       if (BreakDerivation.isShowupOnBreak(showup: target, breaks: otherBreaks)) {
         await _reminderSchedulingService.cancelRemindersForShowup(target.id);
-        continue;
+      } else {
+        toSchedule[target.id] = target;
       }
-
-      await _reminderSchedulingService.scheduleRemindersForShowups(
-        pact: pact,
-        showups: [target],
-        now: now,
-        breaks: breaks,
-      );
     }
+
+    if (toSchedule.isEmpty) return;
+    await _reminderSchedulingService.scheduleRemindersForShowups(
+      pact: pact,
+      showups: toSchedule.values.toList(),
+      now: now,
+      breaks: breaks,
+    );
   }
 
   Future<void> _cancelInWindowReminders(PactBreak pactBreak) async {
