@@ -56,7 +56,9 @@ class _PendingNotificationRowTile extends StatelessWidget {
             Text(row.body ?? '(no body)', style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: AppSpacing.s6),
             Text(
-              row.fireAt == null ? 'No scheduled time' : '${formatShowupDate(row.fireAt!)} ${formatShowupTime(context, row.fireAt!)}',
+              row.fireAt == null
+                  ? 'No scheduled time'
+                  : '${formatShowupDate(row.fireAt!)} ${formatShowupTime(context, row.fireAt!)}',
               style: Theme.of(context)
                   .textTheme
                   .labelSmall
