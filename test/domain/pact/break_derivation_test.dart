@@ -116,6 +116,23 @@ void main() {
     });
   });
 
+  group('BreakDerivation.firstShowupAfterBreak', () {
+    test('returns the actual Showup, not just its id', () {
+      final b = _pactBreak(startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 5));
+
+      final showup = BreakDerivation.firstShowupAfterBreak(_pact, b);
+
+      expect(showup, isNotNull);
+      expect(showup!.scheduledAt, DateTime(2026, 3, 6, 8));
+      expect(showup.pactId, _pact.id);
+    });
+
+    test('null for an open-ended break', () {
+      final b = _pactBreak(startDate: DateTime(2026, 3, 1));
+      expect(BreakDerivation.firstShowupAfterBreak(_pact, b), isNull);
+    });
+  });
+
   group('BreakDerivation.welcomeBackShowupIds', () {
     test('returns the id of the first daily showup after a fixed-end break', () {
       final b = _pactBreak(startDate: DateTime(2026, 3, 1), plannedEndDate: DateTime(2026, 3, 5));
