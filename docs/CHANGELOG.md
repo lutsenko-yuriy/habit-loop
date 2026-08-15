@@ -4,6 +4,17 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.56.0] — 2026-08-15 (PR #380 merged)
+
+### Added
+
+- [user] When returning from a break, your first reminder back includes a special "welcome back" message instead of the standard reminder text.
+- [app] New feature toggle `break_welcome_back_notification_enabled` (default enabled) to control welcome-back reminder text.
+
+### Changed
+
+- [user] Reminder notification titles have been improved for clarity.
+
 ## [0.55.2] — 2026-08-15 (PR #379 merged)
 
 ### Added
