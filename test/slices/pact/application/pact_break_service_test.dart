@@ -4,6 +4,7 @@ import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/pact/application/pact_break_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
@@ -313,6 +314,47 @@ void main() {
         );
 
         expect(notificationService.scheduledReminders, isEmpty);
+      });
+
+      // HAB-234: a later, unrelated break's cancellation must reach an earlier
+      // break's welcome-back target even when that showup was never persisted
+      // — the bug reported against the original HAB-227 cancel-in-window sweep,
+      // which only iterated persisted rows.
+      test(
+          "cancels a stale welcome-back reminder from an earlier break when a later break's "
+          'window covers its still-unpersisted target', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+
+        // b1: fixed-end break whose target is the 4/11 08:00 showup.
+        await service.startBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 1),
+          rationale: 'Travel',
+          plannedEndDate: DateTime(2026, 4, 10),
+          now: DateTime(2026, 3, 15),
+        );
+        // Resolved at/after the planned end — not an early resume, so the
+        // welcome-back reminder for 4/11 stays armed.
+        await service.stopBreak('b1', now: DateTime(2026, 4, 12));
+
+        final targetId = ShowupGenerator.generateWindow(
+          _pact,
+          from: DateTime(2026, 4, 11, 8),
+          to: DateTime(2026, 4, 11, 8).add(const Duration(minutes: 1)),
+        ).first.id;
+
+        // b2: a later, unrelated break whose window happens to land on 4/11.
+        await service.startBreak(
+          id: 'b2',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 11),
+          rationale: 'Another trip',
+          plannedEndDate: DateTime(2026, 4, 15),
+          now: DateTime(2026, 4, 12),
+        );
+
+        expect(notificationService.cancelledShowupIds, contains(targetId));
       });
     });
   });

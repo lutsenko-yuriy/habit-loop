@@ -94,12 +94,15 @@ class PactBreakService {
     await _cancelInWindowReminders(pactBreak);
     _cache.evict(pactId);
 
-    // HAB-227: schedule the welcome-back reminder now, not deferred to the
-    // next dashboard load — pactBreak.stoppedAt is null here, so this always
-    // targets the break's natural (as-planned) end.
+    // HAB-227/HAB-234: reconcile welcome-back reminders across *all* of the
+    // pact's breaks now, not just this new one — the new break's window may
+    // shadow an earlier break's still-unpersisted welcome-back target (the
+    // showup-repository-only sweep above can't reach it), and this new break
+    // needs its own welcome-back reminder scheduled too.
     final pact = await _pactRepository.getPactById(pactId);
     if (pact != null) {
-      await _scheduleWelcomeBackReminder(pact: pact, breakToTarget: pactBreak, now: now);
+      final allBreaks = await _pactBreakRepository.getBreaksForPact(pactId);
+      await reconcileWelcomeBackReminders(pact: pact, breaks: allBreaks, now: now);
     }
 
     return pactBreak;
@@ -122,54 +125,63 @@ class PactBreakService {
     unawaited(_syncService.uploadPactBreak(stopped));
     _cache.evict(stopped.pactId);
     await _rescheduleRemindersAfterStop(original: existing, stopped: stopped, now: now);
-    await _revertWelcomeBackIfResumedEarly(original: existing, stopped: stopped, now: now);
+
+    final pact = await _pactRepository.getPactById(stopped.pactId);
+    if (pact != null) {
+      final allBreaks = await _pactBreakRepository.getBreaksForPact(stopped.pactId);
+      await reconcileWelcomeBackReminders(pact: pact, breaks: allBreaks, now: now);
+    }
 
     return stopped;
   }
 
-  // HAB-227: an early "Resume pact" (before the break's planned end) means
-  // any welcome-back reminder pre-scheduled for `original` at break creation
-  // no longer targets a valid break-end — explicitly reschedule it with
-  // normal text. Resuming at/after the planned end changes nothing (the
-  // welcome-back showup is unaffected either way), so this is a no-op then.
-  Future<void> _revertWelcomeBackIfResumedEarly({
-    required PactBreak original,
-    required PactBreak stopped,
-    required DateTime now,
-  }) async {
-    final plannedEnd = original.plannedEndDate;
-    if (plannedEnd == null) return; // open-ended — nothing was ever tagged.
-
-    final resumedEarly = stopped.stoppedAt != null && stopped.stoppedAt!.isBefore(PactBreak.endOfDay(plannedEnd));
-    if (!resumedEarly) return;
-
-    final pact = await _pactRepository.getPactById(stopped.pactId);
-    if (pact == null) return;
-
-    // breakToTarget: `original` (stoppedAt=null) always resolves to the same
-    // target showup that was tagged at creation — `_scheduleWelcomeBackReminder`
-    // then fetches the *current* (post-stop) breaks list, so the welcome-back
-    // check inside ReminderSchedulingService naturally excludes it now that
-    // this break is flagged as an early resume, producing normal text.
-    await _scheduleWelcomeBackReminder(pact: pact, breakToTarget: original, now: now);
-  }
-
-  Future<void> _scheduleWelcomeBackReminder({
+  /// HAB-227/HAB-234: brings every welcome-back-eligible reminder for [pact]
+  /// in line with what [breaks] currently says it should be. Stateless and
+  /// idempotent — safe to call after any break mutation (start, stop) and
+  /// from a periodic sweep (e.g. dashboard load, to pick up breaks changed by
+  /// sync on another device), since nothing about "which showup gets the
+  /// welcome-back text" is ever persisted; it's always recomputed here.
+  ///
+  /// For each break's target showup (may not be persisted yet):
+  /// - if another break's window now covers it, its reminder — welcome-back
+  ///   or not — must not fire: cancel it outright. This is the fix for the
+  ///   reported bug, where a later break's cancel-in-window sweep only
+  ///   reached persisted showups and missed an earlier break's synthetic
+  ///   target.
+  /// - otherwise, reschedule it. `scheduleRemindersForShowups` re-derives the
+  ///   correct text from the current [breaks] — welcome-back if the break
+  ///   still qualifies, standard text if (e.g.) it was resumed early since
+  ///   the reminder was first armed.
+  Future<void> reconcileWelcomeBackReminders({
     required Pact pact,
-    required PactBreak breakToTarget,
+    required List<PactBreak> breaks,
     required DateTime now,
   }) async {
-    if (pact.reminderOffset == null) return;
-    final target = BreakDerivation.firstShowupAfterBreak(pact, breakToTarget);
-    if (target == null) return;
+    if (pact.reminderOffset == null || breaks.isEmpty) return;
 
-    final allBreaks = await _pactBreakRepository.getBreaksForPact(pact.id);
-    await _reminderSchedulingService.scheduleRemindersForShowups(
-      pact: pact,
-      showups: [target],
-      now: now,
-      breaks: allBreaks,
-    );
+    for (final b in breaks) {
+      // Probe with stoppedAt cleared: the target showup id is a function of
+      // plannedEndDate alone (see BreakDerivation.firstShowupAfterBreak) —
+      // whether *this* break still qualifies for welcome-back text (as
+      // opposed to standard text, e.g. because it was resumed early) is
+      // decided below by scheduleRemindersForShowups itself, via the real,
+      // unprobed `b` inside `breaks`.
+      final target = BreakDerivation.firstShowupAfterBreak(pact, b.copyWith(clearStoppedAt: true));
+      if (target == null) continue;
+
+      final otherBreaks = breaks.where((other) => other.id != b.id).toList();
+      if (BreakDerivation.isShowupOnBreak(showup: target, breaks: otherBreaks)) {
+        await _reminderSchedulingService.cancelRemindersForShowup(target.id);
+        continue;
+      }
+
+      await _reminderSchedulingService.scheduleRemindersForShowups(
+        pact: pact,
+        showups: [target],
+        now: now,
+        breaks: breaks,
+      );
+    }
   }
 
   Future<void> _cancelInWindowReminders(PactBreak pactBreak) async {
