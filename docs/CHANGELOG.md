@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [wip] (PR #381) HAB-234 (WU1): stateless welcome-back-reminder reconciliation in PactBreakService — fixes a later break's cancellation sweep missing an earlier break's unpersisted welcome-back target. WU2 (dashboard-triggered reconciliation, multi-device staleness fix) still to come.
+
 ## [0.56.0] — 2026-08-15 (PR #380 merged)
 
 ### Added
