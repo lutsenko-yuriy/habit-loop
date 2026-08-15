@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_android.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../../infrastructure/remote_config/fake_remote_config_override_store.dart';
 import '../../../../infrastructure/remote_config/fake_remote_config_service.dart';
@@ -234,5 +236,28 @@ void main() {
     expect(find.byKey(const Key('override-value-field')), findsNothing);
     expect(find.byKey(const Key('override-option-real')), findsOneWidget);
     expect(find.byKey(const Key('override-option-local')), findsOneWidget);
+  });
+
+  testWidgets('Android — pending notifications button navigates to the viewer screen', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
+          pactRepositoryProvider.overrideWithValue(InMemoryPactRepository()),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          home: RemoteConfigOverridesPageAndroid(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('view-pending-notifications-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('pending-notifications-empty')), findsOneWidget);
   });
 }

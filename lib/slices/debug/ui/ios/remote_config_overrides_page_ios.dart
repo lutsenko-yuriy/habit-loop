@@ -10,6 +10,7 @@ import 'package:habit_loop/slices/debug/ui/generic/rc_entry_edit_state.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_scroll_view.dart';
 import 'package:habit_loop/slices/debug/ui/generic/remote_config_overrides_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart';
+import 'package:habit_loop/slices/debug/ui/ios/pending_notifications_page_ios.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
@@ -69,27 +70,54 @@ class RemoteConfigOverridesPageIos extends ConsumerWidget {
                     onClear: () => notifier.clearOverride(entry.key),
                   ),
                   slots: (
-                    buildTopSection: (ctx) => DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: CupertinoButton(
-                            key: const Key('test-notification-button'),
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
-                            onPressed: () => scheduleTestNotification(
-                              ref.read(notificationServiceProvider),
-                              ref.read(pactRepositoryProvider),
-                              ref.read(showupRepositoryProvider),
+                    buildTopSection: (ctx) => Column(
+                          children: [
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: CupertinoButton(
+                                key: const Key('test-notification-button'),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
+                                onPressed: () => scheduleTestNotification(
+                                  ref.read(notificationServiceProvider),
+                                  ref.read(pactRepositoryProvider),
+                                  ref.read(showupRepositoryProvider),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(CupertinoIcons.bell),
+                                    SizedBox(width: AppSpacing.s10),
+                                    Text('Fire test notification'),
+                                  ],
+                                ),
+                              ),
                             ),
-                            child: const Row(
-                              children: [
-                                Icon(CupertinoIcons.bell),
-                                SizedBox(width: AppSpacing.s10),
-                                Text('Fire test notification'),
-                              ],
+                            const SizedBox(height: AppSpacing.s8),
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: CupertinoButton(
+                                key: const Key('view-pending-notifications-button'),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
+                                onPressed: () => Navigator.of(ctx).push(
+                                  CupertinoPageRoute<void>(builder: (_) => const PendingNotificationsPageIos()),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(CupertinoIcons.list_bullet),
+                                    SizedBox(width: AppSpacing.s10),
+                                    Text('View pending notifications'),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                     buildEntryTile: (ctx, entry, onTap) => _RcEntryRow(
                           key: Key('rc-entry-${entry.key}'),
