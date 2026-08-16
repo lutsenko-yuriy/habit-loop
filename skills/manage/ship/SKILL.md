@@ -4,7 +4,7 @@ effort: RAPID
 reasoning: TACTICAL
 tools: linear,github,files
 output_style: CONCISE
-description: Post-merge housekeeping after a PR is approved. Moves the linked issues to "In QA", adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, proposes PRODUCT_SPEC.md and GLOSSARY.md updates for approval, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
+description: Post-merge housekeeping after a PR is approved. Moves the linked issues to "In QA", rebases onto the latest main, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, proposes PRODUCT_SPEC.md and GLOSSARY.md updates for approval, refreshes the generated notes index, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
 ---
 
 @skills/shared/project-config.md
@@ -42,13 +42,30 @@ Move each linked issue to the chosen state (PM mapping: **Move issue to state**)
 
 ### 2. Rebase onto the latest main
 
-Before making any of the edits below:
+**First, commit any pending knowledge-note edits** so the tree is clean before rebasing — `/note` may have created a new note file, or edited an already-committed one, earlier in the session without staging it:
+
+```bash
+git status --short docs/knowledge/notes/HAB-XX*.md
+```
+
+If anything shows, stage and commit it now — do not defer this to step 9, since an *unstaged edit to an already-committed file* (not just a new untracked file) makes the rebase below refuse to run at all:
+
+```bash
+git add docs/knowledge/notes/HAB-XX*.md
+git commit -m "docs: capture pending /note updates for HAB-XX"
+```
+
+Then rebase:
 
 ```bash
 git fetch origin && git rebase origin/main
 ```
 
-This is what actually enforces `docs/workflows/FEATURE.md` step 1.5's "rebase before merging" guidance — `ship` is the point that calls `gh pr merge`, so it's the natural place to make the rebase non-optional rather than relying on it being remembered by hand. It must run **before** any of steps 3–8 make edits: `git rebase` refuses to run against an unstaged/uncommitted tree, so doing this later would require stashing or redoing that work (HAB-223).
+**If the rebase reports a conflict:** stop immediately — do not proceed to any further step. Tell the user which files conflicted and wait for guidance (resolve manually and `git rebase --continue`, or `git rebase --abort` to cancel this `ship` attempt). Never leave the branch in a mid-rebase/detached-HEAD state without saying so — the issue was already moved to its post-merge state in step 1, so a silent stall here leaves Linear ahead of the actual repo state.
+
+This is what actually enforces `docs/workflows/FEATURE.md` step 1.5's "rebase before merging" guidance — `ship` is the point that calls `gh pr merge`, so it's the natural place to make the rebase non-optional rather than relying on it being remembered by hand. It must run **before** any of steps 3–8 make edits: `git rebase` refuses to run against an uncommitted tree, so doing this later would require stashing or redoing that work (HAB-223).
+
+**This rebase rewrites the branch's commits whenever `main` has moved** (the only case where it does anything) — the local branch now diverges from `origin/<branch>` by SHA, not just by content. Step 9's push must account for this (see step 9).
 
 ### 3. Draft the [user] bullets
 
@@ -138,13 +155,16 @@ Regenerate `docs/knowledge/notes/INDEX.md` so it reflects the actual note corpus
 
 ```bash
 python3 scripts/notes/index.py
+python3 scripts/notes/index.py --check
 ```
+
+The second call is a validation gate, not a staleness check — the regeneration above already fixed staleness, so `--check` here can only fail on a genuine authoring error (missing `bookmarks:` key, unknown bookmark, malformed frontmatter). `main` has no branch protection, so nothing else blocks a bad index from landing once step 9 pushes and merges — CI's own `--check` run never gates the merge. **If `--check` fails, stop and tell the user; do not commit an invalid index.**
 
 If `docs/knowledge/notes/INDEX.md` changed, include it in step 9's commit.
 
 ### 9. Commit, push, and merge
 
-Stage the files changed above and commit onto the feature branch. Include the product spec and glossary (paths from the project config) only if they were modified in step 7. Also check for an uncommitted knowledge note for this ticket (`git status --short docs/knowledge/notes/HAB-XX*.md`) — `/note` may have written one earlier in the session that never got staged; include it in this commit if found.
+Stage the files changed above and commit onto the feature branch. Include the product spec and glossary (paths from the project config) only if they were modified in step 7. (Any `/note`-created or -edited file for this ticket is already committed by step 2 — nothing further to catch here.)
 
 ```bash
 git add <changelog> <backlog>                  # paths from project config
@@ -152,8 +172,6 @@ git add <changelog> <backlog>                  # paths from project config
 git add <version-file>                         # paths from project config
 # add only if modified:
 git add <product-spec> <glossary>              # paths from project config
-# add if present and uncommitted:
-git add docs/knowledge/notes/HAB-XX*.md        # catches /note output missed earlier in the session
 # add only if step 8 regenerated it:
 git add docs/knowledge/notes/INDEX.md
 ```
@@ -164,8 +182,10 @@ Commit with **exactly one** of these two messages — whichever matches what ste
 - Step 6 was skipped (entry went to `## [Unreleased]`): `git commit -m "chore: release HAB-XX (internal-only, no version bump)"`
 
 ```bash
-git push
+git push --force-with-lease
 ```
+
+**Use `--force-with-lease`, not a bare `git push`.** Step 2's rebase rewrites this branch's commit SHAs whenever `origin/main` had moved since the branch was last pushed — which is exactly the case the rebase exists to handle. A bare `git push` is rejected non-fast-forward in that case, so `ship` would halt post-merge-decision (issue already moved, all edits already committed locally) with nothing actually merged. `--force-with-lease` (not plain `--force`) still refuses if someone else pushed to this branch in the meantime, so it doesn't blindly clobber concurrent work.
 
 Then merge the PR:
 
