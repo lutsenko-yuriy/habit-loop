@@ -15,6 +15,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [meta] (PR #386) HAB-184: `dead-code-check`'s orphaned-test-file detector now exempts files that are relatively-imported from other test files or path-referenced in CI/skill files — fixes 3 false positives: `test_runner.dart` (referenced in `.github/actions/run-scenarios/` and `skills/run/run-scenarios/SKILL.md`), `language_change_flow_test.dart` and `onboarding_carousel_flow_test.dart` (relatively-imported into `test_runner.dart`). High-confidence bucket (all-missing `package:habit_loop` imports) unaffected. 6 unit tests added; live runs confirm no false positives remain.
 - [meta] (PR #385) HAB-223: `ship` now rebases onto `origin/main` as its very first action (step 2), then regenerates `docs/knowledge/notes/INDEX.md` right before the final commit (step 8). Enforces "rebase before merging" guidance non-optionally, and closes the exposure window for stale-but-valid auto-merges on the notes index in the normal `ship`-mediated merge path.
 - [wip] (PR #381) HAB-234 (WU1): stateless welcome-back-reminder reconciliation in PactBreakService — fixes a later break's cancellation sweep missing an earlier break's unpersisted welcome-back target. WU2 (dashboard-triggered reconciliation, multi-device staleness fix) still to come.
 

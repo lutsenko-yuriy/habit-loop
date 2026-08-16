@@ -325,6 +325,94 @@ class TestDetectOrphanedTestFiles(unittest.TestCase):
         self.assertIn('test/orphan_b.dart', high)
         self.assertNotIn('test/live.dart', high)
 
+    def test_relative_import_from_another_test_file_not_informational(self):
+        """A zero-package-import file wired in via a relative import from
+        another test file (e.g. a combined test runner importing individual
+        flow tests) is not a false-positive orphan (HAB-184)."""
+        root = self._project(
+            {
+                'integration_test/test_runner.dart': (
+                    "import 'package:integration_test/integration_test.dart';\n"
+                    "import 'flow_test.dart' as flow;\n"
+                ),
+                'integration_test/flow_test.dart': "import 'harness.dart';",
+            },
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertNotIn('integration_test/flow_test.dart', info)
+
+    def test_referenced_in_github_workflow_not_informational(self):
+        root = self._project(
+            {'integration_test/test_runner.dart': "import 'package:integration_test/integration_test.dart';"},
+        )
+        (root / '.github' / 'actions' / 'run-scenarios').mkdir(parents=True)
+        (root / '.github' / 'actions' / 'run-scenarios' / 'action.yml').write_text(
+            'run: flutter test integration_test/test_runner.dart --machine\n'
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertNotIn('integration_test/test_runner.dart', info)
+
+    def test_referenced_in_skill_file_not_informational(self):
+        root = self._project(
+            {'integration_test/test_runner.dart': "import 'package:integration_test/integration_test.dart';"},
+        )
+        (root / 'skills' / 'run' / 'run-scenarios').mkdir(parents=True)
+        (root / 'skills' / 'run' / 'run-scenarios' / 'SKILL.md').write_text(
+            'Run `integration_test/test_runner.dart` as the target.\n'
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertNotIn('integration_test/test_runner.dart', info)
+
+    def test_truly_unreferenced_zero_import_file_still_informational(self):
+        """Regression: a genuinely orphaned zero-import file must still be flagged."""
+        root = self._project(
+            {'test/util_test.dart': "import 'dart:math';\nimport 'package:test/test.dart';"},
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('test/util_test.dart', info)
+
+    def test_path_containment_does_not_exempt_shorter_suffix_match(self):
+        """A CI reference to integration_test/test_runner.dart must not
+        exempt an unrelated test/test_runner.dart via substring containment
+        (audit finding on PR #386)."""
+        root = self._project(
+            {'test/test_runner.dart': "import 'dart:math';"},
+        )
+        (root / '.github').mkdir()
+        (root / '.github' / 'workflow.yml').write_text(
+            'run: flutter test integration_test/test_runner.dart\n'
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('test/test_runner.dart', info)
+
+    def test_relative_import_match_is_directory_aware_not_basename_only(self):
+        """Two files sharing a basename in different directories must not
+        cross-exempt each other via basename-only import matching (audit
+        finding on PR #386)."""
+        root = self._project(
+            {
+                'test/slices/streak/mapper_test.dart': "import 'dart:math';",
+                'test/slices/pact/mapper_test.dart': "import 'dart:math';",
+                'test/slices/pact/runner_test.dart': "import 'mapper_test.dart';",
+            },
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('test/slices/streak/mapper_test.dart', info)
+        self.assertNotIn('test/slices/pact/mapper_test.dart', info)
+
+    def test_high_confidence_bucket_unaffected_by_relative_import(self):
+        """Out of scope per HAB-184: the high-confidence heuristic (all
+        package:habit_loop imports missing) is untouched even if the file is
+        also wired in via a relative import elsewhere."""
+        root = self._project(
+            {
+                'test/runner.dart': "import 'orphan.dart';",
+                'test/orphan.dart': "import 'package:habit_loop/gone.dart';",
+            },
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('test/orphan.dart', high)
+
 
 _NS_PATH = 'lib/infrastructure/notifications/data/flutter_local_notification_service.dart'
 
