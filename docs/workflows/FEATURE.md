@@ -125,7 +125,7 @@ When in doubt, use **In QA**.
     ```
     Invoke the ship skill for PR #<number>
     ```
-    The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
+    The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, refreshes the generated notes index (`docs/knowledge/notes/INDEX.md`), commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
     Integration scenarios run automatically on CI after merge (see HAB-151). Use `/run-scenarios` manually if you want to verify locally before merging.
 14. Clear the context now that the ticket is fully shipped, before starting a new ticket. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
 15. A new ticket may be picked up while the previous one is In QA.
