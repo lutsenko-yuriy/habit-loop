@@ -8,8 +8,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 - **debugging-methodology** (12)
 - **planning-gaps** (12)
+- **review-findings** (12)
 - **multi-wu-scope** (11)
-- **review-findings** (11)
 - **ci-flakiness** (9)
 - **code-style** (8)
 - **research-methodology** (7)
@@ -156,6 +156,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-183: Manual-dispatch-only CI pipelines for granular build/test/notes procedures](HAB-183.md)
 - [HAB-184: Fix false positives in dead-code-check's orphaned test-file detector](HAB-184.md)
 - [HAB-186: Automate session-start checklist via SessionStart hook](HAB-186.md)
+- [HAB-189: CI/lint check for raw spacing literals instead of AppSpacing tokens](HAB-189.md)
 - [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)

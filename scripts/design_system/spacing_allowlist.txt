@@ -1,0 +1,33 @@
+# Deliberate exceptions to scripts/design_system/lint.py's raw-spacing-literal
+# check — one "path:line" per entry, `#` starts a comment. These are fixed
+# dimensions (icon slots, iOS picker heights, etc.), not spacing gaps, so no
+# AppSpacing value represents them correctly.
+#
+# Keep this list short: it should only ever grow when a genuinely new fixed
+# dimension is added, not as a way to silence the lint on something that
+# really should be a token. If a line number drifts (unrelated edits above
+# it in the same file), update the entry rather than leaving it stale.
+
+# s2 (2px) would double this dot's inter-item margin — visible regression.
+lib/slices/showup/ui/generic/showup_status_dots.dart:58
+
+# Fixed icon slot width in the language picker dialog.
+lib/slices/dashboard/ui/android/language_picker_dialog_android.dart:26
+
+# Fixed counter digit column width.
+lib/slices/debug/ui/ios/remote_config_overrides_page_ios.dart:189
+
+# Fixed timeline spine column width (Android).
+lib/slices/pact/ui/android/pact_timeline_page_android.dart:175
+
+# Fixed timeline spine column width (iOS).
+lib/slices/pact/ui/ios/pact_timeline_page_ios.dart:196
+
+# Fixed label column width — see the class doc comment.
+lib/slices/pact/ui/generic/summary_row.dart:38
+
+# Standard iOS picker wheel height (CupertinoPicker/CupertinoDatePicker).
+lib/slices/pact/ui/ios/cupertino_picker_sheet.dart:34
+lib/slices/pact/ui/ios/pact_break_creation_page_ios.dart:218
+lib/slices/pact/ui/ios/pact_duration_step_ios.dart:94
+lib/slices/pact/ui/ios/showup_duration_step_ios.dart:42
