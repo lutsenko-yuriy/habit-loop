@@ -105,9 +105,9 @@ When in doubt, use **In QA**.
    - Open a PR.
    - Move the Linear ticket to **In Review**.
    - Inform the user of the PR URL.
-   - The review loop (step 10) starts only on the user's explicit command — not automatically. This gives the user room to check the running app and request changes before review effort is spent on code that might still move.
-10. **Review loop** — started by the user's explicit command (not automatically after step 9); repeat until the user explicitly approves the PR:
-    0. **Before asking whether to start:** smoke-test the app on a real device/emulator on your own initiative — confirm it compiles and boots, then exercise the specific flow the PR touches. Report the result, *then* ask if the user is ready to start. Don't smoke-test only after a "go" answer — the readiness question should be asked with evidence already in hand.
+   - The review loop (step 10) starts automatically once the PR is open, unless the user says otherwise beforehand. Say so explicitly if you want to check the running app first before review effort is spent on code that might still move.
+10. **Review loop** — starts automatically once the PR is open (see step 9), unless the user asked to hold; repeat until the user explicitly approves the PR:
+    0. **Before starting:** smoke-test the app on a real device/emulator on your own initiative — confirm it compiles and boots, then exercise the specific flow the PR touches. Report the result, then proceed into the loop.
     1. Wait for both review skills (`review-architecture`, `audit-code`), the Codecov patch-coverage report, and the user to finish leaving comments.
     2. For each comment: either fix it in a new commit and push, or post a one-sentence explanation of why the fix will not be implemented — as a threaded reply under the original comment (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies`), prefixed with `[<skill> reply]` matching the finding's own `[review]`/`[audit]` prefix (e.g. `[audit reply]`).
     3. Check the Codecov patch-coverage report (posted automatically as a PR comment by CI). If patch coverage is below the project threshold, add tests for the uncovered lines where it is reasonable to do so — skip lines that require disproportionate test infrastructure (e.g. `ConsumerStatefulWidget` screens with no widget-test harness). Explain skipped lines in a PR comment.
