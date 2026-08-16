@@ -144,6 +144,7 @@ class DashboardViewModel extends Notifier<DashboardState> {
     final generationService = ref.read(showupGenerationServiceProvider);
     final pactStatsService = ref.read(pactStatsServiceProvider);
     final schedulingService = ref.read(reminderSchedulingServiceProvider);
+    final pactBreakService = ref.read(pactBreakServiceProvider);
 
     // windowStart: normally todayNorm; moved back to first missed day when a gap exists.
     // Gap showups (< todayNorm) → auto-failed; forward showups → eligible for reminders.
@@ -192,6 +193,13 @@ class DashboardViewModel extends Notifier<DashboardState> {
 
       if (futureShowups.isNotEmpty) {
         newShowupsByPact[pact] = futureShowups;
+      }
+
+      // HAB-234: catches welcome-back reminders left stale by a break mutation synced from another device.
+      // `today` (not `todayNorm`) — midnight would let a same-day target's
+      // reminder qualify as "future" and fire immediately on Android.
+      if (breaks.isNotEmpty) {
+        unawaited(pactBreakService.reconcileWelcomeBackReminders(pact: pact, breaks: breaks, now: today));
       }
     }
     if (gapFailedCount > 0) {

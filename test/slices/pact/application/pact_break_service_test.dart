@@ -557,6 +557,50 @@ void main() {
         final newlyScheduled = notificationService.scheduledReminders.skip(scheduledCountBeforeRestore);
         expect(newlyScheduled.map((r) => r.showup.id), contains(targetId));
       });
+
+      // HAB-234: the derived target is always synthetically pending — without
+      // checking the persisted row, a later reconcile pass would re-remind an
+      // already-completed showup indefinitely.
+      test('does not re-schedule a welcome-back target that has already been marked done', () async {
+        await pactRepo.updatePact(_pact.copyWith(reminderOffset: const Duration(minutes: 15)));
+
+        await service.startBreak(
+          id: 'b1',
+          pactId: 'p1',
+          startDate: DateTime(2026, 4, 1),
+          rationale: 'Travel',
+          plannedEndDate: DateTime(2026, 4, 10),
+          now: DateTime(2026, 3, 15),
+        );
+        await service.stopBreak('b1', now: DateTime(2026, 4, 12));
+
+        final targetId = ShowupGenerator.generateWindow(
+          _pact,
+          from: DateTime(2026, 4, 11, 8),
+          to: DateTime(2026, 4, 11, 8).add(const Duration(minutes: 1)),
+        ).first.id;
+        expect(notificationService.scheduledReminders.map((r) => r.showup.id), contains(targetId));
+
+        // User marks the target done (its own reminder cancellation happens
+        // elsewhere — out of scope for this service).
+        await showupRepo.saveShowup(_showup(targetId, DateTime(2026, 4, 11, 8), status: ShowupStatus.done));
+        final scheduledCountBefore = notificationService.scheduledReminders.length;
+
+        // A later, unrelated break triggers another reconcile pass.
+        await service.startBreak(
+          id: 'b2',
+          pactId: 'p1',
+          startDate: DateTime(2026, 5, 1),
+          rationale: 'Another trip',
+          plannedEndDate: DateTime(2026, 5, 5),
+          now: DateTime(2026, 4, 20),
+        );
+
+        expect(
+          notificationService.scheduledReminders.skip(scheduledCountBefore).map((r) => r.showup.id),
+          isNot(contains(targetId)),
+        );
+      });
     });
   });
 

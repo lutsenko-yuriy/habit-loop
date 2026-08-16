@@ -7,6 +7,7 @@ import 'package:habit_loop/domain/pact/pact_break_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
@@ -153,6 +154,12 @@ class PactBreakService {
       // (unprobed) `b` inside scheduleRemindersForShowups below.
       final target = BreakDerivation.firstShowupAfterBreak(pact, b.copyWith(clearStoppedAt: true));
       if (target == null) continue;
+
+      // The derived target is always synthetically pending (HAB-227's generator
+      // never marks one done/failed) — check the real row so a resolved showup
+      // doesn't get reminded again on a later reconcile pass (HAB-234).
+      final persisted = await _showupRepository.getShowupById(target.id);
+      if (persisted != null && persisted.status != ShowupStatus.pending) continue;
 
       final otherBreaks = breaks.where((other) => other.id != b.id).toList();
       if (BreakDerivation.isShowupOnBreak(showup: target, breaks: otherBreaks)) {

@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.56.1] — 2026-08-16 (PR #382 merged)
+
+### Fixed
+
+- [user] Notifications after breaks now appear at the right time with the correct message.
+- HAB-234 (WU2, final): dashboard-triggered welcome-back reconciliation catches stale reminders synced from other devices or lingering from earlier breaks' failed cancellation sweeps; fixes two latent bugs in periodic vs. one-shot call contexts (derived target status check, same-day `now` normalization).
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
