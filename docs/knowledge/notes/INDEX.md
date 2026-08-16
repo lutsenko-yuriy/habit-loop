@@ -9,8 +9,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **debugging-methodology** (12)
 - **planning-gaps** (12)
 - **multi-wu-scope** (11)
+- **review-findings** (10)
 - **ci-flakiness** (9)
-- **review-findings** (9)
 - **code-style** (8)
 - **research-methodology** (7)
 - **knowledge-base-process** (6)
@@ -20,10 +20,10 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **appstore-ci** (3)
 - **cross-project-sync** (3)
 - **feature-toggle** (3)
+- **scope-creep** (3)
 - **ui-design-iteration** (3)
 - **verify-from-source** (3)
 - **debrief-timing** (2)
-- **scope-creep** (2)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
 - **postmortem-workflow** (1)
@@ -158,12 +158,14 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
+- [HAB-223: Prevent silent bad auto-merges of docs/knowledge/notes/INDEX.md](HAB-223.md)
 - [HAB-227: Break-over "welcome back" reminder text](HAB-227.md)
 - [HAB-234: Welcome-back reminder for an unpersisted showup can survive a later, unrelated break's cancellation sweep](HAB-234.md)
 
 ### scope-creep
 - [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
 - [HAB-195: Pact breaks — pause a pact without failing showups](HAB-195.md)
+- [HAB-223: Prevent silent bad auto-merges of docs/knowledge/notes/INDEX.md](HAB-223.md)
 
 ### stale-ticket
 - [HAB-120: Port new meta-workflow skills to Yuriys-agentic-boyz](HAB-120.md)
@@ -197,4 +199,3 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-178: Build a dialectical research skill (thesis/antithesis/synthesis, steelman-bounded)](HAB-178.md)
 - [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
 - [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
-- [HAB-223: Prevent silent bad auto-merges of docs/knowledge/notes/INDEX.md](HAB-223.md)
