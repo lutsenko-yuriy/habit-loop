@@ -19,7 +19,7 @@ This skill produces workflow improvements and a retrospective record, not code.
 ### 1. Load context
 
 - `git log --oneline -20` to see the recent commit history
-- Read `docs/FEATURE_WORKFLOW.md` and `docs/TROUBLESHOOT_WORKFLOW.md`
+- Read `docs/workflows/FEATURE.md` and `docs/workflows/TROUBLESHOOT.md`
 - Read `docs/knowledge/notes/HAB-XX.md` and any `HAB-XX-adjust-N.md` files if they exist. If the notes file has content under `## Notes`, present a brief summary of the captured items to the user before asking the opening question — this gives a memory refresh and avoids re-covering documented ground.
 - If the ticket removed or significantly refactored existing functionality, run `/dead-code-check` now and include any `[WARN]` findings in the debrief dialog as a concrete "what to clean up" item.
 
@@ -50,7 +50,7 @@ If the user says "that's it", "nothing else", or similar, proceed to step 4 even
 
 Identify actionable improvements from the dialog. For each:
 
-- Name the artifact (`docs/FEATURE_WORKFLOW.md`, `skills/build/implement/SKILL.md`, etc.)
+- Name the artifact (`docs/workflows/FEATURE.md`, `skills/build/implement/SKILL.md`, etc.)
 - Show the exact change (diff-style: what line/block is replaced and with what)
 - One-sentence rationale tied to what the user said
 
@@ -97,7 +97,7 @@ Use today's date. Mirror the content from the dialog — do not ask the user for
 
 Check whether the ticket's feature branch has an open PR (`gh pr list --head <branch> --state open`).
 
-**A. Open PR exists** (standard case — debrief runs before `ship`, per `docs/FEATURE_WORKFLOW.md` step 12): stay on the branch, commit, and push. No new branch or PR.
+**A. Open PR exists** (standard case — debrief runs before `ship`, per `docs/workflows/FEATURE.md` step 12): stay on the branch, commit, and push. No new branch or PR.
 ```bash
 git add <files>
 git commit -m "meta: debrief HAB-XX — <short summary>"

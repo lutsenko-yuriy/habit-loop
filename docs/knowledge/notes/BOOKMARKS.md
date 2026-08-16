@@ -33,3 +33,4 @@ heavy `/checkup` tier.
 | `stale-ticket` | A ticket's description no longer matching current reality by the time it's picked up. |
 | `planning-gaps` | Gaps surfaced only during implementation that the `/plan` pass should have caught — algorithm/API mismatches, mis-sequenced WUs, narrow option sets. |
 | `cross-project-sync` | Keeping this repo's harness (skills/workflow docs) in sync with the sibling Yuriys-agentic-boyz project. |
+| `postmortem-workflow` | Post-fix root-cause investigation ticket structure — origin tracing, deadline discipline, distinguishing from pre-fix troubleshooting. |

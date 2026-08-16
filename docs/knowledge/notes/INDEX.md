@@ -26,6 +26,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **scope-creep** (2)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
+- **postmortem-workflow** (1)
 - **stale-ticket** (1)
 
 ## By bookmark
@@ -136,6 +137,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-201: Bug: pact shows "On break" (list + detail banner) before the break actually starts](HAB-201.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
+
+### postmortem-workflow
+- [HAB-209: Postmortem: find when/why stop-pact started deleting ALL showups](HAB-209.md)
 
 ### research-methodology
 - [HAB-123: Research: choose a literature-research methodology for an agent research skill](HAB-123.md)

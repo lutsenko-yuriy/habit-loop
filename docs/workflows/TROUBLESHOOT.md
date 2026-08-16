@@ -1,7 +1,7 @@
 # Troubleshooting Workflow
 
 Use this workflow for reactive work: CI failures, regressions, infrastructure breakage, build system issues.
-For new features, enhancements, and planned changes, use `docs/FEATURE_WORKFLOW.md` instead.
+For new features, enhancements, and planned changes, use `docs/workflows/FEATURE.md` instead.
 
 @skills/shared/decision-guidelines.md
 
@@ -47,4 +47,4 @@ Present this alongside the trade-off table, not only when asked.
 
 ## 5. Ship
 
-Once a fix works, follow `docs/FEATURE_WORKFLOW.md` steps 7–13 (CHANGELOG, version bump, PR, review, debrief, merge via `/ship`).
+Once a fix works, follow `docs/workflows/FEATURE.md` steps 7–13 (CHANGELOG, version bump, PR, review, debrief, merge via `/ship`).
