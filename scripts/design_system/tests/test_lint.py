@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from design_system.lint import find_raw_spacing_literals, load_allowlist
+from design_system.lint import find_raw_spacing_literals, find_unused_allowlist_entries, load_allowlist
 
 
 class TestFindRawSpacingLiterals(unittest.TestCase):
@@ -174,6 +174,91 @@ class TestFindRawSpacingLiterals(unittest.TestCase):
         )
         findings = self._scan(root)
         self.assertEqual(findings, [])
+
+    def test_block_comment_masked(self):
+        """2nd-pass audit finding: /* ... */ comments were not masked at
+        all, so an unbalanced paren inside one (e.g. mentioning "foo)" in
+        prose) could desync the balanced-paren walk and either hide a real
+        violation or misfire on unrelated code."""
+        root = self._project(
+            {
+                'lib/foo.dart': (
+                    "Widget a() => SizedBox(\n"
+                    "  /* note: see foo) below */\n"
+                    "  width: 44,\n"
+                    "  height: 44,\n"
+                    ");\n"
+                )
+            },
+        )
+        findings = self._scan(root)
+        self.assertEqual(len(findings), 2)
+
+    def test_multiline_block_comment_masked(self):
+        root = self._project(
+            {'lib/foo.dart': "/*\n * Uses EdgeInsets.all(16) for outer padding.\n */\nclass Foo {}"},
+        )
+        findings = self._scan(root)
+        self.assertEqual(findings, [])
+
+    def test_sized_box_named_constructor_flagged(self):
+        """2nd-pass audit finding: SizedBox.square/.fromSize bypassed the
+        gate entirely since only bare SizedBox( was matched."""
+        root = self._project(
+            {'lib/foo.dart': "SizedBox.square(dimension: 44);"},
+        )
+        findings = self._scan(root)
+        self.assertEqual(len(findings), 1)
+
+    def test_edge_insets_directional_flagged(self):
+        """2nd-pass audit finding: EdgeInsetsDirectional bypassed the gate
+        entirely since only EdgeInsets.<ctor>( was matched."""
+        root = self._project(
+            {'lib/foo.dart': "EdgeInsetsDirectional.only(start: 12);"},
+        )
+        findings = self._scan(root)
+        self.assertEqual(len(findings), 1)
+
+
+class TestFindUnusedAllowlistEntries(unittest.TestCase):
+
+    def setUp(self):
+        self._roots: list[Path] = []
+
+    def tearDown(self):
+        for root in self._roots:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def _project(self, lib_files: dict[str, str]) -> Path:
+        root = Path(tempfile.mkdtemp())
+        self._roots.append(root)
+        for rel_path, content in lib_files.items():
+            f = root / rel_path
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(content)
+        return root
+
+    def test_entry_matching_a_real_literal_is_not_unused(self):
+        root = self._project(
+            {'lib/foo.dart': "Padding(padding: EdgeInsets.symmetric(horizontal: 1));"},
+        )
+        unused = find_unused_allowlist_entries(root, allowlist={('lib/foo.dart', 1)})
+        self.assertEqual(unused, set())
+
+    def test_entry_with_no_matching_literal_is_unused(self):
+        """2nd-pass audit finding: a stale allowlist entry (the literal at
+        that line was removed or already tokenized) must be detectable,
+        not silently become a permanent blanket exemption on that line."""
+        root = self._project(
+            {'lib/foo.dart': "Padding(padding: EdgeInsets.symmetric(horizontal: AppSpacing.s2));"},
+        )
+        unused = find_unused_allowlist_entries(root, allowlist={('lib/foo.dart', 1)})
+        self.assertEqual(unused, {('lib/foo.dart', 1)})
+
+    def test_entry_for_nonexistent_file_is_unused(self):
+        root = self._project({})
+        unused = find_unused_allowlist_entries(root, allowlist={('lib/gone.dart', 1)})
+        self.assertEqual(unused, {('lib/gone.dart', 1)})
 
 
 class TestLoadAllowlist(unittest.TestCase):

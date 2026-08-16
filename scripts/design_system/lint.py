@@ -10,8 +10,11 @@ Usage:
     python3 scripts/design_system/lint.py [--root <path>]
 
 Exit codes:
-    0  No raw spacing literals found (beyond the checked-in allowlist).
+    0  No raw spacing literals found (beyond the checked-in allowlist), and
+       every allowlist entry still matches a real literal.
     1  One or more raw spacing literals found — see stdout for file:line.
+    1  One or more allowlist entries are stale (no matching literal at that
+       line any more) — see stdout for file:line.
     1  --root does not contain a lib/ directory (fails loud, not open — a
        wrong/missing root must not read as a silent pass on a blocking gate).
 
@@ -32,18 +35,24 @@ from pathlib import Path
 _ALLOWLIST_PATH = Path(__file__).with_name('spacing_allowlist.txt')
 
 # Word-boundary-guarded so `AnimatedSizedBox(` or `someEdgeInsets.all(` don't
-# match (PR #387 audit finding).
-_CALL_START_RE = re.compile(r"\b(?:EdgeInsets\.\w+|SizedBox)\s*\(")
+# match. Covers named constructors (`SizedBox.square(`, `SizedBox.fromSize(`)
+# and `EdgeInsetsDirectional`, both of which bypassed the gate entirely in an
+# earlier version (2nd-pass PR #387 audit finding).
+_CALL_START_RE = re.compile(r"\b(?:EdgeInsets(?:Directional)?\.\w+|SizedBox(?:\.\w+)?)\s*\(")
 _NUMBER_RE = re.compile(r"(?<![\w.])\d+(?:\.\d+)?(?![\w])")
 
-# Matches (and blanks out, preserving length/newlines) line comments and
-# string literals — single- and double-quoted, raw or not, single-line or
-# triple-quoted — before any scanning happens. Without this, a dartdoc
-# comment that documents the rule itself (e.g. `/// Uses EdgeInsets.all(16)`)
-# or a string literal containing similar text is mistaken for a real call
-# (PR #387 audit finding).
+# Matches (and blanks out, preserving length/newlines) comments and string
+# literals — `//` line comments, `/* */` block comments, and single/double
+# -quoted strings (raw or not, single-line or triple-quoted) — before any
+# scanning happens. Without this, a dartdoc comment or string that mentions a
+# call shape is mistaken for a real one, and — since block comments weren't
+# masked in an earlier version — an unbalanced paren inside a `/* ... */`
+# prose comment could desync the balanced-paren walk in `_top_level_args`
+# below, silently hiding real violations or misfiring on unrelated code
+# (1st- and 2nd-pass PR #387 audit findings).
 _STRING_OR_COMMENT_RE = re.compile(
     r"//[^\n]*"
+    r"|/\*.*?\*/"
     r"|r?'''(?:[^\\]|\\.)*?'''"
     r"|r?\"\"\"(?:[^\\]|\\.)*?\"\"\""
     r"|r?\"(?:[^\"\\\n]|\\.)*\""
@@ -67,10 +76,10 @@ def _top_level_args(masked_text: str, call_end: int) -> str:
     `(` at `call_end`, with any nested sub-call's parenthesised contents
     (and their delimiting parens) blanked out — so a number buried two-plus
     levels deep inside an unrelated nested call/constructor is not mistaken
-    for a literal passed directly to *this* call (PR #387 audit finding: the
-    original `[^()]*` non-nested regex went too far the other way and missed
-    real top-level literals whenever a call had *any* nested parens at all,
-    e.g. `SizedBox(width: 44, child: CustomPaint(...))`).
+    for a literal passed directly to *this* call (1st-pass PR #387 audit
+    finding: the original `[^()]*` non-nested regex went too far the other
+    way and missed real top-level literals whenever a call had *any* nested
+    parens at all, e.g. `SizedBox(width: 44, child: CustomPaint(...))`).
     """
     depth = 1
     chars: list[str] = []
@@ -110,21 +119,22 @@ def load_allowlist(path: Path = _ALLOWLIST_PATH) -> set[tuple[str, int]]:
     return entries
 
 
-def find_raw_spacing_literals(root: Path, allowlist: set[tuple[str, int]] | None = None) -> list[tuple[str, int, str]]:
-    """Return (relative_path, line_number, line_text) for each raw numeric
-    literal passed directly (not nested inside another call) to an
-    `EdgeInsets.<ctor>(...)` or `SizedBox(...)` call under lib/, skipping any
-    (path, line) pair present in `allowlist` (defaults to the checked-in
-    spacing_allowlist.txt next to this module).
+def _scan(root: Path) -> list[tuple[str, int, str]]:
+    """Every raw numeric literal passed directly (not nested inside another
+    call) to an `EdgeInsets(Directional).<ctor>(...)` or
+    `SizedBox(.<ctor>)?(...)` call under lib/ — unfiltered by any allowlist.
+    Shared by find_raw_spacing_literals and find_unused_allowlist_entries so
+    both agree on exactly what counts as "a real literal at this location".
     """
-    if allowlist is None:
-        allowlist = load_allowlist()
-
+    # Deliberately permissive here (empty result, not an error) — this is a
+    # library function. The CLI's fail-loud guard for a missing lib/ lives in
+    # main(), the sole current entry point; a future direct importer of this
+    # module should add its own guard rather than rely on this one.
     lib_dir = root / 'lib'
     if not lib_dir.exists():
         return []
 
-    findings: list[tuple[str, int, str]] = []
+    all_literals: list[tuple[str, int, str]] = []
     for dart_file in sorted(lib_dir.rglob('*.dart')):
         try:
             text = dart_file.read_text(encoding='utf-8')
@@ -141,12 +151,33 @@ def find_raw_spacing_literals(root: Path, allowlist: set[tuple[str, int]] | None
             for number_match in _NUMBER_RE.finditer(args):
                 offset = args_start + number_match.start()
                 line_no = text.count('\n', 0, offset) + 1
-                if (rel, line_no) in allowlist:
-                    continue
                 line_text = lines[line_no - 1] if 0 <= line_no - 1 < len(lines) else ''
-                findings.append((rel, line_no, line_text.strip()))
+                all_literals.append((rel, line_no, line_text.strip()))
 
-    return findings
+    return all_literals
+
+
+def find_raw_spacing_literals(root: Path, allowlist: set[tuple[str, int]] | None = None) -> list[tuple[str, int, str]]:
+    """Return (relative_path, line_number, line_text) for each raw numeric
+    literal found by `_scan`, skipping any (path, line) pair present in
+    `allowlist` (defaults to the checked-in spacing_allowlist.txt).
+    """
+    if allowlist is None:
+        allowlist = load_allowlist()
+    return [f for f in _scan(root) if (f[0], f[1]) not in allowlist]
+
+
+def find_unused_allowlist_entries(root: Path, allowlist: set[tuple[str, int]] | None = None) -> set[tuple[str, int]]:
+    """Return the subset of `allowlist` (defaults to the checked-in
+    spacing_allowlist.txt) that does not match any real literal found by
+    `_scan` — a stale entry (the literal was removed, tokenized, or the file
+    doesn't exist any more) that would otherwise silently become a permanent
+    blanket exemption on that line number (2nd-pass PR #387 audit finding).
+    """
+    if allowlist is None:
+        allowlist = load_allowlist()
+    found = {(f[0], f[1]) for f in _scan(root)}
+    return allowlist - found
 
 
 def main(argv: list[str]) -> int:
@@ -160,15 +191,30 @@ def main(argv: list[str]) -> int:
         print(f'Error: {root} has no lib/ directory — wrong --root, or run from the repo root.', file=sys.stderr)
         return 1
 
-    findings = find_raw_spacing_literals(root)
+    allowlist = load_allowlist()
+    findings = find_raw_spacing_literals(root, allowlist)
+    unused = find_unused_allowlist_entries(root, allowlist)
+    ok = True
 
     if findings:
+        ok = False
         print(f'Found {len(findings)} raw numeric literal(s) in EdgeInsets/SizedBox calls under lib/:')
         for rel, line_no, line_text in findings:
             print(f'  {rel}:{line_no}: {line_text}')
         print()
         print('Use an AppSpacing token (lib/theme/spacing.dart) instead of a bare number.')
         print(f'A deliberate, fixed-dimension exception belongs in {_ALLOWLIST_PATH.name} (path:line, one per line).')
+
+    if unused:
+        ok = False
+        if findings:
+            print()
+        print(f'{len(unused)} stale entr{"y" if len(unused) == 1 else "ies"} in {_ALLOWLIST_PATH.name} '
+              '(no matching raw literal at that line any more — remove or update):')
+        for rel, line_no in sorted(unused):
+            print(f'  {rel}:{line_no}')
+
+    if not ok:
         return 1
 
     print('OK — no raw spacing literals found.')
