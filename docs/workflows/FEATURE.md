@@ -1,7 +1,7 @@
 # Feature Workflow
 
 Use this workflow for new features, enhancements, and planned changes.
-For bugs, CI failures, regressions, or infrastructure breakage, use `docs/TROUBLESHOOT_WORKFLOW.md` instead.
+For bugs, CI failures, regressions, or infrastructure breakage, use `docs/workflows/TROUBLESHOOT.md` instead.
 
 Follow TDD: write or update tests **before** implementing the feature or fix. Red → Green → Refactor.
 
@@ -104,7 +104,7 @@ When in doubt, use **In QA**.
    - Push the branch to the remote.
    - Open a PR.
    - Move the Linear ticket to **In Review**.
-   - Inform the user of the PR URL.
+   - Inform the user of the PR URL and open it in the browser (`open <url>` / `xdg-open` on Linux).
    - The review loop (step 10) starts automatically once the PR is open, unless the user says otherwise beforehand. Say so explicitly if you want to check the running app first before review effort is spent on code that might still move.
 10. **Review loop** — starts automatically once the PR is open (see step 9), unless the user asked to hold; repeat until the user explicitly approves the PR:
     0. **Before starting:** smoke-test the app on a real device/emulator on your own initiative — confirm it compiles and boots, then exercise the specific flow the PR touches. Report the result, then proceed into the loop.
@@ -113,7 +113,7 @@ When in doubt, use **In QA**.
     3. Check the Codecov patch-coverage report (posted automatically as a PR comment by CI). If patch coverage is below the project threshold, add tests for the uncovered lines where it is reasonable to do so — skip lines that require disproportionate test infrastructure (e.g. `ConsumerStatefulWidget` screens with no widget-test harness). Explain skipped lines in a PR comment.
     4. If the cumulative changes since the last review pass are non-trivial (new files, logic changes, interface changes), re-invoke both review skills and return to step 10.1.
     5. Minor fixes (typos, cosmetic, comment wording) do not require a re-review pass.
-    6. For PRs that touch `integration_test/`: dispatch the `scenarios.yml` CI workflow (`gh workflow run scenarios.yml --ref <branch>`) and confirm it passes — required before the loop can close, in addition to any local `/run-scenarios` run. CI's short-viewport/headless Android emulator surfaces timing and layout races that don't reproduce locally (HAB-199). Tell the user upfront that this may take several dispatch cycles, so they can step away instead of staying attached through each one (mirrors `docs/TROUBLESHOOT_WORKFLOW.md`'s CI-dispatch guidance). A failure in a scenario this PR's own scope must keep green: keep fixing and re-dispatching until it passes. A failure in a scenario **outside** this PR's scope (pre-existing, unrelated to the diff): re-dispatch up to 3 times; if still red on the 3rd attempt, stop and flag it to the user as flakiness to track separately, rather than re-dispatching indefinitely.
+    6. For PRs that touch `integration_test/`: dispatch the `scenarios.yml` CI workflow (`gh workflow run scenarios.yml --ref <branch>`) and confirm it passes — required before the loop can close, in addition to any local `/run-scenarios` run. CI's short-viewport/headless Android emulator surfaces timing and layout races that don't reproduce locally (HAB-199). Tell the user upfront that this may take several dispatch cycles, so they can step away instead of staying attached through each one (mirrors `docs/workflows/TROUBLESHOOT.md`'s CI-dispatch guidance). A failure in a scenario this PR's own scope must keep green: keep fixing and re-dispatching until it passes. A failure in a scenario **outside** this PR's scope (pre-existing, unrelated to the diff): re-dispatch up to 3 times; if still red on the 3rd attempt, stop and flag it to the user as flakiness to track separately, rather than re-dispatching indefinitely.
     7. The loop ends only when the user explicitly approves ("LGTM", "looks good", "approved", etc.) and the scenarios CI dispatch (step 10.6, when applicable) has passed.
 11. Remind the user to compact context after each commit to keep the conversation lean.
 12. When the user approves the PR, invoke `debrief` on the current feature branch to capture the retrospective before merging:

@@ -39,7 +39,7 @@ Once an issue has been fetched in full earlier in the same session, later steps 
 
 When in doubt, re-fetch — this convention trades a rare redundant call for the far more common case of not re-reading content that's already in context. It never trades away the accuracy of what a step acts on.
 
-**A compacted transcript doesn't count as "already fetched."** This project's own workflow (`docs/FEATURE_WORKFLOW.md` step 11) recommends compacting context after each commit — after compaction, a full description that was fetched earlier in the session is no longer verbatim in context even though the session is nominally the same one. If context was compacted since the last fetch, treat the issue as not-yet-fetched and re-fetch it.
+**A compacted transcript doesn't count as "already fetched."** This project's own workflow (`docs/workflows/FEATURE.md` step 11) recommends compacting context after each commit — after compaction, a full description that was fetched earlier in the session is no longer verbatim in context even though the session is nominally the same one. If context was compacted since the last fetch, treat the issue as not-yet-fetched and re-fetch it.
 
 ## Known redundant round-trips (fixed as part of HAB-176)
 

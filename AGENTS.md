@@ -28,9 +28,10 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
 | docs/knowledge/decisions/README.md | ADR registry index — one `.md` file per standing decision, discoverable independent of the ticket that produced it |
 | docs/CONSTRAINTS.md | Standing project constraints — reference when evaluating trade-offs in research tickets |
-| docs/FEATURE_WORKFLOW.md | Step-by-step feature development workflow — TDD cycle, branching, PR, ship, and ticket state rules |
-| docs/TROUBLESHOOT_WORKFLOW.md | Reactive workflow for bugs, CI failures, and infrastructure issues — investigate, ticket, fix, ship |
-| docs/RESEARCH_WORKFLOW.md | Step-by-step workflow for research-only tickets — alternatives survey, constraint evaluation, debrief |
+| docs/workflows/FEATURE.md | Step-by-step feature development workflow — TDD cycle, branching, PR, ship, and ticket state rules |
+| docs/workflows/TROUBLESHOOT.md | Reactive workflow for bugs, CI failures, and infrastructure issues — investigate, ticket, fix, ship |
+| docs/workflows/RESEARCH.md | Step-by-step workflow for research-only tickets — alternatives survey, constraint evaluation, debrief |
+| docs/workflows/POSTMORTEM.md | Post-fix root-cause investigation workflow — reconstructing when/why a shipped bug was introduced, after TROUBLESHOOT.md produced the fix |
 | docs/knowledge/README.md | Project knowledge base — vault layout, per-ticket file format, how `/note` and `/debrief` write entries |
 | docs/knowledge/notes/INDEX.md | Generated tagged table of contents over `docs/knowledge/notes/` — regenerate via `scripts/notes/index.py`, do not edit by hand (HAB-221) |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
@@ -133,9 +134,10 @@ At the beginning of every new session, before doing anything else, this checklis
 
 ## Workflow
 
-@docs/FEATURE_WORKFLOW.md
-@docs/TROUBLESHOOT_WORKFLOW.md
-@docs/RESEARCH_WORKFLOW.md
+@docs/workflows/FEATURE.md
+@docs/workflows/TROUBLESHOOT.md
+@docs/workflows/RESEARCH.md
+@docs/workflows/POSTMORTEM.md
 
 ## Progress signaling
 

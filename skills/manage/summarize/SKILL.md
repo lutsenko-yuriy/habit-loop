@@ -26,6 +26,10 @@ If it exists and has content:
 
 This catches stale-but-still-relevant intentions from a prior session before backlog review, and avoids re-drafting a ticket that's already listed here. See the HAB-173 debrief (2026-07-16): a `/brief` run created a duplicate of HAB-174 because nothing surfaced `PLAN.local.md`'s existing entry for the same idea.
 
+### 0a. Flag overdue postmortem tickets
+
+Any ticket titled `Postmortem: …` (see `docs/workflows/POSTMORTEM.md`) carries a Linear `dueDate` set at creation. If such a ticket appears in the backlog with a `dueDate` in the past, flag it explicitly in the summary and ask whether to proceed with it now or drop it — do not let it silently blend into the rest of the backlog list.
+
 ### 1. Output the pre-fetched backlog
 
 Routed via `skill_router.py` (`context: linear`) — the backlog data is injected above this text between `=== PRE-FETCHED BACKLOG ===` sentinels. Copy that block verbatim — do not reformat, do not call any tools. This skill's frontmatter also sets `render_html_view: true`, so the pre-fetched path writes and opens a sortable HTML table view of the same backlog (`backlog.local.html`, HAB-222) as a side effect — a `_(Backlog table: <path>)_` note appears after the sentinel block when this succeeds; if it fails, the note is silently omitted and the markdown block is unaffected. **When the note is present, mention in one line that the table opened** (e.g. "Also opened a sortable table view — `<path>`.") so the auto-open isn't a silent surprise; say nothing extra when the note is absent (the fallback already degraded gracefully, no need to draw attention to it). **This flag is opt-in per skill, not automatic for every `context: linear` skill** — `draft-scenarios` also declares `context: linear` but does not set `render_html_view`, so it gets only the markdown block and never pops a browser window mid-ticket. **Known limitation:** the pre-fetched path does not classify product vs. process (step 1a below) — it only groups issues by the existing Bug/Tech Debt/Feature/Improvement Linear labels.

@@ -32,8 +32,10 @@ Read this file to resolve all project-specific constants referenced in skill ins
 | Architecture | `docs/ARCHITECTURE.md` |
 | Analytics events | `docs/ANALYTICS_EVENTS.md` |
 | Feature toggles | `docs/FEATURE_TOGGLES.md` |
-| Feature workflow | `docs/FEATURE_WORKFLOW.md` |
-| Troubleshoot workflow | `docs/TROUBLESHOOT_WORKFLOW.md` |
+| Feature workflow | `docs/workflows/FEATURE.md` |
+| Troubleshoot workflow | `docs/workflows/TROUBLESHOOT.md` |
+| Research workflow | `docs/workflows/RESEARCH.md` |
+| Postmortem workflow | `docs/workflows/POSTMORTEM.md` |
 | Knowledge base | `docs/knowledge/notes/` (one `HAB-XX.md` file per ticket) |
 | Decisions (ADRs) | `docs/knowledge/decisions/` (one `ADR-NNNN-<short-name>.md` file per standing decision) |
 

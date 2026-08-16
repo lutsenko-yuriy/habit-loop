@@ -68,14 +68,14 @@ Run this yourself — never delegate it to another subagent, and never repeat it
 
 Present the full result — evidence table(s) plus synthesis/map — to the user and wait for approval or requested adjustments.
 
-If this skill was invoked as part of an existing ticket's research (a `HAB-XX` ID was given, or is inferable from the conversation), write the findings into that ticket's `docs/knowledge/notes/HAB-XX.md`, following the existing per-ticket note format (dated heading under `## Notes`) — this is what `docs/RESEARCH_WORKFLOW.md` step 4 means by "capture findings mid-session, don't batch to the end." If invoked standalone, the conversation output is the deliverable; do not create a notes file for a ticket that doesn't exist.
+If this skill was invoked as part of an existing ticket's research (a `HAB-XX` ID was given, or is inferable from the conversation), write the findings into that ticket's `docs/knowledge/notes/HAB-XX.md`, following the existing per-ticket note format (dated heading under `## Notes`) — this is what `docs/workflows/RESEARCH.md` step 4 means by "capture findings mid-session, don't batch to the end." If invoked standalone, the conversation output is the deliverable; do not create a notes file for a ticket that doesn't exist.
 
 ---
 
 ## Notes
 
 - This skill never implements anything — it produces a finding. If the finding leads to a decision to build something, that follows the normal `brief`/`plan` → `implement` path as a separate ticket.
-- `docs/RESEARCH_WORKFLOW.md` step 2 ("survey existing alternatives") can invoke this skill directly for claims or topics that suit a literature search — it is not mandatory for every research ticket (e.g. surveying internal code precedent doesn't need it).
+- `docs/workflows/RESEARCH.md` step 2 ("survey existing alternatives") can invoke this skill directly for claims or topics that suit a literature search — it is not mandatory for every research ticket (e.g. surveying internal code precedent doesn't need it).
 - Runs inline in the session rather than being dispatched wholesale to a single subagent, because it owns two approval gates (steps 2 and 5) and spawns its own nested subagents (step 3) — the same reason `debrief` stays inline.
 
 ---

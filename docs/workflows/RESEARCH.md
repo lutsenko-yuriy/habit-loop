@@ -1,6 +1,6 @@
 # Research Workflow
 
-Use this workflow for research-only tickets (no production code, no PR beyond the debrief commit). For features use `docs/FEATURE_WORKFLOW.md`; for bugs/CI use `docs/TROUBLESHOOT_WORKFLOW.md`.
+Use this workflow for research-only tickets (no production code, no PR beyond the debrief commit). For features use `docs/workflows/FEATURE.md`; for bugs/CI use `docs/workflows/TROUBLESHOOT.md`.
 
 @skills/shared/decision-guidelines.md
 
