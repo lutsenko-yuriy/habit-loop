@@ -55,7 +55,7 @@ class ShowupStatusDots extends StatelessWidget {
     Widget dot(Showup s, int index) {
       final color = useUiStates ? colors.forUiState(uiStates![index]) : colors.forStatus(s.status);
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 1), // spacing-lint: allow (s2 doubles this margin)
+        padding: const EdgeInsets.symmetric(horizontal: 1),
         child: _dotCircle(
           key: Key('status-dot-${s.id}'),
           size: 6,

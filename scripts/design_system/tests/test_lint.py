@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from design_system.lint import find_raw_spacing_literals
+from design_system.lint import find_raw_spacing_literals, load_allowlist
 
 
 class TestFindRawSpacingLiterals(unittest.TestCase):
@@ -26,11 +26,16 @@ class TestFindRawSpacingLiterals(unittest.TestCase):
             f.write_text(content)
         return root
 
+    def _scan(self, root: Path, allowlist: set[tuple[str, int]] | None = None) -> list[tuple[str, int, str]]:
+        """Scan with an explicit (default empty) allowlist so tests never
+        depend on the real checked-in spacing_allowlist.txt."""
+        return find_raw_spacing_literals(root, allowlist=allowlist or set())
+
     def test_raw_literal_in_edge_insets_flagged(self):
         root = self._project(
             {'lib/foo.dart': "Padding(padding: EdgeInsets.all(16));"},
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0][0], 'lib/foo.dart')
 
@@ -38,48 +43,57 @@ class TestFindRawSpacingLiterals(unittest.TestCase):
         root = self._project(
             {'lib/foo.dart': "SizedBox(height: 8);"},
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
         self.assertEqual(len(findings), 1)
 
     def test_app_spacing_token_not_flagged(self):
         root = self._project(
             {'lib/foo.dart': "SizedBox(height: AppSpacing.s16);"},
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
         self.assertEqual(findings, [])
 
     def test_multiple_literals_in_one_call_all_flagged(self):
         root = self._project(
             {'lib/foo.dart': "EdgeInsets.symmetric(horizontal: 8, vertical: 4);"},
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
         self.assertEqual(len(findings), 2)
 
     def test_decimal_literal_flagged(self):
         root = self._project(
             {'lib/foo.dart': "SizedBox(width: 8.0);"},
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
         self.assertEqual(len(findings), 1)
 
-    def test_suppression_comment_exempts_line(self):
+    def test_allowlisted_line_exempted(self):
+        root = self._project(
+            {'lib/foo.dart': "Padding(padding: EdgeInsets.symmetric(horizontal: 1));"},
+        )
+        findings = self._scan(root, allowlist={('lib/foo.dart', 1)})
+        self.assertEqual(findings, [])
+
+    def test_allowlist_is_per_line_not_per_file(self):
+        """A file can have both an allowlisted literal and a real violation
+        — only the listed line is exempted."""
         root = self._project(
             {
                 'lib/foo.dart': (
-                    "Padding(\n"
-                    "  padding: EdgeInsets.symmetric(horizontal: 1), // spacing-lint: allow (doubling would break visuals)\n"
-                    ");\n"
+                    "Padding(padding: EdgeInsets.symmetric(horizontal: 1));\n"
+                    "SizedBox(height: 8);\n"
                 )
             },
         )
-        findings = find_raw_spacing_literals(root)
-        self.assertEqual(findings, [])
+        findings = self._scan(root, allowlist={('lib/foo.dart', 1)})
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0][1], 2)
 
     def test_no_matches_returns_empty_list(self):
         root = self._project(
             {'lib/foo.dart': "class Foo {}"},
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
         self.assertEqual(findings, [])
 
     def test_multiline_call_reports_correct_line_number(self):
@@ -94,23 +108,117 @@ class TestFindRawSpacingLiterals(unittest.TestCase):
                 )
             },
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0][1], 3)
 
-    def test_nested_call_in_args_is_skipped_not_crashed(self):
-        """Known limitation: a nested parenthesised expression inside the
-        call args breaks the non-nested regex capture, so this raw literal
-        is silently missed rather than flagged. Documented, not a crash."""
+    def test_literal_nested_inside_unrelated_call_not_flagged(self):
+        """A literal passed to an unrelated nested function call (not
+        directly to SizedBox/EdgeInsets itself) is not a spacing literal for
+        *this* call and must not be flagged."""
         root = self._project(
             {'lib/foo.dart': "SizedBox(height: computeHeight(8));"},
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
+        self.assertEqual(findings, [])
+
+    def test_top_level_literal_alongside_nested_call_is_flagged(self):
+        """PR #387 audit finding: the original non-nested regex silently
+        missed a real top-level literal whenever the call had *any* nested
+        parens elsewhere in its args (e.g. a `child:` widget). Balanced-paren
+        tracking must still find the sibling literal."""
+        root = self._project(
+            {'lib/foo.dart': "SizedBox(width: 44, child: CustomPaint(painter: MyPainter()));"},
+        )
+        findings = self._scan(root)
+        self.assertEqual(len(findings), 1)
+        self.assertIn('44', findings[0][2])
+
+    def test_dartdoc_comment_mentioning_a_call_not_flagged(self):
+        """PR #387 audit finding: documenting the rule itself (or any prior
+        API usage) in a comment must not trigger the lint on the comment."""
+        root = self._project(
+            {'lib/foo.dart': "/// Uses EdgeInsets.all(16) for outer padding.\nclass Foo {}"},
+        )
+        findings = self._scan(root)
+        self.assertEqual(findings, [])
+
+    def test_line_comment_after_call_not_double_counted_as_new_call(self):
+        root = self._project(
+            {'lib/foo.dart': "SizedBox(height: AppSpacing.s8); // was EdgeInsets.all(16) before HAB-187"},
+        )
+        findings = self._scan(root)
+        self.assertEqual(findings, [])
+
+    def test_string_literal_mentioning_a_call_not_flagged(self):
+        """PR #387 audit finding: a string literal containing text that
+        looks like a call must not trigger the lint."""
+        root = self._project(
+            {'lib/foo.dart': "final s = 'example: SizedBox(height: 16)';"},
+        )
+        findings = self._scan(root)
+        self.assertEqual(findings, [])
+
+    def test_subclass_name_not_matched_by_word_boundary(self):
+        """PR #387 audit finding: SizedBox had no left word boundary, so
+        AnimatedSizedBox( would falsely match."""
+        root = self._project(
+            {'lib/foo.dart': "AnimatedSizedBox(height: 8);"},
+        )
+        findings = self._scan(root)
         self.assertEqual(findings, [])
 
     def test_only_scans_lib_directory(self):
         root = self._project(
             {'test/foo_test.dart': "SizedBox(height: 8);"},
         )
-        findings = find_raw_spacing_literals(root)
+        findings = self._scan(root)
         self.assertEqual(findings, [])
+
+
+class TestLoadAllowlist(unittest.TestCase):
+
+    def setUp(self):
+        self._roots: list[Path] = []
+
+    def tearDown(self):
+        for root in self._roots:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def _write(self, content: str) -> Path:
+        root = Path(tempfile.mkdtemp())
+        self._roots.append(root)
+        path = root / 'allowlist.txt'
+        path.write_text(content)
+        return path
+
+    def test_missing_file_returns_empty_set(self):
+        root = Path(tempfile.mkdtemp())
+        self._roots.append(root)
+        self.assertEqual(load_allowlist(root / 'does_not_exist.txt'), set())
+
+    def test_parses_path_colon_line_entries(self):
+        path = self._write('lib/a.dart:12\nlib/b.dart:34\n')
+        self.assertEqual(load_allowlist(path), {('lib/a.dart', 12), ('lib/b.dart', 34)})
+
+    def test_comments_and_blank_lines_ignored(self):
+        path = self._write('# a comment\n\nlib/a.dart:5  # trailing note\n')
+        self.assertEqual(load_allowlist(path), {('lib/a.dart', 5)})
+
+    def test_malformed_line_ignored_not_crashed(self):
+        path = self._write('not-a-valid-entry\nlib/a.dart:notanumber\nlib/b.dart:7\n')
+        self.assertEqual(load_allowlist(path), {('lib/b.dart', 7)})
+
+
+class TestMain(unittest.TestCase):
+
+    def test_missing_lib_dir_fails_loud_not_silent_pass(self):
+        """PR #387 audit finding: a wrong/missing --root must not read as a
+        silent pass on a blocking CI gate."""
+        from design_system.lint import main
+
+        empty_root = Path(tempfile.mkdtemp())
+        try:
+            self.assertEqual(main(['--root', str(empty_root)]), 1)
+        finally:
+            shutil.rmtree(empty_root, ignore_errors=True)
