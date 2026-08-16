@@ -11,9 +11,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **multi-wu-scope** (11)
 - **ci-flakiness** (9)
 - **review-findings** (9)
-- **code-style** (7)
+- **code-style** (8)
+- **research-methodology** (7)
 - **knowledge-base-process** (6)
-- **research-methodology** (6)
 - **widget-test-gotchas** (6)
 - **changelog-versioning** (4)
 - **dead-code** (4)
@@ -60,6 +60,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
 - [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
 - [HAB-234: Welcome-back reminder for an unpersisted showup can survive a later, unrelated break's cancellation sweep](HAB-234.md)
+- [HAB-235: Research: code readability guidelines for CODE_STYLE.md — comment brevity, function/class size, PR scope](HAB-235.md)
 
 ### cross-project-sync
 - [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
@@ -142,6 +143,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-164: Research: on-the-fly localization string updates for post-launch fixes](HAB-164.md)
 - [HAB-169: Research: single docs organisation structure for notes, ADRs, and research artifacts](HAB-169.md)
 - [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
+- [HAB-235: Research: code readability guidelines for CODE_STYLE.md — comment brevity, function/class size, PR scope](HAB-235.md)
 
 ### review-findings
 - [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
