@@ -152,27 +152,42 @@ def detect_orphaned_analytics_events(root: Path) -> list[str]:
 _PACKAGE_IMPORT_RE = re.compile(r"import\s+'package:habit_loop/([^']+)'")
 
 
+_RELATIVE_IMPORT_RE = re.compile(r"import\s+'([^':]+)'")
+
+
 def _test_file_referenced_elsewhere(root: Path, rel_path: str, test_files: list[Path]) -> bool:
     """True if rel_path is imported (relatively) by another test file, or its
-    path string appears in a .github/ file or a skills/**/SKILL.md file."""
-    basename = Path(rel_path).name
-    import_pattern = re.compile(r"import\s+'[^']*" + re.escape(basename) + r"'")
-    this_file = root / rel_path
+    path string appears — as a whole path, not a substring of a longer one —
+    in a .github/ file or a skills/**/SKILL.md file.
+
+    The relative-import check resolves each candidate import against the
+    *importing* file's own directory (not just a basename match) so two test
+    files sharing a basename in different directories can't cross-exempt each
+    other. `[^':]+` excludes `package:`/`dart:` imports, which always contain
+    a colon before the closing quote. The path-reference check is anchored on
+    both sides so a shorter path (`test/x.dart`) can't be silently exempted
+    by a reference to an unrelated longer one that happens to end the same
+    way (`integration_test/x.dart`) — see HAB-184/PR #386 audit.
+    """
+    this_file = (root / rel_path).resolve()
     for other in test_files:
-        if other == this_file:
+        if other.resolve() == this_file:
             continue
         try:
-            if import_pattern.search(other.read_text(encoding='utf-8')):
-                return True
+            source = other.read_text(encoding='utf-8')
         except (OSError, UnicodeDecodeError):
-            pass
+            continue
+        for import_str in _RELATIVE_IMPORT_RE.findall(source):
+            if (other.parent / import_str).resolve() == this_file:
+                return True
 
     github_dir = root / '.github'
     reference_files = (sorted(f for f in github_dir.rglob('*') if f.is_file()) if github_dir.exists() else [])
     reference_files += sorted(root.glob('skills/**/SKILL.md'))
+    path_pattern = re.compile(r'(?<![\w./-])' + re.escape(rel_path) + r'(?![\w.])')
     for f in reference_files:
         try:
-            if rel_path in f.read_text(encoding='utf-8'):
+            if path_pattern.search(f.read_text(encoding='utf-8')):
                 return True
         except (OSError, UnicodeDecodeError):
             pass

@@ -371,6 +371,35 @@ class TestDetectOrphanedTestFiles(unittest.TestCase):
         high, info = detect_orphaned_test_files(root)
         self.assertIn('test/util_test.dart', info)
 
+    def test_path_containment_does_not_exempt_shorter_suffix_match(self):
+        """A CI reference to integration_test/test_runner.dart must not
+        exempt an unrelated test/test_runner.dart via substring containment
+        (audit finding on PR #386)."""
+        root = self._project(
+            {'test/test_runner.dart': "import 'dart:math';"},
+        )
+        (root / '.github').mkdir()
+        (root / '.github' / 'workflow.yml').write_text(
+            'run: flutter test integration_test/test_runner.dart\n'
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('test/test_runner.dart', info)
+
+    def test_relative_import_match_is_directory_aware_not_basename_only(self):
+        """Two files sharing a basename in different directories must not
+        cross-exempt each other via basename-only import matching (audit
+        finding on PR #386)."""
+        root = self._project(
+            {
+                'test/slices/streak/mapper_test.dart': "import 'dart:math';",
+                'test/slices/pact/mapper_test.dart': "import 'dart:math';",
+                'test/slices/pact/runner_test.dart': "import 'mapper_test.dart';",
+            },
+        )
+        high, info = detect_orphaned_test_files(root)
+        self.assertIn('test/slices/streak/mapper_test.dart', info)
+        self.assertNotIn('test/slices/pact/mapper_test.dart', info)
+
     def test_high_confidence_bucket_unaffected_by_relative_import(self):
         """Out of scope per HAB-184: the high-confidence heuristic (all
         package:habit_loop imports missing) is untouched even if the file is
