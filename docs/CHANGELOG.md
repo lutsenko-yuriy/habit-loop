@@ -15,6 +15,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [meta] (PR #385) HAB-223: `ship` now rebases onto `origin/main` as its very first action (step 2), then regenerates `docs/knowledge/notes/INDEX.md` right before the final commit (step 8). Enforces "rebase before merging" guidance non-optionally, and closes the exposure window for stale-but-valid auto-merges on the notes index in the normal `ship`-mediated merge path.
 - [wip] (PR #381) HAB-234 (WU1): stateless welcome-back-reminder reconciliation in PactBreakService — fixes a later break's cancellation sweep missing an earlier break's unpersisted welcome-back target. WU2 (dashboard-triggered reconciliation, multi-device staleness fix) still to come.
 
 ## [0.56.0] — 2026-08-15 (PR #380 merged)
