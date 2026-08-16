@@ -148,6 +148,13 @@ def detect_orphaned_analytics_events(root: Path) -> list[str]:
 # its own: a relative import from another test file (e.g. a combined runner
 # importing individual flow tests), or a direct path reference from CI config
 # or a skill file (a `flutter test <path>`-style entry point) — see HAB-184.
+#
+# Caveat: the exemption is one hop, not a full reachability walk. A file only
+# reachable via another file that is itself dead (e.g. a stale runner still
+# importing a stale flow test) is exempted anyway, because the stale runner
+# is still physically present and still contains the import. Catching that
+# needs a reachability walk from the CI/skill roots, not a per-file check —
+# out of scope here (PR #386 audit).
 
 _PACKAGE_IMPORT_RE = re.compile(r"import\s+'package:habit_loop/([^']+)'")
 
