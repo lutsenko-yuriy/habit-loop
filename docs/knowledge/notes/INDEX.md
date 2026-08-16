@@ -6,8 +6,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
+- **debugging-methodology** (12)
 - **planning-gaps** (12)
-- **debugging-methodology** (11)
 - **multi-wu-scope** (11)
 - **ci-flakiness** (9)
 - **review-findings** (9)
@@ -85,6 +85,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-199: CI: 4 break_flow_test.dart failures — widgets below the fold not realized in lazy Sliver lists (Android emulator only)](HAB-199.md)
 - [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
 - [HAB-208: Stop pact: showups wiped entirely and break banner stays after stopping](HAB-208.md)
+- [HAB-209: Postmortem: find when/why stop-pact started deleting ALL showups](HAB-209.md)
 - [HAB-211: 5 scenarios failing on every main-push CI run since HAB-202 WU4](HAB-211.md)
 - [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
 - [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
