@@ -139,12 +139,45 @@ def detect_orphaned_analytics_events(root: Path) -> list[str]:
 # `package:habit_loop/` imports and resolve them to lib/ paths on disk.
 #
 # High-confidence: ALL package:habit_loop imports point to non-existent files
-# → the file exclusively tested a removed feature.
+# → the file exclusively tested a removed feature. Left untouched by the
+# relative-import/CI-reference check below (HAB-184 out of scope).
 #
 # Informational: ZERO package:habit_loop imports → no production linkage
-# detectable; flag for manual inspection.
+# detectable via that signal alone. Before flagging, also check two other
+# ways a file can be genuinely wired in with no package:habit_loop import of
+# its own: a relative import from another test file (e.g. a combined runner
+# importing individual flow tests), or a direct path reference from CI config
+# or a skill file (a `flutter test <path>`-style entry point) — see HAB-184.
 
 _PACKAGE_IMPORT_RE = re.compile(r"import\s+'package:habit_loop/([^']+)'")
+
+
+def _test_file_referenced_elsewhere(root: Path, rel_path: str, test_files: list[Path]) -> bool:
+    """True if rel_path is imported (relatively) by another test file, or its
+    path string appears in a .github/ file or a skills/**/SKILL.md file."""
+    basename = Path(rel_path).name
+    import_pattern = re.compile(r"import\s+'[^']*" + re.escape(basename) + r"'")
+    this_file = root / rel_path
+    for other in test_files:
+        if other == this_file:
+            continue
+        try:
+            if import_pattern.search(other.read_text(encoding='utf-8')):
+                return True
+        except (OSError, UnicodeDecodeError):
+            pass
+
+    github_dir = root / '.github'
+    reference_files = (sorted(f for f in github_dir.rglob('*') if f.is_file()) if github_dir.exists() else [])
+    reference_files += sorted(root.glob('skills/**/SKILL.md'))
+    for f in reference_files:
+        try:
+            if rel_path in f.read_text(encoding='utf-8'):
+                return True
+        except (OSError, UnicodeDecodeError):
+            pass
+
+    return False
 
 
 def detect_orphaned_test_files(root: Path) -> tuple[list[str], list[str]]:
@@ -163,7 +196,8 @@ def detect_orphaned_test_files(root: Path) -> tuple[list[str], list[str]]:
         rel = test_file.relative_to(root).as_posix()
 
         if not imports:
-            info.append(rel)
+            if not _test_file_referenced_elsewhere(root, rel, test_files):
+                info.append(rel)
             continue
 
         if all(not (root / 'lib' / imp).exists() for imp in imports):
