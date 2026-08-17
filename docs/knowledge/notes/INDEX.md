@@ -17,17 +17,17 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **widget-test-gotchas** (6)
 - **changelog-versioning** (4)
 - **dead-code** (4)
+- **verify-from-source** (4)
 - **appstore-ci** (3)
 - **cross-project-sync** (3)
 - **feature-toggle** (3)
 - **scope-creep** (3)
 - **ui-design-iteration** (3)
-- **verify-from-source** (3)
 - **debrief-timing** (2)
+- **stale-ticket** (2)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
 - **postmortem-workflow** (1)
-- **stale-ticket** (1)
 
 ## By bookmark
 
@@ -172,6 +172,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ### stale-ticket
 - [HAB-120: Port new meta-workflow skills to Yuriys-agentic-boyz](HAB-120.md)
+- [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238.md)
 
 ### ui-design-iteration
 - [HAB-149: About / Feedback screen](HAB-149.md)
@@ -182,6 +183,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-168: ship's state-detection can override an already-in-progress QA status](HAB-168.md)
 - [HAB-188: Checkup cleanup: dashboard load method, Firestore merge dedup, Android buttons, iOS toolbar icon, pagination stub](HAB-188.md)
 - [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
+- [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238.md)
 
 ### widget-test-gotchas
 - [HAB-139: Redeem tail-zone failed showups by adding a note](HAB-139.md)
