@@ -13,6 +13,7 @@ import 'package:habit_loop/slices/debug/ui/generic/restart_required_banner.dart'
 import 'package:habit_loop/slices/debug/ui/ios/pending_notifications_page_ios.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 class RemoteConfigOverridesPageIos extends ConsumerWidget {
   const RemoteConfigOverridesPageIos({super.key});
@@ -400,7 +401,7 @@ class _EditDialogIosState extends State<_EditDialogIos> {
                     children: [
                       Text(
                         '${sliderValue.round()}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: AppTypography.valueEmphasis,
                       ),
                     ],
                   ),

@@ -6,9 +6,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
+- **review-findings** (13)
 - **debugging-methodology** (12)
 - **planning-gaps** (12)
-- **review-findings** (12)
 - **multi-wu-scope** (11)
 - **ci-flakiness** (9)
 - **research-methodology** (9)
@@ -27,6 +27,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **debrief-timing** (2)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
+- **multi-project-scope** (1)
 - **postmortem-workflow** (1)
 
 ## By bookmark
@@ -111,6 +112,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ### linear-efficiency
 - [HAB-176: Reduce token consumption from Linear MCP interactions](HAB-176.md)
 
+### multi-project-scope
+- [HAB-239: CI/lint check for raw TextStyle/fontSize literals instead of AppTypography tokens](HAB-239.md)
+
 ### multi-wu-scope
 - [HAB-116: Pact timeline screen](HAB-116.md)
 - [HAB-153: Audit and clean up integration test scenarios](HAB-153.md)
@@ -165,6 +169,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-223: Prevent silent bad auto-merges of docs/knowledge/notes/INDEX.md](HAB-223.md)
 - [HAB-227: Break-over "welcome back" reminder text](HAB-227.md)
 - [HAB-234: Welcome-back reminder for an unpersisted showup can survive a later, unrelated break's cancellation sweep](HAB-234.md)
+- [HAB-239: CI/lint check for raw TextStyle/fontSize literals instead of AppTypography tokens](HAB-239.md)
 
 ### scope-creep
 - [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)

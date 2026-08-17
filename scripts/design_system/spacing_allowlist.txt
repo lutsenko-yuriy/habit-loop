@@ -15,7 +15,7 @@ lib/slices/showup/ui/generic/showup_status_dots.dart:58
 lib/slices/dashboard/ui/android/language_picker_dialog_android.dart:26
 
 # Fixed counter digit column width.
-lib/slices/debug/ui/ios/remote_config_overrides_page_ios.dart:189
+lib/slices/debug/ui/ios/remote_config_overrides_page_ios.dart:190
 
 # Fixed timeline spine column width (Android).
 lib/slices/pact/ui/android/pact_timeline_page_android.dart:175

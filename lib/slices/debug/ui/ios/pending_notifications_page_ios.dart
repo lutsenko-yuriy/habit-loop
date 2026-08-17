@@ -5,6 +5,7 @@ import 'package:habit_loop/slices/debug/ui/generic/pending_notification_row.dart
 import 'package:habit_loop/slices/debug/ui/generic/pending_notifications_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/theme/spacing.dart';
+import 'package:habit_loop/theme/typography.dart';
 
 /// Read-only debug viewer listing every notification currently pending with
 /// the OS, sorted soonest-first (HAB-228). See [PendingNotificationsViewModel]
@@ -87,9 +88,9 @@ class _PendingNotificationRowTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(row.title ?? '(no title)', style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(row.title ?? '(no title)', style: AppTypography.emphasis),
           const SizedBox(height: AppSpacing.s2),
-          Text(row.body ?? '(no body)', style: const TextStyle(fontSize: 13)),
+          Text(row.body ?? '(no body)', style: AppTypography.caption),
           const SizedBox(height: AppSpacing.s6),
           Text(
             row.fireAt == null

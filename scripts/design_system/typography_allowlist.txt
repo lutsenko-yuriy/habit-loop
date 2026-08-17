@@ -1,0 +1,10 @@
+# Deliberate exceptions to scripts/design_system/lint.py's raw-typography-
+# literal check — one "path:line" per entry, `#` starts a comment. These are
+# call sites whose TextStyle properties happen to exactly match an
+# AppTypography token but are kept raw for a documented reason (e.g.
+# predates the token, or the coupling to the token would be coincidental).
+#
+# Keep this list short: it should only ever grow when a genuinely deliberate
+# exception is added, not as a way to silence the lint on something that
+# really should adopt the token. If a line number drifts (unrelated edits
+# above it in the same file), update the entry rather than leaving it stale.

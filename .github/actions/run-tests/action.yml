@@ -32,7 +32,7 @@ runs:
         echo "Checking CHANGELOG entries newer than $LAST_VERSION"
         python3 scripts/changelog/lint.py docs/CHANGELOG.md "$LAST_VERSION"
 
-    - name: Lint raw spacing literals
+    - name: Lint raw spacing and typography literals
       shell: bash
       run: python3 scripts/design_system/lint.py
 
