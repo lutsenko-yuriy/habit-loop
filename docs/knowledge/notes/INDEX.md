@@ -11,8 +11,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **review-findings** (12)
 - **multi-wu-scope** (11)
 - **ci-flakiness** (9)
+- **code-style** (9)
 - **research-methodology** (9)
-- **code-style** (8)
 - **knowledge-base-process** (6)
 - **widget-test-gotchas** (6)
 - **changelog-versioning** (4)
@@ -62,6 +62,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
 - [HAB-234: Welcome-back reminder for an unpersisted showup can survive a later, unrelated break's cancellation sweep](HAB-234.md)
 - [HAB-235: Research: code readability guidelines for CODE_STYLE.md — comment brevity, function/class size, PR scope](HAB-235.md)
+- [HAB-241: Stop CI pushing build-number commits to main; require PR + enable branch protection](HAB-241.md)
 
 ### cross-project-sync
 - [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
