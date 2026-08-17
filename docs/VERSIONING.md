@@ -18,7 +18,7 @@ Because `## [Unreleased]` can appear multiple times in the file (one sealed per 
 Do not confuse this with the unrelated, legacy `(unreleased)` marker that appears inside some older entries' date parenthetical (e.g. `## [0.50.29] — 2026-07-17 (unreleased)`) — that predates HAB-185, marks a `[wip]` entry that still received a version number under the old scheme, and is left as-is.
 
 **Build number (`+N`):**
-- Auto-incremented by CI only on the `main` branch, after each pipeline run where at least one platform is successfully distributed.
+- Auto-incremented by CI only on the `main` branch, after each pipeline run where at least one platform is successfully distributed — the increment lives in the resolved number and its `version-*` tag (see below), not in a `pubspec.yaml` commit.
 - Synchronized across Android and iOS — both platforms always use the same build number.
 - Feature branch builds do not bump the version, create tags, or distribute to Firebase.
 - A `resolve-version` job runs before builds to prevent build number conflicts: it compares the `pubspec.yaml` build number against the highest existing `version-*` git tag and uses whichever is greater. Both platform builds receive this resolved number via `--build-number`.

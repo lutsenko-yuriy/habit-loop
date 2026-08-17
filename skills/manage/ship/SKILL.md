@@ -133,7 +133,7 @@ Do not rewrite the rest of the file.
 
 **If step 4 instead appended to `## [Unreleased]`:** skip this step entirely — do not touch the version file. `pubspec.yaml`'s version represents the app's build version, not the repo's commit history (`docs/VERSIONING.md`); it only changes when the app itself changes.
 
-Do not touch the build number — CI manages it automatically (see version management in project config).
+Do not touch the build number — CI manages it automatically via `version-*` git tags, not a `pubspec.yaml` commit (HAB-241; see version management in project config).
 
 ### 7. Update PRODUCT_SPEC.md and GLOSSARY.md
 
