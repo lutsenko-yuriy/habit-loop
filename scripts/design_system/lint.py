@@ -33,6 +33,8 @@ import sys
 from pathlib import Path
 
 _ALLOWLIST_PATH = Path(__file__).with_name('spacing_allowlist.txt')
+_TYPOGRAPHY_ALLOWLIST_PATH = Path(__file__).with_name('typography_allowlist.txt')
+_TYPOGRAPHY_TOKENS_REL_PATH = 'lib/theme/typography.dart'
 
 # Word-boundary-guarded so `AnimatedSizedBox(` or `someEdgeInsets.all(` don't
 # match. Covers named constructors (`SizedBox.square(`, `SizedBox.fromSize(`)
@@ -180,6 +182,131 @@ def find_unused_allowlist_entries(root: Path, allowlist: set[tuple[str, int]] | 
     return allowlist - found
 
 
+# Word-boundary-guarded so a widening match like `MyTextStyle(` doesn't fire.
+_TEXTSTYLE_CALL_RE = re.compile(r"\bTextStyle\s*\(")
+
+# Parses one `static const TextStyle <name> = TextStyle(...)` token
+# definition out of lib/theme/typography.dart.
+_TYPOGRAPHY_TOKEN_DEF_RE = re.compile(r"static const TextStyle (\w+) = TextStyle\s*\(")
+
+# The properties that determine a TextStyle's rendered identity for
+# duplicate-detection purposes. `color` is deliberately excluded — per
+# AppTypography's own doc comment, tokens never carry a color; call sites
+# apply it via `.copyWith(color: ...)`, so it's irrelevant to whether a
+# literal duplicates a token.
+_TYPOGRAPHY_PROPERTY_RE = re.compile(
+    r"\b(fontSize|fontWeight|fontStyle|letterSpacing|height|fontFamily)\s*:\s*([^,]+)"
+)
+
+
+def _typography_signature(args_text: str) -> frozenset[tuple[str, str]]:
+    """Reduce a `TextStyle(...)` call's argument text to the subset of
+    properties that determine its rendered identity, normalizing numeric
+    literals (`22` vs `22.0`) so equivalent values compare equal."""
+    sig: set[tuple[str, str]] = set()
+    for match in _TYPOGRAPHY_PROPERTY_RE.finditer(args_text):
+        key = match.group(1)
+        value = match.group(2).strip()
+        if re.fullmatch(r'\d+(?:\.\d+)?', value):
+            value = str(float(value))
+        sig.add((key, value))
+    return frozenset(sig)
+
+
+def _extract_typography_tokens(root: Path) -> dict[frozenset[tuple[str, str]], str]:
+    """Parse lib/theme/typography.dart's own `AppTypography` token
+    definitions into a signature -> token-name mapping. Missing file (or a
+    token with no identity properties, e.g. none) contributes nothing —
+    not an error, since a project without this file simply has no
+    typography tokens to duplicate."""
+    tokens_path = root / _TYPOGRAPHY_TOKENS_REL_PATH
+    if not tokens_path.exists():
+        return {}
+
+    try:
+        text = tokens_path.read_text(encoding='utf-8')
+    except (OSError, UnicodeDecodeError):
+        return {}
+
+    masked = _mask(text)
+    tokens: dict[frozenset[tuple[str, str]], str] = {}
+    for match in _TYPOGRAPHY_TOKEN_DEF_RE.finditer(masked):
+        name = match.group(1)
+        args = _top_level_args(masked, match.end())
+        sig = _typography_signature(args)
+        if sig:
+            tokens[sig] = name
+    return tokens
+
+
+def _scan_typography(root: Path) -> list[tuple[str, int, str, str]]:
+    """Every `TextStyle(...)` call under lib/ (excluding
+    lib/theme/typography.dart's own token definitions) whose properties
+    exactly duplicate an AppTypography token's — unfiltered by any
+    allowlist. Shared by find_typography_token_matches and
+    find_unused_typography_allowlist_entries so both agree on exactly what
+    counts as "a real duplicate at this location"."""
+    lib_dir = root / 'lib'
+    if not lib_dir.exists():
+        return []
+
+    tokens = _extract_typography_tokens(root)
+    if not tokens:
+        return []
+
+    all_matches: list[tuple[str, int, str, str]] = []
+    for dart_file in sorted(lib_dir.rglob('*.dart')):
+        rel = dart_file.relative_to(root).as_posix()
+        if rel == _TYPOGRAPHY_TOKENS_REL_PATH:
+            continue
+
+        try:
+            text = dart_file.read_text(encoding='utf-8')
+        except (OSError, UnicodeDecodeError):
+            continue
+
+        masked = _mask(text)
+        lines = text.splitlines()
+
+        for call_match in _TEXTSTYLE_CALL_RE.finditer(masked):
+            args = _top_level_args(masked, call_match.end())
+            sig = _typography_signature(args)
+            token_name = tokens.get(sig)
+            if token_name is None:
+                continue
+            line_no = text.count('\n', 0, call_match.start()) + 1
+            line_text = lines[line_no - 1] if 0 <= line_no - 1 < len(lines) else ''
+            all_matches.append((rel, line_no, line_text.strip(), token_name))
+
+    return all_matches
+
+
+def find_typography_token_matches(
+    root: Path, allowlist: set[tuple[str, int]] | None = None
+) -> list[tuple[str, int, str, str]]:
+    """Return (relative_path, line_number, line_text, token_name) for each
+    raw `TextStyle(...)` call found by `_scan_typography` that exactly
+    duplicates an AppTypography token, skipping any (path, line) pair
+    present in `allowlist` (defaults to the checked-in
+    typography_allowlist.txt)."""
+    if allowlist is None:
+        allowlist = load_allowlist(_TYPOGRAPHY_ALLOWLIST_PATH)
+    return [f for f in _scan_typography(root) if (f[0], f[1]) not in allowlist]
+
+
+def find_unused_typography_allowlist_entries(
+    root: Path, allowlist: set[tuple[str, int]] | None = None
+) -> set[tuple[str, int]]:
+    """Return the subset of `allowlist` (defaults to the checked-in
+    typography_allowlist.txt) that does not match any real duplicate found
+    by `_scan_typography` — a stale entry that would otherwise silently
+    become a permanent blanket exemption on that line number."""
+    if allowlist is None:
+        allowlist = load_allowlist(_TYPOGRAPHY_ALLOWLIST_PATH)
+    found = {(f[0], f[1]) for f in _scan_typography(root)}
+    return allowlist - found
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', default=None, help='Project root (default: auto-detected)')
@@ -214,10 +341,34 @@ def main(argv: list[str]) -> int:
         for rel, line_no in sorted(unused):
             print(f'  {rel}:{line_no}')
 
+    typography_allowlist = load_allowlist(_TYPOGRAPHY_ALLOWLIST_PATH)
+    typography_findings = find_typography_token_matches(root, typography_allowlist)
+    typography_unused = find_unused_typography_allowlist_entries(root, typography_allowlist)
+
+    if typography_findings:
+        ok = False
+        print()
+        print(f'Found {len(typography_findings)} raw TextStyle literal(s) under lib/ that duplicate an '
+              'AppTypography token:')
+        for rel, line_no, line_text, token_name in typography_findings:
+            print(f'  {rel}:{line_no}: {line_text}  (use AppTypography.{token_name})')
+        print()
+        print(f'A deliberate, one-off exception belongs in {_TYPOGRAPHY_ALLOWLIST_PATH.name} (path:line, one per '
+              'line).')
+
+    if typography_unused:
+        ok = False
+        print()
+        print(f'{len(typography_unused)} stale entr{"y" if len(typography_unused) == 1 else "ies"} in '
+              f'{_TYPOGRAPHY_ALLOWLIST_PATH.name} (no matching duplicate literal at that line any more — remove '
+              'or update):')
+        for rel, line_no in sorted(typography_unused):
+            print(f'  {rel}:{line_no}')
+
     if not ok:
         return 1
 
-    print('OK — no raw spacing literals found.')
+    print('OK — no raw spacing or typography literals found.')
     return 0
 
 
