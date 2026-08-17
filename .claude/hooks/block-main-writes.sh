@@ -32,8 +32,13 @@ branch=$(git -C "$_repo_dir" branch --show-current 2>/dev/null)
 # 1) Explicit push to main — block regardless of the current branch.
 #    Matches `... main` / `:main` / `HEAD:main` as a complete ref token, but not
 #    branch names that merely contain "main" (e.g. feature/main-menu).
-if printf '%s' "$cmd" | grep -qE '\bpush\b' \
-   && printf '%s' "$cmd" | grep -qE '([[:space:]:]|^)main([[:space:]]|$)'; then
+#    Quoted spans (commit/tag message text, e.g. -m "...") are stripped first
+#    so prose mentioning "push"/"main" doesn't false-positive when no push is
+#    actually happening (HAB-238) — the actual push target is never itself a
+#    quoted string in normal usage.
+_scan=$(printf '%s' "$cmd" | sed -E 's/"[^"]*"//g; s/'"'"'[^'"'"']*'"'"'//g')
+if printf '%s' "$_scan" | grep -qE '\bpush\b' \
+   && printf '%s' "$_scan" | grep -qE '([[:space:]:]|^)main([[:space:]]|$)'; then
   deny "BLOCKED: this push targets main. Push a feature branch and open a PR instead (no direct commits/pushes to main). Override only if truly intended: git push --no-verify."
 fi
 
