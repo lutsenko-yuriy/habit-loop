@@ -12,7 +12,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **multi-wu-scope** (11)
 - **ci-flakiness** (9)
 - **code-style** (8)
-- **research-methodology** (7)
+- **research-methodology** (8)
 - **knowledge-base-process** (6)
 - **widget-test-gotchas** (6)
 - **changelog-versioning** (4)
@@ -149,6 +149,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-169: Research: single docs organisation structure for notes, ADRs, and research artifacts](HAB-169.md)
 - [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
 - [HAB-235: Research: code readability guidelines for CODE_STYLE.md — comment brevity, function/class size, PR scope](HAB-235.md)
+- [HAB-236: Research: reading Markdown reports/PRs on GitHub — fonts/colors, doc structure, delivery surface](HAB-236.md)
 
 ### review-findings
 - [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
