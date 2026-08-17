@@ -38,7 +38,7 @@ env:
 
 jobs:
 
-  # ── Skip if this is a CI version-bump commit; also determine build gate ───
+  # ── Skip if the triggering commit is marked [skip ci]; also determine build gate ───
   check-skip:
     runs-on: ubuntu-latest
     outputs:
@@ -307,7 +307,7 @@ jobs:
           RELEASE_NOTES:                ${{ needs.resolve-version.outputs.release_notes }}
         run: python3 scripts/appstore/set_testflight_whatsnew.py
 
-  # ── Tag the release and bump pubspec build number ─────────────────────────
+  # ── Tag the release ─────────────────────────────────────────────────────
   # Gates on *either* distribute-android or distribute-testflight succeeding
   # (not both) — a failure on one platform's distribution must never block
   # tagging the release on the other's account.
@@ -324,7 +324,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Bump pubspec build number and push tag
+      - name: Tag the release
         run: |
           BUILD=${{ needs.resolve-version.outputs.build_number }}
           VERSION=${{ needs.resolve-version.outputs.version_name }}
@@ -343,26 +343,11 @@ jobs:
             exit 1
           fi
 
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Pull first so our sed change applies on top of the current main,
-          # avoiding a rebase conflict when another build-number bump landed
-          # while this job was waiting for distribute-android/-testflight to
-          # finish.
-          git pull --rebase origin main
-
-          # Re-derive the version name from the just-pulled pubspec.yaml, not
-          # $VERSION (captured at pipeline-start) — a concurrently-merged PR
-          # may have bumped the version name while this pipeline was still
-          # running, and only the build number is this job's own to advance
-          # (HAB-210).
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/^version: //' | cut -d'+' -f1)
-
-          sed -i "s/^version: .*/version: ${VERSION}+${BUILD}/" pubspec.yaml
-          git add pubspec.yaml
-          git commit -m "chore: bump build number to ${BUILD} [skip ci]"
-          git push
-
+          # No commit-back to pubspec.yaml (HAB-241) — it's just a floor,
+          # resolve-version takes max(pubspec.yaml, highest version-* tag).
+          # This tag push is now the sole record a build number was consumed;
+          # if it fails after distribution succeeded, push the tag by hand
+          # before re-running (git tag version-X.Y.Z-N-SUFFIX <sha> && git
+          # push --tags).
           git tag "version-${VERSION}-${BUILD}-${SUFFIX}"
           git push --tags

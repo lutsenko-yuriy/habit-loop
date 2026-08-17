@@ -18,11 +18,11 @@ Because `## [Unreleased]` can appear multiple times in the file (one sealed per 
 Do not confuse this with the unrelated, legacy `(unreleased)` marker that appears inside some older entries' date parenthetical (e.g. `## [0.50.29] — 2026-07-17 (unreleased)`) — that predates HAB-185, marks a `[wip]` entry that still received a version number under the old scheme, and is left as-is.
 
 **Build number (`+N`):**
-- Auto-incremented by CI only on the `main` branch, after each pipeline run where at least one platform is successfully distributed.
+- Auto-incremented by CI only on the `main` branch, after each pipeline run where at least one platform is successfully distributed — the increment lives in the resolved number and its `version-*` tag (see below), not in a `pubspec.yaml` commit.
 - Synchronized across Android and iOS — both platforms always use the same build number.
-- The CI commit message includes `[skip ci]` to prevent infinite loops.
 - Feature branch builds do not bump the version, create tags, or distribute to Firebase.
 - A `resolve-version` job runs before builds to prevent build number conflicts: it compares the `pubspec.yaml` build number against the highest existing `version-*` git tag and uses whichever is greater. Both platform builds receive this resolved number via `--build-number`.
+- `version-tag` does **not** commit the resolved build number back to `pubspec.yaml` on `main` (HAB-241, following HAB-237's research) — it only pushes the `version-*` git tag. `pubspec.yaml`'s committed build number is therefore just a floor, expected to drift stale between releases; `resolve-version`'s max-of-pubspec-or-tag comparison is what keeps numbering monotonic regardless. This is also why `main` can require a PR for every branch write with zero bypass exceptions — CI has no remaining need to push commits directly to the branch.
 
 **Git tags:** Created automatically by CI in the format `version-{X.Y.Z}-{buildNumber}-{suffix}` where suffix is:
 - `both` — both Android (Firebase) and iOS (TestFlight) distributed
