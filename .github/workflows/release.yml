@@ -343,19 +343,11 @@ jobs:
             exit 1
           fi
 
-          # No commit-back to pubspec.yaml (HAB-241) — main now requires a PR
-          # for every branch write, and pubspec.yaml's committed build number
-          # was already just a floor: resolve-version takes
-          # max(pubspec.yaml's stored number, highest version-* tag), so
-          # leaving it stale is safe. Tag pushes aren't gated by "require PR
-          # before merge" (that rule only applies to branch refs; confirm any
-          # ruleset added under that name targets branches, not tags, or
-          # numbering silently freezes), so this stays CI's only write to the
-          # remote — and, since HAB-241, its only record that this build
-          # number was consumed. If this push fails after distribution has
-          # already succeeded, the next run will re-resolve the same number
-          # and get rejected as a duplicate by the store — recover manually by
-          # pushing the missing tag by hand (`git tag version-X.Y.Z-N-SUFFIX
-          # <sha> && git push --tags`) before re-running.
+          # No commit-back to pubspec.yaml (HAB-241) — it's just a floor,
+          # resolve-version takes max(pubspec.yaml, highest version-* tag).
+          # This tag push is now the sole record a build number was consumed;
+          # if it fails after distribution succeeded, push the tag by hand
+          # before re-running (git tag version-X.Y.Z-N-SUFFIX <sha> && git
+          # push --tags).
           git tag "version-${VERSION}-${BUILD}-${SUFFIX}"
           git push --tags
