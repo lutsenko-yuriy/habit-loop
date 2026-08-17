@@ -22,9 +22,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **cross-project-sync** (3)
 - **feature-toggle** (3)
 - **scope-creep** (3)
+- **stale-ticket** (3)
 - **ui-design-iteration** (3)
 - **debrief-timing** (2)
-- **stale-ticket** (2)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
 - **postmortem-workflow** (1)
@@ -173,6 +173,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ### stale-ticket
 - [HAB-120: Port new meta-workflow skills to Yuriys-agentic-boyz](HAB-120.md)
+- [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238-adjust-1.md)
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238.md)
 
 ### ui-design-iteration
