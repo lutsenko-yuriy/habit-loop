@@ -186,26 +186,34 @@ def find_unused_allowlist_entries(root: Path, allowlist: set[tuple[str, int]] | 
 _TEXTSTYLE_CALL_RE = re.compile(r"\bTextStyle\s*\(")
 
 # Parses one `static const TextStyle <name> = TextStyle(...)` token
-# definition out of lib/theme/typography.dart.
-_TYPOGRAPHY_TOKEN_DEF_RE = re.compile(r"static const TextStyle (\w+) = TextStyle\s*\(")
+# definition out of lib/theme/typography.dart. `\s*=\s*` (not a literal
+# space) so a dart-format line wrap between the name and `TextStyle(` still
+# matches — otherwise the token silently drops out of the map with no error
+# (audit finding, PR #392).
+_TYPOGRAPHY_TOKEN_DEF_RE = re.compile(r"static const TextStyle (\w+)\s*=\s*TextStyle\s*\(")
 
-# The properties that determine a TextStyle's rendered identity for
-# duplicate-detection purposes. `color` is deliberately excluded — per
-# AppTypography's own doc comment, tokens never carry a color; call sites
-# apply it via `.copyWith(color: ...)`, so it's irrelevant to whether a
-# literal duplicates a token.
-_TYPOGRAPHY_PROPERTY_RE = re.compile(
-    r"\b(fontSize|fontWeight|fontStyle|letterSpacing|height|fontFamily)\s*:\s*([^,]+)"
-)
+# Any top-level named argument. `color` is deliberately excluded from the
+# resulting signature — per AppTypography's own doc comment, tokens never
+# carry a color; call sites apply it via `.copyWith(color: ...)`, so it's
+# irrelevant to whether a literal duplicates a token. Every *other*
+# TextStyle property (shadows, decoration, wordSpacing, backgroundColor,
+# ...) counts: an earlier version compared only a fixed shortlist
+# (fontSize/fontWeight/fontStyle/letterSpacing/height/fontFamily), so a
+# literal that added e.g. `shadows:` alongside a matching fontSize was
+# false-flagged as a token duplicate even though it renders differently
+# (audit finding, PR #392).
+_TYPOGRAPHY_PROPERTY_RE = re.compile(r"\b([a-zA-Z_]\w*)\s*:\s*([^,]*)")
 
 
 def _typography_signature(args_text: str) -> frozenset[tuple[str, str]]:
-    """Reduce a `TextStyle(...)` call's argument text to the subset of
-    properties that determine its rendered identity, normalizing numeric
-    literals (`22` vs `22.0`) so equivalent values compare equal."""
+    """Reduce a `TextStyle(...)` call's argument text to every named
+    property except `color`, normalizing numeric literals (`22` vs `22.0`)
+    so equivalent values compare equal."""
     sig: set[tuple[str, str]] = set()
     for match in _TYPOGRAPHY_PROPERTY_RE.finditer(args_text):
         key = match.group(1)
+        if key == 'color':
+            continue
         value = match.group(2).strip()
         if re.fullmatch(r'\d+(?:\.\d+)?', value):
             value = str(float(value))
@@ -213,12 +221,20 @@ def _typography_signature(args_text: str) -> frozenset[tuple[str, str]]:
     return frozenset(sig)
 
 
-def _extract_typography_tokens(root: Path) -> dict[frozenset[tuple[str, str]], str]:
+def _extract_typography_tokens(root: Path) -> dict[frozenset[tuple[str, str]], list[str]]:
     """Parse lib/theme/typography.dart's own `AppTypography` token
-    definitions into a signature -> token-name mapping. Missing file (or a
-    token with no identity properties, e.g. none) contributes nothing —
+    definitions into a signature -> token-name(s) mapping. Missing file (or
+    a token with no identity properties, e.g. none) contributes nothing —
     not an error, since a project without this file simply has no
-    typography tokens to duplicate."""
+    typography tokens to duplicate.
+
+    Maps to a *list* of names, not one: two tokens can legitimately share a
+    signature (e.g. `sectionTitle` and `wizardStepTitle` are both
+    fontSize:22+bold, kept as separate names for readability at their call
+    sites). A dict keyed by signature with last-write-wins silently dropped
+    one such token from the map entirely — a raw duplicate of the dropped
+    token would then be pointed at the wrong replacement (audit finding,
+    PR #392)."""
     tokens_path = root / _TYPOGRAPHY_TOKENS_REL_PATH
     if not tokens_path.exists():
         return {}
@@ -229,13 +245,13 @@ def _extract_typography_tokens(root: Path) -> dict[frozenset[tuple[str, str]], s
         return {}
 
     masked = _mask(text)
-    tokens: dict[frozenset[tuple[str, str]], str] = {}
+    tokens: dict[frozenset[tuple[str, str]], list[str]] = {}
     for match in _TYPOGRAPHY_TOKEN_DEF_RE.finditer(masked):
         name = match.group(1)
         args = _top_level_args(masked, match.end())
         sig = _typography_signature(args)
         if sig:
-            tokens[sig] = name
+            tokens.setdefault(sig, []).append(name)
     return tokens
 
 
@@ -271,9 +287,10 @@ def _scan_typography(root: Path) -> list[tuple[str, int, str, str]]:
         for call_match in _TEXTSTYLE_CALL_RE.finditer(masked):
             args = _top_level_args(masked, call_match.end())
             sig = _typography_signature(args)
-            token_name = tokens.get(sig)
-            if token_name is None:
+            names = tokens.get(sig)
+            if names is None:
                 continue
+            token_name = ' or '.join(f'AppTypography.{n}' for n in sorted(names))
             line_no = text.count('\n', 0, call_match.start()) + 1
             line_text = lines[line_no - 1] if 0 <= line_no - 1 < len(lines) else ''
             all_matches.append((rel, line_no, line_text.strip(), token_name))
@@ -284,11 +301,13 @@ def _scan_typography(root: Path) -> list[tuple[str, int, str, str]]:
 def find_typography_token_matches(
     root: Path, allowlist: set[tuple[str, int]] | None = None
 ) -> list[tuple[str, int, str, str]]:
-    """Return (relative_path, line_number, line_text, token_name) for each
+    """Return (relative_path, line_number, line_text, suggestion) for each
     raw `TextStyle(...)` call found by `_scan_typography` that exactly
     duplicates an AppTypography token, skipping any (path, line) pair
     present in `allowlist` (defaults to the checked-in
-    typography_allowlist.txt)."""
+    typography_allowlist.txt). `suggestion` is one or more
+    `AppTypography.<name>` references (` or `-joined) — more than one when
+    multiple tokens legitimately share the same signature."""
     if allowlist is None:
         allowlist = load_allowlist(_TYPOGRAPHY_ALLOWLIST_PATH)
     return [f for f in _scan_typography(root) if (f[0], f[1]) not in allowlist]
@@ -351,7 +370,7 @@ def main(argv: list[str]) -> int:
         print(f'Found {len(typography_findings)} raw TextStyle literal(s) under lib/ that duplicate an '
               'AppTypography token:')
         for rel, line_no, line_text, token_name in typography_findings:
-            print(f'  {rel}:{line_no}: {line_text}  (use AppTypography.{token_name})')
+            print(f'  {rel}:{line_no}: {line_text}  (use {token_name})')
         print()
         print(f'A deliberate, one-off exception belongs in {_TYPOGRAPHY_ALLOWLIST_PATH.name} (path:line, one per '
               'line).')
