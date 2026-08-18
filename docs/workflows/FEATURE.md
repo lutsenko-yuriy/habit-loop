@@ -34,6 +34,30 @@ Move straight to **Done** (skip In QA) if the PR touches only:
 
 When in doubt, use **In QA**.
 
+## Trivial changes
+
+A ticket is **trivial** when the change is content-only — the kind of edit that would
+need nothing from us if this content lived in a CMS instead of the repo (a copy/string
+tweak, an icon or asset swap, a single literal value). No logic, no new/changed screen,
+no architecture surface. Tag it `[trivial]` and take the short path instead of the full
+workflow above:
+
+1. Ticket created (via `/brief` or directly).
+2. Change made directly on a feature branch — skip `analyze`/`plan`/`draft-scenarios`,
+   same as any change with no user-facing flow.
+3. PR opened.
+4. `/debrief` — skip the review loop (step 10) entirely; a trivial diff doesn't carry
+   architectural or runtime risk worth two review passes and a Codecov gate.
+5. Merge via `/ship`.
+
+**Release timing:** a `[trivial]` CHANGELOG entry does not trigger a build/release by
+default — it merges and rides along with whichever release happens next, the same way an
+`[Unreleased]`-batched internal-only entry does (`docs/VERSIONING.md`). Only force an
+immediate release for a `[trivial]` entry if the user explicitly asks for one.
+
+If a change *looks* small but touches logic, a new screen, or anything with runtime
+behaviour beyond a literal value, it is not trivial — use the full workflow instead.
+
 ## Steps
 
 1. **Planning & setup gates** — work through in order; skip any that don't apply:

@@ -84,6 +84,7 @@ Because `test.yml`/`build.yml`/`scenarios.yml`/`publish_changelogs.yml` are new 
 | `[ci]` | CI/CD process change | No | No |
 | `[user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
 | `[wip]` | Intermediate WU merge in a multi-WU ticket — tests run, build entirely skipped, no `version-*` tag created | No | No |
+| `[trivial]` | Content-only change (copy/string/icon/asset), no logic or architecture impact | No by default — rides along with the next real release; yes if the user explicitly asks for an immediate release | Yes, once it ships |
 | `[non-user]` | Supplementary bullet descriptor (not a classification) | — | No |
 
 Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]`, `[app]`, `[test]`, `[meta]`, `[ci]`, or `[user-none]`). The tag list may be extended; each new tag must declare its distribution and release-note behaviour.

@@ -217,7 +217,7 @@
   },
   "notificationMissedTitle": "Diesen hast du verpasst",
   "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal.",
-  "notificationWelcomeBackTitle": "Alles klar! Die Pause für {habitName} ist vorbei!",
+  "notificationWelcomeBackTitle": "Die Pause für {habitName} ist vorbei!",
   "@notificationWelcomeBackTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
