@@ -35,3 +35,4 @@ Write one when a ticket's research or implementation concludes in a decision tha
 | ADR-0002 | review showup-redemption requests manually until load becomes unbearable | `accepted` | 2026-07-04 | HAB-140 |
 | ADR-0003 | run a two-tier (light/heavy) periodic checkup for non-mechanical code quality dimensions | `accepted` | 2026-07-15 | HAB-144 |
 | ADR-0004 | build a single-pass dialectical (thesis/antithesis/synthesis) research skill, steelman-bounded, over six other candidate methodologies | `accepted` | 2026-07-18 | HAB-123 |
+| ADR-0005 | keep the per-PR/per-ticket release model; do not batch tickets into shared releases | `accepted` | 2026-08-18 | HAB-240 |
