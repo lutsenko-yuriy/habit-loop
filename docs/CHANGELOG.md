@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.56.2] — 2026-08-19 (PR #394 merged)
+
+### Changed
+
+- [user] Tidied up the wording on the "welcome back" notification after a break.
+- [meta] HAB-245: introduced `[trivial]` CHANGELOG classification and fast-path workflow for content-only changes (docs/workflows/FEATURE.md, docs/VERSIONING.md)
+
 ## [0.56.1] — 2026-08-16 (PR #382 merged)
 
 ### Fixed
