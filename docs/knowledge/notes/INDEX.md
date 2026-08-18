@@ -10,12 +10,12 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **debugging-methodology** (12)
 - **planning-gaps** (12)
 - **multi-wu-scope** (11)
+- **research-methodology** (10)
 - **ci-flakiness** (9)
-- **research-methodology** (9)
 - **code-style** (8)
 - **knowledge-base-process** (6)
 - **widget-test-gotchas** (6)
-- **changelog-versioning** (4)
+- **changelog-versioning** (5)
 - **dead-code** (4)
 - **verify-from-source** (4)
 - **appstore-ci** (3)
@@ -42,6 +42,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-183: Manual-dispatch-only CI pipelines for granular build/test/notes procedures](HAB-183.md)
 - [HAB-185: Gate pubspec.yaml version bumps on app-changing CHANGELOG entries](HAB-185.md)
 - [HAB-192: CI: resolve-version fails with "lookbehind assertion is not fixed length"](HAB-192.md)
+- [HAB-240](HAB-240.md)
 
 ### ci-flakiness
 - [HAB-151: run-scenarios CI job — integration tests on Android emulator](HAB-151.md)
@@ -155,6 +156,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-235: Research: code readability guidelines for CODE_STYLE.md — comment brevity, function/class size, PR scope](HAB-235.md)
 - [HAB-236: Research: reading Markdown reports/PRs on GitHub — fonts/colors, doc structure, delivery surface](HAB-236.md)
 - [HAB-237: Research: should CI ever push commits directly to main?](HAB-237.md)
+- [HAB-240](HAB-240.md)
 
 ### review-findings
 - [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
