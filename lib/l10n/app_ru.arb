@@ -217,7 +217,7 @@
   },
   "notificationMissedTitle": "Вы пропустили эту явку",
   "notificationMissedBody": "Ничего страшного — появитесь в следующий раз.",
-  "notificationWelcomeBackTitle": "Отлично! Перерыв для «{habitName}» закончился!",
+  "notificationWelcomeBackTitle": "Перерыв для «{habitName}» закончился!",
   "@notificationWelcomeBackTitle": {
     "placeholders": {
       "habitName": { "type": "String" }
