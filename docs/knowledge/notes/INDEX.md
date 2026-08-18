@@ -29,6 +29,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **linear-efficiency** (1)
 - **multi-project-scope** (1)
 - **postmortem-workflow** (1)
+- **trivial-change-scope** (1)
 
 ## By bookmark
 
@@ -182,6 +183,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-120: Port new meta-workflow skills to Yuriys-agentic-boyz](HAB-120.md)
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238-adjust-1.md)
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238.md)
+
+### trivial-change-scope
+- [HAB-245: Remove exclamatory opener from break-over reminder notification title](HAB-245.md)
 
 ### ui-design-iteration
 - [HAB-149: About / Feedback screen](HAB-149.md)
