@@ -296,7 +296,9 @@ void main() {
         expect(RemoteConfigDefaults.allowedValues['hurry_up_notification_enabled'], containsAll(['true', 'false']));
       });
 
-      test('is absent from releaseVersions — same ungated pattern as its sibling break_welcome_back_notification_enabled', () {
+      test(
+          'is absent from releaseVersions — same ungated pattern as its sibling break_welcome_back_notification_enabled',
+          () {
         expect(RemoteConfigDefaults.releaseVersions.containsKey('hurry_up_notification_enabled'), isFalse);
       });
     });

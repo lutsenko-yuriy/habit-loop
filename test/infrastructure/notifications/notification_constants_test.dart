@@ -106,9 +106,12 @@ void main() {
     group('id kind classification', () {
       test('isHurryUpNotificationId is true only for negative IDs', () {
         for (final id in _sampleIds) {
-          expect(NotificationConstants.isHurryUpNotificationId(NotificationConstants.hurryUpNotificationId(id)), isTrue);
-          expect(NotificationConstants.isHurryUpNotificationId(NotificationConstants.reminderNotificationId(id)), isFalse);
-          expect(NotificationConstants.isHurryUpNotificationId(NotificationConstants.deadlineNotificationId(id)), isFalse);
+          expect(
+              NotificationConstants.isHurryUpNotificationId(NotificationConstants.hurryUpNotificationId(id)), isTrue);
+          expect(
+              NotificationConstants.isHurryUpNotificationId(NotificationConstants.reminderNotificationId(id)), isFalse);
+          expect(
+              NotificationConstants.isHurryUpNotificationId(NotificationConstants.deadlineNotificationId(id)), isFalse);
         }
       });
     });
