@@ -276,8 +276,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('hurry_up_notification_enabled'), isTrue);
       });
 
-      test('default value is true', () {
-        expect(RemoteConfigDefaults.all['hurry_up_notification_enabled'], isTrue);
+      test('default value is false (WU1 of a still-in-progress multi-WU feature, HAB-246)', () {
+        expect(RemoteConfigDefaults.all['hurry_up_notification_enabled'], isFalse);
       });
 
       test('constant matches all map value', () {
