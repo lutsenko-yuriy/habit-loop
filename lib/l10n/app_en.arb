@@ -227,6 +227,13 @@
     }
   },
   "notificationWelcomeBackBody": "Let's get back to it.",
+  "notificationHurryUpTitle": "Hurry up — {habitName} is about to close!",
+  "@notificationHurryUpTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationHurryUpBody": "There's still time. Go show up.",
   "notificationDurationMinutes": "{count} min",
   "@notificationDurationMinutes": {
     "placeholders": {

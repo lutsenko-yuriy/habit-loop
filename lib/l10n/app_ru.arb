@@ -224,6 +224,13 @@
     }
   },
   "notificationWelcomeBackBody": "Возвращаемся к делу.",
+  "notificationHurryUpTitle": "Поторопитесь — «{habitName}» скоро закроется!",
+  "@notificationHurryUpTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationHurryUpBody": "Ещё есть время. Не откладывайте.",
   "notificationDurationMinutes": "{count} мин",
   "@notificationDurationMinutes": {
     "placeholders": {

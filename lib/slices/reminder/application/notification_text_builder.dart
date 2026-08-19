@@ -53,6 +53,19 @@ abstract final class NotificationTextBuilder {
     );
   }
 
+  // Last-chance nudge shortly before a showup's window closes (HAB-246) —
+  // deliberately avoids a literal countdown; see buildWelcomeBackText for the
+  // same occasion-based (not EXP-001-variant) pattern.
+  static ({String title, String body}) buildHurryUpText({
+    required String habitName,
+    required AppLocalizations l10n,
+  }) {
+    return (
+      title: l10n.notificationHurryUpTitle(habitName),
+      body: l10n.notificationHurryUpBody,
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
