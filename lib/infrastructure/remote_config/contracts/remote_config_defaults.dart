@@ -127,6 +127,7 @@ abstract final class RemoteConfigDefaults {
     'pact_breaks_enabled',
     'pact_chaining_enabled',
     'break_welcome_back_notification_enabled',
+    'hurry_up_notification_enabled',
   };
 
   /// Feature toggle: show the About screen entry point on the dashboard.
@@ -189,6 +190,23 @@ abstract final class RemoteConfigDefaults {
   /// through `FeatureFlags`.
   static const bool breakWelcomeBackNotificationEnabled = true;
 
+  /// Feature toggle: kill-switch for the hurry-up reminder notification (HAB-246).
+  ///
+  /// When `false`, no hurry-up notification is scheduled for any showup —
+  /// existing reminder and deadline notifications are unaffected. Override to
+  /// `false` in the Firebase Remote Config console to disable it without a
+  /// release. Read directly by `ReminderSchedulingService` (not via
+  /// [FeatureFlags]) — same pattern as [breakWelcomeBackNotificationEnabled]
+  /// — so it is **not** subject to HAB-207 release-version gating.
+  static const bool hurryUpNotificationEnabled = true;
+
+  /// How many minutes before a pending showup's window closes the hurry-up
+  /// notification fires (HAB-246). Valid range: 2–10.
+  ///
+  /// A showup is only eligible if its duration is at least `3 ×` this value —
+  /// see [ReminderSchedulingService] for the eligibility check.
+  static const int hurryUpTimeInMinutes = 5;
+
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
   /// in release builds (see [FeatureFlags.fromRemoteConfig]); `null` = not
@@ -235,6 +253,8 @@ abstract final class RemoteConfigDefaults {
     'pact_breaks_enabled': pactBreaksEnabled,
     'pact_chaining_enabled': pactChainingEnabled,
     'break_welcome_back_notification_enabled': breakWelcomeBackNotificationEnabled,
+    'hurry_up_notification_enabled': hurryUpNotificationEnabled,
+    'hurry_up_time_in_minutes': hurryUpTimeInMinutes,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -256,6 +276,7 @@ abstract final class RemoteConfigDefaults {
     'pact_breaks_enabled': ['true', 'false'],
     'pact_chaining_enabled': ['true', 'false'],
     'break_welcome_back_notification_enabled': ['true', 'false'],
+    'hurry_up_notification_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known
@@ -270,5 +291,6 @@ abstract final class RemoteConfigDefaults {
     'sync_max_consecutive_failures': (min: 1, max: 20),
     'onboarding_auto_advance_seconds': (min: 0, max: 60),
     'pact_timeline_no_grouping_tail_period_in_days': (min: 7, max: 21),
+    'hurry_up_time_in_minutes': (min: 2, max: 10),
   };
 }
