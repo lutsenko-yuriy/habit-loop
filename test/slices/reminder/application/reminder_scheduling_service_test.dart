@@ -35,12 +35,13 @@ Showup _makeShowup({
   required String id,
   required DateTime scheduledAt,
   ShowupStatus status = ShowupStatus.pending,
+  Duration duration = const Duration(minutes: 20),
 }) {
   return Showup(
     id: id,
     pactId: 'pact-1',
     scheduledAt: scheduledAt,
-    duration: const Duration(minutes: 20),
+    duration: duration,
     status: status,
   );
 }
@@ -614,6 +615,271 @@ void main() {
         l10n: l10n,
       );
       expect(notificationService.scheduledReminders.first.titleText, normal.title);
+    });
+  });
+
+  group('hurry-up notification (HAB-246)', () {
+    test('does not schedule when hurry_up_notification_enabled is false (default)', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 30)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, isEmpty);
+    });
+
+    test('schedules hurry-up when duration is exactly 3x hurry_up_time (boundary: eligible)', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 15)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, hasLength(1));
+    });
+
+    test('does not schedule hurry-up when duration is just under 3x hurry_up_time (boundary: ineligible)', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 14)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, isEmpty);
+    });
+
+    test('schedules hurry-up when duration exceeds 3x hurry_up_time', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 30)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, hasLength(1));
+      final hurryUp = notificationService.scheduledHurryUps.first;
+      expect(hurryUp.hurryUpOffset, equals(const Duration(minutes: 5)));
+      expect(hurryUp.titleText, isNotEmpty);
+      expect(hurryUp.bodyText, isNotEmpty);
+    });
+
+    test('non-default hurry_up_time_in_minutes shifts the eligibility threshold', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {
+        'hurry_up_notification_enabled': true,
+        'hurry_up_time_in_minutes': 10,
+      });
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [
+        _makeShowup(id: 'su-below', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 29)),
+        _makeShowup(id: 'su-at', scheduledAt: DateTime(2026, 5, 9, 8, 0), duration: const Duration(minutes: 30)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, hasLength(1));
+      expect(notificationService.scheduledHurryUps.first.showup.id, equals('su-at'));
+    });
+
+    test('clamps an out-of-range hurry_up_time_in_minutes (e.g. unset RC returns 0)', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {
+        'hurry_up_notification_enabled': true,
+        'hurry_up_time_in_minutes': 0,
+      });
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      // Below the clamped-minimum (2min) threshold of 6min — would wrongly
+      // qualify if the raw 0 were used unclamped (threshold 0min).
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 5)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, isEmpty);
+    });
+
+    test('does not schedule hurry-up for a non-pending showup', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [
+        _makeShowup(
+          id: 'su-done',
+          scheduledAt: DateTime(2026, 5, 8, 8, 0),
+          duration: const Duration(minutes: 30),
+          status: ShowupStatus.done,
+        ),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, isEmpty);
+    });
+
+    test('does not schedule hurry-up for a showup on break', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final breaks = [
+        PactBreak(
+          id: 'brk-1',
+          pactId: 'pact-1',
+          startDate: DateTime(2026, 5, 5),
+          plannedEndDate: DateTime(2026, 5, 10),
+          rationale: 'Traveling',
+        ),
+      ];
+      final showups = [
+        _makeShowup(id: 'su-on-break', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 30)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now, breaks: breaks);
+
+      expect(notificationService.scheduledHurryUps, isEmpty);
+    });
+
+    test('fires NotificationsScheduledEvent with hurryUpCount reflecting scheduled hurry-ups', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [
+        _makeShowup(id: 'su-eligible', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 30)),
+        _makeShowup(
+            id: 'su-ineligible', scheduledAt: DateTime(2026, 5, 9, 8, 0), duration: const Duration(minutes: 10)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      final event = analyticsService.loggedEvents.single as NotificationsScheduledEvent;
+      expect(event.hurryUpCount, equals(1));
+      // 2 reminders + 1 hurry-up (isIOS=false + dismiss, so no deadlines).
+      expect(event.notificationsCount, equals(3));
+    });
+  });
+
+  group('iOS budget: chronological spend (HAB-246)', () {
+    test('all-eligible showups schedule 21 (64 / 3 per showup: reminder + deadline + hurry-up)', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+        isIOS: true,
+      );
+
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      // Default showup duration (20 min) clears the default 15-min eligibility threshold.
+      final showups = List.generate(40, (i) {
+        return _makeShowup(id: 'su-$i', scheduledAt: DateTime(2026, 5, 8 + i, 8, 0));
+      });
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledReminders, hasLength(21));
+      expect(notificationService.scheduledHurryUps, hasLength(21));
+    });
+
+    test('mixed eligible/ineligible showups, shuffled input, spend budget nearest-first', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+        isIOS: true,
+      );
+
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+
+      // 10 nearest showups are eligible (cost 3 each = 30); remaining budget (34)
+      // buys 17 more ineligible showups (cost 2 each), leaving one over-budget.
+      final eligible = List.generate(10, (i) {
+        return _makeShowup(
+          id: 'su-eligible-$i',
+          scheduledAt: DateTime(2026, 5, 8 + i, 8, 0),
+          duration: const Duration(minutes: 20),
+        );
+      });
+      final ineligible = List.generate(30, (i) {
+        return _makeShowup(
+          id: 'su-ineligible-$i',
+          scheduledAt: DateTime(2026, 5, 18 + i, 8, 0),
+          duration: const Duration(minutes: 10),
+        );
+      });
+      final shuffled = [...ineligible.reversed, ...eligible.reversed];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: shuffled, now: now);
+
+      expect(notificationService.scheduledReminders, hasLength(27));
+      expect(notificationService.scheduledHurryUps, hasLength(10));
+      final scheduledIds = notificationService.scheduledReminders.map((r) => r.showup.id).toSet();
+      expect(scheduledIds, containsAll(eligible.map((s) => s.id)));
+      expect(scheduledIds, containsAll(ineligible.take(17).map((s) => s.id)));
+      expect(scheduledIds, isNot(contains('su-ineligible-17')));
     });
   });
 
