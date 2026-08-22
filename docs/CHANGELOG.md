@@ -22,6 +22,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [wip] (PR #399) HAB-246 (WU3 of multi-WU): hurry-up notification behavioural core — `ReminderSchedulingService` eligibility rule (duration >= 3x hurry_up_time), fire-time gate, and the iOS 64-request budget reworked to spend chronologically by actual per-showup cost instead of a fixed divisor. `NotificationsScheduledEvent` gains `hurry_up_count`. `hurry_up_notification_enabled` still defaults to `false`; flips in WU4.
 - [wip] (PR #395) HAB-246 (WU1 of multi-WU): hurry-up notification foundations — RC keys (`hurry_up_time_in_minutes`, `hurry_up_notification_enabled`), ID formula and classifier, l10n strings (4 locales), notification text builder. No scheduling, cancellation, or eligibility logic yet.
 - [wip] (PR #396) HAB-246 (WU2 of multi-WU): hurry-up notification transport layer — `NotificationService.scheduleHurryUpNotification` contract + implementations, cancellation extended to the new ID. No eligibility rule or `ReminderSchedulingService` wiring yet.
 - [meta] (PR #397) HAB-248: regenerated `docs/knowledge/notes/INDEX.md`, dropping two orphaned references to a never-committed note file that were blocking CI's `test` job on every PR since HAB-246 WU1's ship.
