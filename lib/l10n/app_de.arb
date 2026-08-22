@@ -224,6 +224,13 @@
     }
   },
   "notificationWelcomeBackBody": "Weiter geht's.",
+  "notificationHurryUpTitle": "Beeil dich — {habitName} schließt gleich!",
+  "@notificationHurryUpTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationHurryUpBody": "Es ist noch Zeit. Leg los.",
   "notificationDurationMinutes": "{count} Min.",
   "@notificationDurationMinutes": {
     "placeholders": {

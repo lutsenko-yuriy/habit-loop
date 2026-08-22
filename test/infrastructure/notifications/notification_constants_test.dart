@@ -65,6 +65,56 @@ void main() {
       expect(reminderIds.toSet().length, reminderIds.length);
       expect(deadlineIds.toSet().length, deadlineIds.length);
     });
+
+    group('hurryUpNotificationId', () {
+      test('returns a negative value within [-0x40000000, -1]', () {
+        for (final id in _sampleIds) {
+          final result = NotificationConstants.hurryUpNotificationId(id);
+          expect(result, lessThanOrEqualTo(-1));
+          expect(result, greaterThanOrEqualTo(-0x40000000));
+        }
+      });
+
+      test('is disjoint from reminder and deadline ranges for all sample inputs', () {
+        for (final id in _sampleIds) {
+          final hurryUpId = NotificationConstants.hurryUpNotificationId(id);
+          expect(hurryUpId, lessThan(0), reason: 'Hurry-up ID for "$id" must be negative');
+        }
+      });
+
+      test('IDs are stable across Dart VM restarts — hardcoded FNV-1a expected values', () {
+        // Same migration-safety guarantee as the reminder/deadline goldens above.
+        expect(NotificationConstants.hurryUpNotificationId('a1b2c3d4-e5f6-7890-abcd-ef1234567890'), -0x6B361A0);
+        expect(NotificationConstants.hurryUpNotificationId('showup-id-001'), -0x3E8B1168);
+      });
+
+      test('does not disturb the existing reminder/deadline golden values', () {
+        // Migration-safety guard (see plan HAB-246): adding the hurry-up
+        // formula must not change either existing formula's output.
+        expect(NotificationConstants.reminderNotificationId('a1b2c3d4-e5f6-7890-abcd-ef1234567890'), 0x6B3619F);
+        expect(NotificationConstants.deadlineNotificationId('a1b2c3d4-e5f6-7890-abcd-ef1234567890'), 0x46B361A2);
+        expect(NotificationConstants.reminderNotificationId('showup-id-001'), 0x3E8B1167);
+        expect(NotificationConstants.deadlineNotificationId('showup-id-001'), 0x7E8B1168);
+      });
+
+      test('two different showup IDs produce different hurry-up IDs (no collision on sample)', () {
+        final hurryUpIds = _sampleIds.map(NotificationConstants.hurryUpNotificationId).toList();
+        expect(hurryUpIds.toSet().length, hurryUpIds.length);
+      });
+    });
+
+    group('id kind classification', () {
+      test('isHurryUpNotificationId is true only for negative IDs', () {
+        for (final id in _sampleIds) {
+          expect(
+              NotificationConstants.isHurryUpNotificationId(NotificationConstants.hurryUpNotificationId(id)), isTrue);
+          expect(
+              NotificationConstants.isHurryUpNotificationId(NotificationConstants.reminderNotificationId(id)), isFalse);
+          expect(
+              NotificationConstants.isHurryUpNotificationId(NotificationConstants.deadlineNotificationId(id)), isFalse);
+        }
+      });
+    });
   });
 }
 

@@ -246,6 +246,63 @@ void main() {
       });
     });
 
+    group('hurry_up_time_in_minutes', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('hurry_up_time_in_minutes'), isTrue);
+      });
+
+      test('default value is 5', () {
+        expect(RemoteConfigDefaults.all['hurry_up_time_in_minutes'], 5);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.hurryUpTimeInMinutes,
+          equals(RemoteConfigDefaults.all['hurry_up_time_in_minutes']),
+        );
+      });
+
+      test('appears in intRanges with correct bounds', () {
+        expect(RemoteConfigDefaults.intRanges['hurry_up_time_in_minutes'], (min: 2, max: 10));
+      });
+
+      test('is absent from allowedValues (bounded integer, not enum-like)', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('hurry_up_time_in_minutes'), isFalse);
+      });
+    });
+
+    group('hurry_up_notification_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('hurry_up_notification_enabled'), isTrue);
+      });
+
+      test('default value is false (WU1 of a still-in-progress multi-WU feature, HAB-246)', () {
+        expect(RemoteConfigDefaults.all['hurry_up_notification_enabled'], isFalse);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.hurryUpNotificationEnabled,
+          equals(RemoteConfigDefaults.all['hurry_up_notification_enabled']),
+        );
+      });
+
+      test('appears in featureToggleKeys', () {
+        expect(RemoteConfigDefaults.featureToggleKeys.contains('hurry_up_notification_enabled'), isTrue);
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('hurry_up_notification_enabled'), isTrue);
+        expect(RemoteConfigDefaults.allowedValues['hurry_up_notification_enabled'], containsAll(['true', 'false']));
+      });
+
+      test(
+          'is absent from releaseVersions — same ungated pattern as its sibling break_welcome_back_notification_enabled',
+          () {
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('hurry_up_notification_enabled'), isFalse);
+      });
+    });
+
     group('pact_timeline_no_grouping_tail_period_in_days', () {
       test('key exists in all map', () {
         expect(RemoteConfigDefaults.all.containsKey('pact_timeline_no_grouping_tail_period_in_days'), isTrue);

@@ -224,6 +224,13 @@
     }
   },
   "notificationWelcomeBackBody": "On s'y remet.",
+  "notificationHurryUpTitle": "Dépêche-toi — {habitName} se termine bientôt !",
+  "@notificationHurryUpTitle": {
+    "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationHurryUpBody": "Il reste du temps. Vas-y.",
   "notificationDurationMinutes": "{count} min",
   "@notificationDurationMinutes": {
     "placeholders": {

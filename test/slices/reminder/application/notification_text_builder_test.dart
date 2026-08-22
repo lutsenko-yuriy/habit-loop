@@ -222,4 +222,39 @@ void main() {
       expect(result.body, isNotEmpty);
     });
   });
+
+  group('NotificationTextBuilder.buildHurryUpText', () {
+    const habitName = 'Meditate';
+
+    test('title contains the habit name', () {
+      final result = NotificationTextBuilder.buildHurryUpText(habitName: habitName, l10n: l10n);
+
+      expect(result.title, contains(habitName));
+      expect(result.body, isNotEmpty);
+    });
+
+    test('works in French locale', () {
+      final frL10n = lookupAppLocalizations(const Locale('fr'));
+      final result = NotificationTextBuilder.buildHurryUpText(habitName: habitName, l10n: frL10n);
+
+      expect(result.title, contains(habitName));
+      expect(result.body, isNotEmpty);
+    });
+
+    test('works in German locale', () {
+      final deL10n = lookupAppLocalizations(const Locale('de'));
+      final result = NotificationTextBuilder.buildHurryUpText(habitName: habitName, l10n: deL10n);
+
+      expect(result.title, contains(habitName));
+      expect(result.body, isNotEmpty);
+    });
+
+    test('works in Russian locale', () {
+      final ruL10n = lookupAppLocalizations(const Locale('ru'));
+      final result = NotificationTextBuilder.buildHurryUpText(habitName: habitName, l10n: ruL10n);
+
+      expect(result.title, contains(habitName));
+      expect(result.body, isNotEmpty);
+    });
+  });
 }
