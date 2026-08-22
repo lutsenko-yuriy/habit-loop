@@ -96,6 +96,8 @@ abstract interface class NotificationService {
   /// Fires at `showup.scheduledAt + showup.duration - hurryUpOffset`.
   /// [hurryUpOffset] is caller-supplied (the RC-driven `hurry_up_time_in_minutes`
   /// value) rather than read from [showup]/[Pact] — neither carries it.
+  /// No precondition on [hurryUpOffset] vs. [showup.duration] — a non-positive
+  /// resulting fire time is silently skipped rather than firing immediately.
   ///
   /// Never throws — implementations swallow failures silently.
   Future<void> scheduleHurryUpNotification({

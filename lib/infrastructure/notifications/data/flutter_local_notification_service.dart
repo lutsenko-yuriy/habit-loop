@@ -200,8 +200,13 @@ final class FlutterLocalNotificationService implements NotificationService {
     required String bodyText,
   }) async {
     try {
-      final notifId = _hurryUpNotificationId(showup.id);
       final fireAt = showup.scheduledAt.add(showup.duration).subtract(hurryUpOffset);
+      // Guard against a non-positive lead time: showup duration allows 1 minute while
+      // hurryUpOffset is bounded >= 2, so a past/immediate fireAt is reachable through
+      // the existing UI independently of the caller's own eligibility check (HAB-246 audit).
+      if (!fireAt.isAfter(DateTime.now())) return;
+
+      final notifId = _hurryUpNotificationId(showup.id);
       final tzFireAt = tz.TZDateTime.from(fireAt, tz.local);
 
       final payload = jsonEncode({'showupId': showup.id, 'pactId': showup.pactId});
