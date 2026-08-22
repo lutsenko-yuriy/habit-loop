@@ -192,16 +192,13 @@ abstract final class RemoteConfigDefaults {
 
   /// Feature toggle: kill-switch for the hurry-up reminder notification (HAB-246).
   ///
-  /// Defaulted to `false` during development — same deviation as
-  /// [pactBreaksEnabled]/[pactChainingEnabled], required because this flag is
-  /// introduced partway through a still-in-progress multi-WU feature (WU1 of
-  /// 4) and, unlike those two, is read directly by `ReminderSchedulingService`
-  /// rather than through [FeatureFlags] — so it sits outside HAB-207's
-  /// release-version gate and this default is the only thing preventing the
-  /// half-built feature from reaching users mid-rollout. Flip to `true` here
-  /// in the final ship WU once the feature is complete end-to-end. Override in
-  /// the Firebase Remote Config console to test ahead of that flip.
-  static const bool hurryUpNotificationEnabled = false;
+  /// Flipped to `true` in WU4 (the final WU) now that the feature is complete
+  /// end-to-end. Read directly by `ReminderSchedulingService` (not via
+  /// [FeatureFlags]) — same pattern as its sibling `notification_text_variant`/
+  /// `post_deadline_notification_behavior` keys — so it is **not** subject to
+  /// HAB-207 release-version gating. Override to `false` in the Firebase
+  /// Remote Config console for an emergency kill-switch without a release.
+  static const bool hurryUpNotificationEnabled = true;
 
   /// How many minutes before a pending showup's window closes the hurry-up
   /// notification fires (HAB-246). Valid range: 2–10.
