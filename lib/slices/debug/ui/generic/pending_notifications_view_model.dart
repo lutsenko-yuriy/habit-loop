@@ -10,21 +10,27 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_c
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/slices/debug/ui/generic/pending_notification_row.dart';
 
+// HAB-246: same RC key ReminderSchedulingService reads to compute the
+// hurry-up fire time.
+const _kHurryUpTimeInMinutes = 'hurry_up_time_in_minutes';
+
 /// Resolves the OS's currently-pending notifications into display rows
 /// (HAB-228). [PendingNotificationInfo] carries no fire time — the OS
 /// pending-notifications query doesn't return one — so it's recomputed here
 /// from the payload's `showupId`: reminder-range ids use
 /// `scheduledAt - reminderOffset`, deadline-range ids use
-/// `scheduledAt + duration`. Any failure along that path (missing/malformed
-/// payload, deleted showup/pact, cleared reminderOffset) just leaves
-/// [PendingNotificationRow.fireAt] null with the reason recorded — the row
-/// is still shown.
+/// `scheduledAt + duration`, hurry-up-range ids use
+/// `scheduledAt + duration - hurryUpTime` (HAB-246). Any failure along that
+/// path (missing/malformed payload, deleted showup/pact, cleared
+/// reminderOffset) just leaves [PendingNotificationRow.fireAt] null with the
+/// reason recorded — the row is still shown.
 class PendingNotificationsViewModel extends AutoDisposeAsyncNotifier<List<PendingNotificationRow>> {
   @override
   Future<List<PendingNotificationRow>> build() async {
     final notificationService = ref.read(notificationServiceProvider);
     final showupRepository = ref.read(showupRepositoryProvider);
     final pactRepository = ref.read(pactRepositoryProvider);
+    final remoteConfig = ref.read(remoteConfigServiceProvider);
 
     final pending = await notificationService.getPendingNotifications();
 
@@ -34,9 +40,13 @@ class PendingNotificationsViewModel extends AutoDisposeAsyncNotifier<List<Pendin
     final showupCache = <String, Showup?>{};
     final pactCache = <String, Pact?>{};
 
+    final hurryUpTime = Duration(minutes: remoteConfig.getInt(_kHurryUpTimeInMinutes).clamp(2, 10));
+
     final rows = <PendingNotificationRow>[];
     for (final notification in pending) {
-      rows.add(await _resolveRow(notification, showupRepository, pactRepository, showupCache, pactCache));
+      rows.add(
+        await _resolveRow(notification, showupRepository, pactRepository, showupCache, pactCache, hurryUpTime),
+      );
     }
 
     rows.sort((a, b) {
@@ -55,6 +65,7 @@ class PendingNotificationsViewModel extends AutoDisposeAsyncNotifier<List<Pendin
     PactRepository pactRepository,
     Map<String, Showup?> showupCache,
     Map<String, Pact?> pactCache,
+    Duration hurryUpTime,
   ) async {
     PendingNotificationRow row({DateTime? fireAt, UnresolvedFireTimeReason reason = UnresolvedFireTimeReason.none}) =>
         PendingNotificationRow(
@@ -78,6 +89,10 @@ class PendingNotificationsViewModel extends AutoDisposeAsyncNotifier<List<Pendin
     showupCache[showupId] = showup;
     if (showup == null) {
       return row(reason: UnresolvedFireTimeReason.showupNotFound);
+    }
+
+    if (NotificationConstants.isHurryUpNotificationId(notification.id)) {
+      return row(fireAt: showup.scheduledAt.add(showup.duration).subtract(hurryUpTime));
     }
 
     final isDeadline = notification.id >= NotificationConstants.deadlineRangeStart;
