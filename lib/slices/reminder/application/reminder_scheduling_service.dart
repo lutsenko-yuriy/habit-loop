@@ -76,7 +76,11 @@ final class ReminderSchedulingService {
     final scheduleDeadline = _isIOS || postDeadlineBehavior == 'encourage';
 
     final hurryUpEnabled = _remoteConfig.getBool(_kHurryUpEnabled);
-    final hurryUpTime = Duration(minutes: _remoteConfig.getInt(_kHurryUpTimeInMinutes));
+    // Clamped: RemoteConfigDefaults.intRanges (2-10) is only a debug-screen UI
+    // hint, not enforced at read time — an unset/blank console value returns 0,
+    // which would make every showup eligible and fire right at the deadline
+    // (HAB-246 audit).
+    final hurryUpTime = Duration(minutes: _remoteConfig.getInt(_kHurryUpTimeInMinutes).clamp(2, 10));
 
     final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
     final hurryUpText = NotificationTextBuilder.buildHurryUpText(habitName: pact.habitName, l10n: l10n);

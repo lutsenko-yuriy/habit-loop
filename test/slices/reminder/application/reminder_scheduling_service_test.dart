@@ -716,6 +716,30 @@ void main() {
       expect(notificationService.scheduledHurryUps.first.showup.id, equals('su-at'));
     });
 
+    test('clamps an out-of-range hurry_up_time_in_minutes (e.g. unset RC returns 0)', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {
+        'hurry_up_notification_enabled': true,
+        'hurry_up_time_in_minutes': 0,
+      });
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      // Below the clamped-minimum (2min) threshold of 6min — would wrongly
+      // qualify if the raw 0 were used unclamped (threshold 0min).
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 5)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, isEmpty);
+    });
+
     test('does not schedule hurry-up for a non-pending showup', () async {
       remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
       service = ReminderSchedulingService(
