@@ -36,3 +36,5 @@ heavy `/checkup` tier.
 | `postmortem-workflow` | Post-fix root-cause investigation ticket structure — origin tracing, deadline discipline, distinguishing from pre-fix troubleshooting. |
 | `multi-project-scope` | Whether/how sub-projects sharing a repo (e.g. Flutter app vs. Python/Bash tooling) need separate plan/implement/review cycles, repo boundaries, or orchestration. |
 | `trivial-change-scope` | Recognizing content-only changes (copy/asset/literal edits) that don't need the full review/release ceremony. |
+| `notifications` | Local notification delivery, scheduling, and lifecycle (platform APIs, ID partitioning, cancellation sweeps). |
+| `ios-limits` | iOS platform constraints — pending-notification cap, kernel-level resource limits, simulator quirks. |
