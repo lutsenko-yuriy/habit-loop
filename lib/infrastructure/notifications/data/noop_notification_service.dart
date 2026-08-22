@@ -31,6 +31,14 @@ final class NoopNotificationService implements NotificationService {
   }) async {}
 
   @override
+  Future<void> scheduleHurryUpNotification({
+    required Showup showup,
+    required Duration hurryUpOffset,
+    required String titleText,
+    required String bodyText,
+  }) async {}
+
+  @override
   Future<void> cancelShowupReminder(String showupId) async {}
 
   @override

@@ -26,6 +26,9 @@ final class FakeNotificationService implements NotificationService {
   /// Records of all [scheduleDeadlineNotification] calls in order.
   final List<({Showup showup, String titleText, String bodyText})> scheduledDeadlines = [];
 
+  /// Records of all [scheduleHurryUpNotification] calls in order.
+  final List<({Showup showup, Duration hurryUpOffset, String titleText, String bodyText})> scheduledHurryUps = [];
+
   /// [showupId] values passed to [cancelShowupReminder] in order.
   final List<String> cancelledShowupIds = [];
 
@@ -66,6 +69,16 @@ final class FakeNotificationService implements NotificationService {
   }
 
   @override
+  Future<void> scheduleHurryUpNotification({
+    required Showup showup,
+    required Duration hurryUpOffset,
+    required String titleText,
+    required String bodyText,
+  }) async {
+    scheduledHurryUps.add((showup: showup, hurryUpOffset: hurryUpOffset, titleText: titleText, bodyText: bodyText));
+  }
+
+  @override
   Future<void> cancelShowupReminder(String showupId) async {
     cancelledShowupIds.add(showupId);
   }
@@ -93,6 +106,7 @@ final class FakeNotificationService implements NotificationService {
     permissionGranted = false;
     scheduledReminders.clear();
     scheduledDeadlines.clear();
+    scheduledHurryUps.clear();
     cancelledShowupIds.clear();
     cancelledPactIds.clear();
     cancelledPactShowupIds.clear();

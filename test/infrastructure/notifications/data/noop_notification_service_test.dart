@@ -66,6 +66,18 @@ void main() {
       );
     });
 
+    test('scheduleHurryUpNotification completes without throwing', () async {
+      await expectLater(
+        service.scheduleHurryUpNotification(
+          showup: testShowup,
+          hurryUpOffset: const Duration(minutes: 5),
+          titleText: 'Hurry up — Meditate is about to close!',
+          bodyText: "There's still time. Go show up.",
+        ),
+        completes,
+      );
+    });
+
     test('cancelShowupReminder completes without throwing', () async {
       await expectLater(service.cancelShowupReminder('su-1'), completes);
     });
