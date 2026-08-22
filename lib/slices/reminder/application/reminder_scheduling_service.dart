@@ -21,13 +21,17 @@ const _kPostDeadlineNotificationBehavior = 'post_deadline_notification_behavior'
 // HAB-227: kill-switch for the break-over "welcome back" reminder text.
 const _kBreakWelcomeBackEnabled = 'break_welcome_back_notification_enabled';
 
+// HAB-246: kill-switch + bounded offset for the hurry-up reminder notification.
+const _kHurryUpEnabled = 'hurry_up_notification_enabled';
+const _kHurryUpTimeInMinutes = 'hurry_up_time_in_minutes';
+
 /// Resolves AppLocalizations internally (no BuildContext needed).
 /// [isIOS] is constructor-injected for testability — pass Platform.isIOS at the composition root.
-/// iOS cap: 64 pending notifications max (2 per showup = 32 showups max per pass).
+/// iOS cap: 64 pending notifications max, spent chronologically by actual
+/// per-showup cost (reminder + deadline + hurry-up, if eligible) — see
+/// [scheduleRemindersForShowups] (HAB-246).
 final class ReminderSchedulingService {
   static const int _iosMaxPendingNotifications = 64;
-  // 2 per showup on iOS (reminder + deadline); cap = 64 / 2 = 32 showups.
-  static const int _notificationsPerShowupIos = 2;
   // [systemLocale] is the device/OS locale, used only when no explicit in-app
   // override has been saved (HAB-157) — previously hardcoded to English.
   const ReminderSchedulingService({
@@ -71,7 +75,11 @@ final class ReminderSchedulingService {
     final postDeadlineBehavior = _remoteConfig.getString(_kPostDeadlineNotificationBehavior);
     final scheduleDeadline = _isIOS || postDeadlineBehavior == 'encourage';
 
+    final hurryUpEnabled = _remoteConfig.getBool(_kHurryUpEnabled);
+    final hurryUpTime = Duration(minutes: _remoteConfig.getInt(_kHurryUpTimeInMinutes));
+
     final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
+    final hurryUpText = NotificationTextBuilder.buildHurryUpText(habitName: pact.habitName, l10n: l10n);
 
     // Computed once per call, not per showup — welcome-back applies only to
     // the reminder notification; the deadline notification above always keeps
@@ -87,10 +95,31 @@ final class ReminderSchedulingService {
             !BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks))
         .toList();
 
-    final maxShowups = _isIOS ? (_iosMaxPendingNotifications ~/ _notificationsPerShowupIos) : qualifyingShowups.length;
-    final showupsToSchedule = qualifyingShowups.take(maxShowups).toList();
+    // iOS spends its 64-request budget chronologically by actual per-showup
+    // cost (reminder + deadline + hurry-up, if eligible) rather than at a
+    // fixed rate — a pact with no eligible showups keeps its full ~32-showup
+    // horizon, while eligibility-heavy pacts trade horizon depth for
+    // near-term completeness (HAB-246). Android has no cap.
+    List<Showup> showupsToSchedule;
+    if (_isIOS) {
+      final sorted = [...qualifyingShowups]..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+      final selected = <Showup>[];
+      var budget = 0;
+      for (final showup in sorted) {
+        final cost = 1 +
+            (scheduleDeadline ? 1 : 0) +
+            (_isHurryUpEligible(showup, hurryUpEnabled, hurryUpTime, effectiveNow) ? 1 : 0);
+        if (budget + cost > _iosMaxPendingNotifications) break;
+        budget += cost;
+        selected.add(showup);
+      }
+      showupsToSchedule = selected;
+    } else {
+      showupsToSchedule = qualifyingShowups;
+    }
 
     var scheduledCount = 0;
+    var hurryUpCount = 0;
     for (final showup in showupsToSchedule) {
       final reminderText = welcomeBackIds.contains(showup.id)
           ? NotificationTextBuilder.buildWelcomeBackText(habitName: pact.habitName, l10n: l10n)
@@ -118,6 +147,17 @@ final class ReminderSchedulingService {
       }
 
       scheduledCount += scheduleDeadline ? 2 : 1;
+
+      if (_isHurryUpEligible(showup, hurryUpEnabled, hurryUpTime, effectiveNow)) {
+        await _notificationService.scheduleHurryUpNotification(
+          showup: showup,
+          hurryUpOffset: hurryUpTime,
+          titleText: hurryUpText.title,
+          bodyText: hurryUpText.body,
+        );
+        scheduledCount += 1;
+        hurryUpCount += 1;
+      }
     }
 
     if (scheduledCount > 0) {
@@ -126,9 +166,23 @@ final class ReminderSchedulingService {
           pactId: pact.id,
           notificationsCount: scheduledCount,
           reminderOffsetMinutes: pact.reminderOffset!.inMinutes,
+          hurryUpCount: hurryUpCount,
         ),
       );
     }
+  }
+
+  // Eligible iff the toggle is on, the showup's window is long enough
+  // (duration >= 3 × hurryUpTime, per spec) and its fire time still lies in
+  // the future. Given eligibility implies duration - hurryUpTime >= 0, the
+  // fire-time check can only trip for a showup that was already excluded by
+  // the reminder-fire-time qualifying filter above — kept here as
+  // defense-in-depth, matching the transport layer's own guard (HAB-246).
+  bool _isHurryUpEligible(Showup showup, bool enabled, Duration hurryUpTime, DateTime now) {
+    if (!enabled) return false;
+    if (showup.duration < hurryUpTime * 3) return false;
+    final fireAt = showup.scheduledAt.add(showup.duration).subtract(hurryUpTime);
+    return fireAt.isAfter(now);
   }
 
   Future<void> cancelRemindersForShowup(String showupId) async {

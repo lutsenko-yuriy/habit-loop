@@ -7,6 +7,7 @@ final class NotificationsScheduledEvent extends AnalyticsEvent {
     required this.pactId,
     required this.notificationsCount,
     required this.reminderOffsetMinutes,
+    this.hurryUpCount = 0,
   });
 
   /// ID of the pact whose notifications were scheduled.
@@ -22,6 +23,10 @@ final class NotificationsScheduledEvent extends AnalyticsEvent {
   /// property of `pact_created`.
   final int reminderOffsetMinutes;
 
+  /// Number of hurry-up notifications included in [notificationsCount]
+  /// (HAB-246). `0` when the feature is disabled or no showup qualified.
+  final int hurryUpCount;
+
   @override
   String get name => 'notifications_scheduled';
 
@@ -30,6 +35,7 @@ final class NotificationsScheduledEvent extends AnalyticsEvent {
         'pact_id': pactId,
         'notifications_count': notificationsCount,
         'reminder_offset_minutes': reminderOffsetMinutes,
+        'hurry_up_count': hurryUpCount,
       };
 }
 
