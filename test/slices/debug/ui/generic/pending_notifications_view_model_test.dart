@@ -98,8 +98,7 @@ void main() {
     expect(result.first.fireAt, DateTime(2026, 3, 1, 8, 10));
   });
 
-  test('resolves a hurry-up notification\'s fire time as scheduledAt + duration - hurry_up_time_in_minutes',
-      () async {
+  test('resolves a hurry-up notification\'s fire time as scheduledAt + duration - hurry_up_time_in_minutes', () async {
     await showupRepo.saveShowup(_showup);
     notificationService.pendingNotifications = [
       PendingNotificationInfo(

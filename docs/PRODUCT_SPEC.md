@@ -70,6 +70,7 @@ The Habit Loop app allows the user to:
 - Be reminded about an upcoming showup
   - A notification with a reminder will appear to the user if they defined a reminder
   - The user can see the showup by clicking on the notification
+  - A "hurry up" notification fires `hurry_up_time` minutes (global setting, 2-10, default 5) before a pending showup's window closes, as a last-chance nudge before it auto-fails. Only showups whose duration is at least `3 × hurry_up_time` are eligible (default: ≥ 15 minutes). Does not fire for a showup already marked done/failed, or one on break. Controlled by the `hurry_up_notification_enabled` kill-switch (HAB-246)
 - Access app information and send feedback
   - Secondary dashboard actions (About, Language) are grouped behind a ⋯ menu button in the nav bar; tapping it shows all enabled items. If exactly one item is enabled, it appears as a standalone icon instead of the ⋯ button (single-item shortcut). About is controlled by the `about_screen_enabled` feature flag.
   - The About screen shows the app icon, app name, version number, build number, and a copyright notice
