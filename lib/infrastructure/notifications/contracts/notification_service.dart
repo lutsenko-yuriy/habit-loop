@@ -88,9 +88,28 @@ abstract interface class NotificationService {
     required String bodyText,
   });
 
-  /// Cancels both the reminder and deadline notifications for [showupId].
+  /// Schedules a "hurry up" last-chance nudge for [showup] (HAB-246).
   ///
-  /// Recomputes both notification IDs from [showupId] — no [DateTime] parameter
+  /// Uses a notification ID disjoint from both the reminder and deadline IDs
+  /// (negative range — see [NotificationConstants.hurryUpNotificationId]) so
+  /// all three can coexist in the notification tray.
+  /// Fires at `showup.scheduledAt + showup.duration - hurryUpOffset`.
+  /// [hurryUpOffset] is caller-supplied (the RC-driven `hurry_up_time_in_minutes`
+  /// value) rather than read from [showup]/[Pact] — neither carries it.
+  /// No precondition on [hurryUpOffset] vs. [showup.duration] — a non-positive
+  /// resulting fire time is silently skipped rather than firing immediately.
+  ///
+  /// Never throws — implementations swallow failures silently.
+  Future<void> scheduleHurryUpNotification({
+    required Showup showup,
+    required Duration hurryUpOffset,
+    required String titleText,
+    required String bodyText,
+  });
+
+  /// Cancels the reminder, deadline, and hurry-up notifications for [showupId].
+  ///
+  /// Recomputes all three notification IDs from [showupId] — no [DateTime] parameter
   /// is needed because the IDs are derived solely from the showup UUID.
   ///
   /// Never throws — implementations swallow failures silently.
@@ -99,7 +118,8 @@ abstract interface class NotificationService {
   /// Cancels all pending notifications for the given pact.
   ///
   /// When [showupIds] is provided the implementation computes notification IDs
-  /// deterministically from the showup IDs and cancels them directly — this is
+  /// (reminder, deadline, and hurry-up) deterministically from the showup IDs
+  /// and cancels them directly — this is
   /// the reliable path and works even after a cold restart when the in-memory
   /// registry is empty. When [showupIds] is empty the implementation falls back
   /// to the in-memory registry or an OS pending-notification query (which is

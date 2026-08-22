@@ -22,6 +22,7 @@ const _kChannelName = 'Showup reminders';
 /// Notification ID scheme (FNV-1a 32-bit, disjoint ranges):
 /// - Reminder: `[0x0, 0x3FFFFFFF]`
 /// - Deadline: `[0x40000000, 0x7FFFFFFE]`
+/// - Hurry-up: `[-0x40000000, -1]` (HAB-246)
 ///
 /// `_pactNotificationIds` maps pact ID → notification IDs for fast cancellation.
 /// On restart the registry is empty; fallback queries the OS-managed pending list.
@@ -192,17 +193,64 @@ final class FlutterLocalNotificationService implements NotificationService {
   }
 
   @override
+  Future<void> scheduleHurryUpNotification({
+    required Showup showup,
+    required Duration hurryUpOffset,
+    required String titleText,
+    required String bodyText,
+  }) async {
+    try {
+      final fireAt = showup.scheduledAt.add(showup.duration).subtract(hurryUpOffset);
+      // Guard against a non-positive lead time: showup duration allows 1 minute while
+      // hurryUpOffset is bounded >= 2, so a past/immediate fireAt is reachable through
+      // the existing UI independently of the caller's own eligibility check (HAB-246 audit).
+      if (!fireAt.isAfter(DateTime.now())) return;
+
+      final notifId = _hurryUpNotificationId(showup.id);
+      final tzFireAt = tz.TZDateTime.from(fireAt, tz.local);
+
+      final payload = jsonEncode({'showupId': showup.id, 'pactId': showup.pactId});
+
+      const androidDetails = AndroidNotificationDetails(
+        _kChannelId,
+        _kChannelName,
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+      const iosDetails = DarwinNotificationDetails();
+
+      await _plugin.zonedSchedule(
+        notifId,
+        titleText,
+        bodyText,
+        tzFireAt,
+        const NotificationDetails(android: androidDetails, iOS: iosDetails),
+        androidScheduleMode:
+            _canScheduleExact ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle,
+        payload: payload,
+      );
+
+      _registerNotificationId(showup.pactId, notifId);
+    } catch (e, s) {
+      await _crashlytics.recordError(e, s, information: ['NotificationService.scheduleHurryUpNotification']);
+    }
+  }
+
+  @override
   Future<void> cancelShowupReminder(String showupId) async {
     try {
       final reminderId = _reminderNotificationId(showupId);
       final deadlineId = _deadlineNotificationId(showupId);
+      final hurryUpId = _hurryUpNotificationId(showupId);
       await _plugin.cancel(reminderId);
       await _plugin.cancel(deadlineId);
+      await _plugin.cancel(hurryUpId);
       // Remove from all pact registries (we don't know the pactId here).
       for (final ids in _pactNotificationIds.values) {
         ids
           ..remove(reminderId)
-          ..remove(deadlineId);
+          ..remove(deadlineId)
+          ..remove(hurryUpId);
       }
     } catch (e, s) {
       await _crashlytics.recordError(e, s, information: ['NotificationService.cancelShowupReminder']);
@@ -223,6 +271,7 @@ final class FlutterLocalNotificationService implements NotificationService {
         for (final showupId in showupIds) {
           await _plugin.cancel(_reminderNotificationId(showupId));
           await _plugin.cancel(_deadlineNotificationId(showupId));
+          await _plugin.cancel(_hurryUpNotificationId(showupId));
         }
         _pactNotificationIds.remove(pactId);
         return;
@@ -291,6 +340,7 @@ final class FlutterLocalNotificationService implements NotificationService {
 
   int _reminderNotificationId(String showupId) => NotificationConstants.reminderNotificationId(showupId);
   int _deadlineNotificationId(String showupId) => NotificationConstants.deadlineNotificationId(showupId);
+  int _hurryUpNotificationId(String showupId) => NotificationConstants.hurryUpNotificationId(showupId);
 
   void _registerNotificationId(String pactId, int notifId) {
     _pactNotificationIds.putIfAbsent(pactId, () => {}).add(notifId);
