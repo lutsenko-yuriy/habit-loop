@@ -6,15 +6,15 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (14)
+- **review-findings** (15)
 - **debugging-methodology** (12)
 - **planning-gaps** (12)
 - **multi-wu-scope** (11)
 - **research-methodology** (10)
 - **ci-flakiness** (9)
 - **code-style** (8)
+- **knowledge-base-process** (7)
 - **changelog-versioning** (6)
-- **knowledge-base-process** (6)
 - **widget-test-gotchas** (6)
 - **dead-code** (4)
 - **verify-from-source** (4)
@@ -113,6 +113,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-154: Standing docs audit and tidy-up](HAB-154.md)
 - [HAB-170: Migrate existing decision-like docs into the ADR structure (docs/decisions/)](HAB-170.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
+- [HAB-250: Bug: notes/index.py picks up untracked note files, causing recurring stale-INDEX CI failures](HAB-250.md)
 
 ### l10n-glossary
 - [HAB-128: L10n audit — audit translations and update glossary with canonical per-language terms](HAB-128.md)
@@ -183,6 +184,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-234: Welcome-back reminder for an unpersisted showup can survive a later, unrelated break's cancellation sweep](HAB-234.md)
 - [HAB-239: CI/lint check for raw TextStyle/fontSize literals instead of AppTypography tokens](HAB-239.md)
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
+- [HAB-250: Bug: notes/index.py picks up untracked note files, causing recurring stale-INDEX CI failures](HAB-250.md)
 
 ### scope-creep
 - [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
