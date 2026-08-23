@@ -1,4 +1,5 @@
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -217,6 +218,70 @@ class CheckTests(unittest.TestCase):
             index.write_index(notes_dir, vocab_file, index_file)
             errors = index.check(notes_dir, vocab_file, index_file)
             self.assertEqual(errors, [])
+
+
+def _init_git_repo(repo_dir: Path) -> None:
+    subprocess.run(["git", "init", "-q"], cwd=repo_dir, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo_dir, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=repo_dir, check=True)
+
+
+class IterNotesTests(unittest.TestCase):
+    def test_untracked_note_is_excluded_in_a_git_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_dir = Path(tmp)
+            _init_git_repo(repo_dir)
+            notes_dir = repo_dir / "notes"
+            notes_dir.mkdir()
+            write(notes_dir / "HAB-1.md", "---\nbookmarks: []\n---\n\n# HAB-1: Tracked\n")
+            subprocess.run(["git", "add", "notes/HAB-1.md"], cwd=repo_dir, check=True)
+            subprocess.run(["git", "commit", "-q", "-m", "add HAB-1"], cwd=repo_dir, check=True)
+            # HAB-2 is never `git add`ed — simulates a note file for an
+            # unrelated, not-yet-committed ticket sitting in the working tree.
+            write(notes_dir / "HAB-2.md", "---\nbookmarks: []\n---\n\n# HAB-2: Untracked\n")
+
+            names = [p.name for p in index.iter_notes(notes_dir)]
+
+            self.assertEqual(names, ["HAB-1.md"])
+
+    def test_staged_but_uncommitted_note_is_included(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_dir = Path(tmp)
+            _init_git_repo(repo_dir)
+            notes_dir = repo_dir / "notes"
+            notes_dir.mkdir()
+            write(notes_dir / "HAB-1.md", "---\nbookmarks: []\n---\n\n# HAB-1: Staged\n")
+            subprocess.run(["git", "add", "notes/HAB-1.md"], cwd=repo_dir, check=True)
+            # Deliberately not committed — still in the index, which is what matters.
+
+            names = [p.name for p in index.iter_notes(notes_dir)]
+
+            self.assertEqual(names, ["HAB-1.md"])
+
+    def test_falls_back_to_including_everything_outside_a_git_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir = Path(tmp) / "notes"
+            notes_dir.mkdir()
+            write(notes_dir / "HAB-1.md", "---\nbookmarks: []\n---\n\n# HAB-1: T\n")
+
+            names = [p.name for p in index.iter_notes(notes_dir)]
+
+            self.assertEqual(names, ["HAB-1.md"])
+
+    def test_excluded_files_stay_excluded_even_when_tracked(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_dir = Path(tmp)
+            _init_git_repo(repo_dir)
+            notes_dir = repo_dir / "notes"
+            notes_dir.mkdir()
+            write(notes_dir / "HAB-1.md", "---\nbookmarks: []\n---\n\n# HAB-1: T\n")
+            write(notes_dir / "TEMPLATE.md", "template")
+            subprocess.run(["git", "add", "."], cwd=repo_dir, check=True)
+            subprocess.run(["git", "commit", "-q", "-m", "add notes"], cwd=repo_dir, check=True)
+
+            names = [p.name for p in index.iter_notes(notes_dir)]
+
+            self.assertEqual(names, ["HAB-1.md"])
 
 
 class GenerateIndexTests(unittest.TestCase):
