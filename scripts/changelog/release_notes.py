@@ -18,13 +18,19 @@ Bullet selection (per CHANGELOG entry):
     - If an entry contains ANY bullets prefixed with "[user] ", only those bullets
       are included (with the "[user] " tag stripped).  This is the required
       approach — mark exactly which lines users care about.
+    - "[trivial] "-prefixed bullets are also included, tag stripped (HAB-247):
+      from a newer numbered entry directly, or — the one exception to the rule
+      below — from a sealed "## [Unreleased]" batch, emitted once in the notes
+      for the release that sealed it.  A still-open batch (no release above it
+      yet) contributes nothing.
     - If an entry contains the sentinel "- [user-none]", the entry is silently
       skipped (contributes nothing to the output).  Use this for releases that
       are purely internal (CI fixes, refactors, tooling) with no user-visible
       impact.
-    - If an entry contains NEITHER "[user] " bullets NOR "[user-none]", it is
-      also silently skipped.  Entries MUST be explicitly marked — see convention
-      below.  Use scripts/lint_changelog.py in CI to catch unmarked entries.
+    - If an entry contains NEITHER "[user] " nor "[trivial] " bullets NOR
+      "[user-none]", it is also silently skipped.  Entries MUST be explicitly
+      marked — see convention below.  Use scripts/lint_changelog.py in CI to
+      catch unmarked entries.
 
 Convention for CHANGELOG authors (enforced by scripts/lint_changelog.py):
     - User-facing change:       - [user] Sign-in button stays visible during Google login
