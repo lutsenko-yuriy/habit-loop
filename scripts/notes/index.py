@@ -54,6 +54,7 @@ def _tracked_note_names(notes_dir: Path) -> Optional[Set[str]]:
             cwd=notes_dir,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             check=True,
         )
     except (OSError, subprocess.CalledProcessError):
