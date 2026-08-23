@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.57.0] — 2026-08-23 (HAB-246, WU4 of multi-WU, final)
+
+### Added
+
+- [user] Added a hurry-up reminder — a friendly nudge shortly before a pending showup's window closes, so you don't miss the chance to mark it before it auto-fails.
+- [app] HAB-246 (WU4, final): debug screen fix for the hurry-up notification's fire-time classifier (`pending_notifications_view_model.dart` — was falling through to the reminder formula, showing a wrong time); `hurry_up_notification_enabled` flipped to `true` now that the feature is complete end-to-end.
+
 ## [0.56.2] — 2026-08-19 (PR #394 merged)
 
 ### Changed
@@ -17,13 +24,6 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 - [user] Notifications after breaks now appear at the right time with the correct message.
 - HAB-234 (WU2, final): dashboard-triggered welcome-back reconciliation catches stale reminders synced from other devices or lingering from earlier breaks' failed cancellation sweeps; fixes two latent bugs in periodic vs. one-shot call contexts (derived target status check, same-day `now` normalization).
-
-## [0.57.0] — 2026-08-23 (HAB-246, WU4 of multi-WU, final)
-
-### Added
-
-- [user] Added a hurry-up reminder — a friendly nudge shortly before a pending showup's window closes, so you don't miss the chance to mark it before it auto-fails.
-- [app] HAB-246 (WU4, final): debug screen fix for the hurry-up notification's fire-time classifier (`pending_notifications_view_model.dart` — was falling through to the reminder formula, showing a wrong time); `hurry_up_notification_enabled` flipped to `true` now that the feature is complete end-to-end.
 
 ## [Unreleased]
 
