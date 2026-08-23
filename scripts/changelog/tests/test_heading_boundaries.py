@@ -1,7 +1,40 @@
 import textwrap
 import unittest
 
-from changelog.heading_boundaries import body_end_for, heading_starts
+from changelog.heading_boundaries import body_end_for, heading_entries, heading_starts
+
+
+class TestHeadingEntries(unittest.TestCase):
+
+    def test_labels_numeric_and_unreleased_headings_in_file_order(self):
+        content = textwrap.dedent("""\
+            ## [Unreleased]
+            - [ci] first.
+
+            ## [0.51.0] — 2026-07-19
+            - [user] second.
+
+            ## [Unreleased]
+            - [meta] third.
+
+            ## [0.50.0] — 2026-07-18
+            - [user] fourth.
+        """)
+        labels = [label for _, label in heading_entries(content)]
+        self.assertEqual(labels, ['Unreleased', '0.51.0', 'Unreleased', '0.50.0'])
+
+    def test_offsets_match_heading_starts(self):
+        content = textwrap.dedent("""\
+            ## [Unreleased]
+            - [ci] first.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] second.
+        """)
+        self.assertEqual([s for s, _ in heading_entries(content)], heading_starts(content))
+
+    def test_empty_content_has_no_entries(self):
+        self.assertEqual(heading_entries(''), [])
 
 
 class TestHeadingStarts(unittest.TestCase):
