@@ -160,6 +160,38 @@ class TestShouldDistribute(unittest.TestCase):
         finally:
             os.unlink(path)
 
+    # --- HAB-247: [trivial] tag ---
+
+    def test_trivial_in_unreleased_does_not_trigger_build(self):
+        path = _tmp("""\
+            ## [Unreleased]
+            - [trivial] Copy tweak, no release requested.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
+    def test_trivial_under_numbered_heading_triggers_build(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [trivial] User explicitly asked for a release of this copy tweak.
+        """)
+        try:
+            self.assertTrue(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
+    def test_trivial_under_numbered_heading_not_newer_than_last_published_skips(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [trivial] Already published, should not re-trigger.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '1.0.0'))
+        finally:
+            os.unlink(path)
+
     # --- version filtering ---
 
     def test_only_new_entries_are_considered(self):
