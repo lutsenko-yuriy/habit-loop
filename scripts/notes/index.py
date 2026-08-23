@@ -47,7 +47,10 @@ def _tracked_note_names(notes_dir: Path) -> Optional[Set[str]]:
     behaviour."""
     try:
         result = subprocess.run(
-            ["git", "ls-files", "*.md"],
+            # core.quotePath=false + -z: NUL-separated, unescaped filenames —
+            # otherwise a non-ASCII name comes back octal-quoted (e.g.
+            # "HAB-\303\251.md") and would silently fail every p.name match.
+            ["git", "-c", "core.quotePath=false", "ls-files", "-z", "*.md"],
             cwd=notes_dir,
             capture_output=True,
             text=True,
@@ -55,7 +58,7 @@ def _tracked_note_names(notes_dir: Path) -> Optional[Set[str]]:
         )
     except (OSError, subprocess.CalledProcessError):
         return None
-    return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+    return {name for name in result.stdout.split("\0") if name}
 
 
 def iter_notes(notes_dir: Path) -> List[Path]:

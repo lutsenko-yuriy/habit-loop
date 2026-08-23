@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts.notes import index
 
@@ -258,15 +259,25 @@ class IterNotesTests(unittest.TestCase):
 
             self.assertEqual(names, ["HAB-1.md"])
 
-    def test_falls_back_to_including_everything_outside_a_git_repo(self):
+    def test_falls_back_to_including_everything_when_git_is_unavailable(self):
+        # Forces the fallback path deterministically rather than relying on
+        # tempfile.TemporaryDirectory() happening to land outside a repo —
+        # that assumption doesn't hold everywhere (HAB-250 audit).
         with tempfile.TemporaryDirectory() as tmp:
             notes_dir = Path(tmp) / "notes"
             notes_dir.mkdir()
             write(notes_dir / "HAB-1.md", "---\nbookmarks: []\n---\n\n# HAB-1: T\n")
 
-            names = [p.name for p in index.iter_notes(notes_dir)]
+            with mock.patch("scripts.notes.index.subprocess.run", side_effect=FileNotFoundError):
+                names = [p.name for p in index.iter_notes(notes_dir)]
 
             self.assertEqual(names, ["HAB-1.md"])
+
+    def test_tracked_note_names_returns_none_when_git_invocation_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            notes_dir = Path(tmp)
+            with mock.patch("scripts.notes.index.subprocess.run", side_effect=FileNotFoundError):
+                self.assertIsNone(index._tracked_note_names(notes_dir))
 
     def test_excluded_files_stay_excluded_even_when_tracked(self):
         with tempfile.TemporaryDirectory() as tmp:
