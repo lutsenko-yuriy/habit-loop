@@ -6,16 +6,16 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (13)
+- **review-findings** (14)
 - **debugging-methodology** (12)
 - **planning-gaps** (12)
 - **multi-wu-scope** (11)
 - **research-methodology** (10)
 - **ci-flakiness** (9)
 - **code-style** (8)
+- **changelog-versioning** (6)
 - **knowledge-base-process** (6)
 - **widget-test-gotchas** (6)
-- **changelog-versioning** (5)
 - **dead-code** (4)
 - **verify-from-source** (4)
 - **appstore-ci** (3)
@@ -46,6 +46,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-185: Gate pubspec.yaml version bumps on app-changing CHANGELOG entries](HAB-185.md)
 - [HAB-192: CI: resolve-version fails with "lookbehind assertion is not fixed length"](HAB-192.md)
 - [HAB-240: Research — organize multiple tickets into a shared release, for solo dev and small-team scale](HAB-240.md)
+- [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
 
 ### ci-flakiness
 - [HAB-151: run-scenarios CI job — integration tests on Android emulator](HAB-151.md)
@@ -181,6 +182,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-227: Break-over "welcome back" reminder text](HAB-227.md)
 - [HAB-234: Welcome-back reminder for an unpersisted showup can survive a later, unrelated break's cancellation sweep](HAB-234.md)
 - [HAB-239: CI/lint check for raw TextStyle/fontSize literals instead of AppTypography tokens](HAB-239.md)
+- [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
 
 ### scope-creep
 - [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)
