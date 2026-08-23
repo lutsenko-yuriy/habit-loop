@@ -6,16 +6,16 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
+- **planning-gaps** (13)
 - **review-findings** (13)
 - **debugging-methodology** (12)
-- **planning-gaps** (12)
 - **multi-wu-scope** (11)
 - **research-methodology** (10)
 - **ci-flakiness** (9)
 - **code-style** (8)
+- **changelog-versioning** (6)
 - **knowledge-base-process** (6)
 - **widget-test-gotchas** (6)
-- **changelog-versioning** (5)
 - **dead-code** (4)
 - **verify-from-source** (4)
 - **appstore-ci** (3)
@@ -46,6 +46,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-185: Gate pubspec.yaml version bumps on app-changing CHANGELOG entries](HAB-185.md)
 - [HAB-192: CI: resolve-version fails with "lookbehind assertion is not fixed length"](HAB-192.md)
 - [HAB-240: Research — organize multiple tickets into a shared release, for solo dev and small-team scale](HAB-240.md)
+- [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 
 ### ci-flakiness
 - [HAB-151: run-scenarios CI job — integration tests on Android emulator](HAB-151.md)
@@ -151,6 +152,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-201: Bug: pact shows "On break" (list + detail banner) before the break actually starts](HAB-201.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
+- [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 
 ### postmortem-workflow
 - [HAB-209: Postmortem: find when/why stop-pact started deleting ALL showups](HAB-209.md)
