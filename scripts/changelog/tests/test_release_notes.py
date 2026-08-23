@@ -185,6 +185,40 @@ class TestParseChangelog(unittest.TestCase):
         finally:
             os.unlink(path)
 
+    def test_trivial_concatenated_with_another_tag_is_not_extracted(self):
+        """[audit finding] A concatenated multi-tag bullet like "[trivial][meta] ..."
+        — the repo's actual house style for Unreleased bullets, e.g.
+        docs/CHANGELOG.md's "[ci][meta] HAB-250: ..." — must not partially
+        match _TRIVIAL_TAG and leak a malformed "[meta] ..." line into
+        release notes. Multi-tag [trivial] extraction is explicitly out of
+        scope (HAB-247 plan); the bullet must simply be excluded."""
+        path = _tmp("""\
+            ## [1.1.0] — 2026-02-01
+            - [trivial][meta] Renamed the Start button.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Old thing.
+        """)
+        try:
+            self.assertEqual(_parse_changelog(path, '1.0.0'), [])
+        finally:
+            os.unlink(path)
+
+    def test_bare_trivial_sentinel_is_not_extracted(self):
+        """[audit finding] A bare "- [trivial]" with no description must not
+        produce an empty bullet in release notes."""
+        path = _tmp("""\
+            ## [1.1.0] — 2026-02-01
+            - [trivial]
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Old thing.
+        """)
+        try:
+            self.assertEqual(_parse_changelog(path, '1.0.0'), [])
+        finally:
+            os.unlink(path)
+
     def test_sealed_batch_trivial_bullets_ordered_after_their_sealing_releases_user_bullets(self):
         path = _tmp("""\
             ## [1.1.0] — 2026-02-01

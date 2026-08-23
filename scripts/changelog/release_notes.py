@@ -118,8 +118,12 @@ _USER_TAG = re.compile(r'^\[user\]\s+')
 # Matches the "[user-none]" sentinel that explicitly suppresses an entry.
 _USER_NONE = re.compile(r'^\[user-none\]')
 # Matches the "[trivial] " prefix (HAB-247) — content-only bullets that ride
-# along in ## [Unreleased] until a later release seals their batch.
-_TRIVIAL_TAG = re.compile(r'^\[trivial\]\s*')
+# along in ## [Unreleased] until a later release seals their batch. Requires
+# trailing whitespace like _USER_TAG, so a concatenated multi-tag bullet
+# (e.g. "[trivial][meta] ...", the repo's actual style for Unreleased
+# bullets) or a bare "[trivial]" sentinel is correctly excluded rather than
+# partially stripped into malformed output.
+_TRIVIAL_TAG = re.compile(r'^\[trivial\]\s+')
 
 
 def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
