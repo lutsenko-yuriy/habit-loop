@@ -14,13 +14,19 @@ from __future__ import annotations
 
 import re
 
-_ANY_HEADING = re.compile(r'^## \[.+?\]', re.MULTILINE)
+_ANY_HEADING = re.compile(r'^## \[(.+?)\]', re.MULTILINE)
+
+
+def heading_entries(content: str) -> list[tuple[int, str]]:
+    """Return (start_offset, label) for every '## [...]' heading, in file
+    order. label is the version string (e.g. '1.0.0') or 'Unreleased'."""
+    return [(m.start(), m.group(1)) for m in _ANY_HEADING.finditer(content)]
 
 
 def heading_starts(content: str) -> list[int]:
     """Return the start offsets of every '## [...]' heading (numeric or
     Unreleased), in file order."""
-    return [m.start() for m in _ANY_HEADING.finditer(content)]
+    return [start for start, _ in heading_entries(content)]
 
 
 def body_end_for(heading_start: int, all_heading_starts: list[int], content_len: int) -> int:

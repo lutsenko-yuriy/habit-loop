@@ -6,7 +6,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (15)
+- **review-findings** (16)
 - **planning-gaps** (13)
 - **debugging-methodology** (12)
 - **multi-wu-scope** (11)
@@ -16,7 +16,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **knowledge-base-process** (8)
 - **changelog-versioning** (7)
 - **widget-test-gotchas** (6)
-- **dead-code** (4)
+- **dead-code** (5)
 - **verify-from-source** (4)
 - **appstore-ci** (3)
 - **cross-project-sync** (3)
@@ -80,6 +80,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-143: Dead-code detector script + `/dead-code-check` skill](HAB-143.md)
 - [HAB-177: Simplify PactTimelineGrouper — remove dead grouping-threshold complexity](HAB-177.md)
 - [HAB-180: Remove Firebase iOS distribution; make TestFlight the sole automatic iOS channel](HAB-180.md)
+- [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 
 ### debrief-timing
 - [HAB-166: Onboard first iOS tester to Firebase App Distribution](HAB-166.md)
@@ -187,6 +188,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-234: Welcome-back reminder for an unpersisted showup can survive a later, unrelated break's cancellation sweep](HAB-234.md)
 - [HAB-239: CI/lint check for raw TextStyle/fontSize literals instead of AppTypography tokens](HAB-239.md)
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
+- [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 - [HAB-250: Bug: notes/index.py picks up untracked note files, causing recurring stale-INDEX CI failures](HAB-250.md)
 
 ### scope-creep
