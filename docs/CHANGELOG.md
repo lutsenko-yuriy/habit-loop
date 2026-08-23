@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [ci] HAB-250: `scripts/notes/index.py` now scopes note discovery to git-tracked (or staged) files via `git ls-files`, instead of globbing the filesystem — an untracked `.md` file in `docs/knowledge/notes/` can no longer leak into the regenerated `INDEX.md` and fail CI's `--check` step (recurrence of HAB-248).
+
 ## [0.57.0] — 2026-08-23 (HAB-246, WU4 of multi-WU, final)
 
 ### Added
