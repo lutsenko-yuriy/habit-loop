@@ -56,7 +56,12 @@ void main() {
   setUp(() {
     notificationService = FakeNotificationService();
     analyticsService = FakeAnalyticsService();
-    remoteConfig = FakeRemoteConfigService();
+    // hurry_up_notification_enabled now defaults to true (HAB-246 WU4) —
+    // pinned false here so every pre-existing test in this file keeps
+    // asserting its original reminder/deadline-only notification counts.
+    // The 'hurry-up notification' group below overrides back to true (or
+    // omits the override, for the dedicated default-value test) per test.
+    remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': false});
     localePreference = FakeLocalePreferenceService();
     service = ReminderSchedulingService(
       notificationService: notificationService,
@@ -619,7 +624,8 @@ void main() {
   });
 
   group('hurry-up notification (HAB-246)', () {
-    test('does not schedule when hurry_up_notification_enabled is false (default)', () async {
+    test('does not schedule when hurry_up_notification_enabled is false', () async {
+      // remoteConfig is already pinned false in setUp.
       final pact = _makePact(reminderOffset: const Duration(minutes: 10));
       final now = DateTime(2026, 5, 7, 10, 0);
       final showups = [
@@ -629,6 +635,25 @@ void main() {
       await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
 
       expect(notificationService.scheduledHurryUps, isEmpty);
+    });
+
+    test('schedules when hurry_up_notification_enabled defaults to true (HAB-246 WU4 flag flip)', () async {
+      remoteConfig = FakeRemoteConfigService(); // no override — exercises the real RemoteConfigDefaults value.
+      service = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [
+        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 30)),
+      ];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledHurryUps, hasLength(1));
     });
 
     test('schedules hurry-up when duration is exactly 3x hurry_up_time (boundary: eligible)', () async {

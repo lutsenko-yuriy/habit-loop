@@ -98,6 +98,25 @@ void main() {
     expect(result.first.fireAt, DateTime(2026, 3, 1, 8, 10));
   });
 
+  test('resolves a hurry-up notification\'s fire time as scheduledAt + duration - hurry_up_time_in_minutes', () async {
+    await showupRepo.saveShowup(_showup);
+    notificationService.pendingNotifications = [
+      PendingNotificationInfo(
+        id: NotificationConstants.hurryUpNotificationId('s1'),
+        title: 'Hurry up',
+        body: 'Go show up',
+        payload: _payload(showupId: 's1', pactId: 'p1'),
+      ),
+    ];
+
+    final result = await container.read(pendingNotificationsViewModelProvider.future);
+
+    // Default hurry_up_time_in_minutes is 5 (NoopRemoteConfigService returns
+    // RemoteConfigDefaults values) — fireAt is scheduledAt + duration - 5min.
+    expect(result.first.title, 'Hurry up');
+    expect(result.first.fireAt, DateTime(2026, 3, 1, 8, 5));
+  });
+
   test('leaves fireAt null when the payload is missing', () async {
     notificationService.pendingNotifications = [
       const PendingNotificationInfo(id: 1, title: 'Orphan', body: 'No payload', payload: null),

@@ -86,6 +86,7 @@ Event class: `NotificationsScheduledEvent` in `lib/slices/reminder/analytics/rem
 | `pact_id` | `string` | ID of the pact whose notifications were scheduled |
 | `notifications_count` | `int` | Number of notifications registered with the OS; may be less than the total showup count due to OS limits (iOS caps pending notifications at 64) |
 | `reminder_offset_minutes` | `int` | Reminder offset in minutes — mirrors the `reminder_offset_minutes` property of `pact_created` |
+| `hurry_up_count` | `int` | Number of hurry-up notifications included in `notifications_count` (HAB-246). `0` when the feature is disabled or no showup qualified |
 
 ---
 

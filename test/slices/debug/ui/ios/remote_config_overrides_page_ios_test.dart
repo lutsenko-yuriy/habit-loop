@@ -76,6 +76,23 @@ void main() {
     );
   });
 
+  testWidgets('iOS — entry with a minVersion shows "since" text', (tester) async {
+    await pumpWithTallView(tester);
+
+    // pact_chaining_enabled is the only key registered in releaseVersions.
+    expect(find.textContaining('since 0.53.0'), findsOneWidget);
+  });
+
+  testWidgets('iOS — entry without a minVersion shows no "since" text', (tester) async {
+    await pumpWithTallView(tester);
+
+    final subtitleFinder = find.descendant(
+      of: find.byKey(const Key('rc-entry-max_active_pacts')),
+      matching: find.textContaining('since'),
+    );
+    expect(subtitleFinder, findsNothing);
+  });
+
   testWidgets('iOS — Reset all button hidden when no overrides', (tester) async {
     await pumpWithTallView(tester);
     await tester.pump();

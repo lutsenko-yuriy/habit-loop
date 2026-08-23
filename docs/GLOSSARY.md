@@ -18,6 +18,7 @@ When you find a different word used for the same concept, look it up in **[Known
 | **Showup window** | The interval `[scheduledAt, scheduledAt + showupDuration]` during which a showup is open and can be marked done. Once it closes, an unresolved showup auto-fails. | derived from `Showup.scheduledAt` + `duration` |
 | **Showup duration** | Length of a single showup session (e.g. 10 min; max 2 h). | `Pact.showupDuration`, `Showup.duration` |
 | **Reminder offset** | How long before `scheduledAt` the reminder notification fires. `null` = no reminder; up to 60 min before. `reminderFiresAt = scheduledAt − reminderOffset`. | `Pact.reminderOffset` |
+| **Hurry-up time** | How long before a showup's window closes the hurry-up notification fires. Global setting, 2–10 min, default 5. Only showups with duration ≥ 3× this value are eligible. | `RemoteConfigDefaults.hurryUpTimeInMinutes` |
 | **Streak** | The current run of consecutive **done** showups, counting back from the most recent resolved showup. Pending showups don't break or extend it. | `PactStats.currentStreak` |
 | **Stats** | Computed per-pact totals: done, failed, remaining, total, current streak. Never persisted as truth — derived from showups (with a session cache). | `PactStats` |
 

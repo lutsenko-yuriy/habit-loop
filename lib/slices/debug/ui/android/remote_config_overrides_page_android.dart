@@ -98,7 +98,11 @@ class RemoteConfigOverridesPageAndroid extends ConsumerWidget {
                         entry.key,
                         style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                       ),
-                      subtitle: Text('Value: ${entry.effectiveValue}'),
+                      subtitle: Text(
+                        entry.hasMinVersion
+                            ? 'Value: ${entry.effectiveValue} · since ${entry.minVersion}'
+                            : 'Value: ${entry.effectiveValue}',
+                      ),
                       trailing: OverrideBadge(isOverridden: entry.isOverridden),
                       onTap: onTap,
                     ),
