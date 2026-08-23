@@ -22,6 +22,10 @@ Tag taxonomy (enforced by this linter):
     [meta]      Skills / agent / workflow change. No distribution.
     [ci]        CI/CD process change. No distribution.
     [user-none] Entire entry is internal-only (legacy sentinel, still accepted).
+    [trivial]   Content-only change (copy/string/icon/asset), no logic or architecture
+                impact. No distribution by default (rides along with the next real
+                release); triggers distribution only when given its own numbered
+                heading (i.e. the user explicitly asked for an immediate release).
 
   Supplementary tag — describes an individual bullet but does not classify the entry:
     [non-user]  Developer-only detail within an entry that has a classification tag.
@@ -61,12 +65,13 @@ KNOWN_TAGS: frozenset[str] = frozenset({
     'user', 'user-none', 'non-user',  # legacy / backward-compat
     'app', 'test', 'meta', 'ci',      # new taxonomy
     'wip',                            # intermediate WU merge — skips build and distribution
+    'trivial',                        # content-only change — no distribution by default
 })
 
 # Tags that classify an entry. Every entry must have at least one bullet
 # whose tag is in this set. [non-user] is supplementary only.
 CLASSIFICATION_TAGS: frozenset[str] = frozenset({
-    'user', 'user-none', 'app', 'test', 'meta', 'ci', 'wip',
+    'user', 'user-none', 'app', 'test', 'meta', 'ci', 'wip', 'trivial',
 })
 
 
@@ -174,7 +179,8 @@ def lint(path: str, last_version: Optional[str]) -> list[str]:
                 f'      "- [test] <description>"     — test-only changes, no production code (no distribution)\n'
                 f'      "- [meta] <description>"     — skills/agent/workflow change (no distribution)\n'
                 f'      "- [ci] <description>"       — CI/CD change (no distribution)\n'
-                f'      "- [user-none]"              — entire entry is internal-only (no distribution)'
+                f'      "- [user-none]"              — entire entry is internal-only (no distribution)\n'
+                f'      "- [trivial] <description>"  — content-only change (no distribution by default)'
             )
 
     return errors
