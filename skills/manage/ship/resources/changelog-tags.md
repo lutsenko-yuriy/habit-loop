@@ -7,7 +7,7 @@
 | `- [ci] <description>` | CI/CD process change | No | No |
 | `- [user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
 | `- [wip] <description>` | Intermediate WU merge in a multi-WU ticket | No | No |
-| `- [trivial] <description>` | Content-only change (copy/string/icon/asset), no logic or architecture impact | No by default — rides along with the next real release; yes if given its own numbered heading | No by default; yes once it ships |
+| `- [trivial] <description>` | Content-only change (copy/string/icon/asset), no logic or architecture impact | No by default — rides along in `## [Unreleased]` until the next real release seals it; `ship --release-now` gives it its own numbered heading instead (Yes) | Yes — either once its batch is sealed by a later release, or immediately under `--release-now`; the only non-`[user]`/`[app]` tag whose bullets ever reach "What's New" |
 | `- [non-user] <detail>` | Supplementary bullet within a classified entry | — | No |
 
 Rules:

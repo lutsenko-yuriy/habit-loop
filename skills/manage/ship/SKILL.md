@@ -13,6 +13,14 @@ Use the **Team ID** and **Project ID** from the PM tool mapping for all PM opera
 
 ---
 
+## Arguments
+
+`ship PR #N [--release-now]`
+
+- `--release-now` — only meaningful when step 4 would otherwise classify the entry as `[trivial]`-only. Use it when the user explicitly asks to ship a content-only change immediately instead of letting it ride along with the next real release. Routes the entry to a fresh numbered `## [X.Y.Z]` heading (patch bump) exactly like a `[user]`/`[app]` entry, instead of the open `## [Unreleased]` batch — see step 4. Ignored (no effect) for any entry that isn't `[trivial]`-only; those already get a numbered heading whenever they carry `[user]`/`[app]`.
+
+---
+
 ## Steps
 
 Run all steps in order. Each step must succeed before moving to the next.
@@ -106,6 +114,8 @@ If step 3 returned zero `[user]` bullets (a valid outcome — e.g. a pure refact
 
 Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor for new features, major for breaking changes.
 
+**If the entry is `[trivial]`-only and `--release-now` was passed:** treat it exactly like the app-changing branch above — insert a fresh numbered heading (patch bump; a content-only change never warrants minor/major) with `- [trivial] <description>` as its bullet, sealing any currently-open `## [Unreleased]` batch beneath it. This is the *only* way a `[trivial]`-only entry gets a numbered heading — do not do this on an unqualified `ship` call.
+
 **Otherwise** (entry classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]`/`[trivial]` — nothing here changed the app, or `[trivial]` and no explicit immediate release was requested): look at the file's current first `## [...]` heading:
 
 - **If it's `## [Unreleased]`** (a batch is already open): append the bullet to the top of its existing bullet list, right after its explanatory blurb paragraph — do not create a new heading.
@@ -129,7 +139,7 @@ Do not rewrite the rest of the file.
 
 ### 6. Bump the version
 
-**Only if step 4 created a new numbered heading** (the entry had a `[user]`/`[app]` tag): open the version file (from the project config) and update the version name (`X.Y.Z` part) to match the new `[X.Y.Z]` entry added in step 4.
+**Only if step 4 created a new numbered heading** (the entry had a `[user]`/`[app]` tag, or was `[trivial]`-only with `--release-now`): open the version file (from the project config) and update the version name (`X.Y.Z` part) to match the new `[X.Y.Z]` entry added in step 4.
 
 **If step 4 instead appended to `## [Unreleased]`:** skip this step entirely — do not touch the version file. `pubspec.yaml`'s version represents the app's build version, not the repo's commit history (`docs/VERSIONING.md`); it only changes when the app itself changes.
 
