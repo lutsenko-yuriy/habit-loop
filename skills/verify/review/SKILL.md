@@ -52,6 +52,8 @@ Before flagging a finding, verify:
 
 Only report findings you can fully characterise.
 
+**If the diff touches `scripts/` (Python tooling) and no `lib/` files** (HAB-247 debrief, 2026-08-24): the user does not read Python fluently and relies on this review as their only independent check. Treat a borderline or ambiguous case as reportable rather than discarding it as "probably fine."
+
 ### 5. Leave inline comments
 
 For each finding tied to a specific file and line, post an inline comment. Prefix every comment body with `**[review]**`.

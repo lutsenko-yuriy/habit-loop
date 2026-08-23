@@ -57,6 +57,8 @@ Before reporting any finding, answer all four questions:
 
 Only report a finding if you can answer all four. A vague trigger scenario is not actionable — discard it.
 
+**If the diff touches `scripts/` (Python tooling) and no `lib/` files** (HAB-247 debrief, 2026-08-24): the user does not read Python fluently and relies on this audit as their only independent check. Treat a borderline or ambiguous case as reportable rather than discarding it as "probably fine."
+
 ---
 
 ## Leaving comments
