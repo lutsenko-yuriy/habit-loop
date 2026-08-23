@@ -94,6 +94,33 @@ void main() {
           ]));
     });
 
+    test('minVersion matches RemoteConfigDefaults.releaseVersions for each key', () {
+      final entries = readEntries();
+      for (final e in entries) {
+        expect(e.minVersion, RemoteConfigDefaults.releaseVersions[e.key]);
+      }
+    });
+
+    test('hasMinVersion is true only for keys registered in releaseVersions', () {
+      final entries = readEntries();
+      final withVersion = entries.where((e) => e.hasMinVersion).map((e) => e.key).toSet();
+      expect(withVersion, equals(RemoteConfigDefaults.releaseVersions.keys.toSet()));
+    });
+
+    test('pact_chaining_enabled has minVersion 0.53.0', () {
+      final entries = readEntries();
+      final entry = entries.firstWhere((e) => e.key == 'pact_chaining_enabled');
+      expect(entry.minVersion, '0.53.0');
+      expect(entry.hasMinVersion, isTrue);
+    });
+
+    test('a key absent from releaseVersions has no minVersion', () {
+      final entries = readEntries();
+      final entry = entries.firstWhere((e) => e.key == 'max_active_pacts');
+      expect(entry.minVersion, isNull);
+      expect(entry.hasMinVersion, isFalse);
+    });
+
     test('hasIntRange is false for free-text and enum keys', () {
       final entries = readEntries();
       final noRange = entries.where((e) => !e.hasIntRange).map((e) => e.key).toSet();

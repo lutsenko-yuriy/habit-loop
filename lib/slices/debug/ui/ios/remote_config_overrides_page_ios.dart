@@ -301,7 +301,9 @@ class _RcEntryRow extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.s2),
                   Text(
-                    'Value: ${entry.effectiveValue}',
+                    entry.hasMinVersion
+                        ? 'Value: ${entry.effectiveValue} · since ${entry.minVersion}'
+                        : 'Value: ${entry.effectiveValue}',
                     style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey),
                   ),
                 ],

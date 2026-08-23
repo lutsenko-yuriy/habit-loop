@@ -13,6 +13,7 @@ final class RemoteConfigEntry {
     this.allowedValues,
     this.intRange,
     this.valueHint,
+    this.minVersion,
   });
 
   final String key;
@@ -25,11 +26,15 @@ final class RemoteConfigEntry {
   final ({int min, int max})? intRange;
   // Short semantic hint shown in the edit dialog below "Default:".
   final String? valueHint;
+  // Minimum app version this flag became available on (HAB-207 release-version
+  // gating data), when known. Most keys have none — the map is deliberately sparse.
+  final String? minVersion;
 
   bool get isOverridden => overrideValue != null;
   bool get hasAllowedValues => allowedValues != null;
   bool get hasIntRange => intRange != null;
   bool get hasValueHint => valueHint != null;
+  bool get hasMinVersion => minVersion != null;
 }
 
 // Debug/profile only. Rebuilds state immediately on override changes (no hot-restart needed).
@@ -53,6 +58,7 @@ class RemoteConfigOverridesViewModel extends AutoDisposeNotifier<List<RemoteConf
         allowedValues: RemoteConfigDefaults.allowedValues[key],
         intRange: RemoteConfigDefaults.intRanges[key],
         valueHint: RemoteConfigDefaults.valueHints[key],
+        minVersion: RemoteConfigDefaults.releaseVersions[key],
       );
     }).toList();
   }
