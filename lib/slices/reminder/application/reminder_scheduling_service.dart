@@ -7,6 +7,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
@@ -76,11 +77,15 @@ final class ReminderSchedulingService {
     final scheduleDeadline = _isIOS || postDeadlineBehavior == 'encourage';
 
     final hurryUpEnabled = _remoteConfig.getBool(_kHurryUpEnabled);
-    // Clamped: RemoteConfigDefaults.intRanges (2-10) is only a debug-screen UI
-    // hint, not enforced at read time — an unset/blank console value returns 0,
+    // Clamped: RemoteConfigDefaults.intRanges is only a debug-screen UI hint,
+    // not enforced at read time — an unset/blank console value returns 0,
     // which would make every showup eligible and fire right at the deadline
-    // (HAB-246 audit).
-    final hurryUpTime = Duration(minutes: _remoteConfig.getInt(_kHurryUpTimeInMinutes).clamp(2, 10));
+    // (HAB-246 audit). Sourced from intRanges rather than a hardcoded literal
+    // so this and the debug pending-notifications screen can't drift apart.
+    final hurryUpRange = RemoteConfigDefaults.intRanges[_kHurryUpTimeInMinutes]!;
+    final hurryUpTime = Duration(
+      minutes: _remoteConfig.getInt(_kHurryUpTimeInMinutes).clamp(hurryUpRange.min, hurryUpRange.max),
+    );
 
     final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
     final hurryUpText = NotificationTextBuilder.buildHurryUpText(habitName: pact.habitName, l10n: l10n);

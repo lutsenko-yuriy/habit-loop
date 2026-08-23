@@ -8,6 +8,7 @@ import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_constants.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
+import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/debug/ui/generic/pending_notification_row.dart';
 
 // HAB-246: same RC key ReminderSchedulingService reads to compute the
@@ -40,7 +41,12 @@ class PendingNotificationsViewModel extends AutoDisposeAsyncNotifier<List<Pendin
     final showupCache = <String, Showup?>{};
     final pactCache = <String, Pact?>{};
 
-    final hurryUpTime = Duration(minutes: remoteConfig.getInt(_kHurryUpTimeInMinutes).clamp(2, 10));
+    // Sourced from intRanges rather than a hardcoded literal so this and
+    // ReminderSchedulingService's own clamp can't drift apart (HAB-246 audit).
+    final hurryUpRange = RemoteConfigDefaults.intRanges[_kHurryUpTimeInMinutes]!;
+    final hurryUpTime = Duration(
+      minutes: remoteConfig.getInt(_kHurryUpTimeInMinutes).clamp(hurryUpRange.min, hurryUpRange.max),
+    );
 
     final rows = <PendingNotificationRow>[];
     for (final notification in pending) {
