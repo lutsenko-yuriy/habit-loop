@@ -14,7 +14,15 @@ Usage:
 
 Output (stdout):
     'true'  — at least one new entry contains a [user] or [app] bullet → build and distribute.
-    'false' — all new entries contain only [test]/[meta]/[ci]/[wip]/[user-none]/[non-user] bullets → skip build.
+              A [trivial] bullet also counts, but only when it sits under its own numbered
+              ## [X.Y.Z] heading — that only happens when something has explicitly routed it
+              there (the user asked for an immediate release), since [trivial] bullets default
+              to the ## [Unreleased] batch. This script never inspects ## [Unreleased] content
+              at all, so a [trivial] bullet sitting there (open or sealed) is invisible to it
+              and never triggers a build on its own.
+    'false' — all new entries contain only [test]/[meta]/[ci]/[wip]/[user-none]/[non-user]
+              bullets, or a [trivial] bullet that hasn't been given its own numbered
+              heading → skip build.
 
 Exit code: always 0 — never fails the CI pipeline.
 """
@@ -31,7 +39,7 @@ except ImportError:
     from heading_boundaries import body_end_for, heading_starts
 
 _VERSION_HEADER = re.compile(r'^## \[(\d+\.\d+\.\d+)\]', re.MULTILINE)
-_DISTRIBUTE_TAG = re.compile(r'^\[(user|app)\]')
+_DISTRIBUTE_TAG = re.compile(r'^\[(user|app|trivial)\]')
 
 
 def _parse_semver(version: str) -> tuple[int, int, int]:

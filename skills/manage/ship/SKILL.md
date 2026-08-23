@@ -106,7 +106,7 @@ If step 3 returned zero `[user]` bullets (a valid outcome — e.g. a pure refact
 
 Follow semantic versioning (`docs/VERSIONING.md`): patch for bug fixes, minor for new features, major for breaking changes.
 
-**Otherwise** (entry classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]` — nothing here changed the app): look at the file's current first `## [...]` heading:
+**Otherwise** (entry classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]`/`[trivial]` — nothing here changed the app, or `[trivial]` and no explicit immediate release was requested): look at the file's current first `## [...]` heading:
 
 - **If it's `## [Unreleased]`** (a batch is already open): append the bullet to the top of its existing bullet list, right after its explanatory blurb paragraph — do not create a new heading.
 - **If it's a numbered `## [X.Y.Z]` heading instead, or there's no heading at all yet** (no batch is currently open): insert a **brand-new** `## [Unreleased]` section immediately before that numbered heading (or right after the file's intro paragraph, if there was no heading at all), with this bullet as its first entry:

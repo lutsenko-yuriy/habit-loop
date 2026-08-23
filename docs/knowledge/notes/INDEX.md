@@ -7,14 +7,14 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ## Top themes
 
 - **review-findings** (15)
+- **planning-gaps** (13)
 - **debugging-methodology** (12)
-- **planning-gaps** (12)
 - **multi-wu-scope** (11)
 - **research-methodology** (10)
 - **ci-flakiness** (9)
 - **code-style** (8)
-- **knowledge-base-process** (7)
-- **changelog-versioning** (6)
+- **knowledge-base-process** (8)
+- **changelog-versioning** (7)
 - **widget-test-gotchas** (6)
 - **dead-code** (4)
 - **verify-from-source** (4)
@@ -47,6 +47,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-192: CI: resolve-version fails with "lookbehind assertion is not fixed length"](HAB-192.md)
 - [HAB-240: Research — organize multiple tickets into a shared release, for solo dev and small-team scale](HAB-240.md)
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
+- [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 
 ### ci-flakiness
 - [HAB-151: run-scenarios CI job — integration tests on Android emulator](HAB-151.md)
@@ -113,6 +114,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-154: Standing docs audit and tidy-up](HAB-154.md)
 - [HAB-170: Migrate existing decision-like docs into the ADR structure (docs/decisions/)](HAB-170.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
+- [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 - [HAB-250: Bug: notes/index.py picks up untracked note files, causing recurring stale-INDEX CI failures](HAB-250.md)
 
 ### l10n-glossary
@@ -153,6 +155,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-201: Bug: pact shows "On break" (list + detail banner) before the break actually starts](HAB-201.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
+- [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 
 ### postmortem-workflow
 - [HAB-209: Postmortem: find when/why stop-pact started deleting ALL showups](HAB-209.md)

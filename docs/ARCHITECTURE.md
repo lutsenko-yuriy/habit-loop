@@ -160,7 +160,7 @@ Python utilities for CI, release management, and code-quality tooling. All scrip
 
 | Module | Entry point | Purpose |
 |---|---|---|
-| `scripts/changelog/` | `lint.py`, `distribute.py`, `release_notes.py` | CHANGELOG linting, build-skip gate, and "What's New" generation |
+| `scripts/changelog/` | `lint.py`, `distribute.py`, `release_notes.py`, `heading_boundaries.py` | CHANGELOG linting, build-skip gate, "What's New" generation, and the shared heading-offset helper they all use |
 | `scripts/ci/` | `dispatch_plan.py` | Translates `workflow_dispatch` inputs into per-job CI flags |
 | `scripts/firebase/` | `cleanup_builds.py` | Deletes old Firebase App Distribution releases, keeping the N most recent |
 | `scripts/appstore/` | `testflight_upload.sh` | Uploads a signed IPA to TestFlight (internal testing) via `xcrun altool --upload-app` and an App Store Connect API key — runs alongside, not instead of, Firebase App Distribution (HAB-167) |

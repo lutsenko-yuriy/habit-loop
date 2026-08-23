@@ -160,6 +160,94 @@ class TestShouldDistribute(unittest.TestCase):
         finally:
             os.unlink(path)
 
+    # --- HAB-247: [trivial] tag ---
+
+    def test_trivial_in_unreleased_does_not_trigger_build(self):
+        path = _tmp("""\
+            ## [Unreleased]
+            - [trivial] Copy tweak, no release requested.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
+    def test_trivial_under_numbered_heading_triggers_build(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [trivial] User explicitly asked for a release of this copy tweak.
+        """)
+        try:
+            self.assertTrue(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
+    def test_trivial_under_numbered_heading_not_newer_than_last_published_skips(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [trivial] Already published, should not re-trigger.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '1.0.0'))
+        finally:
+            os.unlink(path)
+
+    def test_trivial_in_sealed_unreleased_does_not_trigger_build(self):
+        """A [trivial] bullet in a sealed (not open) Unreleased batch must stay
+        invisible to distribute.py — this script never scans Unreleased content
+        regardless of sealed/open; release_notes.py's sealed-batch handling
+        (HAB-247 WU2) is a separate, later concern."""
+        path = _tmp("""\
+            ## [Unreleased]
+            - [ci] currently open batch, ignored regardless.
+
+            ## [1.1.0] — 2026-02-01
+            - [meta] Skill A only — should NOT trigger distribution on its own.
+
+            ## [Unreleased]
+            - [trivial] sealed batch bullet — must not leak into 1.1.0's body.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Old user change.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '1.0.0'))
+        finally:
+            os.unlink(path)
+
+    def test_trivialish_and_nontrivial_do_not_match(self):
+        """The tag regex must anchor exactly on `[trivial]` — a bullet whose
+        leading tag merely contains "trivial" as a substring must not match."""
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [trivialish] Not the real tag, must not trigger.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [nontrivial] Not the real tag, must not trigger.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
+    def test_trivial_only_matches_as_leading_tag(self):
+        """[trivial] mentioned as a second tag (not the leading one) must not
+        match — the regex only inspects the first bracketed tag."""
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [ci][trivial] Leading tag is [ci], must not trigger.
+        """)
+        try:
+            self.assertFalse(should_distribute(path, '0.0.0'))
+        finally:
+            os.unlink(path)
+
     # --- version filtering ---
 
     def test_only_new_entries_are_considered(self):

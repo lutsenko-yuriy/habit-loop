@@ -154,6 +154,47 @@ class TestLintNewTags(unittest.TestCase):
             os.unlink(path)
 
 
+class TestLintTrivialTag(unittest.TestCase):
+    """HAB-247: [trivial] must be accepted as a valid classification tag."""
+
+    def test_trivial_bullet_passes(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [trivial] Fixed a typo in the settings screen.
+        """)
+        try:
+            self.assertEqual(lint(path, '0.0.0'), [])
+        finally:
+            os.unlink(path)
+
+    def test_trivial_alone_satisfies_classification_requirement(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [trivial] Icon swap.
+            - [non-user] No logic changed.
+        """)
+        try:
+            self.assertEqual(lint(path, '0.0.0'), [])
+        finally:
+            os.unlink(path)
+
+    def test_trivial_in_open_unreleased_batch_passes(self):
+        path = _tmp("""\
+            ## [Unreleased]
+
+            blurb.
+
+            - [trivial] Copy tweak.
+
+            ## [1.0.0] — 2026-01-01
+            - [user] Real release.
+        """)
+        try:
+            self.assertEqual(lint(path, '0.0.0'), [])
+        finally:
+            os.unlink(path)
+
+
 class TestLintUnknownTags(unittest.TestCase):
     """Any [xxx] tag not in the known set must cause a lint failure."""
 
