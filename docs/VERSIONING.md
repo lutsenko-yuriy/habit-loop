@@ -2,7 +2,7 @@
 
 The app follows [Semantic Versioning](https://semver.org/) with the Flutter version format `X.Y.Z+buildNumber` in `pubspec.yaml`.
 
-**`pubspec.yaml`'s version represents the app's build version, not the repo's commit history (HAB-185).** It only advances for CHANGELOG entries that actually change the app — i.e. entries carrying at least one `[user]` and/or `[app]` tag. Entries classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]` never touch `pubspec.yaml` — see "The `[Unreleased]` section" below.
+**`pubspec.yaml`'s version represents the app's build version, not the repo's commit history (HAB-185).** It only advances for CHANGELOG entries that actually change the app — i.e. entries carrying at least one `[user]` and/or `[app]` tag. Entries classified only as `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]`/`[trivial]` never touch `pubspec.yaml` while they sit in `## [Unreleased]` (the default) — see "The `[Unreleased]` section" below. A `[trivial]`-only entry is the one exception that *can* still touch `pubspec.yaml`, but only if it's given its own numbered heading instead (planned `ship --release-now` routing, not yet wired up — see the tag taxonomy table below).
 
 **Version name (`X.Y.Z`):**
 - **Major (X)** — breaking changes (incompatible file format, dropped platform support)
@@ -71,7 +71,7 @@ Because `test.yml`/`build.yml`/`scenarios.yml`/`publish_changelogs.yml` are new 
 
 **`build-ios` runs on `macos-26`** (not `macos-15`): Apple requires all App Store Connect uploads to be built with the iOS 26 SDK (Xcode 26+), which is only available on the `macos-26` runner image. `distribute-testflight` stays on `macos-15` — it only uploads the already-built IPA and has no SDK dependency.
 
-**Selective build:** `check-skip` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]` or `[app]` bullets. If not (e.g. a `[meta]`-only, `[ci]`-only, `[test]`-only, `[wip]`-only, or `[user-none]`-only entry), the entire build is skipped — no binary is produced, no build number is incremented, and no `version-*` tag is created. Because no `version-*` tag is created for build-skipped entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
+**Selective build:** `check-skip` runs `scripts/changelog/distribute.py` to check whether the new CHANGELOG entries contain any `[user]`, `[app]`, or (under its own numbered heading only — never inside `## [Unreleased]`) `[trivial]` bullets. If not (e.g. a `[meta]`-only, `[ci]`-only, `[test]`-only, `[wip]`-only, `[user-none]`-only, or `[Unreleased]`-batched `[trivial]`-only entry), the entire build is skipped — no binary is produced, no build number is incremented, and no `version-*` tag is created. Because no `version-*` tag is created for build-skipped entries, `release_notes.py` automatically includes all `[user]` bullets from those and any subsequent entries when the next distributable build runs — preserving "What's New" aggregation across all unpublished releases.
 
 **CHANGELOG tag taxonomy** (enforced by `scripts/changelog/lint.py`):
 
@@ -84,15 +84,15 @@ Because `test.yml`/`build.yml`/`scenarios.yml`/`publish_changelogs.yml` are new 
 | `[ci]` | CI/CD process change | No | No |
 | `[user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
 | `[wip]` | Intermediate WU merge in a multi-WU ticket — tests run, build entirely skipped, no `version-*` tag created | No | No |
-| `[trivial]` | Content-only change (copy/string/icon/asset), no logic or architecture impact | No by default (bullet sits in the open `## [Unreleased]` batch, invisible to the build gate) — Yes if given its own numbered `## [X.Y.Z]` heading, which only happens when the user explicitly asks for an immediate release (planned `ship --release-now` routing, not yet wired up) | Yes, once it ships |
+| `[trivial]` | Content-only change (copy/string/icon/asset), no logic or architecture impact | No by default (bullet sits in the open `## [Unreleased]` batch, invisible to the build gate) — Yes if given its own numbered `## [X.Y.Z]` heading, which only happens when the user explicitly asks for an immediate release (planned `ship --release-now` routing, not yet wired up) | **Not yet** — `release_notes.py` only extracts `[user]` bullets today (HAB-247 WU1). WU2 will add sealed-`## [Unreleased]`-batch `[trivial]` bullets to "What's New"; a `[trivial]`-only bullet under its own numbered heading (the `--release-now` path) is a separate case WU2's scope does not cover either — until that's built, such an entry would build and distribute with no release-notes text of its own. |
 | `[non-user]` | Supplementary bullet descriptor (not a classification) | — | No |
 
-Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]`, `[app]`, `[test]`, `[meta]`, `[ci]`, or `[user-none]`). The tag list may be extended; each new tag must declare its distribution and release-note behaviour.
+Every new `## [X.Y.Z]` entry must carry at least one classification tag (`[user]`, `[app]`, `[test]`, `[meta]`, `[ci]`, `[user-none]`, `[wip]`, or `[trivial]`). The tag list may be extended; each new tag must declare its distribution and release-note behaviour.
 
 **Release notes ("What's New"):**
 - `scripts/changelog/release_notes.py` is run during `resolve-version` to produce user-friendly bullet-point release notes.
 - It parses `docs/CHANGELOG.md`, extracts all entries with a version number *higher* than the last published version (determined from `version-*` git tags), and strips developer-only references (HAB-XX issue numbers, PR #XX, WU work-unit markers).
-- Only `[user]` bullets are included; all other tags are silently excluded.
+- Only `[user]` bullets are included; all other tags are silently excluded — including `[trivial]` today (see the taxonomy table's `[trivial]` row above for what WU2 will change here).
 - Output is capped at 4 000 characters for compatibility with both Firebase App Distribution and App Store "What's New" fields.
 - The generated notes are passed to `distribute-android` via a job output and written to `--release-notes-file` so Firebase testers see human-readable text instead of a build number/SHA string. `distribute-testflight` itself does not consume this output — `testflight_upload.sh` uploads the binary only via `xcrun altool`, which has no release-notes parameter — but the same `resolve-version` output is passed to the separate `set-testflight-notes` job (HAB-182, see above), which sets it as the build's "What's New" text via the App Store Connect REST API after Apple finishes processing the build.
 - A copy of the notes file is uploaded as a `release-notes` GitHub Actions artifact (retained for 90 days) for manual use in App Store / Play Store submissions.
