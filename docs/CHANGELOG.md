@@ -9,6 +9,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
 - [ci][meta] HAB-250: `scripts/notes/index.py` now scopes note discovery to git-tracked (or staged) files via `git ls-files`, instead of globbing the filesystem — an untracked `.md` file in `docs/knowledge/notes/` can no longer leak into the regenerated `INDEX.md` and fail CI's `--check` step (recurrence of HAB-248). `/note` and `/debrief` updated to stage a new note file before regenerating, and `/note` now commits it — otherwise the fix itself would flip the failure the other way.
+- [wip] Recognize [trivial] as a valid CHANGELOG tag with build-gating support (HAB-247, WU1 of 2)
 
 ## [0.57.0] — 2026-08-23 (HAB-246, WU4 of multi-WU, final)
 
