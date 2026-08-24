@@ -258,7 +258,7 @@ def main(argv: List[str], repo_root: Path = REPO_ROOT) -> int:
     group.add_argument("--skill", help="Print only this skill's variable cost (its directory name, e.g. 'ship')")
     args = parser.parse_args(argv)
 
-    if args.skill:
+    if args.skill is not None:
         known = {skill_name(p) for p in iter_skill_files(repo_root / "skills")}
         if args.skill not in known:
             print(f"Unknown skill: {args.skill!r} (no skills/**/{args.skill}/SKILL.md found)", file=sys.stderr)

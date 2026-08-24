@@ -283,6 +283,18 @@ class MainCliTests(unittest.TestCase):
             self.assertIn("not-a-real-skill", stderr)
             self.assertEqual(stdout, "")
 
+    def test_empty_skill_name_is_rejected_not_treated_as_unset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "CLAUDE.md", "root\n")
+            write(root / "skills" / "manage" / "ship" / "SKILL.md", "content\n")
+
+            exit_code, stdout, stderr = self._run(["--skill", ""], root)
+
+            self.assertEqual(exit_code, 2)
+            self.assertEqual(stdout, "")
+            self.assertIn("Unknown skill", stderr)
+
     def test_known_skill_prints_its_variable_cost(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
