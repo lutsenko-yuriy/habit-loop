@@ -124,7 +124,8 @@ For full details see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Ubiquitous language — canonical domain terms and known aliases |
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Released version history |
 | [`docs/BACKLOG.md`](docs/BACKLOG.md) | Known issues and planned work |
-| [`docs/VERSIONING.md`](docs/VERSIONING.md) | Version numbering and CI/CD pipeline |
+| [`docs/VERSIONING.md`](docs/VERSIONING.md) | Version numbering rules |
+| [`docs/CI_PIPELINE.md`](docs/CI_PIPELINE.md) | CI/CD pipeline |
 | [`docs/ANALYTICS_EVENTS.md`](docs/ANALYTICS_EVENTS.md) | Analytics event catalogue |
 
 ---
@@ -146,7 +147,7 @@ test → resolve-version → build-android → distribute-android ─┐
 
 Feature branch builds run the test job only (no distribution, no tagging).
 
-Required secrets are documented in [`docs/VERSIONING.md`](docs/VERSIONING.md).
+Required secrets are documented in [`docs/CI_PIPELINE.md`](docs/CI_PIPELINE.md).
 
 ---
 
