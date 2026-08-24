@@ -248,23 +248,26 @@ def render_report(repo_root: Path, only_skill: str = None) -> str:
     return "\n".join(sections) + "\n"
 
 
-def main(argv: List[str]) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(argv: List[str], repo_root: Path = REPO_ROOT) -> int:
+    parser = argparse.ArgumentParser(
+        description="Measure fixed (always-loaded) vs. variable (per-skill) `@`-include token cost. "
+        "See this file's module docstring for the full model and its caveats."
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--fixed-only", action="store_true", help="Print only the fixed-cost breakdown")
     group.add_argument("--skill", help="Print only this skill's variable cost (its directory name, e.g. 'ship')")
     args = parser.parse_args(argv)
 
     if args.skill:
-        known = {skill_name(p) for p in iter_skill_files(REPO_ROOT / "skills")}
+        known = {skill_name(p) for p in iter_skill_files(repo_root / "skills")}
         if args.skill not in known:
             print(f"Unknown skill: {args.skill!r} (no skills/**/{args.skill}/SKILL.md found)", file=sys.stderr)
             return 2
-        print(render_report(REPO_ROOT, only_skill=args.skill))
+        print(render_report(repo_root, only_skill=args.skill))
     elif args.fixed_only:
-        print(render_fixed_section(REPO_ROOT))
+        print(render_fixed_section(repo_root))
     else:
-        print(render_report(REPO_ROOT))
+        print(render_report(repo_root))
     return 0
 
 

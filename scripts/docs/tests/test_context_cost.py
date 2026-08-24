@@ -265,17 +265,35 @@ class DisplayPathTests(unittest.TestCase):
 
 
 class MainCliTests(unittest.TestCase):
-    def _run_with_real_repo(self, argv):
-        stderr = io.StringIO()
-        with contextlib.redirect_stderr(stderr):
-            with contextlib.redirect_stdout(io.StringIO()):
-                exit_code = context_cost.main(argv)
-        return exit_code, stderr.getvalue()
+    def _run(self, argv, repo_root):
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            exit_code = context_cost.main(argv, repo_root=repo_root)
+        return exit_code, stdout.getvalue(), stderr.getvalue()
 
     def test_unknown_skill_errors_loudly_instead_of_printing_an_empty_table(self):
-        exit_code, stderr = self._run_with_real_repo(["--skill", "not-a-real-skill"])
-        self.assertEqual(exit_code, 2)
-        self.assertIn("not-a-real-skill", stderr)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "CLAUDE.md", "root\n")
+            write(root / "skills" / "manage" / "ship" / "SKILL.md", "content\n")
+
+            exit_code, stdout, stderr = self._run(["--skill", "not-a-real-skill"], root)
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("not-a-real-skill", stderr)
+            self.assertEqual(stdout, "")
+
+    def test_known_skill_prints_its_variable_cost(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "CLAUDE.md", "root\n")
+            write(root / "skills" / "manage" / "ship" / "SKILL.md", "one two three\n")
+
+            exit_code, stdout, _ = self._run(["--skill", "ship"], root)
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("ship", stdout)
+            self.assertNotIn("Fixed cost", stdout)
 
     def test_fixed_only_and_skill_are_mutually_exclusive(self):
         with contextlib.redirect_stderr(io.StringIO()):
