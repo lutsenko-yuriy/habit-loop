@@ -19,7 +19,8 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/GLOSSARY.md | Ubiquitous language — canonical domain terms and known aliases |
 | docs/BACKLOG.md | Known issues and remaining work not yet released |
 | docs/CHANGELOG.md | Released version history |
-| docs/VERSIONING.md | Version numbering rules and CI/CD pipeline |
+| docs/VERSIONING.md | Version numbering rules — semver, build numbers, CHANGELOG tags, release notes |
+| docs/CI_PIPELINE.md | CI/CD pipeline — job graph, manual dispatch, TestFlight distribution, secrets/variables |
 | docs/FEATURE_TOGGLES.md | Firebase Remote Config kill-switch flags — catalogue of toggles and their effects |
 | docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
 | docs/CODE_STYLE.md | Code style rules — formatting, linting, comment hygiene |
