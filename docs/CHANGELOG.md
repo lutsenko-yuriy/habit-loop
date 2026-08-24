@@ -11,6 +11,7 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 - [ci][meta] HAB-247: sealed `## [Unreleased]` batches now surface their `[trivial]` bullets in "What's New" once a later release seals them (`heading_boundaries.py`/`release_notes.py`), and `ship` gains `--release-now` to route a `[trivial]`-only entry to its own numbered heading instead (WU2 of 2, final).
 - [wip] Recognize [trivial] as a valid CHANGELOG tag with build-gating support (HAB-247, WU1 of 2)
 - [ci][meta] HAB-250: `scripts/notes/index.py` now scopes note discovery to git-tracked (or staged) files via `git ls-files`, instead of globbing the filesystem — an untracked `.md` file in `docs/knowledge/notes/` can no longer leak into the regenerated `INDEX.md` and fail CI's `--check` step (recurrence of HAB-248). `/note` and `/debrief` updated to stage a new note file before regenerating, and `/note` now commits it — otherwise the fix itself would flip the failure the other way.
+- [wip] HAB-220 (WU1): added `scripts/docs/context_cost.py` to measure the fixed (always-loaded) vs. variable (per-skill) token cost of this project's `@`-include convention; recorded the baseline in `docs/knowledge/notes/HAB-220.md`. Merged `AGENTS.md`'s duplicate "Documentation"/"Slash commands" skill tables into one, added the previously-unindexed `skills/shared/*.md`, and fixed two bare-filename references that read as broken paths.
 
 ## [0.57.0] — 2026-08-23 (HAB-246, WU4 of multi-WU, final)
 
