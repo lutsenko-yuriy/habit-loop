@@ -33,9 +33,10 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/workflows/TROUBLESHOOT.md | Reactive workflow for bugs, CI failures, and infrastructure issues — investigate, ticket, fix, ship |
 | docs/workflows/RESEARCH.md | Step-by-step workflow for research-only tickets — alternatives survey, constraint evaluation, debrief |
 | docs/workflows/POSTMORTEM.md | Post-fix root-cause investigation workflow — reconstructing when/why a shipped bug was introduced, after `docs/workflows/TROUBLESHOOT.md` produced the fix |
+| docs/workflows/MULTI_WU.md | Multi-WU ticket appendix to `FEATURE.md` — WU-splitting guidelines, pre-implementation WU types, branch/PR-per-WU rules, `[wip]` tagging, WU cycle |
 | docs/knowledge/README.md | Project knowledge base — vault layout, per-ticket file format, how `/note` and `/debrief` write entries |
 | docs/knowledge/notes/INDEX.md | Generated tagged table of contents over `docs/knowledge/notes/` — regenerate via `scripts/notes/index.py`, do not edit by hand (HAB-221) |
-| skills/shared/*.md | Shared skill fragments (`project-config.md`, `decision-guidelines.md`, `dialog-guidelines.md`, `wu-splitting-guidelines.md`, `pm-tool-mapping.md`, `linear-efficiency.md`) — `@`-included by individual skills as needed; not meant to be read standalone |
+| skills/shared/*.md | Shared skill fragments (`project-config.md`, `decision-guidelines.md`, `dialog-guidelines.md`, `pm-tool-mapping.md`, `linear-efficiency.md`) — `@`-included by individual skills as needed; not meant to be read standalone |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 
 ## Skills
@@ -114,9 +115,13 @@ At the beginning of every new session, before doing anything else, this checklis
 ## Workflow
 
 @docs/workflows/FEATURE.md
-@docs/workflows/TROUBLESHOOT.md
-@docs/workflows/RESEARCH.md
-@docs/workflows/POSTMORTEM.md
+
+Reactive work (bugs, CI failures, regressions, infrastructure breakage) uses
+`docs/workflows/TROUBLESHOOT.md` instead of the above. Research-only tickets use
+`docs/workflows/RESEARCH.md`. Post-fix root-cause investigation (reconstructing when/why a
+shipped bug was introduced, after `TROUBLESHOOT.md` produced the fix) uses
+`docs/workflows/POSTMORTEM.md`. Read whichever one applies by path when its trigger condition
+is met — they are not preloaded every session.
 
 ## Progress signaling
 
