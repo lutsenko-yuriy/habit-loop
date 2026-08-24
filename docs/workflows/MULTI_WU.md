@@ -40,7 +40,7 @@ Use `[wip]` as the classification tag for all intermediate WU CHANGELOG entries 
 For each WU in sequence:
 1. Create a fresh branch from the latest `origin/main` using the branch name from the plan table.
 2. Follow `FEATURE.md` steps 2–11 (widget tests, TDD cycles, validate, format, PR, review loop). The full review loop (step 10) — `review-architecture`, `audit-code`, Codecov, and user sign-off — is mandatory for every WU PR without exception.
-3. **If this is the final WU** (the one that completes the ticket): invoke `debrief` now (step 12), before shipping — the same order as the single-WU flow. **If this is an intermediate WU**: skip debrief; it runs exactly once, at the final WU.
-4. Invoke `ship` (step 13).
+3. **If this is the final WU** (the one that completes the ticket): invoke `debrief` now (`FEATURE.md` step 12), before shipping — the same order as the single-WU flow. **If this is an intermediate WU**: skip debrief; it runs exactly once, at the final WU.
+4. Invoke `ship` (`FEATURE.md` step 13).
 5. **Hard checkpoint:** after `ship` merges, explicitly tell the user to compact context now, before continuing — state it as its own message and wait for it to happen.
 6. Fetch `origin/main` and start the next WU from the freshly updated tip.

@@ -36,6 +36,7 @@ Read this file to resolve all project-specific constants referenced in skill ins
 | Troubleshoot workflow | `docs/workflows/TROUBLESHOOT.md` |
 | Research workflow | `docs/workflows/RESEARCH.md` |
 | Postmortem workflow | `docs/workflows/POSTMORTEM.md` |
+| Multi-WU ticket appendix | `docs/workflows/MULTI_WU.md` |
 | Knowledge base | `docs/knowledge/notes/` (one `HAB-XX.md` file per ticket) |
 | Decisions (ADRs) | `docs/knowledge/decisions/` (one `ADR-NNNN-<short-name>.md` file per standing decision) |
 
