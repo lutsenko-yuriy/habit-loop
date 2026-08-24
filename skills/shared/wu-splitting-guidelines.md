@@ -1,9 +1,0 @@
-# WU-Splitting Guidelines
-
-SHOULD-level guidelines for dividing a ticket into work units during planning, and for handling a WU0 scenario-stub commit. Learned from HAB-206 (see `docs/knowledge/notes/HAB-206.md`).
-
-1. **Isolate UI/visual-design work into its own WU, and expect it to change a lot mid-development.** A UI-heavy WU (animation choreography, layout, visual polish) can't be fully nailed down on paper — seeing it running is what surfaces the real design (HAB-206 WU4: a center chip was cut post-implementation, and two animation bugs were found only by clicking through the live app). Don't treat that churn as a planning failure; plan for it by keeping UI-heavy work in its own WU rather than bundling it with logic/data WUs whose scope is comparatively stable.
-
-2. **A WU0 stub must not delete scenario coverage for behavior still shipping in production.** The standard WU0 pattern (scenario stubs only, no driver code) works cleanly for additive features, where the old behavior keeps running and old tests keep passing alongside new stubs. It breaks when a stub *replaces* a scenario that verifies behavior still live in `main` — deleting the old test removes real coverage before the new behavior exists to cover it (HAB-206 WU0 left `main` with zero chain-navigation coverage between its merge and WU1 landing). Instead: mark the superseded scenario clearly as legacy (e.g. a `_legacy` suffix or a labeled group) and keep it running against the still-current behavior; only delete it in the WU that actually retires the underlying behavior, in the same commit.
-
-3. **Longer-term: a dedicated designer (human or agent) could reduce this volatility at the source**, since the churn traces back to UI decisions not being settled before implementation starts, not to the WU-splitting process itself. Not staffed yet — flagged here as a direction, not a commitment.

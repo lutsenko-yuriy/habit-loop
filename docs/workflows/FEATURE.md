@@ -87,7 +87,7 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
 
    **A note on CI/infrastructure tickets:** for tickets that bring up a new CI/infrastructure target (a new platform's test job, a new emulator, first real-device timing), expect the scope to balloon once real failures start surfacing — this class of issue can only be caught by running against the real target, not in planning. If it does balloon, split the ticket: merge the CI wiring/job setup on its own once it's mechanically correct, and track scenario/flakiness stabilization as a separate follow-up ticket rather than blocking the original PR on every fix.
 
-   **Multi-WU tickets:** if the approved plan (1.3) contains more than one production work unit, see the [Multi-WU tickets](#multi-wu-tickets) appendix before continuing — it changes how steps 2–12 below are repeated.
+   **Multi-WU tickets:** if the approved plan (1.3) contains more than one production work unit, see `docs/workflows/MULTI_WU.md` before continuing — it changes how steps 2–12 below are repeated.
 
 2. For features with user-visible screens or interactions: draft widget tests before writing production code:
    - Create new widget tests covering each new screen and key user flow (swiping, tapping, navigation, locale changes, auto-advance, etc.).
@@ -124,7 +124,7 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
 8. Commit all changes with a descriptive message.
 9. Push to the remote and open a PR — all in parallel, except the checklist gate below which comes first:
 
-   If this ticket's WU0 was a verification checklist rather than integration scenarios (see the Multi-WU appendix), and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item now, before doing any of the following. Do not proceed on an unexecuted checklist.
+   If this ticket's WU0 was a verification checklist rather than integration scenarios (see `docs/workflows/MULTI_WU.md`), and this is the final WU: run every **[agent]** item yourself and ask the user to confirm every **[human]** item now, before doing any of the following. Do not proceed on an unexecuted checklist.
 
    - Push the branch to the remote.
    - Open a PR.
@@ -155,38 +155,7 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
 14. Clear the context now that the ticket is fully shipped, before starting a new ticket. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
 15. A new ticket may be picked up while the previous one is In QA.
 
----
-
-## Multi-WU tickets
-
-@skills/shared/wu-splitting-guidelines.md
-
-When the approved plan (step 1.3) contains more than one production work unit (WU1+), follow these rules in addition to the standard workflow.
-
-**Research-WU (optional) — then Scenario-WU or Checklist-WU**
-
-If planning surfaces a design choice that would benefit from external validation (precedent from other apps/tools, a published guideline, an established best practice — the same kind of gap HAB-217's mid-ticket `/research` call filled), `plan` proposes a **Research-WU** as the ticket's first WU, running before Scenario-WU/Checklist-WU. It runs `/research` (or an equivalent bounded, cited check) and writes findings to the ticket's knowledge note. No separate branch or PR — same as Checklist-WU below. **Omit it when the ticket is genuinely novel** — no comparable precedent exists to research.
-
-**Scenario-WU** — for tickets with a user-facing flow `draft-scenarios` can assert against via `AppHarness`: after scenarios are approved and written (step 1.6), commit them to `feature/HAB-XX-WU0-scenarios`, push, and open a PR titled `test(WU0): integration scenarios (HAB-XX)`. Use `[test]` as the CHANGELOG classification tag. Merge WU0 directly — no `ship`, no version bump. Each subsequent WU's plan entry lists which scenarios it makes green.
-
-**Checklist-WU** — for everything else (meta/skills/docs work, backend-only changes, or any ticket where scenario generation is skipped): `plan` writes this WU as a **verification checklist** in the plan's Test strategy section instead — a plan-only artifact, no separate branch or PR. Each item is tagged **[agent]** (the agent runs it itself) or **[human]** (needs a person's judgment). **Run it before opening the final WU's PR** (step 9 below) regardless of whether `/implement` was formally invoked for that WU — this convention exists specifically because process/meta tickets are often worked directly in the orchestrating session rather than through `/implement`, so the enforcement point cannot live solely in that skill.
-
-Research-WU, Scenario-WU, and Checklist-WU are named, not numbered — they're pre-implementation units that never carry production code. Everything after them keeps the existing numeric naming (WU1, WU2, …), unchanged by this convention.
-
-**One WU = one branch = one PR**
-
-Each WU gets its own branch (`feature/HAB-XX-WUN-<short>`, where N is the WU number from the plan's WU table) created fresh from `origin/main`. Never reuse a branch from a previous WU. Branch names are pre-named in the plan comment's WU table so the full mapping is visible from day one.
-
-**CHANGELOG tags for intermediate WUs**
-
-Use `[wip]` as the classification tag for all intermediate WU CHANGELOG entries — every WU except the final one. `[wip]` suppresses builds and distribution so testers do not receive partial builds mid-ticket. The final WU uses whichever tag actually reflects what the ticket produced: `[user]`/`[app]` if it's user-facing (this is when CI builds and distributes, and "What's New" aggregates all `[user]` content back to the last published tag), or `[ci]`/`[meta]`/`[test]` if the ticket is pure process/CI/tooling work end-to-end with nothing user-facing to ship.
-
-**WU cycle (WU1 onwards)**
-
-For each WU in sequence:
-1. Create a fresh branch from the latest `origin/main` using the branch name from the plan table.
-2. Follow steps 2–11 (widget tests, TDD cycles, validate, format, PR, review loop). The full review loop (step 10) — `review-architecture`, `audit-code`, Codecov, and user sign-off — is mandatory for every WU PR without exception.
-3. **If this is the final WU** (the one that completes the ticket): invoke `debrief` now (step 12), before shipping — the same order as the single-WU flow. **If this is an intermediate WU**: skip debrief; it runs exactly once, at the final WU.
-4. Invoke `ship` (step 13).
-5. **Hard checkpoint:** after `ship` merges, explicitly tell the user to compact context now, before continuing — state it as its own message and wait for it to happen.
-6. Fetch `origin/main` and start the next WU from the freshly updated tip.
+For tickets whose approved plan contains more than one production work unit (WU1+), see
+`docs/workflows/MULTI_WU.md` — it adds pre-implementation WU types (Research-WU, Scenario-WU,
+Checklist-WU), branch/PR-per-WU rules, `[wip]` CHANGELOG tagging, and the WU cycle that repeats
+steps 2–12 above for each WU.
