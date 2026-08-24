@@ -31,63 +31,41 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/workflows/FEATURE.md | Step-by-step feature development workflow — TDD cycle, branching, PR, ship, and ticket state rules |
 | docs/workflows/TROUBLESHOOT.md | Reactive workflow for bugs, CI failures, and infrastructure issues — investigate, ticket, fix, ship |
 | docs/workflows/RESEARCH.md | Step-by-step workflow for research-only tickets — alternatives survey, constraint evaluation, debrief |
-| docs/workflows/POSTMORTEM.md | Post-fix root-cause investigation workflow — reconstructing when/why a shipped bug was introduced, after TROUBLESHOOT.md produced the fix |
+| docs/workflows/POSTMORTEM.md | Post-fix root-cause investigation workflow — reconstructing when/why a shipped bug was introduced, after `docs/workflows/TROUBLESHOOT.md` produced the fix |
 | docs/knowledge/README.md | Project knowledge base — vault layout, per-ticket file format, how `/note` and `/debrief` write entries |
 | docs/knowledge/notes/INDEX.md | Generated tagged table of contents over `docs/knowledge/notes/` — regenerate via `scripts/notes/index.py`, do not edit by hand (HAB-221) |
+| skills/shared/*.md | Shared skill fragments (`project-config.md`, `decision-guidelines.md`, `dialog-guidelines.md`, `wu-splitting-guidelines.md`, `pm-tool-mapping.md`, `linear-efficiency.md`) — `@`-included by individual skills as needed; not meant to be read standalone |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
-| skills/configure/calibrate/SKILL.md | One-time setup: propose and approve the model → tier mapping |
-| skills/configure/skill-creator/SKILL.md | Create a new skill from scratch (guided wizard), or refactor an existing skill into lean SKILL.md + resource files |
-| skills/configure/style/SKILL.md | Switch communication style: DETAILED, CONCISE, or SCHEMATIC |
-| skills/manage/summarize/SKILL.md | Session-start: fetch and display the backlog |
-| skills/manage/ship/SKILL.md | Post-merge housekeeping: close issues, update docs, bump version, merge |
-| skills/manage/draft-release-notes/SKILL.md | Draft [user] bullets for the current changes, separately from the technical HAB-XX bullet |
-| skills/manage/debrief/SKILL.md | Post-ticket retrospective: structured dialog → workflow improvements + knowledge base entry |
-| skills/manage/note/SKILL.md | Capture a quick observation mid-session into `docs/knowledge/notes/HAB-XX.md` |
-| skills/manage/cleanup-firebase/SKILL.md | Delete old Firebase App Distribution builds locally, keeping the N most recent per platform |
-| skills/manage/dead-code-check/SKILL.md | Advisory dead-code detector — surfaces orphaned l10n keys, analytics events, test files, and handler files |
-| skills/manage/checkup/SKILL.md | Two-tier periodic code-quality checkup (light monthly / heavy quarterly) — walks the 8 non-mechanical dimensions, fixes inline or writes findings to docs/knowledge/checkups/ with deadlines |
-| skills/design/analyze/SKILL.md | Analytics planning: identify events and screen views for a feature |
-| skills/design/brief/SKILL.md | Feature intake: clarifying dialog → scoped Linear ticket + glossary update |
-| skills/design/plan/SKILL.md | Implementation planning: structured plan from a Linear issue |
-| skills/design/experiment/SKILL.md | Experiment design: hypothesis, metrics, feature flag, registry entry |
-| skills/design/research/SKILL.md | Literature research: thesis/antithesis/synthesis for a claim, or a scoping map for a bare topic — cited evidence, single synthesis pass |
-| skills/build/implement/SKILL.md | TDD implementation and PR |
-| skills/run/android/SKILL.md | Start the app on Android (physical device → running emulator → launch AVD) |
-| skills/run/ios/SKILL.md | Start the app on iOS (physical device → booted Simulator → boot Simulator) |
-| skills/run/run-scenarios/SKILL.md | Run integration test scenarios before merging — finds device, runs flutter test integration_test/, reports pass/fail |
-| skills/verify/draft-scenarios/SKILL.md | Pre-implementation scenario drafting: write red scenarios (integration tests) from the ticket spec |
-| skills/verify/review/SKILL.md | Architectural PR review |
-| skills/verify/audit/SKILL.md | Runtime and migration PR review |
 
-## Slash commands
+## Skills
 
 Every skill is registered as a Claude Code slash command via a thin stub in `.claude/commands/`. Type `/` in Claude Code to see the full list.
 
-| Command | Skill | Usage |
-|---|---|---|
-| `/ship` | manage/ship | `/ship PR #N` |
-| `/draft-release-notes` | manage/draft-release-notes | `/draft-release-notes [PR #N \| HAB-XX]` |
-| `/debrief` | manage/debrief | `/debrief HAB-XX` |
-| `/summarize` | manage/summarize | `/summarize` |
-| `/review-architecture` | verify/review | `/review-architecture PR #N` |
-| `/audit-code` | verify/audit | `/audit-code PR #N` |
-| `/plan` | design/plan | `/plan HAB-XX: <title>` |
-| `/analyze` | design/analyze | `/analyze HAB-XX: <title>` |
-| `/brief` | design/brief | `/brief` |
-| `/experiment` | design/experiment | `/experiment <hypothesis>` |
-| `/research` | design/research | `/research <claim or topic>` |
-| `/draft-scenarios` | verify/draft-scenarios | `/draft-scenarios HAB-XX: <title>` |
-| `/implement` | build/implement | `/implement HAB-XX: <title>` |
-| `/calibrate` | configure/calibrate | `/calibrate` |
-| `/skill-creator` | configure/skill-creator | `/skill-creator skills/<path>` or `/skill-creator all` |
-| `/style` | configure/style | `/style CONCISE` |
-| `/ios` | run/ios | `/ios` |
-| `/android` | run/android | `/android` |
-| `/run-scenarios` | run/run-scenarios | `/run-scenarios` or `/run-scenarios HAB-XX` |
-| `/cleanup-firebase` | manage/cleanup-firebase | `/cleanup-firebase [N] [--dry-run]` |
-| `/dead-code-check` | manage/dead-code-check | `/dead-code-check` |
-| `/checkup` | manage/checkup | `/checkup [light|heavy|status]` |
-| `/note` | manage/note | `/note [HAB-XX:] <free-form text>` |
+| Command | Skill | Purpose | Usage |
+|---|---|---|---|
+| `/calibrate` | configure/calibrate | One-time setup: propose and approve the model → tier mapping | `/calibrate` |
+| `/skill-creator` | configure/skill-creator | Create a new skill from scratch (guided wizard), or refactor an existing skill into lean SKILL.md + resource files | `/skill-creator skills/<path>` or `/skill-creator all` |
+| `/style` | configure/style | Switch communication style: DETAILED, CONCISE, or SCHEMATIC | `/style CONCISE` |
+| `/summarize` | manage/summarize | Session-start: fetch and display the backlog | `/summarize` |
+| `/ship` | manage/ship | Post-merge housekeeping: close issues, update docs, bump version, merge | `/ship PR #N` |
+| `/draft-release-notes` | manage/draft-release-notes | Draft [user] bullets for the current changes, separately from the technical HAB-XX bullet | `/draft-release-notes [PR #N \| HAB-XX]` |
+| `/debrief` | manage/debrief | Post-ticket retrospective: structured dialog → workflow improvements + knowledge base entry | `/debrief HAB-XX` |
+| `/note` | manage/note | Capture a quick observation mid-session into a ticket's knowledge-base note | `/note [HAB-XX:] <free-form text>` |
+| `/cleanup-firebase` | manage/cleanup-firebase | Delete old Firebase App Distribution builds locally, keeping the N most recent per platform | `/cleanup-firebase [N] [--dry-run]` |
+| `/dead-code-check` | manage/dead-code-check | Advisory dead-code detector — surfaces orphaned l10n keys, analytics events, test files, and handler files | `/dead-code-check` |
+| `/checkup` | manage/checkup | Two-tier periodic code-quality checkup (light monthly / heavy quarterly) — walks the 8 non-mechanical dimensions, fixes inline or writes findings to docs/knowledge/checkups/ with deadlines | `/checkup [light|heavy|status]` |
+| `/analyze` | design/analyze | Analytics planning: identify events and screen views for a feature | `/analyze HAB-XX: <title>` |
+| `/brief` | design/brief | Feature intake: clarifying dialog → scoped Linear ticket + glossary update | `/brief` |
+| `/plan` | design/plan | Implementation planning: structured plan from a Linear issue | `/plan HAB-XX: <title>` |
+| `/experiment` | design/experiment | Experiment design: hypothesis, metrics, feature flag, registry entry | `/experiment <hypothesis>` |
+| `/research` | design/research | Literature research: thesis/antithesis/synthesis for a claim, or a scoping map for a bare topic — cited evidence, single synthesis pass | `/research <claim or topic>` |
+| `/implement` | build/implement | TDD implementation and PR | `/implement HAB-XX: <title>` |
+| `/android` | run/android | Start the app on Android (physical device → running emulator → launch AVD) | `/android` |
+| `/ios` | run/ios | Start the app on iOS (physical device → booted Simulator → boot Simulator) | `/ios` |
+| `/run-scenarios` | run/run-scenarios | Run integration test scenarios before merging — finds device, runs flutter test integration_test/, reports pass/fail | `/run-scenarios` or `/run-scenarios HAB-XX` |
+| `/draft-scenarios` | verify/draft-scenarios | Pre-implementation scenario drafting: write red scenarios (integration tests) from the ticket spec | `/draft-scenarios HAB-XX: <title>` |
+| `/review-architecture` | verify/review | Architectural PR review | `/review-architecture PR #N` |
+| `/audit-code` | verify/audit | Runtime and migration PR review | `/audit-code PR #N` |
 
 ## Architecture
 
@@ -112,7 +90,7 @@ See `docs/CODE_STYLE.md`. Flutter style guide is the base; the document adds pro
 
 ## Versioning
 
-Update `pubspec.yaml` version name (`X.Y.Z`) whenever a new `CHANGELOG.md` entry carrying a `[user]`/`[app]` tag is added — no separate approval needed. Entries without one land under `## [Unreleased]` instead and never bump the version (HAB-185).
+Update `pubspec.yaml` version name (`X.Y.Z`) whenever a new `docs/CHANGELOG.md` entry carrying a `[user]`/`[app]` tag is added — no separate approval needed. Entries without one land under `## [Unreleased]` instead and never bump the version (HAB-185).
 CI handles build numbers automatically — do not touch.
 Details: @docs/VERSIONING.md
 
