@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -35,6 +37,18 @@ class ParseIncludesTests(unittest.TestCase):
 
     def test_no_includes_returns_empty(self):
         self.assertEqual(context_cost.parse_includes("just prose\n"), [])
+
+    def test_at_path_inside_fenced_block_is_not_an_include(self):
+        text = "prose\n```\n@docs/ARCHITECTURE.md\n```\nmore prose\n"
+        self.assertEqual(context_cost.parse_includes(text), [])
+
+    def test_email_like_at_is_not_an_include(self):
+        text = "contact me@example.md for details\n"
+        self.assertEqual(context_cost.parse_includes(text), [])
+
+    def test_url_fragment_at_is_not_an_include(self):
+        text = "see https://example.com/y@docs/E.md\n"
+        self.assertEqual(context_cost.parse_includes(text), [])
 
 
 class ResolveIncludesTests(unittest.TestCase):
@@ -107,6 +121,29 @@ class ResolveIncludesTests(unittest.TestCase):
             # a.md (depth 0) -> b.md (depth 1) reached; b.md's own @c.md
             # (would be depth 2) is not followed.
             self.assertEqual([f.name for f in files], ["a.md", "b.md"])
+
+    def test_shortest_path_wins_regardless_of_declaration_order(self):
+        # Regression for HAB-220 review/audit: `root.md` includes `via.md`
+        # (whose own child is `target.md`, reaching it at depth 2) BEFORE its
+        # own *direct* include of `target.md` (true depth 1). A depth-first
+        # "seen once ever" visit reaches `target.md` through `via.md` FIRST
+        # (since a for-loop over root's includes recurses fully into `via.md`
+        # before trying root's next sibling include), records it at the wrong,
+        # deeper effective depth, and then — at max_depth=2 — wrongly excludes
+        # `target.md`'s own child `leaf.md`, which the correct depth-1 route
+        # would have included (leaf sits at true depth 2, within the cap).
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "root.md", "@via.md\n@target.md\n")
+            write(root / "via.md", "@target.md\n")
+            write(root / "target.md", "@leaf.md\n")
+            write(root / "leaf.md", "leaf content\n")
+
+            files, _ = context_cost.resolve_includes(root / "root.md", root, max_depth=2)
+
+            self.assertEqual(
+                {f.name for f in files}, {"root.md", "via.md", "target.md", "leaf.md"}
+            )
 
 
 class WordCountTests(unittest.TestCase):
@@ -197,6 +234,54 @@ class RenderReportTests(unittest.TestCase):
             self.assertIn("Variable cost", report)
             self.assertIn("AGENTS.md", report)
             self.assertIn("ship", report)
+
+    def test_variable_section_reports_missing_includes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "CLAUDE.md", "@AGENTS.md\n")
+            write(root / "AGENTS.md", "root docs\n")
+            write(root / "CLAUDE.local.md", "local\n")
+            write(
+                root / "skills" / "manage" / "ship" / "SKILL.md",
+                "@skills/shared/does-not-exist.md\n",
+            )
+
+            report = context_cost.render_variable_section(root)
+
+            self.assertIn("Broken includes (skills)", report)
+            self.assertIn("does-not-exist.md", report)
+
+
+class DisplayPathTests(unittest.TestCase):
+    def test_path_outside_repo_root_falls_back_to_absolute_instead_of_raising(self):
+        with tempfile.TemporaryDirectory() as outside, tempfile.TemporaryDirectory() as tmp:
+            repo_root = Path(tmp)
+            outside_file = Path(outside) / "escaped.md"
+            write(outside_file, "content\n")
+
+            result = context_cost._display_path(outside_file, repo_root)
+
+            self.assertEqual(result, str(outside_file))
+
+
+class MainCliTests(unittest.TestCase):
+    def _run_with_real_repo(self, argv):
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            with contextlib.redirect_stdout(io.StringIO()):
+                exit_code = context_cost.main(argv)
+        return exit_code, stderr.getvalue()
+
+    def test_unknown_skill_errors_loudly_instead_of_printing_an_empty_table(self):
+        exit_code, stderr = self._run_with_real_repo(["--skill", "not-a-real-skill"])
+        self.assertEqual(exit_code, 2)
+        self.assertIn("not-a-real-skill", stderr)
+
+    def test_fixed_only_and_skill_are_mutually_exclusive(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as cm:
+                context_cost.main(["--fixed-only", "--skill", "ship"])
+        self.assertEqual(cm.exception.code, 2)
 
 
 if __name__ == "__main__":

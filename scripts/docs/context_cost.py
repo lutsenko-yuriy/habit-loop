@@ -27,6 +27,19 @@ plus `CLAUDE.local.md` (loaded independently by the harness at session start,
 not itself reached via any `@`-include) — paid on every session, regardless
 of which skill (if any) runs.
 
+Two caveats on that number, surfaced during PR review (HAB-220):
+- `CLAUDE.local.md` is gitignored and per-machine — its word count (and
+  therefore the fixed-cost total) is **not reproducible across machines or
+  CI**. The qualitative classification (loaded every session vs. loaded
+  per-skill) still holds everywhere; only the exact digit is local.
+- The depth-2 cap is this script's best available model, verified against
+  one real rendered session, but a competing explanation (`@path` resolved
+  relative to its *containing* file rather than cut off by hop count) fits
+  every observation in this repo equally, since every hop-2 file's own
+  `@`-include happens to be repo-root-relative already. Re-verify against a
+  hop-2 file that names a path relative to itself before trusting this
+  script across a differently-shaped include graph.
+
 Variable cost = a single `skills/**/SKILL.md`'s own `@`-include set, as read
 by a human or an agent following the file manually (skill invocation does not
 go through the same automatic CLAUDE.md-style expansion the harness performs
@@ -44,8 +57,9 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections import deque
 from pathlib import Path
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CLAUDE_MD = REPO_ROOT / "CLAUDE.md"
@@ -61,19 +75,25 @@ TOKENS_PER_WORD = 1.35
 # AGENTS.md's own @-includes are hop 2. See module docstring for why this cap exists.
 FIXED_COST_MAX_DEPTH = 2
 
+FENCED_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
 BACKTICK_SPAN_RE = re.compile(r"`[^`\n]*`")
-AT_MD_RE = re.compile(r"@(\S+\.md)")
+# (?<!\w) excludes an email-like "me@example.md" or a URL fragment ending in a
+# word character right before the "@" — a real include always follows either
+# start-of-text or whitespace/punctuation, never a word character (HAB-220 audit).
+AT_MD_RE = re.compile(r"(?<!\w)@(\S+\.md)")
 
 Missing = Tuple[Path, str]  # (file that referenced it, the missing relative path)
 
 
 def parse_includes(text: str) -> List[str]:
     """Repo-relative paths named by non-backtick-wrapped `@path.md` references
-    in `text`, in the order they appear. Backtick-wrapped occurrences (an
-    inline-code mention, not a real include) are stripped per line before
-    matching."""
+    in `text`, in the order they appear. Fenced ``` code blocks are stripped
+    from the whole text first (an example inside one is not a real include),
+    then backtick-wrapped occurrences are stripped per remaining line (an
+    inline-code mention is not a real include either)."""
+    unfenced = FENCED_BLOCK_RE.sub("", text)
     includes = []
-    for line in text.splitlines():
+    for line in unfenced.splitlines():
         cleaned = BACKTICK_SPAN_RE.sub("", line)
         includes.extend(match.group(1) for match in AT_MD_RE.finditer(cleaned))
     return includes
@@ -82,7 +102,17 @@ def parse_includes(text: str) -> List[str]:
 def resolve_includes(
     start: Path, repo_root: Path, max_depth: Optional[int] = None
 ) -> Tuple[List[Path], List[Missing]]:
-    """Transitively resolve `start`'s `@`-include chain.
+    """Transitively resolve `start`'s `@`-include chain via breadth-first
+    search, so a file's recorded depth is always its *shortest* distance from
+    `start` regardless of which parent happens to be processed first.
+
+    A depth-first, "seen once ever" visit order — the original
+    implementation — under-counts: a file first reached through a long path
+    gets marked done at that depth, and a later, shorter path to the same
+    file is then skipped even though it would have cleared `max_depth` (HAB-220
+    review). BFS avoids this because every node is enqueued at most once, the
+    first time it's discovered, and BFS discovers nodes in non-decreasing
+    depth order — so that first discovery is always the shortest one.
 
     `max_depth` caps how many hops from `start` are followed (`start` itself
     is depth 0); `None` means unlimited. Use this to model the real,
@@ -90,33 +120,33 @@ def resolve_includes(
     cost, while leaving skill variable-cost resolution uncapped.
 
     Returns (files, missing): `files` is every existing file reached,
-    de-duplicated and in order of first appearance (`start` first); `missing`
+    de-duplicated and in order of first discovery (`start` first); `missing`
     is every include line whose target file does not exist, reported rather
     than raised so one broken link doesn't stop the whole measurement.
     """
+    start_resolved = start.resolve()
+    depth_of: Dict[Path, int] = {start_resolved: 0}
     files: List[Path] = []
-    seen: Set[Path] = set()
     missing: List[Missing] = []
+    queue = deque([(start_resolved, 0)])
 
-    def visit(path: Path, depth: int) -> None:
-        resolved = path.resolve()
-        if resolved in seen:
-            return
-        seen.add(resolved)
-        if not resolved.exists():
-            return
-        files.append(resolved)
+    while queue:
+        path, depth = queue.popleft()
+        if not path.exists():
+            continue
+        files.append(path)
         if max_depth is not None and depth >= max_depth:
-            return
-        text = resolved.read_text(encoding="utf-8")
+            continue
+        text = path.read_text(encoding="utf-8")
         for rel in parse_includes(text):
             target = (repo_root / rel).resolve()
             if not target.exists():
-                missing.append((resolved, rel))
+                missing.append((path, rel))
                 continue
-            visit(target, depth + 1)
+            if target not in depth_of:
+                depth_of[target] = depth + 1
+                queue.append((target, depth + 1))
 
-    visit(start, 0)
     return files, missing
 
 
@@ -153,6 +183,27 @@ def skill_name(skill_md: Path) -> str:
     return skill_md.parent.name
 
 
+def _display_path(path: Path, repo_root: Path) -> str:
+    """`path` relative to `repo_root` for display, falling back to the
+    absolute path if it genuinely lies outside `repo_root` (e.g. a `@../x.md`
+    escape or an out-of-repo symlink target) — a formatting concern only,
+    never worth crashing the whole report over (HAB-220 audit)."""
+    try:
+        return str(path.relative_to(repo_root))
+    except ValueError:
+        return str(path)
+
+
+def _render_missing(missing: List[Missing], repo_root: Path, heading: str) -> List[str]:
+    if not missing:
+        return []
+    lines = [heading]
+    for referencing, target in missing:
+        lines.append(f"- `{_display_path(referencing, repo_root)}` -> missing `{target}`")
+    lines.append("")
+    return lines
+
+
 def render_fixed_section(repo_root: Path) -> str:
     repo_root = repo_root.resolve()
     files, missing = fixed_cost_files(
@@ -162,14 +213,10 @@ def render_fixed_section(repo_root: Path) -> str:
     lines = ["## Fixed cost (always loaded)", "", "| File | Words | ~Tokens |", "|---|---|---|"]
     for p in files:
         w = word_count(p)
-        lines.append(f"| `{p.relative_to(repo_root)}` | {w} | {to_tokens(w)} |")
+        lines.append(f"| `{_display_path(p, repo_root)}` | {w} | {to_tokens(w)} |")
     lines.append(f"| **Total fixed** | **{total_words}** | **≈{to_tokens(total_words)}** |")
     lines.append("")
-    if missing:
-        lines.append("### Broken includes (fixed-cost chain)")
-        for referencing, target in missing:
-            lines.append(f"- `{referencing.relative_to(repo_root)}` -> missing `{target}`")
-        lines.append("")
+    lines.extend(_render_missing(missing, repo_root, "### Broken includes (fixed-cost chain)"))
     return "\n".join(lines)
 
 
@@ -177,16 +224,19 @@ def render_variable_section(repo_root: Path, only_skill: str = None) -> str:
     repo_root = repo_root.resolve()
     lines = ["## Variable cost (per skill invocation)", "", "| Skill | Words | ~Tokens |", "|---|---|---|"]
     rows = []
+    all_missing: List[Missing] = []
     for skill_md in iter_skill_files(repo_root / "skills"):
         name = skill_name(skill_md)
         if only_skill and name != only_skill:
             continue
-        files, _ = resolve_includes(skill_md, repo_root)
+        files, missing = resolve_includes(skill_md, repo_root)
         words = sum(word_count(p) for p in files)
         rows.append((name, words))
+        all_missing.extend(missing)
     for name, words in sorted(rows, key=lambda row: (-row[1], row[0])):
         lines.append(f"| {name} | {words} | ≈{to_tokens(words)} |")
     lines.append("")
+    lines.extend(_render_missing(all_missing, repo_root, "### Broken includes (skills)"))
     return "\n".join(lines)
 
 
@@ -200,14 +250,21 @@ def render_report(repo_root: Path, only_skill: str = None) -> str:
 
 def main(argv: List[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--fixed-only", action="store_true", help="Print only the fixed-cost breakdown")
-    parser.add_argument("--skill", help="Print only this skill's variable cost (its directory name, e.g. 'ship')")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--fixed-only", action="store_true", help="Print only the fixed-cost breakdown")
+    group.add_argument("--skill", help="Print only this skill's variable cost (its directory name, e.g. 'ship')")
     args = parser.parse_args(argv)
 
-    if args.fixed_only:
+    if args.skill:
+        known = {skill_name(p) for p in iter_skill_files(REPO_ROOT / "skills")}
+        if args.skill not in known:
+            print(f"Unknown skill: {args.skill!r} (no skills/**/{args.skill}/SKILL.md found)", file=sys.stderr)
+            return 2
+        print(render_report(REPO_ROOT, only_skill=args.skill))
+    elif args.fixed_only:
         print(render_fixed_section(REPO_ROOT))
     else:
-        print(render_report(REPO_ROOT, only_skill=args.skill))
+        print(render_report(REPO_ROOT))
     return 0
 
 

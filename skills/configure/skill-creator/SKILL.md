@@ -56,7 +56,7 @@ Present everything and wait for approval or iteration.
 1. Write `skills/<category>/<name>/SKILL.md`
 2. Write `skills/<category>/<name>/resources/<name>.md` for each resource
 3. Write `.claude/commands/<name>.md` stub using the routing rules below
-4. Add a row to the AGENTS.md Skills table (HAB-220 merged this with the old Slash commands table)
+4. Add a row to the AGENTS.md Skills table
 
 ### 5. Report
 
