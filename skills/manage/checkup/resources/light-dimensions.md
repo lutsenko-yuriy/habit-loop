@@ -22,7 +22,7 @@ Diff `docs/GLOSSARY.md` canonical terms and known aliases against current code i
 
 ## 4. Doc-reality drift
 
-Sampled read of `docs/ARCHITECTURE.md`, `docs/PRODUCT_SPEC.md`, `docs/FEATURE_TOGGLES.md`, `docs/ANALYTICS_EVENTS.md`, and `docs/VERSIONING.md` against current code: do described flags, events, and layers still exist and match? Sampled, not exhaustive — mechanical staleness detection is out of scope.
+Sampled read of `docs/ARCHITECTURE.md`, `docs/PRODUCT_SPEC.md`, `docs/FEATURE_TOGGLES.md`, `docs/ANALYTICS_EVENTS.md`, `docs/VERSIONING.md`, and `docs/CI_PIPELINE.md` against current code: do described flags, events, layers, and pipeline mechanics still exist and match? Sampled, not exhaustive — mechanical staleness detection is out of scope.
 
 *Grounding: docs-as-code staleness detection normally assumes CI/mechanical enforcement, which doesn't fit a solo-dev monthly cadence ([Docsie](https://www.docsie.io/blog/glossary/documentation-drift/)).*
 
