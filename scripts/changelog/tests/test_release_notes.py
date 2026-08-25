@@ -239,6 +239,63 @@ class TestParseChangelog(unittest.TestCase):
             os.unlink(path)
 
 
+    # --- HAB-252: dead cleanup functions now wired in ---
+
+    def test_user_bullet_stripped_of_ticket_and_pr_references(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [user] HAB-55: Button label improved (PR #92 merged).
+        """)
+        try:
+            self.assertEqual(_parse_changelog(path, '0.0.0'), ['Button label improved.'])
+        finally:
+            os.unlink(path)
+
+    def test_user_bullet_that_is_only_a_dev_status_line_is_dropped(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [user] 42 tests passing.
+            - [user] Real change.
+        """)
+        try:
+            self.assertEqual(_parse_changelog(path, '0.0.0'), ['Real change.'])
+        finally:
+            os.unlink(path)
+
+    def test_should_skip_drops_a_line_cleanup_alone_cannot_neutralize(self):
+        """[audit finding] Distinct from the case above: "3 tests pass." isn't
+        matched by any _CLEANUP_PATTERNS entry (those require "passing", not
+        "pass"), so this exercises _should_skip itself, not just _clean_bullet
+        reducing the line to an empty string first."""
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [user] 3 tests pass.
+            - [user] Real change.
+        """)
+        try:
+            self.assertEqual(_parse_changelog(path, '0.0.0'), ['Real change.'])
+        finally:
+            os.unlink(path)
+
+    def test_user_bullet_wu_marker_stripped_in_any_house_style_shape(self):
+        """[audit finding] The old WU pattern only matched "WU\\d+ of ", so a
+        HAB-\\d+ match consumed the text a "WU3 (final): " marker needed to
+        also match, leaving it behind verbatim. Covers that ordering bug plus
+        a bare parenthesized "(WU3)" the old patterns missed entirely."""
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [user] HAB-174 WU3 (final): Wire the thing up.
+            - [user] Another change (WU3).
+        """)
+        try:
+            self.assertEqual(
+                _parse_changelog(path, '0.0.0'),
+                ['Wire the thing up.', 'Another change.'],
+            )
+        finally:
+            os.unlink(path)
+
+
 class TestFormat(unittest.TestCase):
 
     def test_formats_as_bullet_list(self):

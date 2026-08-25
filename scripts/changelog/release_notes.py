@@ -79,9 +79,12 @@ _CLEANUP_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r'\s*\(?HAB-\d+(?:[,/]\s*HAB-\d+)*\)?'),
     # PR references: (PR #92 merged), PR #92
     re.compile(r'\s*\(?PR\s*#\d+(?:\s+merged)?\)?'),
-    # Work-unit prefixes: "WU4 of HAB-53", "WU4/"
-    re.compile(r'\s*WU\d+\s+of\s+', re.IGNORECASE),
-    re.compile(r'\bWU\d+/\s*', re.IGNORECASE),
+    # Work-unit markers in any house-style shape: "WU4 of HAB-53", "WU4/",
+    # "WU3 (final):", "(WU3)" bare. Self-contained (doesn't depend on the
+    # HAB-\d+ pattern above having already run) — see HAB-252 audit finding,
+    # where a HAB-\d+ match preceding "WU3 (final): " left the WU marker
+    # behind because the old pattern only matched "WU\d+ of ".
+    re.compile(r'\s*\(?WU\d+(?:\s*\([^()]*\))?\s*(?:of\s+|/\s*|:\s*)?\)?', re.IGNORECASE),
     # Test/analyzer status lines (developer-only noise).
     re.compile(r'\d+\s+tests?\s+passing.*', re.IGNORECASE),
     re.compile(r'analyzer\s+clean.*', re.IGNORECASE),
@@ -99,9 +102,10 @@ def _clean_bullet(text: str) -> str:
     """Remove internal references from a single bullet-point string."""
     for pattern in _CLEANUP_PATTERNS:
         text = pattern.sub('', text)
-    # Tidy up multiple spaces and trailing punctuation/whitespace.
+    # Tidy up multiple spaces and stray punctuation left at either end once a
+    # reference like "HAB-55: " (leading) or "(PR #92)" (trailing) is removed.
     text = re.sub(r'  +', ' ', text)
-    text = text.rstrip(' ,;:')
+    text = text.strip(' ,;:-')
     return text.strip()
 
 
@@ -169,7 +173,9 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
                     continue
                 text = stripped[2:]
                 if _TRIVIAL_TAG.match(text):
-                    bullets.append(_TRIVIAL_TAG.sub('', text, count=1).strip())
+                    cleaned = _clean_bullet(_TRIVIAL_TAG.sub('', text, count=1).strip())
+                    if cleaned and not _should_skip(cleaned):
+                        bullets.append(cleaned)
             continue
 
         try:
@@ -198,10 +204,16 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
                 suppress_entry = True
                 break
             elif _USER_TAG.match(text):
-                # Explicitly marked as user-facing — strip the tag and keep.
-                user_bullets.append(_USER_TAG.sub('', text, count=1).strip())
+                # Explicitly marked as user-facing — strip the tag, then scrub
+                # any developer-only reference that slipped past authoring
+                # convention (HAB-252).
+                cleaned = _clean_bullet(_USER_TAG.sub('', text, count=1).strip())
+                if cleaned and not _should_skip(cleaned):
+                    user_bullets.append(cleaned)
             elif _TRIVIAL_TAG.match(text):
-                trivial_bullets.append(_TRIVIAL_TAG.sub('', text, count=1).strip())
+                cleaned = _clean_bullet(_TRIVIAL_TAG.sub('', text, count=1).strip())
+                if cleaned and not _should_skip(cleaned):
+                    trivial_bullets.append(cleaned)
 
         if suppress_entry:
             continue  # skip the whole entry
