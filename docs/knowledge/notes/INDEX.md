@@ -25,6 +25,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **stale-ticket** (3)
 - **ui-design-iteration** (3)
 - **debrief-timing** (2)
+- **docs-findability** (1)
 - **ios-limits** (1)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
@@ -99,6 +100,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
 - [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
 - [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
+
+### docs-findability
+- [HAB-220: Groom docs/skills for token-efficiency and findability](HAB-220.md)
 
 ### feature-toggle
 - [HAB-149: About / Feedback screen](HAB-149.md)
@@ -234,4 +238,3 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-178: Build a dialectical research skill (thesis/antithesis/synthesis, steelman-bounded)](HAB-178.md)
 - [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
 - [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
-- [HAB-220: Groom docs/skills for token-efficiency and findability](HAB-220.md)
