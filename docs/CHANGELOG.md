@@ -8,6 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [ci] HAB-252: `release_notes.py` now actually calls `_clean_bullet`/`_should_skip` on every `[user]`/`[trivial]` bullet, so `HAB-XX`/`PR #N`/`WU` references and dev-only status lines are stripped from "What's New" text as `docs/VERSIONING.md` already claimed. Fixed a stray leading `: ` left behind when a bullet started with `HAB-XX: `. Added regression tests.
 - [ci][meta] HAB-247: sealed `## [Unreleased]` batches now surface their `[trivial]` bullets in "What's New" once a later release seals them (`heading_boundaries.py`/`release_notes.py`), and `ship` gains `--release-now` to route a `[trivial]`-only entry to its own numbered heading instead (WU2 of 2, final).
 - [wip] Recognize [trivial] as a valid CHANGELOG tag with build-gating support (HAB-247, WU1 of 2)
 - [ci][meta] HAB-250: `scripts/notes/index.py` now scopes note discovery to git-tracked (or staged) files via `git ls-files`, instead of globbing the filesystem — an untracked `.md` file in `docs/knowledge/notes/` can no longer leak into the regenerated `INDEX.md` and fail CI's `--check` step (recurrence of HAB-248). `/note` and `/debrief` updated to stage a new note file before regenerating, and `/note` now commits it — otherwise the fix itself would flip the failure the other way.
