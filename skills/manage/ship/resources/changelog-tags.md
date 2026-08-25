@@ -2,7 +2,7 @@ Bullet syntax for CHANGELOG entries. Full tag semantics (meaning, build trigger,
 behaviour) live in `docs/VERSIONING.md`'s tag taxonomy table — this file only adds the exact
 bullet-writing syntax and a couple of process notes not covered there.
 
-| Tag | Bullet syntax |
+| When to use | Bullet syntax |
 |---|---|
 | User-visible app change | `- [user] <description>` |
 | App code change, not user-visible | `- [app] <description>` |

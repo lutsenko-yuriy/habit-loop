@@ -129,7 +129,7 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 - [ci] (PR #N) HAB-XX: <technical detail for developers>
 ```
 
-**`[trivial]` bullets are the one exception to the raw-technical-detail example above** — see `docs/VERSIONING.md`'s tag taxonomy table for why. Write a `[trivial]` bullet's description in the same plain, ticket-free language as a `[user]` bullet (@skills/manage/draft-release-notes/resources/user-bullet-checklist.md) — never `- [trivial] (PR #N) HAB-XX: <technical detail>`.
+**`[trivial]` bullets are the one exception to the raw-technical-detail example above:** a `[trivial]` bullet's text eventually reaches end users verbatim (once its batch is sealed, or immediately under `--release-now`) — see `docs/VERSIONING.md`'s tag taxonomy table for when. Write a `[trivial]` bullet's description in the same plain, ticket-free language as a `[user]` bullet (@skills/manage/draft-release-notes/resources/user-bullet-checklist.md) — never `- [trivial] (PR #N) HAB-XX: <technical detail>`.
 
 Once a `## [Unreleased]` batch is sealed by a later release (see the app-changing branch above), its bullets stay exactly where they are permanently — never move them, and never append further bullets to a sealed batch. Only the single batch currently at position 0 (if any) is ever appended to.
 
