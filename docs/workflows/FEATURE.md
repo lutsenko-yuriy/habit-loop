@@ -15,24 +15,8 @@ Follow TDD: write or update tests **before** implementing the feature or fix. Re
 
 Before picking up any new ticket, check Linear to confirm no other ticket is In Progress (In QA is fine).
 
-**When to use In QA vs Done directly after merge:**
-
-Move to **In QA** if the PR touches any of:
-- `lib/slices/*/ui/` — any widget or screen change
-- `lib/infrastructure/persistence/` — schema migrations or mapper changes
-- `lib/infrastructure/sync/` — Firestore or circuit-breaker behaviour
-- `lib/infrastructure/notifications/` — notification scheduling
-- `main.dart` — app wiring or startup sequence
-- `integration_test/` — **always In QA if integration tests were added or changed**
-
-Move straight to **Done** (skip In QA) if the PR touches only:
-- Pure domain/application logic with no runtime platform dependency (`lib/domain/`, `lib/slices/*/application/`)
-- Documentation or workflow files (`docs/`, `AGENTS.md`, `skills/`)
-- CI configuration (`.github/`)
-- l10n strings with no new screens
-- Pure refactors or test-only changes where `flutter test` fully owns correctness
-
-When in doubt, use **In QA**.
+**When to use In QA vs Done directly after merge:** see `skills/shared/project-config.md`'s
+"In QA path patterns" — the single source for this list (also used by `ship` step 1).
 
 ## Trivial changes
 
