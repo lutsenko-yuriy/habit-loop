@@ -239,6 +239,30 @@ class TestParseChangelog(unittest.TestCase):
             os.unlink(path)
 
 
+    # --- HAB-252: dead cleanup functions now wired in ---
+
+    def test_user_bullet_stripped_of_ticket_and_pr_references(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [user] HAB-55: Button label improved (PR #92 merged).
+        """)
+        try:
+            self.assertEqual(_parse_changelog(path, '0.0.0'), ['Button label improved.'])
+        finally:
+            os.unlink(path)
+
+    def test_user_bullet_that_is_only_a_dev_status_line_is_dropped(self):
+        path = _tmp("""\
+            ## [1.0.0] — 2026-01-01
+            - [user] 42 tests passing.
+            - [user] Real change.
+        """)
+        try:
+            self.assertEqual(_parse_changelog(path, '0.0.0'), ['Real change.'])
+        finally:
+            os.unlink(path)
+
+
 class TestFormat(unittest.TestCase):
 
     def test_formats_as_bullet_list(self):

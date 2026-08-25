@@ -99,9 +99,10 @@ def _clean_bullet(text: str) -> str:
     """Remove internal references from a single bullet-point string."""
     for pattern in _CLEANUP_PATTERNS:
         text = pattern.sub('', text)
-    # Tidy up multiple spaces and trailing punctuation/whitespace.
+    # Tidy up multiple spaces and stray punctuation left at either end once a
+    # reference like "HAB-55: " (leading) or "(PR #92)" (trailing) is removed.
     text = re.sub(r'  +', ' ', text)
-    text = text.rstrip(' ,;:')
+    text = text.strip(' ,;:')
     return text.strip()
 
 
@@ -169,7 +170,9 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
                     continue
                 text = stripped[2:]
                 if _TRIVIAL_TAG.match(text):
-                    bullets.append(_TRIVIAL_TAG.sub('', text, count=1).strip())
+                    cleaned = _clean_bullet(_TRIVIAL_TAG.sub('', text, count=1).strip())
+                    if cleaned and not _should_skip(cleaned):
+                        bullets.append(cleaned)
             continue
 
         try:
@@ -198,10 +201,16 @@ def _parse_changelog(path: str, last_version: Optional[str]) -> list[str]:
                 suppress_entry = True
                 break
             elif _USER_TAG.match(text):
-                # Explicitly marked as user-facing — strip the tag and keep.
-                user_bullets.append(_USER_TAG.sub('', text, count=1).strip())
+                # Explicitly marked as user-facing — strip the tag, then scrub
+                # any developer-only reference that slipped past authoring
+                # convention (HAB-252).
+                cleaned = _clean_bullet(_USER_TAG.sub('', text, count=1).strip())
+                if cleaned and not _should_skip(cleaned):
+                    user_bullets.append(cleaned)
             elif _TRIVIAL_TAG.match(text):
-                trivial_bullets.append(_TRIVIAL_TAG.sub('', text, count=1).strip())
+                cleaned = _clean_bullet(_TRIVIAL_TAG.sub('', text, count=1).strip())
+                if cleaned and not _should_skip(cleaned):
+                    trivial_bullets.append(cleaned)
 
         if suppress_entry:
             continue  # skip the whole entry
