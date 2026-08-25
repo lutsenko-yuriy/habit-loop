@@ -68,4 +68,11 @@ A merged PR moves to **In QA** (not Done directly) if it touches any of:
 - `main.dart` — app wiring or startup sequence
 - `integration_test/` — always In QA when integration tests are added or changed
 
-Move straight to **Done** if the PR touches only: pure domain/application logic, documentation, CI config, l10n strings without new screens, or pure refactors where automated tests fully own correctness. When in doubt, use **In QA**.
+Move straight to **Done** (skip In QA) if the PR touches only:
+- Pure domain/application logic with no runtime platform dependency (`lib/domain/`, `lib/slices/*/application/`)
+- Documentation or workflow files (`docs/`, `AGENTS.md`, `skills/`)
+- CI configuration (`.github/`)
+- l10n strings with no new screens
+- Pure refactors or test-only changes where `flutter test` fully owns correctness
+
+When in doubt, use **In QA**.

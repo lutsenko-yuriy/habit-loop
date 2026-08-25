@@ -87,7 +87,7 @@ Otherwise, read `skills/manage/draft-release-notes/SKILL.md` and follow it, pass
 
 @skills/manage/ship/resources/changelog-tags.md
 
-`## [Unreleased]` sections are **bounded batches**, not one permanent bucket: at most one is ever "open" (accumulating new entries) at a time, and it always sits immediately before the first `## [...]` heading in the file (there is no other content between the file's intro and that first heading — see `docs/CHANGELOG.md`). Once an app-changing entry ships, its new numbered heading is inserted above the open batch, which becomes permanently "sealed" in place — sandwiched between that new release and whatever came before. A fresh `## [Unreleased]` then opens at the new top the next time a non-app-changing entry needs one. This keeps the file scannable: you never scroll through more than one batch's worth of internal-only entries to find the latest release.
+`## [Unreleased]` sections are bounded batches, not one permanent bucket — see `docs/VERSIONING.md`'s "The `[Unreleased]` section" for the sealing mechanics. What matters for this step: at most one batch is ever open (immediately before the file's current first `## [...]` heading), and there is no other content between the file's intro and that heading — see `docs/CHANGELOG.md`.
 
 Determine this entry's classification tags first (per the table above), then route it:
 
@@ -129,7 +129,7 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 - [ci] (PR #N) HAB-XX: <technical detail for developers>
 ```
 
-**`[trivial]` bullets are the one exception to the raw-technical-detail example above:** unlike `[ci]`/`[meta]`/`[test]`/`[wip]`/`[user-none]`, a `[trivial]` bullet's text eventually reaches end users verbatim (once its batch is sealed, or immediately under `--release-now`) — `release_notes.py` does not strip `HAB-XX`/`PR #N`/`WU` references from it the way `[user]` bullets are hand-drafted to avoid in the first place (step 3). Write a `[trivial]` bullet's description in the same plain, ticket-free language as a `[user]` bullet (@skills/manage/draft-release-notes/resources/user-bullet-checklist.md) — never `- [trivial] (PR #N) HAB-XX: <technical detail>`.
+**`[trivial]` bullets are the one exception to the raw-technical-detail example above:** a `[trivial]` bullet's text eventually reaches end users verbatim (once its batch is sealed, or immediately under `--release-now`) — see `docs/VERSIONING.md`'s tag taxonomy table for when. Write a `[trivial]` bullet's description in the same plain, ticket-free language as a `[user]` bullet (@skills/manage/draft-release-notes/resources/user-bullet-checklist.md) — never `- [trivial] (PR #N) HAB-XX: <technical detail>`.
 
 Once a `## [Unreleased]` batch is sealed by a later release (see the app-changing branch above), its bullets stay exactly where they are permanently — never move them, and never append further bullets to a sealed batch. Only the single batch currently at position 0 (if any) is ever appended to.
 

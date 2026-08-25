@@ -38,3 +38,4 @@ heavy `/checkup` tier.
 | `trivial-change-scope` | Recognizing content-only changes (copy/asset/literal edits) that don't need the full review/release ceremony. |
 | `notifications` | Local notification delivery, scheduling, and lifecycle (platform APIs, ID partitioning, cancellation sweeps). |
 | `ios-limits` | iOS platform constraints — pending-notification cap, kernel-level resource limits, simulator quirks. |
+| `docs-findability` | Human-facing navigability/comprehension load of the docs/skills corpus, distinct from agent context-token cost (e.g. wiki/graph-style organization, cross-linking). |

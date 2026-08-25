@@ -1,20 +1,22 @@
-| Tag | When to use | Triggers distribution? | Appears in release notes? |
-|---|---|---|---|
-| `- [user] <description>` | User-visible app change | Yes | Yes — tag stripped |
-| `- [app] <description>` | App code change, not user-visible | Yes | No |
-| `- [test] <description>` | Test-only changes (unit tests, scenarios, widget tests) — no production code | No | No |
-| `- [meta] <description>` | Skills / agent / workflow change | No | No |
-| `- [ci] <description>` | CI/CD process change | No | No |
-| `- [user-none]` | Entire entry is internal-only (legacy sentinel) | No | No |
-| `- [wip] <description>` | Intermediate WU merge in a multi-WU ticket | No | No |
-| `- [trivial] <description>` | Content-only change (copy/string/icon/asset), no logic or architecture impact | No by default — rides along in `## [Unreleased]` until the next real release seals it; `ship --release-now` gives it its own numbered heading instead (Yes) | Yes — either once its batch is sealed by a later release, or immediately under `--release-now`; the only non-`[user]`/`[app]` tag whose bullets ever reach "What's New" |
-| `- [non-user] <detail>` | Supplementary bullet within a classified entry | — | No |
+Bullet syntax for CHANGELOG entries. Full tag semantics (meaning, build trigger, release-notes
+behaviour) live in `docs/VERSIONING.md`'s tag taxonomy table — this file only adds the exact
+bullet-writing syntax and a couple of process notes not covered there.
 
-Rules:
-- **CI enforces this** (`scripts/changelog/lint.py` runs on every PR) — entries without a classification tag fail the build.
-- Every `## [X.Y.Z]` entry must carry at least one of: `[user]`, `[app]`, `[test]`, `[meta]`, `[ci]`, `[user-none]`, `[wip]`, or `[trivial]`.
+| When to use | Bullet syntax |
+|---|---|
+| User-visible app change | `- [user] <description>` |
+| App code change, not user-visible | `- [app] <description>` |
+| Test-only changes (unit tests, scenarios, widget tests) | `- [test] <description>` |
+| Skills / agent / workflow change | `- [meta] <description>` |
+| CI/CD process change | `- [ci] <description>` |
+| Entire entry internal-only (legacy sentinel) | `- [user-none]` |
+| Intermediate WU merge in a multi-WU ticket | `- [wip] <description>` |
+| Content-only change (copy/string/icon/asset) | `- [trivial] <description>` |
+| Supplementary bullet within a classified entry | `- [non-user] <detail>` |
+
+Notes:
+- **CI enforces classification** (`scripts/changelog/lint.py` runs on every PR) — see `docs/VERSIONING.md` for the full tag-taxonomy table and requirement.
 - `[non-user]` is supplementary only — it does **not** satisfy the classification requirement on its own.
 - `[user]` descriptions must pass the plain-language checklist before writing: @skills/manage/draft-release-notes/resources/user-bullet-checklist.md
-- When the [user] line needs to stay short but technical detail is worth preserving, add a companion `[app]` bullet on the next line.
+- When the `[user]` line needs to stay short but technical detail is worth preserving, add a companion `[app]` bullet on the next line.
 - Place `[user]` lines before technical detail lines within the same section.
-- The tag list may grow; each new tag must declare its distribution and release-note behaviour.
