@@ -7,7 +7,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ## Top themes
 
 - **review-findings** (16)
-- **planning-gaps** (13)
+- **planning-gaps** (14)
 - **debugging-methodology** (12)
 - **multi-wu-scope** (11)
 - **research-methodology** (10)
@@ -17,10 +17,10 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **changelog-versioning** (7)
 - **widget-test-gotchas** (6)
 - **dead-code** (5)
+- **feature-toggle** (4)
 - **verify-from-source** (4)
 - **appstore-ci** (3)
 - **cross-project-sync** (3)
-- **feature-toggle** (3)
 - **scope-creep** (3)
 - **stale-ticket** (3)
 - **ui-design-iteration** (3)
@@ -108,6 +108,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-149: About / Feedback screen](HAB-149.md)
 - [HAB-195: Pact breaks — pause a pact without failing showups](HAB-195.md)
 - [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
+- [HAB-254: Notification reconciliation sync — catch drift between derived state and scheduled notifications](HAB-254.md)
 
 ### ios-limits
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
@@ -161,6 +162,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
 - [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
+- [HAB-254: Notification reconciliation sync — catch drift between derived state and scheduled notifications](HAB-254.md)
 
 ### postmortem-workflow
 - [HAB-209: Postmortem: find when/why stop-pact started deleting ALL showups](HAB-209.md)
@@ -239,4 +241,3 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
 - [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
 - [HAB-252: release_notes.py's HAB-XX/PR#/WU stripping is dead code — [user] bullets ship un-cleaned](HAB-252.md)
-- [HAB-254: Notification reconciliation sync — catch drift between derived state and scheduled notifications](HAB-254.md)
