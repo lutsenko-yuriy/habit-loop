@@ -27,6 +27,22 @@ void main() {
     });
   });
 
+  group('NotificationsReconciledEvent', () {
+    test('has correct event name', () {
+      final event = NotificationsReconciledEvent(rescheduledShowupsCount: 2, cancelledShowupsCount: 1);
+
+      expect(event.name, equals('notifications_reconciled'));
+    });
+
+    test('toParameters includes both showup-level counts', () {
+      final event = NotificationsReconciledEvent(rescheduledShowupsCount: 2, cancelledShowupsCount: 1);
+
+      final params = event.toParameters();
+      expect(params['rescheduled_showups_count'], equals(2));
+      expect(params['cancelled_showups_count'], equals(1));
+    });
+  });
+
   group('AppOpenedFromNotificationEvent', () {
     test('has correct event name', () {
       final event = AppOpenedFromNotificationEvent(

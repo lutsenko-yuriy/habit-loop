@@ -3,7 +3,9 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/save_showups_result.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_constants.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
@@ -17,6 +19,44 @@ import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/locale/fake_locale_preference_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
+
+// Throws for a specific pact's showups — used to verify one pact's failure
+// doesn't abort the rest of a reconcile() run.
+class _ThrowingShowupRepository implements ShowupRepository {
+  _ThrowingShowupRepository(this._delegate, this._throwForPactId);
+
+  final ShowupRepository _delegate;
+  final String _throwForPactId;
+
+  @override
+  Future<List<Showup>> getShowupsForPact(String pactId) async {
+    if (pactId == _throwForPactId) throw StateError('simulated repository failure');
+    return _delegate.getShowupsForPact(pactId);
+  }
+
+  @override
+  Future<List<Showup>> getShowupsForDate(DateTime date) => _delegate.getShowupsForDate(date);
+  @override
+  Future<List<Showup>> getShowupsForDateRange(DateTime start, DateTime end) =>
+      _delegate.getShowupsForDateRange(start, end);
+  @override
+  Future<Showup?> getShowupById(String id) => _delegate.getShowupById(id);
+  @override
+  Future<void> saveShowup(Showup showup) => _delegate.saveShowup(showup);
+  @override
+  Future<SaveShowupsResult> saveShowups(List<Showup> showups) => _delegate.saveShowups(showups);
+  @override
+  Future<void> updateShowup(Showup showup) => _delegate.updateShowup(showup);
+  @override
+  Future<DateTime?> getLatestScheduledAtForPact(String pactId) => _delegate.getLatestScheduledAtForPact(pactId);
+  @override
+  Future<int> countShowupsForPact(String pactId) => _delegate.countShowupsForPact(pactId);
+  @override
+  Future<void> deleteShowupsForPact(String pactId) => _delegate.deleteShowupsForPact(pactId);
+  @override
+  Future<void> deleteShowupsForPactAfter(String pactId, DateTime after) =>
+      _delegate.deleteShowupsForPactAfter(pactId, after);
+}
 
 Pact _makePact({Duration? reminderOffset = const Duration(minutes: 10)}) {
   return Pact(
@@ -307,6 +347,64 @@ void main() {
       expect(notificationService.scheduledReminders, hasLength(32));
       expect(notificationService.scheduledReminders.every((r) => r.showup.pactId == 'pact-1'), isTrue);
       expect(notificationService.scheduledDeadlines, hasLength(32));
+    });
+
+    test('only reschedules the specific missing notification kind (hurry-up missing, reminder present)', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': true});
+      pactRepo = InMemoryPactRepository([_makePact()]);
+      final showup = _makeShowup(
+        id: 'su-1',
+        scheduledAt: DateTime(2026, 5, 8, 8, 0),
+        duration: const Duration(minutes: 30),
+      );
+      showupRepo = InMemoryShowupRepository([showup]);
+      notificationService.pendingNotifications = [
+        PendingNotificationInfo(id: NotificationConstants.reminderNotificationId('su-1')),
+      ];
+      service = buildService();
+
+      await service.reconcile(now: DateTime(2026, 5, 7, 10, 0));
+
+      expect(notificationService.scheduledReminders, isEmpty);
+      expect(notificationService.scheduledHurryUps, hasLength(1));
+    });
+
+    test('one pact repository failure does not abort the rest of the run', () async {
+      final pactB = Pact(
+        id: 'pact-2',
+        habitName: 'Journal',
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 6, 30),
+        showupDuration: const Duration(minutes: 20),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+        status: PactStatus.active,
+        reminderOffset: const Duration(minutes: 10),
+        createdAt: DateTime(2026, 1, 1),
+      );
+      pactRepo = InMemoryPactRepository([_makePact(), pactB]);
+      final failingShowup = _makeShowup(id: 'su-fails', scheduledAt: DateTime(2026, 5, 8, 8, 0));
+      final okShowup = Showup(
+        id: 'su-ok',
+        pactId: 'pact-2',
+        scheduledAt: DateTime(2026, 5, 8, 8, 0),
+        duration: const Duration(minutes: 20),
+        status: ShowupStatus.pending,
+      );
+      showupRepo = InMemoryShowupRepository([failingShowup, okShowup]);
+      service = NotificationReconciliationService(
+        pactRepository: pactRepo,
+        showupRepository: _ThrowingShowupRepository(showupRepo, 'pact-1'),
+        pactBreakRepository: breakRepo,
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analytics,
+        localePreference: localePreference,
+      );
+
+      await service.reconcile(now: DateTime(2026, 5, 7, 10, 0));
+
+      expect(notificationService.scheduledReminders, hasLength(1));
+      expect(notificationService.scheduledReminders.first.showup.id, equals('su-ok'));
     });
   });
 }
