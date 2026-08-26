@@ -9,6 +9,7 @@ import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/reminder/application/notification_text_builder.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_plan_context.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_planner.dart';
 
 Pact _makePact({Duration? reminderOffset}) {
@@ -40,9 +41,18 @@ Showup _makeShowup({
   );
 }
 
+// Matches the pre-refactor defaults (welcome-back on, hurry-up/deadline off)
+// so most tests only need to override the one field they're exercising.
+const _kDefaultContext = ReminderPlanContext(
+  textVariant: 'control',
+  scheduleDeadline: false,
+  hurryUpEnabled: false,
+  hurryUpTime: Duration(minutes: 5),
+  welcomeBackEnabled: true,
+);
+
 void main() {
   late AppLocalizations l10n;
-  const planner = ReminderPlanner();
 
   setUpAll(() {
     l10n = lookupAppLocalizations(const Locale('en'));
@@ -54,7 +64,15 @@ void main() {
       final now = DateTime(2026, 5, 1, 9, 0);
       final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 2, 8, 0))];
 
-      final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n);
+      final plan = ReminderPlanner.plan(
+        pact: pact,
+        showups: showups,
+        now: now,
+        l10n: l10n,
+        breaks: const [],
+        context: _kDefaultContext,
+        isIOS: false,
+      );
 
       expect(plan, isEmpty);
     });
@@ -70,7 +88,15 @@ void main() {
         _makeShowup(id: 'su-failed', scheduledAt: DateTime(2026, 5, 10, 8, 0), status: ShowupStatus.failed),
       ];
 
-      final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n);
+      final plan = ReminderPlanner.plan(
+        pact: pact,
+        showups: showups,
+        now: now,
+        l10n: l10n,
+        breaks: const [],
+        context: _kDefaultContext,
+        isIOS: false,
+      );
 
       expect(plan, hasLength(1));
       expect(plan.first.showup.id, equals('su-future'));
@@ -81,7 +107,15 @@ void main() {
       final now = DateTime(2026, 5, 8, 9, 0);
       final showups = [_makeShowup(id: 'su-future-but-reminder-past', scheduledAt: DateTime(2026, 5, 8, 9, 30))];
 
-      final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n);
+      final plan = ReminderPlanner.plan(
+        pact: pact,
+        showups: showups,
+        now: now,
+        l10n: l10n,
+        breaks: const [],
+        context: _kDefaultContext,
+        isIOS: false,
+      );
 
       expect(plan, isEmpty);
     });
@@ -91,10 +125,18 @@ void main() {
       final now = DateTime(2026, 5, 7, 10, 0);
       final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
 
-      final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n);
+      final plan = ReminderPlanner.plan(
+        pact: pact,
+        showups: showups,
+        now: now,
+        l10n: l10n,
+        breaks: const [],
+        context: _kDefaultContext,
+        isIOS: false,
+      );
 
       expect(plan.first.includeDeadline, isFalse);
-      expect(plan.first.deadlineTitle, isNull);
+      expect(plan.first.deadline, isNull);
     });
 
     test('scheduleDeadline=true plans both reminder and deadline', () {
@@ -102,12 +144,26 @@ void main() {
       final now = DateTime(2026, 5, 7, 10, 0);
       final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
 
-      final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n, scheduleDeadline: true);
+      final plan = ReminderPlanner.plan(
+        pact: pact,
+        showups: showups,
+        now: now,
+        l10n: l10n,
+        breaks: const [],
+        context: const ReminderPlanContext(
+          textVariant: 'control',
+          scheduleDeadline: true,
+          hurryUpEnabled: false,
+          hurryUpTime: Duration(minutes: 5),
+          welcomeBackEnabled: true,
+        ),
+        isIOS: false,
+      );
 
       final expected = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
       expect(plan.first.includeDeadline, isTrue);
-      expect(plan.first.deadlineTitle, expected.title);
-      expect(plan.first.deadlineBody, expected.body);
+      expect(plan.first.deadline!.title, expected.title);
+      expect(plan.first.deadline!.body, expected.body);
     });
 
     test('uses the given text variant for reminder text', () {
@@ -115,7 +171,21 @@ void main() {
       final now = DateTime(2026, 5, 7, 10, 0);
       final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
 
-      final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n, textVariant: 'deadline');
+      final plan = ReminderPlanner.plan(
+        pact: pact,
+        showups: showups,
+        now: now,
+        l10n: l10n,
+        breaks: const [],
+        context: const ReminderPlanContext(
+          textVariant: 'deadline',
+          scheduleDeadline: false,
+          hurryUpEnabled: false,
+          hurryUpTime: Duration(minutes: 5),
+          welcomeBackEnabled: true,
+        ),
+        isIOS: false,
+      );
 
       expect(plan.first.reminderTitle, contains('Meditate'));
     });
@@ -138,7 +208,15 @@ void main() {
           ),
         ];
 
-        final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n, breaks: breaks);
+        final plan = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: breaks,
+          context: _kDefaultContext,
+          isIOS: false,
+        );
 
         expect(plan, hasLength(1));
         expect(plan.first.showup.id, equals('su-offbreak'));
@@ -154,13 +232,20 @@ void main() {
           (i) => _makeShowup(id: 'su-$i', scheduledAt: DateTime(2026, 5, 8 + i, 8, 0)),
         );
 
-        final plan = planner.plan(
+        final plan = ReminderPlanner.plan(
           pact: pact,
           showups: showups,
           now: now,
           l10n: l10n,
+          breaks: const [],
+          context: const ReminderPlanContext(
+            textVariant: 'control',
+            scheduleDeadline: true,
+            hurryUpEnabled: false,
+            hurryUpTime: Duration(minutes: 5),
+            welcomeBackEnabled: true,
+          ),
           isIOS: true,
-          scheduleDeadline: true,
         );
 
         expect(plan, hasLength(32));
@@ -174,7 +259,15 @@ void main() {
           (i) => _makeShowup(id: 'su-$i', scheduledAt: DateTime(2026, 5, 8 + i, 8, 0)),
         );
 
-        final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n);
+        final plan = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: const [],
+          context: _kDefaultContext,
+          isIOS: false,
+        );
 
         expect(plan, hasLength(40));
       });
@@ -199,7 +292,15 @@ void main() {
           to: DateTime(2026, 5, 11, 8, 1),
         ).first;
 
-        final plan = planner.plan(pact: pact, showups: [target], now: now, l10n: l10n, breaks: breaks);
+        final plan = ReminderPlanner.plan(
+          pact: pact,
+          showups: [target],
+          now: now,
+          l10n: l10n,
+          breaks: breaks,
+          context: _kDefaultContext,
+          isIOS: false,
+        );
 
         final expected = NotificationTextBuilder.buildWelcomeBackText(habitName: pact.habitName, l10n: l10n);
         expect(plan.first.reminderTitle, expected.title);
@@ -224,13 +325,20 @@ void main() {
           to: DateTime(2026, 5, 11, 8, 1),
         ).first;
 
-        final plan = planner.plan(
+        final plan = ReminderPlanner.plan(
           pact: pact,
           showups: [target],
           now: now,
           l10n: l10n,
           breaks: breaks,
-          welcomeBackEnabled: false,
+          context: const ReminderPlanContext(
+            textVariant: 'control',
+            scheduleDeadline: false,
+            hurryUpEnabled: false,
+            hurryUpTime: Duration(minutes: 5),
+            welcomeBackEnabled: false,
+          ),
+          isIOS: false,
         );
 
         final normal = NotificationTextBuilder.buildReminderText(
@@ -252,9 +360,18 @@ void main() {
           _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 30)),
         ];
 
-        final plan = planner.plan(pact: pact, showups: showups, now: now, l10n: l10n);
+        final plan = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: const [],
+          context: _kDefaultContext,
+          isIOS: false,
+        );
 
         expect(plan.first.includeHurryUp, isFalse);
+        expect(plan.first.hurryUp, isNull);
       });
 
       test('plans a hurry-up when eligible (duration >= 3x hurryUpTime, still future)', () {
@@ -264,19 +381,26 @@ void main() {
           _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 30)),
         ];
 
-        final plan = planner.plan(
+        final plan = ReminderPlanner.plan(
           pact: pact,
           showups: showups,
           now: now,
           l10n: l10n,
-          hurryUpEnabled: true,
-          hurryUpTime: const Duration(minutes: 5),
+          breaks: const [],
+          context: const ReminderPlanContext(
+            textVariant: 'control',
+            scheduleDeadline: false,
+            hurryUpEnabled: true,
+            hurryUpTime: Duration(minutes: 5),
+            welcomeBackEnabled: true,
+          ),
+          isIOS: false,
         );
 
         expect(plan.first.includeHurryUp, isTrue);
-        expect(plan.first.hurryUpOffset, equals(const Duration(minutes: 5)));
-        expect(plan.first.hurryUpTitle, isNotEmpty);
-        expect(plan.first.hurryUpBody, isNotEmpty);
+        expect(plan.first.hurryUp!.offset, equals(const Duration(minutes: 5)));
+        expect(plan.first.hurryUp!.title, isNotEmpty);
+        expect(plan.first.hurryUp!.body, isNotEmpty);
       });
 
       test('does not plan a hurry-up when duration is just under 3x hurryUpTime', () {
@@ -286,13 +410,20 @@ void main() {
           _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0), duration: const Duration(minutes: 14)),
         ];
 
-        final plan = planner.plan(
+        final plan = ReminderPlanner.plan(
           pact: pact,
           showups: showups,
           now: now,
           l10n: l10n,
-          hurryUpEnabled: true,
-          hurryUpTime: const Duration(minutes: 5),
+          breaks: const [],
+          context: const ReminderPlanContext(
+            textVariant: 'control',
+            scheduleDeadline: false,
+            hurryUpEnabled: true,
+            hurryUpTime: Duration(minutes: 5),
+            welcomeBackEnabled: true,
+          ),
+          isIOS: false,
         );
 
         expect(plan.first.includeHurryUp, isFalse);
@@ -305,19 +436,54 @@ void main() {
         final now = DateTime(2026, 5, 7, 10, 0);
         final showups = List.generate(40, (i) => _makeShowup(id: 'su-$i', scheduledAt: DateTime(2026, 5, 8 + i, 8, 0)));
 
-        final plan = planner.plan(
+        final plan = ReminderPlanner.plan(
           pact: pact,
           showups: showups,
           now: now,
           l10n: l10n,
+          breaks: const [],
+          context: const ReminderPlanContext(
+            textVariant: 'control',
+            scheduleDeadline: true,
+            hurryUpEnabled: true,
+            hurryUpTime: Duration(minutes: 5),
+            welcomeBackEnabled: true,
+          ),
           isIOS: true,
-          scheduleDeadline: true,
-          hurryUpEnabled: true,
-          hurryUpTime: const Duration(minutes: 5),
         );
 
         expect(plan, hasLength(21));
         expect(plan.every((p) => p.includeHurryUp), isTrue);
+      });
+    });
+
+    group('PlannedReminder equality', () {
+      test('two plans over identical inputs compare equal by value', () {
+        final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+        final now = DateTime(2026, 5, 7, 10, 0);
+        final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+        final planA = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: const [],
+          context: _kDefaultContext,
+          isIOS: false,
+        );
+        final planB = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: const [],
+          context: _kDefaultContext,
+          isIOS: false,
+        );
+
+        expect(planA.single, equals(planB.single));
+        expect(planA.single.hashCode, equals(planB.single.hashCode));
       });
     });
   });
