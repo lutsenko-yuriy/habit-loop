@@ -1,38 +1,22 @@
 import 'package:flutter/widgets.dart' show Locale;
-import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
-import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
-import 'package:habit_loop/slices/reminder/application/notification_text_builder.dart';
-
-// EXP-001: notification text urgency experiment.
-const _kNotificationTextVariant = 'notification_text_variant';
-
-// EXP-002: post-deadline notification behaviour (Android only).
-const _kPostDeadlineNotificationBehavior = 'post_deadline_notification_behavior';
-
-// HAB-227: kill-switch for the break-over "welcome back" reminder text.
-const _kBreakWelcomeBackEnabled = 'break_welcome_back_notification_enabled';
-
-// HAB-246: kill-switch + bounded offset for the hurry-up reminder notification.
-const _kHurryUpEnabled = 'hurry_up_notification_enabled';
-const _kHurryUpTimeInMinutes = 'hurry_up_time_in_minutes';
+import 'package:habit_loop/slices/reminder/application/reminder_plan_context.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_planner.dart';
 
 /// Resolves AppLocalizations internally (no BuildContext needed).
 /// [isIOS] is constructor-injected for testability — pass Platform.isIOS at the composition root.
-/// iOS cap: 64 pending notifications max, spent chronologically by actual
-/// per-showup cost (reminder + deadline + hurry-up, if eligible) — see
-/// [scheduleRemindersForShowups] (HAB-246).
+/// Resolves locale (async) and remote-config context, delegates the actual
+/// desired-set computation to [ReminderPlanner] (HAB-254 WU1), then applies
+/// the plan via [NotificationService] and logs analytics.
 final class ReminderSchedulingService {
-  static const int _iosMaxPendingNotifications = 64;
   // [systemLocale] is the device/OS locale, used only when no explicit in-app
   // override has been saved (HAB-157) — previously hardcoded to English.
   const ReminderSchedulingService({
@@ -56,9 +40,6 @@ final class ReminderSchedulingService {
   final bool _isIOS;
   final Locale _systemLocale;
 
-  // Qualifies showups by: pending status + scheduledAt after now + non-null reminderOffset
-  // + not on break (HAB-195 WU3 — reminders must not fire while a break covers the showup).
-  // EXP-002: deadline notification scheduled on iOS always; on Android only when behavior == 'encourage'.
   // [now] is injectable for tests.
   Future<void> scheduleRemindersForShowups({
     required Pact pact,
@@ -70,99 +51,46 @@ final class ReminderSchedulingService {
 
     final savedLocale = await _localePreference.getSavedLocale() ?? _systemLocale;
     final AppLocalizations l10n = _resolveL10n(savedLocale);
-
     final effectiveNow = now ?? DateTime.now();
-    final variant = _remoteConfig.getString(_kNotificationTextVariant);
-    final postDeadlineBehavior = _remoteConfig.getString(_kPostDeadlineNotificationBehavior);
-    final scheduleDeadline = _isIOS || postDeadlineBehavior == 'encourage';
 
-    final hurryUpEnabled = _remoteConfig.getBool(_kHurryUpEnabled);
-    // Clamped: RemoteConfigDefaults.intRanges is only a debug-screen UI hint,
-    // not enforced at read time — an unset/blank console value returns 0,
-    // which would make every showup eligible and fire right at the deadline
-    // (HAB-246 audit). Sourced from intRanges rather than a hardcoded literal
-    // so this and the debug pending-notifications screen can't drift apart.
-    final hurryUpRange = RemoteConfigDefaults.intRanges[_kHurryUpTimeInMinutes]!;
-    final hurryUpTime = Duration(
-      minutes: _remoteConfig.getInt(_kHurryUpTimeInMinutes).clamp(hurryUpRange.min, hurryUpRange.max),
+    final context = ReminderPlanContext.resolve(remoteConfig: _remoteConfig, isIOS: _isIOS);
+    final plan = ReminderPlanner.plan(
+      pact: pact,
+      showups: showups,
+      now: effectiveNow,
+      l10n: l10n,
+      breaks: breaks,
+      context: context,
+      isIOS: _isIOS,
     );
-
-    final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
-    final hurryUpText = NotificationTextBuilder.buildHurryUpText(habitName: pact.habitName, l10n: l10n);
-
-    // Computed once per call, not per showup — welcome-back applies only to
-    // the reminder notification; the deadline notification above always keeps
-    // standard wording, per spec.
-    final welcomeBackIds = _remoteConfig.getBool(_kBreakWelcomeBackEnabled)
-        ? BreakDerivation.welcomeBackShowupIds(pact, breaks)
-        : const <String>{};
-
-    final qualifyingShowups = showups
-        .where((s) =>
-            s.status == ShowupStatus.pending &&
-            s.scheduledAt.subtract(pact.reminderOffset!).isAfter(effectiveNow) &&
-            !BreakDerivation.isShowupOnBreak(showup: s, breaks: breaks))
-        .toList();
-
-    // iOS spends its 64-request budget chronologically by actual per-showup
-    // cost (reminder + deadline + hurry-up, if eligible) rather than at a
-    // fixed rate — a pact with no eligible showups keeps its full ~32-showup
-    // horizon, while eligibility-heavy pacts trade horizon depth for
-    // near-term completeness (HAB-246). Android has no cap.
-    List<Showup> showupsToSchedule;
-    if (_isIOS) {
-      final sorted = [...qualifyingShowups]..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
-      final selected = <Showup>[];
-      var budget = 0;
-      for (final showup in sorted) {
-        final cost = 1 +
-            (scheduleDeadline ? 1 : 0) +
-            (_isHurryUpEligible(showup, hurryUpEnabled, hurryUpTime, effectiveNow) ? 1 : 0);
-        if (budget + cost > _iosMaxPendingNotifications) break;
-        budget += cost;
-        selected.add(showup);
-      }
-      showupsToSchedule = selected;
-    } else {
-      showupsToSchedule = qualifyingShowups;
-    }
 
     var scheduledCount = 0;
     var hurryUpCount = 0;
-    for (final showup in showupsToSchedule) {
-      final reminderText = welcomeBackIds.contains(showup.id)
-          ? NotificationTextBuilder.buildWelcomeBackText(habitName: pact.habitName, l10n: l10n)
-          : NotificationTextBuilder.buildReminderText(
-              variant: variant,
-              habitName: pact.habitName,
-              scheduledAt: showup.scheduledAt,
-              showupDuration: showup.duration,
-              l10n: l10n,
-            );
-
+    for (final item in plan) {
       await _notificationService.scheduleShowupReminder(
-        showup: showup,
+        showup: item.showup,
         pact: pact,
-        titleText: reminderText.title,
-        bodyText: reminderText.body,
+        titleText: item.reminderTitle,
+        bodyText: item.reminderBody,
       );
 
-      if (scheduleDeadline) {
+      final deadline = item.deadline;
+      if (deadline != null) {
         await _notificationService.scheduleDeadlineNotification(
-          showup: showup,
-          titleText: deadlineText.title,
-          bodyText: deadlineText.body,
+          showup: item.showup,
+          titleText: deadline.title,
+          bodyText: deadline.body,
         );
       }
+      scheduledCount += deadline != null ? 2 : 1;
 
-      scheduledCount += scheduleDeadline ? 2 : 1;
-
-      if (_isHurryUpEligible(showup, hurryUpEnabled, hurryUpTime, effectiveNow)) {
+      final hurryUp = item.hurryUp;
+      if (hurryUp != null) {
         await _notificationService.scheduleHurryUpNotification(
-          showup: showup,
-          hurryUpOffset: hurryUpTime,
-          titleText: hurryUpText.title,
-          bodyText: hurryUpText.body,
+          showup: item.showup,
+          hurryUpOffset: hurryUp.offset,
+          titleText: hurryUp.title,
+          bodyText: hurryUp.body,
         );
         scheduledCount += 1;
         hurryUpCount += 1;
@@ -179,19 +107,6 @@ final class ReminderSchedulingService {
         ),
       );
     }
-  }
-
-  // Eligible iff the toggle is on, the showup's window is long enough
-  // (duration >= 3 × hurryUpTime, per spec) and its fire time still lies in
-  // the future. Given eligibility implies duration - hurryUpTime >= 0, the
-  // fire-time check can only trip for a showup that was already excluded by
-  // the reminder-fire-time qualifying filter above — kept here as
-  // defense-in-depth, matching the transport layer's own guard (HAB-246).
-  bool _isHurryUpEligible(Showup showup, bool enabled, Duration hurryUpTime, DateTime now) {
-    if (!enabled) return false;
-    if (showup.duration < hurryUpTime * 3) return false;
-    final fireAt = showup.scheduledAt.add(showup.duration).subtract(hurryUpTime);
-    return fireAt.isAfter(now);
   }
 
   Future<void> cancelRemindersForShowup(String showupId) async {
