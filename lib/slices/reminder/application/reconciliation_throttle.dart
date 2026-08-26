@@ -10,6 +10,9 @@ class ReconciliationThrottle {
   bool _running = false;
   DateTime? _lastStartedAt;
 
+  /// True while a run is in flight (between [tryStart]/[forceStart] and [finish]).
+  bool get isRunning => _running;
+
   /// Returns whether a run may start now, and if so marks one as started.
   /// Blocked while a previous run hasn't called [finish] yet, or while
   /// [minInterval] hasn't elapsed since the last run started.
@@ -21,6 +24,16 @@ class ReconciliationThrottle {
     _running = true;
     _lastStartedAt = now;
     return true;
+  }
+
+  /// Unconditionally starts a run, bypassing the [minInterval] check —
+  /// for a trigger that was already queued behind [isRunning] rather than
+  /// a newly-arriving one. [minInterval] exists to rate-limit distinct new
+  /// triggers, not to delay one that was already waiting its turn for the
+  /// re-entrancy lock to clear.
+  void forceStart(DateTime now) {
+    _running = true;
+    _lastStartedAt = now;
   }
 
   /// Marks the current run complete, freeing the re-entrancy lock.

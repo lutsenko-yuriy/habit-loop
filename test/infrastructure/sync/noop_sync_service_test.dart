@@ -66,5 +66,9 @@ void main() {
     test('pullRemoteChanges does not throw', () async {
       await expectLater(svc.pullRemoteChanges(), completes);
     });
+
+    test('pullCompleted never emits', () async {
+      await expectLater(svc.pullCompleted, emitsDone);
+    });
   });
 }

@@ -41,5 +41,27 @@ void main() {
 
       expect(throttle.tryStart(start), isTrue);
     });
+
+    test('isRunning reflects tryStart/finish', () {
+      final throttle = ReconciliationThrottle();
+      expect(throttle.isRunning, isFalse);
+
+      throttle.tryStart(DateTime(2026, 1, 1, 12));
+      expect(throttle.isRunning, isTrue);
+
+      throttle.finish();
+      expect(throttle.isRunning, isFalse);
+    });
+
+    test('forceStart starts a run even within minInterval of the last one', () {
+      final throttle = ReconciliationThrottle(minInterval: const Duration(seconds: 30));
+      final start = DateTime(2026, 1, 1, 12);
+      throttle.tryStart(start);
+      throttle.finish();
+
+      throttle.forceStart(start.add(const Duration(seconds: 1)));
+
+      expect(throttle.isRunning, isTrue);
+    });
   });
 }
