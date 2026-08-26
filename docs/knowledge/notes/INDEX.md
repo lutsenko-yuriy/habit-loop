@@ -6,7 +6,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (16)
+- **review-findings** (17)
 - **planning-gaps** (14)
 - **debugging-methodology** (12)
 - **multi-wu-scope** (11)
@@ -196,6 +196,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
 - [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 - [HAB-250: Bug: notes/index.py picks up untracked note files, causing recurring stale-INDEX CI failures](HAB-250.md)
+- [HAB-254: Notification reconciliation sync — catch drift between derived state and scheduled notifications](HAB-254.md)
 
 ### scope-creep
 - [HAB-187: Design-system foundation + accessibility pass](HAB-187.md)

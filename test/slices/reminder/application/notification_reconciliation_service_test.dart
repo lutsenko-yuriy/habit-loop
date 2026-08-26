@@ -110,8 +110,8 @@ void main() {
       expect(notificationService.scheduledReminders.first.showup.id, equals('su-1'));
       expect(analytics.loggedEvents, hasLength(1));
       final event = analytics.loggedEvents.single as NotificationsReconciledEvent;
-      expect(event.rescheduledCount, equals(1));
-      expect(event.cancelledCount, equals(0));
+      expect(event.rescheduledShowupsCount, equals(1));
+      expect(event.cancelledShowupsCount, equals(0));
     });
 
     test('active break: does not schedule a reminder for an in-window showup', () async {
@@ -158,7 +158,7 @@ void main() {
 
       expect(notificationService.cancelledShowupIds, equals(['su-onbreak']));
       final event = analytics.loggedEvents.single as NotificationsReconciledEvent;
-      expect(event.cancelledCount, equals(1));
+      expect(event.cancelledShowupsCount, equals(1));
     });
 
     test('no drift: makes no calls and logs no analytics event', () async {
@@ -226,6 +226,87 @@ void main() {
       expect(notificationService.scheduledReminders, isEmpty);
       expect(notificationService.scheduledDeadlines, hasLength(1));
       expect(notificationService.scheduledDeadlines.first.showup.id, equals('su-1'));
+    });
+
+    test('an in-progress showup (reminder fired, still within its window) is not cancelled', () async {
+      // Reminder offset 10min, duration 20min, now = scheduledAt + 5min —
+      // reminder fire time (scheduledAt - 10min) is in the past, so the
+      // showup drops out of the desired set even though its deadline
+      // notification is still legitimately pending.
+      remoteConfig = FakeRemoteConfigService(
+        overrides: {'post_deadline_notification_behavior': 'encourage', 'hurry_up_notification_enabled': false},
+      );
+      pactRepo = InMemoryPactRepository([_makePact()]);
+      final inProgress = _makeShowup(id: 'su-inprogress', scheduledAt: DateTime(2026, 5, 8, 8, 0));
+      showupRepo = InMemoryShowupRepository([inProgress]);
+      notificationService.pendingNotifications = [
+        PendingNotificationInfo(id: NotificationConstants.reminderNotificationId('su-inprogress')),
+        PendingNotificationInfo(id: NotificationConstants.deadlineNotificationId('su-inprogress')),
+      ];
+      service = buildService();
+
+      await service.reconcile(now: DateTime(2026, 5, 8, 8, 5));
+
+      expect(notificationService.cancelledShowupIds, isEmpty);
+    });
+
+    test('an iOS multi-pact run shares one 64-notification budget instead of granting each pact its own', () async {
+      remoteConfig = FakeRemoteConfigService(overrides: {'hurry_up_notification_enabled': false});
+      final pactA = _makePact();
+      final pactB = Pact(
+        id: 'pact-2',
+        habitName: 'Journal',
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 6, 30),
+        showupDuration: const Duration(minutes: 20),
+        schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+        status: PactStatus.active,
+        reminderOffset: const Duration(minutes: 10),
+        createdAt: DateTime(2026, 1, 1),
+      );
+      pactRepo = InMemoryPactRepository([pactA, pactB]);
+      final showupsA = List.generate(
+        40,
+        (i) => Showup(
+          id: 'a-$i',
+          pactId: 'pact-1',
+          scheduledAt: DateTime(2026, 5, 8 + i, 8, 0),
+          duration: const Duration(minutes: 20),
+          status: ShowupStatus.pending,
+        ),
+      );
+      final showupsB = List.generate(
+        40,
+        (i) => Showup(
+          id: 'b-$i',
+          pactId: 'pact-2',
+          scheduledAt: DateTime(2026, 5, 8 + i, 8, 0),
+          duration: const Duration(minutes: 20),
+          status: ShowupStatus.pending,
+        ),
+      );
+      showupRepo = InMemoryShowupRepository([...showupsA, ...showupsB]);
+      service = NotificationReconciliationService(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        pactBreakRepository: breakRepo,
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analytics,
+        localePreference: localePreference,
+        isIOS: true,
+      );
+
+      await service.reconcile(now: DateTime(2026, 5, 7, 10, 0));
+
+      // isIOS forces scheduleDeadline true regardless of RC, so each showup
+      // costs 2 (reminder + deadline). Pact A alone (processed first, 40
+      // qualifying showups) spends the entire 64-notification budget on 32
+      // showups; without cross-pact sharing pact B would independently claim
+      // its own 32 more (64 total). Shared, pact B gets none.
+      expect(notificationService.scheduledReminders, hasLength(32));
+      expect(notificationService.scheduledReminders.every((r) => r.showup.pactId == 'pact-1'), isTrue);
+      expect(notificationService.scheduledDeadlines, hasLength(32));
     });
   });
 }

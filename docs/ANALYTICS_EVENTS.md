@@ -98,8 +98,8 @@ Event class: `NotificationsReconciledEvent` in `lib/slices/reminder/analytics/re
 
 | Property | Type | Description |
 |---|---|---|
-| `rescheduled_count` | `int` | Number of individual notifications (reminder/deadline/hurry-up, summed across showups) that were missing from the OS and got (re)scheduled |
-| `cancelled_count` | `int` | Number of showups whose stale notifications were cancelled because they no longer belong in the desired set (e.g. now covered by a break) |
+| `rescheduled_showups_count` | `int` | Number of showups that had at least one notification kind (reminder/deadline/hurry-up) missing from the OS and got (re)scheduled |
+| `cancelled_showups_count` | `int` | Number of showups whose stale notifications were cancelled because they no longer belong in the desired set (e.g. now covered by a break) |
 
 ---
 

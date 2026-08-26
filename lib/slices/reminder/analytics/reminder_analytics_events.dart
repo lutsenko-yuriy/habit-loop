@@ -44,25 +44,27 @@ final class NotificationsScheduledEvent extends AnalyticsEvent {
 /// run, so this event's volume itself signals how often drift occurs.
 final class NotificationsReconciledEvent extends AnalyticsEvent {
   NotificationsReconciledEvent({
-    required this.rescheduledCount,
-    required this.cancelledCount,
+    required this.rescheduledShowupsCount,
+    required this.cancelledShowupsCount,
   });
 
-  /// Number of individual notifications (reminder/deadline/hurry-up, summed
-  /// across showups) that were missing from the OS and got (re)scheduled.
-  final int rescheduledCount;
+  /// Number of showups that had at least one notification kind
+  /// (reminder/deadline/hurry-up) missing from the OS and (re)scheduled.
+  /// Showup-level, not notification-level, so it is directly comparable to
+  /// [cancelledShowupsCount] (PR #411 review).
+  final int rescheduledShowupsCount;
 
   /// Number of showups whose stale notifications were cancelled because they
   /// no longer belong in the desired set (e.g. now covered by a break).
-  final int cancelledCount;
+  final int cancelledShowupsCount;
 
   @override
   String get name => 'notifications_reconciled';
 
   @override
   Map<String, Object?> toParameters() => {
-        'rescheduled_count': rescheduledCount,
-        'cancelled_count': cancelledCount,
+        'rescheduled_showups_count': rescheduledShowupsCount,
+        'cancelled_showups_count': cancelledShowupsCount,
       };
 }
 
