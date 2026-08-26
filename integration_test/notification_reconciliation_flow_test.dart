@@ -29,10 +29,16 @@ void main() {
 
     testWidgets('active_break_keeps_reminders_cancelled_on_foreground', (tester) async {
       // TODO: 1. Seed a pact with a reminder offset.
-      // TODO: 2. Seed a break whose window still covers testNow (not elapsed).
+      // TODO: 2. Seed a fixed-end break whose window still covers testNow (not elapsed).
       // TODO: 3. Seed showups inside the break window with reminders cancelled.
-      // TODO: 4. Trigger the app-foreground lifecycle event.
-      // TODO: 5. Verify FakeNotificationService.scheduledReminders has no new entries for those showups.
+      // TODO: 4. Seed the first post-break showup with its welcome-back reminder already
+      //          scheduled (matching startBreak's proactive scheduling).
+      // TODO: 5. Trigger the app-foreground lifecycle event.
+      // TODO: 6. Verify FakeNotificationService.scheduledReminders has no new entries for the
+      //          in-window showups.
+      // TODO: 7. Verify the welcome-back reminder for the first post-break showup is still
+      //          present in scheduledReminders, with its title/body matching
+      //          NotificationTextBuilder.buildWelcomeBackText.
     });
 
     testWidgets('sync_pull_completion_triggers_reconciliation', (tester) async {
