@@ -31,4 +31,7 @@ class NoopSyncService implements SyncService {
 
   @override
   Future<void> pullRemoteChanges() async {}
+
+  @override
+  Stream<void> get pullCompleted => const Stream.empty();
 }

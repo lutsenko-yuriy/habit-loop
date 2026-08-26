@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -6,6 +8,8 @@ import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 
 /// Test double for [SyncService] that records all calls.
 class FakeSyncService implements SyncService {
+  final _pullCompletedController = StreamController<void>.broadcast();
+
   final List<String> uploadedPactIds = [];
   final List<String> uploadedShowupIds = [];
   final List<String> uploadedPactBreakIds = [];
@@ -56,5 +60,14 @@ class FakeSyncService implements SyncService {
   @override
   Future<void> pullRemoteChanges() async {
     pullRemoteChangesCount++;
+    emitPullCompleted();
   }
+
+  @override
+  Stream<void> get pullCompleted => _pullCompletedController.stream;
+
+  /// Test helper — emits [pullCompleted] directly, without going through
+  /// [pullRemoteChanges], so a test can drive the reconciliation trigger in
+  /// isolation.
+  void emitPullCompleted() => _pullCompletedController.add(null);
 }
