@@ -239,3 +239,4 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
 - [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
 - [HAB-252: release_notes.py's HAB-XX/PR#/WU stripping is dead code — [user] bullets ship un-cleaned](HAB-252.md)
+- [HAB-254: Notification reconciliation sync — catch drift between derived state and scheduled notifications](HAB-254.md)

@@ -20,6 +20,7 @@ import 'fresh_install_flow_test.dart' as fresh_install;
 import 'language_change_flow_test.dart' as language_change;
 import 'mark_showup_done_flow_test.dart' as mark_showup_done;
 import 'notification_navigation_flow_test.dart' as notification_nav;
+import 'notification_reconciliation_flow_test.dart' as notification_reconciliation;
 import 'onboarding_carousel_flow_test.dart' as onboarding;
 import 'pact_chain_test.dart' as pact_chain;
 import 'pact_note_flow_test.dart' as pact_note;
@@ -47,6 +48,7 @@ void main() {
   language_change.main();
   mark_showup_done.main();
   notification_nav.main();
+  notification_reconciliation.main();
   onboarding.main();
   pact_chain.main();
   pact_note.main();
