@@ -128,6 +128,7 @@ abstract final class RemoteConfigDefaults {
     'pact_chaining_enabled',
     'break_welcome_back_notification_enabled',
     'hurry_up_notification_enabled',
+    'notification_reconciliation_enabled',
   };
 
   /// Feature toggle: show the About screen entry point on the dashboard.
@@ -207,6 +208,15 @@ abstract final class RemoteConfigDefaults {
   /// see [ReminderSchedulingService] for the eligibility check.
   static const int hurryUpTimeInMinutes = 5;
 
+  /// Feature toggle: kill-switch for notification reconciliation (HAB-254).
+  ///
+  /// When `false`, `NotificationReconciliationService.reconcile()` is a
+  /// no-op — notification scheduling stays exactly as one-shot as it was
+  /// before this ticket, with no drift-catching pass on foreground or
+  /// sync-pull completion. Override to `false` in the Firebase Remote Config
+  /// console for an emergency kill-switch without a release.
+  static const bool notificationReconciliationEnabled = true;
+
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
   /// in release builds (see [FeatureFlags.fromRemoteConfig]); `null` = not
@@ -255,6 +265,7 @@ abstract final class RemoteConfigDefaults {
     'break_welcome_back_notification_enabled': breakWelcomeBackNotificationEnabled,
     'hurry_up_notification_enabled': hurryUpNotificationEnabled,
     'hurry_up_time_in_minutes': hurryUpTimeInMinutes,
+    'notification_reconciliation_enabled': notificationReconciliationEnabled,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -277,6 +288,7 @@ abstract final class RemoteConfigDefaults {
     'pact_chaining_enabled': ['true', 'false'],
     'break_welcome_back_notification_enabled': ['true', 'false'],
     'hurry_up_notification_enabled': ['true', 'false'],
+    'notification_reconciliation_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

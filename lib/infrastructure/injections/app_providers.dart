@@ -57,6 +57,7 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_break_sync_repository.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
+import 'package:habit_loop/slices/reminder/application/notification_reconciliation_service.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
 import 'package:habit_loop/slices/showup/application/showup_service.dart';
@@ -328,6 +329,22 @@ final deviceLocaleProvider = Provider<Locale>((ref) => ui.PlatformDispatcher.ins
 
 final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((ref) {
   return ReminderSchedulingService(
+    notificationService: ref.watch(notificationServiceProvider),
+    remoteConfig: ref.watch(remoteConfigServiceProvider),
+    analytics: ref.watch(analyticsServiceProvider),
+    localePreference: ref.watch(localePreferenceServiceProvider),
+    isIOS: Platform.isIOS,
+    systemLocale: ref.watch(deviceLocaleProvider),
+  );
+});
+
+// No trigger wired to this yet — that is HAB-254 WU3's job
+// (AppLifecycleReconciler, SyncService.pullCompleted).
+final notificationReconciliationServiceProvider = Provider<NotificationReconciliationService>((ref) {
+  return NotificationReconciliationService(
+    pactRepository: ref.watch(pactRepositoryProvider),
+    showupRepository: ref.watch(showupRepositoryProvider),
+    pactBreakRepository: ref.watch(pactBreakRepositoryProvider),
     notificationService: ref.watch(notificationServiceProvider),
     remoteConfig: ref.watch(remoteConfigServiceProvider),
     analytics: ref.watch(analyticsServiceProvider),

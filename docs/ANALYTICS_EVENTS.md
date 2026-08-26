@@ -90,6 +90,19 @@ Event class: `NotificationsScheduledEvent` in `lib/slices/reminder/analytics/rem
 
 ---
 
+### `notifications_reconciled`
+
+Fired at the end of a `NotificationReconciliationService.reconcile()` run that actually changed something (HAB-254) — never fired for a no-drift run, so this event's volume itself signals how often drift occurs. No trigger calls `reconcile()` yet (WU3 wires app-foreground and sync-pull-completion triggers).
+
+Event class: `NotificationsReconciledEvent` in `lib/slices/reminder/analytics/reminder_analytics_events.dart`
+
+| Property | Type | Description |
+|---|---|---|
+| `rescheduled_count` | `int` | Number of individual notifications (reminder/deadline/hurry-up, summed across showups) that were missing from the OS and got (re)scheduled |
+| `cancelled_count` | `int` | Number of showups whose stale notifications were cancelled because they no longer belong in the desired set (e.g. now covered by a break) |
+
+---
+
 ### `app_opened_from_notification`
 
 Fired when the app is opened (cold-started or resumed from background) because the user tapped a reminder notification. Fires from the navigation layer using data already present in the notification payload — no DB round-trip is needed.
