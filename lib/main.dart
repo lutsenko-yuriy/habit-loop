@@ -55,6 +55,7 @@ import 'package:habit_loop/slices/pact/data/sqlite_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
+import 'package:habit_loop/slices/reminder/ui/generic/app_lifecycle_reconciler.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:habit_loop/theme/habit_loop_theme.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -420,7 +421,7 @@ class HabitLoopApp extends ConsumerWidget {
           data: HabitLoopTheme.cupertinoTheme.copyWith(
             brightness: Theme.of(context).brightness,
           ),
-          child: child ?? const SizedBox.shrink(),
+          child: AppLifecycleReconciler(child: child ?? const SizedBox.shrink()),
         );
       },
       localizationsDelegates: const [

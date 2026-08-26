@@ -338,8 +338,7 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
   );
 });
 
-// No trigger wired to this yet — that is HAB-254 WU3's job
-// (AppLifecycleReconciler, SyncService.pullCompleted).
+// Triggered by AppLifecycleReconciler (app foreground, SyncService.pullCompleted) — HAB-254 WU3.
 final notificationReconciliationServiceProvider = Provider<NotificationReconciliationService>((ref) {
   return NotificationReconciliationService(
     pactRepository: ref.watch(pactRepositoryProvider),
