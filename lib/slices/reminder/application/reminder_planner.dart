@@ -25,6 +25,14 @@ abstract final class ReminderPlanner {
 
   // Qualifies showups by: pending status + scheduledAt after now + non-null reminderOffset
   // + not on break (HAB-195 WU3 — reminders must not fire while a break covers the showup).
+  //
+  // [budgetCeiling] defaults to the full [iosMaxPendingNotifications] — a
+  // caller planning across multiple pacts in one pass (e.g.
+  // NotificationReconciliationService) must shrink it by whatever an earlier
+  // pact in the same pass already spent, or each pact independently claims a
+  // full 64-notification grant against one shared OS-level cap (PR #411
+  // review) — iOS silently drops the overflow and the next run reads the
+  // drop as "missing", reschedules it, and repeats forever.
   static List<PlannedReminder> plan({
     required Pact pact,
     required List<Showup> showups,
@@ -33,6 +41,7 @@ abstract final class ReminderPlanner {
     required List<PactBreak> breaks,
     required ReminderPlanContext context,
     required bool isIOS,
+    int budgetCeiling = iosMaxPendingNotifications,
   }) {
     if (pact.reminderOffset == null) return const [];
 
@@ -66,7 +75,7 @@ abstract final class ReminderPlanner {
         final cost = 1 +
             (context.scheduleDeadline ? 1 : 0) +
             (_isHurryUpEligible(showup, context.hurryUpEnabled, context.hurryUpTime, now) ? 1 : 0);
-        if (budget + cost > iosMaxPendingNotifications) break;
+        if (budget + cost > budgetCeiling) break;
         budget += cost;
         selected.add(showup);
       }

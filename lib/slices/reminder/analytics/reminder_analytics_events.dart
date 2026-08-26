@@ -39,6 +39,35 @@ final class NotificationsScheduledEvent extends AnalyticsEvent {
       };
 }
 
+/// Fired at the end of a [NotificationReconciliationService.reconcile] run
+/// that actually changed something (HAB-254) — never fired for a no-drift
+/// run, so this event's volume itself signals how often drift occurs.
+final class NotificationsReconciledEvent extends AnalyticsEvent {
+  NotificationsReconciledEvent({
+    required this.rescheduledShowupsCount,
+    required this.cancelledShowupsCount,
+  });
+
+  /// Number of showups that had at least one notification kind
+  /// (reminder/deadline/hurry-up) missing from the OS and (re)scheduled.
+  /// Showup-level, not notification-level, so it is directly comparable to
+  /// [cancelledShowupsCount] (PR #411 review).
+  final int rescheduledShowupsCount;
+
+  /// Number of showups whose stale notifications were cancelled because they
+  /// no longer belong in the desired set (e.g. now covered by a break).
+  final int cancelledShowupsCount;
+
+  @override
+  String get name => 'notifications_reconciled';
+
+  @override
+  Map<String, Object?> toParameters() => {
+        'rescheduled_showups_count': rescheduledShowupsCount,
+        'cancelled_showups_count': cancelledShowupsCount,
+      };
+}
+
 /// Fired when the app is opened (cold-started or resumed from background)
 /// because the user tapped a reminder notification.
 ///

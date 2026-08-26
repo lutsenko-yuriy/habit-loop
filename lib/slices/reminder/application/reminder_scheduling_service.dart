@@ -6,8 +6,8 @@ import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.
 import 'package:habit_loop/infrastructure/locale/contracts/locale_preference_service.dart';
 import 'package:habit_loop/infrastructure/notifications/contracts/notification_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_locale_resolver.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_plan_context.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_planner.dart';
 
@@ -49,8 +49,10 @@ final class ReminderSchedulingService {
   }) async {
     if (pact.reminderOffset == null) return;
 
-    final savedLocale = await _localePreference.getSavedLocale() ?? _systemLocale;
-    final AppLocalizations l10n = _resolveL10n(savedLocale);
+    final l10n = await ReminderLocaleResolver.resolve(
+      localePreference: _localePreference,
+      systemLocale: _systemLocale,
+    );
     final effectiveNow = now ?? DateTime.now();
 
     final context = ReminderPlanContext.resolve(remoteConfig: _remoteConfig, isIOS: _isIOS);
@@ -119,14 +121,5 @@ final class ReminderSchedulingService {
     List<String> showupIds = const [],
   }) async {
     await _notificationService.cancelAllRemindersForPact(pactId, showupIds: showupIds);
-  }
-
-  // lookupAppLocalizations throws for unsupported locales — catches and falls back to English.
-  static AppLocalizations _resolveL10n(Locale locale) {
-    try {
-      return lookupAppLocalizations(locale);
-    } catch (_) {
-      return lookupAppLocalizations(const Locale('en'));
-    }
   }
 }
