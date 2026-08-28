@@ -306,8 +306,12 @@ void main() {
       // The cold-start pass itself is this test's "first" trigger — it
       // already ran, un-throttled, at mount and consumed the default
       // throttle's 30s slot. su-1 had nothing pending, so it scheduled a
-      // reminder for it (among others from the dashboard's own gap-fill).
-      final scheduledCountAfterFirst = h.notifications.scheduledReminders.length;
+      // reminder for it. Counted by su-1's own id, not scheduledReminders'
+      // total length — the dashboard's own concurrent gap-fill pass can add
+      // unrelated entries at any point during _settle, which would otherwise
+      // move this baseline for reasons unrelated to the throttle under test.
+      int su1Count() => h.notifications.scheduledReminders.where((r) => r.showup.id == 'su-1').length;
+      final scheduledCountAfterFirst = su1Count();
       expect(scheduledCountAfterFirst, greaterThan(0));
 
       // An explicit foreground trigger immediately after — well within the
@@ -315,7 +319,7 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await _settle(tester);
 
-      expect(h.notifications.scheduledReminders.length, equals(scheduledCountAfterFirst));
+      expect(su1Count(), equals(scheduledCountAfterFirst));
     });
 
     testWidgets('kill_switch_disables_reconciliation', (tester) async {

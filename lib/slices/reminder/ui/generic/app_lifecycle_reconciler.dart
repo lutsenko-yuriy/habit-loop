@@ -73,14 +73,30 @@ class _AppLifecycleReconcilerState extends ConsumerState<AppLifecycleReconciler>
   }
 
   void _runReconcile() {
+    // Wrapped in an async closure, not called inline, so that even a
+    // *synchronous* throw from ref.read (e.g. a provider failing to
+    // construct) becomes a rejected Future instead of propagating straight
+    // out of _runReconcile — otherwise it would skip _throttle.finish()
+    // below and latch the throttle permanently (audit finding, PR #412).
+    Future<void> run() async {
+      try {
+        // reconcile() isn't formally no-throw like NotificationService — a
+        // failure anywhere (including provider construction above) must
+        // never escape as an unhandled root-zone error from this
+        // fire-and-forget call.
+        await ref.read(notificationReconciliationServiceProvider).reconcile();
+      } catch (_) {
+        // Swallowed — see above.
+      }
+    }
+
     unawaited(
-      // reconcile() isn't formally no-throw like NotificationService — a
-      // failure in a step outside its own per-pact try/catch (e.g. resolving
-      // locale, reading the pending-notification list) must not propagate as
-      // an unhandled root-zone error from this unawaited call (audit finding,
-      // PR #412).
-      ref.read(notificationReconciliationServiceProvider).reconcile().catchError((_) {}).whenComplete(() {
+      run().whenComplete(() {
         _throttle.finish();
+        // A run already in flight when this widget was disposed must still
+        // release the throttle above, but must not touch ref/state past
+        // that point (audit finding, PR #412).
+        if (!mounted) return;
         if (_pendingRetry) {
           _pendingRetry = false;
           // forceStart, not tryStart/_maybeReconcile — this trigger was
