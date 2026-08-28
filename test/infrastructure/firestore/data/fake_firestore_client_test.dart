@@ -74,6 +74,32 @@ void main() {
         expect(pactBreaks.first['rationale'], 'Recovering from a cold');
       });
 
+      test('populates the user profile for the seeded userId', () async {
+        client.seed(const FakeFirestoreSeedData(
+          userProfiles: {
+            'user-1': <String, dynamic>{'display_name': 'Jamie'},
+          },
+        ));
+
+        final profile = await client.getUserProfile('user-1');
+        expect(profile?['display_name'], 'Jamie');
+      });
+
+      test('second seed overwrites the user profile on collision (single doc per user)', () async {
+        client.seed(const FakeFirestoreSeedData(
+          userProfiles: {
+            'user-1': <String, dynamic>{'display_name': 'Old'},
+          },
+        ));
+        client.seed(const FakeFirestoreSeedData(
+          userProfiles: {
+            'user-1': <String, dynamic>{'display_name': 'New'},
+          },
+        ));
+
+        expect((await client.getUserProfile('user-1'))?['display_name'], 'New');
+      });
+
       test('is additive — second seed merges new documents with existing ones', () async {
         client.seed(const FakeFirestoreSeedData(
           pacts: {
@@ -157,6 +183,22 @@ void main() {
 
         final snap = client.snapshot();
         expect(snap.pacts['user-1']?['pact-1']?['habit_name'], 'Meditate');
+      });
+
+      test('reflects a seeded user profile', () async {
+        client.seed(const FakeFirestoreSeedData(
+          userProfiles: {
+            'user-1': <String, dynamic>{'display_name': 'Jamie'},
+          },
+        ));
+
+        expect(client.snapshot().userProfiles['user-1']?['display_name'], 'Jamie');
+      });
+
+      test('reflects a user profile written after seeding', () async {
+        await client.upsertUserProfile('user-1', {'display_name': 'Written'});
+
+        expect(client.snapshot().userProfiles['user-1']?['display_name'], 'Written');
       });
 
       test('mutating the snapshot does not affect stored data', () async {

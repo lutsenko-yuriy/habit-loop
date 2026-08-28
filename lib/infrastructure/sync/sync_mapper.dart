@@ -166,15 +166,17 @@ abstract final class SyncMapper {
 
   /// Encodes [profile] to a Firestore document map.
   ///
-  /// Unlike the other entities, [UserProfile] already carries its own
-  /// [UserProfile.updatedAt] as a domain field, so `updated_at` is written
-  /// straight from it rather than defaulting to [DateTime.now] — the LWW
-  /// comparison in [FirestoreSyncService] compares this against the local
-  /// `synced_at`.
-  static Map<String, dynamic> userProfileToDocument(UserProfile profile) {
+  /// [updatedAt] is written as `updated_at` (epoch ms) and defaults to
+  /// [DateTime.now], matching the other three mappers — this must be
+  /// upload time, not [UserProfile.updatedAt] (local edit time). Using the
+  /// domain edit time here would let a stale flush overwrite Firestore with
+  /// an older timestamp than a newer edit already uploaded from another
+  /// device, and the LWW pull compares this field against the receiving
+  /// device's `synced_at`, permanently wedging the merge on that device.
+  static Map<String, dynamic> userProfileToDocument(UserProfile profile, {DateTime? updatedAt}) {
     return {
       'display_name': profile.displayName,
-      'updated_at': profile.updatedAt.millisecondsSinceEpoch,
+      'updated_at': (updatedAt ?? DateTime.now()).millisecondsSinceEpoch,
     };
   }
 

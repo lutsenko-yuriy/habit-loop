@@ -126,7 +126,8 @@ class FirestoreSyncService implements SyncService {
     if (userId == null || _authService.isAnonymous) return;
     await _uploadWithCb(
       upload: () async {
-        await _firestoreClient.upsertUserProfile(userId, SyncMapper.userProfileToDocument(profile));
+        final now = DateTime.now();
+        await _firestoreClient.upsertUserProfile(userId, SyncMapper.userProfileToDocument(profile, updatedAt: now));
       },
       onSynced: () async {
         await _userProfileSyncRepository.markUserProfileSynced(DateTime.now());
@@ -145,7 +146,13 @@ class FirestoreSyncService implements SyncService {
     final dirtyPactBreaks = await _pactBreakSyncRepository.getDirtyPactBreaks();
     final dirtyProfile = await _userProfileSyncRepository.getDirtyUserProfile();
 
+    // Profile first: it's a single record, so putting it ahead of the
+    // (potentially large) pact/showup/pact-break backlogs keeps it from
+    // being dropped by the _flushCap cut below on a big flush.
     final items = <Future<void> Function()>[];
+    if (dirtyProfile != null) {
+      items.add(() => uploadUserProfile(dirtyProfile));
+    }
     for (final pact in dirtyPacts) {
       items.add(() => uploadPact(pact));
     }
@@ -154,9 +161,6 @@ class FirestoreSyncService implements SyncService {
     }
     for (final pactBreak in dirtyPactBreaks) {
       items.add(() => uploadPactBreak(pactBreak));
-    }
-    if (dirtyProfile != null) {
-      items.add(() => uploadUserProfile(dirtyProfile));
     }
 
     final capped = items.take(_flushCap);

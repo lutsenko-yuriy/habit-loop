@@ -343,8 +343,11 @@ Map<String, dynamic> _remotePactBreakDoc(String id, {DateTime? updatedAt}) =>
 UserProfile _profile({String? displayName, DateTime? updatedAt}) =>
     UserProfile(displayName: displayName ?? 'Jamie', updatedAt: updatedAt ?? DateTime(2026, 1, 1));
 
+// updatedAt here simulates the server's stored upload time — passed straight
+// through to the mapper's updatedAt param, not via the profile's own
+// (unrelated) edit-time field, matching how uploadUserProfile now stamps it.
 Map<String, dynamic> _remoteUserProfileDoc({String? displayName, DateTime? updatedAt}) =>
-    SyncMapper.userProfileToDocument(_profile(displayName: displayName, updatedAt: updatedAt));
+    SyncMapper.userProfileToDocument(_profile(displayName: displayName), updatedAt: updatedAt);
 
 FirestoreSyncService _makeService({
   _FakeFirestoreClient? client,
