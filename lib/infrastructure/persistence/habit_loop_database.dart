@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 /// [databaseFactoryFfi]-opened in-memory database — never use the singleton in
 /// tests (it would open a file-backed database on the test host).
 ///
-/// Schema version: 6.
+/// Schema version: 7.
 class HabitLoopDatabase {
   HabitLoopDatabase._();
 
@@ -33,7 +33,7 @@ class HabitLoopDatabase {
     final path = join(await getDatabasesPath(), 'habit_loop.db');
     return openDatabase(
       path,
-      version: 6,
+      version: 7,
       onConfigure: (db) async {
         // Enable WAL journal mode so concurrent readers (main isolate) and the
         // background notification handler isolate can operate simultaneously
@@ -142,6 +142,15 @@ class HabitLoopDatabase {
       )
     ''');
     await db.execute('CREATE INDEX idx_pact_breaks_pact_id ON pact_breaks (pact_id)');
+    await db.execute('''
+      CREATE TABLE user_profile (
+        id            TEXT    NOT NULL PRIMARY KEY,
+        display_name  TEXT,
+        updated_at    INTEGER NOT NULL,
+        dirty         INTEGER NOT NULL DEFAULT 0,
+        synced_at     INTEGER
+      )
+    ''');
   }
 
   /// Incremental schema upgrades from [oldVersion] to [newVersion].
@@ -194,6 +203,20 @@ class HabitLoopDatabase {
         'WHERE predecessor_pact_id IS NOT NULL',
       );
     }
+    if (oldVersion < 7) {
+      // v7 adds the user_profile table (HAB-232) — a single-row store for the
+      // user's optional display name, synced via the same Firestore machinery
+      // as pacts/showups/pact_breaks. Additive only — no existing table touched.
+      await db.execute('''
+        CREATE TABLE user_profile (
+          id            TEXT    NOT NULL PRIMARY KEY,
+          display_name  TEXT,
+          updated_at    INTEGER NOT NULL,
+          dirty         INTEGER NOT NULL DEFAULT 0,
+          synced_at     INTEGER
+        )
+      ''');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -209,7 +232,7 @@ class HabitLoopDatabase {
     return databaseFactory.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
-        version: 6,
+        version: 7,
         onConfigure: (db) async {
           try {
             await db.rawQuery('PRAGMA journal_mode=WAL');

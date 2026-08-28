@@ -114,6 +114,13 @@ void main() {
       expect(result, hasLength(1));
     });
 
+    test('creates the user_profile table', () async {
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='user_profile'",
+      );
+      expect(result, hasLength(1));
+    });
+
     test('pacts table has expected columns', () async {
       final result = await db.rawQuery('PRAGMA table_info(pacts)');
       final columnNames = result.map((row) => row['name'] as String).toSet();
@@ -189,6 +196,20 @@ void main() {
           'synced_at',
         ]),
       );
+    });
+
+    test('user_profile table has expected columns', () async {
+      final result = await db.rawQuery('PRAGMA table_info(user_profile)');
+      final columnNames = result.map((row) => row['name'] as String).toSet();
+      expect(columnNames, containsAll(['id', 'display_name', 'updated_at', 'dirty', 'synced_at']));
+    });
+
+    test('can insert a user_profile row', () async {
+      final rowsAffected = await db.rawInsert(
+        'INSERT INTO user_profile (id, display_name, updated_at) VALUES (?, ?, ?)',
+        ['local', 'Yuriy', 0],
+      );
+      expect(rowsAffected, equals(1));
     });
 
     test('can insert a pact_breaks row after inserting its pact', () async {
@@ -677,6 +698,72 @@ void main() {
 
       await insertSuccessor('pact-2');
       await expectLater(() => insertSuccessor('pact-3'), throwsA(isA<DatabaseException>()));
+    });
+  });
+
+  group('HabitLoopDatabase — migration v6 → v7', () {
+    late Database db;
+
+    setUp(() async {
+      db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      // Build a v6 schema manually (no user_profile table yet).
+      await db.execute('''
+        CREATE TABLE pacts (
+          id                   TEXT    NOT NULL PRIMARY KEY,
+          habit_name           TEXT    NOT NULL,
+          start_date           INTEGER NOT NULL,
+          scheduled_end_date   INTEGER NOT NULL,
+          actual_end_date      INTEGER NOT NULL,
+          showup_duration      INTEGER NOT NULL,
+          schedule             TEXT    NOT NULL,
+          status               TEXT    NOT NULL,
+          reminder_offset      INTEGER,
+          stop_reason          TEXT,
+          total_showups        INTEGER,
+          created_at           INTEGER,
+          dirty                INTEGER NOT NULL DEFAULT 1,
+          synced_at            INTEGER,
+          archived             INTEGER NOT NULL DEFAULT 0,
+          predecessor_pact_id  TEXT
+        )
+      ''');
+      await db.rawInsert(
+        'INSERT INTO pacts (id, habit_name, start_date, scheduled_end_date, actual_end_date, '
+        'showup_duration, schedule, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        ['pact-1', 'Meditate', 0, 1000, 1000, 600000000, '{"type":"daily","timeOfDay":28800000000}', 'active'],
+      );
+    });
+
+    tearDown(() async => db.close());
+
+    test('upgrade creates the user_profile table', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 6, 7);
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='user_profile'",
+      );
+      expect(result, hasLength(1));
+    });
+
+    test('user_profile table has expected columns after v6→v7', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 6, 7);
+      final result = await db.rawQuery('PRAGMA table_info(user_profile)');
+      final columnNames = result.map((row) => row['name'] as String).toSet();
+      expect(columnNames, containsAll(['id', 'display_name', 'updated_at', 'dirty', 'synced_at']));
+    });
+
+    test('can insert a user_profile row after migration', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 6, 7);
+      final rowsAffected = await db.rawInsert(
+        'INSERT INTO user_profile (id, display_name, updated_at) VALUES (?, ?, ?)',
+        ['local', 'Yuriy', 0],
+      );
+      expect(rowsAffected, equals(1));
+    });
+
+    test('upgrade does not touch the existing pacts table — additive only', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 6, 7);
+      final rows = await db.query('pacts', where: 'id = ?', whereArgs: ['pact-1']);
+      expect(rows.single['habit_name'], equals('Meditate'));
     });
   });
 }
