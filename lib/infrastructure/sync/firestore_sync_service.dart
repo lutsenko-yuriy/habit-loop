@@ -32,8 +32,12 @@ class FirestoreSyncService implements SyncService {
   final ShowupRepository _showupRepository;
   final PactBreakRepository _pactBreakRepository;
   final RemoteConfigService? _remoteConfig;
+  final _pullCompletedController = StreamController<void>.broadcast();
 
   bool get _syncEnabled => _remoteConfig?.getBool('network_sync_enabled') ?? true;
+
+  @override
+  Stream<void> get pullCompleted => _pullCompletedController.stream;
 
   FirestoreSyncService({
     required FirestoreClient firestoreClient,
@@ -212,6 +216,8 @@ class FirestoreSyncService implements SyncService {
           // Isolate per-record errors.
         }
       }
+
+      _pullCompletedController.add(null);
     } catch (_) {
       _circuitBreaker.recordFailure();
     }

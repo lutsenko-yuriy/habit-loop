@@ -81,4 +81,11 @@ abstract class SyncService {
   ///
   /// Called fire-and-forget from `main.dart` after auth initialises.
   Future<void> pullRemoteChanges();
+
+  /// Broadcast stream that emits once at the end of every non-aborted
+  /// [pullRemoteChanges] call (HAB-254 WU3) — lets listeners (notification
+  /// reconciliation) react to a completed pull without coupling to any of
+  /// its call sites. Never emits on an aborted pull (sync disabled, circuit
+  /// breaker not closed, no signed-in user) or one that fails outright.
+  Stream<void> get pullCompleted;
 }

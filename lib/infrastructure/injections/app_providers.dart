@@ -58,6 +58,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart
 import 'package:habit_loop/slices/pact/data/noop_pact_break_sync_repository.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/reminder/application/notification_reconciliation_service.dart';
+import 'package:habit_loop/slices/reminder/application/reconciliation_throttle.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
 import 'package:habit_loop/slices/showup/application/showup_generation_service.dart';
 import 'package:habit_loop/slices/showup/application/showup_service.dart';
@@ -338,8 +339,12 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
   );
 });
 
-// No trigger wired to this yet — that is HAB-254 WU3's job
-// (AppLifecycleReconciler, SyncService.pullCompleted).
+// Overridable in tests — e.g. a zero-interval throttle to actually exercise
+// two back-to-back reconcile() calls instead of having the second blocked
+// (HAB-254 WU3, PR #412 audit finding).
+final reconciliationThrottleProvider = Provider<ReconciliationThrottle>((ref) => ReconciliationThrottle());
+
+// Triggered by AppLifecycleReconciler (app foreground, SyncService.pullCompleted) — HAB-254 WU3.
 final notificationReconciliationServiceProvider = Provider<NotificationReconciliationService>((ref) {
   return NotificationReconciliationService(
     pactRepository: ref.watch(pactRepositoryProvider),

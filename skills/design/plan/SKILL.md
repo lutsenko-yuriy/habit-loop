@@ -39,6 +39,17 @@ If the user shared an architectural intent in step 1.5, evaluate it against the 
 
 Do not produce a plan until the user gives a clear answer.
 
+### 2.5 Flag runtime risk areas per WU
+
+For each WU that introduces a lifecycle trigger, fire-and-forget async call, shared
+mutable state (locks/throttles/caches), or a new launch-time provider/singleton: note
+which categories from @skills/verify/audit/resources/audit-checklist.md apply, and the
+defensive pattern to build in from the start (e.g. "wrap in try/catch inside an async
+closure, not called inline", "guard post-await callbacks with a mounted/disposed check",
+"release the lock in a whenComplete/finally, not just the happy path"). Carry these into
+the WU table below as "Risk notes" — this is a heads-up for `/implement` to defend
+against pre-emptively, not a re-run of the audit checklist itself.
+
 The vertical-slice structure to keep in mind:
 - `lib/domain/` — shared pure domain models and repository interfaces
 - `lib/slices/<feature>/domain/` — feature-local domain (if any)
