@@ -144,10 +144,10 @@ class HabitLoopDatabase {
     await db.execute('CREATE INDEX idx_pact_breaks_pact_id ON pact_breaks (pact_id)');
     await db.execute('''
       CREATE TABLE user_profile (
-        id            TEXT    NOT NULL PRIMARY KEY,
+        id            TEXT    NOT NULL PRIMARY KEY CHECK (id = 'local'),
         display_name  TEXT,
         updated_at    INTEGER NOT NULL,
-        dirty         INTEGER NOT NULL DEFAULT 0,
+        dirty         INTEGER NOT NULL DEFAULT 1,
         synced_at     INTEGER
       )
     ''');
@@ -209,10 +209,10 @@ class HabitLoopDatabase {
       // as pacts/showups/pact_breaks. Additive only — no existing table touched.
       await db.execute('''
         CREATE TABLE user_profile (
-          id            TEXT    NOT NULL PRIMARY KEY,
+          id            TEXT    NOT NULL PRIMARY KEY CHECK (id = 'local'),
           display_name  TEXT,
           updated_at    INTEGER NOT NULL,
-          dirty         INTEGER NOT NULL DEFAULT 0,
+          dirty         INTEGER NOT NULL DEFAULT 1,
           synced_at     INTEGER
         )
       ''');

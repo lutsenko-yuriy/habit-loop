@@ -16,6 +16,24 @@ void main() {
       expect(p.displayName, isNull);
     });
 
+    test('normalises an empty display name to null', () {
+      final p = UserProfile(displayName: '', updatedAt: DateTime(2026, 8, 1));
+
+      expect(p.displayName, isNull);
+    });
+
+    test('normalises a whitespace-only display name to null', () {
+      final p = UserProfile(displayName: '   ', updatedAt: DateTime(2026, 8, 1));
+
+      expect(p.displayName, isNull);
+    });
+
+    test('trims leading and trailing whitespace from a display name', () {
+      final p = UserProfile(displayName: '  Yuriy  ', updatedAt: DateTime(2026, 8, 1));
+
+      expect(p.displayName, 'Yuriy');
+    });
+
     group('copyWith', () {
       test('preserves fields not passed', () {
         final p = UserProfile(displayName: 'Yuriy', updatedAt: DateTime(2026, 8, 1));
@@ -38,6 +56,14 @@ void main() {
         final p = UserProfile(displayName: 'Yuriy', updatedAt: DateTime(2026, 8, 1));
 
         final updated = p.copyWith(clearDisplayName: true);
+
+        expect(updated.displayName, isNull);
+      });
+
+      test('normalises an empty or whitespace-only displayName to null, same as the constructor', () {
+        final p = UserProfile(displayName: 'Yuriy', updatedAt: DateTime(2026, 8, 1));
+
+        final updated = p.copyWith(displayName: '   ');
 
         expect(updated.displayName, isNull);
       });
