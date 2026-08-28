@@ -113,4 +113,16 @@ class FaultInjectingFirestoreClient implements FirestoreClient {
     _maybeFail();
     return _inner.deletePactBreak(userId, pactBreakId);
   }
+
+  @override
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async {
+    _maybeFail();
+    return _inner.getUserProfile(userId);
+  }
+
+  @override
+  Future<void> upsertUserProfile(String userId, Map<String, dynamic> data) async {
+    _maybeFail();
+    return _inner.upsertUserProfile(userId, data);
+  }
 }

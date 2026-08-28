@@ -9,6 +9,7 @@
 ///   /users/{userId}/pacts/{pactId}
 ///   /users/{userId}/showups/{showupId}
 ///   /users/{userId}/pact_breaks/{pactBreakId}
+///   /users/{userId}/profile/main
 ///
 /// All data is passed as plain [Map<String, dynamic>] so this interface has
 /// no dependency on the `cloud_firestore` SDK — test fakes can implement it
@@ -43,4 +44,12 @@ abstract class FirestoreClient {
 
   /// Deletes the pact-break document at `/users/[userId]/pact_breaks/[pactBreakId]`.
   Future<void> deletePactBreak(String userId, String pactBreakId);
+
+  /// Returns the single user-profile document for [userId] at
+  /// `/users/[userId]/profile/main`, or `null` if it does not exist.
+  Future<Map<String, dynamic>?> getUserProfile(String userId);
+
+  /// Writes (creates or overwrites) the user-profile document at
+  /// `/users/[userId]/profile/main` with [data].
+  Future<void> upsertUserProfile(String userId, Map<String, dynamic> data);
 }

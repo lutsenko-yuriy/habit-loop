@@ -54,5 +54,16 @@ void main() {
     test('deletePactBreak completes without throwing', () async {
       await expectLater(client.deletePactBreak('user-1', 'break-1'), completes);
     });
+
+    test('getUserProfile returns null', () async {
+      expect(await client.getUserProfile('user-1'), isNull);
+    });
+
+    test('upsertUserProfile completes without throwing', () async {
+      await expectLater(
+        client.upsertUserProfile('user-1', {'display_name': 'Jamie'}),
+        completes,
+      );
+    });
   });
 }

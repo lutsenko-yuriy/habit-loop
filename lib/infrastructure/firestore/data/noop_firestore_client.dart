@@ -32,4 +32,10 @@ class NoopFirestoreClient implements FirestoreClient {
 
   @override
   Future<void> deletePactBreak(String userId, String pactBreakId) async {}
+
+  @override
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async => null;
+
+  @override
+  Future<void> upsertUserProfile(String userId, Map<String, dynamic> data) async {}
 }

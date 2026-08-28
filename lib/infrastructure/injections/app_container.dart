@@ -6,6 +6,8 @@ import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
+import 'package:habit_loop/domain/user/user_profile_repository.dart';
+import 'package:habit_loop/domain/user/user_profile_sync_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
@@ -35,6 +37,8 @@ abstract final class AppContainer {
     ShowupSyncRepository? showupSyncRepository,
     PactBreakRepository? pactBreakRepository,
     PactBreakSyncRepository? pactBreakSyncRepository,
+    UserProfileRepository? userProfileRepository,
+    UserProfileSyncRepository? userProfileSyncRepository,
     AnalyticsService? analyticsService,
     CrashlyticsService? crashlyticsService,
     LogService? logService,
@@ -63,6 +67,9 @@ abstract final class AppContainer {
       if (showupSyncRepository != null) showupSyncRepositoryProvider.overrideWithValue(showupSyncRepository),
       if (pactBreakRepository != null) pactBreakRepositoryProvider.overrideWithValue(pactBreakRepository),
       if (pactBreakSyncRepository != null) pactBreakSyncRepositoryProvider.overrideWithValue(pactBreakSyncRepository),
+      if (userProfileRepository != null) userProfileRepositoryProvider.overrideWithValue(userProfileRepository),
+      if (userProfileSyncRepository != null)
+        userProfileSyncRepositoryProvider.overrideWithValue(userProfileSyncRepository),
       if (logService != null) logServiceProvider.overrideWithValue(logService),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),

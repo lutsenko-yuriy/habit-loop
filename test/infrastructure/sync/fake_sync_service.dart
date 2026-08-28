@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
 
@@ -13,6 +14,7 @@ class FakeSyncService implements SyncService {
   final List<String> uploadedPactIds = [];
   final List<String> uploadedShowupIds = [];
   final List<String> uploadedPactBreakIds = [];
+  int uploadedUserProfileCount = 0;
   int flushCount = 0;
   int triggerManualSyncCount = 0;
   int forceSyncAllCount = 0;
@@ -34,6 +36,11 @@ class FakeSyncService implements SyncService {
   @override
   Future<void> uploadPactBreak(PactBreak pactBreak) async {
     uploadedPactBreakIds.add(pactBreak.id);
+  }
+
+  @override
+  Future<void> uploadUserProfile(UserProfile profile) async {
+    uploadedUserProfileCount++;
   }
 
   @override

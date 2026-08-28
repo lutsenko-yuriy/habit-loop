@@ -3,6 +3,7 @@ import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/persistence/schedule_codec.dart';
 
 /// Encodes domain objects to Firestore document maps and decodes them back.
@@ -160,6 +161,30 @@ abstract final class SyncMapper {
           doc['created_at'] != null ? DateTime.fromMillisecondsSinceEpoch((doc['created_at'] as num).toInt()) : null,
       stoppedAt:
           doc['stopped_at'] != null ? DateTime.fromMillisecondsSinceEpoch((doc['stopped_at'] as num).toInt()) : null,
+    );
+  }
+
+  /// Encodes [profile] to a Firestore document map.
+  ///
+  /// Unlike the other entities, [UserProfile] already carries its own
+  /// [UserProfile.updatedAt] as a domain field, so `updated_at` is written
+  /// straight from it rather than defaulting to [DateTime.now] — the LWW
+  /// comparison in [FirestoreSyncService] compares this against the local
+  /// `synced_at`.
+  static Map<String, dynamic> userProfileToDocument(UserProfile profile) {
+    return {
+      'display_name': profile.displayName,
+      'updated_at': profile.updatedAt.millisecondsSinceEpoch,
+    };
+  }
+
+  /// Decodes a Firestore document map back into a [UserProfile].
+  ///
+  /// Throws if `updated_at` is absent or has an unexpected type.
+  static UserProfile userProfileFromDocument(Map<String, dynamic> doc) {
+    return UserProfile(
+      displayName: doc['display_name'] as String?,
+      updatedAt: DateTime.fromMillisecondsSinceEpoch((doc['updated_at'] as num).toInt()),
     );
   }
 

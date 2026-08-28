@@ -9,6 +9,9 @@ import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
+import 'package:habit_loop/domain/user/user_profile_repository.dart';
+import 'package:habit_loop/domain/user/user_profile_sync_repository.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
@@ -31,6 +34,8 @@ class FirestoreSyncService implements SyncService {
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
   final PactBreakRepository _pactBreakRepository;
+  final UserProfileSyncRepository _userProfileSyncRepository;
+  final UserProfileRepository _userProfileRepository;
   final RemoteConfigService? _remoteConfig;
   final _pullCompletedController = StreamController<void>.broadcast();
 
@@ -49,6 +54,8 @@ class FirestoreSyncService implements SyncService {
     required ShowupRepository showupRepository,
     required PactBreakSyncRepository pactBreakSyncRepository,
     required PactBreakRepository pactBreakRepository,
+    required UserProfileSyncRepository userProfileSyncRepository,
+    required UserProfileRepository userProfileRepository,
     RemoteConfigService? remoteConfig,
   })  : _firestoreClient = firestoreClient,
         _authService = authService,
@@ -59,6 +66,8 @@ class FirestoreSyncService implements SyncService {
         _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _pactBreakRepository = pactBreakRepository,
+        _userProfileSyncRepository = userProfileSyncRepository,
+        _userProfileRepository = userProfileRepository,
         _remoteConfig = remoteConfig;
 
   @override
@@ -111,6 +120,21 @@ class FirestoreSyncService implements SyncService {
   }
 
   @override
+  Future<void> uploadUserProfile(UserProfile profile) async {
+    if (!_syncEnabled) return;
+    final userId = _authService.currentUserId;
+    if (userId == null || _authService.isAnonymous) return;
+    await _uploadWithCb(
+      upload: () async {
+        await _firestoreClient.upsertUserProfile(userId, SyncMapper.userProfileToDocument(profile));
+      },
+      onSynced: () async {
+        await _userProfileSyncRepository.markUserProfileSynced(DateTime.now());
+      },
+    );
+  }
+
+  @override
   Future<void> flushDirtyRecords() async {
     if (!_syncEnabled) return;
     if (!_circuitBreaker.canRequest) return;
@@ -119,6 +143,7 @@ class FirestoreSyncService implements SyncService {
     final dirtyPacts = await _pactSyncRepository.getDirtyPacts();
     final dirtyShowups = await _showupSyncRepository.getDirtyShowups();
     final dirtyPactBreaks = await _pactBreakSyncRepository.getDirtyPactBreaks();
+    final dirtyProfile = await _userProfileSyncRepository.getDirtyUserProfile();
 
     final items = <Future<void> Function()>[];
     for (final pact in dirtyPacts) {
@@ -129,6 +154,9 @@ class FirestoreSyncService implements SyncService {
     }
     for (final pactBreak in dirtyPactBreaks) {
       items.add(() => uploadPactBreak(pactBreak));
+    }
+    if (dirtyProfile != null) {
+      items.add(() => uploadUserProfile(dirtyProfile));
     }
 
     final capped = items.take(_flushCap);
@@ -154,21 +182,26 @@ class FirestoreSyncService implements SyncService {
       await _pactSyncRepository.markAllPactsDirty();
       await _showupSyncRepository.markAllShowupsDirty();
       await _pactBreakSyncRepository.markAllPactBreaksDirty();
+      await _userProfileSyncRepository.markUserProfileDirty();
       final allDirtyPacts = await _pactSyncRepository.getDirtyPacts();
       final allDirtyShowups = await _showupSyncRepository.getDirtyShowups();
       final allDirtyPactBreaks = await _pactBreakSyncRepository.getDirtyPactBreaks();
-      final attempted = allDirtyPacts.length + allDirtyShowups.length + allDirtyPactBreaks.length;
+      final dirtyProfile = await _userProfileSyncRepository.getDirtyUserProfile();
+      final attempted =
+          allDirtyPacts.length + allDirtyShowups.length + allDirtyPactBreaks.length + (dirtyProfile != null ? 1 : 0);
       await flushDirtyRecords();
       // Successfully uploaded records are marked synced (dirty=0) and no longer
       // returned here — what remains are upload failures.
       final remainingPacts = await _pactSyncRepository.getDirtyPacts();
       final remainingShowups = await _showupSyncRepository.getDirtyShowups();
       final remainingPactBreaks = await _pactBreakSyncRepository.getDirtyPactBreaks();
+      final remainingProfile = await _userProfileSyncRepository.getDirtyUserProfile();
       return ForceSyncResult(
         attempted: attempted,
         pactsFailed: remainingPacts.length,
         showupsFailed: remainingShowups.length,
         pactBreaksFailed: remainingPactBreaks.length,
+        userProfileFailed: remainingProfile != null ? 1 : 0,
       );
     } catch (_) {
       return const ForceSyncResult(attempted: 0, pactsFailed: 0, showupsFailed: 0);
@@ -215,6 +248,19 @@ class FirestoreSyncService implements SyncService {
         } catch (_) {
           // Isolate per-record errors.
         }
+      }
+
+      if (_circuitBreaker.currentState != SyncCircuitBreakerState.closed) return;
+
+      // Wrapped in its own try/catch (like every entity above) so a malformed
+      // profile document can never abort the pact/showup/pact-break pull.
+      try {
+        final remoteProfileDoc = await _firestoreClient.getUserProfile(userId);
+        if (remoteProfileDoc != null) {
+          await _mergeRemoteUserProfile(remoteProfileDoc, now);
+        }
+      } catch (_) {
+        // Isolate per-record errors.
       }
 
       _pullCompletedController.add(null);
@@ -344,6 +390,29 @@ class FirestoreSyncService implements SyncService {
         update: _pactBreakRepository.updateBreak,
         markSynced: _pactBreakSyncRepository.markPactBreakSynced,
       );
+
+  // Singleton record (no `id`), so this doesn't reuse [_mergeRemoteRecord]:
+  // same LWW rule (remote `updated_at` > local `synced_at` wins; dirty local
+  // always wins) but "not found locally" and "found locally" both resolve to
+  // the same upsert call rather than separate insert/update methods.
+  Future<void> _mergeRemoteUserProfile(Map<String, dynamic> doc, DateTime now) async {
+    final local = await _userProfileRepository.getProfile();
+
+    if (local == null) {
+      await _userProfileRepository.saveProfile(SyncMapper.userProfileFromDocument(doc));
+      await _userProfileSyncRepository.markUserProfileSynced(now);
+      return;
+    }
+
+    final localSyncedAt = await _userProfileSyncRepository.getUserProfileSyncedAt();
+    if (localSyncedAt == null) return; // dirty → keep local (never resolved by "remote wins")
+
+    final remoteUpdatedAt = SyncMapper.updatedAtFromDocument(doc);
+    if (remoteUpdatedAt == null || !remoteUpdatedAt.isAfter(localSyncedAt)) return; // not newer
+
+    await _userProfileRepository.saveProfile(SyncMapper.userProfileFromDocument(doc));
+    await _userProfileSyncRepository.markUserProfileSynced(now);
+  }
 
   // If CB transitions halfOpen → closed on success, fires flushDirtyRecords
   // to pick up records that accumulated while the CB was non-closed.

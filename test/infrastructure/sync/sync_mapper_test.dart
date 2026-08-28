@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
 
 void main() {
@@ -351,6 +352,43 @@ void main() {
     test('decodes null stoppedAt as null', () {
       final doc = SyncMapper.pactBreakToDocument(pactBreak);
       expect(SyncMapper.pactBreakFromDocument(doc).stoppedAt, isNull);
+    });
+  });
+
+  group('SyncMapper.userProfileToDocument', () {
+    test('includes display_name and updated_at', () {
+      final profile = UserProfile(displayName: 'Jamie', updatedAt: DateTime(2026, 5, 1));
+      final doc = SyncMapper.userProfileToDocument(profile);
+      expect(doc['display_name'], 'Jamie');
+      expect(doc['updated_at'], DateTime(2026, 5, 1).millisecondsSinceEpoch);
+    });
+
+    test('encodes null displayName as null', () {
+      final profile = UserProfile(updatedAt: DateTime(2026, 5, 1));
+      expect(SyncMapper.userProfileToDocument(profile)['display_name'], isNull);
+    });
+
+    test('uses profile.updatedAt directly, not DateTime.now()', () {
+      final fixed = DateTime(2020, 1, 1);
+      final profile = UserProfile(displayName: 'Jamie', updatedAt: fixed);
+      expect(SyncMapper.userProfileToDocument(profile)['updated_at'], fixed.millisecondsSinceEpoch);
+    });
+  });
+
+  group('SyncMapper.userProfileFromDocument', () {
+    test('round-trips a profile through userProfileToDocument → userProfileFromDocument', () {
+      final profile = UserProfile(displayName: 'Jamie', updatedAt: DateTime(2026, 5, 1));
+      final doc = SyncMapper.userProfileToDocument(profile);
+      final decoded = SyncMapper.userProfileFromDocument(doc);
+
+      expect(decoded.displayName, profile.displayName);
+      expect(decoded.updatedAt, profile.updatedAt);
+    });
+
+    test('decodes null displayName', () {
+      final profile = UserProfile(updatedAt: DateTime(2026, 5, 1));
+      final doc = SyncMapper.userProfileToDocument(profile);
+      expect(SyncMapper.userProfileFromDocument(doc).displayName, isNull);
     });
   });
 
