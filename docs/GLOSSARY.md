@@ -21,6 +21,7 @@ When you find a different word used for the same concept, look it up in **[Known
 | **Hurry-up time** | How long before a showup's window closes the hurry-up notification fires. Global setting, 2–10 min, default 5. Only showups with duration ≥ 3× this value are eligible. | `RemoteConfigDefaults.hurryUpTimeInMinutes` |
 | **Streak** | The current run of consecutive **done** showups, counting back from the most recent resolved showup. Pending showups don't break or extend it. | `PactStats.currentStreak` |
 | **Stats** | Computed per-pact totals: done, failed, remaining, total, current streak. Never persisted as truth — derived from showups (with a session cache). | `PactStats` |
+| **Display name** | The user's first name, captured once (skippable) and used to personalize onboarding, the dashboard greeting, and notification copy. Not the same as a pact's habit name. | HAB-232 |
 
 ---
 
@@ -72,6 +73,7 @@ When you find a different word used for the same concept, look it up in **[Known
 | **Calendar strip** | The 7-day band (today ±3) with coloured dots per showup (green = done, red = failed, grey/amber = upcoming). |
 | **Pacts panel** | The draggable sheet listing all pacts with Active / Done / Stopped filter chips. |
 | **Onboarding carousel** | The four-slide intro shown only to users with zero pacts. |
+| **Enter Name page** | The skippable, first-launch-only screen (fresh installs) that asks for the user's **display name**, shown before the onboarding carousel. |
 | **Pact timeline** | The full-history milestone view of a pact's showups, reached via "View timeline" on pact detail. Loaded and grouped in one pass — no pagination. Gated by `pact_timeline_enabled`. |
 
 ---
