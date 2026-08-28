@@ -473,6 +473,32 @@ Fired when the user taps "Previous Pact" or "Next Pact" on a pact detail screen 
 
 ---
 
+### `display_name_entry_completed`
+
+Fired when the EnterNamePage flow ends — either the user saves a name or skips. Fresh installs only; existing users never see this screen. (HAB-232)
+
+| Property | Type | Description |
+|---|---|---|
+| `action` | `string` | `saved` \| `skipped` |
+| `name_length` | `int?` | Character count of the saved name; present only when `action = saved` |
+
+No PII risk — only the name's character length is included, never the name text itself.
+
+---
+
+### `display_name_changed`
+
+Fired when the user saves a new name via the "Change name" dialog (⋯ menu). (HAB-232)
+
+| Property | Type | Description |
+|---|---|---|
+| `name_length` | `int` | Character count of the new name |
+| `had_previous_name` | `bool` | `true` if a name was already on file before this change |
+
+No PII risk — only the name's character length is included, never the name text itself.
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.
@@ -492,3 +518,5 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 | `ShowupDetailAnalyticsScreen` | `showup_detail` | `slices/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |
 | `PactTimelineAnalyticsScreen` | `pact_timeline` | `slices/pact/analytics/pact_timeline_analytics_events.dart` | Pact Timeline screen opens; properties: `pact_id: string`, `pact_status: string` (`active \| completed \| stopped`), `total_showup_count: int` — HAB-116 |
 | `AboutAnalyticsScreen` | `about` | `slices/about/analytics/about_analytics_events.dart` | About screen opens — HAB-149 |
+| *(TBD by `/plan`)* | `enter_name` | *(TBD by `/plan`)* | EnterNamePage shown (fresh install, before onboarding carousel) — HAB-232 |
+| *(TBD by `/plan`)* | `change_name` | *(TBD by `/plan`)* | "Change name" dialog opens from the ⋯ menu — HAB-232 |

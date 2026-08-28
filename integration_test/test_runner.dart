@@ -14,6 +14,7 @@ import 'break_flow_test.dart' as break_flow;
 import 'break_timeline_flow_test.dart' as break_timeline;
 import 'create_pact_flow_test.dart' as create_pact;
 import 'dashboard_kebab_menu_flow_test.dart' as kebab_menu;
+import 'display_name_flow_test.dart' as display_name;
 import 'edit_pact_flow_test.dart' as edit_pact;
 import 'fake_firestore_sync_flow_test.dart' as fake_firestore;
 import 'fresh_install_flow_test.dart' as fresh_install;
@@ -42,6 +43,7 @@ void main() {
   break_timeline.main();
   create_pact.main();
   kebab_menu.main();
+  display_name.main();
   edit_pact.main();
   fake_firestore.main();
   fresh_install.main();

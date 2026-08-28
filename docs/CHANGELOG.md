@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [test] HAB-232 (Scenario-WU): integration scenario stubs for display-name personalization (`integration_test/display_name_flow_test.dart`) — EnterNamePage on fresh install, permanent skip, pre-fill from existing local data, changing the name via the ⋯ menu, personalized onboarding/dashboard copy, and personalized reminder notification text. No driver code yet.
+
 ## [0.58.0] — 2026-08-28 (PR #412 merged)
 
 ### Added
