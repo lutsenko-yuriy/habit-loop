@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.58.0] — 2026-08-28 (PR #412 merged)
+
+### Added
+
+- [user] Reminders for a paused pact are now automatically restored when the pause expires, without requiring any action from you.
+- [app] HAB-254 (WU3, final): wired `NotificationReconciliationService.reconcile()` to three triggers via `AppLifecycleReconciler` (`lib/slices/reminder/ui/generic/`, wrapping the app tree in `main.dart`) — a one-shot cold-start pass, app foreground, and a new `SyncService.pullCompleted` broadcast stream (emitted by `FirestoreSyncService` at the end of every non-aborted `pullRemoteChanges()`). A shared `ReconciliationThrottle` (re-entrancy lock + 30s minimum interval) keeps the triggers from overlapping or thrashing. Notifications now self-heal drift (stale on-break state, missed reschedules) automatically instead of only on the next explicit scheduling call.
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
