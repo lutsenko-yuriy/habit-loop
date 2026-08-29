@@ -106,6 +106,32 @@ void main() {
       syncService.emitPullCompleted();
       await Future<void>.delayed(Duration.zero);
     });
+
+    test('setDisplayName uploads the profile via SyncService', () async {
+      final syncService = FakeSyncService();
+      final container = _makeContainer(syncService: syncService);
+      addTearDown(container.dispose);
+      container.read(displayNameProvider);
+
+      await container.read(displayNameProvider.notifier).setDisplayName('Yuriy');
+
+      expect(syncService.uploadedUserProfileCount, 1);
+    });
+
+    test('state updates after a build() re-execution (ref.invalidate), not just the first build', () async {
+      final container = _makeContainer();
+      addTearDown(container.dispose);
+      container.read(displayNameProvider);
+
+      // Re-runs build() on the same Notifier instance without disposing the
+      // container — regression guard for _disposed latching true forever.
+      container.invalidate(displayNameProvider);
+      container.read(displayNameProvider);
+
+      await container.read(displayNameProvider.notifier).setDisplayName('Yuriy');
+
+      expect(container.read(displayNameProvider), 'Yuriy');
+    });
   });
 
   group('personalizedNameProvider', () {

@@ -40,6 +40,11 @@ class DisplayNameNotifier extends Notifier<String?> {
 
   @override
   String? build() {
+    // Riverpod preserves this Notifier instance across a build() re-run
+    // (ref.invalidate/refresh, hot reload) — the prior build's onDispose
+    // fires first, so _disposed must be reset here or it latches true
+    // forever and every future write silently stops reaching `state`.
+    _disposed = false;
     _pullCompletedSubscription = ref.read(syncServiceProvider).pullCompleted.listen((_) {
       unawaited(_refreshFromRepository());
     });
@@ -57,6 +62,7 @@ class DisplayNameNotifier extends Notifier<String?> {
   Future<void> setDisplayName(String? name) async {
     final profile = UserProfile(displayName: name, updatedAt: DateTime.now());
     await ref.read(userProfileRepositoryProvider).saveProfile(profile);
+    unawaited(ref.read(syncServiceProvider).uploadUserProfile(profile));
     if (_disposed) return;
     state = profile.displayName;
     unawaited(_publishUserProperty(state));
