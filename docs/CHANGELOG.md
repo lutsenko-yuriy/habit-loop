@@ -8,6 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [meta] HAB-257: aligned `implement` skill to auto-start review loop once PR opens, matching `FEATURE.md` documented default (PR #419 merged).
 - [test] HAB-232 (Scenario-WU): integration scenario stubs for display-name personalization (`integration_test/display_name_flow_test.dart`) — EnterNamePage on fresh install, permanent skip, pre-fill from existing local data, changing the name via the ⋯ menu, personalized onboarding/dashboard copy, and personalized reminder notification text. No driver code yet.
 - [wip] HAB-232 (WU2): Firestore sync wiring for user profile — `FirestoreClient` methods (`getUserProfile`/`upsertUserProfile`), `SyncMapper` integration, and updated `SyncService`/`FirestoreSyncService` to push/pull the profile alongside pacts and showups. Synced via the existing machinery; no user-visible change yet.
 - [meta] HAB-256: removed the `block-main-writes.sh` PreToolUse hook — redundant with `.git/hooks/pre-push` (the actual airtight backstop against direct pushes to `main`) and had a false-positive bug when a subagent ran from a git worktree, false-blocking every commit on a correctly-checked-out feature branch.
