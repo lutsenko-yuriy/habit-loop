@@ -61,5 +61,55 @@ void main() {
 
       await expectLater(service.markOnboardingPassed(), completes);
     });
+
+    test('isNameEntryShown returns false when key is absent (fresh install)', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final service = SharedPreferencesOnboardingService(prefs);
+
+      expect(service.isNameEntryShown, isFalse);
+    });
+
+    test('isNameEntryShown returns true when key is pre-set', () async {
+      SharedPreferences.setMockInitialValues({
+        'habit_loop_name_entry_shown': true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final service = SharedPreferencesOnboardingService(prefs);
+
+      expect(service.isNameEntryShown, isTrue);
+    });
+
+    test('markNameEntryShown writes the flag; isNameEntryShown returns true on the same instance', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final service = SharedPreferencesOnboardingService(prefs);
+
+      expect(service.isNameEntryShown, isFalse);
+      await service.markNameEntryShown();
+      expect(service.isNameEntryShown, isTrue);
+    });
+
+    test('markNameEntryShown persists across a new instance using the same SharedPreferences', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await SharedPreferencesOnboardingService(prefs).markNameEntryShown();
+
+      final service2 = SharedPreferencesOnboardingService(prefs);
+      expect(service2.isNameEntryShown, isTrue);
+    });
+
+    test('markNameEntryShown is independent of markOnboardingPassed', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final service = SharedPreferencesOnboardingService(prefs);
+
+      await service.markNameEntryShown();
+      expect(service.isNameEntryShown, isTrue);
+      expect(service.isOnboardingPassed, isFalse);
+    });
+
+    test('markNameEntryShown never throws (no-throw contract)', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final service = SharedPreferencesOnboardingService(prefs);
+
+      await expectLater(service.markNameEntryShown(), completes);
+    });
   });
 }

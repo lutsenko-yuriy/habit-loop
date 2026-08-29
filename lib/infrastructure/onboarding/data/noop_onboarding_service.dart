@@ -16,4 +16,10 @@ final class NoopOnboardingService implements OnboardingPreferenceService {
 
   @override
   Future<void> markOnboardingPassed() async {}
+
+  @override
+  bool get isNameEntryShown => false;
+
+  @override
+  Future<void> markNameEntryShown() async {}
 }

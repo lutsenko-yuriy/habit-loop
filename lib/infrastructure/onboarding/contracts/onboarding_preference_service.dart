@@ -28,4 +28,12 @@ abstract interface class OnboardingPreferenceService {
   ///
   /// Never throws — implementations swallow failures silently.
   Future<void> markOnboardingPassed();
+
+  /// Returns `true` if [EnterNamePage] has already been shown once (saved or
+  /// skipped) — independent of [isOnboardingPassed], so a user who skips and
+  /// kills the app before reaching the dashboard is never re-prompted.
+  bool get isNameEntryShown;
+
+  /// Marks the name-entry page as shown. Never throws.
+  Future<void> markNameEntryShown();
 }
