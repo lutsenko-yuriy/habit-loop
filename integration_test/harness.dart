@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoTextField;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,9 +10,11 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/user/user_profile_repository.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/main.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
@@ -19,12 +22,14 @@ import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
+import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../test/infrastructure/analytics/fake_analytics_service.dart';
 import '../test/infrastructure/auth/fake_auth_service.dart';
 import '../test/infrastructure/locale/fake_locale_preference_service.dart';
 import '../test/infrastructure/notifications/fake_notification_service.dart';
+import '../test/infrastructure/onboarding/fake_onboarding_preference_service.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import '../test/infrastructure/sync/fake_sync_service.dart';
 
@@ -54,6 +59,8 @@ class AppHarness {
     required this.syncService,
     required this.localeService,
     required this.navigatorKey,
+    required this.onboardingService,
+    required this.userProfileRepository,
     this.firestoreClient,
   });
 
@@ -65,6 +72,14 @@ class AppHarness {
   final FakeNotificationService notifications;
   final FakeSyncService syncService;
   final FakeLocalePreferenceService localeService;
+
+  /// HAB-232: shared instance so tests can simulate a subsequent launch by
+  /// passing the same instance into a second [AppHarness.create] call.
+  final OnboardingPreferenceService onboardingService;
+
+  /// HAB-232: shared instance so tests can seed/read a locally-stored display
+  /// name without going through the UI.
+  final UserProfileRepository userProfileRepository;
 
   /// Navigator key wired into [HabitLoopApp]. Use this in tests to drive
   /// navigation programmatically (e.g. to simulate a notification tap).
@@ -126,6 +141,8 @@ class AppHarness {
     bool initiallyAnonymous = false,
     FakeSyncService Function(InMemoryPactRepository, InMemoryShowupRepository)? syncServiceFactory,
     FirestoreClient? firestoreClient,
+    OnboardingPreferenceService? onboardingService,
+    UserProfileRepository? userProfileRepository,
   }) async {
     final pactRepo = InMemoryPactRepository();
     final showupRepo = InMemoryShowupRepository();
@@ -137,6 +154,8 @@ class AppHarness {
     final notifications = FakeNotificationService();
     final syncService = syncServiceFactory?.call(pactRepo, showupRepo) ?? FakeSyncService();
     final localeService = FakeLocalePreferenceService();
+    final resolvedOnboardingService = onboardingService ?? FakeOnboardingPreferenceService();
+    final resolvedUserProfileRepository = userProfileRepository ?? InMemoryUserProfileRepository();
 
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
@@ -147,6 +166,8 @@ class AppHarness {
       analyticsService: analytics,
       notificationService: notifications,
       localePreferenceService: localeService,
+      onboardingPreferenceService: resolvedOnboardingService,
+      userProfileRepository: resolvedUserProfileRepository,
     );
 
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -161,6 +182,8 @@ class AppHarness {
       syncService: syncService,
       localeService: localeService,
       navigatorKey: navigatorKey,
+      onboardingService: resolvedOnboardingService,
+      userProfileRepository: resolvedUserProfileRepository,
       firestoreClient: firestoreClient,
     );
 
@@ -269,6 +292,28 @@ Future<void> waitFor(
     }
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+/// Enters [name] into EnterNamePage's field and taps its save button (HAB-232).
+Future<void> saveEnterName(WidgetTester tester, String name) async {
+  await tester.enterText(find.byKey(const Key('enter-name-text-field')), name);
+  await tester.tap(find.byKey(const Key('enter-name-save-button')));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
+/// Taps EnterNamePage's skip button (HAB-232).
+Future<void> skipEnterName(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('enter-name-skip-button')));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
+/// Returns the current text of EnterNamePage's field on any platform (HAB-232).
+String enterNameFieldText(WidgetTester tester) {
+  final w = tester.widget(find.byKey(const Key('enter-name-text-field')));
+  if (w is TextField) return w.controller?.text ?? '';
+  return (w as CupertinoTextField).controller?.text ?? '';
 }
 
 /// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).

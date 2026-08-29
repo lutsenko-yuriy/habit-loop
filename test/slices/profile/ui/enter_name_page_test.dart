@@ -28,7 +28,8 @@ Widget _buildApp({
       syncServiceProvider.overrideWithValue(FakeSyncService()),
       remoteConfigServiceProvider.overrideWithValue(FakeRemoteConfigService()),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
-      if (seedDisplayName != null) displayNameProvider.overrideWith(() => DisplayNameNotifier(seedDisplayName: seedDisplayName)),
+      if (seedDisplayName != null)
+        displayNameProvider.overrideWith(() => DisplayNameNotifier(seedDisplayName: seedDisplayName)),
     ],
     child: MaterialApp(
       localizationsDelegates: const [
@@ -145,10 +146,12 @@ void main() {
     });
 
     testWidgets('pre-fills the text field with an existing local name', (tester) async {
+      final userProfileRepository = InMemoryUserProfileRepository();
+      await userProfileRepository.saveProfile(UserProfile(displayName: 'Sam', updatedAt: DateTime(2026)));
       await tester.pumpWidget(_buildApp(
         onDone: () {},
         onboardingService: FakeOnboardingPreferenceService(),
-        userProfileRepository: InMemoryUserProfileRepository()..saveProfile(UserProfile(displayName: 'Sam', updatedAt: DateTime(2026))),
+        userProfileRepository: userProfileRepository,
         seedDisplayName: 'Sam',
       ));
       await tester.pump();
@@ -174,8 +177,8 @@ void main() {
       await tester.pump();
 
       final events = analyticsService.loggedEvents;
-      expect(events.any((e) => e.name == 'display_name_entry_completed' && e.toParameters()['action'] == 'saved'),
-          isTrue);
+      expect(
+          events.any((e) => e.name == 'display_name_entry_completed' && e.toParameters()['action'] == 'saved'), isTrue);
     });
   });
 }
