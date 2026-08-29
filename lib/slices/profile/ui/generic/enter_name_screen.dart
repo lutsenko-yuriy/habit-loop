@@ -7,6 +7,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/profile/analytics/profile_analytics_events.dart';
 import 'package:habit_loop/slices/profile/ui/android/enter_name_page_android.dart';
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 import 'package:habit_loop/slices/profile/ui/ios/enter_name_page_ios.dart';
 
 /// Skippable first-launch page asking for the user's first name (HAB-232).
@@ -78,21 +79,37 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
   Future<void> _onSave() async {
     if (_submitting) return;
     _submitting = true;
-    // The platform bodies' LengthLimitingTextInputFormatter already caps input
-    // at enterNameMaxLength grapheme clusters — no further truncation needed
-    // here (a raw String.substring could split a surrogate pair).
-    final trimmed = _controller.text.trim();
-    if (trimmed.isEmpty) {
-      await _finish(name: null, action: 'skipped');
-      return;
+    try {
+      final trimmed = _controller.text.trim();
+      if (trimmed.isEmpty) {
+        await _finish(name: null, action: 'skipped');
+        return;
+      }
+      // The platform bodies' LengthLimitingTextInputFormatter only caps typed
+      // input — a name arriving via sync or seeded straight into the
+      // controller (initState) bypasses it, so cap again here defensively.
+      // Truncates by code point (rune), not raw String.substring, so a
+      // surrogate pair can't be split.
+      await _finish(name: _capToMaxLength(trimmed), action: 'saved');
+    } finally {
+      _submitting = false;
     }
-    await _finish(name: trimmed, action: 'saved');
   }
 
   Future<void> _onSkip() async {
     if (_submitting) return;
     _submitting = true;
-    await _finish(name: null, action: 'skipped');
+    try {
+      await _finish(name: null, action: 'skipped');
+    } finally {
+      _submitting = false;
+    }
+  }
+
+  String _capToMaxLength(String value) {
+    final runes = value.runes;
+    if (runes.length <= enterNameMaxLength) return value;
+    return String.fromCharCodes(runes.take(enterNameMaxLength));
   }
 
   @override

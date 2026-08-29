@@ -105,6 +105,29 @@ void main() {
       expect(saved?.displayName?.length, enterNameMaxLength);
     });
 
+    testWidgets('caps a name that bypasses the field formatter (seeded straight into the controller)', (tester) async {
+      // Simulates a >40-char name that arrived via sync — never typed through
+      // the field's LengthLimitingTextInputFormatter — landing in the
+      // controller via the initState seed instead.
+      final userProfileRepository = InMemoryUserProfileRepository();
+      final longName = 'A' * 60;
+
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: userProfileRepository,
+        seedDisplayName: longName,
+      ));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('enter-name-save-button')));
+      await tester.pump();
+      await tester.pump();
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName?.length, enterNameMaxLength);
+    });
+
     testWidgets('tapping skip marks name entry shown, saves nothing, and calls onDone', (tester) async {
       var doneCalled = false;
       final userProfileRepository = InMemoryUserProfileRepository();

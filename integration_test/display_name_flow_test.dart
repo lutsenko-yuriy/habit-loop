@@ -34,6 +34,7 @@ void main() {
         tester,
         extraOverrides: [_flagOn],
         initiallyAnonymous: true,
+        onboardingService: FakeOnboardingPreferenceService(),
         userProfileRepository: userProfileRepository,
       );
 
