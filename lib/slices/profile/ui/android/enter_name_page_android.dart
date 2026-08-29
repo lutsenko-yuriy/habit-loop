@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 class EnterNamePageAndroid extends StatelessWidget {
@@ -32,6 +34,7 @@ class EnterNamePageAndroid extends StatelessWidget {
                 controller: controller,
                 autofocus: true,
                 textCapitalization: TextCapitalization.words,
+                inputFormatters: [LengthLimitingTextInputFormatter(enterNameMaxLength)],
                 decoration: InputDecoration(hintText: l10n.enterNameHint, border: const OutlineInputBorder()),
               ),
               const SizedBox(height: AppSpacing.s24),

@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 class EnterNamePageIos extends StatelessWidget {
@@ -33,6 +35,7 @@ class EnterNamePageIos extends StatelessWidget {
                 placeholder: l10n.enterNameHint,
                 autofocus: true,
                 textCapitalization: TextCapitalization.words,
+                inputFormatters: [LengthLimitingTextInputFormatter(enterNameMaxLength)],
               ),
               const SizedBox(height: AppSpacing.s24),
               CupertinoButton.filled(

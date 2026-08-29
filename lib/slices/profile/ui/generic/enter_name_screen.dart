@@ -9,10 +9,6 @@ import 'package:habit_loop/slices/profile/ui/android/enter_name_page_android.dar
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/profile/ui/ios/enter_name_page_ios.dart';
 
-/// Maximum accepted display-name length (HAB-232) — caps what eventually
-/// reaches notification copy.
-const int enterNameMaxLength = 40;
-
 /// Skippable first-launch page asking for the user's first name (HAB-232).
 ///
 /// Shown by [DashboardScreen] on fresh installs, before the onboarding
@@ -33,10 +29,15 @@ class EnterNameScreen extends ConsumerStatefulWidget {
 class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
   late final TextEditingController _controller;
 
+  // Guards against a double-tap firing two saves/skips (double-counted
+  // analytics event, duplicate write) while the first one is still in flight.
+  bool _submitting = false;
+
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: ref.read(displayNameProvider) ?? '');
+    final seed = ref.read(displayNameProvider) ?? '';
+    _controller = TextEditingController(text: seed)..selection = TextSelection.collapsed(offset: seed.length);
     unawaited(
       Future.microtask(
         () => ref.read(analyticsServiceProvider).logScreenView(const EnterNameAnalyticsScreen()),
@@ -51,13 +52,23 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
   }
 
   Future<void> _finish({required String? name, required String action}) async {
+    var resolvedAction = action;
     if (name != null) {
-      await ref.read(displayNameProvider.notifier).setDisplayName(name);
+      try {
+        await ref.read(displayNameProvider.notifier).setDisplayName(name);
+      } catch (_) {
+        // Never strand the user on this screen over a transient DB failure —
+        // degrade to "skipped" so isNameEntryShown still gets marked and onDone fires.
+        resolvedAction = 'skipped';
+      }
     }
     await ref.read(onboardingPreferenceServiceProvider).markNameEntryShown();
     unawaited(
       ref.read(analyticsServiceProvider).logEvent(
-            DisplayNameEntryCompletedEvent(action: action, nameLength: name?.length),
+            DisplayNameEntryCompletedEvent(
+              action: resolvedAction,
+              nameLength: resolvedAction == 'saved' ? name?.length : null,
+            ),
           ),
     );
     if (!mounted) return;
@@ -65,16 +76,24 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
   }
 
   Future<void> _onSave() async {
+    if (_submitting) return;
+    _submitting = true;
+    // The platform bodies' LengthLimitingTextInputFormatter already caps input
+    // at enterNameMaxLength grapheme clusters — no further truncation needed
+    // here (a raw String.substring could split a surrogate pair).
     final trimmed = _controller.text.trim();
     if (trimmed.isEmpty) {
       await _finish(name: null, action: 'skipped');
       return;
     }
-    final capped = trimmed.length > enterNameMaxLength ? trimmed.substring(0, enterNameMaxLength) : trimmed;
-    await _finish(name: capped, action: 'saved');
+    await _finish(name: trimmed, action: 'saved');
   }
 
-  Future<void> _onSkip() => _finish(name: null, action: 'skipped');
+  Future<void> _onSkip() async {
+    if (_submitting) return;
+    _submitting = true;
+    await _finish(name: null, action: 'skipped');
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -29,16 +29,22 @@ void main() {
     testWidgets(
         'enter_name_page_shown_on_fresh_install_and_saves_name: fresh install shows EnterNamePage and saving a name persists it',
         (tester) async {
-      h = await AppHarness.create(tester, extraOverrides: [_flagOn], initiallyAnonymous: true);
+      final userProfileRepository = InMemoryUserProfileRepository();
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        initiallyAnonymous: true,
+        userProfileRepository: userProfileRepository,
+      );
 
       expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
 
       await saveEnterName(tester, 'Alex');
 
       expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
-      expect(find.text('Create a Pact'), findsOneWidget);
+      expect(find.text(l10n(tester).createPact), findsOneWidget);
 
-      final saved = await h.userProfileRepository.getProfile();
+      final saved = await userProfileRepository.getProfile();
       expect(saved?.displayName, 'Alex');
     });
 

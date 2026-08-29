@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart' show CupertinoTextField;
+import 'package:flutter/foundation.dart' show TargetPlatform, debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_screen.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
@@ -179,6 +182,64 @@ void main() {
       final events = analyticsService.loggedEvents;
       expect(
           events.any((e) => e.name == 'display_name_entry_completed' && e.toParameters()['action'] == 'saved'), isTrue);
+    });
+  });
+
+  group('EnterNameScreen on iOS (HAB-232 audit finding)', () {
+    testWidgets('renders the Cupertino body and saves a trimmed name', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      var doneCalled = false;
+      final userProfileRepository = InMemoryUserProfileRepository();
+      final onboardingService = FakeOnboardingPreferenceService();
+
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () => doneCalled = true,
+          onboardingService: onboardingService,
+          userProfileRepository: userProfileRepository,
+        ));
+        await tester.pump();
+
+        expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
+        final field = tester.widget(find.byKey(const Key('enter-name-text-field')));
+        expect(field, isA<CupertinoTextField>());
+
+        await tester.enterText(find.byKey(const Key('enter-name-text-field')), '  Alex  ');
+        await tester.tap(find.byKey(const Key('enter-name-save-button')));
+        await tester.pump();
+        await tester.pump();
+
+        expect(doneCalled, isTrue);
+        expect(onboardingService.isNameEntryShown, isTrue);
+        final saved = await userProfileRepository.getProfile();
+        expect(saved?.displayName, 'Alex');
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('tapping skip marks name entry shown and calls onDone', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      var doneCalled = false;
+      final onboardingService = FakeOnboardingPreferenceService();
+
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () => doneCalled = true,
+          onboardingService: onboardingService,
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        await tester.tap(find.byKey(const Key('enter-name-skip-button')));
+        await tester.pump();
+        await tester.pump();
+
+        expect(doneCalled, isTrue);
+        expect(onboardingService.isNameEntryShown, isTrue);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
   });
 }
