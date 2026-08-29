@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
+import 'package:habit_loop/domain/user/user_profile_repository.dart';
 import 'package:habit_loop/infrastructure/auth/data/noop_auth_service.dart';
 import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
@@ -17,6 +19,8 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_break_sync_repository.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
+import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/data/noop_showup_sync_repository.dart';
 
@@ -643,5 +647,56 @@ void main() {
 
       expect(withAuthOverrides.length, equals(baseOverrides.length + 2));
     });
+
+    test('displayNameProvider resolves to null when userProfileRepository is not provided', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(displayNameProvider), isNull);
+    });
+
+    test('displayNameProvider reflects a saved display name fetched internally from the repository', () async {
+      final userProfileRepo = InMemoryUserProfileRepository();
+      await userProfileRepo.saveProfile(UserProfile(displayName: 'Yuriy', updatedAt: DateTime.now()));
+
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        userProfileRepository: userProfileRepo,
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(displayNameProvider), 'Yuriy');
+    });
+
+    test('displayNameProvider falls back to null when the seed read throws (must never block runApp)', () async {
+      final overrides = await AppContainer.overrides(
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        transactionService: txService,
+        userProfileRepository: _ThrowingUserProfileRepository(),
+      );
+      final container = ProviderContainer(overrides: overrides);
+      addTearDown(container.dispose);
+
+      expect(container.read(displayNameProvider), isNull);
+    });
   });
+}
+
+class _ThrowingUserProfileRepository implements UserProfileRepository {
+  @override
+  Future<UserProfile?> getProfile() async {
+    throw Exception('DB read failed');
+  }
+
+  @override
+  Future<void> saveProfile(UserProfile profile) async {}
 }

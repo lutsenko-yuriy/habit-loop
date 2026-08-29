@@ -21,6 +21,7 @@ import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_prefer
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_override_store.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 
 /// Composition root. Knows which instances to wire to which providers;
 /// `main.dart` knows how to construct those instances.
@@ -59,6 +60,17 @@ abstract final class AppContainer {
       initialLocale = await localePreferenceService.getSavedLocale();
     }
 
+    // HAB-232 WU3: unlike initialLocale above, this read is wrapped in its
+    // own try/catch — a DB read failure here must never block runApp.
+    String? initialDisplayName;
+    if (userProfileRepository != null) {
+      try {
+        initialDisplayName = (await userProfileRepository.getProfile())?.displayName;
+      } catch (_) {
+        initialDisplayName = null;
+      }
+    }
+
     return [
       pactRepositoryProvider.overrideWithValue(pactRepository),
       showupRepositoryProvider.overrideWithValue(showupRepository),
@@ -70,6 +82,8 @@ abstract final class AppContainer {
       if (userProfileRepository != null) userProfileRepositoryProvider.overrideWithValue(userProfileRepository),
       if (userProfileSyncRepository != null)
         userProfileSyncRepositoryProvider.overrideWithValue(userProfileSyncRepository),
+      if (initialDisplayName != null)
+        displayNameProvider.overrideWith(() => DisplayNameNotifier(seedDisplayName: initialDisplayName)),
       if (logService != null) logServiceProvider.overrideWithValue(logService),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),
