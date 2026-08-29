@@ -14,10 +14,13 @@ class EnterNamePageIos extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return CupertinoPageScaffold(
       child: SafeArea(
-        child: Padding(
+        // Scrollable: the field is autofocused, so the keyboard is up on the very
+        // first frame and shrinks the body (resizeToAvoidBottomInset) — an
+        // unscrollable Column can overflow past the Continue/Skip buttons on a
+        // short device or with longer translated copy.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.s24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(l10n.enterNameTitle, style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle),
