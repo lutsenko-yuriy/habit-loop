@@ -11,12 +11,16 @@ import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
+import 'package:habit_loop/domain/user/user_profile_repository.dart';
+import 'package:habit_loop/domain/user/user_profile_sync_repository.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../infrastructure/auth/fake_auth_service.dart';
@@ -30,11 +34,13 @@ class _FakeFirestoreClient implements FirestoreClient {
   final List<Map<String, dynamic>> upsertedPacts = [];
   final List<Map<String, dynamic>> upsertedShowups = [];
   final List<Map<String, dynamic>> upsertedPactBreaks = [];
+  final List<Map<String, dynamic>> upsertedUserProfiles = [];
   bool throwOnNext = false;
   bool throwOnGetPacts = false;
   List<Map<String, dynamic>> remotePactDocs = [];
   List<Map<String, dynamic>> remoteShowupDocs = [];
   List<Map<String, dynamic>> remotePactBreakDocs = [];
+  Map<String, dynamic>? remoteUserProfileDoc;
 
   @override
   Future<List<Map<String, dynamic>>> getPacts(String userId) async {
@@ -83,6 +89,18 @@ class _FakeFirestoreClient implements FirestoreClient {
 
   @override
   Future<void> deletePactBreak(String userId, String pactBreakId) async {}
+
+  @override
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async => remoteUserProfileDoc;
+
+  @override
+  Future<void> upsertUserProfile(String userId, Map<String, dynamic> data) async {
+    if (throwOnNext) {
+      throwOnNext = false;
+      throw Exception('network error');
+    }
+    upsertedUserProfiles.add(data);
+  }
 }
 
 class _ThrowingPactSyncRepo implements PactSyncRepository {
@@ -128,6 +146,12 @@ class _ThrowingFirestoreClient implements FirestoreClient {
 
   @override
   Future<void> deletePactBreak(String userId, String pactBreakId) async {}
+
+  @override
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async => null;
+
+  @override
+  Future<void> upsertUserProfile(String userId, Map<String, dynamic> data) async => throw Exception('error');
 }
 
 class _InMemoryPactSyncRepo implements PactSyncRepository {
@@ -241,6 +265,40 @@ class _InMemoryPactBreakSyncRepo implements PactBreakSyncRepository {
   }
 }
 
+class _InMemoryUserProfileSyncRepo implements UserProfileSyncRepository {
+  UserProfile? dirty;
+  final UserProfile? all;
+  DateTime? syncedAt;
+  bool synced = false;
+
+  _InMemoryUserProfileSyncRepo({UserProfile? dirty, UserProfile? all, DateTime? userProfileSyncedAt})
+      : dirty = dirty,
+        all = all ?? dirty,
+        syncedAt = userProfileSyncedAt;
+
+  @override
+  Future<UserProfile?> getDirtyUserProfile() async => dirty;
+
+  @override
+  Future<void> markUserProfileSynced(DateTime syncedAtArg) async {
+    synced = true;
+    dirty = null;
+    syncedAt = syncedAtArg;
+  }
+
+  @override
+  Future<DateTime?> getUserProfileSyncedAt() async {
+    if (dirty != null) return null;
+    return syncedAt;
+  }
+
+  @override
+  Future<void> markUserProfileDirty() async {
+    if (all != null) dirty = all;
+    syncedAt = null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -282,6 +340,15 @@ Map<String, dynamic> _remoteShowupDoc(String id, {DateTime? updatedAt}) =>
 Map<String, dynamic> _remotePactBreakDoc(String id, {DateTime? updatedAt}) =>
     SyncMapper.pactBreakToDocument(_pactBreak(id), updatedAt: updatedAt);
 
+UserProfile _profile({String? displayName, DateTime? updatedAt}) =>
+    UserProfile(displayName: displayName ?? 'Jamie', updatedAt: updatedAt ?? DateTime(2026, 1, 1));
+
+// updatedAt here simulates the server's stored upload time — passed straight
+// through to the mapper's updatedAt param, not via the profile's own
+// (unrelated) edit-time field, matching how uploadUserProfile now stamps it.
+Map<String, dynamic> _remoteUserProfileDoc({String? displayName, DateTime? updatedAt}) =>
+    SyncMapper.userProfileToDocument(_profile(displayName: displayName), updatedAt: updatedAt);
+
 FirestoreSyncService _makeService({
   _FakeFirestoreClient? client,
   FakeAuthService? auth,
@@ -295,6 +362,9 @@ FirestoreSyncService _makeService({
   PactRepository? pactRepository,
   ShowupRepository? showupRepository,
   PactBreakRepository? pactBreakRepository,
+  UserProfileRepository? userProfileRepository,
+  DateTime? userProfileSyncedAt,
+  UserProfile? dirtyProfile,
   FakeRemoteConfigService? remoteConfig,
 }) {
   return FirestoreSyncService(
@@ -307,6 +377,9 @@ FirestoreSyncService _makeService({
     pactRepository: pactRepository ?? InMemoryPactRepository(),
     showupRepository: showupRepository ?? InMemoryShowupRepository(),
     pactBreakRepository: pactBreakRepository ?? InMemoryPactBreakRepository(),
+    userProfileRepository: userProfileRepository ?? InMemoryUserProfileRepository(),
+    userProfileSyncRepository:
+        _InMemoryUserProfileSyncRepo(dirty: dirtyProfile, userProfileSyncedAt: userProfileSyncedAt),
     remoteConfig: remoteConfig,
   );
 }
@@ -330,6 +403,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.uploadPact(_pact('p1'));
@@ -377,6 +452,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.uploadPact(_pact('p1'));
@@ -408,6 +485,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.uploadShowup(_showup('s1'));
@@ -446,6 +525,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: pactBreakSyncRepo,
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.uploadPactBreak(_pactBreak('b1'));
@@ -479,6 +560,55 @@ void main() {
     });
   });
 
+  group('FirestoreSyncService.uploadUserProfile', () {
+    test('uploads to Firestore and marks user profile synced when CB is closed', () async {
+      final client = _FakeFirestoreClient();
+      final profileSyncRepo = _InMemoryUserProfileSyncRepo();
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: _InMemoryPactSyncRepo([]),
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
+        pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
+        pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: profileSyncRepo,
+      );
+
+      await svc.uploadUserProfile(_profile(displayName: 'Jamie'));
+
+      expect(client.upsertedUserProfiles.length, 1);
+      expect(client.upsertedUserProfiles.first['display_name'], 'Jamie');
+      expect(profileSyncRepo.synced, isTrue);
+    });
+
+    test('does not upload when CB is open', () async {
+      final client = _FakeFirestoreClient();
+      final cb = SyncCircuitBreaker();
+      cb.recordFailure();
+      for (var i = 0; i < 5; i++) {
+        cb.recordFailure();
+      }
+
+      final svc = _makeService(client: client, cb: cb);
+      await svc.uploadUserProfile(_profile());
+
+      expect(client.upsertedUserProfiles, isEmpty);
+    });
+
+    test('does not upload when userId is null', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(client: client, auth: FakeAuthService(userId: null));
+
+      await svc.uploadUserProfile(_profile());
+
+      expect(client.upsertedUserProfiles, isEmpty);
+    });
+  });
+
   group('FirestoreSyncService.uploadPact — halfOpen flush trigger', () {
     test('triggers flushDirtyRecords when CB transitions halfOpen → closed', () async {
       // Set up: 1 dirty pact in repo, CB starts halfOpen (1 previous failure)
@@ -497,6 +627,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       // A successful upload while halfOpen transitions CB to closed and triggers flush.
@@ -511,13 +643,14 @@ void main() {
   });
 
   group('FirestoreSyncService.flushDirtyRecords', () {
-    test('uploads all dirty pacts, showups, and pact breaks', () async {
+    test('uploads all dirty pacts, showups, pact breaks, and the user profile', () async {
       final client = _FakeFirestoreClient();
       final svc = _makeService(
         client: client,
         dirtyPacts: [_pact('p1'), _pact('p2')],
         dirtyShowups: [_showup('s1')],
         dirtyPactBreaks: [_pactBreak('b1')],
+        dirtyProfile: _profile(displayName: 'Jamie'),
       );
 
       await svc.flushDirtyRecords();
@@ -525,6 +658,16 @@ void main() {
       expect(client.upsertedPacts.map((d) => d['id']), containsAll(['p1', 'p2']));
       expect(client.upsertedShowups.map((d) => d['id']), contains('s1'));
       expect(client.upsertedPactBreaks.map((d) => d['id']), contains('b1'));
+      expect(client.upsertedUserProfiles.single['display_name'], 'Jamie');
+    });
+
+    test('does nothing to the profile when it is not dirty', () async {
+      final client = _FakeFirestoreClient();
+      final svc = _makeService(client: client);
+
+      await svc.flushDirtyRecords();
+
+      expect(client.upsertedUserProfiles, isEmpty);
     });
 
     test('stops early when CB transitions to open mid-flush', () async {
@@ -545,6 +688,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.flushDirtyRecords();
@@ -679,6 +824,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -701,6 +848,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -725,6 +874,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -755,6 +906,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -780,6 +933,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -804,6 +959,8 @@ void main() {
         showupRepository: showupRepo,
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -828,6 +985,8 @@ void main() {
         showupRepository: showupRepo,
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -849,6 +1008,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: pactBreakSyncRepo,
         pactBreakRepository: pactBreakRepo,
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -873,6 +1034,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: pactBreakSyncRepo,
         pactBreakRepository: pactBreakRepo,
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -898,6 +1061,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: pactBreakSyncRepo,
         pactBreakRepository: pactBreakRepo,
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -923,6 +1088,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: pactBreakSyncRepo,
         pactBreakRepository: pactBreakRepo,
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.pullRemoteChanges();
@@ -1050,6 +1217,145 @@ void main() {
         expect(device1Winner, device2Winner, reason: 'both devices must converge on the same winner');
       });
     });
+
+    group('user profile merge (HAB-232 WU2)', () {
+      test('inserts a remote profile not found locally', () async {
+        final client = _FakeFirestoreClient()..remoteUserProfileDoc = _remoteUserProfileDoc(displayName: 'Jamie');
+        final profileRepo = InMemoryUserProfileRepository();
+        final profileSyncRepo = _InMemoryUserProfileSyncRepo();
+        final svc = FirestoreSyncService(
+          firestoreClient: client,
+          authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
+          circuitBreaker: SyncCircuitBreaker(),
+          pactSyncRepository: _InMemoryPactSyncRepo([]),
+          showupSyncRepository: _InMemoryShowupSyncRepo([]),
+          pactRepository: InMemoryPactRepository(),
+          showupRepository: InMemoryShowupRepository(),
+          pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
+          pactBreakRepository: InMemoryPactBreakRepository(),
+          userProfileRepository: profileRepo,
+          userProfileSyncRepository: profileSyncRepo,
+        );
+
+        await svc.pullRemoteChanges();
+
+        expect((await profileRepo.getProfile())?.displayName, 'Jamie');
+        expect(profileSyncRepo.synced, isTrue);
+      });
+
+      test('does nothing when there is no remote profile document', () async {
+        final client = _FakeFirestoreClient(); // remoteUserProfileDoc left null
+        final profileRepo = InMemoryUserProfileRepository();
+        final svc = _makeService(client: client, userProfileRepository: profileRepo);
+
+        await svc.pullRemoteChanges();
+
+        expect(await profileRepo.getProfile(), isNull);
+      });
+
+      test('skips remote profile when local copy is dirty', () async {
+        final localProfile = _profile(displayName: 'Local');
+        final profileRepo = InMemoryUserProfileRepository();
+        await profileRepo.saveProfile(localProfile);
+        final client = _FakeFirestoreClient()
+          ..remoteUserProfileDoc = _remoteUserProfileDoc(displayName: 'Remote', updatedAt: DateTime(2026, 6, 1));
+        final profileSyncRepo = _InMemoryUserProfileSyncRepo(dirty: localProfile);
+        final svc = FirestoreSyncService(
+          firestoreClient: client,
+          authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
+          circuitBreaker: SyncCircuitBreaker(),
+          pactSyncRepository: _InMemoryPactSyncRepo([]),
+          showupSyncRepository: _InMemoryShowupSyncRepo([]),
+          pactRepository: InMemoryPactRepository(),
+          showupRepository: InMemoryShowupRepository(),
+          pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
+          pactBreakRepository: InMemoryPactBreakRepository(),
+          userProfileRepository: profileRepo,
+          userProfileSyncRepository: profileSyncRepo,
+        );
+
+        await svc.pullRemoteChanges();
+
+        expect(profileSyncRepo.synced, isFalse);
+        expect((await profileRepo.getProfile())?.displayName, 'Local');
+      });
+
+      test('overwrites local profile when remote updated_at is newer than local syncedAt', () async {
+        final t1 = DateTime(2026, 3, 1);
+        final t2 = DateTime(2026, 4, 1); // remote is newer
+
+        final localProfile = _profile(displayName: 'Local', updatedAt: t1);
+        final profileRepo = InMemoryUserProfileRepository();
+        await profileRepo.saveProfile(localProfile);
+        final client = _FakeFirestoreClient()
+          ..remoteUserProfileDoc = _remoteUserProfileDoc(displayName: 'Remote', updatedAt: t2);
+        final profileSyncRepo = _InMemoryUserProfileSyncRepo(userProfileSyncedAt: t1);
+        final svc = FirestoreSyncService(
+          firestoreClient: client,
+          authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
+          circuitBreaker: SyncCircuitBreaker(),
+          pactSyncRepository: _InMemoryPactSyncRepo([]),
+          showupSyncRepository: _InMemoryShowupSyncRepo([]),
+          pactRepository: InMemoryPactRepository(),
+          showupRepository: InMemoryShowupRepository(),
+          pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
+          pactBreakRepository: InMemoryPactBreakRepository(),
+          userProfileRepository: profileRepo,
+          userProfileSyncRepository: profileSyncRepo,
+        );
+
+        await svc.pullRemoteChanges();
+
+        expect(profileSyncRepo.synced, isTrue);
+        expect((await profileRepo.getProfile())?.displayName, 'Remote');
+      });
+
+      test(
+          'keeps local profile when remote updated_at is not newer than local syncedAt — '
+          'never resolves by "remote non-null wins" (HAB-232 WU2 risk note)', () async {
+        final t1 = DateTime(2026, 4, 1);
+        final t2 = DateTime(2026, 3, 1); // remote is OLDER
+
+        // Local profile is a deliberate clear (displayName: null) synced after the
+        // remote's stale non-null value — the remote must NOT resurrect the old name.
+        final localProfile = UserProfile(updatedAt: t1); // deliberate clear: displayName omitted → null
+        final profileRepo = InMemoryUserProfileRepository();
+        await profileRepo.saveProfile(localProfile);
+        final client = _FakeFirestoreClient()
+          ..remoteUserProfileDoc = _remoteUserProfileDoc(displayName: 'Stale remote name', updatedAt: t2);
+        final profileSyncRepo = _InMemoryUserProfileSyncRepo(userProfileSyncedAt: t1);
+        final svc = FirestoreSyncService(
+          firestoreClient: client,
+          authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
+          circuitBreaker: SyncCircuitBreaker(),
+          pactSyncRepository: _InMemoryPactSyncRepo([]),
+          showupSyncRepository: _InMemoryShowupSyncRepo([]),
+          pactRepository: InMemoryPactRepository(),
+          showupRepository: InMemoryShowupRepository(),
+          pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
+          pactBreakRepository: InMemoryPactBreakRepository(),
+          userProfileRepository: profileRepo,
+          userProfileSyncRepository: profileSyncRepo,
+        );
+
+        await svc.pullRemoteChanges();
+
+        expect(profileSyncRepo.synced, isFalse);
+        expect((await profileRepo.getProfile())?.displayName, isNull);
+      });
+
+      test('a malformed remote profile document is isolated and does not abort pact/showup pull', () async {
+        final client = _FakeFirestoreClient()
+          ..remotePactDocs = [_remotePactDoc('p1')]
+          ..remoteUserProfileDoc = {'display_name': 'Bad', 'updated_at': 'not-a-number'};
+        final pactRepo = InMemoryPactRepository();
+        final svc = _makeService(client: client, pactRepository: pactRepo);
+
+        await expectLater(svc.pullRemoteChanges(), completes);
+
+        expect((await pactRepo.getAllPacts()).map((p) => p.id), contains('p1'));
+      });
+    });
   });
 
   group('FirestoreSyncService.forceSyncAll', () {
@@ -1086,6 +1392,8 @@ void main() {
         showupRepository: InMemoryShowupRepository([showup]),
         pactBreakSyncRepository: pactBreakSyncRepo,
         pactBreakRepository: InMemoryPactBreakRepository([pactBreak]),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       final result = await svc.forceSyncAll();
@@ -1132,6 +1440,8 @@ void main() {
         showupRepository: InMemoryShowupRepository([showup]),
         pactBreakSyncRepository: pactBreakSyncRepo,
         pactBreakRepository: InMemoryPactBreakRepository([pactBreak]),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       final result = await svc.forceSyncAll();
@@ -1172,12 +1482,69 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       final result = await svc.forceSyncAll();
       expect(result.attempted, equals(0));
       expect(result.pactsFailed, equals(0));
       expect(result.showupsFailed, equals(0));
+    });
+
+    test('includes the user profile in attempted/succeeded counts when one exists', () async {
+      final client = _FakeFirestoreClient();
+      final profile = _profile(displayName: 'Jamie');
+      final profileRepo = InMemoryUserProfileRepository();
+      await profileRepo.saveProfile(profile);
+      final profileSyncRepo = _InMemoryUserProfileSyncRepo(all: profile, userProfileSyncedAt: DateTime(2026, 5, 1));
+
+      final svc = FirestoreSyncService(
+        firestoreClient: client,
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: _InMemoryPactSyncRepo([]),
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
+        pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
+        pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: profileRepo,
+        userProfileSyncRepository: profileSyncRepo,
+      );
+
+      final result = await svc.forceSyncAll();
+
+      expect(client.upsertedUserProfiles.single['display_name'], 'Jamie');
+      expect(result.attempted, equals(1));
+      expect(result.userProfileFailed, equals(0));
+    });
+
+    test('reports userProfileFailed when the upload fails', () async {
+      final profile = _profile(displayName: 'Jamie');
+      final profileRepo = InMemoryUserProfileRepository();
+      await profileRepo.saveProfile(profile);
+      final profileSyncRepo = _InMemoryUserProfileSyncRepo(all: profile, userProfileSyncedAt: DateTime(2026, 5, 1));
+
+      final svc = FirestoreSyncService(
+        firestoreClient: _ThrowingFirestoreClient(),
+        authService: FakeAuthService(userId: 'user-1', isAnonymous: false),
+        circuitBreaker: SyncCircuitBreaker(),
+        pactSyncRepository: _InMemoryPactSyncRepo([]),
+        showupSyncRepository: _InMemoryShowupSyncRepo([]),
+        pactRepository: InMemoryPactRepository(),
+        showupRepository: InMemoryShowupRepository(),
+        pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
+        pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: profileRepo,
+        userProfileSyncRepository: profileSyncRepo,
+      );
+
+      final result = await svc.forceSyncAll();
+
+      expect(result.attempted, equals(1));
+      expect(result.userProfileFailed, equals(1));
+      expect(result.failed, equals(1));
     });
   });
 
@@ -1207,6 +1574,8 @@ void main() {
         showupRepository: InMemoryShowupRepository(),
         pactBreakSyncRepository: _InMemoryPactBreakSyncRepo([]),
         pactBreakRepository: InMemoryPactBreakRepository(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        userProfileSyncRepository: _InMemoryUserProfileSyncRepo(),
       );
 
       await svc.uploadPact(_pact('p1'));

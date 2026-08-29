@@ -3,6 +3,7 @@ import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/persistence/schedule_codec.dart';
 
 /// Encodes domain objects to Firestore document maps and decodes them back.
@@ -160,6 +161,32 @@ abstract final class SyncMapper {
           doc['created_at'] != null ? DateTime.fromMillisecondsSinceEpoch((doc['created_at'] as num).toInt()) : null,
       stoppedAt:
           doc['stopped_at'] != null ? DateTime.fromMillisecondsSinceEpoch((doc['stopped_at'] as num).toInt()) : null,
+    );
+  }
+
+  /// Encodes [profile] to a Firestore document map.
+  ///
+  /// [updatedAt] is written as `updated_at` (epoch ms) and defaults to
+  /// [DateTime.now], matching the other three mappers — this must be
+  /// upload time, not [UserProfile.updatedAt] (local edit time). Using the
+  /// domain edit time here would let a stale flush overwrite Firestore with
+  /// an older timestamp than a newer edit already uploaded from another
+  /// device, and the LWW pull compares this field against the receiving
+  /// device's `synced_at`, permanently wedging the merge on that device.
+  static Map<String, dynamic> userProfileToDocument(UserProfile profile, {DateTime? updatedAt}) {
+    return {
+      'display_name': profile.displayName,
+      'updated_at': (updatedAt ?? DateTime.now()).millisecondsSinceEpoch,
+    };
+  }
+
+  /// Decodes a Firestore document map back into a [UserProfile].
+  ///
+  /// Throws if `updated_at` is absent or has an unexpected type.
+  static UserProfile userProfileFromDocument(Map<String, dynamic> doc) {
+    return UserProfile(
+      displayName: doc['display_name'] as String?,
+      updatedAt: DateTime.fromMillisecondsSinceEpoch((doc['updated_at'] as num).toInt()),
     );
   }
 

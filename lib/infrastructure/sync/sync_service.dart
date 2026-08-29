@@ -1,6 +1,7 @@
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/sync/force_sync_result.dart';
 
 /// Abstract interface for the write-through sync service.
@@ -30,6 +31,11 @@ abstract class SyncService {
   ///
   /// Same success/failure semantics as [uploadPact].
   Future<void> uploadPactBreak(PactBreak pactBreak);
+
+  /// Uploads [profile] to Firestore if the circuit breaker allows requests.
+  ///
+  /// Same success/failure semantics as [uploadPact].
+  Future<void> uploadUserProfile(UserProfile profile);
 
   /// Loads all locally-dirty records and uploads them to Firestore.
   ///

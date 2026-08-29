@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
 
 void main() {
@@ -351,6 +352,47 @@ void main() {
     test('decodes null stoppedAt as null', () {
       final doc = SyncMapper.pactBreakToDocument(pactBreak);
       expect(SyncMapper.pactBreakFromDocument(doc).stoppedAt, isNull);
+    });
+  });
+
+  group('SyncMapper.userProfileToDocument', () {
+    test('includes display_name and the given updated_at', () {
+      final profile = UserProfile(displayName: 'Jamie', updatedAt: DateTime(2026, 5, 1));
+      final doc = SyncMapper.userProfileToDocument(profile, updatedAt: DateTime(2026, 5, 2));
+      expect(doc['display_name'], 'Jamie');
+      expect(doc['updated_at'], DateTime(2026, 5, 2).millisecondsSinceEpoch);
+    });
+
+    test('encodes null displayName as null', () {
+      final profile = UserProfile(updatedAt: DateTime(2026, 5, 1));
+      expect(SyncMapper.userProfileToDocument(profile)['display_name'], isNull);
+    });
+
+    // Upload time, not profile.updatedAt (edit time) — see the doc comment:
+    // mixing the two would let a stale flush overwrite a newer remote edit.
+    test('defaults updated_at to DateTime.now(), not profile.updatedAt', () {
+      final editTime = DateTime(2020, 1, 1);
+      final profile = UserProfile(displayName: 'Jamie', updatedAt: editTime);
+      final doc = SyncMapper.userProfileToDocument(profile);
+      expect(doc['updated_at'], isNot(editTime.millisecondsSinceEpoch));
+      expect(doc['updated_at'], isA<int>());
+    });
+  });
+
+  group('SyncMapper.userProfileFromDocument', () {
+    test('round-trips a profile through userProfileToDocument → userProfileFromDocument', () {
+      final profile = UserProfile(displayName: 'Jamie', updatedAt: DateTime(2026, 5, 1));
+      final doc = SyncMapper.userProfileToDocument(profile, updatedAt: DateTime(2026, 5, 1));
+      final decoded = SyncMapper.userProfileFromDocument(doc);
+
+      expect(decoded.displayName, profile.displayName);
+      expect(decoded.updatedAt, DateTime(2026, 5, 1));
+    });
+
+    test('decodes null displayName', () {
+      final profile = UserProfile(updatedAt: DateTime(2026, 5, 1));
+      final doc = SyncMapper.userProfileToDocument(profile, updatedAt: DateTime(2026, 5, 1));
+      expect(SyncMapper.userProfileFromDocument(doc).displayName, isNull);
     });
   });
 

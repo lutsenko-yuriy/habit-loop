@@ -23,6 +23,10 @@ void main() {
       expect(await client.getPactBreaks('user-1'), isEmpty);
     });
 
+    test('getUserProfile returns null when nothing upserted', () async {
+      expect(await client.getUserProfile('user-1'), isNull);
+    });
+
     // -------------------------------------------------------------------------
     // seed()
     // -------------------------------------------------------------------------
@@ -70,6 +74,32 @@ void main() {
         expect(pactBreaks.first['rationale'], 'Recovering from a cold');
       });
 
+      test('populates the user profile for the seeded userId', () async {
+        client.seed(const FakeFirestoreSeedData(
+          userProfiles: {
+            'user-1': <String, dynamic>{'display_name': 'Jamie'},
+          },
+        ));
+
+        final profile = await client.getUserProfile('user-1');
+        expect(profile?['display_name'], 'Jamie');
+      });
+
+      test('second seed overwrites the user profile on collision (single doc per user)', () async {
+        client.seed(const FakeFirestoreSeedData(
+          userProfiles: {
+            'user-1': <String, dynamic>{'display_name': 'Old'},
+          },
+        ));
+        client.seed(const FakeFirestoreSeedData(
+          userProfiles: {
+            'user-1': <String, dynamic>{'display_name': 'New'},
+          },
+        ));
+
+        expect((await client.getUserProfile('user-1'))?['display_name'], 'New');
+      });
+
       test('is additive — second seed merges new documents with existing ones', () async {
         client.seed(const FakeFirestoreSeedData(
           pacts: {
@@ -115,7 +145,7 @@ void main() {
     // clear()
     // -------------------------------------------------------------------------
 
-    test('clear removes all pacts, showups, and pact breaks', () async {
+    test('clear removes all pacts, showups, pact breaks, and user profiles', () async {
       client.seed(const FakeFirestoreSeedData(
         pacts: {
           'user-1': {'pact-1': <String, dynamic>{}}
@@ -127,12 +157,14 @@ void main() {
           'user-1': {'break-1': <String, dynamic>{}}
         },
       ));
+      await client.upsertUserProfile('user-1', {'display_name': 'Jamie'});
 
       client.clear();
 
       expect(await client.getPacts('user-1'), isEmpty);
       expect(await client.getShowups('user-1'), isEmpty);
       expect(await client.getPactBreaks('user-1'), isEmpty);
+      expect(await client.getUserProfile('user-1'), isNull);
     });
 
     // -------------------------------------------------------------------------
@@ -151,6 +183,22 @@ void main() {
 
         final snap = client.snapshot();
         expect(snap.pacts['user-1']?['pact-1']?['habit_name'], 'Meditate');
+      });
+
+      test('reflects a seeded user profile', () async {
+        client.seed(const FakeFirestoreSeedData(
+          userProfiles: {
+            'user-1': <String, dynamic>{'display_name': 'Jamie'},
+          },
+        ));
+
+        expect(client.snapshot().userProfiles['user-1']?['display_name'], 'Jamie');
+      });
+
+      test('reflects a user profile written after seeding', () async {
+        await client.upsertUserProfile('user-1', {'display_name': 'Written'});
+
+        expect(client.snapshot().userProfiles['user-1']?['display_name'], 'Written');
       });
 
       test('mutating the snapshot does not affect stored data', () async {
@@ -324,6 +372,40 @@ void main() {
     });
 
     // -------------------------------------------------------------------------
+    // getUserProfile / upsertUserProfile
+    // -------------------------------------------------------------------------
+
+    test('upsertUserProfile then getUserProfile returns the stored document', () async {
+      await client.upsertUserProfile('user-1', {'display_name': 'Jamie'});
+
+      expect((await client.getUserProfile('user-1'))?['display_name'], 'Jamie');
+    });
+
+    test('upsertUserProfile overwrites the previous document (singleton — no id)', () async {
+      await client.upsertUserProfile('user-1', {'display_name': 'Old'});
+      await client.upsertUserProfile('user-1', {'display_name': 'New'});
+
+      expect((await client.getUserProfile('user-1'))?['display_name'], 'New');
+    });
+
+    test('getUserProfile is isolated per userId', () async {
+      await client.upsertUserProfile('user-1', {'display_name': 'A'});
+      await client.upsertUserProfile('user-2', {'display_name': 'B'});
+
+      expect((await client.getUserProfile('user-1'))?['display_name'], 'A');
+      expect((await client.getUserProfile('user-2'))?['display_name'], 'B');
+    });
+
+    test('getUserProfile returns a copy — mutating it does not affect stored data', () async {
+      await client.upsertUserProfile('user-1', {'display_name': 'A'});
+
+      final result = await client.getUserProfile('user-1');
+      result!['display_name'] = 'Mutated';
+
+      expect((await client.getUserProfile('user-1'))?['display_name'], 'A');
+    });
+
+    // -------------------------------------------------------------------------
     // Defensive copies — getPacts / getShowups return copies
     // -------------------------------------------------------------------------
 
@@ -361,6 +443,8 @@ void main() {
       await expectLater(client.deletePact('u', 'nonexistent'), completes);
       await expectLater(client.deleteShowup('u', 'nonexistent'), completes);
       await expectLater(client.deletePactBreak('u', 'nonexistent'), completes);
+      await expectLater(client.getUserProfile('nobody'), completes);
+      await expectLater(client.upsertUserProfile('u', {}), completes);
     });
   });
 }

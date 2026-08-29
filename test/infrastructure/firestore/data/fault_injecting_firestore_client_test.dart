@@ -97,6 +97,16 @@ void main() {
         await makePerfect().deletePactBreak('user-1', 'break-1');
         expect(await inner.getPactBreaks('user-1'), isEmpty);
       });
+
+      test('getUserProfile delegates to inner and returns its result', () async {
+        await inner.upsertUserProfile('user-1', {'display_name': 'Jamie'});
+        expect((await makePerfect().getUserProfile('user-1'))?['display_name'], 'Jamie');
+      });
+
+      test('upsertUserProfile delegates to inner', () async {
+        await makePerfect().upsertUserProfile('user-1', {'display_name': 'Jamie'});
+        expect((await inner.getUserProfile('user-1'))?['display_name'], 'Jamie');
+      });
     });
 
     // -------------------------------------------------------------------------
@@ -138,6 +148,14 @@ void main() {
 
       test('deletePactBreak throws', () {
         expect(makeAbsent().deletePactBreak('user-1', 'break-1'), throwsException);
+      });
+
+      test('getUserProfile throws', () {
+        expect(makeAbsent().getUserProfile('user-1'), throwsException);
+      });
+
+      test('upsertUserProfile throws', () {
+        expect(makeAbsent().upsertUserProfile('user-1', {}), throwsException);
       });
     });
 

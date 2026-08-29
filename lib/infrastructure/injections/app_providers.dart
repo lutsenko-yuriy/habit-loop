@@ -15,6 +15,8 @@ import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/domain/showup/showup_sync_repository.dart';
+import 'package:habit_loop/domain/user/user_profile_repository.dart';
+import 'package:habit_loop/domain/user/user_profile_sync_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
@@ -57,6 +59,8 @@ import 'package:habit_loop/slices/pact/application/pact_transaction_service.dart
 import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_break_sync_repository.dart';
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
+import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
+import 'package:habit_loop/slices/profile/data/noop_user_profile_sync_repository.dart';
 import 'package:habit_loop/slices/reminder/application/notification_reconciliation_service.dart';
 import 'package:habit_loop/slices/reminder/application/reconciliation_throttle.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
@@ -225,6 +229,17 @@ final pactBreakRepositoryProvider = Provider<PactBreakRepository>(
 
 final pactBreakSyncRepositoryProvider = Provider<PactBreakSyncRepository>(
   (ref) => const NoopPactBreakSyncRepository(),
+);
+
+// No must-override throw (unlike pactRepositoryProvider/showupRepositoryProvider) —
+// an inert in-memory default keeps syncServiceProvider working without an explicit
+// override, same rationale as pactBreakRepositoryProvider above.
+final userProfileRepositoryProvider = Provider<UserProfileRepository>(
+  (ref) => InMemoryUserProfileRepository(),
+);
+
+final userProfileSyncRepositoryProvider = Provider<UserProfileSyncRepository>(
+  (ref) => const NoopUserProfileSyncRepository(),
 );
 
 // ---------------------------------------------------------------------------
@@ -402,6 +417,8 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     showupRepository: ref.watch(showupRepositoryProvider),
     pactBreakSyncRepository: ref.watch(pactBreakSyncRepositoryProvider),
     pactBreakRepository: ref.watch(pactBreakRepositoryProvider),
+    userProfileSyncRepository: ref.watch(userProfileSyncRepositoryProvider),
+    userProfileRepository: ref.watch(userProfileRepositoryProvider),
     remoteConfig: ref.watch(remoteConfigServiceProvider),
   );
 });

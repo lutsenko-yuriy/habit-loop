@@ -54,6 +54,7 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_break_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_transaction_service.dart';
+import 'package:habit_loop/slices/profile/data/sqlite_user_profile_repository.dart';
 import 'package:habit_loop/slices/reminder/analytics/reminder_analytics_events.dart';
 import 'package:habit_loop/slices/reminder/ui/generic/app_lifecycle_reconciler.dart';
 import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
@@ -270,6 +271,7 @@ Future<void> main() async {
     final pactRepo = SqlitePactRepository(db);
     final showupRepo = SqliteShowupRepository(db);
     final pactBreakRepo = SqlitePactBreakRepository(db);
+    final userProfileRepo = SqliteUserProfileRepository(db);
     final txService = SqlitePactTransactionService(db);
 
     // Assign notificationAnalyticsService so the warm-start callback (closed
@@ -297,6 +299,8 @@ Future<void> main() async {
       showupSyncRepository: showupRepo,
       pactBreakRepository: pactBreakRepo,
       pactBreakSyncRepository: pactBreakRepo,
+      userProfileRepository: userProfileRepo,
+      userProfileSyncRepository: userProfileRepo,
       transactionService: txService,
       logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
       analyticsService: analyticsService,

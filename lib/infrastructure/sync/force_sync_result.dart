@@ -5,6 +5,7 @@ class ForceSyncResult {
     required this.pactsFailed,
     required this.showupsFailed,
     this.pactBreaksFailed = 0,
+    this.userProfileFailed = 0,
   });
 
   /// Total records marked dirty before the flush pass.
@@ -19,6 +20,11 @@ class ForceSyncResult {
   /// Pact breaks still dirty after the flush (failed to upload).
   final int pactBreaksFailed;
 
-  int get failed => pactsFailed + showupsFailed + pactBreaksFailed;
+  /// `1` if the user profile is still dirty after the flush (failed to
+  /// upload), `0` otherwise. There is at most one profile per user, so this
+  /// is a 0/1 count rather than a list length.
+  final int userProfileFailed;
+
+  int get failed => pactsFailed + showupsFailed + pactBreaksFailed + userProfileFailed;
   int get succeeded => attempted - failed;
 }

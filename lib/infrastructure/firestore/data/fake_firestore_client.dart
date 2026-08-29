@@ -5,16 +5,20 @@ import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.d
 /// [pacts] maps `userId → pactId → document fields`.
 /// [showups] maps `userId → showupId → document fields`.
 /// [pactBreaks] maps `userId → pactBreakId → document fields`.
+/// [userProfiles] maps `userId → the single profile document's fields`
+/// (there is no per-id key — one profile document per user).
 class FakeFirestoreSeedData {
   const FakeFirestoreSeedData({
     this.pacts = const {},
     this.showups = const {},
     this.pactBreaks = const {},
+    this.userProfiles = const {},
   });
 
   final Map<String, Map<String, Map<String, dynamic>>> pacts;
   final Map<String, Map<String, Map<String, dynamic>>> showups;
   final Map<String, Map<String, Map<String, dynamic>>> pactBreaks;
+  final Map<String, Map<String, dynamic>> userProfiles;
 }
 
 /// In-memory [FirestoreClient] for debug and profile builds.
@@ -42,6 +46,9 @@ class FakeFirestoreClient implements FirestoreClient {
   // userId → pactBreakId → document fields
   final Map<String, Map<String, Map<String, dynamic>>> _pactBreaks = {};
 
+  // userId → single profile document fields
+  final Map<String, Map<String, dynamic>> _userProfiles = {};
+
   /// Pre-populates the client with [data].
   ///
   /// Additive: calling [seed] multiple times merges all datasets. When two
@@ -59,13 +66,17 @@ class FakeFirestoreClient implements FirestoreClient {
       final bucket = _pactBreaks.putIfAbsent(entry.key, () => {});
       entry.value.forEach((id, doc) => bucket[id] = Map<String, dynamic>.from(doc));
     }
+    for (final entry in data.userProfiles.entries) {
+      _userProfiles[entry.key] = Map<String, dynamic>.from(entry.value);
+    }
   }
 
-  /// Removes all pacts, showups, and pact breaks from in-memory storage.
+  /// Removes all pacts, showups, pact breaks, and user profiles from in-memory storage.
   void clear() {
     _pacts.clear();
     _showups.clear();
     _pactBreaks.clear();
+    _userProfiles.clear();
   }
 
   /// Returns a deep snapshot of the current in-memory state.
@@ -92,6 +103,7 @@ class FakeFirestoreClient implements FirestoreClient {
           docs.map((id, doc) => MapEntry(id, Map<String, dynamic>.from(doc))),
         ),
       ),
+      userProfiles: _userProfiles.map((uid, doc) => MapEntry(uid, Map<String, dynamic>.from(doc))),
     );
   }
 
@@ -135,5 +147,16 @@ class FakeFirestoreClient implements FirestoreClient {
   @override
   Future<void> deletePactBreak(String userId, String pactBreakId) async {
     _pactBreaks[userId]?.remove(pactBreakId);
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async {
+    final doc = _userProfiles[userId];
+    return doc == null ? null : Map<String, dynamic>.from(doc);
+  }
+
+  @override
+  Future<void> upsertUserProfile(String userId, Map<String, dynamic> data) async {
+    _userProfiles[userId] = Map<String, dynamic>.from(data);
   }
 }
