@@ -88,6 +88,19 @@ void main() {
         expect(flags.showupRedemptionEnabled, RemoteConfigDefaults.showupRedemptionEnabled);
         expect(flags.pactBreaksEnabled, RemoteConfigDefaults.pactBreaksEnabled);
         expect(flags.pactChainingEnabled, RemoteConfigDefaults.pactChainingEnabled);
+        expect(flags.displayNamePersonalizationEnabled, RemoteConfigDefaults.displayNamePersonalizationEnabled);
+      });
+
+      test('displayNamePersonalizationEnabled defaults to false (HAB-232, under construction)', () {
+        final rc = FakeRemoteConfigService();
+        final flags = FeatureFlags.fromRemoteConfig(rc);
+        expect(flags.displayNamePersonalizationEnabled, isFalse);
+      });
+
+      test('displayNamePersonalizationEnabled reads true from RC override', () {
+        final rc = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true});
+        final flags = FeatureFlags.fromRemoteConfig(rc);
+        expect(flags.displayNamePersonalizationEnabled, isTrue);
       });
     });
 
@@ -207,6 +220,12 @@ void main() {
       test('instances differ when pact_chaining_enabled differs', () {
         final rcOn = FakeRemoteConfigService();
         final rcOff = FakeRemoteConfigService(overrides: {'pact_chaining_enabled': false});
+        expect(FeatureFlags.fromRemoteConfig(rcOn), isNot(equals(FeatureFlags.fromRemoteConfig(rcOff))));
+      });
+
+      test('instances differ when display_name_personalization_enabled differs', () {
+        final rcOff = FakeRemoteConfigService();
+        final rcOn = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true});
         expect(FeatureFlags.fromRemoteConfig(rcOn), isNot(equals(FeatureFlags.fromRemoteConfig(rcOff))));
       });
     });

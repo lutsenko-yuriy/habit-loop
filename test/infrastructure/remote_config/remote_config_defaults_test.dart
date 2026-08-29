@@ -214,6 +214,39 @@ void main() {
       });
     });
 
+    group('display_name_personalization_enabled', () {
+      test('key exists in all map', () {
+        expect(RemoteConfigDefaults.all.containsKey('display_name_personalization_enabled'), isTrue);
+      });
+
+      test('default value is false (HAB-232, under construction until WU7)', () {
+        expect(RemoteConfigDefaults.all['display_name_personalization_enabled'], isFalse);
+      });
+
+      test('constant matches all map value', () {
+        expect(
+          RemoteConfigDefaults.displayNamePersonalizationEnabled,
+          equals(RemoteConfigDefaults.all['display_name_personalization_enabled']),
+        );
+      });
+
+      test('appears in featureToggleKeys', () {
+        expect(RemoteConfigDefaults.featureToggleKeys.contains('display_name_personalization_enabled'), isTrue);
+      });
+
+      test('appears in allowedValues with true/false options', () {
+        expect(RemoteConfigDefaults.allowedValues.containsKey('display_name_personalization_enabled'), isTrue);
+        expect(
+          RemoteConfigDefaults.allowedValues['display_name_personalization_enabled'],
+          containsAll(['true', 'false']),
+        );
+      });
+
+      test('not yet release-gated (WU7 adds it when flipping to true)', () {
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('display_name_personalization_enabled'), isFalse);
+      });
+    });
+
     group('releaseVersions (HAB-207)', () {
       test('pact_chaining_enabled maps to its actual shipped version', () {
         expect(RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'], '0.53.0');

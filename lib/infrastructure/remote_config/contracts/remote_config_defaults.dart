@@ -129,6 +129,7 @@ abstract final class RemoteConfigDefaults {
     'break_welcome_back_notification_enabled',
     'hurry_up_notification_enabled',
     'notification_reconciliation_enabled',
+    'display_name_personalization_enabled',
   };
 
   /// Feature toggle: show the About screen entry point on the dashboard.
@@ -217,6 +218,16 @@ abstract final class RemoteConfigDefaults {
   /// console for an emergency kill-switch without a release.
   static const bool notificationReconciliationEnabled = true;
 
+  /// Feature toggle: kill-switch for display-name personalization (HAB-232).
+  ///
+  /// Defaulted to `false` during development (same deviation as
+  /// [pactBreaksEnabled]/[pactChainingEnabled] — the feature is incomplete
+  /// across WU3–WU6) and flipped to `true` in the final WU (WU7), where it
+  /// also gains a [releaseVersions] entry. Override to `false` in the
+  /// Firebase Remote Config console to disable personalization without a
+  /// release once it has shipped.
+  static const bool displayNamePersonalizationEnabled = false;
+
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
   /// in release builds (see [FeatureFlags.fromRemoteConfig]); `null` = not
@@ -266,6 +277,7 @@ abstract final class RemoteConfigDefaults {
     'hurry_up_notification_enabled': hurryUpNotificationEnabled,
     'hurry_up_time_in_minutes': hurryUpTimeInMinutes,
     'notification_reconciliation_enabled': notificationReconciliationEnabled,
+    'display_name_personalization_enabled': displayNamePersonalizationEnabled,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -289,6 +301,7 @@ abstract final class RemoteConfigDefaults {
     'break_welcome_back_notification_enabled': ['true', 'false'],
     'hurry_up_notification_enabled': ['true', 'false'],
     'notification_reconciliation_enabled': ['true', 'false'],
+    'display_name_personalization_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known
