@@ -27,7 +27,7 @@ void main() {
     tearDown(() => h.dispose());
 
     testWidgets(
-        'enter_name_page_shown_on_fresh_install_and_saves_name: fresh install shows EnterNamePage and saving a name persists it',
+        'enter_name_page_shown_on_fresh_install_and_saves_name: fresh install shows EnterNameScreen and saving a name persists it',
         (tester) async {
       final userProfileRepository = InMemoryUserProfileRepository();
       h = await AppHarness.create(
@@ -49,7 +49,7 @@ void main() {
     });
 
     testWidgets(
-        'enter_name_page_skip_is_permanent: skipping EnterNamePage marks it shown so it is never re-prompted on a later launch',
+        'enter_name_page_skip_is_permanent: skipping EnterNameScreen marks it shown so it is never re-prompted on a later launch',
         (tester) async {
       final onboardingService = FakeOnboardingPreferenceService();
       final userProfileRepository = InMemoryUserProfileRepository();
@@ -85,7 +85,7 @@ void main() {
     });
 
     testWidgets(
-        'enter_name_page_prefills_existing_local_name: an existing local name pre-fills EnterNamePage instead of showing it empty',
+        'enter_name_page_prefills_existing_local_name: an existing local name pre-fills EnterNameScreen instead of showing it empty',
         (tester) async {
       final userProfileRepository = InMemoryUserProfileRepository();
       await userProfileRepository.saveProfile(UserProfile(displayName: 'Sam', updatedAt: DateTime(2026, 1, 1)));

@@ -314,7 +314,7 @@ Future<void> waitForGone(
   }
 }
 
-/// Enters [name] into EnterNamePage's field, taps its save button, and waits
+/// Enters [name] into EnterNameScreen's field, taps its save button, and waits
 /// for the page to actually disappear — the tap triggers a SQLite write and a
 /// SharedPreferences round trip, so a fixed pump count could flake (HAB-232).
 Future<void> saveEnterName(WidgetTester tester, String name) async {
@@ -324,14 +324,14 @@ Future<void> saveEnterName(WidgetTester tester, String name) async {
   await waitForGone(tester, find.byKey(const Key('enter-name-text-field')));
 }
 
-/// Taps EnterNamePage's skip button and waits for the page to disappear (HAB-232).
+/// Taps EnterNameScreen's skip button and waits for the page to disappear (HAB-232).
 Future<void> skipEnterName(WidgetTester tester) async {
   await tester.tap(find.byKey(const Key('enter-name-skip-button')));
   await tester.pump();
   await waitForGone(tester, find.byKey(const Key('enter-name-text-field')));
 }
 
-/// Returns the current text of EnterNamePage's field on any platform (HAB-232).
+/// Returns the current text of EnterNameScreen's field on any platform (HAB-232).
 String enterNameFieldText(WidgetTester tester) {
   final w = tester.widget(find.byKey(const Key('enter-name-text-field')));
   if (w is TextField) return w.controller?.text ?? '';

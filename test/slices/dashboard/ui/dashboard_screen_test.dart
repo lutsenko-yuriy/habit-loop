@@ -722,7 +722,7 @@ void main() {
     );
   });
 
-  group('EnterNamePage gating (HAB-232)', () {
+  group('EnterNameScreen gating (HAB-232)', () {
     Widget buildWithFlag({
       required bool flagEnabled,
       bool onboardingPassed = false,
@@ -760,14 +760,14 @@ void main() {
       );
     }
 
-    testWidgets('shows EnterNamePage on fresh install when the flag is on', (tester) async {
+    testWidgets('shows EnterNameScreen on fresh install when the flag is on', (tester) async {
       await tester.pumpWidget(buildWithFlag(flagEnabled: true));
       await tester.pump();
 
       expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
     });
 
-    testWidgets('does not show EnterNamePage when the flag is off', (tester) async {
+    testWidgets('does not show EnterNameScreen when the flag is off', (tester) async {
       await tester.pumpWidget(buildWithFlag(flagEnabled: false));
       await tester.pumpAndSettle();
 
@@ -775,14 +775,14 @@ void main() {
       expect(find.text('Create a Pact'), findsOneWidget);
     });
 
-    testWidgets('does not show EnterNamePage when onboarding already passed (existing users)', (tester) async {
+    testWidgets('does not show EnterNameScreen when onboarding already passed (existing users)', (tester) async {
       await tester.pumpWidget(buildWithFlag(flagEnabled: true, onboardingPassed: true));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
     });
 
-    testWidgets('does not show EnterNamePage when it was already shown (skip is permanent)', (tester) async {
+    testWidgets('does not show EnterNameScreen when it was already shown (skip is permanent)', (tester) async {
       await tester.pumpWidget(buildWithFlag(flagEnabled: true, nameEntryShown: true));
       await tester.pump();
 
@@ -790,7 +790,7 @@ void main() {
       expect(find.text('Create a Pact'), findsOneWidget);
     });
 
-    testWidgets('skipping EnterNamePage reveals the onboarding carousel without a restart', (tester) async {
+    testWidgets('skipping EnterNameScreen reveals the onboarding carousel without a restart', (tester) async {
       await tester.pumpWidget(buildWithFlag(flagEnabled: true));
       await tester.pump();
 
