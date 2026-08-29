@@ -12,6 +12,8 @@ abstract interface class FirebaseAnalyticsClient {
   });
 
   Future<void> logScreenView({required String screenName});
+
+  Future<void> setUserProperty({required String name, String? value});
 }
 
 /// [AnalyticsService] implementation backed by Firebase Analytics.
@@ -46,6 +48,15 @@ final class FirebaseAnalyticsService implements AnalyticsService {
   Future<void> logScreenView(AnalyticsScreen screen) async {
     try {
       await _client.logScreenView(screenName: screen.name);
+    } catch (_) {
+      // Analytics failures must never surface to the user.
+    }
+  }
+
+  @override
+  Future<void> setUserProperty(String name, String? value) async {
+    try {
+      await _client.setUserProperty(name: name, value: value);
     } catch (_) {
       // Analytics failures must never surface to the user.
     }

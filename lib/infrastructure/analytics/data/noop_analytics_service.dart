@@ -21,4 +21,9 @@ final class NoopAnalyticsService implements AnalyticsService {
   Future<void> logScreenView(AnalyticsScreen screen) async {
     debugPrint('[Analytics] screen_view: ${screen.name}');
   }
+
+  @override
+  Future<void> setUserProperty(String name, String? value) async {
+    debugPrint('[Analytics] user_property: $name=$value');
+  }
 }

@@ -7,6 +7,7 @@ import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.
 class FakeAnalyticsService implements AnalyticsService {
   final List<AnalyticsEvent> loggedEvents = [];
   final List<AnalyticsScreen> loggedScreens = [];
+  final List<({String name, String? value})> setUserProperties = [];
 
   @override
   Future<void> logEvent(AnalyticsEvent event) async {
@@ -18,8 +19,14 @@ class FakeAnalyticsService implements AnalyticsService {
     loggedScreens.add(screen);
   }
 
+  @override
+  Future<void> setUserProperty(String name, String? value) async {
+    setUserProperties.add((name: name, value: value));
+  }
+
   void reset() {
     loggedEvents.clear();
     loggedScreens.clear();
+    setUserProperties.clear();
   }
 }

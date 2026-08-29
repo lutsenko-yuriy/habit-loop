@@ -19,4 +19,10 @@ abstract interface class AnalyticsService {
   ///
   /// Never throws — implementations swallow failures silently.
   Future<void> logScreenView(AnalyticsScreen screen);
+
+  /// Sets a Firebase Analytics user property [name] to [value].
+  ///
+  /// `null` clears the property. Never throws — implementations swallow
+  /// failures silently.
+  Future<void> setUserProperty(String name, String? value);
 }
