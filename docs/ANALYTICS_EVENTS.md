@@ -530,5 +530,5 @@ Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnaly
 | `ShowupDetailAnalyticsScreen` | `showup_detail` | `slices/showup/analytics/showup_analytics_events.dart` | Showup detail screen opens |
 | `PactTimelineAnalyticsScreen` | `pact_timeline` | `slices/pact/analytics/pact_timeline_analytics_events.dart` | Pact Timeline screen opens; properties: `pact_id: string`, `pact_status: string` (`active \| completed \| stopped`), `total_showup_count: int` — HAB-116 |
 | `AboutAnalyticsScreen` | `about` | `slices/about/analytics/about_analytics_events.dart` | About screen opens — HAB-149 |
-| *(TBD by `/plan`)* | `enter_name` | *(TBD by `/plan`)* | EnterNamePage shown (fresh install, before onboarding carousel) — HAB-232 |
+| `EnterNameAnalyticsScreen` | `enter_name` | `slices/profile/analytics/profile_analytics_events.dart` | EnterNamePage shown (fresh install, before onboarding carousel) — HAB-232 |
 | *(TBD by `/plan`)* | `change_name` | *(TBD by `/plan`)* | "Change name" dialog opens from the ⋯ menu — HAB-232 |
