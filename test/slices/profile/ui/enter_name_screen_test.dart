@@ -128,6 +128,31 @@ void main() {
       expect(saved?.displayName?.length, enterNameMaxLength);
     });
 
+    testWidgets('caps by grapheme cluster, not UTF-16 code unit — a multi-code-point emoji stays intact',
+        (tester) async {
+      // '👨‍👩‍👧‍👦' (family emoji, ZWJ sequence) is one grapheme cluster but 7
+      // UTF-16 code units — String.substring/String.runes truncation could
+      // split it mid-sequence and store a mangled surrogate/ZWJ remnant.
+      final userProfileRepository = InMemoryUserProfileRepository();
+      const familyEmoji = '👨‍👩‍👧‍👦';
+      final longName = familyEmoji * 41;
+
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: userProfileRepository,
+        seedDisplayName: longName,
+      ));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('enter-name-save-button')));
+      await tester.pump();
+      await tester.pump();
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, familyEmoji * enterNameMaxLength);
+    });
+
     testWidgets('tapping skip marks name entry shown, saves nothing, and calls onDone', (tester) async {
       var doneCalled = false;
       final userProfileRepository = InMemoryUserProfileRepository();

@@ -68,7 +68,9 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
       ref.read(analyticsServiceProvider).logEvent(
             DisplayNameEntryCompletedEvent(
               action: resolvedAction,
-              nameLength: resolvedAction == 'saved' ? name?.length : null,
+              // .characters.length (grapheme clusters), not .length (UTF-16 code
+              // units) — matches the unit enterNameMaxLength/_capToMaxLength cap in.
+              nameLength: resolvedAction == 'saved' ? name?.characters.length : null,
             ),
           ),
     );
@@ -88,8 +90,9 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
       // The platform bodies' LengthLimitingTextInputFormatter only caps typed
       // input — a name arriving via sync or seeded straight into the
       // controller (initState) bypasses it, so cap again here defensively.
-      // Truncates by code point (rune), not raw String.substring, so a
-      // surrogate pair can't be split.
+      // Uses .characters (grapheme clusters, same unit the formatter counts
+      // in) rather than String.runes/substring, which could split a multi-
+      // code-point grapheme (ZWJ/flag emoji, decomposed diacritics).
       await _finish(name: _capToMaxLength(trimmed), action: 'saved');
     } finally {
       _submitting = false;
@@ -107,9 +110,9 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
   }
 
   String _capToMaxLength(String value) {
-    final runes = value.runes;
-    if (runes.length <= enterNameMaxLength) return value;
-    return String.fromCharCodes(runes.take(enterNameMaxLength));
+    final chars = value.characters;
+    if (chars.length <= enterNameMaxLength) return value;
+    return chars.take(enterNameMaxLength).toString();
   }
 
   @override
