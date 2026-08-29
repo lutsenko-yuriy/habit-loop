@@ -48,5 +48,10 @@ void main() {
         await expectLater(service.logScreenView(screen), completes);
       }
     });
+
+    test('setUserProperty does not throw', () async {
+      await expectLater(service.setUserProperty('has_display_name', 'true'), completes);
+      await expectLater(service.setUserProperty('has_display_name', null), completes);
+    });
   });
 }

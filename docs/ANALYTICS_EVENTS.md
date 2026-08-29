@@ -499,6 +499,18 @@ No PII risk — only the name's character length is included, never the name tex
 
 ---
 
+## User Properties
+
+Tracked via `AnalyticsService.setUserProperty(name, value)`, which calls `FirebaseAnalytics.setUserProperty`. Unlike events, a user property is durable state attached to every subsequent event, so it can *segment* existing events (funnels, retention) by whether a condition holds — not just count how often something happened.
+
+### `has_display_name`
+
+`'true'` or `'false'` — whether the user currently has a display name on file, regardless of whether display-name personalization is enabled. Set at app startup and on every local or remote change to the stored name. (HAB-232 WU3)
+
+No PII risk — a boolean string, never the name itself.
+
+---
+
 ## Screen Views
 
 Tracked via `AnalyticsService.logScreenView(screen)`, which calls `FirebaseAnalytics.logScreenView`.

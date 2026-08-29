@@ -31,6 +31,7 @@ final class FeatureFlags {
     required this.aboutScreenEnabled,
     required this.pactBreaksEnabled,
     required this.pactChainingEnabled,
+    required this.displayNamePersonalizationEnabled,
   });
 
   /// [appVersion] is the real running version (see `runningAppVersionProvider`
@@ -52,6 +53,10 @@ final class FeatureFlags {
         currentVersion: appVersion,
         isDebugOrProfile: isDebugOrProfile,
       ),
+      // Not release-gated yet (HAB-232 WU3) — the feature is incomplete
+      // through WU6; WU7 flips this to resolveReleaseGatedFlag alongside
+      // adding a releaseVersions entry, mirroring pactChainingEnabled above.
+      displayNamePersonalizationEnabled: rc.getBool('display_name_personalization_enabled'),
     );
   }
 
@@ -73,6 +78,9 @@ final class FeatureFlags {
   /// Whether the pact-chaining feature (HAB-202) is enabled.
   final bool pactChainingEnabled;
 
+  /// Whether display-name personalization (HAB-232) is enabled.
+  final bool displayNamePersonalizationEnabled;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -83,7 +91,8 @@ final class FeatureFlags {
           showupRedemptionEnabled == other.showupRedemptionEnabled &&
           aboutScreenEnabled == other.aboutScreenEnabled &&
           pactBreaksEnabled == other.pactBreaksEnabled &&
-          pactChainingEnabled == other.pactChainingEnabled;
+          pactChainingEnabled == other.pactChainingEnabled &&
+          displayNamePersonalizationEnabled == other.displayNamePersonalizationEnabled;
 
   @override
   int get hashCode => Object.hash(
@@ -94,5 +103,6 @@ final class FeatureFlags {
         aboutScreenEnabled,
         pactBreaksEnabled,
         pactChainingEnabled,
+        displayNamePersonalizationEnabled,
       );
 }

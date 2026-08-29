@@ -22,4 +22,9 @@ final class FirebaseAnalyticsClientAdapter implements FirebaseAnalyticsClient {
   Future<void> logScreenView({required String screenName}) {
     return _firebase.logScreenView(screenName: screenName);
   }
+
+  @override
+  Future<void> setUserProperty({required String name, String? value}) {
+    return _firebase.setUserProperty(name: name, value: value);
+  }
 }

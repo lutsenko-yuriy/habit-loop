@@ -8,6 +8,7 @@ import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart'
 class FakeFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
   final List<({String name, Map<String, Object>? parameters})> loggedEvents = [];
   final List<String> loggedScreenNames = [];
+  final List<({String name, String? value})> setUserProperties = [];
 
   @override
   Future<void> logEvent({
@@ -20,6 +21,11 @@ class FakeFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
   @override
   Future<void> logScreenView({required String screenName}) async {
     loggedScreenNames.add(screenName);
+  }
+
+  @override
+  Future<void> setUserProperty({required String name, String? value}) async {
+    setUserProperties.add((name: name, value: value));
   }
 }
 
@@ -115,6 +121,27 @@ void main() {
       );
     });
   });
+
+  group('FirebaseAnalyticsService.setUserProperty', () {
+    test('forwards name and value to Firebase', () async {
+      await service.setUserProperty('has_display_name', 'true');
+      expect(fakeClient.setUserProperties.single, (name: 'has_display_name', value: 'true'));
+    });
+
+    test('forwards a null value', () async {
+      await service.setUserProperty('has_display_name', null);
+      expect(fakeClient.setUserProperties.single, (name: 'has_display_name', value: null));
+    });
+
+    test('swallows exceptions from Firebase', () async {
+      final throwingClient = _ThrowingFirebaseAnalyticsClient();
+      final throwingService = FirebaseAnalyticsService(throwingClient);
+      await expectLater(
+        throwingService.setUserProperty('has_display_name', 'true'),
+        completes,
+      );
+    });
+  });
 }
 
 class _ThrowingFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
@@ -128,6 +155,11 @@ class _ThrowingFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
 
   @override
   Future<void> logScreenView({required String screenName}) async {
+    throw Exception('Firebase error');
+  }
+
+  @override
+  Future<void> setUserProperty({required String name, String? value}) async {
     throw Exception('Firebase error');
   }
 }
