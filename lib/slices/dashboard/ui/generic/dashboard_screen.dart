@@ -15,7 +15,7 @@ import 'package:habit_loop/slices/dashboard/ui/ios/dashboard_page_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
-import 'package:habit_loop/slices/profile/ui/generic/enter_name_page.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_screen.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -250,7 +250,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
         ref.watch(featureFlagsProvider).displayNamePersonalizationEnabled;
 
     if (showEnterName) {
-      return EnterNamePage(onDone: () => setState(() {}));
+      return EnterNameScreen(onDone: () => setState(() {}));
     }
 
     // Deferred to post-frame so build() stays a pure function of state.

@@ -7,7 +7,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
-import 'package:habit_loop/slices/profile/ui/generic/enter_name_page.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_screen.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/onboarding/fake_onboarding_preference_service.dart';
@@ -39,13 +39,13 @@ Widget _buildApp({
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: EnterNamePage(onDone: onDone),
+      home: EnterNameScreen(onDone: onDone),
     ),
   );
 }
 
 void main() {
-  group('EnterNamePage', () {
+  group('EnterNameScreen', () {
     testWidgets('shows the title, hint and text field', (tester) async {
       await tester.pumpWidget(_buildApp(
         onDone: () {},
