@@ -64,21 +64,33 @@ class OnboardingSlideWidget extends StatelessWidget {
             ),
           ),
           const Flexible(child: SizedBox(height: AppSpacing.s32)),
-          Text(
-            slide.title(l10n, personalizedName),
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-            // A long personalized name (HAB-232 WU6 audit finding) can push this past
-            // the 1-2 lines the neutral copy always fit in — cap it defensively so it
-            // never overflows the fixed-height carousel slot on a short viewport.
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(
-            slide.body(l10n, personalizedName),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
-            textAlign: TextAlign.center,
+          // A long personalized name (HAB-232 WU6) can wrap the title to 3 lines,
+          // which — combined with the body text — can outgrow the fixed-height
+          // carousel slot on a short viewport even after the image/spacer above
+          // shrink to nothing. Flexible+SingleChildScrollView (same pattern as
+          // EnterNamePage) gives this block a bounded height and lets it scroll
+          // internally instead of throwing a RenderFlex overflow.
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    slide.title(l10n, personalizedName),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
+                  Text(
+                    slide.body(l10n, personalizedName),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

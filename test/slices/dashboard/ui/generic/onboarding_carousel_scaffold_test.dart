@@ -111,6 +111,32 @@ void main() {
       final l10n = AppLocalizations.of(tester.element(find.byType(PageView)))!;
       expect(find.text(l10n.onboardingSlide0Title), findsOneWidget);
     });
+
+    testWidgets(
+        'a long personalized name does not overflow OnboardingSlideWidget on a tight slot (HAB-232 WU6 regression)',
+        (tester) async {
+      // Reproduces the exact fixed-size slot CI's headless run reported
+      // (w=256, h=148) before the title/body were moved into a
+      // Flexible+SingleChildScrollView.
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 256,
+            height: 148,
+            child: OnboardingSlideWidget(
+              slide: OnboardingSlide.slides[0],
+              l10n: l10n,
+              personalizedName: 'A' * 40, // max name length — forces a multi-line title
+            ),
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('OnboardingCarouselScaffold — dots row', () {
