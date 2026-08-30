@@ -149,6 +149,11 @@ void main() {
         // (HAB-232 WU6 audit), not an arbitrarily generous size. The earlier
         // Flexible-spacer version reported maxScrollExtent 72 here even
         // though real content only needs 374px.
+        //
+        // This slot has only ~4px of headroom over slide 1's English copy
+        // (416px) — if a future copy change flips this red, that's a real
+        // signal to check the actual device slot, not a cue to loosen this
+        // assertion back toward masking the original bug.
         await tester.pumpWidget(MaterialApp(
           home: Center(
             child: SizedBox(
