@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/profile/ui/generic/change_name_dialog_controller.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 
 /// Shows a [CupertinoAlertDialog] pre-filled with [currentName] (HAB-232 WU5),
@@ -28,26 +29,10 @@ class _ChangeNameDialogIos extends StatefulWidget {
 }
 
 class _ChangeNameDialogIosState extends State<_ChangeNameDialogIos> {
-  late final TextEditingController _controller;
-  late bool _canSave;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.currentName)
-      ..selection = TextSelection.collapsed(offset: widget.currentName.length);
-    _canSave = _controller.text.trim().isNotEmpty;
-    _controller.addListener(_onChanged);
-  }
-
-  void _onChanged() {
-    final canSave = _controller.text.trim().isNotEmpty;
-    if (canSave != _canSave) setState(() => _canSave = canSave);
-  }
+  late final _controller = ChangeNameDialogController(widget.currentName);
 
   @override
   void dispose() {
-    _controller.removeListener(_onChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -61,7 +46,7 @@ class _ChangeNameDialogIosState extends State<_ChangeNameDialogIos> {
         padding: const EdgeInsets.only(top: 8),
         child: CupertinoTextField(
           key: const Key('change-name-text-field'),
-          controller: _controller,
+          controller: _controller.textController,
           autofocus: true,
           placeholder: l10n.enterNameHint,
           textCapitalization: TextCapitalization.words,
@@ -74,11 +59,14 @@ class _ChangeNameDialogIosState extends State<_ChangeNameDialogIos> {
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.cancel),
         ),
-        CupertinoDialogAction(
-          key: const Key('change-name-save-button'),
-          isDefaultAction: true,
-          onPressed: _canSave ? () => Navigator.pop(context, _controller.text.trim()) : null,
-          child: Text(l10n.changeNameSave),
+        ValueListenableBuilder<bool>(
+          valueListenable: _controller.canSave,
+          builder: (context, canSave, _) => CupertinoDialogAction(
+            key: const Key('change-name-save-button'),
+            isDefaultAction: true,
+            onPressed: canSave ? () => Navigator.pop(context, _controller.textController.text.trim()) : null,
+            child: Text(l10n.changeNameSave),
+          ),
         ),
       ],
     );

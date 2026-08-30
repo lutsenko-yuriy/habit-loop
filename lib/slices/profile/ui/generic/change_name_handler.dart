@@ -20,29 +20,40 @@ Future<void> openChangeNameDialog({
   /// none on file) and returns the trimmed new name on Save, or `null` if
   /// cancelled/dismissed. The dialog itself is responsible for disabling
   /// Save while the field is empty — this handler never clears a name.
-  required Future<String?> Function({required BuildContext context, required String currentName}) showDialog,
+  required Future<String?> Function({required BuildContext context, required String currentName}) showDialogFn,
 }) async {
   final analytics = ref.read(analyticsServiceProvider);
 
   // Capture before any await — an async-gap read could be stale by the time
-  // the dialog closes (e.g. a remote pull lands while it's open).
-  final currentName = ref.read(displayNameProvider) ?? '';
+  // the dialog closes (e.g. a remote pull lands while it's open). Reads
+  // personalizedNameProvider (not the raw displayNameProvider) per that
+  // provider's own docstring — behaviourally identical today since this
+  // dialog is only reachable while the flag is on.
+  final currentName = ref.read(personalizedNameProvider) ?? '';
 
   unawaited(analytics.logScreenView(const ChangeNameAnalyticsScreen()));
 
   if (!context.mounted) return;
 
-  final newName = await showDialog(context: context, currentName: currentName);
+  final newName = await showDialogFn(context: context, currentName: currentName);
+
+  // Re-check after the dialog's own await — the widget (and this ref) may
+  // have been torn down while it was open, e.g. the user navigated away.
+  if (!context.mounted) return;
   if (newName == null) return; // cancelled/dismissed
 
-  // Same grapheme-safe cap as EnterNameScreen — a name arriving pre-filled
-  // via sync mid-edit could exceed enterNameMaxLength even though the
-  // dialog's own input formatter caps typed input.
-  final chars = newName.characters;
-  final capped = chars.length <= enterNameMaxLength ? newName : chars.take(enterNameMaxLength).toString();
+  final capped = capToMaxNameLength(newName);
+  if (capped == currentName) return; // unchanged — no-op, mirrors applyLanguageSelection
 
   final hadPreviousName = currentName.isNotEmpty;
-  await ref.read(displayNameProvider.notifier).setDisplayName(capped);
+  try {
+    await ref.read(displayNameProvider.notifier).setDisplayName(capped);
+  } catch (_) {
+    // Never let a transient DB failure crash a menu callback — the dialog is
+    // already closed, so there is nowhere left to surface an inline error.
+    // Skip the analytics event since nothing was actually persisted.
+    return;
+  }
 
   unawaited(
     analytics.logEvent(

@@ -67,7 +67,7 @@ class DashboardPageAndroid extends ConsumerWidget {
     Future<void> onChangeNameTapped() => openChangeNameDialog(
           context: context,
           ref: ref,
-          showDialog: ({required context, required currentName}) =>
+          showDialogFn: ({required context, required currentName}) =>
               showMaterialChangeNameDialog(context, currentName, l10n),
         );
 

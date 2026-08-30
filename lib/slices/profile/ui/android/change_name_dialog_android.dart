@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/profile/ui/generic/change_name_dialog_controller.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 
 /// Shows an [AlertDialog] pre-filled with [currentName] (HAB-232 WU5),
@@ -28,26 +29,10 @@ class _ChangeNameDialogAndroid extends StatefulWidget {
 }
 
 class _ChangeNameDialogAndroidState extends State<_ChangeNameDialogAndroid> {
-  late final TextEditingController _controller;
-  late bool _canSave;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.currentName)
-      ..selection = TextSelection.collapsed(offset: widget.currentName.length);
-    _canSave = _controller.text.trim().isNotEmpty;
-    _controller.addListener(_onChanged);
-  }
-
-  void _onChanged() {
-    final canSave = _controller.text.trim().isNotEmpty;
-    if (canSave != _canSave) setState(() => _canSave = canSave);
-  }
+  late final _controller = ChangeNameDialogController(widget.currentName);
 
   @override
   void dispose() {
-    _controller.removeListener(_onChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -59,7 +44,7 @@ class _ChangeNameDialogAndroidState extends State<_ChangeNameDialogAndroid> {
       title: Text(l10n.changeNameTitle),
       content: TextField(
         key: const Key('change-name-text-field'),
-        controller: _controller,
+        controller: _controller.textController,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
         inputFormatters: [LengthLimitingTextInputFormatter(enterNameMaxLength)],
@@ -71,10 +56,13 @@ class _ChangeNameDialogAndroidState extends State<_ChangeNameDialogAndroid> {
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.cancel),
         ),
-        TextButton(
-          key: const Key('change-name-save-button'),
-          onPressed: _canSave ? () => Navigator.pop(context, _controller.text.trim()) : null,
-          child: Text(l10n.changeNameSave),
+        ValueListenableBuilder<bool>(
+          valueListenable: _controller.canSave,
+          builder: (context, canSave, _) => TextButton(
+            key: const Key('change-name-save-button'),
+            onPressed: canSave ? () => Navigator.pop(context, _controller.textController.text.trim()) : null,
+            child: Text(l10n.changeNameSave),
+          ),
         ),
       ],
     );

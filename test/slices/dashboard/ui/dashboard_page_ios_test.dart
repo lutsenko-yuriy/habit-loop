@@ -440,6 +440,33 @@ void main() {
       expect(changedEvent.toParameters()['had_previous_name'], isTrue);
     });
 
+    testWidgets('saving with no prior name fires display_name_changed with had_previous_name=false', (tester) async {
+      final analyticsService = FakeAnalyticsService();
+      final userProfileRepository = InMemoryUserProfileRepository();
+
+      await tester.pumpWidget(_buildTestApp(
+        remoteConfig: flagOn,
+        userProfileRepository: userProfileRepository,
+        analyticsService: analyticsService,
+      ));
+
+      await tester.tap(find.byKey(const Key('kebab-menu-button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('change-name-button')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('change-name-text-field')), 'Sam');
+      await tester.pump(); // rebuild so the (now non-empty) field re-enables Save
+      await tester.tap(find.byKey(const Key('change-name-save-button')));
+      await tester.pumpAndSettle();
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, 'Sam');
+
+      final changedEvent = analyticsService.loggedEvents.firstWhere((e) => e.name == 'display_name_changed');
+      expect(changedEvent.toParameters()['had_previous_name'], isFalse);
+    });
+
     testWidgets('save button is disabled while the field is empty', (tester) async {
       await tester.pumpWidget(_buildTestApp(remoteConfig: flagOn));
 
