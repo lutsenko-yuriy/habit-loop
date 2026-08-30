@@ -18,6 +18,8 @@ import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart'
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_view_model.dart';
 import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
+import 'package:habit_loop/slices/profile/ui/android/change_name_dialog_android.dart';
+import 'package:habit_loop/slices/profile/ui/generic/change_name_handler.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
@@ -62,6 +64,13 @@ class DashboardPageAndroid extends ConsumerWidget {
           messenger: ScaffoldMessenger.of(context),
         );
 
+    Future<void> onChangeNameTapped() => openChangeNameDialog(
+          context: context,
+          ref: ref,
+          showDialogFn: ({required context, required currentName}) =>
+              showMaterialChangeNameDialog(context, currentName, l10n),
+        );
+
     // Show the onboarding carousel full-screen (no app bar) when requested.
     // showCarousel is true when there are no pacts + user is anonymous, OR
     // when sign-in is in progress (to avoid a flash of empty dashboard).
@@ -80,9 +89,11 @@ class DashboardPageAndroid extends ConsumerWidget {
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
       onAboutPressed: onAbout,
+      onChangeNamePressed: onChangeNameTapped,
       languageSelectionEnabled: featureFlags.languageSelectionEnabled,
       networkSyncEnabled: featureFlags.networkSyncEnabled,
       aboutScreenEnabled: featureFlags.aboutScreenEnabled,
+      displayNamePersonalizationEnabled: featureFlags.displayNamePersonalizationEnabled,
     );
 
     final kebabItems = kebabMenuItems(actions);
@@ -165,6 +176,7 @@ String _kebabItemLabel(DashboardActionType type, AppLocalizations l10n) => switc
       DashboardActionType.about => l10n.aboutTitle,
       DashboardActionType.languagePicker => l10n.languagePickerTitle,
       DashboardActionType.rcOverrides => l10n.dashboardDebugMenuItem,
+      DashboardActionType.changeName => l10n.changeNameTitle,
       _ => '',
     };
 
@@ -201,6 +213,12 @@ Widget _buildAppBarButton(
     DashboardActionType.about => IconButton(
         key: action.key,
         icon: const Icon(Icons.info_outline),
+        tooltip: tooltip,
+        onPressed: action.onPressed,
+      ),
+    DashboardActionType.changeName => IconButton(
+        key: action.key,
+        icon: const Icon(Icons.edit_outlined),
         tooltip: tooltip,
         onPressed: action.onPressed,
       ),

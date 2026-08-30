@@ -391,5 +391,8 @@
   "enterNameBody": "Dein Name personalisiert das Onboarding, dein Dashboard und Benachrichtigungen. Du kannst ihn jederzeit ändern.",
   "enterNameHint": "Vorname",
   "enterNameContinue": "Weiter",
-  "enterNameSkip": "Überspringen"
+  "enterNameSkip": "Überspringen",
+
+  "changeNameTitle": "Namen ändern",
+  "changeNameSave": "Speichern"
 }

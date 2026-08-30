@@ -19,6 +19,8 @@ import 'package:habit_loop/slices/dashboard/ui/ios/language_picker_dialog_ios.da
 import 'package:habit_loop/slices/dashboard/ui/ios/onboarding_carousel_ios.dart';
 import 'package:habit_loop/slices/debug/ui/ios/remote_config_overrides_page_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
+import 'package:habit_loop/slices/profile/ui/generic/change_name_handler.dart';
+import 'package:habit_loop/slices/profile/ui/ios/change_name_dialog_ios.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
@@ -63,6 +65,13 @@ class DashboardPageIos extends ConsumerWidget {
           messenger: ScaffoldMessenger.of(context),
         );
 
+    Future<void> onChangeNameTapped() => openChangeNameDialog(
+          context: context,
+          ref: ref,
+          showDialogFn: ({required context, required currentName}) =>
+              showCupertinoChangeNameDialog(context, currentName, l10n),
+        );
+
     // Show the onboarding carousel full-screen (no nav bar) when requested.
     // showCarousel is true when there are no pacts + user is anonymous, OR
     // when sign-in is in progress (to avoid a flash of empty dashboard).
@@ -81,9 +90,11 @@ class DashboardPageIos extends ConsumerWidget {
       onLanguagePickerPressed: onLanguagePickerTapped,
       onCreatePactPressed: onCreatePact,
       onAboutPressed: onAbout,
+      onChangeNamePressed: onChangeNameTapped,
       languageSelectionEnabled: featureFlags.languageSelectionEnabled,
       networkSyncEnabled: featureFlags.networkSyncEnabled,
       aboutScreenEnabled: featureFlags.aboutScreenEnabled,
+      displayNamePersonalizationEnabled: featureFlags.displayNamePersonalizationEnabled,
     );
 
     final kebabItems = kebabMenuItems(actions);
@@ -195,6 +206,7 @@ String _kebabItemLabel(DashboardActionType type, AppLocalizations l10n) => switc
       DashboardActionType.about => l10n.aboutTitle,
       DashboardActionType.languagePicker => l10n.languagePickerTitle,
       DashboardActionType.rcOverrides => l10n.dashboardDebugMenuItem,
+      DashboardActionType.changeName => l10n.changeNameTitle,
       _ => '',
     };
 
@@ -237,6 +249,12 @@ Widget _buildNavBarButton(
         padding: EdgeInsets.zero,
         onPressed: action.onPressed,
         child: const Icon(CupertinoIcons.info_circle),
+      ),
+    DashboardActionType.changeName => CupertinoButton(
+        key: action.key,
+        padding: EdgeInsets.zero,
+        onPressed: action.onPressed,
+        child: const Icon(CupertinoIcons.pencil),
       ),
   };
   return Semantics(

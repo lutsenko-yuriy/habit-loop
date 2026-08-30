@@ -90,10 +90,7 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
       // The platform bodies' LengthLimitingTextInputFormatter only caps typed
       // input — a name arriving via sync or seeded straight into the
       // controller (initState) bypasses it, so cap again here defensively.
-      // Uses .characters (grapheme clusters, same unit the formatter counts
-      // in) rather than String.runes/substring, which could split a multi-
-      // code-point grapheme (ZWJ/flag emoji, decomposed diacritics).
-      await _finish(name: _capToMaxLength(trimmed), action: 'saved');
+      await _finish(name: capToMaxNameLength(trimmed), action: 'saved');
     } finally {
       _submitting = false;
     }
@@ -107,12 +104,6 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
     } finally {
       _submitting = false;
     }
-  }
-
-  String _capToMaxLength(String value) {
-    final chars = value.characters;
-    if (chars.length <= enterNameMaxLength) return value;
-    return chars.take(enterNameMaxLength).toString();
   }
 
   @override

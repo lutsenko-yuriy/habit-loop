@@ -103,15 +103,46 @@ void main() {
     });
 
     testWidgets(
-        'change_name_dialog_updates_dashboard_greeting_without_restart: the ⋯ menu\'s "Change name" dialog updates the stored name and the dashboard greeting updates without a restart',
-        (tester) async {
-      // TODO: 1. Launch harness with flag on, a name already on file, at least one pact seeded so the dashboard loads directly.
-      // TODO: 2. Verify the dashboard greeting shows the original name.
-      // TODO: 3. Open the kebab menu, tap "Change name".
-      // TODO: 4. Verify ChangeNameDialog is shown, pre-filled with the current name.
-      // TODO: 5. Clear the field and enter a new name, confirm.
-      // TODO: 6. Verify the dialog is dismissed.
-      // TODO: 7. Verify the dashboard greeting now shows the new name, with no app restart/harness recreation.
+        'change_name_dialog_updates_stored_name: the ⋯ menu\'s "Change name" dialog pre-fills the current name, '
+        'updates the stored name on save, and reflects the new value on reopen — no app restart '
+        '(WU6 has not shipped yet, so the dashboard greeting header does not exist; asserted here via the '
+        "dialog's own pre-fill instead)", (tester) async {
+      // 1. Launch harness with flag on and a name already on file. Not
+      //    initiallyAnonymous (default false), so the dashboard loads
+      //    directly with no pact needed to skip the onboarding carousel.
+      //    isNameEntryShown must be seeded true, or EnterNameScreen (WU4)
+      //    would intercept the dashboard first (this is a returning user
+      //    with a name already on file, not a fresh install).
+      final userProfileRepository = InMemoryUserProfileRepository();
+      await userProfileRepository.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: userProfileRepository,
+      );
+
+      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+
+      // 2/3. Open the kebab menu, tap "Change name".
+      await openChangeNameDialogFromKebab(tester);
+
+      // 4. ChangeNameDialog is shown, pre-filled with the current name.
+      expect(find.byKey(const Key('change-name-text-field')), findsOneWidget);
+      expect(changeNameFieldText(tester), 'Alex');
+
+      // 5/6. Clear the field, enter a new name, confirm — dialog dismisses.
+      await saveChangeName(tester, 'Sam');
+      expect(find.byKey(const Key('change-name-text-field')), findsNothing);
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, 'Sam');
+
+      // 7. Re-open the dialog with no app restart/harness recreation — the
+      //    new name is reflected immediately via displayNameProvider.
+      await openChangeNameDialogFromKebab(tester);
+      expect(changeNameFieldText(tester), 'Sam');
     });
 
     testWidgets(

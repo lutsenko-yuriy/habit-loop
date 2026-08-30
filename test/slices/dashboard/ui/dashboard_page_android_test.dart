@@ -7,6 +7,7 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
@@ -16,6 +17,8 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_state.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
@@ -31,6 +34,8 @@ Widget _buildTestApp({
   Locale? localeOverride,
   Locale locale = const Locale('en'),
   DashboardState state = const DashboardState(isLoading: false),
+  InMemoryUserProfileRepository? userProfileRepository,
+  String? seedDisplayName,
 }) {
   return ProviderScope(
     overrides: [
@@ -42,6 +47,12 @@ Widget _buildTestApp({
       if (localeService != null) localePreferenceServiceProvider.overrideWithValue(localeService),
       if (remoteConfig != null) remoteConfigServiceProvider.overrideWithValue(remoteConfig),
       if (localeOverride != null) localeOverrideProvider.overrideWith((ref) => localeOverride),
+      if (userProfileRepository != null) userProfileRepositoryProvider.overrideWithValue(userProfileRepository),
+      // HAB-232: displayNameProvider is only seeded from the repository by
+      // AppContainer's real bootstrap — this bare ProviderScope needs the
+      // same seed applied explicitly (mirrors enter_name_screen_test.dart).
+      if (seedDisplayName != null)
+        displayNameProvider.overrideWith(() => DisplayNameNotifier(seedDisplayName: seedDisplayName)),
     ],
     child: MaterialApp(
       localizationsDelegates: const [
@@ -353,6 +364,131 @@ void main() {
 
     expect(find.textContaining('120 мин'), findsOneWidget);
     expect(find.textContaining('120 min'), findsNothing);
+  });
+
+  group('Change name (HAB-232 WU5)', () {
+    final flagOn = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true});
+
+    testWidgets('change-name item hidden from kebab when flag is off', (tester) async {
+      await tester.pumpWidget(_buildTestApp());
+
+      await _openKebab(tester);
+
+      expect(find.byKey(const Key('change-name-button')), findsNothing);
+    });
+
+    testWidgets('change-name item shown in kebab and opens dialog pre-filled with the current name', (tester) async {
+      final userProfileRepository = InMemoryUserProfileRepository();
+      await userProfileRepository.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      await tester.pumpWidget(_buildTestApp(
+        remoteConfig: flagOn,
+        userProfileRepository: userProfileRepository,
+        seedDisplayName: 'Alex',
+      ));
+
+      await _openKebab(tester);
+      expect(find.byKey(const Key('change-name-button')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('change-name-button')));
+      await tester.pumpAndSettle();
+
+      final field = tester.widget<TextField>(find.byKey(const Key('change-name-text-field')));
+      expect(field.controller?.text, 'Alex');
+    });
+
+    testWidgets('saving a new name persists it and fires display_name_changed', (tester) async {
+      final analyticsService = FakeAnalyticsService();
+      final userProfileRepository = InMemoryUserProfileRepository();
+      await userProfileRepository.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      await tester.pumpWidget(_buildTestApp(
+        remoteConfig: flagOn,
+        userProfileRepository: userProfileRepository,
+        analyticsService: analyticsService,
+        seedDisplayName: 'Alex',
+      ));
+
+      await _openKebab(tester);
+      await tester.tap(find.byKey(const Key('change-name-button')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('change-name-text-field')), 'Sam');
+      await tester.pump(); // rebuild so the (now non-empty) field re-enables Save
+      await tester.tap(find.byKey(const Key('change-name-save-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('change-name-text-field')), findsNothing);
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, 'Sam');
+
+      final changedEvent = analyticsService.loggedEvents.firstWhere((e) => e.name == 'display_name_changed');
+      expect(changedEvent.toParameters()['name_length'], 3);
+      expect(changedEvent.toParameters()['had_previous_name'], isTrue);
+    });
+
+    testWidgets('saving with no prior name fires display_name_changed with had_previous_name=false', (tester) async {
+      final analyticsService = FakeAnalyticsService();
+      final userProfileRepository = InMemoryUserProfileRepository();
+
+      await tester.pumpWidget(_buildTestApp(
+        remoteConfig: flagOn,
+        userProfileRepository: userProfileRepository,
+        analyticsService: analyticsService,
+      ));
+
+      await _openKebab(tester);
+      await tester.tap(find.byKey(const Key('change-name-button')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('change-name-text-field')), 'Sam');
+      await tester.pump(); // rebuild so the (now non-empty) field re-enables Save
+      await tester.tap(find.byKey(const Key('change-name-save-button')));
+      await tester.pumpAndSettle();
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, 'Sam');
+
+      final changedEvent = analyticsService.loggedEvents.firstWhere((e) => e.name == 'display_name_changed');
+      expect(changedEvent.toParameters()['had_previous_name'], isFalse);
+    });
+
+    testWidgets('save button is disabled while the field is empty', (tester) async {
+      await tester.pumpWidget(_buildTestApp(remoteConfig: flagOn));
+
+      await _openKebab(tester);
+      await tester.tap(find.byKey(const Key('change-name-button')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('change-name-text-field')), '   ');
+      await tester.pump();
+
+      final saveButton = tester.widget<TextButton>(find.byKey(const Key('change-name-save-button')));
+      expect(saveButton.onPressed, isNull);
+    });
+
+    testWidgets('cancel dismisses the dialog without saving', (tester) async {
+      final userProfileRepository = InMemoryUserProfileRepository();
+      await userProfileRepository.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      await tester.pumpWidget(_buildTestApp(
+        remoteConfig: flagOn,
+        userProfileRepository: userProfileRepository,
+        seedDisplayName: 'Alex',
+      ));
+
+      await _openKebab(tester);
+      await tester.tap(find.byKey(const Key('change-name-button')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('change-name-text-field')), 'Sam');
+      await tester.tap(find.byKey(const Key('change-name-cancel-button')));
+      await tester.pumpAndSettle();
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, 'Alex');
+    });
   });
 }
 
