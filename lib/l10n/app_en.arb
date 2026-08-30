@@ -395,5 +395,8 @@
   "enterNameBody": "Your name personalizes onboarding, your dashboard, and notifications. You can change it anytime.",
   "enterNameHint": "First name",
   "enterNameContinue": "Continue",
-  "enterNameSkip": "Skip"
+  "enterNameSkip": "Skip",
+
+  "changeNameTitle": "Change name",
+  "changeNameSave": "Save"
 }

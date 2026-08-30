@@ -391,5 +391,8 @@
   "enterNameBody": "Votre prénom personnalise l'accueil, votre tableau de bord et les notifications. Vous pouvez le modifier à tout moment.",
   "enterNameHint": "Prénom",
   "enterNameContinue": "Continuer",
-  "enterNameSkip": "Ignorer"
+  "enterNameSkip": "Ignorer",
+
+  "changeNameTitle": "Changer de nom",
+  "changeNameSave": "Enregistrer"
 }

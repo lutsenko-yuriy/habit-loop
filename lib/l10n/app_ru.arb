@@ -391,5 +391,8 @@
   "enterNameBody": "Ваше имя используется для персонализации онбординга, панели управления и уведомлений. Вы можете изменить его в любой момент.",
   "enterNameHint": "Имя",
   "enterNameContinue": "Продолжить",
-  "enterNameSkip": "Пропустить"
+  "enterNameSkip": "Пропустить",
+
+  "changeNameTitle": "Изменить имя",
+  "changeNameSave": "Сохранить"
 }

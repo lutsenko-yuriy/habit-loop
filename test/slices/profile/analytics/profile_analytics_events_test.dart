@@ -33,4 +33,33 @@ void main() {
       expect(const EnterNameAnalyticsScreen().name, 'enter_name');
     });
   });
+
+  group('ChangeNameAnalyticsScreen', () {
+    test('implements AnalyticsScreen', () {
+      expect(const ChangeNameAnalyticsScreen(), isA<AnalyticsScreen>());
+    });
+
+    test('name is change_name', () {
+      expect(const ChangeNameAnalyticsScreen().name, 'change_name');
+    });
+  });
+
+  group('DisplayNameChangedEvent', () {
+    test('has correct name', () {
+      const event = DisplayNameChangedEvent(nameLength: 3, hadPreviousName: true);
+      expect(event.name, 'display_name_changed');
+    });
+
+    test('toParameters includes name_length and had_previous_name', () {
+      const event = DisplayNameChangedEvent(nameLength: 3, hadPreviousName: true);
+      final params = event.toParameters();
+      expect(params['name_length'], 3);
+      expect(params['had_previous_name'], isTrue);
+    });
+
+    test('had_previous_name is false when there was no prior name', () {
+      const event = DisplayNameChangedEvent(nameLength: 5, hadPreviousName: false);
+      expect(event.toParameters()['had_previous_name'], isFalse);
+    });
+  });
 }

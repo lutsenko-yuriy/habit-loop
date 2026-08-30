@@ -8,7 +8,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 
-enum DashboardActionType { rcOverrides, syncStatus, languagePicker, createPact, about }
+enum DashboardActionType { rcOverrides, syncStatus, languagePicker, createPact, about, changeName }
 
 /// Localized accessible label for [type] — used as a Material `tooltip`
 /// (Android) or wrapped in a `Semantics` label (iOS, which has no built-in
@@ -19,6 +19,7 @@ String dashboardActionLabel(DashboardActionType type, AppLocalizations l10n) => 
       DashboardActionType.languagePicker => l10n.languagePickerTitle,
       DashboardActionType.about => l10n.aboutTitle,
       DashboardActionType.createPact => l10n.createPact,
+      DashboardActionType.changeName => l10n.changeNameTitle,
     };
 
 class DashboardActionDescriptor {
@@ -35,9 +36,11 @@ List<DashboardActionDescriptor> buildDashboardActions({
   required VoidCallback onLanguagePickerPressed,
   required VoidCallback onCreatePactPressed,
   required VoidCallback onAboutPressed,
+  required VoidCallback onChangeNamePressed,
   required bool languageSelectionEnabled,
   required bool networkSyncEnabled,
   required bool aboutScreenEnabled,
+  required bool displayNamePersonalizationEnabled,
 }) =>
     [
       if (kDebugMode || kProfileMode)
@@ -64,6 +67,15 @@ List<DashboardActionDescriptor> buildDashboardActions({
           key: const Key('about-button'),
           onPressed: onAboutPressed,
         ),
+      // HAB-232: available to all users regardless of isNameEntryShown/
+      // isOnboardingPassed — a standing settings-style affordance, gated only
+      // by the same kill-switch as the rest of the feature.
+      if (displayNamePersonalizationEnabled)
+        DashboardActionDescriptor(
+          type: DashboardActionType.changeName,
+          key: const Key('change-name-button'),
+          onPressed: onChangeNamePressed,
+        ),
       DashboardActionDescriptor(
         type: DashboardActionType.createPact,
         key: const Key('create-pact-button'),
@@ -75,6 +87,7 @@ const _kebabCandidateTypes = {
   DashboardActionType.rcOverrides,
   DashboardActionType.languagePicker,
   DashboardActionType.about,
+  DashboardActionType.changeName,
 };
 
 /// Items that belong inside the kebab menu (⋯).

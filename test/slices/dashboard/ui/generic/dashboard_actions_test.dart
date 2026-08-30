@@ -11,9 +11,14 @@ List<DashboardActionDescriptor> makeActions({
   void Function()? onLang,
   void Function()? onCreate,
   void Function()? onAbout,
+  void Function()? onChangeName,
   bool languageSelectionEnabled = true,
   bool networkSyncEnabled = true,
   bool aboutScreenEnabled = true,
+  // Defaults false — matches the flag's default-off-during-development
+  // value (RemoteConfigDefaults.displayNamePersonalizationEnabled) so every
+  // pre-existing test above keeps seeing exactly the same candidate set.
+  bool displayNamePersonalizationEnabled = false,
 }) =>
     buildDashboardActions(
       onRcOverridesPressed: onRc ?? () {},
@@ -21,9 +26,11 @@ List<DashboardActionDescriptor> makeActions({
       onLanguagePickerPressed: onLang ?? () {},
       onCreatePactPressed: onCreate ?? () {},
       onAboutPressed: onAbout ?? () {},
+      onChangeNamePressed: onChangeName ?? () {},
       languageSelectionEnabled: languageSelectionEnabled,
       networkSyncEnabled: networkSyncEnabled,
       aboutScreenEnabled: aboutScreenEnabled,
+      displayNamePersonalizationEnabled: displayNamePersonalizationEnabled,
     );
 
 void main() {
@@ -94,22 +101,42 @@ void main() {
       expect(about.key, const Key('about-button'));
     });
 
+    test('includes changeName when displayNamePersonalizationEnabled is true', () {
+      final actions = makeActions(displayNamePersonalizationEnabled: true);
+      expect(actions.any((a) => a.type == DashboardActionType.changeName), isTrue);
+    });
+
+    test('omits changeName when displayNamePersonalizationEnabled is false', () {
+      final actions = makeActions(displayNamePersonalizationEnabled: false);
+      expect(actions.any((a) => a.type == DashboardActionType.changeName), isFalse);
+    });
+
+    test('changeName descriptor has Key(change-name-button)', () {
+      final changeName = makeActions(displayNamePersonalizationEnabled: true)
+          .firstWhere((a) => a.type == DashboardActionType.changeName);
+      expect(changeName.key, const Key('change-name-button'));
+    });
+
     test('onPressed callbacks are wired to provided functions', () {
-      bool rcCalled = false, syncCalled = false, langCalled = false, aboutCalled = false;
+      bool rcCalled = false, syncCalled = false, langCalled = false, aboutCalled = false, changeNameCalled = false;
       final actions = makeActions(
         onRc: () => rcCalled = true,
         onSync: () => syncCalled = true,
         onLang: () => langCalled = true,
         onAbout: () => aboutCalled = true,
+        onChangeName: () => changeNameCalled = true,
+        displayNamePersonalizationEnabled: true,
       );
       actions.firstWhere((a) => a.type == DashboardActionType.rcOverrides).onPressed();
       actions.firstWhere((a) => a.type == DashboardActionType.syncStatus).onPressed();
       actions.firstWhere((a) => a.type == DashboardActionType.languagePicker).onPressed();
       actions.firstWhere((a) => a.type == DashboardActionType.about).onPressed();
+      actions.firstWhere((a) => a.type == DashboardActionType.changeName).onPressed();
       expect(rcCalled, isTrue);
       expect(syncCalled, isTrue);
       expect(langCalled, isTrue);
       expect(aboutCalled, isTrue);
+      expect(changeNameCalled, isTrue);
     });
   });
 
@@ -146,6 +173,12 @@ void main() {
       final items = kebabMenuItems(actions);
       expect(items.any((a) => a.type == DashboardActionType.syncStatus), isFalse);
       expect(items.any((a) => a.type == DashboardActionType.createPact), isFalse);
+    });
+
+    test('changeName is a kebab candidate alongside language and about', () {
+      final actions = makeActions(displayNamePersonalizationEnabled: true);
+      final items = kebabMenuItems(actions);
+      expect(items.any((a) => a.type == DashboardActionType.changeName), isTrue);
     });
   });
 

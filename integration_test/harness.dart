@@ -338,6 +338,32 @@ String enterNameFieldText(WidgetTester tester) {
   return (w as CupertinoTextField).controller?.text ?? '';
 }
 
+/// Returns the current text of the "Change name" dialog's field on any
+/// platform (HAB-232 WU5).
+String changeNameFieldText(WidgetTester tester) {
+  final w = tester.widget(find.byKey(const Key('change-name-text-field')));
+  if (w is TextField) return w.controller?.text ?? '';
+  return (w as CupertinoTextField).controller?.text ?? '';
+}
+
+/// Opens the ⋯ kebab menu and taps "Change name" (HAB-232 WU5).
+Future<void> openChangeNameDialogFromKebab(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('kebab-menu-button')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('change-name-button')));
+  await tester.pumpAndSettle();
+}
+
+/// Enters [name] into the "Change name" dialog's field, taps Save, and waits
+/// for the dialog to actually disappear (HAB-232 WU5).
+Future<void> saveChangeName(WidgetTester tester, String name) async {
+  await tester.enterText(find.byKey(const Key('change-name-text-field')), name);
+  await tester.pump(); // rebuild so a (now non-empty) field re-enables Save
+  await tester.tap(find.byKey(const Key('change-name-save-button')));
+  await tester.pump();
+  await waitForGone(tester, find.byKey(const Key('change-name-text-field')));
+}
+
 /// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).
 final noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
   FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
