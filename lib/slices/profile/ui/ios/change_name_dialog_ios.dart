@@ -3,6 +3,7 @@ import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/profile/ui/generic/change_name_dialog_controller.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
+import 'package:habit_loop/theme/spacing.dart';
 
 /// Shows a [CupertinoAlertDialog] pre-filled with [currentName] (HAB-232 WU5),
 /// returning the trimmed new name on Save, or `null` if cancelled/dismissed.
@@ -43,7 +44,7 @@ class _ChangeNameDialogIosState extends State<_ChangeNameDialogIos> {
     return CupertinoAlertDialog(
       title: Text(l10n.changeNameTitle),
       content: Padding(
-        padding: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.only(top: AppSpacing.s8),
         child: CupertinoTextField(
           key: const Key('change-name-text-field'),
           controller: _controller.textController,
