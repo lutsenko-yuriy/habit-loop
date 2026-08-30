@@ -68,6 +68,11 @@ class OnboardingSlideWidget extends StatelessWidget {
             slide.title(l10n, personalizedName),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
+            // A long personalized name (HAB-232 WU6 audit finding) can push this past
+            // the 1-2 lines the neutral copy always fit in — cap it defensively so it
+            // never overflows the fixed-height carousel slot on a short viewport.
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(

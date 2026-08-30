@@ -236,9 +236,14 @@ class _GreetingHeader extends StatelessWidget {
     final name = personalizedName;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
-      child: Text(
-        name == null ? l10n.dashboardGreetingNeutral : l10n.dashboardGreetingPersonalized(name),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      child: Semantics(
+        header: true,
+        child: Text(
+          name == null ? l10n.dashboardGreetingNeutral : l10n.dashboardGreetingPersonalized(name),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     );
   }
