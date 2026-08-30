@@ -139,16 +139,21 @@ void main() {
     });
 
     testWidgets(
-        'normal-length copy is not force-scrolled on a comfortably sized slot '
-        '(regression — an earlier fix gave title/body a fixed 1/3-height flex share on every slide)', (tester) async {
-      for (final slide in OnboardingSlide.slides) {
-        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+        'normal-length copy is not force-scrolled on a real small-device slot '
+        '(regression — an earlier fix inflated the reported intrinsic height by ~100px, '
+        'pushing content off-screen on short viewports)', (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
+      for (final slide in OnboardingSlide.slides) {
+        // 360x420 — the actual PageView slide slot on a ~360x640 device
+        // (HAB-232 WU6 audit), not an arbitrarily generous size. The earlier
+        // Flexible-spacer version reported maxScrollExtent 72 here even
+        // though real content only needs 374px.
         await tester.pumpWidget(MaterialApp(
           home: Center(
             child: SizedBox(
               width: 360,
-              height: 600,
+              height: 420,
               child: OnboardingSlideWidget(slide: slide, l10n: l10n),
             ),
           ),

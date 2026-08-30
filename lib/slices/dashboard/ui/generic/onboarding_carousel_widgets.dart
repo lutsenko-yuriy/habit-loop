@@ -78,7 +78,13 @@ class OnboardingSlideWidget extends StatelessWidget {
                         child: SvgPicture.asset(slide.assetPath, width: 200, fit: BoxFit.contain),
                       ),
                     ),
-                    const Flexible(child: SizedBox(height: AppSpacing.s32)),
+                    // Not Flexible (HAB-232 WU6 audit) — RenderFlex's intrinsic-height
+                    // formula for flex children is max(childIntrinsic/flex) x totalFlex,
+                    // so a flexible 32px spacer alongside the flexible image gets
+                    // normalized up to the image's own intrinsic height, inflating the
+                    // Column's reported intrinsic size by ~100px and pushing real content
+                    // off-screen on short viewports even though it would otherwise fit.
+                    const SizedBox(height: AppSpacing.s32),
                     Text(
                       slide.title(l10n, personalizedName),
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
