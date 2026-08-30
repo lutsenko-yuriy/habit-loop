@@ -3,6 +3,7 @@ import 'dart:async' show StreamSubscription, unawaited;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 
 /// The user's raw resolved display name (HAB-232), `null` when none is on
 /// file. Seeded synchronously before `runApp` via [DisplayNameNotifier]'s
@@ -21,10 +22,17 @@ final displayNameProvider = NotifierProvider<DisplayNameNotifier, String?>(Displ
 /// an empty string — whenever the flag is off, so every consumer (onboarding,
 /// dashboard greeting, notification copy, the change-name dialog) has
 /// exactly one "no name" representation to check.
+///
+/// Also re-applies [capToMaxNameLength] here (HAB-232 WU6 audit finding) —
+/// the UI entry points (`EnterNameScreen`, `openChangeNameDialog`) cap on
+/// save, but a name arriving via [SyncService.pullCompleted] is written to
+/// the repository (and this provider) uncapped, and this is the single
+/// choke point every render call site already goes through.
 final personalizedNameProvider = Provider<String?>((ref) {
   final enabled = ref.watch(featureFlagsProvider).displayNamePersonalizationEnabled;
   if (!enabled) return null;
-  return ref.watch(displayNameProvider);
+  final name = ref.watch(displayNameProvider);
+  return name == null ? null : capToMaxNameLength(name);
 });
 
 class DisplayNameNotifier extends Notifier<String?> {

@@ -5,6 +5,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 
 import '../../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../../infrastructure/remote_config/fake_remote_config_service.dart';
@@ -163,6 +164,18 @@ void main() {
     test('default RC value keeps it off (feature incomplete through WU6)', () {
       // No explicit flag override — exercises RemoteConfigDefaults directly.
       expect(RemoteConfigDefaults.displayNamePersonalizationEnabled, isFalse);
+    });
+
+    test('caps an overlong name to enterNameMaxLength (HAB-232 WU6 audit finding)', () async {
+      // setDisplayName has no cap of its own (only the UI entry points do) —
+      // this simulates a name that arrived uncapped via a sync pull.
+      final container = _makeContainer(flagEnabled: true);
+      addTearDown(container.dispose);
+      container.read(displayNameProvider);
+      await container.read(displayNameProvider.notifier).setDisplayName('A' * 100);
+
+      final personalized = container.read(personalizedNameProvider);
+      expect(personalized, hasLength(enterNameMaxLength));
     });
   });
 }
