@@ -40,10 +40,15 @@ class OnboardingDotsRow extends StatelessWidget {
 
 /// Shared slide content widget for the onboarding carousel.
 class OnboardingSlideWidget extends StatelessWidget {
-  const OnboardingSlideWidget({super.key, required this.slide, required this.l10n});
+  const OnboardingSlideWidget({super.key, required this.slide, required this.l10n, this.personalizedName});
 
   final OnboardingSlide slide;
   final AppLocalizations l10n;
+
+  /// Resolved `personalizedNameProvider` value (HAB-232 WU6) — `null` when no
+  /// name is on file or the kill-switch is off. Passed through to [slide]'s
+  /// title/body builders; only slide 0 renders it.
+  final String? personalizedName;
 
   @override
   Widget build(BuildContext context) {
@@ -60,13 +65,13 @@ class OnboardingSlideWidget extends StatelessWidget {
           ),
           const Flexible(child: SizedBox(height: AppSpacing.s32)),
           Text(
-            slide.title(l10n),
+            slide.title(l10n, personalizedName),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            slide.body(l10n),
+            slide.body(l10n, personalizedName),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
             textAlign: TextAlign.center,
           ),

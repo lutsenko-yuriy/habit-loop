@@ -283,6 +283,10 @@
 
   "onboardingSlide0Title": "Build your habit. For real this time.",
   "@onboardingSlide0Title": {},
+  "onboardingSlide0TitlePersonalized": "Hi {name}! Build your habit. For real this time.",
+  "@onboardingSlide0TitlePersonalized": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "onboardingSlide0Body": "Habit Loop helps you commit, show up, and track progress — one pact at a time.",
   "@onboardingSlide0Body": {},
   "onboardingSlide1Title": "Make a pact with yourself",
@@ -398,5 +402,11 @@
   "enterNameSkip": "Skip",
 
   "changeNameTitle": "Change name",
-  "changeNameSave": "Save"
+  "changeNameSave": "Save",
+
+  "dashboardGreetingPersonalized": "Hi {name}",
+  "@dashboardGreetingPersonalized": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "dashboardGreetingNeutral": "Welcome back"
 }

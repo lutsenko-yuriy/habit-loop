@@ -8,6 +8,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_carousel_scaffold.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_carousel_widgets.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 
 import '../../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../../infrastructure/remote_config/fake_remote_config_service.dart';
@@ -18,6 +19,7 @@ Widget _buildApp({
   bool isSigningIn = false,
   bool isAnonymous = true,
   int autoAdvanceSeconds = 0,
+  String? personalizedName,
 }) {
   return ProviderScope(
     overrides: [
@@ -29,6 +31,7 @@ Widget _buildApp({
       authStateChangesProvider.overrideWith(
         (ref) => Stream.value(AuthState(userId: 'u-1', isAnonymous: isAnonymous)),
       ),
+      personalizedNameProvider.overrideWithValue(personalizedName),
     ],
     child: MaterialApp(
       localizationsDelegates: const [
@@ -72,9 +75,10 @@ void main() {
       await tester.pumpWidget(_buildApp());
       await tester.pump();
       expect(
-          find.text(OnboardingSlide.slides[0].title(AppLocalizations.of(
-            tester.element(find.byType(PageView)),
-          )!)),
+          find.text(OnboardingSlide.slides[0].title(
+            AppLocalizations.of(tester.element(find.byType(PageView)))!,
+            null,
+          )),
           findsOneWidget);
     });
 
@@ -86,7 +90,26 @@ void main() {
       await tester.pumpAndSettle();
 
       final l10n = AppLocalizations.of(tester.element(find.byType(OnboardingDotsRow)))!;
-      expect(find.text(OnboardingSlide.slides[1].title(l10n)), findsOneWidget);
+      expect(find.text(OnboardingSlide.slides[1].title(l10n, null)), findsOneWidget);
+    });
+  });
+
+  group('OnboardingCarouselScaffold — personalization (HAB-232 WU6)', () {
+    testWidgets('slide 0 title is personalized when personalizedNameProvider returns a name', (tester) async {
+      await tester.pumpWidget(_buildApp(personalizedName: 'Alex'));
+      await tester.pump();
+
+      final l10n = AppLocalizations.of(tester.element(find.byType(PageView)))!;
+      expect(find.text(l10n.onboardingSlide0TitlePersonalized('Alex')), findsOneWidget);
+      expect(find.text(l10n.onboardingSlide0Title), findsNothing);
+    });
+
+    testWidgets('slide 0 title falls back to neutral copy when personalizedNameProvider returns null', (tester) async {
+      await tester.pumpWidget(_buildApp(personalizedName: null));
+      await tester.pump();
+
+      final l10n = AppLocalizations.of(tester.element(find.byType(PageView)))!;
+      expect(find.text(l10n.onboardingSlide0Title), findsOneWidget);
     });
   });
 
