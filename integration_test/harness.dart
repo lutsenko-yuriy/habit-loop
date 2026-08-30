@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoTextField;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,9 +10,11 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
+import 'package:habit_loop/domain/user/user_profile_repository.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/main.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
@@ -54,6 +57,8 @@ class AppHarness {
     required this.syncService,
     required this.localeService,
     required this.navigatorKey,
+    this.onboardingService,
+    this.userProfileRepository,
     this.firestoreClient,
   });
 
@@ -65,6 +70,18 @@ class AppHarness {
   final FakeNotificationService notifications;
   final FakeSyncService syncService;
   final FakeLocalePreferenceService localeService;
+
+  /// HAB-232: non-null only when [AppHarness.create] was called with an
+  /// explicit `onboardingService` — otherwise the widget tree uses the
+  /// default `NoopOnboardingService` (app_providers.dart), unaffected by this
+  /// field's absence. Pass the same instance into a second [AppHarness.create]
+  /// call to simulate a subsequent launch.
+  final OnboardingPreferenceService? onboardingService;
+
+  /// HAB-232: non-null only when [AppHarness.create] was called with an
+  /// explicit `userProfileRepository` — otherwise the widget tree uses the
+  /// default `InMemoryUserProfileRepository` (app_providers.dart).
+  final UserProfileRepository? userProfileRepository;
 
   /// Navigator key wired into [HabitLoopApp]. Use this in tests to drive
   /// navigation programmatically (e.g. to simulate a notification tap).
@@ -126,6 +143,8 @@ class AppHarness {
     bool initiallyAnonymous = false,
     FakeSyncService Function(InMemoryPactRepository, InMemoryShowupRepository)? syncServiceFactory,
     FirestoreClient? firestoreClient,
+    OnboardingPreferenceService? onboardingService,
+    UserProfileRepository? userProfileRepository,
   }) async {
     final pactRepo = InMemoryPactRepository();
     final showupRepo = InMemoryShowupRepository();
@@ -147,6 +166,11 @@ class AppHarness {
       analyticsService: analytics,
       notificationService: notifications,
       localePreferenceService: localeService,
+      // HAB-232: only overridden when a test explicitly opts in — otherwise every
+      // pre-existing scenario keeps its original NoopOnboardingService/
+      // InMemoryUserProfileRepository defaults (app_providers.dart) unchanged.
+      onboardingPreferenceService: onboardingService,
+      userProfileRepository: userProfileRepository,
     );
 
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -161,6 +185,8 @@ class AppHarness {
       syncService: syncService,
       localeService: localeService,
       navigatorKey: navigatorKey,
+      onboardingService: onboardingService,
+      userProfileRepository: userProfileRepository,
       firestoreClient: firestoreClient,
     );
 
@@ -269,6 +295,47 @@ Future<void> waitFor(
     }
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+/// Pumps until [finder] has no matches or [timeout] expires — the inverse of
+/// [waitFor], for asserting a widget has actually been removed rather than
+/// just tapped away (HAB-232).
+Future<void> waitForGone(
+  WidgetTester tester,
+  Finder finder, {
+  Duration timeout = const Duration(seconds: 30),
+}) async {
+  final deadline = tester.binding.clock.now().add(timeout);
+  while (finder.evaluate().isNotEmpty) {
+    if (tester.binding.clock.now().isAfter(deadline)) {
+      throw TestFailure('waitForGone timed out: still present: $finder');
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
+/// Enters [name] into EnterNameScreen's field, taps its save button, and waits
+/// for the page to actually disappear — the tap triggers a SQLite write and a
+/// SharedPreferences round trip, so a fixed pump count could flake (HAB-232).
+Future<void> saveEnterName(WidgetTester tester, String name) async {
+  await tester.enterText(find.byKey(const Key('enter-name-text-field')), name);
+  await tester.tap(find.byKey(const Key('enter-name-save-button')));
+  await tester.pump();
+  await waitForGone(tester, find.byKey(const Key('enter-name-text-field')));
+}
+
+/// Taps EnterNameScreen's skip button and waits for the page to disappear (HAB-232).
+Future<void> skipEnterName(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('enter-name-skip-button')));
+  await tester.pump();
+  await waitForGone(tester, find.byKey(const Key('enter-name-text-field')));
+}
+
+/// Returns the current text of EnterNameScreen's field on any platform (HAB-232).
+String enterNameFieldText(WidgetTester tester) {
+  final w = tester.widget(find.byKey(const Key('enter-name-text-field')));
+  if (w is TextField) return w.controller?.text ?? '';
+  return (w as CupertinoTextField).controller?.text ?? '';
 }
 
 /// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).

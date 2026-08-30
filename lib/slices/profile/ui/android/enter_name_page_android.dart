@@ -1,0 +1,58 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
+import 'package:habit_loop/theme/spacing.dart';
+
+class EnterNamePageAndroid extends StatelessWidget {
+  const EnterNamePageAndroid({super.key, required this.controller, required this.onSave, required this.onSkip});
+
+  final TextEditingController controller;
+  final Future<void> Function() onSave;
+  final Future<void> Function() onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      body: SafeArea(
+        // Scrollable: the field is autofocused, so the keyboard is up on the very
+        // first frame and shrinks the body (resizeToAvoidBottomInset) — an
+        // unscrollable Column can overflow past the Continue/Skip buttons on a
+        // short device or with longer translated copy.
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.s24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.enterNameTitle, style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: AppSpacing.s12),
+              Text(l10n.enterNameBody, style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: AppSpacing.s24),
+              TextField(
+                key: const Key('enter-name-text-field'),
+                controller: controller,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                inputFormatters: [LengthLimitingTextInputFormatter(enterNameMaxLength)],
+                decoration: InputDecoration(hintText: l10n.enterNameHint, border: const OutlineInputBorder()),
+              ),
+              const SizedBox(height: AppSpacing.s24),
+              FilledButton(
+                key: const Key('enter-name-save-button'),
+                onPressed: () => onSave(),
+                child: Text(l10n.enterNameContinue),
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              TextButton(
+                key: const Key('enter-name-skip-button'),
+                onPressed: () => onSkip(),
+                child: Text(l10n.enterNameSkip),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

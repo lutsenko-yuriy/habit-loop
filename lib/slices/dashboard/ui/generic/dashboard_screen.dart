@@ -15,6 +15,7 @@ import 'package:habit_loop/slices/dashboard/ui/ios/dashboard_page_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_screen.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -240,6 +241,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     // !onboardingPassed short-circuits on cold start so AsyncLoading never causes a carousel flash.
     // isSigningIn keeps carousel visible during pullRemoteChanges after Google sign-in.
     final showCarousel = !onboardingPassed && (isNewUser || isSigningIn);
+
+    // Neither flag alone suffices (HAB-232): !onboardingPassed alone re-shows this on every
+    // cold start before a pact/sign-in exists; !isNameEntryShown alone would wrongly prompt
+    // existing users, for whom isOnboardingPassed is already true.
+    final showEnterName = !onboardingPassed &&
+        !onboardingService.isNameEntryShown &&
+        ref.watch(featureFlagsProvider).displayNamePersonalizationEnabled;
+
+    if (showEnterName) {
+      return EnterNameScreen(onDone: () => setState(() {}));
+    }
 
     // Deferred to post-frame so build() stays a pure function of state.
     if (!showCarousel && !_onboardingMarkedThisSession) {

@@ -385,5 +385,11 @@
   "@wizardStepIndicatorLabel": {
     "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
   },
-  "scheduleRemoveSlotTooltip": "Zeitfenster entfernen"
+  "scheduleRemoveSlotTooltip": "Zeitfenster entfernen",
+
+  "enterNameTitle": "Wie sollen wir dich nennen?",
+  "enterNameBody": "Dein Name personalisiert das Onboarding, dein Dashboard und Benachrichtigungen. Du kannst ihn jederzeit ändern.",
+  "enterNameHint": "Vorname",
+  "enterNameContinue": "Weiter",
+  "enterNameSkip": "Überspringen"
 }

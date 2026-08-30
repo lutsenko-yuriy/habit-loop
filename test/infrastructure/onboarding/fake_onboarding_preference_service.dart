@@ -7,11 +7,17 @@ import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_prefer
 /// [markCalledCount] so tests can assert it was called exactly once.
 final class FakeOnboardingPreferenceService implements OnboardingPreferenceService {
   bool _passed;
+  bool _nameEntryShown;
 
   /// How many times [markOnboardingPassed] has been called.
   int markCalledCount = 0;
 
-  FakeOnboardingPreferenceService({bool initialValue = false}) : _passed = initialValue;
+  /// How many times [markNameEntryShown] has been called.
+  int markNameEntryShownCalledCount = 0;
+
+  FakeOnboardingPreferenceService({bool initialValue = false, bool initialNameEntryShown = false})
+      : _passed = initialValue,
+        _nameEntryShown = initialNameEntryShown;
 
   @override
   bool get isOnboardingPassed => _passed;
@@ -20,5 +26,14 @@ final class FakeOnboardingPreferenceService implements OnboardingPreferenceServi
   Future<void> markOnboardingPassed() async {
     markCalledCount++;
     _passed = true;
+  }
+
+  @override
+  bool get isNameEntryShown => _nameEntryShown;
+
+  @override
+  Future<void> markNameEntryShown() async {
+    markNameEntryShownCalledCount++;
+    _nameEntryShown = true;
   }
 }

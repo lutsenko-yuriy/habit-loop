@@ -3,47 +3,103 @@
 //
 // Run on host:   flutter test integration_test/display_name_flow_test.dart
 // Run on device: flutter test integration_test/display_name_flow_test.dart -d <device>
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/user/user_profile.dart';
+import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:integration_test/integration_test.dart';
 
+import '../test/infrastructure/onboarding/fake_onboarding_preference_service.dart';
+import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
+
+final _flagOn = remoteConfigServiceProvider.overrideWithValue(
+  FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true}),
+);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Display name personalization flow', () {
-    // TODO: once driver code is filled in, declare `late AppHarness h;` and
-    // `tearDown(() => h.dispose());` here, mirroring other flow test files.
+    late AppHarness h;
+    tearDown(() => h.dispose());
 
     testWidgets(
-        'enter_name_page_shown_on_fresh_install_and_saves_name: fresh install shows EnterNamePage and saving a name persists it',
+        'enter_name_page_shown_on_fresh_install_and_saves_name: fresh install shows EnterNameScreen and saving a name persists it',
         (tester) async {
-      // TODO: 1. Launch harness with flag `display_name_personalization_enabled: true`, `initiallyAnonymous: true`, no pacts seeded.
-      // TODO: 2. Verify EnterNamePage is shown (its title/key) instead of the onboarding carousel/dashboard.
-      // TODO: 3. Enter a name into the text field.
-      // TODO: 4. Tap save.
-      // TODO: 5. Verify EnterNamePage is dismissed and the app proceeds to its normal first-launch flow.
-      // TODO: 6. Verify the saved name is now readable from the underlying preference store used by displayNameProvider.
+      final userProfileRepository = InMemoryUserProfileRepository();
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        initiallyAnonymous: true,
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: userProfileRepository,
+      );
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
+
+      await saveEnterName(tester, 'Alex');
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(find.text(l10n(tester).createPact), findsOneWidget);
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, 'Alex');
     });
 
     testWidgets(
-        'enter_name_page_skip_is_permanent: skipping EnterNamePage marks it shown so it is never re-prompted on a later launch',
+        'enter_name_page_skip_is_permanent: skipping EnterNameScreen marks it shown so it is never re-prompted on a later launch',
         (tester) async {
-      // TODO: 1. Launch harness with flag on, fresh install (no pacts, isNameEntryShown false).
-      // TODO: 2. Verify EnterNamePage is shown.
-      // TODO: 3. Tap "Skip".
-      // TODO: 4. Verify EnterNamePage is dismissed.
-      // TODO: 5. Dispose harness, recreate a new AppHarness reusing the same underlying preference store/state (not a truly fresh install) to simulate a subsequent launch.
-      // TODO: 6. Verify EnterNamePage is NOT shown on this second launch (dashboard/carousel appears directly instead).
+      final onboardingService = FakeOnboardingPreferenceService();
+      final userProfileRepository = InMemoryUserProfileRepository();
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        initiallyAnonymous: true,
+        onboardingService: onboardingService,
+        userProfileRepository: userProfileRepository,
+      );
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
+
+      await skipEnterName(tester);
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(onboardingService.isNameEntryShown, isTrue);
+
+      h.dispose();
+
+      // Simulate a subsequent launch: same onboarding-service/profile-repository
+      // instances, fresh AppHarness (not a truly fresh install).
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        initiallyAnonymous: true,
+        onboardingService: onboardingService,
+        userProfileRepository: userProfileRepository,
+      );
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
     });
 
     testWidgets(
-        'enter_name_page_prefills_existing_local_name: an existing local name pre-fills EnterNamePage instead of showing it empty',
+        'enter_name_page_prefills_existing_local_name: an existing local name pre-fills EnterNameScreen instead of showing it empty',
         (tester) async {
-      // TODO: 1. Launch harness with flag on, beforePump seeding an existing local display name into the preference store (simulating leftover local state from before reinstall), with isNameEntryShown false and no pacts.
-      // TODO: 2. Verify EnterNamePage is shown.
-      // TODO: 3. Verify its text field is pre-populated with the seeded name.
+      final userProfileRepository = InMemoryUserProfileRepository();
+      await userProfileRepository.saveProfile(UserProfile(displayName: 'Sam', updatedAt: DateTime(2026, 1, 1)));
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        initiallyAnonymous: true,
+        userProfileRepository: userProfileRepository,
+      );
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
+      expect(enterNameFieldText(tester), 'Sam');
     });
 
     testWidgets(

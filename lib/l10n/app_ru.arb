@@ -385,5 +385,11 @@
   "@wizardStepIndicatorLabel": {
     "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
   },
-  "scheduleRemoveSlotTooltip": "Удалить временной интервал"
+  "scheduleRemoveSlotTooltip": "Удалить временной интервал",
+
+  "enterNameTitle": "Как к вам обращаться?",
+  "enterNameBody": "Ваше имя используется для персонализации онбординга, панели управления и уведомлений. Вы можете изменить его в любой момент.",
+  "enterNameHint": "Имя",
+  "enterNameContinue": "Продолжить",
+  "enterNameSkip": "Пропустить"
 }

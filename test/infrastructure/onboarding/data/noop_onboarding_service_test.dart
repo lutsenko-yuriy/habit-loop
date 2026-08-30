@@ -24,5 +24,16 @@ void main() {
       await service.markOnboardingPassed();
       // No assertion needed — must not throw.
     });
+
+    test('isNameEntryShown always returns false', () async {
+      const service = NoopOnboardingService();
+      expect(service.isNameEntryShown, isFalse);
+      await service.markNameEntryShown();
+      expect(service.isNameEntryShown, isFalse);
+    });
+
+    test('markNameEntryShown never throws', () async {
+      await expectLater(const NoopOnboardingService().markNameEntryShown(), completes);
+    });
   });
 }

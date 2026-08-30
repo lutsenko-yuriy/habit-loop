@@ -385,5 +385,11 @@
   "@wizardStepIndicatorLabel": {
     "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
   },
-  "scheduleRemoveSlotTooltip": "Supprimer le créneau"
+  "scheduleRemoveSlotTooltip": "Supprimer le créneau",
+
+  "enterNameTitle": "Comment devons-nous vous appeler ?",
+  "enterNameBody": "Votre prénom personnalise l'accueil, votre tableau de bord et les notifications. Vous pouvez le modifier à tout moment.",
+  "enterNameHint": "Prénom",
+  "enterNameContinue": "Continuer",
+  "enterNameSkip": "Ignorer"
 }

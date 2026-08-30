@@ -8,6 +8,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
@@ -18,6 +19,7 @@ import 'package:habit_loop/theme/colors.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/onboarding/fake_onboarding_preference_service.dart';
+import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 final _today = DateTime(2026, 3, 29);
 
@@ -718,5 +720,86 @@ void main() {
         expect(onboardingService.markCalledCount, 1);
       },
     );
+  });
+
+  group('EnterNameScreen gating (HAB-232)', () {
+    Widget buildWithFlag({
+      required bool flagEnabled,
+      bool onboardingPassed = false,
+      bool nameEntryShown = false,
+      OnboardingPreferenceService? onboardingService,
+    }) {
+      final pactRepo = InMemoryPactRepository();
+      final showupRepo = InMemoryShowupRepository();
+      final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
+      return ProviderScope(
+        overrides: [
+          pactRepositoryProvider.overrideWithValue(pactRepo),
+          showupRepositoryProvider.overrideWithValue(showupRepo),
+          pactTransactionServiceProvider.overrideWithValue(txService),
+          todayProvider.overrideWithValue(_today),
+          onboardingPreferenceServiceProvider.overrideWithValue(
+            onboardingService ??
+                FakeOnboardingPreferenceService(initialValue: onboardingPassed, initialNameEntryShown: nameEntryShown),
+          ),
+          remoteConfigServiceProvider.overrideWithValue(
+            FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': flagEnabled}),
+          ),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: Locale('en'),
+          home: DashboardScreen(),
+        ),
+      );
+    }
+
+    testWidgets('shows EnterNameScreen on fresh install when the flag is on', (tester) async {
+      await tester.pumpWidget(buildWithFlag(flagEnabled: true));
+      await tester.pump();
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
+    });
+
+    testWidgets('does not show EnterNameScreen when the flag is off', (tester) async {
+      await tester.pumpWidget(buildWithFlag(flagEnabled: false));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(find.text('Create a Pact'), findsOneWidget);
+    });
+
+    testWidgets('does not show EnterNameScreen when onboarding already passed (existing users)', (tester) async {
+      await tester.pumpWidget(buildWithFlag(flagEnabled: true, onboardingPassed: true));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+    });
+
+    testWidgets('does not show EnterNameScreen when it was already shown (skip is permanent)', (tester) async {
+      await tester.pumpWidget(buildWithFlag(flagEnabled: true, nameEntryShown: true));
+      await tester.pump();
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(find.text('Create a Pact'), findsOneWidget);
+    });
+
+    testWidgets('skipping EnterNameScreen reveals the onboarding carousel without a restart', (tester) async {
+      await tester.pumpWidget(buildWithFlag(flagEnabled: true));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('enter-name-skip-button')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(find.text('Create a Pact'), findsOneWidget);
+    });
   });
 }

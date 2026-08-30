@@ -26,6 +26,10 @@ final class SharedPreferencesOnboardingService implements OnboardingPreferenceSe
   /// The key used to store the onboarding-passed flag.
   static const String _key = 'habit_loop_onboarding_passed';
 
+  /// The key used to store the name-entry-shown flag (HAB-232) — independent
+  /// of [_key], see [OnboardingPreferenceService.isNameEntryShown].
+  static const String _nameEntryShownKey = 'habit_loop_name_entry_shown';
+
   const SharedPreferencesOnboardingService(this._prefs);
 
   @override
@@ -35,6 +39,16 @@ final class SharedPreferencesOnboardingService implements OnboardingPreferenceSe
   Future<void> markOnboardingPassed() async {
     try {
       await _prefs.setBool(_key, true);
+    } catch (_) {}
+  }
+
+  @override
+  bool get isNameEntryShown => _prefs.getBool(_nameEntryShownKey) ?? false;
+
+  @override
+  Future<void> markNameEntryShown() async {
+    try {
+      await _prefs.setBool(_nameEntryShownKey, true);
     } catch (_) {}
   }
 }
