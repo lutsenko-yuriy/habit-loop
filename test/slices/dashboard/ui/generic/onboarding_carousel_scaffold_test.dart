@@ -137,6 +137,35 @@ void main() {
 
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets(
+        'normal-length copy is not force-scrolled on a comfortably sized slot '
+        '(regression — an earlier fix gave title/body a fixed 1/3-height flex share on every slide)', (tester) async {
+      for (final slide in OnboardingSlide.slides) {
+        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+        await tester.pumpWidget(MaterialApp(
+          home: Center(
+            child: SizedBox(
+              width: 360,
+              height: 600,
+              child: OnboardingSlideWidget(slide: slide, l10n: l10n),
+            ),
+          ),
+        ));
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+        expect(
+          scrollable.position.maxScrollExtent,
+          0,
+          reason: 'content that already fits the slot should not need to scroll — a non-zero '
+              'maxScrollExtent here means the image/title/body are being squeezed into less '
+              'height than they actually need',
+        );
+      }
+    });
   });
 
   group('OnboardingCarouselScaffold — dots row', () {
