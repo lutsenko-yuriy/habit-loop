@@ -20,6 +20,7 @@ import 'package:habit_loop/slices/dashboard/ui/ios/onboarding_carousel_ios.dart'
 import 'package:habit_loop/slices/debug/ui/ios/remote_config_overrides_page_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/profile/ui/generic/change_name_handler.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/profile/ui/ios/change_name_dialog_ios.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
@@ -33,7 +34,6 @@ class DashboardPageIos extends ConsumerWidget {
   final AsyncCallback onCreatePact;
   final Future<void> Function(String) onShowupTapped;
   final AsyncCallback onAbout;
-  final String? personalizedName;
 
   const DashboardPageIos({
     super.key,
@@ -44,7 +44,6 @@ class DashboardPageIos extends ConsumerWidget {
     required this.onCreatePact,
     required this.onShowupTapped,
     required this.onAbout,
-    this.personalizedName,
   });
 
   @override
@@ -82,6 +81,7 @@ class DashboardPageIos extends ConsumerWidget {
     }
 
     final featureFlags = ref.watch(featureFlagsProvider);
+    final personalizedName = ref.watch(personalizedNameProvider);
 
     final actions = buildDashboardActions(
       onRcOverridesPressed: () => Navigator.of(context)

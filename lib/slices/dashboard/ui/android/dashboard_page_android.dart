@@ -20,6 +20,7 @@ import 'package:habit_loop/slices/debug/ui/android/remote_config_overrides_page_
 import 'package:habit_loop/slices/pact/ui/generic/pacts_summary_bar.dart' show PactsPanel;
 import 'package:habit_loop/slices/profile/ui/android/change_name_dialog_android.dart';
 import 'package:habit_loop/slices/profile/ui/generic/change_name_handler.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_formatters.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
@@ -32,7 +33,6 @@ class DashboardPageAndroid extends ConsumerWidget {
   final AsyncCallback onCreatePact;
   final Future<void> Function(String) onShowupTapped;
   final AsyncCallback onAbout;
-  final String? personalizedName;
 
   const DashboardPageAndroid({
     super.key,
@@ -43,7 +43,6 @@ class DashboardPageAndroid extends ConsumerWidget {
     required this.onCreatePact,
     required this.onShowupTapped,
     required this.onAbout,
-    this.personalizedName,
   });
 
   @override
@@ -81,6 +80,7 @@ class DashboardPageAndroid extends ConsumerWidget {
     }
 
     final featureFlags = ref.watch(featureFlagsProvider);
+    final personalizedName = ref.watch(personalizedNameProvider);
 
     final actions = buildDashboardActions(
       onRcOverridesPressed: () => Navigator.of(context)
