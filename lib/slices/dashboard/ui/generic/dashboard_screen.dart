@@ -15,6 +15,7 @@ import 'package:habit_loop/slices/dashboard/ui/ios/dashboard_page_ios.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_screen.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
 
@@ -261,6 +262,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       });
     }
 
+    final personalizedName = ref.watch(personalizedNameProvider);
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return DashboardPageIos(
         state: state,
@@ -270,6 +273,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
         onCreatePact: onCreatePact,
         onShowupTapped: onShowupTapped,
         onAbout: navigateToAbout,
+        personalizedName: personalizedName,
       );
     }
     return DashboardPageAndroid(
@@ -280,6 +284,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       onCreatePact: onCreatePact,
       onShowupTapped: onShowupTapped,
       onAbout: navigateToAbout,
+      personalizedName: personalizedName,
     );
   }
 }

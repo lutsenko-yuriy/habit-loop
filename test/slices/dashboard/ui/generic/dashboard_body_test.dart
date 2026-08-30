@@ -43,6 +43,7 @@ Widget _wrap(
   Future<void> Function(String)? onShowupTapped,
   TextScaler? textScaler,
   void Function(String showupId, ShowupUiState uiState)? onTileUiState,
+  String? personalizedName,
 }) {
   return MaterialApp(
     localizationsDelegates: const [
@@ -68,6 +69,7 @@ Widget _wrap(
         onCreatePact: () async {},
         onDaySelected: onDaySelected ?? (_) {},
         onShowupTapped: onShowupTapped ?? (_) async {},
+        personalizedName: personalizedName,
         buildShowupTile: (ctx, showup, uiState, habitName, onTap) {
           onTileUiState?.call(showup.id, uiState);
           return GestureDetector(
@@ -264,6 +266,23 @@ void main() {
       ));
       await tester.pump();
       expect(captured, ShowupUiState.onBreak);
+    });
+  });
+
+  group('DashboardBody — greeting header (HAB-232 WU6)', () {
+    testWidgets('shows personalized greeting when personalizedName is provided', (tester) async {
+      await tester.pumpWidget(_wrap(_state([]), personalizedName: 'Alex'));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(DashboardBody)))!;
+      expect(find.text(l10n.dashboardGreetingPersonalized('Alex')), findsOneWidget);
+      expect(find.text(l10n.dashboardGreetingNeutral), findsNothing);
+    });
+
+    testWidgets('falls back to the neutral greeting when personalizedName is null', (tester) async {
+      await tester.pumpWidget(_wrap(_state([])));
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(find.byType(DashboardBody)))!;
+      expect(find.text(l10n.dashboardGreetingNeutral), findsOneWidget);
     });
   });
 }

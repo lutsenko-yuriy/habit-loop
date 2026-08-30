@@ -45,6 +45,11 @@ class DashboardBody extends StatelessWidget {
   /// Returns the platform-specific create-pact button inside the no-pacts CTA.
   final Widget Function(BuildContext context, AsyncCallback onCreatePact) buildNoPactsCta;
 
+  /// Resolved `personalizedNameProvider` value (HAB-232 WU6) — `null` when no
+  /// name is on file or the `displayNamePersonalizationEnabled` kill-switch is
+  /// off, in which case the greeting header falls back to neutral copy.
+  final String? personalizedName;
+
   const DashboardBody({
     super.key,
     required this.state,
@@ -57,6 +62,7 @@ class DashboardBody extends StatelessWidget {
     required this.onShowupTapped,
     required this.buildShowupTile,
     required this.buildNoPactsCta,
+    this.personalizedName,
   });
 
   @override
@@ -66,6 +72,7 @@ class DashboardBody extends StatelessWidget {
       children: [
         _CalendarStrip(state: state, statusColors: statusColors, onDaySelected: onDaySelected),
         separator,
+        _GreetingHeader(l10n: l10n, personalizedName: personalizedName),
         Expanded(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
@@ -210,6 +217,28 @@ class _CalendarDayCell extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Greeting header shown above the showup list (HAB-232 WU6). Renders
+/// personalized copy when [personalizedName] is non-null, otherwise the
+/// existing neutral "Welcome back" copy.
+class _GreetingHeader extends StatelessWidget {
+  final AppLocalizations l10n;
+  final String? personalizedName;
+
+  const _GreetingHeader({required this.l10n, required this.personalizedName});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = personalizedName;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+      child: Text(
+        name == null ? l10n.dashboardGreetingNeutral : l10n.dashboardGreetingPersonalized(name),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }

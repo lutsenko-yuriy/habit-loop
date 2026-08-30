@@ -32,6 +32,7 @@ class DashboardPageAndroid extends ConsumerWidget {
   final AsyncCallback onCreatePact;
   final Future<void> Function(String) onShowupTapped;
   final AsyncCallback onAbout;
+  final String? personalizedName;
 
   const DashboardPageAndroid({
     super.key,
@@ -42,6 +43,7 @@ class DashboardPageAndroid extends ConsumerWidget {
     required this.onCreatePact,
     required this.onShowupTapped,
     required this.onAbout,
+    this.personalizedName,
   });
 
   @override
@@ -127,6 +129,7 @@ class DashboardPageAndroid extends ConsumerWidget {
                   onCreatePact: onCreatePact,
                   onDaySelected: onDaySelected,
                   onShowupTapped: onShowupTapped,
+                  personalizedName: personalizedName,
                   buildShowupTile: (ctx, showup, uiState, habitName, onTap) => _ShowupTile(
                     showup: showup,
                     uiState: uiState,
