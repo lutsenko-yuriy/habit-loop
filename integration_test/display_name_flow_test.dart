@@ -5,6 +5,7 @@
 // Run on device: flutter test integration_test/display_name_flow_test.dart -d <device>
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
@@ -17,6 +18,15 @@ import 'harness.dart';
 final _flagOn = remoteConfigServiceProvider.overrideWithValue(
   FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true}),
 );
+final _flagOff = remoteConfigServiceProvider.overrideWithValue(
+  FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false}),
+);
+
+Pact _seedGreetingPact() => buildPact(
+      id: 'greeting-flow-test-pact-1',
+      habitName: 'Meditate',
+      startDate: DateTime(2026, 1, 1),
+    );
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -145,13 +155,114 @@ void main() {
       expect(changeNameFieldText(tester), 'Sam');
     });
 
+    // Split into one harness per test (rather than several AppHarness.create
+    // calls inside a single testWidgets, as the earlier scenarios in this
+    // file do) — reusing the root ProviderScope element across multiple
+    // dispose()+recreate() cycles within one test body was observed to leak
+    // stream-backed provider state (authStateChangesProvider, in particular)
+    // across "launches" when anonymity/pact-count actually change between
+    // them, unlike the existing skip/relaunch scenario above which keeps
+    // both constant. One harness per test sidesteps that entirely.
     testWidgets(
-        'personalization_shown_only_when_name_on_file_and_flag_on: onboarding slide 0 and the dashboard greeting personalize only when a name is on file and the flag is on',
+        'personalization_shown_only_when_name_on_file_and_flag_on: dashboard greeting is personalized when a name is on file and the flag is on',
         (tester) async {
-      // TODO: 1. Case A (personalized): flag on, name on file, at least one pact seeded — verify dashboard greeting contains the name.
-      // TODO: 2. Case A onboarding: flag on, name on file, zero pacts (so onboarding carousel/slide 0 renders) — verify slide 0's copy contains the name.
-      // TODO: 3. Case B (no name): flag on, no name on file — verify dashboard greeting and onboarding slide 0 show neutral/current (non-personalized) copy.
-      // TODO: 4. Case C (flag off): flag off, name on file — verify dashboard greeting and onboarding slide 0 show neutral/current copy despite a name being present.
+      final repo = InMemoryUserProfileRepository();
+      await repo.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: repo,
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_seedGreetingPact());
+        },
+      );
+      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+      expect(find.text(l10n(tester).dashboardGreetingPersonalized('Alex')), findsOneWidget);
+      expect(find.text(l10n(tester).dashboardGreetingNeutral), findsNothing);
+    });
+
+    testWidgets(
+        'personalization_shown_only_when_name_on_file_and_flag_on: dashboard greeting falls back to neutral copy when no name is on file',
+        (tester) async {
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_seedGreetingPact());
+        },
+      );
+      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+      expect(find.text(l10n(tester).dashboardGreetingNeutral), findsOneWidget);
+    });
+
+    testWidgets(
+        'personalization_shown_only_when_name_on_file_and_flag_on: dashboard greeting shows neutral copy when the flag is off despite a name on file',
+        (tester) async {
+      final repo = InMemoryUserProfileRepository();
+      await repo.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOff],
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: repo,
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_seedGreetingPact());
+        },
+      );
+      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+      expect(find.text(l10n(tester).dashboardGreetingNeutral), findsOneWidget);
+      expect(find.text(l10n(tester).dashboardGreetingPersonalized('Alex')), findsNothing);
+    });
+
+    testWidgets(
+        'personalization_shown_only_when_name_on_file_and_flag_on: onboarding slide 0 is personalized when a name is on file and the flag is on',
+        (tester) async {
+      final repo = InMemoryUserProfileRepository();
+      await repo.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        initiallyAnonymous: true,
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: repo,
+      );
+      await waitFor(tester, find.text(l10n(tester).onboardingSlide0TitlePersonalized('Alex')));
+      expect(find.text(l10n(tester).onboardingSlide0Title), findsNothing);
+    });
+
+    testWidgets(
+        'personalization_shown_only_when_name_on_file_and_flag_on: onboarding slide 0 falls back to neutral copy when no name is on file',
+        (tester) async {
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn],
+        initiallyAnonymous: true,
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      );
+      await waitFor(tester, find.text(l10n(tester).onboardingSlide0Title));
+    });
+
+    testWidgets(
+        'personalization_shown_only_when_name_on_file_and_flag_on: onboarding slide 0 shows neutral copy when the flag is off despite a name on file',
+        (tester) async {
+      final repo = InMemoryUserProfileRepository();
+      await repo.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOff],
+        initiallyAnonymous: true,
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: repo,
+      );
+      await waitFor(tester, find.text(l10n(tester).onboardingSlide0Title));
     });
 
     testWidgets(

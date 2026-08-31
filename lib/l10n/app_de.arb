@@ -279,6 +279,10 @@
   },
   "onboardingSlide0Title": "Bau deine Gewohnheit auf. Diesmal wirklich.",
   "@onboardingSlide0Title": {},
+  "onboardingSlide0TitlePersonalized": "Hi {name}! Bau deine Gewohnheit auf. Diesmal wirklich.",
+  "@onboardingSlide0TitlePersonalized": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "onboardingSlide0Body": "Habit Loop hilft dir, dich zu verpflichten, aufzutauchen und Fortschritte zu verfolgen — ein Pakt nach dem anderen.",
   "@onboardingSlide0Body": {},
   "onboardingSlide1Title": "Schließ einen Pakt mit dir selbst",
@@ -394,5 +398,11 @@
   "enterNameSkip": "Überspringen",
 
   "changeNameTitle": "Namen ändern",
-  "changeNameSave": "Speichern"
+  "changeNameSave": "Speichern",
+
+  "dashboardGreetingPersonalized": "Hi {name}",
+  "@dashboardGreetingPersonalized": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "dashboardGreetingNeutral": "Willkommen zurück"
 }

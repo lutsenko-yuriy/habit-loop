@@ -279,6 +279,10 @@
   },
   "onboardingSlide0Title": "Construis ton habitude. Pour de vrai cette fois.",
   "@onboardingSlide0Title": {},
+  "onboardingSlide0TitlePersonalized": "Salut {name} ! Construis ton habitude. Pour de vrai cette fois.",
+  "@onboardingSlide0TitlePersonalized": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "onboardingSlide0Body": "Habit Loop t'aide à t'engager, à te montrer et à suivre ta progression — un pacte à la fois.",
   "@onboardingSlide0Body": {},
   "onboardingSlide1Title": "Fais un pacte avec toi-même",
@@ -394,5 +398,11 @@
   "enterNameSkip": "Ignorer",
 
   "changeNameTitle": "Changer de nom",
-  "changeNameSave": "Enregistrer"
+  "changeNameSave": "Enregistrer",
+
+  "dashboardGreetingPersonalized": "Salut {name}",
+  "@dashboardGreetingPersonalized": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "dashboardGreetingNeutral": "Content de te revoir"
 }

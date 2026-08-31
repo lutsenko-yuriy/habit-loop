@@ -7,6 +7,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_carousel_widgets.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_slide.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/onboarding_view_model.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 /// Shared onboarding carousel body — owns [PageController] lifecycle and
@@ -53,6 +54,7 @@ class _OnboardingCarouselScaffoldState extends ConsumerState<OnboardingCarouselS
     final auth = ref.watch(authStateChangesProvider).valueOrNull;
     final isAnonymous = auth?.isAnonymous ?? true;
     final isSigningIn = ref.watch(onboardingSignInLoadingProvider);
+    final personalizedName = ref.watch(personalizedNameProvider);
 
     ref.listen<int>(onboardingViewModelProvider, (_, next) {
       if (!_controller.hasClients) return;
@@ -77,6 +79,7 @@ class _OnboardingCarouselScaffoldState extends ConsumerState<OnboardingCarouselS
             itemBuilder: (context, index) => OnboardingSlideWidget(
               slide: OnboardingSlide.slides[index],
               l10n: l10n,
+              personalizedName: personalizedName,
             ),
           ),
         ),

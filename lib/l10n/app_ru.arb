@@ -279,6 +279,10 @@
   },
   "onboardingSlide0Title": "Строй привычку. По-настоящему.",
   "@onboardingSlide0Title": {},
+  "onboardingSlide0TitlePersonalized": "Привет, {name}! Строй привычку. По-настоящему.",
+  "@onboardingSlide0TitlePersonalized": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "onboardingSlide0Body": "Habit Loop помогает брать обязательства, выполнять их и отслеживать прогресс — один пакт за раз.",
   "@onboardingSlide0Body": {},
   "onboardingSlide1Title": "Заключи пакт с собой",
@@ -394,5 +398,11 @@
   "enterNameSkip": "Пропустить",
 
   "changeNameTitle": "Изменить имя",
-  "changeNameSave": "Сохранить"
+  "changeNameSave": "Сохранить",
+
+  "dashboardGreetingPersonalized": "Привет, {name}",
+  "@dashboardGreetingPersonalized": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "dashboardGreetingNeutral": "С возвращением"
 }
