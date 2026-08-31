@@ -303,12 +303,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       switchInCurve: Curves.easeInOut,
       switchOutCurve: Curves.easeInOut,
       transitionBuilder: (child, animation) {
-        // AnimatedSwitcher drives an entering child's animation forward
-        // (0 → 1) and an exiting child's animation in reverse (1 → 0) on the
-        // very same 0..1 scale — status is what tells them apart, not the
-        // instantaneous value, since both can be mid-range at once.
-        final isExiting = animation.status == AnimationStatus.reverse || animation.status == AnimationStatus.dismissed;
-        final offsetTween = isExiting
+        // AnimatedSwitcher gives each child (entering and exiting alike) an
+        // Animation<double> that reads 0 (hidden) → 1 (visible); the actual
+        // AnimationController for the entering child is driven forward and
+        // for the exiting child in reverse, so `status` — not the
+        // instantaneous value — is what tells them apart, since both can be
+        // mid-range at once. Empirically (confirmed on-device, not just by
+        // reading the docs) AnimatedSwitcher reports the *entering* child's
+        // status as forward/completed and the *exiting* child's as
+        // reverse/dismissed here — so the tween below deliberately matches
+        // forward/completed to the exiting-page tween, the opposite of what
+        // the status names alone would suggest. Both pages move leftward:
+        // the exiting page slides from centered to off-screen left, the
+        // entering page slides from off-screen right to centered.
+        final isExitingStatus =
+            animation.status == AnimationStatus.forward || animation.status == AnimationStatus.completed;
+        final offsetTween = isExitingStatus
             ? Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
             : Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero);
         return SlideTransition(position: offsetTween.animate(animation), child: child);

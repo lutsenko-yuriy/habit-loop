@@ -822,16 +822,19 @@ void main() {
       expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
       expect(find.text('Create a Pact'), findsOneWidget);
 
-      // Inspect the SlideTransitions directly (rather than descendant widget
-      // positions, which are also subject to the onboarding carousel's own
-      // independent PageView geometry) — this dashboard-level transition's
-      // pair must be animating one from the left (exiting) and one from the
-      // right (entering); a crossfade would use FadeTransition instead, with
-      // no SlideTransition offsets at all.
-      final dxValues =
-          tester.widgetList<SlideTransition>(find.byType(SlideTransition)).map((s) => s.position.value.dx).toList();
-      expect(dxValues.any((dx) => dx < -0.05), isTrue, reason: 'expected a SlideTransition offset left (exiting)');
-      expect(dxValues.any((dx) => dx > 0.05), isTrue, reason: 'expected a SlideTransition offset right (entering)');
+      // Inspect the specific SlideTransition ancestor of each page (not just
+      // "some SlideTransition somewhere"), so a left/right mixup between the
+      // entering and exiting child is actually caught — bit us once already
+      // (HAB-232 WU8 review): both offsets were present, just swapped.
+      final exitingSlide = tester.widget<SlideTransition>(
+        find.ancestor(of: find.byKey(const Key('enter-name-text-field')), matching: find.byType(SlideTransition)).first,
+      );
+      final enteringSlide = tester.widget<SlideTransition>(
+        find.ancestor(of: find.text('Create a Pact'), matching: find.byType(SlideTransition)).first,
+      );
+      expect(exitingSlide.position.value.dx, lessThan(0), reason: 'the outgoing EnterNameScreen must move left');
+      expect(enteringSlide.position.value.dx, greaterThan(0),
+          reason: 'the incoming carousel must enter from the right');
 
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
