@@ -13,13 +13,6 @@ abstract final class RemoteConfigDefaults {
   /// Config console to experiment with different limits without a release.
   static const int maxActivePacts = 3;
 
-  /// EXP-001: Notification text urgency variant.
-  ///
-  /// Controls the copy used in reminder notifications before the showup window.
-  /// Values: `'control'` (generic), `'deadline'` (shows close time),
-  /// `'time_limit'` (shows time remaining). Default is `'control'`.
-  static const String notificationTextVariant = 'control';
-
   /// EXP-002: Post-deadline notification behaviour on Android.
   ///
   /// Controls what happens after the showup window closes on Android.
@@ -186,8 +179,8 @@ abstract final class RemoteConfigDefaults {
   /// text — the welcome-back copy substitution is skipped entirely. Override
   /// to `false` in the Firebase Remote Config console to disable it without a
   /// release. Read directly by `ReminderSchedulingService` (not via
-  /// [FeatureFlags]) — same pattern as its sibling `notification_text_variant`/
-  /// `post_deadline_notification_behavior` keys — so it is **not** subject to
+  /// [FeatureFlags]) — same pattern as its sibling
+  /// `post_deadline_notification_behavior` key — so it is **not** subject to
   /// HAB-207 release-version gating; that gate only applies to flags exposed
   /// through `FeatureFlags`.
   static const bool breakWelcomeBackNotificationEnabled = true;
@@ -196,8 +189,8 @@ abstract final class RemoteConfigDefaults {
   ///
   /// Flipped to `true` in WU4 (the final WU) now that the feature is complete
   /// end-to-end. Read directly by `ReminderSchedulingService` (not via
-  /// [FeatureFlags]) — same pattern as its sibling `notification_text_variant`/
-  /// `post_deadline_notification_behavior` keys — so it is **not** subject to
+  /// [FeatureFlags]) — same pattern as its sibling
+  /// `post_deadline_notification_behavior` key — so it is **not** subject to
   /// HAB-207 release-version gating. Override to `false` in the Firebase
   /// Remote Config console for an emergency kill-switch without a release.
   static const bool hurryUpNotificationEnabled = true;
@@ -258,7 +251,6 @@ abstract final class RemoteConfigDefaults {
   /// successful fetch.
   static const Map<String, dynamic> all = {
     'max_active_pacts': maxActivePacts,
-    'notification_text_variant': notificationTextVariant,
     'post_deadline_notification_behavior': postDeadlineNotificationBehavior,
     'onboarding_auto_advance_seconds': onboardingAutoAdvanceSeconds,
     'exp_003_commitment_confirmation': exp003CommitmentConfirmation,
@@ -287,7 +279,6 @@ abstract final class RemoteConfigDefaults {
   /// text field for enum-like keys. Keys absent from this map accept any value
   /// — the screen shows a plain text field instead.
   static const Map<String, List<String>> allowedValues = {
-    'notification_text_variant': ['control', 'deadline', 'time_limit'],
     'post_deadline_notification_behavior': ['dismiss', 'encourage'],
     'exp_003_commitment_confirmation': ['button', 'checkbox', 'retype'],
     'debug_connectivity_state': ['perfect', 'unstable', 'absent'],

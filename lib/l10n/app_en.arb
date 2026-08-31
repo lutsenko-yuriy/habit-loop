@@ -201,51 +201,7 @@
     }
   },
   "notificationReminderBody": "Tap to mark your showup.",
-  "notificationDeadlineTitle": "{habitName}: mark your showup done",
-  "@notificationDeadlineTitle": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationDeadlineTitlePersonalized": "Hi {name}, {habitName}: mark your showup done",
-  "@notificationDeadlineTitlePersonalized": {
-    "placeholders": {
-      "name": { "type": "String" },
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationDeadlineBody": "Window closes at {time}.",
-  "@notificationDeadlineBody": {
-    "placeholders": {
-      "time": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitTitle": "{habitName}: showup time!",
-  "@notificationTimeLimitTitle": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitTitlePersonalized": "Hi {name}, {habitName}: showup time!",
-  "@notificationTimeLimitTitlePersonalized": {
-    "placeholders": {
-      "name": { "type": "String" },
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitBody": "You have {duration} to mark it done.",
-  "@notificationTimeLimitBody": {
-    "placeholders": {
-      "duration": { "type": "String" }
-    }
-  },
   "notificationMissedTitle": "You missed this one",
-  "notificationMissedTitlePersonalized": "Hi {name}, you missed this one",
-  "@notificationMissedTitlePersonalized": {
-    "placeholders": {
-      "name": { "type": "String" }
-    }
-  },
   "notificationMissedBody": "That's okay — show up next time.",
   "notificationWelcomeBackTitle": "The break for {habitName} is over!",
   "@notificationWelcomeBackTitle": {
@@ -267,7 +223,7 @@
       "habitName": { "type": "String" }
     }
   },
-  "notificationHurryUpTitlePersonalized": "Hi {name}, hurry up — {habitName} is about to close!",
+  "notificationHurryUpTitlePersonalized": "{name}, hurry up — {habitName} is about to close!",
   "@notificationHurryUpTitlePersonalized": {
     "placeholders": {
       "name": { "type": "String" },
@@ -275,18 +231,6 @@
     }
   },
   "notificationHurryUpBody": "There's still time. Go show up.",
-  "notificationDurationMinutes": "{count} min",
-  "@notificationDurationMinutes": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
-  "notificationDurationHours": "{count} h",
-  "@notificationDurationHours": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
   "syncStatusTitle": "Sync status",
   "@syncStatusTitle": {},
   "syncStatusSynced": "Up to date",

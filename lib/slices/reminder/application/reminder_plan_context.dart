@@ -2,9 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 
-// EXP-001: notification text urgency experiment.
-const _kNotificationTextVariant = 'notification_text_variant';
-
 // EXP-002: post-deadline notification behaviour (Android only).
 const _kPostDeadlineNotificationBehavior = 'post_deadline_notification_behavior';
 
@@ -26,7 +23,6 @@ const _kHurryUpTimeInMinutes = 'hurry_up_time_in_minutes';
 @immutable
 class ReminderPlanContext {
   const ReminderPlanContext({
-    required this.textVariant,
     required this.scheduleDeadline,
     required this.hurryUpEnabled,
     required this.hurryUpTime,
@@ -34,7 +30,6 @@ class ReminderPlanContext {
     this.displayName,
   });
 
-  final String textVariant;
   final bool scheduleDeadline;
   final bool hurryUpEnabled;
   final Duration hurryUpTime;
@@ -59,7 +54,6 @@ class ReminderPlanContext {
     final postDeadlineBehavior = remoteConfig.getString(_kPostDeadlineNotificationBehavior);
     final hurryUpRange = RemoteConfigDefaults.intRanges[_kHurryUpTimeInMinutes]!;
     return ReminderPlanContext(
-      textVariant: remoteConfig.getString(_kNotificationTextVariant),
       scheduleDeadline: isIOS || postDeadlineBehavior == 'encourage',
       hurryUpEnabled: remoteConfig.getBool(_kHurryUpEnabled),
       hurryUpTime: Duration(

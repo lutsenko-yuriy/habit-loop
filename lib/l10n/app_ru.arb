@@ -190,7 +190,7 @@
       "habitName": { "type": "String" }
     }
   },
-  "notificationReminderTitlePersonalized": "Привет, {name}! Время для «{habitName}»!",
+  "notificationReminderTitlePersonalized": "{name}, время для «{habitName}»!",
   "@notificationReminderTitlePersonalized": {
     "placeholders": {
       "name": { "type": "String" },
@@ -198,51 +198,7 @@
     }
   },
   "notificationReminderBody": "Нажмите, чтобы отметить явку.",
-  "notificationDeadlineTitle": "{habitName}: отметьте явку выполненной",
-  "@notificationDeadlineTitle": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationDeadlineTitlePersonalized": "Привет, {name}! {habitName}: отметьте явку выполненной",
-  "@notificationDeadlineTitlePersonalized": {
-    "placeholders": {
-      "name": { "type": "String" },
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationDeadlineBody": "Окно закрывается в {time}.",
-  "@notificationDeadlineBody": {
-    "placeholders": {
-      "time": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitTitle": "{habitName}: время явки!",
-  "@notificationTimeLimitTitle": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitTitlePersonalized": "Привет, {name}! {habitName}: время явки!",
-  "@notificationTimeLimitTitlePersonalized": {
-    "placeholders": {
-      "name": { "type": "String" },
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitBody": "У вас {duration}, чтобы отметить явку.",
-  "@notificationTimeLimitBody": {
-    "placeholders": {
-      "duration": { "type": "String" }
-    }
-  },
   "notificationMissedTitle": "Вы пропустили эту явку",
-  "notificationMissedTitlePersonalized": "Привет, {name}! Вы пропустили эту явку",
-  "@notificationMissedTitlePersonalized": {
-    "placeholders": {
-      "name": { "type": "String" }
-    }
-  },
   "notificationMissedBody": "Ничего страшного — появитесь в следующий раз.",
   "notificationWelcomeBackTitle": "Перерыв для «{habitName}» закончился!",
   "@notificationWelcomeBackTitle": {
@@ -250,7 +206,7 @@
       "habitName": { "type": "String" }
     }
   },
-  "notificationWelcomeBackTitlePersonalized": "Привет, {name}! Перерыв для «{habitName}» закончился!",
+  "notificationWelcomeBackTitlePersonalized": "{name}, перерыв для «{habitName}» закончился!",
   "@notificationWelcomeBackTitlePersonalized": {
     "placeholders": {
       "name": { "type": "String" },
@@ -264,7 +220,7 @@
       "habitName": { "type": "String" }
     }
   },
-  "notificationHurryUpTitlePersonalized": "Привет, {name}! Поторопитесь — «{habitName}» скоро закроется!",
+  "notificationHurryUpTitlePersonalized": "{name}, поторопитесь — «{habitName}» скоро закроется!",
   "@notificationHurryUpTitlePersonalized": {
     "placeholders": {
       "name": { "type": "String" },
@@ -272,18 +228,6 @@
     }
   },
   "notificationHurryUpBody": "Ещё есть время. Не откладывайте.",
-  "notificationDurationMinutes": "{count} мин",
-  "@notificationDurationMinutes": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
-  "notificationDurationHours": "{count} ч",
-  "@notificationDurationHours": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
   "syncStatusTitle": "Статус синхронизации",
   "@syncStatusTitle": {},
   "syncStatusSynced": "Актуально",

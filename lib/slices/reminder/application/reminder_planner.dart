@@ -45,10 +45,7 @@ abstract final class ReminderPlanner {
   }) {
     if (pact.reminderOffset == null) return const [];
 
-    final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(
-      l10n: l10n,
-      displayName: context.displayName,
-    );
+    final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
     final hurryUpText = NotificationTextBuilder.buildHurryUpText(
       habitName: pact.habitName,
       l10n: l10n,
@@ -123,10 +120,7 @@ abstract final class ReminderPlanner {
             displayName: context.displayName,
           )
         : NotificationTextBuilder.buildReminderText(
-            variant: context.textVariant,
             habitName: pact.habitName,
-            scheduledAt: showup.scheduledAt,
-            showupDuration: showup.duration,
             l10n: l10n,
             displayName: context.displayName,
           );
