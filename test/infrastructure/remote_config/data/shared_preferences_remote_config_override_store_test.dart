@@ -39,11 +39,11 @@ void main() {
       final store = SharedPreferencesRemoteConfigOverrideStore(prefs);
 
       await store.setOverride('max_active_pacts', '5');
-      await store.setOverride('notification_text_variant', 'deadline');
+      await store.setOverride('post_deadline_notification_behavior', 'encourage');
 
       expect(store.getAllOverrides(), {
         'max_active_pacts': '5',
-        'notification_text_variant': 'deadline',
+        'post_deadline_notification_behavior': 'encourage',
       });
     });
 

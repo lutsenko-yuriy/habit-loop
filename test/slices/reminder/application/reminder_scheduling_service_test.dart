@@ -543,10 +543,7 @@ void main() {
       await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now, breaks: breaks);
 
       final normal = NotificationTextBuilder.buildReminderText(
-        variant: 'control',
         habitName: pact.habitName,
-        scheduledAt: DateTime(2026, 5, 20, 8, 0),
-        showupDuration: pact.showupDuration,
         l10n: l10n,
       );
       expect(notificationService.scheduledReminders.first.titleText, normal.title);
@@ -613,10 +610,7 @@ void main() {
       await service.scheduleRemindersForShowups(pact: pact, showups: [target], now: now, breaks: breaks);
 
       final normal = NotificationTextBuilder.buildReminderText(
-        variant: 'control',
         habitName: pact.habitName,
-        scheduledAt: target.scheduledAt,
-        showupDuration: target.duration,
         l10n: l10n,
       );
       expect(notificationService.scheduledReminders.first.titleText, normal.title);

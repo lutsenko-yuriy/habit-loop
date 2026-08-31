@@ -100,13 +100,14 @@ void main() {
 
   group('OverridableRemoteConfigService.getString', () {
     test('returns inner value when no override is set', () {
-      expect(service.getString('notification_text_variant'), RemoteConfigDefaults.notificationTextVariant);
+      expect(service.getString('post_deadline_notification_behavior'),
+          RemoteConfigDefaults.postDeadlineNotificationBehavior);
     });
 
     test('returns the override string directly when set', () async {
-      await store.setOverride('notification_text_variant', 'deadline');
+      await store.setOverride('post_deadline_notification_behavior', 'encourage');
 
-      expect(service.getString('notification_text_variant'), 'deadline');
+      expect(service.getString('post_deadline_notification_behavior'), 'encourage');
     });
 
     test('returns empty string for unknown key with no override', () {
@@ -140,7 +141,8 @@ void main() {
       );
 
       expect(noopService.getInt('max_active_pacts'), RemoteConfigDefaults.maxActivePacts);
-      expect(noopService.getString('notification_text_variant'), RemoteConfigDefaults.notificationTextVariant);
+      expect(noopService.getString('post_deadline_notification_behavior'),
+          RemoteConfigDefaults.postDeadlineNotificationBehavior);
       expect(noopService.getBool('unknown_key'), isFalse);
       expect(noopService.getDouble('unknown_key'), 0.0);
     });
