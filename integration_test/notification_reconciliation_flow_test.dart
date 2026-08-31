@@ -346,7 +346,9 @@ void main() {
         tester,
         extraOverrides: [
           remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(overrides: {'notification_reconciliation_enabled': false}),
+            FakeRemoteConfigService(
+              overrides: {'notification_reconciliation_enabled': false, 'display_name_personalization_enabled': false},
+            ),
           ),
         ],
         beforePump: (h) async {

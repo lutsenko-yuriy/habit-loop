@@ -53,9 +53,18 @@ class DisplayNameNotifier extends Notifier<String?> {
     // fires first, so _disposed must be reset here or it latches true
     // forever and every future write silently stops reaching `state`.
     _disposed = false;
-    _pullCompletedSubscription = ref.read(syncServiceProvider).pullCompleted.listen((_) {
-      unawaited(_refreshFromRepository());
-    });
+    try {
+      // syncServiceProvider needs the full repository graph wired — guarded
+      // so a caller that only wants the raw name doesn't need it overridden.
+      _pullCompletedSubscription = ref.read(syncServiceProvider).pullCompleted.listen((_) {
+        unawaited(_refreshFromRepository());
+      });
+    } catch (e, s) {
+      // Locally seeded/written name still works; just no cross-device
+      // pull-refresh. Recorded non-fatal so it's distinguishable from a
+      // test that simply didn't override the repository graph.
+      unawaited(ref.read(crashlyticsServiceProvider).recordError(e, s, fatal: false));
+    }
     ref.onDispose(() {
       _disposed = true;
       unawaited(_pullCompletedSubscription?.cancel());

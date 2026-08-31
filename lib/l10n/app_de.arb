@@ -190,36 +190,26 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationReminderTitlePersonalized": "Hi {name}, Zeit für {habitName}!",
+  "@notificationReminderTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationReminderBody": "Tippe, um deinen Showup zu markieren.",
-  "notificationDeadlineTitle": "{habitName}: markiere deinen Showup als erledigt",
-  "@notificationDeadlineTitle": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationDeadlineBody": "Fenster schließt um {time}.",
-  "@notificationDeadlineBody": {
-    "placeholders": {
-      "time": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitTitle": "{habitName}: Showup-Zeit!",
-  "@notificationTimeLimitTitle": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitBody": "Du hast {duration}, um es als erledigt zu markieren.",
-  "@notificationTimeLimitBody": {
-    "placeholders": {
-      "duration": { "type": "String" }
-    }
-  },
   "notificationMissedTitle": "Diesen hast du verpasst",
   "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal.",
   "notificationWelcomeBackTitle": "Die Pause für {habitName} ist vorbei!",
   "@notificationWelcomeBackTitle": {
     "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationWelcomeBackTitlePersonalized": "Hi {name}, die Pause für {habitName} ist vorbei!",
+  "@notificationWelcomeBackTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
       "habitName": { "type": "String" }
     }
   },
@@ -230,19 +220,14 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationHurryUpTitlePersonalized": "{name}, beeil dich — {habitName} schließt gleich!",
+  "@notificationHurryUpTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationHurryUpBody": "Es ist noch Zeit. Leg los.",
-  "notificationDurationMinutes": "{count} Min.",
-  "@notificationDurationMinutes": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
-  "notificationDurationHours": "{count} Std.",
-  "@notificationDurationHours": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
   "syncStatusTitle": "Synchronisierungsstatus",
   "@syncStatusTitle": {},
   "syncStatusSynced": "Aktuell",

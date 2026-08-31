@@ -15,9 +15,9 @@ List<DashboardActionDescriptor> makeActions({
   bool languageSelectionEnabled = true,
   bool networkSyncEnabled = true,
   bool aboutScreenEnabled = true,
-  // Defaults false — matches the flag's default-off-during-development
-  // value (RemoteConfigDefaults.displayNamePersonalizationEnabled) so every
-  // pre-existing test above keeps seeing exactly the same candidate set.
+  // Defaults false (opposite of RemoteConfigDefaults.displayNamePersonalizationEnabled
+  // as of HAB-232 WU7) so every pre-existing test above, which doesn't care
+  // about changeName, keeps seeing exactly the same candidate set.
   bool displayNamePersonalizationEnabled = false,
 }) =>
     buildDashboardActions(

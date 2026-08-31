@@ -222,6 +222,17 @@ class AppHarness {
           // Return empty string — the dashboard shows it as a subtitle and the
           // test doesn't assert on version text.
           appVersionProvider.overrideWith((_) async => ''),
+          // HAB-232 WU7: display_name_personalization_enabled's RC default is
+          // now `true`, and resolveReleaseGatedFlag bypasses the release-version
+          // gate entirely in debug builds (which integration tests run as) — so
+          // NoopRemoteConfigService's default would show EnterNameScreen and
+          // block every pre-existing scenario from ever reaching the dashboard.
+          // Default it off here, same as before the flip; extraOverrides below
+          // (display_name_flow_test.dart's _flagOn/_flagOff) wins when a test
+          // opts in, since it's spread after this one.
+          remoteConfigServiceProvider.overrideWithValue(
+            FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false}),
+          ),
           ...extraOverrides,
         ],
         child: HabitLoopApp(navigatorKey: navigatorKey),

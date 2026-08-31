@@ -67,6 +67,9 @@ const _kReconciliationEnabled = 'notification_reconciliation_enabled';
 /// No trigger is wired to this yet — that is HAB-254 WU3's job
 /// (`AppLifecycleReconciler`, `SyncService.pullCompleted`).
 final class NotificationReconciliationService {
+  // [displayName]: resolved at the composition root, not here (HAB-232 WU7)
+  // — must match whatever ReminderSchedulingService is given, or this
+  // reconciler sees a permanent mismatch and reschedules every run.
   const NotificationReconciliationService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,
@@ -77,6 +80,7 @@ final class NotificationReconciliationService {
     required LocalePreferenceService localePreference,
     bool isIOS = false,
     Locale systemLocale = const Locale('en'),
+    String? displayName,
   })  : _pactRepository = pactRepository,
         _showupRepository = showupRepository,
         _pactBreakRepository = pactBreakRepository,
@@ -85,7 +89,8 @@ final class NotificationReconciliationService {
         _analytics = analytics,
         _localePreference = localePreference,
         _isIOS = isIOS,
-        _systemLocale = systemLocale;
+        _systemLocale = systemLocale,
+        _displayName = displayName;
 
   final PactRepository _pactRepository;
   final ShowupRepository _showupRepository;
@@ -96,6 +101,7 @@ final class NotificationReconciliationService {
   final LocalePreferenceService _localePreference;
   final bool _isIOS;
   final Locale _systemLocale;
+  final String? _displayName;
 
   // [now] is injectable for tests.
   Future<void> reconcile({DateTime? now}) async {
@@ -110,7 +116,7 @@ final class NotificationReconciliationService {
       localePreference: _localePreference,
       systemLocale: _systemLocale,
     );
-    final context = ReminderPlanContext.resolve(remoteConfig: _remoteConfig, isIOS: _isIOS);
+    final context = ReminderPlanContext.resolve(remoteConfig: _remoteConfig, isIOS: _isIOS, displayName: _displayName);
     final actualIds = (await _notificationService.getPendingNotifications()).map((n) => n.id).toSet();
 
     var rescheduledShowupsCount = 0;

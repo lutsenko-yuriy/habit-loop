@@ -91,16 +91,16 @@ void main() {
         expect(flags.displayNamePersonalizationEnabled, RemoteConfigDefaults.displayNamePersonalizationEnabled);
       });
 
-      test('displayNamePersonalizationEnabled defaults to false (HAB-232, under construction)', () {
+      test('displayNamePersonalizationEnabled defaults to true (HAB-232 WU7, feature complete)', () {
         final rc = FakeRemoteConfigService();
         final flags = FeatureFlags.fromRemoteConfig(rc);
-        expect(flags.displayNamePersonalizationEnabled, isFalse);
+        expect(flags.displayNamePersonalizationEnabled, isTrue);
       });
 
-      test('displayNamePersonalizationEnabled reads true from RC override', () {
-        final rc = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true});
+      test('displayNamePersonalizationEnabled reads false from RC override', () {
+        final rc = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false});
         final flags = FeatureFlags.fromRemoteConfig(rc);
-        expect(flags.displayNamePersonalizationEnabled, isTrue);
+        expect(flags.displayNamePersonalizationEnabled, isFalse);
       });
     });
 
@@ -224,7 +224,7 @@ void main() {
       });
 
       test('instances differ when display_name_personalization_enabled differs', () {
-        final rcOff = FakeRemoteConfigService();
+        final rcOff = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false});
         final rcOn = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true});
         expect(FeatureFlags.fromRemoteConfig(rcOn), isNot(equals(FeatureFlags.fromRemoteConfig(rcOff))));
       });

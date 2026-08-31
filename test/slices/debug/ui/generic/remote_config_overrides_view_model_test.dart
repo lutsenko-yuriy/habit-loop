@@ -66,7 +66,6 @@ void main() {
       expect(
           constrained,
           containsAll([
-            'notification_text_variant',
             'post_deadline_notification_behavior',
             'exp_003_commitment_confirmation',
             'debug_backend',
@@ -144,10 +143,10 @@ void main() {
     });
 
     test('effectiveValue reflects service getString for string key', () {
-      service.overrides['notification_text_variant'] = 'deadline';
+      service.overrides['post_deadline_notification_behavior'] = 'encourage';
       final entries = readEntries();
-      final entry = entries.firstWhere((e) => e.key == 'notification_text_variant');
-      expect(entry.effectiveValue, 'deadline');
+      final entry = entries.firstWhere((e) => e.key == 'post_deadline_notification_behavior');
+      expect(entry.effectiveValue, 'encourage');
     });
 
     test('initial state reflects pre-existing overrides from store', () async {
@@ -194,7 +193,7 @@ void main() {
 
     test('clearAllOverrides removes every override', () async {
       await store.setOverride('max_active_pacts', '10');
-      await store.setOverride('notification_text_variant', 'deadline');
+      await store.setOverride('post_deadline_notification_behavior', 'encourage');
       container.listen(remoteConfigOverridesViewModelProvider, (_, __) {});
       final notifier = container.read(remoteConfigOverridesViewModelProvider.notifier);
 

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -22,10 +23,28 @@ final _flagOff = remoteConfigServiceProvider.overrideWithValue(
   FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false}),
 );
 
+// Fixed clock, mirroring reminder_locale_flow_test.dart's _seedPact pattern —
+// showups are generated for "today" through +10 days, independent of the
+// real wall-clock time the test runs at. _seedGreetingPact's startDate was
+// originally a literal 2026-01-01 with no todayProvider override — as real
+// time passed since WU6 was authored, the dashboard's gap-fill sweep had to
+// backfill a growing number of days on every run, until it became
+// prohibitively slow on-device (HAB-232 WU7 fix, root-caused via a pre-WU7
+// baseline comparison run of the identical scenario).
+final _testNow = DateTime(2099, 6, 15, 7, 0);
+final _testToday = DateTime(2099, 6, 15);
+
 Pact _seedGreetingPact() => buildPact(
       id: 'greeting-flow-test-pact-1',
       habitName: 'Meditate',
-      startDate: DateTime(2026, 1, 1),
+      startDate: _testToday,
+    );
+
+Pact _seedReminderPact() => buildPact(
+      id: 'reminder-name-flow-test-pact-1',
+      habitName: 'Meditate',
+      startDate: _testToday,
+      reminderOffset: const Duration(minutes: 30),
     );
 
 void main() {
@@ -171,7 +190,13 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        // Fixed clock (HAB-232 WU7 fix) — without it, "today" is the real
+        // wall-clock date, which drifts further from _seedGreetingPact's
+        // fixed startDate every day this suite runs, making the dashboard's
+        // gap-fill sweep backfill more and more showups until the on-device
+        // run becomes prohibitively slow (root-caused via a pre-WU7 baseline
+        // comparison — same stall, unrelated to WU7's own changes).
+        extraOverrides: [_flagOn, todayProvider.overrideWithValue(_testNow)],
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: repo,
         beforePump: (h) async {
@@ -188,7 +213,7 @@ void main() {
         (tester) async {
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        extraOverrides: [_flagOn, todayProvider.overrideWithValue(_testNow)],
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: InMemoryUserProfileRepository(),
         beforePump: (h) async {
@@ -207,7 +232,7 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOff],
+        extraOverrides: [_flagOff, todayProvider.overrideWithValue(_testNow)],
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: repo,
         beforePump: (h) async {
@@ -268,11 +293,52 @@ void main() {
     testWidgets(
         'reminder_notification_text_contains_name_when_on_file: a scheduled reminder notification\'s text contains the user\'s name when one is on file',
         (tester) async {
-      // TODO: 1. Launch harness with flag on, a name on file, seed an active pact with a reminder offset (mirroring reminder_locale_flow_test.dart's _seedPact pattern), fixed todayProvider.
-      // TODO: 2. Let the dashboard's first-load sweep schedule the reminder.
-      // TODO: 3. Verify h.notifications.scheduledReminders is non-empty.
-      // TODO: 4. Verify the scheduled reminder's titleText/bodyText contains the seeded name (built via NotificationTextBuilder with the name resolved).
-      // TODO: 5. (Contrast) repeat with no name on file — verify the reminder text does not contain a name and matches the current neutral copy.
+      // 1. Launch harness with the flag on, a name on file, an active pact
+      //    with a reminder offset, and a fixed clock.
+      final repo = InMemoryUserProfileRepository();
+      await repo.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn, todayProvider.overrideWithValue(_testNow)],
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: repo,
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_seedReminderPact());
+        },
+      );
+
+      // 2. Let the dashboard's first-load sweep schedule the reminder.
+      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // 3/4. The scheduled reminder's title contains the seeded name.
+      expect(h.notifications.scheduledReminders, isNotEmpty);
+      final named = h.notifications.scheduledReminders.first;
+      expect(named.pact.id, equals(_seedReminderPact().id));
+      expect(named.titleText, equals(l10n(tester).notificationReminderTitlePersonalized('Alex', 'Meditate')));
+    });
+
+    testWidgets(
+        'reminder_notification_text_contains_name_when_on_file: falls back to neutral copy when no name is on file',
+        (tester) async {
+      // 5. (Contrast) same setup with no name on file — neutral copy, no name.
+      h = await AppHarness.create(
+        tester,
+        extraOverrides: [_flagOn, todayProvider.overrideWithValue(_testNow)],
+        onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_seedReminderPact());
+        },
+      );
+
+      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(h.notifications.scheduledReminders, isNotEmpty);
+      final neutral = h.notifications.scheduledReminders.first;
+      expect(neutral.titleText, equals(l10n(tester).notificationReminderTitle('Meditate')));
     });
   });
 }

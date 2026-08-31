@@ -193,36 +193,26 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationReminderTitlePersonalized": "Hi {name}, time for {habitName}!",
+  "@notificationReminderTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationReminderBody": "Tap to mark your showup.",
-  "notificationDeadlineTitle": "{habitName}: mark your showup done",
-  "@notificationDeadlineTitle": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationDeadlineBody": "Window closes at {time}.",
-  "@notificationDeadlineBody": {
-    "placeholders": {
-      "time": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitTitle": "{habitName}: showup time!",
-  "@notificationTimeLimitTitle": {
-    "placeholders": {
-      "habitName": { "type": "String" }
-    }
-  },
-  "notificationTimeLimitBody": "You have {duration} to mark it done.",
-  "@notificationTimeLimitBody": {
-    "placeholders": {
-      "duration": { "type": "String" }
-    }
-  },
   "notificationMissedTitle": "You missed this one",
   "notificationMissedBody": "That's okay — show up next time.",
   "notificationWelcomeBackTitle": "The break for {habitName} is over!",
   "@notificationWelcomeBackTitle": {
     "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationWelcomeBackTitlePersonalized": "Hi {name}, the break for {habitName} is over!",
+  "@notificationWelcomeBackTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
       "habitName": { "type": "String" }
     }
   },
@@ -233,19 +223,14 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationHurryUpTitlePersonalized": "{name}, hurry up — {habitName} is about to close!",
+  "@notificationHurryUpTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationHurryUpBody": "There's still time. Go show up.",
-  "notificationDurationMinutes": "{count} min",
-  "@notificationDurationMinutes": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
-  "notificationDurationHours": "{count} h",
-  "@notificationDurationHours": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
   "syncStatusTitle": "Sync status",
   "@syncStatusTitle": {},
   "syncStatusSynced": "Up to date",

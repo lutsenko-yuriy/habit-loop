@@ -6,6 +6,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/profile/analytics/profile_analytics_events.dart';
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_rescheduler.dart';
 
 /// Shared between iOS and Android dashboard. Opens the "Change name" dialog
 /// (⋯ menu, HAB-232), pre-filled with the current name, and persists any
@@ -54,6 +55,13 @@ Future<void> openChangeNameDialog({
     // already closed, so there is nowhere left to surface an inline error.
     // Skip the analytics event since nothing was actually persisted.
     return;
+  }
+
+  // Reschedule so already-pending notifications pick up the new name.
+  try {
+    await rescheduleAllPendingReminders(ref);
+  } catch (_) {
+    // The saved name still stands; only the reschedule pass failed.
   }
 
   unawaited(

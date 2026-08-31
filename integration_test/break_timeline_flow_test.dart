@@ -39,6 +39,7 @@ Showup _showup(String id, DateTime scheduledAt, {ShowupStatus status = ShowupSta
 FakeRemoteConfigService _rc({int tailPeriodInDays = 7}) => FakeRemoteConfigService(overrides: {
       'pact_timeline_no_grouping_tail_period_in_days': tailPeriodInDays,
       'pact_breaks_enabled': true,
+      'display_name_personalization_enabled': false,
     });
 
 void main() {

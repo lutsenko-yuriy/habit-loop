@@ -104,7 +104,9 @@ void main() {
       // remote pact will never be merged.
       final faultClient = FaultInjectingFirestoreClient(
         inner: fakeFirestore,
-        rc: FakeRemoteConfigService(overrides: {'debug_connectivity_state': 'absent'}),
+        rc: FakeRemoteConfigService(
+          overrides: {'debug_connectivity_state': 'absent', 'display_name_personalization_enabled': false},
+        ),
       );
 
       h = await AppHarness.create(

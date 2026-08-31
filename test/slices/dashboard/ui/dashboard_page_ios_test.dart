@@ -143,6 +143,7 @@ void main() {
       remoteConfig: FakeRemoteConfigService(overrides: {
         'about_screen_enabled': false,
         'language_selection_enabled': false,
+        'display_name_personalization_enabled': false,
       }),
     ));
 
@@ -188,6 +189,7 @@ void main() {
       remoteConfig: FakeRemoteConfigService(overrides: {
         'about_screen_enabled': false,
         'language_selection_enabled': false,
+        'display_name_personalization_enabled': false,
       }),
     ));
 
@@ -377,9 +379,10 @@ void main() {
 
   group('Change name (HAB-232 WU5)', () {
     final flagOn = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true});
+    final flagOff = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false});
 
     testWidgets('change-name item hidden from kebab when flag is off', (tester) async {
-      await tester.pumpWidget(_buildTestApp());
+      await tester.pumpWidget(_buildTestApp(remoteConfig: flagOff));
 
       await tester.tap(find.byKey(const Key('kebab-menu-button')));
       await tester.pumpAndSettle();

@@ -65,6 +65,7 @@ void main() {
               // Use the 'button' variant (control) so the commitment dialog
               // shows a single "I Accept" button — simplest to automate.
               'exp_003_commitment_confirmation': 'button',
+              'display_name_personalization_enabled': false,
             }),
           ),
           pactCreationTodayProvider.overrideWithValue(_testNow),

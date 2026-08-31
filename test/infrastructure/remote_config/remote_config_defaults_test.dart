@@ -219,8 +219,8 @@ void main() {
         expect(RemoteConfigDefaults.all.containsKey('display_name_personalization_enabled'), isTrue);
       });
 
-      test('default value is false (HAB-232, under construction until WU7)', () {
-        expect(RemoteConfigDefaults.all['display_name_personalization_enabled'], isFalse);
+      test('default value is true (HAB-232 WU7, feature complete)', () {
+        expect(RemoteConfigDefaults.all['display_name_personalization_enabled'], isTrue);
       });
 
       test('constant matches all map value', () {
@@ -242,8 +242,8 @@ void main() {
         );
       });
 
-      test('not yet release-gated (WU7 adds it when flipping to true)', () {
-        expect(RemoteConfigDefaults.releaseVersions.containsKey('display_name_personalization_enabled'), isFalse);
+      test('release-gated to 0.59.0 (HAB-232 WU7)', () {
+        expect(RemoteConfigDefaults.releaseVersions['display_name_personalization_enabled'], '0.59.0');
       });
     });
 

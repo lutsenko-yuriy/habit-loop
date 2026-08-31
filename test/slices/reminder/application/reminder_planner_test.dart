@@ -44,7 +44,6 @@ Showup _makeShowup({
 // Matches the pre-refactor defaults (welcome-back on, hurry-up/deadline off)
 // so most tests only need to override the one field they're exercising.
 const _kDefaultContext = ReminderPlanContext(
-  textVariant: 'control',
   scheduleDeadline: false,
   hurryUpEnabled: false,
   hurryUpTime: Duration(minutes: 5),
@@ -151,7 +150,6 @@ void main() {
         l10n: l10n,
         breaks: const [],
         context: const ReminderPlanContext(
-          textVariant: 'control',
           scheduleDeadline: true,
           hurryUpEnabled: false,
           hurryUpTime: Duration(minutes: 5),
@@ -164,30 +162,6 @@ void main() {
       expect(plan.first.includeDeadline, isTrue);
       expect(plan.first.deadline!.title, expected.title);
       expect(plan.first.deadline!.body, expected.body);
-    });
-
-    test('uses the given text variant for reminder text', () {
-      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
-      final now = DateTime(2026, 5, 7, 10, 0);
-      final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
-
-      final plan = ReminderPlanner.plan(
-        pact: pact,
-        showups: showups,
-        now: now,
-        l10n: l10n,
-        breaks: const [],
-        context: const ReminderPlanContext(
-          textVariant: 'deadline',
-          scheduleDeadline: false,
-          hurryUpEnabled: false,
-          hurryUpTime: Duration(minutes: 5),
-          welcomeBackEnabled: true,
-        ),
-        isIOS: false,
-      );
-
-      expect(plan.first.reminderTitle, contains('Meditate'));
     });
 
     group('on-break suppression (HAB-195 WU3)', () {
@@ -239,7 +213,6 @@ void main() {
           l10n: l10n,
           breaks: const [],
           context: const ReminderPlanContext(
-            textVariant: 'control',
             scheduleDeadline: true,
             hurryUpEnabled: false,
             hurryUpTime: Duration(minutes: 5),
@@ -332,7 +305,6 @@ void main() {
           l10n: l10n,
           breaks: breaks,
           context: const ReminderPlanContext(
-            textVariant: 'control',
             scheduleDeadline: false,
             hurryUpEnabled: false,
             hurryUpTime: Duration(minutes: 5),
@@ -342,10 +314,7 @@ void main() {
         );
 
         final normal = NotificationTextBuilder.buildReminderText(
-          variant: 'control',
           habitName: pact.habitName,
-          scheduledAt: target.scheduledAt,
-          showupDuration: target.duration,
           l10n: l10n,
         );
         expect(plan.first.reminderTitle, normal.title);
@@ -388,7 +357,6 @@ void main() {
           l10n: l10n,
           breaks: const [],
           context: const ReminderPlanContext(
-            textVariant: 'control',
             scheduleDeadline: false,
             hurryUpEnabled: true,
             hurryUpTime: Duration(minutes: 5),
@@ -417,7 +385,6 @@ void main() {
           l10n: l10n,
           breaks: const [],
           context: const ReminderPlanContext(
-            textVariant: 'control',
             scheduleDeadline: false,
             hurryUpEnabled: true,
             hurryUpTime: Duration(minutes: 5),
@@ -443,7 +410,6 @@ void main() {
           l10n: l10n,
           breaks: const [],
           context: const ReminderPlanContext(
-            textVariant: 'control',
             scheduleDeadline: true,
             hurryUpEnabled: true,
             hurryUpTime: Duration(minutes: 5),
@@ -454,6 +420,53 @@ void main() {
 
         expect(plan, hasLength(21));
         expect(plan.every((p) => p.includeHurryUp), isTrue);
+      });
+    });
+
+    group('displayName personalization (HAB-232 WU7)', () {
+      test('reminder title contains the name when the context carries one', () {
+        final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+        final now = DateTime(2026, 5, 7, 10, 0);
+        final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+        final plan = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: const [],
+          context: const ReminderPlanContext(
+            scheduleDeadline: true,
+            hurryUpEnabled: true,
+            hurryUpTime: Duration(minutes: 5),
+            welcomeBackEnabled: true,
+            displayName: 'Alex',
+          ),
+          isIOS: false,
+        );
+
+        expect(plan.first.reminderTitle, contains('Alex'));
+        // The deadline/missed notification is deliberately not personalized
+        // (HAB-232 WU7 review) — always the neutral title regardless of name.
+        expect(plan.first.deadline!.title, isNot(contains('Alex')));
+      });
+
+      test('reminder title has no name when the context carries none', () {
+        final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+        final now = DateTime(2026, 5, 7, 10, 0);
+        final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+        final plan = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: const [],
+          context: _kDefaultContext,
+          isIOS: false,
+        );
+
+        expect(plan.first.reminderTitle, l10n.notificationReminderTitle(pact.habitName));
       });
     });
 

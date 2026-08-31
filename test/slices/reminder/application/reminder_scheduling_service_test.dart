@@ -218,30 +218,6 @@ void main() {
       expect(notificationService.scheduledReminders, isEmpty);
     });
 
-    test('uses notification_text_variant from remote config', () async {
-      remoteConfig = FakeRemoteConfigService(overrides: {'notification_text_variant': 'deadline'});
-      service = ReminderSchedulingService(
-        notificationService: notificationService,
-        remoteConfig: remoteConfig,
-        analytics: analyticsService,
-        localePreference: localePreference,
-      );
-
-      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
-      final now = DateTime(2026, 5, 7, 10, 0);
-
-      final showups = [
-        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
-      ];
-
-      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
-
-      expect(notificationService.scheduledReminders, hasLength(1));
-      final reminder = notificationService.scheduledReminders.first;
-      // 'deadline' variant title should contain the habit name
-      expect(reminder.titleText, contains('Meditate'));
-    });
-
     test('passes correct title and body to scheduleShowupReminder', () async {
       final pact = _makePact(reminderOffset: const Duration(minutes: 10));
       final now = DateTime(2026, 5, 7, 10, 0);
@@ -543,10 +519,7 @@ void main() {
       await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now, breaks: breaks);
 
       final normal = NotificationTextBuilder.buildReminderText(
-        variant: 'control',
         habitName: pact.habitName,
-        scheduledAt: DateTime(2026, 5, 20, 8, 0),
-        showupDuration: pact.showupDuration,
         l10n: l10n,
       );
       expect(notificationService.scheduledReminders.first.titleText, normal.title);
@@ -613,10 +586,7 @@ void main() {
       await service.scheduleRemindersForShowups(pact: pact, showups: [target], now: now, breaks: breaks);
 
       final normal = NotificationTextBuilder.buildReminderText(
-        variant: 'control',
         habitName: pact.habitName,
-        scheduledAt: target.scheduledAt,
-        showupDuration: target.duration,
         l10n: l10n,
       );
       expect(notificationService.scheduledReminders.first.titleText, normal.title);
@@ -905,6 +875,37 @@ void main() {
       expect(scheduledIds, containsAll(eligible.map((s) => s.id)));
       expect(scheduledIds, containsAll(ineligible.take(17).map((s) => s.id)));
       expect(scheduledIds, isNot(contains('su-ineligible-17')));
+    });
+  });
+
+  group('displayName personalization (HAB-232 WU7)', () {
+    test('scheduled reminder text contains the name when the service is given one', () async {
+      final named = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+        isIOS: false,
+        displayName: 'Alex',
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+      await named.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledReminders.first.titleText, contains('Alex'));
+    });
+
+    test('scheduled reminder text has no name when the service is given none', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      expect(notificationService.scheduledReminders.first.titleText, l10n.notificationReminderTitle('Meditate'));
     });
   });
 

@@ -76,8 +76,8 @@ void main() {
         RemoteConfigDefaults.maxActivePacts,
       );
       expect(
-        container.read(remoteConfigServiceProvider).getString('notification_text_variant'),
-        RemoteConfigDefaults.notificationTextVariant,
+        container.read(remoteConfigServiceProvider).getString('post_deadline_notification_behavior'),
+        RemoteConfigDefaults.postDeadlineNotificationBehavior,
       );
     });
 
@@ -178,7 +178,7 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final store = SharedPreferencesRemoteConfigOverrideStore(prefs);
       await store.setOverride('max_active_pacts', '5');
-      await store.setOverride('notification_text_variant', 'deadline');
+      await store.setOverride('post_deadline_notification_behavior', 'encourage');
 
       final service = OverridableRemoteConfigService(
         inner: NoopRemoteConfigService(),
@@ -196,7 +196,7 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(remoteConfigServiceProvider).getInt('max_active_pacts'), 5);
-      expect(container.read(remoteConfigServiceProvider).getString('notification_text_variant'), 'deadline');
+      expect(container.read(remoteConfigServiceProvider).getString('post_deadline_notification_behavior'), 'encourage');
     });
   });
 }

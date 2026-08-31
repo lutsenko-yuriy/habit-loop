@@ -40,13 +40,5 @@ void main() {
       expect(context.hurryUpEnabled, isTrue);
       expect(context.welcomeBackEnabled, isFalse);
     });
-
-    test('reads the notification text variant straight from remote config', () {
-      final remoteConfig = FakeRemoteConfigService(overrides: {'notification_text_variant': 'deadline'});
-
-      final context = ReminderPlanContext.resolve(remoteConfig: remoteConfig, isIOS: false);
-
-      expect(context.textVariant, equals('deadline'));
-    });
   });
 }

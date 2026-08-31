@@ -38,6 +38,12 @@ Widget _buildApp({
       pactTransactionServiceProvider.overrideWithValue(txService),
       todayProvider.overrideWithValue(_today),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
+      // Name entry is irrelevant to this file's tests — mark it already
+      // shown so EnterNameScreen (default-on since HAB-232 WU7) never
+      // intercepts the dashboard these tests actually exercise.
+      onboardingPreferenceServiceProvider.overrideWithValue(
+        FakeOnboardingPreferenceService(initialNameEntryShown: true),
+      ),
     ],
     child: const MaterialApp(
       localizationsDelegates: [
@@ -578,7 +584,14 @@ void main() {
       final pactRepo = InMemoryPactRepository(pacts);
       final showupRepo = InMemoryShowupRepository();
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-      final onboardingService = FakeOnboardingPreferenceService(initialValue: onboardingPassed);
+      // Name entry is irrelevant to this group's carousel/dashboard-transition
+      // assertions — mark it already shown so EnterNameScreen (default-on
+      // since HAB-232 WU7) never intercedes ahead of the carousel it's
+      // actually testing for.
+      final onboardingService = FakeOnboardingPreferenceService(
+        initialValue: onboardingPassed,
+        initialNameEntryShown: true,
+      );
       return ProviderScope(
         overrides: [
           pactRepositoryProvider.overrideWithValue(pactRepo),
@@ -645,7 +658,7 @@ void main() {
         final pactRepo = InMemoryPactRepository([pact]);
         final showupRepo = InMemoryShowupRepository();
         final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
-        final onboardingService = FakeOnboardingPreferenceService();
+        final onboardingService = FakeOnboardingPreferenceService(initialNameEntryShown: true);
 
         await tester.pumpWidget(ProviderScope(
           overrides: [
@@ -687,7 +700,7 @@ void main() {
           schedule: const DailySchedule(timeOfDay: Duration(hours: 7)),
           status: PactStatus.active,
         );
-        final onboardingService = FakeOnboardingPreferenceService();
+        final onboardingService = FakeOnboardingPreferenceService(initialNameEntryShown: true);
         final pactRepo = InMemoryPactRepository([pact]);
         final showupRepo = InMemoryShowupRepository();
         final txService = InMemoryPactTransactionService(pactRepo, showupRepo);

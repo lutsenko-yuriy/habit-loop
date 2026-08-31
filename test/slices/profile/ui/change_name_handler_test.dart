@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/domain/user/user_profile_repository.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/profile/ui/generic/change_name_handler.dart';
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/notifications/fake_notification_service.dart';
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 import '../../../infrastructure/sync/fake_sync_service.dart';
 
@@ -32,11 +40,21 @@ Widget _buildApp({
   FakeAnalyticsService? analyticsService,
   String? seedDisplayName,
   void Function(String currentNameSeenByDialog)? onDialogShown,
+  // Reschedule-on-change (HAB-232 WU7 audit finding, mirrors HAB-157) reads
+  // pactRepositoryProvider/showupRepositoryProvider, which throw by default
+  // unless overridden — empty repos make the reschedule pass a harmless
+  // no-op for tests that don't care about it.
+  InMemoryPactRepository? pactRepository,
+  InMemoryShowupRepository? showupRepository,
+  FakeNotificationService? notificationService,
 }) {
   return ProviderScope(
     overrides: [
       userProfileRepositoryProvider.overrideWithValue(userProfileRepository),
       syncServiceProvider.overrideWithValue(FakeSyncService()),
+      pactRepositoryProvider.overrideWithValue(pactRepository ?? InMemoryPactRepository()),
+      showupRepositoryProvider.overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
+      if (notificationService != null) notificationServiceProvider.overrideWithValue(notificationService),
       // openChangeNameDialog reads personalizedNameProvider, which is gated by
       // this flag — real callers only ever reach this dialog while it's on
       // (the ⋯ menu entry itself is gated), so tests assume it's on too.
@@ -239,6 +257,82 @@ void main() {
 
       final saved = await userProfileRepository.getProfile();
       expect(saved?.displayName, familyEmoji * enterNameMaxLength);
+    });
+
+    group('reschedules pending reminders on change (HAB-232 WU7 audit finding)', () {
+      Pact seedPact() => Pact(
+            id: 'pact-1',
+            habitName: 'Meditate',
+            startDate: DateTime.now().subtract(const Duration(days: 1)),
+            endDate: DateTime.now().add(const Duration(days: 90)),
+            showupDuration: const Duration(minutes: 20),
+            schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+            status: PactStatus.active,
+            reminderOffset: const Duration(minutes: 10),
+            createdAt: DateTime.now(),
+          );
+
+      testWidgets('cancels and re-schedules pending reminders when the name changes', (tester) async {
+        final pactRepo = InMemoryPactRepository([seedPact()]);
+        final showupRepo = InMemoryShowupRepository([
+          Showup(
+            id: 'su-1',
+            pactId: 'pact-1',
+            scheduledAt: DateTime.now().add(const Duration(days: 1)),
+            duration: const Duration(minutes: 20),
+            status: ShowupStatus.pending,
+          ),
+        ]);
+        final notifications = FakeNotificationService();
+        final userProfileRepository = InMemoryUserProfileRepository();
+        await userProfileRepository.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+        await tester.pumpWidget(_buildApp(
+          dialogResult: 'Sam',
+          userProfileRepository: userProfileRepository,
+          seedDisplayName: 'Alex',
+          pactRepository: pactRepo,
+          showupRepository: showupRepo,
+          notificationService: notifications,
+        ));
+
+        await tester.tap(find.byType(ElevatedButton));
+        await tester.pump();
+        await tester.pump();
+
+        expect(notifications.cancelledPactIds, contains('pact-1'));
+        expect(notifications.scheduledReminders, hasLength(1));
+        expect(notifications.scheduledReminders.first.showup.id, equals('su-1'));
+      });
+
+      testWidgets('does not reschedule when the dialog is cancelled (no-op)', (tester) async {
+        final pactRepo = InMemoryPactRepository([seedPact()]);
+        final showupRepo = InMemoryShowupRepository([
+          Showup(
+            id: 'su-1',
+            pactId: 'pact-1',
+            scheduledAt: DateTime.now().add(const Duration(days: 1)),
+            duration: const Duration(minutes: 20),
+            status: ShowupStatus.pending,
+          ),
+        ]);
+        final notifications = FakeNotificationService();
+
+        await tester.pumpWidget(_buildApp(
+          dialogResult: null,
+          userProfileRepository: InMemoryUserProfileRepository(),
+          pactRepository: pactRepo,
+          showupRepository: showupRepo,
+          notificationService: notifications,
+        ));
+
+        await tester.tap(find.byType(ElevatedButton));
+        await tester.pump();
+        await tester.pump();
+
+        expect(notifications.cancelledPactIds, isEmpty);
+        expect(notifications.scheduledReminders, isEmpty);
+      });
     });
 
     testWidgets('fires the change_name screen view before showing the dialog', (tester) async {

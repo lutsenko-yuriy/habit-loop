@@ -25,7 +25,7 @@ import 'harness.dart';
 // explicit override still keeps these scenarios independent of that default
 // — see the flag-off scenario below, which needs the opposite override.
 final _chainingEnabled = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'pact_chaining_enabled': true}),
+  FakeRemoteConfigService(overrides: {'pact_chaining_enabled': true, 'display_name_personalization_enabled': false}),
 );
 
 // Dated near 2099 (short spans, matching every other integration-test
@@ -260,6 +260,7 @@ void main() {
               'pact_chaining_enabled': true,
               // 'button' variant — single "I Accept" button, simplest to automate.
               'exp_003_commitment_confirmation': 'button',
+              'display_name_personalization_enabled': false,
             }),
           ),
           pactDetailNowProvider.overrideWithValue(adjustTestNow),
@@ -502,6 +503,7 @@ void main() {
             FakeRemoteConfigService(overrides: {
               'pact_chaining_enabled': true,
               'exp_003_commitment_confirmation': 'button',
+              'display_name_personalization_enabled': false,
             }),
           ),
           pactDetailNowProvider.overrideWithValue(defaultNamingTestNow),
@@ -615,7 +617,9 @@ void main() {
         // flag being off) must be forced rather than relying on the default.
         extraOverrides: [
           remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(overrides: {'pact_chaining_enabled': false}),
+            FakeRemoteConfigService(
+              overrides: {'pact_chaining_enabled': false, 'display_name_personalization_enabled': false},
+            ),
           ),
         ],
         beforePump: (h) async {
