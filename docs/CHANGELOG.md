@@ -14,6 +14,7 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 - [wip] HAB-232 (WU3): displayNameProvider + personalizedNameProvider, RC kill-switch (default `false`), FeatureFlags, startup seed via AppContainer.overrides, AnalyticsService.setUserProperty property-setting (PR #418). No user-visible change yet (flag defaults off, no UI consumers until WU4–WU7).
 - [meta] HAB-256: removed the `block-main-writes.sh` PreToolUse hook — redundant with `.git/hooks/pre-push` (the actual airtight backstop against direct pushes to `main`) and had a false-positive bug when a subagent ran from a git worktree, false-blocking every commit on a correctly-checked-out feature branch.
 - [wip] HAB-232: Change Name dialog's Save button no longer stays disabled on an empty field — clearing the field and saving now removes the stored name, instead of being blocked. Still gated behind `displayNamePersonalizationEnabled` (off until WU7), so no user-visible change yet.
+- [wip] HAB-232 (WU8): EnterNamePage visual redesign — bottom-anchored Continue/Skip buttons, centered content and text, underline text field (thickens on focus) replacing the boxed border, and an animated slide transition into onboarding (PR #426). Still gated behind `displayNamePersonalizationEnabled` (off until WU7), so no user-visible change yet.
 
 ## [0.58.0] — 2026-08-28 (PR #412 merged)
 
