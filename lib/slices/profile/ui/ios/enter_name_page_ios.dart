@@ -42,15 +42,15 @@ class _EnterNamePageIosState extends State<EnterNamePageIos> {
     final theme = CupertinoTheme.of(context);
     return CupertinoPageScaffold(
       child: SafeArea(
-        // Content stays inset (horizontal padding); the button column below
-        // is a separate sibling with no horizontal padding of its own, so
-        // Continue/Skip span the full screen width (WU8) instead of matching
-        // the inset content.
-        child: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s24),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s24),
+          // Buttons stretch to the same inset width as the rest of the page
+          // (WU8) — CrossAxisAlignment.stretch on this outer column, not a
+          // separate edge-to-edge sibling.
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
                 child: Center(
                   key: const Key('enter-name-content-area'),
                   // Scrollable: the field is autofocused, so the keyboard is up on
@@ -98,23 +98,18 @@ class _EnterNamePageIosState extends State<EnterNamePageIos> {
                   ),
                 ),
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CupertinoButton.filled(
-                  key: const Key('enter-name-save-button'),
-                  onPressed: () => widget.onSave(),
-                  child: Text(l10n.enterNameContinue),
-                ),
-                CupertinoButton(
-                  key: const Key('enter-name-skip-button'),
-                  onPressed: () => widget.onSkip(),
-                  child: Text(l10n.enterNameSkip),
-                ),
-              ],
-            ),
-          ],
+              CupertinoButton.filled(
+                key: const Key('enter-name-save-button'),
+                onPressed: () => widget.onSave(),
+                child: Text(l10n.enterNameContinue),
+              ),
+              CupertinoButton(
+                key: const Key('enter-name-skip-button'),
+                onPressed: () => widget.onSkip(),
+                child: Text(l10n.enterNameSkip),
+              ),
+            ],
+          ),
         ),
       ),
     );

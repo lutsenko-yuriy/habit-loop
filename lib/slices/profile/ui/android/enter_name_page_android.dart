@@ -17,15 +17,15 @@ class EnterNamePageAndroid extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        // Content stays inset (horizontal padding); the button column below
-        // is a separate sibling with no horizontal padding of its own, so
-        // Continue/Skip span the full screen width (WU8) instead of matching
-        // the inset content.
-        child: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s24),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s24),
+          // Buttons stretch to the same inset width as the rest of the page
+          // (WU8) — CrossAxisAlignment.stretch on this outer column, not a
+          // separate edge-to-edge sibling.
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
                 child: Center(
                   key: const Key('enter-name-content-area'),
                   // Scrollable: the field is autofocused, so the keyboard is up on
@@ -71,25 +71,19 @@ class EnterNamePageAndroid extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FilledButton(
-                  key: const Key('enter-name-save-button'),
-                  onPressed: () => onSave(),
-                  child: Text(l10n.enterNameContinue),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                TextButton(
-                  key: const Key('enter-name-skip-button'),
-                  onPressed: () => onSkip(),
-                  child: Text(l10n.enterNameSkip),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-              ],
-            ),
-          ],
+              FilledButton(
+                key: const Key('enter-name-save-button'),
+                onPressed: () => onSave(),
+                child: Text(l10n.enterNameContinue),
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              TextButton(
+                key: const Key('enter-name-skip-button'),
+                onPressed: () => onSkip(),
+                child: Text(l10n.enterNameSkip),
+              ),
+            ],
+          ),
         ),
       ),
     );
