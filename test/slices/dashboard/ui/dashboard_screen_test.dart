@@ -797,15 +797,16 @@ void main() {
       await tester.tap(find.byKey(const Key('enter-name-skip-button')));
       await tester.pump();
       await tester.pump();
-      // WU8: the swap now crossfades over 400ms (AnimatedSwitcher) instead
-      // of cutting instantly — let it finish before asserting.
+      // WU8: the swap now slides over 400ms (AnimatedSwitcher) instead of
+      // cutting instantly — let it finish before asserting.
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
       expect(find.text('Create a Pact'), findsOneWidget);
     });
 
-    testWidgets('the swap into onboarding crossfades over 400ms rather than cutting instantly (WU8)', (tester) async {
+    testWidgets('the swap into onboarding slides — old page exits left, new page enters from the right (WU8)',
+        (tester) async {
       await tester.pumpWidget(buildWithFlag(flagEnabled: true));
       await tester.pump();
 
@@ -816,10 +817,21 @@ void main() {
       await tester.tap(find.byKey(const Key('enter-name-skip-button')));
       await tester.pump();
       // Mid-transition: both the outgoing EnterNameScreen and the incoming
-      // carousel are present in the tree while the crossfade is in flight.
+      // carousel are present in the tree while the slide is in flight.
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
       expect(find.text('Create a Pact'), findsOneWidget);
+
+      // Inspect the SlideTransitions directly (rather than descendant widget
+      // positions, which are also subject to the onboarding carousel's own
+      // independent PageView geometry) — this dashboard-level transition's
+      // pair must be animating one from the left (exiting) and one from the
+      // right (entering); a crossfade would use FadeTransition instead, with
+      // no SlideTransition offsets at all.
+      final dxValues =
+          tester.widgetList<SlideTransition>(find.byType(SlideTransition)).map((s) => s.position.value.dx).toList();
+      expect(dxValues.any((dx) => dx < -0.05), isTrue, reason: 'expected a SlideTransition offset left (exiting)');
+      expect(dxValues.any((dx) => dx > 0.05), isTrue, reason: 'expected a SlideTransition offset right (entering)');
 
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('enter-name-text-field')), findsNothing);

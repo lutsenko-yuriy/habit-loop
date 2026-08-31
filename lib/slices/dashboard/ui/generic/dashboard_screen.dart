@@ -292,15 +292,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     }
 
     // EnterNameScreen → the dashboard (typically the onboarding carousel,
-    // right after a fresh-install save/skip) fades between them rather than
-    // cutting instantly (WU8) — same 400ms/easeInOut the carousel's own
-    // slide transition uses (onboarding_carousel_scaffold.dart), so entering
-    // the name reads as the first step of onboarding, not a separate screen.
+    // right after a fresh-install save/skip) slides between them — the old
+    // page exits to the left, the new one enters from the right, like a
+    // forward navigation push — rather than cutting instantly (WU8). Same
+    // 400ms/easeInOut the carousel's own slide transition uses
+    // (onboarding_carousel_scaffold.dart), so entering the name reads as the
+    // first step of onboarding, not a separate screen.
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 400),
       switchInCurve: Curves.easeInOut,
       switchOutCurve: Curves.easeInOut,
-      transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+      transitionBuilder: (child, animation) {
+        // AnimatedSwitcher drives an entering child's animation forward
+        // (0 → 1) and an exiting child's animation in reverse (1 → 0) on the
+        // very same 0..1 scale — status is what tells them apart, not the
+        // instantaneous value, since both can be mid-range at once.
+        final isExiting = animation.status == AnimationStatus.reverse || animation.status == AnimationStatus.dismissed;
+        final offsetTween = isExiting
+            ? Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
+            : Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero);
+        return SlideTransition(position: offsetTween.animate(animation), child: child);
+      },
       child: child,
     );
   }
