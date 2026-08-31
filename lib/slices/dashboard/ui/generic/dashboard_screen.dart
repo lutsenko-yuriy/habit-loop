@@ -249,37 +249,71 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
         !onboardingService.isNameEntryShown &&
         ref.watch(featureFlagsProvider).displayNamePersonalizationEnabled;
 
-    if (showEnterName) {
-      return EnterNameScreen(onDone: () => setState(() {}));
-    }
-
     // Deferred to post-frame so build() stays a pure function of state.
-    if (!showCarousel && !_onboardingMarkedThisSession) {
+    if (!showEnterName && !showCarousel && !_onboardingMarkedThisSession) {
       _onboardingMarkedThisSession = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         unawaited(onboardingService.markOnboardingPassed());
       });
     }
 
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return DashboardPageIos(
-        state: state,
-        hasPacts: hasPacts,
-        showCarousel: showCarousel,
-        onDaySelected: onDaySelected,
-        onCreatePact: onCreatePact,
-        onShowupTapped: onShowupTapped,
-        onAbout: navigateToAbout,
+    final Widget child;
+    if (showEnterName) {
+      child = KeyedSubtree(
+        key: const ValueKey('enter-name'),
+        child: EnterNameScreen(onDone: () => setState(() {})),
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      child = KeyedSubtree(
+        key: const ValueKey('dashboard'),
+        child: DashboardPageIos(
+          state: state,
+          hasPacts: hasPacts,
+          showCarousel: showCarousel,
+          onDaySelected: onDaySelected,
+          onCreatePact: onCreatePact,
+          onShowupTapped: onShowupTapped,
+          onAbout: navigateToAbout,
+        ),
+      );
+    } else {
+      child = KeyedSubtree(
+        key: const ValueKey('dashboard'),
+        child: DashboardPageAndroid(
+          state: state,
+          hasPacts: hasPacts,
+          showCarousel: showCarousel,
+          onDaySelected: onDaySelected,
+          onCreatePact: onCreatePact,
+          onShowupTapped: onShowupTapped,
+          onAbout: navigateToAbout,
+        ),
       );
     }
-    return DashboardPageAndroid(
-      state: state,
-      hasPacts: hasPacts,
-      showCarousel: showCarousel,
-      onDaySelected: onDaySelected,
-      onCreatePact: onCreatePact,
-      onShowupTapped: onShowupTapped,
-      onAbout: navigateToAbout,
+
+    // EnterNameScreen slides into the dashboard/carousel like a forward nav
+    // push (WU8) — same 400ms/easeInOut as the carousel's own transition.
+    // Direction keys off targetChildKey, not animation.status: status is
+    // re-read on every rebuild, not just at swap time, and can flip mid-
+    // transition (audit finding, PR #426).
+    final targetChildKey = child.key;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      switchInCurve: Curves.easeInOut,
+      switchOutCurve: Curves.easeInOut,
+      transitionBuilder: (transitionChild, animation) {
+        final isEntering = transitionChild.key == targetChildKey;
+        final offsetTween = isEntering
+            ? Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            : Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero);
+        // IgnorePointer: the exiting page stays hit-testable underneath
+        // otherwise, and can double-fire its save/skip (audit finding).
+        return IgnorePointer(
+          ignoring: !isEntering,
+          child: SlideTransition(position: offsetTween.animate(animation), child: transitionChild),
+        );
+      },
+      child: child,
     );
   }
 }

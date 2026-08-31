@@ -290,4 +290,135 @@ void main() {
       }
     });
   });
+
+  group('EnterNamePage layout (WU8 redesign)', () {
+    testWidgets('Android: buttons are pushed to the bottom via an Expanded content area', (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      // The content column and the button column are siblings inside a
+      // Column, with the content wrapped in Expanded so it fills the space
+      // above the buttons instead of sitting immediately below the field.
+      // find.ancestor + tester.widget already throws if no Expanded
+      // ancestor exists, so reaching this line is itself the assertion.
+      expect(find.byKey(const Key('enter-name-content-area')), findsOneWidget);
+      tester.widget<Expanded>(
+        find.ancestor(of: find.byKey(const Key('enter-name-content-area')), matching: find.byType(Expanded)).first,
+      );
+    });
+
+    testWidgets('Android: title and body text are centered', (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final title = tester.widget<Text>(find.text(l10n.enterNameTitle));
+      final body = tester.widget<Text>(find.text(l10n.enterNameBody));
+      expect(title.textAlign, TextAlign.center);
+      expect(body.textAlign, TextAlign.center);
+    });
+
+    testWidgets('Android: buttons stretch to the same inset width as the rest of the page', (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      final saveButtonWidth = tester.getSize(find.byKey(const Key('enter-name-save-button'))).width;
+      final fieldWidth = tester.getSize(find.byKey(const Key('enter-name-text-field'))).width;
+
+      expect(saveButtonWidth, fieldWidth);
+    });
+
+    testWidgets('Android: text field uses an underline border, thicker when focused', (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      final field = tester.widget<TextField>(find.byKey(const Key('enter-name-text-field')));
+      final decoration = field.decoration!;
+      expect(decoration.border, isA<UnderlineInputBorder>());
+      final unfocusedWidth = (decoration.enabledBorder as UnderlineInputBorder).borderSide.width;
+      final focusedWidth = (decoration.focusedBorder as UnderlineInputBorder).borderSide.width;
+      expect(focusedWidth, greaterThan(unfocusedWidth));
+    });
+
+    testWidgets('iOS: buttons are pushed to the bottom via an Expanded content area', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () {},
+          onboardingService: FakeOnboardingPreferenceService(),
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        // find.ancestor + tester.widget already throws if no Expanded
+        // ancestor exists, so reaching this line is itself the assertion.
+        expect(find.byKey(const Key('enter-name-content-area')), findsOneWidget);
+        tester.widget<Expanded>(
+          find.ancestor(of: find.byKey(const Key('enter-name-content-area')), matching: find.byType(Expanded)).first,
+        );
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('iOS: buttons stretch to the same inset width as the rest of the page', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () {},
+          onboardingService: FakeOnboardingPreferenceService(),
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        final saveButtonWidth = tester.getSize(find.byKey(const Key('enter-name-save-button'))).width;
+        final fieldWidth = tester.getSize(find.byKey(const Key('enter-name-text-field'))).width;
+
+        expect(saveButtonWidth, fieldWidth);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('iOS: text field shrinks its bottom border width on unfocus', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () {},
+          onboardingService: FakeOnboardingPreferenceService(),
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        // The field autofocuses (same as before WU8) — starts focused/thick.
+        final focused = tester.widget<CupertinoTextField>(find.byKey(const Key('enter-name-text-field')));
+        final focusedWidth = ((focused.decoration as BoxDecoration).border as Border).bottom.width;
+
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pump();
+
+        final unfocused = tester.widget<CupertinoTextField>(find.byKey(const Key('enter-name-text-field')));
+        final unfocusedWidth = ((unfocused.decoration as BoxDecoration).border as Border).bottom.width;
+        expect(focusedWidth, greaterThan(unfocusedWidth));
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+  });
 }
