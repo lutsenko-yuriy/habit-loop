@@ -303,11 +303,12 @@ void main() {
       // The content column and the button column are siblings inside a
       // Column, with the content wrapped in Expanded so it fills the space
       // above the buttons instead of sitting immediately below the field.
+      // find.ancestor + tester.widget already throws if no Expanded
+      // ancestor exists, so reaching this line is itself the assertion.
       expect(find.byKey(const Key('enter-name-content-area')), findsOneWidget);
-      final contentParent = tester.widget<Expanded>(
+      tester.widget<Expanded>(
         find.ancestor(of: find.byKey(const Key('enter-name-content-area')), matching: find.byType(Expanded)).first,
       );
-      expect(contentParent, isNotNull);
     });
 
     testWidgets('Android: title and body text are centered', (tester) async {
@@ -365,11 +366,12 @@ void main() {
         ));
         await tester.pump();
 
+        // find.ancestor + tester.widget already throws if no Expanded
+        // ancestor exists, so reaching this line is itself the assertion.
         expect(find.byKey(const Key('enter-name-content-area')), findsOneWidget);
-        final contentParent = tester.widget<Expanded>(
+        tester.widget<Expanded>(
           find.ancestor(of: find.byKey(const Key('enter-name-content-area')), matching: find.byType(Expanded)).first,
         );
-        expect(contentParent, isNotNull);
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }

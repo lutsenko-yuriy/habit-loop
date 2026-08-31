@@ -298,30 +298,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
     // 400ms/easeInOut the carousel's own slide transition uses
     // (onboarding_carousel_scaffold.dart), so entering the name reads as the
     // first step of onboarding, not a separate screen.
+    //
+    // targetChildKey identifies the entering child by its own ValueKey
+    // rather than reading transitionBuilder's animation.status (audit
+    // finding, PR #426) — transitionBuilder is a fresh closure on every
+    // DashboardScreen rebuild, and AnimatedSwitcher re-invokes it for every
+    // still-mounted entry (not just at the moment a swap starts) whenever
+    // any of the providers this build() watches emits mid-transition, so a
+    // status-based direction could flip non-deterministically partway
+    // through the 400ms.
+    final targetChildKey = child.key;
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 400),
       switchInCurve: Curves.easeInOut,
       switchOutCurve: Curves.easeInOut,
-      transitionBuilder: (child, animation) {
-        // AnimatedSwitcher gives each child (entering and exiting alike) an
-        // Animation<double> that reads 0 (hidden) → 1 (visible); the actual
-        // AnimationController for the entering child is driven forward and
-        // for the exiting child in reverse, so `status` — not the
-        // instantaneous value — is what tells them apart, since both can be
-        // mid-range at once. Empirically (confirmed on-device, not just by
-        // reading the docs) AnimatedSwitcher reports the *entering* child's
-        // status as forward/completed and the *exiting* child's as
-        // reverse/dismissed here — so the tween below deliberately matches
-        // forward/completed to the exiting-page tween, the opposite of what
-        // the status names alone would suggest. Both pages move leftward:
-        // the exiting page slides from centered to off-screen left, the
-        // entering page slides from off-screen right to centered.
-        final isExitingStatus =
-            animation.status == AnimationStatus.forward || animation.status == AnimationStatus.completed;
-        final offsetTween = isExitingStatus
-            ? Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
-            : Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero);
-        return SlideTransition(position: offsetTween.animate(animation), child: child);
+      transitionBuilder: (transitionChild, animation) {
+        final isEntering = transitionChild.key == targetChildKey;
+        final offsetTween = isEntering
+            ? Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            : Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero);
+        // The exiting page must not remain hit-testable for the 400ms it's
+        // still visible underneath — otherwise a tap lands on its buttons
+        // and can double-fire EnterNameScreen's save/skip analytics + write
+        // (audit finding, PR #426).
+        return IgnorePointer(
+          ignoring: !isEntering,
+          child: SlideTransition(position: offsetTween.animate(animation), child: transitionChild),
+        );
       },
       child: child,
     );

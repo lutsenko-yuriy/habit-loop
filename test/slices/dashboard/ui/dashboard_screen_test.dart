@@ -728,6 +728,7 @@ void main() {
       bool onboardingPassed = false,
       bool nameEntryShown = false,
       OnboardingPreferenceService? onboardingService,
+      FakeAnalyticsService? analyticsService,
     }) {
       final pactRepo = InMemoryPactRepository();
       final showupRepo = InMemoryShowupRepository();
@@ -745,6 +746,7 @@ void main() {
           remoteConfigServiceProvider.overrideWithValue(
             FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': flagEnabled}),
           ),
+          if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
         ],
         child: const MaterialApp(
           localizationsDelegates: [
@@ -839,6 +841,88 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
       expect(find.text('Create a Pact'), findsOneWidget);
+    });
+
+    testWidgets('slide direction stays consistent across multiple rebuilds mid-transition (audit finding, PR #426)',
+        (tester) async {
+      // A status-based (rather than key-based) direction check previously
+      // re-derived which way each page should move on every single
+      // transitionBuilder invocation — since AnimatedSwitcher re-invokes it
+      // for every still-mounted entry on every DashboardScreen rebuild (not
+      // just once at swap time), a provider emission mid-transition could
+      // flip the direction non-deterministically partway through. Sampling
+      // twice during the transition, forcing extra rebuilds via pump() in
+      // between, catches a flip a single sample would miss.
+      await tester.pumpWidget(buildWithFlag(flagEnabled: true));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('enter-name-skip-button')));
+      await tester.pump();
+
+      await tester.pump(const Duration(milliseconds: 50));
+      final exitingDxEarly = tester
+          .widget<SlideTransition>(
+            find
+                .ancestor(of: find.byKey(const Key('enter-name-text-field')), matching: find.byType(SlideTransition))
+                .first,
+          )
+          .position
+          .value
+          .dx;
+      final enteringDxEarly = tester
+          .widget<SlideTransition>(
+            find.ancestor(of: find.text('Create a Pact'), matching: find.byType(SlideTransition)).first,
+          )
+          .position
+          .value
+          .dx;
+
+      // Several extra rebuilds in between, none of which change any actual
+      // dashboard state — exactly the "unrelated rebuild mid-transition"
+      // scenario the fix must be immune to.
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final exitingDxLate = tester
+          .widget<SlideTransition>(
+            find
+                .ancestor(of: find.byKey(const Key('enter-name-text-field')), matching: find.byType(SlideTransition))
+                .first,
+          )
+          .position
+          .value
+          .dx;
+      final enteringDxLate = tester
+          .widget<SlideTransition>(
+            find.ancestor(of: find.text('Create a Pact'), matching: find.byType(SlideTransition)).first,
+          )
+          .position
+          .value
+          .dx;
+
+      expect(exitingDxEarly.sign, exitingDxLate.sign, reason: 'the exiting page must not flip direction mid-flight');
+      expect(enteringDxEarly.sign, enteringDxLate.sign, reason: 'the entering page must not flip direction mid-flight');
+    });
+
+    testWidgets('the exiting page is not hit-testable during its exit animation (audit finding, PR #426)',
+        (tester) async {
+      final analyticsService = FakeAnalyticsService();
+      await tester.pumpWidget(buildWithFlag(flagEnabled: true, analyticsService: analyticsService));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('enter-name-skip-button')));
+      await tester.pump();
+      // Mid-transition: the skip button is still technically present in the
+      // tree (fading/sliding out underneath the incoming carousel) — a tap
+      // here must not reach it a second time.
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byKey(const Key('enter-name-skip-button')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('enter-name-skip-button')), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final skipEvents = analyticsService.loggedEvents.where((e) => e.name == 'display_name_entry_completed');
+      expect(skipEvents, hasLength(1), reason: 'a mid-transition tap on the exiting page must be ignored');
     });
   });
 }
