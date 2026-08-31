@@ -75,6 +75,7 @@ void main() {
             FakeRemoteConfigService(overrides: {
               'about_screen_enabled': false,
               'language_selection_enabled': false,
+              'display_name_personalization_enabled': false,
             }),
           ),
         ],

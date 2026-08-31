@@ -24,7 +24,7 @@ import 'harness.dart';
 // pact_breaks_enabled now defaults to true (HAB-195 WU6) — this override is
 // kept for explicitness/determinism, independent of the production default.
 final _breaksEnabled = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true}),
+  FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true, 'display_name_personalization_enabled': false}),
 );
 
 Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId) async {

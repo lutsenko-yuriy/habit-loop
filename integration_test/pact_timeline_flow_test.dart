@@ -45,6 +45,7 @@ FakeRemoteConfigService _rcGrouping({
 }) =>
     FakeRemoteConfigService(overrides: {
       'pact_timeline_no_grouping_tail_period_in_days': tailPeriodInDays,
+      'display_name_personalization_enabled': false,
     });
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -473,7 +474,9 @@ void main() {
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             remoteConfigServiceProvider.overrideWithValue(
-              FakeRemoteConfigService(overrides: {'pact_timeline_enabled': false}),
+              FakeRemoteConfigService(
+                overrides: {'pact_timeline_enabled': false, 'display_name_personalization_enabled': false},
+              ),
             ),
           ],
           beforePump: (h) async {
