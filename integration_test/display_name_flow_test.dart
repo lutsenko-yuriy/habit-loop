@@ -133,9 +133,7 @@ void main() {
 
     testWidgets(
         'change_name_dialog_updates_stored_name: the ⋯ menu\'s "Change name" dialog pre-fills the current name, '
-        'updates the stored name on save, and reflects the new value on reopen — no app restart '
-        '(WU6 has not shipped yet, so the dashboard greeting header does not exist; asserted here via the '
-        "dialog's own pre-fill instead)", (tester) async {
+        'updates the stored name on save, and reflects the new value on reopen — no app restart', (tester) async {
       // 1. Launch harness with flag on and a name already on file. Not
       //    initiallyAnonymous (default false), so the dashboard loads
       //    directly with no pact needed to skip the onboarding carousel.
@@ -152,7 +150,9 @@ void main() {
         userProfileRepository: userProfileRepository,
       );
 
-      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+      // WU9: title is personalized ("Hi Alex") whenever the flag is on and a
+      // name is on file — dashboardTitle ("Dashboard") never renders here.
+      await waitFor(tester, find.text(l10n(tester).dashboardGreetingPersonalized('Alex')));
 
       // 2/3. Open the kebab menu, tap "Change name".
       await openChangeNameDialogFromKebab(tester);

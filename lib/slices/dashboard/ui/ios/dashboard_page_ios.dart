@@ -108,8 +108,13 @@ class DashboardPageIos extends ConsumerWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
+        // maxLines/overflow: CupertinoNavigationBar.middle doesn't clip like
+        // AppBar's title does — a long name would otherwise wrap and fill
+        // the whole nav bar (audit finding, PR #428).
         middle: Text(
           personalizedName == null ? l10n.dashboardTitle : l10n.dashboardGreetingPersonalized(personalizedName),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
