@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.d
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/onboarding/fake_onboarding_preference_service.dart';
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 // A counting showup repository that records how many times getShowupsForDateRange
@@ -81,6 +82,12 @@ ProviderContainer _makeContainer({
     // hang on pending Timer when the carousel is shown (no-pact state).
     remoteConfigServiceProvider.overrideWithValue(
       FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+    ),
+    // Name entry is irrelevant to this file's date-refresh assertions — mark
+    // it already shown so EnterNameScreen (default-on since HAB-232 WU7)
+    // never intercepts the dashboard.
+    onboardingPreferenceServiceProvider.overrideWithValue(
+      FakeOnboardingPreferenceService(initialNameEntryShown: true),
     ),
   ]);
   return container;

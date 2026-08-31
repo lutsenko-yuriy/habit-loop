@@ -7,6 +7,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
+import 'infrastructure/onboarding/fake_onboarding_preference_service.dart';
 import 'infrastructure/remote_config/fake_remote_config_service.dart';
 
 void main() {
@@ -24,6 +25,12 @@ void main() {
           // Disable auto-advance timer so pumpAndSettle() does not hang.
           remoteConfigServiceProvider.overrideWithValue(
             FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+          ),
+          // This smoke test is about the onboarding carousel, not name entry —
+          // mark it already shown so EnterNameScreen (default-on since
+          // HAB-232 WU7) doesn't precede the carousel it's asserting on.
+          onboardingPreferenceServiceProvider.overrideWithValue(
+            FakeOnboardingPreferenceService(initialNameEntryShown: true),
           ),
         ],
         child: HabitLoopApp(navigatorKey: GlobalKey<NavigatorState>()),
