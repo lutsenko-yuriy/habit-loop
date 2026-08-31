@@ -908,6 +908,37 @@ void main() {
     });
   });
 
+  group('displayName personalization (HAB-232 WU7)', () {
+    test('scheduled reminder text contains the name when the service is given one', () async {
+      final named = ReminderSchedulingService(
+        notificationService: notificationService,
+        remoteConfig: remoteConfig,
+        analytics: analyticsService,
+        localePreference: localePreference,
+        isIOS: false,
+        displayName: 'Alex',
+      );
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+      await named.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      expect(notificationService.scheduledReminders.first.titleText, contains('Alex'));
+    });
+
+    test('scheduled reminder text has no name when the service is given none', () async {
+      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+      final now = DateTime(2026, 5, 7, 10, 0);
+      final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
+
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      expect(notificationService.scheduledReminders.first.titleText, l10n.notificationReminderTitle('Meditate'));
+    });
+  });
+
   group('cancelRemindersForShowup', () {
     test('delegates to notificationService.cancelShowupReminder', () async {
       await service.cancelRemindersForShowup('su-123');

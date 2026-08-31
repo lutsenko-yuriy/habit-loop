@@ -105,7 +105,7 @@ void main() {
     breakRepo = InMemoryPactBreakRepository();
   });
 
-  NotificationReconciliationService buildService() {
+  NotificationReconciliationService buildService({String? displayName}) {
     return NotificationReconciliationService(
       pactRepository: pactRepo,
       showupRepository: showupRepo,
@@ -114,6 +114,7 @@ void main() {
       remoteConfig: remoteConfig,
       analytics: analytics,
       localePreference: localePreference,
+      displayName: displayName,
     );
   }
 
@@ -405,6 +406,20 @@ void main() {
 
       expect(notificationService.scheduledReminders, hasLength(1));
       expect(notificationService.scheduledReminders.first.showup.id, equals('su-ok'));
+    });
+
+    group('displayName personalization (HAB-232 WU7)', () {
+      test('rescheduled reminder text contains the name when the service is given one', () async {
+        pactRepo = InMemoryPactRepository([_makePact()]);
+        final showup = _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0));
+        showupRepo = InMemoryShowupRepository([showup]);
+        notificationService.pendingNotifications = const [];
+        service = buildService(displayName: 'Alex');
+
+        await service.reconcile(now: DateTime(2026, 5, 7, 10, 0));
+
+        expect(notificationService.scheduledReminders.first.titleText, contains('Alex'));
+      });
     });
   });
 }

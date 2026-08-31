@@ -19,6 +19,9 @@ import 'package:habit_loop/slices/reminder/application/reminder_planner.dart';
 final class ReminderSchedulingService {
   // [systemLocale] is the device/OS locale, used only when no explicit in-app
   // override has been saved (HAB-157) — previously hardcoded to English.
+  // [displayName] is the caller's resolved personalizedNameProvider value
+  // (HAB-232 WU7) — read at the composition root, not here, so this class
+  // stays free of a Riverpod dependency.
   const ReminderSchedulingService({
     required NotificationService notificationService,
     required RemoteConfigService remoteConfig,
@@ -26,12 +29,14 @@ final class ReminderSchedulingService {
     required LocalePreferenceService localePreference,
     bool isIOS = false,
     Locale systemLocale = const Locale('en'),
+    String? displayName,
   })  : _notificationService = notificationService,
         _remoteConfig = remoteConfig,
         _analytics = analytics,
         _localePreference = localePreference,
         _isIOS = isIOS,
-        _systemLocale = systemLocale;
+        _systemLocale = systemLocale,
+        _displayName = displayName;
 
   final NotificationService _notificationService;
   final RemoteConfigService _remoteConfig;
@@ -39,6 +44,7 @@ final class ReminderSchedulingService {
   final LocalePreferenceService _localePreference;
   final bool _isIOS;
   final Locale _systemLocale;
+  final String? _displayName;
 
   // [now] is injectable for tests.
   Future<void> scheduleRemindersForShowups({
@@ -55,7 +61,7 @@ final class ReminderSchedulingService {
     );
     final effectiveNow = now ?? DateTime.now();
 
-    final context = ReminderPlanContext.resolve(remoteConfig: _remoteConfig, isIOS: _isIOS);
+    final context = ReminderPlanContext.resolve(remoteConfig: _remoteConfig, isIOS: _isIOS, displayName: _displayName);
     final plan = ReminderPlanner.plan(
       pact: pact,
       showups: showups,
