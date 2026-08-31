@@ -61,6 +61,7 @@ import 'package:habit_loop/slices/pact/data/noop_pact_break_sync_repository.dart
 import 'package:habit_loop/slices/pact/data/noop_pact_sync_repository.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/profile/data/noop_user_profile_sync_repository.dart';
+import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/reminder/application/notification_reconciliation_service.dart';
 import 'package:habit_loop/slices/reminder/application/reconciliation_throttle.dart';
 import 'package:habit_loop/slices/reminder/application/reminder_scheduling_service.dart';
@@ -351,6 +352,7 @@ final reminderSchedulingServiceProvider = Provider<ReminderSchedulingService>((r
     localePreference: ref.watch(localePreferenceServiceProvider),
     isIOS: Platform.isIOS,
     systemLocale: ref.watch(deviceLocaleProvider),
+    displayName: ref.watch(personalizedNameProvider),
   );
 });
 
@@ -371,6 +373,7 @@ final notificationReconciliationServiceProvider = Provider<NotificationReconcili
     localePreference: ref.watch(localePreferenceServiceProvider),
     isIOS: Platform.isIOS,
     systemLocale: ref.watch(deviceLocaleProvider),
+    displayName: ref.watch(personalizedNameProvider),
   );
 });
 
