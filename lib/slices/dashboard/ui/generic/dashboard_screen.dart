@@ -291,22 +291,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
       );
     }
 
-    // EnterNameScreen → the dashboard (typically the onboarding carousel,
-    // right after a fresh-install save/skip) slides between them — the old
-    // page exits to the left, the new one enters from the right, like a
-    // forward navigation push — rather than cutting instantly (WU8). Same
-    // 400ms/easeInOut the carousel's own slide transition uses
-    // (onboarding_carousel_scaffold.dart), so entering the name reads as the
-    // first step of onboarding, not a separate screen.
-    //
-    // targetChildKey identifies the entering child by its own ValueKey
-    // rather than reading transitionBuilder's animation.status (audit
-    // finding, PR #426) — transitionBuilder is a fresh closure on every
-    // DashboardScreen rebuild, and AnimatedSwitcher re-invokes it for every
-    // still-mounted entry (not just at the moment a swap starts) whenever
-    // any of the providers this build() watches emits mid-transition, so a
-    // status-based direction could flip non-deterministically partway
-    // through the 400ms.
+    // EnterNameScreen slides into the dashboard/carousel like a forward nav
+    // push (WU8) — same 400ms/easeInOut as the carousel's own transition.
+    // Direction keys off targetChildKey, not animation.status: status is
+    // re-read on every rebuild, not just at swap time, and can flip mid-
+    // transition (audit finding, PR #426).
     final targetChildKey = child.key;
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 400),
@@ -317,10 +306,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
         final offsetTween = isEntering
             ? Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
             : Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero);
-        // The exiting page must not remain hit-testable for the 400ms it's
-        // still visible underneath — otherwise a tap lands on its buttons
-        // and can double-fire EnterNameScreen's save/skip analytics + write
-        // (audit finding, PR #426).
+        // IgnorePointer: the exiting page stays hit-testable underneath
+        // otherwise, and can double-fire its save/skip (audit finding).
         return IgnorePointer(
           ignoring: !isEntering,
           child: SlideTransition(position: offsetTween.animate(animation), child: transitionChild),

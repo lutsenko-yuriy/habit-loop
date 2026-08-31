@@ -16,9 +16,8 @@ class EnterNamePageIos extends StatefulWidget {
 }
 
 class _EnterNamePageIosState extends State<EnterNamePageIos> {
-  // Local, presentational only — CupertinoTextField has no built-in
-  // focused/unfocused decoration swap the way Material's InputDecoration
-  // does, so the underline's focus thickening (WU8) is driven by hand.
+  // CupertinoTextField has no built-in focus-based decoration, so the
+  // underline's focus thickening (WU8) is driven by hand.
   final _focusNode = FocusNode();
 
   @override
@@ -44,19 +43,15 @@ class _EnterNamePageIosState extends State<EnterNamePageIos> {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s24),
-          // Buttons stretch to the same inset width as the rest of the page
-          // (WU8) — CrossAxisAlignment.stretch on this outer column, not a
-          // separate edge-to-edge sibling.
+          // Stretch: buttons match the page's inset width (WU8).
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: Center(
                   key: const Key('enter-name-content-area'),
-                  // Scrollable: the field is autofocused, so the keyboard is up on
-                  // the very first frame and shrinks the available height — an
-                  // unscrollable column can overflow on a short device or with
-                  // longer translated copy.
+                  // Scrollable: autofocus pops the keyboard on the first
+                  // frame, which can overflow on a short device otherwise.
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
