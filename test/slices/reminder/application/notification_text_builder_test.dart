@@ -291,7 +291,8 @@ void main() {
     });
 
     test('title contains the name when one is given', () {
-      final result = NotificationTextBuilder.buildWelcomeBackText(habitName: habitName, l10n: l10n, displayName: 'Alex');
+      final result =
+          NotificationTextBuilder.buildWelcomeBackText(habitName: habitName, l10n: l10n, displayName: 'Alex');
 
       expect(result.title, contains('Alex'));
       expect(result.title, contains(habitName));

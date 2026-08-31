@@ -45,9 +45,7 @@ abstract final class NotificationTextBuilder {
     String? displayName,
   }) {
     return (
-      title: displayName != null
-          ? l10n.notificationMissedTitlePersonalized(displayName)
-          : l10n.notificationMissedTitle,
+      title: displayName != null ? l10n.notificationMissedTitlePersonalized(displayName) : l10n.notificationMissedTitle,
       body: l10n.notificationMissedBody,
     );
   }
