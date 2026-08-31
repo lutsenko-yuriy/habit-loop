@@ -190,10 +190,24 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationReminderTitlePersonalized": "Salut {name}, c'est l'heure de {habitName} !",
+  "@notificationReminderTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationReminderBody": "Appuie pour marquer ta séance.",
   "notificationDeadlineTitle": "{habitName} : marque ta séance comme réalisée",
   "@notificationDeadlineTitle": {
     "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationDeadlineTitlePersonalized": "Salut {name}, {habitName} : marque ta séance comme réalisée",
+  "@notificationDeadlineTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
       "habitName": { "type": "String" }
     }
   },
@@ -209,6 +223,13 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationTimeLimitTitlePersonalized": "Salut {name}, {habitName} : c'est l'heure de la séance !",
+  "@notificationTimeLimitTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationTimeLimitBody": "Tu as {duration} pour le marquer comme fait.",
   "@notificationTimeLimitBody": {
     "placeholders": {
@@ -216,6 +237,12 @@
     }
   },
   "notificationMissedTitle": "Tu as manqué celui-ci",
+  "notificationMissedTitlePersonalized": "Salut {name}, tu as manqué celui-ci",
+  "@notificationMissedTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "notificationMissedBody": "Pas de panique — sois là pour la prochaine séance.",
   "notificationWelcomeBackTitle": "La pause pour {habitName} est terminée !",
   "@notificationWelcomeBackTitle": {
@@ -223,10 +250,24 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationWelcomeBackTitlePersonalized": "Salut {name}, la pause pour {habitName} est terminée !",
+  "@notificationWelcomeBackTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationWelcomeBackBody": "On s'y remet.",
   "notificationHurryUpTitle": "Dépêche-toi — {habitName} se termine bientôt !",
   "@notificationHurryUpTitle": {
     "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationHurryUpTitlePersonalized": "Salut {name}, dépêche-toi — {habitName} se termine bientôt !",
+  "@notificationHurryUpTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
       "habitName": { "type": "String" }
     }
   },

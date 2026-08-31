@@ -190,10 +190,24 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationReminderTitlePersonalized": "Hi {name}, Zeit für {habitName}!",
+  "@notificationReminderTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationReminderBody": "Tippe, um deinen Showup zu markieren.",
   "notificationDeadlineTitle": "{habitName}: markiere deinen Showup als erledigt",
   "@notificationDeadlineTitle": {
     "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationDeadlineTitlePersonalized": "Hi {name}, {habitName}: markiere deinen Showup als erledigt",
+  "@notificationDeadlineTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
       "habitName": { "type": "String" }
     }
   },
@@ -209,6 +223,13 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationTimeLimitTitlePersonalized": "Hi {name}, {habitName}: Showup-Zeit!",
+  "@notificationTimeLimitTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationTimeLimitBody": "Du hast {duration}, um es als erledigt zu markieren.",
   "@notificationTimeLimitBody": {
     "placeholders": {
@@ -216,6 +237,12 @@
     }
   },
   "notificationMissedTitle": "Diesen hast du verpasst",
+  "notificationMissedTitlePersonalized": "Hi {name}, diesen hast du verpasst",
+  "@notificationMissedTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "notificationMissedBody": "Das ist okay — erscheine beim nächsten Mal.",
   "notificationWelcomeBackTitle": "Die Pause für {habitName} ist vorbei!",
   "@notificationWelcomeBackTitle": {
@@ -223,10 +250,24 @@
       "habitName": { "type": "String" }
     }
   },
+  "notificationWelcomeBackTitlePersonalized": "Hi {name}, die Pause für {habitName} ist vorbei!",
+  "@notificationWelcomeBackTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "habitName": { "type": "String" }
+    }
+  },
   "notificationWelcomeBackBody": "Weiter geht's.",
   "notificationHurryUpTitle": "Beeil dich — {habitName} schließt gleich!",
   "@notificationHurryUpTitle": {
     "placeholders": {
+      "habitName": { "type": "String" }
+    }
+  },
+  "notificationHurryUpTitlePersonalized": "Hi {name}, beeil dich — {habitName} schließt gleich!",
+  "@notificationHurryUpTitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" },
       "habitName": { "type": "String" }
     }
   },

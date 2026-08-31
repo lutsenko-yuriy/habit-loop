@@ -153,6 +153,62 @@ void main() {
 
       expect(result.body, contains('00:15'));
     });
+
+    group('displayName personalization (HAB-232 WU7)', () {
+      test('control variant title contains the name when one is given', () {
+        final result = NotificationTextBuilder.buildReminderText(
+          variant: 'control',
+          habitName: habitName,
+          scheduledAt: scheduledAt,
+          showupDuration: showupDuration,
+          l10n: l10n,
+          displayName: 'Alex',
+        );
+
+        expect(result.title, contains('Alex'));
+        expect(result.title, contains(habitName));
+      });
+
+      test('control variant title has no name when displayName is null', () {
+        final result = NotificationTextBuilder.buildReminderText(
+          variant: 'control',
+          habitName: habitName,
+          scheduledAt: scheduledAt,
+          showupDuration: showupDuration,
+          l10n: l10n,
+        );
+
+        expect(result.title, l10n.notificationReminderTitle(habitName));
+      });
+
+      test('deadline variant title contains the name when one is given', () {
+        final result = NotificationTextBuilder.buildReminderText(
+          variant: 'deadline',
+          habitName: habitName,
+          scheduledAt: scheduledAt,
+          showupDuration: showupDuration,
+          l10n: l10n,
+          displayName: 'Alex',
+        );
+
+        expect(result.title, contains('Alex'));
+        expect(result.title, contains(habitName));
+      });
+
+      test('time_limit variant title contains the name when one is given', () {
+        final result = NotificationTextBuilder.buildReminderText(
+          variant: 'time_limit',
+          habitName: habitName,
+          scheduledAt: scheduledAt,
+          showupDuration: showupDuration,
+          l10n: l10n,
+          displayName: 'Alex',
+        );
+
+        expect(result.title, contains('Alex'));
+        expect(result.title, contains(habitName));
+      });
+    });
   });
 
   group('NotificationTextBuilder.buildDeadlineExpiredText', () {
@@ -185,6 +241,18 @@ void main() {
 
       expect(result.title, isNotEmpty);
       expect(result.body, isNotEmpty);
+    });
+
+    test('title contains the name when one is given', () {
+      final result = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n, displayName: 'Alex');
+
+      expect(result.title, contains('Alex'));
+    });
+
+    test('title has no name when displayName is null', () {
+      final result = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
+
+      expect(result.title, l10n.notificationMissedTitle);
     });
   });
 
@@ -221,6 +289,19 @@ void main() {
       expect(result.title, contains(habitName));
       expect(result.body, isNotEmpty);
     });
+
+    test('title contains the name when one is given', () {
+      final result = NotificationTextBuilder.buildWelcomeBackText(habitName: habitName, l10n: l10n, displayName: 'Alex');
+
+      expect(result.title, contains('Alex'));
+      expect(result.title, contains(habitName));
+    });
+
+    test('title has no name when displayName is null', () {
+      final result = NotificationTextBuilder.buildWelcomeBackText(habitName: habitName, l10n: l10n);
+
+      expect(result.title, l10n.notificationWelcomeBackTitle(habitName));
+    });
   });
 
   group('NotificationTextBuilder.buildHurryUpText', () {
@@ -255,6 +336,19 @@ void main() {
 
       expect(result.title, contains(habitName));
       expect(result.body, isNotEmpty);
+    });
+
+    test('title contains the name when one is given', () {
+      final result = NotificationTextBuilder.buildHurryUpText(habitName: habitName, l10n: l10n, displayName: 'Alex');
+
+      expect(result.title, contains('Alex'));
+      expect(result.title, contains(habitName));
+    });
+
+    test('title has no name when displayName is null', () {
+      final result = NotificationTextBuilder.buildHurryUpText(habitName: habitName, l10n: l10n);
+
+      expect(result.title, l10n.notificationHurryUpTitle(habitName));
     });
   });
 }

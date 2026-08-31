@@ -4,12 +4,17 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 abstract final class NotificationTextBuilder {
   /// Variant dispatches copy: `'deadline'` shows closing time (`HH:mm`),
   /// `'time_limit'` shows duration left; any other value → control (generic reminder).
+  ///
+  /// [displayName] personalizes the title when non-null (HAB-232 WU7) —
+  /// falls back to the neutral title otherwise, same "one no-name
+  /// representation" contract as [personalizedNameProvider].
   static ({String title, String body}) buildReminderText({
     required String variant,
     required String habitName,
     required DateTime scheduledAt,
     required Duration showupDuration,
     required AppLocalizations l10n,
+    String? displayName,
   }) {
     return switch (variant) {
       'deadline' => _buildDeadlineText(
@@ -17,14 +22,18 @@ abstract final class NotificationTextBuilder {
           scheduledAt: scheduledAt,
           showupDuration: showupDuration,
           l10n: l10n,
+          displayName: displayName,
         ),
       'time_limit' => _buildTimeLimitText(
           habitName: habitName,
           showupDuration: showupDuration,
           l10n: l10n,
+          displayName: displayName,
         ),
       _ => (
-          title: l10n.notificationReminderTitle(habitName),
+          title: displayName != null
+              ? l10n.notificationReminderTitlePersonalized(displayName, habitName)
+              : l10n.notificationReminderTitle(habitName),
           body: l10n.notificationReminderBody,
         ),
     };
@@ -33,9 +42,12 @@ abstract final class NotificationTextBuilder {
   // Replacement notification after the showup window closes; no action buttons.
   static ({String title, String body}) buildDeadlineExpiredText({
     required AppLocalizations l10n,
+    String? displayName,
   }) {
     return (
-      title: l10n.notificationMissedTitle,
+      title: displayName != null
+          ? l10n.notificationMissedTitlePersonalized(displayName)
+          : l10n.notificationMissedTitle,
       body: l10n.notificationMissedBody,
     );
   }
@@ -46,9 +58,12 @@ abstract final class NotificationTextBuilder {
   static ({String title, String body}) buildWelcomeBackText({
     required String habitName,
     required AppLocalizations l10n,
+    String? displayName,
   }) {
     return (
-      title: l10n.notificationWelcomeBackTitle(habitName),
+      title: displayName != null
+          ? l10n.notificationWelcomeBackTitlePersonalized(displayName, habitName)
+          : l10n.notificationWelcomeBackTitle(habitName),
       body: l10n.notificationWelcomeBackBody,
     );
   }
@@ -59,9 +74,12 @@ abstract final class NotificationTextBuilder {
   static ({String title, String body}) buildHurryUpText({
     required String habitName,
     required AppLocalizations l10n,
+    String? displayName,
   }) {
     return (
-      title: l10n.notificationHurryUpTitle(habitName),
+      title: displayName != null
+          ? l10n.notificationHurryUpTitlePersonalized(displayName, habitName)
+          : l10n.notificationHurryUpTitle(habitName),
       body: l10n.notificationHurryUpBody,
     );
   }
@@ -75,11 +93,14 @@ abstract final class NotificationTextBuilder {
     required DateTime scheduledAt,
     required Duration showupDuration,
     required AppLocalizations l10n,
+    String? displayName,
   }) {
     final closeTime = scheduledAt.add(showupDuration);
     final timeString = _formatHHmm(closeTime);
     return (
-      title: l10n.notificationDeadlineTitle(habitName),
+      title: displayName != null
+          ? l10n.notificationDeadlineTitlePersonalized(displayName, habitName)
+          : l10n.notificationDeadlineTitle(habitName),
       body: l10n.notificationDeadlineBody(timeString),
     );
   }
@@ -88,10 +109,13 @@ abstract final class NotificationTextBuilder {
     required String habitName,
     required Duration showupDuration,
     required AppLocalizations l10n,
+    String? displayName,
   }) {
     final durationString = _formatTimeRemaining(showupDuration, l10n);
     return (
-      title: l10n.notificationTimeLimitTitle(habitName),
+      title: displayName != null
+          ? l10n.notificationTimeLimitTitlePersonalized(displayName, habitName)
+          : l10n.notificationTimeLimitTitle(habitName),
       body: l10n.notificationTimeLimitBody(durationString),
     );
   }
