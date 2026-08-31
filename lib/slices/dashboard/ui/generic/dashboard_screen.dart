@@ -249,37 +249,59 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with WidgetsB
         !onboardingService.isNameEntryShown &&
         ref.watch(featureFlagsProvider).displayNamePersonalizationEnabled;
 
-    if (showEnterName) {
-      return EnterNameScreen(onDone: () => setState(() {}));
-    }
-
     // Deferred to post-frame so build() stays a pure function of state.
-    if (!showCarousel && !_onboardingMarkedThisSession) {
+    if (!showEnterName && !showCarousel && !_onboardingMarkedThisSession) {
       _onboardingMarkedThisSession = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         unawaited(onboardingService.markOnboardingPassed());
       });
     }
 
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return DashboardPageIos(
-        state: state,
-        hasPacts: hasPacts,
-        showCarousel: showCarousel,
-        onDaySelected: onDaySelected,
-        onCreatePact: onCreatePact,
-        onShowupTapped: onShowupTapped,
-        onAbout: navigateToAbout,
+    final Widget child;
+    if (showEnterName) {
+      child = KeyedSubtree(
+        key: const ValueKey('enter-name'),
+        child: EnterNameScreen(onDone: () => setState(() {})),
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      child = KeyedSubtree(
+        key: const ValueKey('dashboard'),
+        child: DashboardPageIos(
+          state: state,
+          hasPacts: hasPacts,
+          showCarousel: showCarousel,
+          onDaySelected: onDaySelected,
+          onCreatePact: onCreatePact,
+          onShowupTapped: onShowupTapped,
+          onAbout: navigateToAbout,
+        ),
+      );
+    } else {
+      child = KeyedSubtree(
+        key: const ValueKey('dashboard'),
+        child: DashboardPageAndroid(
+          state: state,
+          hasPacts: hasPacts,
+          showCarousel: showCarousel,
+          onDaySelected: onDaySelected,
+          onCreatePact: onCreatePact,
+          onShowupTapped: onShowupTapped,
+          onAbout: navigateToAbout,
+        ),
       );
     }
-    return DashboardPageAndroid(
-      state: state,
-      hasPacts: hasPacts,
-      showCarousel: showCarousel,
-      onDaySelected: onDaySelected,
-      onCreatePact: onCreatePact,
-      onShowupTapped: onShowupTapped,
-      onAbout: navigateToAbout,
+
+    // EnterNameScreen → the dashboard (typically the onboarding carousel,
+    // right after a fresh-install save/skip) fades between them rather than
+    // cutting instantly (WU8) — same 400ms/easeInOut the carousel's own
+    // slide transition uses (onboarding_carousel_scaffold.dart), so entering
+    // the name reads as the first step of onboarding, not a separate screen.
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      switchInCurve: Curves.easeInOut,
+      switchOutCurve: Curves.easeInOut,
+      transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+      child: child,
     );
   }
 }

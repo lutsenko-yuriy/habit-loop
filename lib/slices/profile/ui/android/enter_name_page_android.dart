@@ -14,30 +14,62 @@ class EnterNamePageAndroid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        // Scrollable: the field is autofocused, so the keyboard is up on the very
-        // first frame and shrinks the body (resizeToAvoidBottomInset) — an
-        // unscrollable Column can overflow past the Continue/Skip buttons on a
-        // short device or with longer translated copy.
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s24),
+          // Content fills the space above the buttons (WU8) — Expanded +
+          // Center, rather than the buttons following the field immediately,
+          // so the buttons stay bottom-anchored regardless of content height.
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(l10n.enterNameTitle, style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: AppSpacing.s12),
-              Text(l10n.enterNameBody, style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: AppSpacing.s24),
-              TextField(
-                key: const Key('enter-name-text-field'),
-                controller: controller,
-                autofocus: true,
-                textCapitalization: TextCapitalization.words,
-                inputFormatters: [LengthLimitingTextInputFormatter(enterNameMaxLength)],
-                decoration: InputDecoration(hintText: l10n.enterNameHint, border: const OutlineInputBorder()),
+              Expanded(
+                child: Center(
+                  key: const Key('enter-name-content-area'),
+                  // Scrollable: the field is autofocused, so the keyboard is up on
+                  // the very first frame and shrinks the available height — an
+                  // unscrollable column can overflow on a short device or with
+                  // longer translated copy.
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.enterNameTitle,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: AppSpacing.s12),
+                        Text(
+                          l10n.enterNameBody,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.s24),
+                        TextField(
+                          key: const Key('enter-name-text-field'),
+                          controller: controller,
+                          autofocus: true,
+                          textAlign: TextAlign.center,
+                          textCapitalization: TextCapitalization.words,
+                          inputFormatters: [LengthLimitingTextInputFormatter(enterNameMaxLength)],
+                          decoration: InputDecoration(
+                            hintText: l10n.enterNameHint,
+                            border: const UnderlineInputBorder(),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: theme.colorScheme.outline),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: AppSpacing.s24),
               FilledButton(
                 key: const Key('enter-name-save-button'),
                 onPressed: () => onSave(),

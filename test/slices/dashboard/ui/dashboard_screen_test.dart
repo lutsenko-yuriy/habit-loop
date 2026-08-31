@@ -797,7 +797,31 @@ void main() {
       await tester.tap(find.byKey(const Key('enter-name-skip-button')));
       await tester.pump();
       await tester.pump();
+      // WU8: the swap now crossfades over 400ms (AnimatedSwitcher) instead
+      // of cutting instantly — let it finish before asserting.
+      await tester.pumpAndSettle();
 
+      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(find.text('Create a Pact'), findsOneWidget);
+    });
+
+    testWidgets('the swap into onboarding crossfades over 400ms rather than cutting instantly (WU8)', (tester) async {
+      await tester.pumpWidget(buildWithFlag(flagEnabled: true));
+      await tester.pump();
+
+      expect(find.byType(AnimatedSwitcher), findsOneWidget);
+      final switcher = tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher));
+      expect(switcher.duration, const Duration(milliseconds: 400));
+
+      await tester.tap(find.byKey(const Key('enter-name-skip-button')));
+      await tester.pump();
+      // Mid-transition: both the outgoing EnterNameScreen and the incoming
+      // carousel are present in the tree while the crossfade is in flight.
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
+      expect(find.text('Create a Pact'), findsOneWidget);
+
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
       expect(find.text('Create a Pact'), findsOneWidget);
     });
