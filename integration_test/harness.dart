@@ -376,8 +376,17 @@ Future<void> saveChangeName(WidgetTester tester, String name) async {
 }
 
 /// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).
+///
+/// Also pins `display_name_personalization_enabled` off (HAB-232 WU10) — like
+/// any bare `FakeRemoteConfigService`, this fully replaces the harness's own
+/// default override (`AppHarness.create`'s overrides list) rather than
+/// layering on top of it, so it needs the same pin repeated here or every
+/// test using this helper regresses back to the RC default (`true`) and gets
+/// intercepted by EnterNameScreen instead of whatever it's actually testing.
 final noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'onboarding_auto_advance_seconds': 0}),
+  FakeRemoteConfigService(
+    overrides: {'onboarding_auto_advance_seconds': 0, 'display_name_personalization_enabled': false},
+  ),
 );
 
 /// Opens the collapsible pacts panel from the dashboard.
