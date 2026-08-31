@@ -141,6 +141,30 @@ void main() {
       expect(event.toParameters()['had_previous_name'], isTrue);
     });
 
+    testWidgets('saving an empty name clears the stored display name (HAB-232)', (tester) async {
+      final analyticsService = FakeAnalyticsService();
+      final userProfileRepository = InMemoryUserProfileRepository();
+      await userProfileRepository.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      await tester.pumpWidget(_buildApp(
+        dialogResult: '', // field cleared and saved
+        userProfileRepository: userProfileRepository,
+        analyticsService: analyticsService,
+        seedDisplayName: 'Alex',
+      ));
+
+      await tester.tap(find.byType(ElevatedButton));
+      await tester.pump();
+      await tester.pump();
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, isNull);
+
+      final event = analyticsService.loggedEvents.firstWhere((e) => e.name == 'display_name_changed');
+      expect(event.toParameters()['name_length'], 0);
+      expect(event.toParameters()['had_previous_name'], isTrue);
+    });
+
     testWidgets('had_previous_name is false when no name was on file before the change', (tester) async {
       final analyticsService = FakeAnalyticsService();
 

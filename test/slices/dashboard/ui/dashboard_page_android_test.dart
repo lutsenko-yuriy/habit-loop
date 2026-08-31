@@ -454,8 +454,16 @@ void main() {
       expect(changedEvent.toParameters()['had_previous_name'], isFalse);
     });
 
-    testWidgets('save button is disabled while the field is empty', (tester) async {
-      await tester.pumpWidget(_buildTestApp(remoteConfig: flagOn));
+    testWidgets('save button stays enabled when the field is cleared, and clearing it removes the name (HAB-232)',
+        (tester) async {
+      final userProfileRepository = InMemoryUserProfileRepository();
+      await userProfileRepository.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
+
+      await tester.pumpWidget(_buildTestApp(
+        remoteConfig: flagOn,
+        userProfileRepository: userProfileRepository,
+        seedDisplayName: 'Alex',
+      ));
 
       await _openKebab(tester);
       await tester.tap(find.byKey(const Key('change-name-button')));
@@ -465,7 +473,13 @@ void main() {
       await tester.pump();
 
       final saveButton = tester.widget<TextButton>(find.byKey(const Key('change-name-save-button')));
-      expect(saveButton.onPressed, isNull);
+      expect(saveButton.onPressed, isNotNull);
+
+      await tester.tap(find.byKey(const Key('change-name-save-button')));
+      await tester.pumpAndSettle();
+
+      final saved = await userProfileRepository.getProfile();
+      expect(saved?.displayName, isNull);
     });
 
     testWidgets('cancel dismisses the dialog without saving', (tester) async {

@@ -12,22 +12,20 @@ class ChangeNameDialogController {
   ChangeNameDialogController(String currentName)
       : textController = TextEditingController(text: currentName)
           ..selection = TextSelection.collapsed(offset: currentName.length),
-        canSave = ValueNotifier<bool>(currentName.trim().isNotEmpty) {
-    textController.addListener(_onTextChanged);
-  }
+        canSave = ValueNotifier<bool>(true);
 
   final TextEditingController textController;
 
-  /// `true` once the field holds non-empty, non-whitespace-only text.
+  /// Always `true` — Save is enabled unconditionally, including for an empty
+  /// field: clearing the name and saving is how a user removes it (HAB-232
+  /// follow-up). `openChangeNameDialog` already treats an empty result as a
+  /// deliberate clear, not a validation failure. Kept as a [ValueNotifier]
+  /// rather than a plain `bool` so the platform bodies' existing
+  /// `ValueListenableBuilder<bool>` wiring doesn't need to change if a future
+  /// requirement reintroduces conditional disabling.
   final ValueNotifier<bool> canSave;
 
-  void _onTextChanged() {
-    final value = textController.text.trim().isNotEmpty;
-    if (value != canSave.value) canSave.value = value;
-  }
-
   void dispose() {
-    textController.removeListener(_onTextChanged);
     textController.dispose();
     canSave.dispose();
   }
