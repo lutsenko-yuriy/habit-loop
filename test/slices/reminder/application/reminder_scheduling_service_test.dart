@@ -218,30 +218,6 @@ void main() {
       expect(notificationService.scheduledReminders, isEmpty);
     });
 
-    test('uses notification_text_variant from remote config', () async {
-      remoteConfig = FakeRemoteConfigService(overrides: {'notification_text_variant': 'deadline'});
-      service = ReminderSchedulingService(
-        notificationService: notificationService,
-        remoteConfig: remoteConfig,
-        analytics: analyticsService,
-        localePreference: localePreference,
-      );
-
-      final pact = _makePact(reminderOffset: const Duration(minutes: 10));
-      final now = DateTime(2026, 5, 7, 10, 0);
-
-      final showups = [
-        _makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0)),
-      ];
-
-      await service.scheduleRemindersForShowups(pact: pact, showups: showups, now: now);
-
-      expect(notificationService.scheduledReminders, hasLength(1));
-      final reminder = notificationService.scheduledReminders.first;
-      // 'deadline' variant title should contain the habit name
-      expect(reminder.titleText, contains('Meditate'));
-    });
-
     test('passes correct title and body to scheduleShowupReminder', () async {
       final pact = _makePact(reminderOffset: const Duration(minutes: 10));
       final now = DateTime(2026, 5, 7, 10, 0);

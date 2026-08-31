@@ -9,6 +9,7 @@ import 'package:habit_loop/slices/profile/ui/android/enter_name_page_android.dar
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 import 'package:habit_loop/slices/profile/ui/ios/enter_name_page_ios.dart';
+import 'package:habit_loop/slices/reminder/application/reminder_rescheduler.dart';
 
 /// Skippable first-launch page asking for the user's first name (HAB-232).
 ///
@@ -61,6 +62,19 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
         // Never strand the user on this screen over a transient DB failure —
         // degrade to "skipped" so isNameEntryShown still gets marked and onDone fires.
         resolvedAction = 'skipped';
+      }
+      if (resolvedAction == 'saved') {
+        try {
+          // A pre-filled name (from a previous install) can already have
+          // scheduled reminders with the old/absent name baked into the OS
+          // payload — re-schedule them (HAB-232 WU7 audit finding). Cheap
+          // no-op on the common fresh-install path with no pacts yet. Its own
+          // try/catch: a reschedule failure must not undo an already-persisted
+          // name save by reporting it as 'skipped'.
+          await rescheduleAllPendingReminders(ref);
+        } catch (_) {
+          // The saved name still stands; only the reschedule pass failed.
+        }
       }
     }
     await ref.read(onboardingPreferenceServiceProvider).markNameEntryShown();

@@ -4,15 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_screen.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
+import '../../../infrastructure/notifications/fake_notification_service.dart';
 import '../../../infrastructure/onboarding/fake_onboarding_preference_service.dart';
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
 import '../../../infrastructure/sync/fake_sync_service.dart';
@@ -23,6 +31,13 @@ Widget _buildApp({
   required InMemoryUserProfileRepository userProfileRepository,
   FakeAnalyticsService? analyticsService,
   String? seedDisplayName,
+  // Reschedule-on-save (HAB-232 WU7 audit finding, mirrors HAB-157) reads
+  // pactRepositoryProvider/showupRepositoryProvider — empty on the common
+  // fresh-install path this file exercises, so the reschedule pass is a
+  // harmless no-op unless a test explicitly seeds one.
+  InMemoryPactRepository? pactRepository,
+  InMemoryShowupRepository? showupRepository,
+  FakeNotificationService? notificationService,
 }) {
   return ProviderScope(
     overrides: [
@@ -30,6 +45,9 @@ Widget _buildApp({
       userProfileRepositoryProvider.overrideWithValue(userProfileRepository),
       syncServiceProvider.overrideWithValue(FakeSyncService()),
       remoteConfigServiceProvider.overrideWithValue(FakeRemoteConfigService()),
+      pactRepositoryProvider.overrideWithValue(pactRepository ?? InMemoryPactRepository()),
+      showupRepositoryProvider.overrideWithValue(showupRepository ?? InMemoryShowupRepository()),
+      if (notificationService != null) notificationServiceProvider.overrideWithValue(notificationService),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (seedDisplayName != null)
         displayNameProvider.overrideWith(() => DisplayNameNotifier(seedDisplayName: seedDisplayName)),
@@ -419,6 +437,86 @@ void main() {
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
+    });
+  });
+
+  group('reschedules pending reminders on save (HAB-232 WU7 audit finding)', () {
+    testWidgets('cancels and re-schedules an already-pending reminder for a pre-filled name', (tester) async {
+      final pactRepo = InMemoryPactRepository([
+        Pact(
+          id: 'pact-1',
+          habitName: 'Meditate',
+          startDate: DateTime.now().subtract(const Duration(days: 1)),
+          endDate: DateTime.now().add(const Duration(days: 90)),
+          showupDuration: const Duration(minutes: 20),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          reminderOffset: const Duration(minutes: 10),
+          createdAt: DateTime.now(),
+        ),
+      ]);
+      final showupRepo = InMemoryShowupRepository([
+        Showup(
+          id: 'su-1',
+          pactId: 'pact-1',
+          scheduledAt: DateTime.now().add(const Duration(days: 1)),
+          duration: const Duration(minutes: 20),
+          status: ShowupStatus.pending,
+        ),
+      ]);
+      final notifications = FakeNotificationService();
+
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        pactRepository: pactRepo,
+        showupRepository: showupRepo,
+        notificationService: notifications,
+      ));
+      await tester.pump();
+
+      await tester.enterText(find.byKey(const Key('enter-name-text-field')), 'Alex');
+      await tester.tap(find.byKey(const Key('enter-name-save-button')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(notifications.cancelledPactIds, contains('pact-1'));
+      expect(notifications.scheduledReminders, hasLength(1));
+      expect(notifications.scheduledReminders.first.showup.id, equals('su-1'));
+    });
+
+    testWidgets('does not reschedule when skipped (no-op)', (tester) async {
+      final pactRepo = InMemoryPactRepository([
+        Pact(
+          id: 'pact-1',
+          habitName: 'Meditate',
+          startDate: DateTime.now().subtract(const Duration(days: 1)),
+          endDate: DateTime.now().add(const Duration(days: 90)),
+          showupDuration: const Duration(minutes: 20),
+          schedule: const DailySchedule(timeOfDay: Duration(hours: 8)),
+          status: PactStatus.active,
+          reminderOffset: const Duration(minutes: 10),
+          createdAt: DateTime.now(),
+        ),
+      ]);
+      final notifications = FakeNotificationService();
+
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+        pactRepository: pactRepo,
+        notificationService: notifications,
+      ));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('enter-name-skip-button')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(notifications.cancelledPactIds, isEmpty);
+      expect(notifications.scheduledReminders, isEmpty);
     });
   });
 }
