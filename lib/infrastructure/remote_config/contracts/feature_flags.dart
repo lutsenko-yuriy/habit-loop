@@ -53,10 +53,13 @@ final class FeatureFlags {
         currentVersion: appVersion,
         isDebugOrProfile: isDebugOrProfile,
       ),
-      // Not release-gated yet (HAB-232 WU3) — the feature is incomplete
-      // through WU6; WU7 flips this to resolveReleaseGatedFlag alongside
-      // adding a releaseVersions entry, mirroring pactChainingEnabled above.
-      displayNamePersonalizationEnabled: rc.getBool('display_name_personalization_enabled'),
+      // Release-gated to 0.59.0 (HAB-232 WU7), mirroring pactChainingEnabled above.
+      displayNamePersonalizationEnabled: resolveReleaseGatedFlag(
+        rawValue: rc.getBool('display_name_personalization_enabled'),
+        releaseVersion: RemoteConfigDefaults.releaseVersions['display_name_personalization_enabled'],
+        currentVersion: appVersion,
+        isDebugOrProfile: isDebugOrProfile,
+      ),
     );
   }
 

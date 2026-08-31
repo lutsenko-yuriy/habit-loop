@@ -220,13 +220,13 @@ abstract final class RemoteConfigDefaults {
 
   /// Feature toggle: kill-switch for display-name personalization (HAB-232).
   ///
-  /// Defaulted to `false` during development (same deviation as
-  /// [pactBreaksEnabled]/[pactChainingEnabled] — the feature is incomplete
-  /// across WU3–WU6) and flipped to `true` in the final WU (WU7), where it
-  /// also gains a [releaseVersions] entry. Override to `false` in the
+  /// Flipped to `true` in the final WU (WU7) and release-gated to `0.59.0`
+  /// via [releaseVersions] — the feature defaulted `false` during
+  /// development (WU3–WU6, same deviation as
+  /// [pactBreaksEnabled]/[pactChainingEnabled]). Override to `false` in the
   /// Firebase Remote Config console to disable personalization without a
-  /// release once it has shipped.
-  static const bool displayNamePersonalizationEnabled = false;
+  /// release.
+  static const bool displayNamePersonalizationEnabled = true;
 
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
@@ -236,6 +236,7 @@ abstract final class RemoteConfigDefaults {
   /// is the sole pre-existing retrofit.
   static const Map<String, String?> releaseVersions = {
     'pact_chaining_enabled': '0.53.0',
+    'display_name_personalization_enabled': '0.59.0',
   };
 
   /// Optional short hint shown in the debug override dialog for keys whose

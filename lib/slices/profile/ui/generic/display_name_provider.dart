@@ -53,9 +53,22 @@ class DisplayNameNotifier extends Notifier<String?> {
     // fires first, so _disposed must be reset here or it latches true
     // forever and every future write silently stops reaching `state`.
     _disposed = false;
-    _pullCompletedSubscription = ref.read(syncServiceProvider).pullCompleted.listen((_) {
-      unawaited(_refreshFromRepository());
-    });
+    try {
+      // syncServiceProvider transitively requires the full repository graph
+      // (pactRepositoryProvider et al.) to be wired — guarded the same way
+      // the pre-runApp seed read is (see AppContainer.overrides) so a
+      // caller that only cares about the raw/personalized name (e.g.
+      // ReminderSchedulingService, now a personalizedNameProvider consumer
+      // as of WU7) never needs the sync stack overridden just to construct
+      // this notifier (HAB-232 WU7 fix — this cascaded through dozens of
+      // pre-existing tests when the feature flag's default flipped to `true`).
+      _pullCompletedSubscription = ref.read(syncServiceProvider).pullCompleted.listen((_) {
+        unawaited(_refreshFromRepository());
+      });
+    } catch (_) {
+      // No cross-device pull-refresh available — the locally seeded/written
+      // name still works fine.
+    }
     ref.onDispose(() {
       _disposed = true;
       unawaited(_pullCompletedSubscription?.cancel());
