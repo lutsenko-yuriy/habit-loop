@@ -31,6 +31,7 @@ class ReminderPlanContext {
     required this.hurryUpEnabled,
     required this.hurryUpTime,
     required this.welcomeBackEnabled,
+    this.displayName,
   });
 
   final String textVariant;
@@ -38,6 +39,11 @@ class ReminderPlanContext {
   final bool hurryUpEnabled;
   final Duration hurryUpTime;
   final bool welcomeBackEnabled;
+
+  // Personalizes every notification's title when non-null (HAB-232 WU7).
+  // Supplied by the caller, not read here — [resolve] stays a pure
+  // Remote-Config read; the name comes from personalizedNameProvider instead.
+  final String? displayName;
 
   // scheduleDeadline: iOS always schedules it; Android only when the RC
   // behavior is 'encourage' (EXP-002). hurryUpTime is clamped — an
@@ -48,6 +54,7 @@ class ReminderPlanContext {
   factory ReminderPlanContext.resolve({
     required RemoteConfigService remoteConfig,
     required bool isIOS,
+    String? displayName,
   }) {
     final postDeadlineBehavior = remoteConfig.getString(_kPostDeadlineNotificationBehavior);
     final hurryUpRange = RemoteConfigDefaults.intRanges[_kHurryUpTimeInMinutes]!;
@@ -59,6 +66,7 @@ class ReminderPlanContext {
         minutes: remoteConfig.getInt(_kHurryUpTimeInMinutes).clamp(hurryUpRange.min, hurryUpRange.max),
       ),
       welcomeBackEnabled: remoteConfig.getBool(_kBreakWelcomeBackEnabled),
+      displayName: displayName,
     );
   }
 }

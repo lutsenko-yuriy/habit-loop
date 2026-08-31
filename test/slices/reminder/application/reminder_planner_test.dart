@@ -457,6 +457,52 @@ void main() {
       });
     });
 
+    group('displayName personalization (HAB-232 WU7)', () {
+      test('reminder title contains the name when the context carries one', () {
+        final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+        final now = DateTime(2026, 5, 7, 10, 0);
+        final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+        final plan = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: const [],
+          context: const ReminderPlanContext(
+            textVariant: 'control',
+            scheduleDeadline: true,
+            hurryUpEnabled: true,
+            hurryUpTime: Duration(minutes: 5),
+            welcomeBackEnabled: true,
+            displayName: 'Alex',
+          ),
+          isIOS: false,
+        );
+
+        expect(plan.first.reminderTitle, contains('Alex'));
+        expect(plan.first.deadline!.title, contains('Alex'));
+      });
+
+      test('reminder title has no name when the context carries none', () {
+        final pact = _makePact(reminderOffset: const Duration(minutes: 10));
+        final now = DateTime(2026, 5, 7, 10, 0);
+        final showups = [_makeShowup(id: 'su-1', scheduledAt: DateTime(2026, 5, 8, 8, 0))];
+
+        final plan = ReminderPlanner.plan(
+          pact: pact,
+          showups: showups,
+          now: now,
+          l10n: l10n,
+          breaks: const [],
+          context: _kDefaultContext,
+          isIOS: false,
+        );
+
+        expect(plan.first.reminderTitle, l10n.notificationReminderTitle(pact.habitName));
+      });
+    });
+
     group('PlannedReminder equality', () {
       test('two plans over identical inputs compare equal by value', () {
         final pact = _makePact(reminderOffset: const Duration(minutes: 10));

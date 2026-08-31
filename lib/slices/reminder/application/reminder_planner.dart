@@ -45,8 +45,15 @@ abstract final class ReminderPlanner {
   }) {
     if (pact.reminderOffset == null) return const [];
 
-    final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(l10n: l10n);
-    final hurryUpText = NotificationTextBuilder.buildHurryUpText(habitName: pact.habitName, l10n: l10n);
+    final deadlineText = NotificationTextBuilder.buildDeadlineExpiredText(
+      l10n: l10n,
+      displayName: context.displayName,
+    );
+    final hurryUpText = NotificationTextBuilder.buildHurryUpText(
+      habitName: pact.habitName,
+      l10n: l10n,
+      displayName: context.displayName,
+    );
 
     // Computed once, not per showup — welcome-back applies only to the
     // reminder notification; the deadline notification always keeps standard
@@ -110,13 +117,18 @@ abstract final class ReminderPlanner {
     required bool isWelcomeBack,
   }) {
     final reminderText = isWelcomeBack
-        ? NotificationTextBuilder.buildWelcomeBackText(habitName: pact.habitName, l10n: l10n)
+        ? NotificationTextBuilder.buildWelcomeBackText(
+            habitName: pact.habitName,
+            l10n: l10n,
+            displayName: context.displayName,
+          )
         : NotificationTextBuilder.buildReminderText(
             variant: context.textVariant,
             habitName: pact.habitName,
             scheduledAt: showup.scheduledAt,
             showupDuration: showup.duration,
             l10n: l10n,
+            displayName: context.displayName,
           );
 
     final includeHurryUp = _isHurryUpEligible(showup, context.hurryUpEnabled, context.hurryUpTime, now);
