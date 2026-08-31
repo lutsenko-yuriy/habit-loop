@@ -18,8 +18,9 @@ Future<void> openChangeNameDialog({
 
   /// Platform-specific dialog. Receives the current name (empty string if
   /// none on file) and returns the trimmed new name on Save, or `null` if
-  /// cancelled/dismissed. The dialog itself is responsible for disabling
-  /// Save while the field is empty — this handler never clears a name.
+  /// cancelled/dismissed. Save is always enabled, including on an empty
+  /// field — an empty result here is a deliberate clear, not a cancellation;
+  /// [UserProfile]'s own normalization turns it into `displayName == null`.
   required Future<String?> Function({required BuildContext context, required String currentName}) showDialogFn,
 }) async {
   final analytics = ref.read(analyticsServiceProvider);

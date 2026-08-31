@@ -6,7 +6,7 @@ import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 
 /// Shows an [AlertDialog] pre-filled with [currentName] (HAB-232 WU5),
 /// returning the trimmed new name on Save, or `null` if cancelled/dismissed.
-/// Save stays disabled while the field is empty/whitespace-only.
+/// Save is always enabled; saving an empty field clears the name (HAB-232).
 Future<String?> showMaterialChangeNameDialog(
   BuildContext context,
   String currentName,
@@ -56,13 +56,10 @@ class _ChangeNameDialogAndroidState extends State<_ChangeNameDialogAndroid> {
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.cancel),
         ),
-        ValueListenableBuilder<bool>(
-          valueListenable: _controller.canSave,
-          builder: (context, canSave, _) => TextButton(
-            key: const Key('change-name-save-button'),
-            onPressed: canSave ? () => Navigator.pop(context, _controller.textController.text.trim()) : null,
-            child: Text(l10n.changeNameSave),
-          ),
+        TextButton(
+          key: const Key('change-name-save-button'),
+          onPressed: () => Navigator.pop(context, _controller.textController.text.trim()),
+          child: Text(l10n.changeNameSave),
         ),
       ],
     );
