@@ -325,6 +325,22 @@ void main() {
       expect(body.textAlign, TextAlign.center);
     });
 
+    testWidgets('Android: buttons span the full screen width, wider than the inset content', (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      final screenWidth = tester.view.physicalSize.width / tester.view.devicePixelRatio;
+      final saveButtonWidth = tester.getSize(find.byKey(const Key('enter-name-save-button'))).width;
+      final fieldWidth = tester.getSize(find.byKey(const Key('enter-name-text-field'))).width;
+
+      expect(saveButtonWidth, screenWidth);
+      expect(saveButtonWidth, greaterThan(fieldWidth));
+    });
+
     testWidgets('Android: text field uses an underline border, thicker when focused', (tester) async {
       await tester.pumpWidget(_buildApp(
         onDone: () {},
@@ -356,6 +372,27 @@ void main() {
           find.ancestor(of: find.byKey(const Key('enter-name-content-area')), matching: find.byType(Expanded)).first,
         );
         expect(contentParent, isNotNull);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('iOS: buttons span the full screen width, wider than the inset content', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () {},
+          onboardingService: FakeOnboardingPreferenceService(),
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        final screenWidth = tester.view.physicalSize.width / tester.view.devicePixelRatio;
+        final saveButtonWidth = tester.getSize(find.byKey(const Key('enter-name-save-button'))).width;
+        final fieldWidth = tester.getSize(find.byKey(const Key('enter-name-text-field'))).width;
+
+        expect(saveButtonWidth, screenWidth);
+        expect(saveButtonWidth, greaterThan(fieldWidth));
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }

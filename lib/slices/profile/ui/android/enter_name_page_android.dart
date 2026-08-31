@@ -17,14 +17,15 @@ class EnterNamePageAndroid extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s24),
-          // Content fills the space above the buttons (WU8) — Expanded +
-          // Center, rather than the buttons following the field immediately,
-          // so the buttons stay bottom-anchored regardless of content height.
-          child: Column(
-            children: [
-              Expanded(
+        // Content stays inset (horizontal padding); the button column below
+        // is a separate sibling with no horizontal padding of its own, so
+        // Continue/Skip span the full screen width (WU8) instead of matching
+        // the inset content.
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.s24),
                 child: Center(
                   key: const Key('enter-name-content-area'),
                   // Scrollable: the field is autofocused, so the keyboard is up on
@@ -70,19 +71,25 @@ class EnterNamePageAndroid extends StatelessWidget {
                   ),
                 ),
               ),
-              FilledButton(
-                key: const Key('enter-name-save-button'),
-                onPressed: () => onSave(),
-                child: Text(l10n.enterNameContinue),
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              TextButton(
-                key: const Key('enter-name-skip-button'),
-                onPressed: () => onSkip(),
-                child: Text(l10n.enterNameSkip),
-              ),
-            ],
-          ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton(
+                  key: const Key('enter-name-save-button'),
+                  onPressed: () => onSave(),
+                  child: Text(l10n.enterNameContinue),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                TextButton(
+                  key: const Key('enter-name-skip-button'),
+                  onPressed: () => onSkip(),
+                  child: Text(l10n.enterNameSkip),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+            ),
+          ],
         ),
       ),
     );
