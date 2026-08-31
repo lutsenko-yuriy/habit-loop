@@ -104,7 +104,9 @@ class DashboardPageAndroid extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.dashboardTitle),
+        title: Text(
+          personalizedName == null ? l10n.dashboardTitle : l10n.dashboardGreetingPersonalized(personalizedName),
+        ),
         actions: [
           ...otherStandalone.map((a) => _buildAppBarButton(context, a, syncState, l10n)),
           if (kebabItems.isNotEmpty) _buildKebabButton(context, ref, kebabItems, l10n),
@@ -129,7 +131,6 @@ class DashboardPageAndroid extends ConsumerWidget {
                   onCreatePact: onCreatePact,
                   onDaySelected: onDaySelected,
                   onShowupTapped: onShowupTapped,
-                  personalizedName: personalizedName,
                   buildShowupTile: (ctx, showup, uiState, habitName, onTap) => _ShowupTile(
                     showup: showup,
                     uiState: uiState,

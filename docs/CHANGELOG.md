@@ -16,6 +16,7 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 - [meta] HAB-256: removed the `block-main-writes.sh` PreToolUse hook — redundant with `.git/hooks/pre-push` (the actual airtight backstop against direct pushes to `main`) and had a false-positive bug when a subagent ran from a git worktree, false-blocking every commit on a correctly-checked-out feature branch.
 - [wip] HAB-232: Change Name dialog's Save button no longer stays disabled on an empty field — clearing the field and saving now removes the stored name, instead of being blocked. Still gated behind `displayNamePersonalizationEnabled` (off until WU7), so no user-visible change yet.
 - [wip] HAB-232 (WU8): EnterNamePage visual redesign — bottom-anchored Continue/Skip buttons, centered content and text, underline text field (thickens on focus) replacing the boxed border, and an animated slide transition into onboarding (PR #426). Still gated behind `displayNamePersonalizationEnabled` (off until WU7), so no user-visible change yet.
+- [wip] HAB-232 (WU9): moved the personalized dashboard greeting from a standalone header row into the app bar/nav bar title itself ("Hi {name}" replaces "Dashboard" when a name is on file), removing WU6's separate greeting row and its neutral "Welcome back" fallback copy. Still gated behind `displayNamePersonalizationEnabled` (off until WU7), so no user-visible change yet.
 
 ## [0.58.0] — 2026-08-28 (PR #412 merged)
 

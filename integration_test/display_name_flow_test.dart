@@ -203,13 +203,12 @@ void main() {
           await h.pactRepo.savePact(_seedGreetingPact());
         },
       );
-      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      expect(find.text(l10n(tester).dashboardGreetingPersonalized('Alex')), findsOneWidget);
-      expect(find.text(l10n(tester).dashboardGreetingNeutral), findsNothing);
+      await waitFor(tester, find.text(l10n(tester).dashboardGreetingPersonalized('Alex')));
+      expect(find.text(l10n(tester).dashboardTitle), findsNothing);
     });
 
     testWidgets(
-        'personalization_shown_only_when_name_on_file_and_flag_on: dashboard greeting falls back to neutral copy when no name is on file',
+        'personalization_shown_only_when_name_on_file_and_flag_on: dashboard title stays plain when no name is on file',
         (tester) async {
       h = await AppHarness.create(
         tester,
@@ -221,11 +220,10 @@ void main() {
         },
       );
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      expect(find.text(l10n(tester).dashboardGreetingNeutral), findsOneWidget);
     });
 
     testWidgets(
-        'personalization_shown_only_when_name_on_file_and_flag_on: dashboard greeting shows neutral copy when the flag is off despite a name on file',
+        'personalization_shown_only_when_name_on_file_and_flag_on: dashboard title stays plain when the flag is off despite a name on file',
         (tester) async {
       final repo = InMemoryUserProfileRepository();
       await repo.saveProfile(UserProfile(displayName: 'Alex', updatedAt: DateTime(2026, 1, 1)));
@@ -240,7 +238,6 @@ void main() {
         },
       );
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      expect(find.text(l10n(tester).dashboardGreetingNeutral), findsOneWidget);
       expect(find.text(l10n(tester).dashboardGreetingPersonalized('Alex')), findsNothing);
     });
 

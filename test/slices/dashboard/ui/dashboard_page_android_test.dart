@@ -507,6 +507,36 @@ void main() {
       expect(saved?.displayName, 'Alex');
     });
   });
+
+  group('app bar title greeting (HAB-232 WU9)', () {
+    testWidgets('title is personalized when a name is on file and the flag is on', (tester) async {
+      final flagOn = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true});
+      await tester.pumpWidget(_buildTestApp(remoteConfig: flagOn, seedDisplayName: 'Alex'));
+      await tester.pump();
+
+      final l10n = AppLocalizations.of(tester.element(find.byType(DashboardPageAndroid)))!;
+      expect(find.text(l10n.dashboardGreetingPersonalized('Alex')), findsOneWidget);
+      expect(find.text(l10n.dashboardTitle), findsNothing);
+    });
+
+    testWidgets('title stays plain "Dashboard" when no name is on file', (tester) async {
+      await tester.pumpWidget(_buildTestApp());
+      await tester.pump();
+
+      final l10n = AppLocalizations.of(tester.element(find.byType(DashboardPageAndroid)))!;
+      expect(find.text(l10n.dashboardTitle), findsOneWidget);
+    });
+
+    testWidgets('title stays plain "Dashboard" when a name is on file but the flag is off', (tester) async {
+      final flagOff = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false});
+      await tester.pumpWidget(_buildTestApp(remoteConfig: flagOff, seedDisplayName: 'Alex'));
+      await tester.pump();
+
+      final l10n = AppLocalizations.of(tester.element(find.byType(DashboardPageAndroid)))!;
+      expect(find.text(l10n.dashboardTitle), findsOneWidget);
+      expect(find.text(l10n.dashboardGreetingPersonalized('Alex')), findsNothing);
+    });
+  });
 }
 
 class _LoadedPactListViewModel extends PactListViewModel {

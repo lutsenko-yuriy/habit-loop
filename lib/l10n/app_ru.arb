@@ -388,6 +388,5 @@
   "dashboardGreetingPersonalized": "Привет, {name}",
   "@dashboardGreetingPersonalized": {
     "placeholders": { "name": { "type": "String" } }
-  },
-  "dashboardGreetingNeutral": "С возвращением"
+  }
 }

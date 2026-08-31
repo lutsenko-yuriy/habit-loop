@@ -392,6 +392,5 @@
   "dashboardGreetingPersonalized": "Hi {name}",
   "@dashboardGreetingPersonalized": {
     "placeholders": { "name": { "type": "String" } }
-  },
-  "dashboardGreetingNeutral": "Welcome back"
+  }
 }
