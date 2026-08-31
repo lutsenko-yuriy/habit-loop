@@ -3,13 +3,9 @@ import 'dart:async' show unawaited;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 
-/// Cancels and re-schedules every active pact's pending reminders — for any
-/// change that invalidates already-scheduled notification text, since the OS
-/// payload can't be edited in place, only cancelled and replaced. Originally
-/// written for an in-app language switch (HAB-157); a display name
-/// change/clear needs the exact same treatment (HAB-232 WU7 audit finding —
-/// `NotificationReconciliationService` can't heal this on its own, since its
-/// diff is keyed by notification id, not by text).
+/// Cancels and re-schedules every active pact's pending reminders — the OS
+/// notification payload can't be edited in place, only replaced. Shared by
+/// the language switch (HAB-157) and display-name change (HAB-232 WU7) flows.
 Future<void> rescheduleAllPendingReminders(WidgetRef ref) async {
   final queryService = ref.read(dashboardQueryServiceProvider);
   final schedulingService = ref.read(reminderSchedulingServiceProvider);

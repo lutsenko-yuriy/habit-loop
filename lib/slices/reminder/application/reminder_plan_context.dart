@@ -35,9 +35,8 @@ class ReminderPlanContext {
   final Duration hurryUpTime;
   final bool welcomeBackEnabled;
 
-  // Personalizes every notification's title when non-null (HAB-232 WU7).
-  // Supplied by the caller, not read here — [resolve] stays a pure
-  // Remote-Config read; the name comes from personalizedNameProvider instead.
+  // Personalizes every notification's title when non-null (HAB-232 WU7) —
+  // supplied by the caller, not read here; [resolve] stays a pure RC read.
   final String? displayName;
 
   // scheduleDeadline: iOS always schedules it; Android only when the RC

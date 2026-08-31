@@ -19,9 +19,7 @@ import 'package:habit_loop/slices/reminder/application/reminder_planner.dart';
 final class ReminderSchedulingService {
   // [systemLocale] is the device/OS locale, used only when no explicit in-app
   // override has been saved (HAB-157) — previously hardcoded to English.
-  // [displayName] is the caller's resolved personalizedNameProvider value
-  // (HAB-232 WU7) — read at the composition root, not here, so this class
-  // stays free of a Riverpod dependency.
+  // [displayName]: resolved at the composition root, not here (HAB-232 WU7).
   const ReminderSchedulingService({
     required NotificationService notificationService,
     required RemoteConfigService remoteConfig,

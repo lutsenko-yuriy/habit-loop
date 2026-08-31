@@ -67,12 +67,9 @@ const _kReconciliationEnabled = 'notification_reconciliation_enabled';
 /// No trigger is wired to this yet — that is HAB-254 WU3's job
 /// (`AppLifecycleReconciler`, `SyncService.pullCompleted`).
 final class NotificationReconciliationService {
-  // [displayName] is the caller's resolved personalizedNameProvider value
-  // (HAB-232 WU7) — read at the composition root, not here, so this class
-  // stays free of a Riverpod dependency. Must be kept in sync with whatever
-  // ReminderSchedulingService is given, or the reconciler sees a permanent
-  // desired-vs-actual mismatch and reschedules every run (same pitfall as
-  // ReminderPlanContext.resolve's other inputs — see its doc comment).
+  // [displayName]: resolved at the composition root, not here (HAB-232 WU7)
+  // — must match whatever ReminderSchedulingService is given, or this
+  // reconciler sees a permanent mismatch and reschedules every run.
   const NotificationReconciliationService({
     required PactRepository pactRepository,
     required ShowupRepository showupRepository,

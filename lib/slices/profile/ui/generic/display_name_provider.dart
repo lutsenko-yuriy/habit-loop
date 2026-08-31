@@ -54,24 +54,15 @@ class DisplayNameNotifier extends Notifier<String?> {
     // forever and every future write silently stops reaching `state`.
     _disposed = false;
     try {
-      // syncServiceProvider transitively requires the full repository graph
-      // (pactRepositoryProvider et al.) to be wired — guarded the same way
-      // the pre-runApp seed read is (see AppContainer.overrides) so a
-      // caller that only cares about the raw/personalized name (e.g.
-      // ReminderSchedulingService, now a personalizedNameProvider consumer
-      // as of WU7) never needs the sync stack overridden just to construct
-      // this notifier (HAB-232 WU7 fix — this cascaded through dozens of
-      // pre-existing tests when the feature flag's default flipped to `true`).
+      // syncServiceProvider needs the full repository graph wired — guarded
+      // so a caller that only wants the raw name doesn't need it overridden.
       _pullCompletedSubscription = ref.read(syncServiceProvider).pullCompleted.listen((_) {
         unawaited(_refreshFromRepository());
       });
     } catch (e, s) {
-      // No cross-device pull-refresh available — the locally seeded/written
-      // name still works fine. Recorded non-fatal (not just swallowed) so a
-      // genuine production failure of the sync stack is distinguishable from
-      // a test that didn't override the repository graph (HAB-232 WU7 audit
-      // finding) — CrashlyticsService has a no-throw contract, safe to call
-      // unconditionally.
+      // Locally seeded/written name still works; just no cross-device
+      // pull-refresh. Recorded non-fatal so it's distinguishable from a
+      // test that simply didn't override the repository graph.
       unawaited(ref.read(crashlyticsServiceProvider).recordError(e, s, fatal: false));
     }
     ref.onDispose(() {

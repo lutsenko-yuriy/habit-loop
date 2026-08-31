@@ -64,13 +64,9 @@ class _EnterNameScreenState extends ConsumerState<EnterNameScreen> {
         resolvedAction = 'skipped';
       }
       if (resolvedAction == 'saved') {
+        // Reschedule so a pre-filled name's already-pending reminders pick
+        // it up too. No-op on the common fresh-install path with no pacts.
         try {
-          // A pre-filled name (from a previous install) can already have
-          // scheduled reminders with the old/absent name baked into the OS
-          // payload — re-schedule them (HAB-232 WU7 audit finding). Cheap
-          // no-op on the common fresh-install path with no pacts yet. Its own
-          // try/catch: a reschedule failure must not undo an already-persisted
-          // name save by reporting it as 'skipped'.
           await rescheduleAllPendingReminders(ref);
         } catch (_) {
           // The saved name still stands; only the reschedule pass failed.

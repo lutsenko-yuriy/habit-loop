@@ -2,9 +2,8 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 
 // Static helper for notification text; callers provide AppLocalizations (no BuildContext needed).
 abstract final class NotificationTextBuilder {
-  /// [displayName] personalizes the title when non-null (HAB-232 WU7) —
-  /// falls back to the neutral title otherwise, same "one no-name
-  /// representation" contract as [personalizedNameProvider].
+  /// [displayName] personalizes the title when non-null (HAB-232 WU7),
+  /// else falls back to the neutral title.
   static ({String title, String body}) buildReminderText({
     required String habitName,
     required AppLocalizations l10n,

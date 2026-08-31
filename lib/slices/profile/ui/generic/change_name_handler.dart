@@ -57,11 +57,7 @@ Future<void> openChangeNameDialog({
     return;
   }
 
-  // Already-scheduled notifications keep their old (or absent) name in the
-  // text baked into the OS payload — re-schedule them, same reasoning as
-  // openLanguagePicker's HAB-157 fix (HAB-232 WU7 audit finding). Own
-  // try/catch: a reschedule failure must not be mistaken for the name save
-  // itself failing — that already succeeded above.
+  // Reschedule so already-pending notifications pick up the new name.
   try {
     await rescheduleAllPendingReminders(ref);
   } catch (_) {
