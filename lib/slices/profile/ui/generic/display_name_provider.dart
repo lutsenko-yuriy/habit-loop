@@ -65,9 +65,14 @@ class DisplayNameNotifier extends Notifier<String?> {
       _pullCompletedSubscription = ref.read(syncServiceProvider).pullCompleted.listen((_) {
         unawaited(_refreshFromRepository());
       });
-    } catch (_) {
+    } catch (e, s) {
       // No cross-device pull-refresh available — the locally seeded/written
-      // name still works fine.
+      // name still works fine. Recorded non-fatal (not just swallowed) so a
+      // genuine production failure of the sync stack is distinguishable from
+      // a test that didn't override the repository graph (HAB-232 WU7 audit
+      // finding) — CrashlyticsService has a no-throw contract, safe to call
+      // unconditionally.
+      unawaited(ref.read(crashlyticsServiceProvider).recordError(e, s, fatal: false));
     }
     ref.onDispose(() {
       _disposed = true;
