@@ -4,7 +4,7 @@
 _We believe that urgency-framing in notification text will cause higher rates of showups being marked done or failed for users with active pacts and a reminder offset configured, because a concrete time deadline makes the cost of inaction salient and prompts immediate action._
 
 ## Status
-`pending`
+`abandoned`
 
 <!-- Keep only one status. Valid transitions: pending → running → won | lost | abandoned -->
 
@@ -35,7 +35,17 @@ _We believe that urgency-framing in notification text will cause higher rates of
 | `showup_auto_failed` rate per scheduled showup | Guardrail | | |
 
 ## Decision
-_What was decided, why, and on what date._
+Abandoned, 2026-08-31, during HAB-232 WU7. The `deadline`/`time_limit` variants shipped with v0.20.0
+but the `notification_text_variant` Remote Config rollout was never actually flipped away from
+`control` — the experiment sat `pending` through dozens of subsequent releases. Discovered and killed
+while adding display-name personalization to notification titles (HAB-232): personalizing three
+divergent title templates (control/deadline/time_limit) for a dormant, never-launched experiment wasn't
+worth the added surface, and the variant copy itself had gone stale/awkward in review. Removed the
+variant dispatch from `NotificationTextBuilder`, `ReminderPlanContext`, and the
+`notification_text_variant` Remote Config key entirely rather than carry dead code forward.
 
 ## Learnings
-_What this tells us beyond the primary metric._
+Ship the actual ramp (flip the RC value away from its dormant default) close to when the experiment
+code lands — a `pending` experiment with no forcing function to launch it just accumulates as
+maintenance weight on every unrelated change to the same code path, until someone removes it years
+later having gotten zero data from it.
