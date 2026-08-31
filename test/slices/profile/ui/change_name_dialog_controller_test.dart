@@ -10,29 +10,9 @@ void main() {
       controller.dispose();
     });
 
-    test('canSave starts true when currentName is non-empty', () {
-      final controller = ChangeNameDialogController('Alex');
-      expect(controller.canSave.value, isTrue);
-      controller.dispose();
-    });
-
-    test('canSave starts true when currentName is empty', () {
+    test('seeds an empty text controller when currentName is empty', () {
       final controller = ChangeNameDialogController('');
-      expect(controller.canSave.value, isTrue);
-      controller.dispose();
-    });
-
-    test('canSave stays true when the field is cleared — clearing saves an empty name', () {
-      final controller = ChangeNameDialogController('Alex');
-      controller.textController.text = '   ';
-      expect(controller.canSave.value, isTrue);
-      controller.dispose();
-    });
-
-    test('canSave stays true once non-whitespace text is entered', () {
-      final controller = ChangeNameDialogController('');
-      controller.textController.text = 'Sam';
-      expect(controller.canSave.value, isTrue);
+      expect(controller.textController.text, isEmpty);
       controller.dispose();
     });
 

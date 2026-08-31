@@ -488,11 +488,13 @@ No PII risk — only the name's character length is included, never the name tex
 
 ### `display_name_changed`
 
-Fired when the user saves a new name via the "Change name" dialog (⋯ menu). (HAB-232)
+Fired when the user saves a changed name via the "Change name" dialog (⋯ menu). (HAB-232)
+Also fires when the field is saved empty to clear a previously-saved name — `name_length: 0`
+with `had_previous_name: true` distinguishes a clear from a rename.
 
 | Property | Type | Description |
 |---|---|---|
-| `name_length` | `int` | Character count of the new name |
+| `name_length` | `int` | Character count of the new name (`0` when the name was cleared) |
 | `had_previous_name` | `bool` | `true` if a name was already on file before this change |
 
 No PII risk — only the name's character length is included, never the name text itself.
