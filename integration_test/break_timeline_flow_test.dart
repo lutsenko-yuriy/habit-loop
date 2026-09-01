@@ -7,13 +7,11 @@ import 'package:flutter/material.dart' show Key;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 final _testNow = DateTime(2099, 6, 15, 7, 55);
@@ -36,11 +34,10 @@ Showup _showup(String id, DateTime scheduledAt, {ShowupStatus status = ShowupSta
 
 /// RC overrides for the merged-break-milestone scenarios: a 7-day tail zone
 /// (cutoff = Jun 8, relative to [_testNow] = Jun 15) plus breaks enabled.
-FakeRemoteConfigService _rc({int tailPeriodInDays = 7}) => FakeRemoteConfigService(overrides: {
+Map<String, dynamic> _rc({int tailPeriodInDays = 7}) => {
       'pact_timeline_no_grouping_tail_period_in_days': tailPeriodInDays,
       'pact_breaks_enabled': true,
-      'display_name_personalization_enabled': false,
-    });
+    };
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -61,8 +58,8 @@ void main() {
 
       h = await AppHarness.create(
         tester,
+        remoteConfigOverrides: _rc(),
         extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(_rc()),
           todayProvider.overrideWithValue(_testNow),
           pactDetailNowProvider.overrideWithValue(_testNow),
           pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -114,8 +111,8 @@ void main() {
 
       h = await AppHarness.create(
         tester,
+        remoteConfigOverrides: _rc(),
         extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(_rc()),
           todayProvider.overrideWithValue(_testNow),
           pactDetailNowProvider.overrideWithValue(_testNow),
           pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -169,8 +166,8 @@ void main() {
 
       h = await AppHarness.create(
         tester,
+        remoteConfigOverrides: _rc(),
         extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(_rc()),
           todayProvider.overrideWithValue(_testNow),
           pactDetailNowProvider.overrideWithValue(_testNow),
           pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -217,8 +214,8 @@ void main() {
 
       h = await AppHarness.create(
         tester,
+        remoteConfigOverrides: _rc(),
         extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(_rc()),
           todayProvider.overrideWithValue(_testNow),
           pactDetailNowProvider.overrideWithValue(_testNow),
           pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -287,8 +284,8 @@ void main() {
 
       h = await AppHarness.create(
         tester,
+        remoteConfigOverrides: _rc(),
         extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(_rc()),
           todayProvider.overrideWithValue(_testNow),
           pactDetailNowProvider.overrideWithValue(_testNow),
           pactTimelineNowProvider.overrideWithValue(_testNow),

@@ -8,14 +8,12 @@ import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 final _testNow = DateTime(2099, 6, 15, 7, 55);
@@ -40,13 +38,12 @@ Showup _showup(String id, DateTime scheduledAt, {ShowupStatus status = ShowupSta
 
 /// RC overrides used for tail-zone tests: disables the tail zone by default
 /// so streak/single milestones can be asserted deterministically.
-FakeRemoteConfigService _rcGrouping({
+Map<String, dynamic> _rcGrouping({
   int tailPeriodInDays = 0,
 }) =>
-    FakeRemoteConfigService(overrides: {
+    {
       'pact_timeline_no_grouping_tail_period_in_days': tailPeriodInDays,
-      'display_name_personalization_enabled': false,
-    });
+    };
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -247,8 +244,8 @@ void main() {
         // Seeding June 8–14 (7 days) with no gaps so the gap-filler adds nothing.
         h = await AppHarness.create(
           tester,
+          remoteConfigOverrides: _rcGrouping(),
           extraOverrides: [
-            remoteConfigServiceProvider.overrideWithValue(_rcGrouping()),
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -297,8 +294,8 @@ void main() {
         // Seeding through June 14 so gap-filler adds nothing before _testNow.
         h = await AppHarness.create(
           tester,
+          remoteConfigOverrides: _rcGrouping(),
           extraOverrides: [
-            remoteConfigServiceProvider.overrideWithValue(_rcGrouping()),
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -333,8 +330,8 @@ void main() {
         // Tail:     Jun 8–14 (7 done → 7 individual SingleShowupMilestone tiles).
         h = await AppHarness.create(
           tester,
+          remoteConfigOverrides: _rcGrouping(tailPeriodInDays: 7),
           extraOverrides: [
-            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(tailPeriodInDays: 7)),
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -381,8 +378,8 @@ void main() {
         // Tail:     Jun 10 (1 done → SingleShowupMilestone) → header visible.
         h = await AppHarness.create(
           tester,
+          remoteConfigOverrides: _rcGrouping(tailPeriodInDays: 14),
           extraOverrides: [
-            remoteConfigServiceProvider.overrideWithValue(_rcGrouping(tailPeriodInDays: 14)),
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
             pactTimelineNowProvider.overrideWithValue(_testNow),
@@ -470,14 +467,10 @@ void main() {
       (tester) async {
         h = await AppHarness.create(
           tester,
+          remoteConfigOverrides: {'pact_timeline_enabled': false},
           extraOverrides: [
             todayProvider.overrideWithValue(_testNow),
             pactDetailNowProvider.overrideWithValue(_testNow),
-            remoteConfigServiceProvider.overrideWithValue(
-              FakeRemoteConfigService(
-                overrides: {'pact_timeline_enabled': false, 'display_name_personalization_enabled': false},
-              ),
-            ),
           ],
           beforePump: (h) async {
             await h.pactRepo.savePact(_activePact);
