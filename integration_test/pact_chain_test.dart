@@ -9,7 +9,6 @@ import 'package:flutter/material.dart' show Key, Offset, Scrollable, TextField, 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
@@ -18,15 +17,12 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart' s
 import 'package:habit_loop/theme/widgets/animated_value_transition.dart' show kAnimatedValueTransitionDuration;
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 // pact_chaining_enabled now defaults to true (HAB-202 WU4 shipped), but an
 // explicit override still keeps these scenarios independent of that default
 // — see the flag-off scenario below, which needs the opposite override.
-final _chainingEnabled = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'pact_chaining_enabled': true, 'display_name_personalization_enabled': false}),
-);
+const _chainingEnabled = {'pact_chaining_enabled': true};
 
 // Dated near 2099 (short spans, matching every other integration-test
 // fixture in this suite) rather than the ticket's illustrative 2026 dates —
@@ -255,19 +251,16 @@ void main() {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(overrides: {
-              'pact_chaining_enabled': true,
-              // 'button' variant — single "I Accept" button, simplest to automate.
-              'exp_003_commitment_confirmation': 'button',
-              'display_name_personalization_enabled': false,
-            }),
-          ),
           pactDetailNowProvider.overrideWithValue(adjustTestNow),
           pactCreationTodayProvider.overrideWithValue(adjustTestNow),
           pactCreationSubmitNowProvider.overrideWithValue(() => adjustTestNow),
           todayProvider.overrideWithValue(adjustTestNow),
         ],
+        remoteConfigOverrides: {
+          'pact_chaining_enabled': true,
+          // 'button' variant — single "I Accept" button, simplest to automate.
+          'exp_003_commitment_confirmation': 'button',
+        },
         beforePump: (h) async {
           await h.pactRepo.savePact(predecessor);
         },
@@ -372,7 +365,7 @@ void main() {
       // ── 1. Seed P_p ("Vibe coding") and linked P_c ("Vibe coding (v2)") ──
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_chainingEnabled],
+        remoteConfigOverrides: _chainingEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(_chainNavPredecessorPact);
           await h.pactRepo.savePact(_chainNavSuccessorPact);
@@ -411,7 +404,7 @@ void main() {
       // ── 1. Seed P_p and P_c ───────────────────────────────────────────────
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_chainingEnabled],
+        remoteConfigOverrides: _chainingEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(_chainNavPredecessorPact);
           await h.pactRepo.savePact(_chainNavSuccessorPact);
@@ -447,7 +440,7 @@ void main() {
       // ── 1. Seed P_p and P_c ───────────────────────────────────────────────
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_chainingEnabled],
+        remoteConfigOverrides: _chainingEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(_chainNavPredecessorPact);
           await h.pactRepo.savePact(_chainNavSuccessorPact);
@@ -499,18 +492,15 @@ void main() {
       h = await AppHarness.create(
         tester,
         extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(overrides: {
-              'pact_chaining_enabled': true,
-              'exp_003_commitment_confirmation': 'button',
-              'display_name_personalization_enabled': false,
-            }),
-          ),
           pactDetailNowProvider.overrideWithValue(defaultNamingTestNow),
           pactCreationTodayProvider.overrideWithValue(defaultNamingTestNow),
           pactCreationSubmitNowProvider.overrideWithValue(() => defaultNamingTestNow),
           todayProvider.overrideWithValue(defaultNamingTestNow),
         ],
+        remoteConfigOverrides: {
+          'pact_chaining_enabled': true,
+          'exp_003_commitment_confirmation': 'button',
+        },
         beforePump: (h) async {
           await h.pactRepo.savePact(rootPact);
           await h.pactRepo.savePact(midPact);
@@ -568,7 +558,7 @@ void main() {
     testWidgets('adjust_and_start_again_available_from_completed_pact', (tester) async {
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_chainingEnabled],
+        remoteConfigOverrides: _chainingEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(completedPact);
         },
@@ -615,13 +605,7 @@ void main() {
         // 2. Explicit override — pact_chaining_enabled now defaults to
         // `true` (HAB-202 WU4 shipped), so this scenario's premise (the
         // flag being off) must be forced rather than relying on the default.
-        extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(
-              overrides: {'pact_chaining_enabled': false, 'display_name_personalization_enabled': false},
-            ),
-          ),
-        ],
+        remoteConfigOverrides: const {'pact_chaining_enabled': false},
         beforePump: (h) async {
           await h.pactRepo.savePact(flagOffPredecessor);
           await h.pactRepo.savePact(flagOffSuccessor);
@@ -664,7 +648,7 @@ void main() {
     testWidgets('abandoning_adjust_wizard_leaves_predecessor_unchanged', (tester) async {
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_chainingEnabled],
+        remoteConfigOverrides: _chainingEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(cancelledPact);
         },

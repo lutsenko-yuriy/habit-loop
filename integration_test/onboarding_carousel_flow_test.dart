@@ -22,7 +22,7 @@ void main() {
     testWidgets(
         'carousel_shown_on_first_launch_with_no_pacts: onboarding carousel is shown on first launch when there are no pacts',
         (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, remoteConfigOverrides: noAutoAdvance);
       final strings = l10n(tester);
 
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
@@ -32,7 +32,7 @@ void main() {
     });
 
     testWidgets('swipe_left_advances_to_slide_1: swiping left advances the carousel to slide 1', (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, remoteConfigOverrides: noAutoAdvance);
       final strings = l10n(tester);
 
       // 300 px stays within one page width on any ≥320 dp device
@@ -54,7 +54,7 @@ void main() {
 
     testWidgets('swipe_right_returns_to_slide_0: swiping right after advancing returns the carousel to slide 0',
         (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, remoteConfigOverrides: noAutoAdvance);
       final strings = l10n(tester);
 
       // Advance to slide 1 using the same 300 px drag as the "swiping left"
@@ -84,7 +84,7 @@ void main() {
     testWidgets(
         'tap_language_opens_picker_and_persists_locale: tapping "Language" opens the language picker and saving a locale persists it',
         (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, remoteConfigOverrides: noAutoAdvance);
       final strings = l10n(tester);
 
       // The carousel has a single "Language" button (dialog not yet open).

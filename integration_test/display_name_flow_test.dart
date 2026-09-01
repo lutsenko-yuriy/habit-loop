@@ -7,21 +7,15 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/user/user_profile.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../test/infrastructure/onboarding/fake_onboarding_preference_service.dart';
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
-final _flagOn = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true}),
-);
-final _flagOff = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false}),
-);
+const _flagOn = {'display_name_personalization_enabled': true};
+const _flagOff = {'display_name_personalization_enabled': false};
 
 // Fixed clock, mirroring reminder_locale_flow_test.dart's _seedPact pattern —
 // showups are generated for "today" through +10 days, independent of the
@@ -61,7 +55,7 @@ void main() {
       final userProfileRepository = InMemoryUserProfileRepository();
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        remoteConfigOverrides: _flagOn,
         initiallyAnonymous: true,
         onboardingService: FakeOnboardingPreferenceService(),
         userProfileRepository: userProfileRepository,
@@ -86,7 +80,7 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        remoteConfigOverrides: _flagOn,
         initiallyAnonymous: true,
         onboardingService: onboardingService,
         userProfileRepository: userProfileRepository,
@@ -105,7 +99,7 @@ void main() {
       // instances, fresh AppHarness (not a truly fresh install).
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        remoteConfigOverrides: _flagOn,
         initiallyAnonymous: true,
         onboardingService: onboardingService,
         userProfileRepository: userProfileRepository,
@@ -122,7 +116,7 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        remoteConfigOverrides: _flagOn,
         initiallyAnonymous: true,
         userProfileRepository: userProfileRepository,
       );
@@ -145,7 +139,7 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        remoteConfigOverrides: _flagOn,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: userProfileRepository,
       );
@@ -196,7 +190,8 @@ void main() {
         // gap-fill sweep backfill more and more showups until the on-device
         // run becomes prohibitively slow (root-caused via a pre-WU7 baseline
         // comparison — same stall, unrelated to WU7's own changes).
-        extraOverrides: [_flagOn, todayProvider.overrideWithValue(_testNow)],
+        extraOverrides: [todayProvider.overrideWithValue(_testNow)],
+        remoteConfigOverrides: _flagOn,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: repo,
         beforePump: (h) async {
@@ -212,7 +207,8 @@ void main() {
         (tester) async {
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn, todayProvider.overrideWithValue(_testNow)],
+        extraOverrides: [todayProvider.overrideWithValue(_testNow)],
+        remoteConfigOverrides: _flagOn,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: InMemoryUserProfileRepository(),
         beforePump: (h) async {
@@ -230,7 +226,8 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOff, todayProvider.overrideWithValue(_testNow)],
+        extraOverrides: [todayProvider.overrideWithValue(_testNow)],
+        remoteConfigOverrides: _flagOff,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: repo,
         beforePump: (h) async {
@@ -249,7 +246,7 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        remoteConfigOverrides: _flagOn,
         initiallyAnonymous: true,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: repo,
@@ -263,7 +260,7 @@ void main() {
         (tester) async {
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn],
+        remoteConfigOverrides: _flagOn,
         initiallyAnonymous: true,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: InMemoryUserProfileRepository(),
@@ -279,7 +276,7 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOff],
+        remoteConfigOverrides: _flagOff,
         initiallyAnonymous: true,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: repo,
@@ -297,7 +294,8 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn, todayProvider.overrideWithValue(_testNow)],
+        extraOverrides: [todayProvider.overrideWithValue(_testNow)],
+        remoteConfigOverrides: _flagOn,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: repo,
         beforePump: (h) async {
@@ -324,7 +322,8 @@ void main() {
       // 5. (Contrast) same setup with no name on file — neutral copy, no name.
       h = await AppHarness.create(
         tester,
-        extraOverrides: [_flagOn, todayProvider.overrideWithValue(_testNow)],
+        extraOverrides: [todayProvider.overrideWithValue(_testNow)],
+        remoteConfigOverrides: _flagOn,
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: InMemoryUserProfileRepository(),
         beforePump: (h) async {

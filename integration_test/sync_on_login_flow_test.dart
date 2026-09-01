@@ -165,8 +165,8 @@ void main() {
         tester,
         initiallyAnonymous: true,
         syncServiceFactory: (pactRepo, showupRepo) => _SeedingSyncService(pactRepo, showupRepo),
+        remoteConfigOverrides: noAutoAdvance,
         extraOverrides: [
-          noAutoAdvance,
           // Pin the clock so the seeded showup is not auto-failed.
           todayProvider.overrideWithValue(_testNow),
           showupDetailNowProvider.overrideWithValue(_testNow),
