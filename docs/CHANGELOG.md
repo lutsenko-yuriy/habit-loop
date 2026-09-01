@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.59.0] — 2026-09-01 (PR #429 merged)
+
+### Added
+
+- [user] You can now enter your first name (skippable) the first time you open the app, or add or change it anytime from the ⋯ menu.
+- [user] Once you've added your name, it shows up in your dashboard greeting, your onboarding welcome, and your reminder notifications.
+- [app] HAB-232 (WU10, final): fixed `scenarios.yml` CI flakiness surfaced by WU7's dispatches — a shared test-harness RC-override helper was missing a key, causing 9 scenarios across 5 unrelated files to render the wrong screen. No production code touched by this WU specifically; the user-facing feature itself (display-name personalization) was completed across WU1–WU9 (PRs #414, #417, #418, #420, #421, #423, #425, #426, #428).
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
