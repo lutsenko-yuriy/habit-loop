@@ -47,6 +47,14 @@ void main() {
       expect(service.getBool('display_name_personalization_enabled'), isTrue);
     });
 
+    test('an explicit null override does not fall through to the production default', () {
+      final service = FakeRemoteConfigService.withTestDefaults(
+        overrides: {'display_name_personalization_enabled': null},
+      );
+
+      expect(service.getBool('display_name_personalization_enabled'), isFalse);
+    });
+
     test('each construction builds an independent map — no aliasing between instances', () {
       final a = FakeRemoteConfigService.withTestDefaults();
       final b = FakeRemoteConfigService.withTestDefaults();
