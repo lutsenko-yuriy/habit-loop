@@ -131,6 +131,11 @@ ProviderContainer _makeContainer({
       // Required so stopPact can load showup IDs for deterministic notification
       // cancellation (HAB-100) without hitting the default UnimplementedError.
       showupRepositoryProvider.overrideWithValue(showupRepo),
+      // Default "now" (HAB-259) — without this, the real DateTime.now() drifts
+      // past _pact's hardcoded endDate (2026-09-01) and PactService silently
+      // auto-completes it mid-test. Listed before ...extras so a test's own
+      // pactDetailNowProvider override (e.g. for break-window scenarios) wins.
+      pactDetailNowProvider.overrideWithValue(DateTime(2026, 4, 4)),
       ...extras,
     ],
   );
@@ -920,15 +925,9 @@ void main() {
     });
 
     test('load does not auto-complete an active pact with a future end date and pending showups', () async {
-      // _pact: endDate=2026-09-01 (future from 2026-04-04). Pin "now" explicitly
-      // (HAB-259) — real DateTime.now() eventually catches up to endDate and
-      // makes this pact legitimately auto-complete, which isn't what this test
-      // is about.
-      final container = _makeContainer(
-        pacts: [_pact],
-        showups: _showups,
-        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 4, 4))],
-      );
+      // _pact: endDate=2026-09-01, future relative to _makeContainer's pinned
+      // "now" default (2026-04-04) — see that default's own comment (HAB-259).
+      final container = _makeContainer(pacts: [_pact], showups: _showups);
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
       final state = container.read(pactDetailViewModelProvider('p1'));
