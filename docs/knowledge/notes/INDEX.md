@@ -9,21 +9,21 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **review-findings** (17)
 - **planning-gaps** (14)
 - **debugging-methodology** (12)
-- **multi-wu-scope** (11)
+- **multi-wu-scope** (12)
+- **ci-flakiness** (10)
 - **research-methodology** (10)
-- **ci-flakiness** (9)
 - **code-style** (8)
 - **knowledge-base-process** (8)
 - **changelog-versioning** (7)
 - **widget-test-gotchas** (6)
 - **dead-code** (5)
 - **feature-toggle** (4)
+- **ui-design-iteration** (4)
 - **verify-from-source** (4)
 - **appstore-ci** (3)
 - **cross-project-sync** (3)
 - **scope-creep** (3)
 - **stale-ticket** (3)
-- **ui-design-iteration** (3)
 - **debrief-timing** (2)
 - **docs-findability** (1)
 - **ios-limits** (1)
@@ -60,6 +60,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-212: Pacts list: default "On Break" filter selected, remove Archived chip, show archived counts inline](HAB-212.md)
 - [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
 - [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
+- [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
 
 ### code-style
 - [HAB-139: Redeem tail-zone failed showups by adding a note](HAB-139.md)
@@ -144,6 +145,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
 - [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
+- [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
 
 ### notifications
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
@@ -215,6 +217,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-149: About / Feedback screen](HAB-149.md)
 - [HAB-202: Adjust and start again: create a new pact from a finished one, chained](HAB-202.md)
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
+- [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
 
 ### verify-from-source
 - [HAB-168: ship's state-detection can override an already-in-progress QA status](HAB-168.md)
@@ -241,5 +244,4 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-178: Build a dialectical research skill (thesis/antithesis/synthesis, steelman-bounded)](HAB-178.md)
 - [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
 - [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
-- [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
 - [HAB-252: release_notes.py's HAB-XX/PR#/WU stripping is dead code — [user] bullets ship un-cleaned](HAB-252.md)
