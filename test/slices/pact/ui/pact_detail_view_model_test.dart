@@ -920,8 +920,15 @@ void main() {
     });
 
     test('load does not auto-complete an active pact with a future end date and pending showups', () async {
-      // _pact: endDate=2026-09-01 (future from 2026-04-04), has pending showup s4.
-      final container = _makeContainer(pacts: [_pact], showups: _showups);
+      // _pact: endDate=2026-09-01 (future from 2026-04-04). Pin "now" explicitly
+      // (HAB-259) — real DateTime.now() eventually catches up to endDate and
+      // makes this pact legitimately auto-complete, which isn't what this test
+      // is about.
+      final container = _makeContainer(
+        pacts: [_pact],
+        showups: _showups,
+        extras: [pactDetailNowProvider.overrideWithValue(DateTime(2026, 4, 4))],
+      );
       addTearDown(container.dispose);
       await container.read(pactDetailViewModelProvider('p1').notifier).load();
       final state = container.read(pactDetailViewModelProvider('p1'));
@@ -1037,6 +1044,11 @@ void main() {
           pactStatsServiceProvider.overrideWithValue(throwingStatsService),
           pactDetailCacheProvider.overrideWithValue(throwingCache),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+          // Pin "now" (HAB-259) — _pact's endDate is in the past of real
+          // DateTime.now() by now, which would auto-complete it during load()
+          // and change stopPact's behavior before this test's own throwing
+          // repository ever gets exercised.
+          pactDetailNowProvider.overrideWithValue(DateTime(2026, 4, 4)),
         ],
       );
       addTearDown(failContainer.dispose);
