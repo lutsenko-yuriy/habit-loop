@@ -1,12 +1,21 @@
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_defaults.dart';
 import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_service.dart';
 
+import 'test_remote_config_defaults.dart';
+
 /// A fake [RemoteConfigService] backed by an in-memory map.
 ///
 /// Tests can inject specific flag values via the [overrides] map.
 /// Getters look up [overrides] first, then fall back to [RemoteConfigDefaults.all].
 class FakeRemoteConfigService implements RemoteConfigService {
   FakeRemoteConfigService({Map<String, dynamic>? overrides}) : overrides = overrides ?? {};
+
+  /// Layers [overrides] on top of [TestRemoteConfigDefaults.all], which is
+  /// itself layered on top of [RemoteConfigDefaults.all]. Use this for any
+  /// harness/test construction — the bare constructor is reserved for
+  /// asserting production defaults (HAB-260).
+  FakeRemoteConfigService.withTestDefaults({Map<String, dynamic>? overrides})
+      : overrides = {...TestRemoteConfigDefaults.all, ...?overrides};
 
   final Map<String, dynamic> overrides;
 
