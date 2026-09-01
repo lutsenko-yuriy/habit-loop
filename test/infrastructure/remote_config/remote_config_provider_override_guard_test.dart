@@ -18,18 +18,20 @@ void main() {
     final integrationTestDir = Directory('integration_test');
     expect(integrationTestDir.existsSync(), isTrue, reason: 'expected to run flutter test from the repo root');
 
-    const forbiddenPattern = 'remoteConfigServiceProvider.overrideWithValue(';
+    // Whitespace-tolerant so a direct override reformatted across multiple
+    // lines (e.g. `remoteConfigServiceProvider\n  .overrideWithValue(`)
+    // still trips the guard.
+    final forbiddenPattern = RegExp(r'remoteConfigServiceProvider\s*\.\s*overrideWithValue\s*\(');
     final violations = <String>[];
 
     for (final entity in integrationTestDir.listSync(recursive: true)) {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;
       if (entity.path.endsWith('${Platform.pathSeparator}harness.dart')) continue;
 
-      final lines = entity.readAsLinesSync();
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i].contains(forbiddenPattern)) {
-          violations.add('${entity.path}:${i + 1}');
-        }
+      final content = entity.readAsStringSync();
+      for (final match in forbiddenPattern.allMatches(content)) {
+        final lineNumber = '\n'.allMatches(content.substring(0, match.start)).length + 1;
+        violations.add('${entity.path}:$lineNumber');
       }
     }
 
