@@ -233,10 +233,10 @@ class AppHarness {
           // in debug builds (which integration tests run as) — so it would
           // show EnterNameScreen and block every pre-existing scenario from
           // ever reaching the dashboard. TestRemoteConfigDefaults.all pins it
-          // off (HAB-260); [remoteConfigOverrides] layers on top of that, and
-          // any direct remoteConfigServiceProvider override still in
-          // extraOverrides (pending HAB-260 WU3 migration) wins over both,
-          // since it's spread after this one.
+          // off (HAB-260); [remoteConfigOverrides] layers on top of that.
+          // A guard test (HAB-260 WU3) keeps any future integration_test/
+          // file from overriding remoteConfigServiceProvider directly and
+          // silently discarding this layering.
           remoteConfigServiceProvider.overrideWithValue(
             FakeRemoteConfigService.withTestDefaults(overrides: remoteConfigOverrides),
           ),

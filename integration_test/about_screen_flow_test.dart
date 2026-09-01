@@ -9,7 +9,6 @@ import 'package:habit_loop/slices/about/analytics/about_analytics_events.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 Future<void> _openAboutScreen(WidgetTester tester) async {
@@ -89,14 +88,7 @@ void main() {
         (tester) async {
       h = await AppHarness.create(
         tester,
-        extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(overrides: {
-              'about_screen_enabled': false,
-              'display_name_personalization_enabled': false,
-            }),
-          ),
-        ],
+        remoteConfigOverrides: {'about_screen_enabled': false},
       );
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));

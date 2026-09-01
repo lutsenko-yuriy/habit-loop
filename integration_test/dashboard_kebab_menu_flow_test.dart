@@ -4,11 +4,9 @@
 // Run on device: flutter test integration_test/dashboard_kebab_menu_flow_test.dart -d <device>
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 void main() {
@@ -70,15 +68,10 @@ void main() {
         (tester) async {
       h = await AppHarness.create(
         tester,
-        extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(overrides: {
-              'about_screen_enabled': false,
-              'language_selection_enabled': false,
-              'display_name_personalization_enabled': false,
-            }),
-          ),
-        ],
+        remoteConfigOverrides: {
+          'about_screen_enabled': false,
+          'language_selection_enabled': false,
+        },
       );
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));

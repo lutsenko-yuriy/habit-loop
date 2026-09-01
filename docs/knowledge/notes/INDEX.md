@@ -8,8 +8,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 - **review-findings** (17)
 - **planning-gaps** (14)
+- **multi-wu-scope** (13)
 - **debugging-methodology** (12)
-- **multi-wu-scope** (12)
 - **ci-flakiness** (10)
 - **research-methodology** (10)
 - **code-style** (8)
@@ -32,6 +32,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **multi-project-scope** (1)
 - **notifications** (1)
 - **postmortem-workflow** (1)
+- **subagent-authority** (1)
 - **trivial-change-scope** (1)
 
 ## By bookmark
@@ -146,6 +147,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
 - [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
+- [HAB-260: FakeRemoteConfigService replaces rather than layers RC overrides — needs a harness-defaults merge](HAB-260.md)
 
 ### notifications
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
@@ -209,6 +211,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-120: Port new meta-workflow skills to Yuriys-agentic-boyz](HAB-120.md)
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238-adjust-1.md)
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238.md)
+
+### subagent-authority
+- [HAB-260: FakeRemoteConfigService replaces rather than layers RC overrides — needs a harness-defaults merge](HAB-260.md)
 
 ### trivial-change-scope
 - [HAB-245: Remove exclamatory opener from break-over reminder notification title](HAB-245.md)

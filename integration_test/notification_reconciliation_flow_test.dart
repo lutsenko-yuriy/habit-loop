@@ -15,7 +15,6 @@ import 'package:habit_loop/slices/reminder/application/notification_text_builder
 import 'package:habit_loop/slices/reminder/application/reconciliation_throttle.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 /// Pumps a handful of frames so the async chain triggered by a
@@ -344,13 +343,7 @@ void main() {
 
       h = await AppHarness.create(
         tester,
-        extraOverrides: [
-          remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(
-              overrides: {'notification_reconciliation_enabled': false, 'display_name_personalization_enabled': false},
-            ),
-          ),
-        ],
+        remoteConfigOverrides: {'notification_reconciliation_enabled': false},
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
           await h.pactBreakRepo.saveBreak(elapsedBreak);

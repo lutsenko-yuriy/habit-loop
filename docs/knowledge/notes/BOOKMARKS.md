@@ -39,3 +39,4 @@ heavy `/checkup` tier.
 | `notifications` | Local notification delivery, scheduling, and lifecycle (platform APIs, ID partitioning, cancellation sweeps). |
 | `ios-limits` | iOS platform constraints — pending-notification cap, kernel-level resource limits, simulator quirks. |
 | `docs-findability` | Human-facing navigability/comprehension load of the docs/skills corpus, distinct from agent context-token cost (e.g. wiki/graph-style organization, cross-linking). |
+| `subagent-authority` | What a delegated subagent can accept as valid user approval vs. what only the orchestrator/main session can act on — trust boundaries in multi-agent delegation. |
