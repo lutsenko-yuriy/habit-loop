@@ -306,7 +306,9 @@ void main() {
       );
 
       // 2. Let the dashboard's first-load sweep schedule the reminder.
-      await waitFor(tester, find.text(l10n(tester).dashboardTitle));
+      // WU9: title is personalized ("Hi Alex") whenever the flag is on and a
+      // name is on file — dashboardTitle ("Dashboard") never renders here.
+      await waitFor(tester, find.text(l10n(tester).dashboardGreetingPersonalized('Alex')));
       await tester.pump(const Duration(milliseconds: 200));
 
       // 3/4. The scheduled reminder's title contains the seeded name.

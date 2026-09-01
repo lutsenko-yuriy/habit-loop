@@ -4,6 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.59.0] — 2026-09-01 (PR #429 merged)
+
+### Added
+
+- [user] You can now enter your first name (skippable) the first time you open the app, or add or change it anytime from the ⋯ menu.
+- [user] Once you've added your name, it shows up in your dashboard greeting, your onboarding welcome, and your reminder notifications.
+- [app] HAB-232 (WU10, final): fixed `scenarios.yml` CI flakiness surfaced by WU7's dispatches — a shared test-harness RC-override helper was missing a key, causing 9 scenarios across 5 unrelated files to render the wrong screen. No production code touched by this WU specifically; the user-facing feature itself (display-name personalization) was completed across WU1–WU9 (PRs #414, #417, #418, #420, #421, #423, #425, #426, #428).
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
@@ -18,6 +26,7 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 - [wip] HAB-232: Change Name dialog's Save button no longer stays disabled on an empty field — clearing the field and saving now removes the stored name, instead of being blocked. Still gated behind `displayNamePersonalizationEnabled` (off until WU7), so no user-visible change yet.
 - [wip] HAB-232 (WU8): EnterNamePage visual redesign — bottom-anchored Continue/Skip buttons, centered content and text, underline text field (thickens on focus) replacing the boxed border, and an animated slide transition into onboarding (PR #426). Still gated behind `displayNamePersonalizationEnabled` (off until WU7), so no user-visible change yet.
 - [wip] HAB-232 (WU9): moved the personalized dashboard greeting from a standalone header row into the app bar/nav bar title itself ("Hi {name}" replaces "Dashboard" when a name is on file), removing WU6's separate greeting row and its neutral "Welcome back" fallback copy (PR #428). Still release-gated to `0.59.0`, so no user-visible change yet in this release.
+- [test] HAB-232 (WU10, final): fixed the `scenarios.yml` flakiness WU7's dispatches surfaced — `integration_test/harness.dart`'s shared `noAutoAdvance` RC override was missing `display_name_personalization_enabled: false`, so every scenario using it (onboarding carousel, sync-on-login, fresh-install keychain fix, language change, FakeFirestoreClient integration) got intercepted by `EnterNameScreen` instead of showing what the test actually expected. No production code touched.
 
 ## [0.58.0] — 2026-08-28 (PR #412 merged)
 
