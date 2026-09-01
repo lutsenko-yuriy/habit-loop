@@ -36,7 +36,7 @@ void main() {
           tester,
           // Simulate a stale Google-linked user from the iOS Keychain.
           initiallyAnonymous: false,
-          extraOverrides: [noAutoAdvance],
+          remoteConfigOverrides: noAutoAdvance,
           beforePump: (h) async {
             // Mirror what main.dart does: clear stale auth before initialize().
             final prefs = await SharedPreferences.getInstance();

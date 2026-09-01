@@ -8,20 +8,16 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' show Key, Theme;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/theme/colors.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 // pact_breaks_enabled now defaults to true (HAB-195 WU6) — this override is
 // kept for explicitness/determinism, independent of the production default.
-final _breaksEnabled = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true, 'display_name_personalization_enabled': false}),
-);
+const _breaksEnabled = {'pact_breaks_enabled': true};
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -52,8 +48,8 @@ void main() {
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
           pactListNowProvider.overrideWithValue(testNow),
-          _breaksEnabled,
         ],
+        remoteConfigOverrides: _breaksEnabled,
         beforePump: (h) async {
           for (final pact in pacts) {
             await h.pactRepo.savePact(pact);

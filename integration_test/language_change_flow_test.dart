@@ -18,7 +18,7 @@ void main() {
     testWidgets(
         'selecting_russian_rerenders_carousel: selecting Russian from the language picker re-renders the onboarding carousel in Russian and persists the locale',
         (tester) async {
-      h = await AppHarness.create(tester, initiallyAnonymous: true, extraOverrides: [noAutoAdvance]);
+      h = await AppHarness.create(tester, initiallyAnonymous: true, remoteConfigOverrides: noAutoAdvance);
       final strings = l10n(tester);
 
       // ── 1. Carousel is shown in English (first launch, no pacts) ──────────

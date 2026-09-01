@@ -118,6 +118,11 @@ class AppHarness {
   ///   ```dart
   ///   extraOverrides: [todayProvider.overrideWithValue(DateTime(2099, 6, 15))],
   ///   ```
+  /// - [remoteConfigOverrides]: RC flag values layered on top of
+  ///   [TestRemoteConfigDefaults.all] via [FakeRemoteConfigService.withTestDefaults]
+  ///   (HAB-260). Prefer this over overriding [remoteConfigServiceProvider]
+  ///   directly through [extraOverrides] — that would fully replace the
+  ///   harness's own service instead of layering on top of it.
   /// - [beforePump]: optional async callback called after the repository
   ///   instances are ready but *before* [tester.pumpWidget]. Use this to
   ///   pre-seed pacts and showups so they are visible on the very first
@@ -139,6 +144,7 @@ class AppHarness {
   static Future<AppHarness> create(
     WidgetTester tester, {
     List<Override> extraOverrides = const [],
+    Map<String, dynamic> remoteConfigOverrides = const {},
     Future<void> Function(AppHarness h)? beforePump,
     bool initiallyAnonymous = false,
     FakeSyncService Function(InMemoryPactRepository, InMemoryShowupRepository)? syncServiceFactory,
@@ -222,16 +228,17 @@ class AppHarness {
           // Return empty string — the dashboard shows it as a subtitle and the
           // test doesn't assert on version text.
           appVersionProvider.overrideWith((_) async => ''),
-          // HAB-232 WU7: display_name_personalization_enabled's RC default is
-          // now `true`, and resolveReleaseGatedFlag bypasses the release-version
-          // gate entirely in debug builds (which integration tests run as) — so
-          // NoopRemoteConfigService's default would show EnterNameScreen and
-          // block every pre-existing scenario from ever reaching the dashboard.
-          // Default it off here, same as before the flip; extraOverrides below
-          // (display_name_flow_test.dart's _flagOn/_flagOff) wins when a test
-          // opts in, since it's spread after this one.
+          // display_name_personalization_enabled's RC default is `true`, and
+          // resolveReleaseGatedFlag bypasses the release-version gate entirely
+          // in debug builds (which integration tests run as) — so it would
+          // show EnterNameScreen and block every pre-existing scenario from
+          // ever reaching the dashboard. TestRemoteConfigDefaults.all pins it
+          // off (HAB-260); [remoteConfigOverrides] layers on top of that, and
+          // any direct remoteConfigServiceProvider override still in
+          // extraOverrides (pending HAB-260 WU3 migration) wins over both,
+          // since it's spread after this one.
           remoteConfigServiceProvider.overrideWithValue(
-            FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false}),
+            FakeRemoteConfigService.withTestDefaults(overrides: remoteConfigOverrides),
           ),
           ...extraOverrides,
         ],
@@ -377,17 +384,12 @@ Future<void> saveChangeName(WidgetTester tester, String name) async {
 
 /// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).
 ///
-/// Also pins `display_name_personalization_enabled` off (HAB-232 WU10) — like
-/// any bare `FakeRemoteConfigService`, this fully replaces the harness's own
-/// default override (`AppHarness.create`'s overrides list) rather than
-/// layering on top of it, so it needs the same pin repeated here or every
-/// test using this helper regresses back to the RC default (`true`) and gets
-/// intercepted by EnterNameScreen instead of whatever it's actually testing.
-final noAutoAdvance = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(
-    overrides: {'onboarding_auto_advance_seconds': 0, 'display_name_personalization_enabled': false},
-  ),
-);
+/// A plain overrides map — pass it as `AppHarness.create`'s
+/// `remoteConfigOverrides` (merge in any other keys a test needs) rather than
+/// wrapping it in `extraOverrides` (HAB-260). `display_name_personalization_enabled`
+/// no longer needs pinning here since `TestRemoteConfigDefaults.all` already
+/// covers it.
+const noAutoAdvance = {'onboarding_auto_advance_seconds': 0};
 
 /// Opens the collapsible pacts panel from the dashboard.
 Future<void> openPactsPanel(WidgetTester tester) async {

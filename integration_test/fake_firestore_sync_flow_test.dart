@@ -64,10 +64,10 @@ void main() {
         tester,
         firestoreClient: fakeFirestore,
         initiallyAnonymous: true,
+        remoteConfigOverrides: noAutoAdvance,
         extraOverrides: [
           todayProvider.overrideWithValue(_testNow),
           showupDetailNowProvider.overrideWithValue(_testNow),
-          noAutoAdvance,
         ],
       );
       final strings = l10n(tester);
@@ -111,10 +111,10 @@ void main() {
         tester,
         firestoreClient: faultClient,
         initiallyAnonymous: true,
+        remoteConfigOverrides: noAutoAdvance,
         extraOverrides: [
           todayProvider.overrideWithValue(_testNow),
           showupDetailNowProvider.overrideWithValue(_testNow),
-          noAutoAdvance,
         ],
       );
       final strings = l10n(tester);

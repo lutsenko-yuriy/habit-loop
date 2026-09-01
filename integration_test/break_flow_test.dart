@@ -18,14 +18,11 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart'
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
 
 // pact_breaks_enabled now defaults to true (HAB-195 WU6) — this override is
 // kept for explicitness/determinism, independent of the production default.
-final _breaksEnabled = remoteConfigServiceProvider.overrideWithValue(
-  FakeRemoteConfigService(overrides: {'pact_breaks_enabled': true, 'display_name_personalization_enabled': false}),
-);
+const _breaksEnabled = {'pact_breaks_enabled': true};
 
 Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId) async {
   final tileKey = Key('timeline-milestone-$showupId');
@@ -82,8 +79,8 @@ void main() {
           todayProvider.overrideWithValue(testNow),
           pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
-          _breaksEnabled,
         ],
+        remoteConfigOverrides: _breaksEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
         },
@@ -145,8 +142,8 @@ void main() {
           todayProvider.overrideWithValue(testNow),
           pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
-          _breaksEnabled,
         ],
+        remoteConfigOverrides: _breaksEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
         },
@@ -187,8 +184,8 @@ void main() {
           todayProvider.overrideWithValue(testNow),
           pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
-          _breaksEnabled,
         ],
+        remoteConfigOverrides: _breaksEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
         },
@@ -244,8 +241,8 @@ void main() {
           pactTimelineNowProvider.overrideWithValue(testNow),
           showupDetailNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
-          _breaksEnabled,
         ],
+        remoteConfigOverrides: _breaksEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
           await h.showupRepo.saveShowup(showup);
@@ -307,8 +304,8 @@ void main() {
           todayProvider.overrideWithValue(testNow),
           pactListNowProvider.overrideWithValue(testNow),
           pactBreakCreationNowProvider.overrideWithValue(testNow),
-          _breaksEnabled,
         ],
+        remoteConfigOverrides: _breaksEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
           await h.pactBreakRepo.saveBreak(existingBreak);
@@ -411,8 +408,8 @@ void main() {
           todayProvider.overrideWithValue(testNow),
           pactListNowProvider.overrideWithValue(testNow),
           showupDetailNowProvider.overrideWithValue(testNow),
-          _breaksEnabled,
         ],
+        remoteConfigOverrides: _breaksEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(pact);
           await h.showupRepo.saveShowups([showup]);
@@ -678,8 +675,8 @@ void main() {
         extraOverrides: [
           todayProvider.overrideWithValue(testNow),
           pactListNowProvider.overrideWithValue(testNow),
-          _breaksEnabled,
         ],
+        remoteConfigOverrides: _breaksEnabled,
         beforePump: (h) async {
           await h.pactRepo.savePact(onBreakPact);
           await h.pactRepo.savePact(plainPact);
