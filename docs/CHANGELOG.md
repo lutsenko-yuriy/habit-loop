@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.60.1] — 2026-09-02 (PR #436 merged)
+
+### Fixed
+
+- [app] HAB-229: debug seed data re-run now cancels OS notifications scheduled for deleted pacts, preventing stale reminders from firing after seed reset
+
 ## [0.60.0] — 2026-09-02 (PR #435 merged)
 
 ### Added

@@ -11,6 +11,7 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 ## In QA
 
+- **HAB-229**: Debug seed re-run leaves stale OS notifications for deleted pacts (PR #436)
 - **HAB-216**: Merge break runs into a single timeline milestone, tail zone included (PRs #363–365)
 - **HAB-218**: Bug: "Take a break" / "Stop pact" / "Archive" buttons no longer full width on pact detail (PR #365)
 - **HAB-201**: Bug: pact shows "On break" (list + detail banner) before the break actually starts (PR #335)
