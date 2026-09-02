@@ -12,6 +12,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
+import '../../../../infrastructure/notifications/fake_notification_service.dart';
 import '../../../../infrastructure/remote_config/fake_remote_config_service.dart';
 
 void main() {
@@ -29,6 +30,7 @@ void main() {
     ProviderContainer makeContainer({
       Object? fakeFirestore,
       Map<String, dynamic> rcOverrides = const {},
+      FakeNotificationService? notificationService,
     }) {
       final txService = InMemoryPactTransactionService(pactRepo, showupRepo);
       final rc = FakeRemoteConfigService(overrides: rcOverrides);
@@ -40,6 +42,7 @@ void main() {
         remoteConfigServiceProvider.overrideWithValue(rc),
         syncServiceProvider.overrideWithValue(const NoopSyncService()),
         if (fakeFirestore != null) fakeFirestoreClientProvider.overrideWithValue(fakeFirestore),
+        if (notificationService != null) notificationServiceProvider.overrideWithValue(notificationService),
       ]);
       addTearDown(container.dispose);
       return container;
@@ -185,6 +188,39 @@ void main() {
       final state = container.read(debugSeedDataViewModelProvider);
       expect(state.status, DebugSeedState.done);
       expect(await pactBreakRepo.getBreaksForPact('debug-seed-local-0'), isEmpty);
+    });
+
+    test('seedLocalPacts cancels OS reminders for each deleted pact before re-seeding (HAB-229)', () async {
+      final fakeNotifications = FakeNotificationService();
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 2}, notificationService: fakeNotifications);
+      final notifier = container.read(debugSeedDataViewModelProvider.notifier);
+
+      // First seed run creates debug-seed-local-0/1 with their own showups.
+      await notifier.seedLocalPacts();
+      final firstRunShowupIds = {
+        for (final pactId in ['debug-seed-local-0', 'debug-seed-local-1'])
+          ...(await showupRepo.getShowupsForPact(pactId)).map((s) => s.id),
+      };
+      expect(firstRunShowupIds, isNotEmpty);
+      fakeNotifications.reset();
+
+      // Second run deletes the first run's pacts — each deleted pact's
+      // reminders must be cancelled, or they linger in the OS forever.
+      await notifier.seedLocalPacts();
+
+      expect(fakeNotifications.cancelledPactIds, containsAll(['debug-seed-local-0', 'debug-seed-local-1']));
+      final cancelledShowupIds = fakeNotifications.cancelledPactShowupIds.expand((ids) => ids).toSet();
+      expect(cancelledShowupIds, equals(firstRunShowupIds));
+    });
+
+    test('seedLocalPacts does not attempt cancellation when there are no existing pacts to delete', () async {
+      final fakeNotifications = FakeNotificationService();
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 1}, notificationService: fakeNotifications);
+
+      // First-ever run — nothing pre-existing to clean up.
+      await container.read(debugSeedDataViewModelProvider.notifier).seedLocalPacts();
+
+      expect(fakeNotifications.cancelledPactIds, isEmpty);
     });
 
     test('seedLocalPacts pact IDs are stable across the same seed index', () async {

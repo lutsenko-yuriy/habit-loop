@@ -69,10 +69,14 @@ class DebugSeedDataViewModel extends AutoDisposeNotifier<DebugSeedDataState> {
       final pactService = ref.read(pactServiceProvider);
       final showupRepo = ref.read(showupRepositoryProvider);
       final pactBreakRepo = ref.read(pactBreakRepositoryProvider);
+      final reminderScheduling = ref.read(reminderSchedulingServiceProvider);
       final n = state.pactCount;
 
       final existingPacts = await pactService.getAllPacts();
       for (final p in existingPacts) {
+        // Fetch before deletion — cancellation needs the showup IDs that are about to be removed.
+        final showupIds = (await showupRepo.getShowupsForPact(p.id)).map((s) => s.id).toList();
+        await reminderScheduling.cancelAllRemindersForPact(p.id, showupIds: showupIds);
         await showupRepo.deleteShowupsForPact(p.id);
         // FK to pacts.id — must clear first or deletePact below throws (HAB-208).
         await pactBreakRepo.deleteBreaksForPact(p.id);
