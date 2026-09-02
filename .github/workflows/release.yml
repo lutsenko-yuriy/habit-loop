@@ -33,6 +33,15 @@ on:
         type: boolean
         default: false
 
+# Serializes runs that build/tag on main (push or workflow_dispatch against
+# refs/heads/main) so resolve-version can't have two runs read the same
+# highest version-* tag and resolve the same build number (HAB-264). Every
+# other ref/event gets its own run-id group, so PRs and other branches keep
+# running in parallel untouched.
+concurrency:
+  group: release-${{ github.ref == 'refs/heads/main' && 'main' || github.run_id }}
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
