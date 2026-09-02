@@ -12,7 +12,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **debugging-methodology** (12)
 - **ci-flakiness** (10)
 - **research-methodology** (10)
-- **code-style** (8)
+- **code-style** (9)
 - **knowledge-base-process** (8)
 - **changelog-versioning** (7)
 - **widget-test-gotchas** (6)
@@ -72,6 +72,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
 - [HAB-234: Welcome-back reminder for an unpersisted showup can survive a later, unrelated break's cancellation sweep](HAB-234.md)
 - [HAB-235: Research: code readability guidelines for CODE_STYLE.md — comment brevity, function/class size, PR scope](HAB-235.md)
+- [HAB-263: Todo list: fill in-progress showups amber instead of the outline circle](HAB-263.md)
 
 ### cross-project-sync
 - [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
