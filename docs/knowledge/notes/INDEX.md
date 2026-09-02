@@ -8,8 +8,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 - **review-findings** (18)
 - **planning-gaps** (14)
+- **debugging-methodology** (13)
 - **multi-wu-scope** (13)
-- **debugging-methodology** (12)
 - **ci-flakiness** (10)
 - **research-methodology** (10)
 - **code-style** (9)
@@ -17,9 +17,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **changelog-versioning** (7)
 - **widget-test-gotchas** (6)
 - **dead-code** (5)
+- **verify-from-source** (5)
 - **feature-toggle** (4)
 - **ui-design-iteration** (4)
-- **verify-from-source** (4)
 - **appstore-ci** (3)
 - **cross-project-sync** (3)
 - **scope-creep** (3)
@@ -103,6 +103,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
 - [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
 - [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
+- [HAB-264: Serialize release.yml on main to prevent build-number races](HAB-264.md)
 
 ### docs-findability
 - [HAB-220: Groom docs/skills for token-efficiency and findability](HAB-220.md)
@@ -231,6 +232,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-188: Checkup cleanup: dashboard load method, Firestore merge dedup, Android buttons, iOS toolbar icon, pagination stub](HAB-188.md)
 - [HAB-217: Dedicated step/skill for drafting [user] "What's New" CHANGELOG bullets](HAB-217.md)
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238.md)
+- [HAB-264: Serialize release.yml on main to prevent build-number races](HAB-264.md)
 
 ### widget-test-gotchas
 - [HAB-139: Redeem tail-zone failed showups by adding a note](HAB-139.md)
