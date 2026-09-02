@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
+import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
@@ -19,6 +20,7 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
 import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_status_colors.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/locale/fake_locale_preference_service.dart';
@@ -550,6 +552,151 @@ void main() {
       final l10n = AppLocalizations.of(tester.element(find.byType(DashboardPageIos)))!;
       expect(find.text(l10n.dashboardTitle), findsOneWidget);
       expect(find.text(l10n.dashboardGreetingPersonalized('Alex')), findsNothing);
+    });
+  });
+
+  group('Todo list tile icon by UI state (HAB-263)', () {
+    DashboardState stateWithShowup(
+      Showup showup, {
+      Map<String, Duration?> reminderOffsetByPactId = const {},
+      Map<String, List<PactBreak>> breaksByPactId = const {},
+    }) =>
+        DashboardState(
+          isLoading: false,
+          selectedDayIndex: 0,
+          todayIndex: 0,
+          calendarDays: [
+            CalendarDayEntry(date: DateTime(2026, 3, 29), showups: [showup]),
+          ],
+          pactNames: const {'pact-1': 'Meditate'},
+          reminderOffsetByPactId: reminderOffsetByPactId,
+          breaksByPactId: breaksByPactId,
+        );
+
+    Color colorFor(WidgetTester tester, Color Function(ShowupStatusColors) pick) {
+      final context = tester.element(find.byType(DashboardPageIos));
+      return pick(ShowupStatusColors.cupertino(context));
+    }
+
+    testWidgets('planned showup (no reminder fired yet) shows outline circle in pending color', (tester) async {
+      final showup = Showup(
+        id: 's1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime.now().add(const Duration(days: 1)),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+
+      await tester.pumpWidget(_buildTestApp(state: stateWithShowup(showup)));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(CupertinoIcons.circle), findsOneWidget);
+      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.circle));
+      expect(icon.color, colorFor(tester, (c) => c.pending));
+      expect(find.textContaining('Planned'), findsOneWidget);
+    });
+
+    testWidgets('waitingForStart showup (reminder fired, not yet started) shows filled amber circle', (tester) async {
+      final showup = Showup(
+        id: 's1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime.now().add(const Duration(minutes: 10)),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final state = stateWithShowup(
+        showup,
+        reminderOffsetByPactId: {'pact-1': const Duration(minutes: 30)},
+      );
+
+      await tester.pumpWidget(_buildTestApp(state: state));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsOneWidget);
+      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.clock_fill));
+      expect(icon.color, colorFor(tester, (c) => c.waitingForStart));
+      // Subtitle now tracks uiState, not the raw "Pending" domain status (HAB-263 audit finding).
+      expect(find.textContaining('Waiting for start'), findsOneWidget);
+      expect(find.textContaining('Pending'), findsNothing);
+    });
+
+    testWidgets('active (in-progress) showup shows filled amber circle', (tester) async {
+      final showup = Showup(
+        id: 's1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime.now().subtract(const Duration(minutes: 5)),
+        duration: const Duration(minutes: 30),
+        status: ShowupStatus.pending,
+      );
+
+      await tester.pumpWidget(_buildTestApp(state: stateWithShowup(showup)));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsOneWidget);
+      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.clock_fill));
+      expect(icon.color, colorFor(tester, (c) => c.waitingForStart));
+    });
+
+    testWidgets('done showup keeps its own filled check icon, unaffected', (tester) async {
+      final showup = Showup(
+        id: 's1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime.now().subtract(const Duration(hours: 1)),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.done,
+      );
+
+      await tester.pumpWidget(_buildTestApp(state: stateWithShowup(showup)));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(CupertinoIcons.check_mark_circled_solid), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsNothing);
+      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.check_mark_circled_solid));
+      expect(icon.color, colorFor(tester, (c) => c.done));
+    });
+
+    testWidgets('failed showup keeps its own xmark icon, unaffected', (tester) async {
+      final showup = Showup(
+        id: 's1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime.now().subtract(const Duration(hours: 1)),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.failed,
+      );
+
+      await tester.pumpWidget(_buildTestApp(state: stateWithShowup(showup)));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(CupertinoIcons.xmark_circle_fill), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsNothing);
+      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.xmark_circle_fill));
+      expect(icon.color, colorFor(tester, (c) => c.failed));
+    });
+
+    testWidgets('on-break showup keeps its own pause icon in blue, unaffected', (tester) async {
+      final showup = Showup(
+        id: 's1',
+        pactId: 'pact-1',
+        scheduledAt: DateTime(2026, 3, 29, 12),
+        duration: const Duration(minutes: 10),
+        status: ShowupStatus.pending,
+      );
+      final state = stateWithShowup(
+        showup,
+        breaksByPactId: {
+          'pact-1': [
+            PactBreak(id: 'b1', pactId: 'pact-1', startDate: DateTime(2026, 1, 1), rationale: 'rest'),
+          ],
+        },
+      );
+
+      await tester.pumpWidget(_buildTestApp(state: state));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(CupertinoIcons.pause_circle_fill), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsNothing);
+      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.pause_circle_fill));
+      expect(icon.color, colorFor(tester, (c) => c.onBreak));
     });
   });
 }

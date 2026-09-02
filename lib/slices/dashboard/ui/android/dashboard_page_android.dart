@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
@@ -245,17 +244,19 @@ class _ShowupTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isOnBreak = uiState == ShowupUiState.onBreak;
-    final icon = isOnBreak
-        ? Icons.pause_circle_filled
-        : switch (showup.status) {
-            ShowupStatus.done => Icons.check_circle,
-            ShowupStatus.failed => Icons.cancel,
-            ShowupStatus.pending => Icons.radio_button_unchecked,
-          };
+    // Icon shape signals category (resolved/on-break/in-progress/upcoming);
+    // color signals the specific state — see ShowupStatusColors.forUiState (HAB-263).
+    final icon = switch (uiState) {
+      ShowupUiState.onBreak => Icons.pause_circle_filled,
+      ShowupUiState.waitingForStart || ShowupUiState.active => Icons.access_time_filled,
+      ShowupUiState.done => Icons.check_circle,
+      ShowupUiState.failed => Icons.cancel,
+      ShowupUiState.planned => Icons.radio_button_unchecked,
+    };
     final colors = ShowupStatusColors.material(Theme.of(context).colorScheme);
-    final color = isOnBreak ? colors.onBreak : colors.forStatus(showup.status);
-    final statusText = isOnBreak ? l10n.showupOnBreak : showupStatusText(l10n, showup.status);
+    final color = colors.forUiState(uiState);
+    // uiState-driven, not showup.status, so the label matches the icon above (HAB-263 audit finding).
+    final statusText = showupUiStateText(l10n, uiState);
 
     return ListTile(
       onTap: onTap,

@@ -58,6 +58,51 @@ Prefer flat control flow over nested conditionals — guard clauses first, then 
 
 Nesting depth is a readability cost on its own, independent of line count. Guard clauses earn their keep when there's a non-trivial body *after* the checks — when the entire body *is* the check, a single logical expression is more direct with no performance difference (Dart short-circuits `&&` the same way sequential early returns do).
 
+## Avoid the ternary operator
+
+Treat `cond ? a : b` as a code smell, even unnested — it reads worse under a quick scan than the alternatives below. Pick the replacement by shape:
+
+**Two-way branch, one-off** → `if`/`else`:
+```dart
+// Instead of:
+final label = hasName ? 'Hi, $name' : 'Dashboard';
+
+// Prefer:
+final String label;
+if (hasName) {
+  label = 'Hi, $name';
+} else {
+  label = 'Dashboard';
+}
+```
+
+**Selecting over an enum or a fixed set of discrete cases** → `switch` expression — the compiler enforces exhaustiveness, so a new enum value fails to compile instead of silently falling through:
+```dart
+// Instead of:
+final icon = isOnBreak ? Icons.pause_circle_filled : isInProgress ? Icons.access_time_filled : Icons.check_circle;
+
+// Prefer:
+final icon = switch (uiState) {
+  ShowupUiState.onBreak => Icons.pause_circle_filled,
+  ShowupUiState.waitingForStart || ShowupUiState.active => Icons.access_time_filled,
+  ShowupUiState.done => Icons.check_circle,
+  ...
+};
+```
+
+**The same conditional logic is needed in more than one place, or the condition itself needs a name to be legible** → extract a helper function/method:
+```dart
+// ShowupStatusColors.forUiState(state) — used by the calendar dots, the detail
+// badge, and the todo-list tile, instead of three copies of the same switch.
+Color forUiState(ShowupUiState state) => switch (state) {
+      ShowupUiState.planned => pending,
+      ShowupUiState.waitingForStart || ShowupUiState.active => waitingForStart,
+      ShowupUiState.onBreak => onBreak,
+      ShowupUiState.done => done,
+      ShowupUiState.failed => failed,
+    };
+```
+
 ## Git hygiene
 
 Before the first `git add -A`/commit on a new feature branch, run `git status` and check for pre-existing untracked/modified files unrelated to this ticket — stage only what belongs to the change (`git add <specific files>`) rather than `-A`, to avoid sweeping unrelated working-tree state into the PR (HAB-228: an untracked local config file and a leftover investigation test both got swept into a PR this way, each needing its own cleanup commit).

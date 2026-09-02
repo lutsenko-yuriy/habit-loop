@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.60.0] — 2026-09-02 (PR #435 merged)
+
+### Added
+
+- [user] Todo list now shows a filled amber clock icon for in-progress showups instead of the outline circle, matching the calendar and showup details
+- [app] HAB-263: refactored todo-list icon and status-text logic to use `ShowupUiState` consistently instead of mixing UI state (for icons/colours) with domain status (for text labels), and unified to a `switch` expression over enum states instead of nested ternaries for improved readability
+
 ## [0.59.0] — 2026-09-01 (PR #429 merged)
 
 ### Added

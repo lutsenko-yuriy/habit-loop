@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter/material.dart' show Icon, Material, MaterialType, ScaffoldMessenger, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
-import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
@@ -290,23 +289,23 @@ class _ShowupTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isOnBreak = uiState == ShowupUiState.onBreak;
-    final statusText = isOnBreak ? l10n.showupOnBreak : showupStatusText(l10n, showup.status);
+    // uiState-driven, not showup.status, so the label matches the icon below (HAB-263 audit finding).
+    final statusText = showupUiStateText(l10n, uiState);
     final colors = ShowupStatusColors.cupertino(context);
+    // Icon shape signals category (resolved/on-break/in-progress/upcoming);
+    // color signals the specific state — see ShowupStatusColors.forUiState (HAB-263).
+    final icon = switch (uiState) {
+      ShowupUiState.onBreak => CupertinoIcons.pause_circle_fill,
+      ShowupUiState.waitingForStart || ShowupUiState.active => CupertinoIcons.clock_fill,
+      ShowupUiState.done => CupertinoIcons.check_mark_circled_solid,
+      ShowupUiState.failed => CupertinoIcons.xmark_circle_fill,
+      ShowupUiState.planned => CupertinoIcons.circle,
+    };
 
     return CupertinoListTile(
       backgroundColor: CupertinoColors.transparent,
       onTap: onTap,
-      leading: Icon(
-        isOnBreak
-            ? CupertinoIcons.pause_circle_fill
-            : switch (showup.status) {
-                ShowupStatus.done => CupertinoIcons.check_mark_circled_solid,
-                ShowupStatus.failed => CupertinoIcons.xmark_circle_fill,
-                ShowupStatus.pending => CupertinoIcons.circle,
-              },
-        color: isOnBreak ? colors.onBreak : colors.forStatus(showup.status),
-      ),
+      leading: Icon(icon, color: colors.forUiState(uiState)),
       title: Text(habitName),
       subtitle: Text('${l10n.showupDurationMinutes(showup.duration.inMinutes)} — $statusText'),
     );
