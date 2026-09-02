@@ -246,15 +246,23 @@ class _ShowupTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isOnBreak = uiState == ShowupUiState.onBreak;
+    // In-progress: reminder fired but not yet started, or actively within the showup window (HAB-263).
+    final isInProgress = uiState == ShowupUiState.waitingForStart || uiState == ShowupUiState.active;
     final icon = isOnBreak
         ? Icons.pause_circle_filled
-        : switch (showup.status) {
-            ShowupStatus.done => Icons.check_circle,
-            ShowupStatus.failed => Icons.cancel,
-            ShowupStatus.pending => Icons.radio_button_unchecked,
-          };
+        : isInProgress
+            ? Icons.circle
+            : switch (showup.status) {
+                ShowupStatus.done => Icons.check_circle,
+                ShowupStatus.failed => Icons.cancel,
+                ShowupStatus.pending => Icons.radio_button_unchecked,
+              };
     final colors = ShowupStatusColors.material(Theme.of(context).colorScheme);
-    final color = isOnBreak ? colors.onBreak : colors.forStatus(showup.status);
+    final color = isOnBreak
+        ? colors.onBreak
+        : isInProgress
+            ? colors.waitingForStart
+            : colors.forStatus(showup.status);
     final statusText = isOnBreak ? l10n.showupOnBreak : showupStatusText(l10n, showup.status);
 
     return ListTile(

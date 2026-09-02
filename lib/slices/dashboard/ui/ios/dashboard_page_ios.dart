@@ -291,6 +291,8 @@ class _ShowupTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isOnBreak = uiState == ShowupUiState.onBreak;
+    // In-progress: reminder fired but not yet started, or actively within the showup window (HAB-263).
+    final isInProgress = uiState == ShowupUiState.waitingForStart || uiState == ShowupUiState.active;
     final statusText = isOnBreak ? l10n.showupOnBreak : showupStatusText(l10n, showup.status);
     final colors = ShowupStatusColors.cupertino(context);
 
@@ -300,12 +302,18 @@ class _ShowupTile extends StatelessWidget {
       leading: Icon(
         isOnBreak
             ? CupertinoIcons.pause_circle_fill
-            : switch (showup.status) {
-                ShowupStatus.done => CupertinoIcons.check_mark_circled_solid,
-                ShowupStatus.failed => CupertinoIcons.xmark_circle_fill,
-                ShowupStatus.pending => CupertinoIcons.circle,
-              },
-        color: isOnBreak ? colors.onBreak : colors.forStatus(showup.status),
+            : isInProgress
+                ? CupertinoIcons.circle_fill
+                : switch (showup.status) {
+                    ShowupStatus.done => CupertinoIcons.check_mark_circled_solid,
+                    ShowupStatus.failed => CupertinoIcons.xmark_circle_fill,
+                    ShowupStatus.pending => CupertinoIcons.circle,
+                  },
+        color: isOnBreak
+            ? colors.onBreak
+            : isInProgress
+                ? colors.waitingForStart
+                : colors.forStatus(showup.status),
       ),
       title: Text(habitName),
       subtitle: Text('${l10n.showupDurationMinutes(showup.duration.inMinutes)} — $statusText'),
