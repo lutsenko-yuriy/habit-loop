@@ -190,27 +190,41 @@ void main() {
       expect(await pactBreakRepo.getBreaksForPact('debug-seed-local-0'), isEmpty);
     });
 
-    test('seedLocalPacts cancels OS reminders for each deleted pact before re-seeding (HAB-229)', () async {
+    test('seedLocalPacts cancels OS reminders for a deleted pact that had a reminder offset set (HAB-229)', () async {
+      final fakeNotifications = FakeNotificationService();
+      final container = makeContainer(rcOverrides: {'max_active_pacts': 1}, notificationService: fakeNotifications);
+      final notifier = container.read(debugSeedDataViewModelProvider.notifier);
+
+      // First seed run creates debug-seed-local-0 (reminderOffset: null, as all
+      // seeded pacts are) — simulate the user giving it a reminder afterwards
+      // via the edit screen, the same way a debug pact can end up with real
+      // scheduled reminders.
+      await notifier.seedLocalPacts();
+      final seeded = (await pactRepo.getAllPacts()).single;
+      await pactRepo.updatePact(seeded.copyWith(reminderOffset: const Duration(minutes: 10)));
+      final firstRunShowupIds = (await showupRepo.getShowupsForPact('debug-seed-local-0')).map((s) => s.id).toSet();
+      expect(firstRunShowupIds, isNotEmpty);
+
+      // Second run deletes the first run's pact — its now-real reminders must
+      // be cancelled, or they linger in the OS forever.
+      await notifier.seedLocalPacts();
+
+      expect(fakeNotifications.cancelledPactIds, equals(['debug-seed-local-0']));
+      expect(fakeNotifications.cancelledPactShowupIds.single.toSet(), equals(firstRunShowupIds));
+    });
+
+    test('seedLocalPacts skips cancellation for deleted pacts with no reminder offset (the common case)', () async {
+      // Freshly-seeded pacts always have reminderOffset: null (never had a
+      // reminder scheduled), so re-running the seed tool without ever editing
+      // a pact's reminder must not pay the cancellation round-trip at all.
       final fakeNotifications = FakeNotificationService();
       final container = makeContainer(rcOverrides: {'max_active_pacts': 2}, notificationService: fakeNotifications);
       final notifier = container.read(debugSeedDataViewModelProvider.notifier);
 
-      // First seed run creates debug-seed-local-0/1 with their own showups.
       await notifier.seedLocalPacts();
-      final firstRunShowupIds = {
-        for (final pactId in ['debug-seed-local-0', 'debug-seed-local-1'])
-          ...(await showupRepo.getShowupsForPact(pactId)).map((s) => s.id),
-      };
-      expect(firstRunShowupIds, isNotEmpty);
-      fakeNotifications.reset();
-
-      // Second run deletes the first run's pacts — each deleted pact's
-      // reminders must be cancelled, or they linger in the OS forever.
       await notifier.seedLocalPacts();
 
-      expect(fakeNotifications.cancelledPactIds, containsAll(['debug-seed-local-0', 'debug-seed-local-1']));
-      final cancelledShowupIds = fakeNotifications.cancelledPactShowupIds.expand((ids) => ids).toSet();
-      expect(cancelledShowupIds, equals(firstRunShowupIds));
+      expect(fakeNotifications.cancelledPactIds, isEmpty);
     });
 
     test('seedLocalPacts does not attempt cancellation when there are no existing pacts to delete', () async {
