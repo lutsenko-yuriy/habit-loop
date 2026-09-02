@@ -244,7 +244,6 @@ class _ShowupTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isOnBreak = uiState == ShowupUiState.onBreak;
     // Icon shape signals category (resolved/on-break/in-progress/upcoming);
     // color signals the specific state — see ShowupStatusColors.forUiState (HAB-263).
     final icon = switch (uiState) {
@@ -256,7 +255,8 @@ class _ShowupTile extends StatelessWidget {
     };
     final colors = ShowupStatusColors.material(Theme.of(context).colorScheme);
     final color = colors.forUiState(uiState);
-    final statusText = isOnBreak ? l10n.showupOnBreak : showupStatusText(l10n, showup.status);
+    // uiState-driven, not showup.status, so the label matches the icon above (HAB-263 audit finding).
+    final statusText = showupUiStateText(l10n, uiState);
 
     return ListTile(
       onTap: onTap,

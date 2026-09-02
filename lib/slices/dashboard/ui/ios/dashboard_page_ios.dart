@@ -289,8 +289,8 @@ class _ShowupTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isOnBreak = uiState == ShowupUiState.onBreak;
-    final statusText = isOnBreak ? l10n.showupOnBreak : showupStatusText(l10n, showup.status);
+    // uiState-driven, not showup.status, so the label matches the icon below (HAB-263 audit finding).
+    final statusText = showupUiStateText(l10n, uiState);
     final colors = ShowupStatusColors.cupertino(context);
     // Icon shape signals category (resolved/on-break/in-progress/upcoming);
     // color signals the specific state — see ShowupStatusColors.forUiState (HAB-263).

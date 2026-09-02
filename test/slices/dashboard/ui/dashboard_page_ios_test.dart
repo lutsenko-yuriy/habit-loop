@@ -593,6 +593,7 @@ void main() {
       expect(find.byIcon(CupertinoIcons.circle), findsOneWidget);
       final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.circle));
       expect(icon.color, colorFor(tester, (c) => c.pending));
+      expect(find.textContaining('Planned'), findsOneWidget);
     });
 
     testWidgets('waitingForStart showup (reminder fired, not yet started) shows filled amber circle', (tester) async {
@@ -614,6 +615,9 @@ void main() {
       expect(find.byIcon(CupertinoIcons.circle_fill), findsOneWidget);
       final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.circle_fill));
       expect(icon.color, colorFor(tester, (c) => c.waitingForStart));
+      // Subtitle now tracks uiState, not the raw "Pending" domain status (HAB-263 audit finding).
+      expect(find.textContaining('Waiting for start'), findsOneWidget);
+      expect(find.textContaining('Pending'), findsNothing);
     });
 
     testWidgets('active (in-progress) showup shows filled amber circle', (tester) async {
