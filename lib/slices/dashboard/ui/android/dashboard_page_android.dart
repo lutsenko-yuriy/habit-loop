@@ -248,7 +248,7 @@ class _ShowupTile extends StatelessWidget {
     // color signals the specific state — see ShowupStatusColors.forUiState (HAB-263).
     final icon = switch (uiState) {
       ShowupUiState.onBreak => Icons.pause_circle_filled,
-      ShowupUiState.waitingForStart || ShowupUiState.active => Icons.circle,
+      ShowupUiState.waitingForStart || ShowupUiState.active => Icons.access_time_filled,
       ShowupUiState.done => Icons.check_circle,
       ShowupUiState.failed => Icons.cancel,
       ShowupUiState.planned => Icons.radio_button_unchecked,

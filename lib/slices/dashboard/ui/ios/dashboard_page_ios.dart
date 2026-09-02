@@ -296,7 +296,7 @@ class _ShowupTile extends StatelessWidget {
     // color signals the specific state — see ShowupStatusColors.forUiState (HAB-263).
     final icon = switch (uiState) {
       ShowupUiState.onBreak => CupertinoIcons.pause_circle_fill,
-      ShowupUiState.waitingForStart || ShowupUiState.active => CupertinoIcons.circle_fill,
+      ShowupUiState.waitingForStart || ShowupUiState.active => CupertinoIcons.clock_fill,
       ShowupUiState.done => CupertinoIcons.check_mark_circled_solid,
       ShowupUiState.failed => CupertinoIcons.xmark_circle_fill,
       ShowupUiState.planned => CupertinoIcons.circle,

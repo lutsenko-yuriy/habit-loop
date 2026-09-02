@@ -4,7 +4,7 @@ The app is available in English, French, German, and Russian.
 
 The Habit Loop app allows the user to:
 - See an overview on a dashboard of what the user should do today, what they have already done today, and how their pacts are going in general
-  - The user must see a todo list of showups that are already done/should be done today. Each entry's icon reflects its state: outline circle (upcoming), filled amber circle (in progress — reminder fired or the showup's window has opened), filled green (done), filled red (failed), filled blue pause glyph (on break)
+  - The user must see a todo list of showups that are already done/should be done today. Each entry's icon reflects its state: outline circle (upcoming), filled amber clock (in progress — reminder fired or the showup's window has opened), filled green (done), filled red (failed), filled blue pause glyph (on break)
   - The user must see a calendar view centered on today, showing 3 days before and 3 days after. Past and today's slots show completed/failed showups; future slots show upcoming scheduled showups. Each day shows colored dots per showup (green=done, red=failed, grey=upcoming). Today is highlighted with a circle; the selected day has accent color. Tapping a day shows that day's showups in the list below.
   - The user can create a new pact on a separate screen
   - Multiple pacts can be active simultaneously

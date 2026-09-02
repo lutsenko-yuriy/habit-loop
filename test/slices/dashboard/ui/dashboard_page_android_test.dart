@@ -425,8 +425,8 @@ void main() {
       await tester.pumpWidget(_buildTestApp(state: state));
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.circle), findsOneWidget);
-      final icon = tester.widget<Icon>(find.byIcon(Icons.circle));
+      expect(find.byIcon(Icons.access_time_filled), findsOneWidget);
+      final icon = tester.widget<Icon>(find.byIcon(Icons.access_time_filled));
       expect(icon.color, colorsFrom(tester).waitingForStart);
       // Subtitle now tracks uiState, not the raw "Pending" domain status (HAB-263 audit finding).
       expect(find.textContaining('Waiting for start'), findsOneWidget);
@@ -445,8 +445,8 @@ void main() {
       await tester.pumpWidget(_buildTestApp(state: stateWithShowup(showup)));
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.circle), findsOneWidget);
-      final icon = tester.widget<Icon>(find.byIcon(Icons.circle));
+      expect(find.byIcon(Icons.access_time_filled), findsOneWidget);
+      final icon = tester.widget<Icon>(find.byIcon(Icons.access_time_filled));
       expect(icon.color, colorsFrom(tester).waitingForStart);
     });
 
@@ -463,7 +463,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
-      expect(find.byIcon(Icons.circle), findsNothing);
+      expect(find.byIcon(Icons.access_time_filled), findsNothing);
       final icon = tester.widget<Icon>(find.byIcon(Icons.check_circle));
       expect(icon.color, colorsFrom(tester).done);
     });
@@ -481,7 +481,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.cancel), findsOneWidget);
-      expect(find.byIcon(Icons.circle), findsNothing);
+      expect(find.byIcon(Icons.access_time_filled), findsNothing);
       final icon = tester.widget<Icon>(find.byIcon(Icons.cancel));
       expect(icon.color, colorsFrom(tester).failed);
     });
@@ -507,7 +507,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.pause_circle_filled), findsOneWidget);
-      expect(find.byIcon(Icons.circle), findsNothing);
+      expect(find.byIcon(Icons.access_time_filled), findsNothing);
       final icon = tester.widget<Icon>(find.byIcon(Icons.pause_circle_filled));
       expect(icon.color, colorsFrom(tester).onBreak);
     });

@@ -612,8 +612,8 @@ void main() {
       await tester.pumpWidget(_buildTestApp(state: state));
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(CupertinoIcons.circle_fill), findsOneWidget);
-      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.circle_fill));
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsOneWidget);
+      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.clock_fill));
       expect(icon.color, colorFor(tester, (c) => c.waitingForStart));
       // Subtitle now tracks uiState, not the raw "Pending" domain status (HAB-263 audit finding).
       expect(find.textContaining('Waiting for start'), findsOneWidget);
@@ -632,8 +632,8 @@ void main() {
       await tester.pumpWidget(_buildTestApp(state: stateWithShowup(showup)));
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(CupertinoIcons.circle_fill), findsOneWidget);
-      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.circle_fill));
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsOneWidget);
+      final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.clock_fill));
       expect(icon.color, colorFor(tester, (c) => c.waitingForStart));
     });
 
@@ -650,7 +650,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(CupertinoIcons.check_mark_circled_solid), findsOneWidget);
-      expect(find.byIcon(CupertinoIcons.circle_fill), findsNothing);
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsNothing);
       final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.check_mark_circled_solid));
       expect(icon.color, colorFor(tester, (c) => c.done));
     });
@@ -668,7 +668,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(CupertinoIcons.xmark_circle_fill), findsOneWidget);
-      expect(find.byIcon(CupertinoIcons.circle_fill), findsNothing);
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsNothing);
       final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.xmark_circle_fill));
       expect(icon.color, colorFor(tester, (c) => c.failed));
     });
@@ -694,7 +694,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(CupertinoIcons.pause_circle_fill), findsOneWidget);
-      expect(find.byIcon(CupertinoIcons.circle_fill), findsNothing);
+      expect(find.byIcon(CupertinoIcons.clock_fill), findsNothing);
       final icon = tester.widget<Icon>(find.byIcon(CupertinoIcons.pause_circle_fill));
       expect(icon.color, colorFor(tester, (c) => c.onBreak));
     });
