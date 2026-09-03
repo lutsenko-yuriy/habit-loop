@@ -59,7 +59,18 @@ runs:
       with:
         api-level: 29
         arch: x86_64
-        script: bash -c "set -o pipefail; flutter test integration_test/test_runner.dart --machine --no-pub --timeout=300s | tee test-results.json"
+        # Wrapper-level timeout (HAB-205): the test framework's own --timeout=300s
+        # bounds a single test, not the whole `flutter test` process — a genuinely
+        # stuck run (e.g. a runaway fixture date range) has been observed to sail
+        # past it with no error, silently consuming the job's full 90m budget.
+        # `timeout 30m` kills the whole process tree instead, well above the ~10m
+        # a healthy full-suite run takes.
+        script: >-
+          bash -c "set -o pipefail;
+          timeout 30m flutter test integration_test/test_runner.dart --machine --no-pub --timeout=300s | tee test-results.json;
+          code=\${PIPESTATUS[0]};
+          if [ \$code -eq 124 ]; then echo '::error::flutter test hung past the 30m wrapper timeout (HAB-205) — likely a runaway fixture/timing issue, not a slow-but-healthy run'; fi;
+          exit \$code"
 
     - name: Strip non-JSON lines from test results
       if: always()

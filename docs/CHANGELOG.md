@@ -10,6 +10,7 @@ Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not cha
 
 - [ci] HAB-264: `release.yml` now serializes runs that build/tag on `main` (push or `workflow_dispatch` against `refs/heads/main`) via a `concurrency` group, so two merges landing close together can no longer both read the same highest `version-*` tag and resolve the same build number. Caught live when PR #435 (0.60.0) and PR #436 (0.60.1) raced and both resolved build number 192.
 - [test] HAB-265: fixed `notification_navigation_flow_test.dart` assertions left stale by HAB-263 — the dashboard tile now shows "Planned" (uiState-based text) instead of "Pending" (raw domain status) for a not-yet-started showup, and the test still checked for the old text.
+- [ci] HAB-205: added a hard 30-minute wrapper-level `timeout` around the `flutter test` invocation for integration scenarios (CI's `run-scenarios` composite action and the local `/run-scenarios` skill) — the test framework's own `--timeout=300s` bounds a single test, not the whole process, so a genuinely stuck run (e.g. a runaway fixture date range, seen in HAB-202) previously sailed past it silently instead of failing fast with a clear signal.
 
 ## [0.60.1] — 2026-09-02 (PR #436 merged)
 
