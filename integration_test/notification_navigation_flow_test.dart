@@ -65,8 +65,9 @@ void main() {
 
         // ── 1. Dashboard shows today's showup as planned (HAB-263: the tile
         //       subtitle tracks time-derived uiState, not raw domain status —
-        //       this showup's fixed clock sits before the reminder/start
-        //       window, so it reads "Planned", not "Pending"). ──────────────
+        //       with no reminderOffset set, this showup stays in the
+        //       pre-reminder `planned` uiState, so it reads "Planned", not
+        //       "Pending"). ─────────────────────────────────────────────────
         await waitFor(tester, find.text('Morning Jog'));
         expect(find.textContaining(strings.showupPlanned), findsOneWidget);
 
