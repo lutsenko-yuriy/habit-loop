@@ -39,15 +39,23 @@ If files are found, run only those. If none match, fall back to the full suite a
 
 ### 3. Run
 
-Wrap the invocation in a hard 30-minute wrapper timeout (HAB-205) — a genuinely stuck run is indistinguishable from a slow one otherwise; it produces no error and can hang indefinitely, well past what a healthy full-suite run takes (~10 minutes):
+Wrap the invocation in a hard 20-minute wrapper timeout (HAB-205) — a genuinely stuck run is indistinguishable from a slow one otherwise; it produces no error and can hang indefinitely, well past what a healthy full-suite run takes (~10 minutes).
+
+`timeout` is GNU coreutils and is not present on macOS by default — resolve the binary first (falls back to no wrapper, with a warning, if neither is installed rather than silently failing with "command not found"):
 
 ```bash
-timeout 30m <flutter> test <target> -d <device-id> --reporter expanded
+TIMEOUT_BIN=$(command -v timeout || command -v gtimeout || true)
 ```
+
+```bash
+${TIMEOUT_BIN:+$TIMEOUT_BIN -k 1m 20m} <flutter> test <target> -d <device-id> --reporter expanded
+```
+
+If `TIMEOUT_BIN` is empty, tell the user once: "No `timeout`/`gtimeout` binary found (install via `brew install coreutils` for the hang-safety wrapper) — running without a wrapper timeout."
 
 When `<target>` is a single specific file (HAB-XX match), run it directly. When it is the full suite, use `integration_test/test_runner.dart` as the target.
 
-If the command exits with code 124, report a hang explicitly instead of a generic failure: "⏱️ Timed out after 30m — likely a runaway fixture/timing issue (HAB-205), not a slow-but-healthy run. Investigate before re-running."
+If the command exits with code 124, report a hang explicitly instead of a generic failure: "⏱️ Timed out after 20m — likely a runaway fixture/timing issue (HAB-205), not a slow-but-healthy run. Investigate before re-running."
 
 If running this in the background, set up the monitor to emit on both success and
 failure/error markers — not just a single "All tests passed" line — so a stalled or
