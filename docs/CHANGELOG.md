@@ -9,6 +9,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
 - [ci] HAB-264: `release.yml` now serializes runs that build/tag on `main` (push or `workflow_dispatch` against `refs/heads/main`) via a `concurrency` group, so two merges landing close together can no longer both read the same highest `version-*` tag and resolve the same build number. Caught live when PR #435 (0.60.0) and PR #436 (0.60.1) raced and both resolved build number 192.
+- [test] HAB-265: fixed `notification_navigation_flow_test.dart` assertions left stale by HAB-263 — the dashboard tile now shows "Planned" (uiState-based text) instead of "Pending" (raw domain status) for a not-yet-started showup, and the test still checked for the old text.
 
 ## [0.60.1] — 2026-09-02 (PR #436 merged)
 

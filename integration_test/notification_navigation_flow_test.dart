@@ -63,9 +63,13 @@ void main() {
 
         final strings = l10n(tester);
 
-        // ── 1. Dashboard shows today's showup as pending ──────────────────
+        // ── 1. Dashboard shows today's showup as planned (HAB-263: the tile
+        //       subtitle tracks time-derived uiState, not raw domain status —
+        //       with no reminderOffset set, this showup stays in the
+        //       pre-reminder `planned` uiState, so it reads "Planned", not
+        //       "Pending"). ─────────────────────────────────────────────────
         await waitFor(tester, find.text('Morning Jog'));
-        expect(find.textContaining(strings.showupPending), findsOneWidget);
+        expect(find.textContaining(strings.showupPlanned), findsOneWidget);
 
         // ── 2. Simulate notification tap: push ShowupDetailScreen directly
         //       using NotificationNavigator (the production code path).
@@ -98,7 +102,7 @@ void main() {
 
         // ── 5. Dashboard tile now shows done status ────────────────────────
         expect(find.textContaining(strings.showupDone), findsOneWidget);
-        expect(find.textContaining(strings.showupPending), findsNothing);
+        expect(find.textContaining(strings.showupPlanned), findsNothing);
       },
     );
 
@@ -120,7 +124,7 @@ void main() {
         final strings = l10n(tester);
 
         await waitFor(tester, find.text('Morning Jog'));
-        expect(find.textContaining(strings.showupPending), findsOneWidget);
+        expect(find.textContaining(strings.showupPlanned), findsOneWidget);
 
         final container = ProviderScope.containerOf(tester.element(find.byType(Navigator).first));
         unawaited(
@@ -144,7 +148,7 @@ void main() {
         }
 
         expect(find.textContaining(strings.showupFailed), findsOneWidget);
-        expect(find.textContaining(strings.showupPending), findsNothing);
+        expect(find.textContaining(strings.showupPlanned), findsNothing);
       },
     );
   });
