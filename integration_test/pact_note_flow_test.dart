@@ -108,15 +108,39 @@ Future<void> _enterNoteText(WidgetTester tester, String text) async {
   }
 }
 
-/// Pumps until the save button goes back to disabled (i.e. `saveNote()`'s
-/// async DB write + state update has completed) or [timeout] expires.
-/// Mirrors [_enterNoteText]'s poll-don't-guess pattern for the other side of
-/// the save round-trip — a fixed pump count after tapping Save can be
-/// outrun by CI's slower/shared runner, reading the repo before the write
-/// actually lands (HAB-258).
-Future<void> _waitForSaveSettled(WidgetTester tester, {Duration timeout = const Duration(seconds: 20)}) async {
+/// Pumps until [pactId]'s persisted note matches [expectedNote] or [timeout]
+/// expires.
+///
+/// Deliberately polls the repository (ground truth) rather than the save
+/// button's enabled state: `onPressed` is `null` both while
+/// `isSavingNote == true` *and* once the save has completed with no further
+/// unsaved changes — `(isSaving || !hasChanged) ? null : ...`
+/// (pact_note_section.dart). "Disabled" therefore goes true on the very next
+/// frame after tapping Save, before the async write has actually landed, so
+/// waiting for it returns immediately without waiting for anything (HAB-258
+/// — a first attempt at this fix used exactly that button-state poll and
+/// still flaked on CI for this reason).
+///
+/// `PactService.updatePact` awaits the repository write, then
+/// `PactDetailCache.refresh` (in-memory, no I/O) — the repo write landing is
+/// the reliable signal; the couple of extra pumps below give the
+/// near-instant cache refresh time to catch up before the caller treats the
+/// save as fully settled (e.g. before navigating to Timeline).
+Future<void> _waitForNoteSaved(
+  WidgetTester tester,
+  AppHarness h,
+  String pactId,
+  String expectedNote, {
+  Duration timeout = const Duration(seconds: 20),
+}) async {
   final deadline = tester.binding.clock.now().add(timeout);
-  while (_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
+  while (tester.binding.clock.now().isBefore(deadline)) {
+    final saved = await h.pactRepo.getPactById(pactId);
+    if ((saved?.stopReason ?? '') == expectedNote) {
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      return;
+    }
     await tester.pump(const Duration(milliseconds: 50));
   }
 }
@@ -180,7 +204,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      await _waitForSaveSettled(tester);
+      await _waitForNoteSaved(tester, h, _stoppedPact.id, 'Injured knee — resting now');
 
       // ── 6. Note is persisted ───────────────────────────────────────────────
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
@@ -223,7 +247,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      await _waitForSaveSettled(tester);
+      await _waitForNoteSaved(tester, h, _stoppedPact.id, '');
 
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
       expect(saved?.stopReason ?? '', isEmpty);
@@ -263,7 +287,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      await _waitForSaveSettled(tester);
+      await _waitForNoteSaved(tester, h, _stoppedPact.id, 'Injured knee — resting now');
 
       // ── 4. Open Timeline from the same still-open Pact Detail screen ────────
       await openTimeline(tester);
@@ -319,7 +343,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      await _waitForSaveSettled(tester);
+      await _waitForNoteSaved(tester, h, _completedPact.id, 'Felt great throughout!');
 
       final saved = await h.pactRepo.getPactById(_completedPact.id);
       expect(saved?.stopReason, 'Felt great throughout!');
