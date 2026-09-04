@@ -94,13 +94,29 @@ Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) asyn
 /// the change. enterText's update reaches the button via a
 /// ValueListenableBuilder rebuild that intermittently takes far more than a
 /// couple of frames on CI's emulator — sometimes several seconds — so a
-/// fixed pump count is not reliable (HAB-211).
+/// fixed pump count is not reliable (HAB-211). 10s wasn't always enough
+/// under CI load (HAB-258: `existing_stop_reason_prepopulated_and_editable`
+/// timed out here on a baseline dispatch) — 30s matches [waitFor]'s own
+/// default elsewhere in this harness.
 Future<void> _enterNoteText(WidgetTester tester, String text) async {
   await tester.tap(find.byKey(const Key('pact-note-field')));
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const Key('pact-note-field')), text);
-  final deadline = tester.binding.clock.now().add(const Duration(seconds: 10));
+  final deadline = tester.binding.clock.now().add(const Duration(seconds: 30));
   while (!_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
+/// Pumps until the save button goes back to disabled (i.e. `saveNote()`'s
+/// async DB write + state update has completed) or [timeout] expires.
+/// Mirrors [_enterNoteText]'s poll-don't-guess pattern for the other side of
+/// the save round-trip — a fixed pump count after tapping Save can be
+/// outrun by CI's slower/shared runner, reading the repo before the write
+/// actually lands (HAB-258).
+Future<void> _waitForSaveSettled(WidgetTester tester, {Duration timeout = const Duration(seconds: 20)}) async {
+  final deadline = tester.binding.clock.now().add(timeout);
+  while (_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
     await tester.pump(const Duration(milliseconds: 50));
   }
 }
@@ -164,14 +180,13 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _waitForSaveSettled(tester);
 
       // ── 6. Note is persisted ───────────────────────────────────────────────
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
       expect(saved?.stopReason, 'Injured knee — resting now');
 
       // ── 7. Save button is disabled again (no new unsaved changes) ─────────
-      await waitFor(tester, find.byKey(const Key('pact-note-save-button')));
       expect(_saveButtonEnabled(tester), isFalse);
 
       // ── 8. pact_note_saved analytics event was fired ───────────────────────
@@ -208,7 +223,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _waitForSaveSettled(tester);
 
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
       expect(saved?.stopReason ?? '', isEmpty);
@@ -248,7 +263,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _waitForSaveSettled(tester);
 
       // ── 4. Open Timeline from the same still-open Pact Detail screen ────────
       await openTimeline(tester);
@@ -304,7 +319,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await _waitForSaveSettled(tester);
 
       final saved = await h.pactRepo.getPactById(_completedPact.id);
       expect(saved?.stopReason, 'Felt great throughout!');
