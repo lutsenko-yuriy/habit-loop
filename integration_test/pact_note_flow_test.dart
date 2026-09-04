@@ -242,14 +242,25 @@ void main() {
       );
 
       await _enterNoteText(tester, '');
+      // TEMP HAB-258 diagnostics — remove once the race is identified.
+      // ignore: avoid_print
+      print('HAB-258 diag: field text after _enterNoteText = "${_noteFieldText(tester)}", '
+          'save enabled = ${_saveButtonEnabled(tester)}');
 
       await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
+      // ignore: avoid_print
+      print('HAB-258 diag: field text right before tap = "${_noteFieldText(tester)}"');
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
+      // ignore: avoid_print
+      print('HAB-258 diag: field text right after tap+pump = "${_noteFieldText(tester)}"');
       await _waitForNoteSaved(tester, h, _stoppedPact.id, '');
 
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
+      // ignore: avoid_print
+      print('HAB-258 diag: final repo stopReason = "${saved?.stopReason}", '
+          'final field text = "${_noteFieldText(tester)}"');
       expect(saved?.stopReason ?? '', isEmpty);
     });
 
