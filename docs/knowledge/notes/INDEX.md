@@ -6,7 +6,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (19)
+- **review-findings** (20)
 - **planning-gaps** (14)
 - **debugging-methodology** (13)
 - **multi-wu-scope** (13)
@@ -193,6 +193,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-184: Fix false positives in dead-code-check's orphaned test-file detector](HAB-184.md)
 - [HAB-186: Automate session-start checklist via SessionStart hook](HAB-186.md)
 - [HAB-189: CI/lint check for raw spacing literals instead of AppSpacing tokens](HAB-189.md)
+- [HAB-205: Add a hard wrapper-level timeout for integration scenario runs](HAB-205.md)
 - [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)

@@ -59,7 +59,20 @@ runs:
       with:
         api-level: 29
         arch: x86_64
-        script: bash -c "set -o pipefail; flutter test integration_test/test_runner.dart --machine --no-pub --timeout=300s | tee test-results.json"
+        # Wrapper-level timeout (HAB-205): the test framework's own --timeout=300s
+        # bounds a single test, not the whole `flutter test` process — a genuinely
+        # stuck run (e.g. a runaway fixture date range) has been observed to sail
+        # past it with no error, silently consuming the job's full 90m budget.
+        # `timeout -k 1m 20m` kills the whole process group instead, still 2x the
+        # ~10m a healthy full-suite run takes. `-k 1m` sends a follow-up SIGKILL
+        # a minute after the initial SIGTERM, in case flutter test's SIGTERM
+        # handler (adb device teardown) is itself what's hung — without it,
+        # timeout can block forever waiting on a handler that never returns.
+        script: >-
+          bash -c "timeout -k 1m 20m flutter test integration_test/test_runner.dart --machine --no-pub --timeout=300s | tee test-results.json;
+          code=\${PIPESTATUS[0]};
+          if [ \$code -eq 124 ]; then echo '::error::flutter test hung past the 20m wrapper timeout (HAB-205) — likely a runaway fixture/timing issue, not a slow-but-healthy run'; touch scenario-timeout.marker; fi;
+          exit \$code"
 
     - name: Strip non-JSON lines from test results
       if: always()
@@ -81,7 +94,11 @@ runs:
       run: python3 scripts/ci/scenarios_summary.py
 
     - name: Update badge gist
-      if: always()
+      # Skip on a HAB-205 wrapper-timeout: a killed run leaves a truncated
+      # test-results.json whose passed-so-far count can equal its own total,
+      # which update_scenarios_badge.py can't tell apart from a genuine
+      # all-green run — publishing brightgreen for a run that never finished.
+      if: always() && hashFiles('scenario-timeout.marker') == ''
       shell: bash
       env:
         GIST_TOKEN: ${{ inputs.gist-token }}
