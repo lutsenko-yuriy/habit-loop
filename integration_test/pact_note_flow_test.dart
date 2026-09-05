@@ -94,15 +94,15 @@ Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) asyn
 /// the change. enterText's update reaches the button via a
 /// ValueListenableBuilder rebuild that intermittently takes far more than a
 /// couple of frames on CI's emulator — sometimes several seconds — so a
-/// fixed pump count is not reliable (HAB-211). 10s wasn't always enough
-/// under CI load (HAB-258: `existing_stop_reason_prepopulated_and_editable`
-/// timed out here on a baseline dispatch) — 30s matches [waitFor]'s own
-/// default elsewhere in this harness.
+/// fixed pump count is not reliable (HAB-211). Bumped 10s -> 30s -> 45s
+/// across successive HAB-258 dispatches (`existing_stop_reason_prepopulated_and_editable`
+/// timed out here at both prior values) — matches [_waitForNoteSaved]'s
+/// same-reasoning 45s budget.
 Future<void> _enterNoteText(WidgetTester tester, String text) async {
   await tester.tap(find.byKey(const Key('pact-note-field')));
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const Key('pact-note-field')), text);
-  final deadline = tester.binding.clock.now().add(const Duration(seconds: 30));
+  final deadline = tester.binding.clock.now().add(const Duration(seconds: 45));
   while (!_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
     await tester.pump(const Duration(milliseconds: 50));
   }
