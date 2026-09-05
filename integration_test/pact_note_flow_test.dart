@@ -186,6 +186,13 @@ void main() {
           matching: find.byType(Scrollable),
         ),
       );
+      // scrollUntilVisible's found-check only confirms the element exists in
+      // the tree — on CI's slower/short-viewport emulator the field can still
+      // be mid-scroll, at a not-yet-stable on-screen position, so an
+      // immediate tap's hit-test can miss it entirely (HAB-258, same root
+      // cause as openTimeline's identical settle below, HAB-211). Settle
+      // first, every time this field is scrolled into view before typing.
+      await tester.pumpAndSettle();
       expect(find.text('Got injured'), findsOneWidget);
 
       // ── 2. Save button is disabled (no changes yet) ────────────────────────
@@ -240,27 +247,17 @@ void main() {
           matching: find.byType(Scrollable),
         ),
       );
+      await tester.pumpAndSettle(); // HAB-258 — see comment on the first test's identical call.
 
       await _enterNoteText(tester, '');
-      // TEMP HAB-258 diagnostics — remove once the race is identified.
-      // ignore: avoid_print
-      print('HAB-258 diag: field text after _enterNoteText = "${_noteFieldText(tester)}", '
-          'save enabled = ${_saveButtonEnabled(tester)}');
 
       await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      // ignore: avoid_print
-      print('HAB-258 diag: field text right before tap = "${_noteFieldText(tester)}"');
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
-      // ignore: avoid_print
-      print('HAB-258 diag: field text right after tap+pump = "${_noteFieldText(tester)}"');
       await _waitForNoteSaved(tester, h, _stoppedPact.id, '');
 
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
-      // ignore: avoid_print
-      print('HAB-258 diag: final repo stopReason = "${saved?.stopReason}", '
-          'final field text = "${_noteFieldText(tester)}"');
       expect(saved?.stopReason ?? '', isEmpty);
     });
 
@@ -292,6 +289,7 @@ void main() {
           matching: find.byType(Scrollable),
         ),
       );
+      await tester.pumpAndSettle(); // HAB-258 — see comment on the first test's identical call.
       await _enterNoteText(tester, 'Injured knee — resting now');
 
       await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
@@ -341,6 +339,7 @@ void main() {
           matching: find.byType(Scrollable),
         ),
       );
+      await tester.pumpAndSettle(); // HAB-258 — see comment on the first test's identical call.
 
       // ── 1. Field starts empty ─────────────────────────────────────────────
       expect(_noteFieldText(tester), isEmpty);
