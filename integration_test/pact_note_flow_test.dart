@@ -215,7 +215,12 @@ void main() {
       // The stopped-date row + View Timeline button push the save button near the
       // viewport edge; ensureVisible scrolls it fully into view before tapping.
       await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
-      await tester.pump();
+      // pumpAndSettle, not a single pump — ensureVisible's scroll (and the
+      // keyboard closing) may still be animating; an immediate tap can
+      // hit-test-miss the button (HAB-258, same root cause as the
+      // scrollUntilVisible fix above, and the pattern
+      // empty_note_field_writable_and_persists already used correctly below).
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
       await _waitForNoteSaved(tester, h, _stoppedPact.id, 'Injured knee — resting now');
@@ -259,7 +264,12 @@ void main() {
       await _enterNoteText(tester, '');
 
       await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
-      await tester.pump();
+      // pumpAndSettle, not a single pump — ensureVisible's scroll (and the
+      // keyboard closing) may still be animating; an immediate tap can
+      // hit-test-miss the button (HAB-258, same root cause as the
+      // scrollUntilVisible fix above, and the pattern
+      // empty_note_field_writable_and_persists already used correctly below).
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
       await _waitForNoteSaved(tester, h, _stoppedPact.id, '');
@@ -300,7 +310,12 @@ void main() {
       await _enterNoteText(tester, 'Injured knee — resting now');
 
       await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
-      await tester.pump();
+      // pumpAndSettle, not a single pump — ensureVisible's scroll (and the
+      // keyboard closing) may still be animating; an immediate tap can
+      // hit-test-miss the button (HAB-258, same root cause as the
+      // scrollUntilVisible fix above, and the pattern
+      // empty_note_field_writable_and_persists already used correctly below).
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('pact-note-save-button')));
       await tester.pump();
       await _waitForNoteSaved(tester, h, _stoppedPact.id, 'Injured knee — resting now');
