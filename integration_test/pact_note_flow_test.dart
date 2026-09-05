@@ -131,7 +131,7 @@ Future<void> _waitForNoteSaved(
   AppHarness h,
   String pactId,
   String expectedNote, {
-  Duration timeout = const Duration(seconds: 20),
+  Duration timeout = const Duration(seconds: 45),
 }) async {
   final deadline = tester.binding.clock.now().add(timeout);
   while (tester.binding.clock.now().isBefore(deadline)) {
@@ -143,6 +143,13 @@ Future<void> _waitForNoteSaved(
     }
     await tester.pump(const Duration(milliseconds: 50));
   }
+  // Throw like waitFor does instead of returning silently — a caller that
+  // proceeds to navigate on an unconfirmed save gets a much more confusing
+  // downstream failure (HAB-258: a CI run this slow surfaced as a Timeline
+  // waitFor timeout two steps later, not as this one).
+  throw TestFailure(
+    '_waitForNoteSaved timed out: pact $pactId stopReason never became "$expectedNote"',
+  );
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -299,13 +306,16 @@ void main() {
       await _waitForNoteSaved(tester, h, _stoppedPact.id, 'Injured knee — resting now');
 
       // ── 4. Open Timeline from the same still-open Pact Detail screen ────────
+      // Longer-than-default timeouts below (HAB-258): a CI run observed this
+      // navigation alone take ~52s under heavy load — waitFor's usual 30s
+      // default isn't always enough for this specific screen transition.
       await openTimeline(tester);
-      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+      await waitFor(tester, find.textContaining(strings.pactTimelineTitle), timeout: const Duration(seconds: 60));
 
       // ── 5. The updated note is reflected; the original text is gone ─────────
       // Pact Detail remains in the nav stack below Timeline, so its own
       // pact-note-field still shows the new text too — two matches expected.
-      await waitFor(tester, find.text('Injured knee — resting now'));
+      await waitFor(tester, find.text('Injured knee — resting now'), timeout: const Duration(seconds: 60));
       expect(find.text('Injured knee — resting now'), findsAtLeastNWidgets(1));
       expect(find.text('Got injured'), findsNothing);
     });
