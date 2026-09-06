@@ -8,6 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [meta] (PR #442) HAB-200: logged a follow-up note about the ship subagent's mid-skill self-escalation attempt
 - [meta] (PR #441) HAB-200: research concludes — adopt the "test robot" pattern incrementally starting from the next flaky-file fix, plus a centralized widget-Key file (ADR-0006)
 - [test] HAB-258: fixed four confirmed races in `pact_note_flow_test.dart` causing intermittent `scenarios.yml` failures on the pact-note/timeline write-through scenarios — an ambiguous save-button-disabled poll that returned before the async write actually landed, missing settles after scrolling the note field and the Save button into view (hit-test misses on CI's slower/short-viewport Android emulator), and a silent wait-timeout that masked a real failure as a confusing downstream error. Residual CI-timeout-only flakiness at two spots split off to HAB-267.
 - [ci] HAB-264: `release.yml` now serializes runs that build/tag on `main` (push or `workflow_dispatch` against `refs/heads/main`) via a `concurrency` group, so two merges landing close together can no longer both read the same highest `version-*` tag and resolve the same build number. Caught live when PR #435 (0.60.0) and PR #436 (0.60.1) raced and both resolved build number 192.
