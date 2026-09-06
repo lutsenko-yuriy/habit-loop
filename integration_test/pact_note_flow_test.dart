@@ -106,6 +106,12 @@ Future<void> _enterNoteText(WidgetTester tester, String text) async {
   while (!_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
     await tester.pump(const Duration(milliseconds: 50));
   }
+  // Throw like waitFor/_waitForNoteSaved do instead of returning silently —
+  // a caller that taps a still-disabled Save button gets a confusing failure
+  // much later instead of a clear signal here (HAB-258 audit finding on PR #440).
+  if (!_saveButtonEnabled(tester)) {
+    throw TestFailure('_enterNoteText timed out: save button never became enabled for "$text"');
+  }
 }
 
 /// Pumps until [pactId]'s persisted note matches [expectedNote] or [timeout]
@@ -137,6 +143,14 @@ Future<void> _waitForNoteSaved(
   while (tester.binding.clock.now().isBefore(deadline)) {
     final saved = await h.pactRepo.getPactById(pactId);
     if ((saved?.stopReason ?? '') == expectedNote) {
+      // Fixed pumps, not pumpAndSettle: tried it (HAB-258 audit finding on
+      // PR #440) and it hangs here — some ongoing animation on this screen
+      // never settles (same class of issue AppHarness.create's own comment
+      // warns about for CircularProgressIndicator). Unlike the widget-tree
+      // waits elsewhere in this file, PactDetailCache.refresh is pure
+      // in-memory recompute with no real async gap, so two short pumps are
+      // enough to flush its couple of microtask hops — this one case where
+      // a fixed count is actually safe, not a guess.
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
       return;
@@ -332,7 +346,13 @@ void main() {
       // pact-note-field still shows the new text too — two matches expected.
       await waitFor(tester, find.text('Injured knee — resting now'), timeout: const Duration(seconds: 60));
       expect(find.text('Injured knee — resting now'), findsAtLeastNWidgets(1));
-      expect(find.text('Got injured'), findsNothing);
+      // Timeline's note comes from PactDetailCache, not the repository
+      // _waitForNoteSaved above already confirmed — waitFor(the new text)
+      // is satisfiable by Pact Detail's own note field alone (findsAtLeastNWidgets(1)
+      // accepts one match), so it doesn't guarantee Timeline itself has
+      // re-rendered yet. Wait for the old text to actually disappear instead
+      // of asserting on it with no wait (HAB-258 audit finding on PR #440).
+      await waitForGone(tester, find.text('Got injured'), timeout: const Duration(seconds: 60));
     });
   });
 
