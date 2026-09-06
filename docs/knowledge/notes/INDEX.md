@@ -25,6 +25,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **scope-creep** (3)
 - **stale-ticket** (3)
 - **debrief-timing** (2)
+- **subagent-authority** (2)
 - **docs-findability** (1)
 - **ios-limits** (1)
 - **l10n-glossary** (1)
@@ -33,7 +34,6 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **notifications** (1)
 - **postmortem-workflow** (1)
 - **scenario-gate-scope** (1)
-- **subagent-authority** (1)
 - **trivial-change-scope** (1)
 
 ## By bookmark
@@ -225,6 +225,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238.md)
 
 ### subagent-authority
+- [HAB-200: Research: replace ad hoc widget-test interactions with a "test robot" abstraction for integration scenarios](HAB-200-adjust-1.md)
 - [HAB-260: FakeRemoteConfigService replaces rather than layers RC overrides — needs a harness-defaults merge](HAB-260.md)
 
 ### trivial-change-scope
