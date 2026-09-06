@@ -7,10 +7,10 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ## Top themes
 
 - **review-findings** (20)
+- **debugging-methodology** (14)
 - **planning-gaps** (14)
-- **debugging-methodology** (13)
 - **multi-wu-scope** (13)
-- **ci-flakiness** (10)
+- **ci-flakiness** (11)
 - **research-methodology** (10)
 - **code-style** (9)
 - **knowledge-base-process** (8)
@@ -63,6 +63,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-215: Break end date resumes same day instead of the day after](HAB-215.md)
 - [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
 - [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
+- [HAB-258: Flaky pact-note/timeline write-through scenarios in scenarios.yml](HAB-258.md)
 
 ### code-style
 - [HAB-139: Redeem tail-zone failed showups by adding a note](HAB-139.md)
@@ -104,6 +105,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-213: Showup on-break polish: calendar dot color, hidden actions, screen animation](HAB-213.md)
 - [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
 - [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
+- [HAB-258: Flaky pact-note/timeline write-through scenarios in scenarios.yml](HAB-258.md)
 - [HAB-264: Serialize release.yml on main to prevent build-number races](HAB-264.md)
 
 ### docs-findability
@@ -260,4 +262,3 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-210: CI version-tag job clobbers version name during a concurrent pipeline race](HAB-210.md)
 - [HAB-214: Debug seed data: choose pact count (1-10) before regenerating](HAB-214.md)
 - [HAB-252: release_notes.py's HAB-XX/PR#/WU stripping is dead code — [user] bullets ship un-cleaned](HAB-252.md)
-- [HAB-258: Flaky pact-note/timeline write-through scenarios in scenarios.yml](HAB-258.md)
