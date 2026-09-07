@@ -37,3 +37,4 @@ Write one when a ticket's research or implementation concludes in a decision tha
 | ADR-0004 | build a single-pass dialectical (thesis/antithesis/synthesis) research skill, steelman-bounded, over six other candidate methodologies | `accepted` | 2026-07-18 | HAB-123 |
 | ADR-0005 | keep the per-PR/per-ticket release model; do not batch tickets into shared releases | `accepted` | 2026-08-18 | HAB-240 |
 | ADR-0006 | adopt the "test robot" pattern incrementally, starting from the next flaky-file fix, plus a centralized widget-Key file | `accepted` | 2026-09-06 | HAB-200 |
+| ADR-0007 | keep the fixed nightly clock-window block as-is, and add a complementary break reminder rather than replacing it | `accepted` | 2026-09-07 | HAB-251 |
