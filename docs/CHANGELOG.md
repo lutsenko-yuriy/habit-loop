@@ -8,6 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [meta] HAB-251: research concludes — keep the fixed nightly clock-window block as-is, add a complementary next-request-triggered break reminder (ADR-0007); follow-up ticket HAB-268 filed for implementation; `research` skill's evidence-gathering instructions tightened (per-sub-question search passes, fewer snippet-only citations)
 - [meta] (PR #442) HAB-200: logged a follow-up note about the ship subagent's mid-skill self-escalation attempt
 - [meta] (PR #441) HAB-200: research concludes — adopt the "test robot" pattern incrementally starting from the next flaky-file fix, plus a centralized widget-Key file (ADR-0006)
 - [test] HAB-258: fixed four confirmed races in `pact_note_flow_test.dart` causing intermittent `scenarios.yml` failures on the pact-note/timeline write-through scenarios — an ambiguous save-button-disabled poll that returned before the async write actually landed, missing settles after scrolling the note field and the Save button into view (hit-test misses on CI's slower/short-viewport Android emulator), and a silent wait-timeout that masked a real failure as a confusing downstream error. Residual CI-timeout-only flakiness at two spots split off to HAB-267.

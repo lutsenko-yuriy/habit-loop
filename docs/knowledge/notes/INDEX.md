@@ -10,8 +10,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **debugging-methodology** (14)
 - **planning-gaps** (14)
 - **multi-wu-scope** (13)
+- **research-methodology** (12)
 - **ci-flakiness** (11)
-- **research-methodology** (11)
 - **code-style** (9)
 - **knowledge-base-process** (8)
 - **changelog-versioning** (7)
@@ -188,6 +188,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-236: Research: reading Markdown reports/PRs on GitHub — fonts/colors, doc structure, delivery surface](HAB-236.md)
 - [HAB-237: Research: should CI ever push commits directly to main?](HAB-237.md)
 - [HAB-240: Research — organize multiple tickets into a shared release, for solo dev and small-team scale](HAB-240.md)
+- [HAB-251: Research: developer health (vision, ergonomics, mental load) and its effect on attentiveness/thoroughness](HAB-251.md)
 
 ### review-findings
 - [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
