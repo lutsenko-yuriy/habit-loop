@@ -14,6 +14,11 @@
 		3723E9370B8FCCE6B901798B /* MarkShowupDoneIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58F4DCDA2ADCF3990EBF88D /* MarkShowupDoneIntent.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		68515DD6810959AAAB5F5814 /* VoiceShowupStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95CC06681A7B5504CCD78315 /* VoiceShowupStoreTests.swift */; };
+		BA5C6ECA9382084B50EE1EDE /* VoicePactBreak.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27E9CDA3997BE96BEC8B4286 /* VoicePactBreak.swift */; };
+		10C526A98248DE12AF52108C /* VoiceNotificationCanceller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ACB3489379661639122596D /* VoiceNotificationCanceller.swift */; };
+		55290502CB1EBC6162EE0498 /* VoiceWriteSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B7E8E9EB42098B430FA1446 /* VoiceWriteSignal.swift */; };
+		8A14BC726F8B42121E42ADA1 /* VoicePactBreakTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C418E33CD2EA6B4DF260DEB4 /* VoicePactBreakTests.swift */; };
+		EE9607BEEE59A90C37CA1854 /* VoiceNotificationCancellerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08067286945B1595AF007370 /* VoiceNotificationCancellerTests.swift */; };
 		6A36D6B55773B82DFD8A769D /* VoiceShowup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FFAE1ADFEE7BFD1116A7A5C /* VoiceShowup.swift */; };
 		70278DC243304DCBEC5F4C5B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F695340C76E9D0A92E3749F /* GoogleService-Info.plist */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
@@ -71,6 +76,11 @@
 		8940E7C9A5BD42EA3E01057A /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		8F695340C76E9D0A92E3749F /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		95CC06681A7B5504CCD78315 /* VoiceShowupStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceShowupStoreTests.swift; sourceTree = "<group>"; };
+		27E9CDA3997BE96BEC8B4286 /* VoicePactBreak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoicePactBreak.swift; sourceTree = "<group>"; };
+		2ACB3489379661639122596D /* VoiceNotificationCanceller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceNotificationCanceller.swift; sourceTree = "<group>"; };
+		4B7E8E9EB42098B430FA1446 /* VoiceWriteSignal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceWriteSignal.swift; sourceTree = "<group>"; };
+		C418E33CD2EA6B4DF260DEB4 /* VoicePactBreakTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoicePactBreakTests.swift; sourceTree = "<group>"; };
+		08067286945B1595AF007370 /* VoiceNotificationCancellerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceNotificationCancellerTests.swift; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -119,6 +129,8 @@
 			children = (
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
 				95CC06681A7B5504CCD78315 /* VoiceShowupStoreTests.swift */,
+				C418E33CD2EA6B4DF260DEB4 /* VoicePactBreakTests.swift */,
+				08067286945B1595AF007370 /* VoiceNotificationCancellerTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -132,6 +144,9 @@
 				B58F4DCDA2ADCF3990EBF88D /* MarkShowupDoneIntent.swift */,
 				BFB7671004182047FE79B6E6 /* TodaysShowupsIntent.swift */,
 				258E977E7FFBFFEAAD4A7CB0 /* HabitLoopShortcuts.swift */,
+				27E9CDA3997BE96BEC8B4286 /* VoicePactBreak.swift */,
+				2ACB3489379661639122596D /* VoiceNotificationCanceller.swift */,
+				4B7E8E9EB42098B430FA1446 /* VoiceWriteSignal.swift */,
 			);
 			path = Voice;
 			sourceTree = "<group>";
@@ -446,6 +461,8 @@
 			files = (
 				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
 				68515DD6810959AAAB5F5814 /* VoiceShowupStoreTests.swift in Sources */,
+				8A14BC726F8B42121E42ADA1 /* VoicePactBreakTests.swift in Sources */,
+				EE9607BEEE59A90C37CA1854 /* VoiceNotificationCancellerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -462,6 +479,9 @@
 				3723E9370B8FCCE6B901798B /* MarkShowupDoneIntent.swift in Sources */,
 				12D3271A50B817DB0C3770A8 /* TodaysShowupsIntent.swift in Sources */,
 				8C0DAED9700E9DFE6D90BB61 /* HabitLoopShortcuts.swift in Sources */,
+				BA5C6ECA9382084B50EE1EDE /* VoicePactBreak.swift in Sources */,
+				10C526A98248DE12AF52108C /* VoiceNotificationCanceller.swift in Sources */,
+				55290502CB1EBC6162EE0498 /* VoiceWriteSignal.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

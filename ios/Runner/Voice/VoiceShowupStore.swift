@@ -42,8 +42,12 @@ enum VoiceShowupStore {
   /// Today's remaining showups for active pacts, ordered soonest-first.
   /// Filter mirrors PRODUCT_SPEC.md: exclude done, exclude manually-failed
   /// (redeemable = 0), include auto-failed (redeemable = 1) and pending.
-  /// Does NOT check pact_breaks — out of scope for this native layer (HAB-269 WU1);
-  /// must be closed before WU2 flips voice_mark_done_enabled — see docs/knowledge/notes/HAB-269.md.
+  /// Also excludes (HAB-269 WU2, closing WU1's must-close gaps):
+  /// - any pending showup covered by an unresolved-or-resolved break window
+  ///   (mirrors BreakDerivation.isShowupOnBreak / showup_detail_content.dart's
+  ///   HAB-213 rule that hides Mark Done for on-break showups);
+  /// - any showup whose window has already closed (`windowEnd < now`) — a
+  ///   stale, not-yet-reconciled showup must not read back as "remaining".
   static func todaysOpenShowups(now: Date = Date()) -> [VoiceShowup] {
     guard let db = openConnection() else { return [] }
     defer { sqlite3_close(db) }
@@ -55,7 +59,7 @@ enum VoiceShowupStore {
     let endMs = Int64(endOfDay.timeIntervalSince1970 * 1000)
 
     let sql = """
-      SELECT s.id, p.habit_name, s.scheduled_at, s.duration, s.status, s.redeemable
+      SELECT s.id, s.pact_id, p.habit_name, s.scheduled_at, s.duration, s.status, s.redeemable
       FROM showups s
       JOIN pacts p ON p.id = s.pact_id
       WHERE p.status = 'active'
@@ -75,26 +79,74 @@ enum VoiceShowupStore {
     sqlite3_bind_int64(stmt, 1, startMs)
     sqlite3_bind_int64(stmt, 2, endMs)
 
-    var results: [VoiceShowup] = []
+    var rows: [VoiceShowup] = []
+    var pactIds: Set<String> = []
     while sqlite3_step(stmt) == SQLITE_ROW {
       let id = String(cString: sqlite3_column_text(stmt, 0))
-      let habitName = String(cString: sqlite3_column_text(stmt, 1))
-      let scheduledAtMs = sqlite3_column_int64(stmt, 2)
+      let pactId = String(cString: sqlite3_column_text(stmt, 1))
+      let habitName = String(cString: sqlite3_column_text(stmt, 2))
+      let scheduledAtMs = sqlite3_column_int64(stmt, 3)
       // showup_mapper.dart stores Duration.inMicroseconds, not minutes.
-      let durationMicroseconds = sqlite3_column_int64(stmt, 3)
-      let status = String(cString: sqlite3_column_text(stmt, 4))
-      let redeemable = sqlite3_column_int(stmt, 5) == 1
+      let durationMicroseconds = sqlite3_column_int64(stmt, 4)
+      let status = String(cString: sqlite3_column_text(stmt, 5))
+      let redeemable = sqlite3_column_int(stmt, 6) == 1
 
       let scheduledAt = Date(timeIntervalSince1970: Double(scheduledAtMs) / 1000)
       let windowEnd = scheduledAt.addingTimeInterval(Double(durationMicroseconds) / 1_000_000)
-      results.append(
+      rows.append(
         VoiceShowup(
-          id: id, habitName: habitName, scheduledAt: scheduledAt,
+          id: id, pactId: pactId, habitName: habitName, scheduledAt: scheduledAt,
           windowEnd: windowEnd, status: status, redeemable: redeemable
         )
       )
+      pactIds.insert(pactId)
     }
-    return results
+
+    let breaksByPactId = fetchBreaks(db: db, pactIds: pactIds)
+    return rows.compactMap { showup in
+      if showup.windowEnd < now { return nil }
+      if showup.status == "pending" {
+        let breaks = breaksByPactId[showup.pactId] ?? []
+        if breaks.contains(where: { $0.contains(showup.scheduledAt) }) { return nil }
+      }
+      return showup
+    }
+  }
+
+  /// Fetches every break for the given pact ids, keyed by pact id. A single
+  /// query (rather than one per pact) since `pactIds` is at most the handful
+  /// of active pacts with a showup today.
+  private static func fetchBreaks(db: OpaquePointer, pactIds: Set<String>) -> [String: [VoicePactBreak]] {
+    guard !pactIds.isEmpty else { return [:] }
+
+    let placeholders = pactIds.map { _ in "?" }.joined(separator: ", ")
+    let sql = "SELECT pact_id, start_date, planned_end_date, stopped_at FROM pact_breaks WHERE pact_id IN (\(placeholders))"
+    var stmt: OpaquePointer?
+    guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+      print("VoiceShowupStore: fetchBreaks prepare failed: \(String(cString: sqlite3_errmsg(db)))")
+      return [:]
+    }
+    defer { sqlite3_finalize(stmt) }
+
+    let sqliteTransient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+    for (index, pactId) in pactIds.enumerated() {
+      sqlite3_bind_text(stmt, Int32(index + 1), (pactId as NSString).utf8String, -1, sqliteTransient)
+    }
+
+    var result: [String: [VoicePactBreak]] = [:]
+    while sqlite3_step(stmt) == SQLITE_ROW {
+      let pactId = String(cString: sqlite3_column_text(stmt, 0))
+      let startDate = Date(timeIntervalSince1970: Double(sqlite3_column_int64(stmt, 1)) / 1000)
+      let plannedEndDate = sqlite3_column_type(stmt, 2) == SQLITE_NULL
+        ? nil : Date(timeIntervalSince1970: Double(sqlite3_column_int64(stmt, 2)) / 1000)
+      let stoppedAt = sqlite3_column_type(stmt, 3) == SQLITE_NULL
+        ? nil : Date(timeIntervalSince1970: Double(sqlite3_column_int64(stmt, 3)) / 1000)
+      let voiceBreak = VoicePactBreak(
+        pactId: pactId, startDate: startDate, plannedEndDate: plannedEndDate, stoppedAt: stoppedAt
+      )
+      result[pactId, default: []].append(voiceBreak)
+    }
+    return result
   }
 
   /// Pending showups (window open right now) matching `description` case-insensitively

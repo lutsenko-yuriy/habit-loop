@@ -1,10 +1,13 @@
-// HAB-269 WU1 — "which showups today" Siri voice command. No openAppWhenRun: this
+// HAB-269 WU1/WU2 — "which showups today" Siri voice command. No openAppWhenRun: this
 // must run without foregrounding, per PRODUCT_SPEC.md's "no unlocking the phone"
 // requirement — confirmed working during the WU0 checklist (docs/knowledge/notes/HAB-269.md).
-// Analytics logging (voice_today_showups_queried) lands in WU2. Inert in production
-// until WU2 flips voice_mark_done_enabled — see VoiceFeatureFlag.swift.
+//
+// WU2: logs voice_today_showups_queried directly via the native FirebaseAnalytics SDK —
+// a deliberate, documented exception to routing through Dart's AnalyticsService
+// (docs/ARCHITECTURE.md's Voice section, HAB-269 WU2).
 
 import AppIntents
+import FirebaseAnalytics
 import Foundation
 
 @available(iOS 16.0, *)
@@ -19,6 +22,7 @@ struct TodaysShowupsIntent: AppIntent {
     }
 
     let showups = VoiceShowupStore.todaysOpenShowups()
+    Analytics.logEvent("voice_today_showups_queried", parameters: ["showup_count": showups.count])
     if showups.isEmpty {
       return .result(dialog: "Nothing left to do today.")
     }

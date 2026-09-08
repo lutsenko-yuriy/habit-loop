@@ -17,7 +17,7 @@ final class VoiceShowupStoreTests: XCTestCase {
   ) -> VoiceShowup {
     let scheduledAt = reference.addingTimeInterval(offsetSeconds)
     return VoiceShowup(
-      id: name, habitName: name, scheduledAt: scheduledAt,
+      id: name, pactId: "pact-1", habitName: name, scheduledAt: scheduledAt,
       windowEnd: scheduledAt.addingTimeInterval(durationSeconds), status: status, redeemable: true
     )
   }

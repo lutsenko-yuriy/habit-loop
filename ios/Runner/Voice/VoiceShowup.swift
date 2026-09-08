@@ -6,6 +6,9 @@ import Foundation
 
 struct VoiceShowup: Equatable {
   let id: String
+  // Added HAB-269 WU2 — needed to log showup_marked_done's pact_id property
+  // and to look up the covering pact's breaks in VoiceShowupStore.
+  let pactId: String
   let habitName: String
   let scheduledAt: Date
   let windowEnd: Date
