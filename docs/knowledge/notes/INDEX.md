@@ -22,10 +22,10 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **ui-design-iteration** (4)
 - **appstore-ci** (3)
 - **cross-project-sync** (3)
+- **ios-limits** (3)
 - **scope-creep** (3)
 - **stale-ticket** (3)
 - **debrief-timing** (2)
-- **ios-limits** (2)
 - **subagent-authority** (2)
 - **docs-findability** (1)
 - **l10n-glossary** (1)
@@ -123,6 +123,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ### ios-limits
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
 - [HAB-271: Bug: app fails to relaunch after force-quit — splash screen flashes and closes (Debug only)](HAB-271.md)
+- [HAB-272: Enter Name screen: match app theme (background, illustration)](HAB-272.md)
 
 ### knowledge-base-process
 - [HAB-130: Project knowledge base — local Markdown vault with /note and /debrief integration](HAB-130.md)
