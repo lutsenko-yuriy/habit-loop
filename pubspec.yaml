@@ -53,3 +53,4 @@ flutter:
   assets:
     - assets/onboarding/
     - assets/app_icon/
+    - assets/enter_name/

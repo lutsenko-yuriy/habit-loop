@@ -6,6 +6,12 @@ import 'package:characters/characters.dart';
 /// and `openChangeNameDialog`.
 const int enterNameMaxLength = 40;
 
+/// Size of [EnterNameIllustration] — deliberately smaller than the onboarding
+/// carousel's 200×160 slide images (HAB-272), so the title, body, and name
+/// field still fit above the keyboard on a short device.
+const double enterNameIllustrationWidth = 96;
+const double enterNameIllustrationHeight = 88;
+
 /// Caps [value] to [enterNameMaxLength] by grapheme cluster (via
 /// `.characters`), not UTF-16 code unit (`.length`/`.substring`) — a
 /// multi-code-point grapheme (ZWJ sequence, decomposed diacritic) could

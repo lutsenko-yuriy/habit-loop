@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart' show CupertinoTextField;
+import 'package:flutter/cupertino.dart' show CupertinoPageScaffold, CupertinoTextField;
 import 'package:flutter/foundation.dart' show TargetPlatform, debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -517,6 +517,73 @@ void main() {
 
       expect(notifications.cancelledPactIds, isEmpty);
       expect(notifications.scheduledReminders, isEmpty);
+    });
+  });
+
+  group('EnterNamePage theming and illustration (HAB-272)', () {
+    testWidgets('iOS: background matches the app themed surface color', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () {},
+          onboardingService: FakeOnboardingPreferenceService(),
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        final scaffold = tester.widget<CupertinoPageScaffold>(find.byType(CupertinoPageScaffold));
+        final theme = Theme.of(tester.element(find.byType(CupertinoPageScaffold)));
+        expect(scaffold.backgroundColor, theme.colorScheme.surface);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('Android: background matches the app themed surface color', (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      final theme = Theme.of(tester.element(find.byType(Scaffold)));
+      expect(scaffold.backgroundColor, theme.colorScheme.surface);
+    });
+
+    testWidgets('iOS: shows the enter-name illustration, smaller than the onboarding illustration', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () {},
+          onboardingService: FakeOnboardingPreferenceService(),
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        expect(find.byKey(const Key('enter-name-illustration')), findsOneWidget);
+        final size = tester.getSize(find.byKey(const Key('enter-name-illustration')));
+        // Onboarding carousel slides render at width 200 (OnboardingSlideWidget) —
+        // this illustration must stay well under that so the keyboard doesn't
+        // push the title/body/field off-screen on a short device.
+        expect(size.width, lessThan(200));
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('Android: shows the enter-name illustration, smaller than the onboarding illustration', (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      expect(find.byKey(const Key('enter-name-illustration')), findsOneWidget);
+      final size = tester.getSize(find.byKey(const Key('enter-name-illustration')));
+      expect(size.width, lessThan(200));
     });
   });
 }
