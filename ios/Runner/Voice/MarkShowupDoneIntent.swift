@@ -48,8 +48,7 @@ struct MarkShowupDoneIntent: AppIntent {
 
     // Case 1: exactly one pending match -> mark immediately, no confirmation.
     if pending.count == 1 {
-      logResolved(outcome: "marked_direct", candidateCount: pending.count)
-      return .result(dialog: IntentDialog(stringLiteral: mark(pending[0])))
+      return .result(dialog: IntentDialog(stringLiteral: markAndLog(pending[0], outcome: "marked_direct", candidateCount: pending.count)))
     }
 
     // Case 3: several pending matches -> confirm the best guess (first match).
@@ -57,8 +56,11 @@ struct MarkShowupDoneIntent: AppIntent {
       let best = pending[0]
       do {
         _ = try await requestConfirmation(result: .result(dialog: "Did you mean \(best.habitName)?"))
-        logResolved(outcome: "marked_after_confirmation", candidateCount: pending.count)
-        return .result(dialog: IntentDialog(stringLiteral: mark(best)))
+        return .result(
+          dialog: IntentDialog(
+            stringLiteral: markAndLog(best, outcome: "marked_after_confirmation", candidateCount: pending.count)
+          )
+        )
       } catch {
         logResolved(outcome: "declined_confirmation", candidateCount: pending.count)
         return .result(dialog: "OK, not marking anything.")
@@ -73,8 +75,9 @@ struct MarkShowupDoneIntent: AppIntent {
         _ = try await requestConfirmation(
           result: .result(dialog: "\(match.habitName) isn't due yet. Mark it done anyway?")
         )
-        logResolved(outcome: "marked_after_confirmation", candidateCount: 0)
-        return .result(dialog: IntentDialog(stringLiteral: mark(match)))
+        return .result(
+          dialog: IntentDialog(stringLiteral: markAndLog(match, outcome: "marked_after_confirmation", candidateCount: 0))
+        )
       } catch {
         logResolved(outcome: "declined_confirmation", candidateCount: 0)
         return .result(dialog: "OK, not marking anything.")
@@ -97,20 +100,31 @@ struct MarkShowupDoneIntent: AppIntent {
         logResolved(outcome: "abandoned_no_match", candidateCount: 0)
         return .result(dialog: "Something went wrong.")
       }
-      logResolved(outcome: "recovered_from_no_match", candidateCount: 0)
-      return .result(dialog: IntentDialog(stringLiteral: mark(chosen)))
+      return .result(
+        dialog: IntentDialog(stringLiteral: markAndLog(chosen, outcome: "recovered_from_no_match", candidateCount: 0))
+      )
     } catch {
       logResolved(outcome: "abandoned_no_match", candidateCount: 0)
       return .result(dialog: "OK, not marking anything.")
     }
   }
 
-  private func mark(_ showup: VoiceShowup) -> String {
-    let ok = VoiceShowupStore.markDone(id: showup.id)
-    guard ok else { return "Something went wrong." }
+  /// Attempts the write, then logs `voice_mark_done_resolved` with the actual
+  /// result — `outcome` on success, `failed_write` if `VoiceShowupStore.markDone`
+  /// returned false. Logging `outcome` unconditionally before attempting the
+  /// write (as WU2 originally did) let a failed write masquerade as success in
+  /// this metric, while `showup_marked_done` (which only fires on success)
+  /// disagreed with it — making the outcome enum unusable for a success rate
+  /// (HAB-269 WU2 audit finding).
+  private func markAndLog(_ showup: VoiceShowup, outcome: String, candidateCount: Int) -> String {
+    guard VoiceShowupStore.markDone(id: showup.id) else {
+      logResolved(outcome: "failed_write", candidateCount: candidateCount)
+      return "Something went wrong."
+    }
     VoiceNotificationCanceller.cancel(showupId: showup.id)
     VoiceWriteSignal.post()
     Analytics.logEvent("showup_marked_done", parameters: ["pact_id": showup.pactId, "source": "voice"])
+    logResolved(outcome: outcome, candidateCount: candidateCount)
     return "Marked \(showup.habitName) done."
   }
 

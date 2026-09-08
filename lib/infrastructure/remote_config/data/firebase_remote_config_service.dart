@@ -55,7 +55,7 @@ final class FirebaseRemoteConfigService implements RemoteConfigService {
   final FirebaseRemoteConfigClient _client;
 
   @override
-  Future<void> initialize() async {
+  Future<void> initialize({void Function()? onFetchComplete}) async {
     try {
       await _client.setConfigSettings(
         fetchTimeout: !kReleaseMode ? const Duration(seconds: 10) : const Duration(seconds: 15),
@@ -69,14 +69,19 @@ final class FirebaseRemoteConfigService implements RemoteConfigService {
     // Fire-and-forget the network fetch so a poor connection never blocks app
     // startup. In-code defaults (applied above) are available immediately;
     // fresh values activate in the background when the network is reachable.
-    unawaited(_fetchAndActivateSilently());
+    unawaited(_fetchAndActivateSilently(onFetchComplete));
   }
 
-  Future<void> _fetchAndActivateSilently() async {
+  Future<void> _fetchAndActivateSilently(void Function()? onFetchComplete) async {
     try {
       await _client.fetchAndActivate();
     } catch (_) {
       // Network failures are expected offline — swallow silently.
+    } finally {
+      // Fires on both success and failure — a caller mirroring a value
+      // fetched-or-not needs to re-read either way (falls back to the
+      // in-code default on failure, which is itself a meaningful value).
+      onFetchComplete?.call();
     }
   }
 

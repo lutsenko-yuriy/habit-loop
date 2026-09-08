@@ -1,3 +1,4 @@
+import Firebase
 import Flutter
 import UIKit
 import UserNotifications
@@ -14,6 +15,16 @@ import UserNotifications
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // HAB-269 WU2 audit finding — a backgrounded/killed-app AppIntent's perform() runs
+    // without Dart's main() ever executing, so `Firebase.initializeApp()` (lib/main.dart)
+    // never configures the default FirebaseApp in that process; the native voice analytics
+    // calls (MarkShowupDoneIntent/TodaysShowupsIntent) would silently no-op without this.
+    // Guarded since Dart's own Firebase.initializeApp() also calls FirebaseApp.configure()
+    // when the engine does start up in the same process (foreground launch).
+    if FirebaseApp.app() == nil {
+      FirebaseApp.configure()
+    }
+
     // Flutter 3.x no longer sets UNUserNotificationCenter.delegate automatically.
     // Without this, iOS has no delegate to call on notification tap, so the plugin's
     // didReceiveNotificationResponse is never invoked and navigation is silently dropped.

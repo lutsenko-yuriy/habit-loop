@@ -13,8 +13,9 @@ import 'package:habit_loop/infrastructure/remote_config/contracts/remote_config_
 /// developers can verify which config values are being read.
 final class NoopRemoteConfigService implements RemoteConfigService {
   @override
-  Future<void> initialize() async {
+  Future<void> initialize({void Function()? onFetchComplete}) async {
     debugPrint('[RemoteConfig] initialize (noop)');
+    onFetchComplete?.call();
   }
 
   @override

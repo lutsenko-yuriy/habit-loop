@@ -29,7 +29,9 @@ class FakeRemoteConfigService implements RemoteConfigService {
   final Map<String, dynamic> overrides;
 
   @override
-  Future<void> initialize() async {}
+  Future<void> initialize({void Function()? onFetchComplete}) async {
+    onFetchComplete?.call();
+  }
 
   @override
   int getInt(String key) {

@@ -518,7 +518,7 @@ Fired when the "mark \<habit\> done" Siri intent finishes handling, regardless o
 
 | Property | Type | Description |
 |---|---|---|
-| `outcome` | `string` | `marked_direct` \| `marked_after_confirmation` \| `declined_confirmation` \| `recovered_from_no_match` \| `abandoned_no_match` |
+| `outcome` | `string` | `marked_direct` \| `marked_after_confirmation` \| `declined_confirmation` \| `recovered_from_no_match` \| `abandoned_no_match` \| `failed_write` (the DB write itself failed after a match/confirmation — logged instead of the success outcome it would otherwise have used, so it never double-counts as success; WU2 audit finding) |
 | `candidate_count` | `int` | Number of pending showups matching the spoken description at resolution time (0, 1, or 2+) |
 
 No PII risk — the spoken habit name is never included, only match counts and a closed-set outcome enum.

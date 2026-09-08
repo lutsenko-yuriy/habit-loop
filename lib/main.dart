@@ -120,6 +120,14 @@ Future<void> main() async {
     } catch (_) {}
   }
 
+  // HAB-269 WU2 — mirrors voice_mark_done_enabled into native UserDefaults so
+  // the Siri App Intents (no live Dart process) can read it directly. `sync`
+  // is idempotent, so it's safe to call again below once the real fetch
+  // settles — a single call right after `initialize()` would only ever mirror
+  // the in-code default or a *previous* session's cached value (HAB-269 WU2
+  // audit finding), never what this session's fetch actually returned.
+  final voiceRemoteConfigBridge = VoiceRemoteConfigBridge();
+
   // Initialise Remote Config before runApp so flags are ready on first frame.
   RemoteConfigService? remoteConfigService;
   RemoteConfigOverrideStore? remoteConfigOverrideStore;
@@ -129,7 +137,9 @@ Future<void> main() async {
         FirebaseRemoteConfig.instance,
       );
       final firebaseService = FirebaseRemoteConfigService(remoteConfigClient);
-      await firebaseService.initialize();
+      await firebaseService.initialize(
+        onFetchComplete: () => unawaited(voiceRemoteConfigBridge.sync(firebaseService)),
+      );
       remoteConfigService = firebaseService;
     } catch (_) {
       // initialize() already swallows; guard here so a constructor failure
@@ -148,12 +158,12 @@ Future<void> main() async {
     } catch (_) {}
   }
 
-  // HAB-269 WU2 — mirror voice_mark_done_enabled into native UserDefaults so
-  // the Siri App Intents (no live Dart process) can read it directly, and
-  // wire the Siri mark-done -> dashboard refresh bridge. Both calls are
+  // HAB-269 WU2 — wire the Siri mark-done -> dashboard refresh bridge, and
+  // do the initial voice-flag sync (in-code default or debug override; the
+  // release-mode real-fetch re-sync above is separate). Both calls are
   // iOS-only concerns; on Android/tests the platform channel/EventChannel
   // calls are safely inert (caught exception / no listener ever fires).
-  unawaited(VoiceRemoteConfigBridge().sync(remoteConfigService ?? NoopRemoteConfigService()));
+  unawaited(voiceRemoteConfigBridge.sync(remoteConfigService ?? NoopRemoteConfigService()));
   VoiceWriteSignalListener().listen(_signalDashboardRefresh);
 
   // Read debug_backend before constructing auth/Firestore — decision needed at startup.

@@ -46,8 +46,12 @@ enum VoiceShowupStore {
   /// - any pending showup covered by an unresolved-or-resolved break window
   ///   (mirrors BreakDerivation.isShowupOnBreak / showup_detail_content.dart's
   ///   HAB-213 rule that hides Mark Done for on-break showups);
-  /// - any showup whose window has already closed (`windowEnd < now`) — a
-  ///   stale, not-yet-reconciled showup must not read back as "remaining".
+  /// - any *pending* showup whose window has already closed (`windowEnd < now`)
+  ///   — a stale, not-yet-reconciled showup must not read back as "remaining".
+  ///   Gated on `pending` only: every auto-failed (redeemable) showup has, by
+  ///   definition, `windowEnd < now` (that's what makes it auto-failed), so an
+  ///   ungated filter here would make the redeemable branch above unreachable
+  ///   (HAB-269 WU2 audit finding).
   static func todaysOpenShowups(now: Date = Date()) -> [VoiceShowup] {
     guard let db = openConnection() else { return [] }
     defer { sqlite3_close(db) }
@@ -104,8 +108,8 @@ enum VoiceShowupStore {
 
     let breaksByPactId = fetchBreaks(db: db, pactIds: pactIds)
     return rows.compactMap { showup in
-      if showup.windowEnd < now { return nil }
       if showup.status == "pending" {
+        if showup.windowEnd < now { return nil }
         let breaks = breaksByPactId[showup.pactId] ?? []
         if breaks.contains(where: { $0.contains(showup.scheduledAt) }) { return nil }
       }
