@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.61.1] — 2026-09-08 (PR #447 merged)
+
+### Changed
+
+- [user] The welcome screen where you enter your name now matches the rest of the app's look and feel.
+- HAB-272: EnterNamePageIos/EnterNamePageAndroid now set backgroundColor explicitly to theme.colorScheme.surface (iOS previously fell back to CupertinoColors.systemBackground); added EnterNameIllustration (assets/enter_name/wave_hello.svg), sized to match the onboarding carousel's own illustrations (200×150).
+
 ## [0.61.0] — 2026-09-08 (PR #445 merged)
 
 ### Added
