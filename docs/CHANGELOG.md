@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.60.2] — 2026-09-08 (PR #444 merged)
+
+### Changed
+
+- [app] HAB-269 (WU1): native iOS App Intents data layer — VoiceShowupStore/VoiceShowup sqlite access, TodaysShowupsIntent/MarkShowupDoneIntent matching/confirmation flow, HabitLoopShortcuts registration. Gated behind voice_mark_done_enabled (defaults false; WU2 enables).
+
 ## [Unreleased]
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
