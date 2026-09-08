@@ -32,6 +32,7 @@ final class FeatureFlags {
     required this.pactBreaksEnabled,
     required this.pactChainingEnabled,
     required this.displayNamePersonalizationEnabled,
+    required this.voiceMarkDoneEnabled,
   });
 
   /// [appVersion] is the real running version (see `runningAppVersionProvider`
@@ -46,6 +47,11 @@ final class FeatureFlags {
       showupRedemptionEnabled: rc.getBool('showup_redemption_enabled'),
       aboutScreenEnabled: rc.getBool('about_screen_enabled'),
       pactBreaksEnabled: rc.getBool('pact_breaks_enabled'),
+      // Not release-version gated — the Siri App Intents already read this
+      // key directly from native UserDefaults (VoiceFeatureFlag.swift), where
+      // HAB-207 gating doesn't apply; this getter exists for Dart-side
+      // consumers (e.g. a future debug surface) to stay consistent with it.
+      voiceMarkDoneEnabled: rc.getBool('voice_mark_done_enabled'),
       // Release-version gating (HAB-207) starts here — flags above predate it.
       pactChainingEnabled: resolveReleaseGatedFlag(
         rawValue: rc.getBool('pact_chaining_enabled'),
@@ -84,6 +90,9 @@ final class FeatureFlags {
   /// Whether display-name personalization (HAB-232) is enabled.
   final bool displayNamePersonalizationEnabled;
 
+  /// Whether the Siri voice mark-done feature (HAB-269) is enabled.
+  final bool voiceMarkDoneEnabled;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -95,7 +104,8 @@ final class FeatureFlags {
           aboutScreenEnabled == other.aboutScreenEnabled &&
           pactBreaksEnabled == other.pactBreaksEnabled &&
           pactChainingEnabled == other.pactChainingEnabled &&
-          displayNamePersonalizationEnabled == other.displayNamePersonalizationEnabled;
+          displayNamePersonalizationEnabled == other.displayNamePersonalizationEnabled &&
+          voiceMarkDoneEnabled == other.voiceMarkDoneEnabled;
 
   @override
   int get hashCode => Object.hash(
@@ -107,5 +117,6 @@ final class FeatureFlags {
         pactBreaksEnabled,
         pactChainingEnabled,
         displayNamePersonalizationEnabled,
+        voiceMarkDoneEnabled,
       );
 }
