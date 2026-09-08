@@ -29,11 +29,12 @@ Fired when the user successfully completes the pact creation wizard and the pact
 
 ### `showup_marked_done`
 
-Fired when the user manually marks a showup as done from the showup detail screen.
+Fired when the user manually marks a showup as done from the showup detail screen, or via a Siri voice command (HAB-269).
 
 | Property | Type | Description |
 |---|---|---|
 | `pact_id` | `string` | ID of the parent pact (join with `pact_created` for habit name) |
+| `source` | `string` | `showup_detail` \| `voice` — entry point the mark-done came from. Added in HAB-269. |
 
 ---
 
@@ -498,6 +499,29 @@ with `had_previous_name: true` distinguishes a clear from a rename.
 | `had_previous_name` | `bool` | `true` if a name was already on file before this change |
 
 No PII risk — only the name's character length is included, never the name text itself.
+
+---
+
+### `voice_today_showups_queried`
+
+Fired when the "which showups should I do today" Siri intent resolves. (HAB-269)
+
+| Property | Type | Description |
+|---|---|---|
+| `showup_count` | `int` | Number of showups read back to the user |
+
+---
+
+### `voice_mark_done_resolved`
+
+Fired when the "mark \<habit\> done" Siri intent finishes handling, regardless of outcome. Never logs the spoken habit-name text — only counts and enums. (HAB-269)
+
+| Property | Type | Description |
+|---|---|---|
+| `outcome` | `string` | `marked_direct` \| `marked_after_confirmation` \| `declined_confirmation` \| `recovered_from_no_match` \| `abandoned_no_match` |
+| `candidate_count` | `int` | Number of pending showups matching the spoken description at resolution time (0, 1, or 2+) |
+
+No PII risk — the spoken habit name is never included, only match counts and a closed-set outcome enum.
 
 ---
 

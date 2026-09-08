@@ -7,8 +7,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ## Top themes
 
 - **review-findings** (20)
+- **planning-gaps** (15)
 - **debugging-methodology** (14)
-- **planning-gaps** (14)
 - **multi-wu-scope** (13)
 - **research-methodology** (12)
 - **ci-flakiness** (11)
@@ -172,6 +172,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
 - [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 - [HAB-254: Notification reconciliation sync — catch drift between derived state and scheduled notifications](HAB-254.md)
+- [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
 
 ### postmortem-workflow
 - [HAB-209: Postmortem: find when/why stop-pact started deleting ALL showups](HAB-209.md)
