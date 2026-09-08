@@ -18,6 +18,13 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		CAD6EF7785F766F74A12C400 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 674F278D5EF810825BE0F5A0 /* Pods_Runner.framework */; };
+		6A36D6B55773B82DFD8A769D /* VoiceShowup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FFAE1ADFEE7BFD1116A7A5C /* VoiceShowup.swift */; };
+		A3E7A6E27FED79C207B674FB /* VoiceShowupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEEC4D5B1D0AF0F8998CEEAB /* VoiceShowupStore.swift */; };
+		D4FB4FD9C6A4837029803564 /* VoiceFeatureFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1ED76CBD84D6B8C6ED58AD2 /* VoiceFeatureFlag.swift */; };
+		3723E9370B8FCCE6B901798B /* MarkShowupDoneIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58F4DCDA2ADCF3990EBF88D /* MarkShowupDoneIntent.swift */; };
+		12D3271A50B817DB0C3770A8 /* TodaysShowupsIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB7671004182047FE79B6E6 /* TodaysShowupsIntent.swift */; };
+		8C0DAED9700E9DFE6D90BB61 /* HabitLoopShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258E977E7FFBFFEAAD4A7CB0 /* HabitLoopShortcuts.swift */; };
+		68515DD6810959AAAB5F5814 /* VoiceShowupStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95CC06681A7B5504CCD78315 /* VoiceShowupStoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +76,13 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9DB2098C7550523DA2FF2D17 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
+		7FFAE1ADFEE7BFD1116A7A5C /* VoiceShowup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceShowup.swift; sourceTree = "<group>"; };
+		AEEC4D5B1D0AF0F8998CEEAB /* VoiceShowupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceShowupStore.swift; sourceTree = "<group>"; };
+		A1ED76CBD84D6B8C6ED58AD2 /* VoiceFeatureFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceFeatureFlag.swift; sourceTree = "<group>"; };
+		B58F4DCDA2ADCF3990EBF88D /* MarkShowupDoneIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkShowupDoneIntent.swift; sourceTree = "<group>"; };
+		BFB7671004182047FE79B6E6 /* TodaysShowupsIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysShowupsIntent.swift; sourceTree = "<group>"; };
+		258E977E7FFBFFEAAD4A7CB0 /* HabitLoopShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitLoopShortcuts.swift; sourceTree = "<group>"; };
+		95CC06681A7B5504CCD78315 /* VoiceShowupStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceShowupStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
+				95CC06681A7B5504CCD78315 /* VoiceShowupStoreTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -129,7 +144,6 @@
 				9DB2098C7550523DA2FF2D17 /* Pods-RunnerTests.release.xcconfig */,
 				8940E7C9A5BD42EA3E01057A /* Pods-RunnerTests.profile.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -167,8 +181,22 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				9229CBD56222AA5DD66EDE31 /* Voice */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		9229CBD56222AA5DD66EDE31 /* Voice */ = {
+			isa = PBXGroup;
+			children = (
+				7FFAE1ADFEE7BFD1116A7A5C /* VoiceShowup.swift */,
+				AEEC4D5B1D0AF0F8998CEEAB /* VoiceShowupStore.swift */,
+				A1ED76CBD84D6B8C6ED58AD2 /* VoiceFeatureFlag.swift */,
+				B58F4DCDA2ADCF3990EBF88D /* MarkShowupDoneIntent.swift */,
+				BFB7671004182047FE79B6E6 /* TodaysShowupsIntent.swift */,
+				258E977E7FFBFFEAAD4A7CB0 /* HabitLoopShortcuts.swift */,
+			);
+			path = Voice;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -287,9 +315,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -400,9 +432,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -417,6 +453,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
+				68515DD6810959AAAB5F5814 /* VoiceShowupStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -427,6 +464,12 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
+				6A36D6B55773B82DFD8A769D /* VoiceShowup.swift in Sources */,
+				A3E7A6E27FED79C207B674FB /* VoiceShowupStore.swift in Sources */,
+				D4FB4FD9C6A4837029803564 /* VoiceFeatureFlag.swift in Sources */,
+				3723E9370B8FCCE6B901798B /* MarkShowupDoneIntent.swift in Sources */,
+				12D3271A50B817DB0C3770A8 /* TodaysShowupsIntent.swift in Sources */,
+				8C0DAED9700E9DFE6D90BB61 /* HabitLoopShortcuts.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
