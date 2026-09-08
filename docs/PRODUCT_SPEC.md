@@ -71,6 +71,15 @@ The Habit Loop app allows the user to:
   - A notification with a reminder will appear to the user if they defined a reminder
   - The user can see the showup by clicking on the notification
   - A "hurry up" notification fires `hurry_up_time` minutes (global setting, 2-10, default 5) before a pending showup's window closes, as a last-chance nudge before it auto-fails. Only showups whose duration is at least `3 × hurry_up_time` are eligible (default: ≥ 15 minutes). Does not fire for a showup already marked done/failed, or one on break. Controlled by the `hurry_up_notification_enabled` kill-switch (HAB-246)
+- Mark a showup done hands-free via Siri, without unlocking the phone (iOS only; feature flag: `voice_mark_done_enabled`)
+  - "Which showups should I do today?" reads back today's remaining showups — active, non-on-break pacts, not yet done or failed (auto-failed showups included) — starting with the next upcoming one
+  - "Mark \<habit\> done" only marks, never fails, a showup by voice:
+    1. Exactly one showup matching the description is currently pending → marked immediately, no confirmation
+    2. A matching showup exists but its window hasn't opened yet → Siri confirms first, reminding the user it isn't due yet
+    3. Several pending showups match the description → Siri confirms the most likely match before marking
+    4. No showup matches the description → Siri reads back today's remaining showups and lets the user pick one by position (e.g. "the first one")
+  - Marking a showup via Siri cancels its pending reminder/deadline/hurry-up notifications, the same as marking it done in-app
+  - Not available: Android/Google Assistant, marking a showup failed by voice, or any showup on break or belonging to a stopped/completed pact
 - Access app information and send feedback
   - Secondary dashboard actions (About, Language) are grouped behind a ⋯ menu button in the nav bar; tapping it shows all enabled items. If exactly one item is enabled, it appears as a standalone icon instead of the ⋯ button (single-item shortcut). About is controlled by the `about_screen_enabled` feature flag.
   - The About screen shows the app icon, app name, version number, build number, and a copyright notice
