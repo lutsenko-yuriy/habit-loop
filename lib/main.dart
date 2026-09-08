@@ -87,9 +87,15 @@ bool _notificationNavigationHandled = false;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (_) {
+    // AppDelegate may have already configured the default app natively
+    // (HAB-269 WU2) — only rethrow if Firebase is genuinely uninitialized.
+    if (Firebase.apps.isEmpty) rethrow;
+  }
 
   // Release-version gating (HAB-207) — '' fails closed, unlike the test
   // sentinel unspecifiedAppVersion, which fails open.

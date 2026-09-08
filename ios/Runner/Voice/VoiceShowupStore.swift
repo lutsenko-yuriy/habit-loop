@@ -42,16 +42,10 @@ enum VoiceShowupStore {
   /// Today's remaining showups for active pacts, ordered soonest-first.
   /// Filter mirrors PRODUCT_SPEC.md: exclude done, exclude manually-failed
   /// (redeemable = 0), include auto-failed (redeemable = 1) and pending.
-  /// Also excludes (HAB-269 WU2, closing WU1's must-close gaps):
-  /// - any pending showup covered by an unresolved-or-resolved break window
-  ///   (mirrors BreakDerivation.isShowupOnBreak / showup_detail_content.dart's
-  ///   HAB-213 rule that hides Mark Done for on-break showups);
-  /// - any *pending* showup whose window has already closed (`windowEnd < now`)
-  ///   — a stale, not-yet-reconciled showup must not read back as "remaining".
-  ///   Gated on `pending` only: every auto-failed (redeemable) showup has, by
-  ///   definition, `windowEnd < now` (that's what makes it auto-failed), so an
-  ///   ungated filter here would make the redeemable branch above unreachable
-  ///   (HAB-269 WU2 audit finding).
+  /// Also excludes, for *pending* showups only (WU2): any covered by a break
+  /// window (mirrors HAB-213's in-app rule), and any whose window already
+  /// closed. Gated on pending because every redeemable showup has, by
+  /// definition, a closed window — an ungated filter would hide it entirely.
   static func todaysOpenShowups(now: Date = Date()) -> [VoiceShowup] {
     guard let db = openConnection() else { return [] }
     defer { sqlite3_close(db) }

@@ -15,12 +15,8 @@ import UserNotifications
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // HAB-269 WU2 audit finding — a backgrounded/killed-app AppIntent's perform() runs
-    // without Dart's main() ever executing, so `Firebase.initializeApp()` (lib/main.dart)
-    // never configures the default FirebaseApp in that process; the native voice analytics
-    // calls (MarkShowupDoneIntent/TodaysShowupsIntent) would silently no-op without this.
-    // Guarded since Dart's own Firebase.initializeApp() also calls FirebaseApp.configure()
-    // when the engine does start up in the same process (foreground launch).
+    // A backgrounded AppIntent never runs Dart's main(), so Firebase needs
+    // configuring here too, or the native analytics calls silently no-op.
     if FirebaseApp.app() == nil {
       FirebaseApp.configure()
     }

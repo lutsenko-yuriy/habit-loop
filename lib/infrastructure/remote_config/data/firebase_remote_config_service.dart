@@ -78,9 +78,6 @@ final class FirebaseRemoteConfigService implements RemoteConfigService {
     } catch (_) {
       // Network failures are expected offline — swallow silently.
     } finally {
-      // Fires on both success and failure — a caller mirroring a value
-      // fetched-or-not needs to re-read either way (falls back to the
-      // in-code default on failure, which is itself a meaningful value).
       onFetchComplete?.call();
     }
   }

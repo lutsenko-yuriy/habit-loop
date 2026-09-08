@@ -11,14 +11,9 @@ abstract interface class RemoteConfigService {
   /// Should be called once at app startup. Swallows any network or SDK
   /// errors so a failed fetch never prevents the app from launching.
   ///
-  /// The returned future resolves once in-code defaults are registered —
-  /// it does NOT wait for the network fetch, so values read immediately
-  /// after `await initialize()` may still be defaults. [onFetchComplete],
-  /// if given, fires once the fetch actually settles (success or failure)
-  /// so a caller can re-read values that must reflect the fetched state —
-  /// e.g. mirroring a flag into a native platform channel (HAB-269 WU2
-  /// audit finding: syncing only right after `initialize()` reads a
-  /// stale/default value, not what was just fetched).
+  /// The returned future does NOT wait for the network fetch — only for
+  /// in-code defaults to register. [onFetchComplete], if given, fires once
+  /// the fetch actually settles, for callers that need the fetched value.
   ///
   /// Never throws — implementations swallow failures silently.
   Future<void> initialize({void Function()? onFetchComplete});

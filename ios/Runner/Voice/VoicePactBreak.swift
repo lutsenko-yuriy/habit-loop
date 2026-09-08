@@ -30,9 +30,7 @@ struct VoicePactBreak {
   static func endOfDay(_ d: Date) -> Date {
     let calendar = Calendar.current
     let startOfDay = calendar.startOfDay(for: d)
-    // Match Dart's `DateTime(y, m, d, 23, 59, 59, 999)` down to the millisecond, not just
-    // the second — a `scheduledAt` landing in that last 999ms window must be treated
-    // identically on both sides (audit finding, HAB-269 WU2 review).
+    // Match Dart's DateTime(y, m, d, 23, 59, 59, 999) to the millisecond.
     let almostNextDay = calendar.date(byAdding: DateComponents(day: 1, nanosecond: -1_000_000), to: startOfDay)
     return almostNextDay ?? d
   }

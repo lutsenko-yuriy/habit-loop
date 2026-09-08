@@ -109,13 +109,8 @@ struct MarkShowupDoneIntent: AppIntent {
     }
   }
 
-  /// Attempts the write, then logs `voice_mark_done_resolved` with the actual
-  /// result — `outcome` on success, `failed_write` if `VoiceShowupStore.markDone`
-  /// returned false. Logging `outcome` unconditionally before attempting the
-  /// write (as WU2 originally did) let a failed write masquerade as success in
-  /// this metric, while `showup_marked_done` (which only fires on success)
-  /// disagreed with it — making the outcome enum unusable for a success rate
-  /// (HAB-269 WU2 audit finding).
+  /// Attempts the write, then logs `voice_mark_done_resolved` — `outcome` on
+  /// success, `failed_write` if the write itself failed.
   private func markAndLog(_ showup: VoiceShowup, outcome: String, candidateCount: Int) -> String {
     guard VoiceShowupStore.markDone(id: showup.id) else {
       logResolved(outcome: "failed_write", candidateCount: candidateCount)

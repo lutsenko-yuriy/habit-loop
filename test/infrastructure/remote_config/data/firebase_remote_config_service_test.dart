@@ -290,6 +290,21 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(fakeClient.fetchAndActivateCallCount, 1);
     });
+
+    test('calls onFetchComplete once the fetch settles successfully', () async {
+      var called = false;
+      await service.initialize(onFetchComplete: () => called = true);
+      await Future<void>.delayed(Duration.zero);
+      expect(called, isTrue);
+    });
+
+    test('calls onFetchComplete even when fetchAndActivate throws', () async {
+      var called = false;
+      final fetchThrowingService = FirebaseRemoteConfigService(_FetchThrowingClient());
+      await fetchThrowingService.initialize(onFetchComplete: () => called = true);
+      await Future<void>.delayed(Duration.zero);
+      expect(called, isTrue);
+    });
   });
 
   group('FirebaseRemoteConfigService.getInt', () {
