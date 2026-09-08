@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Theme;
 import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_illustration.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 class EnterNamePageIos extends StatefulWidget {
@@ -40,6 +42,10 @@ class _EnterNamePageIosState extends State<EnterNamePageIos> {
     final l10n = AppLocalizations.of(context)!;
     final theme = CupertinoTheme.of(context);
     return CupertinoPageScaffold(
+      // Matches the onboarding carousel's background (HAB-272) — otherwise
+      // this falls back to CupertinoColors.systemBackground (plain white/black),
+      // not the app's themed mint/dark-blue surface.
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s24),
@@ -56,6 +62,8 @@ class _EnterNamePageIosState extends State<EnterNamePageIos> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        const EnterNameIllustration(key: Key('enter-name-illustration')),
+                        const SizedBox(height: AppSpacing.s12),
                         Text(
                           l10n.enterNameTitle,
                           textAlign: TextAlign.center,

@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart' show CupertinoTextField;
+import 'package:flutter/cupertino.dart' show CupertinoPageScaffold, CupertinoTextField;
 import 'package:flutter/foundation.dart' show TargetPlatform, debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -18,6 +18,7 @@ import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart'
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_screen.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
@@ -53,6 +54,11 @@ Widget _buildApp({
         displayNameProvider.overrideWith(() => DisplayNameNotifier(seedDisplayName: seedDisplayName)),
     ],
     child: MaterialApp(
+      // Real production theme (HAB-272 audit finding) — without it, the two
+      // background-color tests below compared the scaffold to whatever
+      // MaterialApp's own default ColorScheme happened to be, never actually
+      // exercising HabitLoopTheme's mint/dark-blue surface.
+      theme: HabitLoopTheme.materialTheme,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -517,6 +523,79 @@ void main() {
 
       expect(notifications.cancelledPactIds, isEmpty);
       expect(notifications.scheduledReminders, isEmpty);
+    });
+  });
+
+  group('EnterNamePage theming and illustration (HAB-272)', () {
+    testWidgets('iOS: background matches the app themed surface color', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () {},
+          onboardingService: FakeOnboardingPreferenceService(),
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        final scaffold = tester.widget<CupertinoPageScaffold>(find.byType(CupertinoPageScaffold));
+        final theme = Theme.of(tester.element(find.byType(CupertinoPageScaffold)));
+        expect(scaffold.backgroundColor, theme.colorScheme.surface);
+        // Regression guard (HAB-272 audit finding): comparing to the ambient
+        // theme alone would still pass if backgroundColor silently reverted
+        // to CupertinoPageScaffold's plain-white default — HabitLoopTheme's
+        // seeded surface is never pure white, so this catches that case too.
+        expect(scaffold.backgroundColor, isNot(Colors.white));
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('Android: background matches the app themed surface color', (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      final theme = Theme.of(tester.element(find.byType(Scaffold)));
+      expect(scaffold.backgroundColor, theme.colorScheme.surface);
+      // Regression guard (HAB-272 audit finding) — see the iOS test above.
+      expect(scaffold.backgroundColor, isNot(Colors.white));
+    });
+
+    testWidgets('iOS: shows the enter-name illustration, matching the onboarding illustration size', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(_buildApp(
+          onDone: () {},
+          onboardingService: FakeOnboardingPreferenceService(),
+          userProfileRepository: InMemoryUserProfileRepository(),
+        ));
+        await tester.pump();
+
+        expect(find.byKey(const Key('enter-name-illustration')), findsOneWidget);
+        final size = tester.getSize(find.byKey(const Key('enter-name-illustration')));
+        // Matches OnboardingSlideWidget's own 200-wide illustrations exactly.
+        expect(size.width, 200);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('Android: shows the enter-name illustration, matching the onboarding illustration size',
+        (tester) async {
+      await tester.pumpWidget(_buildApp(
+        onDone: () {},
+        onboardingService: FakeOnboardingPreferenceService(),
+        userProfileRepository: InMemoryUserProfileRepository(),
+      ));
+      await tester.pump();
+
+      expect(find.byKey(const Key('enter-name-illustration')), findsOneWidget);
+      final size = tester.getSize(find.byKey(const Key('enter-name-illustration')));
+      expect(size.width, 200);
     });
   });
 }

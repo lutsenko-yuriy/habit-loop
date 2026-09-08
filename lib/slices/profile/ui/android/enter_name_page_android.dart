@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
+import 'package:habit_loop/slices/profile/ui/generic/enter_name_illustration.dart';
 import 'package:habit_loop/theme/spacing.dart';
 
 class EnterNamePageAndroid extends StatelessWidget {
@@ -16,6 +17,10 @@ class EnterNamePageAndroid extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return Scaffold(
+      // Explicit even though ThemeData.scaffoldBackgroundColor already
+      // resolves to this (HAB-272) — keeps both platform pages consistent
+      // and testable the same way.
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s24),
@@ -32,6 +37,8 @@ class EnterNamePageAndroid extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        const EnterNameIllustration(key: Key('enter-name-illustration')),
+                        const SizedBox(height: AppSpacing.s12),
                         Text(
                           l10n.enterNameTitle,
                           textAlign: TextAlign.center,

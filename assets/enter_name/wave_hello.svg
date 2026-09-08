@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240">
+  <!-- Background circle, same mint tone as the onboarding slides -->
+  <circle cx="160" cy="120" r="90" fill="#E0F2F1"/>
+
+  <!-- Decorative accent dots, clear of the figure -->
+  <circle cx="112" cy="72" r="5" fill="#8BC34A" opacity="0.3"/>
+  <circle cx="206" cy="152" r="5" fill="#FFB74D" opacity="0.3"/>
+  <circle cx="128" cy="186" r="4" fill="#00796B" opacity="0.3"/>
+
+  <!-- Silhouette: head, shoulders and upper torso only (no legs, no face) -->
+  <circle cx="152" cy="92" r="20" fill="#004D40"/>
+  <path d="M 118 178 Q 110 132 134 114 Q 143 108 152 108 Q 161 108 170 114 Q 188 128 186 160 L 186 178 Z" fill="#004D40"/>
+
+  <!-- Raised waving arm, bent at the elbow, with a rounded hand -->
+  <path d="M 176 122 Q 196 112 202 92" fill="none" stroke="#004D40" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="205" cy="82" r="10" fill="#004D40"/>
+
+  <!-- Wave motion lines beside the hand — kept inside the r=90 background
+       circle (HAB-272 audit finding), unlike the original reach to (246,82). -->
+  <path d="M 218 66 Q 226 82 218 98" fill="none" stroke="#8BC34A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 224 62 Q 234 82 224 102" fill="none" stroke="#FFB74D" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+</svg>
