@@ -15,7 +15,8 @@
   <path d="M 176 122 Q 196 112 202 92" fill="none" stroke="#004D40" stroke-width="14" stroke-linecap="round"/>
   <circle cx="205" cy="82" r="10" fill="#004D40"/>
 
-  <!-- Wave motion lines beside the hand -->
-  <path d="M 224 68 Q 232 82 224 96" fill="none" stroke="#8BC34A" stroke-width="3" stroke-linecap="round"/>
-  <path d="M 234 62 Q 246 82 234 102" fill="none" stroke="#FFB74D" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <!-- Wave motion lines beside the hand — kept inside the r=90 background
+       circle (HAB-272 audit finding), unlike the original reach to (246,82). -->
+  <path d="M 218 66 Q 226 82 218 98" fill="none" stroke="#8BC34A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 224 62 Q 234 82 224 102" fill="none" stroke="#FFB74D" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
 </svg>

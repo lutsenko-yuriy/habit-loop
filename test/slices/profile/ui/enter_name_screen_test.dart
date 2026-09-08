@@ -18,6 +18,7 @@ import 'package:habit_loop/slices/profile/ui/generic/display_name_provider.dart'
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_constants.dart';
 import 'package:habit_loop/slices/profile/ui/generic/enter_name_screen.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/theme/habit_loop_theme.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/notifications/fake_notification_service.dart';
@@ -53,6 +54,11 @@ Widget _buildApp({
         displayNameProvider.overrideWith(() => DisplayNameNotifier(seedDisplayName: seedDisplayName)),
     ],
     child: MaterialApp(
+      // Real production theme (HAB-272 audit finding) — without it, the two
+      // background-color tests below compared the scaffold to whatever
+      // MaterialApp's own default ColorScheme happened to be, never actually
+      // exercising HabitLoopTheme's mint/dark-blue surface.
+      theme: HabitLoopTheme.materialTheme,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -534,6 +540,11 @@ void main() {
         final scaffold = tester.widget<CupertinoPageScaffold>(find.byType(CupertinoPageScaffold));
         final theme = Theme.of(tester.element(find.byType(CupertinoPageScaffold)));
         expect(scaffold.backgroundColor, theme.colorScheme.surface);
+        // Regression guard (HAB-272 audit finding): comparing to the ambient
+        // theme alone would still pass if backgroundColor silently reverted
+        // to CupertinoPageScaffold's plain-white default — HabitLoopTheme's
+        // seeded surface is never pure white, so this catches that case too.
+        expect(scaffold.backgroundColor, isNot(Colors.white));
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
@@ -550,6 +561,8 @@ void main() {
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
       final theme = Theme.of(tester.element(find.byType(Scaffold)));
       expect(scaffold.backgroundColor, theme.colorScheme.surface);
+      // Regression guard (HAB-272 audit finding) — see the iOS test above.
+      expect(scaffold.backgroundColor, isNot(Colors.white));
     });
 
     testWidgets('iOS: shows the enter-name illustration, smaller than the onboarding illustration', (tester) async {
