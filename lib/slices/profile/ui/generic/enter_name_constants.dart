@@ -6,14 +6,14 @@ import 'package:characters/characters.dart';
 /// and `openChangeNameDialog`.
 const int enterNameMaxLength = 40;
 
-/// Size of [EnterNameIllustration] — deliberately smaller than the onboarding
-/// carousel's 200×160 slide images (HAB-272), so the title, body, and name
-/// field still fit above the keyboard on a short device. Matches the SVG's
-/// 320×240 (4:3) viewBox exactly so `BoxFit.contain` doesn't leave dead space
-/// inside the box (HAB-272 audit finding — a mismatched box shrinks the drawn
-/// illustration further without shrinking the box's own footprint).
-const double enterNameIllustrationWidth = 96;
-const double enterNameIllustrationHeight = 72;
+/// Size of [EnterNameIllustration] — matches the onboarding carousel's own
+/// slide illustrations exactly (200 wide, `BoxFit.contain` inside a 320×240
+/// (4:3) viewBox renders at 150 tall), per user request after seeing the
+/// smaller version live (HAB-272). The screen's existing `SingleChildScrollView`
+/// absorbs any keyboard overflow, same as it already does for a long
+/// personalized name or a small device.
+const double enterNameIllustrationWidth = 200;
+const double enterNameIllustrationHeight = 150;
 
 /// Caps [value] to [enterNameMaxLength] by grapheme cluster (via
 /// `.characters`), not UTF-16 code unit (`.length`/`.substring`) — a

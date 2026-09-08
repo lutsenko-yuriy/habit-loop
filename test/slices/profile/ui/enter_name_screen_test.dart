@@ -565,7 +565,7 @@ void main() {
       expect(scaffold.backgroundColor, isNot(Colors.white));
     });
 
-    testWidgets('iOS: shows the enter-name illustration, smaller than the onboarding illustration', (tester) async {
+    testWidgets('iOS: shows the enter-name illustration, matching the onboarding illustration size', (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       try {
         await tester.pumpWidget(_buildApp(
@@ -577,16 +577,15 @@ void main() {
 
         expect(find.byKey(const Key('enter-name-illustration')), findsOneWidget);
         final size = tester.getSize(find.byKey(const Key('enter-name-illustration')));
-        // Onboarding carousel slides render at width 200 (OnboardingSlideWidget) —
-        // this illustration must stay well under that so the keyboard doesn't
-        // push the title/body/field off-screen on a short device.
-        expect(size.width, lessThan(200));
+        // Matches OnboardingSlideWidget's own 200-wide illustrations exactly.
+        expect(size.width, 200);
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
     });
 
-    testWidgets('Android: shows the enter-name illustration, smaller than the onboarding illustration', (tester) async {
+    testWidgets('Android: shows the enter-name illustration, matching the onboarding illustration size',
+        (tester) async {
       await tester.pumpWidget(_buildApp(
         onDone: () {},
         onboardingService: FakeOnboardingPreferenceService(),
@@ -596,7 +595,7 @@ void main() {
 
       expect(find.byKey(const Key('enter-name-illustration')), findsOneWidget);
       final size = tester.getSize(find.byKey(const Key('enter-name-illustration')));
-      expect(size.width, lessThan(200));
+      expect(size.width, 200);
     });
   });
 }
