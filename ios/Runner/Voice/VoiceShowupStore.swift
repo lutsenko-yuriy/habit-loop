@@ -19,16 +19,30 @@ enum VoiceShowupStore {
     return documents.appendingPathComponent("habit_loop.db").path
   }
 
+  // HabitLoopDatabase._open() sets `PRAGMA journal_mode=WAL` persistently, and a
+  // read-only connection can fail to read a WAL db that needs -shm initialised or a
+  // -wal replay (exactly the cold, app-not-running case this feature targets — audit
+  // finding, HAB-269 WU1 review). Open read-write even for reads; the sandbox already
+  // grants this process write access to its own habit_loop.db.
+  private static func openConnection() -> OpaquePointer? {
+    var db: OpaquePointer?
+    guard sqlite3_open_v2(databasePath, &db, SQLITE_OPEN_READWRITE, nil) == SQLITE_OK else {
+      print("VoiceShowupStore: failed to open db at \(databasePath)")
+      return nil
+    }
+    // A live backgrounded app can be mid-write and briefly hold the WAL lock — retry
+    // for up to 3s instead of failing the very first contended access.
+    sqlite3_busy_timeout(db, 3000)
+    return db
+  }
+
   /// Today's remaining showups for active pacts, ordered soonest-first.
   /// Filter mirrors PRODUCT_SPEC.md: exclude done, exclude manually-failed
   /// (redeemable = 0), include auto-failed (redeemable = 1) and pending.
-  /// Does NOT check pact_breaks — out of scope for this native layer.
+  /// Does NOT check pact_breaks — out of scope for this native layer (HAB-269 WU1);
+  /// must be closed before WU2 flips voice_mark_done_enabled — see docs/knowledge/notes/HAB-269.md.
   static func todaysOpenShowups(now: Date = Date()) -> [VoiceShowup] {
-    var db: OpaquePointer?
-    guard sqlite3_open_v2(databasePath, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
-      print("VoiceShowupStore: failed to open db at \(databasePath)")
-      return []
-    }
+    guard let db = openConnection() else { return [] }
     defer { sqlite3_close(db) }
 
     let calendar = Calendar.current
@@ -111,20 +125,26 @@ enum VoiceShowupStore {
 
   /// Raw UPDATE, threaded through the same `dirty`/`synced_at` convention
   /// ShowupMapper.toRow() uses so the write queues for the next sync pass.
+  /// `AND status = 'pending'` guards against a race where the showup was manually
+  /// failed in-app during Siri's confirmation round-trip — a stale "done" report to
+  /// the user is safer than silently overwriting that fail. `sqlite3_changes` (not
+  /// just SQLITE_DONE, which is also returned for a zero-row match) is what actually
+  /// confirms the row was updated.
   @discardableResult
   static func markDone(id: String) -> Bool {
-    var db: OpaquePointer?
-    guard sqlite3_open_v2(databasePath, &db, SQLITE_OPEN_READWRITE, nil) == SQLITE_OK else {
-      return false
-    }
+    guard let db = openConnection() else { return false }
     defer { sqlite3_close(db) }
 
-    let sql = "UPDATE showups SET status = 'done', dirty = 1, synced_at = NULL WHERE id = ?"
+    let sql = "UPDATE showups SET status = 'done', dirty = 1, synced_at = NULL WHERE id = ? AND status = 'pending'"
     var stmt: OpaquePointer?
     guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return false }
     defer { sqlite3_finalize(stmt) }
 
-    sqlite3_bind_text(stmt, 1, (id as NSString).utf8String, -1, nil)
-    return sqlite3_step(stmt) == SQLITE_DONE
+    // nil destructor here would be SQLITE_STATIC, binding NSString's transient inner
+    // buffer past its lifetime; SQLITE_TRANSIENT makes sqlite3 copy the bytes instead.
+    let sqliteTransient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+    sqlite3_bind_text(stmt, 1, (id as NSString).utf8String, -1, sqliteTransient)
+    guard sqlite3_step(stmt) == SQLITE_DONE else { return false }
+    return sqlite3_changes(db) > 0
   }
 }

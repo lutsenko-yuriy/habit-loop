@@ -28,7 +28,8 @@ struct MarkShowupDoneIntent: AppIntent {
   @Parameter(title: "Habit", requestValueDialog: "Which habit?")
   var habitDescription: String
 
-  @MainActor
+  // No @MainActor: perform() does synchronous SQLite I/O and touches no UIKit state,
+  // so it shouldn't compete with the main thread (audit finding, HAB-269 WU1 review).
   func perform() async throws -> some IntentResult & ProvidesDialog {
     guard VoiceFeatureFlag.markDoneEnabled else {
       return .result(dialog: "Voice mark-done isn't available yet.")

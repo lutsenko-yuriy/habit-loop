@@ -12,7 +12,7 @@ struct TodaysShowupsIntent: AppIntent {
   static var title: LocalizedStringResource = "Which showups today"
   static var description = IntentDescription("Reads back today's remaining habit show-ups.")
 
-  @MainActor
+  // No @MainActor: perform() does synchronous SQLite I/O and touches no UIKit state.
   func perform() async throws -> some IntentResult & ProvidesDialog {
     guard VoiceFeatureFlag.markDoneEnabled else {
       return .result(dialog: "Voice showups aren't available yet.")
