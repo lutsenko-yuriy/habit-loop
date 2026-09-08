@@ -6,15 +6,15 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (20)
+- **review-findings** (21)
 - **planning-gaps** (15)
 - **debugging-methodology** (14)
 - **multi-wu-scope** (13)
+- **ci-flakiness** (12)
 - **research-methodology** (12)
-- **ci-flakiness** (11)
 - **code-style** (9)
+- **changelog-versioning** (8)
 - **knowledge-base-process** (8)
-- **changelog-versioning** (7)
 - **widget-test-gotchas** (7)
 - **dead-code** (5)
 - **verify-from-source** (5)
@@ -51,6 +51,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-240: Research — organize multiple tickets into a shared release, for solo dev and small-team scale](HAB-240.md)
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
 - [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
+- [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
 
 ### ci-flakiness
 - [HAB-151: run-scenarios CI job — integration tests on Android emulator](HAB-151.md)
@@ -64,6 +65,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-216: Merge break runs into a single timeline milestone, tail zone included](HAB-216.md)
 - [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
 - [HAB-258: Flaky pact-note/timeline write-through scenarios in scenarios.yml](HAB-258.md)
+- [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
 
 ### code-style
 - [HAB-139: Redeem tail-zone failed showups by adding a note](HAB-139.md)
@@ -212,6 +214,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-250: Bug: notes/index.py picks up untracked note files, causing recurring stale-INDEX CI failures](HAB-250.md)
 - [HAB-254: Notification reconciliation sync — catch drift between derived state and scheduled notifications](HAB-254.md)
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
+- [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
 
 ### scenario-gate-scope
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
