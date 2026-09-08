@@ -14,6 +14,12 @@ void main() {
       await expectLater(service.initialize(), completes);
     });
 
+    test('initialize calls onFetchComplete', () async {
+      var called = false;
+      await service.initialize(onFetchComplete: () => called = true);
+      expect(called, isTrue);
+    });
+
     test('getInt returns the expected default from RemoteConfigDefaults', () {
       expect(
         service.getInt('max_active_pacts'),

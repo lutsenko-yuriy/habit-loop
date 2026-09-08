@@ -67,6 +67,18 @@ void main() {
         expect(flags.pactBreaksEnabled, isFalse);
       });
 
+      test('voiceMarkDoneEnabled defaults to true', () {
+        final rc = FakeRemoteConfigService();
+        final flags = FeatureFlags.fromRemoteConfig(rc);
+        expect(flags.voiceMarkDoneEnabled, isTrue);
+      });
+
+      test('voiceMarkDoneEnabled reads false from RC override', () {
+        final rc = FakeRemoteConfigService(overrides: {'voice_mark_done_enabled': false});
+        final flags = FeatureFlags.fromRemoteConfig(rc);
+        expect(flags.voiceMarkDoneEnabled, isFalse);
+      });
+
       test('pactChainingEnabled defaults to true', () {
         final rc = FakeRemoteConfigService();
         final flags = FeatureFlags.fromRemoteConfig(rc);
@@ -226,6 +238,12 @@ void main() {
       test('instances differ when display_name_personalization_enabled differs', () {
         final rcOff = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': false});
         final rcOn = FakeRemoteConfigService(overrides: {'display_name_personalization_enabled': true});
+        expect(FeatureFlags.fromRemoteConfig(rcOn), isNot(equals(FeatureFlags.fromRemoteConfig(rcOff))));
+      });
+
+      test('instances differ when voice_mark_done_enabled differs', () {
+        final rcOff = FakeRemoteConfigService(overrides: {'voice_mark_done_enabled': false});
+        final rcOn = FakeRemoteConfigService(overrides: {'voice_mark_done_enabled': true});
         expect(FeatureFlags.fromRemoteConfig(rcOn), isNot(equals(FeatureFlags.fromRemoteConfig(rcOff))));
       });
     });

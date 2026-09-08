@@ -4,6 +4,13 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [0.61.0] — 2026-09-08 (PR #445 merged)
+
+### Added
+
+- [user] You can now ask Siri what's on your to-do list today, or tell it to mark a habit done — no need to unlock your phone.
+- HAB-269 (WU2): feature flag wiring (voice_mark_done_enabled flipped true), Darwin-notification dashboard refresh bridge, native Firebase Analytics calls, pact_breaks/window-end filters and native notification cancellation closing WU1's must-close gaps.
+
 ## [0.60.2] — 2026-09-08 (PR #444 merged)
 
 ### Changed

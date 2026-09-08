@@ -123,6 +123,7 @@ abstract final class RemoteConfigDefaults {
     'hurry_up_notification_enabled',
     'notification_reconciliation_enabled',
     'display_name_personalization_enabled',
+    'voice_mark_done_enabled',
   };
 
   /// Feature toggle: show the About screen entry point on the dashboard.
@@ -221,6 +222,18 @@ abstract final class RemoteConfigDefaults {
   /// release.
   static const bool displayNamePersonalizationEnabled = true;
 
+  /// Feature toggle: kill-switch for the Siri voice mark-done feature (HAB-269).
+  ///
+  /// Defaulted to `false` for the whole of WU1 (native data layer + App
+  /// Intents landed inert) and flipped to `true` here in the final WU (WU2)
+  /// now that the feature flag/refresh-signal/analytics wiring is complete.
+  /// Mirrored into native `UserDefaults` by `VoiceRemoteConfigBridge` since
+  /// the Siri App Intents have no live Dart process to read this from
+  /// directly — see `VoiceFeatureFlag.swift`. Override to `false` in the
+  /// Firebase Remote Config console to disable voice mark-done without a
+  /// release.
+  static const bool voiceMarkDoneEnabled = true;
+
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
   /// in release builds (see [FeatureFlags.fromRemoteConfig]); `null` = not
@@ -271,6 +284,7 @@ abstract final class RemoteConfigDefaults {
     'hurry_up_time_in_minutes': hurryUpTimeInMinutes,
     'notification_reconciliation_enabled': notificationReconciliationEnabled,
     'display_name_personalization_enabled': displayNamePersonalizationEnabled,
+    'voice_mark_done_enabled': voiceMarkDoneEnabled,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -294,6 +308,7 @@ abstract final class RemoteConfigDefaults {
     'hurry_up_notification_enabled': ['true', 'false'],
     'notification_reconciliation_enabled': ['true', 'false'],
     'display_name_personalization_enabled': ['true', 'false'],
+    'voice_mark_done_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

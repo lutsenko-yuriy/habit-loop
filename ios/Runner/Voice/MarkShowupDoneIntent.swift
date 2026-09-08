@@ -1,7 +1,5 @@
-// HAB-269 WU1 — "mark <habit> done" Siri voice command. See docs/ARCHITECTURE.md's
+// HAB-269 WU1/WU2 — "mark <habit> done" Siri voice command. See docs/ARCHITECTURE.md's
 // Voice section and the plan comment on HAB-269 for the full case-by-case rationale.
-// Analytics logging (voice_mark_done_resolved) lands in WU2. Inert in production until
-// WU2 flips voice_mark_done_enabled — see VoiceFeatureFlag.swift.
 //
 // requestConfirmation(result:) does NOT return a Bool (confirmed against Apple's docs):
 // it returns the passed-in result on confirm, and *throws* if the user declines.
@@ -13,8 +11,17 @@
 // free function on AppIntent, and its itemsToDisambiguate must match the parameter's
 // own declared type — so it disambiguates among habit-name Strings, then looks up the
 // matching VoiceShowup by name.
+//
+// WU2 additions: on a successful mark, cancels the showup's pending reminder/deadline/
+// hurry-up notifications (VoiceNotificationCanceller — see its header comment for why
+// native reimplementation was chosen over the Darwin-notification/EventChannel bridge)
+// and posts VoiceWriteSignal so a live-in-background Flutter engine refreshes its
+// caches. Analytics (voice_mark_done_resolved, showup_marked_done) are logged directly
+// via the native FirebaseAnalytics SDK — a deliberate, documented exception to routing
+// through Dart's AnalyticsService (docs/ARCHITECTURE.md's Voice section, HAB-269 WU2).
 
 import AppIntents
+import FirebaseAnalytics
 import Foundation
 
 @available(iOS 16.0, *)
@@ -41,7 +48,7 @@ struct MarkShowupDoneIntent: AppIntent {
 
     // Case 1: exactly one pending match -> mark immediately, no confirmation.
     if pending.count == 1 {
-      return .result(dialog: IntentDialog(stringLiteral: mark(pending[0])))
+      return .result(dialog: IntentDialog(stringLiteral: markAndLog(pending[0], outcome: "marked_direct", candidateCount: pending.count)))
     }
 
     // Case 3: several pending matches -> confirm the best guess (first match).
@@ -49,21 +56,30 @@ struct MarkShowupDoneIntent: AppIntent {
       let best = pending[0]
       do {
         _ = try await requestConfirmation(result: .result(dialog: "Did you mean \(best.habitName)?"))
-        return .result(dialog: IntentDialog(stringLiteral: mark(best)))
+        return .result(
+          dialog: IntentDialog(
+            stringLiteral: markAndLog(best, outcome: "marked_after_confirmation", candidateCount: pending.count)
+          )
+        )
       } catch {
+        logResolved(outcome: "declined_confirmation", candidateCount: pending.count)
         return .result(dialog: "OK, not marking anything.")
       }
     }
 
     // Case 2: a future (not-yet-pending) match -> confirm, reminding it isn't due yet.
+    // No pending matches at all, so candidate_count is 0 for both outcomes below.
     let future = VoiceShowupStore.futureMatches(in: todays, description: habitDescription, now: now)
     if let match = future.first {
       do {
         _ = try await requestConfirmation(
           result: .result(dialog: "\(match.habitName) isn't due yet. Mark it done anyway?")
         )
-        return .result(dialog: IntentDialog(stringLiteral: mark(match)))
+        return .result(
+          dialog: IntentDialog(stringLiteral: markAndLog(match, outcome: "marked_after_confirmation", candidateCount: 0))
+        )
       } catch {
+        logResolved(outcome: "declined_confirmation", candidateCount: 0)
         return .result(dialog: "OK, not marking anything.")
       }
     }
@@ -72,6 +88,7 @@ struct MarkShowupDoneIntent: AppIntent {
     // native disambiguation UI.
     let candidates = todays.filter { $0.status == "pending" }
     guard !candidates.isEmpty else {
+      logResolved(outcome: "abandoned_no_match", candidateCount: 0)
       return .result(dialog: "I couldn't find anything to mark done today.")
     }
     do {
@@ -80,16 +97,36 @@ struct MarkShowupDoneIntent: AppIntent {
         dialog: "I couldn't match that to a habit. Which one did you mean?"
       )
       guard let chosen = candidates.first(where: { $0.habitName == chosenName }) else {
+        logResolved(outcome: "abandoned_no_match", candidateCount: 0)
         return .result(dialog: "Something went wrong.")
       }
-      return .result(dialog: IntentDialog(stringLiteral: mark(chosen)))
+      return .result(
+        dialog: IntentDialog(stringLiteral: markAndLog(chosen, outcome: "recovered_from_no_match", candidateCount: 0))
+      )
     } catch {
+      logResolved(outcome: "abandoned_no_match", candidateCount: 0)
       return .result(dialog: "OK, not marking anything.")
     }
   }
 
-  private func mark(_ showup: VoiceShowup) -> String {
-    let ok = VoiceShowupStore.markDone(id: showup.id)
-    return ok ? "Marked \(showup.habitName) done." : "Something went wrong."
+  /// Attempts the write, then logs `voice_mark_done_resolved` — `outcome` on
+  /// success, `failed_write` if the write itself failed.
+  private func markAndLog(_ showup: VoiceShowup, outcome: String, candidateCount: Int) -> String {
+    guard VoiceShowupStore.markDone(id: showup.id) else {
+      logResolved(outcome: "failed_write", candidateCount: candidateCount)
+      return "Something went wrong."
+    }
+    VoiceNotificationCanceller.cancel(showupId: showup.id)
+    VoiceWriteSignal.post()
+    Analytics.logEvent("showup_marked_done", parameters: ["pact_id": showup.pactId, "source": "voice"])
+    logResolved(outcome: outcome, candidateCount: candidateCount)
+    return "Marked \(showup.habitName) done."
+  }
+
+  private func logResolved(outcome: String, candidateCount: Int) {
+    Analytics.logEvent(
+      "voice_mark_done_resolved",
+      parameters: ["outcome": outcome, "candidate_count": candidateCount]
+    )
   }
 }

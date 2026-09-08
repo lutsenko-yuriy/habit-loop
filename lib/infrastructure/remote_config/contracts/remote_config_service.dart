@@ -11,8 +11,12 @@ abstract interface class RemoteConfigService {
   /// Should be called once at app startup. Swallows any network or SDK
   /// errors so a failed fetch never prevents the app from launching.
   ///
+  /// The returned future does NOT wait for the network fetch — only for
+  /// in-code defaults to register. [onFetchComplete], if given, fires once
+  /// the fetch actually settles, for callers that need the fetched value.
+  ///
   /// Never throws — implementations swallow failures silently.
-  Future<void> initialize();
+  Future<void> initialize({void Function()? onFetchComplete});
 
   /// Returns an int config value for [key].
   ///

@@ -24,7 +24,7 @@ final class OverridableRemoteConfigService implements RemoteConfigService {
         _store = store;
 
   @override
-  Future<void> initialize() => _inner.initialize();
+  Future<void> initialize({void Function()? onFetchComplete}) => _inner.initialize(onFetchComplete: onFetchComplete);
 
   @override
   int getInt(String key) {
