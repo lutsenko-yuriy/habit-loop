@@ -87,15 +87,14 @@ bool _notificationNavigationHandled = false;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (_) {
-    // AppDelegate may have already configured the default app natively
-    // (HAB-269 WU2) — only rethrow if Firebase is genuinely uninitialized.
-    if (Firebase.apps.isEmpty) rethrow;
-  }
+  // AppDelegate may already have configured the default app natively
+  // (HAB-269 WU2). If its options match, the SDK returns the existing app
+  // silently — no exception. A duplicate-app throw here means the two
+  // platforms' Firebase config actually disagree, which should fail loudly
+  // rather than be swallowed, so this stays unguarded.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Release-version gating (HAB-207) — '' fails closed, unlike the test
   // sentinel unspecifiedAppVersion, which fails open.

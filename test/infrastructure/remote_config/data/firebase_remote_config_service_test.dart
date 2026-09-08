@@ -298,6 +298,17 @@ void main() {
       expect(called, isTrue);
     });
 
+    test('onFetchComplete fires after fetchAndActivate, not before', () async {
+      final callOrder = <String>[];
+      final trackingClient = _TrackingFirebaseRemoteConfigClient(callOrder);
+      final trackingService = FirebaseRemoteConfigService(trackingClient);
+
+      await trackingService.initialize(onFetchComplete: () => callOrder.add('onFetchComplete'));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(callOrder.indexOf('fetchAndActivate'), lessThan(callOrder.indexOf('onFetchComplete')));
+    });
+
     test('calls onFetchComplete even when fetchAndActivate throws', () async {
       var called = false;
       final fetchThrowingService = FirebaseRemoteConfigService(_FetchThrowingClient());
