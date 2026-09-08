@@ -28,6 +28,9 @@ enum VoiceShowupStore {
     var db: OpaquePointer?
     guard sqlite3_open_v2(databasePath, &db, SQLITE_OPEN_READWRITE, nil) == SQLITE_OK else {
       print("VoiceShowupStore: failed to open db at \(databasePath)")
+      // sqlite3_open_v2 can allocate a handle even on failure (per SQLite docs) — close
+      // it instead of leaking (HAB-269 WU2 fast-follow; caught in WU1's own post-fix audit).
+      sqlite3_close(db)
       return nil
     }
     // A live backgrounded app can be mid-write and briefly hold the WAL lock — retry
