@@ -47,6 +47,8 @@ import 'package:habit_loop/infrastructure/remote_config/data/firebase_remote_con
 import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/overridable_remote_config_service.dart';
 import 'package:habit_loop/infrastructure/remote_config/data/shared_preferences_remote_config_override_store.dart';
+import 'package:habit_loop/infrastructure/voice/voice_remote_config_bridge.dart';
+import 'package:habit_loop/infrastructure/voice/voice_write_signal_listener.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
@@ -145,6 +147,14 @@ Future<void> main() async {
       );
     } catch (_) {}
   }
+
+  // HAB-269 WU2 — mirror voice_mark_done_enabled into native UserDefaults so
+  // the Siri App Intents (no live Dart process) can read it directly, and
+  // wire the Siri mark-done -> dashboard refresh bridge. Both calls are
+  // iOS-only concerns; on Android/tests the platform channel/EventChannel
+  // calls are safely inert (caught exception / no listener ever fires).
+  unawaited(VoiceRemoteConfigBridge().sync(remoteConfigService ?? NoopRemoteConfigService()));
+  VoiceWriteSignalListener().listen(_signalDashboardRefresh);
 
   // Read debug_backend before constructing auth/Firestore — decision needed at startup.
   final debugBackend = !kReleaseMode
