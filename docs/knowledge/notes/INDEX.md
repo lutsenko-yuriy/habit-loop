@@ -7,8 +7,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ## Top themes
 
 - **review-findings** (21)
+- **debugging-methodology** (15)
 - **planning-gaps** (15)
-- **debugging-methodology** (14)
 - **multi-wu-scope** (13)
 - **ci-flakiness** (12)
 - **research-methodology** (12)
@@ -25,9 +25,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **scope-creep** (3)
 - **stale-ticket** (3)
 - **debrief-timing** (2)
+- **ios-limits** (2)
 - **subagent-authority** (2)
 - **docs-findability** (1)
-- **ios-limits** (1)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
 - **multi-project-scope** (1)
@@ -109,6 +109,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-228: Debug: pending-notifications viewer screen](HAB-228.md)
 - [HAB-258: Flaky pact-note/timeline write-through scenarios in scenarios.yml](HAB-258.md)
 - [HAB-264: Serialize release.yml on main to prevent build-number races](HAB-264.md)
+- [HAB-271: Bug: app fails to relaunch after force-quit — splash screen flashes and closes (Debug only)](HAB-271.md)
 
 ### docs-findability
 - [HAB-220: Groom docs/skills for token-efficiency and findability](HAB-220.md)
@@ -121,6 +122,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ### ios-limits
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
+- [HAB-271: Bug: app fails to relaunch after force-quit — splash screen flashes and closes (Debug only)](HAB-271.md)
 
 ### knowledge-base-process
 - [HAB-130: Project knowledge base — local Markdown vault with /note and /debrief integration](HAB-130.md)
