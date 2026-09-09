@@ -6,7 +6,7 @@ Use this workflow for research-only tickets (no production code, no PR beyond th
 
 ## Steps
 
-1. **Scope the ticket before surveying.** Two passes, both ticket-specific (not covered by the general `docs/CONSTRAINTS.md`):
+1. **Scope the ticket before surveying.** If this scoping/survey work is expected to span multiple sessions/days, move the Linear ticket to **Brief** first (ADR-0008) and back to Backlog/Todo once scoped. Two passes, both ticket-specific (not covered by the general `docs/CONSTRAINTS.md`):
    - **Ticket-specific constraints.** List constraints unique to this ticket — including non-functional ones (existing infra, timing, ownership) — beyond the standing project constraints. Surfacing these early can invalidate the premise of the research before survey effort is spent.
    - **MoSCoW the requirements.** Sort the ticket's research goals into Must/Should/Could/Won't. Survey and evaluate Musts first — a goal that turns out to be Could-have may already be satisfied by the status quo.
 
