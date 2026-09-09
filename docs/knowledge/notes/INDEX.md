@@ -18,10 +18,10 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **widget-test-gotchas** (7)
 - **dead-code** (5)
 - **verify-from-source** (5)
+- **cross-project-sync** (4)
 - **feature-toggle** (4)
 - **ui-design-iteration** (4)
 - **appstore-ci** (3)
-- **cross-project-sync** (3)
 - **debrief-timing** (3)
 - **ios-limits** (3)
 - **scope-creep** (3)
@@ -81,6 +81,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ### cross-project-sync
 - [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
 - [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)
+- [HAB-172: Synchronize HabitLoop harness improvements into YAB](HAB-172.md)
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
 
 ### dead-code
