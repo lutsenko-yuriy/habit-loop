@@ -6,7 +6,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (21)
+- **review-findings** (22)
 - **debugging-methodology** (15)
 - **planning-gaps** (15)
 - **multi-wu-scope** (13)
@@ -217,6 +217,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-250: Bug: notes/index.py picks up untracked note files, causing recurring stale-INDEX CI failures](HAB-250.md)
 - [HAB-254: Notification reconciliation sync — catch drift between derived state and scheduled notifications](HAB-254.md)
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
+- [HAB-268: Add a break/eye-strain reminder alongside the nightly block (ADR-0007)](HAB-268.md)
 - [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
 
 ### scenario-gate-scope
