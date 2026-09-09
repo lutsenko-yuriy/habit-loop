@@ -102,7 +102,43 @@ else
   fail=$((fail + 1))
 fi
 
-# 9. Stale state files (older than a day) are pruned automatically, so a
+# 9. A session_id containing a path separator is rejected outright rather
+#    than risk writing the state file outside STATE_DIR.
+printf '' > "$TMP_ENV"
+reset_state
+out=$(run "../escape" 1000)
+check_silent "path-separator session_id -> rejected, silent" "$out"
+if [ -e "$TMP_STATE_DIR/../escape" ] || find "$(dirname "$TMP_STATE_DIR")" -maxdepth 1 -name escape 2>/dev/null | grep -q escape; then
+  echo "FAIL: path-separator session_id must not create a file outside STATE_DIR"
+  fail=$((fail + 1))
+else
+  echo "PASS: path-separator session_id must not create a file outside STATE_DIR"
+  pass=$((pass + 1))
+fi
+
+# 10. A malformed interval in the toggle file falls back to the 20-minute
+#     default instead of failing open into a reminder on every prompt.
+printf 'HL_BREAK_REMINDER=on\nHL_BREAK_REMINDER_INTERVAL_MIN=not-a-number\n' > "$TMP_ENV"
+reset_state
+run "sess-7" 1000 >/dev/null
+out=$(run "sess-7" 1500)
+check_silent "malformed interval -> falls back to default, no early fire" "$out"
+out=$(run "sess-7" $((1000 + 20 * 60)))
+check "malformed interval -> default 20min still fires eventually" "20-20-20" "" "$out"
+
+# 11. A prompt-to-prompt gap of 3x the interval or more is treated as time
+#     away from the keyboard -> clock resets silently, no false "it's been
+#     20 minutes of active time" nudge right after a long break.
+printf '' > "$TMP_ENV"
+reset_state
+run "sess-8" 1000 >/dev/null
+out=$(run "sess-8" $((1000 + 3 * 20 * 60)))
+check_silent "long away-gap (>=3x interval) -> silent, clock resets" "$out"
+# Confirm the clock actually reset: a normal interval after that point fires.
+out=$(run "sess-8" $((1000 + 3 * 20 * 60 + 20 * 60)))
+check "after an away-gap reset, a normal interval still fires later" "20-20-20" "" "$out"
+
+# 12. Stale state files (older than a day) are pruned automatically, so a
 #    solo dev never has to clean these up by hand.
 reset_state
 echo 1000 > "$TMP_STATE_DIR/stale-session"

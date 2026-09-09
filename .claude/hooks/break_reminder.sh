@@ -21,6 +21,11 @@
 # mirrors nightly_block.env / alert.env. Takes effect on the very next prompt.
 #
 # Exit 0 always — this hook is a nudge, never a blocker.
+#
+# Test seams (see test_break_reminder.sh): BREAK_REMINDER_ENV_OVERRIDE points
+# at a scratch toggle file, BREAK_REMINDER_STATE_DIR_OVERRIDE at a scratch
+# state directory, BREAK_REMINDER_NOW_OVERRIDE fakes the current epoch time —
+# same pattern as alert.sh's ALERT_ENV_OVERRIDE / FRONTMOST_APP_OVERRIDE.
 
 PROJECT=/Users/yurich/claude_projects/habit_loop
 ENV_FILE="${BREAK_REMINDER_ENV_OVERRIDE:-$PROJECT/.claude/break_reminder.env}"
@@ -36,8 +41,20 @@ HL_BREAK_REMINDER_INTERVAL_MIN=20
 [ -f "$ENV_FILE" ] && source "$ENV_FILE"
 [ "$HL_BREAK_REMINDER" = "on" ] || exit 0
 
+# A hand-edited toggle file could set this to anything — fall back to the
+# default rather than failing open into a garbled nudge on every prompt.
+case "$HL_BREAK_REMINDER_INTERVAL_MIN" in
+  ''|*[!0-9]*|0) HL_BREAK_REMINDER_INTERVAL_MIN=20 ;;
+esac
+
 session_id=$(printf '%s' "$input" | jq -r '.session_id // ""' 2>/dev/null || true)
 [ -n "$session_id" ] || exit 0
+# session_id is used verbatim as a filename below — reject anything that
+# could escape STATE_DIR (path separators, leading dot) rather than risk
+# writing outside it, where the staleness prune below can never find it.
+case "$session_id" in
+  */* | .*) exit 0 ;;
+esac
 
 mkdir -p "$STATE_DIR"
 
@@ -62,7 +79,18 @@ if [ "$elapsed" -lt "$interval_sec" ]; then
   exit 0
 fi
 
-# Interval elapsed — reset the clock and surface the nudge.
+# A gap of 3x the interval or more means the prompt-to-prompt gap was idle
+# time away from the keyboard, not active session time — reset the clock
+# silently rather than greeting a returning user with a false "it's been
+# 20 minutes of active time" after a multi-hour lunch break.
+away_threshold_sec=$((interval_sec * 3))
+if [ "$elapsed" -ge "$away_threshold_sec" ]; then
+  echo "$now" > "$state_file"
+  exit 0
+fi
+
+# Interval elapsed, and the gap wasn't just idle time away — reset the clock
+# and surface the nudge.
 echo "$now" > "$state_file"
 
 context="It's been about $HL_BREAK_REMINDER_INTERVAL_MIN minutes of active session time. Following the 20-20-20 rule: mention briefly to the user that it's a good moment for a short break — look at something 20 feet away for 20 seconds, or stretch."
