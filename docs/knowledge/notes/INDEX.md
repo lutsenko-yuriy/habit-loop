@@ -9,12 +9,12 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **review-findings** (22)
 - **debugging-methodology** (15)
 - **planning-gaps** (15)
-- **research-methodology** (14)
+- **research-methodology** (15)
 - **multi-wu-scope** (13)
 - **ci-flakiness** (12)
 - **code-style** (9)
+- **knowledge-base-process** (9)
 - **changelog-versioning** (8)
-- **knowledge-base-process** (8)
 - **widget-test-gotchas** (7)
 - **dead-code** (5)
 - **verify-from-source** (5)
@@ -136,6 +136,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-221: Tagged table of contents for docs/knowledge/notes/ to mine historical pain points](HAB-221.md)
 - [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 - [HAB-250: Bug: notes/index.py picks up untracked note files, causing recurring stale-INDEX CI failures](HAB-250.md)
+- [HAB-266: Research: are docs/knowledge/notes/BOOKMARKS.md bookmarks proliferating faster than they're useful?](HAB-266.md)
 
 ### l10n-glossary
 - [HAB-128: L10n audit — audit translations and update glossary with canonical per-language terms](HAB-128.md)
@@ -199,6 +200,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-251: Research: developer health (vision, ergonomics, mental load) and its effect on attentiveness/thoroughness](HAB-251.md)
 - [HAB-253: Research: human-facing findability and navigation for docs/skills](HAB-253.md)
 - [HAB-255: Research — add "Brief" and "Debrief" ticket states for async, multi-day work](HAB-255.md)
+- [HAB-266: Research: are docs/knowledge/notes/BOOKMARKS.md bookmarks proliferating faster than they're useful?](HAB-266.md)
 
 ### review-findings
 - [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
