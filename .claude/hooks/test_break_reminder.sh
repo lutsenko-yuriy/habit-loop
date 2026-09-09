@@ -138,7 +138,29 @@ check_silent "long away-gap (>=3x interval) -> silent, clock resets" "$out"
 out=$(run "sess-8" $((1000 + 3 * 20 * 60 + 20 * 60)))
 check "after an away-gap reset, a normal interval still fires later" "20-20-20" "" "$out"
 
-# 12. Stale state files (older than a day) are pruned automatically, so a
+# 12. The firing path always exits 0, even though it ends on a `jq` call —
+#     the hook must never accidentally block a prompt (exit 2) if jq errors.
+printf '' > "$TMP_ENV"
+reset_state
+run "sess-9" 1000 >/dev/null
+run "sess-9" $((1000 + 20 * 60)) >/dev/null
+rc=$?
+if [ "$rc" -eq 0 ]; then
+  echo "PASS: firing path exits 0"
+  pass=$((pass + 1))
+else
+  echo "FAIL: firing path exits 0 (rc=$rc)"
+  fail=$((fail + 1))
+fi
+
+# 13. A corrupt/empty state file (e.g. a crash mid-write) must not be read as
+#     epoch 0 -> must not fabricate a huge elapsed and fire spuriously.
+reset_state
+printf '' > "$TMP_STATE_DIR/sess-10"
+out=$(run "sess-10" 1000)
+check_silent "empty state file -> treated as fresh, not epoch 0" "$out"
+
+# 14. Stale state files (older than a day) are pruned automatically, so a
 #    solo dev never has to clean these up by hand.
 reset_state
 echo 1000 > "$TMP_STATE_DIR/stale-session"

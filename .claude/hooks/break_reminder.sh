@@ -56,11 +56,13 @@ case "$session_id" in
   */* | .*) exit 0 ;;
 esac
 
-mkdir -p "$STATE_DIR"
+mkdir -p "$STATE_DIR" || exit 0
 
 # Prune state files untouched for over a day — old sessions that never
-# ended cleanly shouldn't accumulate forever.
-find "$STATE_DIR" -type f -mtime +1 -delete 2>/dev/null || true
+# ended cleanly shouldn't accumulate forever. -mtime +0 (not +1) is the
+# correct spelling of "more than 1 day old": find's +n means "more than
+# (n+1) whole days", so +1 would actually mean "over 2 days".
+find "$STATE_DIR" -type f -mtime +0 -delete 2>/dev/null || true
 
 now="${BREAK_REMINDER_NOW_OVERRIDE:-$(date +%s)}"
 interval_sec=$((HL_BREAK_REMINDER_INTERVAL_MIN * 60))
@@ -73,6 +75,12 @@ if [ ! -f "$state_file" ]; then
 fi
 
 last=$(cat "$state_file" 2>/dev/null || echo "$now")
+# A corrupt or empty state file (e.g. a crash mid-write) must not be read as
+# epoch 0 — bash arithmetic silently treats "" as 0, which would fabricate a
+# multi-decade "elapsed" and fire a spurious reminder on the very next prompt.
+case "$last" in
+  ''|*[!0-9]*) last="$now" ;;
+esac
 elapsed=$((now - last))
 
 if [ "$elapsed" -lt "$interval_sec" ]; then
@@ -95,4 +103,5 @@ echo "$now" > "$state_file"
 
 context="It's been about $HL_BREAK_REMINDER_INTERVAL_MIN minutes of active session time. Following the 20-20-20 rule: mention briefly to the user that it's a good moment for a short break — look at something 20 feet away for 20 seconds, or stretch."
 
-jq -n --arg ctx "$context" '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx}}'
+jq -n --arg ctx "$context" '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx}}' || true
+exit 0
