@@ -65,6 +65,6 @@ fi
 # Interval elapsed — reset the clock and surface the nudge.
 echo "$now" > "$state_file"
 
-context="It's been about $HL_BREAK_REMINDER_INTERVAL_MIN minutes of active session time. Following the 20-20-20 rule (ADR-0007): mention briefly to the user that it's a good moment for a short break — look at something 20 feet away for 20 seconds, or stretch."
+context="It's been about $HL_BREAK_REMINDER_INTERVAL_MIN minutes of active session time. Following the 20-20-20 rule: mention briefly to the user that it's a good moment for a short break — look at something 20 feet away for 20 seconds, or stretch."
 
 jq -n --arg ctx "$context" '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx}}'
