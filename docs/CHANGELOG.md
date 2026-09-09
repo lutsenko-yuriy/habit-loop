@@ -4,6 +4,10 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+- [meta] HAB-268: added `.claude/hooks/break_reminder.sh` — a `UserPromptSubmit` hook that nudges a short break every ~20 minutes of active session time (20-20-20 rule), complementing the existing nightly working-hours block. Standing per-machine toggle via `.claude/break_reminder.env` (gitignored); wiring it into `.claude/settings.local.json` is a manual per-machine step (see PR #448) — the hook does nothing until wired in.
+
 ## [0.61.1] — 2026-09-08 (PR #447 merged)
 
 ### Changed

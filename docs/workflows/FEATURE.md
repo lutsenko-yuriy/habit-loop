@@ -80,6 +80,14 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
    - Do not continue to step 3 until the user approves the widget tests.
 3. **TDD micro-cycle** — repeat for each logical unit of work within the WU:
    1. **Red** — Write a small set of failing unit tests for one logical unit of work.
+      If the unit is a script/hook whose behavior branches on more than ~2
+      independent config/state axes (toggles, malformed input, state-file
+      presence/staleness, time gaps, etc.), sketch the combinations as a quick
+      table first (per `skills/shared/decision-guidelines.md` #3) — this
+      surfaces edge cases before review finds them instead of after (HAB-268
+      debrief, 2026-09-09: 6 of 11 review/audit findings on a stateful hook
+      script were combinatorial edge cases missed by reasoning forward from
+      "what's the natural way to wire this up").
    2. **Green** — Implement the minimum code to make them pass.
       **Opportunistic changes:** If an idea arises to modify existing or in-flight functionality, write the integration test for that change first. Never modify observable behaviour without a covering integration test.
       **Scope-expansion discoveries:** If implementation surfaces a question like "does this pattern/bug exist elsewhere in the app too?", do not revise the current ticket's plan (or add new work units) to investigate app-wide — capture the question via `/note` and schedule a dedicated follow-up ticket after this one ships. Small, directly-related fixes discovered along the way (e.g. one companion bug blocking this ticket's own tests) can still be folded in with a quick check — it's broadening the ticket's own charter mid-flight that compounds scope (HAB-187's WU7-10 plan revision, added mid-review of WU3, ballooned a ~6-WU ticket into 11).
