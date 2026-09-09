@@ -8,7 +8,8 @@ Follow TDD: write or update tests **before** implementing the feature or fix. Re
 @skills/shared/decision-guidelines.md
 
 **Ticket states and parallelism rules:**
-- **In Progress** → active development; only one ticket may be In Progress at a time.
+- **Brief** → pre-implementation scoping (`/brief`, `/analyze`, `/plan`, `/draft-scenarios` gates from step 1 below) — used when this scoping genuinely spans multiple sessions/days, so it's visible separately from Backlog rather than looking untouched (ADR-0008). Skip it for tickets that go straight into a single session's In Progress.
+- **In Progress** → active development; only one ticket may be In Progress at a time (Brief does not count against this limit).
 - **In Review** → PR is open; code review (architectural + audit) is happening.
 - **In QA** → PR is merged; CI/CD and human testers are validating on real devices. A new ticket **may** be picked up while another is In QA.
 - **Done** → QA has signed off; the user moves the ticket to Done manually.
@@ -44,7 +45,7 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
 
 ## Steps
 
-1. **Planning & setup gates** — work through in order; skip any that don't apply:
+1. **Planning & setup gates** — work through in order; skip any that don't apply. If this scoping is expected to span multiple sessions/days, move the Linear ticket to **Brief** first (ADR-0008) and back to Backlog/Todo once it's done, before step 1.5 moves it to In Progress:
    1. **Sharpen the spec.** If the ticket lacks a clear UX spec (no explicit description of UI behaviour, interaction, or screen layout), or predates the `/brief` skill: run `/brief` first, before anything else below.
    2. **Analytics planning.** For features with user-visible screens or interactions: invoke `analyze` and wait for approval.
       ```
