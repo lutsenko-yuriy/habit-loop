@@ -9,8 +9,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **review-findings** (22)
 - **debugging-methodology** (15)
 - **planning-gaps** (15)
+- **research-methodology** (14)
 - **multi-wu-scope** (13)
-- **research-methodology** (13)
 - **ci-flakiness** (12)
 - **code-style** (9)
 - **changelog-versioning** (8)
@@ -26,8 +26,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **ios-limits** (3)
 - **scope-creep** (3)
 - **stale-ticket** (3)
+- **docs-findability** (2)
 - **subagent-authority** (2)
-- **docs-findability** (1)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
 - **multi-project-scope** (1)
@@ -114,6 +114,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ### docs-findability
 - [HAB-220: Groom docs/skills for token-efficiency and findability](HAB-220.md)
+- [HAB-253: Research: human-facing findability and navigation for docs/skills](HAB-253.md)
 
 ### feature-toggle
 - [HAB-149: About / Feedback screen](HAB-149.md)
@@ -196,6 +197,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-237: Research: should CI ever push commits directly to main?](HAB-237.md)
 - [HAB-240: Research — organize multiple tickets into a shared release, for solo dev and small-team scale](HAB-240.md)
 - [HAB-251: Research: developer health (vision, ergonomics, mental load) and its effect on attentiveness/thoroughness](HAB-251.md)
+- [HAB-253: Research: human-facing findability and navigation for docs/skills](HAB-253.md)
 - [HAB-255: Research — add "Brief" and "Debrief" ticket states for async, multi-day work](HAB-255.md)
 
 ### review-findings
