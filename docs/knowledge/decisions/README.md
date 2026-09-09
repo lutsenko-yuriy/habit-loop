@@ -39,3 +39,4 @@ Write one when a ticket's research or implementation concludes in a decision tha
 | ADR-0006 | adopt the "test robot" pattern incrementally, starting from the next flaky-file fix, plus a centralized widget-Key file | `accepted` | 2026-09-06 | HAB-200 |
 | ADR-0007 | keep the fixed nightly clock-window block as-is, and add a complementary break reminder rather than replacing it | `accepted` | 2026-09-07 | HAB-251 |
 | ADR-0008 | add a "Brief" Linear ticket state before In Progress; reject a separate "Debrief" state | `accepted` | 2026-09-09 | HAB-255 |
+| ADR-0009 | recommend building a grep-based "oracle" Q&A skill for docs/skills/notes; reject a generated doc-graph and wikilink adoption | `accepted` | 2026-09-09 | HAB-253 |
