@@ -7,18 +7,18 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ## Top themes
 
 - **review-findings** (22)
+- **research-methodology** (16)
 - **debugging-methodology** (15)
 - **planning-gaps** (15)
-- **research-methodology** (15)
 - **multi-wu-scope** (13)
 - **ci-flakiness** (12)
 - **code-style** (9)
 - **knowledge-base-process** (9)
 - **changelog-versioning** (8)
 - **widget-test-gotchas** (7)
+- **cross-project-sync** (5)
 - **dead-code** (5)
 - **verify-from-source** (5)
-- **cross-project-sync** (4)
 - **feature-toggle** (4)
 - **ui-design-iteration** (4)
 - **appstore-ci** (3)
@@ -83,6 +83,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)
 - [HAB-172: Synchronize HabitLoop harness improvements into YAB](HAB-172.md)
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
+- [HAB-276: Research: strategy for syncing YAB template updates into an already-adopted project](HAB-276.md)
 
 ### dead-code
 - [HAB-141: Dashboard stale showup status after notification tap (reopened)](HAB-141-adjust-1.md)
@@ -202,6 +203,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-253: Research: human-facing findability and navigation for docs/skills](HAB-253.md)
 - [HAB-255: Research — add "Brief" and "Debrief" ticket states for async, multi-day work](HAB-255.md)
 - [HAB-266: Research: are docs/knowledge/notes/BOOKMARKS.md bookmarks proliferating faster than they're useful?](HAB-266.md)
+- [HAB-276: Research: strategy for syncing YAB template updates into an already-adopted project](HAB-276.md)
 
 ### review-findings
 - [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
