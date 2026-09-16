@@ -8,6 +8,7 @@ description: Post-merge housekeeping after a PR is approved. Moves the linked is
 ---
 
 @skills/shared/project-config.md
+@skills/shared/git-cli-safety.md
 
 Use the **Team ID** and **Project ID** from the PM tool mapping for all PM operations.
 

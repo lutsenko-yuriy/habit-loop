@@ -9,6 +9,7 @@ description: Runtime and migration review of a PR. Checks for launch-time failur
 
 @skills/shared/project-config.md
 @skills/shared/decision-guidelines.md
+@skills/shared/git-cli-safety.md
 
 ---
 
