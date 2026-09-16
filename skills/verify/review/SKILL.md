@@ -8,6 +8,7 @@ description: Architectural review of a PR. Checks for layer violations, dependen
 
 @skills/shared/project-config.md
 @skills/shared/decision-guidelines.md
+@skills/shared/git-cli-safety.md
 
 This skill produces reviews, not code.
 
