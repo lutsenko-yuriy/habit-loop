@@ -16,7 +16,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **knowledge-base-process** (9)
 - **changelog-versioning** (8)
 - **widget-test-gotchas** (7)
-- **cross-project-sync** (5)
+- **cross-project-sync** (6)
 - **dead-code** (5)
 - **verify-from-source** (5)
 - **feature-toggle** (4)
@@ -80,6 +80,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ### cross-project-sync
 - [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
+- [HAB-165: Initialize CheckLister project](HAB-165.md)
 - [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)
 - [HAB-172: Synchronize HabitLoop harness improvements into YAB](HAB-172.md)
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
