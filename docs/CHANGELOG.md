@@ -6,6 +6,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ## [Unreleased]
 
+- [meta] (PR #458) HAB-278 WU17: /onboard output resources for Habit Loop
 - [meta] (PR #456) HAB-165: knowledge note capturing CheckLister's findings and proposed YAB/Habit Loop improvements; follow-ups HAB-278/HAB-279/HAB-280.
 - [meta] HAB-266: audited `docs/knowledge/notes/BOOKMARKS.md` usage — 29 bookmarks, 170 note associations across 104 notes, 7 (24%) used on only one note, no true duplicates found. Decided to leave `/debrief` step 4's bookmark-proposal gate as-is; the existing quarterly heavy-`/checkup` dimension 9 ("Knowledge-corpus bookmark health," HAB-221 WU3) already covers pruning.
 - [meta] HAB-253: adopted ADR-0009 — recommend a grep-based "oracle" Q&A skill over docs/skills/notes (no vector DB, mirrors the `/research` pattern), rejecting wikilink-style backlink adoption and a generated doc-graph as poor fits for this repo's solo-developer, CLI/agent-first workflow. Follow-up implementation tracked as HAB-273.
