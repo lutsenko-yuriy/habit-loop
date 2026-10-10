@@ -35,6 +35,7 @@ This project describes what each skill needs from a model using two axes: **Effo
 | `checkup` | THOROUGH | ARCHITECTURAL | Non-mechanical quality heuristics span the whole codebase and require cross-cutting judgement |
 | `skill-creator` | FOCUSED | ARCHITECTURAL | Designing skill structure requires understanding the whole skill system and tier routing |
 | `style` | RAPID | MECHANICAL | Load and apply a communication style definition |
+| `note` | RAPID | MECHANICAL | Append an observation to a ticket's knowledge-base note |
 
 ### Product skills — operate on the codebase and product
 
@@ -52,6 +53,12 @@ This project describes what each skill needs from a model using two axes: **Effo
 | `draft-release-notes` | RAPID | TACTICAL | Draft [user] bullets from observable diff evidence; runs inline within `ship` with no model switch |
 | `debrief` | FOCUSED | ARCHITECTURAL | Retrospective dialog scoped to one ticket; cross-skill and workflow reasoning |
 | `summarize` | RAPID | MECHANICAL | Structured PM data fetch and format |
+| `draft-scenarios` | FOCUSED | TACTICAL | Translate a ticket spec into red integration-test scenario stubs |
+| `run-scenarios` | RAPID | MECHANICAL | Find a device and run the integration suite |
+| `run-android` | RAPID | MECHANICAL | Launch the app on an Android device or emulator |
+| `run-ios` | RAPID | MECHANICAL | Launch the app on an iOS device or Simulator |
+| `dead-code-check` | RAPID | MECHANICAL | Scripted advisory scan for orphaned keys, events and files |
+| `cleanup-firebase` | RAPID | MECHANICAL | Scripted deletion of old Firebase App Distribution builds |
 
 ---
 
@@ -61,12 +68,9 @@ Models available to this project:
 
 | Model | Access |
 |---|---|
-| claude-opus-4-6 | Anthropic API |
-| claude-sonnet-4-6 | Anthropic API |
+| claude-opus-5-5 | Anthropic API |
+| claude-sonnet-5-5 | Anthropic API |
 | claude-haiku-4-5 | Anthropic API |
-| qwen/qwen3-coder-30b (MLX, 5-bit) | LM Studio (local) |
-| mistralai/devstral-small-2-2512 (MLX, 4-bit) | LM Studio (local) |
-| qwen/qwen3-8b (MLX, 4-bit) | LM Studio (local) |
 
 The `calibrate` skill reads this list and proposes the mapping below. Re-run `calibrate` whenever the available models change.
 
@@ -74,16 +78,16 @@ The `calibrate` skill reads this list and proposes the mapping below. Re-run `ca
 
 ## Active mapping
 
-_Last updated: 2026-07-11._
+_Last updated: 2026-10-10._
 
 | Effort | Reasoning | Model | Claude Code alias |
 |---|---|---|---|
-| THOROUGH | ARCHITECTURAL | claude-opus-4-6 | `opus` |
-| THOROUGH | TACTICAL | claude-opus-4-6 | `opus` |
-| FOCUSED | ARCHITECTURAL | claude-sonnet-4-6 | `sonnet` |
-| FOCUSED | TACTICAL | qwen/qwen3-coder-30b (MLX, 5-bit) | `lm-studio` |
+| THOROUGH | ARCHITECTURAL | claude-opus-5-5 | `opus` |
+| THOROUGH | TACTICAL | claude-opus-5-5 | `opus` |
+| FOCUSED | ARCHITECTURAL | claude-sonnet-5-5 | `sonnet` |
+| FOCUSED | TACTICAL | claude-sonnet-5-5 | `sonnet` |
 | RAPID | TACTICAL | claude-haiku-4-5 | `haiku` |
-| RAPID | MECHANICAL | qwen/qwen3-8b (MLX, 4-bit) | `lm-studio` |
+| RAPID | MECHANICAL | claude-haiku-4-5 | `haiku` |
 
 ---
 

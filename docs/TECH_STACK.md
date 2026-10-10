@@ -1,29 +1,32 @@
-<!-- yab:template -->
 # Tech Stack
-
-<!-- Delete the marker line above once this file is filled in; `onboard.py check` reports it as still a template while it is present.
-     Agents read this file to know which languages, tools and platforms the project uses. -->
 
 ## Languages
 
-<!-- One row per language, name in the first column. Every language listed here must also be named in
-     docs/CODE_STYLE.md under "## Base standard" (exact, case-sensitive match). -->
-
 | Language | Version | Used for |
 |---|---|---|
-| <language> | <version> | <e.g. application code, scripts> |
+| Dart | ^3.6.0 (`pubspec.yaml`) | Application code, tests |
+| Swift | 5.0 (`ios/Runner.xcodeproj/project.pbxproj`) | iOS Siri/Shortcuts voice intents (`ios/Runner/Voice/`) |
+| Kotlin | 2.2.20 (`android/settings.gradle.kts`) | Android host activity |
+| Python | 3.12 (`.github/workflows/`) | Tooling scripts (`scripts/`) |
+| Shell | bash | Claude Code hooks (`.claude/hooks/`), CI glue |
 
 ## Frameworks and libraries
 
-- <framework or key library, with a link>
+- [Flutter](https://flutter.dev) stable channel (unpinned in CI) — UI framework
+- [Riverpod](https://riverpod.dev) — state management and DI
+- [sqflite](https://pub.dev/packages/sqflite) — local storage
+- [Firebase](https://firebase.google.com) — Analytics, Crashlytics, Remote Config, Auth, Firestore, App Distribution
+- [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications) — scheduled reminders
+- [Talker](https://pub.dev/packages/talker_flutter) — logging
 
 ## Platforms
 
-- <target platforms, runtimes or deployment environments>
+- iOS 15.0+ (TestFlight)
+- Android, Flutter-default minSdk (Firebase App Distribution)
 
 ## Tooling
 
-- **Build / package manager:** <tool>
-- **Test runner:** <tool>
-- **Linter / formatter:** <tool>
-- **CI:** <service>
+- **Build / package manager:** pub (Flutter), Gradle 8.14, CocoaPods
+- **Test runner:** `flutter test` (unit/widget), `flutter test integration_test/` (scenarios)
+- **Linter / formatter:** `flutter analyze` (`flutter_lints`), `dart format -l 120`
+- **CI:** GitHub Actions, Codecov

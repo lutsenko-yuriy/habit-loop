@@ -1,37 +1,34 @@
 [providers]
 # Read by `scripts/onboard/onboard.py`, not by Habit Loop's skill_router, which picks providers from skill frontmatter.
 # pm is mandatory and the only record of the PM tool; it must be linear or github (GitHub Issues).
-# It is empty until /onboard fills it in and `onboard.py apply` reconciles .mcp.json to match.
-pm = ""
+# /onboard fills it in, and `onboard.py apply` reconciles .mcp.json to match.
+pm = "linear"
 vcs = "github"
 
 [project]
 # Answers that used to be {{PLACEHOLDER}} values; `scripts/onboard/onboard.py apply` substitutes them into
 # tracked files. Empty values are left as placeholders so `onboard.py check` still reports them.
-name = ""
-description = ""
-architecture_summary = ""
-issue_prefix = ""
-git_host = ""
-pm_project_url = ""
-team_id = ""
-project_id = ""
-experiment_tool = ""
-available_models = ""
-ai_commit_trailer = ""
-ai_tool_credit = ""
-test_command = ""
-integration_test_dir = ""
-test_harness_file = ""
-test_harness_class = ""
-version_file = ""
-version_field = ""
-in_qa_paths = ""
+name = "Habit Loop"
+description = "Mobile app for building habits through time-boxed pacts to show up"
+architecture_summary = "Vertical-slice Flutter app with Riverpod (state + DI) and sqflite (local storage)"
+issue_prefix = "HAB"
+git_host = "GitHub"
+pm_project_url = "https://linear.app/yuriy-lutsenkos-workspace/project/habit-loop-flutter-app-created-with-assistance-of-claude-bf8b51a86175"
+team_id = "2de84a9b-453b-4991-8e09-f88715fa926e"
+project_id = "c3afdc26-d306-4f72-bdb3-de9b01060d0f"
+experiment_tool = "Firebase Remote Config + Firebase A/B Testing"
+available_models = "claude-opus-5-5, claude-sonnet-5-5, claude-haiku-4-5"
+ai_commit_trailer = "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+ai_tool_credit = "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+test_command = "flutter test"
+integration_test_dir = "integration_test/"
+test_harness_file = "integration_test/harness.dart"
+test_harness_class = "AppHarness"
+version_file = "pubspec.yaml"
+version_field = "version: X.Y.Z+buildNumber"
+in_qa_paths = "lib/slices/*/ui/, lib/infrastructure/persistence/, lib/infrastructure/sync/, lib/infrastructure/notifications/, main.dart, integration_test/"
 # false: apply deletes LICENSE (the project is not MIT-licensed like the template).
 keep_licence = true
-
-[linear]
-project_id = "c3afdc26-d306-4f72-bdb3-de9b01060d0f"
 
 [llm]
 lmstudio_base = "http://localhost:1234/v1"

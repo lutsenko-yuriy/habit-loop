@@ -2,7 +2,11 @@
 
 ## Base standard
 
-Follow the [Flutter style guide](https://github.com/flutter/flutter/blob/master/docs/contributing/Style-guide-for-Flutter-repo.md) for all Dart and Flutter code. Everything below is an addition or clarification on top of it.
+- Dart: [Flutter style guide](https://github.com/flutter/flutter/blob/master/docs/contributing/Style-guide-for-Flutter-repo.md) for all Dart and Flutter code — enforced by `dart format` and `flutter analyze`. Everything below is an addition or clarification on top of it.
+- Swift: [Swift API Design Guidelines](https://www.swift.org/documentation/api-design-guidelines/) — no enforcer configured.
+- Kotlin: [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html) — no enforcer configured.
+- Python: [PEP 8](https://peps.python.org/pep-0008/) — no enforcer configured.
+- Shell: [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html) — no enforcer configured.
 
 ## Formatting
 
