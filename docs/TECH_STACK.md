@@ -12,7 +12,7 @@
 
 ## Frameworks and libraries
 
-- [Flutter](https://flutter.dev) 3.44 — UI framework
+- [Flutter](https://flutter.dev) stable channel (unpinned in CI) — UI framework
 - [Riverpod](https://riverpod.dev) — state management and DI
 - [sqflite](https://pub.dev/packages/sqflite) — local storage
 - [Firebase](https://firebase.google.com) — Analytics, Crashlytics, Remote Config, Auth, Firestore, App Distribution

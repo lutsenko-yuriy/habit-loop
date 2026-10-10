@@ -1,7 +1,7 @@
 [providers]
 # Read by `scripts/onboard/onboard.py`, not by Habit Loop's skill_router, which picks providers from skill frontmatter.
 # pm is mandatory and the only record of the PM tool; it must be linear or github (GitHub Issues).
-# It is empty until /onboard fills it in and `onboard.py apply` reconciles .mcp.json to match.
+# /onboard fills it in, and `onboard.py apply` reconciles .mcp.json to match.
 pm = "linear"
 vcs = "github"
 
