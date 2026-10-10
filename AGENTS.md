@@ -24,6 +24,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/FEATURE_TOGGLES.md | Firebase Remote Config kill-switch flags — catalogue of toggles and their effects |
 | docs/ANALYTICS_EVENTS.md | Analytics event catalogue — events, screen views, and their properties |
 | docs/CODE_STYLE.md | Code style rules — formatting, linting, comment hygiene |
+| docs/TECH_STACK.md | Languages, frameworks, platforms and tooling the project uses |
 | docs/LICENSING.md | Current licence (MIT) — cites ADR-0001 for the decision record |
 | docs/MODEL_TIERS.md | Effort Tier and Reasoning Depth vocabulary; active model → tier mapping |
 | docs/experiments/README.md | Experiment registry index — one `.md` file per experiment, tracking hypothesis, metrics, and decision |
@@ -45,7 +46,8 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 
 | Command | Skill | Purpose | Usage |
 |---|---|---|---|
-| `/calibrate` | configure/calibrate | One-time setup: propose and approve the model → tier mapping | `/calibrate` |
+| `/onboard` | configure/onboard | First-session onboarding: project config, tech stack, code style and constraints, first model mapping, then the onboarded marker; orientation for later clones | `/onboard` |
+| `/calibrate` | configure/calibrate | Re-map models to tiers when the available models change (the first mapping happens in `/onboard`) | `/calibrate` |
 | `/skill-creator` | configure/skill-creator | Create a new skill from scratch (guided wizard), or refactor an existing skill into lean SKILL.md + resource files | `/skill-creator skills/<path>` or `/skill-creator all` |
 | `/style` | configure/style | Switch communication style: DETAILED, CONCISE, or SCHEMATIC | `/style CONCISE` |
 | `/summarize` | manage/summarize | Session-start: fetch and display the backlog | `/summarize` |
@@ -71,7 +73,7 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 
 ## Architecture
 
-Vertical-slice architecture with **Riverpod** (state management + DI) and **sqflite** (local storage). Details and directory layout: docs/ARCHITECTURE.md.
+Vertical-slice architecture with **Riverpod** (state management + DI) and **sqflite** (local storage). Details and directory layout: docs/ARCHITECTURE.md. Languages and tooling: docs/TECH_STACK.md.
 
 ## Common Commands
 
@@ -100,7 +102,7 @@ Details: @docs/VERSIONING.md
 
 At the beginning of every new session, before doing anything else, this checklist runs in two parts:
 
-**Automated by the `SessionStart` hook** (`.claude/hooks/session_start.sh`, matcher `startup` only — deliberately excluding `resume` so reattaching to an in-progress ticket doesn't re-trigger the checklist mid-task — wired in `.claude/settings.local.json`, HAB-186). The hook injects steps 1-4 below as context automatically; Claude does not need to be told to run them. This section stays the source of truth for what the checklist does — the hook is just the trigger:
+**Automated by the `SessionStart` hook** (`.claude/hooks/session_start.sh`, matcher `startup` only — deliberately excluding `resume` so reattaching to an in-progress ticket doesn't re-trigger the checklist mid-task — wired in `.claude/settings.local.json`, HAB-186). The hook injects steps 1-4 below as context automatically; Claude does not need to be told to run them. Until `/onboard` has marked this clone (HAB-278), the hook injects only a "run `/onboard` first" note instead — the onboarding gate (`scripts/onboard/`, wired in the committed `.claude/settings.json`) blocks the checklist until then. This section stays the source of truth for what the checklist does — the hook is just the trigger:
 
 1. Ensure the Linear MCP is authenticated. If `mcp__linear__*` tools are unavailable, use `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
 2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `skills/configure/style/`). Default to DETAILED if absent.

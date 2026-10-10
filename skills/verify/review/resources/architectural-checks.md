@@ -10,3 +10,4 @@
 - **Provider graph safety** — no circular dependencies in Riverpod providers
 - **Comment hygiene** — flag any comments that narrate WHAT the code does, duplicate field names, use `// ---` dividers, or could be removed without confusing a future reader. Only WHY comments are acceptable: hidden constraints, invariants, platform quirks, PII rules, no-throw contracts. Flag excess as 🟡.
 - **Analytics event wiring** — if the PR adds any new class extending `AnalyticsEvent`, verify at least one call-site exists in the PR diff or in existing code (grep `lib/` for the class name). For multi-WU tickets, cross-reference the plan's WU table: only events assigned to this WU are expected to be wired here — unwired events in other WUs are fine. Flag any unwired event with no future WU assignment as 🔴.
+- **Tech-stack drift** — a new language, framework or tool in the diff must be declared in `docs/TECH_STACK.md`, and a new language needs a Base standard in `docs/CODE_STYLE.md`.
