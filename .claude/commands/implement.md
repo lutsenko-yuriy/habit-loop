@@ -1,4 +1,17 @@
-Run via Bash: `python3 scripts/skill_router skills/build/implement/SKILL.md --args '$ARGUMENTS'`
-If the script exits non-zero (LM Studio unavailable or model not loaded), fall back by spawning an Agent — do not execute the skill directly in this session — with `model`: `"sonnet"` and `prompt`: the full content of `skills/build/implement/SKILL.md` (read via the Read tool), followed by the arguments below.
+Route this invocation to a subagent. **Do not execute the skill yourself.**
 
+**Skill:** implement
+**Tier:** FOCUSED + TACTICAL
+**Model alias:** sonnet
+
+Steps:
+1. Read `skills/build/implement/SKILL.md` using the Read tool.
+2. Spawn an Agent with:
+   - `model`: `"sonnet"`
+   - `prompt`: full content of the skill file, followed by the arguments below.
+3. Before sending, confirm the `prompt` argument you're about to pass actually contains
+   the skill file's full text (not a placeholder token) — re-read it back if unsure
+   (HAB-258 debrief).
+
+**Arguments:**
 $ARGUMENTS

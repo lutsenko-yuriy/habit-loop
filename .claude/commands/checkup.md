@@ -1,4 +1,17 @@
-Run via Bash: `python3 scripts/skill_router skills/manage/checkup/SKILL.md --args '$ARGUMENTS'`
-If the script exits non-zero (LM Studio unavailable or model not loaded), fall back by spawning an Agent — do not execute the skill directly in this session — with `model`: `"haiku"` and `prompt`: the full content of `skills/manage/checkup/SKILL.md` (read via the Read tool), followed by the arguments below.
+Route this invocation to a subagent. **Do not execute the skill yourself.**
 
+**Skill:** checkup
+**Tier:** THOROUGH + ARCHITECTURAL
+**Model alias:** opus
+
+Steps:
+1. Read `skills/manage/checkup/SKILL.md` using the Read tool.
+2. Spawn an Agent with:
+   - `model`: `"opus"`
+   - `prompt`: full content of the skill file, followed by the arguments below.
+3. Before sending, confirm the `prompt` argument you're about to pass actually contains
+   the skill file's full text (not a placeholder token) — re-read it back if unsure
+   (HAB-258 debrief).
+
+**Arguments:**
 $ARGUMENTS
