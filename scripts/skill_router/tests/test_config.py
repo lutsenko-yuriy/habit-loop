@@ -89,5 +89,40 @@ class TestLocalModelsEnabled(unittest.TestCase):
         self.assertFalse(cfg.local_models_enabled)
 
 
+@unittest.skipUnless(_HAS_TOMLLIB, "requires tomllib (Python >= 3.11) to actually parse the toml")
+@patch.dict("os.environ", {}, clear=True)
+class TestLinearProjectId(unittest.TestCase):
+    """[project].project_id is the single record (HAB-278); [linear].project_id is the legacy fallback."""
+
+    def _cfg(self, content: str):
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "skill_router.toml"
+            path.write_text(content, encoding="utf-8")
+            return load_config(str(path))
+
+    def test_project_id_is_read(self):
+        self.assertEqual(self._cfg('[project]\nproject_id = " p1 "\n').linear_project_id, "p1")
+
+    def test_project_id_wins_over_legacy_linear(self):
+        cfg = self._cfg('[project]\nproject_id = "p1"\n\n[linear]\nproject_id = "old"\n')
+        self.assertEqual(cfg.linear_project_id, "p1")
+
+    def test_empty_project_id_keeps_legacy_linear(self):
+        cfg = self._cfg('[project]\nproject_id = ""\n\n[linear]\nproject_id = "old"\n')
+        self.assertEqual(cfg.linear_project_id, "old")
+
+    def test_env_wins_over_project_id(self):
+        with patch.dict("os.environ", {"LINEAR_PROJECT_ID": "env"}):
+            cfg = self._cfg('[project]\nproject_id = "p1"\n')
+        self.assertEqual(cfg.linear_project_id, "env")
+
+    def test_none_project_id_keeps_legacy_linear(self):
+        cfg = self._cfg('[project]\nproject_id = "none (no board)"\n\n[linear]\nproject_id = "old"\n')
+        self.assertEqual(cfg.linear_project_id, "old")
+
+    def test_no_project_id_anywhere(self):
+        self.assertIsNone(self._cfg('[providers]\npm = "linear"\n').linear_project_id)
+
+
 if __name__ == "__main__":
     unittest.main()

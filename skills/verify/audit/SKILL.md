@@ -46,7 +46,7 @@ Look for related changes in `pubspec.yaml`, `Info.plist`, `AndroidManifest.xml`,
 
 ### 4. Cross-reference intent
 
-Read `docs/PRODUCT_SPEC.md` and `CLAUDE.md` to understand the intended behaviour and check against it.
+Read `docs/PRODUCT_SPEC.md` and `CLAUDE.md` to understand the intended behaviour and check against it. Where relevant, also check the diff against `docs/CONSTRAINTS.md` (standing constraints), `docs/TECH_STACK.md` (declared languages and tooling) and `docs/CODE_STYLE.md` (style rules).
 
 ### 5. Reason through each potential finding
 

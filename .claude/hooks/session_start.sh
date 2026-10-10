@@ -14,12 +14,25 @@
 #   - confirming Linear MCP auth
 #   - invoking the summarize skill
 #   - running scripts/checkup/due.py --format=session
+#
+# Until /onboard writes this clone's marker (HAB-278), it injects only a
+# "run /onboard first" note: the onboarding gate blocks the checklist anyway.
 
-PROJECT=/Users/yurich/claude_projects/habit_loop
-LOCAL_MD="$PROJECT/CLAUDE.local.md"
+PROJECT="${CLAUDE_PROJECT_DIR:-/Users/yurich/claude_projects/habit_loop}"
+# Main checkout's copy: linked worktrees don't carry the gitignored CLAUDE.local.md.
+LOCAL_MD=/Users/yurich/claude_projects/habit_loop/CLAUDE.local.md
 
 # Must consume stdin (hook input JSON) even though we don't need its fields.
 cat >/dev/null
+
+# Mirrors onboard.marker_path: --git-common-dir may be relative to $PROJECT.
+common=$(git -C "$PROJECT" rev-parse --git-common-dir 2>/dev/null)
+case "$common" in /*|"") ;; *) common="$PROJECT/$common" ;; esac
+if [ -z "$common" ] || [ ! -e "$common/yab/onboarded" ]; then
+  ctx='This clone is not onboarded yet. Skip the AGENTS.md "Session start" checklist: run /onboard first (the onboarding gate blocks most tools until it finishes), then /summarize.'
+  jq -n --arg ctx "$ctx" '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: $ctx}}'
+  exit 0
+fi
 
 missing_env=""
 [ -z "${LINEAR_API_KEY:-}" ] && missing_env="$missing_env LINEAR_API_KEY"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -51,10 +52,17 @@ def load_config(toml_path: str | Path = _DEFAULT_TOML_PATH) -> Config:
     else:
         # Fail closed on any unverified/non-bool value — never default to enabled.
         local_models_enabled = False
+    # [project].project_id is the single record (HAB-278); a legacy [linear].project_id is the fallback.
+    project = data.get("project")
+    project_id = project.get("project_id") if isinstance(project, dict) else None
+    project_id = project_id.strip() if isinstance(project_id, str) else ""
+    if re.match(r"none\b", project_id, re.I):  # onboard's "no project" answer, not an id
+        project_id = ""
     return Config(
         linear_api_key=os.environ.get("LINEAR_API_KEY"),
         linear_project_id=(
             os.environ.get("LINEAR_PROJECT_ID")
+            or project_id
             or data.get("linear", {}).get("project_id")
         ),
         lmstudio_base=(
