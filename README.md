@@ -45,14 +45,14 @@ flutter test integration_test/ -d <device-id>                  # scenarios, need
 python3 -m unittest discover -s scripts -p 'test_*.py' -t scripts  # agent and release tooling
 ```
 
-Run the Python tests on 3.11+ (CI uses 3.12). `docs/CI_PIPELINE.md` covers the CI jobs,
+Run the Python tests on 3.11+. `docs/CI_PIPELINE.md` covers the CI jobs,
 distribution and required secrets.
 
 ## Architecture
 
 Vertical-slice architecture with Riverpod (state and DI) and sqflite (local storage):
 
-- `lib/slices/`: one slice per feature, split into `domain`, `application`, `data` and `ui`.
+- `lib/slices/`: one slice per feature, with `application`, `data`, `ui` and `analytics` layers as needed.
 - UI is platform-split: `ios/` (Cupertino) and `android/` (Material), plus `generic/` for shared view models and widgets.
 - `lib/domain/`: domain models and repository interfaces shared across slices.
 - `lib/infrastructure/`: analytics, auth, crash reporting, notifications, sync and DI wiring.
@@ -71,7 +71,7 @@ Issues and backlog live in [Linear](https://linear.app/yuriy-lutsenkos-workspace
 **Requires:** `git`, `python3`, a Python 3.11+ interpreter, an authenticated `gh` (`gh auth login`)
 and the Linear MCP (authenticate it via `/mcp`).
 The gate runs on any `python3`, 3.9 included. Without `python3`, the gate denies every tool call, and `/onboard` can't fix that.
-Onboarding's `check`, `apply` and `mark` need 3.11+ (for example `python3.12`). `/onboard` finds one on its own.
+Onboarding's `check`, `apply` and `mark` need 3.11+ (for example `python3.12`). `/onboard` looks for one and asks you to install it if none is found.
 
 1. Open Claude Code **from the repo root**. Claude Code reads `.claude/settings.json` only
    from the directory it starts in. If you start it from a subdirectory, the gate hooks

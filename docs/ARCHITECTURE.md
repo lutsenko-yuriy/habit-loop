@@ -1,6 +1,6 @@
 # Architecture
 
-Vertical-slice architecture where each slice is a feature from @docs/PRODUCT_SPEC.md, with four layers per slice: domain, application, data, and UI.
+Vertical-slice architecture where each slice is a feature from @docs/PRODUCT_SPEC.md, with up to four layers per slice: application, data, UI and analytics. Domain models live in the shared `lib/domain/`.
 
 Cross-cutting infrastructure (analytics, crashlytics, remote config) lives under `lib/infrastructure/`. Pure domain models and repository interfaces shared across features live under `lib/domain/`.
 
