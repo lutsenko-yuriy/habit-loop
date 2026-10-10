@@ -12,49 +12,12 @@ Build habits through pacts and showups.
 
 Habit Loop lets you make a **pact** with yourself: commit to showing up for a habit for a fixed period. Each scheduled session is a **showup**. At the end, you know exactly how you did — no excuses, no pauses.
 
----
+## Running it
 
-## Platforms
+**Requires:** the Flutter SDK (stable channel), Xcode and CocoaPods for iOS, and the
+Android SDK with JDK 17 for Android.
 
-| Platform | Status |
-|---|---|
-| iOS | Distributed via Firebase App Distribution |
-| Android | Distributed via Firebase App Distribution |
-
-## Supported languages
-
-English · French · German · Russian
-
----
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| UI framework | Flutter (Dart SDK ^3.6.0) |
-| State management / DI | Riverpod |
-| Local storage | sqflite |
-| Auth | Firebase Auth (anonymous + Google sign-in) |
-| Analytics | Firebase Analytics |
-| Crash reporting | Firebase Crashlytics |
-| Feature flags | Firebase Remote Config |
-| Sync | Cloud Firestore |
-| Notifications | flutter_local_notifications |
-
----
-
-## Getting started
-
-### Prerequisites
-
-- Flutter SDK (stable channel). Full binary path stored in `CLAUDE.local.md` (not on default `PATH` on all machines)
-- Xcode (iOS builds)
-- Android Studio or the Android SDK (Android builds)
-- CocoaPods (`gem install cocoapods`)
-
-### Credential files (not committed)
-
-Three files are excluded from version control and must be sourced separately:
+Three Firebase config files are not committed and must be obtained separately:
 
 | File | How to obtain |
 |---|---|
@@ -62,101 +25,67 @@ Three files are excluded from version control and must be sourced separately:
 | `android/app/google-services.json` | Firebase Console → Android app |
 | `ios/Runner/GoogleService-Info.plist` | Firebase Console → iOS app |
 
-### First-time setup
-
 ```bash
 flutter pub get
-flutter gen-l10n
+flutter gen-l10n          # again after editing any lib/l10n/*.arb file
+flutter run -d ios        # or -d android
 ```
 
----
+Available in English, French, German and Russian. Android builds ship through Firebase
+App Distribution, iOS builds through TestFlight. See `docs/PRODUCT_SPEC.md` for the
+features and behaviour.
 
-## Common commands
+## Testing
 
 ```bash
-# Run on a connected device or simulator
-flutter run
-
-# Run on a specific platform
-flutter run -d ios
-flutter run -d android
-
-# Run all unit tests
-flutter test
-
-# Run a single test file
-flutter test test/path/to/test_file.dart
-
-# Static analysis
+flutter test                                                   # unit and widget tests
 flutter analyze
-
-# Re-generate localizations (required after editing any lib/l10n/*.arb file)
-flutter gen-l10n
-
-# Format code
-dart format -l 120 lib/ test/
+dart format -l 120 lib/ test/ integration_test/
+flutter test integration_test/ -d <device-id>                  # scenarios, needs a running device
+python3 -m unittest discover -s scripts -p 'test_*.py' -t scripts  # agent and release tooling
 ```
 
-> **Note:** `flutter` may not be on your `PATH`. Use the full binary path from your local `CLAUDE.local.md` if needed.
-
----
+Run the Python tests on 3.11+ (CI uses 3.12). `docs/CI_PIPELINE.md` covers the CI jobs,
+distribution and required secrets.
 
 ## Architecture
 
-Vertical-slice architecture: each product feature lives in its own slice under `lib/slices/` with four layers — **domain**, **application**, **data**, and **UI**.
+Vertical-slice architecture with Riverpod (state and DI) and sqflite (local storage):
 
-Cross-cutting infrastructure (analytics, auth, crash reporting, notifications, sync) lives under `lib/infrastructure/`. Pure domain models and repository interfaces shared across features live under `lib/domain/`.
+- `lib/slices/`: one slice per feature, split into `domain`, `application`, `data` and `ui`.
+- UI is platform-split: `ios/` (Cupertino) and `android/` (Material), plus `generic/` for shared view models and widgets.
+- `lib/domain/`: domain models and repository interfaces shared across slices.
+- `lib/infrastructure/`: analytics, auth, crash reporting, notifications, sync and DI wiring.
 
-UI is **platform-split**: each slice has `ios/` (Cupertino) and `android/` (Material) subdirectories alongside a `generic/` directory for shared view models, formatters, and widgets.
+Providers are declared in `lib/infrastructure/injections/app_providers.dart`. See
+`docs/ARCHITECTURE.md` for the full layout and `docs/TECH_STACK.md` for languages and tooling.
 
-State management uses **Riverpod**. All providers are declared in `lib/infrastructure/injections/app_providers.dart`; production wiring happens in `lib/infrastructure/injections/app_container.dart`.
+## Working on this project with Claude Code
 
-For full details see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+This repo uses the
+[agentic-boyz](https://github.com/lutsenko-yuriy/yuriys-agentic-boyz)
+multi-skill workflow. `AGENTS.md`, included via `CLAUDE.md`, is the
+orchestrator. It points to the skills under `skills/` and to the project facts in `docs/`.
+Issues and backlog live in [Linear](https://linear.app/yuriy-lutsenkos-workspace/project/habit-loop-flutter-app-created-with-assistance-of-claude-bf8b51a86175) (prefix `HAB`).
 
----
+**Requires:** `git`, `python3`, a Python 3.11+ interpreter, an authenticated `gh` (`gh auth login`)
+and the Linear MCP (authenticate it via `/mcp`).
+The gate runs on any `python3`, 3.9 included. Without `python3`, the gate denies every tool call, and `/onboard` can't fix that.
+Onboarding's `check`, `apply` and `mark` need 3.11+ (for example `python3.12`). `/onboard` finds one on its own.
 
-## Documentation
+1. Open Claude Code **from the repo root**. Claude Code reads `.claude/settings.json` only
+   from the directory it starts in. If you start it from a subdirectory, the gate hooks
+   don't load.
+2. Run `/onboard`. Until it finishes, a gate blocks most writes, other skills, subagents
+   and shell commands. The project is already configured, so here it gives a short
+   orientation and then writes a per-clone marker inside the git dir. The marker is never
+   committed, so each collaborator runs `/onboard` once.
+3. Start with `/summarize`.
 
-| File | Contents |
-|---|---|
-| [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) | Feature requirements |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Code organisation, layers, directory structure |
-| [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Ubiquitous language — canonical domain terms and known aliases |
-| [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Released version history |
-| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Known issues and planned work |
-| [`docs/VERSIONING.md`](docs/VERSIONING.md) | Version numbering rules |
-| [`docs/CI_PIPELINE.md`](docs/CI_PIPELINE.md) | CI/CD pipeline |
-| [`docs/ANALYTICS_EVENTS.md`](docs/ANALYTICS_EVENTS.md) | Analytics event catalogue |
+Machine-specific settings (Flutter binary path, API keys) go in a gitignored `CLAUDE.local.md`.
 
----
-
-## CI/CD
-
-GitHub Actions pipeline on every push to `main`:
-
-```
-test → resolve-version → build-android → distribute-android ─┐
-                        → build-ios     → distribute-ios     ──┤
-                                                               └→ version-tag
-```
-
-- **Test job**: lint, format check, unit tests (integration tests run locally as the pre-merge gate)
-- **Build jobs**: signed AAB (Android) and IPA (iOS)
-- **Distribute jobs**: upload to Firebase App Distribution
-- **Version tag**: bumps the build number in `pubspec.yaml` and creates a `version-X.Y.Z-N-{platform}` git tag
-
-Feature branch builds run the test job only (no distribution, no tagging).
-
-Required secrets are documented in [`docs/CI_PIPELINE.md`](docs/CI_PIPELINE.md).
-
----
-
-## Known issues
-
-Android-emulator integration scenarios show inconsistent, spreading failures across successive CI dispatches — tracked in [#297](https://github.com/lutsenko-yuriy/habit-loop/issues/297).
-
----
+If you change the configuration, commit and push it, so collaborators don't work from a stale one.
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE)
+MIT. See [LICENSE](LICENSE).
