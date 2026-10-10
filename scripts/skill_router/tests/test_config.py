@@ -116,6 +116,10 @@ class TestLinearProjectId(unittest.TestCase):
             cfg = self._cfg('[project]\nproject_id = "p1"\n')
         self.assertEqual(cfg.linear_project_id, "env")
 
+    def test_none_project_id_keeps_legacy_linear(self):
+        cfg = self._cfg('[project]\nproject_id = "none (no board)"\n\n[linear]\nproject_id = "old"\n')
+        self.assertEqual(cfg.linear_project_id, "old")
+
     def test_no_project_id_anywhere(self):
         self.assertIsNone(self._cfg('[providers]\npm = "linear"\n').linear_project_id)
 

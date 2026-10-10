@@ -12,11 +12,14 @@ fail=0
 ONBOARDED=$(mktemp -d)
 FRESH=$(mktemp -d)
 NOT_A_REPO=$(mktemp -d)
-trap 'rm -rf "$ONBOARDED" "$FRESH" "$NOT_A_REPO"' EXIT
+trap 'rm -rf "$ONBOARDED" "$ONBOARDED-wt" "$FRESH" "$NOT_A_REPO"' EXIT
 
 git -C "$ONBOARDED" init -q
 git -C "$FRESH" init -q
 mkdir -p "$ONBOARDED/.git/yab" && touch "$ONBOARDED/.git/yab/onboarded"
+git -C "$ONBOARDED" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+WORKTREE="$ONBOARDED-wt"
+git -C "$ONBOARDED" worktree add -q "$WORKTREE"
 
 context_for() {
   echo '{}' | CLAUDE_PROJECT_DIR="$1" bash "$HOOK" | jq -r '.hookSpecificOutput.additionalContext'
@@ -37,6 +40,7 @@ check() {
 }
 
 check "onboarded clone runs the checklist" "$ONBOARDED" "Invoke the summarize skill" "/onboard"
+check "linked worktree of an onboarded clone runs the checklist" "$WORKTREE" "Invoke the summarize skill" "/onboard"
 check "clone without marker defers to /onboard" "$FRESH" "/onboard" "Invoke the summarize skill"
 check "no git repo defers to /onboard" "$NOT_A_REPO" "/onboard" "Invoke the summarize skill"
 
