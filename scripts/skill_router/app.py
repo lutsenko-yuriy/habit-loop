@@ -67,6 +67,13 @@ def run(argv: list[str]) -> int:
             print(f"[skill_router] Unknown context provider '{context}'", file=sys.stderr)
             return 2
         ctx_provider = ctx_factory(cfg)
+        if not all(hasattr(ctx_provider, m) for m in ("fetch_context", "format_context")):
+            print(
+                f"[skill_router] Provider '{ctx_provider.group_name}' (from context '{context}') "
+                "does not supply context — run this skill inside Claude Code",
+                file=sys.stderr,
+            )
+            return 2
         err = ctx_provider.validate()
         if err:
             print(f"[skill_router] {err}", file=sys.stderr)
