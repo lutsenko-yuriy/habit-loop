@@ -3,6 +3,7 @@
 !.claude/agents/
 !.claude/commands/
 !.claude/hooks/
+!.claude/settings.json
 CLAUDE.local.md
 PLAN.local.md
 memory/
