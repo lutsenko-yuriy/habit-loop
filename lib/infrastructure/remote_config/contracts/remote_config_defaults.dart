@@ -238,9 +238,9 @@ abstract final class RemoteConfigDefaults {
   /// Feature toggle: kill-switch for the Checklister integration (GH #464).
   ///
   /// When `false`, no checklist link/run UI is shown and mark-done is never
-  /// gated behind a checklist run. Override to `false` in the Firebase Remote
-  /// Config console to disable the integration without a release.
-  static const bool checklisterIntegrationEnabled = true;
+  /// gated behind a checklist run. Defaults to `false` until GH #464's final WU
+  /// flips it, so the unfinished integration never reaches users mid-rollout.
+  static const bool checklisterIntegrationEnabled = false;
 
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
