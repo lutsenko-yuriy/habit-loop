@@ -1,5 +1,7 @@
+import io
 import os
 import unittest
+from contextlib import redirect_stderr
 from unittest.mock import MagicMock, patch
 
 from skill_router.app import run
@@ -10,6 +12,7 @@ from .fixtures import (
     _FM_NO_EFFORT,
     _FM_FOCUSED,
     _FM_WITH_CONTEXT,
+    _FM_WITH_CONTEXT_GITHUB,
     _FM_WITH_CONTEXT_AND_RENDER_HTML_VIEW,
     _FM_WITH_TOOLS_LINEAR,
     _FM_WITH_TOOLS_GITHUB,
@@ -96,6 +99,24 @@ class TestRun(unittest.TestCase):
         call_prompt = mock_stream.call_args[0][1]
         self.assertIn("PR #42", call_prompt)
         self.assertIn("body", call_prompt)
+
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_WITH_CONTEXT_GITHUB)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_context_provider_without_context_support_returns_2(self, *_):
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            self.assertEqual(self._run(["skill_router", "fake/SKILL.md"]), 2)
+        self.assertIn("does not supply context", stderr.getvalue())
+
+    @patch(f"{_MOD}.read_frontmatter", return_value=_FM_WITH_CONTEXT)
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_context_provider_without_format_context_returns_2(self, *_):
+        fake_provider = MagicMock(spec=["group_name", "validate", "fetch_context"])
+        stderr = io.StringIO()
+        with patch.dict(f"{_MOD}._PROVIDER_FACTORIES", {"linear": MagicMock(return_value=fake_provider)}):
+            with redirect_stderr(stderr):
+                self.assertEqual(self._run(["skill_router", "fake/SKILL.md"]), 2)
+        self.assertIn("does not supply context", stderr.getvalue())
 
     @patch(f"{_MOD}.stream_completion", return_value=True)
     @patch(f"{_MOD}.model_loaded", return_value=True)

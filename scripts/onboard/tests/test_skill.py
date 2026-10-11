@@ -132,6 +132,15 @@ class BashAndToolsTest(unittest.TestCase):
         for sub in sorted(bash_policy.ONBOARD_SUBCOMMANDS):
             self.assertIn("scripts/onboard/onboard.py %s" % sub, cmds)
 
+    def test_step_a_uses_every_remote_form(self):
+        cmds = bash_lines(text_of(skill_files()))
+        for tail in ("remote --new NAME", "remote --new NAME --public", "remote --url URL", "remote --none"):
+            self.assertIn("python3 scripts/onboard/onboard.py " + tail, cmds)
+        step_a = next(ln for ln in SKILL.read_text(encoding="utf-8").splitlines() if ln.startswith("Step A"))
+        self.assertIn("gh_authenticated", step_a)
+        self.assertIn("consent", step_a)
+        self.assertIn("only a URL the user typed", step_a)
+
     def test_never_uses_force(self):
         self.assertNotIn("--force", " ".join(bash_lines(text_of(skill_files()))))
 
@@ -384,6 +393,24 @@ class TemplateFlowTest(unittest.TestCase):
             self.assertFalse((root / ".yab-template").exists())
             self.assertFalse(any(".yab-template" in e for e in onboard.check(root)["errors"]))
 
+    @template_only
+    def test_new_project_gets_an_empty_changelog_and_must_replace_the_readme(self):
+        # Template-only: an onboarded project's CHANGELOG and README are already its own.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = make_clone(tmp, "https://github.com/me/proj.git", sentinel=True)
+            write_config(root)
+            self.assertTrue(onboard.apply(root)["changelog_reset"])
+            self.assertNotIn("## [Unreleased]", (root / "docs/CHANGELOG.md").read_text())
+            errors = onboard.check(root)["errors"]
+            self.assertTrue(any(e.startswith("README.md is still the YAB template README") for e in errors))
+
+    @template_only
+    def test_readme_step_names_the_template_title(self):
+        title = onboard.TEMPLATE_README_TITLE
+        self.assertTrue((ROOT / "README.md").read_text(encoding="utf-8").startswith("# %s\n" % title))
+        self.assertIn('Write `README.md` for the project', SKILL.read_text(encoding="utf-8"))
+        self.assertIn('titled "%s"' % title, SKILL.read_text(encoding="utf-8"))
+
     def test_origin_not_yab_never_asks_the_template_question(self):
         text = SKILL.read_text(encoding="utf-8")
         self.assertIn("`template_mode` is true", text)
@@ -392,9 +419,8 @@ class TemplateFlowTest(unittest.TestCase):
     def test_human_only_commands_run_in_a_separate_terminal_not_via_bang(self):
         text = text_of(skill_files())
         human = human_commands(text)
-        self.assertEqual(4, len(human))
-        self.assertTrue(any("&& git remote set-url origin" in c for c in human))
-        self.assertTrue(any(c.endswith("&& git remote remove origin") for c in human))
+        self.assertEqual(3, len(human))
+        self.assertTrue(any(c.endswith("&& gh auth login") for c in human))
         self.assertTrue(any("&& git add <the files it listed>" in c for c in human))
         self.assertTrue(any(c.endswith("onboard.py mark --force") for c in human))
         for c in human:

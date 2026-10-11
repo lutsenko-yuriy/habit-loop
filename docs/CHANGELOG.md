@@ -16,6 +16,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - [meta] HAB-276: adopted ADR-0010 — sync template updates via plain-git diff-and-apply workflow (Copier's core idea, no new dependency), scoped to template-owned paths with agent-driven conflict resolution. Strategy evaluated against `docs/CONSTRAINTS.md`; precedent surveyed (git subtree/submodule, Copier, cruft, Yeoman, framework-native patterns).
 - [meta] (PR #457) HAB-278 WU16: port the /onboard skill and onboarding gate from YAB; session_start defers to /onboard until the clone is marked.
 - [meta] (PR #459) HAB-278 WU18: README refresh
+- [meta] (PR #460) HAB-278 WU24: port YAB onboarding remote/README/CHANGELOG handling and the skill_router context guard; session start reads [providers].pm
 
 ## [0.61.1] — 2026-09-08 (PR #447 merged)
 
