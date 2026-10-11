@@ -35,6 +35,7 @@ Fired when the user manually marks a showup as done from the showup detail scree
 |---|---|---|
 | `pact_id` | `string` | ID of the parent pact (join with `pact_created` for habit name) |
 | `source` | `string` | `showup_detail` \| `voice` — entry point the mark-done came from. Added in HAB-269. |
+| `checklist_outcome` | `string` | `success` \| `failure` \| `none` — outcome of the checklist run that unlocked this mark-done; `none` when the pact has no linked checklist or Checklister isn't installed. Added in GH #464. |
 
 ---
 
@@ -518,10 +519,67 @@ Fired when the "mark \<habit\> done" Siri intent finishes handling, regardless o
 
 | Property | Type | Description |
 |---|---|---|
-| `outcome` | `string` | `marked_direct` \| `marked_after_confirmation` \| `declined_confirmation` \| `recovered_from_no_match` \| `abandoned_no_match` \| `failed_write` (the DB write itself failed after a match/confirmation — logged instead of the success outcome it would otherwise have used, so it never double-counts as success; WU2 audit finding) |
+| `outcome` | `string` | `marked_direct` \| `marked_after_confirmation` \| `declined_confirmation` \| `recovered_from_no_match` \| `abandoned_no_match` \| `failed_write` (the DB write itself failed after a match/confirmation — logged instead of the success outcome it would otherwise have used, so it never double-counts as success; WU2 audit finding) \| `blocked_checklist_linked` (the matched showup's pact has a linked checklist, so Siri refused and told the user to run it in-app first; GH #464) |
 | `candidate_count` | `int` | Number of pending showups matching the spoken description at resolution time (0, 1, or 2+) |
 
 No PII risk — the spoken habit name is never included, only match counts and a closed-set outcome enum.
+
+---
+
+### `pact_checklist_selection_started`
+
+Fired when the user taps "Select checklist" or "Change" on an active pact's detail screen and Checklister opens for picking. Compare with `pact_checklist_linked` to measure picker abandonment. (GH #464)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact the checklist is being linked to |
+| `mode` | `string` | `select` (none linked yet) \| `change` (replacing a linked one) |
+
+---
+
+### `pact_checklist_linked`
+
+Fired when Checklister returns a selection and the link is persisted. (GH #464)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact the checklist was linked to |
+| `mode` | `string` | `select` \| `change` |
+
+No PII risk — the checklist name (user-entered in Checklister) and its ID are never included.
+
+---
+
+### `pact_checklist_unlinked`
+
+Fired when the user taps "Remove" on the pact detail checklist section. (GH #464)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the pact the checklist was removed from |
+| `days_linked` | `int` | Days between the checklist being linked and removed |
+
+---
+
+### `checklist_run_started`
+
+Fired when the user taps "Run checklist" on a showup detail screen and Checklister opens. Compare with `checklist_run_finished` to measure run abandonment. (GH #464)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the parent pact |
+
+---
+
+### `checklist_run_finished`
+
+Fired when Checklister reports a run's outcome back to Habit Loop. A `failure` outcome also shows the unsuccessful-run dialog; "Mark as done" unlocks either way. (GH #464)
+
+| Property | Type | Description |
+|---|---|---|
+| `pact_id` | `string` | ID of the parent pact |
+| `outcome` | `string` | `success` \| `failure` — the only result Checklister reports |
+| `window_closed_meanwhile` | `bool` | `true` if the showup window closed between the run starting and finishing |
 
 ---
 
@@ -534,6 +592,14 @@ Tracked via `AnalyticsService.setUserProperty(name, value)`, which calls `Fireba
 `'true'` or `'false'` — whether the user currently has a display name on file, regardless of whether display-name personalization is enabled. Set at app startup and on every local or remote change to the stored name. (HAB-232 WU3)
 
 No PII risk — a boolean string, never the name itself.
+
+---
+
+### `has_checklister_installed`
+
+`'true'` or `'false'` — whether the sibling Checklister app is installed. Set at app startup. Segments checklist-feature adoption against the users who could actually use it. (GH #464)
+
+No PII risk — a boolean string about one known sibling app; no other installed apps are probed.
 
 ---
 

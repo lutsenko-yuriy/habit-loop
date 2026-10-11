@@ -50,6 +50,8 @@ When you find a different word used for the same concept, look it up in **[Known
 | **Commitment confirmation** | The gate shown before a pact is created, making the "no exceptions, no pausing" commitment explicit. Variant under EXP-003 (`button` / `checkbox` / `retype`). |
 | **Redeem (a showup)** | Marking an auto-failed (not manually failed) showup as done, by writing a required note. Only available within the tail zone (last N days, `pact_timeline_no_grouping_tail_period_in_days`). Gated by `showup_redemption_enabled`. |
 | **Milestone** | One grouped unit shown on the pact timeline: a streak run, a mixed group, a single or noted showup, or an anchor (pact created / current state / concluded). Distinct from an analytics event or a generic UI list item (`PactTimelineMilestone`, `slices/pact/application/`). |
+| **Linked checklist** | A checklist from the sibling Checklister app attached to an active pact via pact detail. While Checklister is installed, a showup of that pact must go through a **checklist run** before "Mark as done" unlocks (GH #464). |
+| **Checklist run** | One execution of a linked checklist in Checklister, started from a showup. Habit Loop only sees its outcome — success or failure — and unlocks "Mark as done" either way (GH #464). |
 
 ---
 
