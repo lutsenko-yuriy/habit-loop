@@ -79,6 +79,18 @@ void main() {
         expect(flags.voiceMarkDoneEnabled, isFalse);
       });
 
+      test('checklisterIntegrationEnabled defaults to true', () {
+        final rc = FakeRemoteConfigService();
+        final flags = FeatureFlags.fromRemoteConfig(rc);
+        expect(flags.checklisterIntegrationEnabled, isTrue);
+      });
+
+      test('checklisterIntegrationEnabled reads false from RC override', () {
+        final rc = FakeRemoteConfigService(overrides: {'checklister_integration_enabled': false});
+        final flags = FeatureFlags.fromRemoteConfig(rc);
+        expect(flags.checklisterIntegrationEnabled, isFalse);
+      });
+
       test('pactChainingEnabled defaults to true', () {
         final rc = FakeRemoteConfigService();
         final flags = FeatureFlags.fromRemoteConfig(rc);

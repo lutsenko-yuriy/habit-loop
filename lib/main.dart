@@ -21,6 +21,8 @@ import 'package:habit_loop/infrastructure/auth/data/firebase_auth_client_adapter
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_service.dart';
 import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
 import 'package:habit_loop/infrastructure/auth/data/local_auth_service.dart';
+import 'package:habit_loop/infrastructure/checklister/application/publish_checklister_installed_property.dart';
+import 'package:habit_loop/infrastructure/checklister/data/url_launcher_checklister_gateway.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
@@ -302,6 +304,7 @@ Future<void> main() async {
     final pactChecklistLinkRepo = SqlitePactChecklistLinkRepository(db);
     final checklistRunRepo = SqliteChecklistRunRepository(db);
     final txService = SqlitePactTransactionService(db);
+    final checklisterGateway = UrlLauncherChecklisterGateway();
 
     // Assign notificationAnalyticsService so the warm-start callback (closed
     // over above) can fire events. Also used in the cold-start post-frame callback.
@@ -332,6 +335,7 @@ Future<void> main() async {
       checklistRunRepository: checklistRunRepo,
       userProfileRepository: userProfileRepo,
       userProfileSyncRepository: userProfileRepo,
+      checklisterGateway: checklisterGateway,
       transactionService: txService,
       logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
       analyticsService: analyticsService,
@@ -358,6 +362,10 @@ Future<void> main() async {
       debugBackendAtStartup: !kReleaseMode ? debugBackend : null,
       runningAppVersion: runningAppVersion,
     );
+
+    if (analyticsService != null) {
+      unawaited(publishChecklisterInstalledProperty(checklisterGateway, analyticsService).catchError((_) {}));
+    }
 
     runApp(
       ProviderScope(

@@ -26,6 +26,7 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../test/infrastructure/analytics/fake_analytics_service.dart';
 import '../test/infrastructure/auth/fake_auth_service.dart';
+import '../test/infrastructure/checklister/fake_checklister_gateway.dart';
 import '../test/infrastructure/locale/fake_locale_preference_service.dart';
 import '../test/infrastructure/notifications/fake_notification_service.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
@@ -56,6 +57,7 @@ class AppHarness {
     required this.notifications,
     required this.syncService,
     required this.localeService,
+    required this.checklister,
     required this.navigatorKey,
     this.onboardingService,
     this.userProfileRepository,
@@ -70,6 +72,10 @@ class AppHarness {
   final FakeNotificationService notifications;
   final FakeSyncService syncService;
   final FakeLocalePreferenceService localeService;
+
+  /// GH-464: Checklister is installed by default; set `checklister.installed`
+  /// or `canLaunch` to simulate otherwise, read `launchedUrls` to assert.
+  final FakeChecklisterGateway checklister;
 
   /// HAB-232: non-null only when [AppHarness.create] was called with an
   /// explicit `onboardingService` — otherwise the widget tree uses the
@@ -162,6 +168,7 @@ class AppHarness {
     final notifications = FakeNotificationService();
     final syncService = syncServiceFactory?.call(pactRepo, showupRepo) ?? FakeSyncService();
     final localeService = FakeLocalePreferenceService();
+    final checklister = FakeChecklisterGateway();
 
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
@@ -172,6 +179,7 @@ class AppHarness {
       analyticsService: analytics,
       notificationService: notifications,
       localePreferenceService: localeService,
+      checklisterGateway: checklister,
       // HAB-232: only overridden when a test explicitly opts in — otherwise every
       // pre-existing scenario keeps its original NoopOnboardingService/
       // InMemoryUserProfileRepository defaults (app_providers.dart) unchanged.
@@ -190,6 +198,7 @@ class AppHarness {
       notifications: notifications,
       syncService: syncService,
       localeService: localeService,
+      checklister: checklister,
       navigatorKey: navigatorKey,
       onboardingService: onboardingService,
       userProfileRepository: userProfileRepository,
