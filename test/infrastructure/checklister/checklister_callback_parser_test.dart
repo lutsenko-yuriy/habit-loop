@@ -67,8 +67,8 @@ void main() {
 
     test('cancelled and error parse', () {
       for (final st in ['cancelled', 'error']) {
-        final r = parse('habitloop://checklist/run-finished?pactId=p1&showupId=s1&status=$st&checklistId=c1')!
-            as RunCallback;
+        final r =
+            parse('habitloop://checklist/run-finished?pactId=p1&showupId=s1&status=$st&checklistId=c1')! as RunCallback;
         expect(r.status.name, st);
         expect(r.runId, isNull);
       }

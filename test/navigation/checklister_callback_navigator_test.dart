@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/checklister/data/checklister_callback_parser.dart';
 import 'package:habit_loop/infrastructure/deep_links/data/link_deduper.dart';
@@ -8,7 +6,8 @@ import 'package:habit_loop/navigation/checklister_callback_navigator.dart';
 import '../infrastructure/deep_links/fake_incoming_link_service.dart';
 
 final _sel = Uri.parse('habitloop://checklist/selected?pactId=p1&status=selected&checklistId=c1&checklistName=M');
-final _run = Uri.parse('habitloop://checklist/run-finished?pactId=p1&showupId=s1&status=completed&checklistId=c1&runId=r1');
+final _run =
+    Uri.parse('habitloop://checklist/run-finished?pactId=p1&showupId=s1&status=completed&checklistId=c1&runId=r1');
 
 void main() {
   late List<SelectionCallback> selections;
