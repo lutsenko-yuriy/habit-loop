@@ -9,6 +9,7 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/pact/analytics/pact_analytics_events.dart';
 import 'package:habit_loop/slices/pact/ui/android/pact_detail_page_android.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_checklist_section_host.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_state.dart';
@@ -277,6 +278,10 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         ? _onAdjustAndStartAgain
         : null;
 
+    // Keyed per pact so a chain-link swap gets a fresh view model (GH #464).
+    final checklistSection =
+        PactChecklistSectionHost(key: ValueKey('checklist-$_currentPactId'), pactId: _currentPactId);
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return PactDetailPageIos(
         state: state,
@@ -296,6 +301,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
         chainNavigationDirection: _lastDirection,
         previousState: _outgoingSnapshot,
         originalPactId: widget.pactId,
+        checklistSection: checklistSection,
       );
     }
     return PactDetailPageAndroid(
@@ -316,6 +322,7 @@ class _PactDetailScreenState extends ConsumerState<PactDetailScreen> {
       chainNavigationDirection: _lastDirection,
       previousState: _outgoingSnapshot,
       originalPactId: widget.pactId,
+      checklistSection: checklistSection,
     );
   }
 }

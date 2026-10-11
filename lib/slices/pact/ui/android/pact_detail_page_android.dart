@@ -161,6 +161,7 @@ class PactDetailPageAndroid extends StatelessWidget {
                         chainNavigationDirection: chainNavigationDirection,
                         previousState: previousState,
                         originalPactId: originalPactId ?? state.pact?.id ?? previousState?.pact?.id,
+                        checklistSection: checklistSection,
                       ),
           ),
           // Invisible marker exposing the currently-shown pact id (HAB-206
@@ -190,6 +191,7 @@ class _PactDetailContent extends StatelessWidget {
   final ScrollController? scrollController;
   final SlideDirection? chainNavigationDirection;
   final PactDetailState? previousState;
+  final Widget? checklistSection;
   final String? originalPactId;
 
   const _PactDetailContent({
@@ -209,6 +211,7 @@ class _PactDetailContent extends StatelessWidget {
     this.scrollController,
     this.chainNavigationDirection,
     this.previousState,
+    this.checklistSection,
     this.originalPactId,
   });
 
@@ -436,6 +439,12 @@ class _PactDetailContent extends StatelessWidget {
             onPressed: onOpenTimeline,
             child: Text(l10n.pactDetailViewTimeline),
           ),
+        ],
+
+        // Checklist section (GH #464): active pacts only; the host hides itself when disabled.
+        if (pact.status == PactStatus.active && checklistSection != null) ...[
+          const SizedBox(height: AppSpacing.s16),
+          checklistSection!,
         ],
 
         // Editable note section for inactive pacts, reveals/collapses (HAB-206 WU3).

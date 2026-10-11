@@ -10,10 +10,10 @@ final class PactChecklistSelectionStartedEvent extends AnalyticsEvent {
   final String mode;
 
   @override
-  String get name => throw UnimplementedError();
+  String get name => 'pact_checklist_selection_started';
 
   @override
-  Map<String, Object?> toParameters() => throw UnimplementedError();
+  Map<String, Object?> toParameters() => {'pact_id': pactId, 'mode': mode};
 }
 
 /// Fired when a selection callback changes the pact's link. (GH #464)
@@ -26,10 +26,10 @@ final class PactChecklistLinkedEvent extends AnalyticsEvent {
   final String mode;
 
   @override
-  String get name => throw UnimplementedError();
+  String get name => 'pact_checklist_linked';
 
   @override
-  Map<String, Object?> toParameters() => throw UnimplementedError();
+  Map<String, Object?> toParameters() => {'pact_id': pactId, 'mode': mode};
 }
 
 /// Fired when the user removes the pact's checklist link. (GH #464)
@@ -40,8 +40,8 @@ final class PactChecklistUnlinkedEvent extends AnalyticsEvent {
   final int daysLinked;
 
   @override
-  String get name => throw UnimplementedError();
+  String get name => 'pact_checklist_unlinked';
 
   @override
-  Map<String, Object?> toParameters() => throw UnimplementedError();
+  Map<String, Object?> toParameters() => {'pact_id': pactId, 'days_linked': daysLinked};
 }
