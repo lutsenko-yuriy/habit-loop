@@ -24,6 +24,8 @@ import 'package:habit_loop/infrastructure/analytics/data/noop_analytics_service.
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/auth/contracts/auth_state.dart';
 import 'package:habit_loop/infrastructure/auth/data/noop_auth_service.dart';
+import 'package:habit_loop/infrastructure/checklister/contracts/checklister_gateway.dart';
+import 'package:habit_loop/infrastructure/checklister/data/noop_checklister_gateway.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dart';
@@ -194,6 +196,14 @@ final featureFlagsProvider = Provider<FeatureFlags>(
     appVersion: ref.watch(runningAppVersionProvider),
   ),
 );
+
+/// Checklister deep-link gateway (GH #464). Inert noop by default; `main.dart`
+/// overrides it with the `url_launcher`-backed implementation.
+final checklisterGatewayProvider = Provider<ChecklisterGateway>((ref) => NoopChecklisterGateway());
+
+/// Whether Checklister is installed. Cached until invalidated; `ChecklisterInstallWatcher`
+/// re-checks on app resume.
+final checklisterInstalledProvider = FutureProvider<bool>((ref) => ref.watch(checklisterGatewayProvider).isInstalled());
 
 final remoteConfigOverrideStoreProvider = Provider<RemoteConfigOverrideStore>(
   (ref) => const NoopRemoteConfigOverrideStore(),

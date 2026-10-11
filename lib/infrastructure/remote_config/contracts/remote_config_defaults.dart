@@ -124,6 +124,7 @@ abstract final class RemoteConfigDefaults {
     'notification_reconciliation_enabled',
     'display_name_personalization_enabled',
     'voice_mark_done_enabled',
+    'checklister_integration_enabled',
   };
 
   /// Feature toggle: show the About screen entry point on the dashboard.
@@ -234,6 +235,14 @@ abstract final class RemoteConfigDefaults {
   /// release.
   static const bool voiceMarkDoneEnabled = true;
 
+  /// Feature toggle: kill-switch for the Checklister integration (GH #464).
+  ///
+  /// When `false`, no checklist link/run UI is shown and mark-done is never
+  /// gated behind a checklist run. Defaults to `false` until GH #464's final WU
+  /// flips it, and release-gated via [releaseVersions], so the unfinished
+  /// integration never reaches users mid-rollout.
+  static const bool checklisterIntegrationEnabled = false;
+
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
   /// in release builds (see [FeatureFlags.fromRemoteConfig]); `null` = not
@@ -243,6 +252,8 @@ abstract final class RemoteConfigDefaults {
   static const Map<String, String?> releaseVersions = {
     'pact_chaining_enabled': '0.53.0',
     'display_name_personalization_enabled': '0.59.0',
+    // `null` until GH #464's final WU sets its release version.
+    'checklister_integration_enabled': null,
   };
 
   /// Optional short hint shown in the debug override dialog for keys whose
@@ -285,6 +296,7 @@ abstract final class RemoteConfigDefaults {
     'notification_reconciliation_enabled': notificationReconciliationEnabled,
     'display_name_personalization_enabled': displayNamePersonalizationEnabled,
     'voice_mark_done_enabled': voiceMarkDoneEnabled,
+    'checklister_integration_enabled': checklisterIntegrationEnabled,
   };
 
   /// Allowed string values for keys that accept only a fixed set of values.
@@ -309,6 +321,7 @@ abstract final class RemoteConfigDefaults {
     'notification_reconciliation_enabled': ['true', 'false'],
     'display_name_personalization_enabled': ['true', 'false'],
     'voice_mark_done_enabled': ['true', 'false'],
+    'checklister_integration_enabled': ['true', 'false'],
   };
 
   /// Bounded integer ranges for keys whose values must fall within a known

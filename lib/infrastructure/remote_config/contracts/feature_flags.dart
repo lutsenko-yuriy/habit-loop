@@ -33,6 +33,7 @@ final class FeatureFlags {
     required this.pactChainingEnabled,
     required this.displayNamePersonalizationEnabled,
     required this.voiceMarkDoneEnabled,
+    required this.checklisterIntegrationEnabled,
   });
 
   /// [appVersion] is the real running version (see `runningAppVersionProvider`
@@ -53,6 +54,12 @@ final class FeatureFlags {
       // consumers (e.g. a future debug surface) to stay consistent with it.
       voiceMarkDoneEnabled: rc.getBool('voice_mark_done_enabled'),
       // Release-version gating (HAB-207) starts here — flags above predate it.
+      checklisterIntegrationEnabled: resolveReleaseGatedFlag(
+        rawValue: rc.getBool('checklister_integration_enabled'),
+        releaseVersion: RemoteConfigDefaults.releaseVersions['checklister_integration_enabled'],
+        currentVersion: appVersion,
+        isDebugOrProfile: isDebugOrProfile,
+      ),
       pactChainingEnabled: resolveReleaseGatedFlag(
         rawValue: rc.getBool('pact_chaining_enabled'),
         releaseVersion: RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'],
@@ -93,6 +100,9 @@ final class FeatureFlags {
   /// Whether the Siri voice mark-done feature (HAB-269) is enabled.
   final bool voiceMarkDoneEnabled;
 
+  /// Whether the Checklister integration (GH #464) is enabled.
+  final bool checklisterIntegrationEnabled;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -105,7 +115,8 @@ final class FeatureFlags {
           pactBreaksEnabled == other.pactBreaksEnabled &&
           pactChainingEnabled == other.pactChainingEnabled &&
           displayNamePersonalizationEnabled == other.displayNamePersonalizationEnabled &&
-          voiceMarkDoneEnabled == other.voiceMarkDoneEnabled;
+          voiceMarkDoneEnabled == other.voiceMarkDoneEnabled &&
+          checklisterIntegrationEnabled == other.checklisterIntegrationEnabled;
 
   @override
   int get hashCode => Object.hash(
@@ -118,5 +129,6 @@ final class FeatureFlags {
         pactChainingEnabled,
         displayNamePersonalizationEnabled,
         voiceMarkDoneEnabled,
+        checklisterIntegrationEnabled,
       );
 }

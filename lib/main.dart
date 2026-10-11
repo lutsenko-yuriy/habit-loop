@@ -21,6 +21,7 @@ import 'package:habit_loop/infrastructure/auth/data/firebase_auth_client_adapter
 import 'package:habit_loop/infrastructure/auth/data/firebase_auth_service.dart';
 import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
 import 'package:habit_loop/infrastructure/auth/data/local_auth_service.dart';
+import 'package:habit_loop/infrastructure/checklister/data/url_launcher_checklister_gateway.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
@@ -53,6 +54,7 @@ import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/checklist/data/sqlite_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/sqlite_pact_checklist_link_repository.dart';
+import 'package:habit_loop/slices/checklist/ui/generic/checklister_install_watcher.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_break_repository.dart';
@@ -302,6 +304,7 @@ Future<void> main() async {
     final pactChecklistLinkRepo = SqlitePactChecklistLinkRepository(db);
     final checklistRunRepo = SqliteChecklistRunRepository(db);
     final txService = SqlitePactTransactionService(db);
+    final checklisterGateway = UrlLauncherChecklisterGateway();
 
     // Assign notificationAnalyticsService so the warm-start callback (closed
     // over above) can fire events. Also used in the cold-start post-frame callback.
@@ -332,6 +335,7 @@ Future<void> main() async {
       checklistRunRepository: checklistRunRepo,
       userProfileRepository: userProfileRepo,
       userProfileSyncRepository: userProfileRepo,
+      checklisterGateway: checklisterGateway,
       transactionService: txService,
       logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
       analyticsService: analyticsService,
@@ -456,7 +460,9 @@ class HabitLoopApp extends ConsumerWidget {
           data: HabitLoopTheme.cupertinoTheme.copyWith(
             brightness: Theme.of(context).brightness,
           ),
-          child: AppLifecycleReconciler(child: child ?? const SizedBox.shrink()),
+          child: AppLifecycleReconciler(
+            child: ChecklisterInstallWatcher(child: child ?? const SizedBox.shrink()),
+          ),
         );
       },
       localizationsDelegates: const [

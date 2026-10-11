@@ -595,9 +595,9 @@ No PII risk — a boolean string, never the name itself.
 
 ---
 
-### `has_checklister_installed`
+### `checklister_installed`
 
-`'true'` or `'false'` — whether the sibling Checklister app is installed. Set at app startup. Segments checklist-feature adoption against the users who could actually use it. (GH #464)
+`'true'` or `'false'` — whether the sibling Checklister app is installed. Set after the first frame and refreshed on app resume when it changes. (Renamed from `has_checklister_installed`, which exceeds Firebase's 24-char user-property limit.) Segments checklist-feature adoption against the users who could actually use it. (GH #464)
 
 No PII risk — a boolean string about one known sibling app; no other installed apps are probed.
 
