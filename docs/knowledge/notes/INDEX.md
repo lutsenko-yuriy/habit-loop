@@ -9,8 +9,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **review-findings** (23)
 - **research-methodology** (16)
 - **debugging-methodology** (15)
+- **multi-wu-scope** (15)
 - **planning-gaps** (15)
-- **multi-wu-scope** (14)
 - **ci-flakiness** (12)
 - **code-style** (9)
 - **knowledge-base-process** (9)
@@ -27,10 +27,10 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **scope-creep** (3)
 - **stale-ticket** (3)
 - **docs-findability** (2)
+- **multi-project-scope** (2)
 - **subagent-authority** (2)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
-- **multi-project-scope** (1)
 - **notifications** (1)
 - **postmortem-workflow** (1)
 - **scenario-gate-scope** (1)
@@ -149,9 +149,11 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-176: Reduce token consumption from Linear MCP interactions](HAB-176.md)
 
 ### multi-project-scope
+- [GH-464: Link a Checklister checklist to a pact and run it before marking a showup done](GH-464.md)
 - [HAB-239: CI/lint check for raw TextStyle/fontSize literals instead of AppTypography tokens](HAB-239.md)
 
 ### multi-wu-scope
+- [GH-464: Link a Checklister checklist to a pact and run it before marking a showup done](GH-464.md)
 - [HAB-116: Pact timeline screen](HAB-116.md)
 - [HAB-153: Audit and clean up integration test scenarios](HAB-153.md)
 - [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)
