@@ -6,6 +6,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ## [Unreleased]
 
+- [wip] (PR #466) GH-464 WU1: Checklister link/run persistence — domain models (PactChecklistLink, ChecklistRun, ChecklistGate, ChecklistRunDerivation), SQLite + in-memory repositories, schema v8 with two local-only tables cleaned up by AFTER DELETE triggers.
 - [meta] (PR #458) HAB-278 WU17: /onboard output resources for Habit Loop
 - [meta] (PR #456) HAB-165: knowledge note capturing CheckLister's findings and proposed YAB/Habit Loop improvements; follow-ups HAB-278/HAB-279/HAB-280.
 - [meta] HAB-266: audited `docs/knowledge/notes/BOOKMARKS.md` usage — 29 bookmarks, 170 note associations across 104 notes, 7 (24%) used on only one note, no true duplicates found. Decided to leave `/debrief` step 4's bookmark-proposal gate as-is; the existing quarterly heavy-`/checkup` dimension 9 ("Knowledge-corpus bookmark health," HAB-221 WU3) already covers pruning.
