@@ -28,7 +28,7 @@ class _ChecklisterInstallWatcherState extends ConsumerState<ChecklisterInstallWa
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_check(initial: true)));
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_check()));
   }
 
   @override
@@ -42,14 +42,13 @@ class _ChecklisterInstallWatcherState extends ConsumerState<ChecklisterInstallWa
     if (state == AppLifecycleState.resumed) unawaited(_check());
   }
 
-  Future<void> _check({bool initial = false}) async {
+  Future<void> _check() async {
     final now = DateTime.now();
     final last = _lastCheck;
     if (last != null && now.difference(last) < widget.minInterval) return;
     _lastCheck = now;
     try {
-      // The first read already resolves fresh; later checks must drop the cached value.
-      if (!initial) ref.invalidate(checklisterInstalledProvider);
+      ref.invalidate(checklisterInstalledProvider);
       final installed = await ref.read(checklisterInstalledProvider.future);
       if (!mounted || installed == _published) return;
       _published = installed;

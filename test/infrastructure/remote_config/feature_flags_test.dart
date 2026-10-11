@@ -85,6 +85,11 @@ void main() {
         expect(flags.checklisterIntegrationEnabled, isFalse);
       });
 
+      test('checklisterIntegrationEnabled is release-gated and not yet released', () {
+        expect(RemoteConfigDefaults.releaseVersions.containsKey('checklister_integration_enabled'), isTrue);
+        expect(RemoteConfigDefaults.releaseVersions['checklister_integration_enabled'], isNull);
+      });
+
       test('checklisterIntegrationEnabled reads true from RC override', () {
         final rc = FakeRemoteConfigService(overrides: {'checklister_integration_enabled': true});
         final flags = FeatureFlags.fromRemoteConfig(rc);

@@ -53,8 +53,13 @@ final class FeatureFlags {
       // HAB-207 gating doesn't apply; this getter exists for Dart-side
       // consumers (e.g. a future debug surface) to stay consistent with it.
       voiceMarkDoneEnabled: rc.getBool('voice_mark_done_enabled'),
-      checklisterIntegrationEnabled: rc.getBool('checklister_integration_enabled'),
       // Release-version gating (HAB-207) starts here — flags above predate it.
+      checklisterIntegrationEnabled: resolveReleaseGatedFlag(
+        rawValue: rc.getBool('checklister_integration_enabled'),
+        releaseVersion: RemoteConfigDefaults.releaseVersions['checklister_integration_enabled'],
+        currentVersion: appVersion,
+        isDebugOrProfile: isDebugOrProfile,
+      ),
       pactChainingEnabled: resolveReleaseGatedFlag(
         rawValue: rc.getBool('pact_chaining_enabled'),
         releaseVersion: RemoteConfigDefaults.releaseVersions['pact_chaining_enabled'],

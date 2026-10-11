@@ -100,10 +100,11 @@ void main() {
       }
     });
 
-    test('hasMinVersion is true only for keys registered in releaseVersions', () {
+    test('hasMinVersion is true only for keys with a version in releaseVersions', () {
       final entries = readEntries();
       final withVersion = entries.where((e) => e.hasMinVersion).map((e) => e.key).toSet();
-      expect(withVersion, equals(RemoteConfigDefaults.releaseVersions.keys.toSet()));
+      final versioned = RemoteConfigDefaults.releaseVersions.entries.where((e) => e.value != null).map((e) => e.key);
+      expect(withVersion, equals(versioned.toSet()));
     });
 
     test('pact_chaining_enabled has minVersion 0.53.0', () {
