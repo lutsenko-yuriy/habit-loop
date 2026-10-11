@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:habit_loop/infrastructure/checklister/contracts/checklister_callback.dart';
 import 'package:habit_loop/infrastructure/checklister/data/checklister_callback_parser.dart';
-import 'package:habit_loop/infrastructure/deep_links/data/link_deduper.dart';
+import 'package:habit_loop/navigation/link_deduper.dart';
 
 typedef SelectionCallbackHandler = Future<void> Function(SelectionCallback callback);
 typedef RunCallbackHandler = Future<void> Function(RunCallback callback);
@@ -38,14 +39,14 @@ class ChecklisterCallbackNavigator {
 
   /// Subscribes to [links] for the app lifetime. Repeated deliveries are dropped and
   /// a failing handler never ends the subscription. Raw URLs are never logged.
-  StreamSubscription<Uri> listen(Stream<Uri> links) {
-    return links.listen((uri) async {
-      if (_deduper.isDuplicate(uri)) return;
+  StreamSubscription<void> listen(Stream<Uri> links) {
+    // asyncMap pauses the stream until each handler finishes, so handlers never overlap.
+    return links.where((uri) => !_deduper.isDuplicate(uri)).asyncMap((uri) async {
       try {
         await handle(uri);
       } catch (e) {
         debugPrint('[ChecklisterCallbackNavigator] handler failed: ${e.runtimeType}');
       }
-    });
+    }).listen((_) {});
   }
 }

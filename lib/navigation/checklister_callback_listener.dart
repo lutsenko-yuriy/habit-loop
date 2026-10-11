@@ -17,7 +17,7 @@ class ChecklisterCallbackListener extends ConsumerStatefulWidget {
 }
 
 class _ChecklisterCallbackListenerState extends ConsumerState<ChecklisterCallbackListener> {
-  StreamSubscription<Uri>? _subscription;
+  StreamSubscription<void>? _subscription;
 
   @override
   void initState() {

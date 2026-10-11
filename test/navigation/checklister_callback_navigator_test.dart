@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/checklister/data/checklister_callback_parser.dart';
-import 'package:habit_loop/infrastructure/deep_links/data/link_deduper.dart';
+import 'package:habit_loop/infrastructure/checklister/contracts/checklister_callback.dart';
 import 'package:habit_loop/navigation/checklister_callback_navigator.dart';
+import 'package:habit_loop/navigation/link_deduper.dart';
 
 import '../infrastructure/deep_links/fake_incoming_link_service.dart';
 

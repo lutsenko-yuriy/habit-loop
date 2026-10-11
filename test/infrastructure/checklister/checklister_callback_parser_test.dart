@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/infrastructure/checklister/contracts/checklister_callback.dart';
 import 'package:habit_loop/infrastructure/checklister/data/checklister_callback_parser.dart';
 
 ChecklisterCallback? parse(String url) => ChecklisterCallbackParser.parse(Uri.parse(url));

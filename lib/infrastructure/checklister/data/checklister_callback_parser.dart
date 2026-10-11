@@ -1,52 +1,18 @@
-enum ChecklisterCallbackStatus { selected, completed, cancelled, error }
-
-sealed class ChecklisterCallback {
-  const ChecklisterCallback({required this.pactId, required this.status});
-
-  final String pactId;
-  final ChecklisterCallbackStatus status;
-}
-
-/// `habitloop://checklist/selected` — result of Checklister's checklist picker.
-class SelectionCallback extends ChecklisterCallback {
-  const SelectionCallback({required super.pactId, required super.status, this.checklistId, this.checklistName});
-
-  final String? checklistId;
-  final String? checklistName;
-}
-
-/// `habitloop://checklist/run-finished` — result of running a checklist for a showup.
-class RunCallback extends ChecklisterCallback {
-  const RunCallback({
-    required super.pactId,
-    required this.showupId,
-    required super.status,
-    required this.checklistId,
-    this.runId,
-  });
-
-  final String showupId;
-  final String checklistId;
-  final String? runId;
-}
+import 'package:habit_loop/infrastructure/checklister/contracts/checklister_callback.dart';
+import 'package:habit_loop/infrastructure/checklister/contracts/checklister_links.dart';
 
 /// Parses Checklister's callbacks into [ChecklisterCallback]s. Pure; returns `null`
 /// for anything that is not a well-formed `habitloop://checklist/...` callback.
 abstract final class ChecklisterCallbackParser {
-  static const scheme = 'habitloop';
-  static const host = 'checklist';
-  static const selectedPath = '/selected';
-  static const runFinishedPath = '/run-finished';
-
   static ChecklisterCallback? parse(Uri uri) {
-    if (uri.scheme != scheme || uri.host != host) return null;
+    if (uri.scheme != ChecklisterLinks.callbackScheme || uri.host != ChecklisterLinks.callbackHost) return null;
     final q = uri.queryParameters;
     final pactId = _nonEmpty(q['pactId']);
     final status = _status(q['status']);
     if (pactId == null || status == null) return null;
 
     switch (uri.path) {
-      case selectedPath:
+      case ChecklisterLinks.selectedPath:
         if (status == ChecklisterCallbackStatus.completed) return null;
         final checklistId = _nonEmpty(q['checklistId']);
         if (status == ChecklisterCallbackStatus.selected && checklistId == null) return null;
@@ -56,7 +22,7 @@ abstract final class ChecklisterCallbackParser {
           checklistId: checklistId,
           checklistName: _nonEmpty(q['checklistName']),
         );
-      case runFinishedPath:
+      case ChecklisterLinks.runFinishedPath:
         if (status == ChecklisterCallbackStatus.selected) return null;
         final showupId = _nonEmpty(q['showupId']);
         final checklistId = _nonEmpty(q['checklistId']);

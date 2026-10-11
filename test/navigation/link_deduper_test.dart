@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habit_loop/infrastructure/deep_links/data/link_deduper.dart';
+import 'package:habit_loop/navigation/link_deduper.dart';
 
 void main() {
   final a = Uri.parse('habitloop://checklist/selected?pactId=p1&status=cancelled');
