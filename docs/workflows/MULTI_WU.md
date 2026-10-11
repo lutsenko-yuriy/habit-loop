@@ -15,6 +15,14 @@ a WU0 scenario-stub commit. Learned from HAB-206 (see `docs/knowledge/notes/HAB-
 
 3. **Longer-term: a dedicated designer (human or agent) could reduce this volatility at the source**, since the churn traces back to UI decisions not being settled before implementation starts, not to the WU-splitting process itself. Not staffed yet — flagged here as a direction, not a commitment.
 
+4. **A rollout across several repos is a parent ticket with one child ticket per repo, not one multi-WU ticket.** HAB-278 ran 24 WUs over five repos (YAB, mordovorot, CheckLister, Habit Loop, plus YAB-test-project for verification) as a single ticket. It stayed open for the whole rollout, and the user found it exhausting. Coordinate the children like this:
+   - **Hub:** every child lives in Habit Loop's Linear as a sub-issue of the parent, with the repo in its title, even when that repo's own PM is GitHub Issues. This keeps the status of the whole rollout in one place.
+   - **Parent owns the plan:** the source repo and its commit range (e.g. YAB `f3b99ec..10b46ca`), the port order, the cross-repo carry-overs, and the Checklist-WU that runs once every child has shipped.
+   - **Order:** the source-repo child *blocks* each port child (Linear "blocked by"). Port children of the same source range are independent and can run in any order.
+   - **Children** go through the full cycle, including their own short `/debrief`, and close on their own. A carry-over for another repo goes into the parent's note, not the next child's.
+   - **Changes to the source after a child has shipped** (e.g. HAB-278's WU19–24 re-ports) become new child tickets, not new WUs on an old ticket.
+   - **Parent debrief** runs after the last child ships and covers only cross-repo lessons.
+
 ## Pre-implementation WUs
 
 **Research-WU (optional) — then Scenario-WU or Checklist-WU**

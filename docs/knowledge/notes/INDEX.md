@@ -6,17 +6,17 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (22)
+- **review-findings** (23)
 - **research-methodology** (16)
 - **debugging-methodology** (15)
 - **planning-gaps** (15)
-- **multi-wu-scope** (13)
+- **multi-wu-scope** (14)
 - **ci-flakiness** (12)
 - **code-style** (9)
 - **knowledge-base-process** (9)
 - **changelog-versioning** (8)
+- **cross-project-sync** (7)
 - **widget-test-gotchas** (7)
-- **cross-project-sync** (6)
 - **dead-code** (5)
 - **verify-from-source** (5)
 - **feature-toggle** (4)
@@ -85,6 +85,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-172: Synchronize HabitLoop harness improvements into YAB](HAB-172.md)
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
 - [HAB-276: Research: strategy for syncing YAB template updates into an already-adopted project](HAB-276.md)
+- [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
 
 ### dead-code
 - [HAB-141: Dashboard stale showup status after notification tap (reopened)](HAB-141-adjust-1.md)
@@ -164,6 +165,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
 - [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
 - [HAB-260: FakeRemoteConfigService replaces rather than layers RC overrides — needs a harness-defaults merge](HAB-260.md)
+- [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
 
 ### notifications
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
@@ -229,6 +231,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
 - [HAB-268: Add a break/eye-strain reminder alongside the nightly block (ADR-0007)](HAB-268.md)
 - [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
+- [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
 
 ### scenario-gate-scope
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
