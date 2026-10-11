@@ -17,6 +17,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - [meta] (PR #457) HAB-278 WU16: port the /onboard skill and onboarding gate from YAB; session_start defers to /onboard until the clone is marked.
 - [meta] (PR #459) HAB-278 WU18: README refresh
 - [meta] (PR #460) HAB-278 WU24: port YAB onboarding remote/README/CHANGELOG handling and the skill_router context guard; session start reads [providers].pm
+- [meta] (PR #461) HAB-278 debrief: cross-repo rollouts become a parent ticket with one child ticket per repo (MULTI_WU.md guideline 4)
 
 ## [0.61.1] — 2026-09-08 (PR #447 merged)
 
