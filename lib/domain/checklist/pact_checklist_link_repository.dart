@@ -7,7 +7,8 @@ abstract class PactChecklistLinkRepository {
   /// Links for the given pacts, keyed by pact id (pacts without a link are absent).
   Future<Map<String, PactChecklistLink>> getForPacts(Iterable<String> pactIds);
 
-  /// Inserts or replaces the link for `link.pactId`.
+  /// Inserts or replaces the link for `link.pactId`. An unknown pact id is accepted
+  /// (no FK); the row is removed when/if a pact with that id is deleted.
   Future<void> upsert(PactChecklistLink link);
 
   /// Removes the link for [pactId]; no-op if none.

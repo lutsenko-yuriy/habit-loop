@@ -7,7 +7,9 @@ abstract class ChecklistRunRepository {
   /// Runs for the given showups, keyed by showup id (showups without a run are absent).
   Future<Map<String, ChecklistRun>> getForShowups(Iterable<String> showupIds);
 
-  /// Records a run start. Creates the run, or restarts an unfinished one by
+  /// Records a run start. Unknown showup/pact ids are accepted (no FK); rows are
+  /// removed when the owning showup/pact is deleted.
+  /// Creates the run, or restarts an unfinished one by
   /// overwriting [startedAt] (and pact/checklist ids). A finished run is final
   /// and is returned unchanged. Returns the resulting run.
   Future<ChecklistRun> upsertStarted({

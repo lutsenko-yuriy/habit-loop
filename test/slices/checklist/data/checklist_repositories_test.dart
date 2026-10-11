@@ -64,6 +64,11 @@ void _linkContract(String name, Future<PactChecklistLinkRepository> Function() m
       expect(await repo.getForPacts([]), isEmpty);
     });
 
+    test('upsert for an unknown pact id is accepted', () async {
+      await repo.upsert(_link(pactId: 'ghost'));
+      expect(await repo.getForPact('ghost'), isNotNull);
+    });
+
     test('delete removes the link; deleting an absent link is a no-op', () async {
       await repo.upsert(_link());
       await repo.delete('pact-1');
@@ -131,6 +136,12 @@ void _runContract(String name, Future<ChecklistRunRepository> Function() make) {
       );
       expect(second, isNull);
       expect(await repo.getForShowup('showup-1'), done);
+    });
+
+    test('upsertStarted for an unknown showup/pact id is accepted', () async {
+      final run = await repo.upsertStarted(
+          showupId: 'ghost', pactId: 'ghost-pact', checklistId: 'c1', startedAt: t0);
+      expect(await repo.getForShowup('ghost'), run);
     });
 
     test('getForShowups returns only existing runs, keyed by showup id', () async {
