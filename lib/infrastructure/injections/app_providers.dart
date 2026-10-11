@@ -201,8 +201,8 @@ final featureFlagsProvider = Provider<FeatureFlags>(
 /// overrides it with the `url_launcher`-backed implementation.
 final checklisterGatewayProvider = Provider<ChecklisterGateway>((ref) => NoopChecklisterGateway());
 
-/// Whether Checklister is installed. Resolved fresh on each read of a new
-/// provider instance; invalidate to re-check (e.g. on app resume).
+/// Whether Checklister is installed. Cached until invalidated; `ChecklisterInstallWatcher`
+/// re-checks on app resume.
 final checklisterInstalledProvider = FutureProvider<bool>((ref) => ref.watch(checklisterGatewayProvider).isInstalled());
 
 final remoteConfigOverrideStoreProvider = Provider<RemoteConfigOverrideStore>(
