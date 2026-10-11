@@ -28,6 +28,8 @@ import 'package:habit_loop/infrastructure/checklister/contracts/checklister_gate
 import 'package:habit_loop/infrastructure/checklister/data/noop_checklister_gateway.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/deep_links/contracts/incoming_link_service.dart';
+import 'package:habit_loop/infrastructure/deep_links/data/noop_incoming_link_service.dart';
 import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dart';
 import 'package:habit_loop/infrastructure/device/data/noop_device_id_service.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
@@ -200,6 +202,10 @@ final featureFlagsProvider = Provider<FeatureFlags>(
 /// Checklister deep-link gateway (GH #464). Inert noop by default; `main.dart`
 /// overrides it with the `url_launcher`-backed implementation.
 final checklisterGatewayProvider = Provider<ChecklisterGateway>((ref) => NoopChecklisterGateway());
+
+/// Incoming `habitloop://` links (GH #464). Inert noop by default; `main.dart`
+/// overrides it with the `app_links`-backed implementation.
+final incomingLinkServiceProvider = Provider<IncomingLinkService>((ref) => const NoopIncomingLinkService());
 
 /// Whether Checklister is installed. Cached until invalidated; `ChecklisterInstallWatcher`
 /// re-checks on app resume.

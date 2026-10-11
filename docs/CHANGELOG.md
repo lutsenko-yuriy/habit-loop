@@ -6,6 +6,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ## [Unreleased]
 
+- [wip] (PR #468) GH-464 WU3: incoming `habitloop://` links — `IncomingLinkService` over `app_links` (`uriLinkStream` only), pure Checklister callback parser (`habitloop://checklist/selected` and `/run-finished`; malformed/foreign links rejected), duplicate-delivery filter, `ChecklisterCallbackNavigator` skeleton with no-op handlers, `habitloop` URL scheme on iOS/Android, Flutter built-in deep linking disabled on both.
 - [wip] (PR #467) GH-464 WU2: outbound Checklister gateway (`ChecklisterGateway` via url_launcher, `checklister://select`/`run` link builders), installed check re-probed on app resume (`ChecklisterInstallWatcher`), `checklister_installed` user property, iOS `LSApplicationQueriesSchemes`/Android `<queries>` declarations, kill-switch `checklister_integration_enabled` (default false + release-gated until WU7).
 - [wip] (PR #466) GH-464 WU1: Checklister link/run persistence — domain models (PactChecklistLink, ChecklistRun, ChecklistGate, ChecklistRunDerivation), SQLite + in-memory repositories, schema v8 with two local-only tables cleaned up by AFTER DELETE triggers.
 - [meta] (PR #458) HAB-278 WU17: /onboard output resources for Habit Loop

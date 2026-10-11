@@ -79,12 +79,22 @@
 	<string>This app does not use advertising identifiers.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.935013168355-3jecs4lf3l2rr4g7dktth2as259i0tve</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.habitloop.habitLoop.callbacks</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>habitloop</string>
 			</array>
 		</dict>
 	</array>

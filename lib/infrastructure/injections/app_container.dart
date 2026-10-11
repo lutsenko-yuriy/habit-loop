@@ -14,6 +14,7 @@ import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.
 import 'package:habit_loop/infrastructure/auth/contracts/auth_service.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_gateway.dart';
 import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/deep_links/contracts/incoming_link_service.dart';
 import 'package:habit_loop/infrastructure/device/contracts/device_id_service.dart';
 import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
@@ -46,6 +47,7 @@ abstract final class AppContainer {
     UserProfileRepository? userProfileRepository,
     UserProfileSyncRepository? userProfileSyncRepository,
     ChecklisterGateway? checklisterGateway,
+    IncomingLinkService? incomingLinkService,
     AnalyticsService? analyticsService,
     CrashlyticsService? crashlyticsService,
     LogService? logService,
@@ -94,6 +96,7 @@ abstract final class AppContainer {
       if (initialDisplayName != null)
         displayNameProvider.overrideWith(() => DisplayNameNotifier(seedDisplayName: initialDisplayName)),
       if (checklisterGateway != null) checklisterGatewayProvider.overrideWithValue(checklisterGateway),
+      if (incomingLinkService != null) incomingLinkServiceProvider.overrideWithValue(incomingLinkService),
       if (logService != null) logServiceProvider.overrideWithValue(logService),
       if (analyticsService != null) analyticsServiceProvider.overrideWithValue(analyticsService),
       if (crashlyticsService != null) crashlyticsServiceProvider.overrideWithValue(crashlyticsService),

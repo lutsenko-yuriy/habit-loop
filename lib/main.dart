@@ -26,6 +26,7 @@ import 'package:habit_loop/infrastructure/crashlytics/contracts/crashlytics_serv
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_client_adapter.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/firebase_crashlytics_service.dart';
 import 'package:habit_loop/infrastructure/crashlytics/data/noop_crashlytics_service.dart';
+import 'package:habit_loop/infrastructure/deep_links/data/app_links_incoming_link_service.dart';
 import 'package:habit_loop/infrastructure/device/data/shared_preferences_device_id_service.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fake_firestore_client.dart';
 import 'package:habit_loop/infrastructure/firestore/data/fault_injecting_firestore_client.dart';
@@ -51,6 +52,7 @@ import 'package:habit_loop/infrastructure/remote_config/data/shared_preferences_
 import 'package:habit_loop/infrastructure/voice/voice_remote_config_bridge.dart';
 import 'package:habit_loop/infrastructure/voice/voice_write_signal_listener.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
+import 'package:habit_loop/navigation/checklister_callback_listener.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/checklist/data/sqlite_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/sqlite_pact_checklist_link_repository.dart';
@@ -336,6 +338,7 @@ Future<void> main() async {
       userProfileRepository: userProfileRepo,
       userProfileSyncRepository: userProfileRepo,
       checklisterGateway: checklisterGateway,
+      incomingLinkService: AppLinksIncomingLinkService(),
       transactionService: txService,
       logService: !kReleaseMode ? TalkerLogService(Talker()) : null,
       analyticsService: analyticsService,
@@ -461,7 +464,9 @@ class HabitLoopApp extends ConsumerWidget {
             brightness: Theme.of(context).brightness,
           ),
           child: AppLifecycleReconciler(
-            child: ChecklisterInstallWatcher(child: child ?? const SizedBox.shrink()),
+            child: ChecklisterInstallWatcher(
+              child: ChecklisterCallbackListener(child: child ?? const SizedBox.shrink()),
+            ),
           ),
         );
       },
