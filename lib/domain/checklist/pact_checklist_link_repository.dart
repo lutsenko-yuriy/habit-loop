@@ -8,7 +8,7 @@ abstract class PactChecklistLinkRepository {
   Future<Map<String, PactChecklistLink>> getForPacts(Iterable<String> pactIds);
 
   /// Inserts or replaces the link for `link.pactId`. An unknown pact id is accepted
-  /// (no FK); the row is removed when/if a pact with that id is deleted.
+  /// (no FK); the SQLite implementation removes the row when that pact is deleted.
   Future<void> upsert(PactChecklistLink link);
 
   /// Removes the link for [pactId]; no-op if none.

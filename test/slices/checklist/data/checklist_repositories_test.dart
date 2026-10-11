@@ -182,12 +182,12 @@ void main() {
       final d = await openDb();
       final links = SqlitePactChecklistLinkRepository(d);
       await links.upsert(_link());
-      final ids = ['pact-1', for (var i = 0; i < 1200; i++) 'x$i'];
+      final ids = [for (var i = 0; i < 1200; i++) 'x$i', 'pact-1'];
       expect((await links.getForPacts(ids)).keys, ['pact-1']);
       final runs = SqliteChecklistRunRepository(d);
       await runs.upsertStarted(
           showupId: 'showup-1', pactId: 'pact-1', checklistId: 'c', startedAt: DateTime(2026, 3, 1));
-      expect((await runs.getForShowups(['showup-1', for (var i = 0; i < 1200; i++) 'y$i'])).keys, ['showup-1']);
+      expect((await runs.getForShowups([for (var i = 0; i < 1200; i++) 'y$i', 'showup-1'])).keys, ['showup-1']);
     });
 
     test('deleting the showup cascades to its run', () async {
