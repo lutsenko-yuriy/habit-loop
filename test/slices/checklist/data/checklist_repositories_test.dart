@@ -139,8 +139,7 @@ void _runContract(String name, Future<ChecklistRunRepository> Function() make) {
     });
 
     test('upsertStarted for an unknown showup/pact id is accepted', () async {
-      final run = await repo.upsertStarted(
-          showupId: 'ghost', pactId: 'ghost-pact', checklistId: 'c1', startedAt: t0);
+      final run = await repo.upsertStarted(showupId: 'ghost', pactId: 'ghost-pact', checklistId: 'c1', startedAt: t0);
       expect(await repo.getForShowup('ghost'), run);
     });
 
