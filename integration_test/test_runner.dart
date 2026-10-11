@@ -12,6 +12,8 @@ import 'about_screen_flow_test.dart' as about;
 import 'archive_pact_flow_test.dart' as archive_pact;
 import 'break_flow_test.dart' as break_flow;
 import 'break_timeline_flow_test.dart' as break_timeline;
+import 'checklist_link_flow_test.dart' as checklist_link;
+import 'checklist_run_flow_test.dart' as checklist_run;
 import 'create_pact_flow_test.dart' as create_pact;
 import 'dashboard_kebab_menu_flow_test.dart' as kebab_menu;
 import 'display_name_flow_test.dart' as display_name;
@@ -41,6 +43,8 @@ void main() {
   archive_pact.main();
   break_flow.main();
   break_timeline.main();
+  checklist_link.main();
+  checklist_run.main();
   create_pact.main();
   kebab_menu.main();
   display_name.main();
