@@ -51,6 +51,8 @@ import 'package:habit_loop/infrastructure/voice/voice_remote_config_bridge.dart'
 import 'package:habit_loop/infrastructure/voice/voice_write_signal_listener.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
+import 'package:habit_loop/slices/checklist/data/sqlite_checklist_run_repository.dart';
+import 'package:habit_loop/slices/checklist/data/sqlite_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_screen.dart';
 import 'package:habit_loop/slices/pact/data/sqlite_pact_break_repository.dart';
@@ -297,6 +299,8 @@ Future<void> main() async {
     final showupRepo = SqliteShowupRepository(db);
     final pactBreakRepo = SqlitePactBreakRepository(db);
     final userProfileRepo = SqliteUserProfileRepository(db);
+    final pactChecklistLinkRepo = SqlitePactChecklistLinkRepository(db);
+    final checklistRunRepo = SqliteChecklistRunRepository(db);
     final txService = SqlitePactTransactionService(db);
 
     // Assign notificationAnalyticsService so the warm-start callback (closed
@@ -324,6 +328,8 @@ Future<void> main() async {
       showupSyncRepository: showupRepo,
       pactBreakRepository: pactBreakRepo,
       pactBreakSyncRepository: pactBreakRepo,
+      pactChecklistLinkRepository: pactChecklistLinkRepo,
+      checklistRunRepository: checklistRunRepo,
       userProfileRepository: userProfileRepo,
       userProfileSyncRepository: userProfileRepo,
       transactionService: txService,

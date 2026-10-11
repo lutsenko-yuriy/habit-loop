@@ -766,4 +766,56 @@ void main() {
       expect(rows.single['habit_name'], equals('Meditate'));
     });
   });
+  group('HabitLoopDatabase — schema v8 (checklist tables)', () {
+    late Database db;
+
+    // openForTesting() uses the global factory.
+    setUpAll(() => databaseFactory = databaseFactoryFfi);
+
+    setUp(() async {
+      db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      await db.execute('CREATE TABLE pacts (id TEXT NOT NULL PRIMARY KEY)');
+      await db.execute('CREATE TABLE showups (id TEXT NOT NULL PRIMARY KEY)');
+    });
+
+    tearDown(() async => db.close());
+
+    Future<Set<String>> columns(Database d, String table) async =>
+        (await d.rawQuery('PRAGMA table_info($table)')).map((r) => r['name'] as String).toSet();
+
+    test('v7 -> v8 upgrade creates both tables with no sync columns', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 7, 8);
+      expect(await columns(db, 'pact_checklist_links'), {'pact_id', 'checklist_id', 'checklist_name', 'linked_at'});
+      expect(await columns(db, 'checklist_runs'),
+          {'showup_id', 'pact_id', 'checklist_id', 'started_at', 'finished_at', 'outcome'});
+    });
+
+    test('v7 -> v8 upgrade installs cleanup triggers: deleting a showup/pact removes its rows', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 7, 8);
+      await db.insert('pacts', {'id': 'p'});
+      await db.insert('showups', {'id': 's'});
+      await db
+          .insert('pact_checklist_links', {'pact_id': 'p', 'checklist_id': 'c', 'checklist_name': 'n', 'linked_at': 1});
+      await db.insert('checklist_runs', {'showup_id': 's', 'pact_id': 'p', 'checklist_id': 'c', 'started_at': 1});
+      await db.delete('showups', where: 'id = ?', whereArgs: ['s']);
+      expect(await db.query('checklist_runs'), isEmpty);
+      await db.delete('pacts', where: 'id = ?', whereArgs: ['p']);
+      expect(await db.query('pact_checklist_links'), isEmpty);
+    });
+
+    test('fresh create includes both tables, and openForTesting is at v8', () async {
+      await db.close(); // in-memory databases are a shared single instance
+      final fresh = await HabitLoopDatabase.openForTesting();
+      addTearDown(fresh.close);
+      expect(await columns(fresh, 'pact_checklist_links'), isNotEmpty);
+      expect(await columns(fresh, 'checklist_runs'), isNotEmpty);
+      expect(await fresh.getVersion(), 8);
+    });
+
+    test('existing pacts/showups tables are untouched by the upgrade', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 7, 8);
+      expect(await columns(db, 'pacts'), {'id'});
+      expect(await columns(db, 'showups'), {'id'});
+    });
+  });
 }

@@ -9,6 +9,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/checklist/checklist_run_repository.dart';
+import 'package:habit_loop/domain/checklist/pact_checklist_link_repository.dart';
 import 'package:habit_loop/domain/pact/pact_break_repository.dart';
 import 'package:habit_loop/domain/pact/pact_break_sync_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
@@ -46,6 +48,8 @@ import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_
 import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
+import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
+import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_break_service.dart';
 import 'package:habit_loop/slices/pact/application/pact_chain_service.dart';
@@ -226,6 +230,16 @@ final showupSyncRepositoryProvider = Provider<ShowupSyncRepository>(
 // consumer working without an explicit override.
 final pactBreakRepositoryProvider = Provider<PactBreakRepository>(
   (ref) => InMemoryPactBreakRepository(),
+);
+
+// Local-only (never synced) checklist link/run stores (GH-464). Inert in-memory
+// defaults, same rationale as pactBreakRepositoryProvider above.
+final pactChecklistLinkRepositoryProvider = Provider<PactChecklistLinkRepository>(
+  (ref) => InMemoryPactChecklistLinkRepository(),
+);
+
+final checklistRunRepositoryProvider = Provider<ChecklistRunRepository>(
+  (ref) => InMemoryChecklistRunRepository(),
 );
 
 final pactBreakSyncRepositoryProvider = Provider<PactBreakSyncRepository>(
