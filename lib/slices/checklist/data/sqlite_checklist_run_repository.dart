@@ -1,6 +1,7 @@
 import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/domain/checklist/checklist_run_repository.dart';
 import 'package:habit_loop/infrastructure/persistence/checklist_run_mapper.dart';
+import 'package:habit_loop/slices/checklist/data/chunked_in_query.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SqliteChecklistRunRepository implements ChecklistRunRepository {
@@ -20,21 +21,9 @@ class SqliteChecklistRunRepository implements ChecklistRunRepository {
   Future<Map<String, ChecklistRun>> getForShowups(Iterable<String> showupIds) async {
     final ids = showupIds.toSet().toList();
     if (ids.isEmpty) return {};
-    final result = <String, ChecklistRun>{};
-    // Chunked to stay under SQLite's bound-variable limit.
-    for (var i = 0; i < ids.length; i += 500) {
-      final chunk = ids.sublist(i, i + 500 > ids.length ? ids.length : i + 500);
-      final rows = await _db.query(
-        _table,
-        where: 'showup_id IN (${List.filled(chunk.length, '?').join(',')})',
-        whereArgs: chunk,
-      );
-      for (final row in rows) {
-        final run = ChecklistRunMapper.fromRow(row);
-        result[run.showupId] = run;
-      }
-    }
-    return result;
+    final rows = await queryByIdsChunked(_db, _table, 'showup_id', ids);
+    final entries = rows.map(ChecklistRunMapper.fromRow);
+    return {for (final run in entries) run.showupId: run};
   }
 
   @override
