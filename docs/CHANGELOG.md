@@ -18,6 +18,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 - [meta] (PR #459) HAB-278 WU18: README refresh
 - [meta] (PR #460) HAB-278 WU24: port YAB onboarding remote/README/CHANGELOG handling and the skill_router context guard; session start reads [providers].pm
 - [meta] (PR #461) HAB-278 debrief: cross-repo rollouts become a parent ticket with one child ticket per repo (MULTI_WU.md guideline 4)
+- [test] (PR #465) GH-464: Scenario-WU — 11 TODO-only integration scenario stubs for the Checklister checklist link and run flows (checklist_link_flow_test.dart, checklist_run_flow_test.dart); also glossary terms, analytics catalogue entries, ARCHITECTURE.md planned section, and the GH-464 knowledge note with Research-WU findings.
 
 ## [0.61.1] — 2026-09-08 (PR #447 merged)
 
