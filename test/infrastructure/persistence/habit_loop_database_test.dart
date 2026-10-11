@@ -790,6 +790,19 @@ void main() {
           {'showup_id', 'pact_id', 'checklist_id', 'started_at', 'finished_at', 'outcome'});
     });
 
+    test('v7 -> v8 upgrade installs cleanup triggers: deleting a showup/pact removes its rows', () async {
+      await HabitLoopDatabase.runUpgradeMigrations(db, 7, 8);
+      await db.insert('pacts', {'id': 'p'});
+      await db.insert('showups', {'id': 's'});
+      await db.insert('pact_checklist_links',
+          {'pact_id': 'p', 'checklist_id': 'c', 'checklist_name': 'n', 'linked_at': 1});
+      await db.insert('checklist_runs', {'showup_id': 's', 'pact_id': 'p', 'checklist_id': 'c', 'started_at': 1});
+      await db.delete('showups', where: 'id = ?', whereArgs: ['s']);
+      expect(await db.query('checklist_runs'), isEmpty);
+      await db.delete('pacts', where: 'id = ?', whereArgs: ['p']);
+      expect(await db.query('pact_checklist_links'), isEmpty);
+    });
+
     test('fresh create includes both tables, and openForTesting is at v8', () async {
       await db.close(); // in-memory databases are a shared single instance
       final fresh = await HabitLoopDatabase.openForTesting();

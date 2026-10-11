@@ -154,7 +154,7 @@ class HabitLoopDatabase {
     // Local-only checklist tables (GH-464): no dirty/synced_at, never synced.
     await db.execute('''
       CREATE TABLE pact_checklist_links (
-        pact_id         TEXT    NOT NULL PRIMARY KEY REFERENCES pacts(id) ON DELETE CASCADE,
+        pact_id         TEXT    NOT NULL PRIMARY KEY,
         checklist_id    TEXT    NOT NULL,
         checklist_name  TEXT    NOT NULL,
         linked_at       INTEGER NOT NULL
@@ -162,13 +162,33 @@ class HabitLoopDatabase {
     ''');
     await db.execute('''
       CREATE TABLE checklist_runs (
-        showup_id     TEXT    NOT NULL PRIMARY KEY REFERENCES showups(id) ON DELETE CASCADE,
+        showup_id     TEXT    NOT NULL PRIMARY KEY,
         pact_id       TEXT    NOT NULL,
         checklist_id  TEXT    NOT NULL,
         started_at    INTEGER NOT NULL,
         finished_at   INTEGER,
         outcome       TEXT
       )
+    ''');
+    await _createChecklistCleanupTriggers(db);
+  }
+
+  /// AFTER DELETE triggers instead of FKs: showup updates use INSERT OR REPLACE,
+  /// whose implicit delete would cascade through an FK and wipe the run (GH-464).
+  /// REPLACE deletions do not fire delete triggers while recursive_triggers is off.
+  static Future<void> _createChecklistCleanupTriggers(Database db) async {
+    await db.execute('''
+      CREATE TRIGGER checklist_runs_cleanup_on_showup_delete AFTER DELETE ON showups
+      BEGIN
+        DELETE FROM checklist_runs WHERE showup_id = OLD.id;
+      END
+    ''');
+    await db.execute('''
+      CREATE TRIGGER checklist_cleanup_on_pact_delete AFTER DELETE ON pacts
+      BEGIN
+        DELETE FROM pact_checklist_links WHERE pact_id = OLD.id;
+        DELETE FROM checklist_runs WHERE pact_id = OLD.id;
+      END
     ''');
   }
 
@@ -236,12 +256,12 @@ class HabitLoopDatabase {
         )
       ''');
     }
-    if (oldVersion < 8) {
+    if (oldVersion < 8 && newVersion >= 8) {
       // v8 adds the local-only Checklister link/run tables (GH-464). Additive
-      // only — no existing table touched; rows cascade with their pact/showup.
+      // only — no existing table touched; rows are cleaned up by AFTER DELETE triggers.
       await db.execute('''
         CREATE TABLE pact_checklist_links (
-          pact_id         TEXT    NOT NULL PRIMARY KEY REFERENCES pacts(id) ON DELETE CASCADE,
+          pact_id         TEXT    NOT NULL PRIMARY KEY,
           checklist_id    TEXT    NOT NULL,
           checklist_name  TEXT    NOT NULL,
           linked_at       INTEGER NOT NULL
@@ -249,7 +269,7 @@ class HabitLoopDatabase {
       ''');
       await db.execute('''
         CREATE TABLE checklist_runs (
-          showup_id     TEXT    NOT NULL PRIMARY KEY REFERENCES showups(id) ON DELETE CASCADE,
+          showup_id     TEXT    NOT NULL PRIMARY KEY,
           pact_id       TEXT    NOT NULL,
           checklist_id  TEXT    NOT NULL,
           started_at    INTEGER NOT NULL,
@@ -257,6 +277,7 @@ class HabitLoopDatabase {
           outcome       TEXT
         )
       ''');
+      await _createChecklistCleanupTriggers(db);
     }
   }
 

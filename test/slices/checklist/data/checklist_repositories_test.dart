@@ -15,6 +15,7 @@ import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_reposit
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/checklist/data/sqlite_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/sqlite_pact_checklist_link_repository.dart';
+import 'package:habit_loop/slices/showup/data/sqlite_showup_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 final _pact = Pact(
@@ -195,6 +196,39 @@ void main() {
       await d.delete('showups', where: 'pact_id = ?', whereArgs: ['pact-1']);
       await d.delete('pacts', where: 'id = ?', whereArgs: ['pact-1']);
       expect(await links.getForPact('pact-1'), isNull);
+    });
+
+    test('a run survives updateShowup on its showup (INSERT OR REPLACE)', () async {
+      final d = await openDb();
+      final runs = SqliteChecklistRunRepository(d);
+      await runs.upsertStarted(
+          showupId: 'showup-1', pactId: 'pact-1', checklistId: 'c', startedAt: DateTime(2026, 3, 1));
+      await SqliteShowupRepository(d).updateShowup(_showup.copyWith(status: ShowupStatus.done));
+      expect(await runs.getForShowup('showup-1'), isNotNull);
+    });
+
+    test('a link survives a REPLACE write on its pact', () async {
+      final d = await openDb();
+      final links = SqlitePactChecklistLinkRepository(d);
+      await links.upsert(_link());
+      await d.insert('pacts', PactMapper.toRow(_pact), conflictAlgorithm: ConflictAlgorithm.replace);
+      expect(await links.getForPact('pact-1'), isNotNull);
+    });
+
+    test('deleting the pact removes its runs too', () async {
+      final d = await openDb();
+      final runs = SqliteChecklistRunRepository(d);
+      await runs.upsertStarted(
+          showupId: 'showup-1', pactId: 'pact-1', checklistId: 'c', startedAt: DateTime(2026, 3, 1));
+      await d.delete('showups', where: 'pact_id = ?', whereArgs: ['pact-1']);
+      await d.insert('checklist_runs', {
+        'showup_id': 'orphan',
+        'pact_id': 'pact-1',
+        'checklist_id': 'c',
+        'started_at': 1,
+      });
+      await d.delete('pacts', where: 'id = ?', whereArgs: ['pact-1']);
+      expect(await runs.getForShowup('orphan'), isNull);
     });
   });
 }
