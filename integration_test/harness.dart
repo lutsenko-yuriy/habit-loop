@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart' show CupertinoTextField;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,7 @@ import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import '../test/infrastructure/analytics/fake_analytics_service.dart';
 import '../test/infrastructure/auth/fake_auth_service.dart';
 import '../test/infrastructure/checklister/fake_checklister_gateway.dart';
+import '../test/infrastructure/deep_links/fake_incoming_link_service.dart';
 import '../test/infrastructure/locale/fake_locale_preference_service.dart';
 import '../test/infrastructure/notifications/fake_notification_service.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
@@ -58,6 +61,7 @@ class AppHarness {
     required this.syncService,
     required this.localeService,
     required this.checklister,
+    required this.incomingLinks,
     required this.navigatorKey,
     this.onboardingService,
     this.userProfileRepository,
@@ -76,6 +80,9 @@ class AppHarness {
   /// GH-464: Checklister is installed by default; set `checklister.installed`
   /// or `canLaunch` to simulate otherwise, read `launchedUrls` to assert.
   final FakeChecklisterGateway checklister;
+
+  /// GH-464: simulate `habitloop://` callbacks via `incomingLinks.emit(uri)`.
+  final FakeIncomingLinkService incomingLinks;
 
   /// HAB-232: non-null only when [AppHarness.create] was called with an
   /// explicit `onboardingService` — otherwise the widget tree uses the
@@ -169,6 +176,7 @@ class AppHarness {
     final syncService = syncServiceFactory?.call(pactRepo, showupRepo) ?? FakeSyncService();
     final localeService = FakeLocalePreferenceService();
     final checklister = FakeChecklisterGateway();
+    final incomingLinks = FakeIncomingLinkService();
 
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
@@ -180,6 +188,7 @@ class AppHarness {
       notificationService: notifications,
       localePreferenceService: localeService,
       checklisterGateway: checklister,
+      incomingLinkService: incomingLinks,
       // HAB-232: only overridden when a test explicitly opts in — otherwise every
       // pre-existing scenario keeps its original NoopOnboardingService/
       // InMemoryUserProfileRepository defaults (app_providers.dart) unchanged.
@@ -199,6 +208,7 @@ class AppHarness {
       syncService: syncService,
       localeService: localeService,
       checklister: checklister,
+      incomingLinks: incomingLinks,
       navigatorKey: navigatorKey,
       onboardingService: onboardingService,
       userProfileRepository: userProfileRepository,
@@ -284,6 +294,7 @@ class AppHarness {
   /// only closes services, so it is safe to call from a regular [tearDown].
   void dispose() {
     auth.dispose();
+    unawaited(incomingLinks.dispose());
   }
 }
 
