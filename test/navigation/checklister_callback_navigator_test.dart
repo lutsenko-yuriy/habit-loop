@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/checklister/data/checklister_callback_parser.dart';
 import 'package:habit_loop/infrastructure/deep_links/data/link_deduper.dart';
@@ -77,6 +79,30 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(calls, 2);
+    await sub.cancel();
+    await service.dispose();
+  });
+
+  test('a second link\'s handler starts only after the first completes', () async {
+    final gate = Completer<void>();
+    final events = <String>[];
+    final nav = ChecklisterCallbackNavigator(
+      onSelection: (c) async {
+        events.add('start ${c.pactId}');
+        if (c.pactId == 'p1') await gate.future;
+        events.add('end ${c.pactId}');
+      },
+    );
+    final service = FakeIncomingLinkService();
+    final sub = nav.listen(service.links);
+    service.emit(Uri.parse('habitloop://checklist/selected?pactId=p1&status=cancelled'));
+    service.emit(Uri.parse('habitloop://checklist/selected?pactId=p2&status=cancelled'));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(events, ['start p1']);
+
+    gate.complete();
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(events, ['start p1', 'end p1', 'start p2', 'end p2']);
     await sub.cancel();
     await service.dispose();
   });
