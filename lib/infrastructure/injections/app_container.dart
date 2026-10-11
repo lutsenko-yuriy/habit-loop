@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/checklist/checklist_run_repository.dart';
+import 'package:habit_loop/domain/checklist/pact_checklist_link_repository.dart';
 import 'package:habit_loop/domain/pact/pact_break_repository.dart';
 import 'package:habit_loop/domain/pact/pact_break_sync_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
@@ -38,6 +40,8 @@ abstract final class AppContainer {
     ShowupSyncRepository? showupSyncRepository,
     PactBreakRepository? pactBreakRepository,
     PactBreakSyncRepository? pactBreakSyncRepository,
+    PactChecklistLinkRepository? pactChecklistLinkRepository,
+    ChecklistRunRepository? checklistRunRepository,
     UserProfileRepository? userProfileRepository,
     UserProfileSyncRepository? userProfileSyncRepository,
     AnalyticsService? analyticsService,
@@ -79,6 +83,9 @@ abstract final class AppContainer {
       if (showupSyncRepository != null) showupSyncRepositoryProvider.overrideWithValue(showupSyncRepository),
       if (pactBreakRepository != null) pactBreakRepositoryProvider.overrideWithValue(pactBreakRepository),
       if (pactBreakSyncRepository != null) pactBreakSyncRepositoryProvider.overrideWithValue(pactBreakSyncRepository),
+      if (pactChecklistLinkRepository != null)
+        pactChecklistLinkRepositoryProvider.overrideWithValue(pactChecklistLinkRepository),
+      if (checklistRunRepository != null) checklistRunRepositoryProvider.overrideWithValue(checklistRunRepository),
       if (userProfileRepository != null) userProfileRepositoryProvider.overrideWithValue(userProfileRepository),
       if (userProfileSyncRepository != null)
         userProfileSyncRepositoryProvider.overrideWithValue(userProfileSyncRepository),

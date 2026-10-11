@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 /// [databaseFactoryFfi]-opened in-memory database — never use the singleton in
 /// tests (it would open a file-backed database on the test host).
 ///
-/// Schema version: 7.
+/// Schema version: 8.
 class HabitLoopDatabase {
   HabitLoopDatabase._();
 
@@ -33,7 +33,7 @@ class HabitLoopDatabase {
     final path = join(await getDatabasesPath(), 'habit_loop.db');
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onConfigure: (db) async {
         // Enable WAL journal mode so concurrent readers (main isolate) and the
         // background notification handler isolate can operate simultaneously
@@ -151,6 +151,25 @@ class HabitLoopDatabase {
         synced_at     INTEGER
       )
     ''');
+    // Local-only checklist tables (GH-464): no dirty/synced_at, never synced.
+    await db.execute('''
+      CREATE TABLE pact_checklist_links (
+        pact_id         TEXT    NOT NULL PRIMARY KEY REFERENCES pacts(id) ON DELETE CASCADE,
+        checklist_id    TEXT    NOT NULL,
+        checklist_name  TEXT    NOT NULL,
+        linked_at       INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE checklist_runs (
+        showup_id     TEXT    NOT NULL PRIMARY KEY REFERENCES showups(id) ON DELETE CASCADE,
+        pact_id       TEXT    NOT NULL,
+        checklist_id  TEXT    NOT NULL,
+        started_at    INTEGER NOT NULL,
+        finished_at   INTEGER,
+        outcome       TEXT
+      )
+    ''');
   }
 
   /// Incremental schema upgrades from [oldVersion] to [newVersion].
@@ -217,6 +236,28 @@ class HabitLoopDatabase {
         )
       ''');
     }
+    if (oldVersion < 8) {
+      // v8 adds the local-only Checklister link/run tables (GH-464). Additive
+      // only — no existing table touched; rows cascade with their pact/showup.
+      await db.execute('''
+        CREATE TABLE pact_checklist_links (
+          pact_id         TEXT    NOT NULL PRIMARY KEY REFERENCES pacts(id) ON DELETE CASCADE,
+          checklist_id    TEXT    NOT NULL,
+          checklist_name  TEXT    NOT NULL,
+          linked_at       INTEGER NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE checklist_runs (
+          showup_id     TEXT    NOT NULL PRIMARY KEY REFERENCES showups(id) ON DELETE CASCADE,
+          pact_id       TEXT    NOT NULL,
+          checklist_id  TEXT    NOT NULL,
+          started_at    INTEGER NOT NULL,
+          finished_at   INTEGER,
+          outcome       TEXT
+        )
+      ''');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -232,7 +273,7 @@ class HabitLoopDatabase {
     return databaseFactory.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
-        version: 7,
+        version: 8,
         onConfigure: (db) async {
           try {
             await db.rawQuery('PRAGMA journal_mode=WAL');
