@@ -1,59 +1,244 @@
-// Scenario stubs for GH-464: linking a Checklister checklist to a pact.
+// Scenarios for GH-464: linking a Checklister checklist to a pact.
 //
 // Run with: flutter test integration_test/checklist_link_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/checklist_link_flow_test.dart
-//
-// Harness hooks these scenarios need (added to AppHarness when the production
-// types exist, see GH-464 plan): h.checklister (FakeChecklisterGateway),
-// h.incomingLinks (FakeIncomingLinkService), h.checklistLinkRepo,
-// h.checklistRunRepo, simulateResume(tester).
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/checklist/pact_checklist_link.dart';
+import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/infrastructure/checklister/contracts/checklister_links.dart';
+import 'package:habit_loop/slices/checklist/analytics/checklist_analytics_events.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
+import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
+
+final _testNow = DateTime(2099, 6, 15, 7, 55);
+final _testToday = DateTime(2099, 6, 15);
+
+const _flagOn = {'checklister_integration_enabled': true};
+
+const _pactId = 'checklist-link-pact';
+const _showupId = '${_pactId}_20990615T080000_0';
+const _selectKey = Key('pact-checklist-select-button');
+const _changeKey = Key('pact-checklist-change-button');
+const _removeKey = Key('pact-checklist-remove-button');
+
+final _activePact = buildPact(id: _pactId, habitName: 'Meditate', startDate: _testToday);
+
+PactChecklistLink _link(String id, String name) =>
+    PactChecklistLink(pactId: _pactId, checklistId: id, checklistName: name, linkedAt: DateTime(2099, 6, 1));
+
+/// The callback Checklister would open after the picker, with its own params appended.
+Uri _selectionCallback(String query) => Uri.parse('${ChecklisterLinks.selectedCallback(_pactId)}&$query');
+
+List<Override> get _clock => [
+      todayProvider.overrideWithValue(_testNow),
+      pactDetailNowProvider.overrideWithValue(_testNow),
+    ];
+
+/// Scrolls pact detail until [finder] is on screen (the section sits below the fold on short viewports).
+Future<void> _scrollTo(WidgetTester tester, String pactId, Finder finder) async {
+  await waitFor(tester, find.byKey(Key('pact-detail-scroll-view-$pactId')));
+  await tester.scrollUntilVisible(
+    finder,
+    200,
+    scrollable: find.descendant(
+      of: find.byKey(Key('pact-detail-scroll-view-$pactId')),
+      matching: find.byType(Scrollable),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openDetail(WidgetTester tester, String habitName) async {
+  await openPactsPanel(tester);
+  await openPactDetail(tester, habitName);
+  await waitFor(tester, find.text(l10n(tester).sectionStats.toUpperCase()));
+  await tester.pumpAndSettle();
+}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Checklist link flow', () {
+    late AppHarness h;
+    tearDown(() => h.dispose());
+
+    testWidgets('no_checklist_section_when_checklister_not_installed: pact detail has no Checklist section',
+        (tester) async {
+      h = await AppHarness.create(
+        tester,
+        remoteConfigOverrides: _flagOn,
+        extraOverrides: _clock,
+        beforePump: (h) async {
+          h.checklister.installed = false;
+          await h.pactRepo.savePact(_activePact);
+        },
+      );
+
+      await _openDetail(tester, 'Meditate');
+      await tester.drag(find.byType(ListView).last, const Offset(0, -2000));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(_selectKey), findsNothing);
+      expect(find.text(l10n(tester).pactChecklistSectionTitle.toUpperCase()), findsNothing);
+    });
+
     testWidgets('select_checklist_links_checklist_to_pact: a selected callback shows the linked checklist on the pact',
         (tester) async {
-      // TODO: 1. Seed an active pact with no link; Checklister installed.
-      // TODO: 2. Open pact detail: Checklist section shows only "Select checklist".
-      // TODO: 3. Tap it: launchedUrls has checklister://select whose callbackUrl is
-      //          habitloop://checklist/selected?pactId=<id>.
-      // TODO: 4. incomingLinks.emit the callback with status=selected&checklistId=c1&checklistName=Morning.
-      // TODO: 5. Section shows "Morning", Change and Remove.
-      // TODO: 6. Link repo holds c1/Morning for the pact.
-      // TODO: 7. Analytics has pact_checklist_selection_started and pact_checklist_linked.
+      h = await AppHarness.create(
+        tester,
+        remoteConfigOverrides: _flagOn,
+        extraOverrides: _clock,
+        beforePump: (h) async => h.pactRepo.savePact(_activePact),
+      );
+
+      // 2. Only "Select checklist" is offered.
+      await _openDetail(tester, 'Meditate');
+      await _scrollTo(tester, _pactId, find.byKey(_selectKey));
+      expect(find.byKey(_changeKey), findsNothing);
+      expect(find.byKey(_removeKey), findsNothing);
+
+      // 3. Tapping it opens Checklister with our selected-callback URL.
+      await tester.tap(find.byKey(_selectKey));
+      await tester.pumpAndSettle();
+      final launched = h.checklister.launchedUrls.single;
+      expect(launched.scheme, 'checklister');
+      expect(launched.host, 'select');
+      expect(launched.queryParameters['callbackUrl'], ChecklisterLinks.selectedCallback(_pactId).toString());
+
+      // 4-5. Checklister calls back with a selection; the section shows it.
+      h.incomingLinks.emit(_selectionCallback('status=selected&checklistId=c1&checklistName=Morning'));
+      await waitFor(tester, find.text('Morning'));
+      expect(find.byKey(_changeKey), findsOneWidget);
+      expect(find.byKey(_removeKey), findsOneWidget);
+      expect(find.byKey(_selectKey), findsNothing);
+
+      // 6. Persisted.
+      final stored = await h.checklistLinkRepo.getForPact(_pactId);
+      expect([stored?.checklistId, stored?.checklistName], ['c1', 'Morning']);
+
+      // 7. Analytics.
+      final started = h.analytics.loggedEvents.whereType<PactChecklistSelectionStartedEvent>().single;
+      expect([started.pactId, started.mode], [_pactId, 'select']);
+      final linked = h.analytics.loggedEvents.whereType<PactChecklistLinkedEvent>().single;
+      expect([linked.pactId, linked.mode], [_pactId, 'select']);
     });
 
     testWidgets(
         'selection_cancelled_or_error_leaves_pact_unlinked: cancelled changes nothing, error asks to select something',
         (tester) async {
-      // TODO: 1. Seed an active pact with no link; open pact detail and tap "Select checklist".
-      // TODO: 2. Emit status=cancelled: still "Select checklist", no error message, link repo empty.
-      // TODO: 3. Tap "Select checklist" again and emit status=error.
-      // TODO: 4. L10n error copy is shown, "Select checklist" still shown, link repo empty.
+      h = await AppHarness.create(
+        tester,
+        remoteConfigOverrides: _flagOn,
+        extraOverrides: _clock,
+        beforePump: (h) async => h.pactRepo.savePact(_activePact),
+      );
+      await _openDetail(tester, 'Meditate');
+      await _scrollTo(tester, _pactId, find.byKey(_selectKey));
+      final strings = l10n(tester);
+
+      // 1-2. Cancelled: still "Select checklist", no message, nothing stored.
+      await tester.tap(find.byKey(_selectKey));
+      await tester.pumpAndSettle();
+      h.incomingLinks.emit(_selectionCallback('status=cancelled'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(_selectKey), findsOneWidget);
+      expect(find.text(strings.pactChecklistNoChecklistsError), findsNothing);
+      expect(await h.checklistLinkRepo.getForPact(_pactId), isNull);
+
+      // 3-4. Error (no checklists in Checklister): message shown, still unlinked.
+      await tester.tap(find.byKey(_selectKey));
+      await tester.pumpAndSettle();
+      h.incomingLinks.emit(_selectionCallback('status=error'));
+      await waitFor(tester, find.text(strings.pactChecklistNoChecklistsError));
+      expect(find.byKey(_selectKey), findsOneWidget);
+      expect(await h.checklistLinkRepo.getForPact(_pactId), isNull);
     });
 
     testWidgets(
         'change_replaces_link_and_remove_clears_it: Change swaps the checklist, Remove unlinks without relocking',
         (tester) async {
-      // TODO: 1. Seed a pact linked to c1/Morning, plus a pending showup with a finished run (already unlocked).
-      // TODO: 2. Open pact detail; tap Change; select URL launched; emit selected for c2/Evening.
-      // TODO: 3. Section shows "Evening"; link repo holds c2.
-      // TODO: 4. Tap Remove: no confirmation dialog.
-      // TODO: 5. Section shows "Select checklist"; link repo empty; pact_checklist_unlinked fired.
-      // TODO: 6. Open the unlocked showup: "Mark as done" is still shown (no relock).
+      final showup = buildShowup(id: _showupId, pactId: _pactId, scheduledAt: DateTime(2099, 6, 15, 8, 0));
+      h = await AppHarness.create(
+        tester,
+        remoteConfigOverrides: _flagOn,
+        extraOverrides: [..._clock, showupDetailNowProvider.overrideWithValue(_testNow)],
+        beforePump: (h) async {
+          await h.pactRepo.savePact(_activePact);
+          await h.showupRepo.saveShowups([showup]);
+          await h.checklistLinkRepo.upsert(_link('c1', 'Morning'));
+        },
+      );
+
+      // 2. Change -> Checklister opens -> selecting c2 swaps the link.
+      await _openDetail(tester, 'Meditate');
+      await _scrollTo(tester, _pactId, find.byKey(_changeKey));
+      expect(find.text('Morning'), findsOneWidget);
+      await tester.tap(find.byKey(_changeKey));
+      await tester.pumpAndSettle();
+      expect(h.checklister.launchedUrls.single.host, 'select');
+      h.incomingLinks.emit(_selectionCallback('status=selected&checklistId=c2&checklistName=Evening'));
+      await waitFor(tester, find.text('Evening'));
+      expect((await h.checklistLinkRepo.getForPact(_pactId))?.checklistId, 'c2');
+      final linked = h.analytics.loggedEvents.whereType<PactChecklistLinkedEvent>().single;
+      expect(linked.mode, 'change');
+
+      // 4-5. Remove: no confirmation dialog, back to "Select checklist".
+      await tester.tap(find.byKey(_removeKey));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byKey(_selectKey), findsOneWidget);
+      expect(await h.checklistLinkRepo.getForPact(_pactId), isNull);
+      expect(h.analytics.loggedEvents.whereType<PactChecklistUnlinkedEvent>(), hasLength(1));
+
+      // 6. The showup is still markable after the unlink (nothing relocks).
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await waitFor(tester, find.text('Meditate'));
+      await tester.tap(find.text('Meditate').first);
+      await waitFor(tester, find.text(l10n(tester).markDone));
     });
 
     testWidgets('no_checklist_section_for_inactive_pact: stopped and completed pacts have no Checklist section',
         (tester) async {
-      // TODO: 1. Seed one stopped pact and one completed pact.
-      // TODO: 2. Open pact detail for each.
-      // TODO: 3. No Checklist section or button is present in either.
+      h = await AppHarness.create(
+        tester,
+        remoteConfigOverrides: _flagOn,
+        extraOverrides: _clock,
+        beforePump: (h) async {
+          await h.pactRepo.savePact(buildPact(
+            id: 'stopped-pact',
+            habitName: 'Stopped Habit',
+            startDate: DateTime(2099, 1, 1),
+            endDate: DateTime(2099, 3, 31),
+            status: PactStatus.stopped,
+            stoppedAt: DateTime(2099, 3, 1),
+          ));
+          await h.pactRepo.savePact(buildPact(
+            id: 'completed-pact',
+            habitName: 'Completed Habit',
+            startDate: DateTime(2099, 1, 1),
+            endDate: DateTime(2099, 3, 31),
+            status: PactStatus.completed,
+          ));
+        },
+      );
+
+      for (final entry in {'Stopped Habit': 'stopped-pact', 'Completed Habit': 'completed-pact'}.entries) {
+        await _openDetail(tester, entry.key);
+        await tester.drag(find.byType(ListView).last, const Offset(0, -2000));
+        await tester.pumpAndSettle();
+        expect(find.byKey(_selectKey), findsNothing, reason: entry.key);
+        expect(find.text(l10n(tester).pactChecklistSectionTitle.toUpperCase()), findsNothing, reason: entry.key);
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+      }
     });
   });
 }

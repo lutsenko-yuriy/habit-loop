@@ -19,6 +19,8 @@ import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/main.dart';
+import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
+import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_status_handler.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_break_repository.dart';
@@ -62,6 +64,8 @@ class AppHarness {
     required this.localeService,
     required this.checklister,
     required this.incomingLinks,
+    required this.checklistLinkRepo,
+    required this.checklistRunRepo,
     required this.navigatorKey,
     this.onboardingService,
     this.userProfileRepository,
@@ -83,6 +87,10 @@ class AppHarness {
 
   /// GH-464: simulate `habitloop://` callbacks via `incomingLinks.emit(uri)`.
   final FakeIncomingLinkService incomingLinks;
+
+  /// GH-464: in-memory checklist link / run stores wired into the app.
+  final InMemoryPactChecklistLinkRepository checklistLinkRepo;
+  final InMemoryChecklistRunRepository checklistRunRepo;
 
   /// HAB-232: non-null only when [AppHarness.create] was called with an
   /// explicit `onboardingService` — otherwise the widget tree uses the
@@ -177,6 +185,8 @@ class AppHarness {
     final localeService = FakeLocalePreferenceService();
     final checklister = FakeChecklisterGateway();
     final incomingLinks = FakeIncomingLinkService();
+    final checklistLinkRepo = InMemoryPactChecklistLinkRepository();
+    final checklistRunRepo = InMemoryChecklistRunRepository();
 
     final overrides = await AppContainer.overrides(
       pactRepository: pactRepo,
@@ -189,6 +199,8 @@ class AppHarness {
       localePreferenceService: localeService,
       checklisterGateway: checklister,
       incomingLinkService: incomingLinks,
+      pactChecklistLinkRepository: checklistLinkRepo,
+      checklistRunRepository: checklistRunRepo,
       // HAB-232: only overridden when a test explicitly opts in — otherwise every
       // pre-existing scenario keeps its original NoopOnboardingService/
       // InMemoryUserProfileRepository defaults (app_providers.dart) unchanged.
@@ -209,6 +221,8 @@ class AppHarness {
       localeService: localeService,
       checklister: checklister,
       incomingLinks: incomingLinks,
+      checklistLinkRepo: checklistLinkRepo,
+      checklistRunRepo: checklistRunRepo,
       navigatorKey: navigatorKey,
       onboardingService: onboardingService,
       userProfileRepository: userProfileRepository,

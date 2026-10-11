@@ -88,6 +88,9 @@ class PactDetailPageAndroid extends StatelessWidget {
   /// current pact's id for callers that don't exercise chain navigation.
   final String? originalPactId;
 
+  /// Checklist section (GH #464), shown for active pacts only. `null` hides it.
+  final Widget? checklistSection;
+
   const PactDetailPageAndroid({
     super.key,
     required this.state,
@@ -107,6 +110,7 @@ class PactDetailPageAndroid extends StatelessWidget {
     this.chainNavigationDirection,
     this.previousState,
     this.originalPactId,
+    this.checklistSection,
   });
 
   bool get _isActive => state.pact?.status == PactStatus.active;

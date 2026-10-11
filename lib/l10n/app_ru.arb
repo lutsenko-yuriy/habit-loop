@@ -388,5 +388,17 @@
   "dashboardGreetingPersonalized": "Привет, {name}",
   "@dashboardGreetingPersonalized": {
     "placeholders": { "name": { "type": "String" } }
-  }
+  },
+  "pactChecklistSectionTitle": "Чек-лист",
+  "@pactChecklistSectionTitle": {},
+  "pactChecklistSelect": "Выбрать чек-лист",
+  "@pactChecklistSelect": {},
+  "pactChecklistChange": "Изменить",
+  "@pactChecklistChange": {},
+  "pactChecklistRemove": "Убрать",
+  "@pactChecklistRemove": {},
+  "pactChecklistNoChecklistsError": "Сначала создайте чек-лист в Checklister.",
+  "@pactChecklistNoChecklistsError": {},
+  "checklisterCouldNotOpenError": "Не удалось открыть Checklister.",
+  "@checklisterCouldNotOpenError": {}
 }

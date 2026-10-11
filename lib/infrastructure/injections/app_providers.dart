@@ -52,6 +52,7 @@ import 'package:habit_loop/infrastructure/remote_config/data/noop_remote_config_
 import 'package:habit_loop/infrastructure/sync/firestore_sync_service.dart';
 import 'package:habit_loop/infrastructure/sync/sync_circuit_breaker.dart';
 import 'package:habit_loop/infrastructure/sync/sync_service.dart';
+import 'package:habit_loop/slices/checklist/application/checklist_service.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/dashboard/application/dashboard_query_service.dart';
@@ -332,6 +333,15 @@ final pactBreakServiceProvider = Provider<PactBreakService>((ref) {
 /// consumer yet; wired up in WU3/WU4.
 final pactChainServiceProvider = Provider<PactChainService>((ref) {
   return PactChainService(pactRepository: ref.watch(pactRepositoryProvider));
+});
+
+final checklistServiceProvider = Provider<ChecklistService>((ref) {
+  return ChecklistService(
+    linkRepository: ref.watch(pactChecklistLinkRepositoryProvider),
+    pactRepository: ref.watch(pactRepositoryProvider),
+    gateway: ref.watch(checklisterGatewayProvider),
+    analytics: ref.watch(analyticsServiceProvider),
+  );
 });
 
 final firestoreClientProvider = Provider<FirestoreClient>(

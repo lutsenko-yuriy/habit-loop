@@ -89,6 +89,9 @@ class PactDetailPageIos extends StatelessWidget {
   /// current pact's id for callers that don't exercise chain navigation.
   final String? originalPactId;
 
+  /// Checklist section (GH #464), shown for active pacts only. `null` hides it.
+  final Widget? checklistSection;
+
   const PactDetailPageIos({
     super.key,
     required this.state,
@@ -108,6 +111,7 @@ class PactDetailPageIos extends StatelessWidget {
     this.chainNavigationDirection,
     this.previousState,
     this.originalPactId,
+    this.checklistSection,
   });
 
   @override
