@@ -42,6 +42,23 @@ class _GatedLinkRepo extends InMemoryPactChecklistLinkRepository implements Pact
   }
 }
 
+/// Only the first read is held back (a slow in-flight load); later reads return at once.
+class _FirstReadGatedRepo extends InMemoryPactChecklistLinkRepository implements PactChecklistLinkRepository {
+  _FirstReadGatedRepo(super.links);
+  final gate = Completer<void>();
+  bool _first = true;
+
+  @override
+  Future<PactChecklistLink?> getForPact(String pactId) async {
+    final result = await super.getForPact(pactId);
+    if (_first) {
+      _first = false;
+      await gate.future;
+    }
+    return result;
+  }
+}
+
 void main() {
   late InMemoryPactChecklistLinkRepository links;
   late FakeChecklisterGateway gateway;
@@ -171,5 +188,57 @@ void main() {
     slow.gate.complete();
 
     await expectLater(loading, completes);
+  });
+
+  test('a stale load that read the link before remove() does not write it back', () async {
+    final repo = _FirstReadGatedRepo([_link('c1', 'Morning')]);
+    final c = makeContainer(repo);
+    c.listen(pactChecklistSectionViewModelProvider('p1'), (_, __) {});
+    final vm = c.read(pactChecklistSectionViewModelProvider('p1').notifier);
+
+    final loading = vm.load(); // read old link, now parked
+    await Future<void>.delayed(Duration.zero);
+    await vm.remove();
+    repo.gate.complete();
+    await loading;
+
+    expect(c.read(pactChecklistSectionViewModelProvider('p1')).link, isNull);
+  });
+
+  test('double-tapped Select launches Checklister and logs the event once', () async {
+    final c = makeContainer();
+    c.listen(pactChecklistSectionViewModelProvider('p1'), (_, __) {});
+    final vm = c.read(pactChecklistSectionViewModelProvider('p1').notifier);
+    await vm.load();
+
+    await Future.wait([vm.startSelection(), vm.startSelection()]);
+
+    expect(gateway.launchedUrls, hasLength(1));
+    expect(analytics.loggedEvents.whereType<PactChecklistSelectionStartedEvent>(), hasLength(1));
+  });
+
+  test('double-tapped Remove logs unlinked once; the in-flight guard is released afterwards', () async {
+    await links.upsert(_link('c1', 'Morning'));
+    final c = makeContainer();
+    c.listen(pactChecklistSectionViewModelProvider('p1'), (_, __) {});
+    final vm = c.read(pactChecklistSectionViewModelProvider('p1').notifier);
+    await vm.load();
+
+    await Future.wait([vm.remove(), vm.remove()]);
+    expect(analytics.loggedEvents.whereType<PactChecklistUnlinkedEvent>(), hasLength(1));
+
+    await vm.startSelection(); // not stuck busy
+    expect(gateway.launchedUrls, hasLength(1));
+  });
+
+  test('a no-checklists notice raised before the VM existed is shown, then consumed', () async {
+    final c = makeContainer();
+    c.read(checklistNoChecklistsNoticeProvider('p1').notifier).state = true; // cold start: no VM alive
+
+    c.listen(pactChecklistSectionViewModelProvider('p1'), (_, __) {});
+    expect(c.read(pactChecklistSectionViewModelProvider('p1')).error, PactChecklistSectionError.noChecklists);
+
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(checklistNoChecklistsNoticeProvider('p1')), isFalse);
   });
 }
