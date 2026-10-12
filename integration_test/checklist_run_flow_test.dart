@@ -3,19 +3,24 @@
 // Run with: flutter test integration_test/checklist_run_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/checklist_run_flow_test.dart
 //
-// Remaining stubs are filled in WU6 (run-finished callback, late finish, cold start).
+// The late-finish stub is filled in WU6b.
 // Run callbacks always carry both ids: habitloop://checklist/run-finished?pactId=<id>&showupId=<id>.
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart' show CupertinoButton;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/domain/checklist/pact_checklist_link.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_links.dart';
+import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/checklist/analytics/checklist_analytics_events.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
+import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -69,6 +74,29 @@ Future<void> _openPactDetailBottom(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// Delivers Checklister's run-finished callback for [showupId] with [status].
+Future<void> _finishRun(WidgetTester tester, AppHarness h, String status, {String showupId = _showupId}) async {
+  h.incomingLinks.emit(_runFinished(status, showupId: showupId));
+  await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+  await tester.pumpAndSettle();
+}
+
+Uri _runFinished(String status, {String showupId = _showupId}) =>
+    Uri.parse('${ChecklisterLinks.runFinishedCallback(_pactId, showupId)}&status=$status&checklistId=c1&runId=r1');
+
+Future<AppHarness> _linkedHarness(WidgetTester tester, {Future<void> Function(AppHarness h)? seed}) =>
+    AppHarness.create(
+      tester,
+      remoteConfigOverrides: _flagOn,
+      extraOverrides: _clock,
+      beforePump: (h) async {
+        await h.pactRepo.savePact(_pact);
+        await h.showupRepo.saveShowups([_pendingShowup]);
+        await h.checklistLinkRepo.upsert(_link);
+        await seed?.call(h);
+      },
+    );
+
 bool _enabled(WidgetTester tester, Finder finder) {
   final w = tester.widget(finder);
   if (w is ButtonStyleButton) return w.onPressed != null;
@@ -80,7 +108,7 @@ void main() {
   setUpAll(AppHarness.initForHost);
 
   group('Checklist run flow', () {
-    // Nullable: the WU6 stubs below create no harness yet.
+    // Nullable: the late-finish stub creates no harness yet.
     AppHarness? harness;
     tearDown(() async {
       harness?.dispose();
@@ -130,22 +158,92 @@ void main() {
     testWidgets(
         'completed_run_unlocks_mark_done_and_persists: completed callback unlocks Mark as done and survives reopen',
         (tester) async {
-      // TODO: 1. Seed as in the gate scenario; tap Run checklist.
-      // TODO: 2. Emit run-finished?pactId=<id>&showupId=<id>&status=completed&checklistId=c1&runId=r1.
-      // TODO: 3. Showup detail shows "Mark as done", no failure dialog; checklist_run_finished fired.
-      // TODO: 4. Navigate back, reopen the showup: "Mark as done" still shown.
-      // TODO: 5. Tap Mark as done.
-      // TODO: 6. Showup is done; showup_marked_done carries checklist_outcome=success.
+      final h = harness = await _linkedHarness(tester);
+      final strings = l10n(tester);
+
+      // 1. Tap Run checklist.
+      await _openShowup(tester);
+      await waitFor(tester, find.byKey(_runKey));
+      await tester.tap(find.byKey(_runKey));
+      await tester.pumpAndSettle();
+
+      // 2-3. Completed callback: Mark as done shown in place, no dialog; checklist_run_finished fired.
+      await _finishRun(tester, h, 'completed');
+      await waitFor(tester, find.text(strings.markDone));
+      expect(find.byKey(_runKey), findsNothing);
+      expect(find.text(strings.showupChecklistFailedTitle), findsNothing);
+      final finished = h.analytics.loggedEvents.whereType<ChecklistRunFinishedEvent>().single;
+      expect(finished.outcome, ChecklistRunOutcome.success);
+
+      // 4. Back, reopen: still unlocked.
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await _openShowup(tester);
+      expect(find.text(strings.markDone), findsOneWidget);
+      expect(find.byKey(_runKey), findsNothing);
+
+      // 5-6. Mark as done: done, with checklist_outcome=success.
+      await tester.tap(find.text(strings.markDone));
+      await waitFor(tester, find.text(strings.showupDone));
+      expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.done);
+      final done = h.analytics.loggedEvents.whereType<ShowupMarkedDoneEvent>().single;
+      expect(done.toParameters()['checklist_outcome'], 'success');
     });
 
     testWidgets('unsuccessful_run_shows_dialog_and_unlocks: cancelled and error both show the dialog and unlock',
         (tester) async {
-      // TODO: 1. Seed as in the gate scenario; tap Run checklist.
-      // TODO: 2. Emit run-finished?pactId=<id>&showupId=<id>&status=cancelled: unsuccessful-run dialog shown.
-      // TODO: 3. Tap OK: "Mark as done" shown.
-      // TODO: 4. Reopen the showup: still unlocked, dialog not shown again.
-      // TODO: 5. Repeat with a second showup using status=error: dialog shown and unlocked.
-      // TODO: 6. Mark one done: showup_marked_done carries checklist_outcome=failure.
+      const secondId = '${_pactId}_20990615T075000_0';
+      final h = harness = await _linkedHarness(
+        tester,
+        seed: (h) async {
+          // Window 07:50–08:00 is open at 07:55; its run was started earlier.
+          await h.showupRepo.saveShowup(
+            buildShowup(id: secondId, pactId: _pactId, scheduledAt: DateTime(2099, 6, 15, 7, 50)),
+          );
+          await h.checklistRunRepo
+              .upsertStarted(showupId: secondId, pactId: _pactId, checklistId: 'c1', startedAt: _testNow);
+        },
+      );
+      final strings = l10n(tester);
+
+      // 1. Tap Run checklist on the 08:00 showup (opened by id: both tiles read "Meditate").
+      await waitFor(tester, find.text('Meditate'));
+      unawaited(NotificationNavigator.navigateToShowup(navigatorKey: h.navigatorKey, showupId: _showupId));
+      await waitFor(tester, find.byKey(_runKey));
+      await tester.tap(find.byKey(_runKey));
+      await tester.pumpAndSettle();
+
+      // 2-3. Cancelled: dialog; OK unlocks Mark as done.
+      await _finishRun(tester, h, 'cancelled');
+      await waitFor(tester, find.text(strings.showupChecklistFailedTitle));
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(find.text(strings.showupChecklistFailedTitle), findsNothing);
+      expect(find.text(strings.markDone), findsOneWidget);
+
+      // 4. Reopen: still unlocked, no second dialog.
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      unawaited(NotificationNavigator.navigateToShowup(navigatorKey: h.navigatorKey, showupId: _showupId));
+      await waitFor(tester, find.text(strings.markDone));
+      expect(find.text(strings.showupChecklistFailedTitle), findsNothing);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // 5. Error for the other showup (no screen open): its detail opens with the dialog, unlocked.
+      await _finishRun(tester, h, 'error', showupId: secondId);
+      await waitFor(tester, find.text(strings.showupChecklistFailedTitle));
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(find.text(strings.markDone), findsOneWidget);
+
+      // 6. Mark it done: checklist_outcome=failure.
+      await tester.tap(find.text(strings.markDone));
+      await waitFor(tester, find.text(strings.showupDone));
+      expect((await h.showupRepo.getShowupById(secondId))?.status, ShowupStatus.done);
+      final done = h.analytics.loggedEvents.whereType<ShowupMarkedDoneEvent>().single;
+      expect(done.toParameters()['checklist_outcome'], 'failure');
+      expect(h.analytics.loggedEvents.whereType<ChecklistRunFinishedEvent>(), hasLength(2));
     });
 
     testWidgets('late_finish_within_grace_prevents_auto_fail: run finished within 15 minutes after the window closes',
@@ -259,12 +357,25 @@ void main() {
     });
 
     testWidgets('cold_start_callback_opens_showup_detail: initial link opens the showup detail screen', (tester) async {
-      // TODO: 1. Seed a linked pact, a pending showup and an unfinished run record.
-      // TODO: 2. Create the harness with incomingLinks.initialLink =
-      //          habitloop://checklist/run-finished?pactId=<id>&showupId=<id>&status=completed&checklistId=c1&runId=r1.
-      // TODO: 3. Pump to the first frame.
-      // TODO: 4. Showup detail for that showup is on top of the dashboard.
-      // TODO: 5. "Mark as done" shown; run marked finished in the repo; back returns to the dashboard.
+      // 1-3. A started run, and the callback is already waiting when the app starts.
+      final h = harness = await _linkedHarness(
+        tester,
+        seed: (h) async {
+          await h.checklistRunRepo
+              .upsertStarted(showupId: _showupId, pactId: _pactId, checklistId: 'c1', startedAt: _testNow);
+          h.incomingLinks.emit(_runFinished('completed'));
+        },
+      );
+      final strings = l10n(tester);
+
+      // 4-5. Showup detail on top, unlocked; the run is finished; back returns to the dashboard.
+      await waitFor(tester, find.text(strings.markDone));
+      expect(find.byKey(_runKey), findsNothing);
+      expect((await h.checklistRunRepo.getForShowup(_showupId))?.isFinished, isTrue);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.text(strings.markDone), findsNothing);
+      await waitFor(tester, find.text('Meditate'));
     });
   });
 }
