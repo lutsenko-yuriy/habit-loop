@@ -256,13 +256,13 @@ void main() {
       expect(await runs.getForShowup('s1'), finished);
     });
 
-    test('restarting an unfinished run refreshes startedAt', () async {
+    test('restarting an unfinished run keeps its first startedAt (late-finish exemption survives a re-tap)', () async {
       await links.upsert(link('c1', 'Morning'));
       await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: DateTime(2026, 5, 10, 8));
 
-      await service.startRun(pactId: 'p1', showupId: 's1');
+      expect(await service.startRun(pactId: 'p1', showupId: 's1'), RunStartOutcome.launched);
 
-      expect((await runs.getForShowup('s1'))?.startedAt, now);
+      expect((await runs.getForShowup('s1'))?.startedAt, DateTime(2026, 5, 10, 8));
     });
   });
 

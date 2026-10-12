@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/checklist/checklist_gate.dart';
 import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/tail_zone.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
@@ -50,6 +51,19 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
     final pending = state.showup == null || state.showup!.status == ShowupStatus.pending;
     if (outcome == ChecklistRunOutcome.failure && pending) state = state.copyWith(showChecklistFailureDialog: true);
     unawaited(_refreshChecklistGate());
+  }
+
+  // A checklist run started in the window may still finish within the grace (GH-464).
+  // A failed lookup falls back to the plain auto-fail rather than failing the load, as the dashboard sweep does.
+  Future<bool> _isLateFinishExempt(Showup showup, DateTime now) async {
+    try {
+      return (await ref.read(checklistServiceProvider).lateFinishExemptIds([showup], now: now)).isNotEmpty;
+    } catch (e, st) {
+      unawaited(ref
+          .read(logServiceProvider)
+          .error('showup_late_finish_lookup_failed: id=$arg', exception: e, stackTrace: st));
+      return false;
+    }
   }
 
   void acknowledgeChecklistFailureDialog() => state = state.copyWith(showChecklistFailureDialog: false);
@@ -137,9 +151,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final pactStatsService = ref.read(pactStatsServiceProvider);
       if (showup.status == ShowupStatus.pending && !isOnBreak) {
         final endTime = showup.scheduledAt.add(showup.duration);
-        // A checklist run started in the window may still finish within the grace (GH-464).
-        if (now.isAfter(endTime) &&
-            (await ref.read(checklistServiceProvider).lateFinishExemptIds([showup], now: now)).isEmpty) {
+        if (now.isAfter(endTime) && !await _isLateFinishExempt(showup, now)) {
           showup = await pactStatsService.persistShowupStatus(
             showup: showup,
             status: ShowupStatus.failed,

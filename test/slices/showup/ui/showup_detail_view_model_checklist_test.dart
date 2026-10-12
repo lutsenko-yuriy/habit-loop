@@ -122,6 +122,11 @@ class _ThrowingRunRepo extends InMemoryChecklistRunRepository {
       Future.error(StateError('db down'));
 }
 
+class _ThrowingLookupRunRepo extends InMemoryChecklistRunRepository {
+  @override
+  Future<Map<String, ChecklistRun>> getForShowups(Iterable<String> showupIds) => Future.error(StateError('db down'));
+}
+
 void main() {
   late _Env env;
   tearDown(() => env.container.dispose());
@@ -393,6 +398,12 @@ void main() {
       env = _Env(now: DateTime(2099, 1, 1, 8, 20));
       await start(env, DateTime(2099, 1, 1, 8, 11));
       expect(await statusAfterLoad(env), ShowupStatus.failed);
+    });
+
+    test('a failing run lookup falls back to the plain auto-fail; the screen still loads', () async {
+      env = _Env(now: DateTime(2099, 1, 1, 8, 20), runRepo: _ThrowingLookupRunRepo());
+      expect(await statusAfterLoad(env), ShowupStatus.failed);
+      expect(env.state.loadError, isNull);
     });
   });
 }

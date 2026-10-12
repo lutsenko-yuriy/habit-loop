@@ -148,11 +148,13 @@ class ChecklistService {
   Future<RunStartOutcome> startRun({required String pactId, required String showupId}) async {
     final link = await _links.getForPact(pactId);
     if (link == null) return RunStartOutcome.notRunnable;
+    // A re-tap keeps the first start, so a run begun inside the window stays exempt from auto-fail.
+    final existing = await _runs.getForShowup(showupId);
     final run = await _runs.upsertStarted(
       showupId: showupId,
       pactId: pactId,
       checklistId: link.checklistId,
-      startedAt: _now(),
+      startedAt: existing?.startedAt ?? _now(),
     );
     if (run.isFinished) return RunStartOutcome.notRunnable;
     final callback = ChecklisterLinks.runFinishedCallback(pactId, showupId).toString();
