@@ -52,19 +52,29 @@ class _ChecklisterCallbackListenerState extends ConsumerState<ChecklisterCallbac
 
   ChecklisterRunHandler _runHandler() => ChecklisterRunHandler(
         service: ref.read(checklistServiceProvider),
+        isEnabled: () => ref.read(featureFlagsProvider).checklisterIntegrationEnabled,
         onFinished: (showupId, outcome) {
           if (!mounted) return;
           ref.read(checklistRunFinishedNoticeProvider(showupId).notifier).state = outcome;
           // An open showup detail consumes the notice itself; otherwise (cold start) open one.
           final navigatorKey = widget.navigatorKey;
           if (navigatorKey == null || ref.exists(showupDetailViewModelProvider(showupId))) return;
-          void push() => unawaited(NotificationNavigator.navigateToShowup(
-                navigatorKey: navigatorKey,
-                showupId: showupId,
-                onReturn: () {
-                  if (mounted) ref.read(dashboardRefreshSignalProvider.notifier).state++;
-                },
-              ));
+          void push() {
+            if (!mounted) return;
+            // Never mounted: drop the notice so a later visit doesn't show a stale dialog.
+            if (navigatorKey.currentState == null) {
+              ref.read(checklistRunFinishedNoticeProvider(showupId).notifier).state = null;
+              return;
+            }
+            unawaited(NotificationNavigator.navigateToShowup(
+              navigatorKey: navigatorKey,
+              showupId: showupId,
+              onReturn: () {
+                if (mounted) ref.read(dashboardRefreshSignalProvider.notifier).state++;
+              },
+            ));
+          }
+
           // Cold start: the navigator may not be mounted yet.
           if (navigatorKey.currentState != null) {
             push();

@@ -18,6 +18,7 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_signals.dart';
 import '../infrastructure/analytics/fake_analytics_service.dart';
 import '../infrastructure/checklister/fake_checklister_gateway.dart';
 import '../infrastructure/deep_links/fake_incoming_link_service.dart';
+import '../infrastructure/remote_config/fake_remote_config_service.dart';
 
 Pact _pact(String id, PactStatus status) => Pact(
       id: id,
@@ -52,6 +53,9 @@ void main() {
       showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
       checklisterGatewayProvider.overrideWithValue(FakeChecklisterGateway()),
       analyticsServiceProvider.overrideWithValue(FakeAnalyticsService()),
+      remoteConfigServiceProvider.overrideWithValue(
+        FakeRemoteConfigService.withTestDefaults(overrides: {'checklister_integration_enabled': true}),
+      ),
     ]);
     addTearDown(container.dispose);
     await tester.pumpWidget(

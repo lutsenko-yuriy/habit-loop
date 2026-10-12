@@ -46,7 +46,9 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
   void _consumeRunFinished(ChecklistRunOutcome outcome) {
     if (_disposed) return;
     ref.read(checklistRunFinishedNoticeProvider(arg).notifier).state = null;
-    if (outcome == ChecklistRunOutcome.failure) state = state.copyWith(showChecklistFailureDialog: true);
+    // Showup unknown yet (cold start) is re-checked by load(); a resolved showup gets no "still markable" dialog.
+    final pending = state.showup == null || state.showup!.status == ShowupStatus.pending;
+    if (outcome == ChecklistRunOutcome.failure && pending) state = state.copyWith(showChecklistFailureDialog: true);
     unawaited(_refreshChecklistGate());
   }
 
@@ -201,6 +203,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         canRedeem: canRedeem,
         canStartBreak: canStartBreak,
         checklistRunCouldNotOpen: false,
+        showChecklistFailureDialog: state.showChecklistFailureDialog && showup.status == ShowupStatus.pending,
         checklistGate: checklist.gate,
         checklistOutcome: checklist.outcome,
         clearChecklistOutcome: checklist.outcome == null,

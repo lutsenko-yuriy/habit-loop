@@ -340,5 +340,27 @@ void main() {
       await env.vm.load();
       expect(env.state.showChecklistFailureDialog, isFalse);
     });
+
+    test('no failure dialog for a showup that is no longer pending', () async {
+      env = _Env();
+      await env.vm.load();
+      await env.vm.markFailed();
+      await env.finishRun(ChecklistRunOutcome.failure);
+      raise(ChecklistRunOutcome.failure);
+      await pumpEventQueue();
+      expect(env.state.showChecklistFailureDialog, isFalse);
+    });
+
+    test('cold start: a dialog raised before load is dropped if the loaded showup is not pending', () async {
+      env = _Env(keepAlive: false);
+      final showup = (await env.container.read(showupRepositoryProvider).getShowupById('s1'))!;
+      await env.container.read(showupRepositoryProvider).updateShowup(showup.copyWith(status: ShowupStatus.failed));
+      await env.finishRun(ChecklistRunOutcome.failure);
+      raise(ChecklistRunOutcome.failure);
+      env.container.listen(showupDetailViewModelProvider('s1'), (_, __) {});
+      await pumpEventQueue();
+      await env.vm.load();
+      expect(env.state.showChecklistFailureDialog, isFalse);
+    });
   });
 }
