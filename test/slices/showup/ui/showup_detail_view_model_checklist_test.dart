@@ -183,6 +183,13 @@ void main() {
       expect(env.state.checklistGate, ChecklistGate.none);
     });
 
+    test('overlapping loads both complete (the older one yields)', () async {
+      env = _Env();
+      await Future.wait([env.vm.load(), env.vm.load()]).timeout(const Duration(seconds: 2));
+      expect(env.state.isLoading, isFalse);
+      expect(env.state.checklistGate, ChecklistGate.runRequired);
+    });
+
     test('install state change re-derives the gate without a reload', () async {
       env = _Env();
       await env.vm.load();

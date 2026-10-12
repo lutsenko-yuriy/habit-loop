@@ -38,6 +38,9 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
   /// Bumped by every gate read; a read that finishes under an older generation drops its result.
   int _gateGeneration = 0;
 
+  /// Bumped by every load(); an older overlapping load yields to the newer one.
+  int _loadGeneration = 0;
+
   Future<({ChecklistGate gate, ChecklistRunOutcome? outcome})> _fetchChecklistStatus(String pactId) async =>
       ref.read(checklistServiceProvider).statusFor(
             pactId: pactId,
@@ -65,6 +68,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
   }
 
   Future<void> load() async {
+    final loadGeneration = ++_loadGeneration;
     // Clear stale save state from a previous visit so buttons are never permanently disabled.
     state = state.copyWith(
       isLoading: true,
@@ -166,7 +170,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       do {
         gateGeneration = ++_gateGeneration;
         checklist = await _fetchChecklistStatus(showup.pactId);
-        if (_disposed) return;
+        if (_disposed || loadGeneration != _loadGeneration) return;
       } while (gateGeneration != _gateGeneration);
 
       state = state.copyWith(
