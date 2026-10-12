@@ -4,14 +4,14 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
-## [0.62.0] — 2026-10-12 (PR #PRNUM merged)
+## [0.62.0] — 2026-10-12 (PR #473 merged)
 
 ### Added
 
 - [user] You can link a pact to a checklist from the Checklister app. Each showup of that pact then asks you to run the checklist before you can mark it done.
 - [user] If you start the checklist before the showup's time is up, you get 15 extra minutes to finish it before the showup counts as missed.
 - [user] Siri won't mark a showup done until you've run its checklist in the app.
-- [app] (PR #PRNUM) GH-464 WU7 (final): Siri checklist gate — `VoiceChecklistGate.swift` (mirrors `ChecklistGate.resolve`; missing v8 tables read as no link) checked in `MarkShowupDoneIntent.markAndLog` before every write, logging `voice_mark_done_resolved.outcome=blocked_checklist_linked`; `VoiceRemoteConfigBridge` mirrors the release-gated `checklister_integration_enabled` into `UserDefaults`; the flag now defaults to `true`, release-gated to 0.62.0. The feature itself shipped across WU1–WU6b (PRs #466–#472).
+- [app] (PR #473) GH-464 WU7 (final): Siri checklist gate — `VoiceChecklistGate.swift` (mirrors `ChecklistGate.resolve`; missing v8 tables read as no link) checked in `MarkShowupDoneIntent.markAndLog` before every write, logging `voice_mark_done_resolved.outcome=blocked_checklist_linked`; `VoiceRemoteConfigBridge` mirrors the release-gated `checklister_integration_enabled` into `UserDefaults`; the flag now defaults to `true`, release-gated to 0.62.0. The feature itself shipped across WU1–WU6b (PRs #466–#472).
 
 ## [Unreleased]
 
