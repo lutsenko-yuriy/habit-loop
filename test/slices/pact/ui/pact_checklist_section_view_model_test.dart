@@ -14,6 +14,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_checklist_section_signals.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_checklist_section_state.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_checklist_section_view_model.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/checklister/fake_checklister_gateway.dart';
@@ -67,6 +68,7 @@ void main() {
   ProviderContainer makeContainer([PactChecklistLinkRepository? repo]) {
     final c = ProviderContainer(overrides: [
       pactRepositoryProvider.overrideWithValue(InMemoryPactRepository([_pact])),
+      showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
       pactChecklistLinkRepositoryProvider.overrideWithValue(repo ?? links),
       checklisterGatewayProvider.overrideWithValue(gateway),
       analyticsServiceProvider.overrideWithValue(analytics),
