@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_callback.dart';
 import 'package:habit_loop/navigation/checklister_selection_handler.dart';
 import 'package:habit_loop/slices/checklist/application/checklist_service.dart';
+import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 
@@ -32,6 +33,7 @@ void main() {
     handler = ChecklisterSelectionHandler(
       service: ChecklistService(
         linkRepository: InMemoryPactChecklistLinkRepository(),
+        runRepository: InMemoryChecklistRunRepository(),
         pactRepository: InMemoryPactRepository([_pact('p1', PactStatus.active), _pact('p2', PactStatus.stopped)]),
         gateway: FakeChecklisterGateway(),
         analytics: FakeAnalyticsService(),

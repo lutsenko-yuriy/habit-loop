@@ -12,6 +12,9 @@ class FakeChecklisterGateway implements ChecklisterGateway {
 
   final List<Uri> launchedUrls = [];
 
+  /// Called with each URL just before it is (or fails to be) launched.
+  void Function(Uri uri)? onLaunch;
+
   @override
   Future<bool> isInstalled() async => installed;
 
@@ -23,6 +26,7 @@ class FakeChecklisterGateway implements ChecklisterGateway {
       _launch(ChecklisterLinks.runUri(checklistId, callbackUrl));
 
   bool _launch(Uri uri) {
+    onLaunch?.call(uri);
     if (!canLaunch) return false;
     launchedUrls.add(uri);
     return true;

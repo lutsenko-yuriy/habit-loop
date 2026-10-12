@@ -338,6 +338,7 @@ final pactChainServiceProvider = Provider<PactChainService>((ref) {
 final checklistServiceProvider = Provider<ChecklistService>((ref) {
   return ChecklistService(
     linkRepository: ref.watch(pactChecklistLinkRepositoryProvider),
+    runRepository: ref.watch(checklistRunRepositoryProvider),
     pactRepository: ref.watch(pactRepositoryProvider),
     gateway: ref.watch(checklisterGatewayProvider),
     analytics: ref.watch(analyticsServiceProvider),

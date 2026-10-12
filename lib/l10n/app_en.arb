@@ -404,5 +404,7 @@
   "pactChecklistNoChecklistsError": "Create a checklist in Checklister first.",
   "@pactChecklistNoChecklistsError": {},
   "checklisterCouldNotOpenError": "Couldn't open Checklister.",
-  "@checklisterCouldNotOpenError": {}
+  "@checklisterCouldNotOpenError": {},
+  "showupRunChecklist": "Run checklist",
+  "@showupRunChecklist": {}
 }

@@ -400,5 +400,7 @@
   "pactChecklistNoChecklistsError": "Erstelle zuerst eine Checkliste in Checklister.",
   "@pactChecklistNoChecklistsError": {},
   "checklisterCouldNotOpenError": "Checklister konnte nicht geöffnet werden.",
-  "@checklisterCouldNotOpenError": {}
+  "@checklisterCouldNotOpenError": {},
+  "showupRunChecklist": "Checkliste durchgehen",
+  "@showupRunChecklist": {}
 }

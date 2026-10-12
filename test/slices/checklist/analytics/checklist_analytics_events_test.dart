@@ -19,4 +19,10 @@ void main() {
     expect(e.name, 'pact_checklist_unlinked');
     expect(e.toParameters(), {'pact_id': 'p1', 'days_linked': 4});
   });
+
+  test('ChecklistRunStartedEvent', () {
+    final e = ChecklistRunStartedEvent(pactId: 'p1');
+    expect(e.name, 'checklist_run_started');
+    expect(e.toParameters(), {'pact_id': 'p1'});
+  });
 }

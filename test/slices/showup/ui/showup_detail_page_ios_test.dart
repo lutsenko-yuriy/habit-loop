@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show MaterialApp, Theme;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/checklist/checklist_gate.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
@@ -31,6 +32,7 @@ final _redeemableShowup = Showup(
 Widget _buildApp(
   ShowupDetailState state, {
   Future<void> Function()? onRedeemShowup,
+  Future<void> Function()? onRunChecklist,
   Brightness brightness = Brightness.light,
 }) {
   return MaterialApp(
@@ -48,6 +50,7 @@ Widget _buildApp(
       onMarkFailed: () async {},
       onSaveNote: (_) async {},
       onRedeemShowup: onRedeemShowup ?? () async {},
+      onRunChecklist: onRunChecklist ?? () async {},
     ),
   );
 }
@@ -205,5 +208,48 @@ void main() {
         expect(hintText.style?.color, HabitLoopColors.secondaryText(ctx));
       });
     }
+  });
+
+  group('checklist gate (GH #464)', () {
+    ShowupDetailState gated({bool couldNotOpen = false, bool starting = false}) => ShowupDetailState(
+          showup: _showup,
+          habitName: 'Meditate',
+          isLoading: false,
+          uiState: ShowupUiState.planned,
+          checklistGate: ChecklistGate.runRequired,
+          checklistRunCouldNotOpen: couldNotOpen,
+          isStartingChecklistRun: starting,
+        );
+
+    testWidgets('runRequired: Run checklist replaces Mark as done; Mark as failed stays', (tester) async {
+      var runs = 0;
+      await tester.pumpWidget(_buildApp(gated(), onRunChecklist: () async => runs++));
+      final l10n = AppLocalizations.of(tester.element(find.byType(ShowupDetailPageIos)))!;
+
+      expect(find.text(l10n.markDone), findsNothing);
+      expect(find.text(l10n.markFailed), findsOneWidget);
+      await tester.tap(find.byKey(const Key('showup-run-checklist-button')));
+      expect(runs, 1);
+    });
+
+    testWidgets('unlocked: Mark as done is back', (tester) async {
+      await tester.pumpWidget(_buildApp(gated().copyWith(checklistGate: ChecklistGate.unlocked)));
+      final l10n = AppLocalizations.of(tester.element(find.byType(ShowupDetailPageIos)))!;
+      expect(find.text(l10n.markDone), findsOneWidget);
+      expect(find.byKey(const Key('showup-run-checklist-button')), findsNothing);
+    });
+
+    testWidgets('could not open Checklister: error shown', (tester) async {
+      await tester.pumpWidget(_buildApp(gated(couldNotOpen: true)));
+      final l10n = AppLocalizations.of(tester.element(find.byType(ShowupDetailPageIos)))!;
+      expect(find.text(l10n.checklisterCouldNotOpenError), findsOneWidget);
+    });
+
+    testWidgets('while starting: Run checklist is disabled', (tester) async {
+      var runs = 0;
+      await tester.pumpWidget(_buildApp(gated(starting: true), onRunChecklist: () async => runs++));
+      await tester.tap(find.byKey(const Key('showup-run-checklist-button')), warnIfMissed: false);
+      expect(runs, 0);
+    });
   });
 }
