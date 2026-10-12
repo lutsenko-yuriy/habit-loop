@@ -65,6 +65,13 @@ final class VoiceChecklistGateTests: XCTestCase {
     XCTAssertFalse(state.runFinished)
   }
 
+  func testLinkState_otherSqliteError_failsClosed() {
+    exec("CREATE TABLE pact_checklist_links (unexpected TEXT)")
+    let state = VoiceChecklistGate.linkState(db: db!, pactId: "p1", showupId: "s1")
+    XCTAssertTrue(state.linked)
+    XCTAssertFalse(state.runFinished)
+  }
+
   func testLinkState_noLinkForPact() {
     createV8Tables()
     link(pactId: "other")

@@ -57,6 +57,9 @@ struct MarkShowupDoneIntent: AppIntent {
     // Case 3: several pending matches -> confirm the best guess (first match).
     if pending.count > 1 {
       let best = pending[0]
+      if let refusal = await checklistRefusal(best, candidateCount: pending.count) {
+        return .result(dialog: IntentDialog(stringLiteral: refusal))
+      }
       do {
         _ = try await requestConfirmation(result: .result(dialog: "Did you mean \(best.habitName)?"))
         let message = await markAndLog(best, outcome: "marked_after_confirmation", candidateCount: pending.count)
@@ -71,6 +74,9 @@ struct MarkShowupDoneIntent: AppIntent {
     // No pending matches at all, so candidate_count is 0 for both outcomes below.
     let future = VoiceShowupStore.futureMatches(in: todays, description: habitDescription, now: now)
     if let match = future.first {
+      if let refusal = await checklistRefusal(match, candidateCount: 0) {
+        return .result(dialog: IntentDialog(stringLiteral: refusal))
+      }
       do {
         _ = try await requestConfirmation(
           result: .result(dialog: "\(match.habitName) isn't due yet. Mark it done anyway?")
@@ -111,10 +117,7 @@ struct MarkShowupDoneIntent: AppIntent {
   /// success, `failed_write` if the write itself failed, `blocked_checklist_linked`
   /// if the checklist gate refused it (every case path funnels through here).
   private func markAndLog(_ showup: VoiceShowup, outcome: String, candidateCount: Int) async -> String {
-    if await VoiceChecklistGate.blocks(showup) {
-      logResolved(outcome: "blocked_checklist_linked", candidateCount: candidateCount)
-      return "Open Habit Loop and run the checklist for \(showup.habitName) first."
-    }
+    if let refusal = await checklistRefusal(showup, candidateCount: candidateCount) { return refusal }
     guard VoiceShowupStore.markDone(id: showup.id) else {
       logResolved(outcome: "failed_write", candidateCount: candidateCount)
       return "Something went wrong."
@@ -124,6 +127,14 @@ struct MarkShowupDoneIntent: AppIntent {
     Analytics.logEvent("showup_marked_done", parameters: ["pact_id": showup.pactId, "source": "voice"])
     logResolved(outcome: outcome, candidateCount: candidateCount)
     return "Marked \(showup.habitName) done."
+  }
+
+  /// Refusal text (and `blocked_checklist_linked` logged) when the checklist gate blocks
+  /// `showup`. Also called before a confirmation prompt, so Siri doesn't ask first and refuse after.
+  private func checklistRefusal(_ showup: VoiceShowup, candidateCount: Int) async -> String? {
+    guard await VoiceChecklistGate.blocks(showup) else { return nil }
+    logResolved(outcome: "blocked_checklist_linked", candidateCount: candidateCount)
+    return "Open Habit Loop and run the checklist for \(showup.habitName) first."
   }
 
   private func logResolved(outcome: String, candidateCount: Int) {
