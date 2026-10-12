@@ -1,10 +1,12 @@
 import 'package:habit_loop/domain/checklist/checklist_gate.dart';
 import 'package:habit_loop/domain/checklist/checklist_run.dart';
+import 'package:habit_loop/domain/checklist/checklist_run_derivation.dart';
 import 'package:habit_loop/domain/checklist/checklist_run_repository.dart';
 import 'package:habit_loop/domain/checklist/pact_checklist_link.dart';
 import 'package:habit_loop/domain/checklist/pact_checklist_link_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_callback.dart';
@@ -146,11 +148,13 @@ class ChecklistService {
   Future<RunStartOutcome> startRun({required String pactId, required String showupId}) async {
     final link = await _links.getForPact(pactId);
     if (link == null) return RunStartOutcome.notRunnable;
+    // A re-tap keeps the first start, so a run begun inside the window stays exempt from auto-fail.
+    final existing = await _runs.getForShowup(showupId);
     final run = await _runs.upsertStarted(
       showupId: showupId,
       pactId: pactId,
       checklistId: link.checklistId,
-      startedAt: _now(),
+      startedAt: existing?.startedAt ?? _now(),
     );
     if (run.isFinished) return RunStartOutcome.notRunnable;
     final callback = ChecklisterLinks.runFinishedCallback(pactId, showupId).toString();
@@ -184,5 +188,15 @@ class ChecklistService {
       windowClosedMeanwhile: windowEnd != null && !run.startedAt.isAfter(windowEnd) && finishedAt.isAfter(windowEnd),
     ));
     return outcome;
+  }
+
+  /// Ids of [showups] exempt from auto-fail at [now] by the late-finish rule; runs fetched in one batch.
+  Future<Set<String>> lateFinishExemptIds(List<Showup> showups, {required DateTime now}) async {
+    if (showups.isEmpty) return const {};
+    final runs = await _runs.getForShowups(showups.map((s) => s.id));
+    return {
+      for (final s in showups)
+        if (ChecklistRunDerivation.suppressesAutoFail(showup: s, run: runs[s.id], now: now)) s.id,
+    };
   }
 }

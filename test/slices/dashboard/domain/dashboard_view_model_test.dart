@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
+import 'package:habit_loop/domain/checklist/checklist_run_repository.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -9,6 +11,7 @@ import 'package:habit_loop/domain/showup/showup_generator.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/sync/noop_sync_service.dart';
+import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/application/pact_detail_cache.dart';
 import 'package:habit_loop/slices/pact/application/pact_stats_service.dart';
@@ -52,6 +55,22 @@ class _CountingShowupRepository extends InMemoryShowupRepository {
     getShowupsForPactCallCount++;
     return super.getShowupsForPact(pactId);
   }
+}
+
+/// Counts calls to [getForShowups].
+class _CountingRunRepository extends InMemoryChecklistRunRepository {
+  int getForShowupsCallCount = 0;
+
+  @override
+  Future<Map<String, ChecklistRun>> getForShowups(Iterable<String> showupIds) {
+    getForShowupsCallCount++;
+    return super.getForShowups(showupIds);
+  }
+}
+
+class _ThrowingRunRepository extends InMemoryChecklistRunRepository {
+  @override
+  Future<Map<String, ChecklistRun>> getForShowups(Iterable<String> showupIds) => Future.error(StateError('db down'));
 }
 
 /// A [PactStatsService] that throws [StateError] when [persistShowupStatus] is
@@ -835,6 +854,7 @@ void main() {
       FakeNotificationService? notifications,
       InMemoryShowupRepository? showupRepoOverride,
       List<PactBreak> breaks = const [],
+      ChecklistRunRepository? runs,
     }) {
       final pactRepo = InMemoryPactRepository(pacts);
       final showupRepo = showupRepoOverride ?? InMemoryShowupRepository(showups);
@@ -849,6 +869,7 @@ void main() {
           pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository(breaks)),
           if (analytics != null) analyticsServiceProvider.overrideWithValue(analytics),
           if (notifications != null) notificationServiceProvider.overrideWithValue(notifications),
+          if (runs != null) checklistRunRepositoryProvider.overrideWithValue(runs),
         ],
       );
     }
@@ -948,6 +969,48 @@ void main() {
       final updated = await showupRepo.getShowupsForPact('p1');
       final target = updated.firstWhere((s) => s.id == 's-onbreak');
       expect(target.status, ShowupStatus.pending, reason: 'On-break showup must not be auto-failed by the sweep');
+    });
+
+    test('late finish (GH-464): skips a showup whose run started in the window, within the grace', () async {
+      final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
+      // Windows end at 23:55 yesterday; today (00:00) is inside the 15-minute grace.
+      Showup lateWindow(String id) => Showup(
+            id: id,
+            pactId: 'p1',
+            scheduledAt: DateTime(today.year, today.month, today.day - 1, 23, 45),
+            duration: const Duration(minutes: 10),
+            status: ShowupStatus.pending,
+          );
+      final runs = _CountingRunRepository();
+      await runs.upsertStarted(
+        showupId: 's-run',
+        pactId: 'p1',
+        checklistId: 'c1',
+        startedAt: DateTime(today.year, today.month, today.day - 1, 23, 50),
+      );
+
+      final showupRepo = InMemoryShowupRepository([lateWindow('s-run'), lateWindow('s-norun')]);
+      final c = buildContainer(pacts: [pact], showups: [], showupRepoOverride: showupRepo, runs: runs);
+      addTearDown(c.dispose);
+
+      await c.read(dashboardViewModelProvider.notifier).load();
+
+      expect((await showupRepo.getShowupById('s-run'))?.status, ShowupStatus.pending);
+      expect((await showupRepo.getShowupById('s-norun'))?.status, ShowupStatus.failed);
+      expect(runs.getForShowupsCallCount, 1, reason: 'Runs are batch-fetched once per sweep');
+    });
+
+    test('late finish (GH-464): a failing run lookup falls back to the plain sweep', () async {
+      final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
+      final showupRepo = InMemoryShowupRepository([pastDuePending(id: 's1', pactId: 'p1')]);
+      final c =
+          buildContainer(pacts: [pact], showups: [], showupRepoOverride: showupRepo, runs: _ThrowingRunRepository());
+      addTearDown(c.dispose);
+
+      await c.read(dashboardViewModelProvider.notifier).load();
+
+      expect((await showupRepo.getShowupById('s1'))?.status, ShowupStatus.failed);
+      expect(c.read(dashboardViewModelProvider).isLoading, isFalse);
     });
 
     test('does not touch already-resolved (done) showups', () async {

@@ -3,7 +3,6 @@
 // Run with: flutter test integration_test/checklist_run_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/checklist_run_flow_test.dart
 //
-// The late-finish stub is filled in WU6b.
 // Run callbacks always carry both ids: habitloop://checklist/run-finished?pactId=<id>&showupId=<id>.
 import 'dart:async' show unawaited;
 
@@ -17,6 +16,7 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_links.dart';
 import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/checklist/analytics/checklist_analytics_events.dart';
+import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
@@ -46,6 +46,33 @@ List<Override> get _clock => [
       pactTimelineNowProvider.overrideWithValue(_testNow),
       showupDetailNowProvider.overrideWithValue(_testNow),
     ];
+
+/// A test clock that can move forward mid-scenario.
+class _MutableClock {
+  _MutableClock(this.now);
+
+  DateTime now;
+
+  static final _providers = [todayProvider, pactDetailNowProvider, pactTimelineNowProvider, showupDetailNowProvider];
+
+  List<Override> get overrides => [for (final p in _providers) p.overrideWith((ref) => now)];
+
+  /// Moves to [time]; screens and sweeps see it on their next load.
+  void advanceTo(WidgetTester tester, DateTime time) {
+    now = time;
+    final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+    for (final p in _providers) {
+      container.invalidate(p);
+    }
+  }
+}
+
+/// Re-runs the dashboard load (and its auto-fail sweep), as a resume does.
+void _bumpDashboardRefresh(WidgetTester tester) {
+  ProviderScope.containerOf(tester.element(find.byType(MaterialApp)))
+      .read(dashboardRefreshSignalProvider.notifier)
+      .state++;
+}
 
 /// Opens today's showup from the dashboard.
 Future<void> _openShowup(WidgetTester tester) async {
@@ -84,11 +111,15 @@ Future<void> _finishRun(WidgetTester tester, AppHarness h, String status, {Strin
 Uri _runFinished(String status, {String showupId = _showupId}) =>
     Uri.parse('${ChecklisterLinks.runFinishedCallback(_pactId, showupId)}&status=$status&checklistId=c1&runId=r1');
 
-Future<AppHarness> _linkedHarness(WidgetTester tester, {Future<void> Function(AppHarness h)? seed}) =>
+Future<AppHarness> _linkedHarness(
+  WidgetTester tester, {
+  Future<void> Function(AppHarness h)? seed,
+  _MutableClock? clock,
+}) =>
     AppHarness.create(
       tester,
       remoteConfigOverrides: _flagOn,
-      extraOverrides: _clock,
+      extraOverrides: clock?.overrides ?? _clock,
       beforePump: (h) async {
         await h.pactRepo.savePact(_pact);
         await h.showupRepo.saveShowups([_pendingShowup]);
@@ -108,7 +139,6 @@ void main() {
   setUpAll(AppHarness.initForHost);
 
   group('Checklist run flow', () {
-    // Nullable: the late-finish stub creates no harness yet.
     AppHarness? harness;
     tearDown(() async {
       harness?.dispose();
@@ -248,13 +278,51 @@ void main() {
 
     testWidgets('late_finish_within_grace_prevents_auto_fail: run finished within 15 minutes after the window closes',
         (tester) async {
-      // TODO: 1. Seed a linked pact and a showup at 08:00 with a 10-minute duration.
-      // TODO: 2. Use a mutable showupDetailNowProvider clock at 08:05; open the showup and tap Run checklist.
-      // TODO: 3. Advance the clock to 08:20 (window closed 08:10, inside the 15-minute grace).
-      // TODO: 4. Emit run-finished?pactId=<id>&showupId=<id>&status=completed&checklistId=c1&runId=r1.
-      // TODO: 5. Showup is still pending (not auto-failed); "Mark as done" shown.
-      // TODO: 6. Tap Mark as done: showup marked done.
-      // TODO: 7. Variant: clock at 08:30 with a started run; reopening the showup auto-fails it (past grace).
+      // 1. Linked pact; showup window 08:00–08:10; clock at 08:05.
+      final clock = _MutableClock(DateTime(2099, 6, 15, 8, 5));
+      final h = harness = await _linkedHarness(tester, clock: clock);
+      final strings = l10n(tester);
+
+      // 2. Open the showup and start the run inside the window.
+      await _openShowup(tester);
+      await tester.tap(find.byKey(_runKey));
+      await tester.pumpAndSettle();
+      expect(await h.checklistRunRepo.getForShowup(_showupId), isNotNull);
+
+      // 3. The window closes; back on the dashboard at 08:20 (inside the grace) the sweep skips it.
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      clock.advanceTo(tester, DateTime(2099, 6, 15, 8, 20));
+      _bumpDashboardRefresh(tester);
+      await tester.pumpAndSettle();
+      expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.pending);
+
+      // 4–5. The completed callback opens the showup: still pending, Mark as done shown.
+      await _finishRun(tester, h, 'completed');
+      await waitFor(tester, find.text(strings.markDone));
+      expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.pending);
+
+      // 6. Mark as done.
+      await tester.tap(find.text(strings.markDone));
+      await waitFor(tester, find.text(strings.showupDone));
+      expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.done);
+    });
+
+    testWidgets('late_finish_past_grace_auto_fails: a started run no longer protects the showup after 15 minutes',
+        (tester) async {
+      // 7. Run started at 08:05; clock at 08:26 (grace ended 08:25): the showup is auto-failed.
+      final h = harness = await _linkedHarness(
+        tester,
+        clock: _MutableClock(DateTime(2099, 6, 15, 8, 26)),
+        seed: (h) => h.checklistRunRepo.upsertStarted(
+          showupId: _showupId,
+          pactId: _pactId,
+          checklistId: 'c1',
+          startedAt: DateTime(2099, 6, 15, 8, 5),
+        ),
+      );
+      await waitFor(tester, find.text('Meditate'));
+      expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.failed);
     });
 
     testWidgets('redeeming_auto_failed_showup_ignores_checklist_gate: redemption needs only the note', (tester) async {

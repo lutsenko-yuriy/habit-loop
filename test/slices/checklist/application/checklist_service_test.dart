@@ -256,13 +256,13 @@ void main() {
       expect(await runs.getForShowup('s1'), finished);
     });
 
-    test('restarting an unfinished run refreshes startedAt', () async {
+    test('restarting an unfinished run keeps its first startedAt (late-finish exemption survives a re-tap)', () async {
       await links.upsert(link('c1', 'Morning'));
       await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: DateTime(2026, 5, 10, 8));
 
-      await service.startRun(pactId: 'p1', showupId: 's1');
+      expect(await service.startRun(pactId: 'p1', showupId: 's1'), RunStartOutcome.launched);
 
-      expect((await runs.getForShowup('s1'))?.startedAt, now);
+      expect((await runs.getForShowup('s1'))?.startedAt, DateTime(2026, 5, 10, 8));
     });
   });
 
@@ -357,6 +357,40 @@ void main() {
       await started('s1');
       expect(await service.applyRunResult(run(ChecklisterCallbackStatus.selected)), isNull);
       expect((await runs.getForShowup('s1'))?.isFinished, isFalse);
+    });
+  });
+
+  group('lateFinishExemptIds', () {
+    // Window 08:00–08:10; grace ends 08:25.
+    Showup showup(String id, {ShowupStatus status = ShowupStatus.pending}) => Showup(
+          id: id,
+          pactId: 'p1',
+          scheduledAt: DateTime(2026, 5, 10, 8),
+          duration: const Duration(minutes: 10),
+          status: status,
+        );
+
+    Future<void> started(String showupId, DateTime at) =>
+        runs.upsertStarted(showupId: showupId, pactId: 'p1', checklistId: 'c1', startedAt: at);
+
+    test('returns pending showups whose run started in the window, while within the grace', () async {
+      await started('a', DateTime(2026, 5, 10, 8, 5));
+      await started('late-start', DateTime(2026, 5, 10, 8, 11));
+      await started('done', DateTime(2026, 5, 10, 8, 5));
+      final ids = await service.lateFinishExemptIds(
+        [showup('a'), showup('late-start'), showup('no-run'), showup('done', status: ShowupStatus.done)],
+        now: DateTime(2026, 5, 10, 8, 20),
+      );
+      expect(ids, {'a'});
+    });
+
+    test('empty once the grace has passed', () async {
+      await started('a', DateTime(2026, 5, 10, 8, 5));
+      expect(await service.lateFinishExemptIds([showup('a')], now: DateTime(2026, 5, 10, 8, 26)), isEmpty);
+    });
+
+    test('no showups: no lookup, empty result', () async {
+      expect(await service.lateFinishExemptIds(const [], now: now), isEmpty);
     });
   });
 }

@@ -269,17 +269,28 @@ class DashboardViewModel extends Notifier<DashboardState> {
 
     // Auto-fail sweep: pending showups whose window has fully elapsed (status==pending, pact active, now > scheduledAt+duration).
     // TODO(perf): batch persistShowupStatus per pact to reduce syncStats round-trips (N+1, small window ≤3 days).
-    final Map<String, Showup> autoFailedById = {};
-    var autoFailedCount = 0;
-    for (final showup in showups) {
-      if (showup.status != ShowupStatus.pending) continue;
-      if (!activePactIds.contains(showup.pactId)) continue;
-      final windowEnd = showup.scheduledAt.add(showup.duration);
-      if (!today.isAfter(windowEnd)) continue;
+    final candidates = showups.where((showup) {
+      if (showup.status != ShowupStatus.pending) return false;
+      if (!activePactIds.contains(showup.pactId)) return false;
+      if (!today.isAfter(showup.scheduledAt.add(showup.duration))) return false;
       // On-break showups stay pending — they must not be auto-failed (HAB-195 WU3).
       final breaks = breaksByPactId[showup.pactId] ?? const [];
-      if (BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks)) continue;
+      return !BreakDerivation.isShowupOnBreak(showup: showup, breaks: breaks);
+    }).toList();
+    // A checklist run started in the window may still finish within the grace (GH-464).
+    // A failed lookup falls back to the plain sweep rather than failing the whole load.
+    var lateFinishExempt = const <String>{};
+    try {
+      lateFinishExempt = await ref.read(checklistServiceProvider).lateFinishExemptIds(candidates, now: today);
+    } catch (error, stackTrace) {
+      unawaited(crashlytics.log('auto_fail_sweep: checklist run lookup failed: $error'));
+      unawaited(crashlytics.recordError(error, stackTrace));
+    }
 
+    final Map<String, Showup> autoFailedById = {};
+    var autoFailedCount = 0;
+    for (final showup in candidates) {
+      if (lateFinishExempt.contains(showup.id)) continue;
       final failed = await _autoFailShowup(
         showup,
         pactStatsService: pactStatsService,
