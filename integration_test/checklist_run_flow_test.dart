@@ -69,7 +69,9 @@ class _MutableClock {
 
 /// Re-runs the dashboard load (and its auto-fail sweep), as a resume does.
 void _bumpDashboardRefresh(WidgetTester tester) {
-  ProviderScope.containerOf(tester.element(find.byType(MaterialApp))).read(dashboardRefreshSignalProvider.notifier).state++;
+  ProviderScope.containerOf(tester.element(find.byType(MaterialApp)))
+      .read(dashboardRefreshSignalProvider.notifier)
+      .state++;
 }
 
 /// Opens today's showup from the dashboard.

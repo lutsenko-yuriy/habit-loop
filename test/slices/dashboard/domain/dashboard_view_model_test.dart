@@ -1003,7 +1003,8 @@ void main() {
     test('late finish (GH-464): a failing run lookup falls back to the plain sweep', () async {
       final pact = _dailyPact(id: 'p1', startDate: DateTime(2026, 3, 1));
       final showupRepo = InMemoryShowupRepository([pastDuePending(id: 's1', pactId: 'p1')]);
-      final c = buildContainer(pacts: [pact], showups: [], showupRepoOverride: showupRepo, runs: _ThrowingRunRepository());
+      final c =
+          buildContainer(pacts: [pact], showups: [], showupRepoOverride: showupRepo, runs: _ThrowingRunRepository());
       addTearDown(c.dispose);
 
       await c.read(dashboardViewModelProvider.notifier).load();
