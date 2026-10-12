@@ -312,6 +312,7 @@ void main() {
       final finished = await runs.getForShowup('s1');
       expect([finished?.finishedAt, finished?.outcome], [now, ChecklistRunOutcome.success]);
       final e = analytics.loggedEvents.single as ChecklistRunFinishedEvent;
+      expect(e.name, 'checklist_run_finished');
       expect(e.toParameters(), {'pact_id': 'p1', 'outcome': 'success', 'window_closed_meanwhile': false});
     });
 
