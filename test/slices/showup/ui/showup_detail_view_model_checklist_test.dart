@@ -1,9 +1,10 @@
-import 'dart:async' show unawaited;
+import 'dart:async' show Completer, unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/checklist/checklist_gate.dart';
 import 'package:habit_loop/domain/checklist/checklist_run.dart';
+import 'package:habit_loop/domain/checklist/checklist_run_repository.dart';
 import 'package:habit_loop/domain/checklist/pact_checklist_link.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -50,7 +51,14 @@ final _showup = Showup(
 final _link = PactChecklistLink(pactId: 'p1', checklistId: 'c1', checklistName: 'Morning', linkedAt: DateTime(2098));
 
 class _Env {
-  _Env({bool flag = true, bool linked = true, bool installed = true}) {
+  _Env(
+      {bool flag = true,
+      bool linked = true,
+      bool installed = true,
+      InMemoryPactChecklistLinkRepository? linkRepo,
+      ChecklistRunRepository? runRepo})
+      : links = linkRepo ?? InMemoryPactChecklistLinkRepository(),
+        runs = runRepo ?? InMemoryChecklistRunRepository() {
     gateway.installed = installed;
     if (linked) unawaited(links.upsert(_link));
     rc = FakeRemoteConfigService.withTestDefaults(overrides: {'checklister_integration_enabled': flag});
@@ -73,8 +81,8 @@ class _Env {
     container.listen(showupDetailViewModelProvider('s1'), (_, __) {});
   }
 
-  final links = InMemoryPactChecklistLinkRepository();
-  final runs = InMemoryChecklistRunRepository();
+  final InMemoryPactChecklistLinkRepository links;
+  final ChecklistRunRepository runs;
   final gateway = FakeChecklisterGateway();
   final analytics = FakeAnalyticsService();
   late final FakeRemoteConfigService rc;
@@ -87,6 +95,28 @@ class _Env {
     await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: _now);
     await runs.markFinished(showupId: 's1', finishedAt: _now, outcome: outcome);
   }
+}
+
+/// Link reads block until [release] completes.
+class _SlowLinkRepo extends InMemoryPactChecklistLinkRepository {
+  final release = Completer<void>();
+
+  @override
+  Future<PactChecklistLink?> getForPact(String pactId) async {
+    await release.future;
+    return super.getForPact(pactId);
+  }
+}
+
+class _ThrowingRunRepo extends InMemoryChecklistRunRepository {
+  @override
+  Future<ChecklistRun> upsertStarted({
+    required String showupId,
+    required String pactId,
+    required String checklistId,
+    required DateTime startedAt,
+  }) =>
+      Future.error(StateError('db down'));
 }
 
 void main() {
@@ -124,6 +154,33 @@ void main() {
       await env.vm.load();
       expect(env.state.checklistGate, ChecklistGate.unlocked);
       expect(env.state.checklistOutcome, ChecklistRunOutcome.failure);
+    });
+
+    test('the gate is resolved before loading ends (no Mark as done flash)', () async {
+      env = _Env();
+      final seen = <ShowupDetailState>[];
+      env.container.listen(showupDetailViewModelProvider('s1'), (_, next) => seen.add(next));
+      await env.vm.load();
+      final loaded = seen.where((s) => !s.isLoading && s.showup != null);
+      expect(loaded, isNotEmpty);
+      expect(loaded.every((s) => s.checklistGate == ChecklistGate.runRequired), isTrue);
+    });
+
+    test('an uninstall during load is not overwritten by the stale load result', () async {
+      final slow = _SlowLinkRepo();
+      env = _Env(linked: false, linkRepo: slow);
+      await slow.upsert(_link);
+      final loading = env.vm.load();
+      await pumpEventQueue();
+
+      env.gateway.installed = false;
+      env.container.invalidate(checklisterInstalledProvider);
+      await pumpEventQueue();
+      slow.release.complete();
+      await loading;
+      await pumpEventQueue();
+
+      expect(env.state.checklistGate, ChecklistGate.none);
     });
 
     test('install state change re-derives the gate without a reload', () async {
@@ -195,6 +252,16 @@ void main() {
 
       expect(env.state.checklistRunCouldNotOpen, isTrue);
       expect(env.state.isStartingChecklistRun, isFalse);
+    });
+
+    test('a throwing start shows the error and still releases the busy flag', () async {
+      env = _Env(runRepo: _ThrowingRunRepo());
+      await env.vm.load();
+      await env.vm.runChecklist();
+
+      expect(env.state.checklistRunCouldNotOpen, isTrue);
+      expect(env.state.isStartingChecklistRun, isFalse);
+      expect(env.gateway.launchedUrls, isEmpty);
     });
 
     test('a second tap while starting is ignored', () async {

@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/domain/checklist/checklist_gate.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -34,27 +35,29 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
     return const ShowupDetailState();
   }
 
-  Future<ChecklistGate?> _readChecklistStatus(String pactId) async {
-    final status = await ref.read(checklistServiceProvider).statusFor(
-          pactId: pactId,
-          showupId: arg,
-          flagEnabled: ref.read(featureFlagsProvider).checklisterIntegrationEnabled,
-          installed: await ref.read(checklisterInstalledProvider.future),
-        );
-    if (_disposed) return null;
-    state = state.copyWith(
-      checklistGate: status.gate,
-      checklistOutcome: status.outcome,
-      clearChecklistOutcome: status.outcome == null,
-    );
-    return status.gate;
-  }
+  /// Bumped by every gate read; a read that finishes under an older generation drops its result.
+  int _gateGeneration = 0;
+
+  Future<({ChecklistGate gate, ChecklistRunOutcome? outcome})> _fetchChecklistStatus(String pactId) async =>
+      ref.read(checklistServiceProvider).statusFor(
+            pactId: pactId,
+            showupId: arg,
+            flagEnabled: ref.read(featureFlagsProvider).checklisterIntegrationEnabled,
+            installed: await ref.read(checklisterInstalledProvider.future),
+          );
 
   Future<void> _refreshChecklistGate() async {
+    final generation = ++_gateGeneration; // also makes an in-flight load() re-read
     final showup = state.showup;
     if (showup == null || _disposed) return;
     try {
-      await _readChecklistStatus(showup.pactId);
+      final status = await _fetchChecklistStatus(showup.pactId);
+      if (_disposed || generation != _gateGeneration) return;
+      state = state.copyWith(
+        checklistGate: status.gate,
+        checklistOutcome: status.outcome,
+        clearChecklistOutcome: status.outcome == null,
+      );
     } catch (e, st) {
       unawaited(
           ref.read(logServiceProvider).error('showup_checklist_gate_failed: id=$arg', exception: e, stackTrace: st));
@@ -156,6 +159,16 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
           showup.status != ShowupStatus.done &&
           TailZone.contains(scheduledAt: showup.scheduledAt, now: now, days: tailDays);
 
+      // Resolved before isLoading flips so "Mark as done" never shows (or accepts a tap) ahead of the gate.
+      // Re-read if the install state changed mid-read, so a stale gate never lands.
+      ({ChecklistGate gate, ChecklistRunOutcome? outcome}) checklist;
+      int gateGeneration;
+      do {
+        gateGeneration = ++_gateGeneration;
+        checklist = await _fetchChecklistStatus(showup.pactId);
+        if (_disposed) return;
+      } while (gateGeneration != _gateGeneration);
+
       state = state.copyWith(
         showup: showup,
         habitName: habitName,
@@ -167,8 +180,10 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         canRedeem: canRedeem,
         canStartBreak: canStartBreak,
         checklistRunCouldNotOpen: false,
+        checklistGate: checklist.gate,
+        checklistOutcome: checklist.outcome,
+        clearChecklistOutcome: checklist.outcome == null,
       );
-      await _readChecklistStatus(showup.pactId);
     } catch (e, st) {
       unawaited(
         ref.read(logServiceProvider).error('showup_detail_load_failed: id=$arg', exception: e, stackTrace: st),
@@ -202,7 +217,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         case RunStartOutcome.couldNotOpen:
           state = state.copyWith(checklistRunCouldNotOpen: true);
         case RunStartOutcome.notRunnable:
-          await _readChecklistStatus(showup.pactId);
+          await _refreshChecklistGate();
       }
     } catch (e, st) {
       unawaited(
