@@ -14,31 +14,32 @@ void main() {
     messenger.setMockMethodCallHandler(channel, null);
   });
 
-  test('sync writes the current voice_mark_done_enabled value to the platform channel', () async {
-    MethodCall? received;
+  Future<Map<String, Object?>> syncAndCapture(Map<String, Object> overrides) async {
+    final received = <String, Object?>{};
     messenger.setMockMethodCallHandler(channel, (call) async {
-      received = call;
+      received[call.method] = call.arguments;
       return null;
     });
+    await VoiceRemoteConfigBridge().sync(FakeRemoteConfigService(overrides: overrides));
+    return received;
+  }
 
-    final rc = FakeRemoteConfigService(overrides: {'voice_mark_done_enabled': true});
-    await VoiceRemoteConfigBridge().sync(rc);
-
-    expect(received?.method, 'setVoiceMarkDoneEnabled');
-    expect(received?.arguments, {'enabled': true});
+  test('sync writes the current voice_mark_done_enabled value to the platform channel', () async {
+    final received = await syncAndCapture({'voice_mark_done_enabled': true});
+    expect(received['setVoiceMarkDoneEnabled'], {'enabled': true});
   });
 
   test('sync writes false when the flag is off', () async {
-    MethodCall? received;
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      received = call;
-      return null;
-    });
+    final received = await syncAndCapture({'voice_mark_done_enabled': false});
+    expect(received['setVoiceMarkDoneEnabled'], {'enabled': false});
+  });
 
-    final rc = FakeRemoteConfigService(overrides: {'voice_mark_done_enabled': false});
-    await VoiceRemoteConfigBridge().sync(rc);
+  test('sync mirrors checklister_integration_enabled for the Siri checklist gate', () async {
+    final on = await syncAndCapture({'checklister_integration_enabled': true});
+    expect(on['setChecklisterIntegrationEnabled'], {'enabled': true});
 
-    expect(received?.arguments, {'enabled': false});
+    final off = await syncAndCapture({'checklister_integration_enabled': false});
+    expect(off['setChecklisterIntegrationEnabled'], {'enabled': false});
   });
 
   test('sync swallows a platform channel failure (e.g. Android, no handler registered)', () async {

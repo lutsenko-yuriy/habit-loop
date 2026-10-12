@@ -137,7 +137,7 @@ Future<void> main() async {
   // settles — a single call right after `initialize()` would only ever mirror
   // the in-code default or a *previous* session's cached value (HAB-269 WU2
   // audit finding), never what this session's fetch actually returned.
-  final voiceRemoteConfigBridge = VoiceRemoteConfigBridge();
+  final voiceRemoteConfigBridge = VoiceRemoteConfigBridge(appVersion: runningAppVersion);
 
   // Initialise Remote Config before runApp so flags are ready on first frame.
   RemoteConfigService? remoteConfigService;
