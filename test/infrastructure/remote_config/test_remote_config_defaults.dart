@@ -11,7 +11,11 @@ abstract final class TestRemoteConfigDefaults {
   /// (`RemoteConfigDefaults.displayNamePersonalizationEnabled == true`), which
   /// would otherwise force every unrelated test to pin a display name or
   /// accept personalized copy it isn't asserting on. Test default: off.
+  ///
+  /// GH-464: the Checklister integration defaults on too and adds a pact-detail
+  /// section that shifts unrelated scenarios' layout. Test default: off.
   static const Map<String, dynamic> all = {
     'display_name_personalization_enabled': false,
+    'checklister_integration_enabled': false,
   };
 }
