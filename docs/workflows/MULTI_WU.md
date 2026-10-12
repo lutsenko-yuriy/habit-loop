@@ -23,6 +23,8 @@ a WU0 scenario-stub commit. Learned from HAB-206 (see `docs/knowledge/notes/HAB-
    - **Changes to the source after a child has shipped** (e.g. HAB-278's WU19–24 re-ports) become new child tickets, not new WUs on an old ticket.
    - **Parent debrief** runs after the last child ships and covers only cross-repo lessons.
 
+5. **Size each WU against its real surface, not just its core logic.** A WU that adds a service method usually also brings a view model, iOS and Android widgets, l10n in four languages, scenarios and docs, so estimate each of those separately. GH-464's WU4 (+2050/−33, 34 files) and WU5 (+969/−51, 24 files) each came in several times over their ~300 / ~260 LoC estimates because only the core logic was counted. Sizing WU6 this way up front split it into 6a and 6b, and both stayed reviewable.
+
 ## Pre-implementation WUs
 
 **Research-WU (optional) — then Scenario-WU or Checklist-WU**
