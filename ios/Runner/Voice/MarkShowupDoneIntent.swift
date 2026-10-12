@@ -19,6 +19,8 @@
 // caches. Analytics (voice_mark_done_resolved, showup_marked_done) are logged directly
 // via the native FirebaseAnalytics SDK — a deliberate, documented exception to routing
 // through Dart's AnalyticsService (docs/ARCHITECTURE.md's Voice section, HAB-269 WU2).
+//
+// GH-464 WU7: markAndLog checks VoiceChecklistGate before every write.
 
 import AppIntents
 import FirebaseAnalytics
@@ -48,7 +50,8 @@ struct MarkShowupDoneIntent: AppIntent {
 
     // Case 1: exactly one pending match -> mark immediately, no confirmation.
     if pending.count == 1 {
-      return .result(dialog: IntentDialog(stringLiteral: markAndLog(pending[0], outcome: "marked_direct", candidateCount: pending.count)))
+      let message = await markAndLog(pending[0], outcome: "marked_direct", candidateCount: pending.count)
+      return .result(dialog: IntentDialog(stringLiteral: message))
     }
 
     // Case 3: several pending matches -> confirm the best guess (first match).
@@ -56,11 +59,8 @@ struct MarkShowupDoneIntent: AppIntent {
       let best = pending[0]
       do {
         _ = try await requestConfirmation(result: .result(dialog: "Did you mean \(best.habitName)?"))
-        return .result(
-          dialog: IntentDialog(
-            stringLiteral: markAndLog(best, outcome: "marked_after_confirmation", candidateCount: pending.count)
-          )
-        )
+        let message = await markAndLog(best, outcome: "marked_after_confirmation", candidateCount: pending.count)
+        return .result(dialog: IntentDialog(stringLiteral: message))
       } catch {
         logResolved(outcome: "declined_confirmation", candidateCount: pending.count)
         return .result(dialog: "OK, not marking anything.")
@@ -75,9 +75,8 @@ struct MarkShowupDoneIntent: AppIntent {
         _ = try await requestConfirmation(
           result: .result(dialog: "\(match.habitName) isn't due yet. Mark it done anyway?")
         )
-        return .result(
-          dialog: IntentDialog(stringLiteral: markAndLog(match, outcome: "marked_after_confirmation", candidateCount: 0))
-        )
+        let message = await markAndLog(match, outcome: "marked_after_confirmation", candidateCount: 0)
+        return .result(dialog: IntentDialog(stringLiteral: message))
       } catch {
         logResolved(outcome: "declined_confirmation", candidateCount: 0)
         return .result(dialog: "OK, not marking anything.")
@@ -100,9 +99,8 @@ struct MarkShowupDoneIntent: AppIntent {
         logResolved(outcome: "abandoned_no_match", candidateCount: 0)
         return .result(dialog: "Something went wrong.")
       }
-      return .result(
-        dialog: IntentDialog(stringLiteral: markAndLog(chosen, outcome: "recovered_from_no_match", candidateCount: 0))
-      )
+      let message = await markAndLog(chosen, outcome: "recovered_from_no_match", candidateCount: 0)
+      return .result(dialog: IntentDialog(stringLiteral: message))
     } catch {
       logResolved(outcome: "abandoned_no_match", candidateCount: 0)
       return .result(dialog: "OK, not marking anything.")
@@ -110,8 +108,13 @@ struct MarkShowupDoneIntent: AppIntent {
   }
 
   /// Attempts the write, then logs `voice_mark_done_resolved` — `outcome` on
-  /// success, `failed_write` if the write itself failed.
-  private func markAndLog(_ showup: VoiceShowup, outcome: String, candidateCount: Int) -> String {
+  /// success, `failed_write` if the write itself failed, `blocked_checklist_linked`
+  /// if the checklist gate refused it (every case path funnels through here).
+  private func markAndLog(_ showup: VoiceShowup, outcome: String, candidateCount: Int) async -> String {
+    if await VoiceChecklistGate.blocks(showup) {
+      logResolved(outcome: "blocked_checklist_linked", candidateCount: candidateCount)
+      return "Open Habit Loop and run the checklist for \(showup.habitName) first."
+    }
     guard VoiceShowupStore.markDone(id: showup.id) else {
       logResolved(outcome: "failed_write", candidateCount: candidateCount)
       return "Something went wrong."

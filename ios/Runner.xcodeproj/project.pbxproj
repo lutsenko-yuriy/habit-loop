@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C4E1A7B2D93F40A1B6E2F702 /* VoiceChecklistGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E1A7B2D93F40A1B6E2F701 /* VoiceChecklistGate.swift */; };
+		C4E1A7B2D93F40A1B6E2F704 /* VoiceChecklistGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E1A7B2D93F40A1B6E2F703 /* VoiceChecklistGateTests.swift */; };
 		01594D5C3F75D223C0EBB814 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 011A27AAE5216F10DE0B4014 /* Pods_RunnerTests.framework */; };
 		12D3271A50B817DB0C3770A8 /* TodaysShowupsIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB7671004182047FE79B6E6 /* TodaysShowupsIntent.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
@@ -56,6 +58,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C4E1A7B2D93F40A1B6E2F701 /* VoiceChecklistGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChecklistGate.swift; sourceTree = "<group>"; };
+		C4E1A7B2D93F40A1B6E2F703 /* VoiceChecklistGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChecklistGateTests.swift; sourceTree = "<group>"; };
 		011A27AAE5216F10DE0B4014 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
@@ -131,6 +135,7 @@
 				95CC06681A7B5504CCD78315 /* VoiceShowupStoreTests.swift */,
 				C418E33CD2EA6B4DF260DEB4 /* VoicePactBreakTests.swift */,
 				08067286945B1595AF007370 /* VoiceNotificationCancellerTests.swift */,
+				C4E1A7B2D93F40A1B6E2F703 /* VoiceChecklistGateTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -147,6 +152,7 @@
 				27E9CDA3997BE96BEC8B4286 /* VoicePactBreak.swift */,
 				2ACB3489379661639122596D /* VoiceNotificationCanceller.swift */,
 				4B7E8E9EB42098B430FA1446 /* VoiceWriteSignal.swift */,
+				C4E1A7B2D93F40A1B6E2F701 /* VoiceChecklistGate.swift */,
 			);
 			path = Voice;
 			sourceTree = "<group>";
@@ -463,6 +469,7 @@
 				68515DD6810959AAAB5F5814 /* VoiceShowupStoreTests.swift in Sources */,
 				8A14BC726F8B42121E42ADA1 /* VoicePactBreakTests.swift in Sources */,
 				EE9607BEEE59A90C37CA1854 /* VoiceNotificationCancellerTests.swift in Sources */,
+				C4E1A7B2D93F40A1B6E2F704 /* VoiceChecklistGateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -482,6 +489,7 @@
 				BA5C6ECA9382084B50EE1EDE /* VoicePactBreak.swift in Sources */,
 				10C526A98248DE12AF52108C /* VoiceNotificationCanceller.swift in Sources */,
 				55290502CB1EBC6162EE0498 /* VoiceWriteSignal.swift in Sources */,
+				C4E1A7B2D93F40A1B6E2F702 /* VoiceChecklistGate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
