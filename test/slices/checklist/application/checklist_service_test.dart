@@ -229,8 +229,7 @@ void main() {
     test('already finished run: not runnable, record unchanged', () async {
       await links.upsert(link('c1', 'Morning'));
       await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: now);
-      final finished =
-          await runs.markFinished(showupId: 's1', finishedAt: now, outcome: ChecklistRunOutcome.failure);
+      final finished = await runs.markFinished(showupId: 's1', finishedAt: now, outcome: ChecklistRunOutcome.failure);
 
       expect(await service.startRun(pactId: 'p1', showupId: 's1'), RunStartOutcome.notRunnable);
       expect(gateway.launchedUrls, isEmpty);
