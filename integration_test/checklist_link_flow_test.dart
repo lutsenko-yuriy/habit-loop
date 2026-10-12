@@ -115,6 +115,7 @@ void main() {
       // 4-5. Checklister calls back with a selection; the section shows it.
       h.incomingLinks.emit(_selectionCallback('status=selected&checklistId=c1&checklistName=Morning'));
       await waitFor(tester, find.text('Morning'));
+      await tester.pumpAndSettle(); // let the empty -> linked crossfade finish
       expect(find.byKey(_changeKey), findsOneWidget);
       expect(find.byKey(_removeKey), findsOneWidget);
       expect(find.byKey(_selectKey), findsNothing);
@@ -185,6 +186,7 @@ void main() {
       expect(h.checklister.launchedUrls.single.host, 'select');
       h.incomingLinks.emit(_selectionCallback('status=selected&checklistId=c2&checklistName=Evening'));
       await waitFor(tester, find.text('Evening'));
+      await tester.pumpAndSettle(); // let the old -> new crossfade finish
       expect((await h.checklistLinkRepo.getForPact(_pactId))?.checklistId, 'c2');
       final linked = h.analytics.loggedEvents.whereType<PactChecklistLinkedEvent>().single;
       expect(linked.mode, 'change');

@@ -245,6 +245,14 @@ void main() {
       expect(find.text(l10n.checklisterCouldNotOpenError), findsOneWidget);
     });
 
+    testWidgets('while saving: Run checklist keeps its enabled colour (no grey flash)', (tester) async {
+      await tester.pumpWidget(_buildApp(gated().copyWith(isSaving: true)));
+      final ctx = tester.element(find.byType(ShowupDetailPageIos));
+      final button = tester.widget<CupertinoButton>(find.byKey(const Key('showup-run-checklist-button')));
+      expect(button.onPressed, isNull);
+      expect(button.disabledColor, CupertinoTheme.of(ctx).primaryColor);
+    });
+
     testWidgets('while starting: Run checklist is disabled', (tester) async {
       var runs = 0;
       await tester.pumpWidget(_buildApp(gated(starting: true), onRunChecklist: () async => runs++));

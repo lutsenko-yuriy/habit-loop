@@ -24,7 +24,7 @@ enum VoiceShowupStore {
   // -wal replay (exactly the cold, app-not-running case this feature targets — audit
   // finding, HAB-269 WU1 review). Open read-write even for reads; the sandbox already
   // grants this process write access to its own habit_loop.db.
-  private static func openConnection() -> OpaquePointer? {
+  static func openConnection() -> OpaquePointer? {
     var db: OpaquePointer?
     guard sqlite3_open_v2(databasePath, &db, SQLITE_OPEN_READWRITE, nil) == SQLITE_OK else {
       print("VoiceShowupStore: failed to open db at \(databasePath)")

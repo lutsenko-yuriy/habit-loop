@@ -88,6 +88,12 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                                         FilledButton(
                                           key: const Key('showup-run-checklist-button'),
                                           onPressed: s.isSaving || s.isStartingChecklistRun ? null : onRunChecklist,
+                                          // Keeps enabled colours while disabled, like Mark as done below:
+                                          // a grey flash showed while Mark as failed was saving.
+                                          style: FilledButton.styleFrom(
+                                            disabledBackgroundColor: theme.colorScheme.primary,
+                                            disabledForegroundColor: theme.colorScheme.onPrimary,
+                                          ),
                                           child: Text(l10n.showupRunChecklist),
                                         )
                                       else

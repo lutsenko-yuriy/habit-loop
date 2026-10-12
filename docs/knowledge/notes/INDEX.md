@@ -15,7 +15,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **code-style** (9)
 - **knowledge-base-process** (9)
 - **changelog-versioning** (8)
-- **cross-project-sync** (7)
+- **cross-project-sync** (8)
 - **widget-test-gotchas** (7)
 - **dead-code** (5)
 - **verify-from-source** (5)
@@ -79,6 +79,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-263: Todo list: fill in-progress showups amber instead of the outline circle](HAB-263.md)
 
 ### cross-project-sync
+- [GH-464: Link a Checklister checklist to a pact and run it before marking a showup done](GH-464.md)
 - [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
 - [HAB-165: Initialize CheckLister project](HAB-165.md)
 - [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)

@@ -103,7 +103,11 @@ import UserNotifications
   }
 
   private func handleVoiceRemoteConfig(_ call: FlutterMethodCall, result: FlutterResult) {
-    guard call.method == "setVoiceMarkDoneEnabled" else {
+    let keysByMethod = [
+      "setVoiceMarkDoneEnabled": VoiceFeatureFlag.userDefaultsKey,
+      "setChecklisterIntegrationEnabled": VoiceFeatureFlag.checklisterUserDefaultsKey,
+    ]
+    guard let key = keysByMethod[call.method] else {
       result(FlutterMethodNotImplemented)
       return
     }
@@ -111,7 +115,7 @@ import UserNotifications
       result(FlutterError(code: "bad_args", message: "enabled bool argument required", details: nil))
       return
     }
-    UserDefaults.standard.set(enabled, forKey: VoiceFeatureFlag.userDefaultsKey)
+    UserDefaults.standard.set(enabled, forKey: key)
     result(nil)
   }
 

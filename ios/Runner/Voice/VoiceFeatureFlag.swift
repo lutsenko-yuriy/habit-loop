@@ -12,4 +12,11 @@ enum VoiceFeatureFlag {
   static var markDoneEnabled: Bool {
     UserDefaults.standard.bool(forKey: userDefaultsKey)
   }
+
+  /// GH-464 WU7 — release-gated `checklister_integration_enabled`, mirrored by the same bridge.
+  static let checklisterUserDefaultsKey = "checklister_integration_enabled"
+
+  static var checklisterIntegrationEnabled: Bool {
+    UserDefaults.standard.bool(forKey: checklisterUserDefaultsKey)
+  }
 }

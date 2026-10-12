@@ -59,6 +59,11 @@ The Habit Loop app allows the user to:
     - The default habit name is the chain's root pact name plus a version suffix (e.g. "Vibe coding (v2)", then "Vibe coding (v3)" on the next adjustment), regardless of what the immediate predecessor was renamed to
     - Any pact's detail screen shows a chevron navigation stripe right under the habit name whenever a predecessor/successor exists: `‹ predecessor` on the left, `successor ›` on the right — either chevron only appears if that neighbor exists. Tapping a chevron swaps the same screen's content to that neighbor in place (no new screen, no loading spinner — the neighbor is prefetched) with a brief slide+fade transition; a second tap is ignored until the transition settles. The hardware/system back button always exits the screen entirely, regardless of how much chain-navigating happened. "Adjust and start again" appears separately in the bottom action area, and only while no successor exists yet — once a successor is created, it disappears from there (the way to reach the successor is the stripe, not a replacement button)
     - Each pact can have at most one successor — no branching. Stats and streaks are never shared across a chain; it is purely a navigational link
+  - The user can link an active pact to a checklist from the Checklister app, so that every showup of that pact needs a checklist run before it can be marked done (feature flag: `checklister_integration_enabled`)
+    - The pact detail screen shows a "Checklist" section only when Checklister is installed. With nothing linked it shows a "No checklist linked yet" row with "Select checklist", which opens Checklister to pick one; once linked, the row shows the checklist's name on the left with "Change" and "Remove" (no confirmation) on the right. Linking, changing and removing crossfade between the two rows (no slide)
+    - If Checklister reports there is nothing to pick, the user is asked to create/select a checklist there first
+    - Changing or removing the link never re-locks a showup whose run already finished
+    - Links and runs are stored on the device only; after a reinstall or on another device the pact has to be linked again
 - See the details of a specific showup
   - The user must see the time of the showup
   - The user must see the habit in this showup
@@ -66,6 +71,10 @@ The Habit Loop app allows the user to:
   - If the details of the showup were opened after the showup time (as defined during the pact's creation), the showup is marked as failed
   - The user can leave a note on the showup regardless of the time
   - If a showup was auto-failed (not manually failed) and falls within the tail zone (last N days, controlled by `pact_timeline_no_grouping_tail_period_in_days`), the user can redeem it by writing a note and tapping "Mark as Done (redeem)". The redemption button is always visible when eligible but disabled until a note is saved. Manual fails are not redeemable. The feature is controlled by the `showup_redemption_enabled` kill-switch.
+  - If the showup's pact is linked to a checklist and Checklister is installed, "Mark as done" is replaced by "Run checklist", which opens the checklist in Checklister; "Mark as failed" is unchanged
+    - When Checklister returns, the showup detail opens (or refreshes) with "Mark as done" unlocked, whatever the run's outcome; a cancelled or failed run additionally shows a one-time dialog saying the checklist wasn't completed
+    - If the run was started before the showup's window closed, the showup isn't auto-failed until 15 minutes after the window ends, so a run that finishes a little late can still be marked done
+    - If Checklister is uninstalled, the showup behaves as if no checklist were linked
   - The showup detail screen uses smooth fade and slide transitions when its state changes (status badge, auto-fail banner, Take a Break button, action buttons, notes and mark-error text, pact link row) — matching the pact detail screen's existing animated style.
 - Be reminded about an upcoming showup
   - A notification with a reminder will appear to the user if they defined a reminder
@@ -79,6 +88,7 @@ The Habit Loop app allows the user to:
     3. Several pending showups match the description → Siri confirms the most likely match before marking
     4. No showup matches the description → Siri reads back today's remaining pending showups and lets the user pick one by position (e.g. "the first one")
   - Marking a showup via Siri cancels its pending reminder/deadline/hurry-up notifications, the same as marking it done in-app
+  - If the showup's pact is linked to a checklist and Checklister is installed, Siri doesn't mark it and asks the user to open Habit Loop and run the checklist first; once that showup's run has finished in-app, Siri marks it normally
   - Not available: Android/Google Assistant, marking a showup failed by voice, any showup on break, or one belonging to a stopped/completed pact
 - Access app information and send feedback
   - Secondary dashboard actions (About, Language) are grouped behind a ⋯ menu button in the nav bar; tapping it shows all enabled items. If exactly one item is enabled, it appears as a standalone icon instead of the ⋯ button (single-item shortcut). About is controlled by the `about_screen_enabled` feature flag.

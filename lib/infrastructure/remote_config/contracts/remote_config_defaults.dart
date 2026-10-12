@@ -237,11 +237,12 @@ abstract final class RemoteConfigDefaults {
 
   /// Feature toggle: kill-switch for the Checklister integration (GH #464).
   ///
-  /// When `false`, no checklist link/run UI is shown and mark-done is never
-  /// gated behind a checklist run. Defaults to `false` until GH #464's final WU
-  /// flips it, and release-gated via [releaseVersions], so the unfinished
-  /// integration never reaches users mid-rollout.
-  static const bool checklisterIntegrationEnabled = false;
+  /// When `false`, no checklist link/run UI is shown and mark-done (in-app and
+  /// Siri) is never gated behind a checklist run. Defaulted `false` during
+  /// development (WU2–WU6b) and flipped in the final WU (WU7), release-gated to
+  /// `0.62.0` via [releaseVersions]. Mirrored into native `UserDefaults` by
+  /// `VoiceRemoteConfigBridge` for the Siri gate.
+  static const bool checklisterIntegrationEnabled = true;
 
   /// Release-version gate for feature-toggle kill-switches (HAB-207).
   /// Absent key = ungated. Value = flag needs `runningAppVersion >= value`
@@ -252,8 +253,7 @@ abstract final class RemoteConfigDefaults {
   static const Map<String, String?> releaseVersions = {
     'pact_chaining_enabled': '0.53.0',
     'display_name_personalization_enabled': '0.59.0',
-    // `null` until GH #464's final WU sets its release version.
-    'checklister_integration_enabled': null,
+    'checklister_integration_enabled': '0.62.0',
   };
 
   /// Optional short hint shown in the debug override dialog for keys whose
