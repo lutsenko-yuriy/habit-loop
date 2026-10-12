@@ -1,12 +1,14 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_loop/domain/checklist/checklist_gate.dart';
 import 'package:habit_loop/domain/pact/break_derivation.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/domain/showup/tail_zone.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/slices/checklist/application/checklist_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
@@ -19,9 +21,43 @@ final showupDetailViewModelProvider =
     AutoDisposeNotifierProviderFamily<ShowupDetailViewModel, ShowupDetailState, String>(ShowupDetailViewModel.new);
 
 class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState, String> {
+  bool _disposed = false;
+
   @override
   ShowupDetailState build(String showupId) {
+    _disposed = false;
+    ref.onDispose(() => _disposed = true);
+    // Checklister installed/uninstalled while backgrounded: re-derive the gate on resume.
+    ref.listen(checklisterInstalledProvider, (prev, next) {
+      if (next.hasValue && prev?.valueOrNull != next.valueOrNull) unawaited(_refreshChecklistGate());
+    });
     return const ShowupDetailState();
+  }
+
+  Future<ChecklistGate?> _readChecklistStatus(String pactId) async {
+    final status = await ref.read(checklistServiceProvider).statusFor(
+          pactId: pactId,
+          showupId: arg,
+          flagEnabled: ref.read(featureFlagsProvider).checklisterIntegrationEnabled,
+          installed: await ref.read(checklisterInstalledProvider.future),
+        );
+    if (_disposed) return null;
+    state = state.copyWith(
+      checklistGate: status.gate,
+      checklistOutcome: status.outcome,
+      clearChecklistOutcome: status.outcome == null,
+    );
+    return status.gate;
+  }
+
+  Future<void> _refreshChecklistGate() async {
+    final showup = state.showup;
+    if (showup == null || _disposed) return;
+    try {
+      await _readChecklistStatus(showup.pactId);
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('showup_checklist_gate_failed: id=$arg', exception: e, stackTrace: st));
+    }
   }
 
   Future<void> load() async {
@@ -129,7 +165,9 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         wasAutoFailed: wasAutoFailed,
         canRedeem: canRedeem,
         canStartBreak: canStartBreak,
+        checklistRunCouldNotOpen: false,
       );
+      await _readChecklistStatus(showup.pactId);
     } catch (e, st) {
       unawaited(
         ref.read(logServiceProvider).error('showup_detail_load_failed: id=$arg', exception: e, stackTrace: st),
@@ -138,11 +176,39 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
     }
   }
 
-  // No-op when showup is not pending.
+  // No-op when showup is not pending or a checklist run is still required.
   Future<void> markDone() async {
     final showup = state.showup;
     if (showup == null || showup.status != ShowupStatus.pending) return;
+    if (state.checklistGate == ChecklistGate.runRequired) return;
     await _updateStatus(ShowupStatus.done);
+  }
+
+  /// Records the run start and opens Checklister (GH #464). The gate stays
+  /// `runRequired` until the run-finished callback arrives.
+  Future<void> runChecklist() async {
+    final showup = state.showup;
+    if (showup == null || showup.status != ShowupStatus.pending) return;
+    if (state.checklistGate != ChecklistGate.runRequired || state.isStartingChecklistRun || state.isSaving) return;
+    state = state.copyWith(isStartingChecklistRun: true, checklistRunCouldNotOpen: false);
+    try {
+      unawaited(ref.read(crashlyticsServiceProvider).log('action: run_checklist(showupId=$arg)'));
+      final outcome = await ref.read(checklistServiceProvider).startRun(pactId: showup.pactId, showupId: arg);
+      if (_disposed) return;
+      switch (outcome) {
+        case RunStartOutcome.launched:
+          break;
+        case RunStartOutcome.couldNotOpen:
+          state = state.copyWith(checklistRunCouldNotOpen: true);
+        case RunStartOutcome.notRunnable:
+          await _readChecklistStatus(showup.pactId);
+      }
+    } catch (e, st) {
+      unawaited(ref.read(logServiceProvider).error('showup_run_checklist_failed: id=$arg', exception: e, stackTrace: st));
+      if (!_disposed) state = state.copyWith(checklistRunCouldNotOpen: true);
+    } finally {
+      if (!_disposed) state = state.copyWith(isStartingChecklistRun: false);
+    }
   }
 
   // No-op when showup is not pending.
@@ -185,7 +251,8 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       );
 
       final AnalyticsEvent event = switch (newStatus) {
-        ShowupStatus.done => ShowupMarkedDoneEvent(pactId: updatedShowup.pactId),
+        ShowupStatus.done =>
+          ShowupMarkedDoneEvent(pactId: updatedShowup.pactId, checklistOutcome: state.checklistOutcome),
         ShowupStatus.failed => ShowupMarkedFailedEvent(pactId: updatedShowup.pactId),
         ShowupStatus.pending => throw StateError('Unexpected pending status'),
       };

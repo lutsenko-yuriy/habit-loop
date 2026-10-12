@@ -1,3 +1,5 @@
+import 'package:habit_loop/domain/checklist/checklist_gate.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
@@ -22,6 +24,12 @@ class ShowupDetailState {
   // pact still exists, breaks are enabled, no unresolved break already blocks a new one,
   // the showup is unresolved or auto-failed (not done), and it's within the tail zone.
   final bool canStartBreak;
+  // GH #464: whether "Mark as done" waits on a Checklister run.
+  final ChecklistGate checklistGate;
+  // Outcome of the finished run that unlocked the gate; null when no gate applies.
+  final ChecklistRunOutcome? checklistOutcome;
+  final bool isStartingChecklistRun;
+  final bool checklistRunCouldNotOpen;
 
   const ShowupDetailState({
     this.showup,
@@ -37,6 +45,10 @@ class ShowupDetailState {
     this.isShowupNotFound = false,
     this.canRedeem = false,
     this.canStartBreak = false,
+    this.checklistGate = ChecklistGate.none,
+    this.checklistOutcome,
+    this.isStartingChecklistRun = false,
+    this.checklistRunCouldNotOpen = false,
   });
 
   ShowupDetailState copyWith({
@@ -57,6 +69,11 @@ class ShowupDetailState {
     bool? isShowupNotFound,
     bool? canRedeem,
     bool? canStartBreak,
+    ChecklistGate? checklistGate,
+    ChecklistRunOutcome? checklistOutcome,
+    bool clearChecklistOutcome = false,
+    bool? isStartingChecklistRun,
+    bool? checklistRunCouldNotOpen,
   }) {
     return ShowupDetailState(
       showup: showup ?? this.showup,
@@ -72,6 +89,10 @@ class ShowupDetailState {
       isShowupNotFound: isShowupNotFound ?? this.isShowupNotFound,
       canRedeem: canRedeem ?? this.canRedeem,
       canStartBreak: canStartBreak ?? this.canStartBreak,
+      checklistGate: checklistGate ?? this.checklistGate,
+      checklistOutcome: clearChecklistOutcome ? null : (checklistOutcome ?? this.checklistOutcome),
+      isStartingChecklistRun: isStartingChecklistRun ?? this.isStartingChecklistRun,
+      checklistRunCouldNotOpen: checklistRunCouldNotOpen ?? this.checklistRunCouldNotOpen,
     );
   }
 }
