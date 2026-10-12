@@ -57,6 +57,7 @@ class _Env {
       bool linked = true,
       bool installed = true,
       bool keepAlive = true,
+      DateTime? now,
       InMemoryPactChecklistLinkRepository? linkRepo,
       ChecklistRunRepository? runRepo})
       : links = linkRepo ?? InMemoryPactChecklistLinkRepository(),
@@ -72,7 +73,7 @@ class _Env {
       pactTransactionServiceProvider.overrideWithValue(InMemoryPactTransactionService(pacts, showups)),
       syncServiceProvider.overrideWithValue(const NoopSyncService()),
       pactBreakRepositoryProvider.overrideWithValue(InMemoryPactBreakRepository()),
-      showupDetailNowProvider.overrideWithValue(_now),
+      showupDetailNowProvider.overrideWithValue(now ?? _now),
       remoteConfigServiceProvider.overrideWithValue(rc),
       analyticsServiceProvider.overrideWithValue(analytics),
       checklisterGatewayProvider.overrideWithValue(gateway),
@@ -361,6 +362,37 @@ void main() {
       await pumpEventQueue();
       await env.vm.load();
       expect(env.state.showChecklistFailureDialog, isFalse);
+    });
+  });
+
+  group('late-finish exemption from auto-fail', () {
+    // Window 08:00–08:10; grace ends 08:25.
+    Future<ShowupStatus?> statusAfterLoad(_Env env) async {
+      await env.vm.load();
+      return (await env.container.read(showupRepositoryProvider).getShowupById('s1'))?.status;
+    }
+
+    Future<void> start(_Env env, DateTime at) =>
+        env.runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: at);
+
+    test('run started in the window, within the grace: stays pending and runRequired', () async {
+      env = _Env(now: DateTime(2099, 1, 1, 8, 20));
+      await start(env, DateTime(2099, 1, 1, 8, 5));
+      expect(await statusAfterLoad(env), ShowupStatus.pending);
+      expect(env.state.checklistGate, ChecklistGate.runRequired);
+      expect(env.analytics.loggedEvents.whereType<ShowupAutoFailedEvent>(), isEmpty);
+    });
+
+    test('past the grace: auto-failed', () async {
+      env = _Env(now: DateTime(2099, 1, 1, 8, 26));
+      await start(env, DateTime(2099, 1, 1, 8, 5));
+      expect(await statusAfterLoad(env), ShowupStatus.failed);
+    });
+
+    test('run started after the window closed: auto-failed', () async {
+      env = _Env(now: DateTime(2099, 1, 1, 8, 20));
+      await start(env, DateTime(2099, 1, 1, 8, 11));
+      expect(await statusAfterLoad(env), ShowupStatus.failed);
     });
   });
 }

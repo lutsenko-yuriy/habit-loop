@@ -137,7 +137,9 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
       final pactStatsService = ref.read(pactStatsServiceProvider);
       if (showup.status == ShowupStatus.pending && !isOnBreak) {
         final endTime = showup.scheduledAt.add(showup.duration);
-        if (now.isAfter(endTime)) {
+        // A checklist run started in the window may still finish within the grace (GH-464).
+        if (now.isAfter(endTime) &&
+            (await ref.read(checklistServiceProvider).lateFinishExemptIds([showup], now: now)).isEmpty) {
           showup = await pactStatsService.persistShowupStatus(
             showup: showup,
             status: ShowupStatus.failed,
