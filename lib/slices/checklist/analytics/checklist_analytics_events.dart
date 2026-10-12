@@ -1,3 +1,4 @@
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 
 /// Fired when Checklister is opened to pick a checklist for a pact. (GH #464)
@@ -57,4 +58,20 @@ final class ChecklistRunStartedEvent extends AnalyticsEvent {
 
   @override
   Map<String, Object?> toParameters() => {'pact_id': pactId};
+}
+
+/// Fired when Checklister reports a run's outcome back. (GH #464)
+final class ChecklistRunFinishedEvent extends AnalyticsEvent {
+  ChecklistRunFinishedEvent({required this.pactId, required this.outcome, required this.windowClosedMeanwhile});
+
+  final String pactId;
+  final ChecklistRunOutcome outcome;
+  final bool windowClosedMeanwhile;
+
+  @override
+  String get name => 'checklist_run_finished';
+
+  @override
+  Map<String, Object?> toParameters() =>
+      {'pact_id': pactId, 'outcome': outcome.name, 'window_closed_meanwhile': windowClosedMeanwhile};
 }

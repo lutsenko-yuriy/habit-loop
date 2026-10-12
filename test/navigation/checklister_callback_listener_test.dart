@@ -1,19 +1,24 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_links.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/navigation/checklister_callback_listener.dart';
+import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_checklist_section_signals.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_detail_signals.dart';
 
 import '../infrastructure/analytics/fake_analytics_service.dart';
 import '../infrastructure/checklister/fake_checklister_gateway.dart';
 import '../infrastructure/deep_links/fake_incoming_link_service.dart';
+import '../infrastructure/remote_config/fake_remote_config_service.dart';
 
 Pact _pact(String id, PactStatus status) => Pact(
       id: id,
@@ -29,11 +34,13 @@ Uri _cb(String pactId, String query) => Uri.parse('${ChecklisterLinks.selectedCa
 
 void main() {
   late InMemoryPactChecklistLinkRepository links;
+  late InMemoryChecklistRunRepository runs;
   late FakeIncomingLinkService incoming;
   late ProviderContainer container;
 
   Future<void> pumpListener(WidgetTester tester) async {
     links = InMemoryPactChecklistLinkRepository();
+    runs = InMemoryChecklistRunRepository();
     incoming = FakeIncomingLinkService();
     addTearDown(incoming.dispose);
     container = ProviderContainer(overrides: [
@@ -42,8 +49,13 @@ void main() {
         InMemoryPactRepository([_pact('p1', PactStatus.active), _pact('p2', PactStatus.stopped)]),
       ),
       pactChecklistLinkRepositoryProvider.overrideWithValue(links),
+      checklistRunRepositoryProvider.overrideWithValue(runs),
+      showupRepositoryProvider.overrideWithValue(InMemoryShowupRepository()),
       checklisterGatewayProvider.overrideWithValue(FakeChecklisterGateway()),
       analyticsServiceProvider.overrideWithValue(FakeAnalyticsService()),
+      remoteConfigServiceProvider.overrideWithValue(
+        FakeRemoteConfigService.withTestDefaults(overrides: {'checklister_integration_enabled': true}),
+      ),
     ]);
     addTearDown(container.dispose);
     await tester.pumpWidget(
@@ -84,5 +96,17 @@ void main() {
     await tester.pump();
 
     expect(await links.getForPact('p2'), isNull);
+  });
+
+  testWidgets('run-finished callback for a started run raises the showup notice', (tester) async {
+    await pumpListener(tester);
+    await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: DateTime(2026));
+
+    incoming.emit(Uri.parse('${ChecklisterLinks.runFinishedCallback('p1', 's1')}&status=cancelled&checklistId=c1'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(container.read(checklistRunFinishedNoticeProvider('s1')), ChecklistRunOutcome.failure);
+    expect((await runs.getForShowup('s1'))?.outcome, ChecklistRunOutcome.failure);
   });
 }

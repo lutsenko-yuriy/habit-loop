@@ -5,6 +5,8 @@ import 'package:habit_loop/domain/checklist/pact_checklist_link.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
+import 'package:habit_loop/domain/showup/showup.dart';
+import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_callback.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_links.dart';
 import 'package:habit_loop/slices/checklist/analytics/checklist_analytics_events.dart';
@@ -12,6 +14,7 @@ import 'package:habit_loop/slices/checklist/application/checklist_service.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../../../infrastructure/analytics/fake_analytics_service.dart';
 import '../../../infrastructure/checklister/fake_checklister_gateway.dart';
@@ -54,6 +57,23 @@ void main() {
       linkRepository: links,
       runRepository: runs,
       pactRepository: pacts,
+      showupRepository: InMemoryShowupRepository([
+        // Window 11:50–12:00; `now` (12:00) is its last instant.
+        Showup(
+          id: 's1',
+          pactId: 'p1',
+          scheduledAt: DateTime(2026, 5, 10, 11, 50),
+          duration: const Duration(minutes: 10),
+          status: ShowupStatus.pending,
+        ),
+        Showup(
+          id: 's2',
+          pactId: 'p1',
+          scheduledAt: DateTime(2026, 5, 10, 11, 40),
+          duration: const Duration(minutes: 10),
+          status: ShowupStatus.pending,
+        ),
+      ]),
       gateway: gateway,
       analytics: analytics,
       now: () => now,
@@ -274,6 +294,69 @@ void main() {
       await runs.markFinished(showupId: 's1', finishedAt: now, outcome: ChecklistRunOutcome.success);
       expect(await status(flag: false), (gate: ChecklistGate.none, outcome: null));
       expect(await status(installed: false), (gate: ChecklistGate.none, outcome: null));
+    });
+  });
+
+  group('applyRunResult', () {
+    RunCallback run(ChecklisterCallbackStatus status,
+            {String showupId = 's1', String pactId = 'p1', String checklistId = 'c1'}) =>
+        RunCallback(pactId: pactId, showupId: showupId, status: status, checklistId: checklistId, runId: 'r1');
+
+    Future<void> started(String showupId, {DateTime? at}) =>
+        runs.upsertStarted(showupId: showupId, pactId: 'p1', checklistId: 'c1', startedAt: at ?? now);
+
+    test('completed: finishes the run as success and logs checklist_run_finished', () async {
+      await started('s1');
+      expect(await service.applyRunResult(run(ChecklisterCallbackStatus.completed)), ChecklistRunOutcome.success);
+
+      final finished = await runs.getForShowup('s1');
+      expect([finished?.finishedAt, finished?.outcome], [now, ChecklistRunOutcome.success]);
+      final e = analytics.loggedEvents.single as ChecklistRunFinishedEvent;
+      expect(e.name, 'checklist_run_finished');
+      expect(e.toParameters(), {'pact_id': 'p1', 'outcome': 'success', 'window_closed_meanwhile': false});
+    });
+
+    test('cancelled and error both map to failure', () async {
+      await started('s1');
+      await started('s2');
+      expect(await service.applyRunResult(run(ChecklisterCallbackStatus.cancelled)), ChecklistRunOutcome.failure);
+      expect(
+        await service.applyRunResult(run(ChecklisterCallbackStatus.error, showupId: 's2')),
+        ChecklistRunOutcome.failure,
+      );
+    });
+
+    test('window_closed_meanwhile is true when the window ended between start and finish', () async {
+      await started('s2', at: DateTime(2026, 5, 10, 11, 45));
+      await service.applyRunResult(run(ChecklisterCallbackStatus.completed, showupId: 's2'));
+      expect((analytics.loggedEvents.single as ChecklistRunFinishedEvent).windowClosedMeanwhile, isTrue);
+    });
+
+    test('ignored without a started run (spoofed callback)', () async {
+      expect(await service.applyRunResult(run(ChecklisterCallbackStatus.completed)), isNull);
+      expect(await runs.getForShowup('s1'), isNull);
+      expect(analytics.loggedEvents, isEmpty);
+    });
+
+    test('a duplicate callback is a no-op: no second event, the first outcome stays', () async {
+      await started('s1');
+      await service.applyRunResult(run(ChecklisterCallbackStatus.completed));
+      expect(await service.applyRunResult(run(ChecklisterCallbackStatus.cancelled)), isNull);
+      expect((await runs.getForShowup('s1'))?.outcome, ChecklistRunOutcome.success);
+      expect(analytics.loggedEvents, hasLength(1));
+    });
+
+    test('ignored when the pact or checklist does not match the started run', () async {
+      await started('s1');
+      expect(await service.applyRunResult(run(ChecklisterCallbackStatus.completed, pactId: 'other')), isNull);
+      expect(await service.applyRunResult(run(ChecklisterCallbackStatus.completed, checklistId: 'c2')), isNull);
+      expect((await runs.getForShowup('s1'))?.isFinished, isFalse);
+    });
+
+    test('a selection-only status is ignored', () async {
+      await started('s1');
+      expect(await service.applyRunResult(run(ChecklisterCallbackStatus.selected)), isNull);
+      expect((await runs.getForShowup('s1'))?.isFinished, isFalse);
     });
   });
 }

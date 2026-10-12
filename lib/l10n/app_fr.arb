@@ -402,5 +402,7 @@
   "checklisterCouldNotOpenError": "Impossible d'ouvrir Checklister.",
   "@checklisterCouldNotOpenError": {},
   "showupRunChecklist": "Lancer la liste",
-  "@showupRunChecklist": {}
+  "@showupRunChecklist": {},
+  "showupChecklistFailedTitle": "Liste non terminée",
+  "showupChecklistFailedBody": "La liste ne s'est pas terminée correctement. Vous pouvez quand même marquer cette séance comme faite."
 }

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
+import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_break_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
@@ -45,9 +46,40 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
     );
   }
 
+  /// The unsuccessful-run dialog (GH #464); acknowledged only once it is closed.
+  Future<void> _showChecklistFailureDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final ok = MaterialLocalizations.of(context).okButtonLabel;
+    final title = Text(l10n.showupChecklistFailedTitle);
+    final body = Text(l10n.showupChecklistFailedBody);
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: title,
+          content: body,
+          actions: [CupertinoDialogAction(onPressed: () => Navigator.of(ctx).pop(), child: Text(ok))],
+        ),
+      );
+    } else {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: title,
+          content: body,
+          actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(ok))],
+        ),
+      );
+    }
+    if (mounted) ref.read(showupDetailViewModelProvider(widget.showupId).notifier).acknowledgeChecklistFailureDialog();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(showupDetailViewModelProvider(widget.showupId));
+    ref.listen(showupDetailViewModelProvider(widget.showupId).select((s) => s.showChecklistFailureDialog), (_, show) {
+      if (show) unawaited(_showChecklistFailureDialog());
+    });
 
     Future<void> onMarkDone() async {
       await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).markDone();

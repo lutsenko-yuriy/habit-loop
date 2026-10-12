@@ -11,6 +11,7 @@ import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.da
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/checklist/application/checklist_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_detail_signals.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_ui_state.dart';
 
@@ -32,8 +33,26 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
     ref.listen(checklisterInstalledProvider, (prev, next) {
       if (next.hasValue && prev?.valueOrNull != next.valueOrNull) unawaited(_refreshChecklistGate());
     });
+    ref.listen(checklistRunFinishedNoticeProvider(showupId), (_, outcome) {
+      if (outcome != null) _consumeRunFinished(outcome);
+    });
+    // Raised before this VM existed (cold start: the navigator pushes this screen).
+    final pending = ref.read(checklistRunFinishedNoticeProvider(showupId));
+    if (pending != null) unawaited(Future.microtask(() => _consumeRunFinished(pending)));
     return const ShowupDetailState();
   }
+
+  /// A run-finished callback was applied: re-read the gate and raise the failure dialog once.
+  void _consumeRunFinished(ChecklistRunOutcome outcome) {
+    if (_disposed) return;
+    ref.read(checklistRunFinishedNoticeProvider(arg).notifier).state = null;
+    // Showup unknown yet (cold start) is re-checked by load(); a resolved showup gets no "still markable" dialog.
+    final pending = state.showup == null || state.showup!.status == ShowupStatus.pending;
+    if (outcome == ChecklistRunOutcome.failure && pending) state = state.copyWith(showChecklistFailureDialog: true);
+    unawaited(_refreshChecklistGate());
+  }
+
+  void acknowledgeChecklistFailureDialog() => state = state.copyWith(showChecklistFailureDialog: false);
 
   /// Bumped by every gate read; a read that finishes under an older generation drops its result.
   int _gateGeneration = 0;
@@ -184,6 +203,7 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
         canRedeem: canRedeem,
         canStartBreak: canStartBreak,
         checklistRunCouldNotOpen: false,
+        showChecklistFailureDialog: state.showChecklistFailureDialog && showup.status == ShowupStatus.pending,
         checklistGate: checklist.gate,
         checklistOutcome: checklist.outcome,
         clearChecklistOutcome: checklist.outcome == null,
