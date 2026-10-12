@@ -397,6 +397,8 @@
   "@pactChecklistSectionTitle": {},
   "pactChecklistSelect": "Select checklist",
   "@pactChecklistSelect": {},
+  "pactChecklistEmpty": "No checklist linked yet",
+  "@pactChecklistEmpty": {},
   "pactChecklistChange": "Change",
   "@pactChecklistChange": {},
   "pactChecklistRemove": "Remove",

@@ -29,6 +29,14 @@ final _pact = Pact(
 );
 
 const _selectKey = Key('pact-checklist-select-button');
+const _emptyKey = Key('pact-checklist-empty');
+
+final _link = PactChecklistLink(
+  pactId: 'p1',
+  checklistId: 'c1',
+  checklistName: 'Morning routine',
+  linkedAt: DateTime(2026, 5, 1),
+);
 
 void main() {
   late InMemoryPactChecklistLinkRepository links;
@@ -80,9 +88,40 @@ void main() {
     expect(find.byKey(_selectKey), findsNothing);
   });
 
-  testWidgets('flag on + installed + no link: shows "Select checklist"', (tester) async {
+  testWidgets('flag on + installed + no link: shows the empty state with "Select checklist"', (tester) async {
     await pump(tester);
+    expect(find.byKey(_emptyKey), findsOneWidget);
     expect(find.byKey(_selectKey), findsOneWidget);
+  });
+
+  testWidgets(
+    'linked name sits left of Change/Remove on one row',
+    variant: const TargetPlatformVariant({TargetPlatform.android, TargetPlatform.iOS}),
+    (tester) async {
+      await links.upsert(_link);
+      await pump(tester);
+
+      final name = tester.getCenter(find.text('Morning routine'));
+      final change = tester.getCenter(find.byKey(const Key('pact-checklist-change-button')));
+      final remove = tester.getCenter(find.byKey(const Key('pact-checklist-remove-button')));
+      expect(name.dx, lessThan(change.dx));
+      expect(change.dx, lessThan(remove.dx));
+      expect((name.dy - remove.dy).abs(), lessThan(2));
+    },
+  );
+
+  testWidgets('Remove crossfades the linked tile into the empty state', (tester) async {
+    await links.upsert(_link);
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('pact-checklist-remove-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Morning routine'), findsOneWidget, reason: 'outgoing tile still fading');
+    expect(find.byKey(_emptyKey), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(find.text('Morning routine'), findsNothing);
   });
 
   testWidgets('tapping "Select checklist" opens Checklister and logs selection_started', (tester) async {
@@ -96,12 +135,7 @@ void main() {
   });
 
   testWidgets('existing link: shows its name; Remove clears it and logs unlinked', (tester) async {
-    await links.upsert(PactChecklistLink(
-      pactId: 'p1',
-      checklistId: 'c1',
-      checklistName: 'Morning routine',
-      linkedAt: DateTime(2026, 5, 1),
-    ));
+    await links.upsert(_link);
     await pump(tester);
     expect(find.text('Morning routine'), findsOneWidget);
 

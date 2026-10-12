@@ -393,6 +393,8 @@
   "@pactChecklistSectionTitle": {},
   "pactChecklistSelect": "Выбрать чек-лист",
   "@pactChecklistSelect": {},
+  "pactChecklistEmpty": "Чек-лист пока не выбран",
+  "@pactChecklistEmpty": {},
   "pactChecklistChange": "Изменить",
   "@pactChecklistChange": {},
   "pactChecklistRemove": "Убрать",

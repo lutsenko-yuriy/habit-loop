@@ -393,6 +393,8 @@
   "@pactChecklistSectionTitle": {},
   "pactChecklistSelect": "Choisir une liste",
   "@pactChecklistSelect": {},
+  "pactChecklistEmpty": "Aucune liste liée pour l’instant",
+  "@pactChecklistEmpty": {},
   "pactChecklistChange": "Changer",
   "@pactChecklistChange": {},
   "pactChecklistRemove": "Retirer",
