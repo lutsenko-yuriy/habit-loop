@@ -30,6 +30,8 @@ class ShowupDetailState {
   final ChecklistRunOutcome? checklistOutcome;
   final bool isStartingChecklistRun;
   final bool checklistRunCouldNotOpen;
+  // One-shot: an unsuccessful run just finished; cleared once the dialog is acknowledged.
+  final bool showChecklistFailureDialog;
 
   const ShowupDetailState({
     this.showup,
@@ -49,6 +51,7 @@ class ShowupDetailState {
     this.checklistOutcome,
     this.isStartingChecklistRun = false,
     this.checklistRunCouldNotOpen = false,
+    this.showChecklistFailureDialog = false,
   });
 
   ShowupDetailState copyWith({
@@ -74,6 +77,7 @@ class ShowupDetailState {
     bool clearChecklistOutcome = false,
     bool? isStartingChecklistRun,
     bool? checklistRunCouldNotOpen,
+    bool? showChecklistFailureDialog,
   }) {
     return ShowupDetailState(
       showup: showup ?? this.showup,
@@ -93,6 +97,7 @@ class ShowupDetailState {
       checklistOutcome: clearChecklistOutcome ? null : (checklistOutcome ?? this.checklistOutcome),
       isStartingChecklistRun: isStartingChecklistRun ?? this.isStartingChecklistRun,
       checklistRunCouldNotOpen: checklistRunCouldNotOpen ?? this.checklistRunCouldNotOpen,
+      showChecklistFailureDialog: showChecklistFailureDialog ?? this.showChecklistFailureDialog,
     );
   }
 }

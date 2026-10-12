@@ -1,7 +1,10 @@
+import 'package:flutter/cupertino.dart' show CupertinoAlertDialog;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -13,6 +16,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_screen.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_detail_signals.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 
 import '../../../infrastructure/remote_config/fake_remote_config_service.dart';
@@ -435,6 +439,51 @@ void main() {
       await tester.tap(find.textContaining('deleted'));
       await tester.pumpAndSettle();
       expect(navKey.currentState!.canPop(), isFalse);
+    });
+  });
+
+  group('unsuccessful checklist run dialog', () {
+    testWidgets(
+      'shown once for a failure notice, acknowledged with OK',
+      variant: const TargetPlatformVariant({TargetPlatform.iOS, TargetPlatform.android}),
+      (tester) async {
+        final showup = _pendingFutureShowup();
+        await tester.pumpWidget(
+          _testApp(
+            overrides: _overrides(showup: showup, pact: _pact),
+            child: ShowupDetailScreen(showupId: showup.id),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final container = ProviderScope.containerOf(tester.element(find.byType(ShowupDetailScreen)));
+        final l10n = AppLocalizations.of(tester.element(find.byType(ShowupDetailScreen)))!;
+
+        container.read(checklistRunFinishedNoticeProvider(showup.id).notifier).state = ChecklistRunOutcome.failure;
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.showupChecklistFailedTitle), findsOneWidget);
+        final ios = defaultTargetPlatform == TargetPlatform.iOS;
+        expect(find.byType(ios ? CupertinoAlertDialog : AlertDialog), findsOneWidget);
+
+        await tester.tap(find.text('OK'));
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.showupChecklistFailedTitle), findsNothing);
+        expect(container.read(showupDetailViewModelProvider(showup.id)).showChecklistFailureDialog, isFalse);
+      },
+    );
+
+    testWidgets('no dialog for a success notice', (tester) async {
+      final showup = _pendingFutureShowup();
+      await tester.pumpWidget(
+        _testApp(
+          overrides: _overrides(showup: showup, pact: _pact),
+          child: ShowupDetailScreen(showupId: showup.id),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(tester.element(find.byType(ShowupDetailScreen)));
+      container.read(checklistRunFinishedNoticeProvider(showup.id).notifier).state = ChecklistRunOutcome.success;
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
     });
   });
 }

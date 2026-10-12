@@ -402,5 +402,7 @@
   "checklisterCouldNotOpenError": "Не удалось открыть Checklister.",
   "@checklisterCouldNotOpenError": {},
   "showupRunChecklist": "Пройти чек-лист",
-  "@showupRunChecklist": {}
+  "@showupRunChecklist": {},
+  "showupChecklistFailedTitle": "Чек-лист не пройден",
+  "showupChecklistFailedBody": "Чек-лист не был пройден успешно. Вы всё равно можете отметить эту явку как выполненную."
 }

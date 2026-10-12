@@ -21,6 +21,7 @@ import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
+import 'package:habit_loop/slices/showup/ui/generic/showup_detail_signals.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
 
@@ -55,6 +56,7 @@ class _Env {
       {bool flag = true,
       bool linked = true,
       bool installed = true,
+      bool keepAlive = true,
       InMemoryPactChecklistLinkRepository? linkRepo,
       ChecklistRunRepository? runRepo})
       : links = linkRepo ?? InMemoryPactChecklistLinkRepository(),
@@ -78,7 +80,7 @@ class _Env {
       checklistRunRepositoryProvider.overrideWithValue(runs),
     ]);
     // Keep the autoDispose family alive between reads.
-    container.listen(showupDetailViewModelProvider('s1'), (_, __) {});
+    if (keepAlive) container.listen(showupDetailViewModelProvider('s1'), (_, __) {});
   }
 
   final InMemoryPactChecklistLinkRepository links;
@@ -283,6 +285,60 @@ void main() {
       await env.vm.load();
       await env.vm.runChecklist();
       expect(env.gateway.launchedUrls, isEmpty);
+    });
+  });
+
+  group('run-finished notice', () {
+    void raise(ChecklistRunOutcome outcome) =>
+        env.container.read(checklistRunFinishedNoticeProvider('s1').notifier).state = outcome;
+
+    test('success: unlocks without the failure dialog and clears the notice', () async {
+      env = _Env();
+      await env.vm.load();
+      await env.finishRun(ChecklistRunOutcome.success);
+      raise(ChecklistRunOutcome.success);
+      await pumpEventQueue();
+
+      expect(env.state.checklistGate, ChecklistGate.unlocked);
+      expect(env.state.showChecklistFailureDialog, isFalse);
+      expect(env.container.read(checklistRunFinishedNoticeProvider('s1')), isNull);
+    });
+
+    test('failure: unlocks and raises the dialog until it is acknowledged', () async {
+      env = _Env();
+      await env.vm.load();
+      await env.finishRun(ChecklistRunOutcome.failure);
+      raise(ChecklistRunOutcome.failure);
+      await pumpEventQueue();
+
+      expect(env.state.checklistGate, ChecklistGate.unlocked);
+      expect(env.state.showChecklistFailureDialog, isTrue);
+      env.vm.acknowledgeChecklistFailureDialog();
+      expect(env.state.showChecklistFailureDialog, isFalse);
+    });
+
+    test('a notice raised before the VM exists (cold start) is consumed on build', () async {
+      env = _Env(keepAlive: false);
+      await env.finishRun(ChecklistRunOutcome.failure);
+      raise(ChecklistRunOutcome.failure);
+      env.container.listen(showupDetailViewModelProvider('s1'), (_, __) {});
+      await env.vm.load();
+      await pumpEventQueue();
+
+      expect(env.state.checklistGate, ChecklistGate.unlocked);
+      expect(env.state.showChecklistFailureDialog, isTrue);
+      expect(env.container.read(checklistRunFinishedNoticeProvider('s1')), isNull);
+    });
+
+    test('a reload does not raise the dialog again', () async {
+      env = _Env();
+      await env.vm.load();
+      await env.finishRun(ChecklistRunOutcome.failure);
+      raise(ChecklistRunOutcome.failure);
+      await pumpEventQueue();
+      env.vm.acknowledgeChecklistFailureDialog();
+      await env.vm.load();
+      expect(env.state.showChecklistFailureDialog, isFalse);
     });
   });
 }

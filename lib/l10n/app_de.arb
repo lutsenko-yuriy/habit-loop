@@ -402,5 +402,7 @@
   "checklisterCouldNotOpenError": "Checklister konnte nicht geöffnet werden.",
   "@checklisterCouldNotOpenError": {},
   "showupRunChecklist": "Checkliste durchgehen",
-  "@showupRunChecklist": {}
+  "@showupRunChecklist": {},
+  "showupChecklistFailedTitle": "Checkliste nicht abgeschlossen",
+  "showupChecklistFailedBody": "Die Checkliste wurde nicht erfolgreich abgeschlossen. Du kannst dieses Showup trotzdem als erledigt markieren."
 }

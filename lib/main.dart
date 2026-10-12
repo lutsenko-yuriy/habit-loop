@@ -465,7 +465,10 @@ class HabitLoopApp extends ConsumerWidget {
           ),
           child: AppLifecycleReconciler(
             child: ChecklisterInstallWatcher(
-              child: ChecklisterCallbackListener(child: child ?? const SizedBox.shrink()),
+              child: ChecklisterCallbackListener(
+                navigatorKey: navigatorKey,
+                child: child ?? const SizedBox.shrink(),
+              ),
             ),
           ),
         );
