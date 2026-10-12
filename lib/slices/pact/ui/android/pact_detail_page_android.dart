@@ -441,11 +441,20 @@ class _PactDetailContent extends StatelessWidget {
           ),
         ],
 
-        // Checklist section (GH #464): active pacts only; the host hides itself when disabled.
-        if (pact.status == PactStatus.active && checklistSection != null) ...[
-          const SizedBox(height: AppSpacing.s16),
-          checklistSection!,
-        ],
+        // Checklist section (GH #464): active pacts only, collapses on stop like the sections
+        // around it; the host hides itself when disabled.
+        if (checklistSection != null)
+          AnimatedReveal(
+            visible: pact.status == PactStatus.active,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppSpacing.s16),
+                checklistSection!,
+              ],
+            ),
+          ),
 
         // Editable note section for inactive pacts, reveals/collapses (HAB-206 WU3).
         // Falls back to the outgoing pact's stopReason while collapsing.

@@ -84,6 +84,22 @@ void main() {
       expect(find.byKey(_marker), findsNothing);
     });
 
+    testWidgets('stopping the pact fades the section out instead of popping it', (tester) async {
+      const section = SizedBox(key: _marker, height: 40);
+      await _pump(tester, _active, section: section);
+      await _scrollToBottom(tester);
+      expect(find.byKey(_marker), findsOneWidget);
+
+      await tester.pumpWidget(
+        _app(_active.copyWith(status: PactStatus.stopped, stoppedAt: DateTime(2026, 4, 1)), checklistSection: section),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byKey(_marker), findsOneWidget, reason: 'still collapsing');
+
+      await tester.pumpAndSettle();
+      expect(find.byKey(_marker), findsNothing);
+    });
+
     testWidgets('completed pact never renders the section even if one is provided', (tester) async {
       await _pump(tester, _active.copyWith(status: PactStatus.completed), section: const SizedBox(key: _marker));
       await _scrollToBottom(tester);
