@@ -392,5 +392,17 @@
   "dashboardGreetingPersonalized": "Hi {name}",
   "@dashboardGreetingPersonalized": {
     "placeholders": { "name": { "type": "String" } }
-  }
+  },
+  "pactChecklistSectionTitle": "Checklist",
+  "@pactChecklistSectionTitle": {},
+  "pactChecklistSelect": "Select checklist",
+  "@pactChecklistSelect": {},
+  "pactChecklistChange": "Change",
+  "@pactChecklistChange": {},
+  "pactChecklistRemove": "Remove",
+  "@pactChecklistRemove": {},
+  "pactChecklistNoChecklistsError": "Create a checklist in Checklister first.",
+  "@pactChecklistNoChecklistsError": {},
+  "checklisterCouldNotOpenError": "Couldn't open Checklister.",
+  "@checklisterCouldNotOpenError": {}
 }

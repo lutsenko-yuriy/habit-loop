@@ -75,7 +75,7 @@
         <!-- GH #464: lets canLaunchUrl detect the Checklister app (package visibility, Android 11+). -->
         <intent>
             <action android:name="android.intent.action.VIEW"/>
-            <data android:scheme="checklister"/>
+            <data android:scheme="checklister" android:host="select"/>
         </intent>
     </queries>
 </manifest>

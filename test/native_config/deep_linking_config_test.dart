@@ -17,4 +17,10 @@ void main() {
     );
     expect(manifest, contains('android:scheme="habitloop" android:host="checklist"'));
   });
+
+  test('Android <queries> names a host Checklister filters on, so canLaunchUrl can see it', () {
+    final manifest = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+    // Checklister's VIEW filter declares hosts select/run; a scheme-only query matches no filter.
+    expect(manifest, contains('<data android:scheme="checklister" android:host="select"/>'));
+  });
 }
