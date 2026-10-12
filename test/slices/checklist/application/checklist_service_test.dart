@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/checklist/checklist_gate.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/domain/checklist/pact_checklist_link.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -7,6 +9,7 @@ import 'package:habit_loop/infrastructure/checklister/contracts/checklister_call
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_links.dart';
 import 'package:habit_loop/slices/checklist/analytics/checklist_analytics_events.dart';
 import 'package:habit_loop/slices/checklist/application/checklist_service.dart';
+import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 
@@ -35,6 +38,7 @@ SelectionCallback _status(String pactId, ChecklisterCallbackStatus s) => Selecti
 void main() {
   final now = DateTime(2026, 5, 10, 12);
   late InMemoryPactChecklistLinkRepository links;
+  late InMemoryChecklistRunRepository runs;
   late InMemoryPactRepository pacts;
   late FakeChecklisterGateway gateway;
   late FakeAnalyticsService analytics;
@@ -42,11 +46,13 @@ void main() {
 
   setUp(() {
     links = InMemoryPactChecklistLinkRepository();
+    runs = InMemoryChecklistRunRepository();
     pacts = InMemoryPactRepository([_pact('p1'), _pact('stopped', status: PactStatus.stopped)]);
     gateway = FakeChecklisterGateway();
     analytics = FakeAnalyticsService();
     service = ChecklistService(
       linkRepository: links,
+      runRepository: runs,
       pactRepository: pacts,
       gateway: gateway,
       analytics: analytics,
@@ -183,6 +189,92 @@ void main() {
     test('no-op without a link: no event', () async {
       await service.unlink('p1');
       expect(analytics.loggedEvents, isEmpty);
+    });
+  });
+
+  group('startRun', () {
+    test('persists an unfinished run before launching, then logs checklist_run_started', () async {
+      await links.upsert(link('c1', 'Morning'));
+      ChecklistRun? atLaunch;
+      gateway.onLaunch = (_) async => atLaunch = await runs.getForShowup('s1');
+
+      expect(await service.startRun(pactId: 'p1', showupId: 's1'), RunStartOutcome.launched);
+
+      final launched = gateway.launchedUrls.single;
+      expect([launched.host, launched.queryParameters['checklistId']], ['run', 'c1']);
+      expect(launched.queryParameters['callbackUrl'], ChecklisterLinks.runFinishedCallback('p1', 's1').toString());
+      final run = await runs.getForShowup('s1');
+      expect([run?.pactId, run?.checklistId, run?.startedAt, run?.isFinished], ['p1', 'c1', now, false]);
+      expect(atLaunch, isNotNull);
+      final e = analytics.loggedEvents.single as ChecklistRunStartedEvent;
+      expect(e.pactId, 'p1');
+    });
+
+    test('could not open: the started record is kept, no event', () async {
+      await links.upsert(link('c1', 'Morning'));
+      gateway.canLaunch = false;
+
+      expect(await service.startRun(pactId: 'p1', showupId: 's1'), RunStartOutcome.couldNotOpen);
+
+      expect(await runs.getForShowup('s1'), isNotNull);
+      expect(analytics.loggedEvents, isEmpty);
+    });
+
+    test('no link: not runnable, nothing launched or stored', () async {
+      expect(await service.startRun(pactId: 'p1', showupId: 's1'), RunStartOutcome.notRunnable);
+      expect(gateway.launchedUrls, isEmpty);
+      expect(await runs.getForShowup('s1'), isNull);
+    });
+
+    test('already finished run: not runnable, record unchanged', () async {
+      await links.upsert(link('c1', 'Morning'));
+      await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: now);
+      final finished =
+          await runs.markFinished(showupId: 's1', finishedAt: now, outcome: ChecklistRunOutcome.failure);
+
+      expect(await service.startRun(pactId: 'p1', showupId: 's1'), RunStartOutcome.notRunnable);
+      expect(gateway.launchedUrls, isEmpty);
+      expect(await runs.getForShowup('s1'), finished);
+    });
+
+    test('restarting an unfinished run refreshes startedAt', () async {
+      await links.upsert(link('c1', 'Morning'));
+      await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: DateTime(2026, 5, 10, 8));
+
+      await service.startRun(pactId: 'p1', showupId: 's1');
+
+      expect((await runs.getForShowup('s1'))?.startedAt, now);
+    });
+  });
+
+  group('statusFor', () {
+    Future<({ChecklistGate gate, ChecklistRunOutcome? outcome})> status({bool flag = true, bool installed = true}) =>
+        service.statusFor(pactId: 'p1', showupId: 's1', flagEnabled: flag, installed: installed);
+
+    test('no link: none', () async {
+      expect((await status()).gate, ChecklistGate.none);
+    });
+
+    test('link without a finished run: runRequired', () async {
+      await links.upsert(link('c1', 'Morning'));
+      expect(await status(), (gate: ChecklistGate.runRequired, outcome: null));
+      await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: now);
+      expect((await status()).gate, ChecklistGate.runRequired);
+    });
+
+    test('finished run: unlocked with its outcome', () async {
+      await links.upsert(link('c1', 'Morning'));
+      await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: now);
+      await runs.markFinished(showupId: 's1', finishedAt: now, outcome: ChecklistRunOutcome.success);
+      expect(await status(), (gate: ChecklistGate.unlocked, outcome: ChecklistRunOutcome.success));
+    });
+
+    test('flag off or not installed: none, and no outcome even with a finished run', () async {
+      await links.upsert(link('c1', 'Morning'));
+      await runs.upsertStarted(showupId: 's1', pactId: 'p1', checklistId: 'c1', startedAt: now);
+      await runs.markFinished(showupId: 's1', finishedAt: now, outcome: ChecklistRunOutcome.success);
+      expect(await status(flag: false), (gate: ChecklistGate.none, outcome: null));
+      expect(await status(installed: false), (gate: ChecklistGate.none, outcome: null));
     });
   });
 }

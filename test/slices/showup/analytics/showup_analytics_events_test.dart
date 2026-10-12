@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_screen.dart';
 import 'package:habit_loop/slices/showup/analytics/showup_analytics_events.dart';
 
@@ -13,6 +14,21 @@ void main() {
       final event = ShowupMarkedDoneEvent(pactId: 'pact-123');
       final params = event.toParameters();
       expect(params['pact_id'], 'pact-123');
+    });
+
+    test('checklist_outcome defaults to none', () {
+      expect(ShowupMarkedDoneEvent(pactId: 'p').toParameters()['checklist_outcome'], 'none');
+    });
+
+    test('checklist_outcome carries the run outcome', () {
+      expect(
+        ShowupMarkedDoneEvent(pactId: 'p', checklistOutcome: ChecklistRunOutcome.success).toParameters()['checklist_outcome'],
+        'success',
+      );
+      expect(
+        ShowupMarkedDoneEvent(pactId: 'p', checklistOutcome: ChecklistRunOutcome.failure).toParameters()['checklist_outcome'],
+        'failure',
+      );
     });
   });
 

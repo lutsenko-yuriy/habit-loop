@@ -45,3 +45,16 @@ final class PactChecklistUnlinkedEvent extends AnalyticsEvent {
   @override
   Map<String, Object?> toParameters() => {'pact_id': pactId, 'days_linked': daysLinked};
 }
+
+/// Fired when "Run checklist" opens Checklister for a showup. (GH #464)
+final class ChecklistRunStartedEvent extends AnalyticsEvent {
+  ChecklistRunStartedEvent({required this.pactId});
+
+  final String pactId;
+
+  @override
+  String get name => 'checklist_run_started';
+
+  @override
+  Map<String, Object?> toParameters() => {'pact_id': pactId};
+}

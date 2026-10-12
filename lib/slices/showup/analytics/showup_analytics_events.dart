@@ -1,18 +1,22 @@
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_event.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_screen.dart';
 
 /// Fired when the user manually marks a showup as done.
 final class ShowupMarkedDoneEvent extends AnalyticsEvent {
-  ShowupMarkedDoneEvent({required this.pactId});
+  ShowupMarkedDoneEvent({required this.pactId, this.checklistOutcome});
 
   /// ID of the parent pact.
   final String pactId;
+
+  /// Outcome of the checklist run that unlocked this mark-done; `null` when no checklist gate applied.
+  final ChecklistRunOutcome? checklistOutcome;
 
   @override
   String get name => 'showup_marked_done';
 
   @override
-  Map<String, Object?> toParameters() => {'pact_id': pactId};
+  Map<String, Object?> toParameters() => {'pact_id': pactId, 'checklist_outcome': checklistOutcome?.name ?? 'none'};
 }
 
 /// Fired when the user manually marks a showup as failed (not auto-fail).

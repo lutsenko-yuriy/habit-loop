@@ -1,3 +1,6 @@
+import 'package:habit_loop/domain/checklist/checklist_gate.dart';
+import 'package:habit_loop/domain/checklist/checklist_run.dart';
+import 'package:habit_loop/domain/checklist/checklist_run_repository.dart';
 import 'package:habit_loop/domain/checklist/pact_checklist_link.dart';
 import 'package:habit_loop/domain/checklist/pact_checklist_link_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
@@ -26,21 +29,36 @@ enum SelectionOutcome {
   ignored,
 }
 
-/// Link / unlink / selection-callback logic for a pact's Checklister checklist (GH #464).
+/// What [ChecklistService.startRun] did.
+enum RunStartOutcome {
+  /// The run was recorded and Checklister opened.
+  launched,
+
+  /// The run was recorded but Checklister could not be opened.
+  couldNotOpen,
+
+  /// No link, or the showup's run has already finished.
+  notRunnable,
+}
+
+/// Link / unlink / selection-callback / run-start logic for a pact's Checklister checklist (GH #464).
 class ChecklistService {
   ChecklistService({
     required PactChecklistLinkRepository linkRepository,
+    required ChecklistRunRepository runRepository,
     required PactRepository pactRepository,
     required ChecklisterGateway gateway,
     required AnalyticsService analytics,
     DateTime Function()? now,
   })  : _links = linkRepository,
+        _runs = runRepository,
         _pacts = pactRepository,
         _gateway = gateway,
         _analytics = analytics,
         _now = now ?? DateTime.now;
 
   final PactChecklistLinkRepository _links;
+  final ChecklistRunRepository _runs;
   final PactRepository _pacts;
   final ChecklisterGateway _gateway;
   final AnalyticsService _analytics;
@@ -103,5 +121,37 @@ class ChecklistService {
     await _analytics.logEvent(
       PactChecklistUnlinkedEvent(pactId: pactId, daysLinked: _now().difference(existing.linkedAt).inDays),
     );
+  }
+
+  /// The showup's checklist gate, plus the finished run's outcome when unlocked.
+  Future<({ChecklistGate gate, ChecklistRunOutcome? outcome})> statusFor({
+    required String pactId,
+    required String showupId,
+    required bool flagEnabled,
+    required bool installed,
+  }) async {
+    if (!flagEnabled || !installed) return (gate: ChecklistGate.none, outcome: null);
+    final link = await _links.getForPact(pactId);
+    final run = link == null ? null : await _runs.getForShowup(showupId);
+    final gate = ChecklistGate.resolve(flagEnabled: true, checklisterInstalled: true, link: link, run: run);
+    return (gate: gate, outcome: gate == ChecklistGate.unlocked ? run?.outcome : null);
+  }
+
+  /// Records the run start, then opens Checklister to run the pact's checklist.
+  /// The record is written first so a callback racing the launch finds it.
+  Future<RunStartOutcome> startRun({required String pactId, required String showupId}) async {
+    final link = await _links.getForPact(pactId);
+    if (link == null) return RunStartOutcome.notRunnable;
+    final run = await _runs.upsertStarted(
+      showupId: showupId,
+      pactId: pactId,
+      checklistId: link.checklistId,
+      startedAt: _now(),
+    );
+    if (run.isFinished) return RunStartOutcome.notRunnable;
+    final callback = ChecklisterLinks.runFinishedCallback(pactId, showupId).toString();
+    if (!await _gateway.launchRun(link.checklistId, callback)) return RunStartOutcome.couldNotOpen;
+    await _analytics.logEvent(ChecklistRunStartedEvent(pactId: pactId));
+    return RunStartOutcome.launched;
   }
 }
