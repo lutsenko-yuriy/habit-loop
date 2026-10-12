@@ -211,6 +211,15 @@ void main() {
       expect(find.text(l10n.checklisterCouldNotOpenError), findsOneWidget);
     });
 
+    testWidgets('while saving: Run checklist keeps its enabled colours (no grey flash)', (tester) async {
+      await tester.pumpWidget(_buildApp(gated().copyWith(isSaving: true)));
+      final theme = Theme.of(tester.element(find.byType(ShowupDetailPageAndroid)));
+      final button = tester.widget<FilledButton>(find.byKey(const Key('showup-run-checklist-button')));
+      expect(button.onPressed, isNull);
+      expect(button.style?.backgroundColor?.resolve({WidgetState.disabled}), theme.colorScheme.primary);
+      expect(button.style?.foregroundColor?.resolve({WidgetState.disabled}), theme.colorScheme.onPrimary);
+    });
+
     testWidgets('while starting: Run checklist is disabled', (tester) async {
       var runs = 0;
       await tester.pumpWidget(_buildApp(gated(starting: true), onRunChecklist: () async => runs++));

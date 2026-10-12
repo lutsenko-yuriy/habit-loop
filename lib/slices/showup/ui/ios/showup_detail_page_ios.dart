@@ -100,6 +100,8 @@ class ShowupDetailPageIos extends StatelessWidget {
                                             CupertinoButton.filled(
                                               key: const Key('showup-run-checklist-button'),
                                               onPressed: s.isSaving || s.isStartingChecklistRun ? null : onRunChecklist,
+                                              // No grey flash while Mark as failed saves (same as Mark as done).
+                                              disabledColor: CupertinoTheme.of(ctx).primaryColor,
                                               child: Text(l10n.showupRunChecklist),
                                             )
                                           else
