@@ -5,6 +5,7 @@ import 'package:habit_loop/domain/checklist/pact_checklist_link.dart';
 import 'package:habit_loop/domain/checklist/pact_checklist_link_repository.dart';
 import 'package:habit_loop/domain/pact/pact_repository.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
+import 'package:habit_loop/domain/showup/showup_repository.dart';
 import 'package:habit_loop/infrastructure/analytics/contracts/analytics_service.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_callback.dart';
 import 'package:habit_loop/infrastructure/checklister/contracts/checklister_gateway.dart';
@@ -41,18 +42,20 @@ enum RunStartOutcome {
   notRunnable,
 }
 
-/// Link / unlink / selection-callback / run-start logic for a pact's Checklister checklist (GH #464).
+/// Link / unlink / selection-callback / run start-and-finish logic for a pact's Checklister checklist (GH #464).
 class ChecklistService {
   ChecklistService({
     required PactChecklistLinkRepository linkRepository,
     required ChecklistRunRepository runRepository,
     required PactRepository pactRepository,
+    required ShowupRepository showupRepository,
     required ChecklisterGateway gateway,
     required AnalyticsService analytics,
     DateTime Function()? now,
   })  : _links = linkRepository,
         _runs = runRepository,
         _pacts = pactRepository,
+        _showups = showupRepository,
         _gateway = gateway,
         _analytics = analytics,
         _now = now ?? DateTime.now;
@@ -60,6 +63,7 @@ class ChecklistService {
   final PactChecklistLinkRepository _links;
   final ChecklistRunRepository _runs;
   final PactRepository _pacts;
+  final ShowupRepository _showups;
   final ChecklisterGateway _gateway;
   final AnalyticsService _analytics;
   final DateTime Function() _now;
@@ -153,5 +157,32 @@ class ChecklistService {
     if (!await _gateway.launchRun(link.checklistId, callback)) return RunStartOutcome.couldNotOpen;
     await _analytics.logEvent(ChecklistRunStartedEvent(pactId: pactId));
     return RunStartOutcome.launched;
+  }
+
+  /// Finishes the showup's started run from a run-finished callback. Returns the
+  /// outcome, or `null` when ignored: no matching unfinished run (spoofed or
+  /// duplicate callback) or a non-run status.
+  Future<ChecklistRunOutcome?> applyRunResult(RunCallback callback) async {
+    final outcome = switch (callback.status) {
+      ChecklisterCallbackStatus.completed => ChecklistRunOutcome.success,
+      ChecklisterCallbackStatus.cancelled || ChecklisterCallbackStatus.error => ChecklistRunOutcome.failure,
+      ChecklisterCallbackStatus.selected => null,
+    };
+    if (outcome == null) return null;
+    final run = await _runs.getForShowup(callback.showupId);
+    if (run == null || run.isFinished || run.pactId != callback.pactId || run.checklistId != callback.checklistId) {
+      return null;
+    }
+    final finishedAt = _now();
+    final finished = await _runs.markFinished(showupId: callback.showupId, finishedAt: finishedAt, outcome: outcome);
+    if (finished == null) return null;
+    final showup = await _showups.getShowupById(callback.showupId);
+    final windowEnd = showup?.scheduledAt.add(showup.duration);
+    await _analytics.logEvent(ChecklistRunFinishedEvent(
+      pactId: callback.pactId,
+      outcome: outcome,
+      windowClosedMeanwhile: windowEnd != null && !run.startedAt.isAfter(windowEnd) && finishedAt.isAfter(windowEnd),
+    ));
+    return outcome;
   }
 }

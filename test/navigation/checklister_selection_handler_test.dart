@@ -8,6 +8,7 @@ import 'package:habit_loop/slices/checklist/application/checklist_service.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
+import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 
 import '../infrastructure/analytics/fake_analytics_service.dart';
 import '../infrastructure/checklister/fake_checklister_gateway.dart';
@@ -35,6 +36,7 @@ void main() {
         linkRepository: InMemoryPactChecklistLinkRepository(),
         runRepository: InMemoryChecklistRunRepository(),
         pactRepository: InMemoryPactRepository([_pact('p1', PactStatus.active), _pact('p2', PactStatus.stopped)]),
+        showupRepository: InMemoryShowupRepository(),
         gateway: FakeChecklisterGateway(),
         analytics: FakeAnalyticsService(),
       ),
