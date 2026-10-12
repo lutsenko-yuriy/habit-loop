@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habit_loop/domain/checklist/checklist_gate.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_content.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_state.dart';
@@ -21,6 +22,9 @@ class ShowupDetailPageAndroid extends StatelessWidget {
   /// Null hides the "Take a break" tail-zone entry point (HAB-195 WU4.2).
   final VoidCallback? onStartBreak;
 
+  /// Opens Checklister; shown instead of "Mark as done" while a run is required (GH #464).
+  final Future<void> Function()? onRunChecklist;
+
   const ShowupDetailPageAndroid({
     super.key,
     required this.state,
@@ -30,6 +34,7 @@ class ShowupDetailPageAndroid extends StatelessWidget {
     required this.onRedeemShowup,
     this.onOpenPact,
     this.onStartBreak,
+    this.onRunChecklist,
   });
 
   @override
@@ -79,18 +84,33 @@ class ShowupDetailPageAndroid extends StatelessWidget {
                               buildActionButtons: (ctx, s) => Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
-                                      FilledButton(
-                                        onPressed: s.isSaving ? null : onMarkDone,
-                                        // No spinner, no default disabled grey (WU3): both flashed while fading
-                                        // out via AnimatedReveal after the save completed.
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: theme.colorScheme.secondary,
-                                          foregroundColor: theme.colorScheme.onSecondary,
-                                          disabledBackgroundColor: theme.colorScheme.secondary,
-                                          disabledForegroundColor: theme.colorScheme.onSecondary,
+                                      if (s.checklistGate == ChecklistGate.runRequired)
+                                        FilledButton(
+                                          key: const Key('showup-run-checklist-button'),
+                                          onPressed: s.isSaving || s.isStartingChecklistRun ? null : onRunChecklist,
+                                          child: Text(l10n.showupRunChecklist),
+                                        )
+                                      else
+                                        FilledButton(
+                                          onPressed: s.isSaving ? null : onMarkDone,
+                                          // No spinner, no default disabled grey (WU3): both flashed while fading
+                                          // out via AnimatedReveal after the save completed.
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: theme.colorScheme.secondary,
+                                            foregroundColor: theme.colorScheme.onSecondary,
+                                            disabledBackgroundColor: theme.colorScheme.secondary,
+                                            disabledForegroundColor: theme.colorScheme.onSecondary,
+                                          ),
+                                          child: Text(l10n.markDone),
                                         ),
-                                        child: Text(l10n.markDone),
-                                      ),
+                                      if (s.checklistRunCouldNotOpen) ...[
+                                        const SizedBox(height: AppSpacing.s8),
+                                        Text(
+                                          l10n.checklisterCouldNotOpenError,
+                                          textAlign: TextAlign.center,
+                                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+                                        ),
+                                      ],
                                       const SizedBox(height: AppSpacing.s8),
                                       OutlinedButton(
                                         onPressed: s.isSaving ? null : onMarkFailed,

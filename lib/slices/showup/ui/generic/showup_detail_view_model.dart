@@ -56,7 +56,8 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
     try {
       await _readChecklistStatus(showup.pactId);
     } catch (e, st) {
-      unawaited(ref.read(logServiceProvider).error('showup_checklist_gate_failed: id=$arg', exception: e, stackTrace: st));
+      unawaited(
+          ref.read(logServiceProvider).error('showup_checklist_gate_failed: id=$arg', exception: e, stackTrace: st));
     }
   }
 
@@ -204,7 +205,8 @@ class ShowupDetailViewModel extends AutoDisposeFamilyNotifier<ShowupDetailState,
           await _readChecklistStatus(showup.pactId);
       }
     } catch (e, st) {
-      unawaited(ref.read(logServiceProvider).error('showup_run_checklist_failed: id=$arg', exception: e, stackTrace: st));
+      unawaited(
+          ref.read(logServiceProvider).error('showup_run_checklist_failed: id=$arg', exception: e, stackTrace: st));
       if (!_disposed) state = state.copyWith(checklistRunCouldNotOpen: true);
     } finally {
       if (!_disposed) state = state.copyWith(isStartingChecklistRun: false);

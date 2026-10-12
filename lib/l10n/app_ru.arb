@@ -400,5 +400,7 @@
   "pactChecklistNoChecklistsError": "Сначала создайте чек-лист в Checklister.",
   "@pactChecklistNoChecklistsError": {},
   "checklisterCouldNotOpenError": "Не удалось открыть Checklister.",
-  "@checklisterCouldNotOpenError": {}
+  "@checklisterCouldNotOpenError": {},
+  "showupRunChecklist": "Пройти чек-лист",
+  "@showupRunChecklist": {}
 }

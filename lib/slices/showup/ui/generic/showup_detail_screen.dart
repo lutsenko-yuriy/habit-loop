@@ -61,6 +61,10 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).saveNote(note);
     }
 
+    Future<void> onRunChecklist() async {
+      await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).runChecklist();
+    }
+
     Future<void> onRedeemShowup() async {
       await ref.read(showupDetailViewModelProvider(widget.showupId).notifier).redeemShowup();
     }
@@ -125,6 +129,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
         onRedeemShowup: onRedeemShowup,
         onOpenPact: openPactCallback,
         onStartBreak: startBreakCallback,
+        onRunChecklist: onRunChecklist,
       );
     }
     return ShowupDetailPageAndroid(
@@ -135,6 +140,7 @@ class _ShowupDetailScreenState extends ConsumerState<ShowupDetailScreen> {
       onRedeemShowup: onRedeemShowup,
       onOpenPact: openPactCallback,
       onStartBreak: startBreakCallback,
+      onRunChecklist: onRunChecklist,
     );
   }
 }

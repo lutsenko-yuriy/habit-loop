@@ -22,11 +22,13 @@ void main() {
 
     test('checklist_outcome carries the run outcome', () {
       expect(
-        ShowupMarkedDoneEvent(pactId: 'p', checklistOutcome: ChecklistRunOutcome.success).toParameters()['checklist_outcome'],
+        ShowupMarkedDoneEvent(pactId: 'p', checklistOutcome: ChecklistRunOutcome.success)
+            .toParameters()['checklist_outcome'],
         'success',
       );
       expect(
-        ShowupMarkedDoneEvent(pactId: 'p', checklistOutcome: ChecklistRunOutcome.failure).toParameters()['checklist_outcome'],
+        ShowupMarkedDoneEvent(pactId: 'p', checklistOutcome: ChecklistRunOutcome.failure)
+            .toParameters()['checklist_outcome'],
         'failure',
       );
     });
