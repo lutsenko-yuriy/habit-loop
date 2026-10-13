@@ -66,8 +66,7 @@ Future<void> _openInactivePactDetail(AppHarness h, WidgetTester tester, String h
   await tester.pumpAndSettle();
 }
 
-/// Waits until [pactId]'s persisted note equals [expectedNote]; polls the repo because the
-/// save button is disabled before the write lands (HAB-258).
+/// Polls the repo until [pactId]'s note equals [expectedNote] (HAB-258).
 Future<void> _waitForNoteSaved(
   WidgetTester tester,
   AppHarness h,
