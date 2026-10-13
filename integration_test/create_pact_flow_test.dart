@@ -2,8 +2,6 @@
 //
 // Run with: flutter test integration_test/create_pact_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/create_pact_flow_test.dart
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
@@ -14,33 +12,6 @@ import 'harness.dart';
 // 5 min before the wizard's default Mon-Fri 08:00 slot, so today's showup
 // stays in the future regardless of real wall-clock time.
 final _testNow = DateTime(2099, 6, 15, 7, 55);
-
-/// Swipes the pact-creation [PageView] to the next page.
-///
-/// Starts near the **top-right** of the PageView (the static title area) so
-/// that interactive widgets lower on the page — in particular the [Slider] on
-/// the showup-duration step — cannot intercept the gesture.
-///
-/// Uses 300 px / 50 ms (timedDragFrom) instead of flingFrom(-400, 1000):
-/// - 300 px keeps the pointer on-screen for any ≥310 dp device
-///   (start x = right-10 = ~380; end x = ~80, within the viewport).
-///   flingFrom(-400) from x=380 went to x=-20, which was off-screen.
-/// - (300/W)+0.5 rounds to 1 for any W≥300 dp, so no page overshoot.
-///
-/// Tries the iOS key first, falls back to the Android key.
-Future<void> _swipeWizardForward(WidgetTester tester) async {
-  const iosKey = Key('pact-creation-pageview-ios');
-  const androidKey = Key('pact-creation-pageview-android');
-  final key = find.byKey(iosKey).evaluate().isNotEmpty ? iosKey : androidKey;
-  final rect = tester.getRect(find.byKey(key));
-  // Y = top + 40: safely inside the title text area on every wizard page.
-  await tester.timedDragFrom(
-    Offset(rect.right - 10, rect.top + 40),
-    const Offset(-300, 0),
-    const Duration(milliseconds: 50),
-  );
-  await tester.pumpAndSettle();
-}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -80,36 +51,26 @@ void main() {
       expect(find.text(strings.pactCreationTitle), findsOneWidget);
 
       // ── 3. Page 0 – habit name: enter text ──────────────────────────────
-      // Platform-agnostic: Android uses TextField, iOS uses CupertinoTextField.
-      await tester.enterText(
-        find.byWidgetPredicate((w) => w is TextField || w is CupertinoTextField),
-        'Meditate',
-      );
-      // A plain pump() (not pumpAndSettle()) — the cursor blink animation
-      // never settles. The extra 300ms pump lets the keyboard-show animation
-      // catch up so the first _swipeWizardForward's getRect() below reads a
-      // stable PageView rect instead of one still mid-resize.
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await h.wizard.enterHabitName('Meditate');
 
       // ── 4. Page 0 → 1: swipe to pact duration (defaults are valid) ────────
-      await _swipeWizardForward(tester);
+      await h.wizard.swipeForward();
 
       // ── 5. Page 1 → 2: swipe to showup duration (auto-set to 10 min) ─────
-      await _swipeWizardForward(tester);
+      await h.wizard.swipeForward();
 
       // ── 6. Page 2 → 3: swipe to schedule ────────────────────────────────
       // NOTE: must start from the top of the PageView — the Slider on the
       // showup-duration page intercepts horizontal flings from the center.
-      await _swipeWizardForward(tester);
+      await h.wizard.swipeForward();
 
       // ── 7. Page 3: schedule step — the slot-based editor is pre-selected
       // (Mon-Fri at 08:00 WeeklySlot) so no user interaction is needed here;
       // swipe directly to the reminder step.
-      await _swipeWizardForward(tester);
+      await h.wizard.swipeForward();
 
       // ── 8. Page 4 → 5: swipe to summary ─────────────────────────────────
-      await _swipeWizardForward(tester);
+      await h.wizard.swipeForward();
 
       // ── 9. Commitment dialog – tap "I Accept" (button variant) ──────────
       // The summary page's "Create Pact" button is labeled createPactConfirm.
