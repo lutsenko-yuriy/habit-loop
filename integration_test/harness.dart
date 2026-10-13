@@ -35,6 +35,7 @@ import '../test/infrastructure/notifications/fake_notification_service.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import '../test/infrastructure/sync/fake_sync_service.dart';
 import 'robots/break_robot.dart';
+import 'robots/checklist_robot.dart';
 import 'robots/dashboard_robot.dart';
 import 'robots/onboarding_robot.dart';
 import 'robots/pact_detail_robot.dart';
@@ -91,6 +92,24 @@ class AppHarness {
   late final BreakRobot breaks = BreakRobot(tester);
   late final TimelineRobot timeline = TimelineRobot(tester);
   late final ShowupDetailRobot showupDetail = ShowupDetailRobot(tester);
+  late final ChecklistRobot checklist = ChecklistRobot(tester);
+
+  /// Opens [habitName]'s pact detail from the pacts panel, then waits for it to load and settle.
+  Future<void> openSettledPactDetail(String habitName) async {
+    await dashboard.openPactsPanel();
+    await dashboard.openPactDetail(habitName);
+    await pactDetail.waitLoaded();
+    await tester.pumpAndSettle();
+  }
+
+  /// Backgrounds and resumes the app; the install watcher throttles to 5 s of wall-clock time, so real time passes first.
+  Future<void> backgroundAndResume() async {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 5100)));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pumpAndSettle();
+  }
 
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;

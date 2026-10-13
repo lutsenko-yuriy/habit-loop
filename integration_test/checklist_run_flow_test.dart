@@ -6,7 +6,6 @@
 // Run callbacks always carry both ids: habitloop://checklist/run-finished?pactId=<id>&showupId=<id>.
 import 'dart:async' show unawaited;
 
-import 'package:flutter/cupertino.dart' show CupertinoButton;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,8 +31,6 @@ const _flagOn = {'checklister_integration_enabled': true};
 
 const _pactId = 'checklist-run-pact';
 const _showupId = '${_pactId}_20990615T080000_0';
-const _runKey = Key('showup-run-checklist-button');
-const _changeKey = Key('pact-checklist-change-button');
 
 final _pact = buildPact(id: _pactId, habitName: 'Meditate', startDate: DateTime(2099, 6, 1));
 final _pendingShowup = buildShowup(id: _showupId, pactId: _pactId, scheduledAt: DateTime(2099, 6, 15, 8, 0));
@@ -75,30 +72,10 @@ void _bumpDashboardRefresh(WidgetTester tester) {
 }
 
 /// Opens today's showup from the dashboard.
-Future<void> _openShowup(WidgetTester tester) async {
-  await waitFor(tester, find.text('Meditate'));
-  await tester.tap(find.text('Meditate').first);
-  await waitFor(tester, find.text(l10n(tester).markFailed));
-}
-
-/// Backgrounds and resumes the app. The install watcher throttles re-checks to
-/// once per 5 s of wall-clock time, so real time must pass first.
-Future<void> _resume(WidgetTester tester) async {
-  await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 5100)));
-  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-  await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
-  await tester.pumpAndSettle();
-}
-
-/// Opens pact detail from the pacts panel and scrolls to the bottom.
-Future<void> _openPactDetailBottom(WidgetTester tester) async {
-  await openPactsPanel(tester);
-  await openPactDetail(tester, 'Meditate');
-  await waitFor(tester, find.text(l10n(tester).sectionStats.toUpperCase()));
-  await tester.pumpAndSettle();
-  await tester.drag(find.byType(ListView).last, const Offset(0, -2000));
-  await tester.pumpAndSettle();
+Future<void> _openShowup(AppHarness h) async {
+  await waitFor(h.tester, find.text('Meditate'));
+  await h.dashboard.openShowup('Meditate');
+  await h.showupDetail.waitForMarkFailed();
 }
 
 /// Delivers Checklister's run-finished callback for [showupId] with [status].
@@ -128,12 +105,6 @@ Future<AppHarness> _linkedHarness(
       },
     );
 
-bool _enabled(WidgetTester tester, Finder finder) {
-  final w = tester.widget(finder);
-  if (w is ButtonStyleButton) return w.onPressed != null;
-  return (w as CupertinoButton).onPressed != null;
-}
-
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
@@ -157,16 +128,14 @@ void main() {
           await h.checklistLinkRepo.upsert(_link);
         },
       );
-      final strings = l10n(tester);
 
       // 1-2. Run checklist and Mark as failed; no Mark as done.
-      await _openShowup(tester);
-      await waitFor(tester, find.byKey(_runKey));
-      expect(find.text(strings.markDone), findsNothing);
+      await _openShowup(h);
+      await h.showupDetail.waitForRunChecklist();
+      expect(h.showupDetail.markDoneButton, findsNothing);
 
       // 3. Tapping it opens Checklister's run with our callback carrying both ids.
-      await tester.tap(find.byKey(_runKey));
-      await tester.pumpAndSettle();
+      await h.showupDetail.tapRunChecklist();
       final launched = h.checklister.launchedUrls.single;
       expect([launched.scheme, launched.host, launched.queryParameters['checklistId']], ['checklister', 'run', 'c1']);
       final callback = Uri.parse(launched.queryParameters['callbackUrl']!);
@@ -180,9 +149,9 @@ void main() {
       expect(started.pactId, _pactId);
 
       // 5. No callback (the user just comes back): still gated.
-      await _resume(tester);
-      expect(find.byKey(_runKey), findsOneWidget);
-      expect(find.text(strings.markDone), findsNothing);
+      await h.backgroundAndResume();
+      expect(h.showupDetail.runChecklistButton, findsOneWidget);
+      expect(h.showupDetail.markDoneButton, findsNothing);
     });
 
     testWidgets(
@@ -192,15 +161,14 @@ void main() {
       final strings = l10n(tester);
 
       // 1. Tap Run checklist.
-      await _openShowup(tester);
-      await waitFor(tester, find.byKey(_runKey));
-      await tester.tap(find.byKey(_runKey));
-      await tester.pumpAndSettle();
+      await _openShowup(h);
+      await h.showupDetail.waitForRunChecklist();
+      await h.showupDetail.tapRunChecklist();
 
       // 2-3. Completed callback: Mark as done shown in place, no dialog; checklist_run_finished fired.
       await _finishRun(tester, h, 'completed');
-      await waitFor(tester, find.text(strings.markDone));
-      expect(find.byKey(_runKey), findsNothing);
+      await h.showupDetail.waitForMarkDone();
+      expect(h.showupDetail.runChecklistButton, findsNothing);
       expect(find.text(strings.showupChecklistFailedTitle), findsNothing);
       final finished = h.analytics.loggedEvents.whereType<ChecklistRunFinishedEvent>().single;
       expect(finished.outcome, ChecklistRunOutcome.success);
@@ -208,12 +176,12 @@ void main() {
       // 4. Back, reopen: still unlocked.
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await _openShowup(tester);
-      expect(find.text(strings.markDone), findsOneWidget);
-      expect(find.byKey(_runKey), findsNothing);
+      await _openShowup(h);
+      expect(h.showupDetail.markDoneButton, findsOneWidget);
+      expect(h.showupDetail.runChecklistButton, findsNothing);
 
       // 5-6. Mark as done: done, with checklist_outcome=success.
-      await tester.tap(find.text(strings.markDone));
+      await tester.tap(h.showupDetail.markDoneButton);
       await waitFor(tester, find.text(strings.showupDone));
       expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.done);
       final done = h.analytics.loggedEvents.whereType<ShowupMarkedDoneEvent>().single;
@@ -239,9 +207,8 @@ void main() {
       // 1. Tap Run checklist on the 08:00 showup (opened by id: both tiles read "Meditate").
       await waitFor(tester, find.text('Meditate'));
       unawaited(NotificationNavigator.navigateToShowup(navigatorKey: h.navigatorKey, showupId: _showupId));
-      await waitFor(tester, find.byKey(_runKey));
-      await tester.tap(find.byKey(_runKey));
-      await tester.pumpAndSettle();
+      await h.showupDetail.waitForRunChecklist();
+      await h.showupDetail.tapRunChecklist();
 
       // 2-3. Cancelled: dialog; OK unlocks Mark as done.
       await _finishRun(tester, h, 'cancelled');
@@ -249,13 +216,13 @@ void main() {
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       expect(find.text(strings.showupChecklistFailedTitle), findsNothing);
-      expect(find.text(strings.markDone), findsOneWidget);
+      expect(h.showupDetail.markDoneButton, findsOneWidget);
 
       // 4. Reopen: still unlocked, no second dialog.
       await tester.pageBack();
       await tester.pumpAndSettle();
       unawaited(NotificationNavigator.navigateToShowup(navigatorKey: h.navigatorKey, showupId: _showupId));
-      await waitFor(tester, find.text(strings.markDone));
+      await h.showupDetail.waitForMarkDone();
       expect(find.text(strings.showupChecklistFailedTitle), findsNothing);
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -265,10 +232,10 @@ void main() {
       await waitFor(tester, find.text(strings.showupChecklistFailedTitle));
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
-      expect(find.text(strings.markDone), findsOneWidget);
+      expect(h.showupDetail.markDoneButton, findsOneWidget);
 
       // 6. Mark it done: checklist_outcome=failure.
-      await tester.tap(find.text(strings.markDone));
+      await tester.tap(h.showupDetail.markDoneButton);
       await waitFor(tester, find.text(strings.showupDone));
       expect((await h.showupRepo.getShowupById(secondId))?.status, ShowupStatus.done);
       final done = h.analytics.loggedEvents.whereType<ShowupMarkedDoneEvent>().single;
@@ -284,9 +251,8 @@ void main() {
       final strings = l10n(tester);
 
       // 2. Open the showup and start the run inside the window.
-      await _openShowup(tester);
-      await tester.tap(find.byKey(_runKey));
-      await tester.pumpAndSettle();
+      await _openShowup(h);
+      await h.showupDetail.tapRunChecklist();
       expect(await h.checklistRunRepo.getForShowup(_showupId), isNotNull);
 
       // 3. The window closes; back on the dashboard at 08:20 (inside the grace) the sweep skips it.
@@ -299,11 +265,11 @@ void main() {
 
       // 4–5. The completed callback opens the showup: still pending, Mark as done shown.
       await _finishRun(tester, h, 'completed');
-      await waitFor(tester, find.text(strings.markDone));
+      await h.showupDetail.waitForMarkDone();
       expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.pending);
 
       // 6. Mark as done.
-      await tester.tap(find.text(strings.markDone));
+      await tester.tap(h.showupDetail.markDoneButton);
       await waitFor(tester, find.text(strings.showupDone));
       expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.done);
     });
@@ -347,29 +313,20 @@ void main() {
       final strings = l10n(tester);
 
       // 1-2. Open the auto-failed showup from the timeline.
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Meditate');
-      // Keyed scroll view: openTimeline's bare ListView finder also matches the pacts panel here.
-      const timelineButton = Key('pact-detail-timeline-button');
-      await tester.dragUntilVisible(
-        find.byKey(timelineButton),
-        find.byKey(const Key('pact-detail-scroll-view-$_pactId')),
-        const Offset(0, -100),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(timelineButton));
-      await tester.pumpAndSettle();
-      const tile = Key('timeline-milestone-$failedId');
-      await waitFor(tester, find.byKey(tile));
-      await tester.tap(find.byKey(tile));
-      await waitFor(tester, find.byKey(const Key('showup-redeem-button')));
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Meditate');
+      await h.pactDetail.openTimelineAndSettle();
+      final tile = h.timeline.milestone(failedId);
+      await waitFor(tester, tile);
+      await tester.tap(tile);
+      await h.showupDetail.waitForRedeemButton();
 
       // 3. No Run checklist; redemption is enabled by the note alone.
-      expect(find.byKey(_runKey), findsNothing);
-      expect(_enabled(tester, find.byKey(const Key('showup-redeem-button'))), isTrue);
+      expect(h.showupDetail.runChecklistButton, findsNothing);
+      expect(h.showupDetail.isRedeemEnabled, isTrue);
 
       // 4-5. Redeem: done, and no run was ever needed.
-      await tester.tap(find.byKey(const Key('showup-redeem-button')));
+      await tester.tap(h.showupDetail.redeemButton);
       await waitFor(tester, find.text(strings.showupDone));
       expect((await h.showupRepo.getShowupById(failedId))?.status, ShowupStatus.done);
       expect(await h.checklistRunRepo.getForShowup(failedId), isNull);
@@ -389,38 +346,39 @@ void main() {
           await h.checklistLinkRepo.upsert(_link);
         },
       );
-      final strings = l10n(tester);
 
       // 2. Pact detail: no Checklist section.
-      await _openPactDetailBottom(tester);
-      expect(find.byKey(_changeKey), findsNothing);
+      await h.openSettledPactDetail('Meditate');
+      await h.pactDetail.scrollToBottom();
+      expect(h.checklist.changeButton, findsNothing);
       await tester.pageBack();
       await tester.pumpAndSettle();
 
       // 3. Showup detail: plain Mark as done.
-      await _openShowup(tester);
-      expect(find.text(strings.markDone), findsOneWidget);
-      expect(find.byKey(_runKey), findsNothing);
+      await _openShowup(h);
+      expect(h.showupDetail.markDoneButton, findsOneWidget);
+      expect(h.showupDetail.runChecklistButton, findsNothing);
 
       // 4-5. Installed while backgrounded: the open showup re-gates; the pact shows its link.
       h.checklister.installed = true;
-      await _resume(tester);
-      await waitFor(tester, find.byKey(_runKey));
-      expect(find.text(strings.markDone), findsNothing);
+      await h.backgroundAndResume();
+      await h.showupDetail.waitForRunChecklist();
+      expect(h.showupDetail.markDoneButton, findsNothing);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await _openPactDetailBottom(tester);
-      await waitFor(tester, find.text('Morning'));
-      expect(find.byKey(_changeKey), findsOneWidget);
+      await h.openSettledPactDetail('Meditate');
+      await h.pactDetail.scrollToBottom();
+      await h.checklist.waitForLinkedName('Morning');
+      expect(h.checklist.changeButton, findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
 
       // 6-7. Uninstalled again: Mark as done is back and the link is kept.
       h.checklister.installed = false;
-      await _resume(tester);
-      await _openShowup(tester);
-      expect(find.text(strings.markDone), findsOneWidget);
-      expect(find.byKey(_runKey), findsNothing);
+      await h.backgroundAndResume();
+      await _openShowup(h);
+      expect(h.showupDetail.markDoneButton, findsOneWidget);
+      expect(h.showupDetail.runChecklistButton, findsNothing);
       expect(await h.checklistLinkRepo.getForPact(_pactId), isNotNull);
     });
 
@@ -434,15 +392,14 @@ void main() {
           h.incomingLinks.emit(_runFinished('completed'));
         },
       );
-      final strings = l10n(tester);
 
       // 4-5. Showup detail on top, unlocked; the run is finished; back returns to the dashboard.
-      await waitFor(tester, find.text(strings.markDone));
-      expect(find.byKey(_runKey), findsNothing);
+      await h.showupDetail.waitForMarkDone();
+      expect(h.showupDetail.runChecklistButton, findsNothing);
       expect((await h.checklistRunRepo.getForShowup(_showupId))?.isFinished, isTrue);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      expect(find.text(strings.markDone), findsNothing);
+      expect(h.showupDetail.markDoneButton, findsNothing);
       await waitFor(tester, find.text('Meditate'));
     });
   });
