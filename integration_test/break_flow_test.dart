@@ -50,8 +50,8 @@ void main() {
         },
       );
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Meditate');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Meditate');
 
       await h.pactDetail.startBreak();
 
@@ -109,8 +109,8 @@ void main() {
         },
       );
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Jog');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Jog');
 
       await h.pactDetail.startBreak();
 
@@ -146,8 +146,8 @@ void main() {
         },
       );
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Read');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Read');
 
       await h.pactDetail.startBreak();
 
@@ -201,9 +201,9 @@ void main() {
       );
 
       // ── 1. Open the tail-zone (auto-failed, past) showup's detail via the timeline ──
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Read');
-      await openTimeline(tester);
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Read');
+      await h.pactDetail.openTimeline();
       await h.timeline.openShowupDetail(showupId);
 
       // ── 2. The break entry point is present ───────────────────────────────
@@ -266,9 +266,9 @@ void main() {
       // PactListViewModel bug, which made onBreak evaluate against real
       // wall-clock time instead of this test's overridden todayProvider, so
       // it never actually hit the on-break filter path here).
-      await openPactsPanel(tester);
+      await h.dashboard.openPactsPanel();
       await waitFor(tester, find.text('Stretch'));
-      await openPactDetail(tester, 'Stretch');
+      await h.dashboard.openPactDetail('Stretch');
       await waitFor(tester, find.text('Stretch'));
 
       // The pact is active but already has an unresolved break — the
@@ -538,8 +538,8 @@ void main() {
       // The Break chip defaults to selected (HAB-212), so the on-break
       // pact's tile already renders in the panel — no chip interaction
       // needed before tapping it by habit name.
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Swim');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Swim');
       await h.pactDetail.waitForBreakBanner();
 
       // ── 3. Tap "Resume pact" and confirm ──────────────────────────────────
@@ -630,7 +630,7 @@ void main() {
       //         the rest of this scenario still starts from the "Active
       //         selected, Break not selected" corner of the truth table it's
       //         actually testing ────────────────────────────────────────────
-      await openPactsPanel(tester);
+      await h.dashboard.openPactsPanel();
       await h.dashboard.toggleBreakFilter();
 
       // ── 1. Active/Done/Stopped selected, Break deselected — the on-break

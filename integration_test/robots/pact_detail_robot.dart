@@ -21,6 +21,8 @@ class PactDetailRobot extends BaseRobot {
   /// The [Scrollable] inside [_scrollView], as `scrollUntilVisible` requires.
   Finder get _scrollable => find.descendant(of: _scrollView, matching: find.byType(Scrollable)).first;
 
+  Finder get stopPactButton => find.text(p.l10n(tester).stopPact);
+
   /// Scrolls "Stop Pact" at the bottom of the list into view.
   Future<void> scrollToStopPact() async {
     await tester.scrollUntilVisible(find.text(p.l10n(tester).stopPact), 200.0, scrollable: _scrollable);
