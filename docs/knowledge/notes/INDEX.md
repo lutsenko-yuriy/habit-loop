@@ -11,7 +11,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **debugging-methodology** (15)
 - **multi-wu-scope** (15)
 - **planning-gaps** (15)
-- **ci-flakiness** (12)
+- **ci-flakiness** (13)
 - **code-style** (9)
 - **knowledge-base-process** (9)
 - **changelog-versioning** (8)
@@ -54,6 +54,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
 
 ### ci-flakiness
+- [GH-474: Flaky text-entry scenarios on CI (pact note, display name)](GH-474.md)
 - [HAB-151: run-scenarios CI job — integration tests on Android emulator](HAB-151.md)
 - [HAB-153: Audit and clean up integration test scenarios](HAB-153.md)
 - [HAB-179: CI — two integration scenarios fail on the Android-emulator run-scenarios job](HAB-179.md)
