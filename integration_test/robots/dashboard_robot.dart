@@ -95,7 +95,7 @@ class DashboardRobot extends BaseRobot {
     await tester.pump(); // rebuild so a (now non-empty) field re-enables Save
     await tester.tap(find.byKey(const Key('change-name-save-button')));
     await tester.pump();
-    await waitForGone(find.byKey(_changeNameField));
+    await waitForGone(changeNameField);
   }
 
   String get changeNameText => fieldText(changeNameField);

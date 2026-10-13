@@ -14,21 +14,19 @@ class OnboardingRobot extends BaseRobot {
     await enterText(enterNameField, name);
     await tester.tap(find.byKey(const Key('enter-name-save-button')));
     await tester.pump();
-    await waitForGone(find.byKey(_nameField));
+    await waitForGone(enterNameField);
   }
 
   /// Taps EnterNameScreen's skip button and waits for the page to disappear (HAB-232).
   Future<void> skipEnterName() async {
     await tester.tap(find.byKey(const Key('enter-name-skip-button')));
     await tester.pump();
-    await waitForGone(find.byKey(_nameField));
+    await waitForGone(enterNameField);
   }
 
   Finder get enterNameField => find.byKey(_nameField);
 
   String get enterNameText => fieldText(enterNameField);
-
-  Finder get languagePickerButton => find.byKey(const Key('language-picker-button'));
 
   /// Swipes to slide 1; 300 px stays one page on the <=320 dp CI AVD, 50 ms keeps the fling velocity.
   Future<void> swipeToSlide1() async {
