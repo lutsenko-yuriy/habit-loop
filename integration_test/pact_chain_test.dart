@@ -15,9 +15,9 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart'
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart' show pactDetailNowProvider;
 import 'package:habit_loop/theme/widgets/animated_value_transition.dart' show kAnimatedValueTransitionDuration;
+import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
-import 'harness_binding.dart';
 
 // pact_chaining_enabled now defaults to true (HAB-202 WU4 shipped), but an
 // explicit override still keeps these scenarios independent of that default
@@ -223,7 +223,7 @@ Future<void> _waitForPactCreated(WidgetTester tester, AppHarness h) async {
 }
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Pact chain — adjust and start again', () {

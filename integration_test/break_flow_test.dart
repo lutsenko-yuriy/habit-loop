@@ -16,9 +16,9 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
+import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
-import 'harness_binding.dart';
 
 // pact_breaks_enabled now defaults to true (HAB-195 WU6) — this override is
 // kept for explicitness/determinism, independent of the production default.
@@ -61,7 +61,7 @@ Future<void> _enterRationaleAndSubmit(WidgetTester tester, String rationale) asy
 }
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Start break flow', () {

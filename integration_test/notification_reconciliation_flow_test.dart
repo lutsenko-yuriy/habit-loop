@@ -13,9 +13,9 @@ import 'package:habit_loop/infrastructure/notifications/contracts/notification_s
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/reminder/application/notification_text_builder.dart';
 import 'package:habit_loop/slices/reminder/application/reconciliation_throttle.dart';
+import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
-import 'harness_binding.dart';
 
 /// Pumps a handful of frames so the async chain triggered by a
 /// reconciliation pass (repository reads, notification-service calls) has a
@@ -65,7 +65,7 @@ void _syncPendingFromRecordedCalls(AppHarness h) {
 }
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Notification reconciliation sync', () {

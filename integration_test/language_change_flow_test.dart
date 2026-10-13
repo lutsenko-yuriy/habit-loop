@@ -3,12 +3,12 @@
 // Run with: flutter test integration_test/language_change_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/language_change_flow_test.dart
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
-import 'harness_binding.dart';
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Language change flow', () {

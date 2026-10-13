@@ -12,10 +12,10 @@ import 'package:habit_loop/infrastructure/firestore/data/fault_injecting_firesto
 import 'package:habit_loop/infrastructure/sync/sync_mapper.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
+import 'package:integration_test/integration_test.dart';
 
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import 'harness.dart';
-import 'harness_binding.dart';
 
 /// Pin the clock to 07:55 on 2099-07-01 so the 08:00 showup is not auto-failed.
 final _testNow = DateTime(2099, 7, 1, 7, 55);
@@ -39,7 +39,7 @@ final _remoteShowup = buildShowup(
 );
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('FakeFirestoreClient integration', () {

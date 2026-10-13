@@ -20,9 +20,9 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_edit_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
+import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
-import 'harness_binding.dart';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -99,7 +99,7 @@ Future<void> _expandPactsPanel(WidgetTester tester, String habitName) async {
 // ---------------------------------------------------------------------------
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Edit pact – flow 1: from pact overview (pacts panel)', () {

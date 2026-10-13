@@ -10,13 +10,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/auth/data/first_launch_auth_fix.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'harness.dart';
-import 'harness_binding.dart';
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Fresh install Keychain fix flow', () {

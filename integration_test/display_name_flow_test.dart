@@ -9,10 +9,10 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/user/user_profile.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/profile/data/in_memory_user_profile_repository.dart';
+import 'package:integration_test/integration_test.dart';
 
 import '../test/infrastructure/onboarding/fake_onboarding_preference_service.dart';
 import 'harness.dart';
-import 'harness_binding.dart';
 
 const _flagOn = {'display_name_personalization_enabled': true};
 const _flagOff = {'display_name_personalization_enabled': false};
@@ -42,7 +42,7 @@ Pact _seedReminderPact() => buildPact(
     );
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Display name personalization flow', () {

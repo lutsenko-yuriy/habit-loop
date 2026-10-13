@@ -12,9 +12,9 @@ import 'package:habit_loop/navigation/notification_navigator.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_refresh_signal.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
+import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
-import 'harness_binding.dart';
 
 // Fixed clock: 5 minutes before the 08:00 showup window, so auto-fail
 // never triggers during the test.
@@ -39,7 +39,7 @@ final _showup = buildShowup(
 );
 
 void main() {
-  HarnessBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Notification navigation flow', () {
