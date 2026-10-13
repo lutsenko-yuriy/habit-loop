@@ -8,7 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
-- [wip] (PR #TBD) GH-476 WU5: break scenarios migrated to robots (`BreakRobot`, `TimelineRobot`, `PactDetailRobot` start/resume helpers, `DashboardRobot` panel filter helpers); keyboard-only post-entry wait removed.
+- [wip] (PR #481) GH-476 WU5: break scenarios migrated to robots (`BreakRobot`, `TimelineRobot`, `PactDetailRobot` start/resume helpers, `DashboardRobot` panel filter helpers); keyboard-only post-entry wait removed.
 - [wip] (PR #480) GH-476 WU4: pact chain and archive scenarios migrated to robots (`PactDetailRobot` chain-link/archive helpers, `PactWizardRobot.swipeToSummary`/`habitNameText`, `DashboardRobot` archived-row helpers).
 - [wip] (PR #479) GH-476 WU3: pact note and stop-pact scenarios migrated to `PactDetailRobot` (`scrollToNoteField`/`enterNote`/`tapSaveNote`/`stopPact`); keyboard-only tap/settle removed from note entry.
 - [wip] (PR #478) GH-476 WU2: pact wizard robot (`h.wizard`/`h.editWizard`) plus pact-detail edit/scroll helpers and `DashboardRobot.expandPactsPanelViaSummary`; create/edit pact scenarios migrated, dead keyboard-workaround waits removed.
