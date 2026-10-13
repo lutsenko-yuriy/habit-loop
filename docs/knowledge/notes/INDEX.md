@@ -6,11 +6,11 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (23)
+- **review-findings** (24)
+- **multi-wu-scope** (16)
+- **planning-gaps** (16)
 - **research-methodology** (16)
 - **debugging-methodology** (15)
-- **multi-wu-scope** (15)
-- **planning-gaps** (15)
 - **ci-flakiness** (13)
 - **code-style** (9)
 - **knowledge-base-process** (9)
@@ -156,6 +156,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ### multi-wu-scope
 - [GH-464: Link a Checklister checklist to a pact and run it before marking a showup done](GH-464.md)
+- [GH-476: Migrate integration scenarios to test robots](GH-476.md)
 - [HAB-116: Pact timeline screen](HAB-116.md)
 - [HAB-153: Audit and clean up integration test scenarios](HAB-153.md)
 - [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)
@@ -175,6 +176,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
 
 ### planning-gaps
+- [GH-476: Migrate integration scenarios to test robots](GH-476.md)
 - [HAB-126: Merge PactTimelineCache and PactStatsCache into a single cache](HAB-126.md)
 - [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
 - [HAB-161: Give skill_router's script stub an explicit cheap fallback alias](HAB-161.md)
@@ -213,6 +215,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-276: Research: strategy for syncing YAB template updates into an already-adopted project](HAB-276.md)
 
 ### review-findings
+- [GH-476: Migrate integration scenarios to test robots](GH-476.md)
 - [HAB-142: Polish: scroll clips into top bar and bottom gap on detail screens](HAB-142.md)
 - [HAB-154: Standing docs audit and tidy-up](HAB-154.md)
 - [HAB-183: Manual-dispatch-only CI pipelines for granular build/test/notes procedures](HAB-183.md)
