@@ -62,7 +62,7 @@ class DashboardRobot extends BaseRobot {
 
   Future<void> scrollArchivedRowIntoView() => tester.ensureVisible(find.byKey(_archivedRow));
 
-  /// Taps the "Archived pacts" row, then pumps [settle] for the panel animations.
+  /// Taps the "Archived pacts" row; default [settle] covers AnimatedSize (250 ms) + sheet _expandMax (300 ms).
   Future<void> tapArchivedRow({Duration settle = const Duration(milliseconds: 400)}) async {
     await tester.tap(find.byKey(_archivedRow));
     await tester.pump(settle);

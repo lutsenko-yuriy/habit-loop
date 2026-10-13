@@ -49,7 +49,8 @@ final _chainNavSuccessorPact = buildPact(
 );
 
 /// Waits for `pact_created`; submit() completes asynchronously and pops the wizard.
-Future<void> _waitForPactCreated(AppHarness h) => h.dashboard.waitUntil(
+Future<void> _waitForPactCreated(AppHarness h) => waitUntil(
+      h.tester,
       () => h.analytics.loggedEvents.any((e) => e.name == 'pact_created'),
       description: 'pact_created event fired',
     );

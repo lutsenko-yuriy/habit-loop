@@ -151,7 +151,6 @@ void main() {
 
       // ── 1. Enable Show archived pacts to make the pact visible ────────────
       await h.dashboard.waitForArchivedRow();
-      // 400 ms covers AnimatedSize (250 ms) + sheet _expandMax (300 ms).
       await h.dashboard.tapArchivedRow();
 
       // Scroll the archived tile into view in case it extends below the panel.

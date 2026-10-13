@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart' show CupertinoTextField;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,6 +52,6 @@ class PactWizardRobot extends BaseRobot {
     }
   }
 
-  /// Habit-name text via the controller (the title repeats it); `.last` skips the detail screen's field underneath.
-  String get habitNameText => fieldText(find.byWidgetPredicate((w) => w is TextField || w is CupertinoTextField).last);
+  /// Habit-name text via the controller (the title repeats it).
+  String get habitNameText => fieldText(find.byKey(_habitNameField));
 }

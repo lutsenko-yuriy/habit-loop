@@ -119,11 +119,7 @@ class PactDetailRobot extends BaseRobot {
 
   /// Taps "Next Pact"; [originalPactId] is the pact the screen was opened with, which keys its list (HAB-206).
   Future<void> tapNextPactLink(String originalPactId) async {
-    await tester.dragUntilVisible(
-      find.byKey(const Key('pact-detail-next-pact-link')),
-      _scrollableOf(originalPactId),
-      const Offset(0, -100),
-    );
+    await scrollToKey(const Key('pact-detail-next-pact-link'), pactId: originalPactId);
     await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
     await tester.pumpAndSettle();
     await tester.pump(kAnimatedValueTransitionDuration * 2);
@@ -147,11 +143,8 @@ class PactDetailRobot extends BaseRobot {
       .first;
 
   /// Scrolls [key] into view in the list of the screen opened with [pactId]; a positive [moveStep] dy scrolls up.
-  Future<void> scrollToKey(Key key, {required String pactId, Offset moveStep = const Offset(0, -100)}) async {
-    await tester.dragUntilVisible(find.byKey(key), _scrollableOf(pactId), moveStep);
-    // Drain dragUntilVisible's trailing ensureVisible animation before the caller taps.
-    await tester.pumpAndSettle();
-  }
+  Future<void> scrollToKey(Key key, {required String pactId, Offset moveStep = const Offset(0, -100)}) =>
+      scrollIntoView(find.byKey(key), _scrollableOf(pactId), moveStep: moveStep);
 
   /// Drags [habitName] up to build content below the fold.
   Future<void> scrollDownFrom(String habitName) async {
