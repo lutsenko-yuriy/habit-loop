@@ -93,4 +93,7 @@ class DashboardRobot extends BaseRobot {
     await tester.fling(find.byKey(const Key('pacts-panel-drag-handle')), const Offset(0, -300), 800);
     await tester.pump(const Duration(milliseconds: 400));
   }
+
+  /// Taps [habitName]'s showup row; callers wait for the detail screen.
+  Future<void> openShowup(String habitName) => tester.tap(find.text(habitName).first);
 }

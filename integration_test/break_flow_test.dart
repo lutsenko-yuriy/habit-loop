@@ -53,8 +53,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Meditate');
 
-      await h.pactDetail.scrollToStartBreakButton();
-      await h.pactDetail.tapStartBreak();
+      await h.pactDetail.startBreak();
 
       // The dashboard's gap-fill sweep already generated showups up to
       // today+10 (June 25) — beyond the default end date (June 22) — so the
@@ -113,8 +112,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Jog');
 
-      await h.pactDetail.scrollToStartBreakButton();
-      await h.pactDetail.tapStartBreak();
+      await h.pactDetail.startBreak();
 
       await h.breaks.toggleUntilPactEnds();
       expect(find.byKey(const Key('break-end-date-row')), findsNothing);
@@ -151,8 +149,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Read');
 
-      await h.pactDetail.scrollToStartBreakButton();
-      await h.pactDetail.tapStartBreak();
+      await h.pactDetail.startBreak();
 
       // Rationale left empty — submit is a no-op and no break is persisted.
       await h.breaks.tapSubmit();
@@ -328,7 +325,7 @@ void main() {
       // The status badge shows "On break" (WU5.1's on-break visual
       // treatment), not the plain "Pending" label — this still asserts the
       // underlying auto-fail suppression, just via the correct post-WU5.1 text.
-      await tester.tap(find.text('Meditate').first);
+      await h.dashboard.openShowup('Meditate');
       final strings = l10n(tester);
       await waitFor(tester, find.text(strings.showupOnBreak));
       expect(find.text(strings.showupOnBreak), findsOneWidget,
@@ -370,7 +367,7 @@ void main() {
 
       // ── 1. Open the on-break showup's detail from the dashboard ──────────
       await waitFor(tester, find.text('Meditate'));
-      await tester.tap(find.text('Meditate').first);
+      await h.dashboard.openShowup('Meditate');
       final strings = l10n(tester);
       await waitFor(tester, find.text(strings.showupOnBreak));
 

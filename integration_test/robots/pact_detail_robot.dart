@@ -43,19 +43,12 @@ class PactDetailRobot extends BaseRobot {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  /// Scrolls the "Take a break" button into view; it isn't built yet on short viewports (HAB-199).
-  Future<void> scrollToStartBreakButton() async {
-    await tester.dragUntilVisible(
-      find.byKey(const Key('pact-detail-start-break-button')),
-      _scrollView,
-      const Offset(0, -100),
-    );
-  }
-
-  /// Taps the (already scrolled-to) "Take a break" button and pumps past the push.
-  Future<void> tapStartBreak() async {
+  /// Scrolls to "Take a break" (unbuilt on short viewports, HAB-199), taps it and pumps past the push.
+  Future<void> startBreak() async {
+    const button = Key('pact-detail-start-break-button');
+    await tester.dragUntilVisible(find.byKey(button), _scrollView, const Offset(0, -100));
     await tester.pump();
-    await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
+    await tester.tap(find.byKey(button));
     await pushTransition();
   }
 
@@ -64,8 +57,7 @@ class PactDetailRobot extends BaseRobot {
     const button = Key('pact-detail-resume-pact-button');
     await tester.ensureVisible(find.byKey(button));
     await tester.pump();
-    await tester.tap(find.byKey(button));
-    await tester.pumpAndSettle();
+    await tapAndSettle(find.byKey(button));
   }
 
   /// Confirms the resume-pact dialog and pumps past the dismissal.
