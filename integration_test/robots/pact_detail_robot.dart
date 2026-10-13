@@ -68,15 +68,27 @@ class PactDetailRobot extends BaseRobot {
 
   Future<void> waitForBreakBanner() => waitFor(find.byKey(const Key('pact-detail-break-banner')));
 
-  /// Opens the timeline, scrolling back to the top first since dragUntilVisible scrolls one way only (HAB-211).
-  Future<void> openTimeline() async {
-    final listViewFinder = _scrollView;
+  /// Scrolls back to the top; the list keeps its offset after a pop, and dragUntilVisible scrolls one way only (HAB-211).
+  Future<void> scrollToTop() async {
     for (var i = 0; i < 15; i++) {
-      await tester.drag(listViewFinder, const Offset(0, 100));
+      await tester.drag(_scrollView, const Offset(0, 100));
       await tester.pump();
     }
+  }
+
+  Finder get timelineButton => find.byKey(const Key('pact-detail-timeline-button'));
+
+  /// Drags the list up 300 px to build content below the fold.
+  Future<void> dragUp() async {
+    await tester.drag(_scrollView, const Offset(0, -300));
+    await tester.pump();
+  }
+
+  /// Opens the timeline from the top of the list.
+  Future<void> openTimeline() async {
+    await scrollToTop();
     // dragUntilVisible, not ensureVisible: the button may not be built yet (HAB-211).
-    await scrollIntoViewAndTap(find.byKey(const Key('pact-detail-timeline-button')), listViewFinder);
+    await scrollIntoViewAndTap(timelineButton, _scrollView);
     await pushTransition();
   }
 

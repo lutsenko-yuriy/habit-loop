@@ -2,7 +2,6 @@
 //
 // Run on host:   flutter test integration_test/pact_timeline_flow_test.dart
 // Run on device: flutter test integration_test/pact_timeline_flow_test.dart -d <device>
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -115,18 +114,18 @@ void main() {
 
         final strings = l10n(tester);
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Meditate');
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Meditate');
 
         // ── 1. "View Timeline" button is present and tappable ─────────────────
-        await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
-        await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
-        expect(find.byKey(const Key('pact-detail-timeline-button')), findsOneWidget);
+        await waitFor(tester, h.pactDetail.timelineButton);
+        await tester.ensureVisible(h.pactDetail.timelineButton);
+        expect(h.pactDetail.timelineButton, findsOneWidget);
 
         // ── 2. Tap "View Timeline" ────────────────────────────────────────────
-        await openTimeline(tester);
+        await h.pactDetail.openTimeline();
 
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.timeline.waitLoaded();
         await waitFor(tester, find.text(strings.timelinePactCreated));
 
         // ── 3. Pact-created anchor is visible ─────────────────────────────────
@@ -163,13 +162,13 @@ void main() {
 
         final strings = l10n(tester);
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Evening Walk');
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Evening Walk');
 
         // ── 1. Tap "View Timeline" ────────────────────────────────────────────
-        await openTimeline(tester);
+        await h.pactDetail.openTimeline();
 
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.timeline.waitLoaded();
 
         // ── 2. Pact-concluded anchor is visible ───────────────────────────────
         await waitFor(tester, find.text(strings.timelinePactConcludedStopped));
@@ -202,27 +201,21 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Meditate');
+        await h.pactDetail.openTimeline();
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Meditate');
-        await openTimeline(tester);
-
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.timeline.waitLoaded();
 
         // ── 1. Note text is visible (noted showup rendered individually) ───────
         await waitFor(tester, find.text('Great session today!'));
         expect(find.text('Great session today!'), findsOneWidget);
 
         // ── 2. Tap the noted showup tile ──────────────────────────────────────
-        final tileKey = Key('timeline-milestone-${_notedShowup.id}');
-        await waitFor(tester, find.byKey(tileKey));
-        await tester.tap(find.byKey(tileKey));
-        await tester.pump(const Duration(milliseconds: 350));
-        await tester.pump(const Duration(milliseconds: 100));
+        await h.timeline.openShowupDetail(_notedShowup.id);
 
         // ── 3. Showup detail screen opens ─────────────────────────────────────
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
 
         // ── 4. Analytics event fired ──────────────────────────────────────────
         expect(
@@ -264,11 +257,11 @@ void main() {
 
         final strings = l10n(tester);
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Exercise');
-        await openTimeline(tester);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Exercise');
+        await h.pactDetail.openTimeline();
 
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.timeline.waitLoaded();
 
         // ── 1. The 3 done showups appear as one streak milestone ───────────────
         await waitFor(tester, find.text(strings.timelineDoneInARow(3)));
@@ -279,10 +272,10 @@ void main() {
 
         // ── 3. No individual tile keys exist for those showups (streaks, not singles) ──
         for (var i = 0; i < 3; i++) {
-          expect(find.byKey(Key('timeline-milestone-gm-d$i')), findsNothing);
+          expect(h.timeline.milestone('gm-d$i'), findsNothing);
         }
         for (var i = 0; i < 4; i++) {
-          expect(find.byKey(Key('timeline-milestone-gm-f$i')), findsNothing);
+          expect(h.timeline.milestone('gm-f$i'), findsNothing);
         }
       },
     );
@@ -310,11 +303,11 @@ void main() {
 
         final strings = l10n(tester);
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Exercise');
-        await openTimeline(tester);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Exercise');
+        await h.pactDetail.openTimeline();
 
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.timeline.waitLoaded();
 
         // ── 1. Streak item is shown with all 12 showups ────────────────────────
         await waitFor(tester, find.text(strings.timelineDoneInARow(12)));
@@ -349,23 +342,23 @@ void main() {
 
         final strings = l10n(tester);
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Exercise');
-        await openTimeline(tester);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Exercise');
+        await h.pactDetail.openTimeline();
 
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.timeline.waitLoaded();
 
         // ── 1. Each of the 7 tail showups has its own tappable tile ───────────
         for (var i = 0; i < 7; i++) {
-          await waitFor(tester, find.byKey(Key('timeline-milestone-gs-tail-$i')));
-          expect(find.byKey(Key('timeline-milestone-gs-tail-$i')), findsOneWidget);
+          await waitFor(tester, h.timeline.milestone('gs-tail-$i'));
+          expect(h.timeline.milestone('gs-tail-$i'), findsOneWidget);
         }
 
         // ── 2. The 3 older showups are collapsed into one streak item ──────────
         await waitFor(tester, find.text(strings.timelineDoneInARow(3)));
         expect(find.text(strings.timelineDoneInARow(3)), findsOneWidget);
         for (var i = 0; i < 3; i++) {
-          expect(find.byKey(Key('timeline-milestone-gs-old-$i')), findsNothing);
+          expect(h.timeline.milestone('gs-old-$i'), findsNothing);
         }
       },
     );
@@ -393,11 +386,11 @@ void main() {
 
         final strings = l10n(tester);
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Exercise');
-        await openTimeline(tester);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Exercise');
+        await h.pactDetail.openTimeline();
 
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.timeline.waitLoaded();
 
         // ── Section header shows the configured number of days ─────────────────
         await waitFor(tester, find.text(strings.timelineRecentSection(14)));
@@ -427,25 +420,17 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Meditate');
+        await h.pactDetail.openTimeline();
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Meditate');
-        await openTimeline(tester);
+        await h.timeline.waitLoaded();
 
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
-
-        // ── 1. Single-showup tile is visible ──────────────────────────────────
-        final tileKey = Key('timeline-milestone-${_singleShowup.id}');
-        await waitFor(tester, find.byKey(tileKey));
-
-        // ── 2. Tap it ─────────────────────────────────────────────────────────
-        await tester.tap(find.byKey(tileKey));
-        await tester.pump(const Duration(milliseconds: 350));
-        await tester.pump(const Duration(milliseconds: 100));
+        // ── 1–2. Tap the single-showup tile ───────────────────────────────────
+        await h.timeline.openShowupDetail(_singleShowup.id);
 
         // ── 3. Showup detail screen opens ─────────────────────────────────────
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
 
         // ── 4. Analytics event fired ──────────────────────────────────────────
         expect(
@@ -478,15 +463,14 @@ void main() {
           },
         );
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Meditate');
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Meditate');
 
         // Scroll through the pact detail to ensure the button area is reached.
-        await tester.drag(find.byType(ListView).last, const Offset(0, -300));
-        await tester.pump();
+        await h.pactDetail.dragUp();
 
         // ── "View Timeline" button is absent ──────────────────────────────────
-        expect(find.byKey(const Key('pact-detail-timeline-button')), findsNothing);
+        expect(h.pactDetail.timelineButton, findsNothing);
       },
     );
   });
@@ -513,11 +497,9 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         // ── 1/2. Open Pact Detail — first open this session, warms the cache ──
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Meditate');
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Meditate');
 
         // ── 3. Navigate back to the Dashboard ─────────────────────────────────
         // pumpAndSettle drains the push transition first — otherwise pageBack()
@@ -529,12 +511,10 @@ void main() {
         // ── 4. Open Showup Detail from the dashboard tile, mark as done ────────
         // The pacts panel is still expanded from step 2, so 'Meditate' also
         // matches the panel's pact row — .first is the dashboard showup tile,
-        // which paints before the panel row (see openPactDetail's `.last` above).
+        // which paints before the panel row (DashboardRobot.openPactDetail taps `.last`).
         await waitFor(tester, find.text('Meditate').first);
-        await tester.tap(find.text('Meditate').first);
-        await waitFor(tester, find.text(strings.markDone));
-        await tester.tap(find.text(strings.markDone));
-        await tester.pumpAndSettle();
+        await h.dashboard.openShowup('Meditate');
+        await h.showupDetail.markDone();
 
         // ── 5. Return to Pact Detail for the same pact, same session ────────────
         // Via the pacts panel (proven reliable above) rather than the showup's
@@ -543,16 +523,16 @@ void main() {
         // that Pact Detail is reopened within the same session, not by which path.
         await tester.pageBack();
         await tester.pumpAndSettle();
-        await openPactDetail(tester, 'Meditate');
+        await h.dashboard.openPactDetail('Meditate');
 
         // ── 6. Open Timeline from Pact Detail ────────────────────────────────────
-        await openTimeline(tester);
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.pactDetail.openTimeline();
+        await h.timeline.waitLoaded();
 
         // ── 7. Timeline shows the showup as a done individual milestone ─────────
-        final tileKey = Key('timeline-milestone-${_todayShowup.id}');
-        await waitFor(tester, find.byKey(tileKey));
-        expect(find.byKey(tileKey), findsOneWidget);
+        final tile = h.timeline.milestone(_todayShowup.id);
+        await waitFor(tester, tile);
+        expect(tile, findsOneWidget);
       },
     );
 
@@ -574,42 +554,22 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         // ── 1/2. Open Pact Detail — first open this session, warms the cache ──
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Meditate');
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Meditate');
 
         // ── 3. Open Timeline ─────────────────────────────────────────────────────
-        await openTimeline(tester);
-        await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+        await h.pactDetail.openTimeline();
+        await h.timeline.waitLoaded();
 
         // ── 4. Tap the showup's milestone tile to open Showup Detail ────────────
-        final tileKey = Key('timeline-milestone-${_singleShowup.id}');
-        await waitFor(tester, find.byKey(tileKey));
-        await tester.tap(find.byKey(tileKey));
-        await tester.pump(const Duration(milliseconds: 350));
-        await tester.pump(const Duration(milliseconds: 100));
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.timeline.openShowupDetail(_singleShowup.id);
+        await h.showupDetail.waitLoaded();
 
         // ── 5. Add a note and save ───────────────────────────────────────────────
         const newNote = 'Felt fantastic today!';
-        await tester.tap(find.byKey(const Key('showup-note-field')));
-        await tester.pumpAndSettle();
-        await tester.enterText(find.byKey(const Key('showup-note-field')), newNote);
-        await tester.pump();
-        // The keyboard can push the save button below the fold, where ListView
-        // hasn't realized it yet — dragUntilVisible scrolls and re-checks
-        // instead of assuming the button already exists.
-        await tester.dragUntilVisible(
-          find.byKey(const Key('showup-note-save-button')),
-          find.ancestor(of: find.byKey(const Key('showup-note-field')), matching: find.byType(Scrollable)),
-          const Offset(0, -100),
-        );
-        await tester.pump();
-        await tester.tap(find.byKey(const Key('showup-note-save-button')));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await h.showupDetail.enterNote(newNote);
+        await h.showupDetail.saveNote();
 
         // ── 6. Navigate back to Timeline (same session, no restart) ─────────────
         await tester.pageBack();
