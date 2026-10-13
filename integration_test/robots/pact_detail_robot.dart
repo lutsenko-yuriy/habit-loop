@@ -43,14 +43,30 @@ class PactDetailRobot extends BaseRobot {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  /// Scrolls the "Take a break" button into view; it isn't built yet on short viewports (HAB-199).
-  Future<void> scrollToStartBreakButton() async {
-    await tester.dragUntilVisible(
-      find.byKey(const Key('pact-detail-start-break-button')),
-      _scrollView,
-      const Offset(0, -100),
-    );
+  /// Scrolls to "Take a break" (unbuilt on short viewports, HAB-199), taps it and pumps past the push.
+  Future<void> startBreak() async {
+    const button = Key('pact-detail-start-break-button');
+    await tester.dragUntilVisible(find.byKey(button), _scrollView, const Offset(0, -100));
+    await tester.pump();
+    await tester.tap(find.byKey(button));
+    await pushTransition();
   }
+
+  /// Taps "Resume pact" (scrolling it into view), leaving the confirm dialog open.
+  Future<void> resumePact() async {
+    const button = Key('pact-detail-resume-pact-button');
+    await tester.ensureVisible(find.byKey(button));
+    await tester.pump();
+    await tapAndSettle(find.byKey(button));
+  }
+
+  /// Confirms the resume-pact dialog and pumps past the dismissal.
+  Future<void> confirmResumePact() async {
+    await tester.tap(find.text(p.l10n(tester).resumePactConfirm));
+    await pushTransition();
+  }
+
+  Future<void> waitForBreakBanner() => waitFor(find.byKey(const Key('pact-detail-break-banner')));
 
   /// Opens the timeline, scrolling back to the top first since dragUntilVisible scrolls one way only (HAB-211).
   Future<void> openTimeline() async {

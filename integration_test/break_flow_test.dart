@@ -3,7 +3,7 @@
 //
 // Run on host:   flutter test integration_test/break_flow_test.dart
 // Run on device: flutter test integration_test/break_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show FilterChip, Key, ListView, Navigator;
+import 'package:flutter/material.dart' show Key, Navigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_break.dart';
@@ -23,42 +23,6 @@ import 'harness.dart';
 // pact_breaks_enabled now defaults to true (HAB-195 WU6) — this override is
 // kept for explicitness/determinism, independent of the production default.
 const _breaksEnabled = {'pact_breaks_enabled': true};
-
-Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId) async {
-  final tileKey = Key('timeline-milestone-$showupId');
-  await waitFor(tester, find.byKey(tileKey));
-  await tester.tap(find.byKey(tileKey));
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
-
-/// Types [rationale] into the break-rationale field and submits.
-///
-/// The keyboard-inset relayout must settle *before* scrolling to the submit
-/// button — a bare `pump()` doesn't advance time, so on a still-growing
-/// inset the button ends up back under the keyboard once the inset finishes
-/// animating in, causing tap() to miss it (HAB-199: confirmed via CI
-/// diagnostic — the button's unscrolled rect was identical between a
-/// passing and a failing run, only the scroll offset differed).
-///
-/// Uses `dragUntilVisible`, not `ensureVisible` — the next-showup hint row
-/// (HAB-215) pushed the submit button beyond the ListView's initially
-/// realized extent on CI's short Android viewport, so it isn't built yet
-/// when this is first called; `ensureVisible` requires the element to
-/// already exist in the tree, `dragUntilVisible` incrementally scrolls
-/// until it is (same root cause as HAB-196/HAB-199/HAB-211).
-Future<void> _enterRationaleAndSubmit(WidgetTester tester, String rationale) async {
-  await tester.enterText(find.byKey(const Key('break-rationale-field')), rationale);
-  await tester.pump(const Duration(milliseconds: 450));
-  await tester.dragUntilVisible(
-    find.byKey(const Key('break-submit-button')),
-    find.byType(ListView),
-    const Offset(0, -100),
-  );
-  await tester.pump();
-  await tester.tap(find.byKey(const Key('break-submit-button')));
-  await tester.pump(const Duration(milliseconds: 450));
-}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -89,11 +53,7 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Meditate');
 
-      await scrollToPactDetailStartBreakButton(tester);
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await h.pactDetail.startBreak();
 
       // The dashboard's gap-fill sweep already generated showups up to
       // today+10 (June 25) — beyond the default end date (June 22) — so the
@@ -105,7 +65,7 @@ void main() {
       // Accept the flow's default dates (today .. today+7) — consistent with
       // how create_pact_flow_test.dart never drives the native date picker —
       // and only fill in the mandatory rationale.
-      await _enterRationaleAndSubmit(tester, 'Feeling sick');
+      await h.breaks.enterRationaleAndSubmit('Feeling sick');
 
       // Back on Pact Detail: the break was persisted and blocks a new one.
       expect(find.byKey(const Key('pact-detail-start-break-button')), findsNothing);
@@ -152,17 +112,12 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Jog');
 
-      await scrollToPactDetailStartBreakButton(tester);
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await h.pactDetail.startBreak();
 
-      await tester.tap(find.byKey(const Key('break-until-pact-ends-switch')));
-      await tester.pumpAndSettle(); // let the end-date row's AnimatedSwitcher collapse finish
+      await h.breaks.toggleUntilPactEnds();
       expect(find.byKey(const Key('break-end-date-row')), findsNothing);
 
-      await _enterRationaleAndSubmit(tester, 'Travel');
+      await h.breaks.enterRationaleAndSubmit('Travel');
 
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
@@ -194,20 +149,15 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Read');
 
-      await scrollToPactDetailStartBreakButton(tester);
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await h.pactDetail.startBreak();
 
       // Rationale left empty — submit is a no-op and no break is persisted.
-      await tester.tap(find.byKey(const Key('break-submit-button')));
-      await tester.pump(const Duration(milliseconds: 350));
+      await h.breaks.tapSubmit();
       expect(await h.pactBreakRepo.getBreaksForPact(pactId), isEmpty);
       // Still on the break-creation screen, not popped back to Pact Detail.
       expect(find.byKey(const Key('break-submit-button')), findsOneWidget);
 
-      await _enterRationaleAndSubmit(tester, 'Busy week');
+      await h.breaks.enterRationaleAndSubmit('Busy week');
 
       final breaks = await h.pactBreakRepo.getBreaksForPact(pactId);
       expect(breaks, hasLength(1));
@@ -254,17 +204,15 @@ void main() {
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Read');
       await openTimeline(tester);
-      await _openShowupDetailFromTimeline(tester, showupId);
+      await h.timeline.openShowupDetail(showupId);
 
       // ── 2. The break entry point is present ───────────────────────────────
       await waitFor(tester, find.byKey(const Key('showup-detail-start-break-button')));
 
       // ── 3. Tap it and submit — defaults are accepted (today .. today+7) ────
-      await tester.tap(find.byKey(const Key('showup-detail-start-break-button')));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await h.breaks.startFromShowupDetail();
 
-      await _enterRationaleAndSubmit(tester, 'Feeling sick');
+      await h.breaks.enterRationaleAndSubmit('Feeling sick');
 
       // ── 4. Start date defaults to today (testNow's date), not the past
       //         triggering showup's own (June 14) date ─────────────────────
@@ -377,7 +325,7 @@ void main() {
       // The status badge shows "On break" (WU5.1's on-break visual
       // treatment), not the plain "Pending" label — this still asserts the
       // underlying auto-fail suppression, just via the correct post-WU5.1 text.
-      await tester.tap(find.text('Meditate').first);
+      await h.dashboard.openShowup('Meditate');
       final strings = l10n(tester);
       await waitFor(tester, find.text(strings.showupOnBreak));
       expect(find.text(strings.showupOnBreak), findsOneWidget,
@@ -419,7 +367,7 @@ void main() {
 
       // ── 1. Open the on-break showup's detail from the dashboard ──────────
       await waitFor(tester, find.text('Meditate'));
-      await tester.tap(find.text('Meditate').first);
+      await h.dashboard.openShowup('Meditate');
       final strings = l10n(tester);
       await waitFor(tester, find.text(strings.showupOnBreak));
 
@@ -592,19 +540,12 @@ void main() {
       // needed before tapping it by habit name.
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Swim');
-      await waitFor(tester, find.byKey(const Key('pact-detail-break-banner')));
+      await h.pactDetail.waitForBreakBanner();
 
       // ── 3. Tap "Resume pact" and confirm ──────────────────────────────────
       h.notifications.reset();
-      await tester.ensureVisible(find.byKey(const Key('pact-detail-resume-pact-button')));
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('pact-detail-resume-pact-button')));
-      await tester.pumpAndSettle();
-
-      final strings = l10n(tester);
-      await tester.tap(find.text(strings.resumePactConfirm));
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pump(const Duration(milliseconds: 100));
+      await h.pactDetail.resumePact();
+      await h.pactDetail.confirmResumePact();
 
       // ── 4. The banner disappears — the pact returns to normal display ────
       expect(find.byKey(const Key('pact-detail-break-banner')), findsNothing);
@@ -690,15 +631,7 @@ void main() {
       //         selected, Break not selected" corner of the truth table it's
       //         actually testing ────────────────────────────────────────────
       await openPactsPanel(tester);
-      const panelScrollable = Key('pacts-panel-scrollable');
-      await tester.dragUntilVisible(
-        find.byKey(const Key('break-filter-chip')),
-        find.byKey(panelScrollable),
-        const Offset(0, -100),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('break-filter-chip')));
-      await tester.pump(const Duration(milliseconds: 300));
+      await h.dashboard.toggleBreakFilter();
 
       // ── 1. Active/Done/Stopped selected, Break deselected — the on-break
       //         pact (Swim) is hidden even though its underlying status is
@@ -708,35 +641,16 @@ void main() {
       // Android emulator) — anchor on the panel's own scrollable rather than
       // Yoga's own text, which may not exist yet (HAB-211, same root cause
       // as HAB-196 Fix 4 / HAB-199).
-      await tester.dragUntilVisible(find.text('Yoga'), find.byKey(panelScrollable), const Offset(0, -100));
-      await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
+      await h.dashboard.scrollPanelTo(find.text('Yoga'));
+      await h.dashboard.scrollPanelTo(find.text('Cycling'));
       expect(find.text('Cycling'), findsOneWidget);
       expect(find.text('Swim'), findsNothing);
 
       // ── 2. Select the "Break" chip on top of the already-selected Active
       //         — the on-break pact now joins the plain active one; Cycling
       //         (stopped) is unaffected, its own chip untouched. ─────────
-      final strings = l10n(tester);
-      // Step 1 scrolled down to reveal Cycling — the filter-chip row is
-      // part of the same CustomScrollView, above the list items, so it
-      // scrolled out of view along with the title. Scroll back up (positive
-      // offset) before tapping it (HAB-211 — a real CI-only miss: the chip
-      // being out of view didn't reproduce on the local emulator's taller
-      // viewport).
-      await tester.dragUntilVisible(
-        find.byKey(const Key('break-filter-chip')),
-        find.byKey(panelScrollable),
-        const Offset(0, 100),
-      );
-      // dragUntilVisible's own found-check only confirms the element exists
-      // in the tree — a lazy list's cache extent can pre-build an item
-      // that isn't actually painted at a stable on-screen position yet, so
-      // an immediate tap's hit-test can still miss (CI-only: real device
-      // cache-extent/paint timing differs from the local emulator) —
-      // settle first (HAB-211).
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('break-filter-chip')));
-      await tester.pump(const Duration(milliseconds: 300));
+      // Step 1 scrolled the chip row out of view; scroll back up to it (HAB-211: CI-only miss).
+      await h.dashboard.toggleBreakFilter(moveStep: const Offset(0, 100));
 
       expect(find.text('Swim'), findsOneWidget);
       expect(find.text('Yoga'), findsOneWidget);
@@ -745,25 +659,18 @@ void main() {
       // not just off-screen, it's unrealized. Scroll back down to it before
       // asserting, same as step 1 (HAB-211: 3 items is not "small enough to
       // always stay realized" on CI's viewport).
-      await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
+      await h.dashboard.scrollPanelTo(find.text('Cycling'));
       expect(find.text('Cycling'), findsOneWidget);
 
       // ── 3. Deselect "Active" — only the on-break pact remains among the
       //         active-status pacts (Break alone now governs it); the plain
       //         active pact (Yoga) disappears; Cycling stays, still
       //         unaffected by the Active/Break axis ─────────────────────
-      await tester.dragUntilVisible(
-        find.widgetWithText(FilterChip, strings.filterActive),
-        find.byKey(panelScrollable),
-        const Offset(0, 100),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilterChip, strings.filterActive));
-      await tester.pump(const Duration(milliseconds: 300));
+      await h.dashboard.toggleActiveFilter(moveStep: const Offset(0, 100));
 
       expect(find.text('Swim'), findsOneWidget);
       expect(find.text('Yoga'), findsNothing);
-      await tester.dragUntilVisible(find.text('Cycling'), find.byKey(panelScrollable), const Offset(0, -100));
+      await h.dashboard.scrollPanelTo(find.text('Cycling'));
       expect(find.text('Cycling'), findsOneWidget);
     });
   });

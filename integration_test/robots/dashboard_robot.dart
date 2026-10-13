@@ -27,9 +27,29 @@ class DashboardRobot extends BaseRobot {
     await waitFor(find.text(habitName));
   }
 
+  Finder get _panelScrollable => find.byKey(const Key('pacts-panel-scrollable'));
+
+  /// Drags the panel until [target] is built; the filter chips scroll out with the list, so [moveStep] may go up.
+  Future<void> scrollPanelTo(Finder target, {Offset moveStep = const Offset(0, -100)}) =>
+      tester.dragUntilVisible(target, _panelScrollable, moveStep);
+
+  /// Toggles the "Break" filter chip.
+  Future<void> toggleBreakFilter({Offset moveStep = const Offset(0, -100)}) =>
+      _toggleChip(find.byKey(const Key('break-filter-chip')), moveStep);
+
+  /// Toggles the "Active" filter chip.
+  Future<void> toggleActiveFilter({Offset moveStep = const Offset(0, -100)}) =>
+      _toggleChip(find.widgetWithText(FilterChip, p.l10n(tester).filterActive), moveStep);
+
+  Future<void> _toggleChip(Finder chip, Offset moveStep) async {
+    await scrollIntoView(chip, _panelScrollable, moveStep: moveStep);
+    await tester.tap(chip);
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+
   /// Opens the pact named [habitName] from the pacts panel, scrolling it into view first (HAB-211).
   Future<void> openPactDetail(String habitName) async {
-    final scrollableFinder = find.byKey(const Key('pacts-panel-scrollable'));
+    final scrollableFinder = _panelScrollable;
     // Scoped to the panel: the name can also appear in today's list (HAB-211).
     final panelEntryFinder = find.descendant(of: scrollableFinder, matching: find.text(habitName));
     await scrollIntoView(panelEntryFinder, scrollableFinder);
@@ -73,4 +93,7 @@ class DashboardRobot extends BaseRobot {
     await tester.fling(find.byKey(const Key('pacts-panel-drag-handle')), const Offset(0, -300), 800);
     await tester.pump(const Duration(milliseconds: 400));
   }
+
+  /// Taps [habitName]'s showup row; callers wait for the detail screen.
+  Future<void> openShowup(String habitName) => tester.tap(find.text(habitName).first);
 }
