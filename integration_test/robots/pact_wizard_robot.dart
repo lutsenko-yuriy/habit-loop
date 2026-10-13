@@ -44,4 +44,14 @@ class PactWizardRobot extends BaseRobot {
     await waitFor(find.byKey(_habitNameField));
     await tester.pumpAndSettle();
   }
+
+  /// Swipes to the summary page; 8 swipes since the last hops occasionally miss the snap threshold on iOS.
+  Future<void> swipeToSummary() async {
+    for (var i = 0; i < 8; i++) {
+      await swipeForward();
+    }
+  }
+
+  /// Habit-name text via the controller (the title repeats it).
+  String get habitNameText => fieldText(find.byKey(_habitNameField));
 }

@@ -8,6 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
+- [wip] (PR #480) GH-476 WU4: pact chain and archive scenarios migrated to robots (`PactDetailRobot` chain-link/archive helpers, `PactWizardRobot.swipeToSummary`/`habitNameText`, `DashboardRobot` archived-row helpers).
 - [wip] (PR #479) GH-476 WU3: pact note and stop-pact scenarios migrated to `PactDetailRobot` (`scrollToNoteField`/`enterNote`/`tapSaveNote`/`stopPact`); keyboard-only tap/settle removed from note entry.
 - [wip] (PR #478) GH-476 WU2: pact wizard robot (`h.wizard`/`h.editWizard`) plus pact-detail edit/scroll helpers and `DashboardRobot.expandPactsPanelViaSummary`; create/edit pact scenarios migrated, dead keyboard-workaround waits removed.
 - [wip] (PR #477) GH-476 WU1: test-robot foundation — `BaseRobot` + `DashboardRobot`/`PactDetailRobot`/`OnboardingRobot` under `integration_test/robots/`, exposed as `h.dashboard`/`h.pactDetail`/`h.onboarding`; harness nav helpers became one-line delegates; wait primitives moved to `integration_test/primitives.dart`; pact-detail list finder scoped by key prefix (the bare `ListView` finder also hit the pacts panel).
