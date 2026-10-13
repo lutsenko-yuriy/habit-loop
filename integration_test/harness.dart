@@ -94,6 +94,23 @@ class AppHarness {
   late final ShowupDetailRobot showupDetail = ShowupDetailRobot(tester);
   late final ChecklistRobot checklist = ChecklistRobot(tester);
 
+  /// Opens [habitName]'s pact detail from the pacts panel, then waits for it to load and settle.
+  Future<void> openSettledPactDetail(String habitName) async {
+    await dashboard.openPactsPanel();
+    await dashboard.openPactDetail(habitName);
+    await pactDetail.waitLoaded();
+    await tester.pumpAndSettle();
+  }
+
+  /// Backgrounds and resumes the app; the install watcher throttles to 5 s of wall-clock time, so real time passes first.
+  Future<void> backgroundAndResume() async {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 5100)));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pumpAndSettle();
+  }
+
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
   final InMemoryPactBreakRepository pactBreakRepo;

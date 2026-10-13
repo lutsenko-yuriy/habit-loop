@@ -78,15 +78,6 @@ Future<void> _openShowup(AppHarness h) async {
   await h.showupDetail.waitForMarkFailed();
 }
 
-/// Opens pact detail from the pacts panel and scrolls to the bottom.
-Future<void> _openPactDetailAtBottom(AppHarness h) async {
-  await h.dashboard.openPactsPanel();
-  await h.dashboard.openPactDetail('Meditate');
-  await h.pactDetail.waitLoaded();
-  await h.tester.pumpAndSettle();
-  await h.pactDetail.scrollToBottom();
-}
-
 /// Delivers Checklister's run-finished callback for [showupId] with [status].
 Future<void> _finishRun(WidgetTester tester, AppHarness h, String status, {String showupId = _showupId}) async {
   h.incomingLinks.emit(_runFinished(status, showupId: showupId));
@@ -158,7 +149,7 @@ void main() {
       expect(started.pactId, _pactId);
 
       // 5. No callback (the user just comes back): still gated.
-      await h.showupDetail.backgroundAndResume();
+      await h.backgroundAndResume();
       expect(h.showupDetail.runChecklistButton, findsOneWidget);
       expect(h.showupDetail.markDoneButton, findsNothing);
     });
@@ -357,7 +348,8 @@ void main() {
       );
 
       // 2. Pact detail: no Checklist section.
-      await _openPactDetailAtBottom(h);
+      await h.openSettledPactDetail('Meditate');
+      await h.pactDetail.scrollToBottom();
       expect(h.checklist.changeButton, findsNothing);
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -369,12 +361,13 @@ void main() {
 
       // 4-5. Installed while backgrounded: the open showup re-gates; the pact shows its link.
       h.checklister.installed = true;
-      await h.showupDetail.backgroundAndResume();
+      await h.backgroundAndResume();
       await h.showupDetail.waitForRunChecklist();
       expect(h.showupDetail.markDoneButton, findsNothing);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await _openPactDetailAtBottom(h);
+      await h.openSettledPactDetail('Meditate');
+      await h.pactDetail.scrollToBottom();
       await h.checklist.waitForLinkedName('Morning');
       expect(h.checklist.changeButton, findsOneWidget);
       await tester.pageBack();
@@ -382,7 +375,7 @@ void main() {
 
       // 6-7. Uninstalled again: Mark as done is back and the link is kept.
       h.checklister.installed = false;
-      await h.showupDetail.backgroundAndResume();
+      await h.backgroundAndResume();
       await _openShowup(h);
       expect(h.showupDetail.markDoneButton, findsOneWidget);
       expect(h.showupDetail.runChecklistButton, findsNothing);

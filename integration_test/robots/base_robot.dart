@@ -50,15 +50,6 @@ abstract class BaseRobot {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  /// Backgrounds and resumes the app; the install watcher throttles to 5 s of wall-clock time, so real time passes first.
-  Future<void> backgroundAndResume() async {
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 5100)));
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
-    await tester.pumpAndSettle();
-  }
-
   Future<void> enterText(Finder finder, String text) => tester.enterText(finder, text);
 
   /// Whether the Material or Cupertino button at [finder] has an `onPressed` handler.

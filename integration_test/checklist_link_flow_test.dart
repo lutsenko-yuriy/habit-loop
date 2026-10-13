@@ -37,13 +37,6 @@ List<Override> get _clock => [
       pactDetailNowProvider.overrideWithValue(_testNow),
     ];
 
-Future<void> _openDetail(AppHarness h, String habitName) async {
-  await h.dashboard.openPactsPanel();
-  await h.dashboard.openPactDetail(habitName);
-  await h.pactDetail.waitLoaded();
-  await h.tester.pumpAndSettle();
-}
-
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
@@ -64,7 +57,7 @@ void main() {
         },
       );
 
-      await _openDetail(h, 'Meditate');
+      await h.openSettledPactDetail('Meditate');
       await h.pactDetail.scrollToBottom();
 
       expect(h.checklist.selectButton, findsNothing);
@@ -81,7 +74,7 @@ void main() {
       );
 
       // 2. Only "Select checklist" is offered.
-      await _openDetail(h, 'Meditate');
+      await h.openSettledPactDetail('Meditate');
       await h.checklist.scrollToSelect(_pactId);
       expect(h.checklist.changeButton, findsNothing);
       expect(h.checklist.removeButton, findsNothing);
@@ -121,7 +114,7 @@ void main() {
         extraOverrides: _clock,
         beforePump: (h) async => h.pactRepo.savePact(_activePact),
       );
-      await _openDetail(h, 'Meditate');
+      await h.openSettledPactDetail('Meditate');
       await h.checklist.scrollToSelect(_pactId);
       // 1-2. Cancelled: still "Select checklist", no message, nothing stored.
       await h.checklist.tapSelect();
@@ -155,7 +148,7 @@ void main() {
       );
 
       // 2. Change -> Checklister opens -> selecting c2 swaps the link.
-      await _openDetail(h, 'Meditate');
+      await h.openSettledPactDetail('Meditate');
       await h.checklist.scrollToChange(_pactId);
       expect(h.checklist.linkedName('Morning'), findsOneWidget);
       await h.checklist.tapChange();
@@ -208,7 +201,7 @@ void main() {
       );
 
       for (final entry in {'Stopped Habit': 'stopped-pact', 'Completed Habit': 'completed-pact'}.entries) {
-        await _openDetail(h, entry.key);
+        await h.openSettledPactDetail(entry.key);
         await h.pactDetail.scrollToBottom();
         expect(h.checklist.selectButton, findsNothing, reason: entry.key);
         expect(h.checklist.sectionTitle, findsNothing, reason: entry.key);

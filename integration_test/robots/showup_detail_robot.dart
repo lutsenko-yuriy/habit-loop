@@ -17,9 +17,8 @@ class ShowupDetailRobot extends BaseRobot {
 
   /// Taps "Mark as done" and settles.
   Future<void> markDone() async {
-    final done = find.text(p.l10n(tester).markDone);
-    await waitFor(done);
-    await tapAndSettle(done);
+    await waitFor(markDoneButton);
+    await tapAndSettle(markDoneButton);
   }
 
   Finder get markDoneButton => find.text(p.l10n(tester).markDone);
