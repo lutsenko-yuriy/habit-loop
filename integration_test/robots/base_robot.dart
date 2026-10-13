@@ -50,6 +50,10 @@ abstract class BaseRobot {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
+  /// Taps the language option labelled [label] in the open picker; [alreadyActive] matches the "✓ "-prefixed one.
+  Future<void> selectLanguage(String label, {bool alreadyActive = false}) =>
+      tapAndSettle(alreadyActive ? find.textContaining(label) : find.text(label));
+
   Future<void> enterText(Finder finder, String text) => tester.enterText(finder, text);
 
   /// Whether the Material or Cupertino button at [finder] has an `onPressed` handler.

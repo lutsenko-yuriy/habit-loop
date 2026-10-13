@@ -2,7 +2,6 @@
 //
 // Run on host:   flutter test integration_test/dashboard_kebab_menu_flow_test.dart
 // Run on device: flutter test integration_test/dashboard_kebab_menu_flow_test.dart -d <device>
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/slices/dashboard/analytics/kebab_analytics_events.dart';
 import 'package:integration_test/integration_test.dart';
@@ -23,8 +22,7 @@ void main() {
       h = await AppHarness.create(tester);
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      await tester.tap(find.byKey(const Key('kebab-menu-button')));
-      await tester.pumpAndSettle();
+      await h.dashboard.openKebab();
 
       expect(find.text(l10n(tester).aboutTitle), findsOneWidget);
       expect(find.text(l10n(tester).languagePickerTitle), findsOneWidget);
@@ -38,10 +36,7 @@ void main() {
       h = await AppHarness.create(tester);
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      await tester.tap(find.byKey(const Key('kebab-menu-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('about-button')));
-      await tester.pumpAndSettle();
+      await h.dashboard.openAbout();
 
       expect(find.text(l10n(tester).aboutTitle), findsOneWidget);
     });
@@ -52,10 +47,7 @@ void main() {
       h = await AppHarness.create(tester);
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      await tester.tap(find.byKey(const Key('kebab-menu-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('language-picker-button')));
-      await tester.pumpAndSettle();
+      await h.dashboard.openLanguagePicker();
 
       expect(find.text(l10n(tester).languageEnglish), findsOneWidget);
       expect(find.text(l10n(tester).languageFrench), findsOneWidget);
@@ -76,11 +68,10 @@ void main() {
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
 
-      expect(find.byKey(const Key('kebab-menu-button')), findsNothing);
-      expect(find.byKey(const Key('remote-config-debug-button')), findsOneWidget);
+      expect(h.dashboard.kebabButton, findsNothing);
+      expect(h.dashboard.remoteConfigDebugButton, findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('remote-config-debug-button')));
-      await tester.pumpAndSettle();
+      await h.dashboard.openRemoteConfigDebug();
 
       expect(find.text('Remote Config'), findsOneWidget);
     });

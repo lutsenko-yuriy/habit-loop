@@ -25,16 +25,14 @@ void main() {
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
 
       // ── 2. Open language picker via the carousel footer button ────────────
-      await tester.tap(find.text(strings.languagePickerTitle));
-      await tester.pumpAndSettle();
+      await h.onboarding.openLanguagePicker();
 
       // Verify the picker opened by checking that the language options are visible
       // (platform-agnostic: Android shows SimpleDialog, iOS shows CupertinoActionSheet).
       expect(find.text(strings.languageRussian), findsOneWidget);
 
       // ── 3. Select Russian ─────────────────────────────────────────────────
-      await tester.tap(find.text(strings.languageRussian));
-      await tester.pumpAndSettle();
+      await h.onboarding.selectLanguage(strings.languageRussian);
 
       // ── 4. Carousel title is now in Russian ───────────────────────────────
       expect(find.text(strings.onboardingSlide0Title), findsNothing); // English gone

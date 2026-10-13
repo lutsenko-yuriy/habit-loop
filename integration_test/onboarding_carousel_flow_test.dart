@@ -28,25 +28,14 @@ void main() {
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
       expect(find.text(strings.createPact), findsOneWidget);
       // Regular dashboard chrome is not visible.
-      expect(find.byKey(const Key('language-picker-button')), findsNothing);
+      expect(h.dashboard.languagePickerButton, findsNothing);
     });
 
     testWidgets('swipe_left_advances_to_slide_1: swiping left advances the carousel to slide 1', (tester) async {
       h = await AppHarness.create(tester, initiallyAnonymous: true, remoteConfigOverrides: noAutoAdvance);
       final strings = l10n(tester);
 
-      // 300 px stays within one page width on any ≥320 dp device
-      // ((300/320)+0.5=1.44 → rounds to 1). A wider drag (e.g. 400 px)
-      // overshoots to page 2 on ≤400 dp screens ((400/390)+0.5=1.53 → 2),
-      // causing pumpAndSettle to settle there instead of slide 1.
-      // 50 ms keeps velocity ~6000 px/s, well above the snap threshold.
-      await tester.timedDrag(
-        find.text(strings.onboardingSlide0Title),
-        const Offset(-300, 0),
-        const Duration(milliseconds: 50),
-      );
-      await waitFor(tester, find.text(strings.onboardingSlide1Title));
-      await tester.pumpAndSettle();
+      await h.onboarding.swipeToSlide1();
 
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
       expect(find.text(strings.onboardingSlide0Title), findsNothing);
@@ -57,26 +46,11 @@ void main() {
       h = await AppHarness.create(tester, initiallyAnonymous: true, remoteConfigOverrides: noAutoAdvance);
       final strings = l10n(tester);
 
-      // Advance to slide 1 using the same 300 px drag as the "swiping left"
-      // test: on a ≤320 dp device (CI AVD) a 400 px drag overshoots to page 2
-      // ((400/320)+0.5=1.75 → round=2), putting slide 1 off-screen so the
-      // subsequent timedDrag(slide1Title, ...) fails with StateError.
-      await tester.timedDrag(
-        find.text(strings.onboardingSlide0Title),
-        const Offset(-300, 0),
-        const Duration(milliseconds: 50),
-      );
-      await waitFor(tester, find.text(strings.onboardingSlide1Title));
-      await tester.pumpAndSettle();
+      await h.onboarding.swipeToSlide1();
       expect(find.text(strings.onboardingSlide1Title), findsOneWidget);
 
       // Swipe back to slide 0.
-      await tester.timedDrag(
-        find.text(strings.onboardingSlide1Title),
-        const Offset(400, 0),
-        const Duration(milliseconds: 50),
-      );
-      await waitFor(tester, find.text(strings.onboardingSlide0Title));
+      await h.onboarding.swipeBackToSlide0();
 
       expect(find.text(strings.onboardingSlide0Title), findsOneWidget);
     });
@@ -88,8 +62,7 @@ void main() {
       final strings = l10n(tester);
 
       // The carousel has a single "Language" button (dialog not yet open).
-      await tester.tap(find.text(strings.languagePickerTitle));
-      await tester.pumpAndSettle();
+      await h.onboarding.openLanguagePicker();
 
       // Platform-specific picker dialog type.
       if (Platform.isAndroid) {
@@ -99,8 +72,7 @@ void main() {
       }
       expect(find.text(strings.languageFrench), findsOneWidget);
 
-      await tester.tap(find.text(strings.languageFrench));
-      await tester.pumpAndSettle();
+      await h.onboarding.selectLanguage(strings.languageFrench);
 
       // Locale was persisted via the locale preference service.
       expect(h.localeService.savedLocale?.languageCode, equals('fr'));

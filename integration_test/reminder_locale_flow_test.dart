@@ -88,12 +88,8 @@ void main() {
       expect(h.notifications.scheduledReminders.first.titleText, equals(enL10n.notificationReminderTitle('Meditate')));
 
       // 3. Open the language picker and select Russian.
-      await tester.tap(find.byKey(const Key('kebab-menu-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('language-picker-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n(tester).languageRussian));
-      await tester.pumpAndSettle();
+      await h.dashboard.openLanguagePicker();
+      await h.dashboard.selectLanguage(l10n(tester).languageRussian);
 
       // 4. Verify h.notifications.cancelledPactIds now contains the pact ID (stale reminder was cancelled).
       expect(h.notifications.cancelledPactIds, contains(_pactId));
@@ -124,12 +120,8 @@ void main() {
 
       // Make Russian the active in-app override first, so re-selecting it below is
       // a genuine "already-active language" no-op (not a system→explicit change).
-      await tester.tap(find.byKey(const Key('kebab-menu-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('language-picker-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n(tester).languageRussian));
-      await tester.pumpAndSettle();
+      await h.dashboard.openLanguagePicker();
+      await h.dashboard.selectLanguage(l10n(tester).languageRussian);
 
       // 2. Record current counts of scheduledReminders and cancelledPactIds.
       final scheduledCountBefore = h.notifications.scheduledReminders.length;
@@ -137,12 +129,8 @@ void main() {
 
       // 3. Open the language picker and re-select Russian (same as current).
       // Already-active option is prefixed with "✓ " on both platform pickers.
-      await tester.tap(find.byKey(const Key('kebab-menu-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('language-picker-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.textContaining(l10n(tester).languageRussian));
-      await tester.pumpAndSettle();
+      await h.dashboard.openLanguagePicker();
+      await h.dashboard.selectLanguage(l10n(tester).languageRussian, alreadyActive: true);
 
       // 4. Verify no additional cancellation or scheduling calls were made.
       expect(h.notifications.scheduledReminders.length, equals(scheduledCountBefore));

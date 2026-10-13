@@ -368,24 +368,6 @@ IconData syncIconFor(SyncUiState state) => defaultTargetPlatform == TargetPlatfo
     ? syncStatusIconDataCupertino(state)
     : syncStatusIconDataMaterial(state);
 
-/// Delegates to [OnboardingRobot.saveEnterName] (GH-476).
-Future<void> saveEnterName(WidgetTester tester, String name) => OnboardingRobot(tester).saveEnterName(name);
-
-/// Delegates to [OnboardingRobot.skipEnterName] (GH-476).
-Future<void> skipEnterName(WidgetTester tester) => OnboardingRobot(tester).skipEnterName();
-
-/// Delegates to [OnboardingRobot.enterNameText] (GH-476).
-String enterNameFieldText(WidgetTester tester) => OnboardingRobot(tester).enterNameText;
-
-/// Delegates to [DashboardRobot.changeNameText] (GH-476).
-String changeNameFieldText(WidgetTester tester) => DashboardRobot(tester).changeNameText;
-
-/// Delegates to [DashboardRobot.openChangeNameDialog] (GH-476).
-Future<void> openChangeNameDialogFromKebab(WidgetTester tester) => DashboardRobot(tester).openChangeNameDialog();
-
-/// Delegates to [DashboardRobot.saveChangeName] (GH-476).
-Future<void> saveChangeName(WidgetTester tester, String name) => DashboardRobot(tester).saveChangeName(name);
-
 /// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).
 ///
 /// A plain overrides map — pass it as `AppHarness.create`'s
