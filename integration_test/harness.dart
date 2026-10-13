@@ -37,6 +37,7 @@ import '../test/infrastructure/sync/fake_sync_service.dart';
 import 'robots/dashboard_robot.dart';
 import 'robots/onboarding_robot.dart';
 import 'robots/pact_detail_robot.dart';
+import 'robots/pact_wizard_robot.dart';
 
 export 'primitives.dart';
 
@@ -82,6 +83,8 @@ class AppHarness {
   late final DashboardRobot dashboard = DashboardRobot(tester);
   late final PactDetailRobot pactDetail = PactDetailRobot(tester);
   late final OnboardingRobot onboarding = OnboardingRobot(tester);
+  late final PactWizardRobot wizard = PactWizardRobot.create(tester);
+  late final PactWizardRobot editWizard = PactWizardRobot.edit(tester);
 
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
