@@ -200,16 +200,12 @@ void main() {
         },
       );
 
-      final strings = l10n(tester);
-
       await waitFor(tester, find.text('Meditate'));
-      await tester.tap(find.text('Meditate'));
-      await waitFor(tester, find.text(strings.markDone));
+      await h.dashboard.openShowup('Meditate');
+      await h.showupDetail.waitForMarkDone();
 
-      await tester.tap(find.text(strings.showupViewPactDetails));
-      // sectionStats is near the top of _PactDetailContent and only rendered
-      // after the VM finishes loading — reliable on any screen size.
-      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
+      await h.showupDetail.viewPactDetails();
+      await h.pactDetail.waitLoaded();
 
       expect(find.byKey(const Key('archive-pact-button')), findsNothing);
     });

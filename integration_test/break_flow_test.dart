@@ -372,8 +372,8 @@ void main() {
       await waitFor(tester, find.text(strings.showupOnBreak));
 
       // ── 2. Mark Done / Mark Failed must not be shown at all ──────────────
-      expect(find.text(strings.markDone), findsNothing);
-      expect(find.text(strings.markFailed), findsNothing);
+      expect(h.showupDetail.markDoneButton, findsNothing);
+      expect(h.showupDetail.markFailedButton, findsNothing);
 
       // ── 3. Regression guard: buttons are hidden, not because the showup
       //         got auto-resolved behind the scenes. ───────────────────────

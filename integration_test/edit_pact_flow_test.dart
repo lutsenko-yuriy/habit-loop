@@ -76,8 +76,6 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         // ── 1. Dashboard loaded — showup tile visible ────────────────────
         await waitFor(tester, find.text('Meditate'));
 
@@ -99,7 +97,7 @@ void main() {
         // ── 3. Pact detail screen loaded ─────────────────────────────────
         await h.pactDetail.waitLoaded();
         await h.pactDetail.scrollToStopPact();
-        expect(find.text(strings.stopPact), findsOneWidget);
+        expect(h.pactDetail.stopPactButton, findsOneWidget);
 
         // ── 4. Tap the edit button ───────────────────────────────────────
         await h.pactDetail.openEdit();
@@ -171,24 +169,22 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         // ── 1. Dashboard loaded — showup tile visible ────────────────────
         await waitFor(tester, find.text('Meditate'));
 
         // ── 2. Tap the showup tile → ShowupDetailScreen ──────────────────
-        await tester.tap(find.text('Meditate'));
-        await waitFor(tester, find.text(strings.markDone));
+        await h.dashboard.openShowup('Meditate');
+        await h.showupDetail.waitForMarkDone();
 
         // Original habit name is shown in the showup detail header.
         expect(find.text('Meditate'), findsAtLeastNWidgets(1));
-        expect(find.text(strings.showupViewPactDetails), findsOneWidget);
+        expect(h.showupDetail.viewPactDetailsLink, findsOneWidget);
 
         // ── 3. Tap "View pact details" → PactDetailScreen ────────────────
-        await tester.tap(find.text(strings.showupViewPactDetails));
+        await h.showupDetail.viewPactDetails();
         await h.pactDetail.waitLoaded();
         await h.pactDetail.scrollToStopPact();
-        expect(find.text(strings.stopPact), findsOneWidget);
+        expect(h.pactDetail.stopPactButton, findsOneWidget);
 
         // ── 4. Tap the edit button ───────────────────────────────────────
         await h.pactDetail.openEdit();

@@ -264,7 +264,7 @@ void main() {
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: InMemoryUserProfileRepository(),
       );
-      await waitFor(tester, find.text(l10n(tester).onboardingSlide0Title));
+      await h.onboarding.waitForSlide0();
     });
 
     testWidgets(
@@ -280,7 +280,7 @@ void main() {
         onboardingService: FakeOnboardingPreferenceService(initialNameEntryShown: true),
         userProfileRepository: repo,
       );
-      await waitFor(tester, find.text(l10n(tester).onboardingSlide0Title));
+      await h.onboarding.waitForSlide0();
     });
 
     testWidgets(

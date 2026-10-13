@@ -75,8 +75,6 @@ void main() {
         await h.showupDetail.viewPactDetails();
 
         // ── 5. Pact detail screen is shown ───────────────────────────────
-        // sectionStats is near the top of _PactDetailContent and only rendered
-        // after the VM finishes loading — reliable on any screen size.
         await h.pactDetail.waitLoaded();
         // Stop Pact lives at the bottom of the list; scroll to build + reveal it.
         await h.pactDetail.scrollToStopPact();
@@ -88,7 +86,7 @@ void main() {
         // Let the page-transition slide-in animation fully complete before
         // navigating back; otherwise the back button may not yet be in the
         // tree. pumpAndSettle() is safe here — the pact detail VM has already
-        // loaded (confirmed by waitFor(sectionStats) above), so no spinner is running.
+        // loaded (confirmed by waitLoaded above), so no spinner is running.
         await tester.pumpAndSettle();
 
         // ── 6. Navigate back → return to showup detail ───────────────────

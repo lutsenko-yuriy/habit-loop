@@ -32,14 +32,16 @@ class ShowupDetailRobot extends BaseRobot {
   /// Taps "View pact details"; callers wait for the pact detail to load.
   Future<void> viewPactDetails() => tester.tap(viewPactDetailsLink);
 
+  Finder get markFailedButton => find.text(p.l10n(tester).markFailed);
+
   /// Waits for "Mark as failed", taps it and settles.
   Future<void> markFailed() async {
     await waitForMarkFailed();
-    await tapAndSettle(find.text(p.l10n(tester).markFailed));
+    await tapAndSettle(markFailedButton);
   }
 
   /// Waits for "Mark as failed", which renders once the pending showup has loaded.
-  Future<void> waitForMarkFailed() => waitFor(find.text(p.l10n(tester).markFailed));
+  Future<void> waitForMarkFailed() => waitFor(markFailedButton);
 
   Finder get runChecklistButton => find.byKey(_runChecklistButton);
 

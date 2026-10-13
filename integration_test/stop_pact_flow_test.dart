@@ -60,11 +60,11 @@ void main() {
       await waitFor(tester, find.text('Evening Walk'));
 
       // ── 2. Tap showup tile → showup detail ───────────────────────────
-      await tester.tap(find.text('Evening Walk'));
-      await waitFor(tester, find.text(strings.markDone));
+      await h.dashboard.openShowup('Evening Walk');
+      await h.showupDetail.waitForMarkDone();
 
       // ── 3. Navigate to pact detail ────────────────────────────────────
-      await tester.tap(find.text(strings.showupViewPactDetails));
+      await h.showupDetail.viewPactDetails();
       await h.pactDetail.waitLoaded();
 
       // ── 4. Tap Stop Pact → dialog appears ────────────────────────────

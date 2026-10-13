@@ -182,7 +182,7 @@ void main() {
 
       // 5-6. Mark as done: done, with checklist_outcome=success.
       await tester.tap(h.showupDetail.markDoneButton);
-      await waitFor(tester, find.text(strings.showupDone));
+      await waitFor(tester, h.showupDetail.doneStatus);
       expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.done);
       final done = h.analytics.loggedEvents.whereType<ShowupMarkedDoneEvent>().single;
       expect(done.toParameters()['checklist_outcome'], 'success');
@@ -236,7 +236,7 @@ void main() {
 
       // 6. Mark it done: checklist_outcome=failure.
       await tester.tap(h.showupDetail.markDoneButton);
-      await waitFor(tester, find.text(strings.showupDone));
+      await waitFor(tester, h.showupDetail.doneStatus);
       expect((await h.showupRepo.getShowupById(secondId))?.status, ShowupStatus.done);
       final done = h.analytics.loggedEvents.whereType<ShowupMarkedDoneEvent>().single;
       expect(done.toParameters()['checklist_outcome'], 'failure');
@@ -248,7 +248,6 @@ void main() {
       // 1. Linked pact; showup window 08:00–08:10; clock at 08:05.
       final clock = _MutableClock(DateTime(2099, 6, 15, 8, 5));
       final h = harness = await _linkedHarness(tester, clock: clock);
-      final strings = l10n(tester);
 
       // 2. Open the showup and start the run inside the window.
       await _openShowup(h);
@@ -270,7 +269,7 @@ void main() {
 
       // 6. Mark as done.
       await tester.tap(h.showupDetail.markDoneButton);
-      await waitFor(tester, find.text(strings.showupDone));
+      await waitFor(tester, h.showupDetail.doneStatus);
       expect((await h.showupRepo.getShowupById(_showupId))?.status, ShowupStatus.done);
     });
 
@@ -310,7 +309,6 @@ void main() {
           await h.checklistLinkRepo.upsert(_link);
         },
       );
-      final strings = l10n(tester);
 
       // 1-2. Open the auto-failed showup from the timeline.
       await h.dashboard.openPactsPanel();
@@ -327,7 +325,7 @@ void main() {
 
       // 4-5. Redeem: done, and no run was ever needed.
       await tester.tap(h.showupDetail.redeemButton);
-      await waitFor(tester, find.text(strings.showupDone));
+      await waitFor(tester, h.showupDetail.doneStatus);
       expect((await h.showupRepo.getShowupById(failedId))?.status, ShowupStatus.done);
       expect(await h.checklistRunRepo.getForShowup(failedId), isNull);
       expect(h.checklister.launchedUrls, isEmpty);
