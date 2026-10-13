@@ -8,7 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
-- [test] (PR #TBD) GH-476 WU9 (final): remaining scenarios migrated to robots, transitional harness delegates removed; integration scenarios now drive the UI through screen robots (WU1–WU8: PRs #477–#484).
+- [test] (PR #485) GH-476 WU9 (final): remaining scenarios migrated to robots, transitional harness delegates removed; integration scenarios now drive the UI through screen robots (WU1–WU8: PRs #477–#484).
 - [wip] (PR #484) GH-476 WU8: onboarding, name and kebab scenarios migrated to robots (`OnboardingRobot` swipes/language picker, `DashboardRobot` kebab/About/language helpers, `BaseRobot.selectLanguage`).
 - [wip] (PR #483) GH-476 WU7: checklist scenarios migrated to robots (`ChecklistRobot`, `ShowupDetailRobot` run-checklist helpers, `PactDetailRobot.scrollToBottom`, `BaseRobot.backgroundAndResume`).
 - [wip] (PR #482) GH-476 WU6: timeline + showup detail scenarios migrated to robots (`ShowupDetailRobot`, `TimelineRobot` milestone helpers, `PactDetailRobot.scrollToTop`); keyboard-only note-field tap removed.
