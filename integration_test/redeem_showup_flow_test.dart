@@ -2,7 +2,6 @@
 //
 // Run on host:   flutter test integration_test/redeem_showup_flow_test.dart
 // Run on device: flutter test integration_test/redeem_showup_flow_test.dart -d <device>
-import 'package:flutter/cupertino.dart' show CupertinoButton;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -13,12 +12,6 @@ import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dar
 import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
-
-bool _redeemEnabled(WidgetTester tester) {
-  final w = tester.widget(find.byKey(const Key('showup-redeem-button')));
-  if (w is ButtonStyleButton) return w.onPressed != null;
-  return (w as CupertinoButton).onPressed != null;
-}
 
 // Dashboard and timeline anchored on June 15 2099.
 // Default 7-day tail → cutoff = June 8.
@@ -41,14 +34,6 @@ final _pact = buildPact(
 // June 15+ only and auto-fails nothing — keeping Failed=0 after redemption.
 const _showupId = 'redeem-showup-in-tail';
 final _showupAt = DateTime(2099, 6, 14, 8, 0);
-
-Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId) async {
-  final tileKey = Key('timeline-milestone-$showupId');
-  await waitFor(tester, find.byKey(tileKey));
-  await tester.tap(find.byKey(tileKey));
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -86,21 +71,19 @@ void main() {
         final strings = l10n(tester);
 
         // ── 1. Navigate to showup detail via timeline ─────────────────────────
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Morning Run');
-        await openTimeline(tester);
-        await _openShowupDetailFromTimeline(tester, _showupId);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Morning Run');
+        await h.pactDetail.openTimeline();
+        await h.timeline.openShowupDetail(_showupId);
 
         await waitFor(tester, find.text(strings.showupDetailTitle));
 
         // ── 2. Redemption button is visible and enabled ────────────────────────
-        await waitFor(tester, find.byKey(const Key('showup-redeem-button')));
-        expect(_redeemEnabled(tester), isTrue);
+        await h.showupDetail.waitForRedeemButton();
+        expect(h.showupDetail.isRedeemEnabled, isTrue);
 
         // ── 3. Tap the redemption button ───────────────────────────────────────
-        await tester.tap(find.byKey(const Key('showup-redeem-button')));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
+        await h.showupDetail.redeem();
 
         // ── 4. Status chip shows "Done" ────────────────────────────────────────
         await waitFor(tester, find.text(strings.showupDone));
@@ -152,16 +135,16 @@ void main() {
         final strings = l10n(tester);
 
         // ── 1. Navigate to showup detail via timeline ─────────────────────────
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Morning Run');
-        await openTimeline(tester);
-        await _openShowupDetailFromTimeline(tester, _showupId);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Morning Run');
+        await h.pactDetail.openTimeline();
+        await h.timeline.openShowupDetail(_showupId);
 
         await waitFor(tester, find.text(strings.showupDetailTitle));
-        await waitFor(tester, find.byKey(const Key('showup-redeem-button')));
+        await h.showupDetail.waitForRedeemButton();
 
         // ── 2. Redemption button is visible but disabled ───────────────────────
-        expect(_redeemEnabled(tester), isFalse);
+        expect(h.showupDetail.isRedeemEnabled, isFalse);
 
         // ── 3. Explanatory hint is shown ──────────────────────────────────────
         expect(find.text(strings.showupRedeemAddNoteHint), findsOneWidget);
@@ -206,10 +189,10 @@ void main() {
 
         final strings = l10n(tester);
 
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Morning Run');
-        await openTimeline(tester);
-        await _openShowupDetailFromTimeline(tester, _showupId);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Morning Run');
+        await h.pactDetail.openTimeline();
+        await h.timeline.openShowupDetail(_showupId);
 
         await waitFor(tester, find.text(strings.showupDetailTitle));
         await tester.pump(const Duration(milliseconds: 200));
@@ -253,10 +236,10 @@ void main() {
         final strings = l10n(tester);
 
         // Navigate via timeline (June 15 "now" → June 13 is in-tail → individual tile).
-        await openPactsPanel(tester);
-        await openPactDetail(tester, 'Morning Run');
-        await openTimeline(tester);
-        await _openShowupDetailFromTimeline(tester, _showupId);
+        await h.dashboard.openPactsPanel();
+        await h.dashboard.openPactDetail('Morning Run');
+        await h.pactDetail.openTimeline();
+        await h.timeline.openShowupDetail(_showupId);
 
         await waitFor(tester, find.text(strings.showupDetailTitle));
         await tester.pump(const Duration(milliseconds: 200));

@@ -3,7 +3,6 @@
 //
 // Run on host:   flutter test integration_test/break_timeline_flow_test.dart
 // Run on device: flutter test integration_test/break_timeline_flow_test.dart -d <device>
-import 'package:flutter/material.dart' show Key;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/showup/showup.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
@@ -78,11 +77,11 @@ void main() {
 
       final strings = l10n(tester);
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Exercise');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Exercise');
       await tester.pumpAndSettle();
-      await openTimeline(tester);
-      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+      await h.pactDetail.openTimeline();
+      await h.timeline.waitLoaded();
 
       // ── 1. Rationale appears exactly once — one merged entry, not 4 ────────
       await waitFor(tester, find.text('Feeling sick'));
@@ -90,7 +89,7 @@ void main() {
 
       // ── 2. No individual milestone tile for any of the 4 covered showups ───
       for (var i = 0; i < 4; i++) {
-        expect(find.byKey(Key('timeline-milestone-brk1-$i')), findsNothing);
+        expect(h.timeline.milestone('brk1-$i'), findsNothing);
       }
 
       // ── 3. The merged entry sits below the tail-zone section header ────────
@@ -131,11 +130,11 @@ void main() {
 
       final strings = l10n(tester);
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Exercise');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Exercise');
       await tester.pumpAndSettle();
-      await openTimeline(tester);
-      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+      await h.pactDetail.openTimeline();
+      await h.timeline.waitLoaded();
 
       // ── 1. "Travel" appears exactly once — not split into a grouped part
       //         plus individual tail entries ────────────────────────────────
@@ -144,7 +143,7 @@ void main() {
 
       // ── 2. No individual milestone tile for any of the 6 covered showups ───
       for (var i = 0; i < 6; i++) {
-        expect(find.byKey(Key('timeline-milestone-brk2-$i')), findsNothing);
+        expect(h.timeline.milestone('brk2-$i'), findsNothing);
       }
 
       // ── 3. Part of the run touches the tail, so the merged entry sits below
@@ -186,11 +185,11 @@ void main() {
 
       final strings = l10n(tester);
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Exercise');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Exercise');
       await tester.pumpAndSettle();
-      await openTimeline(tester);
-      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+      await h.pactDetail.openTimeline();
+      await h.timeline.waitLoaded();
 
       // ── 1. Rationale appears exactly once (regression: still merges) ───────
       await waitFor(tester, find.text('Feeling sick'));
@@ -233,35 +232,24 @@ void main() {
 
       final strings = l10n(tester);
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Exercise');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Exercise');
       await tester.pumpAndSettle();
-      await openTimeline(tester);
-      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+      await h.pactDetail.openTimeline();
+      await h.timeline.waitLoaded();
 
       // ── 1. One merged entry spanning all 4 days, not two around the done mark ──
       await waitFor(tester, find.text('Feeling sick'));
       expect(find.text('Feeling sick'), findsOneWidget);
 
       // ── 2. No individual milestone tile for the explicitly-done showup ─────
-      expect(find.byKey(const Key('timeline-milestone-brk4-1')), findsNothing);
+      expect(h.timeline.milestone('brk4-1'), findsNothing);
 
       // ── 3. The done mark still counts in the pact's stats — the merge is a
       //         rendering-only change ────────────────────────────────────────
       await tester.pageBack();
       await tester.pumpAndSettle();
-      // openTimeline scrolled pact detail's own ListView down to reveal the
-      // timeline button, and pageBack() preserves that scroll offset — the stats
-      // section (near the top) is now off the realized extent. Reset to the top
-      // the same way openTimeline resets before scrolling down, rather than
-      // dragUntilVisible: the stats Row has no key and its text repeats across
-      // cards, so there's no single unambiguous, always-non-empty target finder
-      // to drive dragUntilVisible with.
-      final listViewFinder = find.byKey(const Key('pact-detail-scroll-view-$_pactId'));
-      for (var i = 0; i < 15; i++) {
-        await tester.drag(listViewFinder, const Offset(0, 100));
-        await tester.pump();
-      }
+      await h.pactDetail.scrollToTop();
       await tester.pumpAndSettle();
       expect(find.text(strings.statsShowups(1)), findsWidgets);
     });
@@ -300,13 +288,11 @@ void main() {
         },
       );
 
-      final strings = l10n(tester);
-
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Exercise');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Exercise');
       await tester.pumpAndSettle();
-      await openTimeline(tester);
-      await waitFor(tester, find.textContaining(strings.pactTimelineTitle));
+      await h.pactDetail.openTimeline();
+      await h.timeline.waitLoaded();
 
       // ── Both rationales appear exactly once — two separate milestones ──────
       await waitFor(tester, find.text('Feeling sick'));
