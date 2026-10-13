@@ -30,7 +30,7 @@ class OnboardingRobot extends BaseRobot {
 
   Finder get languagePickerButton => find.byKey(const Key('language-picker-button'));
 
-  /// Swipes slide 0 left to slide 1. 300 px stays on one page even on the <=320 dp CI AVD; 50 ms keeps fling velocity.
+  /// Swipes to slide 1; 300 px stays one page on the <=320 dp CI AVD, 50 ms keeps the fling velocity.
   Future<void> swipeToSlide1() async {
     final strings = p.l10n(tester);
     await tester.timedDrag(
