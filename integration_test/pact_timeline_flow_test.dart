@@ -2,7 +2,6 @@
 //
 // Run on host:   flutter test integration_test/pact_timeline_flow_test.dart
 // Run on device: flutter test integration_test/pact_timeline_flow_test.dart -d <device>
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -119,9 +118,9 @@ void main() {
         await h.dashboard.openPactDetail('Meditate');
 
         // ── 1. "View Timeline" button is present and tappable ─────────────────
-        await waitFor(tester, find.byKey(const Key('pact-detail-timeline-button')));
-        await tester.ensureVisible(find.byKey(const Key('pact-detail-timeline-button')));
-        expect(find.byKey(const Key('pact-detail-timeline-button')), findsOneWidget);
+        await waitFor(tester, h.pactDetail.timelineButton);
+        await tester.ensureVisible(h.pactDetail.timelineButton);
+        expect(h.pactDetail.timelineButton, findsOneWidget);
 
         // ── 2. Tap "View Timeline" ────────────────────────────────────────────
         await h.pactDetail.openTimeline();
@@ -202,8 +201,6 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         await h.dashboard.openPactsPanel();
         await h.dashboard.openPactDetail('Meditate');
         await h.pactDetail.openTimeline();
@@ -218,7 +215,7 @@ void main() {
         await h.timeline.openShowupDetail(_notedShowup.id);
 
         // ── 3. Showup detail screen opens ─────────────────────────────────────
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
 
         // ── 4. Analytics event fired ──────────────────────────────────────────
         expect(
@@ -423,19 +420,17 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         await h.dashboard.openPactsPanel();
         await h.dashboard.openPactDetail('Meditate');
         await h.pactDetail.openTimeline();
 
         await h.timeline.waitLoaded();
 
-        // ── 1. Single-showup tile is visible ──────────────────────────────────
+        // ── 1–2. Tap the single-showup tile ───────────────────────────────────
         await h.timeline.openShowupDetail(_singleShowup.id);
 
         // ── 3. Showup detail screen opens ─────────────────────────────────────
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
 
         // ── 4. Analytics event fired ──────────────────────────────────────────
         expect(
@@ -472,11 +467,10 @@ void main() {
         await h.dashboard.openPactDetail('Meditate');
 
         // Scroll through the pact detail to ensure the button area is reached.
-        await tester.drag(find.byType(ListView).last, const Offset(0, -300));
-        await tester.pump();
+        await h.pactDetail.dragUp();
 
         // ── "View Timeline" button is absent ──────────────────────────────────
-        expect(find.byKey(const Key('pact-detail-timeline-button')), findsNothing);
+        expect(h.pactDetail.timelineButton, findsNothing);
       },
     );
   });
@@ -517,7 +511,7 @@ void main() {
         // ── 4. Open Showup Detail from the dashboard tile, mark as done ────────
         // The pacts panel is still expanded from step 2, so 'Meditate' also
         // matches the panel's pact row — .first is the dashboard showup tile,
-        // which paints before the panel row (see openPactDetail's `.last` above).
+        // which paints before the panel row (DashboardRobot.openPactDetail taps `.last`).
         await waitFor(tester, find.text('Meditate').first);
         await h.dashboard.openShowup('Meditate');
         await h.showupDetail.markDone();
@@ -560,8 +554,6 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         // ── 1/2. Open Pact Detail — first open this session, warms the cache ──
         await h.dashboard.openPactsPanel();
         await h.dashboard.openPactDetail('Meditate');
@@ -572,7 +564,7 @@ void main() {
 
         // ── 4. Tap the showup's milestone tile to open Showup Detail ────────────
         await h.timeline.openShowupDetail(_singleShowup.id);
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
 
         // ── 5. Add a note and save ───────────────────────────────────────────────
         const newNote = 'Felt fantastic today!';

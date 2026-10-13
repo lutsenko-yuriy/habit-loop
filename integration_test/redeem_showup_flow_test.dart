@@ -2,7 +2,6 @@
 //
 // Run on host:   flutter test integration_test/redeem_showup_flow_test.dart
 // Run on device: flutter test integration_test/redeem_showup_flow_test.dart -d <device>
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
@@ -76,7 +75,7 @@ void main() {
         await h.pactDetail.openTimeline();
         await h.timeline.openShowupDetail(_showupId);
 
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
 
         // ── 2. Redemption button is visible and enabled ────────────────────────
         await h.showupDetail.waitForRedeemButton();
@@ -140,7 +139,7 @@ void main() {
         await h.pactDetail.openTimeline();
         await h.timeline.openShowupDetail(_showupId);
 
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
         await h.showupDetail.waitForRedeemButton();
 
         // ── 2. Redemption button is visible but disabled ───────────────────────
@@ -187,18 +186,16 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         await h.dashboard.openPactsPanel();
         await h.dashboard.openPactDetail('Morning Run');
         await h.pactDetail.openTimeline();
         await h.timeline.openShowupDetail(_showupId);
 
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
         await tester.pump(const Duration(milliseconds: 200));
 
         // ── Redemption button is absent ────────────────────────────────────────
-        expect(find.byKey(const Key('showup-redeem-button')), findsNothing);
+        expect(h.showupDetail.redeemButton, findsNothing);
       },
     );
 
@@ -233,20 +230,18 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         // Navigate via timeline (June 15 "now" → June 13 is in-tail → individual tile).
         await h.dashboard.openPactsPanel();
         await h.dashboard.openPactDetail('Morning Run');
         await h.pactDetail.openTimeline();
         await h.timeline.openShowupDetail(_showupId);
 
-        await waitFor(tester, find.text(strings.showupDetailTitle));
+        await h.showupDetail.waitLoaded();
         await tester.pump(const Duration(milliseconds: 200));
 
         // ── Redemption button is absent because canRedeem=false ────────────────
         // VM uses _detailNowOutOfTail (July 15): cutoff = July 8, June 13 < July 8 → out of tail.
-        expect(find.byKey(const Key('showup-redeem-button')), findsNothing);
+        expect(h.showupDetail.redeemButton, findsNothing);
       },
     );
   });

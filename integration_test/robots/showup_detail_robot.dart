@@ -23,6 +23,8 @@ class ShowupDetailRobot extends BaseRobot {
 
   Future<void> waitForRedeemButton() => waitFor(find.byKey(_redeemButton));
 
+  Finder get redeemButton => find.byKey(_redeemButton);
+
   bool get isRedeemEnabled => isEnabled(find.byKey(_redeemButton));
 
   /// Taps the redeem button, then pumps past the status update.

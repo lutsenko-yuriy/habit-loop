@@ -76,12 +76,19 @@ class PactDetailRobot extends BaseRobot {
     }
   }
 
+  Finder get timelineButton => find.byKey(const Key('pact-detail-timeline-button'));
+
+  /// Drags the list up 300 px to build content below the fold.
+  Future<void> dragUp() async {
+    await tester.drag(_scrollView, const Offset(0, -300));
+    await tester.pump();
+  }
+
   /// Opens the timeline from the top of the list.
   Future<void> openTimeline() async {
-    final listViewFinder = _scrollView;
     await scrollToTop();
     // dragUntilVisible, not ensureVisible: the button may not be built yet (HAB-211).
-    await scrollIntoViewAndTap(find.byKey(const Key('pact-detail-timeline-button')), listViewFinder);
+    await scrollIntoViewAndTap(timelineButton, _scrollView);
     await pushTransition();
   }
 
