@@ -80,6 +80,9 @@ void main() {
       );
 
       // ── 4. Tap Stop Pact → dialog appears ────────────────────────────
+      // scrollUntilVisible can stop with the button just past the viewport edge on taller layouts.
+      await tester.ensureVisible(find.text(strings.stopPact));
+      await tester.pumpAndSettle();
       await tester.tap(find.text(strings.stopPact));
       await tester.pumpAndSettle();
 

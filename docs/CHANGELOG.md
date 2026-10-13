@@ -4,6 +4,12 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 ---
 
+## [Unreleased]
+
+Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
+
+- [test] (PR #475) GH-474: scenarios now register flutter_test's fake keyboard (TestTextInput) per test in AppHarness.create — the real IME stayed attached and its stale updates reverted tester.enterText, causing CI-only text-entry flakiness (pact note, display name). Also fixed stop_pact_flow_test tapping "Stop Pact" just past the viewport edge. Robots migration split to GH-476.
+
 ## [0.62.0] — 2026-10-12 (PR #473 merged)
 
 ### Added

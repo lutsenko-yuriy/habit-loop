@@ -1,7 +1,7 @@
 # ADR-0006 — adopt the "test robot" pattern incrementally, starting from the next flaky-file fix, plus a centralized widget-Key file
 
 ## Status
-`accepted`
+`superseded` — GH-474 debrief (2026-10-13): incremental adoption never triggered (`integration_test/robots/` still empty); replaced by a single dedicated migration ticket, GH-476.
 
 ## Context
 Integration scenarios in `integration_test/` hand-roll `find`/`pump`/`ensureVisible`/`tap` sequences per screen, directly in each test. Screen-specific timing quirks (keyboard-inset relayout races, lazy-list scroll realization) get independently rediscovered per file that touches the same screen — HAB-199 spent ~9 CI dispatches on one such race, and HAB-258 rediscovered a related class of race in a different file months later, despite both being logged in `skills/build/implement/resources/widget-test-gotchas.md`. HAB-258's own fix already followed the shape of a "robot" in substance (shared, intention-revealing helpers like `_waitForNoteSaved`, `_enterNoteText` inside the test file) without lifting that logic into a reusable class — the pattern was reinvented ad hoc rather than adopted as a standing convention. Constraints: solo developer with no dedicated test-infra owner (`docs/CONSTRAINTS.md`), pre-launch stage favoring simplicity and reversibility over up-front infrastructure.

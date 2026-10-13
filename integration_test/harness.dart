@@ -173,6 +173,13 @@ class AppHarness {
     OnboardingPreferenceService? onboardingService,
     UserProfileRepository? userProfileRepository,
   }) async {
+    // The integration binding leaves the real IME attached, whose stale updates can revert
+    // tester.enterText (GH-474) — route text input through the fake keyboard instead.
+    final textInput = tester.binding.testTextInput
+      ..reset()
+      ..register();
+    addTearDown(textInput.unregister);
+
     final pactRepo = InMemoryPactRepository();
     final showupRepo = InMemoryShowupRepository();
     final pactBreakRepo = InMemoryPactBreakRepository();
