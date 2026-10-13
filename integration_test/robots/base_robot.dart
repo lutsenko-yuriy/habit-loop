@@ -53,11 +53,17 @@ abstract class BaseRobot {
   Future<void> enterText(Finder finder, String text) => tester.enterText(finder, text);
 
   /// Whether the Material or Cupertino button at [finder] has an `onPressed` handler.
-  bool isEnabled(Finder finder) {
-    final w = tester.widget(finder);
-    if (w is ButtonStyleButton) return w.onPressed != null;
-    return (w as CupertinoButton).onPressed != null;
-  }
+  bool isEnabled(Finder finder) => _onPressed(finder) != null;
+
+  /// Calls the button's `onPressed` directly, for buttons whose hit target can sit off-screen.
+  void invokeOnPressed(Finder finder) => _onPressed(finder)?.call();
+
+  VoidCallback? _onPressed(Finder finder) => switch (tester.widget(finder)) {
+        final ButtonStyleButton w => w.onPressed,
+        final IconButton w => w.onPressed,
+        final CupertinoButton w => w.onPressed,
+        final w => throw ArgumentError('Unsupported button: ${w.runtimeType}'),
+      };
 
   /// Current text of the Material or Cupertino text field at [finder].
   String fieldText(Finder finder) {

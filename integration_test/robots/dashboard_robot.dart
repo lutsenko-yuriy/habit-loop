@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../primitives.dart' as p;
 import 'base_robot.dart';
 
 class DashboardRobot extends BaseRobot {
@@ -14,6 +15,16 @@ class DashboardRobot extends BaseRobot {
     // Flush the tap before the 400 ms expand animation starts.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  /// Expands the pacts panel by tapping its "[activeCount] active" summary, then waits for [habitName] to appear.
+  Future<void> expandPactsPanelViaSummary(String habitName, {int activeCount = 1}) async {
+    // The summary is one multi-line Text, so match by substring.
+    final summaryFinder = find.textContaining(p.l10n(tester).pactsActive(activeCount));
+    expect(summaryFinder, findsOneWidget);
+    await tester.tap(summaryFinder);
+    await tester.pump(const Duration(milliseconds: 400));
+    await waitFor(find.text(habitName));
   }
 
   /// Opens the pact named [habitName] from the pacts panel, scrolling it into view first (HAB-211).

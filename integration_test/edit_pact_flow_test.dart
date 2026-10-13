@@ -48,53 +48,6 @@ final _showup = buildShowup(
 );
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/// Swipes the edit-wizard [PageView] forward by one page.
-///
-/// Drags from the top-right (static title area), not the center — a center
-/// drag lands on the focused habit-name field on page 0 and loses the
-/// gesture arena to text selection instead of paging.
-Future<void> _swipeEditWizardForward(WidgetTester tester) async {
-  const iosKey = Key('pact-edit-pageview-ios');
-  const androidKey = Key('pact-edit-pageview-android');
-  final key = find.byKey(iosKey).evaluate().isNotEmpty ? iosKey : androidKey;
-  final rect = tester.getRect(find.byKey(key));
-  // 300 px in 50 ms → velocity ≈ 6000 px/s (above the snap threshold).
-  // Y = top + 40: safely inside the title text area on every wizard page.
-  await tester.timedDragFrom(
-    Offset(rect.right - 10, rect.top + 40),
-    const Offset(-300, 0),
-    const Duration(milliseconds: 50),
-  );
-  await tester.pumpAndSettle();
-}
-
-/// Expands the pacts panel by tapping its collapsed header.
-///
-/// The panel header is the [GestureDetector] at the bottom of the dashboard
-/// that shows the active/done/cancelled summary lines. A single tap triggers
-/// `_expand()` which animates the panel to ~55% of screen height.
-Future<void> _expandPactsPanel(WidgetTester tester, String habitName) async {
-  // The summary text in the panel header is the most reliable finder because
-  // it is visible at the collapsed height and does not conflict with other
-  // widgets on the dashboard.
-  final strings = l10n(tester);
-  // The pacts panel header shows all three count lines joined with '\n' in a
-  // single Text widget (see pacts_summary_bar.dart). find.text() requires an
-  // exact full-string match, so use find.textContaining() to match the active
-  // count substring instead.
-  final summaryFinder = find.textContaining(strings.pactsActive(1));
-  expect(summaryFinder, findsOneWidget);
-  await tester.tap(summaryFinder);
-  // Allow the DraggableScrollableSheet snap animation to complete.
-  await tester.pump(const Duration(milliseconds: 400));
-  // Wait for the pact tile to appear after the panel has expanded.
-  await waitFor(tester, find.text(habitName));
-}
-
-// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -129,7 +82,7 @@ void main() {
         await waitFor(tester, find.text('Meditate'));
 
         // ── 2. Expand the pacts panel and tap the pact tile ──────────────
-        await _expandPactsPanel(tester, 'Meditate');
+        await h.dashboard.expandPactsPanelViaSummary('Meditate');
 
         // The habit name appears in both the showup tile (main content) and
         // the pact tile (DraggableScrollableSheet). The dashboard uses a
@@ -144,69 +97,26 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
 
         // ── 3. Pact detail screen loaded ─────────────────────────────────
-        // sectionStats is near the top of _PactDetailContent and only rendered
-        // after the VM finishes loading — reliable on any screen size.
-        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
-        // Stop Pact lives at the bottom of the ListView; scroll to build + reveal it.
-        await tester.scrollUntilVisible(
-          find.text(strings.stopPact),
-          200.0,
-          scrollable: find.ancestor(
-            of: find.text(strings.sectionStats.toUpperCase()),
-            matching: find.byType(Scrollable),
-          ),
-        );
+        await h.pactDetail.waitLoaded();
+        await h.pactDetail.scrollToStopPact();
         expect(find.text(strings.stopPact), findsOneWidget);
 
         // ── 4. Tap the edit button ───────────────────────────────────────
-        // Call onPressed directly on both platforms: the AppBar action may
-        // render partially off-screen on narrow test devices (centre x > screen
-        // width), causing tester.tap() to miss. iOS CupertinoNavigationBar has
-        // the same issue on macOS test environments.
-        if (defaultTargetPlatform == TargetPlatform.iOS) {
-          tester.widget<CupertinoButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
-        } else {
-          tester.widget<IconButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
-        }
-        // Do NOT pumpAndSettle here: PactEditScreen shows a spinner while
-        // load() is in flight (CupertinoActivityIndicator on iOS never
-        // settles). Pump once to let initState fire, then waitFor the field.
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await h.pactDetail.openEdit();
 
         // ── 5. Edit wizard loaded — habit name text field visible ────────
-        await waitFor(tester, find.byKey(const Key('pact-creation-habit-name-field')));
-        // Let the route slide-in animation finish before enterText. The
-        // field enters the widget tree partway through the animation; if
-        // we attempt to focus it while it is still off-screen, showKeyboard
-        // taps the wrong position and onChanged never fires.
-        await tester.pumpAndSettle();
+        await h.editWizard.waitForHabitNameField();
 
         // ── 6. Type the new habit name ───────────────────────────────────
-        // Pre-tap focuses the field and establishes the platform TextInput
-        // connection. pumpAndSettle() is intentionally NOT used after this tap
-        // — it drove the keyboard-open animation long enough to reset the
-        // connection on cold-JIT Android CI before enterText could fire
-        // onChanged. A minimal pump is enough for focus to settle.
-        await tester.tap(find.byKey(const Key('pact-creation-habit-name-field')));
-        await tester.pump(const Duration(milliseconds: 50));
-        await tester.enterText(
-          find.byKey(const Key('pact-creation-habit-name-field')),
-          'Morning Run',
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await h.editWizard.enterHabitName('Morning Run');
 
         // The AppBar title mirrors state.habitName live — visible now confirms
         // enterText fired onChanged before we swipe away from the name page.
         expect(find.text('Morning Run'), findsWidgets, reason: 'enterText did not fire onChanged');
 
-        // Lets the keyboard-show animation settle before the first swipe reads the rect.
-        await tester.pump(const Duration(milliseconds: 300));
-
         // ── 7. Swipe to reminder page, then to summary page ──────────────
-        await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
-        await _swipeEditWizardForward(tester); // page 1 → 2 (summary)
+        await h.editWizard.swipeForward(); // page 0 → 1 (reminder)
+        await h.editWizard.swipeForward(); // page 1 → 2 (summary)
 
         // ── 8. Tap "Save Changes" ────────────────────────────────────────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
@@ -225,14 +135,7 @@ void main() {
         // ListView preserved its scroll position from step 3 (scrolled down to
         // Stop Pact), so the habit name and STATS header are above the viewport
         // and not in the element tree. Scroll back up to reveal them.
-        await tester.scrollUntilVisible(
-          find.text('Morning Run'),
-          -200.0,
-          scrollable: find.ancestor(
-            of: find.text(strings.stopPact),
-            matching: find.byType(Scrollable),
-          ),
-        );
+        await h.pactDetail.scrollUpTo('Morning Run');
 
         // ── 9. Pact detail shows the new name; old name is gone ──────────
         expect(find.text('Morning Run'), findsAtLeastNWidgets(1));
@@ -283,56 +186,25 @@ void main() {
 
         // ── 3. Tap "View pact details" → PactDetailScreen ────────────────
         await tester.tap(find.text(strings.showupViewPactDetails));
-        // sectionStats is near the top of _PactDetailContent and only rendered
-        // after the VM finishes loading — reliable on any screen size.
-        await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
-        // Stop Pact lives at the bottom of the ListView; scroll to build + reveal it.
-        await tester.scrollUntilVisible(
-          find.text(strings.stopPact),
-          200.0,
-          scrollable: find.ancestor(
-            of: find.text(strings.sectionStats.toUpperCase()),
-            matching: find.byType(Scrollable),
-          ),
-        );
+        await h.pactDetail.waitLoaded();
+        await h.pactDetail.scrollToStopPact();
         expect(find.text(strings.stopPact), findsOneWidget);
 
         // ── 4. Tap the edit button ───────────────────────────────────────
-        // Call onPressed directly on both platforms: same pattern as flow 1.
-        if (defaultTargetPlatform == TargetPlatform.iOS) {
-          tester.widget<CupertinoButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
-        } else {
-          tester.widget<IconButton>(find.byKey(const Key('pact-detail-edit-button'))).onPressed?.call();
-        }
-        // Do NOT pumpAndSettle: spinner in PactEditScreen never settles.
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await h.pactDetail.openEdit();
 
         // ── 5. Edit wizard loaded ────────────────────────────────────────
-        await waitFor(tester, find.byKey(const Key('pact-creation-habit-name-field')));
-        // Same as flow 1: settle the route animation before focusing the field.
-        await tester.pumpAndSettle();
+        await h.editWizard.waitForHabitNameField();
 
         // ── 6. Type the new habit name ───────────────────────────────────
-        // No pre-tap here: the field is fresh after pumpAndSettle and enterText
-        // focuses it internally. Flow 1 pre-taps to work around a cold-JIT
-        // keyboard timing issue that does not appear on this navigation path.
-        await tester.enterText(
-          find.byKey(const Key('pact-creation-habit-name-field')),
-          'Yoga',
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await h.editWizard.enterHabitName('Yoga');
 
         // Same check as flow 1: AppBar title reflects the new name.
         expect(find.text('Yoga'), findsWidgets, reason: 'enterText did not fire onChanged');
 
-        // Lets the keyboard-show animation settle before the first swipe reads the rect.
-        await tester.pump(const Duration(milliseconds: 300));
-
         // ── 7. Swipe to summary ──────────────────────────────────────────
-        await _swipeEditWizardForward(tester); // page 0 → 1 (reminder)
-        await _swipeEditWizardForward(tester); // page 1 → 2 (summary)
+        await h.editWizard.swipeForward(); // page 0 → 1 (reminder)
+        await h.editWizard.swipeForward(); // page 1 → 2 (summary)
 
         // ── 8. Tap "Save Changes" — wizard pops back to pact detail ──────
         await tester.tap(find.byKey(const Key('pact-edit-save-button')));
@@ -343,14 +215,7 @@ void main() {
         }
         // Same as flow 1: ListView preserved scroll position (scrolled to Stop
         // Pact from step 3). Scroll back up to reveal the updated habit name.
-        await tester.scrollUntilVisible(
-          find.text('Yoga'),
-          -200.0,
-          scrollable: find.ancestor(
-            of: find.text(strings.stopPact),
-            matching: find.byType(Scrollable),
-          ),
-        );
+        await h.pactDetail.scrollUpTo('Yoga');
         expect(find.text('Yoga'), findsAtLeastNWidgets(1));
 
         // ── 9. Navigate back → ShowupDetailScreen ────────────────────────
