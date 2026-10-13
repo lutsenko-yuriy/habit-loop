@@ -8,6 +8,7 @@ class ShowupDetailRobot extends BaseRobot {
   ShowupDetailRobot(super.tester);
 
   static const _redeemButton = Key('showup-redeem-button');
+  static const _runChecklistButton = Key('showup-run-checklist-button');
   static const _noteField = Key('showup-note-field');
   static const _saveNoteButton = Key('showup-note-save-button');
 
@@ -20,6 +21,20 @@ class ShowupDetailRobot extends BaseRobot {
     await waitFor(done);
     await tapAndSettle(done);
   }
+
+  Finder get markDoneButton => find.text(p.l10n(tester).markDone);
+
+  Future<void> waitForMarkDone() => waitFor(markDoneButton);
+
+  /// Waits for "Mark as failed", which renders once the pending showup has loaded.
+  Future<void> waitForMarkFailed() => waitFor(find.text(p.l10n(tester).markFailed));
+
+  Finder get runChecklistButton => find.byKey(_runChecklistButton);
+
+  Future<void> waitForRunChecklist() => waitFor(runChecklistButton);
+
+  /// Taps "Run checklist" and settles.
+  Future<void> tapRunChecklist() => tapAndSettle(runChecklistButton);
 
   Future<void> waitForRedeemButton() => waitFor(find.byKey(_redeemButton));
 

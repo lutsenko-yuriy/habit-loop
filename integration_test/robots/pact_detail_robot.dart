@@ -92,6 +92,18 @@ class PactDetailRobot extends BaseRobot {
     await pushTransition();
   }
 
+  /// Drags the list to the bottom and settles.
+  Future<void> scrollToBottom() async {
+    await tester.drag(_scrollView, const Offset(0, -2000));
+    await tester.pumpAndSettle();
+  }
+
+  /// Scrolls the timeline button into view, taps it and settles.
+  Future<void> openTimelineAndSettle() async {
+    await scrollIntoViewAndTap(timelineButton, _scrollView);
+    await tester.pumpAndSettle();
+  }
+
   /// Taps "Stop Pact" at the bottom of the list, leaving the confirm dialog open.
   Future<void> stopPact() async {
     await scrollToStopPact();

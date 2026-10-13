@@ -23,9 +23,6 @@ const _flagOn = {'checklister_integration_enabled': true};
 
 const _pactId = 'checklist-link-pact';
 const _showupId = '${_pactId}_20990615T080000_0';
-const _selectKey = Key('pact-checklist-select-button');
-const _changeKey = Key('pact-checklist-change-button');
-const _removeKey = Key('pact-checklist-remove-button');
 
 final _activePact = buildPact(id: _pactId, habitName: 'Meditate', startDate: _testToday);
 
@@ -40,25 +37,11 @@ List<Override> get _clock => [
       pactDetailNowProvider.overrideWithValue(_testNow),
     ];
 
-/// Scrolls pact detail until [finder] is on screen (the section sits below the fold on short viewports).
-Future<void> _scrollTo(WidgetTester tester, String pactId, Finder finder) async {
-  await waitFor(tester, find.byKey(Key('pact-detail-scroll-view-$pactId')));
-  await tester.scrollUntilVisible(
-    finder,
-    200,
-    scrollable: find.descendant(
-      of: find.byKey(Key('pact-detail-scroll-view-$pactId')),
-      matching: find.byType(Scrollable),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
-
-Future<void> _openDetail(WidgetTester tester, String habitName) async {
-  await openPactsPanel(tester);
-  await openPactDetail(tester, habitName);
-  await waitFor(tester, find.text(l10n(tester).sectionStats.toUpperCase()));
-  await tester.pumpAndSettle();
+Future<void> _openDetail(AppHarness h, String habitName) async {
+  await h.dashboard.openPactsPanel();
+  await h.dashboard.openPactDetail(habitName);
+  await h.pactDetail.waitLoaded();
+  await h.tester.pumpAndSettle();
 }
 
 void main() {
@@ -81,12 +64,11 @@ void main() {
         },
       );
 
-      await _openDetail(tester, 'Meditate');
-      await tester.drag(find.byType(ListView).last, const Offset(0, -2000));
-      await tester.pumpAndSettle();
+      await _openDetail(h, 'Meditate');
+      await h.pactDetail.scrollToBottom();
 
-      expect(find.byKey(_selectKey), findsNothing);
-      expect(find.text(l10n(tester).pactChecklistSectionTitle.toUpperCase()), findsNothing);
+      expect(h.checklist.selectButton, findsNothing);
+      expect(h.checklist.sectionTitle, findsNothing);
     });
 
     testWidgets('select_checklist_links_checklist_to_pact: a selected callback shows the linked checklist on the pact',
@@ -99,14 +81,13 @@ void main() {
       );
 
       // 2. Only "Select checklist" is offered.
-      await _openDetail(tester, 'Meditate');
-      await _scrollTo(tester, _pactId, find.byKey(_selectKey));
-      expect(find.byKey(_changeKey), findsNothing);
-      expect(find.byKey(_removeKey), findsNothing);
+      await _openDetail(h, 'Meditate');
+      await h.checklist.scrollToSelect(_pactId);
+      expect(h.checklist.changeButton, findsNothing);
+      expect(h.checklist.removeButton, findsNothing);
 
       // 3. Tapping it opens Checklister with our selected-callback URL.
-      await tester.tap(find.byKey(_selectKey));
-      await tester.pumpAndSettle();
+      await h.checklist.tapSelect();
       final launched = h.checklister.launchedUrls.single;
       expect(launched.scheme, 'checklister');
       expect(launched.host, 'select');
@@ -114,11 +95,11 @@ void main() {
 
       // 4-5. Checklister calls back with a selection; the section shows it.
       h.incomingLinks.emit(_selectionCallback('status=selected&checklistId=c1&checklistName=Morning'));
-      await waitFor(tester, find.text('Morning'));
+      await h.checklist.waitForLinkedName('Morning');
       await tester.pumpAndSettle(); // let the empty -> linked crossfade finish
-      expect(find.byKey(_changeKey), findsOneWidget);
-      expect(find.byKey(_removeKey), findsOneWidget);
-      expect(find.byKey(_selectKey), findsNothing);
+      expect(h.checklist.changeButton, findsOneWidget);
+      expect(h.checklist.removeButton, findsOneWidget);
+      expect(h.checklist.selectButton, findsNothing);
 
       // 6. Persisted.
       final stored = await h.checklistLinkRepo.getForPact(_pactId);
@@ -140,25 +121,21 @@ void main() {
         extraOverrides: _clock,
         beforePump: (h) async => h.pactRepo.savePact(_activePact),
       );
-      await _openDetail(tester, 'Meditate');
-      await _scrollTo(tester, _pactId, find.byKey(_selectKey));
-      final strings = l10n(tester);
-
+      await _openDetail(h, 'Meditate');
+      await h.checklist.scrollToSelect(_pactId);
       // 1-2. Cancelled: still "Select checklist", no message, nothing stored.
-      await tester.tap(find.byKey(_selectKey));
-      await tester.pumpAndSettle();
+      await h.checklist.tapSelect();
       h.incomingLinks.emit(_selectionCallback('status=cancelled'));
       await tester.pumpAndSettle();
-      expect(find.byKey(_selectKey), findsOneWidget);
-      expect(find.text(strings.pactChecklistNoChecklistsError), findsNothing);
+      expect(h.checklist.selectButton, findsOneWidget);
+      expect(h.checklist.noChecklistsError, findsNothing);
       expect(await h.checklistLinkRepo.getForPact(_pactId), isNull);
 
       // 3-4. Error (no checklists in Checklister): message shown, still unlinked.
-      await tester.tap(find.byKey(_selectKey));
-      await tester.pumpAndSettle();
+      await h.checklist.tapSelect();
       h.incomingLinks.emit(_selectionCallback('status=error'));
-      await waitFor(tester, find.text(strings.pactChecklistNoChecklistsError));
-      expect(find.byKey(_selectKey), findsOneWidget);
+      await h.checklist.waitForNoChecklistsError();
+      expect(h.checklist.selectButton, findsOneWidget);
       expect(await h.checklistLinkRepo.getForPact(_pactId), isNull);
     });
 
@@ -178,24 +155,22 @@ void main() {
       );
 
       // 2. Change -> Checklister opens -> selecting c2 swaps the link.
-      await _openDetail(tester, 'Meditate');
-      await _scrollTo(tester, _pactId, find.byKey(_changeKey));
-      expect(find.text('Morning'), findsOneWidget);
-      await tester.tap(find.byKey(_changeKey));
-      await tester.pumpAndSettle();
+      await _openDetail(h, 'Meditate');
+      await h.checklist.scrollToChange(_pactId);
+      expect(h.checklist.linkedName('Morning'), findsOneWidget);
+      await h.checklist.tapChange();
       expect(h.checklister.launchedUrls.single.host, 'select');
       h.incomingLinks.emit(_selectionCallback('status=selected&checklistId=c2&checklistName=Evening'));
-      await waitFor(tester, find.text('Evening'));
+      await h.checklist.waitForLinkedName('Evening');
       await tester.pumpAndSettle(); // let the old -> new crossfade finish
       expect((await h.checklistLinkRepo.getForPact(_pactId))?.checklistId, 'c2');
       final linked = h.analytics.loggedEvents.whereType<PactChecklistLinkedEvent>().single;
       expect(linked.mode, 'change');
 
       // 4-5. Remove: no confirmation dialog, back to "Select checklist".
-      await tester.tap(find.byKey(_removeKey));
-      await tester.pumpAndSettle();
+      await h.checklist.tapRemove();
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byKey(_selectKey), findsOneWidget);
+      expect(h.checklist.selectButton, findsOneWidget);
       expect(await h.checklistLinkRepo.getForPact(_pactId), isNull);
       expect(h.analytics.loggedEvents.whereType<PactChecklistUnlinkedEvent>(), hasLength(1));
 
@@ -203,8 +178,8 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
       await waitFor(tester, find.text('Meditate'));
-      await tester.tap(find.text('Meditate').first);
-      await waitFor(tester, find.text(l10n(tester).markDone));
+      await h.dashboard.openShowup('Meditate');
+      await h.showupDetail.waitForMarkDone();
     });
 
     testWidgets('no_checklist_section_for_inactive_pact: stopped and completed pacts have no Checklist section',
@@ -233,11 +208,10 @@ void main() {
       );
 
       for (final entry in {'Stopped Habit': 'stopped-pact', 'Completed Habit': 'completed-pact'}.entries) {
-        await _openDetail(tester, entry.key);
-        await tester.drag(find.byType(ListView).last, const Offset(0, -2000));
-        await tester.pumpAndSettle();
-        expect(find.byKey(_selectKey), findsNothing, reason: entry.key);
-        expect(find.text(l10n(tester).pactChecklistSectionTitle.toUpperCase()), findsNothing, reason: entry.key);
+        await _openDetail(h, entry.key);
+        await h.pactDetail.scrollToBottom();
+        expect(h.checklist.selectButton, findsNothing, reason: entry.key);
+        expect(h.checklist.sectionTitle, findsNothing, reason: entry.key);
         await tester.pageBack();
         await tester.pumpAndSettle();
       }

@@ -35,6 +35,7 @@ import '../test/infrastructure/notifications/fake_notification_service.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import '../test/infrastructure/sync/fake_sync_service.dart';
 import 'robots/break_robot.dart';
+import 'robots/checklist_robot.dart';
 import 'robots/dashboard_robot.dart';
 import 'robots/onboarding_robot.dart';
 import 'robots/pact_detail_robot.dart';
@@ -91,6 +92,7 @@ class AppHarness {
   late final BreakRobot breaks = BreakRobot(tester);
   late final TimelineRobot timeline = TimelineRobot(tester);
   late final ShowupDetailRobot showupDetail = ShowupDetailRobot(tester);
+  late final ChecklistRobot checklist = ChecklistRobot(tester);
 
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
