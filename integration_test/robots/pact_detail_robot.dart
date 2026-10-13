@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:habit_loop/theme/widgets/animated_value_transition.dart' show kAnimatedValueTransitionDuration;
+
 import '../primitives.dart' as p;
 import 'base_robot.dart';
 
@@ -106,4 +108,65 @@ class PactDetailRobot extends BaseRobot {
   String get noteText => fieldText(_noteField);
 
   bool get isSaveNoteEnabled => isEnabled(_saveNoteButton);
+
+  /// Taps "Previous Pact" (in-place swap), then pumps past the link's separate re-entry-guard timer (HAB-206).
+  Future<void> tapPreviousPactLink() async {
+    await waitFor(find.byKey(const Key('pact-detail-previous-pact-link')));
+    await tester.tap(find.byKey(const Key('pact-detail-previous-pact-link')));
+    await tester.pumpAndSettle();
+    await tester.pump(kAnimatedValueTransitionDuration * 2);
+  }
+
+  /// Taps "Next Pact"; [originalPactId] is the pact the screen was opened with, which keys its list (HAB-206).
+  Future<void> tapNextPactLink(String originalPactId) async {
+    await tester.dragUntilVisible(
+      find.byKey(const Key('pact-detail-next-pact-link')),
+      _scrollableOf(originalPactId),
+      const Offset(0, -100),
+    );
+    await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
+    await tester.pumpAndSettle();
+    await tester.pump(kAnimatedValueTransitionDuration * 2);
+  }
+
+  static const _currentPactIdKeyPrefix = 'pact-detail-current-pact-id-';
+
+  /// Id of the pact currently shown, read from the invisible marker (the screen's own id stays the original).
+  String get currentPactId {
+    final key = tester
+        .widgetList(find.byWidgetPredicate(
+          (w) => w.key is ValueKey<String> && (w.key! as ValueKey<String>).value.startsWith(_currentPactIdKeyPrefix),
+        ))
+        .single
+        .key! as ValueKey<String>;
+    return key.value.substring(_currentPactIdKeyPrefix.length);
+  }
+
+  Finder _scrollableOf(String originalPactId) => find
+      .descendant(of: find.byKey(Key('pact-detail-scroll-view-$originalPactId')), matching: find.byType(Scrollable))
+      .first;
+
+  /// Scrolls [key] into view in the list of the screen opened with [pactId]; a positive [moveStep] dy scrolls up.
+  Future<void> scrollToKey(Key key, {required String pactId, Offset moveStep = const Offset(0, -100)}) async {
+    await tester.dragUntilVisible(find.byKey(key), _scrollableOf(pactId), moveStep);
+    // Drain dragUntilVisible's trailing ensureVisible animation before the caller taps.
+    await tester.pumpAndSettle();
+  }
+
+  /// Drags [habitName] up to build content below the fold.
+  Future<void> scrollDownFrom(String habitName) async {
+    await tester.drag(find.text(habitName).last, const Offset(0, -300));
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+
+  static const _archiveButton = Key('archive-pact-button');
+
+  Future<void> waitForArchiveButton() => waitFor(find.byKey(_archiveButton));
+
+  /// Taps Archive/Unarchive, then pumps [settle].
+  Future<void> tapArchiveButton({Duration settle = const Duration(milliseconds: 100)}) async {
+    await tester.tap(find.byKey(_archiveButton));
+    await tester.pump();
+    await tester.pump(settle);
+  }
 }

@@ -4,8 +4,7 @@
 //
 // Run on host:   flutter test integration_test/pact_chain_test.dart
 // Run on device: flutter test integration_test/pact_chain_test.dart -d <device>
-import 'package:flutter/cupertino.dart' show CupertinoTextField;
-import 'package:flutter/material.dart' show Key, Offset, Scrollable, TextField, ValueKey;
+import 'package:flutter/material.dart' show Key;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/domain/pact/showup_schedule.dart';
@@ -14,7 +13,6 @@ import 'package:habit_loop/slices/pact/ui/generic/pact_creation_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_screen.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart' show pactDetailNowProvider;
-import 'package:habit_loop/theme/widgets/animated_value_transition.dart' show kAnimatedValueTransitionDuration;
 import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
@@ -50,177 +48,11 @@ final _chainNavSuccessorPact = buildPact(
   predecessorPactId: _chainNavPredecessorId,
 );
 
-/// Taps "Previous Pact" on the single mounted [PactDetailScreen] (HAB-206 —
-/// in-place swap, no push/pop).
-///
-/// The extra pump after `pumpAndSettle` (HAB-206 WU3) closes a real race:
-/// `pumpAndSettle` considers the UI settled once the slide+fade transition's
-/// own animation frames stop, but `_onOpenChainLink`'s `_isAnimating` guard
-/// clears on a *separate* `Future.delayed` timer that isn't itself tied to a
-/// frame — on real hardware that timer can still be a few ms from firing
-/// when `pumpAndSettle` returns, so an immediate second tap can silently
-/// no-op against the still-true guard. Padded well past the nominal
-/// duration to absorb real-device scheduling jitter.
-Future<void> _tapPreviousPactLink(WidgetTester tester) async {
-  await waitFor(tester, find.byKey(const Key('pact-detail-previous-pact-link')));
-  await tester.tap(find.byKey(const Key('pact-detail-previous-pact-link')));
-  await tester.pumpAndSettle();
-  await tester.pump(kAnimatedValueTransitionDuration * 2);
-}
-
-/// Taps "Next Pact" on the currently-visible screen, originally opened with
-/// [originalPactId].
-///
-/// Scoped to that screen's own `pact-detail-scroll-view-<id>` Scrollable
-/// (HAB-202) rather than `find.byType(Scrollable).first` — a defensive
-/// carry-over from the push/pop model; harmless now that only one
-/// PactDetailScreen is ever mounted, but keeps this helper symmetric with
-/// `_scrollToDetailKey`'s own scoping. [originalPactId] is the pact the
-/// screen was *opened* with, not necessarily the one currently shown (HAB-206
-/// WU3 keys the ListView by the former — see that key's own doc comment in
-/// pact_detail_page_android.dart/_ios.dart for why it has to stay stable
-/// across an in-place chain-link swap).
-Future<void> _tapNextPactLink(WidgetTester tester, {required String originalPactId}) async {
-  await tester.dragUntilVisible(
-    find.byKey(const Key('pact-detail-next-pact-link')),
-    find
-        .descendant(
-          of: find.byKey(Key('pact-detail-scroll-view-$originalPactId')),
-          matching: find.byType(Scrollable),
-        )
-        .first,
-    const Offset(0, -100),
-  );
-  await tester.tap(find.byKey(const Key('pact-detail-next-pact-link')));
-  await tester.pumpAndSettle();
-  // See _tapPreviousPactLink's doc comment for why this extra pump matters.
-  await tester.pump(kAnimatedValueTransitionDuration * 2);
-}
-
-const _currentPactIdKeyPrefix = 'pact-detail-current-pact-id-';
-
-/// The pactId of the currently-displayed pact detail content, read off a
-/// dedicated invisible marker's own `pact-detail-current-pact-id-<id>`
-/// `ValueKey` (HAB-206 WU3) — reflects the swapped-in pact once
-/// `_onOpenChainLink`'s reload lands, since `PactDetailScreen.pactId` itself
-/// only ever holds the *original* entry-point id under the in-place-swap
-/// model (there's no longer a distinct screen instance per chain-linked pact
-/// to read a `pactId` field off of). Not read off the content ListView's own
-/// key any more — WU3 had to make that one stable (keyed by the *original*
-/// entry pact id) so the ListView's subtree survives a chain-link swap
-/// instead of being torn down and rebuilt (which broke every un-animated
-/// widget's own transition, e.g. the active-break banner's reveal).
-String _currentDetailPactId(WidgetTester tester) {
-  final key = tester
-      .widgetList(find.byWidgetPredicate(
-        (w) => w.key is ValueKey<String> && (w.key! as ValueKey<String>).value.startsWith(_currentPactIdKeyPrefix),
-      ))
-      .single
-      .key! as ValueKey<String>;
-  return key.value.substring(_currentPactIdKeyPrefix.length);
-}
-
-/// Scrolls [key] into view within the pact detail screen originally opened
-/// with [pactId].
-///
-/// Scoped to that screen's own `pact-detail-scroll-view-<id>` Scrollable
-/// (HAB-202) — see `_tapNextPactLink`'s comment above for why an unscoped
-/// `Scrollable` finder can target the wrong (offstage) screen when multiple
-/// `PactDetailScreen`s are mounted at once, and for why [pactId] means the
-/// screen's *original* entry pact, not necessarily the one currently shown.
-///
-/// [moveStep] defaults to scrolling *down* (revealing content below the
-/// fold, e.g. "Adjust and start again" near the bottom). Pass a positive Y
-/// offset to scroll *up* instead — needed for "Previous"/"Next Pact" (near
-/// the top) when the list is already scrolled down from an earlier call on
-/// the same still-mounted screen instance (its scroll position persists
-/// across a push/pop round trip, so scrolling toward the bottom for one
-/// widget can leave a top-of-list widget outside the lazy ListView's built
-/// range entirely, not just offstage — HAB-202 WU4).
-Future<void> _scrollToDetailKey(
-  WidgetTester tester,
-  Key key, {
-  required String pactId,
-  Offset moveStep = const Offset(0, -100),
-}) async {
-  await tester.dragUntilVisible(
-    find.byKey(key),
-    find
-        .descendant(
-          of: find.byKey(Key('pact-detail-scroll-view-$pactId')),
-          matching: find.byType(Scrollable),
-        )
-        .first,
-    moveStep,
-  );
-  // dragUntilVisible's own trailing Scrollable.ensureVisible() call can leave
-  // its scroll-into-view animation still settling by the time control
-  // returns — observed as a tap landing a few px past the viewport's bottom
-  // edge (HAB-202 WU4). Drain it before the caller taps.
-  await tester.pumpAndSettle();
-}
-
-/// Swipes the pact-creation [PageView] to the next page.
-///
-/// Copied from `create_pact_flow_test.dart` — see that file's doc comment for
-/// why 300px/50ms drags from the top-right corner are used instead of a fling
-/// from the center (avoids intercepting the showup-duration Slider, and stays
-/// on-screen / doesn't overshoot on any viewport width).
-Future<void> _swipeWizardForward(WidgetTester tester) async {
-  const iosKey = Key('pact-creation-pageview-ios');
-  const androidKey = Key('pact-creation-pageview-android');
-  final key = find.byKey(iosKey).evaluate().isNotEmpty ? iosKey : androidKey;
-  final rect = tester.getRect(find.byKey(key));
-  await tester.timedDragFrom(
-    Offset(rect.right - 10, rect.top + 40),
-    const Offset(-300, 0),
-    const Duration(milliseconds: 50),
-  );
-  await tester.pumpAndSettle();
-}
-
-/// Swipes from the habit-name page all the way to the summary page.
-///
-/// 8 swipes, not 5 (the number of page transitions needed) — a forward drag
-/// occasionally doesn't cross the PageView's snap threshold on the last hop
-/// into the reminder/summary pages, observed empirically on iOS; the extra
-/// margin is harmless since swiping past the last page is a no-op.
-Future<void> _swipeWizardToSummary(WidgetTester tester) async {
-  for (var i = 0; i < 8; i++) {
-    await _swipeWizardForward(tester);
-  }
-}
-
-/// Current text of the habit-name field on the (already open) creation
-/// wizard. Reads the controller directly rather than `find.text` — the
-/// wizard's AppBar/nav-bar title *also* shows the habit name once it's
-/// non-empty (see `pact_creation_page_android.dart`'s title logic), so a
-/// pre-filled flow has two matching `Text`/`EditableText` widgets and
-/// `find.text` can't disambiguate which one is the field itself.
-///
-/// `.last` — the predecessor's own detail screen (with its note-section
-/// `TextField`/`CupertinoTextField`) stays mounted underneath the pushed
-/// creation wizard (Navigator's default `maintainState: true`), so an
-/// unscoped predicate can match it too; the topmost (most-recently-built)
-/// match is always the wizard's own field (same precedent as
-/// `_currentDetailPactId` above).
-String _habitNameFieldText(WidgetTester tester) {
-  final field = tester.widget(find.byWidgetPredicate((w) => w is TextField || w is CupertinoTextField).last);
-  return field is TextField ? field.controller!.text : (field as CupertinoTextField).controller!.text;
-}
-
-/// Waits for `pact_created` to fire (submit() completes asynchronously and
-/// pops the wizard) — see `create_pact_flow_test.dart` for why this is safer
-/// than asserting immediately after the confirm tap.
-Future<void> _waitForPactCreated(WidgetTester tester, AppHarness h) async {
-  final deadline = tester.binding.clock.now().add(const Duration(seconds: 30));
-  while (!h.analytics.loggedEvents.any((e) => e.name == 'pact_created')) {
-    if (tester.binding.clock.now().isAfter(deadline)) {
-      throw TestFailure('pact_created event was not fired within the timeout');
-    }
-    await tester.pump(const Duration(milliseconds: 100));
-  }
-}
+/// Waits for `pact_created`; submit() completes asynchronously and pops the wizard.
+Future<void> _waitForPactCreated(AppHarness h) => h.dashboard.waitUntil(
+      () => h.analytics.loggedEvents.any((e) => e.name == 'pact_created'),
+      description: 'pact_created event fired',
+    );
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -270,11 +102,7 @@ void main() {
       // ── 1-2. Predecessor detail shows "Adjust and start again" ───────────
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Vibe coding');
-      await _scrollToDetailKey(
-        tester,
-        const Key('pact-detail-adjust-and-start-again-button'),
-        pactId: predecessor.id,
-      );
+      await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: predecessor.id);
       expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsOneWidget);
 
       // ── 3. Tap it — wizard opens ───────────────────────────────────────
@@ -286,17 +114,17 @@ void main() {
       await tester.pumpAndSettle();
 
       // ── 4. Habit name is pre-filled with "Vibe coding (v2)" ──────────────
-      expect(_habitNameFieldText(tester), 'Vibe coding (v2)');
+      expect(h.wizard.habitNameText, 'Vibe coding (v2)');
 
       // ── 5. Swipe to summary and confirm (all fields already valid from
       //        the prefill — no field interaction needed) ──────────────────
-      await _swipeWizardToSummary(tester);
+      await h.wizard.swipeToSummary();
       await tester.tap(find.text(strings.createPactConfirm));
       await tester.pumpAndSettle();
       await tester.tap(find.text(strings.commitmentAccept));
 
       // ── 6. Wait for pact_created, then verify persisted fields ──────────
-      await _waitForPactCreated(tester, h);
+      await _waitForPactCreated(h);
 
       final allPacts = await h.pactRepo.getAllPacts();
       final successor = allPacts.firstWhere((p) => p.habitName == 'Vibe coding (v2)');
@@ -330,7 +158,7 @@ void main() {
       expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsNothing);
 
       // ── 8. Tap "Next Pact" — navigates to the new pact's detail screen ──
-      await _tapNextPactLink(tester, originalPactId: predecessor.id);
+      await h.pactDetail.tapNextPactLink(predecessor.id);
 
       // ── 9. Successor detail shows the predecessor's name in the chevron stripe ──
       await waitFor(tester, find.byKey(const Key('pact-detail-previous-pact-link')));
@@ -344,8 +172,8 @@ void main() {
 
       // ── 10. Tap "Previous Pact" — navigates back to the predecessor's
       //         detail screen (pops to the originating page instance) ─────
-      await _tapPreviousPactLink(tester);
-      await _scrollToDetailKey(tester, const Key('pact-detail-next-pact-link'), pactId: predecessor.id);
+      await h.pactDetail.tapPreviousPactLink();
+      await h.pactDetail.scrollToKey(const Key('pact-detail-next-pact-link'), pactId: predecessor.id);
       expect(find.byKey(const Key('pact-detail-next-pact-link')), findsOneWidget);
     });
   });
@@ -378,20 +206,20 @@ void main() {
 
       // ── 3. Exactly one PactDetailScreen, showing the successor ───────────
       expect(find.byType(PactDetailScreen), findsOneWidget);
-      expect(_currentDetailPactId(tester), _chainNavSuccessorId);
+      expect(h.pactDetail.currentPactId, _chainNavSuccessorId);
 
       // ── 4. Tap "Previous Pact" — swaps in place, no push ─────────────────
-      await _tapPreviousPactLink(tester);
+      await h.pactDetail.tapPreviousPactLink();
       expect(find.byType(PactDetailScreen), findsOneWidget);
-      expect(_currentDetailPactId(tester), _chainNavPredecessorId);
+      expect(h.pactDetail.currentPactId, _chainNavPredecessorId);
 
       // ── 5. Tap "Next Pact" — swaps back to the successor ─────────────────
       // originalPactId is the successor — this screen was opened on it (step
       // 2), and the ListView's key stays pinned to that regardless of the
       // predecessor currently being shown (HAB-206 WU3).
-      await _tapNextPactLink(tester, originalPactId: _chainNavSuccessorId);
+      await h.pactDetail.tapNextPactLink(_chainNavSuccessorId);
       expect(find.byType(PactDetailScreen), findsOneWidget);
-      expect(_currentDetailPactId(tester), _chainNavSuccessorId);
+      expect(h.pactDetail.currentPactId, _chainNavSuccessorId);
 
       // ── 6. System back exits directly to the Pacts List in a single pop ──
       await tester.pageBack();
@@ -417,17 +245,17 @@ void main() {
 
       // ── 3. Exactly one PactDetailScreen, showing the predecessor ─────────
       expect(find.byType(PactDetailScreen), findsOneWidget);
-      expect(_currentDetailPactId(tester), _chainNavPredecessorId);
+      expect(h.pactDetail.currentPactId, _chainNavPredecessorId);
 
       // ── 4. Tap "Next Pact" — swaps in place, no push ─────────────────────
-      await _tapNextPactLink(tester, originalPactId: _chainNavPredecessorId);
+      await h.pactDetail.tapNextPactLink(_chainNavPredecessorId);
       expect(find.byType(PactDetailScreen), findsOneWidget);
-      expect(_currentDetailPactId(tester), _chainNavSuccessorId);
+      expect(h.pactDetail.currentPactId, _chainNavSuccessorId);
 
       // ── 5. Tap "Previous Pact" — swaps back to the predecessor ───────────
-      await _tapPreviousPactLink(tester);
+      await h.pactDetail.tapPreviousPactLink();
       expect(find.byType(PactDetailScreen), findsOneWidget);
-      expect(_currentDetailPactId(tester), _chainNavPredecessorId);
+      expect(h.pactDetail.currentPactId, _chainNavPredecessorId);
 
       // ── 6. System back exits directly to the Pacts List in a single pop ──
       await tester.pageBack();
@@ -452,8 +280,8 @@ void main() {
       await openPactDetail(tester, 'Vibe coding');
 
       // ── 3. Tap "Next Pact" — a single hop, not returned to the start ─────
-      await _tapNextPactLink(tester, originalPactId: _chainNavPredecessorId);
-      expect(_currentDetailPactId(tester), _chainNavSuccessorId);
+      await h.pactDetail.tapNextPactLink(_chainNavPredecessorId);
+      expect(h.pactDetail.currentPactId, _chainNavSuccessorId);
 
       // ── 4. System back exits directly to the Pacts List in a single pop ──
       await tester.pageBack();
@@ -511,11 +339,7 @@ void main() {
       // ── 1-2. Open pact detail for "Focus Sessions" ────────────────────────
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Focus Sessions');
-      await _scrollToDetailKey(
-        tester,
-        const Key('pact-detail-adjust-and-start-again-button'),
-        pactId: midPact.id,
-      );
+      await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: midPact.id);
 
       // ── 3. Tap "Adjust and start again" ───────────────────────────────────
       await tester.tap(find.byKey(const Key('pact-detail-adjust-and-start-again-button')));
@@ -526,16 +350,16 @@ void main() {
       await tester.pumpAndSettle();
 
       // ── 4. Pre-filled with the root's name, not the immediate predecessor's ──
-      expect(_habitNameFieldText(tester), 'Vibe coding (v3)');
+      expect(h.wizard.habitNameText, 'Vibe coding (v3)');
 
       // ── 5. Swipe to summary and confirm ───────────────────────────────────
-      await _swipeWizardToSummary(tester);
+      await h.wizard.swipeToSummary();
       await tester.tap(find.text(strings.createPactConfirm));
       await tester.pumpAndSettle();
       await tester.tap(find.text(strings.commitmentAccept));
 
       // ── 6. Verify persisted fields ─────────────────────────────────────────
-      await _waitForPactCreated(tester, h);
+      await _waitForPactCreated(h);
 
       final allPacts = await h.pactRepo.getAllPacts();
       final successor = allPacts.firstWhere((p) => p.habitName == 'Vibe coding (v3)');
@@ -567,11 +391,7 @@ void main() {
       // ── 1-2. Open pact detail; scroll to the bottom action area ─────────
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Morning Run');
-      await _scrollToDetailKey(
-        tester,
-        const Key('pact-detail-adjust-and-start-again-button'),
-        pactId: completedPact.id,
-      );
+      await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: completedPact.id);
 
       // ── 3. "Adjust and start again" is visible ──────────────────────────
       expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsOneWidget);
@@ -657,11 +477,7 @@ void main() {
       // ── 1-2. Open detail; tap "Adjust and start again" — wizard opens ────
       await openPactsPanel(tester);
       await openPactDetail(tester, 'Evening Walk');
-      await _scrollToDetailKey(
-        tester,
-        const Key('pact-detail-adjust-and-start-again-button'),
-        pactId: cancelledPact.id,
-      );
+      await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: cancelledPact.id);
       await tester.tap(find.byKey(const Key('pact-detail-adjust-and-start-again-button')));
       await waitFor(tester, find.byType(PactCreationScreen));
       // Settle the push transition — otherwise the outgoing and incoming
@@ -669,7 +485,7 @@ void main() {
       // overlays them during the animation), so a keyed finder on the close
       // button ambiguously matches both mid-flight.
       await tester.pumpAndSettle();
-      expect(_habitNameFieldText(tester), 'Evening Walk (v2)');
+      expect(h.wizard.habitNameText, 'Evening Walk (v2)');
 
       // ── 3. Back out without confirming, via the wizard's close button ────
       await tester.tap(find.byKey(const Key('pact-creation-close-button')));
@@ -682,7 +498,7 @@ void main() {
       // top-of-list habit-name row isn't built yet (lazy ListView, not
       // merely offstage).
       await waitFor(tester, find.byType(PactDetailScreen));
-      expect(_currentDetailPactId(tester), cancelledPact.id);
+      expect(h.pactDetail.currentPactId, cancelledPact.id);
 
       // ── 5. Repository still contains only the original pact ─────────────
       final allPacts = await h.pactRepo.getAllPacts();
@@ -691,11 +507,7 @@ void main() {
       expect(allPacts.single.predecessorPactId, isNull);
 
       // ── 6. "Adjust and start again" is still visible ────────────────────
-      await _scrollToDetailKey(
-        tester,
-        const Key('pact-detail-adjust-and-start-again-button'),
-        pactId: cancelledPact.id,
-      );
+      await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: cancelledPact.id);
       expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsOneWidget);
     });
   });

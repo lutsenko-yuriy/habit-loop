@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoTextField;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -44,4 +45,14 @@ class PactWizardRobot extends BaseRobot {
     await waitFor(find.byKey(_habitNameField));
     await tester.pumpAndSettle();
   }
+
+  /// Swipes to the summary page; 8 swipes since the last hops occasionally miss the snap threshold on iOS.
+  Future<void> swipeToSummary() async {
+    for (var i = 0; i < 8; i++) {
+      await swipeForward();
+    }
+  }
+
+  /// Habit-name text via the controller (the title repeats it); `.last` skips the detail screen's field underneath.
+  String get habitNameText => fieldText(find.byWidgetPredicate((w) => w is TextField || w is CupertinoTextField).last);
 }
