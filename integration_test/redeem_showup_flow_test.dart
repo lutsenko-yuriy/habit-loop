@@ -10,9 +10,9 @@ import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
-import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
+import 'harness_binding.dart';
 
 bool _redeemEnabled(WidgetTester tester) {
   final w = tester.widget(find.byKey(const Key('showup-redeem-button')));
@@ -51,7 +51,7 @@ Future<void> _openShowupDetailFromTimeline(WidgetTester tester, String showupId)
 }
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Redeem showup flow', () {

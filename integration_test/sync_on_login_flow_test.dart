@@ -18,10 +18,10 @@ import 'package:habit_loop/slices/dashboard/ui/generic/sync_ui_state.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
-import 'package:integration_test/integration_test.dart';
 
 import '../test/infrastructure/sync/fake_sync_service.dart';
 import 'harness.dart';
+import 'harness_binding.dart';
 
 // Fixed clock: 5 minutes before the 08:00 remote showup window so the
 // auto-fail check (now > scheduledAt + duration) never triggers, and also
@@ -152,7 +152,7 @@ class _DirtyCapturingSyncService extends FakeSyncService {
 }
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Sync on login flow', () {

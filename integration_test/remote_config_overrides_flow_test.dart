@@ -18,11 +18,12 @@ import 'package:habit_loop/infrastructure/remote_config/data/shared_preferences_
 import 'package:habit_loop/slices/pact/data/in_memory_pact_repository.dart';
 import 'package:habit_loop/slices/pact/data/in_memory_pact_transaction_service.dart';
 import 'package:habit_loop/slices/showup/data/in_memory_showup_repository.dart';
-import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'harness_binding.dart';
+
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});

@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart' show todayProvider;
 import 'package:habit_loop/slices/pact/ui/generic/pact_creation_view_model.dart';
-import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
+import 'harness_binding.dart';
 
 // 5 min before the wizard's default Mon-Fri 08:00 slot, so today's showup
 // stays in the future regardless of real wall-clock time.
@@ -43,7 +43,7 @@ Future<void> _swipeWizardForward(WidgetTester tester) async {
 }
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Create pact flow', () {

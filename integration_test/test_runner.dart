@@ -6,7 +6,6 @@
 // This installs the APK / .app once and runs every suite in sequence,
 // avoiding the ~16 s per-file reinstall cost that `flutter test
 // integration_test/` incurs on Android.
-import 'package:integration_test/integration_test.dart';
 
 import 'about_screen_flow_test.dart' as about;
 import 'archive_pact_flow_test.dart' as archive_pact;
@@ -20,6 +19,7 @@ import 'display_name_flow_test.dart' as display_name;
 import 'edit_pact_flow_test.dart' as edit_pact;
 import 'fake_firestore_sync_flow_test.dart' as fake_firestore;
 import 'fresh_install_flow_test.dart' as fresh_install;
+import 'harness_binding.dart';
 import 'language_change_flow_test.dart' as language_change;
 import 'mark_showup_done_flow_test.dart' as mark_showup_done;
 import 'notification_navigation_flow_test.dart' as notification_nav;
@@ -37,7 +37,7 @@ import 'stop_pact_flow_test.dart' as stop_pact;
 import 'sync_on_login_flow_test.dart' as sync_on_login;
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
 
   about.main();
   archive_pact.main();

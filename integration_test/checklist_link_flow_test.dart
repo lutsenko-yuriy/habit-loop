@@ -12,9 +12,9 @@ import 'package:habit_loop/slices/checklist/analytics/checklist_analytics_events
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
-import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
+import 'harness_binding.dart';
 
 final _testNow = DateTime(2099, 6, 15, 7, 55);
 final _testToday = DateTime(2099, 6, 15);
@@ -62,7 +62,7 @@ Future<void> _openDetail(WidgetTester tester, String habitName) async {
 }
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Checklist link flow', () {

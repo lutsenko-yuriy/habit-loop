@@ -8,9 +8,9 @@ import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
-import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
+import 'harness_binding.dart';
 
 // Fixed clock: reminder-eligible showups are generated for "today" (midnight)
 // through +10 days, independent of the real wall-clock time the test runs at.
@@ -27,7 +27,7 @@ Pact _seedPact() => buildPact(
     );
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Reminder locale flow', () {

@@ -10,9 +10,9 @@ import 'package:habit_loop/domain/showup/showup_status.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_timeline_view_model.dart';
-import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
+import 'harness_binding.dart';
 
 final _testNow = DateTime(2099, 6, 15, 7, 55);
 
@@ -40,7 +40,7 @@ Map<String, dynamic> _rc({int tailPeriodInDays = 7}) => {
     };
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Pact timeline — merged break milestones (HAB-216)', () {

@@ -9,9 +9,9 @@ import 'package:habit_loop/domain/pact/showup_schedule.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_detail_view_model.dart';
 import 'package:habit_loop/slices/showup/ui/generic/showup_detail_view_model.dart';
-import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
+import 'harness_binding.dart';
 
 final _testNow = DateTime(2099, 6, 15, 7, 55);
 final _testToday = DateTime(2099, 6, 15);
@@ -79,7 +79,7 @@ final _activeShowup = buildShowup(
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Archive pact — detail screen', () {

@@ -11,16 +11,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
 import 'package:habit_loop/slices/pact/ui/generic/pact_list_view_model.dart';
 import 'package:habit_loop/theme/colors.dart';
-import 'package:integration_test/integration_test.dart';
 
 import 'harness.dart';
+import 'harness_binding.dart';
 
 // pact_breaks_enabled now defaults to true (HAB-195 WU6) — this override is
 // kept for explicitness/determinism, independent of the production default.
 const _breaksEnabled = {'pact_breaks_enabled': true};
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  HarnessBinding.ensureInitialized();
   setUpAll(AppHarness.initForHost);
 
   group('Calendar strip overflow dot', () {
