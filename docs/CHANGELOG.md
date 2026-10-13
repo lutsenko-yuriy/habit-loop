@@ -8,7 +8,7 @@ A record of all versioned releases. For planned work and known issues, see @docs
 
 Internal-only changes (CI, tooling, tests, workflow/skill docs) that did not change the app — no `pubspec.yaml` version bump, no build, no release. See `docs/VERSIONING.md` for the rule.
 
-- [wip] (PR #TBD) GH-476 WU7: checklist scenarios migrated to robots (`ChecklistRobot`, `ShowupDetailRobot` run-checklist helpers, `PactDetailRobot.scrollToBottom`, `BaseRobot.backgroundAndResume`).
+- [wip] (PR #483) GH-476 WU7: checklist scenarios migrated to robots (`ChecklistRobot`, `ShowupDetailRobot` run-checklist helpers, `PactDetailRobot.scrollToBottom`, `BaseRobot.backgroundAndResume`).
 - [wip] (PR #482) GH-476 WU6: timeline + showup detail scenarios migrated to robots (`ShowupDetailRobot`, `TimelineRobot` milestone helpers, `PactDetailRobot.scrollToTop`); keyboard-only note-field tap removed.
 - [wip] (PR #481) GH-476 WU5: break scenarios migrated to robots (`BreakRobot`, `TimelineRobot`, `PactDetailRobot` start/resume helpers, `DashboardRobot` panel filter helpers); keyboard-only post-entry wait removed.
 - [wip] (PR #480) GH-476 WU4: pact chain and archive scenarios migrated to robots (`PactDetailRobot` chain-link/archive helpers, `PactWizardRobot.swipeToSummary`/`habitNameText`, `DashboardRobot` archived-row helpers).
