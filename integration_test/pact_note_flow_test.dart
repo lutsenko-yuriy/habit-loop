@@ -2,7 +2,6 @@
 //
 // Run on host:   flutter test integration_test/pact_note_flow_test.dart
 // Run on device: flutter test integration_test/pact_note_flow_test.dart -d <device>
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
@@ -58,8 +57,9 @@ final _activeShowup = buildShowup(
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /// Opens [habitName]'s pact detail from the pacts panel and waits for it to load.
-Future<void> _openInactivePactDetail(AppHarness h, WidgetTester tester, String habitName) async {
+Future<void> _openSettledPactDetail(AppHarness h, WidgetTester tester, String habitName) async {
   await h.dashboard.openPactsPanel();
+  await h.dashboard.waitFor(find.text(habitName));
   await h.dashboard.openPactDetail(habitName);
   await h.pactDetail.waitLoaded();
   // Settle in-flight work from navigating in; a late rebuild could reset typed input (HAB-211).
@@ -108,7 +108,7 @@ void main() {
         },
       );
 
-      await _openInactivePactDetail(h, tester, 'Morning Run');
+      await _openSettledPactDetail(h, tester, 'Morning Run');
 
       // ── 1. Notes field is visible and pre-populated ───────────────────────
       await h.pactDetail.scrollToNoteField();
@@ -151,7 +151,7 @@ void main() {
         },
       );
 
-      await _openInactivePactDetail(h, tester, 'Morning Run');
+      await _openSettledPactDetail(h, tester, 'Morning Run');
       await h.pactDetail.scrollToNoteField();
 
       await h.pactDetail.enterNote('');
@@ -179,7 +179,7 @@ void main() {
 
       // ── 1/2. Open Pact Detail — first open this session, warms the cache
       //         with the original note ("Got injured") ────────────────────────
-      await _openInactivePactDetail(h, tester, 'Morning Run');
+      await _openSettledPactDetail(h, tester, 'Morning Run');
       final strings = l10n(tester);
 
       // ── 3. Edit the note and save ────────────────────────────────────────────
@@ -229,7 +229,7 @@ void main() {
         },
       );
 
-      await _openInactivePactDetail(h, tester, 'Evening Walk');
+      await _openSettledPactDetail(h, tester, 'Evening Walk');
       await h.pactDetail.scrollToNoteField();
 
       // ── 1. Field starts empty ─────────────────────────────────────────────
