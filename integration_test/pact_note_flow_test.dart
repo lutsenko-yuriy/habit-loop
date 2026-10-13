@@ -57,113 +57,32 @@ final _activeShowup = buildShowup(
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/// Returns whether the pact-note-save-button is enabled on any platform.
-bool _saveButtonEnabled(WidgetTester tester) {
-  final w = tester.widget(find.byKey(const Key('pact-note-save-button')));
-  if (w is ButtonStyleButton) return w.onPressed != null;
-  return (w as CupertinoButton).onPressed != null;
-}
-
-/// Returns the current text of the pact-note-field on any platform.
-String _noteFieldText(WidgetTester tester) {
-  final w = tester.widget(find.byKey(const Key('pact-note-field')));
-  if (w is TextField) return w.controller?.text ?? '';
-  return (w as CupertinoTextField).controller?.text ?? '';
-}
-
-/// Expands the pacts panel and taps [habitName] to open PactDetailScreen.
-Future<void> _openInactivePactDetail(WidgetTester tester, String habitName) async {
-  await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
-  await tester.pump(const Duration(milliseconds: 400));
-  await waitFor(tester, find.text(habitName));
-  await tester.tap(find.text(habitName).last);
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-  // sectionStats is near the top of _PactDetailContent and only rendered after
-  // the VM finishes loading — reliable on any screen size. The note field is
-  // below the fold; each test uses scrollUntilVisible to bring it into view.
-  await waitFor(tester, find.text(l10n(tester).sectionStats.toUpperCase()));
-  // Lets any work still in flight from navigating in (e.g. a screen-view log,
-  // an analytics call) fully settle before a test starts typing — otherwise a
-  // late rebuild while the note field has unsaved input risks resetting it
-  // (HAB-211).
+/// Opens [habitName]'s pact detail from the pacts panel and waits for it to load.
+Future<void> _openInactivePactDetail(AppHarness h, WidgetTester tester, String habitName) async {
+  await h.dashboard.openPactsPanel();
+  await h.dashboard.openPactDetail(habitName);
+  await h.pactDetail.waitLoaded();
+  // Settle in-flight work from navigating in; a late rebuild could reset typed input (HAB-211).
   await tester.pumpAndSettle();
 }
 
-/// Types [text] into the note field and waits for the save button to reflect
-/// the change. enterText's update reaches the button via a
-/// ValueListenableBuilder rebuild that intermittently takes far more than a
-/// couple of frames on CI's emulator — sometimes several seconds — so a
-/// fixed pump count is not reliable (HAB-211). Bumped 10s -> 30s -> 45s
-/// across successive HAB-258 dispatches (`existing_stop_reason_prepopulated_and_editable`
-/// timed out here at both prior values) — matches [_waitForNoteSaved]'s
-/// same-reasoning 45s budget.
-Future<void> _enterNoteText(WidgetTester tester, String text) async {
-  await tester.tap(find.byKey(const Key('pact-note-field')));
-  await tester.pumpAndSettle();
-  await tester.enterText(find.byKey(const Key('pact-note-field')), text);
-  final deadline = tester.binding.clock.now().add(const Duration(seconds: 45));
-  while (!_saveButtonEnabled(tester) && tester.binding.clock.now().isBefore(deadline)) {
-    await tester.pump(const Duration(milliseconds: 50));
-  }
-  // Throw like waitFor/_waitForNoteSaved do instead of returning silently —
-  // a caller that taps a still-disabled Save button gets a confusing failure
-  // much later instead of a clear signal here (HAB-258 audit finding on PR #440).
-  if (!_saveButtonEnabled(tester)) {
-    throw TestFailure('_enterNoteText timed out: save button never became enabled for "$text"');
-  }
-}
-
-/// Pumps until [pactId]'s persisted note matches [expectedNote] or [timeout]
-/// expires.
-///
-/// Deliberately polls the repository (ground truth) rather than the save
-/// button's enabled state: `onPressed` is `null` both while
-/// `isSavingNote == true` *and* once the save has completed with no further
-/// unsaved changes — `(isSaving || !hasChanged) ? null : ...`
-/// (pact_note_section.dart). "Disabled" therefore goes true on the very next
-/// frame after tapping Save, before the async write has actually landed, so
-/// waiting for it returns immediately without waiting for anything (HAB-258
-/// — a first attempt at this fix used exactly that button-state poll and
-/// still flaked on CI for this reason).
-///
-/// `PactService.updatePact` awaits the repository write, then
-/// `PactDetailCache.refresh` (in-memory, no I/O) — the repo write landing is
-/// the reliable signal; the couple of extra pumps below give the
-/// near-instant cache refresh time to catch up before the caller treats the
-/// save as fully settled (e.g. before navigating to Timeline).
+/// Waits until [pactId]'s persisted note equals [expectedNote]; polls the repo because the
+/// save button is disabled before the write lands (HAB-258).
 Future<void> _waitForNoteSaved(
   WidgetTester tester,
   AppHarness h,
   String pactId,
-  String expectedNote, {
-  Duration timeout = const Duration(seconds: 45),
-}) async {
-  final deadline = tester.binding.clock.now().add(timeout);
-  while (tester.binding.clock.now().isBefore(deadline)) {
-    final saved = await h.pactRepo.getPactById(pactId);
-    if ((saved?.stopReason ?? '') == expectedNote) {
-      // Fixed pumps, not pumpAndSettle: tried it (HAB-258 audit finding on
-      // PR #440) and it hangs here — some ongoing animation on this screen
-      // never settles (same class of issue AppHarness.create's own comment
-      // warns about for CircularProgressIndicator). Unlike the widget-tree
-      // waits elsewhere in this file, PactDetailCache.refresh is pure
-      // in-memory recompute with no real async gap, so two short pumps are
-      // enough to flush its couple of microtask hops — this one case where
-      // a fixed count is actually safe, not a guess.
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
-      return;
-    }
-    await tester.pump(const Duration(milliseconds: 50));
-  }
-  // Throw like waitFor does instead of returning silently — a caller that
-  // proceeds to navigate on an unconfirmed save gets a much more confusing
-  // downstream failure (HAB-258: a CI run this slow surfaced as a Timeline
-  // waitFor timeout two steps later, not as this one).
-  throw TestFailure(
-    '_waitForNoteSaved timed out: pact $pactId stopReason never became "$expectedNote"',
+  String expectedNote,
+) async {
+  await waitUntil(
+    tester,
+    () async => ((await h.pactRepo.getPactById(pactId))?.stopReason ?? '') == expectedNote,
+    timeout: const Duration(seconds: 45),
+    description: 'pact $pactId stopReason never became "$expectedNote"',
   );
+  // Fixed pumps: pumpAndSettle hangs here; the cache refresh is in-memory.
+  await tester.pump(const Duration(milliseconds: 100));
+  await tester.pump(const Duration(milliseconds: 100));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -190,53 +109,23 @@ void main() {
         },
       );
 
-      await _openInactivePactDetail(tester, 'Morning Run');
-      final strings = l10n(tester);
+      await _openInactivePactDetail(h, tester, 'Morning Run');
 
       // ── 1. Notes field is visible and pre-populated ───────────────────────
-      // The note section is below the fold on small screens — scroll to reveal.
-      // Use sectionStats (already in the tree after _openInactivePactDetail) as
-      // the scrollable anchor instead of pact-note-field, which is not yet
-      // built by the lazy ListView when scrollUntilVisible first evaluates the
-      // finder (causing Iterable.single: No element on narrow CI screens).
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('pact-note-field')),
-        200.0,
-        scrollable: find.ancestor(
-          of: find.text(strings.sectionStats.toUpperCase()),
-          matching: find.byType(Scrollable),
-        ),
-      );
-      // scrollUntilVisible's found-check only confirms the element exists in
-      // the tree — on CI's slower/short-viewport emulator the field can still
-      // be mid-scroll, at a not-yet-stable on-screen position, so an
-      // immediate tap's hit-test can miss it entirely (HAB-258, same root
-      // cause as openTimeline's identical settle below, HAB-211). Settle
-      // first, every time this field is scrolled into view before typing.
-      await tester.pumpAndSettle();
+      await h.pactDetail.scrollToNoteField();
       expect(find.text('Got injured'), findsOneWidget);
 
       // ── 2. Save button is disabled (no changes yet) ────────────────────────
-      expect(_saveButtonEnabled(tester), isFalse);
+      expect(h.pactDetail.isSaveNoteEnabled, isFalse);
 
       // ── 3. Edit the note ───────────────────────────────────────────────────
-      await _enterNoteText(tester, 'Injured knee — resting now');
+      await h.pactDetail.enterNote('Injured knee — resting now');
 
       // ── 4. Save button becomes enabled ────────────────────────────────────
-      expect(_saveButtonEnabled(tester), isTrue);
+      expect(h.pactDetail.isSaveNoteEnabled, isTrue);
 
       // ── 5. Tap Save ────────────────────────────────────────────────────────
-      // The stopped-date row + View Timeline button push the save button near the
-      // viewport edge; ensureVisible scrolls it fully into view before tapping.
-      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
-      // pumpAndSettle, not a single pump — ensureVisible's scroll (and the
-      // keyboard closing) may still be animating; an immediate tap can
-      // hit-test-miss the button (HAB-258, same root cause as the
-      // scrollUntilVisible fix above, and the pattern
-      // empty_note_field_writable_and_persists already used correctly below).
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('pact-note-save-button')));
-      await tester.pump();
+      await h.pactDetail.tapSaveNote();
       await _waitForNoteSaved(tester, h, _stoppedPact.id, 'Injured knee — resting now');
 
       // ── 6. Note is persisted ───────────────────────────────────────────────
@@ -244,7 +133,7 @@ void main() {
       expect(saved?.stopReason, 'Injured knee — resting now');
 
       // ── 7. Save button is disabled again (no new unsaved changes) ─────────
-      expect(_saveButtonEnabled(tester), isFalse);
+      expect(h.pactDetail.isSaveNoteEnabled, isFalse);
 
       // ── 8. pact_note_saved analytics event was fired ───────────────────────
       expect(h.analytics.loggedEvents.any((e) => e.name == 'pact_note_saved'), isTrue);
@@ -263,29 +152,12 @@ void main() {
         },
       );
 
-      await _openInactivePactDetail(tester, 'Morning Run');
-      final strings = l10n(tester);
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('pact-note-field')),
-        200.0,
-        scrollable: find.ancestor(
-          of: find.text(strings.sectionStats.toUpperCase()),
-          matching: find.byType(Scrollable),
-        ),
-      );
-      await tester.pumpAndSettle(); // HAB-258 — see comment on the first test's identical call.
+      await _openInactivePactDetail(h, tester, 'Morning Run');
+      await h.pactDetail.scrollToNoteField();
 
-      await _enterNoteText(tester, '');
+      await h.pactDetail.enterNote('');
 
-      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
-      // pumpAndSettle, not a single pump — ensureVisible's scroll (and the
-      // keyboard closing) may still be animating; an immediate tap can
-      // hit-test-miss the button (HAB-258, same root cause as the
-      // scrollUntilVisible fix above, and the pattern
-      // empty_note_field_writable_and_persists already used correctly below).
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('pact-note-save-button')));
-      await tester.pump();
+      await h.pactDetail.tapSaveNote();
       await _waitForNoteSaved(tester, h, _stoppedPact.id, '');
 
       final saved = await h.pactRepo.getPactById(_stoppedPact.id);
@@ -308,37 +180,21 @@ void main() {
 
       // ── 1/2. Open Pact Detail — first open this session, warms the cache
       //         with the original note ("Got injured") ────────────────────────
-      await _openInactivePactDetail(tester, 'Morning Run');
+      await _openInactivePactDetail(h, tester, 'Morning Run');
       final strings = l10n(tester);
 
       // ── 3. Edit the note and save ────────────────────────────────────────────
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('pact-note-field')),
-        200.0,
-        scrollable: find.ancestor(
-          of: find.text(strings.sectionStats.toUpperCase()),
-          matching: find.byType(Scrollable),
-        ),
-      );
-      await tester.pumpAndSettle(); // HAB-258 — see comment on the first test's identical call.
-      await _enterNoteText(tester, 'Injured knee — resting now');
+      await h.pactDetail.scrollToNoteField();
+      await h.pactDetail.enterNote('Injured knee — resting now');
 
-      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
-      // pumpAndSettle, not a single pump — ensureVisible's scroll (and the
-      // keyboard closing) may still be animating; an immediate tap can
-      // hit-test-miss the button (HAB-258, same root cause as the
-      // scrollUntilVisible fix above, and the pattern
-      // empty_note_field_writable_and_persists already used correctly below).
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('pact-note-save-button')));
-      await tester.pump();
+      await h.pactDetail.tapSaveNote();
       await _waitForNoteSaved(tester, h, _stoppedPact.id, 'Injured knee — resting now');
 
       // ── 4. Open Timeline from the same still-open Pact Detail screen ────────
       // Longer-than-default timeouts below (HAB-258): a CI run observed this
       // navigation alone take ~52s under heavy load — waitFor's usual 30s
       // default isn't always enough for this specific screen transition.
-      await openTimeline(tester);
+      await h.pactDetail.openTimeline();
       await waitFor(tester, find.textContaining(strings.pactTimelineTitle), timeout: const Duration(seconds: 60));
 
       // ── 5. The updated note is reflected; the original text is gone ─────────
@@ -374,30 +230,16 @@ void main() {
         },
       );
 
-      await _openInactivePactDetail(tester, 'Evening Walk');
-      final strings = l10n(tester);
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('pact-note-field')),
-        200.0,
-        scrollable: find.ancestor(
-          of: find.text(strings.sectionStats.toUpperCase()),
-          matching: find.byType(Scrollable),
-        ),
-      );
-      await tester.pumpAndSettle(); // HAB-258 — see comment on the first test's identical call.
+      await _openInactivePactDetail(h, tester, 'Evening Walk');
+      await h.pactDetail.scrollToNoteField();
 
       // ── 1. Field starts empty ─────────────────────────────────────────────
-      expect(_noteFieldText(tester), isEmpty);
+      expect(h.pactDetail.noteText, isEmpty);
 
       // ── 2. Write and save ─────────────────────────────────────────────────
-      await _enterNoteText(tester, 'Felt great throughout!');
+      await h.pactDetail.enterNote('Felt great throughout!');
 
-      // Scroll the save button into view before tapping — the software keyboard
-      // opened by the text field pushes the button off-screen on small CI AVDs.
-      await tester.ensureVisible(find.byKey(const Key('pact-note-save-button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('pact-note-save-button')));
-      await tester.pump();
+      await h.pactDetail.tapSaveNote();
       await _waitForNoteSaved(tester, h, _completedPact.id, 'Felt great throughout!');
 
       final saved = await h.pactRepo.getPactById(_completedPact.id);
@@ -432,19 +274,8 @@ void main() {
       await waitFor(tester, find.text(strings.markDone));
 
       await tester.tap(find.text(strings.showupViewPactDetails));
-      // sectionStats is near the top of _PactDetailContent and only rendered after
-      // the VM finishes loading — reliable on any screen size. Stop Pact lives at
-      // the bottom of the ListView; use sectionStats to scope the Scrollable so
-      // scrollUntilVisible works even when stopPact is not yet built.
-      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
-      await tester.scrollUntilVisible(
-        find.text(strings.stopPact),
-        200.0,
-        scrollable: find.ancestor(
-          of: find.text(strings.sectionStats.toUpperCase()),
-          matching: find.byType(Scrollable),
-        ),
-      );
+      await h.pactDetail.waitLoaded();
+      await h.pactDetail.scrollToStopPact();
 
       expect(find.byKey(const Key('pact-note-field')), findsNothing);
       expect(find.byKey(const Key('pact-note-save-button')), findsNothing);
