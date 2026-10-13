@@ -384,22 +384,22 @@ Future<void> waitForGone(
   }
 }
 
-/// Transitional delegate to [OnboardingRobot.saveEnterName] (GH-476; removed in the final WU).
+/// Delegates to [OnboardingRobot.saveEnterName] (GH-476).
 Future<void> saveEnterName(WidgetTester tester, String name) => OnboardingRobot(tester).saveEnterName(name);
 
-/// Transitional delegate to [OnboardingRobot.skipEnterName] (GH-476).
+/// Delegates to [OnboardingRobot.skipEnterName] (GH-476).
 Future<void> skipEnterName(WidgetTester tester) => OnboardingRobot(tester).skipEnterName();
 
-/// Transitional delegate to [OnboardingRobot.enterNameText] (GH-476).
+/// Delegates to [OnboardingRobot.enterNameText] (GH-476).
 String enterNameFieldText(WidgetTester tester) => OnboardingRobot(tester).enterNameText;
 
-/// Transitional delegate to [DashboardRobot.changeNameText] (GH-476).
+/// Delegates to [DashboardRobot.changeNameText] (GH-476).
 String changeNameFieldText(WidgetTester tester) => DashboardRobot(tester).changeNameText;
 
-/// Transitional delegate to [DashboardRobot.openChangeNameDialog] (GH-476).
+/// Delegates to [DashboardRobot.openChangeNameDialog] (GH-476).
 Future<void> openChangeNameDialogFromKebab(WidgetTester tester) => DashboardRobot(tester).openChangeNameDialog();
 
-/// Transitional delegate to [DashboardRobot.saveChangeName] (GH-476).
+/// Delegates to [DashboardRobot.saveChangeName] (GH-476).
 Future<void> saveChangeName(WidgetTester tester, String name) => DashboardRobot(tester).saveChangeName(name);
 
 /// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).
@@ -411,17 +411,17 @@ Future<void> saveChangeName(WidgetTester tester, String name) => DashboardRobot(
 /// covers it.
 const noAutoAdvance = {'onboarding_auto_advance_seconds': 0};
 
-/// Transitional delegate to [DashboardRobot.openPactsPanel] (GH-476).
+/// Delegates to [DashboardRobot.openPactsPanel] (GH-476).
 Future<void> openPactsPanel(WidgetTester tester) => DashboardRobot(tester).openPactsPanel();
 
-/// Transitional delegate to [DashboardRobot.openPactDetail] (GH-476).
+/// Delegates to [DashboardRobot.openPactDetail] (GH-476).
 Future<void> openPactDetail(WidgetTester tester, String habitName) => DashboardRobot(tester).openPactDetail(habitName);
 
-/// Transitional delegate to [PactDetailRobot.scrollToStartBreakButton] (GH-476).
+/// Delegates to [PactDetailRobot.scrollToStartBreakButton] (GH-476).
 Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) =>
     PactDetailRobot(tester).scrollToStartBreakButton();
 
-/// Transitional delegate to [PactDetailRobot.openTimeline] (GH-476).
+/// Delegates to [PactDetailRobot.openTimeline] (GH-476).
 Future<void> openTimeline(WidgetTester tester) => PactDetailRobot(tester).openTimeline();
 
 /// Builds a [Pact] fixture with defaults suited to integration tests.

@@ -11,31 +11,18 @@ class DashboardRobot extends BaseRobot {
   /// Opens the collapsible pacts panel from the dashboard.
   Future<void> openPactsPanel() async {
     await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
-    // Bare pump flushes the tap handler synchronously before the 400 ms animation
-    // clock starts — without this the panel may still be collapsed on entry.
+    // Flush the tap before the 400 ms expand animation starts.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Opens the detail screen for the pact named [habitName] from the pacts panel.
-  ///
-  /// Scrolls the panel's list into view first — on a short viewport (CI's
-  /// Android emulator) a pact further down the list isn't realized yet, so a
-  /// bare waitFor can time out even though it legitimately exists once
-  /// scrolled into range (HAB-211, same root cause as HAB-196/HAB-199).
+  /// Opens the pact named [habitName] from the pacts panel, scrolling it into view first (HAB-211).
   Future<void> openPactDetail(String habitName) async {
     final scrollableFinder = find.byKey(const Key('pacts-panel-scrollable'));
-    // Scoped to the panel, not a bare find.text(habitName) — the same habit
-    // name can also appear in the dashboard's "today" todo list, and
-    // dragUntilVisible's internal Scrollable.ensureVisible(element(finder))
-    // calls finder.evaluate().single, which throws on that ambiguity even
-    // though the tap below already disambiguates via .last (HAB-211).
+    // Scoped to the panel: the name can also appear in today's list (HAB-211).
     final panelEntryFinder = find.descendant(of: scrollableFinder, matching: find.text(habitName));
     await tester.dragUntilVisible(panelEntryFinder, scrollableFinder, const Offset(0, -100));
-    // dragUntilVisible's found-check only confirms the element exists in the
-    // tree — a lazy list's cache extent can pre-build an item before it's
-    // actually painted at a stable on-screen position, so an immediate tap's
-    // hit-test can still miss on a real device (HAB-211). Settle first.
+    // Settle first: a pre-built lazy-list item may not be painted in place yet (HAB-211).
     await tester.pumpAndSettle();
     await tester.tap(panelEntryFinder.last);
     await pushTransition();
@@ -49,7 +36,7 @@ class DashboardRobot extends BaseRobot {
     await tester.pumpAndSettle();
   }
 
-  /// Enters [name] into the "Change name" dialog, taps Save, and waits for the dialog to disappear (HAB-232 WU5).
+  /// Saves [name] in the "Change name" dialog (HAB-232 WU5).
   Future<void> saveChangeName(String name) async {
     await tester.enterText(find.byKey(_changeNameField), name);
     await tester.pump(); // rebuild so a (now non-empty) field re-enables Save

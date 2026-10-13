@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../harness.dart' as harness;
 
-/// Shared mechanics for screen robots; robots drive the UI only, domain/fake assertions stay in scenarios.
+/// Shared robot mechanics; domain/fake assertions stay in scenarios.
 abstract class BaseRobot {
   BaseRobot(this.tester);
 
@@ -35,7 +35,7 @@ abstract class BaseRobot {
     }
   }
 
-  /// Scrolls [target] into view inside [scrollable], then settles before any tap (HAB-211/HAB-258).
+  /// Scrolls [target] into view, then settles before any tap (HAB-211).
   Future<void> scrollIntoView(Finder target, Finder scrollable, {Offset moveStep = const Offset(0, -100)}) async {
     await tester.dragUntilVisible(target, scrollable, moveStep);
     await tester.pumpAndSettle();
