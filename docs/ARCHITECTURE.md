@@ -180,6 +180,10 @@ Whether the first-launch `EnterNamePage` is shown is gated by `!isOnboardingPass
 
 **Feature Flags:** `FeatureFlags` (`contracts/feature_flags.dart`) is a pure value object built from a `RemoteConfigService` snapshot via `FeatureFlags.fromRemoteConfig(rc)`; it exposes typed boolean getters (one per kill-switch flag) and overrides equality/hashCode so `Provider` consumers can compare snapshots cheaply. Active flags include `pact_timeline_enabled` (HAB-116) — when `false`, the "View timeline" entry point on pact detail is hidden — and `pact_breaks_enabled` (HAB-195) — kill-switch for the pact-breaks feature; defaulted to `false` during development (deliberate deviation from the usual default-true convention, so all break UI/behaviour stayed hidden until the feature was complete) and flipped to `true` in WU6, the final ship WU. `featureFlagsProvider` in `app_providers.dart` self-composes from `remoteConfigServiceProvider`. Call sites read it via `ref.watch(featureFlagsProvider)` and gate UI or logic: when a flag is `false` the corresponding entry point is hidden (language picker) or bypassed (Firestore sync). All flags are registered in `RemoteConfigDefaults.all` with `allowedValues: ['true', 'false']` so the debug RC overrides screen renders a picker for them automatically. The catalogue of active flags and their effects is in @docs/FEATURE_TOGGLES.md.
 
+## Integration test robots (`integration_test/robots/`)
+
+Scenarios drive the UI through screen robots that extend `BaseRobot` and are reached via lazy getters on `AppHarness` (`h.dashboard`, `h.pactDetail`, `h.wizard`/`h.editWizard`, `h.timeline`, `h.showupDetail`, `h.breaks`, `h.checklist`, `h.onboarding`). Robots do UI actions and UI expects only; repository, fake and analytics assertions and fake-coupled helpers stay in the scenarios. App-wide actions (`backgroundAndResume`, `openSettledPactDetail`) live on `AppHarness` itself (GH-476).
+
 ## Scripts (`scripts/`)
 
 Python utilities for CI, release management, and code-quality tooling. All scripts use the Python stdlib only unless noted.
