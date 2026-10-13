@@ -21,9 +21,11 @@ class PactDetailRobot extends BaseRobot {
   /// The [Scrollable] inside [_scrollView], as `scrollUntilVisible` requires.
   Finder get _scrollable => find.descendant(of: _scrollView, matching: find.byType(Scrollable)).first;
 
+  Finder get stopPactButton => find.text(p.l10n(tester).stopPact);
+
   /// Scrolls "Stop Pact" at the bottom of the list into view.
   Future<void> scrollToStopPact() async {
-    await tester.scrollUntilVisible(find.text(p.l10n(tester).stopPact), 200.0, scrollable: _scrollable);
+    await tester.scrollUntilVisible(stopPactButton, 200.0, scrollable: _scrollable);
   }
 
   /// Scrolls back up to [text]; the list keeps its position after the edit wizard pops.
@@ -108,9 +110,9 @@ class PactDetailRobot extends BaseRobot {
   Future<void> stopPact() async {
     await scrollToStopPact();
     // scrollUntilVisible can stop just past the viewport edge on taller layouts.
-    await tester.ensureVisible(find.text(p.l10n(tester).stopPact));
+    await tester.ensureVisible(stopPactButton);
     await tester.pumpAndSettle();
-    await tapAndSettle(find.text(p.l10n(tester).stopPact));
+    await tapAndSettle(stopPactButton);
   }
 
   /// Confirms the stop-pact dialog.

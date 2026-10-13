@@ -265,14 +265,12 @@ void main() {
         },
       );
 
-      final strings = l10n(tester);
-
       // Navigate via showup tile — active pacts have a live showup on the dashboard.
       await waitFor(tester, find.text('Meditate'));
-      await tester.tap(find.text('Meditate'));
-      await waitFor(tester, find.text(strings.markDone));
+      await h.dashboard.openShowup('Meditate');
+      await h.showupDetail.waitForMarkDone();
 
-      await tester.tap(find.text(strings.showupViewPactDetails));
+      await h.showupDetail.viewPactDetails();
       await h.pactDetail.waitLoaded();
       await h.pactDetail.scrollToStopPact();
 

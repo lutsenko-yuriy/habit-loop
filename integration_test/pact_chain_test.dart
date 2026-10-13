@@ -101,8 +101,8 @@ void main() {
       final strings = l10n(tester);
 
       // ── 1-2. Predecessor detail shows "Adjust and start again" ───────────
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Vibe coding');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Vibe coding');
       await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: predecessor.id);
       expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsOneWidget);
 
@@ -202,8 +202,8 @@ void main() {
       );
 
       // ── 2. Open the successor's detail screen ────────────────────────────
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Vibe coding (v2)');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Vibe coding (v2)');
 
       // ── 3. Exactly one PactDetailScreen, showing the successor ───────────
       expect(find.byType(PactDetailScreen), findsOneWidget);
@@ -241,8 +241,8 @@ void main() {
       );
 
       // ── 2. Open the predecessor's detail screen ──────────────────────────
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Vibe coding');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Vibe coding');
 
       // ── 3. Exactly one PactDetailScreen, showing the predecessor ─────────
       expect(find.byType(PactDetailScreen), findsOneWidget);
@@ -277,8 +277,8 @@ void main() {
       );
 
       // ── 2. Open the predecessor's detail screen ──────────────────────────
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Vibe coding');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Vibe coding');
 
       // ── 3. Tap "Next Pact" — a single hop, not returned to the start ─────
       await h.pactDetail.tapNextPactLink(_chainNavPredecessorId);
@@ -338,8 +338,8 @@ void main() {
       final strings = l10n(tester);
 
       // ── 1-2. Open pact detail for "Focus Sessions" ────────────────────────
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Focus Sessions');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Focus Sessions');
       await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: midPact.id);
 
       // ── 3. Tap "Adjust and start again" ───────────────────────────────────
@@ -390,8 +390,8 @@ void main() {
       );
 
       // ── 1-2. Open pact detail; scroll to the bottom action area ─────────
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Morning Run');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Morning Run');
       await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: completedPact.id);
 
       // ── 3. "Adjust and start again" is visible ──────────────────────────
@@ -434,8 +434,8 @@ void main() {
       );
 
       // ── 3. Predecessor: no "Adjust and start again", no "Next Pact" ─────
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Old Habit');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Old Habit');
       await waitFor(tester, find.byType(PactDetailScreen));
       expect(find.byKey(const Key('pact-detail-adjust-and-start-again-button')), findsNothing);
       expect(find.byKey(const Key('pact-detail-next-pact-link')), findsNothing);
@@ -447,7 +447,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await openPactDetail(tester, 'New Habit');
+      await h.dashboard.openPactDetail('New Habit');
       await waitFor(tester, find.byType(PactDetailScreen));
       expect(find.byKey(const Key('pact-detail-previous-pact-link')), findsNothing);
     });
@@ -476,8 +476,8 @@ void main() {
       );
 
       // ── 1-2. Open detail; tap "Adjust and start again" — wizard opens ────
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Evening Walk');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Evening Walk');
       await h.pactDetail.scrollToKey(const Key('pact-detail-adjust-and-start-again-button'), pactId: cancelledPact.id);
       await tester.tap(find.byKey(const Key('pact-detail-adjust-and-start-again-button')));
       await waitFor(tester, find.byType(PactCreationScreen));

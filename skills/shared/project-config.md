@@ -46,7 +46,7 @@ Read this file to resolve all project-specific constants referenced in skill ins
 |---|---|
 | Integration test directory | `integration_test/` |
 | Test harness file | `integration_test/harness.dart` |
-| Harness usage | Use `AppHarness` for all scenario setup and driver calls |
+| Harness usage | Use `AppHarness` for scenario setup; drive the UI through its screen robots (`h.dashboard`, `h.pactDetail`, … in `integration_test/robots/`) and extend a robot rather than writing a scenario-local UI helper (GH-476) |
 | Unit/integration test command | `flutter test` |
 
 ## Version management

@@ -4,7 +4,6 @@
 //
 // Run with: flutter test integration_test/sync_on_login_flow_test.dart -d <device>
 // Run on host: flutter test integration_test/sync_on_login_flow_test.dart
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/pact/pact_sync_repository.dart';
@@ -172,11 +171,10 @@ void main() {
           showupDetailNowProvider.overrideWithValue(_testNow),
         ],
       );
-      final strings = l10n(tester);
 
       // ── 1. Onboarding carousel shown (anonymous user, no data yet) ───────
       // The carousel replaces the old "No pacts yet" empty state.
-      await waitFor(tester, find.text(strings.onboardingSlide0Title));
+      await h.onboarding.waitForSlide0();
       expect(find.text('Morning Run'), findsNothing);
 
       // ── 2. Tap "Sign in with Google" in the carousel ─────────────────────
@@ -184,9 +182,8 @@ void main() {
       // confirming auth has propagated. Tapping it calls
       // SyncStatusViewModel.linkWithGoogle() → _SeedingSyncService.pullRemoteChanges()
       // seeds the in-memory repos → dashboard reloads with remote data.
-      await waitFor(tester, find.text(strings.signInWithGoogle));
-      await tester.tap(find.text(strings.signInWithGoogle));
-      await tester.pump(); // linkWithGoogle() starts
+      await h.dashboard.waitForSignInWithGoogle();
+      await h.dashboard.tapSignInWithGoogle(); // linkWithGoogle() starts
 
       // ── 3. Wait for dashboard to reload with remote data ─────────────────
       await waitFor(tester, find.text('Morning Run'));
@@ -236,10 +233,9 @@ void main() {
 
       // ── 2. Open sync status dialog and sign in ────────────────────────────
       await waitFor(tester, find.byIcon(syncIconFor(SyncUiState.notLinked)));
-      await tester.tap(find.byKey(const Key('sync-status-button')));
+      await h.dashboard.tapSyncStatus();
       await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n(tester).signInWithGoogle));
-      await tester.pump();
+      await h.dashboard.tapSignInWithGoogle();
 
       // ── 3. Wait for the icon to flip to cloud_done (auth → synced state) ─
       await waitFor(tester, find.byIcon(syncIconFor(SyncUiState.synced)));
@@ -266,8 +262,6 @@ void main() {
           await h.showupRepo.saveShowups([_localShowup]);
         },
       );
-      final strings = l10n(tester);
-
       // ── 1. Dashboard shows local pact; remote pact is not present yet ────
       await waitFor(tester, find.text('Evening Walk'));
       expect(find.text('Evening Walk'), findsOneWidget);
@@ -275,15 +269,13 @@ void main() {
 
       // ── 2. Open sync status dialog ────────────────────────────────────────
       await waitFor(tester, find.byIcon(syncIconFor(SyncUiState.notLinked)));
-      await tester.tap(find.byKey(const Key('sync-status-button')));
-      // Verify the dialog opened by checking the sign-in action is present
-      // (platform-agnostic: Android shows AlertDialog, iOS shows CupertinoAlertDialog).
-      await waitFor(tester, find.text(strings.signInWithGoogle));
-      expect(find.text(strings.signInWithGoogle), findsOneWidget);
+      await h.dashboard.tapSyncStatus();
+      // Sign-in action present means the dialog opened (AlertDialog on Android, Cupertino on iOS).
+      await h.dashboard.waitForSignInWithGoogle();
+      expect(h.dashboard.signInWithGoogleButton, findsOneWidget);
 
       // ── 3. Tap "Sign in with Google" ──────────────────────────────────────
-      await tester.tap(find.text(strings.signInWithGoogle));
-      await tester.pump(); // dialog pops + linkWithGoogle() starts
+      await h.dashboard.tapSignInWithGoogle(); // dialog pops + linkWithGoogle() starts
 
       // ── 4. Both pacts visible: local preserved, remote merged in ──────────
       await waitFor(tester, find.text('Morning Run'));

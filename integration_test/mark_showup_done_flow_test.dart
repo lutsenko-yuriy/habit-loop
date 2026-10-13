@@ -62,17 +62,14 @@ void main() {
       expect(find.text('Daily Yoga'), findsOneWidget);
 
       // ── 2. Tap the showup tile ───────────────────────────────────────────
-      await tester.tap(find.text('Daily Yoga'));
-      // showup detail starts with isLoading = true → CircularProgressIndicator.
-      // pumpAndSettle() would loop on that spinner; use waitFor() instead.
-      final strings = l10n(tester);
-      await waitFor(tester, find.text(strings.markDone));
-      expect(find.text(strings.markDone), findsOneWidget);
-      await tester.tap(find.text(strings.markDone));
-      await tester.pumpAndSettle();
+      await h.dashboard.openShowup('Daily Yoga');
+      // Detail starts loading with a spinner, so wait instead of pumpAndSettle.
+      await h.showupDetail.waitForMarkDone();
+      expect(h.showupDetail.markDoneButton, findsOneWidget);
+      await h.showupDetail.markDone();
 
       // ── 4. Status chip shows "Done" ──────────────────────────────────────
-      expect(find.text(strings.showupDone), findsOneWidget);
+      expect(h.showupDetail.doneStatus, findsOneWidget);
 
       // ── 5. showup_marked_done analytics event was fired ──────────────────
       expect(

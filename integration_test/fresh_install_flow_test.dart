@@ -48,9 +48,8 @@ void main() {
         // No pacts exist, so the onboarding carousel is shown. The carousel
         // renders "Sign in with Google" only when isAnonymous is true —
         // confirming the stale auth was cleared.
-        final strings = l10n(tester);
-        await waitFor(tester, find.text(strings.signInWithGoogle));
-        expect(find.text(strings.signInWithGoogle), findsOneWidget);
+        await h.dashboard.waitForSignInWithGoogle();
+        expect(h.dashboard.signInWithGoogleButton, findsOneWidget);
       },
     );
 

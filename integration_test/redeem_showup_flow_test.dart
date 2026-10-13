@@ -67,8 +67,6 @@ void main() {
           },
         );
 
-        final strings = l10n(tester);
-
         // ── 1. Navigate to showup detail via timeline ─────────────────────────
         await h.dashboard.openPactsPanel();
         await h.dashboard.openPactDetail('Morning Run');
@@ -85,8 +83,8 @@ void main() {
         await h.showupDetail.redeem();
 
         // ── 4. Status chip shows "Done" ────────────────────────────────────────
-        await waitFor(tester, find.text(strings.showupDone));
-        expect(find.text(strings.showupDone), findsOneWidget);
+        await waitFor(tester, h.showupDetail.doneStatus);
+        expect(h.showupDetail.doneStatus, findsOneWidget);
 
         // ── 5. showup_redeemed analytics event fired with correct pact_id ──────
         expect(

@@ -101,8 +101,8 @@ void main() {
 
       final strings = l10n(tester);
 
-      await openPactsPanel(tester);
-      await openPactDetail(tester, 'Evening Walk');
+      await h.dashboard.openPactsPanel();
+      await h.dashboard.openPactDetail('Evening Walk');
 
       // Wait for the detail content to load (habit name appears in _PactDetailContent).
       await waitFor(tester, find.text('Evening Walk'));
@@ -147,7 +147,7 @@ void main() {
 
       final strings = l10n(tester);
 
-      await openPactsPanel(tester);
+      await h.dashboard.openPactsPanel();
 
       // ── 1. Enable Show archived pacts to make the pact visible ────────────
       await h.dashboard.waitForArchivedRow();
@@ -158,7 +158,7 @@ void main() {
       await tester.ensureVisible(find.text('Yoga').last);
       await tester.pump();
 
-      await openPactDetail(tester, 'Yoga');
+      await h.dashboard.openPactDetail('Yoga');
 
       // ── 2. Confirm we reached the pact detail screen ──────────────────────
       await waitFor(tester, find.text(strings.pactDetailTitle));
@@ -200,16 +200,12 @@ void main() {
         },
       );
 
-      final strings = l10n(tester);
-
       await waitFor(tester, find.text('Meditate'));
-      await tester.tap(find.text('Meditate'));
-      await waitFor(tester, find.text(strings.markDone));
+      await h.dashboard.openShowup('Meditate');
+      await h.showupDetail.waitForMarkDone();
 
-      await tester.tap(find.text(strings.showupViewPactDetails));
-      // sectionStats is near the top of _PactDetailContent and only rendered
-      // after the VM finishes loading — reliable on any screen size.
-      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
+      await h.showupDetail.viewPactDetails();
+      await h.pactDetail.waitLoaded();
 
       expect(find.byKey(const Key('archive-pact-button')), findsNothing);
     });
@@ -232,13 +228,13 @@ void main() {
         },
       );
 
-      await openPactsPanel(tester);
+      await h.dashboard.openPactsPanel();
 
       // ── 1. No "Archived pacts" row when N_A = 0 ───────────────────────────
       expect(find.byKey(const Key('show-archived-pacts-row')), findsNothing);
 
       // ── 2. Archive via detail screen ──────────────────────────────────────
-      await openPactDetail(tester, 'Evening Walk');
+      await h.dashboard.openPactDetail('Evening Walk');
       await waitFor(tester, find.text('Evening Walk'));
       await h.pactDetail.scrollDownFrom('Evening Walk');
       await h.pactDetail.waitForArchiveButton();
@@ -269,7 +265,7 @@ void main() {
 
       final strings = l10n(tester);
 
-      await openPactsPanel(tester);
+      await h.dashboard.openPactsPanel();
 
       // ── 1. Row visible; archived pact not shown ───────────────────────────
       await h.dashboard.waitForArchivedRow();
@@ -303,7 +299,7 @@ void main() {
         },
       );
 
-      await openPactsPanel(tester);
+      await h.dashboard.openPactsPanel();
       // Snap the panel to maxSize so all unarchived pacts and the toggle row are visible.
       await h.dashboard.flingPanelToMax();
 

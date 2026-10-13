@@ -23,7 +23,7 @@ If the issue's description was already fetched in full earlier in this session (
 
 ### 2. Read the test harness
 
-Read the harness file and any existing scenarios in the integration test directory (paths from the project config) for the affected slice or feature area. Note naming conventions, helper patterns, and what is already covered so you do not duplicate.
+Read the harness file, the screen robots in `integration_test/robots/`, and any existing scenarios for the affected slice or feature area (paths from the project config). Note the naming conventions, which robot covers which screen, which robot actions and finders already exist, and what is already covered, so you don't duplicate any of it.
 
 ### 3. Draft scenarios
 
@@ -41,13 +41,13 @@ Show all proposed scenarios to the user and wait for approval. Do not write any 
 For each scenario present:
 1. **Name** — the test name as it will appear in code.
 2. **Description** — one sentence on what behaviour it verifies.
-3. **Steps** — a numbered list of the interactions and assertions in order (e.g. "1. Seed a stopped pact with an existing note", "2. Open pact detail", "3. Verify note field is pre-populated", "4. Edit the text — Save button becomes enabled", "5. Tap Save — note is persisted in the repository").
+3. **Steps** — a numbered list of the interactions and assertions in order (e.g. "1. Seed a stopped pact with an existing note", "2. Open pact detail", "3. Verify note field is pre-populated", "4. Edit the text — Save button becomes enabled", "5. Tap Save — note is persisted in the repository"). Tag every UI step with the robot that performs it, e.g. `[h.pactDetail.enterNote]`. Mark actions or finders the robot doesn't have yet as `(new)`, so `implement` adds them to that robot rather than writing a scenario-local helper. Leave repository, fake and analytics assertions untagged; they stay in the scenario.
 
 This level of detail lets the user verify the test logic before anything is written to disk.
 
 ### 5. Write the scenarios
 
-Write the approved scenario files as **stubs**: each test function contains only `// TODO:` comments describing each step exactly as reviewed in step 4 — no driver calls, no assertions. The stubs must compile against the project harness but verify nothing. The `implement` skill will replace the comments with actual driver code as part of making each scenario green.
+Write the approved scenario files as **stubs**: each test function contains only `// TODO:` comments describing each step exactly as reviewed in step 4 — no driver calls, no assertions. Keep each step's robot tag in its `// TODO:` line. The stubs must compile against the project harness but verify nothing. The `implement` skill will replace the comments with actual driver code as part of making each scenario green.
 
 If a new scenario file (not an existing file being extended) was written, also register it in `integration_test/test_runner.dart`: add an aliased import and a `<alias>.main();` call inside `main()`, both placed alphabetically. Without this, the file compiles and runs standalone but is silently skipped by the combined suite (`flutter test integration_test/test_runner.dart`, and CI's `run-scenarios` job).
 

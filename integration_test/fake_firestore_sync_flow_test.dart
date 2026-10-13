@@ -70,18 +70,16 @@ void main() {
           showupDetailNowProvider.overrideWithValue(_testNow),
         ],
       );
-      final strings = l10n(tester);
 
       // Anonymous user sees onboarding carousel — no remote data yet.
-      await waitFor(tester, find.text(strings.onboardingSlide0Title));
+      await h.onboarding.waitForSlide0();
       expect(find.text('Remote Meditation'), findsNothing);
 
       // Sign in → linkWithGoogle() → pullRemoteChanges() uses the real
       // FirestoreSyncService which fetches from FakeFirestoreClient, merges
       // the pact into InMemoryPactRepository, then reloads the dashboard.
-      await waitFor(tester, find.text(strings.signInWithGoogle));
-      await tester.tap(find.text(strings.signInWithGoogle));
-      await tester.pump();
+      await h.dashboard.waitForSignInWithGoogle();
+      await h.dashboard.tapSignInWithGoogle();
 
       await waitFor(tester, find.text('Remote Meditation'));
       expect(find.text('Remote Meditation'), findsAtLeastNWidgets(1));
@@ -117,15 +115,13 @@ void main() {
           showupDetailNowProvider.overrideWithValue(_testNow),
         ],
       );
-      final strings = l10n(tester);
 
-      await waitFor(tester, find.text(strings.onboardingSlide0Title));
+      await h.onboarding.waitForSlide0();
 
       // Sign in — pullRemoteChanges() throws due to absent connectivity.
       // The circuit breaker records the failure; no remote data is merged.
-      await waitFor(tester, find.text(strings.signInWithGoogle));
-      await tester.tap(find.text(strings.signInWithGoogle));
-      await tester.pump();
+      await h.dashboard.waitForSignInWithGoogle();
+      await h.dashboard.tapSignInWithGoogle();
       await tester.pump(const Duration(milliseconds: 500));
 
       // Remote pact must not appear on the dashboard.

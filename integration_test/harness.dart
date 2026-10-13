@@ -377,15 +377,6 @@ IconData syncIconFor(SyncUiState state) => defaultTargetPlatform == TargetPlatfo
 /// covers it.
 const noAutoAdvance = {'onboarding_auto_advance_seconds': 0};
 
-/// Delegates to [DashboardRobot.openPactsPanel] (GH-476).
-Future<void> openPactsPanel(WidgetTester tester) => DashboardRobot(tester).openPactsPanel();
-
-/// Delegates to [DashboardRobot.openPactDetail] (GH-476).
-Future<void> openPactDetail(WidgetTester tester, String habitName) => DashboardRobot(tester).openPactDetail(habitName);
-
-/// Delegates to [PactDetailRobot.openTimeline] (GH-476).
-Future<void> openTimeline(WidgetTester tester) => PactDetailRobot(tester).openTimeline();
-
 /// Builds a [Pact] fixture with defaults suited to integration tests.
 ///
 /// `createdAt` defaults to `startDate` — every fixture across the suite

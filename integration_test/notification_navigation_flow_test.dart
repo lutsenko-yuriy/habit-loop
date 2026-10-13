@@ -86,10 +86,8 @@ void main() {
         await tester.pump();
 
         // ── 3. Mark as done on the showup detail screen ───────────────────
-        await waitFor(tester, find.text(strings.markDone));
-        await tester.tap(find.text(strings.markDone));
-        await tester.pumpAndSettle();
-        expect(find.text(strings.showupDone), findsOneWidget);
+        await h.showupDetail.markDone();
+        expect(h.showupDetail.doneStatus, findsOneWidget);
 
         // ── 4. Navigate back to dashboard ─────────────────────────────────
         await tester.pageBack();
@@ -136,10 +134,8 @@ void main() {
         );
         await tester.pump();
 
-        await waitFor(tester, find.text(strings.markFailed));
-        await tester.tap(find.text(strings.markFailed));
-        await tester.pumpAndSettle();
-        expect(find.text(strings.showupFailed), findsOneWidget);
+        await h.showupDetail.markFailed();
+        expect(h.showupDetail.failedStatus, findsOneWidget);
 
         await tester.pageBack();
         await waitFor(tester, find.text('Morning Jog'));

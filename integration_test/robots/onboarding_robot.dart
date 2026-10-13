@@ -28,6 +28,8 @@ class OnboardingRobot extends BaseRobot {
 
   String get enterNameText => fieldText(enterNameField);
 
+  Future<void> waitForSlide0() => waitFor(find.text(p.l10n(tester).onboardingSlide0Title));
+
   /// Swipes to slide 1; 300 px stays one page on the <=320 dp CI AVD, 50 ms keeps the fling velocity.
   Future<void> swipeToSlide1() async {
     final strings = p.l10n(tester);

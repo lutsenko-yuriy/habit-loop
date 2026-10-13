@@ -120,4 +120,19 @@ class DashboardRobot extends BaseRobot {
 
   /// Taps [habitName]'s showup row; callers wait for the detail screen.
   Future<void> openShowup(String habitName) => tester.tap(find.text(habitName).first);
+
+  Finder get syncStatusButton => find.byKey(const Key('sync-status-button'));
+
+  /// Taps the sync-status button without settling; callers wait for the dialog.
+  Future<void> tapSyncStatus() => tester.tap(syncStatusButton);
+
+  Finder get signInWithGoogleButton => find.text(p.l10n(tester).signInWithGoogle);
+
+  Future<void> waitForSignInWithGoogle() => waitFor(signInWithGoogleButton);
+
+  /// Taps "Sign in with Google" (dialog or carousel) and pumps one frame so the link starts.
+  Future<void> tapSignInWithGoogle() async {
+    await tester.tap(signInWithGoogleButton);
+    await tester.pump();
+  }
 }
