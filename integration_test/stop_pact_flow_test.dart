@@ -2,7 +2,6 @@
 //
 // Run on host:   flutter test integration_test/stop_pact_flow_test.dart
 // Run on device: flutter test integration_test/stop_pact_flow_test.dart -d <device>
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact_status.dart';
 import 'package:habit_loop/slices/dashboard/ui/generic/dashboard_view_model.dart';
@@ -66,31 +65,15 @@ void main() {
 
       // ── 3. Navigate to pact detail ────────────────────────────────────
       await tester.tap(find.text(strings.showupViewPactDetails));
-      // sectionStats is near the top of _PactDetailContent and only rendered
-      // after the VM finishes loading — reliable on any screen size.
-      await waitFor(tester, find.text(strings.sectionStats.toUpperCase()));
-      // Stop Pact is at the bottom of the ListView; scroll to build + reveal it.
-      await tester.scrollUntilVisible(
-        find.text(strings.stopPact),
-        200.0,
-        scrollable: find.ancestor(
-          of: find.text(strings.sectionStats.toUpperCase()),
-          matching: find.byType(Scrollable),
-        ),
-      );
+      await h.pactDetail.waitLoaded();
 
       // ── 4. Tap Stop Pact → dialog appears ────────────────────────────
-      // scrollUntilVisible can stop with the button just past the viewport edge on taller layouts.
-      await tester.ensureVisible(find.text(strings.stopPact));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(strings.stopPact));
-      await tester.pumpAndSettle();
+      await h.pactDetail.stopPact();
 
       expect(find.text(strings.stopPactTitle), findsOneWidget);
 
       // ── 5. Confirm stop ───────────────────────────────────────────────
-      await tester.tap(find.text(strings.stopPactConfirm));
-      await tester.pumpAndSettle();
+      await h.pactDetail.confirmStopPact();
 
       // ── 6. Pact is marked stopped in the repository ───────────────────
       final allPacts = await h.pactRepo.getAllPacts();

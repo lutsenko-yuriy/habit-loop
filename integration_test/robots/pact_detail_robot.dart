@@ -61,4 +61,49 @@ class PactDetailRobot extends BaseRobot {
     await scrollIntoViewAndTap(find.byKey(const Key('pact-detail-timeline-button')), listViewFinder);
     await pushTransition();
   }
+
+  /// Taps "Stop Pact" at the bottom of the list, leaving the confirm dialog open.
+  Future<void> stopPact() async {
+    await scrollToStopPact();
+    // scrollUntilVisible can stop just past the viewport edge on taller layouts.
+    await tester.ensureVisible(find.text(p.l10n(tester).stopPact));
+    await tester.pumpAndSettle();
+    await tapAndSettle(find.text(p.l10n(tester).stopPact));
+  }
+
+  /// Confirms the stop-pact dialog.
+  Future<void> confirmStopPact() => tapAndSettle(find.text(p.l10n(tester).stopPactConfirm));
+
+  Finder get _noteField => find.byKey(const Key('pact-note-field'));
+  Finder get _saveNoteButton => find.byKey(const Key('pact-note-save-button'));
+
+  /// Scrolls the note field into view; it isn't built yet in the lazy list.
+  Future<void> scrollToNoteField() async {
+    await tester.scrollUntilVisible(_noteField, 200.0, scrollable: _scrollable);
+    // Settle: mid-scroll the hit-test can miss the field (HAB-258).
+    await tester.pumpAndSettle();
+  }
+
+  /// Types [text] and waits for Save to enable; the rebuild can take seconds on CI (HAB-211).
+  Future<void> enterNote(String text) async {
+    await enterText(_noteField, text);
+    await waitUntil(
+      () => isSaveNoteEnabled,
+      timeout: const Duration(seconds: 45),
+      description: 'save note button enabled for "$text"',
+    );
+  }
+
+  /// Taps Save, then returns without settling; callers wait on the repo write.
+  Future<void> tapSaveNote() async {
+    await tester.ensureVisible(_saveNoteButton);
+    // Settle: the scroll may still animate and an early tap would miss (HAB-258).
+    await tester.pumpAndSettle();
+    await tester.tap(_saveNoteButton);
+    await tester.pump();
+  }
+
+  String get noteText => fieldText(_noteField);
+
+  bool get isSaveNoteEnabled => isEnabled(_saveNoteButton);
 }
