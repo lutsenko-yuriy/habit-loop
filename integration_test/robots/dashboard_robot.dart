@@ -17,10 +17,10 @@ class DashboardRobot extends BaseRobot {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  /// Expands the pacts panel by tapping its collapsed summary, then waits for [habitName] to appear.
-  Future<void> expandPactsPanelViaSummary(String habitName) async {
+  /// Expands the pacts panel by tapping its "[activeCount] active" summary, then waits for [habitName] to appear.
+  Future<void> expandPactsPanelViaSummary(String habitName, {int activeCount = 1}) async {
     // The summary is one multi-line Text, so match by substring.
-    final summaryFinder = find.textContaining(p.l10n(tester).pactsActive(1));
+    final summaryFinder = find.textContaining(p.l10n(tester).pactsActive(activeCount));
     expect(summaryFinder, findsOneWidget);
     await tester.tap(summaryFinder);
     await tester.pump(const Duration(milliseconds: 400));

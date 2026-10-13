@@ -5,15 +5,15 @@ import 'base_robot.dart';
 
 /// Create or edit pact wizard, told apart by its PageView key prefix.
 class PactWizardRobot extends BaseRobot {
-  PactWizardRobot(super.tester, {required String pageViewKeyPrefix})
+  PactWizardRobot._(super.tester, {required String pageViewKeyPrefix})
       : _iosPageView = Key('$pageViewKeyPrefix-ios'),
         _androidPageView = Key('$pageViewKeyPrefix-android');
 
   /// Create wizard.
-  PactWizardRobot.create(WidgetTester tester) : this(tester, pageViewKeyPrefix: 'pact-creation-pageview');
+  PactWizardRobot.create(WidgetTester tester) : this._(tester, pageViewKeyPrefix: 'pact-creation-pageview');
 
   /// Edit wizard.
-  PactWizardRobot.edit(WidgetTester tester) : this(tester, pageViewKeyPrefix: 'pact-edit-pageview');
+  PactWizardRobot.edit(WidgetTester tester) : this._(tester, pageViewKeyPrefix: 'pact-edit-pageview');
 
   final Key _iosPageView;
   final Key _androidPageView;
