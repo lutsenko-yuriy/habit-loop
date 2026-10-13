@@ -34,10 +34,12 @@ import '../test/infrastructure/locale/fake_locale_preference_service.dart';
 import '../test/infrastructure/notifications/fake_notification_service.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import '../test/infrastructure/sync/fake_sync_service.dart';
+import 'robots/break_robot.dart';
 import 'robots/dashboard_robot.dart';
 import 'robots/onboarding_robot.dart';
 import 'robots/pact_detail_robot.dart';
 import 'robots/pact_wizard_robot.dart';
+import 'robots/timeline_robot.dart';
 
 export 'primitives.dart';
 
@@ -85,6 +87,8 @@ class AppHarness {
   late final OnboardingRobot onboarding = OnboardingRobot(tester);
   late final PactWizardRobot wizard = PactWizardRobot.create(tester);
   late final PactWizardRobot editWizard = PactWizardRobot.edit(tester);
+  late final BreakRobot breaks = BreakRobot(tester);
+  late final TimelineRobot timeline = TimelineRobot(tester);
 
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
@@ -375,10 +379,6 @@ Future<void> openPactsPanel(WidgetTester tester) => DashboardRobot(tester).openP
 
 /// Delegates to [DashboardRobot.openPactDetail] (GH-476).
 Future<void> openPactDetail(WidgetTester tester, String habitName) => DashboardRobot(tester).openPactDetail(habitName);
-
-/// Delegates to [PactDetailRobot.scrollToStartBreakButton] (GH-476).
-Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) =>
-    PactDetailRobot(tester).scrollToStartBreakButton();
 
 /// Delegates to [PactDetailRobot.openTimeline] (GH-476).
 Future<void> openTimeline(WidgetTester tester) => PactDetailRobot(tester).openTimeline();

@@ -52,6 +52,30 @@ class PactDetailRobot extends BaseRobot {
     );
   }
 
+  /// Taps the (already scrolled-to) "Take a break" button and pumps past the push.
+  Future<void> tapStartBreak() async {
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('pact-detail-start-break-button')));
+    await pushTransition();
+  }
+
+  /// Taps "Resume pact" (scrolling it into view), leaving the confirm dialog open.
+  Future<void> resumePact() async {
+    const button = Key('pact-detail-resume-pact-button');
+    await tester.ensureVisible(find.byKey(button));
+    await tester.pump();
+    await tester.tap(find.byKey(button));
+    await tester.pumpAndSettle();
+  }
+
+  /// Confirms the resume-pact dialog and pumps past the dismissal.
+  Future<void> confirmResumePact() async {
+    await tester.tap(find.text(p.l10n(tester).resumePactConfirm));
+    await pushTransition();
+  }
+
+  Future<void> waitForBreakBanner() => waitFor(find.byKey(const Key('pact-detail-break-banner')));
+
   /// Opens the timeline, scrolling back to the top first since dragUntilVisible scrolls one way only (HAB-211).
   Future<void> openTimeline() async {
     final listViewFinder = _scrollView;
