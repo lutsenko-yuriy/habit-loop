@@ -39,6 +39,7 @@ import 'robots/dashboard_robot.dart';
 import 'robots/onboarding_robot.dart';
 import 'robots/pact_detail_robot.dart';
 import 'robots/pact_wizard_robot.dart';
+import 'robots/showup_detail_robot.dart';
 import 'robots/timeline_robot.dart';
 
 export 'primitives.dart';
@@ -89,6 +90,7 @@ class AppHarness {
   late final PactWizardRobot editWizard = PactWizardRobot.edit(tester);
   late final BreakRobot breaks = BreakRobot(tester);
   late final TimelineRobot timeline = TimelineRobot(tester);
+  late final ShowupDetailRobot showupDetail = ShowupDetailRobot(tester);
 
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
