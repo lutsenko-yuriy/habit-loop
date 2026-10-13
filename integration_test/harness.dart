@@ -1,6 +1,5 @@
 import 'dart:async' show unawaited;
 
-import 'package:flutter/cupertino.dart' show CupertinoTextField;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +16,6 @@ import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.d
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/main.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
@@ -36,6 +34,11 @@ import '../test/infrastructure/locale/fake_locale_preference_service.dart';
 import '../test/infrastructure/notifications/fake_notification_service.dart';
 import '../test/infrastructure/remote_config/fake_remote_config_service.dart';
 import '../test/infrastructure/sync/fake_sync_service.dart';
+import 'robots/dashboard_robot.dart';
+import 'robots/onboarding_robot.dart';
+import 'robots/pact_detail_robot.dart';
+
+export 'primitives.dart';
 
 /// Full-stack test harness that boots [HabitLoopApp] with:
 /// - in-memory repository doubles (avoids sqflite_common_ffi isolate
@@ -54,6 +57,7 @@ import '../test/infrastructure/sync/fake_sync_service.dart';
 /// ```
 class AppHarness {
   AppHarness._({
+    required this.tester,
     required this.pactRepo,
     required this.showupRepo,
     required this.pactBreakRepo,
@@ -71,6 +75,13 @@ class AppHarness {
     this.userProfileRepository,
     this.firestoreClient,
   });
+
+  /// Tester the harness was created with; backs the screen robots below.
+  final WidgetTester tester;
+
+  late final DashboardRobot dashboard = DashboardRobot(tester);
+  late final PactDetailRobot pactDetail = PactDetailRobot(tester);
+  late final OnboardingRobot onboarding = OnboardingRobot(tester);
 
   final InMemoryPactRepository pactRepo;
   final InMemoryShowupRepository showupRepo;
@@ -218,6 +229,7 @@ class AppHarness {
     final navigatorKey = GlobalKey<NavigatorState>();
 
     final harness = AppHarness._(
+      tester: tester,
       pactRepo: pactRepo,
       showupRepo: showupRepo,
       pactBreakRepo: pactBreakRepo,
@@ -319,16 +331,6 @@ class AppHarness {
   }
 }
 
-/// Finds the [AppLocalizations] for the current widget tree.
-///
-/// Uses the [Navigator] element (which is inside MaterialApp's Localizations
-/// widget) so that AppLocalizations.of() can walk up to the Localizations
-/// ancestor and return the resolved instance.
-AppLocalizations l10n(WidgetTester tester) {
-  final context = tester.element(find.byType(Navigator).first);
-  return AppLocalizations.of(context)!;
-}
-
 /// The sync-status icon actually rendered for [state] on the platform this
 /// test is running on — mirrors `DashboardScreen`'s own `defaultTargetPlatform`
 /// switch. Use this instead of hardcoding a Material `Icons.*` literal: the
@@ -338,90 +340,23 @@ IconData syncIconFor(SyncUiState state) => defaultTargetPlatform == TargetPlatfo
     ? syncStatusIconDataCupertino(state)
     : syncStatusIconDataMaterial(state);
 
-/// Pumps until [finder] has at least one match or [timeout] expires.
-///
-/// Prefer over a raw [WidgetTester.pumpAndSettle] when provider rebuilds or
-/// async DB work may span more than one frame.
-Future<void> waitFor(
-  WidgetTester tester,
-  Finder finder, {
-  Duration timeout = const Duration(seconds: 30),
-}) async {
-  final deadline = tester.binding.clock.now().add(timeout);
-  while (!finder.evaluate().isNotEmpty) {
-    if (tester.binding.clock.now().isAfter(deadline)) {
-      throw TestFailure('waitFor timed out: $finder');
-    }
-    await tester.pump(const Duration(milliseconds: 100));
-  }
-}
+/// Delegates to [OnboardingRobot.saveEnterName] (GH-476).
+Future<void> saveEnterName(WidgetTester tester, String name) => OnboardingRobot(tester).saveEnterName(name);
 
-/// Pumps until [finder] has no matches or [timeout] expires — the inverse of
-/// [waitFor], for asserting a widget has actually been removed rather than
-/// just tapped away (HAB-232).
-Future<void> waitForGone(
-  WidgetTester tester,
-  Finder finder, {
-  Duration timeout = const Duration(seconds: 30),
-}) async {
-  final deadline = tester.binding.clock.now().add(timeout);
-  while (finder.evaluate().isNotEmpty) {
-    if (tester.binding.clock.now().isAfter(deadline)) {
-      throw TestFailure('waitForGone timed out: still present: $finder');
-    }
-    await tester.pump(const Duration(milliseconds: 100));
-  }
-}
+/// Delegates to [OnboardingRobot.skipEnterName] (GH-476).
+Future<void> skipEnterName(WidgetTester tester) => OnboardingRobot(tester).skipEnterName();
 
-/// Enters [name] into EnterNameScreen's field, taps its save button, and waits
-/// for the page to actually disappear — the tap triggers a SQLite write and a
-/// SharedPreferences round trip, so a fixed pump count could flake (HAB-232).
-Future<void> saveEnterName(WidgetTester tester, String name) async {
-  await tester.enterText(find.byKey(const Key('enter-name-text-field')), name);
-  await tester.tap(find.byKey(const Key('enter-name-save-button')));
-  await tester.pump();
-  await waitForGone(tester, find.byKey(const Key('enter-name-text-field')));
-}
+/// Delegates to [OnboardingRobot.enterNameText] (GH-476).
+String enterNameFieldText(WidgetTester tester) => OnboardingRobot(tester).enterNameText;
 
-/// Taps EnterNameScreen's skip button and waits for the page to disappear (HAB-232).
-Future<void> skipEnterName(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('enter-name-skip-button')));
-  await tester.pump();
-  await waitForGone(tester, find.byKey(const Key('enter-name-text-field')));
-}
+/// Delegates to [DashboardRobot.changeNameText] (GH-476).
+String changeNameFieldText(WidgetTester tester) => DashboardRobot(tester).changeNameText;
 
-/// Returns the current text of EnterNameScreen's field on any platform (HAB-232).
-String enterNameFieldText(WidgetTester tester) {
-  final w = tester.widget(find.byKey(const Key('enter-name-text-field')));
-  if (w is TextField) return w.controller?.text ?? '';
-  return (w as CupertinoTextField).controller?.text ?? '';
-}
+/// Delegates to [DashboardRobot.openChangeNameDialog] (GH-476).
+Future<void> openChangeNameDialogFromKebab(WidgetTester tester) => DashboardRobot(tester).openChangeNameDialog();
 
-/// Returns the current text of the "Change name" dialog's field on any
-/// platform (HAB-232 WU5).
-String changeNameFieldText(WidgetTester tester) {
-  final w = tester.widget(find.byKey(const Key('change-name-text-field')));
-  if (w is TextField) return w.controller?.text ?? '';
-  return (w as CupertinoTextField).controller?.text ?? '';
-}
-
-/// Opens the ⋯ kebab menu and taps "Change name" (HAB-232 WU5).
-Future<void> openChangeNameDialogFromKebab(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('kebab-menu-button')));
-  await tester.pumpAndSettle();
-  await tester.tap(find.byKey(const Key('change-name-button')));
-  await tester.pumpAndSettle();
-}
-
-/// Enters [name] into the "Change name" dialog's field, taps Save, and waits
-/// for the dialog to actually disappear (HAB-232 WU5).
-Future<void> saveChangeName(WidgetTester tester, String name) async {
-  await tester.enterText(find.byKey(const Key('change-name-text-field')), name);
-  await tester.pump(); // rebuild so a (now non-empty) field re-enables Save
-  await tester.tap(find.byKey(const Key('change-name-save-button')));
-  await tester.pump();
-  await waitForGone(tester, find.byKey(const Key('change-name-text-field')));
-}
+/// Delegates to [DashboardRobot.saveChangeName] (GH-476).
+Future<void> saveChangeName(WidgetTester tester, String name) => DashboardRobot(tester).saveChangeName(name);
 
 /// Disables onboarding auto-advance (RC value below `_minAutoAdvanceSeconds`).
 ///
@@ -432,102 +367,18 @@ Future<void> saveChangeName(WidgetTester tester, String name) async {
 /// covers it.
 const noAutoAdvance = {'onboarding_auto_advance_seconds': 0};
 
-/// Opens the collapsible pacts panel from the dashboard.
-Future<void> openPactsPanel(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
-  // Bare pump flushes the tap handler synchronously before the 400 ms animation
-  // clock starts — without this the panel may still be collapsed on entry.
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 400));
-}
+/// Delegates to [DashboardRobot.openPactsPanel] (GH-476).
+Future<void> openPactsPanel(WidgetTester tester) => DashboardRobot(tester).openPactsPanel();
 
-/// Opens the detail screen for the pact named [habitName] from the pacts panel.
-///
-/// Scrolls the panel's list into view first — on a short viewport (CI's
-/// Android emulator) a pact further down the list isn't realized yet, so a
-/// bare waitFor can time out even though it legitimately exists once
-/// scrolled into range (HAB-211, same root cause as HAB-196/HAB-199).
-Future<void> openPactDetail(WidgetTester tester, String habitName) async {
-  final scrollableFinder = find.byKey(const Key('pacts-panel-scrollable'));
-  // Scoped to the panel, not a bare find.text(habitName) — the same habit
-  // name can also appear in the dashboard's "today" todo list, and
-  // dragUntilVisible's internal Scrollable.ensureVisible(element(finder))
-  // calls finder.evaluate().single, which throws on that ambiguity even
-  // though the tap below already disambiguates via .last (HAB-211).
-  final panelEntryFinder = find.descendant(of: scrollableFinder, matching: find.text(habitName));
-  await tester.dragUntilVisible(panelEntryFinder, scrollableFinder, const Offset(0, -100));
-  // dragUntilVisible's found-check only confirms the element exists in the
-  // tree — a lazy list's cache extent can pre-build an item before it's
-  // actually painted at a stable on-screen position, so an immediate tap's
-  // hit-test can still miss on a real device (HAB-211). Settle first.
-  await tester.pumpAndSettle();
-  await tester.tap(panelEntryFinder.last);
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
+/// Delegates to [DashboardRobot.openPactDetail] (GH-476).
+Future<void> openPactDetail(WidgetTester tester, String habitName) => DashboardRobot(tester).openPactDetail(habitName);
 
-/// Scrolls pact detail's "Take a break" button into view from an
-/// already-open pact detail screen.
-///
-/// The button sits below the timeline button and several DateRowTiles in
-/// pact detail's sliver-backed ListView — on a short viewport (CI's Android
-/// emulator) it isn't realized yet, so waitFor alone can time out even
-/// though the widget legitimately exists once scrolled into range (HAB-199,
-/// same root cause as HAB-196 Fix 4).
-///
-/// Anchors on `find.byType(ListView)` rather than a nearby widget (e.g. the
-/// timeline button) so the helper doesn't depend on `pact_timeline_enabled`.
-/// Pact detail renders a single `ListView`, and `CommonFinders` skip offstage
-/// elements by default, so the previous route's own list (still mounted
-/// underneath, per HAB-196 Fix 4's precedent) doesn't create ambiguity. Uses
-/// `ListView` rather than the broader `Scrollable` — a focused `TextField`
-/// has its own internal `Scrollable` too, which `find.byType(Scrollable)`
-/// would also match if a text field was interacted with just before this
-/// call (HAB-211).
-Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) async {
-  await tester.dragUntilVisible(
-    find.byKey(const Key('pact-detail-start-break-button')),
-    find.byType(ListView),
-    const Offset(0, -100),
-  );
-}
+/// Delegates to [PactDetailRobot.scrollToStartBreakButton] (GH-476).
+Future<void> scrollToPactDetailStartBreakButton(WidgetTester tester) =>
+    PactDetailRobot(tester).scrollToStartBreakButton();
 
-/// Opens the timeline screen from an already-open pact detail screen.
-///
-/// Resets scroll position to the top first — a caller that scrolled down
-/// for an earlier interaction (e.g. editing the note field, which sits
-/// *below* the timeline button) would otherwise have this scroll the wrong
-/// direction: `dragUntilVisible`'s single fixed direction can't recover
-/// from starting already past the target (HAB-211, confirmed via CI
-/// diagnostics — the button was always present in the tree with
-/// pactTimelineEnabled=true, just never scrolled back into range).
-Future<void> openTimeline(WidgetTester tester) async {
-  final listViewFinder = find.byType(ListView);
-  for (var i = 0; i < 15; i++) {
-    await tester.drag(listViewFinder, const Offset(0, 100));
-    await tester.pump();
-  }
-  // dragUntilVisible (not waitFor + ensureVisible) — the button only appears
-  // once the view model has resolved *and* it may sit below several
-  // DateRowTiles on a short viewport (CI's Android emulator), where it isn't
-  // realized yet; ensureVisible can't scroll a not-yet-built lazy-list child
-  // into view (HAB-211, same root cause as HAB-196/HAB-199). Uses
-  // find.byType(ListView), not the broader Scrollable — see
-  // scrollToPactDetailStartBreakButton above for why.
-  await tester.dragUntilVisible(
-    find.byKey(const Key('pact-detail-timeline-button')),
-    listViewFinder,
-    const Offset(0, -100),
-  );
-  // dragUntilVisible's found-check only confirms the element exists in the
-  // tree — a lazy list's cache extent can pre-build an item before it's
-  // actually painted at a stable on-screen position, so an immediate tap's
-  // hit-test can still miss on a real device (HAB-211). Settle first.
-  await tester.pumpAndSettle();
-  await tester.tap(find.byKey(const Key('pact-detail-timeline-button')));
-  await tester.pump(const Duration(milliseconds: 350));
-  await tester.pump(const Duration(milliseconds: 100));
-}
+/// Delegates to [PactDetailRobot.openTimeline] (GH-476).
+Future<void> openTimeline(WidgetTester tester) => PactDetailRobot(tester).openTimeline();
 
 /// Builds a [Pact] fixture with defaults suited to integration tests.
 ///
