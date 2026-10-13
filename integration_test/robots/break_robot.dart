@@ -7,6 +7,7 @@ class BreakRobot extends BaseRobot {
   BreakRobot(super.tester);
 
   static const _submitButton = Key('break-submit-button');
+  static const _rationaleField = Key('break-rationale-field');
 
   /// Taps "Start break" on showup detail and pumps past the push.
   Future<void> startFromShowupDetail() async {
@@ -28,8 +29,9 @@ class BreakRobot extends BaseRobot {
 
   /// Types [rationale] and submits; drags to Submit since the HAB-215 hint row pushes it past the realized extent.
   Future<void> enterRationaleAndSubmit(String rationale) async {
-    await enterText(find.byKey(const Key('break-rationale-field')), rationale);
-    await tester.dragUntilVisible(find.byKey(_submitButton), find.byType(ListView), const Offset(0, -100));
+    await enterText(find.byKey(_rationaleField), rationale);
+    final list = find.ancestor(of: find.byKey(_rationaleField), matching: find.byType(ListView)).first;
+    await tester.dragUntilVisible(find.byKey(_submitButton), list, const Offset(0, -100));
     await tester.pump();
     await tester.tap(find.byKey(_submitButton));
     await tester.pump(const Duration(milliseconds: 450));
