@@ -3,7 +3,6 @@
 //
 // Run on host:   flutter test integration_test/display_name_flow_test.dart
 // Run on device: flutter test integration_test/display_name_flow_test.dart -d <device>
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/domain/pact/pact.dart';
 import 'package:habit_loop/domain/user/user_profile.dart';
@@ -61,11 +60,11 @@ void main() {
         userProfileRepository: userProfileRepository,
       );
 
-      expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
+      expect(h.onboarding.enterNameField, findsOneWidget);
 
-      await saveEnterName(tester, 'Alex');
+      await h.onboarding.saveEnterName('Alex');
 
-      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(h.onboarding.enterNameField, findsNothing);
       expect(find.text(l10n(tester).createPact), findsOneWidget);
 
       final saved = await userProfileRepository.getProfile();
@@ -86,11 +85,11 @@ void main() {
         userProfileRepository: userProfileRepository,
       );
 
-      expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
+      expect(h.onboarding.enterNameField, findsOneWidget);
 
-      await skipEnterName(tester);
+      await h.onboarding.skipEnterName();
 
-      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(h.onboarding.enterNameField, findsNothing);
       expect(onboardingService.isNameEntryShown, isTrue);
 
       h.dispose();
@@ -105,7 +104,7 @@ void main() {
         userProfileRepository: userProfileRepository,
       );
 
-      expect(find.byKey(const Key('enter-name-text-field')), findsNothing);
+      expect(h.onboarding.enterNameField, findsNothing);
     });
 
     testWidgets(
@@ -121,8 +120,8 @@ void main() {
         userProfileRepository: userProfileRepository,
       );
 
-      expect(find.byKey(const Key('enter-name-text-field')), findsOneWidget);
-      expect(enterNameFieldText(tester), 'Sam');
+      expect(h.onboarding.enterNameField, findsOneWidget);
+      expect(h.onboarding.enterNameText, 'Sam');
     });
 
     testWidgets(
@@ -149,23 +148,23 @@ void main() {
       await waitFor(tester, find.text(l10n(tester).dashboardGreetingPersonalized('Alex')));
 
       // 2/3. Open the kebab menu, tap "Change name".
-      await openChangeNameDialogFromKebab(tester);
+      await h.dashboard.openChangeNameDialog();
 
       // 4. ChangeNameDialog is shown, pre-filled with the current name.
-      expect(find.byKey(const Key('change-name-text-field')), findsOneWidget);
-      expect(changeNameFieldText(tester), 'Alex');
+      expect(h.dashboard.changeNameField, findsOneWidget);
+      expect(h.dashboard.changeNameText, 'Alex');
 
       // 5/6. Clear the field, enter a new name, confirm — dialog dismisses.
-      await saveChangeName(tester, 'Sam');
-      expect(find.byKey(const Key('change-name-text-field')), findsNothing);
+      await h.dashboard.saveChangeName('Sam');
+      expect(h.dashboard.changeNameField, findsNothing);
 
       final saved = await userProfileRepository.getProfile();
       expect(saved?.displayName, 'Sam');
 
       // 7. Re-open the dialog with no app restart/harness recreation — the
       //    new name is reflected immediately via displayNameProvider.
-      await openChangeNameDialogFromKebab(tester);
-      expect(changeNameFieldText(tester), 'Sam');
+      await h.dashboard.openChangeNameDialog();
+      expect(h.dashboard.changeNameText, 'Sam');
     });
 
     // Split into one harness per test (rather than several AppHarness.create

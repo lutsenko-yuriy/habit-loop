@@ -2,7 +2,6 @@
 //
 // Run on host:   flutter test integration_test/about_screen_flow_test.dart
 // Run on device: flutter test integration_test/about_screen_flow_test.dart -d <device>
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/slices/about/analytics/about_analytics_events.dart';
@@ -10,14 +9,6 @@ import 'package:integration_test/integration_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'harness.dart';
-
-Future<void> _openAboutScreen(WidgetTester tester) async {
-  await waitFor(tester, find.byKey(const Key('kebab-menu-button')));
-  await tester.tap(find.byKey(const Key('kebab-menu-button')));
-  await tester.pumpAndSettle();
-  await tester.tap(find.byKey(const Key('about-button')));
-  await tester.pumpAndSettle();
-}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +23,7 @@ void main() {
       h = await AppHarness.create(tester);
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      await _openAboutScreen(tester);
+      await h.dashboard.openAbout();
 
       expect(find.text(l10n(tester).aboutTitle), findsOneWidget);
     });
@@ -52,7 +43,7 @@ void main() {
       );
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      await _openAboutScreen(tester);
+      await h.dashboard.openAbout();
 
       expect(find.text('Habit Loop'), findsWidgets);
       expect(find.text('Version 1.0.0 (build 42)'), findsOneWidget);
@@ -72,7 +63,7 @@ void main() {
       );
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
-      await _openAboutScreen(tester);
+      await h.dashboard.openAbout();
 
       await tester.tap(find.text(l10n(tester).aboutSendFeedback));
       await tester.pumpAndSettle();
@@ -93,7 +84,7 @@ void main() {
 
       await waitFor(tester, find.text(l10n(tester).dashboardTitle));
 
-      expect(find.byKey(const Key('about-button')), findsNothing);
+      expect(h.dashboard.aboutButton, findsNothing);
     });
   });
 }

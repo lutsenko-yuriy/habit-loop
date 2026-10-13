@@ -9,6 +9,31 @@ class DashboardRobot extends BaseRobot {
 
   static const _changeNameField = Key('change-name-text-field');
 
+  Finder get kebabButton => find.byKey(const Key('kebab-menu-button'));
+  Finder get aboutButton => find.byKey(const Key('about-button'));
+  Finder get languagePickerButton => find.byKey(const Key('language-picker-button'));
+  Finder get remoteConfigDebugButton => find.byKey(const Key('remote-config-debug-button'));
+  Finder get changeNameField => find.byKey(_changeNameField);
+
+  /// Opens the ⋯ kebab menu.
+  Future<void> openKebab() => tapAndSettle(kebabButton);
+
+  /// Opens the About screen via the kebab menu, waiting for the kebab first.
+  Future<void> openAbout() async {
+    await waitFor(kebabButton);
+    await openKebab();
+    await tapAndSettle(aboutButton);
+  }
+
+  /// Opens the language picker via the kebab menu.
+  Future<void> openLanguagePicker() async {
+    await openKebab();
+    await tapAndSettle(languagePickerButton);
+  }
+
+  /// Taps the standalone debug button shown when it is the only kebab item.
+  Future<void> openRemoteConfigDebug() => tapAndSettle(remoteConfigDebugButton);
+
   /// Opens the collapsible pacts panel from the dashboard.
   Future<void> openPactsPanel() async {
     await tester.tap(find.byKey(const Key('pacts-panel-drag-handle')));
@@ -59,22 +84,21 @@ class DashboardRobot extends BaseRobot {
 
   /// Opens the ⋯ kebab menu and taps "Change name" (HAB-232 WU5).
   Future<void> openChangeNameDialog() async {
-    await tester.tap(find.byKey(const Key('kebab-menu-button')));
-    await tester.pumpAndSettle();
+    await openKebab();
     await tester.tap(find.byKey(const Key('change-name-button')));
     await tester.pumpAndSettle();
   }
 
   /// Saves [name] in the "Change name" dialog (HAB-232 WU5).
   Future<void> saveChangeName(String name) async {
-    await enterText(find.byKey(_changeNameField), name);
+    await enterText(changeNameField, name);
     await tester.pump(); // rebuild so a (now non-empty) field re-enables Save
     await tester.tap(find.byKey(const Key('change-name-save-button')));
     await tester.pump();
     await waitForGone(find.byKey(_changeNameField));
   }
 
-  String get changeNameText => fieldText(find.byKey(_changeNameField));
+  String get changeNameText => fieldText(changeNameField);
 
   static const _archivedRow = Key('show-archived-pacts-row');
 
