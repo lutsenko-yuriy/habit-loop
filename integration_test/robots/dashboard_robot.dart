@@ -55,4 +55,22 @@ class DashboardRobot extends BaseRobot {
   }
 
   String get changeNameText => fieldText(find.byKey(_changeNameField));
+
+  static const _archivedRow = Key('show-archived-pacts-row');
+
+  Future<void> waitForArchivedRow() => waitFor(find.byKey(_archivedRow));
+
+  Future<void> scrollArchivedRowIntoView() => tester.ensureVisible(find.byKey(_archivedRow));
+
+  /// Taps the "Archived pacts" row, then pumps [settle] for the panel animations.
+  Future<void> tapArchivedRow({Duration settle = const Duration(milliseconds: 400)}) async {
+    await tester.tap(find.byKey(_archivedRow));
+    await tester.pump(settle);
+  }
+
+  /// Flings the drag handle up so the panel snaps to its max size.
+  Future<void> flingPanelToMax() async {
+    await tester.fling(find.byKey(const Key('pacts-panel-drag-handle')), const Offset(0, -300), 800);
+    await tester.pump(const Duration(milliseconds: 400));
+  }
 }
