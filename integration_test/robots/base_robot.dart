@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart' show CupertinoButton, CupertinoTextField
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../harness.dart' as harness;
+import '../primitives.dart' as p;
 
 /// Shared robot mechanics; domain/fake assertions stay in scenarios.
 abstract class BaseRobot {
@@ -12,30 +12,23 @@ abstract class BaseRobot {
 
   final WidgetTester tester;
 
-  /// Pumps until [finder] has a match (see the harness `waitFor`).
+  /// See the top-level `waitFor`.
   Future<void> waitFor(Finder finder, {Duration timeout = const Duration(seconds: 30)}) =>
-      harness.waitFor(tester, finder, timeout: timeout);
+      p.waitFor(tester, finder, timeout: timeout);
 
-  /// Pumps until [finder] has no match (see the harness `waitForGone`).
+  /// See the top-level `waitForGone`.
   Future<void> waitForGone(Finder finder, {Duration timeout = const Duration(seconds: 30)}) =>
-      harness.waitForGone(tester, finder, timeout: timeout);
+      p.waitForGone(tester, finder, timeout: timeout);
 
-  /// Polls [condition] every 100 ms, pumping between checks; throws [TestFailure] on timeout.
+  /// See the top-level `waitUntil`.
   Future<void> waitUntil(
     FutureOr<bool> Function() condition, {
     Duration timeout = const Duration(seconds: 30),
     String description = 'condition',
-  }) async {
-    final deadline = tester.binding.clock.now().add(timeout);
-    while (!await condition()) {
-      if (tester.binding.clock.now().isAfter(deadline)) {
-        throw TestFailure('waitUntil timed out: $description');
-      }
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-  }
+  }) =>
+      p.waitUntil(tester, condition, timeout: timeout, description: description);
 
-  /// Scrolls [target] into view, then settles before any tap (HAB-211).
+  /// Scrolls [target] into view, then settles: a pre-built lazy-list item may not be painted in place yet (HAB-211).
   Future<void> scrollIntoView(Finder target, Finder scrollable, {Offset moveStep = const Offset(0, -100)}) async {
     await tester.dragUntilVisible(target, scrollable, moveStep);
     await tester.pumpAndSettle();

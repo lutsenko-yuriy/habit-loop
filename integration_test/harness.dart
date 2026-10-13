@@ -16,7 +16,6 @@ import 'package:habit_loop/infrastructure/firestore/contracts/firestore_client.d
 import 'package:habit_loop/infrastructure/injections/app_container.dart';
 import 'package:habit_loop/infrastructure/injections/app_providers.dart';
 import 'package:habit_loop/infrastructure/onboarding/contracts/onboarding_preference_service.dart';
-import 'package:habit_loop/l10n/generated/app_localizations.dart';
 import 'package:habit_loop/main.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_checklist_run_repository.dart';
 import 'package:habit_loop/slices/checklist/data/in_memory_pact_checklist_link_repository.dart';
@@ -38,6 +37,8 @@ import '../test/infrastructure/sync/fake_sync_service.dart';
 import 'robots/dashboard_robot.dart';
 import 'robots/onboarding_robot.dart';
 import 'robots/pact_detail_robot.dart';
+
+export 'primitives.dart';
 
 /// Full-stack test harness that boots [HabitLoopApp] with:
 /// - in-memory repository doubles (avoids sqflite_common_ffi isolate
@@ -330,16 +331,6 @@ class AppHarness {
   }
 }
 
-/// Finds the [AppLocalizations] for the current widget tree.
-///
-/// Uses the [Navigator] element (which is inside MaterialApp's Localizations
-/// widget) so that AppLocalizations.of() can walk up to the Localizations
-/// ancestor and return the resolved instance.
-AppLocalizations l10n(WidgetTester tester) {
-  final context = tester.element(find.byType(Navigator).first);
-  return AppLocalizations.of(context)!;
-}
-
 /// The sync-status icon actually rendered for [state] on the platform this
 /// test is running on — mirrors `DashboardScreen`'s own `defaultTargetPlatform`
 /// switch. Use this instead of hardcoding a Material `Icons.*` literal: the
@@ -348,41 +339,6 @@ AppLocalizations l10n(WidgetTester tester) {
 IconData syncIconFor(SyncUiState state) => defaultTargetPlatform == TargetPlatform.iOS
     ? syncStatusIconDataCupertino(state)
     : syncStatusIconDataMaterial(state);
-
-/// Pumps until [finder] has at least one match or [timeout] expires.
-///
-/// Prefer over a raw [WidgetTester.pumpAndSettle] when provider rebuilds or
-/// async DB work may span more than one frame.
-Future<void> waitFor(
-  WidgetTester tester,
-  Finder finder, {
-  Duration timeout = const Duration(seconds: 30),
-}) async {
-  final deadline = tester.binding.clock.now().add(timeout);
-  while (!finder.evaluate().isNotEmpty) {
-    if (tester.binding.clock.now().isAfter(deadline)) {
-      throw TestFailure('waitFor timed out: $finder');
-    }
-    await tester.pump(const Duration(milliseconds: 100));
-  }
-}
-
-/// Pumps until [finder] has no matches or [timeout] expires — the inverse of
-/// [waitFor], for asserting a widget has actually been removed rather than
-/// just tapped away (HAB-232).
-Future<void> waitForGone(
-  WidgetTester tester,
-  Finder finder, {
-  Duration timeout = const Duration(seconds: 30),
-}) async {
-  final deadline = tester.binding.clock.now().add(timeout);
-  while (finder.evaluate().isNotEmpty) {
-    if (tester.binding.clock.now().isAfter(deadline)) {
-      throw TestFailure('waitForGone timed out: still present: $finder');
-    }
-    await tester.pump(const Duration(milliseconds: 100));
-  }
-}
 
 /// Delegates to [OnboardingRobot.saveEnterName] (GH-476).
 Future<void> saveEnterName(WidgetTester tester, String name) => OnboardingRobot(tester).saveEnterName(name);

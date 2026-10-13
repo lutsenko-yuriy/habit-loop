@@ -21,9 +21,7 @@ class DashboardRobot extends BaseRobot {
     final scrollableFinder = find.byKey(const Key('pacts-panel-scrollable'));
     // Scoped to the panel: the name can also appear in today's list (HAB-211).
     final panelEntryFinder = find.descendant(of: scrollableFinder, matching: find.text(habitName));
-    await tester.dragUntilVisible(panelEntryFinder, scrollableFinder, const Offset(0, -100));
-    // Settle first: a pre-built lazy-list item may not be painted in place yet (HAB-211).
-    await tester.pumpAndSettle();
+    await scrollIntoView(panelEntryFinder, scrollableFinder);
     await tester.tap(panelEntryFinder.last);
     await pushTransition();
   }
@@ -38,7 +36,7 @@ class DashboardRobot extends BaseRobot {
 
   /// Saves [name] in the "Change name" dialog (HAB-232 WU5).
   Future<void> saveChangeName(String name) async {
-    await tester.enterText(find.byKey(_changeNameField), name);
+    await enterText(find.byKey(_changeNameField), name);
     await tester.pump(); // rebuild so a (now non-empty) field re-enables Save
     await tester.tap(find.byKey(const Key('change-name-save-button')));
     await tester.pump();

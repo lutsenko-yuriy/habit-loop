@@ -10,7 +10,7 @@ class OnboardingRobot extends BaseRobot {
 
   /// Enters [name] into EnterNameScreen's field, taps save, and waits for the page to disappear (HAB-232).
   Future<void> saveEnterName(String name) async {
-    await tester.enterText(find.byKey(_nameField), name);
+    await enterText(find.byKey(_nameField), name);
     await tester.tap(find.byKey(const Key('enter-name-save-button')));
     await tester.pump();
     await waitForGone(find.byKey(_nameField));
