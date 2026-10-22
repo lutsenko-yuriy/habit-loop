@@ -12,8 +12,8 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **research-methodology** (16)
 - **debugging-methodology** (15)
 - **ci-flakiness** (13)
+- **cross-project-sync** (10)
 - **code-style** (9)
-- **cross-project-sync** (9)
 - **knowledge-base-process** (9)
 - **changelog-versioning** (8)
 - **widget-test-gotchas** (7)
@@ -89,6 +89,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-276: Research: strategy for syncing YAB template updates into an already-adopted project](HAB-276.md)
 - [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
 - [YAB-42: /onboard: ask for analytics, logging and feature-flag tools; record "none" as a choice](YAB-42.md)
+- [YAB-45: How to modify YAB without modifying YAB: a development project for the template](YAB-45.md)
 
 ### dead-code
 - [HAB-141: Dashboard stale showup status after notification tap (reopened)](HAB-141-adjust-1.md)
