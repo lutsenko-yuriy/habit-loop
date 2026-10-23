@@ -12,7 +12,7 @@ Follow TDD: write or update tests **before** implementing the feature or fix. Re
 - **In Progress** → active development; only one ticket may be In Progress at a time (Brief does not count against this limit).
 - **In Review** → PR is open; code review (architectural + audit) is happening.
 - **In QA** → PR is merged; CI/CD and human testers are validating on real devices. A new ticket **may** be picked up while another is In QA.
-- **Done** → QA has signed off; the user closes the issue as completed manually.
+- **Done** → QA has signed off. The user tells the agent, which runs the mapping's Done move (removes `state:in-qa`, then closes as completed); closing by hand in the GitHub UI leaves the stale label behind.
 
 States are `state:*` labels on the GitHub issue (Backlog = no label, Done = closed) — see `skills/shared/pm-tool-mapping.md`.
 
@@ -148,7 +148,7 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
     ```
     The skill moves the ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, refreshes the generated notes index (`docs/knowledge/notes/INDEX.md`), commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
     Integration scenarios run automatically on CI after merge (see HAB-151). Use `/run-scenarios` manually if you want to verify locally before merging.
-14. Clear the context now that the ticket is fully shipped, before starting a new ticket. The ticket stays **In QA** until the user confirms QA has passed — at that point the user closes it (**Done**) on GitHub manually.
+14. Clear the context now that the ticket is fully shipped, before starting a new ticket. The ticket stays **In QA** until the user confirms QA has passed — at that point the user tells the agent, which runs the mapping's Done move (**Done**).
 15. A new ticket may be picked up while the previous one is In QA.
 
 For tickets whose approved plan contains more than one production work unit (WU1+), see
