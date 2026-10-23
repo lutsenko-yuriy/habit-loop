@@ -38,7 +38,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/knowledge/README.md | Project knowledge base — vault layout, per-ticket file format, how `/note` and `/debrief` write entries |
 | docs/knowledge/notes/INDEX.md | Generated tagged table of contents over `docs/knowledge/notes/` — regenerate via `scripts/notes/index.py`, do not edit by hand (HAB-221) |
 | skills/shared/*.md | Shared skill fragments (`project-config.md`, `decision-guidelines.md`, `dialog-guidelines.md`, `pm-tool-mapping.md`) — `@`-included by individual skills as needed; not meant to be read standalone |
-| CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
+| CLAUDE.local.md | Local machine settings (Flutter binary path, API tokens, active communication style) — gitignored, never commit (contains API keys) |
 
 ## Skills
 
@@ -59,8 +59,8 @@ Every skill is registered as a Claude Code slash command via a thin stub in `.cl
 | `/dead-code-check` | manage/dead-code-check | Advisory dead-code detector — surfaces orphaned l10n keys, analytics events, test files, and handler files | `/dead-code-check` |
 | `/checkup` | manage/checkup | Two-tier periodic code-quality checkup (light monthly / heavy quarterly) — walks the 8 non-mechanical dimensions, fixes inline or writes findings to docs/knowledge/checkups/ with deadlines | `/checkup [light|heavy|status]` |
 | `/analyze` | design/analyze | Analytics planning: identify events and screen views for a feature | `/analyze HAB-XX: <title>` |
-| `/brief` | design/brief | Feature intake: clarifying dialog → scoped Linear ticket + glossary update | `/brief` |
-| `/plan` | design/plan | Implementation planning: structured plan from a Linear issue | `/plan HAB-XX: <title>` |
+| `/brief` | design/brief | Feature intake: clarifying dialog → scoped ticket (GitHub issue) + glossary update | `/brief` |
+| `/plan` | design/plan | Implementation planning: structured plan from a ticket (GitHub issue) | `/plan HAB-XX: <title>` |
 | `/experiment` | design/experiment | Experiment design: hypothesis, metrics, feature flag, registry entry | `/experiment <hypothesis>` |
 | `/research` | design/research | Literature research: thesis/antithesis/synthesis for a claim, or a scoping map for a bare topic — cited evidence, single synthesis pass | `/research <claim or topic>` |
 | `/implement` | build/implement | TDD implementation and PR | `/implement HAB-XX: <title>` |
@@ -104,9 +104,9 @@ At the beginning of every new session, before doing anything else, this checklis
 
 **Automated by the `SessionStart` hook** (`.claude/hooks/session_start.sh`, matcher `startup` only — deliberately excluding `resume` so reattaching to an in-progress ticket doesn't re-trigger the checklist mid-task — wired in `.claude/settings.local.json`, HAB-186). The hook injects steps 1-4 below as context automatically; Claude does not need to be told to run them. Until `/onboard` has marked this clone (HAB-278), the hook injects only a "run `/onboard` first" note instead — the onboarding gate (`scripts/onboard/`, wired in the committed `.claude/settings.json`) blocks the checklist until then. This section stays the source of truth for what the checklist does — the hook is just the trigger:
 
-1. Read `[providers].pm` in `skill_router.toml`: it is the only PM tool for this repo. With `github`, ticket `HAB-N` is GitHub issue #N (use `gh`); ignore any other PM MCP tools (e.g. Linear) in the session. With an MCP-backed PM tool, ensure it is authenticated; if its tools are unavailable, run `/mcp` to trigger the OAuth flow — see `CLAUDE.local.md` for setup notes.
+1. Read `[providers].pm` in `skill_router.toml`: it is the only PM tool for this repo — `github` (GitHub Issues in `lutsenko-yuriy/habit-loop`, HAB-490). Apply the **HAB-N rule** (details: `skills/shared/pm-tool-mapping.md`): `HAB-N` with **N > 281** is GitHub issue #N (use `gh`); **N ≤ 281** is the read-only Linear archive, never queried. Ignore any PM MCP tools (e.g. Linear) the session happens to have. Confirm `gh auth status` passes; if not, ask the user to run `gh auth login`.
 2. Check `CLAUDE.local.md` for an `## Active communication style` section and silently load that style (see `skills/configure/style/`). Default to DETAILED if absent.
-3. Invoke the `summarize` skill: `Invoke the summarize skill to present the current backlog from Linear`.
+3. Invoke the `summarize` skill: `Invoke the summarize skill to present the current backlog from GitHub Issues`.
 4. Run `scripts/checkup/due.py --format=session`. If it reports a tier as due, recommend running `/checkup` before picking up a new ticket, alongside the backlog summary.
 
 **Performed by the agent itself**, following on from the hook-injected context above:
