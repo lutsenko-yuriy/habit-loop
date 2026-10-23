@@ -196,3 +196,4 @@ Return: what was built, PR number and URL, test results, any deviations from the
 - **Do not update `docs/ARCHITECTURE.md` or `docs/PRODUCT_SPEC.md` directly** — delegate as described in step 8.
 - **Do not modify `skills/`** — skill files are owned by the meta-workflow, not by feature work.
 - Fix all test and lint failures before opening the PR. Never leave the build red.
+- Before every commit, confirm from the exit status that the test command passed; truncated output can't show that (`| tail` hides a failing status).
