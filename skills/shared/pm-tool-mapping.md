@@ -35,7 +35,7 @@ An open issue carries **at most one** `state:*` label, and a closed one none: a 
 
 ## Linking PRs to issues
 
-Write `Closes HAB-N` in a PR body, never `Closes #N` (or `Fixes`/`Resolves #N`): GitHub would close the issue on merge, skipping In QA and `ship`'s state move. Use `Part of #N` when a clickable link is wanted.
+Write `Closes HAB-N` in a PR body **or a commit message**, never `Closes #N` (or `Fixes`/`Resolves #N`): GitHub would close the issue on merge, skipping In QA and `ship`'s state move. Commit messages count because the repo squash-merges with every branch commit message kept in the commit on `main`. Use `Part of #N` when a clickable link is wanted.
 
 ## Type and priority labels
 
