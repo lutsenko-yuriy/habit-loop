@@ -31,7 +31,7 @@ IDs stay `HAB-N` everywhere (branches, notes, commits, CHANGELOG). The number te
 | Done | closed as completed |
 | Canceled | closed as not planned |
 
-An open issue carries **at most one** `state:*` label: a move removes the previous one in the same `gh issue edit` call.
+An open issue carries **at most one** `state:*` label, and a closed one none: a move removes the previous one in the same `gh issue edit` call, and closing removes it before `gh issue close`.
 
 ## Type and priority labels
 
@@ -47,7 +47,7 @@ An open issue carries **at most one** `state:*` label: a move removes the previo
 | List issues | `gh issue list --state open --limit 100 --json number,title,labels,body,updatedAt` | Narrow `--json` to the fields the step needs; filter with `--label`, `--search "<words> in:title"`, or `--state all`. |
 | Create issue | `gh issue create --title "..." --body-file <file> --label <type>[,priority:<p>]` | Add `--milestone "<title>"` when the ticket belongs to one. |
 | Update issue | `gh issue edit N --title/--body-file/--add-label/--remove-label ...` | |
-| Move issue to state | `gh issue edit N --remove-label <old state:*> --add-label state:<new>` | Backlog: only remove the old label. Done: `gh issue close N --reason completed`. Canceled: `gh issue close N --reason "not planned"`. Reopen with `gh issue reopen N`. |
+| Move issue to state | `gh issue edit N --remove-label <old state:*> --add-label state:<new>` | Backlog: only remove the old label. Done/Canceled: remove the current `state:*` label first (`gh issue edit N --remove-label state:in-qa`), then `gh issue close N --reason completed` (Done) or `--reason "not planned"` (Canceled) — a closed issue carries no `state:*` label. Reopen with `gh issue reopen N`. |
 | List comments on issue | `gh issue view N --comments` | |
 | Post comment on issue | `gh issue comment N --body-file <file>` | `--body "..."` for one-liners. |
 | Fetch milestone | `gh api repos/lutsenko-yuriy/habit-loop/milestones/<number>` | |
