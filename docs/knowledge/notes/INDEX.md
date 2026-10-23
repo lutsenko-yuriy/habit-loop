@@ -6,28 +6,28 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (26)
-- **multi-wu-scope** (16)
-- **planning-gaps** (16)
-- **research-methodology** (16)
+- **review-findings** (23)
 - **debugging-methodology** (15)
+- **multi-wu-scope** (15)
+- **planning-gaps** (15)
+- **research-methodology** (15)
 - **ci-flakiness** (13)
-- **cross-project-sync** (11)
-- **changelog-versioning** (9)
 - **code-style** (9)
 - **knowledge-base-process** (9)
+- **changelog-versioning** (8)
 - **widget-test-gotchas** (7)
 - **dead-code** (5)
 - **verify-from-source** (5)
+- **cross-project-sync** (4)
 - **feature-toggle** (4)
 - **ui-design-iteration** (4)
 - **appstore-ci** (3)
 - **debrief-timing** (3)
 - **ios-limits** (3)
 - **scope-creep** (3)
-- **stale-ticket** (3)
 - **docs-findability** (2)
 - **multi-project-scope** (2)
+- **stale-ticket** (2)
 - **subagent-authority** (2)
 - **l10n-glossary** (1)
 - **linear-efficiency** (1)
@@ -52,7 +52,6 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
 - [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 - [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
-- [YAB-44: Versioning and release notes move out of /ship into /prepare-release](YAB-44.md)
 
 ### ci-flakiness
 - [GH-474: Flaky text-entry scenarios on CI (pact note, display name)](GH-474.md)
@@ -82,16 +81,9 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ### cross-project-sync
 - [GH-464: Link a Checklister checklist to a pact and run it before marking a showup done](GH-464.md)
-- [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
 - [HAB-165: Initialize CheckLister project](HAB-165.md)
 - [HAB-171: /checkup skill — periodic code-quality checkup procedure](HAB-171.md)
-- [HAB-172: Synchronize HabitLoop harness improvements into YAB](HAB-172.md)
 - [HAB-206: In-place Previous/Next Pact navigation stripe for chained pacts](HAB-206.md)
-- [HAB-276: Research: strategy for syncing YAB template updates into an already-adopted project](HAB-276.md)
-- [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
-- [YAB-42: /onboard: ask for analytics, logging and feature-flag tools; record "none" as a choice](YAB-42.md)
-- [YAB-44: Versioning and release notes move out of /ship into /prepare-release](YAB-44.md)
-- [YAB-45: How to modify YAB without modifying YAB: a development project for the template](YAB-45.md)
 
 ### dead-code
 - [HAB-141: Dashboard stale showup status after notification tap (reopened)](HAB-141-adjust-1.md)
@@ -174,7 +166,6 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-222: Summarize skill — render backlog as a table (number, description, type, status)](HAB-222.md)
 - [HAB-232: Personalize notifications and greetings with the user's first name](HAB-232.md)
 - [HAB-260: FakeRemoteConfigService replaces rather than layers RC overrides — needs a harness-defaults merge](HAB-260.md)
-- [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
 
 ### notifications
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
@@ -182,7 +173,6 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 ### planning-gaps
 - [GH-476: Migrate integration scenarios to test robots](GH-476.md)
 - [HAB-126: Merge PactTimelineCache and PactStatsCache into a single cache](HAB-126.md)
-- [HAB-137: Generalise meta-workflow skill harness — extract project config](HAB-137.md)
 - [HAB-161: Give skill_router's script stub an explicit cheap fallback alias](HAB-161.md)
 - [HAB-173: Timeline screen title shows "Timeline" instead of "<Pact name> - Timeline" until data loads](HAB-173.md)
 - [HAB-174: Populate a shared pact-detail cache (stats + timeline) when Pact Details is first opened](HAB-174.md)
@@ -216,7 +206,6 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-253: Research: human-facing findability and navigation for docs/skills](HAB-253.md)
 - [HAB-255: Research — add "Brief" and "Debrief" ticket states for async, multi-day work](HAB-255.md)
 - [HAB-266: Research: are docs/knowledge/notes/BOOKMARKS.md bookmarks proliferating faster than they're useful?](HAB-266.md)
-- [HAB-276: Research: strategy for syncing YAB template updates into an already-adopted project](HAB-276.md)
 
 ### review-findings
 - [GH-476: Migrate integration scenarios to test robots](GH-476.md)
@@ -242,9 +231,6 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
 - [HAB-268: Add a break/eye-strain reminder alongside the nightly block (ADR-0007)](HAB-268.md)
 - [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
-- [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
-- [YAB-42: /onboard: ask for analytics, logging and feature-flag tools; record "none" as a choice](YAB-42.md)
-- [YAB-44: Versioning and release notes move out of /ship into /prepare-release](YAB-44.md)
 
 ### scenario-gate-scope
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
@@ -255,7 +241,6 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-223: Prevent silent bad auto-merges of docs/knowledge/notes/INDEX.md](HAB-223.md)
 
 ### stale-ticket
-- [HAB-120: Port new meta-workflow skills to Yuriys-agentic-boyz](HAB-120.md)
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238-adjust-1.md)
 - [HAB-238: Bug: block-main-writes.sh false-positives on commit messages that mention push/main in prose](HAB-238.md)
 
