@@ -6,16 +6,16 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (25)
+- **review-findings** (26)
 - **multi-wu-scope** (16)
 - **planning-gaps** (16)
 - **research-methodology** (16)
 - **debugging-methodology** (15)
 - **ci-flakiness** (13)
-- **cross-project-sync** (10)
+- **cross-project-sync** (11)
+- **changelog-versioning** (9)
 - **code-style** (9)
 - **knowledge-base-process** (9)
-- **changelog-versioning** (8)
 - **widget-test-gotchas** (7)
 - **dead-code** (5)
 - **verify-from-source** (5)
@@ -52,6 +52,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-246: Hurry-up reminder before a showup's window closes](HAB-246.md)
 - [HAB-247: Wire up [trivial] CHANGELOG tag: build suppression + delayed release-notes inclusion](HAB-247.md)
 - [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
+- [YAB-44: Versioning and release notes move out of /ship into /prepare-release](YAB-44.md)
 
 ### ci-flakiness
 - [GH-474: Flaky text-entry scenarios on CI (pact note, display name)](GH-474.md)
@@ -89,6 +90,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-276: Research: strategy for syncing YAB template updates into an already-adopted project](HAB-276.md)
 - [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
 - [YAB-42: /onboard: ask for analytics, logging and feature-flag tools; record "none" as a choice](YAB-42.md)
+- [YAB-44: Versioning and release notes move out of /ship into /prepare-release](YAB-44.md)
 - [YAB-45: How to modify YAB without modifying YAB: a development project for the template](YAB-45.md)
 
 ### dead-code
@@ -242,6 +244,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
 - [HAB-278: YAB: ship CONSTRAINTS.md/CODE_STYLE.md as required bootstrap artifacts; require a ticket prefix in setup.sh](HAB-278.md)
 - [YAB-42: /onboard: ask for analytics, logging and feature-flag tools; record "none" as a choice](YAB-42.md)
+- [YAB-44: Versioning and release notes move out of /ship into /prepare-release](YAB-44.md)
 
 ### scenario-gate-scope
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
