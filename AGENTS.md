@@ -37,7 +37,7 @@ Full product specifications: docs/PRODUCT_SPEC.md
 | docs/workflows/MULTI_WU.md | Multi-WU ticket appendix to `FEATURE.md` — WU-splitting guidelines, pre-implementation WU types, branch/PR-per-WU rules, `[wip]` tagging, WU cycle |
 | docs/knowledge/README.md | Project knowledge base — vault layout, per-ticket file format, how `/note` and `/debrief` write entries |
 | docs/knowledge/notes/INDEX.md | Generated tagged table of contents over `docs/knowledge/notes/` — regenerate via `scripts/notes/index.py`, do not edit by hand (HAB-221) |
-| skills/shared/*.md | Shared skill fragments (`project-config.md`, `decision-guidelines.md`, `dialog-guidelines.md`, `pm-tool-mapping.md`, `linear-efficiency.md`) — `@`-included by individual skills as needed; not meant to be read standalone |
+| skills/shared/*.md | Shared skill fragments (`project-config.md`, `decision-guidelines.md`, `dialog-guidelines.md`, `pm-tool-mapping.md`) — `@`-included by individual skills as needed; not meant to be read standalone |
 | CLAUDE.local.md | Local machine settings (Flutter binary path, Linear MCP auth, active communication style) — gitignored, never commit (contains API keys) |
 
 ## Skills
