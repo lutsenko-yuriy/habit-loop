@@ -6,7 +6,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ## Top themes
 
-- **review-findings** (23)
+- **review-findings** (24)
 - **debugging-methodology** (15)
 - **multi-wu-scope** (15)
 - **planning-gaps** (15)
@@ -26,11 +26,11 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - **ios-limits** (3)
 - **scope-creep** (3)
 - **docs-findability** (2)
+- **linear-efficiency** (2)
 - **multi-project-scope** (2)
 - **stale-ticket** (2)
 - **subagent-authority** (2)
 - **l10n-glossary** (1)
-- **linear-efficiency** (1)
 - **notifications** (1)
 - **postmortem-workflow** (1)
 - **scenario-gate-scope** (1)
@@ -145,6 +145,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 
 ### linear-efficiency
 - [HAB-176: Reduce token consumption from Linear MCP interactions](HAB-176.md)
+- [HAB-490: Move PM from Linear to GitHub Issues](HAB-490.md)
 
 ### multi-project-scope
 - [GH-464: Link a Checklister checklist to a pact and run it before marking a showup done](GH-464.md)
@@ -231,6 +232,7 @@ Generated from `bookmarks:` frontmatter in `docs/knowledge/notes/*.md`. Run `pyt
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
 - [HAB-268: Add a break/eye-strain reminder alongside the nightly block (ADR-0007)](HAB-268.md)
 - [HAB-269: Mark a showup done via Siri voice command](HAB-269.md)
+- [HAB-490: Move PM from Linear to GitHub Issues](HAB-490.md)
 
 ### scenario-gate-scope
 - [HAB-265: notification_navigation_flow_test.dart still asserts "Pending" text after HAB-263 changed dashboard subtitle to uiState-specific text](HAB-265.md)
