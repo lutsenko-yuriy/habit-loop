@@ -32,7 +32,7 @@ Any ticket titled `Postmortem: …` (see `docs/workflows/POSTMORTEM.md`) starts 
 
 Fetch the data with the PM mapping's commands (labels and states: see the mapping):
 
-- **List issues:** `gh issue list -R lutsenko-yuriy/habit-loop --state open --limit 100 --json number,title,body,labels,milestone`. Every open issue is in scope: Backlog (no `state:*` label) plus anything in Brief, In Progress, In Review or In QA.
+- **List issues:** `gh issue list -R lutsenko-yuriy/habit-loop --state open --limit <mapping default> --json number,title,body,labels,milestone` (the `--limit` from the mapping's **List issues** row). Every open issue is in scope: Backlog (no `state:*` label) plus anything in Brief, In Progress, In Review or In QA.
 - **List milestones:** `gh api "repos/lutsenko-yuriy/habit-loop/milestones?state=open"`. The active milestone is the open one with the earliest due date (or the lowest number when none has a due date); its progress is `closed_issues / (open_issues + closed_issues)`. With no open milestone, write `Active milestone: none`.
 
 Ticket ID: `HAB-<number>`. One-line description: the first non-empty body line that is not a heading or a `Due:` line, cut to ~100 characters.

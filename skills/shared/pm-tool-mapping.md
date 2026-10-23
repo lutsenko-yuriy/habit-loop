@@ -48,7 +48,7 @@ Write `Closes HAB-N` in a PR body, never `Closes #N` (or `Fixes`/`Resolves #N`):
 | Operation | Command | Notes |
 |---|---|---|
 | Fetch issue | `gh issue view N` | Add `--comments` when the step also needs the comments (e.g. a plan comment): one call instead of two. |
-| List issues | `gh issue list --state open --limit 100 --json number,title,labels,body,updatedAt` | Narrow `--json` to the fields the step needs; filter with `--label`, `--search "<words> in:title"`, or `--state all`. |
+| List issues | `gh issue list --state open --limit 200 --json number,title,labels,body,updatedAt` | `--limit 200` is the project-wide default (gh's own default is 30); keep it unless a step needs only a handful of rows, and say so if a result hits it. Narrow `--json` to the fields the step needs; filter with `--label`, `--search "<words> in:title"`, or `--state all`. |
 | Create issue | `gh issue create --title "..." --body-file <file> --label <type>[,priority:<p>]` | Add `--milestone "<title>"` when the ticket belongs to one. |
 | Update issue | `gh issue edit N --title/--body-file/--add-label/--remove-label ...` | |
 | Move issue to state | `gh issue edit N --remove-label <old state:*> --add-label state:<new>` | Backlog: only remove the old label. Done/Canceled: remove the current `state:*` label first (`gh issue edit N --remove-label state:in-qa`), then `gh issue close N --reason completed` (Done) or `--reason "not planned"` (Canceled) — a closed issue carries no `state:*` label. Reopen with `gh issue reopen N`. |

@@ -137,8 +137,10 @@ Once a `## [Unreleased]` batch is sealed by a later release (see the app-changin
 `docs/BACKLOG.md` is generated from the PM tool (GitHub Issues) — rebuild it from a fresh list, after step 1's state move, instead of hand-editing lines:
 
 ```bash
-gh issue list -R lutsenko-yuriy/habit-loop --state open --limit 200 --json number,title,labels,milestone
+gh issue list -R lutsenko-yuriy/habit-loop --state open --limit <mapping default> --json number,title,labels,milestone
 ```
+
+(`--limit`: the default from the PM mapping's **List issues** row.)
 
 Write the file as:
 
