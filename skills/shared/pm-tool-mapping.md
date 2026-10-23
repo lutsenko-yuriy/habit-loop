@@ -33,6 +33,10 @@ IDs stay `HAB-N` everywhere (branches, notes, commits, CHANGELOG). The number te
 
 An open issue carries **at most one** `state:*` label, and a closed one none: a move removes the previous one in the same `gh issue edit` call, and closing removes it before `gh issue close`.
 
+## Linking PRs to issues
+
+Write `Closes HAB-N` in a PR body, never `Closes #N` (or `Fixes`/`Resolves #N`): GitHub would close the issue on merge, skipping In QA and `ship`'s state move. Use `Part of #N` when a clickable link is wanted.
+
 ## Type and priority labels
 
 - Type: `feature`, `bug`, `tech-debt`, `improvement`.
