@@ -22,7 +22,7 @@ For new features, enhancements, and planned changes, use `docs/workflows/FEATURE
 
 ## 3. Open a tracking ticket
 
-**Before attempting more than one fix**, open a Linear ticket with:
+**Before attempting more than one fix**, open a ticket (GitHub issue) with:
 - Problem description and first observed failure
 - What has already been tried and why it failed
 - Candidate solutions with a trade-off analysis
