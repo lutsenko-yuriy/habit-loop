@@ -26,4 +26,4 @@ Print the full report verbatim. Do not filter or reformat findings.
 
 ### 3. Triage guidance (optional)
 
-If findings are present, offer to open a Linear ticket for any `[WARN]` section with more than one item. Do not open tickets automatically — wait for the user's instruction.
+If findings are present, offer to open a ticket (GitHub issue) for any `[WARN]` section with more than one item. Do not open tickets automatically — wait for the user's instruction.

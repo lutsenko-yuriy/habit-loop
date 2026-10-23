@@ -54,6 +54,6 @@ The index helps surface recurring patterns and pain points across tickets. It's 
 
 ## Agent memory constraints
 
-Ticket state (Backlog, In Progress, In Review, In QA, Done) is **never stored in agent memory** — memory entries go stale within hours and cause incorrect answers about what is currently in flight. **Always query Linear directly** for current ticket state.
+Ticket state (Backlog, In Progress, In Review, In QA, Done) is **never stored in agent memory** — memory entries go stale within hours and cause incorrect answers about what is currently in flight. **Always query the PM tool (GitHub Issues) directly** for current ticket state.
 
-General rule: only store in memory what Linear, git, and the codebase cannot answer. State that a tool can look up authoritatively should never be duplicated in memory.
+General rule: only store in memory what the PM tool, git, and the codebase cannot answer. State that a tool can look up authoritatively should never be duplicated in memory.

@@ -7,11 +7,11 @@
 # automatically instead of relying on the manual instruction alone. See HAB-186.
 #
 # What this script checks directly (cheap, deterministic):
-#   - LINEAR_API_KEY / LM_API_TOKEN presence in the environment (CLAUDE.local.md)
+#   - LM_API_TOKEN presence in the environment (CLAUDE.local.md)
 #   - the active communication style from CLAUDE.local.md's
 #     "## Active communication style" section (default DETAILED if absent)
 # What it defers to Claude via additionalContext (needs live tool calls):
-#   - confirming Linear MCP auth
+#   - confirming the GitHub CLI (the PM tool, HAB-490) is authenticated
 #   - invoking the summarize skill
 #   - running scripts/checkup/due.py --format=session
 #
@@ -35,7 +35,6 @@ if [ -z "$common" ] || [ ! -e "$common/yab/onboarded" ]; then
 fi
 
 missing_env=""
-[ -z "${LINEAR_API_KEY:-}" ] && missing_env="$missing_env LINEAR_API_KEY"
 [ -z "${LM_API_TOKEN:-}" ] && missing_env="$missing_env LM_API_TOKEN"
 
 style="DETAILED"
@@ -51,9 +50,9 @@ fi
 
 context=$(cat <<EOF
 Run the AGENTS.md "Session start" checklist now, before responding to the user:
-1. Confirm the Linear MCP is authenticated (mcp__linear__* tools available); if not, use /mcp to trigger OAuth. ${env_note}
+1. The PM tool is GitHub Issues: HAB-N with N > 281 is issue #N in lutsenko-yuriy/habit-loop (HAB-1..281 are the read-only Linear archive). Confirm \`gh auth status\` passes; if not, ask the user to run \`gh auth login\`. ${env_note}
 2. Adopt the "$style" communication style detected from CLAUDE.local.md.
-3. Invoke the summarize skill to present the current backlog from Linear.
+3. Invoke the summarize skill to present the current backlog from GitHub Issues.
 4. Run scripts/checkup/due.py --format=session; if a tier is due, recommend /checkup alongside the backlog summary.
 Then ask what goes into the next release, per AGENTS.md.
 EOF

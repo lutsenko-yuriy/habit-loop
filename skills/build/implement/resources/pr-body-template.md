@@ -21,4 +21,6 @@ EOF
 
 Use `/opt/homebrew/bin/gh` if `gh` is not on the PATH.
 
+Keep `Closes HAB-XX` in the `HAB-N` form, never `Closes #N` — see "Linking PRs to issues" in `skills/shared/pm-tool-mapping.md`.
+
 **If the PR touches `scripts/` (Python tooling) and no `lib/` files** (HAB-247 debrief, 2026-08-24): add a `## What this means` section right after `## Summary`, written in plain, non-technical language — the reviewer relies on this to follow the change since they don't read Python fluently. Explain what actually changes in behaviour, not how the code does it (no function/regex/class names).

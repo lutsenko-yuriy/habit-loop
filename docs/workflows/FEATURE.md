@@ -12,9 +12,11 @@ Follow TDD: write or update tests **before** implementing the feature or fix. Re
 - **In Progress** → active development; only one ticket may be In Progress at a time (Brief does not count against this limit).
 - **In Review** → PR is open; code review (architectural + audit) is happening.
 - **In QA** → PR is merged; CI/CD and human testers are validating on real devices. A new ticket **may** be picked up while another is In QA.
-- **Done** → QA has signed off; the user moves the ticket to Done manually.
+- **Done** → QA has signed off. The user tells the agent, which runs the mapping's Done move (removes `state:in-qa`, then closes as completed); closing by hand in the GitHub UI leaves the stale label behind.
 
-Before picking up any new ticket, check Linear to confirm no other ticket is In Progress (In QA is fine).
+States are `state:*` labels on the GitHub issue (Backlog = no label, Done = closed) — see `skills/shared/pm-tool-mapping.md`.
+
+Before picking up any new ticket, check the PM tool (`gh issue list --label state:in-progress`) to confirm no other ticket is In Progress (In QA is fine).
 
 **When to use In QA vs Done directly after merge:** see `skills/shared/project-config.md`'s
 "In QA path patterns" — the single source for this list (also used by `ship` step 1).
@@ -45,7 +47,7 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
 
 ## Steps
 
-1. **Planning & setup gates** — work through in order; skip any that don't apply. If this scoping is expected to span multiple sessions/days, move the Linear ticket to **Brief** first (ADR-0008) and back to Backlog/Todo once it's done, before step 1.5 moves it to In Progress:
+1. **Planning & setup gates** — work through in order; skip any that don't apply. If this scoping is expected to span multiple sessions/days, move the ticket to **Brief** first (ADR-0008) and back to Backlog once it's done, before step 1.5 moves it to In Progress:
    1. **Sharpen the spec.** If the ticket lacks a clear UX spec (no explicit description of UI behaviour, interaction, or screen layout), or predates the `/brief` skill: run `/brief` first, before anything else below.
    2. **Analytics planning.** For features with user-visible screens or interactions: invoke `analyze` and wait for approval.
       ```
@@ -58,7 +60,7 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
       ```
       Produces a structured plan (dependencies, models, UI changes, test strategy, ordered phases, work units).
    4. **Feature toggle.** For features introducing new user-facing behaviour: consider a Firebase Remote Config kill-switch flag (default `true`) so the feature can be disabled remotely without a release if a critical regression surfaces after shipping. If added, document it in `docs/FEATURE_TOGGLES.md` before writing any code.
-   5. **Create the feature branch** from the latest `main`, before writing any code. Always include the Linear ticket number after `feature/`:
+   5. **Create the feature branch** from the latest `main`, before writing any code. Always include the ticket number (`HAB-N`, where N is the GitHub issue number) after `feature/`:
       ```
       git fetch origin
       git checkout -b feature/HAB-XX-<short-description> origin/main
@@ -121,7 +123,7 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
 
    - Push the branch to the remote.
    - Open a PR.
-   - Move the Linear ticket to **In Review**.
+   - Move the ticket to **In Review**.
    - Inform the user of the PR URL and open it in the browser (`open <url>` / `xdg-open` on Linux).
    - The review loop (step 10) starts automatically once the PR is open, unless the user says otherwise beforehand. Say so explicitly if you want to check the running app first before review effort is spent on code that might still move.
 10. **Review loop** — starts automatically once the PR is open (see step 9), unless the user asked to hold; repeat until the user explicitly approves the PR:
@@ -144,9 +146,9 @@ behaviour beyond a literal value, it is not trivial — use the full workflow in
     ```
     Invoke the ship skill for PR #<number>
     ```
-    The skill moves the Linear ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, refreshes the generated notes index (`docs/knowledge/notes/INDEX.md`), commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
+    The skill moves the ticket to **In QA**, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps `pubspec.yaml` version, refreshes the generated notes index (`docs/knowledge/notes/INDEX.md`), commits onto the feature branch, pushes, and merges. No separate approval is needed for the version bump.
     Integration scenarios run automatically on CI after merge (see HAB-151). Use `/run-scenarios` manually if you want to verify locally before merging.
-14. Clear the context now that the ticket is fully shipped, before starting a new ticket. The ticket stays **In QA** until the user confirms QA has passed — at that point the user moves it to **Done** in Linear manually.
+14. Clear the context now that the ticket is fully shipped, before starting a new ticket. The ticket stays **In QA** until the user confirms QA has passed — at that point the user tells the agent, which runs the mapping's Done move (**Done**).
 15. A new ticket may be picked up while the previous one is In QA.
 
 For tickets whose approved plan contains more than one production work unit (WU1+), see

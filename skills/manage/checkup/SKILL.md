@@ -10,7 +10,7 @@ description: Two-tier periodic code-quality checkup (light monthly / heavy quart
 @skills/shared/project-config.md
 @skills/shared/decision-guidelines.md
 
-This skill audits, it doesn't ship a feature. Per [ADR-0003](../../../docs/knowledge/decisions/ADR-0003-two-tier-periodic-code-quality-checkup.md), findings are fixed inline or deferred to the ledger — never filed as individual Linear tickets.
+This skill audits, it doesn't ship a feature. Per [ADR-0003](../../../docs/knowledge/decisions/ADR-0003-two-tier-periodic-code-quality-checkup.md), findings are fixed inline or deferred to the ledger — never filed as individual tickets.
 
 ---
 
@@ -48,7 +48,7 @@ In `docs/knowledge/checkups/LEDGER.md`:
 
 ### 6. Commit
 
-No Linear ticket exists for a periodic checkup run (per ADR-0003), so branch and commit directly — a direct commit to `main` is blocked regardless.
+No ticket exists for a periodic checkup run (per ADR-0003), so branch and commit directly — a direct commit to `main` is blocked regardless.
 
 **Mid-ticket** (the current branch already has an open PR — check with `gh pr list --head <branch> --state open`): stay on the branch, commit, and push. The checkup output rides along with that PR.
 
@@ -71,7 +71,7 @@ One line per tier run: dimensions walked, findings fixed inline, findings deferr
 
 ## Constraints
 
-- Never file an individual Linear ticket for a finding — deferred findings go in the ledger's Open findings table only (per ADR-0003).
+- Never file an individual ticket for a finding — deferred findings go in the ledger's Open findings table only (per ADR-0003).
 - An inline fix must stay within Boy Scout Rule scope — small and safe without its own test-writing cycle. Anything larger gets deferred, not force-fitted into this skill's commit.
 - Do not touch `## Resolved findings` rows other than moving matching IDs in from `## Open findings` — never fabricate a resolution.
 - Do not merge the PR opened in step 6 — that's the user's call.

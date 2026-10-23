@@ -2,10 +2,8 @@
 name: summarize
 effort: RAPID
 reasoning: MECHANICAL
-context: linear
-render_html_view: true
 output_style: CONCISE
-description: Present the current backlog at session start. Fetches open issues from the PM tool — via the pre-fetched `skill_router` path, or a live fallback (with product-vs-process classification) if that path is unavailable — shows the active milestone and completion percentage, groups work by label, and asks "What goes into the next release?" Invoke at the start of every session before any work begins.
+description: Present the current backlog at session start. Lists open issues from the PM tool (GitHub Issues via `gh`), classifies product vs. process, shows the active milestone (if any) and its completion percentage, groups work by type label and orders it by priority label, and asks "What goes into the next release?" Invoke at the start of every session before any work begins.
 ---
 
 @skills/shared/project-config.md
@@ -20,7 +18,7 @@ Check for a `PLAN.local.md` file at the project root (gitignored — a personal,
 
 If it exists and has content:
 1. Read it and extract the listed tickets.
-2. Check each listed ticket's current state against the pre-fetched backlog (the `=== PRE-FETCHED BACKLOG ===` block described in step 1 — every issue in it is already state-filtered to non-`Done`/non-`Canceled`, so a listed ticket simply not present has either resolved or fallen outside the block's 50-most-recently-updated window). If that block is unavailable, run step 1's live-fallback **List issues** call now (before continuing here) — its `fields` already include `statusType`, so this same call covers both this check and step 1's backlog output; do not fetch twice. Filter out any already `Done`, `Canceled`, or otherwise resolved.
+2. Check each listed ticket's current state against step 1's **List issues** result — run that call now (before continuing here) and reuse it in step 1; do not fetch twice. It returns open issues only, so a listed ticket that is missing from it is closed (Done or Canceled). Apply the HAB-N rule from the PM mapping: a listed `HAB-N` with N ≤ 281 is a Linear-archive ticket, so treat it as resolved and say so. Filter out every resolved ticket.
 3. Present the surviving plan to the user (ticket IDs, titles, and any inline notes from the file) before the backlog summary below.
 4. Ask: "Want to follow this plan, modify it, start a new plan alongside it, or set it aside and go with the regular backlog?" Wait for the answer before proceeding to step 1.
 
@@ -28,16 +26,18 @@ This catches stale-but-still-relevant intentions from a prior session before bac
 
 ### 0a. Flag overdue postmortem tickets
 
-Any ticket titled `Postmortem: …` (see `docs/workflows/POSTMORTEM.md`) carries a Linear `dueDate` set at creation. If such a ticket appears in the backlog with a `dueDate` in the past, flag it explicitly in the summary and ask whether to proceed with it now or drop it — do not let it silently blend into the rest of the backlog list.
+Any ticket titled `Postmortem: …` (see `docs/workflows/POSTMORTEM.md`) starts its body with a `Due: YYYY-MM-DD` line set at creation (GitHub issues have no due-date field). If such a ticket appears in the backlog with a `Due:` date in the past, flag it explicitly in the summary and ask whether to proceed with it now or drop it — do not let it silently blend into the rest of the backlog list.
 
-### 1. Output the pre-fetched backlog
+### 1. Fetch and output the backlog
 
-Routed via `skill_router.py` (`context: linear`) — the backlog data is injected above this text between `=== PRE-FETCHED BACKLOG ===` sentinels. Copy that block verbatim — do not reformat, do not call any tools. This skill's frontmatter also sets `render_html_view: true`, so the pre-fetched path writes and opens a sortable HTML table view of the same backlog (`backlog.local.html`, HAB-222) as a side effect — a `_(Backlog table: <path>)_` note appears after the sentinel block when this succeeds; if it fails, the note is silently omitted and the markdown block is unaffected. **When the note is present, mention in one line that the table opened** (e.g. "Also opened a sortable table view — `<path>`.") so the auto-open isn't a silent surprise; say nothing extra when the note is absent (the fallback already degraded gracefully, no need to draw attention to it). **This flag is opt-in per skill, not automatic for every `context: linear` skill** — `draft-scenarios` also declares `context: linear` but does not set `render_html_view`, so it gets only the markdown block and never pops a browser window mid-ticket. **Known limitation:** the pre-fetched path does not classify product vs. process (step 1a below) — it only groups issues by the existing Bug/Tech Debt/Feature/Improvement Linear labels.
+Fetch the data with the PM mapping's commands (labels and states: see the mapping):
 
-**Live MCP fallback (restored, HAB-176):** if the sentinel block is missing — the router script failed (e.g. `LM_API_TOKEN`/`LINEAR_API_KEY` unset, LM Studio not running, or a `skill_router` bug — see `CLAUDE.local.md`) and this skill is running via the Agent fallback in `.claude/commands/summarize.md` — do not block on the user fixing it first. Tell the user in one line that the pre-fetch is unavailable and this run is using the slower live path. **This fallback path does not produce the HTML table view** — it runs inside Claude Code with no Python step, and hand-writing the HTML here would cost more than it's worth; it stays markdown-only (HAB-222). Then:
+- **List issues:** `gh issue list -R lutsenko-yuriy/habit-loop --state open --limit <mapping default> --json number,title,body,labels,milestone` (the `--limit` from the mapping's **List issues** row). Every open issue is in scope: Backlog (no `state:*` label) plus anything in Brief, In Progress, In Review or In QA.
+- **List milestones:** `gh api "repos/lutsenko-yuriy/habit-loop/milestones?state=open"`. The active milestone is the open one with the earliest due date (or the lowest number when none has a due date); its progress is `closed_issues / (open_issues + closed_issues)`. With no open milestone, write `Active milestone: none`.
 
-- **List issues** (PM mapping) with `fields: ["title", "description", "status", "statusType", "labels"]` and `includeArchived: false`. **Do not pass `state`** — the tool's `state` parameter accepts only a single state/type/ID with no negation, so it cannot express "not Done/Canceled" the way the pre-fetched block's GraphQL query does; filter client-side on `statusType` instead. Also do not filter by project — the pre-fetched block's own query has no project filter either (whole-workspace, 50 most-recently-updated), so this intentionally does not "match" a project-scoped fetch.
-- **List milestones** (PM mapping) using the **Project ID** from the PM tool mapping — milestones, unlike issues, are project-scoped in both paths.
+Ticket ID: `HAB-<number>`. One-line description: the first non-empty body line that is not a heading or a `Due:` line, cut to ~100 characters.
+
+Group the issues by type label — `bug` and `tech-debt` under **Issues**, `feature`, `improvement` and unlabeled under **Remaining work**. Within each group, order by priority label (`priority:urgent`, `high`, `medium`, `low`, then no priority), then by issue number. Append the priority and any `state:*` label in brackets, e.g. `[high · in-qa]`; leave the brackets out when there is neither.
 
 Produce the summary below:
 
@@ -49,20 +49,20 @@ Produce the summary below:
 **N product tickets · M process tickets pending.**
 
 ### Issues (bugs & tech debt)
-- HAB-XX: <title> — <one-line description>
+- HAB-XX: <title> — <one-line description> [<priority> · <state>]
 
 ### Remaining work
-- HAB-XX: <title> — <one-line description>
+- HAB-XX: <title> — <one-line description> [<priority> · <state>]
 ```
 
-### 1a. Classify product vs. process (fallback path only)
+### 1a. Classify product vs. process
 
 For each ticket, read its title and description and classify it as:
 
 - **Product** — a user-facing feature, bug fix, or app-facing improvement: anything that changes what the app does or how it behaves for an end user.
 - **Process** — workflow, skill, tooling, CI, docs-audit, or research into how the team/agents work: anything that changes how the app gets built, not what it does.
 
-Do not rely on Linear labels alone — the existing labels (Feature, Bug, Tech Debt, Improvement) don't distinguish product from process work; use judgment from each ticket's content. Compute N (product count) and M (process count) and fill in the summary line above, before the section breakdown. The goal is to make process debt visible at the point the release decision gets made, rather than letting it silently pile up across sessions until it's felt rather than seen (see HAB-154 debrief).
+Do not rely on the type labels alone — `feature`, `bug`, `tech-debt` and `improvement` don't distinguish product from process work; use judgment from each ticket's content. Compute N (product count) and M (process count) and fill in the summary line above, before the section breakdown. The goal is to make process debt visible at the point the release decision gets made, rather than letting it silently pile up across sessions until it's felt rather than seen (see HAB-154 debrief).
 
 ### 2. Ask and wait
 

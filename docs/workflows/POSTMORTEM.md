@@ -15,8 +15,8 @@ stop-pact showup deletion) and formalized here after that trial proved useful.
    only — no production code changes; a newly-discovered bug found along the way gets its own
    ticket per `docs/workflows/TROUBLESHOOT.md`.
 2. **Set a due date.** These tickets carry no urgency pressure and are easy to let sit for weeks
-   (HAB-209 sat 16 days between creation and pickup). Set the Linear `dueDate` to ~1-2 weeks out
-   at creation. If a postmortem ticket's due date has passed by the time `summarize` next reviews
+   (HAB-209 sat 16 days between creation and pickup). GitHub issues have no due date field, so start the
+   ticket's body with a `Due: YYYY-MM-DD` line ~1-2 weeks out at creation. If a postmortem ticket's due date has passed by the time `summarize` next reviews
    the backlog, flag it explicitly and ask whether to proceed now or drop it — see
    `skills/manage/summarize/SKILL.md`.
 3. **Find the origin.** `git log -S`/`git blame`/`git bisect` on the regressed behavior. Don't

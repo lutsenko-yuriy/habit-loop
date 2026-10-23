@@ -2,7 +2,6 @@
 name: draft-scenarios
 effort: FOCUSED
 reasoning: TACTICAL
-context: linear
 output_style: CONCISE
 description: Draft scenarios (integration tests) from a ticket description before implementation. Runs after `plan` (if used) and before `implement`. Scenarios are written against the spec — not reverse-engineered from code — so they compile as stubs and give `implement` a concrete target to fill in and make green.
 ---
@@ -19,7 +18,7 @@ This skill produces scenario files, not production code.
 
 ### 1. Fetch the ticket
 
-If the issue's description was already fetched in full earlier in this session (e.g. by a preceding `/plan` run), reuse it from the transcript and skip straight to fetching only what's missing: the plan comment, if not already visible in the transcript (a `/plan` run posts it in full, so it usually already is) — list comments (**List comments on issue**) only if it isn't. Otherwise, fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**) to find any plan comment left by the `plan` skill. Read the description, acceptance criteria, and plan (if present) to understand the expected behaviour. See `skills/shared/linear-efficiency.md` for the reuse convention.
+If the issue's description was already fetched in full earlier in this session (e.g. by a preceding `/plan` run), reuse it from the transcript and skip straight to fetching only what's missing: the plan comment, if not already visible in the transcript (a `/plan` run posts it in full, so it usually already is) — list comments (**List comments on issue**) only if it isn't. Otherwise, fetch the issue (PM mapping: **Fetch issue**), then list its comments (**List comments on issue**) to find any plan comment left by the `plan` skill. Read the description, acceptance criteria, and plan (if present) to understand the expected behaviour. See the PM mapping's "Fetch once, reuse from the transcript" for the reuse convention.
 
 ### 2. Read the test harness
 

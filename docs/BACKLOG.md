@@ -1,7 +1,7 @@
 # Backlog
 
 Known issues and planned work that has not yet been released.
-This file is generated from Linear — do not edit by hand. Source of truth: [Habit Loop project on Linear](https://linear.app/iurii-lutsenkos-workspace/project/habit-loop-flutter-app-created-with-assistance-of-claude-bf8b51a86175).
+This file is generated from GitHub Issues — do not edit by hand. Source of truth: [Habit Loop issues on GitHub](https://github.com/lutsenko-yuriy/habit-loop/issues).
 
 ---
 
@@ -9,39 +9,31 @@ This file is generated from Linear — do not edit by hand. Source of truth: [Ha
 
 (none)
 
+## In Review
+
+(none)
+
 ## In QA
 
-- **HAB-229**: Debug seed re-run leaves stale OS notifications for deleted pacts (PR #436)
-- **HAB-216**: Merge break runs into a single timeline milestone, tail zone included (PRs #363–365)
-- **HAB-218**: Bug: "Take a break" / "Stop pact" / "Archive" buttons no longer full width on pact detail (PR #365)
-- **HAB-201**: Bug: pact shows "On break" (list + detail banner) before the break actually starts (PR #335)
-
-- **HAB-183**: Manual-dispatch-only CI pipelines for granular build/test/notes procedures (PR #287)
-
-- **HAB-158**: Bug: language picker option text overflows on narrow Android screens (PR #250)
-
-- **HAB-157**: Bug: local notifications stay in English after switching app language (PR #248)
-
-- **HAB-173**: Timeline screen title flicker fix (PR #273)
-
-- **HAB-153**: Audit and clean up integration test scenarios (PRs #241–244)
-
-- **HAB-150**: Collapse dashboard nav bar secondary actions into a kebab menu (PR #233)
-
-- **HAB-145**: Onboarding carousel slide overflows on tight viewports (PR #217)
-- **HAB-142**: Polish: scroll clips into top bar and bottom gap on detail screens (PR #211)
-- **HAB-139**: Redeem tail-zone failed showups by adding a note (PR #207)
-- **HAB-111**: Dashboard bottom sheet UX improvements (PR #147)
-- **HAB-113**: Bottom sheet stuck at semi-expanded on fast upward drag (PR #149)
-- **HAB-115**: Editable notes on pact detail for inactive pacts (PR #155)
-- **HAB-116**: Pact timeline screen (PRs #168–176)
-- **HAB-129**: Timeline QA fixes — single-showup tappability + date region (PR #177)
-- **HAB-133**: Timeline tail: switch from count-based to days-based tail zone (PR #185)
+(none)
 
 ## Unscheduled
 
 ### Remaining work
 
-- **HAB-106**: Skill execution observability — token/time/cost tracking in skill_router
-- **HAB-155**: Investigate flaky iOS scenario: create_pact_flow_test.dart full_wizard_creates_pact
-- **HAB-156**: Investigate orphaned integration test files flagged by dead-code-check
+- **HAB-291**: Revisit stashed analytics-planning drafts (3 stashes on main)
+- **HAB-462**: CHANGELOG lint fails on main and no CI job runs it
+- **HAB-463**: Retire skill_router's summarize pre-fetch and HTML backlog view
+- **HAB-491**: Migrate Android distribution to Google Play internal testing (replaces Firebase App Distribution)
+- **HAB-492**: Show "Skipped on break" stat on Pact Detail
+- **HAB-493**: Mark a showup done via Google Assistant voice command
+- **HAB-494**: Suggest pact-name alternatives (incl. per-language) when editing a pact
+- **HAB-495**: Generate "What's New" release notes in all supported languages
+- **HAB-496**: Evaluate dark-mode-aware HabitLoopColors variants for status text
+- **HAB-497**: Manual accessibility QA pass (VoiceOver/TalkBack) for HAB-187 design-system + accessibility work
+- **HAB-498**: Skill execution observability — token/time/cost tracking in skill_router
+- **HAB-499**: Residual CI timeout flakiness in pact_note_flow_test.dart after HAB-258
+- **HAB-500**: fresh_install_flow_test.dart: no scenario covers stale-Keychain fresh install × EnterNameScreen interaction
+- **HAB-501**: Research Flutter performance measurement techniques
+- **HAB-502**: CI: dry-run harness for composite-action logic (no real main push required)
+- **HAB-503**: Triage-style summarize: rank tickets by priority and type labels

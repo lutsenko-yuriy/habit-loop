@@ -25,7 +25,7 @@ Read the following files in full before asking the user anything (paths from the
 
 This context is the reference against which the user's idea will be validated.
 
-Also search Linear for existing tickets covering similar ground (title/keyword search via **List issues**, `fields: ["title", "status"]`, `includeArchived: false`). If a plausible duplicate turns up — in `PLAN.local.md` or Linear — surface it to the user before opening the dialog and ask whether to continue with a new ticket or work from the existing one instead.
+Also search the PM tool for existing tickets covering similar ground (title/keyword search via **List issues** with `--state all --search "<keywords> in:title" --json number,title,state,labels`). If a plausible duplicate turns up — in `PLAN.local.md` or GitHub Issues — surface it to the user before opening the dialog and ask whether to continue with a new ticket or work from the existing one instead.
 
 ### 2. Open the dialog
 
@@ -66,14 +66,17 @@ Based on the answer, produce a simple ASCII mockup and present it for approval b
 
 ### 4. Create the ticket
 
-Once the idea is clear, create an issue in the PM tool (PM mapping: **Create issue**) using the **Team ID** and **Project ID** from the PM tool mapping:
+Once the idea is clear, create an issue in the PM tool (PM mapping: **Create issue**), writing the description below to a file first:
 
-- `team`: team ID from project config
-- `project`: project ID from project config
-- `title`: concise noun-phrase title
-- `labels`: `["Feature"]`
-- `priority`: 3 (Medium) unless the user indicated otherwise
-- `description`: use the template below
+```bash
+gh issue create -R lutsenko-yuriy/habit-loop --title "<title>" --body-file <file> --label feature,priority:medium
+```
+
+- `--title`: concise noun-phrase title
+- `--label`: the type label (`feature` here; `bug`, `tech-debt` or `improvement` if the idea is one of those) plus `priority:medium` unless the user indicated another priority
+- `--body-file`: the description, using the template below
+
+The new ticket is `HAB-<issue number>` (the number `gh issue create` prints).
 
 **Ticket description template:**
 
