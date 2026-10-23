@@ -2,7 +2,7 @@
 name: draft-release-notes
 effort: RAPID
 reasoning: TACTICAL
-tools: linear,github,files
+tools: github,files
 output_style: CONCISE
 description: Draft the [user] "What's New" CHANGELOG bullets for a PR or ticket, separately from the technical HAB-XX bullet. Gathers observable before/after behaviour from the ticket, the PR diff, and (for multi-WU tickets) the reconciled final state across all WUs, drafts one bullet per user-noticeable change, self-checks each against the plain-language checklist, and returns the approved list (possibly empty) to its caller.
 ---

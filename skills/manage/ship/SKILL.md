@@ -2,7 +2,7 @@
 name: ship
 effort: RAPID
 reasoning: TACTICAL
-tools: linear,github,files
+tools: github,files
 output_style: CONCISE
 description: Post-merge housekeeping after a PR is approved. Moves the linked issues to "In QA", rebases onto the latest main, adds a CHANGELOG entry, regenerates BACKLOG.md, bumps pubspec.yaml version, proposes PRODUCT_SPEC.md and GLOSSARY.md updates for approval, refreshes the generated notes index, commits everything onto the feature branch, pushes, and merges. Invoke when the user approves a PR, before merging. The ticket stays In QA until the user manually moves it to Done after QA sign-off.
 ---
@@ -70,7 +70,7 @@ Then rebase:
 git fetch origin && git rebase origin/main
 ```
 
-**If the rebase reports a conflict:** stop immediately — do not proceed to any further step. Tell the user which files conflicted and wait for guidance (resolve manually and `git rebase --continue`, or `git rebase --abort` to cancel this `ship` attempt). Never leave the branch in a mid-rebase/detached-HEAD state without saying so — the issue was already moved to its post-merge state in step 1, so a silent stall here leaves Linear ahead of the actual repo state.
+**If the rebase reports a conflict:** stop immediately — do not proceed to any further step. Tell the user which files conflicted and wait for guidance (resolve manually and `git rebase --continue`, or `git rebase --abort` to cancel this `ship` attempt). Never leave the branch in a mid-rebase/detached-HEAD state without saying so — the issue was already moved to its post-merge state in step 1, so a silent stall here leaves the PM tool ahead of the actual repo state.
 
 This is what actually enforces `docs/workflows/FEATURE.md` step 1.5's "rebase before merging" guidance — `ship` is the point that calls `gh pr merge`, so it's the natural place to make the rebase non-optional rather than relying on it being remembered by hand. It must run **before** any of steps 3–8 make edits: `git rebase` refuses to run against an uncommitted tree, so doing this later would require stashing or redoing that work (HAB-223).
 
@@ -136,9 +136,34 @@ Once a `## [Unreleased]` batch is sealed by a later release (see the app-changin
 
 ### 5. Regenerate BACKLOG.md
 
-Open `docs/BACKLOG.md` and remove the completed ticket(s) from the remaining-work list for their milestone. If all issues in the milestone are Done, note the milestone as complete.
+`docs/BACKLOG.md` is generated from the PM tool (GitHub Issues) — rebuild it from a fresh list, after step 1's state move, instead of hand-editing lines:
 
-Do not rewrite the rest of the file.
+```bash
+gh issue list -R lutsenko-yuriy/habit-loop --state open --limit 200 --json number,title,labels,milestone
+```
+
+Write the file as:
+
+```
+# Backlog
+
+Known issues and planned work that has not yet been released.
+This file is generated from GitHub Issues — do not edit by hand. Source of truth: [Habit Loop issues on GitHub](https://github.com/lutsenko-yuriy/habit-loop/issues).
+
+---
+
+## In Progress
+## In Review
+## In QA
+## <milestone title>        (one section per open milestone, if any)
+## Unscheduled
+### Remaining work
+```
+
+- **In Progress / In Review / In QA:** issues with the matching `state:*` label; `(none)` when empty.
+- **Milestone sections / Unscheduled:** every other open issue (Backlog or `state:brief`), under its milestone's heading, or under **Unscheduled → Remaining work** when it has none.
+- One line per issue: `- **HAB-<number>**: <title>`, sorted by issue number; add ` (PR #N)` only where you know the PR (this ship's own PR for its ticket).
+- Linear-archive tickets (HAB-N with N ≤ 281) never appear: they are all closed (see the HAB-N rule in the PM mapping).
 
 ### 6. Bump the version
 
