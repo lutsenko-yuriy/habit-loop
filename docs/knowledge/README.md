@@ -4,6 +4,8 @@ A local Markdown vault for ticket-scoped research, learnings, retrospectives, an
 
 **Standing decisions** that should be discoverable without knowing which ticket produced them (e.g. "we chose MIT licence") live in `decisions/` (ADRs) — see `docs/knowledge/decisions/README.md`. Day-to-day, ticket-scoped research stays in `notes/`; an ADR links back to the relevant `HAB-XX.md` file for full rationale.
 
+**YAB template notes** (HAB-120, HAB-137, HAB-172, HAB-276, HAB-278, YAB-42, YAB-44, YAB-45 and later YAB tickets) live in the private `lutsenko-yuriy/yab-dev` repo under `docs/knowledge/notes/` (YAB-46).
+
 ## Structure
 
 ```
