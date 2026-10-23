@@ -66,10 +66,9 @@ This repo uses the
 [agentic-boyz](https://github.com/lutsenko-yuriy/yuriys-agentic-boyz)
 multi-skill workflow. `AGENTS.md`, included via `CLAUDE.md`, is the
 orchestrator. It points to the skills under `skills/` and to the project facts in `docs/`.
-Issues and backlog live in [Linear](https://linear.app/yuriy-lutsenkos-workspace/project/habit-loop-flutter-app-created-with-assistance-of-claude-bf8b51a86175) (prefix `HAB`).
+Issues and backlog live in [GitHub Issues](https://github.com/lutsenko-yuriy/habit-loop/issues) (prefix `HAB`: HAB-N is issue #N; HAB-1..281 are an older, read-only Linear archive).
 
-**Requires:** `git`, `python3`, a Python 3.11+ interpreter, an authenticated `gh` (`gh auth login`)
-and the Linear MCP (authenticate it via `/mcp`).
+**Requires:** `git`, `python3`, a Python 3.11+ interpreter and an authenticated `gh` (`gh auth login`).
 The gate runs on any `python3`, 3.9 included. Without `python3`, the gate denies every tool call, and `/onboard` can't fix that.
 Onboarding's `check`, `apply` and `mark` need 3.11+ (for example `python3.12`). `/onboard` looks for one and asks you to install it if none is found.
 

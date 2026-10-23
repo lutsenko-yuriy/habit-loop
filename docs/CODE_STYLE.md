@@ -43,7 +43,7 @@ Never add:
 - Narration of what the code does (`// Loop through slots and update each one`)
 - Boilerplate field or class docs (`/// The current status.`)
 - `// ---` or similar divider lines
-- TODO / FIXME without a Linear ticket reference
+- TODO / FIXME without a ticket reference (`HAB-N`)
 - WHAT descriptions that the identifier already states
 
 When a comment is unavoidable, keep it to **one concise line**. Multi-line comments are reserved for truly complex invariants (layout workarounds, algorithmic constraints) and must still be as short as possible.
